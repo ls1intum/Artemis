@@ -20,11 +20,12 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     totalPages = signal<number>(0);
     isLoading = signal<boolean>(true);
     error = signal<string | undefined>(undefined);
+    zoomLevel = signal<number>(1.0);
 
     private pdfDocument: PDFDocumentProxy | undefined;
     private readonly translateService = inject(TranslateService);
     private viewInitialized = signal<boolean>(false);
-    private resizeObserver: ResizeObserver | undefined;
+    private resizeTimeout: number | undefined;
 
     constructor() {
         // Use legacy build to avoid ES2025 Promise.try compatibility issues
@@ -42,24 +43,17 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     }
 
     ngAfterViewInit(): void {
-        // Set up ResizeObserver to re-render PDF when container size changes
-        const viewerBoxRef = this.pdfViewerBox();
-        if (viewerBoxRef) {
-            this.resizeObserver = new ResizeObserver(() => {
-                if (this.pdfDocument && !this.isLoading() && !this.error()) {
-                    this.renderAllPages();
-                }
-            });
-            this.resizeObserver.observe(viewerBoxRef.nativeElement);
-        }
-
         this.viewInitialized.set(true);
+
+        // Re-render PDF when window is resized
+        window.addEventListener('resize', this.handleResize);
     }
 
     ngOnDestroy(): void {
-        if (this.resizeObserver) {
-            this.resizeObserver.disconnect();
-            this.resizeObserver = undefined;
+        window.removeEventListener('resize', this.handleResize);
+
+        if (this.resizeTimeout !== undefined) {
+            clearTimeout(this.resizeTimeout);
         }
 
         if (this.pdfDocument) {
@@ -102,7 +96,7 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
 
     /**
      * Renders all pages of the PDF document to the container.
-     * Calculates appropriate scaling based on container width.
+     * Each page is rendered once at load time with consistent scaling.
      */
     private async renderAllPages(): Promise<void> {
         if (!this.pdfDocument) {
@@ -117,9 +111,11 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         const container = containerRef.nativeElement;
         container.innerHTML = '';
 
+        // Calculate targetWidth ONCE before rendering any pages
         const targetWidth = this.calculateTargetWidth();
         const numPages = this.pdfDocument.numPages;
 
+        // Render all pages with the same targetWidth
         for (let pageNum = 1; pageNum <= numPages; pageNum++) {
             await this.renderPage(pageNum, container, targetWidth);
         }
@@ -127,14 +123,42 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
 
     /**
      * Calculates the target width for PDF pages based on container dimensions.
-     * Accounts for container padding (40px total) and uses 90% of available width.
+     * Uses full available width (accounting for 40px total padding).
      */
     private calculateTargetWidth(): number {
         const viewerBoxRef = this.pdfViewerBox();
         const boxWidth = viewerBoxRef?.nativeElement.clientWidth || 800;
-        const availableWidth = boxWidth - 40; // Subtract container padding
-        return availableWidth * 0.9; // 90% to ensure it fits
+        const availableWidth = boxWidth - 40; // Subtract container padding (20px left + 20px right)
+        return availableWidth;
     }
+
+    zoomIn(): void {
+        if (this.zoomLevel() < 3.0) {
+            this.zoomLevel.set(Math.min(3.0, this.zoomLevel() + 0.25));
+        }
+    }
+
+    zoomOut(): void {
+        if (this.zoomLevel() > 0.5) {
+            this.zoomLevel.set(Math.max(0.5, this.zoomLevel() - 0.25));
+        }
+    }
+
+    resetZoom(): void {
+        this.zoomLevel.set(1.0);
+    }
+
+    private handleResize = (): void => {
+        // Debounce: wait 300ms after last resize before re-rendering
+        if (this.resizeTimeout !== undefined) {
+            clearTimeout(this.resizeTimeout);
+        }
+        this.resizeTimeout = window.setTimeout(() => {
+            if (this.pdfDocument && !this.isLoading() && !this.error()) {
+                this.renderAllPages();
+            }
+        }, 300);
+    };
 
     /**
      * Renders a single PDF page to a canvas element and appends it to the container.
@@ -147,9 +171,13 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         try {
             const page = await this.pdfDocument.getPage(pageNum);
 
+            // Calculate scale based on target width
             const viewport = page.getViewport({ scale: 1 });
             const scale = targetWidth / viewport.width;
-            const scaledViewport = page.getViewport({ scale });
+
+            // Apply devicePixelRatio for sharp rendering on Retina displays
+            const pixelRatio = window.devicePixelRatio || 1;
+            const scaledViewport = page.getViewport({ scale: scale * pixelRatio });
 
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
@@ -158,20 +186,28 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
                 throw new Error('Could not get 2D context');
             }
 
+            // Set canvas size in physical pixels
             canvas.height = scaledViewport.height;
             canvas.width = scaledViewport.width;
 
-            const pageDiv = document.createElement('div');
-            pageDiv.className = 'pdf-page';
-            pageDiv.appendChild(canvas);
-            container.appendChild(pageDiv);
+            // Scale canvas back to CSS pixels for display
+            canvas.style.width = `${scaledViewport.width / pixelRatio}px`;
+            canvas.style.height = `${scaledViewport.height / pixelRatio}px`;
 
             const renderContext = {
                 canvasContext: context,
                 viewport: scaledViewport,
+                canvas: canvas,
             };
 
+            // Render the page BEFORE adding it to the DOM to prevent flickering
             await page.render(renderContext).promise;
+
+            // Only add to DOM after rendering is complete
+            const pageDiv = document.createElement('div');
+            pageDiv.className = 'pdf-page';
+            pageDiv.appendChild(canvas);
+            container.appendChild(pageDiv);
         } catch {
             // Silently skip pages that fail to render
         }

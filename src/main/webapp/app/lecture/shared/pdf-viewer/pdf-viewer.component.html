@@ -11,9 +11,25 @@
             {{ error() }}
         </div>
     }
+    @if (!isLoading() && !error()) {
+        <div class="pdf-toolbar">
+            <button class="btn btn-sm btn-secondary" (click)="zoomOut()" [disabled]="zoomLevel() <= 0.5">
+                <fa-icon icon="search-minus" />
+            </button>
+            <span class="zoom-level">{{ (zoomLevel() * 100).toFixed(0) }}%</span>
+            <button class="btn btn-sm btn-secondary" (click)="zoomIn()" [disabled]="zoomLevel() >= 3.0">
+                <fa-icon icon="search-plus" />
+            </button>
+            <button class="btn btn-sm btn-secondary" (click)="resetZoom()">
+                <fa-icon icon="undo" />
+            </button>
+        </div>
+    }
     <div class="pdf-viewer-box" #pdfViewerBox>
-        <div #pdfContainer class="pdf-pages-container" [class.d-none]="isLoading() || error()">
-            <!-- Canvas elements will be dynamically inserted here -->
+        <div class="pdf-zoom-wrapper" [style.width.%]="zoomLevel() * 100">
+            <div #pdfContainer class="pdf-pages-container" [class.d-none]="isLoading() || error()" [style.transform]="'scale(' + zoomLevel() + ')'">
+                <!-- Canvas elements will be dynamically inserted here -->
+            </div>
         </div>
     </div>
 </div>
