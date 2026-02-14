@@ -3,7 +3,7 @@ import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/f
 
 @Directive({
     selector: '[jhiFeatureToggle]',
-    host: { '[attr.disabled]': 'disabled()' },
+    host: { '[disabled]': 'disabled() ? "" : null' },
 })
 export class FeatureToggleDirective {
     private featureToggleService = inject(FeatureToggleService);
@@ -14,7 +14,7 @@ export class FeatureToggleDirective {
 
     private featureActive = signal(true);
 
-    disabled = computed(() => this.overwriteDisabled() === true || !this.featureActive());
+    disabled = computed(() => this.overwriteDisabled() || !this.featureActive());
 
     constructor() {
         effect((onCleanup) => {
