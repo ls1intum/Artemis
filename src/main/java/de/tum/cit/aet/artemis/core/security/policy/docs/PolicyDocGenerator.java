@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.core.security.policy.definitions.CourseAccessPolic
 import de.tum.cit.aet.artemis.core.security.policy.definitions.ProgrammingExerciseAccessPolicies;
 
 /**
- * Standalone documentation generator that produces markdown tables from access policy definitions.
+ * Standalone documentation generator that produces Markdown tables from access policy definitions.
  * <p>
  * Usage:
  *
@@ -42,8 +42,6 @@ public final class PolicyDocGenerator {
      */
     static final Map<Role, String> COLUMN_LABELS = Map.of(Role.SUPER_ADMIN, "Super Admin", Role.ADMIN, "Admin", Role.INSTRUCTOR, "Instructor", Role.EDITOR, "Editor",
             Role.TEACHING_ASSISTANT, "Teaching Assistant", Role.STUDENT, "Student");
-
-    private static final Pattern MARKER_PATTERN = Pattern.compile("(<!-- GENERATED:(\\w+) -->).*?(<!-- /GENERATED:\\2 -->)", Pattern.DOTALL);
 
     private PolicyDocGenerator() {
     }
