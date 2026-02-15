@@ -8,7 +8,7 @@
             <!-- Search Input -->
             <div class="search-input-container">
                 <fa-icon [icon]="faSearch" class="search-icon" />
-                <input type="text" placeholder="Search or ask a question..." class="search-input" />
+                <input #searchInput type="text" [placeholder]="'global.search.placeholder' | artemisTranslate" class="search-input" />
             </div>
             <!-- Results Area -->
             <div class="results-container">Search content will go here</div>

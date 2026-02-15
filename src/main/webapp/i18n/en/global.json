@@ -34,6 +34,9 @@
         "importTable": {
             "searchPlaceholder": "Search"
         },
+        "search": {
+            "placeholder": "Search or ask a question..."
+        },
         "menu": {
             "home": "Home",
             "overview": "Overview",

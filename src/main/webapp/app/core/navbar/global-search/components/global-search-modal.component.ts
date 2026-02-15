@@ -1,14 +1,15 @@
-import { Component, HostListener, inject } from '@angular/core';
+import { Component, ElementRef, HostListener, effect, inject, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SearchOverlayService } from '../services/search-overlay.service';
 import { OsDetectorService } from '../services/os-detector.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faSearch } from '@fortawesome/free-solid-svg-icons';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-global-search-modal',
     standalone: true,
-    imports: [CommonModule, FaIconComponent],
+    imports: [CommonModule, FaIconComponent, ArtemisTranslatePipe],
     templateUrl: './global-search-modal.component.html',
     styleUrls: ['./global-search-modal.component.scss'],
 })
@@ -17,6 +18,21 @@ export class GlobalSearchModalComponent {
     osDetector = inject(OsDetectorService);
 
     protected readonly faSearch = faSearch;
+
+    // Get reference to the search input element
+    searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
+
+    constructor() {
+        // Watch for when the modal opens and focus the input
+        effect(() => {
+            if (this.overlay.isOpen() && this.searchInput()) {
+                // Focus the input after the current execution completes
+                setTimeout(() => {
+                    this.searchInput()?.nativeElement.focus();
+                }, 0);
+            }
+        });
+    }
 
     // Global Keyboard Listener
     @HostListener('window:keydown', ['$event'])
