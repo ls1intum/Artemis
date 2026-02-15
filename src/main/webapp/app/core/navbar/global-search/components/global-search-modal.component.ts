@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { SearchOverlayService } from '../services/search-overlay.service';
 import { OsDetectorService } from '../services/os-detector.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faSearch } from '@fortawesome/free-solid-svg-icons';
+import { faArrowDown, faArrowUp, faSearch } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
@@ -18,6 +18,8 @@ export class GlobalSearchModalComponent {
     osDetector = inject(OsDetectorService);
 
     protected readonly faSearch = faSearch;
+    protected readonly faArrowUp = faArrowUp;
+    protected readonly faArrowDown = faArrowDown;
 
     // Get reference to the search input element
     searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');

@@ -35,7 +35,11 @@
             "searchPlaceholder": "Search"
         },
         "search": {
-            "placeholder": "Search or ask a question..."
+            "title": "Search",
+            "placeholder": "Search or ask a question...",
+            "noResultsFound": "No results found",
+            "toNavigate": "to navigate",
+            "toClose": "to close"
         },
         "menu": {
             "home": "Home",

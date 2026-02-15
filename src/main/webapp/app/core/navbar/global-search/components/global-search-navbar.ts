@@ -3,12 +3,13 @@ import { faSearch } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { OsDetectorService } from '../services/os-detector.service';
 import { SearchOverlayService } from '../services/search-overlay.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-global-search-navbar',
     templateUrl: './global-search-navbar.component.html',
     styleUrls: ['./global-search-navbar.component.scss'],
-    imports: [FaIconComponent],
+    imports: [FaIconComponent, ArtemisTranslatePipe],
 })
 export class GlobalSearchNavbarComponent {
     protected readonly faSearch = faSearch;

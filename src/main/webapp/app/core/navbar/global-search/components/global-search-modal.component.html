@@ -11,7 +11,25 @@
                 <input #searchInput type="text" [placeholder]="'global.search.placeholder' | artemisTranslate" class="search-input" />
             </div>
             <!-- Results Area -->
-            <div class="results-container">Search content will go here</div>
+            <div class="results-container">{{ 'global.search.noResultsFound' | artemisTranslate }}</div>
+            <div class="modal-footer">
+                <!-- keyboard hints footer -->
+                <div class="keyboard-hints">
+                    <span class="hint-group">
+                        <kbd class="key-hint-small">
+                            <fa-icon [icon]="faArrowUp" />
+                        </kbd>
+                        <kbd class="key-hint-small">
+                            <fa-icon [icon]="faArrowDown" />
+                        </kbd>
+                        <span class="hint-text">{{ 'global.search.toNavigate' | artemisTranslate }}</span>
+                    </span>
+                    <span class="hint-group">
+                        <kbd class="key-hint-small">ESC</kbd>
+                        <span class="hint-text">{{ 'global.search.toClose' | artemisTranslate }}</span>
+                    </span>
+                </div>
+            </div>
         </div>
     </div>
 }
