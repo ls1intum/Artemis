@@ -7,6 +7,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-global-search-navbar',
+    standalone: true,
     templateUrl: './global-search-navbar.component.html',
     styleUrls: ['./global-search-navbar.component.scss'],
     imports: [FaIconComponent, ArtemisTranslatePipe],

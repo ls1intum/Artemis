@@ -29,7 +29,7 @@
         }
     }
     <!-- Global Search Modal -->
-    @if (globalSearchEnabled && showSkeleton && !isShownViaLti && !isExamStarted && !isExamActive) {
+    @if (globalSearchEnabled && showSkeleton && !isShownViaLti && (!isExamStarted || isTestRunExam)) {
         <jhi-global-search-modal />
     }
 </div>
