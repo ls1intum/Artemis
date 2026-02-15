@@ -26,6 +26,8 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentService;
 import de.tum.cit.aet.artemis.assessment.web.AssessmentResource;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
@@ -76,10 +78,33 @@ public class ModelingAssessmentResource extends AssessmentResource {
      * @param submissionId the id of the submission that should be sent to the client
      * @return the assessment of the given submission
      */
-    @Override
     @GetMapping("modeling-submissions/{submissionId}/result")
     @EnforceAtLeastStudent
-    public ResponseEntity<Result> getAssessmentBySubmissionId(@PathVariable Long submissionId) {
+    public ResponseEntity<Result> getAssessmentBySubmissionId(@PathVariable Long submissionId, @RequestParam(value = "resultId", required = false) Long resultId) {
+
+        // If resultId is provided, return that specific result
+        if (resultId != null) {
+            log.debug("REST request to get result {} for modeling submission {}", resultId, submissionId);
+            ModelingSubmission submission = modelingSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(submissionId);
+            Result result = submission.getResults().stream().filter(r -> r.getId().equals(resultId)).findFirst().orElseThrow(() -> new EntityNotFoundException("Result", resultId));
+
+            StudentParticipation participation = (StudentParticipation) submission.getParticipation();
+            ModelingExercise exercise = modelingExerciseRepository.findByIdElseThrow(participation.getExercise().getId());
+
+            if (!authCheckService.isUserAllowedToGetResult(exercise, participation, result)) {
+                throw new AccessForbiddenException();
+            }
+
+            // remove sensitive information for students
+            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+                exercise.filterSensitiveInformation();
+                result.filterSensitiveInformation();
+            }
+
+            return ResponseEntity.ok(result);
+        }
+
+        // Otherwise, return the latest result
         return super.getAssessmentBySubmissionId(submissionId);
     }
 

@@ -195,6 +195,26 @@ describe('ModelingAssessmentService', () => {
                 expect(expectedResult).toEqual(elemDefault);
             });
 
+            it('should get an assessment with specific resultId', async () => {
+                const submissionId = 187;
+                const resultId = 99;
+                const returnedFromService = { ...elemDefault, id: resultId };
+
+                service
+                    .getAssessment(submissionId, resultId)
+                    .pipe(take(1))
+                    .subscribe((resp) => (expectedResult = resp));
+
+                const req = httpMock.expectOne({
+                    url: `api/modeling/modeling-submissions/${submissionId}/result?resultId=${resultId}`,
+                    method: 'GET',
+                });
+                req.flush(returnedFromService);
+
+                expect(expectedResult.id).toBe(resultId);
+                expect(expectedResult).toEqual(returnedFromService);
+            });
+
             it('should get an example assessment', async () => {
                 const submissionId = 187;
                 const exerciseId = 188;

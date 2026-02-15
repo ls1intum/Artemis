@@ -185,6 +185,50 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void shouldReturnSpecificResultWhenResultIdProvided() throws Exception {
+        // Create submission with model
+        ModelingSubmission submission = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json",
+                TEST_PREFIX + "student1");
+
+        // Add two assessments by different tutors to create multiple results
+        exerciseUtilService.addAssessmentToExercise(classExercise, userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
+        exerciseUtilService.addAssessmentToExercise(classExercise, userUtilService.getUserByLogin(TEST_PREFIX + "tutor2"));
+        exerciseUtilService.updateAssessmentDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
+
+        // Reload submission with results
+        submission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).orElseThrow();
+
+        // Verify we have 2 results
+        assertThat(submission.getResults()).hasSize(2);
+
+        // Get result IDs
+        Result expectedFirstResult = submission.getResults().getFirst();
+        Result expectedLatestResult = submission.getLatestResult();
+        Long firstResultId = expectedFirstResult.getId();
+        Long latestResultId = expectedLatestResult.getId();
+
+        // Request specific result by ID (first result)
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("resultId", firstResultId.toString());
+        Result actualFirstResult = request.get(
+                API_MODELING_SUBMISSIONS + submission.getId() + "/result?"
+                        + params.toSingleValueMap().entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).reduce((a, b) -> a + "&" + b).orElse(""),
+                HttpStatus.OK, Result.class);
+
+        assertThat(actualFirstResult.getId()).isEqualTo(firstResultId);
+
+        // Request specific result by ID (latest result)
+        params.set("resultId", latestResultId.toString());
+        Result actualLatestResult = request.get(
+                API_MODELING_SUBMISSIONS + submission.getId() + "/result?"
+                        + params.toSingleValueMap().entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).reduce((a, b) -> a + "&" + b).orElse(""),
+                HttpStatus.OK, Result.class);
+
+        assertThat(actualLatestResult.getId()).isEqualTo(latestResultId);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetExampleAssessmentAsTutor() throws Exception {
         ExampleSubmission storedExampleSubmission = participationUtilService

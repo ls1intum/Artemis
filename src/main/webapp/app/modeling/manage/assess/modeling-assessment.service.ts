@@ -43,8 +43,9 @@ export class ModelingAssessmentService {
         return this.http.put<Result>(url, assessmentUpdate, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertResultEntityResponseTypeFromServer(res)));
     }
 
-    getAssessment(submissionId: number): Observable<Result> {
-        return this.http.get<Result>(`${this.resourceUrl}/modeling-submissions/${submissionId}/result`).pipe(map((res) => this.convertResult(res)));
+    getAssessment(submissionId: number, resultId?: number): Observable<Result> {
+        const params = resultId ? { resultId: resultId.toString() } : undefined;
+        return this.http.get<Result>(`${this.resourceUrl}/modeling-submissions/${submissionId}/result`, { params }).pipe(map((res) => this.convertResult(res)));
     }
 
     getExampleAssessment(exerciseId: number, submissionId: number): Observable<Result> {

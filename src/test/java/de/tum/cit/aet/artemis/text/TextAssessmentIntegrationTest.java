@@ -439,6 +439,37 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReturnAllResultsWhenIncludeAllResultsParameterTrue() throws Exception {
+        exerciseUtilService.updateAssessmentDueDate(textExercise.getId(), null);
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+
+        // Reload submission to avoid detached entity issues
+        textSubmission = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(textSubmission.getId()).orElseThrow();
+
+        // Add a second result (simulating Athena assessment)
+        Result secondResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC_ATHENA, now(), textSubmission);
+        secondResult.setScore(85.0);
+        secondResult = resultRepository.save(secondResult);
+
+        // Without includeAllResults parameter - should get only one result (default behavior)
+        Participation actualParticipationWithoutParam = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, Participation.class);
+        final TextSubmission actualSubmissionWithoutParam = (TextSubmission) actualParticipationWithoutParam.getSubmissions().iterator().next();
+        assertThat(actualSubmissionWithoutParam.getResults()).hasSize(1);
+
+        // With includeAllResults parameter - should get all results
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("includeAllResults", "true");
+        Participation actualParticipationWithParam = request.get(
+                "/api/text/text-editor/" + textSubmission.getParticipation().getId() + "?"
+                        + params.toSingleValueMap().entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).reduce((a, b) -> a + "&" + b).orElse(""),
+                HttpStatus.OK, Participation.class);
+        final TextSubmission actualSubmissionWithParam = (TextSubmission) actualParticipationWithParam.getSubmissions().iterator().next();
+        assertThat(actualSubmissionWithParam.getResults()).hasSize(2);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void getDataForTextEditor_asOtherStudent() throws Exception {
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);

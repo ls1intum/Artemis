@@ -10,9 +10,10 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 export class TextEditorService {
     private http = inject(HttpClient);
 
-    get(participationId: number): Observable<StudentParticipation> {
+    get(participationId: number, includeAllResults: boolean = false): Observable<StudentParticipation> {
+        const params = includeAllResults ? { includeAllResults: 'true' } : undefined;
         return this.http
-            .get(`api/text/text-editor/${participationId}`, { responseType: 'json' })
+            .get<StudentParticipation>(`api/text/text-editor/${participationId}`, { params })
             .pipe(tap((participation: StudentParticipation) => ExerciseService.convertExerciseDatesFromServer(participation.exercise)));
     }
 

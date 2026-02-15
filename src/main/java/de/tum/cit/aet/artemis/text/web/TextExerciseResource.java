@@ -234,7 +234,8 @@ public class TextExerciseResource {
     // TODO: fix the URL scheme
     @GetMapping("text-editor/{participationId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<StudentParticipation> getDataForTextEditor(@PathVariable Long participationId) {
+    public ResponseEntity<StudentParticipation> getDataForTextEditor(@PathVariable Long participationId,
+            @RequestParam(value = "includeAllResults", defaultValue = "false") boolean includeAllResults) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         StudentParticipation participation = studentParticipationRepository.findByIdWithLatestSubmissionsResultsFeedbackElseThrow(participationId);
         if (!(participation.getExercise() instanceof TextExercise textExercise)) {
@@ -283,8 +284,10 @@ public class TextExerciseResource {
                         result.filterSensitiveInformation();
                     }
 
-                    // only send the one latest result to the client
-                    textSubmission.setResults(List.of(result));
+                    // only send the one latest result to the client (unless all results are requested)
+                    if (!includeAllResults) {
+                        textSubmission.setResults(List.of(result));
+                    }
                 }
                 participation.addSubmission(textSubmission);
             }

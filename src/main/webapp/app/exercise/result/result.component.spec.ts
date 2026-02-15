@@ -221,6 +221,30 @@ describe('ResultComponent', () => {
             mockParticipation.id,
             'submission',
             mockResult.submission?.id,
+            'result',
+            mockResult.id,
+        ]);
+    });
+
+    it('should navigate to modeling exercise details when exercise type is MODELING', () => {
+        comp.exercise = { ...mockExercise, type: ExerciseType.MODELING };
+        comp.participation = mockParticipation;
+        const navigateSpy = jest.spyOn(router, 'navigate');
+        const courseId = 42;
+        comp.showDetails(mockResult);
+
+        expect(navigateSpy).toHaveBeenCalledWith([
+            '/courses',
+            courseId,
+            'exercises',
+            'modeling-exercises',
+            comp.exercise.id,
+            'participate',
+            mockParticipation.id,
+            'submission',
+            mockResult.submission?.id,
+            'result',
+            mockResult.id,
         ]);
     });
 

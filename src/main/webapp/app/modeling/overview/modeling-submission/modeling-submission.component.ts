@@ -127,6 +127,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     submission: ModelingSubmission;
     submissionId: number | undefined;
+    resultId: number | undefined;
     sortedSubmissionHistory: ModelingSubmission[];
     sortedResultHistory: Result[];
 
@@ -188,6 +189,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 .pipe(
                     switchMap((params) => {
                         this.submissionId = Number(params['submissionId']) || undefined;
+                        this.resultId = Number(params['resultId']) || undefined;
                         this.isFeedbackView = !!this.submissionId;
 
                         // If participationId exists and feedback view is needed, fetch history results first
@@ -339,7 +341,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.submission = modelingSubmission;
 
         // reconnect participation <--> result
-        if (getLatestSubmissionResult(modelingSubmission)) {
+        // Skip reducing to single result when viewing a specific result in feedback view
+        if (getLatestSubmissionResult(modelingSubmission) && !(this.isFeedbackView && this.resultId)) {
             modelingSubmission.results = [getLatestSubmissionResult(modelingSubmission)!];
         }
         this.participation = modelingSubmission.participation as StudentParticipation;
@@ -370,21 +373,31 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         if ((getLatestSubmissionResult(this.submission) && this.isAfterAssessmentDueDate) || this.isFeedbackView) {
             this.result = getLatestSubmissionResult(this.submission);
             if (this.isFeedbackView && this.submissionId) {
-                this.result = this.sortedSubmissionHistory.find((submission) => submission.id === this.submissionId)?.latestResult;
+                if (this.resultId) {
+                    // Find the specific result by resultId (from clicked result in timeline)
+                    this.result = this.submission.results?.find((result) => result.id === this.resultId);
+                } else {
+                    // Fallback: Find the result with most recent completionDate
+                    this.result = this.sortedResultHistory.find((result) => result.submission?.id === this.submissionId);
+                }
             }
         }
         this.resultWithComplaint = getFirstResultWithComplaint(this.submission);
         if (this.submission.submitted && this.result && this.result.completionDate) {
-            if (this.isAutomaticResult) {
+            // Check if feedbacks are loaded
+            if (this.result.feedbacks && this.result.feedbacks.length > 0) {
+                // Feedbacks are already loaded, use them directly
                 this.assessmentResult = this.modelingAssessmentService.convertResult(this.result);
                 this.prepareAssessmentData();
-            } else if (!this.isFeedbackView) {
-                this.modelingAssessmentService.getAssessment(this.submission.id!).subscribe((assessmentResult: Result) => {
+            } else if (!this.isAutomaticResult && this.isFeedbackView && this.resultId && this.submissionId) {
+                // Feedbacks not loaded for manual result, fetch from backend using specific resultId
+                this.modelingAssessmentService.getAssessment(this.submissionId, this.resultId).subscribe((assessmentResult: Result) => {
                     this.assessmentResult = assessmentResult;
                     this.prepareAssessmentData();
                 });
-            } else if (this.result) {
-                this.assessmentResult = this.modelingAssessmentService.convertResult(this.result!);
+            } else {
+                // Feedbacks already loaded or automatic result
+                this.assessmentResult = this.modelingAssessmentService.convertResult(this.result);
                 this.prepareAssessmentData();
             }
         }

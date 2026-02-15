@@ -8,18 +8,25 @@ import { TextEditorService } from 'app/text/overview/service/text-editor.service
 
 import { provideHttpClient } from '@angular/common/http';
 import { Language } from 'app/core/course/shared/entities/course.model';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 
 describe('TextEditorService', () => {
     setupTestBed({ zoneless: true });
     let textEditorService: TextEditorService;
+    let httpMock: HttpTestingController;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             providers: [provideHttpClient(), provideHttpClientTesting()],
         });
         textEditorService = TestBed.inject(TextEditorService);
+        httpMock = TestBed.inject(HttpTestingController);
+    });
+
+    afterEach(() => {
+        httpMock.verify();
     });
     it('Can detect a short German string', () => {
         const testString = 'Das ist ein kurzer, deutscher Satz';
@@ -57,5 +64,36 @@ describe('TextEditorService', () => {
             " in 1978, a master's degree in computer science from Carnegie Mellon University in 1982 " +
             'and a PhD degree in computer science from Carnegie Mellon University in 1985.';
         expect(textEditorService.predictLanguage(testString)).toBe(Language.ENGLISH);
+    });
+
+    it('should get participation without includeAllResults parameter', () => {
+        const participationId = 123;
+        const mockParticipation = { id: participationId } as StudentParticipation;
+
+        textEditorService.get(participationId).subscribe((participation) => {
+            expect(participation.id).toBe(participationId);
+        });
+
+        const req = httpMock.expectOne('api/text/text-editor/123');
+        expect(req.request.method).toBe('GET');
+        expect(req.request.params.keys()).toHaveLength(0);
+        req.flush(mockParticipation);
+    });
+
+    it('should get participation with includeAllResults parameter', () => {
+        const participationId = 123;
+        const mockParticipation = {
+            id: participationId,
+            submissions: [{ results: [{ id: 1 }, { id: 2 }] }],
+        } as StudentParticipation;
+
+        textEditorService.get(participationId, true).subscribe((participation) => {
+            expect(participation.id).toBe(participationId);
+        });
+
+        const req = httpMock.expectOne('api/text/text-editor/123?includeAllResults=true');
+        expect(req.request.method).toBe('GET');
+        expect(req.request.params.get('includeAllResults')).toBe('true');
+        req.flush(mockParticipation);
     });
 });
