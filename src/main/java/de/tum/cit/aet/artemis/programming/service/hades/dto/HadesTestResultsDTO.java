@@ -23,7 +23,7 @@ public record HadesTestResultsDTO(@JsonProperty("jobName") String jobName, @Json
         @JsonProperty("assignmentRepoBranchName") String assignmentRepoBranchName, @JsonProperty("assignmentRepoCommitHash") String assignmentRepoCommitHash,
         @JsonProperty("testsRepoCommitHash") String testsRepoCommitHash, @JsonProperty("results") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestSuiteDTO> results,
         @JsonProperty("buildCompletionTime") ZonedDateTime buildCompletionTime, @JsonProperty("isBuildSuccessful") boolean isBuildSuccessful,
-        @JsonProperty("logs") @JsonSetter(nulls = Nulls.AS_EMPTY) List<HadesLogEntryDTO> logs) implements BuildResultNotification {
+        @JsonProperty("logs") @JsonSetter(nulls = Nulls.AS_EMPTY) List<HadesLogEntryDTO> logs, @JsonProperty("passed") int passed) implements BuildResultNotification {
 
     public static HadesTestResultsDTO convert(Object responseBody) {
         return new ObjectMapper().registerModule(new JavaTimeModule()).convertValue(responseBody, HadesTestResultsDTO.class);
@@ -57,15 +57,7 @@ public record HadesTestResultsDTO(@JsonProperty("jobName") String jobName, @Json
     public int getSum() {
         var sum = 0;
         for (TestSuiteDTO testSuiteDTO : results) {
-            sum += testSuiteDTO.failedTests().size() + testSuiteDTO.successfulTests().size();
-        }
-        return sum;
-    }
-
-    public int successful() {
-        var sum = 0;
-        for (TestSuiteDTO testSuiteDTO : results) {
-            sum += testSuiteDTO.successfulTests().size();
+            sum += testSuiteDTO.tests();
         }
         return sum;
     }
@@ -73,7 +65,7 @@ public record HadesTestResultsDTO(@JsonProperty("jobName") String jobName, @Json
     @Override
     public Double buildScore() {
         final var testSum = getSum();
-        return testSum == 0 ? 0D : ((double) successful() / testSum) * 100D;
+        return testSum == 0 ? 0D : ((double) passed() / testSum) * 100D;
     }
 
     @Override
@@ -107,11 +99,12 @@ public record HadesTestResultsDTO(@JsonProperty("jobName") String jobName, @Json
 
     @Override
     public List<? extends BuildJobInterface> jobs() {
-        return List.of();
+        return results;
     }
 
     @Override
     public List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports() {
+        // NOTE: this is not available in Hades
         return List.of();
     }
 }
