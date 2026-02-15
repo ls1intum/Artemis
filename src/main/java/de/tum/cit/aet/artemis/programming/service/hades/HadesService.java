@@ -54,19 +54,19 @@ public class HadesService implements StatelessCIService {
     @Value("${artemis.version-control.build-agent-git-password}")
     private String password;
 
-    private String repositoryDir = "/shared";
+    private static final String repositoryDir = "/shared";
 
-    private String workingDir = "/shared";
+    private static final String workingDir = "/shared";
 
-    private String hadesTestPath = "./";
+    private static final String hadesTestPath = "./";
 
-    private String assignmentPath = "./assignment";
+    private static final String assignmentPath = "./assignment";
 
-    private List<HadesBuildStepDTO.VolumeMount> volumeMounts = List.of(new HadesBuildStepDTO.VolumeMount("shared", "/shared"));
+    private static final List<HadesBuildStepDTO.VolumeMount> volumeMounts = List.of(new HadesBuildStepDTO.VolumeMount("shared", "/shared"));
 
-    private String testOrder = "1";
+    private static final String testOrder = "1";
 
-    private String assignmentOrder = "2";
+    private static final String assignmentOrder = "2";
 
     @Value("${artemis.continuous-integration.hades.images.result-parser-image}")
     private String resultParserImage;
@@ -74,7 +74,7 @@ public class HadesService implements StatelessCIService {
     @Value("${artemis.continuous-integration.hades.adapter.endpoint}")
     private String adapterEndPoint;
 
-    private String ingestDir = "/shared/example/build/test-results/test";
+    private static final String ingestDir = "/shared/build/test-results/test";
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 

@@ -54,13 +54,31 @@ public record HadesTestResultsDTO(@JsonProperty("jobName") String jobName, @Json
         return isBuildSuccessful;
     }
 
+    public int getSum() {
+        var sum = 0;
+        for (TestSuiteDTO testSuiteDTO : results) {
+            sum += testSuiteDTO.failedTests().size() + testSuiteDTO.successfulTests().size();
+        }
+        return sum;
+    }
+
+    public int successful() {
+        var sum = 0;
+        for (TestSuiteDTO testSuiteDTO : results) {
+            sum += testSuiteDTO.successfulTests().size();
+        }
+        return sum;
+    }
+
     @Override
     public Double buildScore() {
-        return 0.0;
+        final var testSum = getSum();
+        return testSum == 0 ? 0D : ((double) successful() / testSum) * 100D;
     }
 
     @Override
     public boolean hasArtifact() {
+        // NOTE: this is not available in Hades
         return false;
     }
 
