@@ -135,17 +135,36 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     zoomIn(): void {
         if (this.zoomLevel() < 3.0) {
             this.zoomLevel.set(Math.min(3.0, this.zoomLevel() + 0.25));
+            this.centerHorizontalScroll();
         }
     }
 
     zoomOut(): void {
         if (this.zoomLevel() > 0.5) {
             this.zoomLevel.set(Math.max(0.5, this.zoomLevel() - 0.25));
+            this.centerHorizontalScroll();
         }
     }
 
     resetZoom(): void {
         this.zoomLevel.set(1.0);
+        this.centerHorizontalScroll();
+    }
+
+    /**
+     * Centers the horizontal scroll position after zooming.
+     * This ensures the PDF remains centered horizontally when zoom changes.
+     */
+    private centerHorizontalScroll(): void {
+        // Use setTimeout to ensure the DOM has updated with the new zoom level
+        setTimeout(() => {
+            const container = this.pdfViewerBox()?.nativeElement;
+            if (container) {
+                // Calculate the horizontal center position
+                const scrollCenter = (container.scrollWidth - container.clientWidth) / 2;
+                container.scrollLeft = scrollCenter;
+            }
+        }, 0);
     }
 
     private handleResize = (): void => {
