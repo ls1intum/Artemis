@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, effect, inject, input, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, computed, effect, inject, input, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import * as PDFJS from 'pdfjs-dist/legacy/build/pdf.mjs';
@@ -22,6 +22,9 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     isLoading = signal<boolean>(true);
     error = signal<string | undefined>(undefined);
     zoomLevel = signal<number>(1.0);
+
+    // Computed wrapper width: at least 100%, or more when zoomed in
+    wrapperWidth = computed(() => Math.max(100, this.zoomLevel() * 100));
 
     private pdfDocument: PDFDocumentProxy | undefined;
     private readonly translateService = inject(TranslateService);
@@ -187,13 +190,13 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
      * This ensures the PDF remains centered horizontally when zoom changes.
      */
     private centerHorizontalScroll(): void {
-        // Use setTimeout to ensure the DOM has updated with the new zoom level
+        // Wait for the next tick to ensure DOM is updated with new zoom level
         setTimeout(() => {
             const container = this.pdfViewerBox()?.nativeElement;
             if (container) {
                 // Calculate the horizontal center position
                 const scrollCenter = (container.scrollWidth - container.clientWidth) / 2;
-                container.scrollLeft = scrollCenter;
+                container.scrollLeft = Math.max(0, scrollCenter);
             }
         }, 0);
     }

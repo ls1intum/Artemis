@@ -27,7 +27,7 @@
         </div>
     }
     <div class="pdf-viewer-box" #pdfViewerBox>
-        <div class="pdf-zoom-wrapper" [style.width.%]="zoomLevel() * 100">
+        <div class="pdf-zoom-wrapper" [style.width.%]="wrapperWidth()">
             <div #pdfContainer class="pdf-pages-container" [class.d-none]="isLoading() || error()" [style.transform]="'scale(' + zoomLevel() + ')'">
                 <!-- Canvas elements will be dynamically inserted here -->
             </div>
