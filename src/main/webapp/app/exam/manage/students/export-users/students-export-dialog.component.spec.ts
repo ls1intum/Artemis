@@ -70,7 +70,7 @@ describe('StudentsExportDialogComponent', () => {
     });
 
     it('should open the dialog', () => {
-        expect(component['dialogVisible']()).toBeTrue();
+        expect(component['dialogVisible']()).toBe(true);
     });
 
     it('should close the dialog when cancel button is clicked', () => {
@@ -79,8 +79,8 @@ describe('StudentsExportDialogComponent', () => {
         const button = document.body.querySelector('#cancel-button') as HTMLButtonElement;
         button.click();
 
-        expect(component['dialogVisible']()).toBeFalse();
-        expect(component['lastExportAttemptFailed']()).toBeFalse();
+        expect(component['dialogVisible']()).toBe(false);
+        expect(component['lastExportAttemptFailed']()).toBe(false);
     });
 
     it('should call exportExamUsers with correct arguments', () => {
@@ -114,8 +114,8 @@ describe('StudentsExportDialogComponent', () => {
 
         component.exportUsers();
 
-        expect(component['lastExportAttemptFailed']()).toBeTrue();
-        expect(component['dialogVisible']()).toBeTrue();
+        expect(component['lastExportAttemptFailed']()).toBe(true);
+        expect(component['dialogVisible']()).toBe(true);
     });
 
     it('should reset error flag when dialog is closed', () => {
@@ -123,8 +123,8 @@ describe('StudentsExportDialogComponent', () => {
 
         component.closeDialog();
 
-        expect(component['lastExportAttemptFailed']()).toBeFalse();
-        expect(component['dialogVisible']()).toBeFalse();
+        expect(component['lastExportAttemptFailed']()).toBe(false);
+        expect(component['dialogVisible']()).toBe(false);
     });
 
     it('should sanitize dangerous CSV values', () => {

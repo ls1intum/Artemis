@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, UrlSegment, convertToParamMap, provideRouter } from '@angular/router';
@@ -26,6 +26,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { DeleteDialogService } from 'app/shared/delete-dialog/service/delete-dialog.service';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 // Stub component for UsersImportButtonComponent to avoid signal viewChild issues with ng-mocks
 @Component({
@@ -90,7 +92,7 @@ describe('ExamStudentsComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: AccountService, useClass: MockAccountService },
-                provideHttpClient(),
+                { provide: DeleteDialogService, useValue: MockDialogService },
                 provideHttpClientTesting(),
             ],
         }).compileComponents();

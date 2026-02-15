@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -19,6 +19,8 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('StudentsUploadImagesDialogComponent', () => {
     setupTestBed({ zoneless: true });
@@ -46,8 +48,8 @@ describe('StudentsUploadImagesDialogComponent', () => {
                 MockProvider(NgbActiveModal),
                 MockProvider(AlertService),
                 MockProvider(ExamManagementService),
-                MockProvider(HttpClient),
-                MockProvider(TranslateService),
+                provideHttpClientTesting(),
+                { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(SessionStorageService),
                 MockProvider(LocalStorageService),
                 MockProvider(Router),
@@ -98,8 +100,8 @@ describe('StudentsUploadImagesDialogComponent', () => {
         component.parsePDFFile();
 
         expect(examServiceStub).toHaveBeenCalledOnce();
-        expect(component.isParsing).toBeFalse();
-        expect(component.hasParsed).toBeTrue();
+        expect(component.isParsing).toBe(false);
+        expect(component.hasParsed).toBe(true);
         expect(component.notFoundUsers).toBeDefined();
         expect(component.notFoundUsers?.numberOfUsersNotFound).toBe(1);
     });

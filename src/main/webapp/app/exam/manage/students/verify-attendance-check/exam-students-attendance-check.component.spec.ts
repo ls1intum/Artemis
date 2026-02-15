@@ -22,7 +22,7 @@ import dayjs from 'dayjs/esm';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ExamStudentsAttendanceCheckComponent', () => {
@@ -44,8 +44,8 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
     let examManagementService: ExamManagementService;
     let sortService: SortService;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [ExamStudentsAttendanceCheckComponent, MockDirective(TranslateDirective), MockDirective(SortDirective), MockPipe(ArtemisTranslatePipe)],
             providers: [
                 provideRouter([]),

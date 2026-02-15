@@ -79,10 +79,11 @@ describe('StudentsReseatingDialogComponent', () => {
         expect(component.examUser()).toEqual(examUser);
         expect(component.selectedRoomNumber()).toBe('2.0.1');
         expect(component.selectedSeat()).toBe('');
-        expect(component.dialogVisible()).toBeTrue();
+        expect(component.dialogVisible()).toBe(true);
     });
 
     it('openDialog() should fallback to empty rooms list on error', () => {
+        vi.useFakeTimers();
         vi.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(throwError(() => new Error('fail')));
 
         component.openDialog(examUser);
@@ -96,7 +97,7 @@ describe('StudentsReseatingDialogComponent', () => {
 
         component.closeDialog();
 
-        expect(component.dialogVisible()).toBeFalse();
+        expect(component.dialogVisible()).toBe(false);
     });
 
     it('calling openDialog() twice should update fields to the latest user and trigger a new seat load for persisted rooms', () => {
@@ -145,13 +146,13 @@ describe('StudentsReseatingDialogComponent', () => {
 
         component.selectedRoomNumber.set(rooms[0].roomNumber);
         fixture.detectChanges();
-        expect(component.selectedRoomIsPersisted()).toBeTrue();
-        expect(component.selectedSeatIsPersisted()).toBeFalse();
+        expect(component.selectedRoomIsPersisted()).toBe(true);
+        expect(component.selectedSeatIsPersisted()).toBe(false);
 
         component.selectedSeat.set('A3');
         fixture.detectChanges();
-        expect(component.selectedRoomIsPersisted()).toBeTrue();
-        expect(component.selectedSeatIsPersisted()).toBeTrue();
+        expect(component.selectedRoomIsPersisted()).toBe(true);
+        expect(component.selectedSeatIsPersisted()).toBe(true);
     });
 
     it('should format room name correctly', () => {
@@ -184,6 +185,7 @@ describe('StudentsReseatingDialogComponent', () => {
     });
 
     it('should find correct seats', () => {
+        vi.useFakeTimers();
         vi.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
         vi.spyOn(service, 'loadSeatsOfExamRoom').mockReturnValue(of({ seats: ['A1', 'A2', 'B1', 'B2', '1, 2', '1, 3'] }));
 
@@ -209,6 +211,6 @@ describe('StudentsReseatingDialogComponent', () => {
         fixture.detectChanges();
         const button = document.body.querySelector('#cancel-button') as HTMLButtonElement;
         button.click();
-        expect(component.dialogVisible()).toBeFalse();
+        expect(component.dialogVisible()).toBe(false);
     });
 });

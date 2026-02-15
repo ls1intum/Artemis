@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { HttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -24,6 +23,7 @@ import { MockStudentsRoomDistributionService } from 'test/helpers/mocks/service/
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 function dispatchInputEvent(inputElement: HTMLInputElement, value: string) {
     inputElement.value = value;
@@ -57,7 +57,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
             ],
             providers: [
                 MockProvider(NgbActiveModal),
-                MockProvider(HttpClient),
+                provideHttpClientTesting(),
                 MockProvider(SessionStorageService),
                 MockProvider(LocalStorageService),
                 MockProvider(Router),
@@ -87,14 +87,14 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         fixture.detectChanges();
         const button = document.body.querySelector('#cancel-button') as HTMLButtonElement;
         button.click();
-        expect(component.dialogVisible()).toBeFalse();
+        expect(component.dialogVisible()).toBe(false);
     });
 
     it('should not have selected rooms and distribute button disabled on first open', () => {
         fixture.detectChanges();
-        expect(component.hasSelectedRooms()).toBeFalse();
+        expect(component.hasSelectedRooms()).toBe(false);
         const button = fixture.debugElement.nativeElement.querySelector('#finish-button');
-        expect(button.disabled).toBeTrue();
+        expect(button.disabled).toBe(true);
     });
 
     it('should request room data from the server on initial opening', () => {
@@ -109,22 +109,22 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         const button = fixture.debugElement.nativeElement.querySelector('#finish-button');
-        expect(component.hasSelectedRooms()).toBeTrue();
-        expect(button.hidden).toBeFalse();
+        expect(component.hasSelectedRooms()).toBe(true);
+        expect(button.hidden).toBe(false);
     });
 
     it('should remove selected room and disable finish button again', () => {
         fixture.detectChanges();
         component.pickSelectedRoom({ item: rooms[0] });
         fixture.changeDetectorRef.detectChanges();
-        expect(component.hasSelectedRooms()).toBeTrue();
+        expect(component.hasSelectedRooms()).toBe(true);
 
         component.removeSelectedRoom(rooms[0]);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(component.hasSelectedRooms()).toBeFalse();
+        expect(component.hasSelectedRooms()).toBe(false);
         const button = fixture.debugElement.nativeElement.querySelector('#finish-button');
-        expect(button.disabled).toBeTrue();
+        expect(button.disabled).toBe(true);
     });
 
     it('should not be able to select same room twice', () => {
@@ -157,6 +157,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     });
 
     it('should find correct rooms', () => {
+        vi.useFakeTimers();
         (service as MockStudentsRoomDistributionService).availableRooms.set(rooms);
 
         let searchResult: RoomForDistributionDTO[] = [];
@@ -225,15 +226,15 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         fixture.detectChanges();
         const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#allowNarrowLayoutsToggle');
 
-        expect(component.allowNarrowLayouts()).toBeFalse();
+        expect(component.allowNarrowLayouts()).toBe(false);
 
         checkbox.click();
         fixture.changeDetectorRef.detectChanges();
-        expect(component.allowNarrowLayouts()).toBeTrue();
+        expect(component.allowNarrowLayouts()).toBe(true);
 
         checkbox.click();
         fixture.changeDetectorRef.detectChanges();
-        expect(component.allowNarrowLayouts()).toBeFalse();
+        expect(component.allowNarrowLayouts()).toBe(false);
     });
 
     it('should never show percentage >= 100 in the not enough capacity warning message', () => {
@@ -255,7 +256,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         component.selectedRooms.set([rooms[0]]);
 
         fixture.changeDetectorRef.detectChanges();
-        expect(component.canSeatAllStudents()).toBeFalse();
+        expect(component.canSeatAllStudents()).toBe(false);
 
         const warningElement: HTMLElement | null = fixture.nativeElement.querySelector('.alert-warning');
 
@@ -272,7 +273,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         component.openDialog();
         fixture.changeDetectorRef.detectChanges();
 
-        expect(component.hasSelectedRooms()).toBeTrue();
+        expect(component.hasSelectedRooms()).toBe(true);
         expect(component.selectedRooms()).toHaveLength(2);
         expect(component.selectedRooms()).toContain(rooms[0]);
         expect(component.selectedRooms()).toContain(rooms[1]);
