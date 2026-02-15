@@ -113,7 +113,7 @@ describe('ExamStudentsComponent', () => {
         expect(component).not.toBeNull();
         expect(component.courseId).toEqual(course.id);
         expect(component.exam).toEqual(examWithCourse);
-        expect(component.isLoading).toBeFalse();
+        expect(component.isLoading).toBe(false);
     });
 
     it('should handle auto-complete for user without login', () => {
@@ -143,7 +143,7 @@ describe('ExamStudentsComponent', () => {
         expect(reloadSpy).toHaveBeenCalledOnce();
         expect(callbackSpy).not.toHaveBeenCalled();
         expect(flashSpy).toHaveBeenCalledOnce();
-        expect(component.isTransitioning).toBeFalse();
+        expect(component.isTransitioning).toBe(false);
     });
 
     it('should search for users', () => {
@@ -156,8 +156,8 @@ describe('ExamStudentsComponent', () => {
         // Check if the observable output matches our expectancies
         search.subscribe((a) => {
             expect(a).toEqual([{ id: user2.id, login: user2.login }]);
-            expect(component.searchNoResults).toBeFalse();
-            expect(component.searchFailed).toBeFalse();
+            expect(component.searchNoResults).toBe(false);
+            expect(component.searchFailed).toBe(false);
         });
 
         expect(userServiceStub).toHaveBeenCalledOnce();
@@ -265,6 +265,6 @@ describe('ExamStudentsComponent', () => {
 
     it('should test on error', () => {
         component.onError('ErrorString');
-        expect(component.isTransitioning).toBeFalse();
+        expect(component.isTransitioning).toBe(false);
     });
 });
