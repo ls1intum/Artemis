@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { faSearch } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { OsDetectorService } from './os-detector.service';
+import { OsDetectorService } from '../services/os-detector.service';
 @Component({
     selector: 'jhi-global-search-navbar',
     templateUrl: './global-search-navbar.component.html',
