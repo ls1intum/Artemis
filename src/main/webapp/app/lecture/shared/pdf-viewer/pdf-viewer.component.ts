@@ -18,6 +18,7 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     pdfViewerBox = viewChild<ElementRef<HTMLDivElement>>('pdfViewerBox');
 
     totalPages = signal<number>(0);
+    currentPage = signal<number>(1);
     isLoading = signal<boolean>(true);
     error = signal<string | undefined>(undefined);
     zoomLevel = signal<number>(1.0);
@@ -47,10 +48,21 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
 
         // Re-render PDF when window is resized
         window.addEventListener('resize', this.handleResize);
+
+        // Track current page on scroll
+        const viewerBox = this.pdfViewerBox()?.nativeElement;
+        if (viewerBox) {
+            viewerBox.addEventListener('scroll', this.updateCurrentPage);
+        }
     }
 
     ngOnDestroy(): void {
         window.removeEventListener('resize', this.handleResize);
+
+        const viewerBox = this.pdfViewerBox()?.nativeElement;
+        if (viewerBox) {
+            viewerBox.removeEventListener('scroll', this.updateCurrentPage);
+        }
 
         if (this.resizeTimeout !== undefined) {
             clearTimeout(this.resizeTimeout);
@@ -88,6 +100,9 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
 
             await this.renderAllPages();
             this.isLoading.set(false);
+
+            // Initialize current page after rendering
+            setTimeout(() => this.updateCurrentPage(), 50);
         } catch (err) {
             this.error.set(this.translateService.instant('artemisApp.attachmentVideoUnit.pdfViewer.error'));
             this.isLoading.set(false);
@@ -177,6 +192,44 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
                 this.renderAllPages();
             }
         }, 300);
+    };
+
+    /**
+     * Updates the current page number based on which page has the most visible area in the viewport.
+     */
+    private updateCurrentPage = (): void => {
+        const viewerBox = this.pdfViewerBox()?.nativeElement;
+        const container = this.pdfContainer()?.nativeElement;
+
+        if (!viewerBox || !container) {
+            return;
+        }
+
+        const pages = container.querySelectorAll('.pdf-page');
+        if (pages.length === 0) {
+            return;
+        }
+
+        const viewerRect = viewerBox.getBoundingClientRect();
+        let maxVisibleArea = 0;
+        let visiblePageNum = 1;
+
+        pages.forEach((page, index) => {
+            const pageRect = page.getBoundingClientRect();
+
+            // Calculate intersection height between page and viewer
+            const intersectionTop = Math.max(pageRect.top, viewerRect.top);
+            const intersectionBottom = Math.min(pageRect.bottom, viewerRect.bottom);
+            const visibleHeight = Math.max(0, intersectionBottom - intersectionTop);
+
+            // The page with the most visible area is the current page
+            if (visibleHeight > maxVisibleArea) {
+                maxVisibleArea = visibleHeight;
+                visiblePageNum = index + 1;
+            }
+        });
+
+        this.currentPage.set(visiblePageNum);
     };
 
     /**

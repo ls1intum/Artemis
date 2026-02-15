@@ -23,6 +23,7 @@
             <button class="btn btn-sm btn-secondary" (click)="resetZoom()">
                 <fa-icon icon="undo" />
             </button>
+            <span class="page-info">{{ currentPage() }}/{{ totalPages() }}</span>
         </div>
     }
     <div class="pdf-viewer-box" #pdfViewerBox>

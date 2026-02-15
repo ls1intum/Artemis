@@ -21,6 +21,16 @@
             font-size: 14px;
         }
 
+        .page-info {
+            min-width: 50px;
+            text-align: center;
+            font-weight: 500;
+            color: #333;
+            font-size: 14px;
+            padding-left: 12px;
+            border-left: 1px solid #ddd;
+        }
+
         button {
             display: flex;
             align-items: center;
