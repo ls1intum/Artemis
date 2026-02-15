@@ -27,6 +27,7 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     private readonly translateService = inject(TranslateService);
     private viewInitialized = signal<boolean>(false);
     private resizeTimeout: number | undefined;
+    private isRendering = false;
 
     constructor() {
         // Use legacy build to avoid ES2025 Promise.try compatibility issues
@@ -112,8 +113,14 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     /**
      * Renders all pages of the PDF document to the container.
      * Each page is rendered once at load time with consistent scaling.
+     * Prevents concurrent rendering operations to avoid race conditions.
      */
     private async renderAllPages(): Promise<void> {
+        // Prevent concurrent rendering operations
+        if (this.isRendering) {
+            return;
+        }
+
         if (!this.pdfDocument) {
             return;
         }
@@ -123,16 +130,25 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
             return;
         }
 
-        const container = containerRef.nativeElement;
-        container.innerHTML = '';
+        this.isRendering = true;
 
-        // Calculate targetWidth ONCE before rendering any pages
-        const targetWidth = this.calculateTargetWidth();
-        const numPages = this.pdfDocument.numPages;
+        try {
+            const container = containerRef.nativeElement;
+            container.innerHTML = '';
 
-        // Render all pages with the same targetWidth
-        for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-            await this.renderPage(pageNum, container, targetWidth);
+            // Calculate targetWidth ONCE before rendering any pages
+            const targetWidth = this.calculateTargetWidth();
+            const numPages = this.pdfDocument.numPages;
+
+            // Render all pages with the same targetWidth
+            for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+                await this.renderPage(pageNum, container, targetWidth);
+            }
+
+            // Update current page after all pages are rendered
+            setTimeout(() => this.updateCurrentPage(), 50);
+        } finally {
+            this.isRendering = false;
         }
     }
 
@@ -196,8 +212,14 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
 
     /**
      * Updates the current page number based on which page has the most visible area in the viewport.
+     * Safe to call during rendering - will skip if pages are not yet fully rendered.
      */
     private updateCurrentPage = (): void => {
+        // Skip update if currently rendering to avoid inconsistent state
+        if (this.isRendering) {
+            return;
+        }
+
         const viewerBox = this.pdfViewerBox()?.nativeElement;
         const container = this.pdfContainer()?.nativeElement;
 
@@ -207,6 +229,13 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
 
         const pages = container.querySelectorAll('.pdf-page');
         if (pages.length === 0) {
+            return;
+        }
+
+        // Verify we have the expected number of pages before updating
+        const expectedPages = this.totalPages();
+        if (expectedPages > 0 && pages.length !== expectedPages) {
+            // Pages are still being rendered, skip update
             return;
         }
 
