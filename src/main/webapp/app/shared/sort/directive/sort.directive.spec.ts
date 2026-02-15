@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 @Component({
     template: `
@@ -47,7 +47,7 @@ describe('Directive: SortDirective', () => {
 
         // THEN
         expect(component.predicate).toBe('ID');
-        expect(component.ascending).toBeTruthy();
+        expect(component.ascending).toBeTrue();
         expect(component.transition).toHaveBeenCalledOnce();
     });
 
@@ -58,12 +58,13 @@ describe('Directive: SortDirective', () => {
         // WHEN
         fixture.detectChanges();
         sortDirective.sort('ID');
+        fixture.detectChanges(); // manual changeDetection in zoneless
         // sort again
         sortDirective.sort('ID');
 
         // THEN
         expect(component.predicate).toBe('ID');
-        expect(component.ascending).toBeFalsy();
+        expect(component.ascending).toBeFalse();
         expect(component.transition).toHaveBeenCalledTimes(2);
     });
 
@@ -74,12 +75,13 @@ describe('Directive: SortDirective', () => {
         // WHEN
         fixture.detectChanges();
         sortDirective.sort('ID');
+        fixture.detectChanges(); // manual changeDetection in zoneless
         // sort again
         sortDirective.sort('NAME');
 
         // THEN
         expect(component.predicate).toBe('NAME');
-        expect(component.ascending).toBeTruthy();
+        expect(component.ascending).toBeTrue();
         expect(component.transition).toHaveBeenCalledTimes(2);
     });
 });
