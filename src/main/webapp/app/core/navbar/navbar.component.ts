@@ -124,6 +124,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     localCIActive = false;
     ltiEnabled: boolean;
     standardizedCompetenciesEnabled = false;
+    globalSearchEnabled = false;
     agentName?: string;
     isExamStarted = false;
 
@@ -133,6 +134,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     examTitle?: string;
 
     private standardizedCompetencySubscription: Subscription;
+    private globalSearchSubscription: Subscription;
     private authStateSubscription: Subscription;
     private routerEventSubscription: Subscription;
     private queryParamsSubscription: Subscription;
@@ -198,6 +200,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
             this.standardizedCompetenciesEnabled = isActive;
         });
 
+        this.globalSearchSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.GlobalSearch).subscribe((isActive) => {
+            this.globalSearchEnabled = isActive;
+        });
+
         // The current user is needed to hide menu items for not logged-in users.
         this.authStateSubscription = this.accountService
             .getAuthenticationState()
@@ -234,6 +240,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
         }
         if (this.standardizedCompetencySubscription) {
             this.standardizedCompetencySubscription.unsubscribe();
+        }
+        if (this.globalSearchSubscription) {
+            this.globalSearchSubscription.unsubscribe();
         }
         this.queryParamsSubscription?.unsubscribe();
         this.examStartedSubscription?.unsubscribe();

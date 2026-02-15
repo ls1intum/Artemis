@@ -24,6 +24,7 @@ export enum FeatureToggle {
     Memiris = 'Memiris',
     LectureContentProcessing = 'LectureContentProcessing',
     RateLimit = 'RateLimit',
+    GlobalSearch = 'GlobalSearch',
 }
 export type ActiveFeatureToggles = Array<FeatureToggle>;
 

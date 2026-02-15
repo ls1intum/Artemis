@@ -10,7 +10,7 @@ import { LtiService } from 'app/shared/service/lti.service';
 import { AlertOverlayComponent } from 'app/core/alert/alert-overlay.component';
 import { CdkScrollable } from '@angular/cdk/scrolling';
 import { CourseNotificationPopupOverlayComponent } from 'app/communication/course-notification/course-notification-popup-overlay/course-notification-popup-overlay.component';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { PageRibbonComponent } from 'app/core/layouts/profiles/page-ribbon.component';
 import { FooterComponent } from 'app/core/layouts/footer/footer.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -46,10 +46,13 @@ export class AppComponent implements OnInit, OnDestroy {
     private document = inject<Document>(DOCUMENT);
     private renderer = inject(Renderer2);
     private ltiService = inject(LtiService);
+    private featureToggleService = inject(FeatureToggleService);
 
+    globalSearchEnabled = false;
     private examStartedSubscription: Subscription;
     private testRunSubscription: Subscription;
     private ltiSubscription: Subscription;
+    private globalSearchSubscription: Subscription;
     /**
      * If the footer and header should be shown.
      * Only set to false on specific pages designed for the native Android and iOS applications where the footer and header are not wanted.
@@ -136,7 +139,9 @@ export class AppComponent implements OnInit, OnDestroy {
         this.ltiSubscription = this.ltiService.isShownViaLti$.subscribe((isShownViaLti) => {
             this.isShownViaLti = isShownViaLti;
         });
-
+        this.globalSearchSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.GlobalSearch).subscribe((isActive) => {
+            this.globalSearchEnabled = isActive;
+        });
         this.themeService.initialize();
     }
 
@@ -154,5 +159,6 @@ export class AppComponent implements OnInit, OnDestroy {
         this.examStartedSubscription?.unsubscribe();
         this.testRunSubscription?.unsubscribe();
         this.ltiSubscription?.unsubscribe();
+        this.globalSearchSubscription?.unsubscribe();
     }
 }

@@ -29,5 +29,7 @@
         }
     }
     <!-- Global Search Modal -->
-    <jhi-global-search-modal />
+    @if (globalSearchEnabled) {
+        <jhi-global-search-modal />
+    }
 </div>
