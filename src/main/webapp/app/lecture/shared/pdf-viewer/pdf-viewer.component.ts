@@ -4,6 +4,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import * as PDFJS from 'pdfjs-dist/legacy/build/pdf.mjs';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 import { TranslateService } from '@ngx-translate/core';
+import { faMinus, faPlus, faRotateLeft } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-pdf-viewer',
@@ -25,6 +26,11 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
 
     // Computed wrapper width: at least 100%, or more when zoomed in
     wrapperWidth = computed(() => Math.max(100, this.zoomLevel() * 100));
+
+    // Icons
+    protected readonly faMinus = faMinus;
+    protected readonly faPlus = faPlus;
+    protected readonly faRotateLeft = faRotateLeft;
 
     private pdfDocument: PDFDocumentProxy | undefined;
     private readonly translateService = inject(TranslateService);

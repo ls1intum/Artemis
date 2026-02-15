@@ -2,3 +2,21 @@
     padding-top: 20px;
     padding-bottom: 20px;
 }
+
+.attachment-info-box {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 12px 16px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 14px;
+        color: #495057;
+    }
+}

@@ -12,33 +12,13 @@
     (onShowIsolated)="handleDownload()"
     (onShowOriginalVersion)="handleOriginalVersion()"
 >
-    @if (lectureUnit().attachment?.uploadDate) {
-        <div>
-            <span class="font-weight-bold" jhiTranslate="artemisApp.attachmentVideoUnit.uploadDate">: </span>
-            {{ lectureUnit().attachment?.uploadDate | artemisDate }}
-        </div>
-    }
-    @if (lectureUnit().attachment?.version) {
-        <div>
-            <span class="font-weight-bold" jhiTranslate="artemisApp.attachmentVideoUnit.version">: </span>
-            {{ lectureUnit().attachment?.version }}
-        </div>
-    }
-    @if (lectureUnit().attachment?.link) {
-        <div>
-            <span class="font-weight-bold" jhiTranslate="artemisApp.attachmentVideoUnit.FileName">: </span>
-            {{ getFileName() }}
-        </div>
-    }
-
     @if (lectureUnit()?.description) {
         <div>
-            <hr />
             {{ lectureUnit().description }}
         </div>
     }
 
-    @if (!!lectureUnit().attachment && !!videoUrl()) {
+    @if (lectureUnit()?.description && !!videoUrl()) {
         <hr />
     }
 
@@ -61,7 +41,7 @@
     }
 
     @if (hasPdf()) {
-        @if (!!videoUrl()) {
+        @if (!!videoUrl() || lectureUnit()?.description) {
             <hr />
         }
         @if (isPdfLoading()) {
@@ -73,5 +53,23 @@
         } @else if (pdfUrl()) {
             <jhi-pdf-viewer [pdfUrl]="pdfUrl()!" />
         }
+    }
+
+    @if (lectureUnit().attachment?.uploadDate || lectureUnit().attachment?.version) {
+        <hr />
+        <div class="attachment-info-box">
+            @if (lectureUnit().attachment?.uploadDate) {
+                <div class="info-item">
+                    <span class="font-weight-bold" jhiTranslate="artemisApp.attachmentVideoUnit.uploadDate">Upload Date</span>:
+                    {{ lectureUnit().attachment?.uploadDate | artemisDate }}
+                </div>
+            }
+            @if (lectureUnit().attachment?.version) {
+                <div class="info-item">
+                    <span class="font-weight-bold" jhiTranslate="artemisApp.attachmentVideoUnit.version">Version</span>:
+                    {{ lectureUnit().attachment?.version }}
+                </div>
+            }
+        </div>
     }
 </jhi-lecture-unit-card>
