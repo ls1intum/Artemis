@@ -32,8 +32,8 @@ describe('StudentsUploadImagesDialogComponent', () => {
 
     let ngbModal: NgbActiveModal;
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [
                 FaIconComponent,
                 FormsModule,
@@ -52,17 +52,13 @@ describe('StudentsUploadImagesDialogComponent', () => {
                 MockProvider(LocalStorageService),
                 MockProvider(Router),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(StudentsUploadImagesDialogComponent);
-                component = fixture.componentInstance;
-                examManagementService = TestBed.inject(ExamManagementService);
-                fixture.componentRef.setInput('courseId', course.id);
-                fixture.componentRef.setInput('exam', exam);
-
-                ngbModal = TestBed.inject(NgbActiveModal);
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(StudentsUploadImagesDialogComponent);
+        component = fixture.componentInstance;
+        examManagementService = TestBed.inject(ExamManagementService);
+        fixture.componentRef.setInput('courseId', course.id);
+        fixture.componentRef.setInput('exam', exam);
+        ngbModal = TestBed.inject(NgbActiveModal);
     });
 
     afterEach(() => {

@@ -37,7 +37,6 @@ class UsersImportButtonStubComponent {}
 
 describe('ExamStudentsComponent', () => {
     setupTestBed({ zoneless: true });
-
     const course = { id: 1 } as Course;
     const user1 = { id: 1, name: 'name', login: 'login' } as User;
     const user2 = { id: 2, login: 'user2' } as User;
@@ -73,8 +72,8 @@ describe('ExamStudentsComponent', () => {
     let examManagementService: ExamManagementService;
     let userService: UserService;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [
                 NgxDatatableModule,
                 FaIconComponent,
