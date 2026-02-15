@@ -1,0 +1,17 @@
+@if (overlay.isOpen()) {
+    <!-- Backdrop -->
+    <div class="modal-backdrop" (click)="overlay.close()"></div>
+
+    <!-- Modal Container -->
+    <div class="modal-wrapper">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+            <!-- Search Input -->
+            <div class="search-input-container">
+                <fa-icon [icon]="faSearch" class="search-icon" />
+                <input type="text" placeholder="Search or ask a question..." class="search-input" />
+            </div>
+            <!-- Results Area -->
+            <div class="results-container">Search content will go here</div>
+        </div>
+    </div>
+}

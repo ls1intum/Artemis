@@ -15,6 +15,7 @@ import { PageRibbonComponent } from 'app/core/layouts/profiles/page-ribbon.compo
 import { FooterComponent } from 'app/core/layouts/footer/footer.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LLMSelectionModalComponent } from 'app/logos/llm-selection-popup.component';
+import { GlobalSearchModalComponent } from 'app/core/navbar/global-search/components/global-search-modal.component';
 
 @Component({
     selector: 'jhi-app',
@@ -30,6 +31,7 @@ import { LLMSelectionModalComponent } from 'app/logos/llm-selection-popup.compon
         FooterComponent,
         CourseNotificationPopupOverlayComponent,
         LLMSelectionModalComponent,
+        GlobalSearchModalComponent,
     ],
 })
 export class AppComponent implements OnInit, OnDestroy {
