@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.security.policy;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -31,17 +32,17 @@ public final class AccessPolicy<T> {
 
     private final String section;
 
-    private final String feature;
+    private final List<String> features;
 
     private final List<PolicyRule<T>> rules;
 
     private final PolicyEffect defaultEffect;
 
-    private AccessPolicy(Class<T> resourceType, String name, String section, String feature, List<PolicyRule<T>> rules, PolicyEffect defaultEffect) {
+    private AccessPolicy(Class<T> resourceType, String name, String section, List<String> features, List<PolicyRule<T>> rules, PolicyEffect defaultEffect) {
         this.resourceType = resourceType;
         this.name = name;
         this.section = section;
-        this.feature = feature;
+        this.features = List.copyOf(features);
         this.rules = List.copyOf(rules);
         this.defaultEffect = defaultEffect;
     }
@@ -107,10 +108,17 @@ public final class AccessPolicy<T> {
     }
 
     /**
-     * @return the feature label for documentation tables (e.g. "Course Overview"), or null if not set
+     * @return the first feature label for documentation tables (e.g. "Course Overview"), or null if not set
      */
     public String getFeature() {
-        return feature;
+        return features.isEmpty() ? null : features.getFirst();
+    }
+
+    /**
+     * @return all feature labels for documentation tables (one row per feature), or an empty list if not set
+     */
+    public List<String> getFeatures() {
+        return features;
     }
 
     /**
@@ -133,7 +141,7 @@ public final class AccessPolicy<T> {
 
         private String section;
 
-        private String feature;
+        private final List<String> features = new ArrayList<>();
 
         private final List<PolicyRule<T>> rules = new ArrayList<>();
 
@@ -164,13 +172,26 @@ public final class AccessPolicy<T> {
         }
 
         /**
-         * Sets the feature label for the documentation table row.
+         * Adds a single feature label for the documentation table.
+         * Can be called multiple times to add multiple features (one row per feature).
          *
          * @param feature the feature name (row label in the generated table)
          * @return this builder
          */
         public Builder<T> feature(String feature) {
-            this.feature = feature;
+            this.features.add(feature);
+            return this;
+        }
+
+        /**
+         * Adds multiple feature labels for the documentation table (one row per feature).
+         * All features share the same access rules.
+         *
+         * @param features the feature names (row labels in the generated table)
+         * @return this builder
+         */
+        public Builder<T> features(String... features) {
+            this.features.addAll(Arrays.asList(features));
             return this;
         }
 
@@ -191,7 +212,7 @@ public final class AccessPolicy<T> {
          * @return the built policy
          */
         public AccessPolicy<T> denyByDefault() {
-            return new AccessPolicy<>(resourceType, name, section, feature, rules, PolicyEffect.DENY);
+            return new AccessPolicy<>(resourceType, name, section, features, rules, PolicyEffect.DENY);
         }
 
         /**
@@ -200,7 +221,7 @@ public final class AccessPolicy<T> {
          * @return the built policy
          */
         public AccessPolicy<T> allowByDefault() {
-            return new AccessPolicy<>(resourceType, name, section, feature, rules, PolicyEffect.ALLOW);
+            return new AccessPolicy<>(resourceType, name, section, features, rules, PolicyEffect.ALLOW);
         }
     }
 

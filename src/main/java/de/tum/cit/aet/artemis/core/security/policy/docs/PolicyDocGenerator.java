@@ -65,32 +65,43 @@ public final class PolicyDocGenerator {
     }
 
     /**
-     * Groups policies by their section name, sorted by feature name within each section.
+     * A documentation row pairing a feature label with its policy.
+     * One policy with multiple features expands into multiple rows.
+     */
+    record DocRow(String feature, AccessPolicy<?> policy) {
+    }
+
+    /**
+     * Groups policies by their section name, expanding policies with multiple features
+     * into one row per feature. Rows are sorted by feature name within each section.
      *
      * @param policies the policies to group
-     * @return a map from section name to list of policies, preserving insertion order
+     * @return a map from section name to list of doc rows, preserving insertion order
      */
-    static Map<String, List<AccessPolicy<?>>> groupBySection(List<AccessPolicy<?>> policies) {
-        Map<String, List<AccessPolicy<?>>> sections = new LinkedHashMap<>();
+    static Map<String, List<DocRow>> groupBySection(List<AccessPolicy<?>> policies) {
+        Map<String, List<DocRow>> sections = new LinkedHashMap<>();
         for (AccessPolicy<?> policy : policies) {
             String section = policy.getSection();
-            if (section != null && policy.getFeature() != null) {
-                sections.computeIfAbsent(section, _ -> new ArrayList<>()).add(policy);
+            if (section != null && !policy.getFeatures().isEmpty()) {
+                List<DocRow> rows = sections.computeIfAbsent(section, _ -> new ArrayList<>());
+                for (String feature : policy.getFeatures()) {
+                    rows.add(new DocRow(feature, policy));
+                }
             }
         }
-        for (List<AccessPolicy<?>> list : sections.values()) {
-            list.sort(Comparator.comparing(AccessPolicy::getFeature));
+        for (List<DocRow> list : sections.values()) {
+            list.sort(Comparator.comparing(DocRow::feature));
         }
         return sections;
     }
 
     /**
-     * Generates a markdown table for a list of policies in one section.
+     * Generates a markdown table for a list of doc rows in one section.
      *
-     * @param policies the policies (rows) in this section
+     * @param docRows the doc rows (feature + policy pairs) in this section
      * @return the markdown table as a string (without trailing newline)
      */
-    static String generateTable(List<AccessPolicy<?>> policies) {
+    static String generateTable(List<DocRow> docRows) {
         // Compute column widths
         int featureWidth = "Feature".length();
         Map<Role, Integer> colWidths = new LinkedHashMap<>();
@@ -100,12 +111,12 @@ public final class PolicyDocGenerator {
 
         // Pre-compute cell values and track widths
         List<String[]> rows = new ArrayList<>();
-        for (AccessPolicy<?> policy : policies) {
-            String feature = policy.getFeature();
+        for (DocRow docRow : docRows) {
+            String feature = docRow.feature();
             featureWidth = Math.max(featureWidth, feature.length());
 
             String[] cells = new String[COLUMN_ORDER.size()];
-            Map<Role, String> roleNotes = buildRoleNotes(policy);
+            Map<Role, String> roleNotes = buildRoleNotes(docRow.policy());
 
             for (int i = 0; i < COLUMN_ORDER.size(); i++) {
                 Role role = COLUMN_ORDER.get(i);
@@ -221,10 +232,10 @@ public final class PolicyDocGenerator {
         String originalContent = Files.readString(mdxPath);
 
         List<AccessPolicy<?>> policies = collectPolicies();
-        Map<String, List<AccessPolicy<?>>> grouped = groupBySection(policies);
+        Map<String, List<DocRow>> grouped = groupBySection(policies);
 
         Map<String, String> tables = new LinkedHashMap<>();
-        for (Map.Entry<String, List<AccessPolicy<?>>> entry : grouped.entrySet()) {
+        for (Map.Entry<String, List<DocRow>> entry : grouped.entrySet()) {
             tables.put(entry.getKey(), generateTable(entry.getValue()));
         }
 

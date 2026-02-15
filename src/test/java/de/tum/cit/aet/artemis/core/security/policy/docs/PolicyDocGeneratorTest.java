@@ -27,7 +27,7 @@ class PolicyDocGeneratorTest {
         AccessPolicy<String> policy = AccessPolicy.forResource(String.class).named("test").section("TestSection").feature("Test Feature")
                 .rule(when(ALWAYS).thenAllow().documentedFor(SUPER_ADMIN, ADMIN, INSTRUCTOR)).denyByDefault();
 
-        String table = PolicyDocGenerator.generateTable(List.of(policy));
+        String table = PolicyDocGenerator.generateTable(List.of(new PolicyDocGenerator.DocRow("Test Feature", policy)));
 
         assertThat(table).contains("| Test Feature");
         assertThat(table).contains("\u2714");
@@ -41,7 +41,7 @@ class PolicyDocGeneratorTest {
         AccessPolicy<String> policy = AccessPolicy.forResource(String.class).named("test").section("TestSection").feature("My Feature")
                 .rule(when(ALWAYS).thenAllow().documentedFor(ADMIN)).rule(when(ALWAYS).thenAllow().documentedFor(STUDENT).withNote("if enrolled")).denyByDefault();
 
-        String table = PolicyDocGenerator.generateTable(List.of(policy));
+        String table = PolicyDocGenerator.generateTable(List.of(new PolicyDocGenerator.DocRow("My Feature", policy)));
 
         assertThat(table).contains("\u2714 (if enrolled)");
         assertThat(table).contains("| My Feature");
@@ -55,7 +55,7 @@ class PolicyDocGeneratorTest {
         AccessPolicy<String> policyB = AccessPolicy.forResource(String.class).named("b").section("S").feature("Beta")
                 .rule(when(ALWAYS).thenAllow().documentedFor(ADMIN, INSTRUCTOR)).denyByDefault();
 
-        String table = PolicyDocGenerator.generateTable(List.of(policyA, policyB));
+        String table = PolicyDocGenerator.generateTable(List.of(new PolicyDocGenerator.DocRow("Alpha", policyA), new PolicyDocGenerator.DocRow("Beta", policyB)));
 
         assertThat(table).contains("| Alpha");
         assertThat(table).contains("| Beta");
@@ -66,7 +66,7 @@ class PolicyDocGeneratorTest {
         AccessPolicy<String> policy = AccessPolicy.forResource(String.class).named("test").section("S").feature("Full")
                 .rule(when(ALWAYS).thenAllow().documentedFor(SUPER_ADMIN, ADMIN, INSTRUCTOR, EDITOR, TEACHING_ASSISTANT, STUDENT)).denyByDefault();
 
-        String table = PolicyDocGenerator.generateTable(List.of(policy));
+        String table = PolicyDocGenerator.generateTable(List.of(new PolicyDocGenerator.DocRow("Full", policy)));
 
         for (String label : PolicyDocGenerator.COLUMN_LABELS.values()) {
             assertThat(table).contains(label);
@@ -149,12 +149,27 @@ class PolicyDocGeneratorTest {
 
         AccessPolicy<String> p3 = AccessPolicy.forResource(String.class).named("c").section("Course").feature("X").rule(when(ALWAYS).thenAllow()).denyByDefault();
 
-        Map<String, List<AccessPolicy<?>>> grouped = PolicyDocGenerator.groupBySection(List.of(p1, p2, p3));
+        Map<String, List<PolicyDocGenerator.DocRow>> grouped = PolicyDocGenerator.groupBySection(List.of(p1, p2, p3));
 
         assertThat(grouped).containsKeys("Nav", "Course");
         assertThat(grouped.get("Nav")).hasSize(2);
-        assertThat(grouped.get("Nav").get(0).getFeature()).isEqualTo("A");
-        assertThat(grouped.get("Nav").get(1).getFeature()).isEqualTo("B");
+        assertThat(grouped.get("Nav").get(0).feature()).isEqualTo("A");
+        assertThat(grouped.get("Nav").get(1).feature()).isEqualTo("B");
+    }
+
+    @Test
+    void testGroupBySectionExpandsMultipleFeatures() {
+        AccessPolicy<String> multiFeature = AccessPolicy.forResource(String.class).named("multi").section("Nav").features("Feature A", "Feature B", "Feature C")
+                .rule(when(ALWAYS).thenAllow().documentedFor(ADMIN)).denyByDefault();
+
+        Map<String, List<PolicyDocGenerator.DocRow>> grouped = PolicyDocGenerator.groupBySection(List.of(multiFeature));
+
+        assertThat(grouped.get("Nav")).hasSize(3);
+        assertThat(grouped.get("Nav").get(0).feature()).isEqualTo("Feature A");
+        assertThat(grouped.get("Nav").get(1).feature()).isEqualTo("Feature B");
+        assertThat(grouped.get("Nav").get(2).feature()).isEqualTo("Feature C");
+        // All rows share the same policy
+        assertThat(grouped.get("Nav")).allMatch(row -> row.policy() == multiFeature);
     }
 
     @Test

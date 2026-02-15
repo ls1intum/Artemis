@@ -9,7 +9,6 @@ import static de.tum.cit.aet.artemis.core.security.Role.SUPER_ADMIN;
 import static de.tum.cit.aet.artemis.core.security.Role.TEACHING_ASSISTANT;
 import static de.tum.cit.aet.artemis.core.security.policy.AccessPolicy.when;
 import static de.tum.cit.aet.artemis.core.security.policy.Conditions.hasStarted;
-import static de.tum.cit.aet.artemis.core.security.policy.Conditions.isAdmin;
 import static de.tum.cit.aet.artemis.core.security.policy.Conditions.memberOfGroup;
 
 import java.util.function.Function;
@@ -21,6 +20,7 @@ import org.springframework.context.annotation.Profile;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.security.policy.AccessPolicy;
+import de.tum.cit.aet.artemis.core.security.policy.Conditions;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
@@ -45,9 +45,9 @@ public class ProgrammingExerciseAccessPolicies {
     @Lazy
     public AccessPolicy<ProgrammingExercise> programmingExerciseVisibilityPolicy() {
         return AccessPolicy.forResource(ProgrammingExercise.class).named("programming-exercise-visibility").section("ProgrammingExercises").feature("View Programming Exercise")
+                .rule(when(Conditions.<ProgrammingExercise>isAdmin()).thenAllow().documentedFor(SUPER_ADMIN, ADMIN))
                 .rule(when(memberOfGroup(courseGroup(Course::getTeachingAssistantGroupName)).or(memberOfGroup(courseGroup(Course::getEditorGroupName)))
-                        .or(memberOfGroup(courseGroup(Course::getInstructorGroupName))).or(isAdmin())).thenAllow()
-                        .documentedFor(SUPER_ADMIN, ADMIN, INSTRUCTOR, EDITOR, TEACHING_ASSISTANT).withNote("if in course"))
+                        .or(memberOfGroup(courseGroup(Course::getInstructorGroupName)))).thenAllow().documentedFor(INSTRUCTOR, EDITOR, TEACHING_ASSISTANT).withNote("if in course"))
                 .rule(when(memberOfGroup(courseGroup(Course::getStudentGroupName)).and(hasStarted(ProgrammingExercise::getReleaseDate))).thenAllow().documentedFor(STUDENT)
                         .withNote("if enrolled + released"))
                 .denyByDefault();
