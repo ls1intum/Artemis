@@ -625,3 +625,15 @@ $ai-modal-description-color: $gray-600;
 $ai-modal-bg: rgba(0, 0, 0, 0.85);
 $ai-modal-subtitle: $black;
 $ai-modal-shadow-hover: rgba(0, 0, 0, 0.4);
+
+// Global Search Navbar
+// Global search navbar (same in both themes since navbar bg is always artemis-dark)
+$global-search-navbar-text-color: $white;
+$global-search-navbar-trigger-bg: #495057;
+$global-search-navbar-trigger-hover-bg: #5a6268;
+$global-search-navbar-kbd-bg: #6c757d;
+
+// Global search modal
+$modal-backdrop-bg: rgba(0, 0, 0, 0.4);
+$modal-kbd-bg: $gray-300;
+$modal-kbd-color: $gray-900;

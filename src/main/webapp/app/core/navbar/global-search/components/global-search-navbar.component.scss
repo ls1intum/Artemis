@@ -25,7 +25,7 @@
     z-index: 1;
 
     /* Text Styles */
-    color: #fff;
+    color: var(--global-search-navbar-text-color);
     font-size: 0.875rem;
     font-weight: 400;
     cursor: pointer;
@@ -38,14 +38,14 @@
         bottom: -0.375rem; /* ← Adjust this for height */
         left: -0.75rem; /* ← Adjust this for width */
         right: -0.75rem; /* ← Adjust this for width */
-        background: #495057;
+        background: var(--global-search-navbar-trigger-bg);
         border-radius: 0.27rem;
         z-index: -1;
         transition: background-color 0.15s;
     }
 
     &:hover::before {
-        background: #5a6268;
+        background: var(--global-search-navbar-trigger-hover-bg);
     }
 
     &:focus-visible {
@@ -84,7 +84,7 @@
         bottom: -0.2rem; /* ← Adjust for height */
         left: -0.25rem; /* ← Adjust for width */
         right: -0.25rem; /* ← Adjust for width */
-        background: #6c757b;
+        background: var(--global-search-navbar-kbd-bg);
         border-radius: 0.27rem;
         z-index: -1;
     }

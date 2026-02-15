@@ -5,8 +5,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(2px);
+    background: var(--modal-backdrop-bg);
     z-index: 9998;
     transition: opacity 0.2s;
 }
@@ -34,7 +33,7 @@
     max-height: 600px;
     background: var(--bs-body-bg);
     border-radius: 0.5rem;
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    box-shadow: var(--bs-box-shadow);
     overflow: hidden;
     pointer-events: auto;
     border: 1px solid var(--bs-border-color);
@@ -103,21 +102,21 @@
 .hint-group {
     display: flex;
     align-items: center;
-    gap: 0.25rem; // Small gap between kbd elements
+    gap: 0.25rem;
 }
 
 .hint-text {
-    margin-left: 0.5rem; // Space between keys and text
+    margin-left: 0.5rem;
 }
 
 .key-hint-small {
     padding: 0.25rem 0.5rem;
-    background: rgba(127, 127, 127, 0.1); // Semi-transparent gray that works in both modes
-    border: 1px solid var(--bs-border-color);
+    background: var(--modal-kbd-bg);
+    border: 1px solid var(--border-color);
     border-radius: 0.25rem;
     font-size: 0.75rem;
     font-family: monospace;
-    color: var(--bs-body-color);
-    display: inline-flex; // Better alignment for FontAwesome icons
-    align-items: center; // Vertically center the icon
+    color: var(--modal-kbd-color);
+    display: inline-flex;
+    align-items: center;
 }
