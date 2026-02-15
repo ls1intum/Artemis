@@ -55,6 +55,10 @@ public final class PolicyDocGenerator {
         List<AccessPolicy<?>> policies = new ArrayList<>();
         CourseAccessPolicies courseConfig = new CourseAccessPolicies();
         policies.add(courseConfig.courseVisibilityPolicy());
+        policies.add(courseConfig.courseStudentAccessPolicy());
+        policies.add(courseConfig.courseStaffAccessPolicy());
+        policies.add(courseConfig.courseEditorAccessPolicy());
+        policies.add(courseConfig.courseInstructorAccessPolicy());
         ProgrammingExerciseAccessPolicies progConfig = new ProgrammingExerciseAccessPolicies();
         policies.add(progConfig.programmingExerciseVisibilityPolicy());
         return policies;

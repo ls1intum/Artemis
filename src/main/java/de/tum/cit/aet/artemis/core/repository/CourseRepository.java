@@ -321,6 +321,10 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
             """)
     String getDefaultInstructorGroupNameById(@Param("courseId") long courseId);
 
+    /**
+     * NOTE: This query mirrors the courseEditorAccessPolicy defined in CourseAccessPolicies.java.
+     * If access rules change, update both the policy definition and this query.
+     */
     @Query("""
             SELECT DISTINCT c
             FROM Course c
@@ -376,6 +380,9 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
 
     /**
      * Get all courses that use one of the given management group names. Management group names are groups names for TA, editor or instructor groups.
+     * <p>
+     * NOTE: This query mirrors the courseStaffAccessPolicy defined in CourseAccessPolicies.java.
+     * If access rules change, update both the policy definition and this query.
      *
      * @param userGroups list of management group names
      * @return a list of courses that use one of the given management group names
@@ -431,6 +438,9 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
 
     /**
      * Query which fetches all courses for which the user is editor or instructor and matching the search criteria.
+     * <p>
+     * NOTE: This query mirrors the courseEditorAccessPolicy defined in CourseAccessPolicies.java.
+     * If access rules change, update both the policy definition and this query.
      *
      * @param partialTitle title search term
      * @param groups       user groups
@@ -611,6 +621,9 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
      * Retrieves all courses that the user has access to based on their role
      * or if they are an admin. Filters out any courses that do not belong to
      * a specific semester (i.e., have a null semester).
+     * <p>
+     * NOTE: This query mirrors the courseStudentAccessPolicy defined in CourseAccessPolicies.java.
+     * If access rules change, update both the policy definition and this query.
      *
      * @param isAdmin A boolean flag indicating whether the user is an admin
      * @param groups  A set of groups that the user belongs to
@@ -643,6 +656,10 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
             """)
     Set<CourseGroupsDTO> findAllCourseGroups();
 
+    /**
+     * NOTE: This query mirrors the courseStaffAccessPolicy defined in CourseAccessPolicies.java.
+     * If access rules change, update both the policy definition and this query.
+     */
     @Query("""
             SELECT c
             FROM Course c

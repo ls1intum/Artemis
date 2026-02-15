@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.service.course;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -23,7 +24,7 @@ public class CourseVisibleService {
 
     private final AccessPolicy<Course> courseVisibilityPolicy;
 
-    public CourseVisibleService(PolicyEngine policyEngine, AccessPolicy<Course> courseVisibilityPolicy) {
+    public CourseVisibleService(PolicyEngine policyEngine, @Qualifier("courseVisibilityPolicy") AccessPolicy<Course> courseVisibilityPolicy) {
         this.policyEngine = policyEngine;
         this.courseVisibilityPolicy = courseVisibilityPolicy;
     }

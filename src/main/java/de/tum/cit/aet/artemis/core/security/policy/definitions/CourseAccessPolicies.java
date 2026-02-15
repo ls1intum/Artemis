@@ -46,4 +46,74 @@ public class CourseAccessPolicies {
                 .rule(when(memberOfGroup(Course::getStudentGroupName).and(hasStarted(Course::getStartDate))).thenAllow().documentedFor(STUDENT).withNote("if enrolled + started"))
                 .denyByDefault();
     }
+
+    /**
+     * Defines the course student access policy (no start-date gate).
+     * <ul>
+     * <li>Any enrolled user (student, TA, editor, instructor) or admin can access.</li>
+     * <li>All other users are denied access by default.</li>
+     * </ul>
+     *
+     * @return the course student access policy
+     */
+    @Bean
+    @Lazy
+    public AccessPolicy<Course> courseStudentAccessPolicy() {
+        return AccessPolicy.forResource(Course.class).named("course-student-access").section("Course Access").feature("Student Access")
+                .rule(when(memberOfGroup(Course::getStudentGroupName).or(memberOfGroup(Course::getTeachingAssistantGroupName)).or(memberOfGroup(Course::getEditorGroupName))
+                        .or(memberOfGroup(Course::getInstructorGroupName)).or(isAdmin())).thenAllow()
+                        .documentedFor(SUPER_ADMIN, ADMIN, INSTRUCTOR, EDITOR, TEACHING_ASSISTANT, STUDENT))
+                .denyByDefault();
+    }
+
+    /**
+     * Defines the course staff access policy (TA and above).
+     * <ul>
+     * <li>Teaching assistants, editors, instructors, and admins can access.</li>
+     * <li>All other users (including students) are denied access by default.</li>
+     * </ul>
+     *
+     * @return the course staff access policy
+     */
+    @Bean
+    @Lazy
+    public AccessPolicy<Course> courseStaffAccessPolicy() {
+        return AccessPolicy.forResource(Course.class).named("course-staff-access").section("Course Access").feature("Staff Access").rule(when(
+                memberOfGroup(Course::getTeachingAssistantGroupName).or(memberOfGroup(Course::getEditorGroupName)).or(memberOfGroup(Course::getInstructorGroupName)).or(isAdmin()))
+                .thenAllow().documentedFor(SUPER_ADMIN, ADMIN, INSTRUCTOR, EDITOR, TEACHING_ASSISTANT)).denyByDefault();
+    }
+
+    /**
+     * Defines the course editor access policy (editor and above).
+     * <ul>
+     * <li>Editors, instructors, and admins can access.</li>
+     * <li>All other users are denied access by default.</li>
+     * </ul>
+     *
+     * @return the course editor access policy
+     */
+    @Bean
+    @Lazy
+    public AccessPolicy<Course> courseEditorAccessPolicy() {
+        return AccessPolicy.forResource(Course.class).named("course-editor-access").section("Course Access").feature("Editor Access")
+                .rule(when(memberOfGroup(Course::getEditorGroupName).or(memberOfGroup(Course::getInstructorGroupName)).or(isAdmin())).thenAllow().documentedFor(SUPER_ADMIN, ADMIN,
+                        INSTRUCTOR, EDITOR))
+                .denyByDefault();
+    }
+
+    /**
+     * Defines the course instructor access policy (instructor and above).
+     * <ul>
+     * <li>Instructors and admins can access.</li>
+     * <li>All other users are denied access by default.</li>
+     * </ul>
+     *
+     * @return the course instructor access policy
+     */
+    @Bean
+    @Lazy
+    public AccessPolicy<Course> courseInstructorAccessPolicy() {
+        return AccessPolicy.forResource(Course.class).named("course-instructor-access").section("Course Access").feature("Instructor Access")
+                .rule(when(memberOfGroup(Course::getInstructorGroupName).or(isAdmin())).thenAllow().documentedFor(SUPER_ADMIN, ADMIN, INSTRUCTOR)).denyByDefault();
+    }
 }
