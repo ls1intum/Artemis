@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
 import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
@@ -5,8 +6,10 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { LearningObjectType, LearningPathNavigationDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { provideHttpClient } from '@angular/common/http';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('LearningPathNavigationService', () => {
+    setupTestBed({ zoneless: true });
     let learningPathNavigationService: LearningPathNavigationService;
     let learningPathApiService: LearningPathApiService;
     let alertService: AlertService;
@@ -53,11 +56,11 @@ describe('LearningPathNavigationService', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should load initial learning path navigation', async () => {
-        const loadLearningPathNavigationSpy = jest.spyOn(learningPathApiService, 'getLearningPathNavigation').mockResolvedValue(learningPathNavigationDto);
+        const loadLearningPathNavigationSpy = vi.spyOn(learningPathApiService, 'getLearningPathNavigation').mockResolvedValue(learningPathNavigationDto);
 
         await learningPathNavigationService.loadLearningPathNavigation(learningPathId);
 
@@ -69,7 +72,7 @@ describe('LearningPathNavigationService', () => {
 
     it('should load relative learning path navigation', async () => {
         const selectedLearningObject = learningPathNavigationDto.currentLearningObject;
-        const loadRelativeLearningPathNavigationSpy = jest.spyOn(learningPathApiService, 'getRelativeLearningPathNavigation').mockResolvedValue(learningPathNavigationDto);
+        const loadRelativeLearningPathNavigationSpy = vi.spyOn(learningPathApiService, 'getRelativeLearningPathNavigation').mockResolvedValue(learningPathNavigationDto);
 
         await learningPathNavigationService.loadRelativeLearningPathNavigation(learningPathId, selectedLearningObject!);
 
@@ -95,8 +98,8 @@ describe('LearningPathNavigationService', () => {
             progress: 90,
         } as LearningPathNavigationDTO;
 
-        jest.spyOn(learningPathApiService, 'getLearningPathNavigation').mockResolvedValue(navigationDto);
-        const completeLearningPathSpy = jest.spyOn(learningPathNavigationService, 'completeLearningPath');
+        vi.spyOn(learningPathApiService, 'getLearningPathNavigation').mockResolvedValue(navigationDto);
+        const completeLearningPathSpy = vi.spyOn(learningPathNavigationService, 'completeLearningPath');
 
         await learningPathNavigationService.loadLearningPathNavigation(learningPathId);
 
@@ -112,8 +115,8 @@ describe('LearningPathNavigationService', () => {
     });
 
     it('should call alert service on learning path loading fail', async () => {
-        jest.spyOn(learningPathApiService, 'getLearningPathNavigation').mockRejectedValue(Error('Server error'));
-        const alertServiceErrorSpy = jest.spyOn(alertService, 'error');
+        vi.spyOn(learningPathApiService, 'getLearningPathNavigation').mockRejectedValue(Error('Server error'));
+        const alertServiceErrorSpy = vi.spyOn(alertService, 'error');
 
         await learningPathNavigationService.loadLearningPathNavigation(learningPathId);
 
@@ -121,8 +124,8 @@ describe('LearningPathNavigationService', () => {
     });
 
     it('should call alert service on relative learning path loading fail', async () => {
-        jest.spyOn(learningPathApiService, 'getRelativeLearningPathNavigation').mockRejectedValue(Error('Server error'));
-        const alertServiceErrorSpy = jest.spyOn(alertService, 'error');
+        vi.spyOn(learningPathApiService, 'getRelativeLearningPathNavigation').mockRejectedValue(Error('Server error'));
+        const alertServiceErrorSpy = vi.spyOn(alertService, 'error');
 
         await learningPathNavigationService.loadRelativeLearningPathNavigation(learningPathId, learningPathNavigationDto.currentLearningObject!);
 
@@ -131,11 +134,11 @@ describe('LearningPathNavigationService', () => {
 
     it('should set current learning object completion to true', () => {
         learningPathNavigationService.setCurrentLearningObjectCompletion(true);
-        expect(learningPathNavigationService.isCurrentLearningObjectCompleted()).toBeTrue();
+        expect(learningPathNavigationService.isCurrentLearningObjectCompleted()).toBeTruthy();
     });
 
     it('should set current learning object completion to false', () => {
         learningPathNavigationService.setCurrentLearningObjectCompletion(false);
-        expect(learningPathNavigationService.isCurrentLearningObjectCompleted()).toBeFalse();
+        expect(learningPathNavigationService.isCurrentLearningObjectCompleted()).toBeFalsy();
     });
 });
