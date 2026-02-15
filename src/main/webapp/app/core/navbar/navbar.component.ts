@@ -37,7 +37,7 @@ import { LoadingNotificationComponent } from 'app/core/loading-notification/load
 import { SystemNotificationComponent } from 'app/core/notification/system-notification/system-notification.component';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { ServerAdministrationComponent } from 'app/core/navbar/server-administration/server-administration.component';
-import { GlobalSearchNavbarComponent } from 'app/core/navbar/global-search/components/global-search-navbar';
+import { GlobalSearchNavbarComponent } from 'app/core/navbar/global-search/components/global-search-navbar.component';
 
 @Component({
     selector: 'jhi-navbar',

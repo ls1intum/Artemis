@@ -8,7 +8,7 @@ import { MockPipe } from 'ng-mocks';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { GlobalSearchNavbarComponent } from './global-search-navbar';
+import { GlobalSearchNavbarComponent } from './global-search-navbar.component';
 import { OsDetectorService } from '../services/os-detector.service';
 import { SearchOverlayService } from '../services/search-overlay.service';
 

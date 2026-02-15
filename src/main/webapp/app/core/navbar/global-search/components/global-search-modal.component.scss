@@ -5,7 +5,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: var(--modal-backdrop-bg);
+    background: var(--global-search-modal-backdrop-bg);
     z-index: 9998;
     transition: opacity 0.2s;
 }
@@ -111,12 +111,12 @@
 
 .key-hint-small {
     padding: 0.25rem 0.5rem;
-    background: var(--modal-kbd-bg);
+    background: var(--global-search-modal-kbd-bg);
     border: 1px solid var(--border-color);
     border-radius: 0.25rem;
     font-size: 0.75rem;
     font-family: monospace;
-    color: var(--modal-kbd-color);
+    color: var(--global-search-modal-kbd-color);
     display: inline-flex;
     align-items: center;
 }

@@ -4,21 +4,24 @@ import { Injectable, signal } from '@angular/core';
     providedIn: 'root',
 })
 export class SearchOverlayService {
-    // Read/Write signal for the modal state
-    isOpen = signal(false);
+    // Private writable signal for the modal state
+    private readonly _isOpen = signal(false);
+
+    // Public readonly view of the signal
+    readonly isOpen = this._isOpen.asReadonly();
 
     open() {
-        this.isOpen.set(true);
-        // Optional: Lock body scroll
+        this._isOpen.set(true);
         document.body.style.overflow = 'hidden';
     }
 
     close() {
-        this.isOpen.set(false);
+        this._isOpen.set(false);
         document.body.style.overflow = '';
     }
+
     toggle() {
-        if (this.isOpen()) {
+        if (this._isOpen()) {
             this.close();
         } else {
             this.open();

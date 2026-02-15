@@ -14,8 +14,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     styleUrls: ['./global-search-modal.component.scss'],
 })
 export class GlobalSearchModalComponent {
-    overlay = inject(SearchOverlayService);
-    osDetector = inject(OsDetectorService);
+    protected overlay = inject(SearchOverlayService);
+    protected osDetector = inject(OsDetectorService);
 
     protected readonly faSearch = faSearch;
     protected readonly faArrowUp = faArrowUp;

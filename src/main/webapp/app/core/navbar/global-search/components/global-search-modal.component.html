@@ -4,7 +4,7 @@
 
     <!-- Modal Container -->
     <div class="modal-wrapper">
-        <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-content" role="dialog" aria-modal="true" [attr.aria-label]="'global.search.title' | artemisTranslate" (click)="$event.stopPropagation()">
             <!-- Search Input -->
             <div class="search-input-container">
                 <fa-icon [icon]="faSearch" class="search-icon" />
