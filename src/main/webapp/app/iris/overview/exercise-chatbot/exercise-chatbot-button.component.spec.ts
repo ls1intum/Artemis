@@ -35,6 +35,7 @@ describe('ExerciseChatbotButtonComponent', () => {
     let mockOverlay: Overlay;
     let mockActivatedRoute: ActivatedRoute;
     let mockDialogClose: any;
+    let mockDialogAfterClosed: Subject<void>;
     let mockParamsSubject: Subject<any>;
     let mockQueryParamsSubject: Subject<any>;
     let accountService: AccountService;
@@ -58,10 +59,11 @@ describe('ExerciseChatbotButtonComponent', () => {
         } as unknown as ActivatedRoute;
 
         mockDialogClose = vi.fn();
+        mockDialogAfterClosed = new Subject<void>();
 
         mockDialog = {
             open: vi.fn().mockReturnValue({
-                afterClosed: vi.fn().mockReturnValue(of(undefined)),
+                afterClosed: vi.fn().mockReturnValue(mockDialogAfterClosed.asObservable()),
                 close: mockDialogClose,
             }),
             closeAll: vi.fn(),
@@ -216,5 +218,116 @@ describe('ExerciseChatbotButtonComponent', () => {
 
         // then - use signal getter
         expect(component.chatOpen()).toBe(false);
+    });
+
+    describe('checkOverflow', () => {
+        it('should set isOverflowing to false when chatBubble element does not exist', () => {
+            component.isOverflowing.set(true);
+            component.checkOverflow();
+            expect(component.isOverflowing()).toBe(false);
+        });
+
+        it('should set isOverflowing to false when bubble-text element does not exist', () => {
+            // Create a mock bubble element without bubble-text child
+            const mockBubble = document.createElement('div');
+            vi.spyOn(component, 'chatBubble' as any).mockReturnValue({ nativeElement: mockBubble });
+
+            component.isOverflowing.set(true);
+            component.checkOverflow();
+
+            expect(component.isOverflowing()).toBe(false);
+        });
+
+        it('should set isOverflowing to true when text scrollHeight exceeds clientHeight', () => {
+            // Create mock elements
+            const mockBubble = document.createElement('div');
+            const mockText = document.createElement('div');
+            mockText.classList.add('bubble-text');
+            mockBubble.appendChild(mockText);
+
+            // Mock scrollHeight > clientHeight
+            Object.defineProperty(mockText, 'scrollHeight', { value: 100, configurable: true });
+            Object.defineProperty(mockText, 'clientHeight', { value: 50, configurable: true });
+
+            vi.spyOn(component, 'chatBubble' as any).mockReturnValue({ nativeElement: mockBubble });
+
+            component.checkOverflow();
+
+            expect(component.isOverflowing()).toBe(true);
+        });
+
+        it('should set isOverflowing to false when text scrollHeight equals clientHeight', () => {
+            // Create mock elements
+            const mockBubble = document.createElement('div');
+            const mockText = document.createElement('div');
+            mockText.classList.add('bubble-text');
+            mockBubble.appendChild(mockText);
+
+            // Mock scrollHeight = clientHeight
+            Object.defineProperty(mockText, 'scrollHeight', { value: 50, configurable: true });
+            Object.defineProperty(mockText, 'clientHeight', { value: 50, configurable: true });
+
+            vi.spyOn(component, 'chatBubble' as any).mockReturnValue({ nativeElement: mockBubble });
+
+            component.checkOverflow();
+
+            expect(component.isOverflowing()).toBe(false);
+        });
+    });
+
+    describe('handleButtonClick', () => {
+        it('should close dialog and set chatOpen to false when chat is open', () => {
+            component.openChat();
+            expect(component.chatOpen()).toBe(true);
+
+            component.handleButtonClick();
+
+            expect(mockDialog.closeAll).toHaveBeenCalled();
+            expect(component.chatOpen()).toBe(false);
+        });
+
+        it('should open chat when chat is closed', () => {
+            expect(component.chatOpen()).toBe(false);
+
+            component.handleButtonClick();
+
+            expect(component.chatOpen()).toBe(true);
+            expect(mockDialog.open).toHaveBeenCalled();
+        });
+    });
+
+    describe('dialog close handling', () => {
+        it('should reset state when dialog is closed externally', async () => {
+            component.openChat();
+            component.newIrisMessage.set('Some message');
+            expect(component.chatOpen()).toBe(true);
+
+            // Simulate dialog closing
+            mockDialogAfterClosed.next();
+            await fixture.whenStable();
+
+            expect(component.chatOpen()).toBe(false);
+            expect(component.newIrisMessage()).toBeUndefined();
+        });
+    });
+
+    describe('lecture mode', () => {
+        it('should subscribe to route.params and call chatService.switchTo with lecture mode', async () => {
+            const lectureId = 789;
+            vi.spyOn(chatHttpServiceMock, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(lectureId)));
+            vi.spyOn(chatHttpServiceMock, 'getChatSessions').mockReturnValue(of([]));
+            vi.spyOn(wsServiceMock, 'subscribeToSession').mockReturnValueOnce(of());
+            const spy = vi.spyOn(chatService, 'switchTo');
+
+            fixture.componentRef.setInput('mode', ChatServiceMode.LECTURE);
+            fixture.changeDetectorRef.detectChanges();
+
+            mockParamsSubject.next({
+                lectureId: lectureId,
+            });
+            await fixture.whenStable();
+
+            expect(spy).toHaveBeenCalledExactlyOnceWith(ChatServiceMode.LECTURE, lectureId);
+        });
     });
 });
