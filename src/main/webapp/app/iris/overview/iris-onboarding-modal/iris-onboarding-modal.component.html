@@ -111,21 +111,21 @@
                     <span aria-hidden="true">&times;</span>
                 </button>
 
-                <div class="modal-header-section">
-                    <h2 id="onboarding-prompt-title" class="title" jhiTranslate="artemisApp.iris.onboarding.step4.title"></h2>
-                    <p class="description" jhiTranslate="artemisApp.iris.onboarding.step4.description"></p>
-                </div>
+                <div class="modal-content-group">
+                    <div class="modal-header-section">
+                        <h2 id="onboarding-prompt-title" class="title" jhiTranslate="artemisApp.iris.onboarding.step4.title"></h2>
+                        <p class="description" jhiTranslate="artemisApp.iris.onboarding.step4.description"></p>
+                    </div>
 
-                <div class="prompt-options" role="group" [attr.aria-label]="'artemisApp.iris.onboarding.step4.promptSuggestions' | artemisTranslate">
-                    @for (prompt of promptOptions; track prompt.type) {
-                        <button type="button" class="prompt-chip" (click)="selectPrompt(prompt.type)">
-                            <fa-icon [icon]="prompt.icon" aria-hidden="true" />
-                            <span [jhiTranslate]="prompt.translationKey"></span>
-                        </button>
-                    }
+                    <div class="prompt-options" role="group" [attr.aria-label]="'artemisApp.iris.onboarding.step4.promptSuggestions' | artemisTranslate">
+                        @for (prompt of promptOptions; track prompt.type) {
+                            <button type="button" class="prompt-chip" (click)="selectPrompt(prompt.type)">
+                                <fa-icon [icon]="prompt.icon" aria-hidden="true" />
+                                <span [jhiTranslate]="prompt.translationKey"></span>
+                            </button>
+                        }
+                    </div>
                 </div>
-
-                <p class="replay-hint" jhiTranslate="artemisApp.iris.onboarding.step4.replayHint"></p>
             </div>
         </div>
     }

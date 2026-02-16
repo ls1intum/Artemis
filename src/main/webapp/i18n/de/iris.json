@@ -16,7 +16,7 @@
                     "description": "Iris kann Konzepte erklären, Fehler finden und Hinweise geben – ohne vollständige Lösungen zu verraten."
                 },
                 "step3": {
-                    "description": "Kehre zum Dashboard zurück, um die Tour abzuschließen."
+                    "description": "Kehre zu Iris zurück, um die Tour abzuschließen."
                 },
                 "step4": {
                     "title": "Probiere eine erste Frage",
@@ -29,7 +29,6 @@
                         "studyTips": "Gib mir Lerntipps",
                         "studyTipsStarter": "Gib mir 3 Tipps, um effektiv zu lernen: "
                     },
-                    "replayHint": "Klicke auf das (i) Symbol, um diese Tour erneut anzuzeigen",
                     "promptSuggestions": "Prompt-Vorschläge"
                 }
             },

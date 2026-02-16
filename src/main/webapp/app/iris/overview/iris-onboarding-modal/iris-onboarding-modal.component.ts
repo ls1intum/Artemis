@@ -60,10 +60,10 @@ export class IrisOnboardingModalComponent {
     readonly tooltipPosition = signal({ top: 680 });
     readonly isStep2PositionReady = signal(false);
 
-    // Position for Step 3 tooltip (aligned with Dashboard tab)
-    readonly dashboardTooltipPosition = signal({ top: 80, left: 232 });
-    readonly dashboardTabCoachMarkPosition = signal({ top: 80, left: 210 });
-    readonly dashboardTabSpotlight = signal({ top: 58, left: 0, width: 220, height: 44 });
+    // Position for Step 3 tooltip (aligned with Iris tab)
+    readonly irisTabTooltipPosition = signal({ top: 80, left: 232 });
+    readonly irisTabCoachMarkPosition = signal({ top: 80, left: 210 });
+    readonly irisTabSpotlight = signal({ top: 58, left: 0, width: 220, height: 44 });
     readonly isStep3PositionReady = signal(false);
     readonly sidebarTooltipConfig = computed<SidebarTooltipConfig | undefined>(() => {
         if (this.step() === 1 && this.isStep1PositionReady()) {
@@ -78,9 +78,9 @@ export class IrisOnboardingModalComponent {
 
         if (this.step() === 3 && this.isStep3PositionReady()) {
             return {
-                spotlight: this.dashboardTabSpotlight(),
-                coachMarkPosition: this.dashboardTabCoachMarkPosition(),
-                tooltipPosition: this.dashboardTooltipPosition(),
+                spotlight: this.irisTabSpotlight(),
+                coachMarkPosition: this.irisTabCoachMarkPosition(),
+                tooltipPosition: this.irisTabTooltipPosition(),
                 descriptionTranslationKey: 'artemisApp.iris.onboarding.step3.description',
                 currentStep: 3,
             };
@@ -130,7 +130,7 @@ export class IrisOnboardingModalComponent {
 
             if (this.step() === 3) {
                 this.isStep3PositionReady.set(false);
-                this.scheduleDashboardTabPositionCalculation();
+                this.scheduleIrisTabPositionCalculation();
             }
 
             if (this.step() === 2 || this.step() === 4) {
@@ -200,12 +200,10 @@ export class IrisOnboardingModalComponent {
                 this.scheduleIrisIconPositionCalculation();
             }
         }
-        // Step 3: User should navigate back to dashboard
-        // Accept both dashboard route variants:
-        // /courses/{id} and /courses/{id}/dashboard
+        // Step 3: User should navigate back to Iris
         else if (this.step() === 3) {
-            const isDashboard = url.match(/^\/courses\/\d+(\/dashboard)?\/?$/) !== null || url === '/courses';
-            if (isDashboard) {
+            const isIrisPage = url.match(/^\/courses\/\d+\/iris\/?$/) !== null;
+            if (isIrisPage) {
                 // Small handoff delay makes the transition from tooltip to modal feel smoother.
                 this.safeTimeout(() => {
                     if (this.step() === 3) {
@@ -298,12 +296,12 @@ export class IrisOnboardingModalComponent {
         );
     }
 
-    private calculateDashboardTabCoachMarkPosition(): boolean {
+    private calculateIrisTabCoachMarkPosition(): boolean {
         return this.calculateSidebarTabPositions(
-            "jhi-course-sidebar a.nav-link-sidebar[data-sidebar-item='Dashboard']",
-            this.dashboardTabSpotlight,
-            this.dashboardTabCoachMarkPosition,
-            this.dashboardTooltipPosition,
+            "jhi-course-sidebar a.nav-link-sidebar[data-sidebar-item='Iris']",
+            this.irisTabSpotlight,
+            this.irisTabCoachMarkPosition,
+            this.irisTabTooltipPosition,
         );
     }
 
@@ -311,8 +309,8 @@ export class IrisOnboardingModalComponent {
         this.resolveStepPosition(1, this.isStep1PositionReady, () => this.calculateExerciseTabCoachMarkPosition(), retries, 100);
     }
 
-    private scheduleDashboardTabPositionCalculation(retries = 20): void {
-        this.resolveStepPosition(3, this.isStep3PositionReady, () => this.calculateDashboardTabCoachMarkPosition(), retries, 100);
+    private scheduleIrisTabPositionCalculation(retries = 20): void {
+        this.resolveStepPosition(3, this.isStep3PositionReady, () => this.calculateIrisTabCoachMarkPosition(), retries, 100);
     }
 
     private resolveStepPosition(expectedStep: number, readinessSignal: WritableSignal<boolean>, calculatePosition: () => boolean, retries: number, retryDelayMs: number): void {

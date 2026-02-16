@@ -183,7 +183,8 @@ describe('IrisOnboardingModalComponent', () => {
             expect(component.step()).toBe(1);
         });
 
-        it.each(['/courses/1/dashboard', '/courses/1', '/courses'])('should advance from step 3 on navigation to %s', (url) => {
+        it('should advance from step 3 on navigation to /courses/1/iris', () => {
+            const url = '/courses/1/iris';
             vi.useFakeTimers();
             component.step.set(3);
             navigateTo(routerEventsSubject, url);
@@ -192,7 +193,7 @@ describe('IrisOnboardingModalComponent', () => {
             vi.useRealTimers();
         });
 
-        it('should not advance from step 3 on non-dashboard navigation', () => {
+        it('should not advance from step 3 on non-Iris navigation', () => {
             vi.useFakeTimers();
             component.step.set(3);
             navigateTo(routerEventsSubject, '/courses/1/exercises/5');
@@ -210,7 +211,7 @@ describe('IrisOnboardingModalComponent', () => {
         it('should not react to navigation on step 2', () => {
             vi.useFakeTimers();
             component.step.set(2);
-            navigateTo(routerEventsSubject, '/courses/1/dashboard');
+            navigateTo(routerEventsSubject, '/courses/1/iris');
             vi.advanceTimersByTime(200);
             expect(component.step()).toBe(2);
             vi.useRealTimers();
@@ -304,9 +305,9 @@ describe('IrisOnboardingModalComponent', () => {
         it('should return step 3 config when step is 3 and position is ready', () => {
             component.step.set(3);
             component.isStep3PositionReady.set(true);
-            component.dashboardTabSpotlight.set({ top: 58, left: 0, width: 220, height: 44 });
-            component.dashboardTabCoachMarkPosition.set({ top: 80, left: 210 });
-            component.dashboardTooltipPosition.set({ top: 80, left: 232 });
+            component.irisTabSpotlight.set({ top: 58, left: 0, width: 220, height: 44 });
+            component.irisTabCoachMarkPosition.set({ top: 80, left: 210 });
+            component.irisTabTooltipPosition.set({ top: 80, left: 232 });
 
             const config = component.sidebarTooltipConfig();
             expect(config).toEqual({
@@ -366,7 +367,7 @@ describe('IrisOnboardingModalComponent', () => {
         it('should not advance from step 3 if step changes before setTimeout fires', () => {
             vi.useFakeTimers();
             component.step.set(3);
-            navigateTo(routerEventsSubject, '/courses/1/dashboard');
+            navigateTo(routerEventsSubject, '/courses/1/iris');
             component.step.set(0);
             vi.advanceTimersByTime(200);
             expect(component.step()).toBe(0);
@@ -450,10 +451,10 @@ describe('IrisOnboardingModalComponent', () => {
             vi.useRealTimers();
         });
 
-        it('should calculate dashboard tab position when sidebar link is found', () => {
+        it('should calculate Iris tab position when sidebar link is found', () => {
             vi.useFakeTimers();
             vi.spyOn(document, 'querySelector').mockImplementation((selector: string) => {
-                if (selector === "jhi-course-sidebar a.nav-link-sidebar[data-sidebar-item='Dashboard']") {
+                if (selector === "jhi-course-sidebar a.nav-link-sidebar[data-sidebar-item='Iris']") {
                     return createMockElement({ top: 58, left: 0, width: 220, height: 44 });
                 }
                 return null;
@@ -467,9 +468,9 @@ describe('IrisOnboardingModalComponent', () => {
 
             expect(component.step()).toBe(3);
             expect(component.isStep3PositionReady()).toBe(true);
-            expect(component.dashboardTabSpotlight()).toEqual({ top: 58, left: 0, width: 220, height: 44 });
-            expect(component.dashboardTabCoachMarkPosition()).toEqual({ top: 74, left: 204 });
-            expect(component.dashboardTooltipPosition()).toEqual({ top: 38, left: 232 });
+            expect(component.irisTabSpotlight()).toEqual({ top: 58, left: 0, width: 220, height: 44 });
+            expect(component.irisTabCoachMarkPosition()).toEqual({ top: 74, left: 204 });
+            expect(component.irisTabTooltipPosition()).toEqual({ top: 38, left: 232 });
 
             vi.useRealTimers();
         });
