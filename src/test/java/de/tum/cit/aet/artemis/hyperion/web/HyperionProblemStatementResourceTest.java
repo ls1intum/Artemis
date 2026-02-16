@@ -243,7 +243,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void shouldAnalyzeChecklistForInstructor() throws Exception {
-        long exerciseId = persistedExerciseId;
+        long courseId = persistedCourseId;
 
         doReturn(new ChatResponse(List.of(new Generation(
                 new AssistantMessage("{\"goals\": [{ \"skill\": \"Loops\", \"taxonomyLevel\": \"APPLY\", \"confidence\": 0.9, \"explanation\": \"Loop found\" }]}")))))
@@ -255,18 +255,17 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
                 .when(azureOpenAiChatModel).call(org.mockito.ArgumentMatchers.<Prompt>argThat(p -> p.getContents().contains("quality issues related to CLARITY")));
 
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
-        programmingExerciseRepository.findById(exerciseId).orElseThrow();
 
-        String body = "{\"problemStatement\":\"Problem\", \"existingDifficulty\":\"EASY\"}";
+        String body = "{\"problemStatementMarkdown\":\"Problem\", \"declaredDifficulty\":\"EASY\", \"exerciseId\":" + persistedExerciseId + "}";
 
-        request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/checklist-analysis", exerciseId).contentType(MediaType.APPLICATION_JSON).content(body))
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/checklist-analysis", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.inferredLearningGoals").isArray()).andExpect(jsonPath("$.qualityIssues").isArray());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
     void shouldAnalyzeChecklistForEditor() throws Exception {
-        long exerciseId = persistedExerciseId;
+        long courseId = persistedCourseId;
 
         doReturn(new ChatResponse(List.of(new Generation(
                 new AssistantMessage("{\"goals\": [{ \"skill\": \"Loops\", \"taxonomyLevel\": \"APPLY\", \"confidence\": 0.9, \"explanation\": \"Loop found\" }]}")))))
@@ -278,35 +277,32 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
                 .when(azureOpenAiChatModel).call(org.mockito.ArgumentMatchers.<Prompt>argThat(p -> p.getContents().contains("quality issues related to CLARITY")));
 
         userUtilService.changeUser(TEST_PREFIX + "editor1");
-        programmingExerciseRepository.findById(exerciseId).orElseThrow();
 
-        String body = "{\"problemStatement\":\"Problem\", \"existingDifficulty\":\"EASY\"}";
+        String body = "{\"problemStatementMarkdown\":\"Problem\", \"declaredDifficulty\":\"EASY\", \"exerciseId\":" + persistedExerciseId + "}";
 
-        request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/checklist-analysis", exerciseId).contentType(MediaType.APPLICATION_JSON).content(body))
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/checklist-analysis", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isOk());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = { "USER", "TA" })
     void shouldReturnForbiddenForChecklistAnalysisTutor() throws Exception {
-        long exerciseId = persistedExerciseId;
+        long courseId = persistedCourseId;
         userUtilService.changeUser(TEST_PREFIX + "tutor1");
-        programmingExerciseRepository.findById(exerciseId).orElseThrow();
 
-        String body = "{\"problemStatement\":\"Problem\"}";
-        request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/checklist-analysis", exerciseId).contentType(MediaType.APPLICATION_JSON).content(body))
+        String body = "{\"problemStatementMarkdown\":\"Problem\"}";
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/checklist-analysis", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isForbidden());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
     void shouldReturnForbiddenForChecklistAnalysisStudent() throws Exception {
-        long exerciseId = persistedExerciseId;
+        long courseId = persistedCourseId;
         userUtilService.changeUser(TEST_PREFIX + "student1");
-        programmingExerciseRepository.findById(exerciseId).orElseThrow();
 
-        String body = "{\"problemStatement\":\"Problem\"}";
-        request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/checklist-analysis", exerciseId).contentType(MediaType.APPLICATION_JSON).content(body))
+        String body = "{\"problemStatementMarkdown\":\"Problem\"}";
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/checklist-analysis", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isForbidden());
     }
 }

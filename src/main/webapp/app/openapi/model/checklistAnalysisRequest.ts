@@ -13,5 +13,6 @@ export interface ChecklistAnalysisRequest {
     problemStatementMarkdown: string;
     declaredDifficulty?: string;
     language?: string;
+    exerciseId?: number;
 }
 

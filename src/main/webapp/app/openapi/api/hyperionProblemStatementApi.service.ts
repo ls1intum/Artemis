@@ -50,19 +50,19 @@ export class HyperionProblemStatementApiService extends BaseService {
     }
 
     /**
-     * @endpoint post /api/hyperion/programming-exercises/{exerciseId}/checklist-analysis
-     * @param exerciseId 
+     * @endpoint post /api/hyperion/courses/{courseId}/checklist-analysis
+     * @param courseId 
      * @param checklistAnalysisRequest 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public analyzeChecklist(exerciseId: number, checklistAnalysisRequest: ChecklistAnalysisRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ChecklistAnalysisResponse>;
-    public analyzeChecklist(exerciseId: number, checklistAnalysisRequest: ChecklistAnalysisRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ChecklistAnalysisResponse>>;
-    public analyzeChecklist(exerciseId: number, checklistAnalysisRequest: ChecklistAnalysisRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ChecklistAnalysisResponse>>;
-    public analyzeChecklist(exerciseId: number, checklistAnalysisRequest: ChecklistAnalysisRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        if (exerciseId === null || exerciseId === undefined) {
-            throw new Error('Required parameter exerciseId was null or undefined when calling analyzeChecklist.');
+    public analyzeChecklist(courseId: number, checklistAnalysisRequest: ChecklistAnalysisRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ChecklistAnalysisResponse>;
+    public analyzeChecklist(courseId: number, checklistAnalysisRequest: ChecklistAnalysisRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ChecklistAnalysisResponse>>;
+    public analyzeChecklist(courseId: number, checklistAnalysisRequest: ChecklistAnalysisRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ChecklistAnalysisResponse>>;
+    public analyzeChecklist(courseId: number, checklistAnalysisRequest: ChecklistAnalysisRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (courseId === null || courseId === undefined) {
+            throw new Error('Required parameter courseId was null or undefined when calling analyzeChecklist.');
         }
         if (checklistAnalysisRequest === null || checklistAnalysisRequest === undefined) {
             throw new Error('Required parameter checklistAnalysisRequest was null or undefined when calling analyzeChecklist.');
@@ -102,7 +102,7 @@ export class HyperionProblemStatementApiService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/hyperion/programming-exercises/${this.configuration.encodeParam({name: "exerciseId", value: exerciseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/checklist-analysis`;
+        let localVarPath = `/api/hyperion/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/checklist-analysis`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<ChecklistAnalysisResponse>('post', `${basePath}${localVarPath}`,
             {
@@ -119,19 +119,19 @@ export class HyperionProblemStatementApiService extends BaseService {
     }
 
     /**
-     * @endpoint post /api/hyperion/programming-exercises/{exerciseId}/checklist-actions
-     * @param exerciseId 
+     * @endpoint post /api/hyperion/courses/{courseId}/checklist-actions
+     * @param courseId 
      * @param checklistActionRequest 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public applyChecklistAction(exerciseId: number, checklistActionRequest: ChecklistActionRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ChecklistActionResponse>;
-    public applyChecklistAction(exerciseId: number, checklistActionRequest: ChecklistActionRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ChecklistActionResponse>>;
-    public applyChecklistAction(exerciseId: number, checklistActionRequest: ChecklistActionRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ChecklistActionResponse>>;
-    public applyChecklistAction(exerciseId: number, checklistActionRequest: ChecklistActionRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        if (exerciseId === null || exerciseId === undefined) {
-            throw new Error('Required parameter exerciseId was null or undefined when calling applyChecklistAction.');
+    public applyChecklistAction(courseId: number, checklistActionRequest: ChecklistActionRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ChecklistActionResponse>;
+    public applyChecklistAction(courseId: number, checklistActionRequest: ChecklistActionRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ChecklistActionResponse>>;
+    public applyChecklistAction(courseId: number, checklistActionRequest: ChecklistActionRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ChecklistActionResponse>>;
+    public applyChecklistAction(courseId: number, checklistActionRequest: ChecklistActionRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (courseId === null || courseId === undefined) {
+            throw new Error('Required parameter courseId was null or undefined when calling applyChecklistAction.');
         }
         if (checklistActionRequest === null || checklistActionRequest === undefined) {
             throw new Error('Required parameter checklistActionRequest was null or undefined when calling applyChecklistAction.');
@@ -171,7 +171,7 @@ export class HyperionProblemStatementApiService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/hyperion/programming-exercises/${this.configuration.encodeParam({name: "exerciseId", value: exerciseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/checklist-actions`;
+        let localVarPath = `/api/hyperion/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/checklist-actions`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<ChecklistActionResponse>('post', `${basePath}${localVarPath}`,
             {

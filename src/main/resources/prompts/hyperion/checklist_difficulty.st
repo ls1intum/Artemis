@@ -1,8 +1,9 @@
 Analyze the following programming exercise and suggest the appropriate difficulty level (EASY, MEDIUM, HARD).
 
-## Structural Metrics (measured from the exercise)
-- **Task count (TODOs)**: {{task_count}}
-- **Test count**: {{test_count}}
+## Instructions
+1. **Count tasks**: Count the number of distinct implementation tasks (TODO blocks / [task] markers) in the problem statement.
+2. **Count tests**: Count the number of distinct test case references (test method names in parentheses) in the problem statement.
+3. **Assess difficulty**: Use the structural counts AND conceptual complexity to determine difficulty.
 
 ## Structural Reference Ranges
 | Level  | Tasks (TODOs) | Tests   |
@@ -23,6 +24,8 @@ Provide:
 1. **suggested**: EASY, MEDIUM, or HARD
 2. **confidence**: Your confidence (0.0 to 1.0)
 3. **reasoning**: 2-4 sentences explaining your assessment, referencing both the structural metrics and the conceptual difficulty
+4. **taskCount**: The number of implementation tasks you counted in the problem statement
+5. **testCount**: The number of test case references you counted in the problem statement
 
 ## Problem Statement
 {{problem_statement}}
@@ -35,6 +38,8 @@ Return your response as JSON:
 {
   "suggested": "EASY|MEDIUM|HARD",
   "confidence": 0.0-1.0,
-  "reasoning": "string"
+  "reasoning": "string",
+  "taskCount": number,
+  "testCount": number
 }
 ```

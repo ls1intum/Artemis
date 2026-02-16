@@ -31,8 +31,7 @@ export namespace ChecklistActionRequest {
         FixQualityIssue: 'FIX_QUALITY_ISSUE',
         FixAllQualityIssues: 'FIX_ALL_QUALITY_ISSUES',
         AdaptDifficulty: 'ADAPT_DIFFICULTY',
-        EmphasizeCompetency: 'EMPHASIZE_COMPETENCY',
-        DeemphasizeCompetency: 'DEEMPHASIZE_COMPETENCY'
+        ShiftTaxonomy: 'SHIFT_TAXONOMY'
     } as const;
     export type ActionTypeEnum = typeof ActionTypeEnum[keyof typeof ActionTypeEnum];
 }

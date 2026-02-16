@@ -29,10 +29,8 @@ import de.tum.cit.aet.artemis.hyperion.dto.DifficultyAssessmentDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.InferredCompetencyDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QualityIssueDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QualityIssueLocationDTO;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import io.micrometer.common.KeyValue;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
@@ -71,59 +69,54 @@ public class HyperionChecklistService {
 
     private final ProgrammingExerciseTaskRepository taskRepository;
 
-    private final ProgrammingExerciseTestCaseRepository testCaseRepository;
-
     public HyperionChecklistService(ChatClient chatClient, HyperionPromptTemplateService templates, ObservationRegistry observationRegistry,
-            StandardizedCompetencyApi standardizedCompetencyApi, ProgrammingExerciseTaskRepository taskRepository, ProgrammingExerciseTestCaseRepository testCaseRepository) {
+            StandardizedCompetencyApi standardizedCompetencyApi, ProgrammingExerciseTaskRepository taskRepository) {
         this.chatClient = chatClient;
         this.templates = templates;
         this.observationRegistry = observationRegistry;
         this.standardizedCompetencyApi = standardizedCompetencyApi;
         this.taskRepository = taskRepository;
-        this.testCaseRepository = testCaseRepository;
     }
 
     /**
-     * Analyzes the checklist for the given programming exercise.
+     * Analyzes the checklist for a programming exercise problem statement.
      * Runs three concurrent analyses: competency inference, difficulty assessment,
      * and quality check.
      *
-     * @param exercise The programming exercise to analyze
-     * @param request  The request containing the problem statement and other
-     *                     details
+     * @param request The request containing the problem statement, metadata, and
+     *                    an optional exerciseId for task/test lookups
      * @return The analysis response containing inferred competencies, bloom radar,
      *         difficulty, and quality issues
      */
     @Observed(name = "hyperion.checklist", contextualName = "checklist analysis", lowCardinalityKeyValues = { AI_SPAN_KEY, AI_SPAN_VALUE })
-    public ChecklistAnalysisResponseDTO analyzeChecklist(ProgrammingExercise exercise, ChecklistAnalysisRequestDTO request) {
-        log.info("Performing checklist analysis for exercise {}", exercise.getId());
+    public ChecklistAnalysisResponseDTO analyzeChecklist(ChecklistAnalysisRequestDTO request) {
+        log.info("Performing checklist analysis (exerciseId={})", request.exerciseId());
 
         String problemStatement = request.problemStatementMarkdown() != null ? request.problemStatementMarkdown() : "";
-        String declaredDifficulty = request.declaredDifficulty() != null ? request.declaredDifficulty()
-                : (exercise.getDifficulty() != null ? exercise.getDifficulty().name() : null);
-        String language = request.language() != null ? request.language() : (exercise.getProgrammingLanguage() != null ? exercise.getProgrammingLanguage().name() : "JAVA");
+        String declaredDifficulty = request.declaredDifficulty() != null ? request.declaredDifficulty() : "NOT_DECLARED";
+        String language = request.language() != null ? request.language() : "JAVA";
 
         // Fetch and serialize the competency catalog
         String catalogJson = serializeCompetencyCatalog();
 
-        var input = Map.of("problem_statement", problemStatement, "declared_difficulty", declaredDifficulty != null ? declaredDifficulty : "NOT_DECLARED", "language", language,
-                "competency_catalog", catalogJson);
+        var input = Map.of("problem_statement", problemStatement, "declared_difficulty", declaredDifficulty, "language", language, "competency_catalog", catalogJson);
 
         Observation parentObs = observationRegistry.getCurrentObservation();
 
-        // Load tasks with their test cases for structural metrics
-        Set<ProgrammingExerciseTask> tasks = taskRepository.findByExerciseIdWithTestCases(exercise.getId());
-        int taskCount = tasks.size();
-        int testCount = testCaseRepository.findByExerciseId(exercise.getId()).size();
-
-        // Build task name list for the competency prompt
-        List<String> taskNames = tasks.stream().map(ProgrammingExerciseTask::getTaskName).filter(name -> name != null && !name.isBlank()).toList();
+        // Load task names for the competency prompt (only for existing exercises)
+        List<String> taskNames;
+        if (request.exerciseId() != null) {
+            Set<ProgrammingExerciseTask> tasks = taskRepository.findByExerciseIdWithTestCases(request.exerciseId());
+            taskNames = tasks.stream().map(ProgrammingExerciseTask::getTaskName).filter(name -> name != null && !name.isBlank()).toList();
+        }
+        else {
+            taskNames = List.of();
+        }
 
         // Run three analyses concurrently
-        var competenciesMono = Mono.fromCallable(() -> runCompetencyInference(input, parentObs, taskNames, tasks, testCount)).subscribeOn(Schedulers.boundedElastic())
-                .onErrorReturn(List.of());
+        var competenciesMono = Mono.fromCallable(() -> runCompetencyInference(input, parentObs, taskNames)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
 
-        var difficultyMono = Mono.fromCallable(() -> runDifficultyAnalysis(input, parentObs, declaredDifficulty, taskCount, testCount)).subscribeOn(Schedulers.boundedElastic())
+        var difficultyMono = Mono.fromCallable(() -> runDifficultyAnalysis(input, parentObs, declaredDifficulty)).subscribeOn(Schedulers.boundedElastic())
                 .onErrorReturn(DifficultyAssessmentDTO.unknown("Analysis failed"));
 
         var qualityMono = Mono.fromCallable(() -> runQualityAnalysis(input, parentObs)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
@@ -212,24 +205,15 @@ public class HyperionChecklistService {
                         + "For HARDER: add complexity, edge cases, split tasks into finer steps, require deeper analysis.\n"
                         + "Preserve all Artemis task markers and test references.";
             }
-            case EMPHASIZE_COMPETENCY -> {
-                String competency = ctx.getOrDefault("competencyTitle", "Unknown");
-                String taxonomyLevel = ctx.getOrDefault("taxonomyLevel", "");
-                String taskCoverage = ctx.getOrDefault("taskCoverage", "unknown");
-                String relatedTasks = ctx.getOrDefault("relatedTasks", "");
-                yield "Increase the emphasis on the competency '" + competency + "'" + (taxonomyLevel.isEmpty() ? "" : " (taxonomy level: " + taxonomyLevel + ")")
-                        + " in the problem statement.\n" + "Current task coverage: " + taskCoverage + (relatedTasks.isEmpty() ? "" : ". Currently related tasks: " + relatedTasks)
-                        + ".\n" + "Add more tasks, examples, or requirements that exercise this skill to increase its coverage.\n"
-                        + "Preserve the overall structure and all existing Artemis task markers.";
-            }
-            case DEEMPHASIZE_COMPETENCY -> {
-                String competency = ctx.getOrDefault("competencyTitle", "Unknown");
-                String taskCoverage = ctx.getOrDefault("taskCoverage", "unknown");
-                String relatedTasks = ctx.getOrDefault("relatedTasks", "");
-                yield "Reduce the emphasis on the competency '" + competency + "' in the problem statement.\n" + "Current task coverage: " + taskCoverage
-                        + (relatedTasks.isEmpty() ? "" : ". Currently related tasks: " + relatedTasks) + ".\n"
-                        + "Simplify or reduce the tasks listed above that heavily exercise this skill, without removing essential requirements.\n"
-                        + "Preserve the overall structure and all existing Artemis task markers.";
+            case SHIFT_TAXONOMY -> {
+                String targetTaxonomy = ctx.getOrDefault("targetTaxonomy", "APPLY");
+                String currentTaxonomySummary = ctx.getOrDefault("currentTaxonomySummary", "");
+                yield "Shift the overall focus of this exercise towards the Bloom's taxonomy level: " + targetTaxonomy + ".\n"
+                        + (currentTaxonomySummary.isEmpty() ? "" : "Current taxonomy distribution: " + currentTaxonomySummary + "\n")
+                        + "Taxonomy levels (from lower to higher cognitive demand): REMEMBER < UNDERSTAND < APPLY < ANALYZE < EVALUATE < CREATE.\n"
+                        + "Rewrite the problem statement so that the majority of tasks target the '" + targetTaxonomy + "' level.\n"
+                        + "For example: APPLY = implement given algorithms; ANALYZE = debug, compare, or dissect code; EVALUATE = justify design decisions; CREATE = design from scratch.\n"
+                        + "Preserve all Artemis task markers ([task] blocks) and test references. Adjust task descriptions and requirements to match the target taxonomy level.";
             }
         };
     }
@@ -244,8 +228,7 @@ public class HyperionChecklistService {
             case FIX_QUALITY_ISSUE -> "Fixed quality issue: " + ctx.getOrDefault("category", "unknown");
             case FIX_ALL_QUALITY_ISSUES -> "Fixed all quality issues";
             case ADAPT_DIFFICULTY -> "Adapted difficulty to " + ctx.getOrDefault("targetDifficulty", "unknown");
-            case EMPHASIZE_COMPETENCY -> "Emphasized competency: " + ctx.getOrDefault("competencyTitle", "unknown");
-            case DEEMPHASIZE_COMPETENCY -> "De-emphasized competency: " + ctx.getOrDefault("competencyTitle", "unknown");
+            case SHIFT_TAXONOMY -> "Shifted taxonomy focus to " + ctx.getOrDefault("targetTaxonomy", "unknown");
         };
     }
 
@@ -296,8 +279,7 @@ public class HyperionChecklistService {
     /**
      * Runs competency inference using the standardized catalog.
      */
-    private List<InferredCompetencyDTO> runCompetencyInference(Map<String, String> input, Observation parentObs, List<String> taskNames, Set<ProgrammingExerciseTask> tasks,
-            int totalTestCount) {
+    private List<InferredCompetencyDTO> runCompetencyInference(Map<String, String> input, Observation parentObs, List<String> taskNames) {
         var child = Observation.createNotStarted("hyperion.checklist.competencies", observationRegistry).contextualName("competency inference")
                 .lowCardinalityKeyValue(KeyValue.of(AI_SPAN_KEY, AI_SPAN_VALUE)).highCardinalityKeyValue(KeyValue.of(LF_SPAN_NAME_KEY, "competency inference"))
                 .parentObservation(parentObs).start();
@@ -316,22 +298,10 @@ public class HyperionChecklistService {
                 return List.of();
             }
 
-            // Build task name -> test count lookup
-            Map<String, Integer> taskTestCounts = new HashMap<>();
-            for (ProgrammingExerciseTask task : tasks) {
-                if (task.getTaskName() != null) {
-                    taskTestCounts.put(task.getTaskName().toLowerCase(), task.getTestCases() != null ? task.getTestCases().size() : 0);
-                }
-            }
-            int totalTasks = tasks.size();
-
             return entity.competencies().stream().map(c -> {
                 List<String> relatedTasks = c.relatedTaskNames() != null ? c.relatedTaskNames() : List.of();
-                double taskCoverage = totalTasks > 0 ? (double) relatedTasks.size() / totalTasks : 0.0;
-                int coveredTests = relatedTasks.stream().mapToInt(name -> taskTestCounts.getOrDefault(name.toLowerCase(), 0)).sum();
-                double testCoverage = totalTestCount > 0 ? (double) coveredTests / totalTestCount : 0.0;
                 return new InferredCompetencyDTO(c.knowledgeAreaShortTitle(), c.competencyTitle(), c.competencyVersion(), c.catalogSourceId(), c.taxonomyLevel(), c.confidence(),
-                        c.rank(), c.evidence(), c.whyThisMatches(), c.isLikelyPrimary(), relatedTasks, Math.min(1.0, taskCoverage), Math.min(1.0, testCoverage));
+                        c.rank(), c.evidence(), c.whyThisMatches(), c.isLikelyPrimary(), relatedTasks);
             }).toList();
         }
         catch (Exception e) {
@@ -375,16 +345,13 @@ public class HyperionChecklistService {
     /**
      * Runs difficulty analysis.
      */
-    private DifficultyAssessmentDTO runDifficultyAnalysis(Map<String, String> input, Observation parentObs, String declaredDifficulty, int taskCount, int testCount) {
+    private DifficultyAssessmentDTO runDifficultyAnalysis(Map<String, String> input, Observation parentObs, String declaredDifficulty) {
         var child = Observation.createNotStarted("hyperion.checklist.difficulty", observationRegistry).contextualName("difficulty check")
                 .lowCardinalityKeyValue(KeyValue.of(AI_SPAN_KEY, AI_SPAN_VALUE)).highCardinalityKeyValue(KeyValue.of(LF_SPAN_NAME_KEY, "difficulty check"))
                 .parentObservation(parentObs).start();
 
         var resourcePath = "/prompts/hyperion/checklist_difficulty.st";
-        var difficultyInput = new HashMap<>(input);
-        difficultyInput.put("task_count", String.valueOf(taskCount));
-        difficultyInput.put("test_count", String.valueOf(testCount));
-        String renderedPrompt = templates.render(resourcePath, difficultyInput);
+        String renderedPrompt = templates.render(resourcePath, input);
 
         try (Observation.Scope scope = child.openScope()) {
             var response = chatClient.prompt().system("You are an expert in computer science education. Return only JSON matching the schema.").user(renderedPrompt).call()
@@ -399,6 +366,8 @@ public class HyperionChecklistService {
             Double confidence = entity.confidence();
             boolean matches = suggested != null && declaredDifficulty != null && suggested.equalsIgnoreCase(declaredDifficulty);
             String delta = computeDelta(declaredDifficulty, suggested);
+            int taskCount = entity.taskCount() != null ? entity.taskCount() : 0;
+            int testCount = entity.testCount() != null ? entity.testCount() : 0;
 
             return new DifficultyAssessmentDTO(suggested, confidence, entity.reasoning(), matches, delta, taskCount, testCount);
         }
@@ -491,7 +460,7 @@ public class HyperionChecklistService {
                 Integer rank, List<String> evidence, String whyThisMatches, Boolean isLikelyPrimary, List<String> relatedTaskNames) {
         }
 
-        record DifficultyResponse(String suggested, Double confidence, String reasoning) {
+        record DifficultyResponse(String suggested, Double confidence, String reasoning, Integer taskCount, Integer testCount) {
         }
 
         record QualityResponse(List<QualityIssue> issues) {

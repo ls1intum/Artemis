@@ -15,5 +15,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  *                                     JAVA, PYTHON)
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ChecklistAnalysisRequestDTO(@NotNull String problemStatementMarkdown, String declaredDifficulty, String language) {
+public record ChecklistAnalysisRequestDTO(@NotNull String problemStatementMarkdown, String declaredDifficulty, String language, Long exerciseId) {
 }

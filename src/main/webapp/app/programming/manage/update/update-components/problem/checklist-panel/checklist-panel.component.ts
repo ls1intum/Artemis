@@ -12,10 +12,9 @@ import {
     faEquals,
     faInfoCircle,
     faMagic,
-    faMinus,
-    faPlus,
     faQuestion,
     faSpinner,
+    faSync,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -40,6 +39,7 @@ export class ChecklistPanelComponent {
     private alertService = inject(AlertService);
 
     exercise = input.required<ProgrammingExercise>();
+    courseId = input.required<number>();
     problemStatement = input.required<string>();
 
     problemStatementChange = output<string>();
@@ -59,6 +59,7 @@ export class ChecklistPanelComponent {
     };
 
     readonly difficultyLevels = ['EASY', 'MEDIUM', 'HARD'] as const;
+    readonly taxonomyLevels = ['REMEMBER', 'UNDERSTAND', 'APPLY', 'ANALYZE', 'EVALUATE', 'CREATE'] as const;
 
     // Icons
     faCheckCircle = faCheckCircle;
@@ -73,23 +74,24 @@ export class ChecklistPanelComponent {
     faQuestion = faQuestion;
     faWrench = faWrench;
     faBolt = faBolt;
-    faPlus = faPlus;
-    faMinus = faMinus;
+    faSync = faSync;
 
     analyze() {
-        const ex = this.exercise();
-        if (!ex?.id) {
+        const cId = this.courseId();
+        if (!cId) {
             return;
         }
 
+        const ex = this.exercise();
         this.isLoading.set(true);
         const request = {
             problemStatementMarkdown: this.problemStatement(),
             declaredDifficulty: ex.difficulty,
             language: ex.programmingLanguage,
+            exerciseId: ex.id,
         };
 
-        this.hyperionApiService.analyzeChecklist(ex.id, request).subscribe({
+        this.hyperionApiService.analyzeChecklist(cId, request).subscribe({
             next: (res: ChecklistAnalysisResponse) => {
                 this.analysisResult.set(res);
                 this.isLoading.set(false);
@@ -147,20 +149,6 @@ export class ChecklistPanelComponent {
         }
     }
 
-    getRelevanceLabel(confidence: number | undefined): string {
-        if (confidence === undefined) return 'Low';
-        if (confidence >= 0.7) return 'High';
-        if (confidence >= 0.4) return 'Medium';
-        return 'Low';
-    }
-
-    getRelevanceBadgeClass(confidence: number | undefined): string {
-        if (confidence === undefined) return 'relevance-low';
-        if (confidence >= 0.7) return 'relevance-high';
-        if (confidence >= 0.4) return 'relevance-medium';
-        return 'relevance-low';
-    }
-
     getCategoryColorClass(category: string | undefined): string {
         switch (category?.toUpperCase()) {
             case 'CLARITY':
@@ -184,6 +172,19 @@ export class ChecklistPanelComponent {
                 return this.faEquals;
             default:
                 return this.faQuestion;
+        }
+    }
+
+    getDeltaLabel(delta: string | undefined): string {
+        switch (delta) {
+            case 'HIGHER':
+                return 'Harder than declared';
+            case 'LOWER':
+                return 'Easier than declared';
+            case 'MATCH':
+                return 'Matches declared';
+            default:
+                return 'Unknown';
         }
     }
 
@@ -270,18 +271,20 @@ export class ChecklistPanelComponent {
     // ===== AI Action Methods =====
 
     private applyAction(request: ChecklistActionRequest, loadingKey: string, onApplied?: () => void) {
-        const exerciseId = this.exercise()?.id;
-        if (!exerciseId || this.isApplyingAction()) return;
+        const cId = this.courseId();
+        if (!cId || this.isApplyingAction()) return;
 
         this.isApplyingAction.set(true);
         this.actionLoadingKey.set(loadingKey);
 
-        this.hyperionApiService.applyChecklistAction(exerciseId, request).subscribe({
+        this.hyperionApiService.applyChecklistAction(cId, request).subscribe({
             next: (res) => {
                 if (res.applied) {
                     this.problemStatementChange.emit(res.updatedProblemStatement ?? '');
                     this.alertService.success('artemisApp.programmingExercise.instructorChecklist.actions.success');
                     onApplied?.();
+                    // Re-analyze after successful rewrite
+                    this.analyze();
                 } else {
                     this.alertService.warning('artemisApp.programmingExercise.instructorChecklist.actions.noChanges');
                 }
@@ -365,50 +368,20 @@ export class ChecklistPanelComponent {
         );
     }
 
-    emphasizeCompetency(competencyTitle: string, taxonomyLevel: string) {
-        const comp = this.analysisResult()?.inferredCompetencies?.find((c) => c.competencyTitle === competencyTitle);
-        this.applyAction(
-            {
-                actionType: ChecklistActionRequest.ActionTypeEnum.EmphasizeCompetency,
-                problemStatementMarkdown: this.problemStatement(),
-                context: {
-                    competencyTitle,
-                    taxonomyLevel,
-                    taskCoverage: String(comp?.taskCoverageRatio ?? 'unknown'),
-                    relatedTasks: comp?.relatedTaskNames?.join(', ') ?? '',
-                },
-            },
-            `emphasize-${competencyTitle}`,
-            () =>
-                this.updateAnalysisOptimistically((r) => ({
-                    ...r,
-                    inferredCompetencies: (r.inferredCompetencies ?? []).map((c) =>
-                        c.competencyTitle === competencyTitle ? { ...c, confidence: Math.min(1.0, (c.confidence ?? 0.5) + 0.15) } : c,
-                    ),
-                })),
-        );
-    }
+    shiftTaxonomy(targetTaxonomy: string) {
+        const competencies = this.analysisResult()?.inferredCompetencies ?? [];
+        const summary = competencies.map((c) => `${c.competencyTitle}: ${c.taxonomyLevel}`).join(', ');
 
-    deemphasizeCompetency(competencyTitle: string) {
-        const comp = this.analysisResult()?.inferredCompetencies?.find((c) => c.competencyTitle === competencyTitle);
         this.applyAction(
             {
-                actionType: ChecklistActionRequest.ActionTypeEnum.DeemphasizeCompetency,
+                actionType: ChecklistActionRequest.ActionTypeEnum.ShiftTaxonomy,
                 problemStatementMarkdown: this.problemStatement(),
                 context: {
-                    competencyTitle,
-                    taskCoverage: String(comp?.taskCoverageRatio ?? 'unknown'),
-                    relatedTasks: comp?.relatedTaskNames?.join(', ') ?? '',
+                    targetTaxonomy,
+                    currentTaxonomySummary: summary,
                 },
             },
-            `deemphasize-${competencyTitle}`,
-            () =>
-                this.updateAnalysisOptimistically((r) => ({
-                    ...r,
-                    inferredCompetencies: (r.inferredCompetencies ?? []).map((c) =>
-                        c.competencyTitle === competencyTitle ? { ...c, confidence: Math.max(0.1, (c.confidence ?? 0.5) - 0.2) } : c,
-                    ),
-                })),
+            `shift-${targetTaxonomy}`,
         );
     }
 

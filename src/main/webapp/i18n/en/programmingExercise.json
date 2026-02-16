@@ -793,10 +793,7 @@
                     "primary": "Primary",
                     "evidence": "Evidence:",
                     "relatedTasks": "Related tasks:",
-                    "taskCoverage": "Task coverage:",
-                    "testCoverage": "Test coverage:",
-                    "emphasize": "Emphasize this competency",
-                    "deemphasize": "De-emphasize this competency"
+                    "shiftFocus": "Shift focus to:"
                 },
                 "bloomRadar": {
                     "title": "Bloom's Taxonomy Distribution"
@@ -804,7 +801,7 @@
                 "difficulty": {
                     "title": "Difficulty Assessment",
                     "suggested": "Suggested:",
-                    "delta": "Delta:",
+                    "vsDeclared": "vs. Declared:",
                     "match": "Match:",
                     "tasks": "Tasks:",
                     "tests": "Tests:"

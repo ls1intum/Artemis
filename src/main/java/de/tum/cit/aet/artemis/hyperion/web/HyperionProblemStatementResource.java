@@ -125,37 +125,36 @@ public class HyperionProblemStatementResource {
     }
 
     /**
-     * POST programming-exercises/{exerciseId}/checklist-analysis: Analyze the
-     * problem statement
+     * POST courses/{courseId}/checklist-analysis: Analyze the problem statement
      * for checklist (learning goals, difficulty, quality).
      *
-     * @param exerciseId the id of the programming exercise
-     * @param request    the request containing problem statement and existing
-     *                       metadata
+     * @param courseId the id of the course
+     * @param request  the request containing problem statement, metadata, and
+     *                     an optional exerciseId
      * @return the checklist analysis result
      */
-    @EnforceAtLeastEditorInExercise
-    @PostMapping("programming-exercises/{exerciseId}/checklist-analysis")
-    public ResponseEntity<ChecklistAnalysisResponseDTO> analyzeChecklist(@PathVariable long exerciseId, @RequestBody ChecklistAnalysisRequestDTO request) {
-        log.debug("REST request to Hyperion checklist analysis for exercise [{}]", exerciseId);
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
-        var result = checklistService.analyzeChecklist(exercise, request);
+    @EnforceAtLeastEditorInCourse
+    @PostMapping("courses/{courseId}/checklist-analysis")
+    public ResponseEntity<ChecklistAnalysisResponseDTO> analyzeChecklist(@PathVariable long courseId, @RequestBody ChecklistAnalysisRequestDTO request) {
+        log.debug("REST request to Hyperion checklist analysis for course [{}]", courseId);
+        courseRepository.findByIdElseThrow(courseId);
+        var result = checklistService.analyzeChecklist(request);
         return ResponseEntity.ok(result);
     }
 
     /**
-     * POST programming-exercises/{exerciseId}/checklist-actions: Apply an AI-powered
-     * checklist action to modify the problem statement.
+     * POST courses/{courseId}/checklist-actions: Apply an AI-powered checklist
+     * action to modify the problem statement.
      *
-     * @param exerciseId the id of the programming exercise
-     * @param request    the action request containing the action type and context
+     * @param courseId the id of the course
+     * @param request  the action request containing the action type and context
      * @return the response containing the updated problem statement
      */
-    @EnforceAtLeastEditorInExercise
-    @PostMapping("programming-exercises/{exerciseId}/checklist-actions")
-    public ResponseEntity<ChecklistActionResponseDTO> applyChecklistAction(@PathVariable long exerciseId, @Valid @RequestBody ChecklistActionRequestDTO request) {
-        log.debug("REST request to Hyperion checklist action [{}] for exercise [{}]", request.actionType(), exerciseId);
-        programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+    @EnforceAtLeastEditorInCourse
+    @PostMapping("courses/{courseId}/checklist-actions")
+    public ResponseEntity<ChecklistActionResponseDTO> applyChecklistAction(@PathVariable long courseId, @Valid @RequestBody ChecklistActionRequestDTO request) {
+        log.debug("REST request to Hyperion checklist action [{}] for course [{}]", request.actionType(), courseId);
+        courseRepository.findByIdElseThrow(courseId);
         var actionResult = checklistService.applyChecklistAction(request);
         return ResponseEntity.ok(actionResult);
     }

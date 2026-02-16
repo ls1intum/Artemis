@@ -793,10 +793,7 @@
                     "primary": "Primär",
                     "evidence": "Belege:",
                     "relatedTasks": "Zugehörige Aufgaben:",
-                    "taskCoverage": "Aufgabenabdeckung:",
-                    "testCoverage": "Testabdeckung:",
-                    "emphasize": "Diese Kompetenz hervorheben",
-                    "deemphasize": "Diese Kompetenz abschwächen"
+                    "shiftFocus": "Fokus verschieben auf:"
                 },
                 "bloomRadar": {
                     "title": "Bloom-Taxonomie-Verteilung"
@@ -804,7 +801,7 @@
                 "difficulty": {
                     "title": "Schwierigkeitsbewertung",
                     "suggested": "Vorgeschlagen:",
-                    "delta": "Abweichung:",
+                    "vsDeclared": "vs. Angegeben:",
                     "match": "Übereinstimmung:",
                     "tasks": "Aufgaben:",
                     "tests": "Tests:"

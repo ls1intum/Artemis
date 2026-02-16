@@ -52,31 +52,16 @@
         }
     }
 
-    /* Relevance badges using Bootstrap contextual colors */
-    .relevance-badge {
-        display: inline-block;
-        padding: 0.125rem 0.5rem;
-        font-size: 0.75rem;
-        font-weight: 600;
+    /* Taxonomy shift chips */
+    .taxonomy-chip {
         border-radius: var(--bs-border-radius-pill);
-    }
+        font-size: 0.75rem;
+        padding: 0.2rem 0.6rem;
+        opacity: 0.85;
 
-    .relevance-high {
-        background-color: rgba(var(--bs-success-rgb), 0.15);
-        color: var(--bs-success);
-        border: 1px solid rgba(var(--bs-success-rgb), 0.3);
-    }
-
-    .relevance-medium {
-        background-color: rgba(var(--bs-warning-rgb), 0.15);
-        color: var(--bs-warning);
-        border: 1px solid rgba(var(--bs-warning-rgb), 0.3);
-    }
-
-    .relevance-low {
-        background-color: rgba(var(--bs-secondary-rgb), 0.1);
-        color: var(--bs-secondary);
-        border: 1px solid rgba(var(--bs-secondary-rgb), 0.25);
+        &:hover:not(:disabled) {
+            opacity: 1;
+        }
     }
 
     .evidence-section {

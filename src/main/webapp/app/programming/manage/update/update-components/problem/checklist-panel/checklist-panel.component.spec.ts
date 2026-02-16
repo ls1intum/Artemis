@@ -12,7 +12,6 @@ import { of, throwError } from 'rxjs';
 import { ChecklistAnalysisResponse } from 'app/openapi/model/checklistAnalysisResponse';
 import { ChecklistActionResponse } from 'app/openapi/model/checklistActionResponse';
 import { ChecklistActionRequest } from 'app/openapi/model/checklistActionRequest';
-import { InferredCompetency } from 'app/openapi/model/inferredCompetency';
 import { By } from '@angular/platform-browser';
 import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
 
@@ -22,6 +21,7 @@ describe('ChecklistPanelComponent', () => {
     let apiService: HyperionProblemStatementApiService;
     let alertService: AlertService;
 
+    const courseId = 42;
     const exercise = new ProgrammingExercise(undefined, undefined);
     exercise.id = 123;
     exercise.problemStatement = 'Problem statement';
@@ -35,8 +35,6 @@ describe('ChecklistPanelComponent', () => {
                 confidence: 0.9,
                 whyThisMatches: 'Explanation',
                 relatedTaskNames: ['Implement loop'],
-                taskCoverageRatio: 0.5,
-                testCoverageRatio: 0.6,
             },
         ],
         difficultyAssessment: { suggested: 'EASY', reasoning: 'Reason', matchesDeclared: true, taskCount: 5, testCount: 10 },
@@ -60,6 +58,7 @@ describe('ChecklistPanelComponent', () => {
         alertService = TestBed.inject(AlertService);
 
         fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('courseId', courseId);
         fixture.componentRef.setInput('problemStatement', 'Problem statement');
         fixture.detectChanges();
     });
@@ -76,7 +75,7 @@ describe('ChecklistPanelComponent', () => {
         expect(button).toBeTruthy();
         button.nativeElement.click();
 
-        expect(analyzeSpy).toHaveBeenCalledWith(exercise.id!, expect.objectContaining({ problemStatementMarkdown: 'Problem statement' }));
+        expect(analyzeSpy).toHaveBeenCalledWith(courseId, expect.objectContaining({ problemStatementMarkdown: 'Problem statement' }));
 
         // Wait for observable
         fixture.detectChanges();
@@ -119,12 +118,13 @@ describe('ChecklistPanelComponent', () => {
             component.analysisResult.set({ ...mockResponse, qualityIssues: [issueToFix, otherIssue] });
 
             const actionSpy = jest.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(mockActionResponse) as any);
+            jest.spyOn(apiService, 'analyzeChecklist').mockReturnValue(of(mockResponse) as any);
             const emitSpy = jest.spyOn(component.problemStatementChange, 'emit');
 
             component.fixQualityIssue(issueToFix, 0);
 
             expect(actionSpy).toHaveBeenCalledWith(
-                exercise.id,
+                courseId,
                 expect.objectContaining({
                     actionType: ChecklistActionRequest.ActionTypeEnum.FixQualityIssue,
                     problemStatementMarkdown: 'Problem statement',
@@ -145,11 +145,12 @@ describe('ChecklistPanelComponent', () => {
                 ],
             });
             const actionSpy = jest.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(mockActionResponse) as any);
+            jest.spyOn(apiService, 'analyzeChecklist').mockReturnValue(of(mockResponse) as any);
 
             component.fixAllQualityIssues();
 
             expect(actionSpy).toHaveBeenCalledWith(
-                exercise.id,
+                courseId,
                 expect.objectContaining({
                     actionType: ChecklistActionRequest.ActionTypeEnum.FixAllQualityIssues,
                 }),
@@ -160,11 +161,12 @@ describe('ChecklistPanelComponent', () => {
         it('should adapt difficulty and update assessment optimistically', () => {
             component.analysisResult.set(mockResponse);
             const actionSpy = jest.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(mockActionResponse) as any);
+            jest.spyOn(apiService, 'analyzeChecklist').mockReturnValue(of(mockResponse) as any);
 
             component.adaptDifficulty('HARD');
 
             expect(actionSpy).toHaveBeenCalledWith(
-                exercise.id,
+                courseId,
                 expect.objectContaining({
                     actionType: ChecklistActionRequest.ActionTypeEnum.AdaptDifficulty,
                     context: expect.objectContaining({ targetDifficulty: 'HARD' }),
@@ -174,38 +176,20 @@ describe('ChecklistPanelComponent', () => {
             expect(component.analysisResult()?.difficultyAssessment?.delta).toBe('MATCH');
         });
 
-        it('should emphasize a competency and boost confidence optimistically', () => {
+        it('should shift taxonomy focus', () => {
             component.analysisResult.set(mockResponse);
             const actionSpy = jest.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(mockActionResponse) as any);
+            jest.spyOn(apiService, 'analyzeChecklist').mockReturnValue(of(mockResponse) as any);
 
-            component.emphasizeCompetency('Loops', 'APPLY');
-
-            expect(actionSpy).toHaveBeenCalledWith(
-                exercise.id,
-                expect.objectContaining({
-                    actionType: ChecklistActionRequest.ActionTypeEnum.EmphasizeCompetency,
-                    context: expect.objectContaining({ competencyTitle: 'Loops', taxonomyLevel: 'APPLY' }),
-                }),
-            );
-            const loops = component.analysisResult()?.inferredCompetencies?.find((comp: InferredCompetency) => comp.competencyTitle === 'Loops');
-            expect(loops?.confidence).toBeCloseTo(1.0);
-        });
-
-        it('should deemphasize a competency and lower confidence optimistically', () => {
-            component.analysisResult.set(mockResponse);
-            const actionSpy = jest.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(mockActionResponse) as any);
-
-            component.deemphasizeCompetency('Loops');
+            component.shiftTaxonomy('ANALYZE');
 
             expect(actionSpy).toHaveBeenCalledWith(
-                exercise.id,
+                courseId,
                 expect.objectContaining({
-                    actionType: ChecklistActionRequest.ActionTypeEnum.DeemphasizeCompetency,
-                    context: expect.objectContaining({ competencyTitle: 'Loops' }),
+                    actionType: ChecklistActionRequest.ActionTypeEnum.ShiftTaxonomy,
+                    context: expect.objectContaining({ targetTaxonomy: 'ANALYZE' }),
                 }),
             );
-            const loops = component.analysisResult()?.inferredCompetencies?.find((comp: InferredCompetency) => comp.competencyTitle === 'Loops');
-            expect(loops?.confidence).toBeCloseTo(0.7);
         });
 
         it('should handle action error', () => {

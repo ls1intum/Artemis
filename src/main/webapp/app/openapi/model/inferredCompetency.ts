@@ -21,7 +21,5 @@ export interface InferredCompetency {
     whyThisMatches?: string;
     isLikelyPrimary?: boolean;
     relatedTaskNames?: Array<string>;
-    taskCoverageRatio?: number;
-    testCoverageRatio?: number;
 }
 

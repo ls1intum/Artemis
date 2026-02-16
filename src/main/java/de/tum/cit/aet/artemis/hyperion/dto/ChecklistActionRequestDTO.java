@@ -33,9 +33,7 @@ public record ChecklistActionRequestDTO(@NotNull @Schema(description = "Type of 
         FIX_ALL_QUALITY_ISSUES,
         /** Adapt the problem statement to a target difficulty level */
         ADAPT_DIFFICULTY,
-        /** Increase emphasis on a specific competency */
-        EMPHASIZE_COMPETENCY,
-        /** Decrease emphasis on a specific competency */
-        DEEMPHASIZE_COMPETENCY
+        /** Shift the exercise focus towards a target Bloom's taxonomy level */
+        SHIFT_TAXONOMY
     }
 }

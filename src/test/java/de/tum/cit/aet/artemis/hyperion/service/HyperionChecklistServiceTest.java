@@ -21,10 +21,7 @@ import de.tum.cit.aet.artemis.atlas.api.StandardizedCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.KnowledgeArea;
 import de.tum.cit.aet.artemis.hyperion.dto.ChecklistAnalysisRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ChecklistAnalysisResponseDTO;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import io.micrometer.observation.ObservationRegistry;
 
 class HyperionChecklistServiceTest {
@@ -41,9 +38,6 @@ class HyperionChecklistServiceTest {
     @Mock
     private ProgrammingExerciseTaskRepository taskRepository;
 
-    @Mock
-    private ProgrammingExerciseTestCaseRepository testCaseRepository;
-
     private HyperionChecklistService hyperionChecklistService;
 
     @BeforeEach
@@ -59,11 +53,9 @@ class HyperionChecklistServiceTest {
         when(standardizedCompetencyApi.getAllForTreeView()).thenReturn(List.of());
 
         when(taskRepository.findByExerciseIdWithTestCases(any())).thenReturn(java.util.Set.of());
-        when(testCaseRepository.findByExerciseId(any())).thenReturn(java.util.Set.of());
 
         var templateService = new HyperionPromptTemplateService();
-        this.hyperionChecklistService = new HyperionChecklistService(chatClient, templateService, observationRegistry, standardizedCompetencyApi, taskRepository,
-                testCaseRepository);
+        this.hyperionChecklistService = new HyperionChecklistService(chatClient, templateService, observationRegistry, standardizedCompetencyApi, taskRepository);
     }
 
     @Test
@@ -90,7 +82,9 @@ class HyperionChecklistServiceTest {
                 {
                     "suggested": "EASY",
                     "confidence": 0.85,
-                    "reasoning": "Simple algorithmic problem with clear constraints."
+                    "reasoning": "Simple algorithmic problem with clear constraints.",
+                    "taskCount": 3,
+                    "testCount": 5
                 }
                 """;
         String qualityJson = """
@@ -123,13 +117,9 @@ class HyperionChecklistServiceTest {
             return new ChatResponse(List.of(new Generation(new AssistantMessage("{}"))));
         });
 
-        ProgrammingExercise exercise = new ProgrammingExercise();
-        exercise.setId(1L);
-        exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem statement", "EASY", "JAVA", 1L);
 
-        ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem statement", "EASY", "JAVA");
-
-        ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeChecklist(exercise, request);
+        ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeChecklist(request);
 
         assertThat(response).isNotNull();
         assertThat(response.inferredCompetencies()).hasSize(1);
@@ -167,11 +157,9 @@ class HyperionChecklistServiceTest {
             return new ChatResponse(List.of(new Generation(new AssistantMessage("{}"))));
         });
 
-        ProgrammingExercise exercise = new ProgrammingExercise();
-        exercise.setId(1L);
-        ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem", null, null);
+        ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem", null, null, 1L);
 
-        ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeChecklist(exercise, request);
+        ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeChecklist(request);
 
         assertThat(response).isNotNull();
         assertThat(response.inferredCompetencies()).isEmpty();
@@ -199,7 +187,7 @@ class HyperionChecklistServiceTest {
                     ]
                 }
                 """;
-        String difficultyJson = "{ \"suggested\": \"MEDIUM\", \"confidence\": 0.7, \"reasoning\": \"OK\" }";
+        String difficultyJson = "{ \"suggested\": \"MEDIUM\", \"confidence\": 0.7, \"reasoning\": \"OK\", \"taskCount\": 5, \"testCount\": 10 }";
         String qualityJson = "{ \"issues\": [] }";
 
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> {
@@ -216,11 +204,9 @@ class HyperionChecklistServiceTest {
             }
         });
 
-        ProgrammingExercise exercise = new ProgrammingExercise();
-        exercise.setId(1L);
-        ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem", null, null);
+        ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem", null, null, 1L);
 
-        ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeChecklist(exercise, request);
+        ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeChecklist(request);
 
         // Bloom radar should be normalized to sum to 1.0
         var radar = response.bloomRadar();

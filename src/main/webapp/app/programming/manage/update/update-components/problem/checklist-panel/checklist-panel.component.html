@@ -182,59 +182,12 @@
                                                     </div>
                                                     <div class="d-flex align-items-center gap-2">
                                                         <span class="badge bg-info badge-sm">{{ comp.taxonomyLevel }}</span>
-                                                        <span class="relevance-badge" [ngClass]="getRelevanceBadgeClass(comp.confidence)">
-                                                            {{ getRelevanceLabel(comp.confidence) }}
-                                                        </span>
                                                     </div>
-                                                    @if (comp.taskCoverageRatio !== null || comp.testCoverageRatio !== null) {
-                                                        <div class="d-flex align-items-center gap-2 mt-1">
-                                                            @if (comp.taskCoverageRatio !== null) {
-                                                                <span class="badge bg-light text-dark border">
-                                                                    <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.taskCoverage"
-                                                                        >Task coverage:</span
-                                                                    >
-                                                                    {{ (comp.taskCoverageRatio * 100).toFixed(0) }}%
-                                                                </span>
-                                                            }
-                                                            @if (comp.testCoverageRatio !== null) {
-                                                                <span class="badge bg-light text-dark border">
-                                                                    <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.testCoverage"
-                                                                        >Test coverage:</span
-                                                                    >
-                                                                    {{ (comp.testCoverageRatio * 100).toFixed(0) }}%
-                                                                </span>
-                                                            }
-                                                        </div>
-                                                    }
                                                     @if (comp.whyThisMatches) {
                                                         <p class="mb-0 text-muted small mt-1">{{ comp.whyThisMatches }}</p>
                                                     }
                                                 </div>
                                                 <div class="d-flex align-items-center gap-1 flex-shrink-0">
-                                                    <button
-                                                        class="btn btn-sm btn-outline-success action-btn"
-                                                        [disabled]="isApplyingAction()"
-                                                        (click)="emphasizeCompetency(comp.competencyTitle || '', comp.taxonomyLevel || ''); $event.stopPropagation()"
-                                                        [attr.title]="'artemisApp.programmingExercise.instructorChecklist.competencies.emphasize' | artemisTranslate"
-                                                    >
-                                                        @if (isActionLoading('emphasize-' + comp.competencyTitle)) {
-                                                            <fa-icon [icon]="faSpinner" animation="spin" size="xs" />
-                                                        } @else {
-                                                            <fa-icon [icon]="faPlus" size="xs" />
-                                                        }
-                                                    </button>
-                                                    <button
-                                                        class="btn btn-sm btn-outline-secondary action-btn"
-                                                        [disabled]="isApplyingAction()"
-                                                        (click)="deemphasizeCompetency(comp.competencyTitle || ''); $event.stopPropagation()"
-                                                        [attr.title]="'artemisApp.programmingExercise.instructorChecklist.competencies.deemphasize' | artemisTranslate"
-                                                    >
-                                                        @if (isActionLoading('deemphasize-' + comp.competencyTitle)) {
-                                                            <fa-icon [icon]="faSpinner" animation="spin" size="xs" />
-                                                        } @else {
-                                                            <fa-icon [icon]="faMinus" size="xs" />
-                                                        }
-                                                    </button>
                                                     <button class="btn btn-sm btn-link p-0 ms-1" (click)="toggleCompetencyExpand(comp.rank || 0); $event.stopPropagation()">
                                                         <fa-icon [icon]="isCompetencyExpanded(comp.rank || 0) ? faChevronDown : faChevronRight" size="xs" />
                                                     </button>
@@ -262,6 +215,24 @@
                                             }
                                         </div>
                                     }
+                                </div>
+
+                                <!-- Taxonomy Shift Action -->
+                                <div class="taxonomy-shift-section p-3 border-top">
+                                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                                        <small class="fw-bold text-muted me-1" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.shiftFocus"
+                                            >Shift focus to:</small
+                                        >
+                                        @for (level of taxonomyLevels; track level) {
+                                            <button class="btn btn-sm btn-outline-info taxonomy-chip" [disabled]="isApplyingAction()" (click)="shiftTaxonomy(level)">
+                                                @if (isActionLoading('shift-' + level)) {
+                                                    <fa-icon [icon]="faSpinner" animation="spin" size="xs" />
+                                                } @else {
+                                                    {{ level }}
+                                                }
+                                            </button>
+                                        }
+                                    </div>
                                 </div>
                             }
                         </div>
@@ -291,10 +262,10 @@
                                     </span>
                                 </div>
                                 <div>
-                                    <span class="fw-bold me-2" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.difficulty.delta">Delta:</span>
+                                    <span class="fw-bold me-2" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.difficulty.vsDeclared">vs. Declared:</span>
                                     <fa-icon [icon]="getDeltaIcon(result.difficultyAssessment.delta)" [ngClass]="getDeltaClass(result.difficultyAssessment.delta)" />
                                     <span class="ms-1" [ngClass]="getDeltaClass(result.difficultyAssessment.delta)">
-                                        {{ result.difficultyAssessment.delta }}
+                                        {{ getDeltaLabel(result.difficultyAssessment.delta) }}
                                     </span>
                                 </div>
                             </div>
