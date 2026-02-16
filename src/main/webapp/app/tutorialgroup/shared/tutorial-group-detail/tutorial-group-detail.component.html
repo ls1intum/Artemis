@@ -46,7 +46,7 @@
             @if (allowManagementActions()) {
                 <a [routerLink]="['registrations']" pButton class="p-button-secondary p-button-sm" data-testid="registrations-link">Registrations</a>
                 <a [routerLink]="['edit']" pButton class="p-button-primary p-button-sm" data-testid="edit-button">Edit</a>
-                <button pButton severity="danger" class="p-button-primary p-button-sm" data-testid="delete-button" (click)="deleteTutorialGroup()">Delete</button>
+                <button pButton severity="danger" class="p-button-primary p-button-sm" data-testid="delete-button" (click)="confirmTutorialGroupDeletion($event)">Delete</button>
             }
         }
     </div>
@@ -246,7 +246,7 @@
                                     <button>
                                         <fa-icon [icon]="faPenToSquare" aria-hidden="true" />
                                     </button>
-                                    <button class="danger" (click)="deleteTutorialGroupSession(session.id)">
+                                    <button class="danger" (click)="confirmSessionDeletion($event, session.id)">
                                         <fa-icon [icon]="faTrash" aria-hidden="true" />
                                     </button>
                                 </div>
@@ -258,3 +258,4 @@
         </table>
     }
 </div>
+<p-confirmDialog />

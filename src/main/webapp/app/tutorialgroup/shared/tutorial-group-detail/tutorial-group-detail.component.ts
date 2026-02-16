@@ -37,6 +37,8 @@ import { ButtonModule } from 'primeng/button';
 import { AccountService } from 'app/core/auth/account.service';
 import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
+import { ConfirmationService } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 
 interface TutorialGroupDetailSession {
     id: number;
@@ -77,7 +79,9 @@ type ListOption = 'all-sessions' | 'future-sessions';
         NgClass,
         RouterLink,
         ButtonModule,
+        ConfirmDialogModule,
     ],
+    providers: [ConfirmationService],
     templateUrl: './tutorial-group-detail.component.html',
     styleUrl: './tutorial-group-detail.component.scss',
 })
@@ -100,6 +104,7 @@ export class TutorialGroupDetailComponent {
     private oneToOneChatService = inject(OneToOneChatService);
     private alertService = inject(AlertService);
     private accountService = inject(AccountService);
+    private confirmationService = inject(ConfirmationService);
     private router = inject(Router);
     private currentLocale = getCurrentLocaleSignal(this.translateService);
     private averageAttendanceRatio = computed<number | undefined>(() => this.computeAverageAttendanceRatio(this.tutorialGroup().sessions, this.tutorialGroup().capacity));
@@ -157,7 +162,45 @@ export class TutorialGroupDetailComponent {
         }
     }
 
-    deleteTutorialGroupSession(sessionId: number) {
+    confirmTutorialGroupDeletion(event: Event) {
+        this.confirmationService.confirm({
+            target: event.target as EventTarget,
+            message: 'Do you really want to delete this tutorial group? This action can not be reversed!',
+            header: 'Delete Tutorial Group?',
+            rejectButtonProps: {
+                label: this.translateService.instant('entity.action.cancel'),
+                severity: 'secondary',
+            },
+            acceptButtonProps: {
+                label: this.translateService.instant('entity.action.delete'),
+                severity: 'danger',
+            },
+            accept: () => {
+                this.deleteTutorialGroup();
+            },
+        });
+    }
+
+    confirmSessionDeletion(event: Event, sessionId: number) {
+        this.confirmationService.confirm({
+            target: event.target as EventTarget,
+            message: 'Do you really want to delete this session?',
+            header: 'Delete Session?',
+            rejectButtonProps: {
+                label: this.translateService.instant('entity.action.cancel'),
+                severity: 'secondary',
+            },
+            acceptButtonProps: {
+                label: this.translateService.instant('entity.action.delete'),
+                severity: 'danger',
+            },
+            accept: () => {
+                this.deleteTutorialGroupSession(sessionId);
+            },
+        });
+    }
+
+    private deleteTutorialGroupSession(sessionId: number) {
         const courseId = this.course().id;
         const tutorialGroupId = this.tutorialGroup().id;
         if (courseId && tutorialGroupId) {
@@ -169,7 +212,7 @@ export class TutorialGroupDetailComponent {
         }
     }
 
-    deleteTutorialGroup() {
+    private deleteTutorialGroup() {
         const courseId = this.course().id;
         const tutorialGroupId = this.tutorialGroup().id;
         if (courseId) {
