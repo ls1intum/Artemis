@@ -198,7 +198,7 @@ describe('ModelingAssessmentService', () => {
             it('should get an assessment with specific resultId', async () => {
                 const submissionId = 187;
                 const resultId = 99;
-                const returnedFromService = { ...elemDefault, id: resultId };
+                const returnedFromService = Object.assign(new Result(), elemDefault, { id: resultId });
 
                 service
                     .getAssessment(submissionId, resultId)
