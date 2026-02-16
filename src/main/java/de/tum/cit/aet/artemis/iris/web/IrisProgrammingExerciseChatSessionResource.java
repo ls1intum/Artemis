@@ -85,7 +85,7 @@ public class IrisProgrammingExerciseChatSessionResource {
         irisSettingsService.ensureEnabledForCourseOrElseThrow(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
-        var session = irisExerciseChatSessionService.getCurrentSessionOrCreateIfNotExists(programmingExercise, user, false);
+        var session = irisExerciseChatSessionService.getCurrentSessionOrCreateIfNotExists(programmingExercise, user);
         irisCitationService.enrichSessionWithCitationInfo(session);
         return ResponseEntity.ok(session);
     }
@@ -127,7 +127,7 @@ public class IrisProgrammingExerciseChatSessionResource {
         irisSettingsService.ensureEnabledForCourseOrElseThrow(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
-        var session = irisExerciseChatSessionService.createSession(programmingExercise, user, false);
+        var session = irisExerciseChatSessionService.createSession(programmingExercise, user);
         var uriString = "/api/iris/sessions/" + session.getId();
 
         return ResponseEntity.created(new URI(uriString)).body(session);

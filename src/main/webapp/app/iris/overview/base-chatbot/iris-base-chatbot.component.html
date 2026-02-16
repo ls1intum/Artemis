@@ -1,280 +1,358 @@
-<!-- client -->
-@if (!isEmbeddedChat()) {
-    <div class="chat-header">
-        <div class="header-start">
-            @if (isChatHistoryAvailable()) {
-                <button
-                    [ngClass]="{ 'is-collapsed': !isChatHistoryOpen() }"
-                    triggers="hover"
-                    class="btn btn-sidebar-collapse btn-sm rounded-3"
-                    (click)="setChatHistoryVisibility(!isChatHistoryOpen())"
-                >
-                    <fa-icon [fixedWidth]="true" [icon]="facSidebar" class="text-secondary d-flex justify-content-center align-items-center" size="lg" />
-                    <div class="btn-sidebar-collapse-chevron d-flex gap-1">
-                        <fa-icon
-                            [fixedWidth]="true"
-                            [icon]="faChevronRight"
-                            class="text-secondary btn-sidebar-collapse-chevron-start d-flex justify-content-center align-items-center"
-                            size="xs"
-                        />
-                        <fa-icon [fixedWidth]="true" [icon]="faChevronRight" class="text-secondary d-flex justify-content-center align-items-center" size="xs" />
-                    </div>
-                </button>
-            }
-
-            <jhi-iris-logo [size]="IrisLogoSize.FLUID" />
-
-            <div class="word-iris">{{ isChatGptWrapper() ? 'ChatGPT' : 'Iris' }}</div>
-            @if (!isChatGptWrapper()) {
-                <a [routerLink]="'/about-iris'" target="_blank">
-                    <fa-icon [icon]="faCircleInfo" class="info-button" />
-                </a>
-            }
-        </div>
-        <div class="d-flex gap-2">
-            @if (relatedEntityRoute() && relatedEntityLinkButtonLabel() && isChatHistoryAvailable()) {
-                <div class="toolbox">
-                    <button [routerLink]="relatedEntityRoute()" [queryParamsHandling]="'preserve'" class="related-entity-button header-control">
-                        <div>
-                            {{ relatedEntityLinkButtonLabel() | artemisTranslate }}
-                        </div>
-                        <fa-icon [icon]="faLink" />
-                    </button>
-                </div>
-            }
-            @if (rateLimitInfo()?.rateLimit; as rateLimit) {
-                @if (rateLimit > 0) {
-                    <div class="toolbox">
-                        <span
-                            class="rate-limit"
-                            [ngbTooltip]="'artemisApp.exerciseChatbot.rateLimitTooltip' | artemisTranslate: { hours: rateLimitInfo()?.rateLimitTimeframeHours }"
-                        >
-                            {{ rateLimitInfo()?.currentMessageCount }} / {{ rateLimit }}
-                        </span>
-                    </div>
-                }
-            }
-            <div class="toolbox">
-                @if (messages().length >= 1) {
-                    <button id="clear-chat-button" (click)="openNewSession()" class="header-control">
-                        <fa-icon [icon]="faPenToSquare" />
-                    </button>
-                }
-
-                @if (fullSize() !== undefined) {
-                    <button (click)="fullSizeToggle.emit()" class="header-control">
-                        @if (!fullSize()) {
-                            <fa-icon [icon]="faExpand" />
-                        } @else {
-                            <fa-icon [icon]="faCompress" />
-                        }
-                    </button>
-                }
-
-                @if (showCloseButton()) {
-                    <button (click)="closeChat()" class="header-control">
-                        <fa-icon [icon]="faXmark" />
-                    </button>
-                }
-            </div>
-        </div>
-    </div>
-}
 <!-- main chat section -->
-<div class="chat-container">
+<div class="chat-layout">
     @if (isChatHistoryAvailable()) {
         <div class="chat-history" [ngClass]="{ 'chat-history-open': isChatHistoryOpen() }">
+            @if (!isChatHistoryOpen()) {
+                <div class="chat-history-collapsed">
+                    <div
+                        class="collapsed-icon-button"
+                        (click)="setChatHistoryVisibility(true)"
+                        role="button"
+                        tabindex="0"
+                        (keydown.enter)="setChatHistoryVisibility(true)"
+                        (keydown.space)="setChatHistoryVisibility(true)"
+                        [attr.aria-label]="'artemisApp.iris.chatHistory.openChatHistory' | artemisTranslate"
+                    >
+                        <fa-icon [icon]="faMagnifyingGlass" />
+                    </div>
+                    <div
+                        class="new-chat-button"
+                        (click)="openNewSession()"
+                        role="button"
+                        tabindex="0"
+                        (keydown.enter)="openNewSession()"
+                        (keydown.space)="openNewSession()"
+                        [attr.aria-label]="'artemisApp.iris.chatHistory.newChat' | artemisTranslate"
+                    >
+                        <fa-icon [icon]="faPenToSquare" class="new-chat-icon" />
+                    </div>
+                    @if (!isChatGptWrapper()) {
+                        <div class="collapsed-bottom">
+                            <a
+                                [routerLink]="'/about-iris'"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="collapsed-icon-button"
+                                [attr.aria-label]="'artemisApp.iris.chatHistory.aboutIris' | artemisTranslate"
+                            >
+                                <fa-icon [icon]="faCircleInfo" class="info-button" />
+                            </a>
+                        </div>
+                    }
+                </div>
+            }
             @if (isChatHistoryOpen()) {
                 <div class="chat-history-container">
-                    <div class="chat-history-close-btn-row">
-                        <h6 jhiTranslate="artemisApp.iris.chatHistory.title"></h6>
+                    <div class="chat-history-top">
+                        <div class="px-2 mt-2 mb-3">
+                            <jhi-search-filter class="w-100" (newSearchEvent)="setSearchValue($event)" />
+                        </div>
+
+                        <div class="new-chat-button" (click)="openNewSession()" role="button" tabindex="0" (keydown.enter)="openNewSession()" (keydown.space)="openNewSession()">
+                            <fa-icon [icon]="faPenToSquare" class="new-chat-icon" />
+                            <span jhiTranslate="artemisApp.iris.chatHistory.newChat"></span>
+                        </div>
+                        <div class="chat-history-divider"></div>
                     </div>
 
-                    <div class="px-2 mt-2 mb-3">
-                        <jhi-search-filter class="w-100" (newSearchEvent)="setSearchValue($event)" />
+                    <div class="chat-history-list">
+                        @if (todaySessions().length > 0) {
+                            <div class="chat-history-label">
+                                <p jhiTranslate="artemisApp.iris.chatHistory.today"></p>
+                            </div>
+                            @for (session of todaySessions(); track session.id) {
+                                <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
+                            }
+                        }
+
+                        @if (yesterdaySessions().length > 0) {
+                            <div class="chat-history-label">
+                                <p jhiTranslate="artemisApp.iris.chatHistory.yesterday"></p>
+                            </div>
+                            @for (session of yesterdaySessions(); track session.id) {
+                                <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
+                            }
+                        }
+
+                        @if (last7DaysSessions().length > 0) {
+                            <div class="chat-history-label">
+                                <p jhiTranslate="artemisApp.iris.chatHistory.last7Days"></p>
+                            </div>
+                            @for (session of last7DaysSessions(); track session.id) {
+                                <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
+                            }
+                        }
+
+                        @if (last30DaysSessions().length > 0) {
+                            <div class="chat-history-label">
+                                <p jhiTranslate="artemisApp.iris.chatHistory.last30Days"></p>
+                            </div>
+                            @for (session of last30DaysSessions(); track session.id) {
+                                <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
+                            }
+                        }
+
+                        @if (olderSessions().length > 0) {
+                            <div class="chat-history-label">
+                                <p jhiTranslate="artemisApp.iris.chatHistory.older"></p>
+                            </div>
+                            @for (session of olderSessions(); track session.id) {
+                                <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
+                            }
+                        }
                     </div>
 
-                    @let todaySessions = getSessionsBetween(0, 0);
-                    @if (todaySessions.length > 0) {
-                        <div class="chat-history-label">
-                            <p jhiTranslate="artemisApp.iris.chatHistory.today"></p>
+                    @if (!isChatGptWrapper()) {
+                        <div class="chat-history-bottom">
+                            <div class="chat-history-divider"></div>
+                            <div class="chat-history-info-link">
+                                <a [routerLink]="'/about-iris'" target="_blank" rel="noopener noreferrer">
+                                    <fa-icon [icon]="faCircleInfo" class="info-button" />
+                                </a>
+                            </div>
                         </div>
-                        @for (session of todaySessions; track session.id; let i = $index) {
-                            <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
-                        }
-                    }
-
-                    @let yesterdaySessions = getSessionsBetween(1, 1);
-                    @if (yesterdaySessions.length > 0) {
-                        <div class="chat-history-label">
-                            <p jhiTranslate="artemisApp.iris.chatHistory.yesterday"></p>
-                        </div>
-                        @for (session of yesterdaySessions; track session.id; let i = $index) {
-                            <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
-                        }
-                    }
-
-                    @let last7DaysSessions = getSessionsBetween(2, 6);
-                    @if (last7DaysSessions.length > 0) {
-                        <div class="chat-history-label">
-                            <p jhiTranslate="artemisApp.iris.chatHistory.last7Days"></p>
-                        </div>
-                        @for (session of last7DaysSessions; track session.id; let i = $index) {
-                            <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
-                        }
-                    }
-
-                    @let last30DaysSessions = getSessionsBetween(7, 29);
-                    @if (last30DaysSessions.length > 0) {
-                        <div class="chat-history-label">
-                            <p jhiTranslate="artemisApp.iris.chatHistory.last30Days"></p>
-                        </div>
-                        @for (session of last30DaysSessions; track session.id; let i = $index) {
-                            <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
-                        }
-                    }
-
-                    @let olderSessions = getSessionsBetween(30, undefined, true);
-                    @if (olderSessions.length > 0) {
-                        <div class="chat-history-label">
-                            <p jhiTranslate="artemisApp.iris.chatHistory.older"></p>
-                        </div>
-                        @for (session of olderSessions; track session.id; let i = $index) {
-                            <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
-                        }
                     }
                 </div>
             }
         </div>
     }
-    <div class="chat-body" [class.not-accepted]="!userAccepted()" #chatBody>
-        @if (messages()?.length) {
-            <div class="messages" #messagesElement (scroll)="checkChatScroll()">
-                @if (
-                    suggestions()?.length &&
-                    (userAccepted() === LLMSelectionDecision.CLOUD_AI || userAccepted() === LLMSelectionDecision.LOCAL_AI) &&
-                    active() &&
-                    (!rateLimitInfo()?.rateLimit || rateLimitInfo()?.currentMessageCount !== rateLimitInfo()?.rateLimit) &&
-                    !hasActiveStage()
-                ) {
-                    <div animate.enter="suggestion-entering" animate.leave="suggestion-leaving">
-                        <div class="suggestions-container">
-                            @for (suggestion of suggestions(); track suggestion) {
-                                <button class="suggestion-button" (click)="onSuggestionClick(suggestion)" [disabled]="isLoading()">
-                                    @if (clickedSuggestion() === suggestion) {
-                                        <fa-icon [icon]="faCircleNotch" animation="spin" />
-                                    } @else {
-                                        <span [innerHTML]="suggestion"></span>
-                                    }
-                                </button>
-                            }
+    <div class="chat-container">
+        <!-- client -->
+        @if (!isEmbeddedChat()) {
+            <div class="chat-header" [class.has-content]="hasHeaderContent()">
+                <div class="d-flex gap-2">
+                    @if (relatedEntityRoute() && relatedEntityLinkButtonLabel() && isChatHistoryAvailable()) {
+                        <div class="toolbox">
+                            <button [routerLink]="relatedEntityRoute()" [queryParamsHandling]="'preserve'" class="related-entity-button header-control">
+                                <div>
+                                    {{ relatedEntityLinkButtonLabel() | artemisTranslate }}
+                                </div>
+                                <fa-icon [icon]="faLink" />
+                            </button>
                         </div>
-                    </div>
-                }
-                @for (message of messages(); track message.id; let i = $index) {
-                    <div
-                        animate.enter="message-entering"
-                        [class.animate-enabled]="animatingMessageIds().has(message.id!)"
-                        [style.transform-origin]="message.sender === IrisSender.USER ? 'bottom right' : 'bottom left'"
-                    >
-                        @for (content of message.content; track content.id) {
-                            <div>
-                                @if (message.sender === IrisSender.USER) {
-                                    <div class="d-flex justify-content-end align-items-center">
-                                        @if (content.type === IrisMessageContentType.TEXT) {
-                                            <div
-                                                class="bubble-right"
-                                                [innerHTML]="(content | as: IrisTextMessageContent).textContent! | htmlForMarkdown: [] : undefined : undefined : true"
-                                            ></div>
-                                        }
-                                    </div>
-                                }
-                                @if (message.sender === IrisSender.LLM) {
-                                    <div style="width: fit-content; position: relative">
-                                        @if (content.type === IrisMessageContentType.TEXT) {
-                                            <div class="bubble-left">
-                                                <jhi-iris-citation-text [text]="(content | as: IrisTextMessageContent).textContent" [citationInfo]="citationInfo()" />
-                                            </div>
+                    }
+                    @if (rateLimitInfo()?.rateLimit; as rateLimit) {
+                        @if (rateLimit > 0) {
+                            <div class="toolbox">
+                                <span
+                                    class="rate-limit"
+                                    [ngbTooltip]="'artemisApp.exerciseChatbot.rateLimitTooltip' | artemisTranslate: { hours: rateLimitInfo()?.rateLimitTimeframeHours }"
+                                >
+                                    {{ rateLimitInfo()?.currentMessageCount }} / {{ rateLimit }}
+                                </span>
+                            </div>
+                        }
+                    }
+                    <div class="toolbox">
+                        @if (!isChatHistoryAvailable() && messages().length >= 1) {
+                            <button id="clear-chat-button" (click)="openNewSession()" class="header-control">
+                                <fa-icon [icon]="faPenToSquare" />
+                            </button>
+                        }
 
-                                            <div class="rate-message-buttons toolbox">
-                                                <button
-                                                    class="btn btn-sm"
-                                                    [class.thumbs-up-clicked]="(message | as: IrisAssistantMessage).helpful"
-                                                    [class.clickable]="!(message | as: IrisAssistantMessage).helpful"
-                                                    [class.rate-button-not-clicked]="!(message | as: IrisAssistantMessage).helpful"
-                                                    (click)="rateMessage(message, true)"
-                                                    [disabled]="(message | as: IrisAssistantMessage).helpful"
-                                                >
-                                                    <fa-icon [icon]="faThumbsUp" />
-                                                </button>
-                                                <button
-                                                    class="btn btn-sm"
-                                                    [class.thumbs-down-clicked]="(message | as: IrisAssistantMessage).helpful === false"
-                                                    [class.clickable]="(message | as: IrisAssistantMessage).helpful !== false"
-                                                    [class.rate-button-not-clicked]="(message | as: IrisAssistantMessage).helpful !== false"
-                                                    (click)="rateMessage(message, false)"
-                                                    [disabled]="(message | as: IrisAssistantMessage).helpful === false"
-                                                >
-                                                    <fa-icon [icon]="faThumbsDown" />
-                                                </button>
+                        @if (fullSize() !== undefined) {
+                            <button (click)="fullSizeToggle.emit()" class="header-control">
+                                @if (!fullSize()) {
+                                    <fa-icon [icon]="faExpand" />
+                                } @else {
+                                    <fa-icon [icon]="faCompress" />
+                                }
+                            </button>
+                        }
+
+                        @if (showCloseButton()) {
+                            <button (click)="closeChat()" class="header-control">
+                                <fa-icon [icon]="faXmark" />
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+        <div class="chat-body" [class.not-accepted]="!userAccepted()" [class.empty-state]="isEmptyState()" #chatBody>
+            @if (messages()?.length) {
+                <div class="messages" #messagesElement (scroll)="checkChatScroll()">
+                    <div class="messages-inner">
+                        @for (message of messages(); track message.id ?? $index; let i = $index) {
+                            <div
+                                animate.enter="message-entering"
+                                [class.animate-enabled]="message.id !== undefined && animatingMessageIds().has(message.id)"
+                                [style.transform-origin]="message.sender === IrisSender.USER ? 'bottom right' : 'bottom left'"
+                            >
+                                @for (content of message.content; track content.id ?? $index) {
+                                    <div>
+                                        @if (message.sender === IrisSender.USER) {
+                                            <div class="d-flex justify-content-end align-items-center">
+                                                @if (content.type === IrisMessageContentType.TEXT) {
+                                                    <span
+                                                        class="bubble-right"
+                                                        [innerHTML]="(content | as: IrisTextMessageContent).textContent! | htmlForMarkdown: [] : undefined : undefined : true"
+                                                    ></span>
+                                                }
+                                            </div>
+                                        }
+                                        @if (message.sender === IrisSender.LLM) {
+                                            <div style="width: fit-content; position: relative">
+                                                @if (content.type === IrisMessageContentType.TEXT) {
+                                                    <div class="bubble-left">
+                                                        <jhi-iris-citation-text [text]="(content | as: IrisTextMessageContent).textContent" [citationInfo]="citationInfo()" />
+                                                    </div>
+
+                                                    <div class="rate-message-buttons toolbox">
+                                                        <button
+                                                            class="btn btn-sm rate-button-not-clicked"
+                                                            (click)="copyMessage(message, i)"
+                                                            [attr.aria-label]="'artemisApp.exerciseChatbot.actions.copy' | artemisTranslate"
+                                                            [title]="'artemisApp.exerciseChatbot.actions.copy' | artemisTranslate"
+                                                        >
+                                                            <fa-icon [icon]="isCopied(message, i) ? faCheck : faCopy" />
+                                                        </button>
+                                                        <button
+                                                            class="btn btn-sm"
+                                                            [class.thumbs-up-clicked]="(message | as: IrisAssistantMessage).helpful"
+                                                            [class.clickable]="!(message | as: IrisAssistantMessage).helpful"
+                                                            [class.rate-button-not-clicked]="!(message | as: IrisAssistantMessage).helpful"
+                                                            (click)="rateMessage(message, true)"
+                                                            [disabled]="(message | as: IrisAssistantMessage).helpful"
+                                                            [attr.aria-label]="'artemisApp.exerciseChatbot.actions.goodResponse' | artemisTranslate"
+                                                            [title]="'artemisApp.exerciseChatbot.actions.goodResponse' | artemisTranslate"
+                                                        >
+                                                            <fa-icon [icon]="faThumbsUp" />
+                                                        </button>
+                                                        <button
+                                                            class="btn btn-sm"
+                                                            [class.thumbs-down-clicked]="(message | as: IrisAssistantMessage).helpful === false"
+                                                            [class.clickable]="(message | as: IrisAssistantMessage).helpful !== false"
+                                                            [class.rate-button-not-clicked]="(message | as: IrisAssistantMessage).helpful !== false"
+                                                            (click)="rateMessage(message, false)"
+                                                            [disabled]="(message | as: IrisAssistantMessage).helpful === false"
+                                                            [attr.aria-label]="'artemisApp.exerciseChatbot.actions.badResponse' | artemisTranslate"
+                                                            [title]="'artemisApp.exerciseChatbot.actions.badResponse' | artemisTranslate"
+                                                        >
+                                                            <fa-icon [icon]="faThumbsDown" />
+                                                        </button>
+                                                    </div>
+                                                }
                                             </div>
                                         }
                                     </div>
                                 }
                             </div>
                         }
+                        @if (
+                            suggestions()?.length &&
+                            isAIEnabled() &&
+                            active() &&
+                            (!rateLimitInfo()?.rateLimit || rateLimitInfo()?.currentMessageCount !== rateLimitInfo()?.rateLimit) &&
+                            !hasActiveStage()
+                        ) {
+                            <div animate.enter="suggestion-entering" animate.leave="suggestion-leaving">
+                                <div class="suggestions-container">
+                                    @for (suggestion of suggestions(); track $index) {
+                                        <button class="suggestion-button" (click)="onSuggestionClick(suggestion)" [disabled]="isLoading()">
+                                            @if (clickedSuggestion() === suggestion) {
+                                                <fa-icon [icon]="faCircleNotch" animation="spin" />
+                                            } @else {
+                                                <span>{{ suggestion }}</span>
+                                            }
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        }
                     </div>
-                }
-            </div>
-        }
-        @if (!messages()?.length && !isEmbeddedChat()) {
-            <div class="empty-chat-message">
-                <jhi-iris-logo [size]="IrisLogoSize.SMALL" />
-                <h3 jhiTranslate="artemisApp.iris.chat.helpOffer"></h3>
-            </div>
-        }
-        <jhi-chat-status-bar [stages]="stages()" />
-        <div class="scroll-to-bottom" [hidden]="isScrolledToBottom()" (click)="scrollToBottom('smooth')" #scrollArrow>
-            <fa-icon [icon]="faArrowDown" />
+                </div>
+            }
+            @if (!messages()?.length && !isEmbeddedChat()) {
+                <div class="empty-chat-message">
+                    <jhi-iris-logo [size]="IrisLogoSize.SMALL" />
+                    <h3 jhiTranslate="artemisApp.iris.chat.helpOffer"></h3>
+                </div>
+            }
+            <jhi-chat-status-bar [stages]="stages()" />
+            @if (!userAccepted()) {
+                <div class="p-chat">
+                    <div class="message-text" jhiTranslate="artemisApp.exerciseActions.externalLLMUsage.popUpMessage"></div>
+                    <div class="button-container">
+                        <button
+                            type="button"
+                            class="btn btn-primary"
+                            #acceptButton
+                            (click)="acceptPermission(LLMSelectionDecision.CLOUD_AI)"
+                            jhiTranslate="artemisApp.exerciseChatbot.accept"
+                        ></button>
+                        @if (showDeclineButton()) {
+                            <button type="button" class="btn btn-secondary" (click)="closeChat()" jhiTranslate="artemisApp.exerciseChatbot.decline"></button>
+                        }
+                    </div>
+                </div>
+            }
+            <button
+                type="button"
+                class="scroll-to-bottom"
+                [hidden]="isScrolledToBottom()"
+                (click)="scrollToBottom('smooth')"
+                #scrollArrow
+                [attr.aria-label]="'artemisApp.exerciseChatbot.scrollToBottom' | artemisTranslate"
+            >
+                <fa-icon [icon]="faArrowDown" />
+            </button>
+            @if (error()) {
+                <div class="client-chat-error">
+                    {{ error() | artemisTranslate: { hours: rateLimitInfo()?.rateLimitTimeframeHours } }}
+                </div>
+            }
+            @if (!active()) {
+                <div class="client-chat-error" [jhiTranslate]="IrisErrorMessageKey.IRIS_NOT_AVAILABLE"></div>
+            }
+            @if (userAccepted() === LLMSelectionDecision.NO_AI) {
+                <div class="client-chat-error" [jhiTranslate]="IrisErrorMessageKey.AI_USAGE_DECLINED"></div>
+            }
+            @if (isAIEnabled()) {
+                <div class="chat-input">
+                    <div class="chat-input-inner">
+                        <div class="textarea-wrapper">
+                            <textarea
+                                [ngModel]="newMessageTextContent()"
+                                (ngModelChange)="newMessageTextContent.set($event)"
+                                rows="1"
+                                class="form-control"
+                                (input)="onInput()"
+                                (paste)="onPaste()"
+                                [disabled]="
+                                    isLoading() ||
+                                    !active() ||
+                                    (rateLimitInfo()?.rateLimit && rateLimitInfo()?.currentMessageCount === rateLimitInfo()?.rateLimit) ||
+                                    hasActiveStage()
+                                "
+                                (keydown)="handleKey($event)"
+                                placeholder="{{ 'artemisApp.exerciseChatbot.inputMessage' | artemisTranslate }}"
+                                #messageTextarea
+                            >
+                            </textarea>
+                            <jhi-button
+                                id="irisSendButton"
+                                class="send-button"
+                                (onClick)="onSend()"
+                                [btnType]="ButtonType.SUCCESS_OUTLINE"
+                                [icon]="faPaperPlane"
+                                [disabled]="
+                                    !newMessageTextContent().trim() ||
+                                    isLoading() ||
+                                    !active() ||
+                                    (rateLimitInfo()?.rateLimit && rateLimitInfo()?.currentMessageCount === rateLimitInfo()?.rateLimit) ||
+                                    hasActiveStage()
+                                "
+                            />
+                        </div>
+                    </div>
+                    @if (!isChatGptWrapper()) {
+                        <span class="disclaimer-message" jhiTranslate="artemisApp.exerciseChatbot.disclaimer"></span>
+                    } @else {
+                        <span class="disclaimer-message" jhiTranslate="artemisApp.exerciseChatbot.disclaimerGPT"></span>
+                    }
+                </div>
+            }
         </div>
-        @if (error() && userAccepted() !== LLMSelectionDecision.NO_AI) {
-            <div class="client-chat-error">
-                {{ error() | artemisTranslate: { hours: rateLimitInfo()?.rateLimitTimeframeHours } }}
-            </div>
-        }
-        @if (userAccepted() === LLMSelectionDecision.NO_AI) {
-            <div class="client-chat-error" [jhiTranslate]="IrisErrorMessageKey.AI_USAGE_DECLINED"></div>
-        } @else if (!active()) {
-            <div class="client-chat-error" [jhiTranslate]="IrisErrorMessageKey.IRIS_NOT_AVAILABLE"></div>
-        }
-        @if (userAccepted() === LLMSelectionDecision.CLOUD_AI || userAccepted() === LLMSelectionDecision.LOCAL_AI) {
-            <div class="chat-input">
-                <textarea
-                    [ngModel]="newMessageTextContent()"
-                    (ngModelChange)="newMessageTextContent.set($event)"
-                    rows="1"
-                    class="form-control"
-                    (input)="onInput()"
-                    (paste)="onPaste()"
-                    type="text"
-                    [disabled]="isLoading() || !active() || (rateLimitInfo()?.rateLimit && rateLimitInfo()?.currentMessageCount === rateLimitInfo()?.rateLimit) || hasActiveStage()"
-                    (keydown)="handleKey($event)"
-                    placeholder="{{ 'artemisApp.exerciseChatbot.inputMessage' | artemisTranslate }}"
-                    #messageTextarea
-                ></textarea>
-                <jhi-button
-                    id="irisSendButton"
-                    (onClick)="onSend()"
-                    [btnType]="ButtonType.SUCCESS_OUTLINE"
-                    [icon]="faPaperPlane"
-                    [disabled]="isLoading() || !active() || (rateLimitInfo()?.rateLimit && rateLimitInfo()?.currentMessageCount === rateLimitInfo()?.rateLimit) || hasActiveStage()"
-                />
-                @if (!isChatGptWrapper()) {
-                    <span class="disclaimer-message" jhiTranslate="artemisApp.exerciseChatbot.disclaimer"></span>
-                } @else {
-                    <span class="disclaimer-message" jhiTranslate="artemisApp.exerciseChatbot.disclaimerGPT"></span>
-                }
-            </div>
-        }
     </div>
 </div>

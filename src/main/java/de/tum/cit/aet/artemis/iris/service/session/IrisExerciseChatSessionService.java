@@ -257,7 +257,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         }
 
         var user = studentParticipation.getStudent().orElseThrow();
-        var session = getCurrentSessionOrCreateIfNotExistsInternal(studentParticipation.getProgrammingExercise(), user, false);
+        var session = getCurrentSessionOrCreateIfNotExistsInternal(studentParticipation.getProgrammingExercise(), user);
         rateLimitService.checkRateLimitElseThrow(session, user);
         log.info("Build failed for user {}", user.getName());
         CompletableFuture
@@ -289,7 +289,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
             if (needsIntervention) {
                 log.info("Scores in the last 3 submissions did not improve for user {}", studentParticipation.getParticipant().getName());
                 var user = studentParticipation.getStudent().orElseThrow();
-                var session = getCurrentSessionOrCreateIfNotExistsInternal(studentParticipation.getProgrammingExercise(), user, false);
+                var session = getCurrentSessionOrCreateIfNotExistsInternal(studentParticipation.getProgrammingExercise(), user);
                 rateLimitService.checkRateLimitElseThrow(session, user);
                 try {
                     CompletableFuture.runAsync(() -> requestAndHandleResponse(session, Optional.of(IrisEventType.PROGRESS_STALLED.name().toLowerCase()), Optional.of(settings),
@@ -347,66 +347,49 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      * Gets the current Iris session for the exercise and user.
      * If no session exists or if the last session is from a different day, a new one is created.
      *
-     * @param exercise                    Programming exercise to get the session for
-     * @param user                        The user to get the session for
-     * @param sendInitialMessageIfCreated Whether to send an initial message from Iris if a new session is created
+     * @param exercise Programming exercise to get the session for
+     * @param user     The user to get the session for
      * @return The current Iris session
      */
-    public IrisProgrammingExerciseChatSession getCurrentSessionOrCreateIfNotExists(ProgrammingExercise exercise, User user, boolean sendInitialMessageIfCreated) {
+    public IrisProgrammingExerciseChatSession getCurrentSessionOrCreateIfNotExists(ProgrammingExercise exercise, User user) {
         user.hasOptedIntoLLMUsageElseThrow();
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         if (course != null) {
             irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
         }
-        return getCurrentSessionOrCreateIfNotExistsInternal(exercise, user, sendInitialMessageIfCreated);
+        return getCurrentSessionOrCreateIfNotExistsInternal(exercise, user);
     }
 
-    private IrisProgrammingExerciseChatSession getCurrentSessionOrCreateIfNotExistsInternal(ProgrammingExercise exercise, User user, boolean sendInitialMessageIfCreated) {
+    private IrisProgrammingExerciseChatSession getCurrentSessionOrCreateIfNotExistsInternal(ProgrammingExercise exercise, User user) {
         var sessionOptional = irisExerciseChatSessionRepository.findLatestByExerciseIdAndUserIdWithMessages(exercise.getId(), user.getId(), Pageable.ofSize(1)).stream()
                 .findFirst();
 
-        return sessionOptional.orElseGet(() -> createSessionInternal(exercise, user, sendInitialMessageIfCreated));
+        return sessionOptional.orElseGet(() -> createSessionInternal(exercise, user));
     }
 
     /**
      * Creates a new Iris session for the given exercise and user.
      *
-     * @param exercise           The exercise the session belongs to
-     * @param user               The user the session belongs to
-     * @param sendInitialMessage Whether to send an initial message from Iris
+     * @param exercise The exercise the session belongs to
+     * @param user     The user the session belongs to
      * @return The created session
      */
-    public IrisProgrammingExerciseChatSession createSession(ProgrammingExercise exercise, User user, boolean sendInitialMessage) {
+    public IrisProgrammingExerciseChatSession createSession(ProgrammingExercise exercise, User user) {
         user.hasOptedIntoLLMUsageElseThrow();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         if (course != null) {
             irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
         }
-        return createSessionInternal(exercise, user, sendInitialMessage);
+        return createSessionInternal(exercise, user);
     }
 
-    /**
-     * Creates a new Iris session for the given exercise and user.
-     *
-     * @param exercise           The exercise the session belongs to
-     * @param user               The user the session belongs to
-     * @param sendInitialMessage Whether to send an initial message from Iris
-     * @return The created session
-     */
-    private IrisProgrammingExerciseChatSession createSessionInternal(ProgrammingExercise exercise, User user, boolean sendInitialMessage) {
+    private IrisProgrammingExerciseChatSession createSessionInternal(ProgrammingExercise exercise, User user) {
         checkIfExamExercise(exercise);
 
         var exerciseChat = new IrisProgrammingExerciseChatSession(exercise, user);
         exerciseChat.setTitle(AbstractIrisChatSessionService.getLocalizedNewChatTitle(user.getLangKey(), messageSource));
-        var session = irisExerciseChatSessionRepository.save(exerciseChat);
-
-        if (sendInitialMessage) {
-            // Run async to allow the session to be returned immediately
-            CompletableFuture.runAsync(() -> requestAndHandleResponse(session));
-        }
-
-        return session;
+        return irisExerciseChatSessionRepository.save(exerciseChat);
     }
 
     @Override

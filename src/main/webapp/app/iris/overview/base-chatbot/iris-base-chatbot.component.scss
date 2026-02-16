@@ -1,7 +1,7 @@
-// Base z-index for message and bubble layering
-$message-base-z-index: 0;
-
 :host {
+    --iris-chat-content-max-width: 800px;
+    --iris-chat-content-margin-inline: auto;
+
     display: flex;
     flex-direction: column;
     flex: 1;
@@ -9,18 +9,9 @@ $message-base-z-index: 0;
     border-radius: var(--bs-border-radius-lg);
 }
 
-.header-start {
-    text-align: start;
-    flex: 1;
-    font-size: 20px;
-    display: flex;
-    gap: 4px;
-    min-width: 0;
-
-    .word-iris,
-    a {
-        align-self: center;
-    }
+:host.layout-widget {
+    --iris-chat-content-max-width: 100%;
+    --iris-chat-content-margin-inline: 0;
 }
 
 .button-container {
@@ -77,7 +68,7 @@ $message-base-z-index: 0;
     display: grid;
     grid-template-rows: 0fr;
     opacity: 0;
-    animation: suggestion-enter 0.3s 1.5s ease-in-out forwards;
+    animation: suggestion-enter 0.3s 1s ease-in-out forwards;
 
     > * {
         overflow: hidden;
@@ -123,16 +114,15 @@ $message-base-z-index: 0;
 .suggestions-container {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
-    padding: 10px;
+    gap: 16px;
     justify-content: center;
     align-items: stretch;
 }
 
 .suggestion-button {
-    background-color: var(--iris-suggestion-background);
+    background-color: var(--iris-secondary-background);
     color: var(--bs-body-color);
-    padding: 5px 10px;
+    padding: 8px 16px;
     cursor: pointer;
     font-size: 12px;
     text-wrap: wrap;
@@ -147,116 +137,36 @@ $message-base-z-index: 0;
     flex: 1;
 
     &:hover {
-        background-color: var(--iris-tool-background);
+        background-color: var(--iris-tertiary-background);
     }
 }
 
 .toolbox {
-    background: var(--iris-tool-background);
-    border: 1px solid var(--border-color);
-    border-radius: var(--bs-border-radius-lg);
     display: flex;
+    gap: 4px;
+
+    .header-control {
+        background-color: var(--iris-secondary-background);
+        border: none;
+        border-radius: var(--bs-border-radius-lg);
+        color: var(--secondary);
+    }
 
     button:hover {
-        color: white !important;
+        background-color: var(--iris-accent-background);
     }
 }
 
 .related-entity-button {
+    background-color: var(--iris-secondary-background);
     display: flex;
     align-items: center;
     gap: 6px;
     font-size: 0.8rem;
 }
 
-.chat-header {
-    display: flex;
-    font-weight: bold;
-    padding: 5px;
-    width: 100%;
-    height: 36px;
-    flex: 0;
-    z-index: 10;
-    background-color: var(--iris-chat-widget-background);
-    border-radius: var(--bs-border-radius-lg) var(--bs-border-radius-lg) 0 0;
-    box-shadow: 0 15px 15px -15px rgba(0, 0, 0, 0.3);
-    border-bottom: 1px solid var(--bs-border-color);
-
-    button {
-        // Safari doing Safari things
-        padding-block: 1px;
-    }
-}
-
-.header-control {
-    border: none;
-    background: transparent;
-    color: var(--secondary);
-}
-
 .rate-limit {
     padding: 3px 5px;
-}
-
-.info-button {
-    cursor: pointer;
-    vertical-align: middle;
-    padding-left: 3px;
-    font-size: 13px;
-    color: var(--blue);
-}
-
-.chat-body {
-    height: 100%;
-    overflow-y: hidden;
-    overflow-x: hidden;
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-width: 0;
-
-    &.not-accepted {
-        height: 100%;
-    }
-
-    .messages {
-        padding: 0 10px 10px;
-        display: flex;
-        flex-direction: column-reverse;
-        gap: 5px;
-        flex: 1;
-        overflow-y: auto;
-        overflow-x: hidden;
-        min-width: 0;
-        scrollbar-width: thin;
-        scrollbar-color: var(--bs-border-color) transparent;
-
-        &::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        &::-webkit-scrollbar-thumb {
-            background-color: var(--bs-border-color);
-            border-radius: 6px;
-        }
-
-        &::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        > div {
-            position: relative;
-            z-index: $message-base-z-index; // Base layer for messages
-        }
-
-        > div:hover {
-            z-index: $message-base-z-index + 2; // Elevated on hover to appear above other messages
-        }
-
-        > div:first-child {
-            margin-top: 5px;
-        }
-    }
 }
 
 .empty-chat-message {
@@ -264,42 +174,19 @@ $message-base-z-index: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    flex: 1;
+    justify-content: flex-start;
     gap: 8px;
 }
 
 :host {
     .bubble-left,
     .bubble-right {
-        --r: 13px; /* the radius */
-        --t: 10px; /* the size of the tail */
-
-        max-width: 100%;
-        margin-bottom: 10px;
         color: var(--bs-body-color);
-        padding: 10px;
-        position: relative;
-        z-index: $message-base-z-index; // Bubble container at base layer
-        overflow: visible;
-        background-color: transparent;
 
         // prettier-ignore
-        &::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background-color: var(--bubble-bg);
-            z-index: $message-base-z-index - 1; // Background behind bubble content
-            -webkit-mask: radial-gradient(var(--t) at var(--_d) 0, #0000 98%, #000 102%) var(--_d) 100% / calc(100% - var(--r)) var(--t) no-repeat,
+        -webkit-mask: radial-gradient(var(--t) at var(--_d) 0, #0000 98%, #000 102%) var(--_d) 100% / calc(100% - var(--r)) var(--t) no-repeat,
             conic-gradient(at var(--r) var(--r), #000 75%, #0000 0) calc(var(--r) / -2) calc(var(--r) / -2) padding-box,
             radial-gradient(50% 50%, #000 98%, #0000 101%) 0 0 / var(--r) var(--r) space padding-box;
-        }
-
-        > * {
-            position: relative;
-            z-index: $message-base-z-index + 1; // Content above bubble background
-        }
         overflow-wrap: break-word;
 
         ::ng-deep {
@@ -379,28 +266,27 @@ $message-base-z-index: 0;
 
 .bubble-left {
     --_d: 0%;
-    --bubble-bg: var(--iris-client-chat-background);
-
-    border-left: var(--t) solid #0000;
-    margin-right: var(--t);
-    place-self: start;
+    margin-bottom: 8px;
+    place-self: center;
+    max-width: 100%;
 }
 
 .bubble-right {
     --_d: 100%;
-    --bubble-bg: var(--iris-my-chat-background);
-
-    border-right: var(--t) solid #0000;
-    margin-left: var(--t);
     place-self: end;
     float: right;
+    background-color: var(--iris-tertiary-background);
+    border-radius: 8px;
+    padding: 16px;
+    max-width: 90%;
 }
 
 .client-chat-error {
     background-color: var(--artemis-alert-danger-background);
     color: var(--bs-body-color);
-    padding: 5px;
+    padding: 4px;
     border-top: 1px solid var(--artemis-alert-danger-border);
+    border-radius: 4px;
     display: flex;
     align-content: center;
     justify-content: center;
@@ -416,100 +302,297 @@ pre {
     font-size: inherit;
 }
 
-.chat-input {
+// chat container layout
+.chat-container,
+.chat-layout {
     display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    background-color: var(--iris-client-chat-input);
-    padding: 5px;
-    flex: 0 1 auto;
+    flex: 1;
+    min-height: 0;
 }
 
-.disclaimer-message {
-    font-size: 60%;
-    color: var(--gray-600);
-    text-align: center;
-    width: 100%;
-    padding-top: 5px;
+.chat-layout {
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
 }
 
 .chat-container {
-    flex: 1;
+    flex-direction: column;
     overflow-y: hidden;
-    display: flex;
+
+    .chat-header {
+        background-color: var(--iris-primary-background);
+        border-radius: 0.25rem 0.25rem 0 0;
+        display: flex;
+        justify-content: flex-end;
+        font-weight: bold;
+        padding: 4px;
+        height: 40px;
+        flex: 0;
+        z-index: 10;
+
+        &.has-content {
+            box-shadow: 0 10px 10px -15px rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid var(--bs-border-color);
+        }
+
+        button {
+            // Safari doing Safari things
+            padding-block: 1px;
+        }
+    }
+
+    .chat-body {
+        height: 100%;
+        overflow-y: hidden;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        align-items: stretch; // stretch children to full width
+        gap: 8px;
+        margin: 0 16px;
+
+        &.not-accepted {
+            height: 100%;
+        }
+
+        .messages-inner,
+        .chat-input,
+        .client-chat-error,
+        .empty-chat-message {
+            width: 100%; // keep the scrollbar full width but limit the content width
+            max-width: var(--iris-chat-content-max-width);
+            margin-inline: var(--iris-chat-content-margin-inline);
+        }
+
+        &.empty-state {
+            position: relative;
+            justify-content: center;
+            padding: 0 16px;
+
+            .disclaimer-message {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                margin-inline: auto;
+            }
+        }
+
+        .messages {
+            flex: 1;
+            overflow-x: hidden;
+            overflow-y: auto;
+            scrollbar-width: auto;
+            scrollbar-color: var(--bs-border-color) transparent;
+
+            &::-webkit-scrollbar {
+                width: 6px;
+            }
+
+            &::-webkit-scrollbar-thumb {
+                background-color: var(--bs-border-color);
+                border-radius: 6px;
+            }
+
+            &::-webkit-scrollbar-track {
+                background: transparent;
+            }
+
+            > div:first-child {
+                margin-top: 24px;
+            }
+
+            .messages-inner {
+                display: flex;
+                flex-direction: column;
+                gap: 40px;
+                margin-inline: auto;
+                padding-bottom: 8px;
+            }
+        }
+    }
 }
 
+.chat-input {
+    display: flex;
+    flex-direction: column;
+    flex: 0 1 auto;
+
+    textarea {
+        background-color: var(--iris-secondary-background);
+        flex: 1 0 auto;
+        padding: 16px 56px 36px 16px;
+        resize: none;
+        border-radius: 8px;
+        min-height: 72px;
+        max-height: 200px;
+        overflow-y: auto;
+
+        &:focus {
+            outline: none;
+            box-shadow: none;
+            border-color: var(--primary);
+        }
+
+        &:disabled {
+            opacity: 0.25;
+            cursor: not-allowed;
+            background-color: var(--iris-secondary-background);
+        }
+    }
+
+    &-inner {
+        display: flex;
+        align-items: stretch;
+    }
+
+    .textarea-wrapper {
+        position: relative;
+        display: flex;
+        flex: 1;
+    }
+}
+
+.new-chat-button {
+    padding: 8px;
+    margin: 0 8px;
+    cursor: pointer;
+    border-radius: var(--bs-border-radius-lg);
+
+    &:hover {
+        background-color: var(--iris-accent-background);
+        border-radius: 6px;
+        padding: 8px;
+    }
+}
+
+// chat sidebar on client ui
 .chat-history {
-    background-color: var(--iris-chat-history-background);
-    width: 0;
+    border-radius: 0.25rem 0 0 0.25rem;
+    border-right: 0.5px solid var(--border-color);
+    width: 40px;
+    height: 100%;
+    flex-shrink: 0;
     overflow-x: hidden;
     transition:
         width 0.3s ease,
-        height 0.3s ease,
         background-color 0.3s ease;
 
-    .chat-history-label p {
-        color: var(--iris-chat-history-label-color);
+    &-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    &-top,
+    &-bottom {
+        position: sticky;
+        z-index: 1;
+    }
+
+    &-top {
+        top: 0;
+    }
+
+    &-bottom {
+        bottom: 0;
+    }
+
+    &-list {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--bs-border-color) transparent;
+
+        &::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background-color: var(--bs-border-color);
+            border-radius: 6px;
+        }
+
+        &::-webkit-scrollbar-track {
+            background: transparent;
+        }
+    }
+
+    &-info-link {
+        display: flex;
+        justify-content: flex-start;
+        padding: 0 8px 8px;
+
+        .info-button {
+            cursor: pointer;
+            vertical-align: middle;
+            font-size: 15px;
+            color: var(--bs-body-color);
+        }
+    }
+
+    &-label p {
+        color: var(--iris-label-color);
         font-size: 0.8rem;
-        margin: 0.5rem 0 0.2rem;
+        margin: 0.5rem 0;
         padding-left: 1rem;
     }
 
-    .double-arrow-icon {
-        transition: transform 0.3s ease;
-        transform: rotate(180deg);
-        cursor: pointer;
+    &-divider {
+        height: 1px;
+        background-color: var(--bs-border-color);
+        margin: 0.5rem 0.75rem;
     }
 
-    .history-closed {
-        transform: rotate(0deg);
-    }
+    &-collapsed {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding-top: 16px;
+        height: 100%;
+        gap: 4px;
 
-    .icon-negative {
-        margin-right: -5px;
-    }
+        .collapsed-icon-button {
+            padding: 6px 8px;
+            cursor: pointer;
+            border-radius: var(--bs-border-radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--bs-body-color);
 
-    h6 {
-        font-size: 20px;
-        font-weight: bold;
-        padding: 1rem 0 0 1rem;
-        margin: 0;
-    }
+            &:hover {
+                background-color: var(--iris-accent-background);
+            }
+        }
 
-    .chat-history-close-btn {
-        padding: 1rem;
-        display: grid;
-        place-items: center;
-    }
+        .new-chat-button {
+            margin: 0;
+            padding: 6px 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-    .chat-history-open-btn {
-        display: grid;
-        place-items: center;
-        padding: 1rem;
+        .collapsed-bottom {
+            margin-top: auto;
+            padding-bottom: 4px;
+        }
     }
 }
 
 .chat-history.chat-history-open {
+    background-color: var(--iris-secondary-background);
     width: 17rem;
-    height: 100%;
-}
 
-.chat-input textarea {
-    flex: 1;
-    padding: 5px 13px;
-    margin-right: 5px;
-    resize: none;
-
-    &:focus {
-        outline: none;
-        box-shadow: none;
-        border-color: var(--primary);
+    .chat-history-collapsed {
+        display: none;
     }
 }
 
 .p-chat {
-    background-color: var(--iris-client-chat-background);
+    background-color: var(--iris-tertiary-background);
     color: var(--bs-body-color);
     border-radius: var(--bs-border-radius-lg);
     display: flex;
@@ -522,12 +605,19 @@ pre {
     padding: 10px;
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
-    border-bottom: 1px solid var(--iris-client-chat-background);
+    border-bottom: 1px solid var(--bs-border-color);
+}
+
+.disclaimer-message {
+    font-size: 80%;
+    color: var(--iris-label-color);
+    text-align: center;
+    padding: 8px;
 }
 
 .scroll-to-bottom {
-    position: absolute;
-    bottom: 60px;
+    position: fixed;
+    bottom: 48px;
     right: 20px;
     width: 30px;
     height: 30px;
@@ -539,34 +629,34 @@ pre {
     align-items: center;
     cursor: pointer;
     box-shadow: 0 0 50px rgba(0, 0, 0, 0.4);
+    z-index: 1;
 }
 
 .rate-message-buttons {
     display: flex;
     justify-content: flex-end;
-    position: absolute;
-    left: 20px;
-    bottom: -0.5lh;
-    padding: 3px;
-    height: 1lh;
-    gap: 5px;
-    background: var(--iris-rate-background);
+    width: fit-content;
 
     button.btn {
-        padding: 0;
+        padding: 4px 6px;
         display: flex;
         align-items: center;
         justify-content: center;
         border: none;
+
+        &:hover {
+            background-color: var(--iris-tertiary-background);
+            border-radius: var(--bs-border-radius-lg);
+        }
     }
 }
 
 .thumbs-up-clicked {
-    color: var(--green);
+    color: var(--success);
 }
 
 .thumbs-down-clicked {
-    color: var(--red);
+    color: var(--danger);
 }
 
 .rate-button-not-clicked {
@@ -574,7 +664,35 @@ pre {
 }
 
 #irisSendButton {
-    margin-bottom: auto;
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    margin-bottom: 0;
+    transform: none;
+
+    ::ng-deep button {
+        border-radius: 8px;
+        padding: 6px 8px;
+        background-color: var(--primary);
+        border-color: var(--primary);
+        color: var(--white);
+        transition:
+            background-color 0.3s ease,
+            border-color 0.3s ease;
+
+        &:hover .svg-inline--fa {
+            transform: rotate(45deg);
+        }
+
+        &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    }
+
+    ::ng-deep .svg-inline--fa {
+        transition: transform 0.3s ease;
+    }
 }
 
 ::ng-deep ngb-modal-backdrop {
@@ -589,73 +707,4 @@ cdk-global-scrollblock {
     position: fixed;
     width: 100%;
     overflow-y: auto;
-}
-
-.btn-sidebar-collapse {
-    margin: 0 1rem 0 0.5rem;
-    position: relative;
-    overflow: hidden;
-    display: inline-flex;
-    align-items: center;
-    justify-content: start;
-    background-color: transparent;
-
-    &:hover {
-        color: var(--primary);
-    }
-
-    &:focus {
-        border-color: transparent;
-    }
-
-    transition: border-color 0.2s 0.3s + 0.2s * 2 ease-in-out;
-}
-
-.btn-sidebar-collapse::after,
-.btn-sidebar-collapse::before {
-    content: '';
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -2;
-    position: absolute;
-    transition: background-color 0.2s ease-in-out;
-}
-
-.btn-sidebar-collapse::after {
-    background-color: var(--iris-chat-header-button-background);
-}
-
-.btn-sidebar-collapse:hover::after {
-    background-color: var(--sidebar-card-selected-bg);
-}
-
-.btn-sidebar-collapse:hover::before {
-    background-color: var(--iris-chat-header-button-background);
-}
-
-.btn-sidebar-collapse:active::after {
-    background-color: var(--iris-chat-header-button-background);
-}
-
-.btn-sidebar-collapse:active::before {
-    background-color: var(--sidebar-card-selected-bg);
-}
-
-.btn-sidebar-collapse-chevron-start {
-    margin-right: -0.7rem;
-}
-
-.btn-sidebar-collapse-chevron {
-    transform: rotateZ(-180deg);
-    display: inline-block;
-    overflow: hidden;
-    margin-left: 0.3rem;
-    transition: transform 0.2s 0.3s ease-in-out;
-}
-
-.is-collapsed .btn-sidebar-collapse-chevron {
-    transform: rotateZ(0deg);
-    transition: transform 0.2s 0.3s ease-in-out;
 }
