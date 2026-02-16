@@ -26,24 +26,6 @@
     margin-left: 1px;
 }
 
-.monaco-add-review-comment-button:hover::before {
-    filter: brightness(0.9);
-}
-
-.monaco-add-review-comment-button::before {
-    cursor: pointer;
-    content: '\ea6b'; // codicon-comment-add
-    font-family: codicon;
-    font-size: 1.1em;
-    background-color: var(--link-color);
-    color: var(--white);
-    border-radius: 35%;
-
-    // Cosmetic adjustment: create a small gap between the button and the line number
-    padding-left: 0;
-    margin-left: 1px;
-}
-
 .monaco-diff-line-highlight {
     background-color: var(--monaco-editor-diff-line-highlight);
 }

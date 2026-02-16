@@ -26,27 +26,6 @@ export class ExerciseReviewCommentService {
     }
 
     /**
-     * Creates a thread with an initial user comment and returns an updated thread list.
-     *
-     * @param exerciseId The exercise that owns the thread.
-     * @param threads The current thread list.
-     * @param request The thread creation payload.
-     * @returns The updated thread list containing the newly created thread.
-     */
-    createThreadWithInitialComment(exerciseId: number, threads: CommentThread[], request: CreateCommentThread): Observable<CommentThread[]> {
-        return this.createThread(exerciseId, request).pipe(
-            map((response) => response.body),
-            map((thread) => {
-                if (!thread?.id) {
-                    return threads;
-                }
-                const newThread: CommentThread = thread.comments ? thread : { ...thread, comments: [] };
-                return this.appendThreadToThreads(threads, newThread);
-            }),
-        );
-    }
-
-    /**
      * Loads all review comment threads for an exercise and unwraps the response body.
      *
      * @param exerciseId The exercise to fetch threads for.
@@ -79,22 +58,6 @@ export class ExerciseReviewCommentService {
     }
 
     /**
-     * Creates a user reply and applies it to the local thread list.
-     *
-     * @param exerciseId The exercise that owns the thread.
-     * @param threads The current thread list.
-     * @param threadId The thread to add the reply to.
-     * @param text The reply text.
-     * @returns The updated thread list.
-     */
-    addReplyToThread(exerciseId: number, threads: CommentThread[], threadId: number, comment: CreateComment): Observable<CommentThread[]> {
-        return this.createUserComment(exerciseId, threadId, comment).pipe(
-            map((response) => response.body),
-            map((createdComment) => (createdComment ? this.appendCommentToThreads(threads, createdComment) : threads)),
-        );
-    }
-
-    /**
      * Updates the resolved state of a thread.
      *
      * @param exerciseId The exercise that owns the thread.
@@ -105,22 +68,6 @@ export class ExerciseReviewCommentService {
     updateThreadResolvedState(exerciseId: number, threadId: number, resolved: boolean): Observable<CommentThreadResponseType> {
         const body: UpdateThreadResolvedState = { resolved };
         return this.http.put<CommentThread>(`${this.resourceUrl}/${exerciseId}/review-threads/${threadId}/resolved`, body, { observe: 'response' });
-    }
-
-    /**
-     * Updates a thread's resolved state and applies the updated thread to the local list.
-     *
-     * @param exerciseId The exercise that owns the thread.
-     * @param threads The current thread list.
-     * @param threadId The thread to update.
-     * @param resolved The new resolved state.
-     * @returns The updated thread list.
-     */
-    updateResolvedStateInThreads(exerciseId: number, threads: CommentThread[], threadId: number, resolved: boolean): Observable<CommentThread[]> {
-        return this.updateThreadResolvedState(exerciseId, threadId, resolved).pipe(
-            map((response) => response.body),
-            map((updatedThread) => (updatedThread?.id ? this.replaceThreadInThreads(threads, updatedThread) : threads)),
-        );
     }
 
     /**
@@ -136,22 +83,6 @@ export class ExerciseReviewCommentService {
     }
 
     /**
-     * Updates a user comment and applies it to the local thread list.
-     *
-     * @param exerciseId The exercise that owns the comment.
-     * @param threads The current thread list.
-     * @param commentId The comment to update.
-     * @param text The updated comment text.
-     * @returns The updated thread list.
-     */
-    updateUserCommentInThreads(exerciseId: number, threads: CommentThread[], commentId: number, content: UpdateCommentContent): Observable<CommentThread[]> {
-        return this.updateUserCommentContent(exerciseId, commentId, content).pipe(
-            map((response) => response.body),
-            map((updatedComment) => (updatedComment ? this.updateCommentInThreads(threads, updatedComment) : threads)),
-        );
-    }
-
-    /**
      * Deletes a review comment by id.
      *
      * @param exerciseId The exercise that owns the comment.
@@ -160,18 +91,6 @@ export class ExerciseReviewCommentService {
      */
     deleteComment(exerciseId: number, commentId: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/review-comments/${commentId}`, { observe: 'response' });
-    }
-
-    /**
-     * Deletes a comment and applies local thread cleanup.
-     *
-     * @param exerciseId The exercise that owns the comment.
-     * @param threads The current thread list.
-     * @param commentId The id of the comment to delete.
-     * @returns The updated thread list.
-     */
-    deleteCommentFromThreads(exerciseId: number, threads: CommentThread[], commentId: number): Observable<CommentThread[]> {
-        return this.deleteComment(exerciseId, commentId).pipe(map(() => this.removeCommentFromThreads(threads, commentId)));
     }
 
     /**

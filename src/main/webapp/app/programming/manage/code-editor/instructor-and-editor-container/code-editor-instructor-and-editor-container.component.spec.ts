@@ -51,7 +51,17 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
     let reviewCommentService: jest.Mocked<
         Pick<
             ExerciseReviewCommentService,
-            'loadThreads' | 'createThreadWithInitialComment' | 'deleteCommentFromThreads' | 'addReplyToThread' | 'updateUserCommentInThreads' | 'updateResolvedStateInThreads'
+            | 'loadThreads'
+            | 'createThread'
+            | 'createUserComment'
+            | 'updateUserCommentContent'
+            | 'deleteComment'
+            | 'updateThreadResolvedState'
+            | 'appendThreadToThreads'
+            | 'removeCommentFromThreads'
+            | 'appendCommentToThreads'
+            | 'updateCommentInThreads'
+            | 'replaceThreadInThreads'
         >
     >;
 
@@ -152,11 +162,16 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
     beforeEach(async () => {
         reviewCommentService = {
             loadThreads: jest.fn(),
-            createThreadWithInitialComment: jest.fn(),
-            deleteCommentFromThreads: jest.fn(),
-            addReplyToThread: jest.fn(),
-            updateUserCommentInThreads: jest.fn(),
-            updateResolvedStateInThreads: jest.fn(),
+            createThread: jest.fn(),
+            createUserComment: jest.fn(),
+            updateUserCommentContent: jest.fn(),
+            deleteComment: jest.fn(),
+            updateThreadResolvedState: jest.fn(),
+            appendThreadToThreads: jest.fn(),
+            removeCommentFromThreads: jest.fn(),
+            appendCommentToThreads: jest.fn(),
+            updateCommentInThreads: jest.fn(),
+            replaceThreadInThreads: jest.fn(),
         };
 
         await TestBed.configureTestingModule({
@@ -538,7 +553,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
         it('onSubmitReviewComment creates thread with initial comment and updates local threads', () => {
             const updatedThreads = [{ id: 3 }] as any;
-            reviewCommentService.createThreadWithInitialComment.mockReturnValue(of(updatedThreads));
+            reviewCommentService.createThread.mockReturnValue(of({ body: { id: 3, comments: [] } } as any));
+            reviewCommentService.appendThreadToThreads.mockReturnValue(updatedThreads);
             comp.reviewCommentThreads.set([]);
 
             const createThreadRequest = {
@@ -549,7 +565,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             };
             comp.onSubmitReviewComment(createThreadRequest);
 
-            expect(reviewCommentService.createThreadWithInitialComment).toHaveBeenCalledWith(42, [], createThreadRequest);
+            expect(reviewCommentService.createThread).toHaveBeenCalledWith(42, createThreadRequest);
+            expect(reviewCommentService.appendThreadToThreads).toHaveBeenCalledWith([], { id: 3, comments: [] });
             expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
         });
 
@@ -563,11 +580,11 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
                 initialComment: { contentType: 'USER', text: 'Initial comment' } as const,
             });
 
-            expect(reviewCommentService.createThreadWithInitialComment).not.toHaveBeenCalled();
+            expect(reviewCommentService.createThread).not.toHaveBeenCalled();
         });
 
         it('onSubmitReviewComment shows saveFailed error on service failure', () => {
-            reviewCommentService.createThreadWithInitialComment.mockReturnValue(throwError(() => new Error('fail')));
+            reviewCommentService.createThread.mockReturnValue(throwError(() => new Error('fail')));
             const errorSpy = jest.spyOn(alertService, 'error');
 
             comp.onSubmitReviewComment({
@@ -582,12 +599,14 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
         it('onDeleteReviewComment deletes comment and updates local threads', () => {
             const updatedThreads = [{ id: 4 }] as any;
-            reviewCommentService.deleteCommentFromThreads.mockReturnValue(of(updatedThreads));
+            reviewCommentService.deleteComment.mockReturnValue(of({} as any));
+            reviewCommentService.removeCommentFromThreads.mockReturnValue(updatedThreads);
             comp.reviewCommentThreads.set([{ id: 1 }] as any);
 
             comp.onDeleteReviewComment(99);
 
-            expect(reviewCommentService.deleteCommentFromThreads).toHaveBeenCalledWith(42, [{ id: 1 }], 99);
+            expect(reviewCommentService.deleteComment).toHaveBeenCalledWith(42, 99);
+            expect(reviewCommentService.removeCommentFromThreads).toHaveBeenCalledWith([{ id: 1 }], 99);
             expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
         });
 
@@ -596,11 +615,11 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
             comp.onDeleteReviewComment(99);
 
-            expect(reviewCommentService.deleteCommentFromThreads).not.toHaveBeenCalled();
+            expect(reviewCommentService.deleteComment).not.toHaveBeenCalled();
         });
 
         it('onDeleteReviewComment shows deleteFailed error on service failure', () => {
-            reviewCommentService.deleteCommentFromThreads.mockReturnValue(throwError(() => new Error('fail')));
+            reviewCommentService.deleteComment.mockReturnValue(throwError(() => new Error('fail')));
             const errorSpy = jest.spyOn(alertService, 'error');
 
             comp.onDeleteReviewComment(99);
@@ -610,13 +629,15 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
         it('onReplyReviewComment adds reply and updates local threads', () => {
             const updatedThreads = [{ id: 5, comments: [{ id: 10 }] }] as any;
-            reviewCommentService.addReplyToThread.mockReturnValue(of(updatedThreads));
+            reviewCommentService.createUserComment.mockReturnValue(of({ body: { id: 10, threadId: 5 } } as any));
+            reviewCommentService.appendCommentToThreads.mockReturnValue(updatedThreads);
             comp.reviewCommentThreads.set([{ id: 5, comments: [] }] as any);
             const comment = { contentType: 'USER', text: 'Reply' } as const;
 
             comp.onReplyReviewComment({ threadId: 5, comment });
 
-            expect(reviewCommentService.addReplyToThread).toHaveBeenCalledWith(42, [{ id: 5, comments: [] }], 5, comment);
+            expect(reviewCommentService.createUserComment).toHaveBeenCalledWith(42, 5, comment);
+            expect(reviewCommentService.appendCommentToThreads).toHaveBeenCalledWith([{ id: 5, comments: [] }], { id: 10, threadId: 5 });
             expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
         });
 
@@ -625,11 +646,11 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
             comp.onReplyReviewComment({ threadId: 5, comment: { contentType: 'USER', text: 'Reply' } as const });
 
-            expect(reviewCommentService.addReplyToThread).not.toHaveBeenCalled();
+            expect(reviewCommentService.createUserComment).not.toHaveBeenCalled();
         });
 
         it('onReplyReviewComment shows saveFailed error on service failure', () => {
-            reviewCommentService.addReplyToThread.mockReturnValue(throwError(() => new Error('fail')));
+            reviewCommentService.createUserComment.mockReturnValue(throwError(() => new Error('fail')));
             const errorSpy = jest.spyOn(alertService, 'error');
 
             comp.onReplyReviewComment({ threadId: 5, comment: { contentType: 'USER', text: 'Reply' } as const });
@@ -639,13 +660,15 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
         it('onUpdateReviewComment updates comment content and local threads', () => {
             const updatedThreads = [{ id: 5 }] as any;
-            reviewCommentService.updateUserCommentInThreads.mockReturnValue(of(updatedThreads));
-            comp.reviewCommentThreads.set([{ id: 1 }] as any);
             const content = { contentType: 'USER', text: 'Updated' } as const;
+            reviewCommentService.updateUserCommentContent.mockReturnValue(of({ body: { id: 7, threadId: 1, content } } as any));
+            reviewCommentService.updateCommentInThreads.mockReturnValue(updatedThreads);
+            comp.reviewCommentThreads.set([{ id: 1 }] as any);
 
             comp.onUpdateReviewComment({ commentId: 7, content });
 
-            expect(reviewCommentService.updateUserCommentInThreads).toHaveBeenCalledWith(42, [{ id: 1 }], 7, content);
+            expect(reviewCommentService.updateUserCommentContent).toHaveBeenCalledWith(42, 7, content);
+            expect(reviewCommentService.updateCommentInThreads).toHaveBeenCalledWith([{ id: 1 }], { id: 7, threadId: 1, content });
             expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
         });
 
@@ -654,11 +677,11 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
             comp.onUpdateReviewComment({ commentId: 7, content: { contentType: 'USER', text: 'Updated' } as const });
 
-            expect(reviewCommentService.updateUserCommentInThreads).not.toHaveBeenCalled();
+            expect(reviewCommentService.updateUserCommentContent).not.toHaveBeenCalled();
         });
 
         it('onUpdateReviewComment shows saveFailed error on service failure', () => {
-            reviewCommentService.updateUserCommentInThreads.mockReturnValue(throwError(() => new Error('fail')));
+            reviewCommentService.updateUserCommentContent.mockReturnValue(throwError(() => new Error('fail')));
             const errorSpy = jest.spyOn(alertService, 'error');
 
             comp.onUpdateReviewComment({ commentId: 7, content: { contentType: 'USER', text: 'Updated' } as const });
@@ -668,12 +691,14 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
         it('onToggleResolveReviewThread updates resolved state and local threads', () => {
             const updatedThreads = [{ id: 6, resolved: true }] as any;
-            reviewCommentService.updateResolvedStateInThreads.mockReturnValue(of(updatedThreads));
+            reviewCommentService.updateThreadResolvedState.mockReturnValue(of({ body: { id: 6, resolved: true } } as any));
+            reviewCommentService.replaceThreadInThreads.mockReturnValue(updatedThreads);
             comp.reviewCommentThreads.set([{ id: 1, resolved: false }] as any);
 
             comp.onToggleResolveReviewThread({ threadId: 6, resolved: true });
 
-            expect(reviewCommentService.updateResolvedStateInThreads).toHaveBeenCalledWith(42, [{ id: 1, resolved: false }], 6, true);
+            expect(reviewCommentService.updateThreadResolvedState).toHaveBeenCalledWith(42, 6, true);
+            expect(reviewCommentService.replaceThreadInThreads).toHaveBeenCalledWith([{ id: 1, resolved: false }], { id: 6, resolved: true });
             expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
         });
 
@@ -682,11 +707,11 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
             comp.onToggleResolveReviewThread({ threadId: 6, resolved: true });
 
-            expect(reviewCommentService.updateResolvedStateInThreads).not.toHaveBeenCalled();
+            expect(reviewCommentService.updateThreadResolvedState).not.toHaveBeenCalled();
         });
 
         it('onToggleResolveReviewThread shows resolveFailed error on service failure', () => {
-            reviewCommentService.updateResolvedStateInThreads.mockReturnValue(throwError(() => new Error('fail')));
+            reviewCommentService.updateThreadResolvedState.mockReturnValue(throwError(() => new Error('fail')));
             const errorSpy = jest.spyOn(alertService, 'error');
 
             comp.onToggleResolveReviewThread({ threadId: 6, resolved: true });
