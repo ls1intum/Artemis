@@ -8,7 +8,7 @@
         <input
             #searchInput
             pInputText
-            placeholder="Language"
+            placeholder="Language *"
             [(ngModel)]="language"
             [invalid]="languageValidation.status === TutorialEditValidationStatus.INVALID"
             (blur)="onBlur()"

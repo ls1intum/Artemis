@@ -47,5 +47,9 @@
         justify-content: end;
         align-items: center;
         gap: 1rem;
+
+        span {
+            font-size: 12px;
+        }
     }
 }

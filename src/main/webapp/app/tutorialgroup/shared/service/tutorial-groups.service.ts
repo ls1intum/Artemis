@@ -1,11 +1,11 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import {
+    CreateOrUpdateTutorialGroupDTO,
     TutorialGroup,
     TutorialGroupRegisterStudentDTO,
     TutorialGroupRegisteredStudentDTO,
     TutorialGroupScheduleDTO,
-    UpdateTutorialGroupDTO,
 } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { Observable } from 'rxjs';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
@@ -88,8 +88,12 @@ export class TutorialGroupsService {
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupResponseDatesFromServer(res)));
     }
 
-    update2(courseId: number, tutorialGroupId: number, updateTutorialGroupDTO: UpdateTutorialGroupDTO): Observable<void> {
-        return this.httpClient.put<void>(`${this.resourceURL}/courses/${courseId}/tutorial-groups2/${tutorialGroupId}`, updateTutorialGroupDTO);
+    createV2(courseId: number, createTutorialGroupDTO: CreateOrUpdateTutorialGroupDTO): Observable<void> {
+        return this.httpClient.post<void>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/v2`, createTutorialGroupDTO);
+    }
+
+    updateV2(courseId: number, tutorialGroupId: number, updateTutorialGroupDTO: CreateOrUpdateTutorialGroupDTO): Observable<void> {
+        return this.httpClient.put<void>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/v2`, updateTutorialGroupDTO);
     }
 
     delete(courseId: number, tutorialGroupId: number): Observable<HttpResponse<void>> {

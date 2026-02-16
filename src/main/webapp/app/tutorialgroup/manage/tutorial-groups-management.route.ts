@@ -53,8 +53,7 @@ export const tutorialGroupManagementRoutes: Routes = [
     },
     {
         path: 'create',
-        loadComponent: () =>
-            import('app/tutorialgroup/manage/tutorial-groups/crud/create-tutorial-group/create-tutorial-group.component').then((m) => m.CreateTutorialGroupComponent),
+        loadComponent: () => import('app/tutorialgroup/manage/tutorial-create-container/tutorial-create-container.component').then((m) => m.TutorialCreateContainerComponent),
         data: {
             authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.pages.createTutorialGroup.title',

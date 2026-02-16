@@ -991,6 +991,11 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     }
 
     @NonNull
+    default User findByIdElseThrow(long userId) {
+        return getValueElseThrow(findById(userId), userId);
+    }
+
+    @NonNull
     default User findByIdWithGroupsAndAuthoritiesElseThrow(long userId) {
         return getValueElseThrow(findOneWithGroupsAndAuthoritiesById(userId), userId);
     }

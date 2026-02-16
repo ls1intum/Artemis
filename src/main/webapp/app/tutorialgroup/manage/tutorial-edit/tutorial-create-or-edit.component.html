@@ -13,11 +13,11 @@
                     <input
                         pInputText
                         [(ngModel)]="title"
-                        placeholder="Title"
-                        [invalid]="titleValidation.status === TutorialEditValidationStatus.INVALID"
+                        placeholder="Title *"
+                        [invalid]="titleValidation.status === TutorialEditValidationStatus.INVALID && titleInputTouched()"
                         (blur)="titleInputTouched.set(true)"
                     />
-                    @if (titleValidation.status === TutorialEditValidationStatus.INVALID) {
+                    @if (titleValidation.status === TutorialEditValidationStatus.INVALID && titleInputTouched()) {
                         <p-inputgroup-addon [pTooltip]="titleValidation.message" tooltipPosition="bottom">
                             <i class="pi pi-info-circle danger"></i>
                         </p-inputgroup-addon>
@@ -34,15 +34,15 @@
                         optionLabel="nameAndLogin"
                         optionValue="id"
                         filterBy="nameAndLogin"
-                        placeholder="Tutor"
+                        placeholder="Tutor *"
                         [options]="tutors()"
                         [(ngModel)]="selectedTutorId"
                         [filter]="true"
-                        [invalid]="tutorValidation.status === TutorialEditValidationStatus.INVALID"
+                        [invalid]="tutorValidation.status === TutorialEditValidationStatus.INVALID && tutorInputTouched()"
                         [showClear]="true"
                         (onBlur)="tutorInputTouched.set(true)"
                     />
-                    @if (tutorValidation.status === TutorialEditValidationStatus.INVALID) {
+                    @if (tutorValidation.status === TutorialEditValidationStatus.INVALID && tutorInputTouched()) {
                         <p-inputgroup-addon [pTooltip]="tutorValidation.message" tooltipPosition="bottom">
                             <i class="pi pi-info-circle danger"></i>
                         </p-inputgroup-addon>
@@ -114,13 +114,13 @@
                         @let firstSessionStartValidation = firstSessionStartValidationResult();
                         <p-datepicker
                             hourFormat="24"
-                            placeholder="First Session Start"
+                            placeholder="First Session Start *"
                             [(ngModel)]="firstSessionStart"
                             [showTime]="true"
-                            [invalid]="firstSessionStartValidation.status === TutorialEditValidationStatus.INVALID"
-                            (onSelect)="firstSessionStartInputTouched.set(true)"
+                            [invalid]="firstSessionStartValidation.status === TutorialEditValidationStatus.INVALID && firstSessionStartInputTouched()"
+                            (onBlur)="firstSessionStartInputTouched.set(true)"
                         />
-                        @if (firstSessionStartValidation.status === TutorialEditValidationStatus.INVALID) {
+                        @if (firstSessionStartValidation.status === TutorialEditValidationStatus.INVALID && firstSessionStartInputTouched()) {
                             <p-inputgroup-addon [pTooltip]="firstSessionStartValidation.message" tooltipPosition="bottom">
                                 <i class="pi pi-info-circle danger"></i>
                             </p-inputgroup-addon>
@@ -134,13 +134,13 @@
                         @let firstSessionEndValidation = firstSessionEndValidationResult();
                         <p-datepicker
                             hourFormat="24"
-                            placeholder="First Session End"
+                            placeholder="First Session End *"
                             [(ngModel)]="firstSessionEnd"
                             [showTime]="true"
-                            [invalid]="firstSessionEndValidation.status === TutorialEditValidationStatus.INVALID"
-                            (onSelect)="firstSessionEndInputTouched.set(true)"
+                            [invalid]="firstSessionEndValidation.status === TutorialEditValidationStatus.INVALID && firstSessionEndInputTouched()"
+                            (onBlur)="firstSessionEndInputTouched.set(true)"
                         />
-                        @if (firstSessionEndValidation.status === TutorialEditValidationStatus.INVALID) {
+                        @if (firstSessionEndValidation.status === TutorialEditValidationStatus.INVALID && firstSessionEndInputTouched()) {
                             <p-inputgroup-addon [pTooltip]="firstSessionEndValidation.message" tooltipPosition="bottom">
                                 <i class="pi pi-info-circle danger"></i>
                             </p-inputgroup-addon>
@@ -163,13 +163,13 @@
                         @let tutorialPeriodEndValidation = tutorialPeriodEndValidationResult();
                         <p-datepicker
                             hourFormat="24"
-                            placeholder="Tutorial Period End"
+                            placeholder="Tutorial Period End *"
                             [(ngModel)]="tutorialPeriodEnd"
                             [showButtonBar]="true"
-                            [invalid]="tutorialPeriodEndValidation.status === TutorialEditValidationStatus.INVALID"
-                            (onSelect)="tutorialPeriodEndInputTouched.set(true)"
+                            [invalid]="tutorialPeriodEndValidation.status === TutorialEditValidationStatus.INVALID && tutorialPeriodEndInputTouched()"
+                            (onBlur)="tutorialPeriodEndInputTouched.set(true)"
                         />
-                        @if (tutorialPeriodEndValidation.status === TutorialEditValidationStatus.INVALID) {
+                        @if (tutorialPeriodEndValidation.status === TutorialEditValidationStatus.INVALID && tutorialPeriodEndInputTouched()) {
                             <p-inputgroup-addon [pTooltip]="tutorialPeriodEndValidation.message" tooltipPosition="left">
                                 <i class="pi pi-info-circle danger"></i>
                             </p-inputgroup-addon>
@@ -185,13 +185,13 @@
                         @let locationValidation = locationValidationResult();
                         <input
                             type="text"
-                            placeholder="Location"
+                            placeholder="Location *"
                             pInputText
                             [(ngModel)]="location"
-                            [invalid]="locationValidation.status === TutorialEditValidationStatus.INVALID"
+                            [invalid]="locationValidation.status === TutorialEditValidationStatus.INVALID && locationInputTouched()"
                             (blur)="locationInputTouched.set(true)"
                         />
-                        @if (locationValidation.status === TutorialEditValidationStatus.INVALID) {
+                        @if (locationValidation.status === TutorialEditValidationStatus.INVALID && locationInputTouched()) {
                             <p-inputgroup-addon [pTooltip]="locationValidation.message" tooltipPosition="left">
                                 <i class="pi pi-info-circle danger"></i>
                             </p-inputgroup-addon>
@@ -204,8 +204,9 @@
     </section>
 
     <div class="controls-footer">
+        <span>* required</span>
         <a [routerLink]="['..']" pButton class="p-button-secondary p-button-sm" data-testid="cancel-button">Cancel</a>
-        <button pButton class="p-button-primary p-button-sm" data-testid="save-button" (click)="save()">Save</button>
+        <button pButton class="p-button-primary p-button-sm" data-testid="save-button" (click)="save()" [disabled]="saveButtonDisabled()">Save</button>
     </div>
 </div>
 <p-confirmDialog />

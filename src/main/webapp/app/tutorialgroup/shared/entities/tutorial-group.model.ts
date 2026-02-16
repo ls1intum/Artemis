@@ -117,9 +117,8 @@ export interface TutorialGroupTutorDTO {
     nameAndLogin: string;
 }
 
-export interface UpdateTutorialGroupDTO {
+export interface CreateOrUpdateTutorialGroupDTO {
     title: string;
-    updateChannelName: boolean;
     tutorId: number;
     language: string;
     isOnline: boolean;

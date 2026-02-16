@@ -20,8 +20,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param language              the language of the tutorial group
  * @param campus                the campus where the tutorial group is held
  */
+// TODO: find better name or maybe remove if possible
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CreateTutorialGroupDTO(@Nullable Long id, @Size(min = 1, max = 19) String title, @Nullable TeachingAssistantDTO teachingAssistant,
+public record OldCreateTutorialGroupDTO(@Nullable Long id, @Size(min = 1, max = 19) String title, @Nullable TeachingAssistantDTO teachingAssistant,
         @Nullable String additionalInformation, @Nullable Integer capacity, @Nullable Boolean isOnline, @Nullable String language, @Nullable String campus) {
 
     /**

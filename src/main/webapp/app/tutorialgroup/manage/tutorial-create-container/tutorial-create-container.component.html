@@ -1,0 +1,11 @@
+<div>
+    @let courseIdToPass = courseId();
+    @if (courseIdToPass) {
+        <jhi-tutorial-edit [courseId]="courseIdToPass" [tutors]="tutors()" (onCreate)="createTutorialGroup($event)" />
+    } @else {
+        something not available
+    }
+    @if (isLoading()) {
+        <jhi-loading-indicator-overlay />
+    }
+</div>
