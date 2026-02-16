@@ -1,14 +1,19 @@
+@import 'src/main/webapp/content/scss/artemis-mixins.scss';
+
 :host {
-    min-height: 100%;
-    max-height: 100%;
+    @include dynamic-content-height(--header-height);
+
     width: 100%;
     display: flex;
     gap: 10px;
+    min-height: 0;
 
     .chat-container {
+        background-color: var(--iris-primary-background);
+        border-radius: 4px;
         flex: 1;
-        min-height: 100%;
-        max-height: 100%;
+        height: 100%;
+        min-height: 0;
         display: flex;
         flex-direction: column;
         min-width: 0;
@@ -17,6 +22,7 @@
     .stats-container {
         flex: 1;
         min-width: 0;
+        height: 100%;
         overflow-y: auto;
         overflow-x: hidden;
         scrollbar-color: var(--gray-500) transparent;
