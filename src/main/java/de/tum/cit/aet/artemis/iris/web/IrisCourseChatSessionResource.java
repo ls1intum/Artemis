@@ -76,7 +76,7 @@ public class IrisCourseChatSessionResource {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         user.hasOptedIntoLLMUsageElseThrow();
 
-        var session = irisCourseChatSessionService.getCurrentSessionOrCreateIfNotExists(course, user, true);
+        var session = irisCourseChatSessionService.getCurrentSessionOrCreateIfNotExists(course, user);
         return ResponseEntity.ok(session);
     }
 
@@ -115,7 +115,7 @@ public class IrisCourseChatSessionResource {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         user.hasOptedIntoLLMUsageElseThrow();
 
-        var session = irisCourseChatSessionService.createSession(course, user, false);
+        var session = irisCourseChatSessionService.createSession(course, user);
         var uriString = "/api/iris/sessions/" + session.getId();
         return ResponseEntity.created(new URI(uriString)).body(session);
     }
