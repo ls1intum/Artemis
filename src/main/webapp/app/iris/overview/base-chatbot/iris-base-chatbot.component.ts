@@ -548,10 +548,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         this.chatService.clearChat();
     }
 
-    setShowIconAndHelpOffer(showHelpOffer: boolean): void {
-        this.showIconAndHelpOffer.set(showHelpOffer);
-    }
-
     setSearchValue(searchValue: string) {
         this.searchValue.set(searchValue.trim().toLowerCase());
     }

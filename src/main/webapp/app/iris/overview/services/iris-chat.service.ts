@@ -178,7 +178,7 @@ export class IrisChatService implements OnDestroy {
             this.accountService.userIdentity()?.selectedLLMUsage === LLMSelectionDecision.CLOUD_AI ||
             this.hasJustAcceptedLLMUsage
         ) {
-           if (forceNew) {
+            if (forceNew) {
                 this.createNewSession().subscribe({
                     ...this.handleNewSession(),
                     complete: () => this.loadChatSessions(),
