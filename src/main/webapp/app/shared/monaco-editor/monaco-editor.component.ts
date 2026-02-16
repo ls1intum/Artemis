@@ -600,8 +600,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         const uri = monaco.Uri.parse(`inmemory://model/${this._editor.getId()}/${fileName}`);
         const model = monaco.editor.getModel(uri) ?? monaco.editor.createModel(newFileContent ?? '', undefined, uri);
 
-        if (!this.models.includes(model as any)) {
-            this.models.push(model as any);
+        if (!this.models.includes(model)) {
+            this.models.push(model);
         }
         if (newFileContent !== undefined) {
             model.setValue(newFileContent);
@@ -625,7 +625,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
     disposeModels() {
         this._editor.setModel(null);
-        this.models.forEach((m) => (m as any).dispose());
+        this.models.forEach((m) => m.dispose());
         this.models = [];
     }
 

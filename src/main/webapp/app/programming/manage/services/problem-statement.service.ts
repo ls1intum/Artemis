@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Injectable, WritableSignal, inject } from '@angular/core';
+import { DestroyRef, Injectable, WritableSignal, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Observable, OperatorFunction, catchError, finalize, map, of } from 'rxjs';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { FileService } from 'app/shared/service/file.service';
@@ -31,22 +32,25 @@ export class ProblemStatementService {
     private readonly alertService = inject(AlertService);
 
     /** Loads the template problem statement for the given exercise. */
-    loadTemplate(exercise: ProgrammingExercise | undefined, templateSignal: WritableSignal<string>, loadedSignal: WritableSignal<boolean>): void {
+    loadTemplate(exercise: ProgrammingExercise | undefined, templateSignal: WritableSignal<string>, loadedSignal: WritableSignal<boolean>, destroyRef: DestroyRef): void {
         if (!exercise?.programmingLanguage) {
             templateSignal.set('');
             loadedSignal.set(false);
             return;
         }
-        this.fileService.getTemplateFile(exercise.programmingLanguage, exercise.projectType).subscribe({
-            next: (template) => {
-                templateSignal.set(template);
-                loadedSignal.set(true);
-            },
-            error: () => {
-                templateSignal.set('');
-                loadedSignal.set(false);
-            },
-        });
+        this.fileService
+            .getTemplateFile(exercise.programmingLanguage, exercise.projectType)
+            .pipe(takeUntilDestroyed(destroyRef))
+            .subscribe({
+                next: (template) => {
+                    templateSignal.set(template);
+                    loadedSignal.set(true);
+                },
+                error: () => {
+                    templateSignal.set('');
+                    loadedSignal.set(false);
+                },
+            });
     }
 
     /** Generates a problem statement using the provided prompt. */

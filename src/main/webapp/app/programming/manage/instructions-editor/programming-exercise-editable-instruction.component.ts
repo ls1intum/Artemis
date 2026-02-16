@@ -9,7 +9,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { faCheckCircle, faCircleNotch, faExclamationTriangle, faSave, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faCircleNotch, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { MonacoEditorMode } from 'app/shared/monaco-editor/monaco-editor.component';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
@@ -24,6 +24,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseInstructionAnalysisComponent } from './analysis/programming-exercise-instruction-analysis.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
+
 import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
 import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_IRIS } from 'app/app.constants';
 import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
@@ -179,7 +180,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     faCheckCircle = faCheckCircle;
     faExclamationTriangle = faExclamationTriangle;
     faCircleNotch = faCircleNotch;
-    faSpinner = faSpinner;
 
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 

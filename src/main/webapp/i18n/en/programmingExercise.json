@@ -256,14 +256,12 @@
                 "refinementError": "Failed to refine problem statement. Please try again.",
                 "reviewChanges": "Review Changes",
                 "reviewChangesDescription": "Green lines will be added, red lines will be removed.",
-                "changesAppliedLive": "Changes are applied immediately. Use the inline revert buttons to undo specific changes.",
-                "useRevertButtons": "Click arrows in the gutter to revert individual changes",
                 "revertAll": "Revert All",
                 "doneReviewing": "Done Reviewing",
-                "changesApplied": "Changes have been applied to the problem statement.",
                 "aiRefining": "AI is updating the problem statement...",
                 "generate": "Generate",
-                "refine": "Refine"
+                "refine": "Refine",
+                "diffLineStatTooltip": "Lines added and removed by the AI refinement."
             },
             "codeGeneration": {
                 "creationAssistance": "Creation Assistance",

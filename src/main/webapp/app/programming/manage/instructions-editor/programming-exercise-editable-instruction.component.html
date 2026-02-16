@@ -1,11 +1,4 @@
 <div class="editable-instruction-container">
-    <!-- AI Refinement in progress banner -->
-    @if (isGeneratingOrRefining()) {
-        <div class="alert alert-info d-flex align-items-center mb-2 py-2">
-            <fa-icon [icon]="faSpinner" animation="spin" class="me-2" />
-            <span jhiTranslate="artemisApp.programmingExercise.problemStatement.aiRefining"></span>
-        </div>
-    }
     <!-- The position of the markdown-editor in the html should not be changed, as it is used for resizing!-->
     @if (exercise()) {
         <!-- showPreview controls whether the preview tab is available in the markdown editor.

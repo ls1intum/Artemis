@@ -235,7 +235,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         courseRepository.findById(courseId).orElseThrow();
         String body = "{\"userPrompt\":\"Prompt\"}";
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/generate", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
-                .andExpect(status().isInternalServerError()).andExpect(jsonPath("$.title").value("Failed to generate problem statement: AI service unavailable"))
+                .andExpect(status().isInternalServerError()).andExpect(jsonPath("$.title").value("Failed to generate problem statement"))
                 .andExpect(jsonPath("$.message").value("error.ProblemStatementGeneration.generationFailed"))
                 .andExpect(jsonPath("$.errorKey").value("ProblemStatementGeneration.generationFailed"));
     }
@@ -297,7 +297,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         courseRepository.findById(courseId).orElseThrow();
         String body = "{\"problemStatementText\":\"Original problem statement\",\"userPrompt\":\"Make it better\"}";
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/refine/global", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
-                .andExpect(status().isInternalServerError()).andExpect(jsonPath("$.title").value("Failed to refine problem statement: AI service unavailable"))
+                .andExpect(status().isInternalServerError()).andExpect(jsonPath("$.title").value("Failed to refine problem statement"))
                 .andExpect(jsonPath("$.errorKey").value("ProblemStatementRefinement.problemStatementRefinementFailed"));
     }
 

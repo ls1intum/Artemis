@@ -1,4 +1,4 @@
-import { Component, Injector, OnDestroy, ViewChild, afterNextRender, computed, inject, model, signal } from '@angular/core';
+import { Component, DestroyRef, Injector, OnDestroy, ViewChild, afterNextRender, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { A11yModule } from '@angular/cdk/a11y';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
@@ -30,7 +30,7 @@ import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from '../../status/programming-exercise-instructor-exercise-status.component';
-import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CodeGenerationRequestDTO } from 'app/openapi/model/codeGenerationRequestDTO';
@@ -52,11 +52,16 @@ import { ConsistencyCheckError } from 'app/programming/shared/entities/consisten
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
 import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
 import { getRepoPath } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
-import { ButtonComponent, ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/buttons/button/button.component';
+import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
 import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
 import { isTemplateOrEmpty } from 'app/programming/manage/shared/problem-statement.utils';
+import { TooltipModule } from 'primeng/tooltip';
+import { TextareaModule } from 'primeng/textarea';
+import { BadgeModule } from 'primeng/badge';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 
 const SEVERITY_ORDER = {
     HIGH: 0,
@@ -78,7 +83,6 @@ const SEVERITY_ORDER = {
         NgbDropdown,
         NgbDropdownToggle,
         NgbDropdownMenu,
-        NgbDropdownButtonItem,
         NgbDropdownItem,
         NgbTooltip,
         UpdatingResultComponent,
@@ -87,8 +91,12 @@ const SEVERITY_ORDER = {
         ProgrammingExerciseInstructionComponent,
         FormsModule,
         A11yModule,
-        ButtonComponent,
         GitDiffLineStatComponent,
+        TooltipModule,
+        TextareaModule,
+        BadgeModule,
+        ButtonModule,
+        MessageModule,
     ],
 })
 export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent implements OnDestroy {
@@ -105,14 +113,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     readonly removedLineCount = signal<number>(0);
     readonly faTableColumns = faTableColumns;
     readonly ButtonSize = ButtonSize;
-    readonly ButtonType = ButtonType;
-    readonly TooltipPlacement = TooltipPlacement;
 
     private consistencyCheckService = inject(ConsistencyCheckService);
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
     private profileService = inject(ProfileService);
     private problemStatementService = inject(ProblemStatementService);
     private injector = inject(Injector);
+    private destroyRef = inject(DestroyRef);
 
     templateProblemStatement = signal<string>('');
     templateLoaded = signal<boolean>(false);
@@ -295,7 +302,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     showDiff = signal(false);
 
     showRefinementPrompt = signal(false);
-    refinementPrompt = model('');
+    refinementPrompt = signal('');
     protected readonly faPaperPlane = faPaperPlane;
 
     override ngOnDestroy(): void {
@@ -707,7 +714,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     private loadTemplate(exercise: ProgrammingExercise) {
-        this.problemStatementService.loadTemplate(exercise, this.templateProblemStatement, this.templateLoaded);
+        this.problemStatementService.loadTemplate(exercise, this.templateProblemStatement, this.templateLoaded, this.destroyRef);
     }
 
     /**

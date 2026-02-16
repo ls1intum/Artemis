@@ -1,4 +1,4 @@
-import { Component, Injector, OnDestroy, OnInit, afterNextRender, computed, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, Injector, OnDestroy, OnInit, afterNextRender, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { faBan, faSave, faSpinner, faTableColumns } from '@fortawesome/free-solid-svg-icons';
@@ -9,12 +9,14 @@ import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbAlert } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
-import { PopoverModule } from 'primeng/popover';
+import { TooltipModule } from 'primeng/tooltip';
+import { TextareaModule } from 'primeng/textarea';
 import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { Subscription } from 'rxjs';
 import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
 import { isTemplateOrEmpty } from 'app/programming/manage/shared/problem-statement.utils';
@@ -25,31 +27,31 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { ButtonComponent, ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/buttons/button/button.component';
+
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
 
 @Component({
     selector: 'jhi-programming-exercise-problem',
     templateUrl: './programming-exercise-problem.component.html',
-    styleUrls: ['../../../../shared/programming-exercise-form.scss'],
+    styleUrls: ['../../../../shared/programming-exercise-form.scss', './programming-exercise-problem.component.scss'],
     imports: [
         CommonModule,
         TranslateDirective,
         NgbAlert,
-        NgbTooltip,
+        TooltipModule,
+        TextareaModule,
 
         ProgrammingExerciseInstructionComponent,
         ProgrammingExerciseEditableInstructionComponent,
         CompetencySelectionComponent,
         FormsModule,
         ArtemisTranslatePipe,
-        PopoverModule,
         ButtonModule,
         FaIconComponent,
         HelpIconComponent,
-        ButtonComponent,
         GitDiffLineStatComponent,
+        MessageModule,
     ],
 })
 export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
@@ -74,14 +76,11 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     faSave = faSave;
     faTableColumns = faTableColumns;
 
-    readonly ButtonSize = ButtonSize;
-    readonly ButtonType = ButtonType;
-    readonly TooltipPlacement = TooltipPlacement;
-
     private translateService = inject(TranslateService);
     private problemStatementService = inject(ProblemStatementService);
     private alertService = inject(AlertService);
     private injector = inject(Injector);
+    private destroyRef = inject(DestroyRef);
 
     /**
      * Lifecycle hook that is called when the component is destroyed.
@@ -132,7 +131,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
         const exercise = this.programmingExercise();
 
         this.currentProblemStatement.set(exercise?.problemStatement ?? '');
-        this.problemStatementService.loadTemplate(exercise, this.templateProblemStatement, this.templateLoaded);
+        this.problemStatementService.loadTemplate(exercise, this.templateProblemStatement, this.templateLoaded, this.destroyRef);
     }
 
     /**
