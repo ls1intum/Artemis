@@ -37,6 +37,7 @@ export default defineConfig({
             'src/main/webapp/app/lecture/**/*.spec.ts', // include lecture tests
             'src/main/webapp/app/lti/**/*.spec.ts', // include lti tests
             'src/main/webapp/app/modeling/**/*.spec.ts', // include modeling tests
+            'src/main/webapp/app/atlas/**/*.spec.ts', // include atlas tests
             'src/main/webapp/app/iris/**/*.spec.ts', // include iris tests
             'src/main/webapp/app/shared/components/buttons/**/*.spec.ts', // include shared buttons
         ],
@@ -66,6 +67,7 @@ export default defineConfig({
                 'src/main/webapp/app/tutorialgroup/**/*.ts', // include tutorial group for code coverage
                 'src/main/webapp/app/lti/**/*.ts', // include lti for code coverage
                 'src/main/webapp/app/modeling/**/*.ts', // include modeling for code coverage
+                'src/main/webapp/app/atlas/**/*.ts', // include atlas for code coverage
                 'src/main/webapp/app/iris/**/*.ts', // include iris for code coverage
                 'src/main/webapp/app/shared/components/buttons/**/*.ts', // include shared buttons for code coverage
             ],
@@ -80,7 +82,7 @@ export default defineConfig({
                 'src/main/webapp/app/core/config/prod.config.ts',       // exclude dayjs configuration file (not really testable)
             ],
             thresholds: {
-                lines: 92.10,
+                lines: 92.05,
                 statements: 91.95,
                 branches: 76.90,
                 functions: 89.10,

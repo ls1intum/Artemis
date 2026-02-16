@@ -25,6 +25,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderColumn;
+import jakarta.persistence.PostLoad;
 import jakarta.persistence.Table;
 
 import org.apache.commons.lang3.StringUtils;
@@ -98,6 +99,18 @@ public class Result extends DomainObject implements Comparable<Result> {
     @JsonIgnoreProperties(value = "result", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<Feedback> feedbacks = new ArrayList<>();
+
+    /**
+     * Removes null entries from the feedbacks list after loading from the database.
+     * Hibernate's @OrderColumn can leave null gaps when feedback entries are deleted without reindexing.
+     * Only cleans already-initialized collections to avoid triggering lazy loading.
+     */
+    @PostLoad
+    private void removeNullFeedbacks() {
+        if (feedbacks != null && Hibernate.isInitialized(feedbacks)) {
+            feedbacks.removeIf(Objects::isNull);
+        }
+    }
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn()
@@ -371,7 +384,8 @@ public class Result extends DomainObject implements Comparable<Result> {
         if (this.feedbacks == null || this.feedbacks.isEmpty()) {
             return false;
         }
-        return this.feedbacks.stream().filter(existingFeedback -> existingFeedback.getReference() != null && existingFeedback.getReference().equals(feedback.getReference()))
+        return this.feedbacks.stream().filter(Objects::nonNull)
+                .filter(existingFeedback -> existingFeedback.getReference() != null && existingFeedback.getReference().equals(feedback.getReference()))
                 .anyMatch(sameFeedback -> !sameFeedback.getCredits().equals(feedback.getCredits()) || feedbackTextHasChanged(sameFeedback.getText(), feedback.getText()));
     }
 
@@ -406,9 +420,13 @@ public class Result extends DomainObject implements Comparable<Result> {
         this.assessmentType = assessmentType;
     }
 
+    /**
+     * Determines the assessment type based on the feedback types. Sets the type to SEMI_AUTOMATIC if any feedback is automatic or automatically adapted.
+     */
     public void determineAssessmentType() {
         setAssessmentType(AssessmentType.MANUAL);
-        if (feedbacks.stream().anyMatch(feedback -> feedback.getType() == FeedbackType.AUTOMATIC || feedback.getType() == FeedbackType.AUTOMATIC_ADAPTED)) {
+        if (feedbacks.stream().filter(Objects::nonNull)
+                .anyMatch(feedback -> feedback.getType() == FeedbackType.AUTOMATIC || feedback.getType() == FeedbackType.AUTOMATIC_ADAPTED)) {
             setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         }
     }
@@ -549,7 +567,7 @@ public class Result extends DomainObject implements Comparable<Result> {
      * Updates the testCaseCount and passedTestCaseCount attributes after filtering the feedback.
      */
     private void updateTestCaseCount() {
-        var testCaseFeedback = feedbacks.stream().filter(Feedback::isTestFeedback).toList();
+        var testCaseFeedback = feedbacks.stream().filter(Objects::nonNull).filter(Feedback::isTestFeedback).toList();
 
         // TODO: this is not good code!
         setTestCaseCount(testCaseFeedback.size());
@@ -568,8 +586,8 @@ public class Result extends DomainObject implements Comparable<Result> {
      * @return the new filtered list
      */
     public List<Feedback> createFilteredFeedbacks(boolean removeHiddenFeedback, Exercise exercise) {
-        var filteredFeedback = feedbacks.stream().filter(feedback -> !feedback.isInvisible()).filter(feedback -> !removeHiddenFeedback || !feedback.isAfterDueDate())
-                .collect(Collectors.toCollection(ArrayList::new));
+        var filteredFeedback = feedbacks.stream().filter(Objects::nonNull).filter(feedback -> !feedback.isInvisible())
+                .filter(feedback -> !removeHiddenFeedback || !feedback.isAfterDueDate()).collect(Collectors.toCollection(ArrayList::new));
 
         if (exercise instanceof ProgrammingExercise programmingExercise && !Boolean.TRUE.equals(programmingExercise.getShowTestNamesToStudents())) {
             filteredFeedback.stream().filter(Feedback::isTestFeedback).forEach(feedback -> {
