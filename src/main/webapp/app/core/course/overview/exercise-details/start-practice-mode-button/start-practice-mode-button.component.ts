@@ -28,8 +28,8 @@ export class StartPracticeModeButtonComponent {
 
     readonly FeatureToggle = FeatureToggle;
 
-    readonly smallButtons = input<boolean>(undefined!);
-    readonly exercise = input<Exercise>(undefined!);
+    readonly smallButtons = input.required<boolean>();
+    readonly exercise = input.required<Exercise>();
     readonly practiceModeStarted = output<StudentParticipation>();
 
     private readonly _startingPracticeMode = signal(false);

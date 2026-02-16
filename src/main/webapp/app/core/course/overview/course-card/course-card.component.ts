@@ -49,7 +49,7 @@ export class CourseCardComponent {
     }
 
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
-    readonly course = input<Course>(undefined!);
+    readonly course = input.required<Course>();
 
     private readonly _nextRelevantExercise = signal<Exercise | undefined>(undefined);
     private readonly _exerciseCount = signal(0);

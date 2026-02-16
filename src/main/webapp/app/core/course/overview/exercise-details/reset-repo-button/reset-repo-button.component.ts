@@ -32,9 +32,9 @@ export class ResetRepoButtonComponent {
     readonly FeatureToggle = FeatureToggle;
     readonly INITIALIZED = InitializationState.INITIALIZED;
 
-    readonly exercise = input<ProgrammingExercise>(undefined!);
-    readonly participations = input<StudentParticipation[]>(undefined!);
-    readonly smallButtons = input<boolean>(undefined!);
+    readonly exercise = input.required<ProgrammingExercise>();
+    readonly participations = input.required<StudentParticipation[]>();
+    readonly smallButtons = input.required<boolean>();
 
     readonly popover = viewChild.required<NgbPopover>('popover');
 

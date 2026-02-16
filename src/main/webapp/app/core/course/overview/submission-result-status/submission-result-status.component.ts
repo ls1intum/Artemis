@@ -30,9 +30,9 @@ export class SubmissionResultStatusComponent {
      * @property showUngradedResults Flag whether ungraded results should also be shown
      * @property short Flag whether the short version of the result text should be used
      */
-    readonly exercise = input<Exercise>(undefined!);
+    readonly exercise = input.required<Exercise>();
     readonly studentParticipation = input<StudentParticipation>();
-    readonly updatingResultClass = input<string>(undefined!);
+    readonly updatingResultClass = input<string>('');
     readonly showBadge = input(false);
     readonly showUngradedResults = input(false);
     readonly showIcon = input(true);

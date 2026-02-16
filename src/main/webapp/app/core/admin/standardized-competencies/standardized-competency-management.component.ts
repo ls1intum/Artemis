@@ -90,7 +90,8 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
     // Cancel confirmation dialog state (replaces NgbModal + ConfirmAutofocusModalComponent)
     protected readonly confirmDialogVisible = signal(false);
     protected readonly confirmDialogTitle = signal('');
-    protected readonly confirmDialogText = signal('');
+    protected readonly confirmDialogTextKey = signal('');
+    protected readonly confirmDialogTextParams = signal<Record<string, string>>({});
     protected readonly confirmDialogCallback = signal<() => void>(() => {});
 
     // Icons
@@ -460,7 +461,8 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
 
     private openCancelModal(title: string, entityType: 'standardizedCompetency' | 'knowledgeArea', callback: () => void) {
         this.confirmDialogTitle.set(`artemisApp.${entityType}.manage.cancelModal.title`);
-        this.confirmDialogText.set(this.translateService.instant(`artemisApp.${entityType}.manage.cancelModal.text`, { title: title }));
+        this.confirmDialogTextKey.set(`artemisApp.${entityType}.manage.cancelModal.text`);
+        this.confirmDialogTextParams.set({ title: title });
         this.confirmDialogCallback.set(callback);
         this.confirmDialogVisible.set(true);
     }

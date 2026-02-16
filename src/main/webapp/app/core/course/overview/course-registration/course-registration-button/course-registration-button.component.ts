@@ -19,7 +19,7 @@ export class CourseRegistrationButtonComponent implements OnInit {
     private profileService = inject(ProfileService);
     private alertService = inject(AlertService);
 
-    readonly course = input<Course>(undefined!);
+    readonly course = input.required<Course>();
     readonly onRegistration = output<void>();
 
     private readonly _userIsAllowedToRegister = signal(false);

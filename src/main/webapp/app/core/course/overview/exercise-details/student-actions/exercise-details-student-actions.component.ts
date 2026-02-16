@@ -90,11 +90,11 @@ export class ExerciseDetailsStudentActionsComponent {
     readonly equalColumns = input(true);
     readonly smallColumns = input(false);
 
-    readonly exercise = input<Exercise>(undefined!);
-    readonly courseId = input<number>(undefined!);
-    readonly smallButtons = input<boolean>(undefined!);
-    readonly examMode = input<boolean>(undefined!);
-    readonly isGeneratingFeedback = input<boolean>(undefined!);
+    readonly exercise = input.required<Exercise>();
+    readonly courseId = input.required<number>();
+    readonly smallButtons = input<boolean>(false);
+    readonly examMode = input<boolean>(false);
+    readonly isGeneratingFeedback = input<boolean>(false);
 
     readonly generatingFeedback = output<void>();
 

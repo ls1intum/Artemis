@@ -9,7 +9,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     imports: [TranslateDirective, CoursePrerequisitesModalComponent],
 })
 export class CoursePrerequisitesButtonComponent {
-    readonly course = input<Course>(undefined!);
+    readonly course = input.required<Course>();
 
     showModal = signal<boolean>(false);
 

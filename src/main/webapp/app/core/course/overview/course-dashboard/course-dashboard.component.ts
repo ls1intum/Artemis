@@ -81,7 +81,10 @@ export class CourseDashboardComponent implements OnDestroy {
     readonly competencies = computed(() => this._competencies());
     readonly openedAccordionIndex = computed(() => this._openedAccordionIndex());
     readonly course = computed(() => this._course());
-    readonly isCollapsed = computed(() => this._isCollapsed());
+    // isCollapsed is exposed as a getter for compatibility with CourseOverviewComponent
+    get isCollapsed(): boolean {
+        return this._isCollapsed();
+    }
 
     private metricsSubscription?: Subscription;
 

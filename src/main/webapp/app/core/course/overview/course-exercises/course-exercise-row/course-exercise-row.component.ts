@@ -51,8 +51,8 @@ export class CourseExerciseRowComponent implements OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly dayjs = dayjs;
     @HostBinding('class') classes = 'exercise-row';
-    readonly exercise = input<Exercise>(undefined!);
-    readonly course = input<Course>(undefined!);
+    readonly exercise = input.required<Exercise>();
+    readonly course = input.required<Course>();
     /**
      * PresentationMode deactivates the interactivity of the component
      */

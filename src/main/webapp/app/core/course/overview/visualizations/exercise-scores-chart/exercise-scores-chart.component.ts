@@ -49,7 +49,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
     exerciseTypeFilter = inject(ChartExerciseTypeFilter);
     private translateService = inject(TranslateService);
 
-    readonly filteredExerciseIDs = input<number[]>(undefined!);
+    readonly filteredExerciseIDs = input.required<number[]>();
 
     courseId: number;
     isLoading = false;

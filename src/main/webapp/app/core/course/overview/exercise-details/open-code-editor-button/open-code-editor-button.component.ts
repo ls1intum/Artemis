@@ -22,10 +22,10 @@ export class OpenCodeEditorButtonComponent {
     readonly FeatureToggle = FeatureToggle;
 
     readonly loading = input(false);
-    readonly smallButtons = input<boolean>(undefined!);
-    readonly participations = input<ProgrammingExerciseStudentParticipation[]>(undefined!);
-    readonly courseAndExerciseNavigationUrlSegment = input<any[]>(undefined!);
-    readonly exercise = input<Exercise>(undefined!);
+    readonly smallButtons = input.required<boolean>();
+    readonly participations = input.required<ProgrammingExerciseStudentParticipation[]>();
+    readonly courseAndExerciseNavigationUrlSegment = input.required<any[]>();
+    readonly exercise = input.required<Exercise>();
     readonly hideLabelMobile = input(false);
 
     private readonly _courseAndExerciseNavigationUrl = signal<string>('');

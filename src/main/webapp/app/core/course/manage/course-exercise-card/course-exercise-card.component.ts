@@ -12,9 +12,9 @@ import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
     imports: [TranslateDirective, FaIconComponent, NgbCollapse],
 })
 export class CourseExerciseCardComponent {
-    readonly headingJhiTranslate = input<string>(undefined!);
-    readonly exerciseCount = input<number>(undefined!);
-    readonly course = input<Course>(undefined!);
+    readonly headingJhiTranslate = input.required<string>();
+    readonly exerciseCount = input.required<number>();
+    readonly course = input.required<Course>();
     readonly isCollapsed = signal(false);
 
     // Icons

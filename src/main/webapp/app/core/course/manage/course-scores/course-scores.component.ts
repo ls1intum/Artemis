@@ -9,7 +9,6 @@ import { Exercise, ExerciseType, IncludedInOverallScore, exerciseTypes } from 'a
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
-import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { average, round, roundScorePercentSpecifiedByCourseSettings, roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
@@ -88,7 +87,6 @@ export class CourseScoresComponent implements OnInit {
     private readonly route = inject(ActivatedRoute);
     private readonly courseManagementService = inject(CourseManagementService);
     private readonly sortService = inject(SortService);
-    private readonly languageHelper = inject(JhiLanguageHelper);
     private readonly localeConversionService = inject(LocaleConversionService);
     private readonly gradingService = inject(GradingService);
     private readonly plagiarismCasesService = inject(PlagiarismCasesService);
@@ -173,9 +171,6 @@ export class CourseScoresComponent implements OnInit {
                 this.initializeWithCourse(findWithExercisesResult.body!);
             });
         });
-
-        // Subscribe to language changes - signal-based change detection handles view updates automatically
-        this.languageHelper.language.pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
     }
 
     sortRows() {

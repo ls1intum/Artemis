@@ -119,7 +119,7 @@
     [style]="{ width: '35dvw' }"
     [header]="confirmDialogTitle() | artemisTranslate"
 >
-    <div [innerHTML]="confirmDialogText()"></div>
+    <div [jhiTranslate]="confirmDialogTextKey()" [translateValues]="confirmDialogTextParams()"></div>
     <ng-template #footer>
         <button type="button" class="btn btn-outline-secondary" (click)="onConfirmDialogCancel()" jhiTranslate="global.form.cancel"></button>
         <button type="button" class="btn btn-danger" (click)="onConfirmDialogConfirm()" jhiTranslate="global.form.confirm"></button>
