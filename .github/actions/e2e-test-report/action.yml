@@ -51,6 +51,7 @@ runs:
         path: ${{ inputs.download-path }}
 
     - name: Generate Test Report
+      id: test-report
       uses: mikepenz/action-junit-report@v5.6.2
       if: success() || failure()
       with:
@@ -95,11 +96,19 @@ runs:
           const testsRun = `${{ inputs.tests-run }}`;
           const phaseName = `${{ inputs.phase-name }}`;
           const jobStatus = '${{ job.status }}';
+          const testSummary = `${{ steps.test-report.outputs.summary || '' }}`;
 
           let statusEmoji = jobStatus === 'success' ? '✅' : '❌';
           let statusText = jobStatus === 'success' ? 'passed' : 'failed';
 
-          const body = `### ${phaseName}: E2E Tests ${statusEmoji}\n\n**Status:** ${phaseName} ${statusText}\n\n**Tests Run:** ${testsRun}\n\n**Details:** Check the [${phaseName} Test Report](https://github.com/${{ inputs.repository }}/actions/runs/${{ inputs.run-id }}) for detailed results.\n\n---\n*This is an automated comment for ${phaseName} of the E2E test execution.*`;
+          let body = `### ${phaseName}: E2E Tests ${statusEmoji}\n\n`;
+          body += `**Status:** ${phaseName} ${statusText}\n\n`;
+          if (testSummary) {
+            body += `${testSummary}\n\n`;
+          }
+          body += `**Tests Run:** ${testsRun}\n\n`;
+          body += `**Details:** Check the [${phaseName} Test Report](https://github.com/${{ inputs.repository }}/actions/runs/${{ inputs.run-id }}) for detailed results.\n\n`;
+          body += `---\n*This is an automated comment for ${phaseName} of the E2E test execution.*`;
 
           github.rest.issues.createComment({
             owner: context.repo.owner,
