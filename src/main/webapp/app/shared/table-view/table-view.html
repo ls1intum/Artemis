@@ -33,54 +33,61 @@ currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
 (onLazyLoad)="onLazyLoad.emit($event)"
 -->
 
-<div class="card">
-    <p-table
-        stripedRows
-        [columns]="cols()"
-        [value]="vals()"
-        [totalRecords]="totalRows()"
-        [tableStyle]="{ 'min-width': '50rem' }"
-        [paginator]="true"
-        [rows]="2"
-        [showCurrentPageReport]="true"
-        [rowsPerPageOptions]="[1, 2, 5, 10]"
-        [paginator]="true"
-        [lazy]="true"
-        (onLazyLoad)="onLazyLoad.emit($event)"
-    >
-        <ng-template #header let-columns>
-            <tr>
-                @for (col of columns; track col) {
-                    <th [pSortableColumn]="col.sort ? col.field : undefined">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <span>{{ col.header }}</span>
-                                @if (col.sort) {
-                                    <p-sortIcon [field]="col.field" />
-                                }
-                            </div>
-                            @if (col.filter) {
-                                <p-columnFilter [type]="col.filterType" [field]="col.field" display="menu" class="ml-auto" />
+<!-- <div class="card"> -->
+<div class="p-inputgroup">
+    <input type="text" pInputText pSize="small" placeholder="Search..." [(ngModel)]="globalSearch" (input)="onGlobalSearchInput($event)" />
+</div>
+<p-table
+    #dt
+    stripedRows
+    [columns]="cols()"
+    [value]="vals()"
+    [totalRecords]="totalRows()"
+    [tableStyle]="{ 'min-width': '50rem' }"
+    [paginator]="true"
+    [rows]="2"
+    [showCurrentPageReport]="true"
+    [rowsPerPageOptions]="[1, 2, 5, 10]"
+    [paginator]="true"
+    [lazy]="true"
+    (onLazyLoad)="onLazyLoad.emit($event)"
+>
+    <ng-template #header let-columns>
+        <tr>
+            @for (col of columns; track col) {
+                <th [pSortableColumn]="col.sort ? col.field : undefined" [style]="{ 'min-width': col.width ?? 'auto' }">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span>{{ col.header }}</span>
+                            @if (col.sort) {
+                                <p-sortIcon [field]="col.field" />
                             }
                         </div>
-                    </th>
-                }
-                <th>
-                    <div class="flex items-center gap-2"></div>
+                        @if (col.filter) {
+                            <p-columnFilter [type]="col.filterType" [field]="col.field" display="menu" class="ml-auto" />
+                        }
+                    </div>
                 </th>
-            </tr>
-        </ng-template>
-        <ng-template #body let-rowData let-columns="columns">
-            <tr>
-                @for (col of columns; track col) {
-                    <td>{{ rowData[col.field] }}</td>
-                }
-                @if (rowActions()) {
-                    <td class="text-end">
-                        <ng-container [ngTemplateOutlet]="rowActions()!" [ngTemplateOutletContext]="{ $implicit: rowData }" />
-                    </td>
-                }
-            </tr>
-        </ng-template>
-    </p-table>
-</div>
+            }
+            <th>
+                <div class="flex items-center gap-2"></div>
+            </th>
+        </tr>
+    </ng-template>
+    <ng-template #body let-rowData let-columns="columns">
+        <tr>
+            @for (col of columns; track col) {
+                <!-- @if (col.cellRenderer) {
+                    <ng-container *ngComponentOutlet="col.cellRenderer; injector: cellInjector(row, col, ri)"> </ng-container>
+                } @else { -->
+                <td>{{ rowData[col.field] }}</td>
+            }
+            @if (rowActions()) {
+                <td class="text-end">
+                    <ng-container [ngTemplateOutlet]="rowActions()!" [ngTemplateOutletContext]="{ $implicit: rowData }" />
+                </td>
+            }
+        </tr>
+    </ng-template>
+</p-table>
+<!-- </div> -->

@@ -1,12 +1,4 @@
-export type SortDir = 'asc' | 'desc';
-
-export interface DbQuery {
-    page: number; // 0-based
-    size: number;
-    sort: string; // e.g. "name,asc"
-    filters: Record<string, unknown>; // backend-specific payload (generic)
-    globalFilter?: string;
-}
+import { SearchTermPageableSearch, SortingOrder } from '../table/pageable-table';
 
 // Minimal shape so you don't depend on PrimeNG types directly
 type LazyLoadLike = {
@@ -19,16 +11,15 @@ type LazyLoadLike = {
     globalFilter?: any;
 };
 
-function sortDirFromOrder(order?: 1 | -1 | 0 | null): SortDir | null {
-    if (order === 1) return 'asc';
-    if (order === -1) return 'desc';
-    return null;
+function getSortingOrder(order?: 1 | -1 | 0 | null): SortingOrder {
+    if (order === 1) return SortingOrder.ASCENDING;
+    if (order === -1) return SortingOrder.DESCENDING;
+    return SortingOrder.ASCENDING;
 }
 
-function normalizeSort(e: LazyLoadLike): string {
+function getSortedColumn(e: LazyLoadLike): string {
     const field = e.sortField?.trim() ?? 'id';
-    const dir = sortDirFromOrder(e.sortOrder);
-    return field && dir ? `${field},${dir}` : '';
+    return field;
 }
 
 /**
@@ -37,12 +28,13 @@ function normalizeSort(e: LazyLoadLike): string {
  * - sort is ["field,asc"] etc
  * - filters keeps a generic normalized structure you can later map to your backend format
  */
-export function buildDbQueryFromLazyEvent(e: LazyLoadLike, defaults: { page?: number; size?: number } = {}): DbQuery {
-    const size = e.rows ?? defaults.size ?? 20;
+export function buildDbQueryFromLazyEvent(e: LazyLoadLike, defaults: { page?: number; size?: number } = {}): SearchTermPageableSearch {
+    const pageSize = e.rows ?? defaults.size ?? 20;
     const first = e.first ?? 0;
-    const page = size > 0 ? Math.floor(first / size) : (defaults.page ?? 0);
+    const page = pageSize > 0 ? Math.floor(first / pageSize) : (defaults.page ?? 0);
 
-    const sort = normalizeSort(e);
+    const sortedColumn = getSortedColumn(e);
+    const sortingOrder = getSortingOrder(e.sortOrder);
 
     // Normalize PrimeNG filters into a simple structure:
     // filters[field] = { value, matchMode, operator, constraints? }
@@ -89,7 +81,7 @@ export function buildDbQueryFromLazyEvent(e: LazyLoadLike, defaults: { page?: nu
         }
     }
 
-    const globalFilter = e.globalFilter !== undefined && e.globalFilter !== null && `${e.globalFilter}`.trim() !== '' ? `${e.globalFilter}`.trim() : undefined;
+    const searchTerm = e.globalFilter !== undefined && e.globalFilter !== null && `${e.globalFilter}`.trim() !== '' ? `${e.globalFilter}`.trim() : '';
 
-    return { page, size, sort, filters, globalFilter };
+    return { page, pageSize, sortedColumn, sortingOrder, searchTerm };
 }

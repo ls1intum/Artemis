@@ -12,14 +12,12 @@ import org.jspecify.annotations.NonNull;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.domain.Organization;
-import de.tum.cit.aet.artemis.core.dto.OrganizationDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
@@ -29,7 +27,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 @Profile(PROFILE_CORE)
 @Lazy
 @Repository
-public interface OrganizationRepository extends ArtemisJpaRepository<Organization, Long> {
+public interface OrganizationRepository extends ArtemisJpaRepository<Organization, Long>, JpaSpecificationExecutor<Organization>, OrganizationRepositoryCustom {
 
     @Query("""
             SELECT organization
@@ -102,7 +100,8 @@ public interface OrganizationRepository extends ArtemisJpaRepository<Organizatio
      * Returns the title of the organization with the given id.
      *
      * @param organizationId the id of the organization
-     * @return the name/title of the organization or null if the organization does not exist
+     * @return the name/title of the organization or null if the organization does
+     *         not exist
      */
     @Query("""
             SELECT o.name
@@ -122,7 +121,8 @@ public interface OrganizationRepository extends ArtemisJpaRepository<Organizatio
     @NonNull
     default Set<Organization> getAllMatchingOrganizationsByUserEmail(String userEmail) {
         Set<Organization> matchingOrganizations = new HashSet<>();
-        // TODO: we should avoid findAll() and instead try to filter this directly in the database
+        // TODO: we should avoid findAll() and instead try to filter this directly in
+        // the database
         findAll().forEach(organization -> {
             Pattern pattern = Pattern.compile(organization.getEmailPattern());
             Matcher matcher = pattern.matcher(userEmail);
@@ -137,32 +137,11 @@ public interface OrganizationRepository extends ArtemisJpaRepository<Organizatio
      * Get an organization containing the eagerly loaded list of users and courses
      *
      * @param organizationId the id of the organization to retrieve
-     * @return the organization with the given id containing eagerly loaded list of users and courses
+     * @return the organization with the given id containing eagerly loaded list of
+     *         users and courses
      */
     @NonNull
     default Organization findByIdWithEagerUsersAndCoursesElseThrow(long organizationId) throws EntityNotFoundException {
         return getValueElseThrow(findByIdWithEagerUsersAndCourses(organizationId), organizationId);
     }
-
-    @Query(value = """
-            SELECT new de.tum.cit.aet.artemis.core.dto.OrganizationDTO(
-                o.id,
-                o.name,
-                o.shortName,
-                o.url,
-                o.description,
-                o.logoUrl,
-                o.emailPattern,
-                COUNT(DISTINCT u.id),
-                COUNT(DISTINCT c.id)
-            )
-            FROM Organization o
-            LEFT JOIN o.users u
-            LEFT JOIN o.courses c
-            GROUP BY o.id, o.name, o.shortName, o.url, o.description, o.logoUrl, o.emailPattern
-            """, countQuery = """
-            SELECT COUNT(o.id)
-            FROM Organization o
-            """)
-    Page<OrganizationDTO> findAllWithUserAndCourseCounts(Pageable pageable);
 }
