@@ -54,12 +54,15 @@
             },
             "disclaimer": "Iris kann Fehler machen. Überprüfe wichtige Informationen.",
             "disclaimerGPT": "ChatGPT kann Fehler machen. Überprüfe wichtige Informationen.",
-            "tutorFirstMessage": "Hallo, ich bin Iris! Ich kann dir bei deiner Programmieraufgabe helfen. Du kannst <a href='/about-iris' target='_blank'>hier</a> mehr über mich erfahren.",
-            "codeEditorFirstMessage": "Hallo, ich bin Iris! Ich kann dir bei der Bearbeitung von Programmieraufgaben helfen. Ich kann zum Beispiel: <ul><li>eine neue Aufgabe erstellen</li><li><a href='/' target='_blank'>eine Variante von einer bestehenden Aufgabe erstellen</a></li><li>eine bestehende Aufgabe neuen Anforderungen anpassen</li></ul> Du kannst <a href='/about-iris' target='_blank'>hier</a> mehr über mich erfahren.",
             "rateLimitTooltip": "Dies ist die maximale Anzahl von Nachrichten, die du in einem {{ hours }}-Stunden-Zeitfenster an Iris senden kannst.",
             "goToRelatedEntityButton": {
                 "exerciseLabel": "Zugehörige Aufgabe",
                 "lectureLabel": "Zugehörige Vorlesung"
+            },
+            "actions": {
+                "copy": "Kopieren",
+                "goodResponse": "Gute Antwort",
+                "badResponse": "Schlechte Antwort"
             }
         }
     }
