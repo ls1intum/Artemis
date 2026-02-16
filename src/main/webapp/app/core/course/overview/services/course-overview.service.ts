@@ -303,13 +303,32 @@ export class CourseOverviewService {
         }
 
         for (const group in groupedConversationGroups) {
-            // Sort conversations within each group so that favorites are shown on top
+            // Sort conversations within each group with the following priority:
+            // 1. Favorites first
+            // 2. Then by unread messages
+            // 3. Then alphabetically by title
             groupedConversationGroups[group].entityData.sort((a, b) => {
                 const aIsFavorite = a.conversation?.isFavorite ? 1 : 0;
                 const bIsFavorite = b.conversation?.isFavorite ? 1 : 0;
-                return bIsFavorite - aIsFavorite;
+
+                // Favorites first
+                if (bIsFavorite !== aIsFavorite) {
+                    return bIsFavorite - aIsFavorite;
+                }
+
+                const aHasUnread = (a.conversation?.unreadMessagesCount ?? 0) > 0 ? 1 : 0;
+                const bHasUnread = (b.conversation?.unreadMessagesCount ?? 0) > 0 ? 1 : 0;
+
+                // Then by unread messages
+                if (bHasUnread !== aHasUnread) {
+                    return bHasUnread - aHasUnread;
+                }
+
+                // Then alphabetically by title
+                return (a.title ?? '').localeCompare(b.title, undefined, { sensitivity: 'base' });
             });
         }
+
         return groupedConversationGroups;
     }
 
