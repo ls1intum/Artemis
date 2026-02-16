@@ -54,12 +54,15 @@
             },
             "disclaimer": "Iris can make mistakes. Consider checking important information.",
             "disclaimerGPT": "ChatGPT can make mistakes. Consider checking important information.",
-            "tutorFirstMessage": "Hi, I'm Iris! I can help you with your programming exercise. You can learn more about me <a href='/about-iris' target='_blank'>here</a>.",
-            "codeEditorFirstMessage": "Hi, I'm Iris! I can help you to create programming exercises. For example: <ul><li>create a brand-new exercise</li><li>{link:create a variant of another existing exercise}</li><li>adapt an existing exercise to new requirements</li></ul> You can learn more about me <a href='/about-iris' target='_blank'>here</a>.",
             "rateLimitTooltip": "This is the maximum number of messages you can send to Iris in a {{ hours }} hour window.",
             "goToRelatedEntityButton": {
                 "exerciseLabel": "Related Exercise",
                 "lectureLabel": "Related Lecture"
+            },
+            "actions": {
+                "copy": "Copy",
+                "goodResponse": "Good response",
+                "badResponse": "Bad response"
             }
         }
     }
