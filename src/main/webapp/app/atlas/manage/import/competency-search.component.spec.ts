@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe } from 'ng-mocks';
@@ -7,14 +8,16 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CompetencySearchComponent', () => {
+    setupTestBed({ zoneless: true });
     let componentFixture: ComponentFixture<CompetencySearchComponent>;
     let component: CompetencySearchComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [CompetencySearchComponent, MockPipe(ArtemisTranslatePipe), ButtonComponent],
+            imports: [CompetencySearchComponent, MockPipe(ArtemisTranslatePipe), ButtonComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting()],
         })
             .compileComponents()
@@ -31,7 +34,7 @@ describe('CompetencySearchComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -74,10 +77,10 @@ describe('CompetencySearchComponent', () => {
         const advancedSearchToggle = componentFixture.debugElement.nativeElement.querySelector('#toggleAdvancedSearch');
 
         advancedSearchToggle.click();
-        expect(component.advancedSearchEnabled).toBeTrue();
+        expect(component.advancedSearchEnabled).toBeTruthy();
 
         advancedSearchToggle.click();
-        expect(component.advancedSearchEnabled).toBeFalse();
+        expect(component.advancedSearchEnabled).toBeFalsy();
     });
 
     function initializeSearch(): void {

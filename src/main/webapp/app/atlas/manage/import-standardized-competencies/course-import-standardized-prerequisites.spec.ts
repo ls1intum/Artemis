@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { StandardizedCompetencyFilterStubComponent } from 'test/helpers/stubs/atlas/standardized-competency-filter-stub.component';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
@@ -18,13 +19,12 @@ import { Source } from 'app/atlas/shared/entities/standardized-competency.model'
 import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { CourseImportStandardizedPrerequisitesComponent } from 'app/atlas/manage/import-standardized-competencies/course-import-standardized-prerequisites.component';
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
-import { StandardizedCompetencyFilterComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-filter.component';
 import { StandardizedCompetencyService } from 'app/atlas/shared/standardized-competencies/standardized-competency.service';
-import { StandardizedCompetencyDetailComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-detail.component';
-import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CourseImportStandardizedPrerequisitesComponent', () => {
+    setupTestBed({ zoneless: true });
     let componentFixture: ComponentFixture<CourseImportStandardizedPrerequisitesComponent>;
     let component: CourseImportStandardizedPrerequisitesComponent;
     const courseId = 1;
@@ -36,15 +36,10 @@ describe('CourseImportStandardizedPrerequisitesComponent', () => {
         TestBed.configureTestingModule({
             imports: [
                 CourseImportStandardizedPrerequisitesComponent,
-                StandardizedCompetencyFilterComponent,
-                StandardizedCompetencyDetailComponent,
-                KnowledgeAreaTreeComponent,
-                FaIconComponent,
-            ],
-            declarations: [
                 StandardizedCompetencyFilterStubComponent,
                 StandardizedCompetencyDetailStubComponent,
                 KnowledgeAreaTreeStubComponent,
+                FaIconComponent,
                 MockComponent(ButtonComponent),
                 MockDirective(SortDirective),
                 MockPipe(HtmlForMarkdownPipe),
@@ -67,7 +62,7 @@ describe('CourseImportStandardizedPrerequisitesComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should load data', () => {
@@ -105,8 +100,8 @@ describe('CourseImportStandardizedPrerequisitesComponent', () => {
         const sources: Source[] = [{ id: 1 }, { id: 2 }];
 
         const standardizedCompetencyService = TestBed.inject(StandardizedCompetencyService);
-        const getForTreeViewSpy = jest.spyOn(standardizedCompetencyService, 'getAllForTreeView').mockReturnValue(of(new HttpResponse({ body: dtoTree })));
-        const getSourcesSpy = jest.spyOn(standardizedCompetencyService, 'getSources').mockReturnValue(of(new HttpResponse({ body: sources })));
+        const getForTreeViewSpy = vi.spyOn(standardizedCompetencyService, 'getAllForTreeView').mockReturnValue(of(new HttpResponse({ body: dtoTree })));
+        const getSourcesSpy = vi.spyOn(standardizedCompetencyService, 'getSources').mockReturnValue(of(new HttpResponse({ body: sources })));
 
         componentFixture.detectChanges();
 
@@ -157,12 +152,12 @@ describe('CourseImportStandardizedPrerequisitesComponent', () => {
         component['deselectCompetency'](competencyToDeselect);
 
         expect(component['selectedCompetencies']).toHaveLength(1);
-        expect(competencyToDeselect.selected).toBeFalse();
+        expect(competencyToDeselect.selected).toBeFalsy();
     });
 
     it('should sort', () => {
         const sortService = TestBed.inject(SortService);
-        const sortSpy = jest.spyOn(sortService, 'sortByProperty');
+        const sortSpy = vi.spyOn(sortService, 'sortByProperty');
 
         component['sortSelected']({ predicate: 'title', ascending: true });
 
@@ -171,9 +166,9 @@ describe('CourseImportStandardizedPrerequisitesComponent', () => {
 
     it('should navigate after importing competencies', () => {
         const router: Router = TestBed.inject(Router);
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        const navigateSpy = vi.spyOn(router, 'navigate');
         const prerequisiteService = TestBed.inject(PrerequisiteService);
-        const importSpy = jest.spyOn(prerequisiteService, 'importStandardizedCompetencies').mockReturnValue(
+        const importSpy = vi.spyOn(prerequisiteService, 'importStandardizedCompetencies').mockReturnValue(
             of({
                 body: [{ id: 1 }, { id: 2 }],
             } as HttpResponse<Competency[]>),
@@ -191,7 +186,7 @@ describe('CourseImportStandardizedPrerequisitesComponent', () => {
 
     it('should cancel', () => {
         const router: Router = TestBed.inject(Router);
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        const navigateSpy = vi.spyOn(router, 'navigate');
 
         component['cancel']();
 
@@ -203,10 +198,10 @@ describe('CourseImportStandardizedPrerequisitesComponent', () => {
 
         component['isLoading'] = false;
         canDeactivate = component.canDeactivate();
-        expect(canDeactivate).toBeTrue();
+        expect(canDeactivate).toBeTruthy();
 
         component['isLoading'] = true;
         canDeactivate = component.canDeactivate();
-        expect(canDeactivate).toBeFalse();
+        expect(canDeactivate).toBeFalsy();
     });
 });
