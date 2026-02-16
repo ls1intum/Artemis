@@ -391,9 +391,16 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 this.prepareAssessmentData();
             } else if (!this.isAutomaticResult && this.isFeedbackView && this.resultId && this.submissionId) {
                 // Feedbacks not loaded for manual result, fetch from backend using specific resultId
-                this.modelingAssessmentService.getAssessment(this.submissionId, this.resultId).subscribe((assessmentResult: Result) => {
-                    this.assessmentResult = assessmentResult;
-                    this.prepareAssessmentData();
+                this.modelingAssessmentService.getAssessment(this.submissionId, this.resultId).subscribe({
+                    next: (assessmentResult: Result) => {
+                        this.assessmentResult = assessmentResult;
+                        this.prepareAssessmentData();
+                    },
+                    error: (error: HttpErrorResponse) => {
+                        this.isLoading = false;
+                        this.assessmentResult = undefined;
+                        onError(this.alertService, error);
+                    },
                 });
             } else {
                 // Feedbacks already loaded or automatic result
