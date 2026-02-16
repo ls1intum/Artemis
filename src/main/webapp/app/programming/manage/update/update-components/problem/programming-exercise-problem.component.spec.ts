@@ -436,4 +436,18 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         expect(comp.shouldShowGenerateButton()).toBeFalse();
     }));
+
+    it('should handle onInstructionChange', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        fixture.componentRef.setInput('programmingExercise', exercise);
+
+        const problemStatementSpy = jest.spyOn(comp.problemStatementChange, 'emit');
+        const programmingExerciseSpy = jest.spyOn(comp.programmingExerciseChange, 'emit');
+
+        comp.onInstructionChange('Updated statement');
+
+        expect(exercise.problemStatement).toBe('Updated statement');
+        expect(problemStatementSpy).toHaveBeenCalledWith('Updated statement');
+        expect(programmingExerciseSpy).toHaveBeenCalledWith(exercise);
+    });
 });

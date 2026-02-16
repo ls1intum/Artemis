@@ -114,16 +114,14 @@
                 <!-- Single Unified Editor - switches between normal and diff modes -->
                 <jhi-programming-exercise-editable-instructions
                     #editableInstructions
-                    [mode]="showDiff() ? 'diff' : 'normal'"
-                    [participation]="programmingExercise()?.templateParticipation"
                     [exercise]="programmingExercise()!"
+                    (instructionChange)="onInstructionChange($event)"
                     [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
                     [showStatus]="!!programmingExercise()?.id"
                     [editMode]="!!programmingExercise()?.id"
                     [isGeneratingOrRefining]="isGeneratingOrRefining()"
                     (hasUnsavedChanges)="programmingExerciseCreationConfig().hasUnsavedChanges = $event"
-                    (instructionChange)="onProblemStatementChange($event)"
-                    (exerciseChange)="programmingExerciseChange.emit($event)"
+                    [mode]="showDiff() ? 'diff' : 'normal'"
                     [renderSideBySide]="allowSplitView()"
                     (diffLineChange)="onDiffLineChange($event)"
                     [forceRender]="programmingExerciseCreationConfig().rerenderSubject"

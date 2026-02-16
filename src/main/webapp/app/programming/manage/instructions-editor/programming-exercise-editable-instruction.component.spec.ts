@@ -3,14 +3,20 @@ import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { Subject, of, throwError } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
+import * as Y from 'yjs';
 import { DebugElement } from '@angular/core';
+
+// Mock y-monaco to avoid needing full Monaco API in tests
+jest.mock('y-monaco', () => ({
+    MonacoBinding: jest.fn().mockImplementation(() => ({
+        destroy: jest.fn(),
+    })),
+}));
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { MockProgrammingExerciseGradingService } from 'test/helpers/mocks/service/mock-programming-exercise-grading.service';
-import { triggerChanges } from 'test/helpers/utils/general-test.utils';
-import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { ResultService } from 'app/exercise/result/result.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
@@ -36,6 +42,8 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
+import { ProblemStatementSyncService } from 'app/programming/manage/services/problem-statement-sync.service';
+import { editor } from 'test/helpers/mocks/mock-monaco-editor';
 
 describe('ProgrammingExerciseEditableInstructionComponent', () => {
     let comp: ProgrammingExerciseEditableInstructionComponent;
@@ -54,7 +62,6 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     templateParticipation.id = 99;
 
     const exercise = { id: 30, templateParticipation } as ProgrammingExercise;
-    const participation = { id: 1, results: [{ id: 10, feedbacks: [{ id: 20 }, { id: 21 }] }] } as Participation;
     const testCases = [
         { testName: 'test1', active: true },
         { testName: 'test2', active: true },
@@ -72,6 +79,27 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         },
     } as ActivatedRoute;
 
+    const yDoc = new Y.Doc();
+    const yText = yDoc.getText('problem-statement');
+    const yAwareness = {} as any;
+    const stateReplaced$ = new Subject<{ doc: Y.Doc; text: Y.Text; awareness: any }>();
+    const problemStatementSyncServiceMock = {
+        init: jest.fn().mockReturnValue({ doc: yDoc, text: yText, awareness: yAwareness }),
+        reset: jest.fn(),
+        stateReplaced$: stateReplaced$.asObservable(),
+    };
+
+    const defaultForceRender$ = new Subject<void>();
+    const setRequiredInputs = (
+        fixtureRef: ComponentFixture<ProgrammingExerciseEditableInstructionComponent>,
+        exerciseInput: ProgrammingExercise = exercise,
+        forceRender$: Observable<void> = defaultForceRender$,
+    ) => {
+        fixtureRef.componentRef.setInput('exercise', exerciseInput);
+        fixtureRef.componentRef.setInput('initialEditorHeight', 'external');
+        fixtureRef.componentRef.setInput('forceRender', forceRender$);
+    };
+
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [MockDirective(NgbTooltip), FaIconComponent],
@@ -88,9 +116,15 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useClass: MockAlertService },
+                { provide: ProblemStatementSyncService, useValue: problemStatementSyncServiceMock },
                 { provide: ActivatedRoute, useValue: route },
                 MockProvider(ProfileService, {
                     getProfileInfo: () => mockProfileInfo,
+                    isProfileActive: jest.fn().mockReturnValue(false),
+                    isModuleFeatureActive: jest.fn().mockReturnValue(true),
+                }),
+                MockProvider(ProgrammingExerciseParticipationService, {
+                    getLatestResultWithFeedback: jest.fn(),
                 }),
                 { provide: AccountService, useClass: MockAccountService },
                 provideHttpClient(),
@@ -110,20 +144,73 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
                 generateHtmlSubjectStub = jest.spyOn(comp.generateHtmlSubject, 'next');
                 programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
                 alertService = TestBed.inject(AlertService);
+                setRequiredInputs(fixture, { id: undefined } as ProgrammingExercise);
             });
     });
 
     afterEach(() => {
         (gradingService as MockProgrammingExerciseGradingService).initSubject([]);
+        jest.clearAllMocks();
         jest.restoreAllMocks();
     });
 
-    it('should not have any test cases if the test case service emits an empty array', fakeAsync(() => {
-        comp.exercise = exercise;
-        comp.participation = participation;
+    it('should initialize sync service', fakeAsync(() => {
+        const exercise = { id: 30, templateParticipation, problemStatement: 'test' } as ProgrammingExercise;
+        setRequiredInputs(fixture, exercise);
+        fixture.detectChanges();
 
-        triggerChanges(comp, { property: 'exercise', currentValue: exercise });
-        fixture.changeDetectorRef.detectChanges();
+        // Set up mock for markdownEditorMonaco using the mock-monaco-editor helper
+        const mockEditor = editor.create();
+        comp.markdownEditorMonaco = {
+            monacoEditor: {
+                getModel: () => mockEditor.getModel(),
+                getEditor: () => mockEditor,
+            },
+        } as unknown as MarkdownEditorMonacoComponent;
+
+        // Trigger ngAfterViewInit manually since the ViewChild is now set
+        comp.ngAfterViewInit();
+        tick();
+
+        expect(problemStatementSyncServiceMock.init).toHaveBeenCalledWith(exercise.id, exercise.problemStatement);
+
+        fixture.destroy();
+        flush();
+    }));
+
+    it('skips initializing sync when edit mode disabled', fakeAsync(() => {
+        fixture.componentRef.setInput('editMode', false);
+        setRequiredInputs(fixture, { ...exercise, problemStatement: 'content' });
+
+        fixture.detectChanges();
+        tick();
+
+        expect(problemStatementSyncServiceMock.init).not.toHaveBeenCalled();
+    }));
+
+    it('emits unsaved flag on user edits', () => {
+        const hasUnsavedSpy = jest.fn();
+        comp.hasUnsavedChanges.subscribe(hasUnsavedSpy);
+        setRequiredInputs(fixture, { ...exercise, problemStatement: 'old' });
+        fixture.detectChanges();
+
+        comp.updateProblemStatement('changed');
+
+        expect(hasUnsavedSpy).toHaveBeenCalledWith(true);
+    });
+
+    it('should reset sync service on component destroy', () => {
+        setRequiredInputs(fixture, exercise);
+        fixture.detectChanges();
+
+        fixture.destroy();
+
+        expect(problemStatementSyncServiceMock.reset).toHaveBeenCalled();
+    });
+
+    it('should not have any test cases if the test case service emits an empty array', fakeAsync(() => {
+        setRequiredInputs(fixture, exercise);
+        fixture.detectChanges();
         tick();
 
         expect(subscribeForTestCaseSpy).toHaveBeenNthCalledWith(1, exercise.id);
@@ -134,14 +221,10 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     }));
 
     it('should have test cases according to the result of the test case service if it does not return an empty array', fakeAsync(() => {
-        comp.exercise = exercise;
-        comp.participation = participation;
-
-        triggerChanges(comp, { property: 'exercise', currentValue: exercise });
+        setRequiredInputs(fixture, exercise);
+        fixture.detectChanges();
 
         (gradingService as MockProgrammingExerciseGradingService).nextTestCases(testCases);
-
-        fixture.changeDetectorRef.detectChanges();
         tick();
 
         expect(subscribeForTestCaseSpy).toHaveBeenNthCalledWith(1, exercise.id);
@@ -159,21 +242,16 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     }));
 
     it('should update test cases if a new test case result comes in', fakeAsync(() => {
-        comp.exercise = exercise;
-        comp.participation = participation;
-
-        triggerChanges(comp, { property: 'exercise', currentValue: exercise });
+        setRequiredInputs(fixture, exercise);
+        fixture.detectChanges();
 
         (gradingService as MockProgrammingExerciseGradingService).nextTestCases(testCases);
-
-        fixture.changeDetectorRef.detectChanges();
         tick();
 
         expect(comp.exerciseTestCases).toHaveLength(2);
         expect(comp.exerciseTestCases).toEqual(['test1', 'test2']);
 
         (gradingService as MockProgrammingExerciseGradingService).nextTestCases([{ testName: 'testX' }]);
-        fixture.changeDetectorRef.detectChanges();
         tick();
 
         expect(comp.exerciseTestCases).toHaveLength(0);
@@ -185,17 +263,16 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     }));
 
     it('should try to retrieve the test case values from the solution repos last build result if there are no testCases (empty result)', fakeAsync(() => {
-        comp.exercise = exercise;
-        comp.participation = participation;
         const subject = new Subject<Result>();
         getLatestResultWithFeedbacksStub.mockReturnValue(subject);
 
-        triggerChanges(comp, { property: 'exercise', currentValue: exercise });
+        setRequiredInputs(fixture, exercise);
+        fixture.detectChanges();
 
         // No test cases available, might be that the solution build never ran to create tests...
         (gradingService as MockProgrammingExerciseGradingService).nextTestCases(undefined);
 
-        fixture.changeDetectorRef.detectChanges();
+        fixture.detectChanges();
 
         expect(comp.exerciseTestCases).toHaveLength(0);
         expect(getLatestResultWithFeedbacksStub).toHaveBeenNthCalledWith(1, exercise.templateParticipation!.id!);
@@ -211,13 +288,12 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     }));
 
     it('should not try to query test cases or solution participation results if the exercise is being created (there can be no test cases yet)', fakeAsync(() => {
-        comp.exercise = exercise;
-        comp.participation = participation;
-        comp.editMode = false;
+        fixture.componentRef.setInput('editMode', false);
+        const newExercise = { ...exercise, id: undefined };
 
-        triggerChanges(comp, { property: 'exercise', currentValue: exercise });
+        setRequiredInputs(fixture, newExercise as ProgrammingExercise);
 
-        fixture.changeDetectorRef.detectChanges();
+        fixture.detectChanges();
         tick();
 
         expect(comp.exerciseTestCases).toHaveLength(0);
@@ -235,13 +311,9 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
     it('should re-render the preview html when forceRender has emitted', fakeAsync(() => {
         const forceRenderSubject = new Subject<void>();
-        comp.exercise = exercise;
-        comp.participation = participation;
-        comp.forceRender = forceRenderSubject.asObservable();
+        setRequiredInputs(fixture, exercise, forceRenderSubject.asObservable());
 
-        triggerChanges(comp, { property: 'exercise', currentValue: exercise });
-
-        fixture.changeDetectorRef.detectChanges();
+        fixture.detectChanges();
         tick();
 
         // Initial render is triggered in ngAfterViewInit when showPreview is true
@@ -282,12 +354,15 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     }));
 
     it('should save the problem statement to the server', () => {
-        comp.exercise = exercise;
-        comp.editMode = true;
+        fixture.componentRef.setInput('editMode', true);
+        setRequiredInputs(fixture, exercise);
+        fixture.detectChanges();
 
         const updateProblemStatement = jest.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(of(new HttpResponse({ body: exercise })));
 
         comp.updateProblemStatement('new problem statement');
+        fixture.componentRef.setInput('exercise', { ...exercise, problemStatement: 'new problem statement' } as ProgrammingExercise);
+        fixture.detectChanges();
         comp.saveInstructions({ stopPropagation: () => {} } as Event);
 
         expect(updateProblemStatement).toHaveBeenCalledExactlyOnceWith(exercise.id, 'new problem statement');
@@ -297,8 +372,9 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         const updateProblemStatementSpy = jest.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(throwError(() => undefined));
         const logErrorSpy = jest.spyOn(alertService, 'error');
 
-        comp.exercise = exercise;
-        comp.editMode = true;
+        fixture.componentRef.setInput('editMode', true);
+        setRequiredInputs(fixture, exercise);
+        fixture.detectChanges();
 
         comp.saveInstructions(new KeyboardEvent('cmd+s'));
         expect(updateProblemStatementSpy).toHaveBeenCalledOnce();
@@ -307,8 +383,9 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
     it('should save on key commands', () => {
         const saveInstructionsSpy = jest.spyOn(comp, 'saveInstructions');
-        comp.exercise = exercise;
-        comp.editMode = true;
+        fixture.componentRef.setInput('editMode', true);
+        setRequiredInputs(fixture, exercise);
+        fixture.detectChanges();
 
         comp.saveOnControlAndS(new KeyboardEvent('ctrl+s'));
         expect(saveInstructionsSpy).toHaveBeenCalledOnce();
@@ -318,22 +395,13 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     });
 
     it('should have intelligence actions when Hyperion is active', () => {
-        const isModuleFeatureActiveSpy = jest.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockReturnValue(true);
-
-        // Komponente erneut erzeugen, damit computed() neu berechnet wird
-        fixture = TestBed.createComponent(ProgrammingExerciseEditableInstructionComponent);
-        comp = fixture.componentInstance;
-
-        // IDs setzen, die in artemisIntelligenceActions verwendet werden
-        comp.courseId = 1;
-        comp.exerciseId = 42;
-
-        fixture.changeDetectorRef.detectChanges();
+        setRequiredInputs(fixture, { ...exercise, course: { id: 1 } as any } as ProgrammingExercise);
+        comp.hyperionEnabled = true;
+        fixture.detectChanges();
 
         const actions = comp.artemisIntelligenceActions();
         expect(actions).toHaveLength(1);
         expect(actions[0]).toBeInstanceOf(RewriteAction);
-        expect(isModuleFeatureActiveSpy).toHaveBeenCalledWith(MODULE_FEATURE_HYPERION);
     });
 
     it('should cleanup subscriptions on destroy', fakeAsync(() => {

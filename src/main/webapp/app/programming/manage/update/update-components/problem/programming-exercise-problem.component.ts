@@ -303,4 +303,13 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
         this.addedLineCount.set(event.lineChange.addedLineCount);
         this.removedLineCount.set(event.lineChange.removedLineCount);
     }
+
+    onInstructionChange(problemStatement: string) {
+        const exercise = this.programmingExercise();
+        if (exercise) {
+            exercise.problemStatement = problemStatement;
+            this.programmingExerciseChange.emit(exercise);
+            this.problemStatementChange.emit(problemStatement);
+        }
+    }
 }
