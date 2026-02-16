@@ -10,7 +10,7 @@ import { CompetencyService } from 'app/atlas/manage/services/competency.service'
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChatMessage } from 'app/atlas/shared/entities/chat-message.model';
-import { Competency, CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
+import { Competency, CompetencyRelationType, CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { throwError } from 'rxjs';
 import { ElementRef } from '@angular/core';
@@ -1748,6 +1748,208 @@ describe('AgentChatModalComponent', () => {
                 expect(agentMessage).toBeDefined();
                 expect(agentMessage?.competencyPreviews).toBeUndefined();
             });
+        });
+    });
+
+    describe('Relation Graph Preview Handling', () => {
+        beforeEach(() => {
+            vi.spyOn(mockTranslateService, 'instant').mockReturnValue('Welcome');
+            mockAgentChatService.getConversationHistory.mockReturnValue(of([]));
+            component.ngOnInit();
+        });
+
+        it('should handle relation graph preview response', () => {
+            const mockResponse = {
+                message: 'Here is the relation graph:',
+                sessionId: 'course_123',
+                timestamp: new Date().toISOString(),
+                success: true,
+                competenciesModified: false,
+                relationGraphPreview: {
+                    nodes: [
+                        { id: '1', label: 'OOP Basics' },
+                        { id: '2', label: 'Design Patterns' },
+                    ],
+                    edges: [{ id: 'edge-1', source: '1', target: '2', relationType: CompetencyRelationType.ASSUMES }],
+                    viewOnly: false,
+                },
+            };
+            mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse as unknown as AgentChatResponse));
+            component.currentMessage.set('Show me the competency graph');
+            fixture.detectChanges();
+
+            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+            sendButton.click();
+
+            const agentMessage = component.messages().find((msg) => !msg.isUser && msg.relationGraphPreview);
+            expect(agentMessage).toBeDefined();
+            expect(agentMessage?.relationGraphPreview?.nodes).toHaveLength(2);
+            expect(agentMessage?.relationGraphPreview?.edges).toHaveLength(1);
+        });
+
+        it('should convert nodes to competencies correctly', () => {
+            const mockResponse = {
+                message: 'Graph:',
+                sessionId: 'course_123',
+                timestamp: new Date().toISOString(),
+                success: true,
+                competenciesModified: false,
+                relationGraphPreview: {
+                    nodes: [
+                        { id: '5', label: 'Algorithms' },
+                        { id: '15', label: 'Data Structures' },
+                    ],
+                    edges: [],
+                    viewOnly: false,
+                },
+            };
+            mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse as unknown as AgentChatResponse));
+            component.currentMessage.set('Graph');
+            fixture.detectChanges();
+
+            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+            sendButton.click();
+
+            const agentMessage = component.messages().find((msg) => !msg.isUser && msg.graphCompetencies);
+            expect(agentMessage?.graphCompetencies?.[0].id).toBe(5);
+            expect(agentMessage?.graphCompetencies?.[0].title).toBe('Algorithms');
+            expect(agentMessage?.graphCompetencies?.[1].id).toBe(15);
+            expect(agentMessage?.graphCompetencies?.[1].title).toBe('Data Structures');
+        });
+
+        it('should convert edges to relations with unique IDs', () => {
+            const mockResponse = {
+                message: 'Relations:',
+                sessionId: 'course_123',
+                timestamp: new Date().toISOString(),
+                success: true,
+                competenciesModified: false,
+                relationGraphPreview: {
+                    nodes: [
+                        { id: '1', label: 'A' },
+                        { id: '2', label: 'B' },
+                    ],
+                    edges: [
+                        { id: 'edge-1', source: '1', target: '2', relationType: CompetencyRelationType.ASSUMES },
+                        { id: 'edge-2', source: '2', target: '1', relationType: CompetencyRelationType.MATCHES },
+                    ],
+                    viewOnly: false,
+                },
+            };
+            mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse as unknown as AgentChatResponse));
+            component.currentMessage.set('Relations');
+            fixture.detectChanges();
+
+            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+            sendButton.click();
+
+            const agentMessage = component.messages().find((msg) => !msg.isUser && msg.graphRelations);
+            expect(agentMessage?.graphRelations).toHaveLength(2);
+            expect(agentMessage?.graphRelations?.[0].headCompetencyId).toBe(1);
+            expect(agentMessage?.graphRelations?.[0].tailCompetencyId).toBe(2);
+            expect(agentMessage?.graphRelations?.[0].relationType).toBe(CompetencyRelationType.ASSUMES);
+            expect(agentMessage?.graphRelations?.[1].relationType).toBe(CompetencyRelationType.MATCHES);
+            // IDs should be unique
+            expect(agentMessage?.graphRelations?.[0].id).not.toBe(agentMessage?.graphRelations?.[1].id);
+        });
+    });
+
+    describe('isRelationUpdateOperation', () => {
+        it('should return true when relationPreviews has relationId', () => {
+            const message: ChatMessage = {
+                id: '1',
+                content: 'Test',
+                isUser: false,
+                timestamp: new Date(),
+                relationPreviews: [
+                    {
+                        relationId: 123,
+                        headCompetencyId: 1,
+                        headCompetencyTitle: 'A',
+                        tailCompetencyId: 2,
+                        tailCompetencyTitle: 'B',
+                        relationType: CompetencyRelationType.ASSUMES,
+                    },
+                ],
+            };
+
+            const result = component['isRelationUpdateOperation'](message);
+            expect(result).toBeTruthy();
+        });
+
+        it('should return false when relationPreviews has no relationId', () => {
+            const message: ChatMessage = {
+                id: '1',
+                content: 'Test',
+                isUser: false,
+                timestamp: new Date(),
+                relationPreviews: [
+                    {
+                        headCompetencyId: 1,
+                        headCompetencyTitle: 'A',
+                        tailCompetencyId: 2,
+                        tailCompetencyTitle: 'B',
+                        relationType: CompetencyRelationType.ASSUMES,
+                    },
+                ],
+            };
+
+            const result = component['isRelationUpdateOperation'](message);
+            expect(result).toBeFalsy();
+        });
+
+        it('should return true when at least one relationPreview has relationId', () => {
+            const message: ChatMessage = {
+                id: '1',
+                content: 'Test',
+                isUser: false,
+                timestamp: new Date(),
+                relationPreviews: [
+                    {
+                        headCompetencyId: 1,
+                        headCompetencyTitle: 'A',
+                        tailCompetencyId: 2,
+                        tailCompetencyTitle: 'B',
+                        relationType: CompetencyRelationType.ASSUMES,
+                    },
+                    {
+                        relationId: 456,
+                        headCompetencyId: 3,
+                        headCompetencyTitle: 'C',
+                        tailCompetencyId: 4,
+                        tailCompetencyTitle: 'D',
+                        relationType: CompetencyRelationType.EXTENDS,
+                    },
+                ],
+            };
+
+            const result = component['isRelationUpdateOperation'](message);
+            expect(result).toBeTruthy();
+        });
+
+        it('should return false for message without relation previews', () => {
+            const message: ChatMessage = {
+                id: '1',
+                content: 'Test',
+                isUser: false,
+                timestamp: new Date(),
+            };
+
+            const result = component['isRelationUpdateOperation'](message);
+            expect(result).toBeFalsy();
+        });
+
+        it('should return false for empty relationPreviews array', () => {
+            const message: ChatMessage = {
+                id: '1',
+                content: 'Test',
+                isUser: false,
+                timestamp: new Date(),
+                relationPreviews: [],
+            };
+
+            const result = component['isRelationUpdateOperation'](message);
+            expect(result).toBeFalsy();
         });
     });
 });
