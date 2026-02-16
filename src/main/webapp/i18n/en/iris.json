@@ -140,6 +140,7 @@
                 "helpOffer": "How can I help you today?"
             },
             "contextSelection": {
+                "selectContext": "Select Context",
                 "entireCourse": "Entire Course",
                 "entireCourseDescription": "Discuss course content and reflect on your progress",
                 "selectLecture": "Select Lecture",

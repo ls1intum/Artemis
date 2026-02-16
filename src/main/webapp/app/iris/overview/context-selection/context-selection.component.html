@@ -2,6 +2,9 @@
     @switch (currentView()) {
         @case ('main') {
             <div class="selection-view">
+                <div class="selection-header">
+                    <h6 jhiTranslate="artemisApp.iris.contextSelection.selectContext"></h6>
+                </div>
                 @for (option of options(); track option.type) {
                     <button class="context-selection-box" [class.selected]="selectedType() === option.type" (click)="onOptionClick(option.type)">
                         <fa-icon [icon]="option.icon" class="context-icon" />

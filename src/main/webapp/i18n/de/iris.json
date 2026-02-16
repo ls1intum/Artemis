@@ -140,6 +140,7 @@
                 "helpOffer": "Wie kann ich Dir helfen?"
             },
             "contextSelection": {
+                "selectContext": "Kontext auswählen",
                 "entireCourse": "Gesamter Kurs",
                 "entireCourseDescription": "Kursinhalte besprechen und Fortschritt reflektieren",
                 "selectLecture": "Vorlesung auswählen",
