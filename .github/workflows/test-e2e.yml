@@ -32,7 +32,6 @@ jobs:
       run_all_tests: ${{ steps.determine.outputs.RUN_ALL_TESTS }}
       relevant_tests: ${{ steps.determine.outputs.RELEVANT_TESTS }}
       remaining_tests: ${{ steps.determine.outputs.REMAINING_TESTS }}
-      ignore_tests: ${{ steps.determine.outputs.IGNORE_TESTS }}
       relevant_count: ${{ steps.determine.outputs.RELEVANT_COUNT }}
       remaining_count: ${{ steps.determine.outputs.REMAINING_COUNT }}
     steps:
@@ -119,7 +118,7 @@ jobs:
         uses: ./.github/actions/e2e-teardown
         with:
           artifact-name-suffix: Phase 1
-          require-tests: warn
+          require-tests: error
 
       - name: E2E Test Report
         if: success() || failure()
@@ -188,7 +187,7 @@ jobs:
           test-notice: "Running Phase 2 with remaining tests: ${{ needs.determine-tests.outputs.remaining_tests }}"
 
       - name: Run E2E Playwright tests (Phase 2 - Remaining Tests)
-        run: .ci/E2E-tests/execute.sh mysql-localci playwright "${{ needs.determine-tests.outputs.remaining_tests }}" "${{ needs.determine-tests.outputs.ignore_tests }}"
+        run: .ci/E2E-tests/execute.sh mysql-localci playwright "${{ needs.determine-tests.outputs.remaining_tests }}"
         env:
           FAST_TEST_TIMEOUT_SECONDS: 60
 
@@ -197,7 +196,7 @@ jobs:
         uses: ./.github/actions/e2e-teardown
         with:
           artifact-name-suffix: Phase 2
-          require-tests: warn
+          require-tests: error
 
       - name: E2E Test Report
         if: success() || failure()
@@ -282,6 +281,7 @@ jobs:
           path: all-test-results
 
       - name: All Tests Report (PR)
+        id: test-report
         uses: mikepenz/action-junit-report@v5.6.2
         if: success() || failure()
         with:
@@ -293,6 +293,55 @@ jobs:
           detailed_summary: true
           include_time_in_summary: true
           report_paths: 'all-test-results/results.xml'
+
+      - name: Find PR number
+        if: success() || failure()
+        id: find-pr
+        continue-on-error: true
+        run: |
+          BRANCH_NAME=${{ github.event.workflow_run.head_branch }}
+          echo "Checking if PR exists for head ref: $BRANCH_NAME."
+
+          PR_RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/pulls?head=${{ github.repository_owner }}:$BRANCH_NAME")
+
+          PR_NUMBER=$(echo "$PR_RESPONSE" | grep -o '"number": [0-9]*,' | head -1 | sed 's/"number": //g' | sed 's/,//g' | tr -d ' \t\n\r')
+
+          if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
+            echo "Found PR: $PR_NUMBER from branch: $BRANCH_NAME."
+            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          else
+            echo "No PR found from branch: $BRANCH_NAME."
+          fi
+
+      - name: Post test results comment to PR
+        if: (success() || failure()) && steps.find-pr.outputs.pr_number != ''
+        uses: actions/github-script@v8
+        continue-on-error: true
+        with:
+          script: |
+            const prNumber = ${{ steps.find-pr.outputs.pr_number }};
+            const jobStatus = '${{ job.status }}';
+            const testSummary = `${{ steps.test-report.outputs.summary || '' }}`;
+
+            let statusEmoji = jobStatus === 'success' ? '✅' : '❌';
+            let statusText = jobStatus === 'success' ? 'passed' : 'failed';
+
+            let body = `### All E2E Tests ${statusEmoji}\n\n`;
+            body += `**Status:** Tests ${statusText}\n\n`;
+            if (testSummary) {
+              body += `${testSummary}\n\n`;
+            }
+            body += `**Details:** Check the [E2E Test Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for detailed results.\n\n`;
+            body += `---\n*This is an automated comment for the E2E test execution (all tests).*`;
+
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: body
+            });
 
   # Run all tests for non-PR events (push to develop, main, release branches)
   run-e2e-all-non-pr:
