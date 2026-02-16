@@ -258,7 +258,7 @@ public class ProgrammingExerciseParticipationService {
             if (coAuthor.getName() != null) {
                 displayIdentifier.append(" ").append(coAuthor.getName());
             }
-            else if (coAuthor.getEmail() == null) {
+            else {
                 displayIdentifier.append(" ").append(login);
             }
 
