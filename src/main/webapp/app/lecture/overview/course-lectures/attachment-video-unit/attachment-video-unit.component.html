@@ -41,9 +41,6 @@
     }
 
     @if (hasPdf()) {
-        @if (!!videoUrl() || lectureUnit()?.description) {
-            <hr />
-        }
         @if (isPdfLoading()) {
             <div class="d-flex justify-content-center p-3">
                 <div class="spinner-border" role="status">
@@ -51,25 +48,7 @@
                 </div>
             </div>
         } @else if (pdfUrl()) {
-            <jhi-pdf-viewer [pdfUrl]="pdfUrl()!" />
+            <jhi-pdf-viewer [pdfUrl]="pdfUrl()!" [uploadDate]="lectureUnit().attachment?.uploadDate" [version]="lectureUnit().attachment?.version" />
         }
-    }
-
-    @if (lectureUnit().attachment?.uploadDate || lectureUnit().attachment?.version) {
-        <hr />
-        <div class="attachment-info-box">
-            @if (lectureUnit().attachment?.uploadDate) {
-                <div class="info-item">
-                    <span class="font-weight-bold" jhiTranslate="artemisApp.attachmentVideoUnit.uploadDate">Upload Date</span>:
-                    {{ lectureUnit().attachment?.uploadDate | artemisDate }}
-                </div>
-            }
-            @if (lectureUnit().attachment?.version) {
-                <div class="info-item">
-                    <span class="font-weight-bold" jhiTranslate="artemisApp.attachmentVideoUnit.version">Version</span>:
-                    {{ lectureUnit().attachment?.version }}
-                </div>
-            }
-        </div>
     }
 </jhi-lecture-unit-card>

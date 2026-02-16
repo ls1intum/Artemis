@@ -25,7 +25,6 @@ import {
     faFileVideo,
     faFileWord,
 } from '@fortawesome/free-solid-svg-icons';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
@@ -36,7 +35,7 @@ import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.
 import { map } from 'rxjs/operators';
 @Component({
     selector: 'jhi-attachment-video-unit',
-    imports: [LectureUnitComponent, ArtemisDatePipe, TranslateDirective, SafeResourceUrlPipe, VideoPlayerComponent, PdfViewerComponent],
+    imports: [LectureUnitComponent, TranslateDirective, SafeResourceUrlPipe, VideoPlayerComponent, PdfViewerComponent],
     templateUrl: './attachment-video-unit.component.html',
     styleUrl: './attachment-video-unit.component.scss',
 })

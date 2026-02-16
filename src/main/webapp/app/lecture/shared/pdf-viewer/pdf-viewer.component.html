@@ -13,17 +13,21 @@
     }
     @if (!isLoading() && !error()) {
         <div class="pdf-toolbar">
-            <button class="btn btn-sm btn-secondary" (click)="zoomOut()" [disabled]="zoomLevel() <= 0.5">
-                <fa-icon [icon]="faMinus" />
-            </button>
-            <span class="zoom-level">{{ (zoomLevel() * 100).toFixed(0) }}%</span>
-            <button class="btn btn-sm btn-secondary" (click)="zoomIn()" [disabled]="zoomLevel() >= 3.0">
-                <fa-icon [icon]="faPlus" />
-            </button>
-            <button class="btn btn-sm btn-secondary" (click)="resetZoom()">
-                <fa-icon [icon]="faRotateLeft" />
-            </button>
-            <span class="page-info">{{ currentPage() }}/{{ totalPages() }}</span>
+            <div class="toolbar-left">
+                <button class="btn btn-link" (click)="zoomOut()" [disabled]="zoomLevel() <= 0.5">
+                    <fa-icon [icon]="faSearchMinus" />
+                </button>
+                <button class="btn btn-link" (click)="zoomIn()" [disabled]="zoomLevel() >= 3.0">
+                    <fa-icon [icon]="faSearchPlus" />
+                </button>
+                <span class="zoom-level">{{ (zoomLevel() * 100).toFixed(0) }}%</span>
+                <button class="btn btn-link" (click)="resetZoom()">
+                    <fa-icon [icon]="faRotateLeft" />
+                </button>
+            </div>
+            <div class="toolbar-right">
+                <span class="page-info">{{ currentPage() }}/{{ totalPages() }}</span>
+            </div>
         </div>
     }
     <div class="pdf-viewer-box" #pdfViewerBox>
@@ -33,4 +37,19 @@
             </div>
         </div>
     </div>
+    @if (uploadDate() || version()) {
+        <div class="attachment-info">
+            @if (uploadDate()) {
+                <span jhiTranslate="artemisApp.attachmentVideoUnit.uploadDate">Upload Date</span>:
+                {{ uploadDate() | artemisDate }}
+            }
+            @if (uploadDate() && version()) {
+                <span> - </span>
+            }
+            @if (version()) {
+                <span jhiTranslate="artemisApp.attachmentVideoUnit.version">Version</span>:
+                {{ version() }}
+            }
+        </div>
+    }
 </div>

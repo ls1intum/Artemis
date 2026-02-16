@@ -3,18 +3,23 @@ import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import * as PDFJS from 'pdfjs-dist/legacy/build/pdf.mjs';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
+import type { Dayjs } from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
-import { faMinus, faPlus, faRotateLeft } from '@fortawesome/free-solid-svg-icons';
+import { TranslateModule } from '@ngx-translate/core';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { faRotateLeft, faSearchMinus, faSearchPlus } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-pdf-viewer',
     standalone: true,
-    imports: [CommonModule, FontAwesomeModule],
+    imports: [CommonModule, FontAwesomeModule, TranslateModule, ArtemisDatePipe],
     templateUrl: './pdf-viewer.component.html',
     styleUrls: ['./pdf-viewer.component.scss'],
 })
 export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     pdfUrl = input.required<string>();
+    uploadDate = input<Dayjs | undefined>(undefined);
+    version = input<number | undefined>(undefined);
     pdfContainer = viewChild<ElementRef<HTMLDivElement>>('pdfContainer');
     pdfViewerBox = viewChild<ElementRef<HTMLDivElement>>('pdfViewerBox');
 
@@ -28,8 +33,8 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     wrapperWidth = computed(() => Math.max(100, this.zoomLevel() * 100));
 
     // Icons
-    protected readonly faMinus = faMinus;
-    protected readonly faPlus = faPlus;
+    protected readonly faSearchMinus = faSearchMinus;
+    protected readonly faSearchPlus = faSearchPlus;
     protected readonly faRotateLeft = faRotateLeft;
 
     private pdfDocument: PDFDocumentProxy | undefined;
