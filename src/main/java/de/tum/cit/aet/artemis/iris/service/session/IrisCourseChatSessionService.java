@@ -160,7 +160,7 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
             return;
         }
 
-        var session = getCurrentSessionOrCreateIfNotExistsInternal(course, user, false);
+        var session = getCurrentSessionOrCreateIfNotExistsInternal(course, user);
         rateLimitService.checkRateLimitElseThrow(session, user);
 
         var variant = settings.variant().jsonValue();
@@ -173,18 +173,17 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
      * Gets the current Iris session for the course and user.
      * If no session exists or if the last session is from a different day, a new one is created.
      *
-     * @param course                      The course to get the session for
-     * @param user                        The user to get the session for
-     * @param sendInitialMessageIfCreated Whether to send an initial message from Iris if a new session is created
+     * @param course The course to get the session for
+     * @param user   The user to get the session for
      * @return The current Iris session
      */
-    public IrisCourseChatSession getCurrentSessionOrCreateIfNotExists(Course course, User user, boolean sendInitialMessageIfCreated) {
+    public IrisCourseChatSession getCurrentSessionOrCreateIfNotExists(Course course, User user) {
         user.hasOptedIntoLLMUsageElseThrow();
         irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
-        return getCurrentSessionOrCreateIfNotExistsInternal(course, user, sendInitialMessageIfCreated);
+        return getCurrentSessionOrCreateIfNotExistsInternal(course, user);
     }
 
-    private IrisCourseChatSession getCurrentSessionOrCreateIfNotExistsInternal(Course course, User user, boolean sendInitialMessageIfCreated) {
+    private IrisCourseChatSession getCurrentSessionOrCreateIfNotExistsInternal(Course course, User user) {
         var sessionOptional = irisCourseChatSessionRepository.findLatestByCourseIdAndUserIdWithMessages(course.getId(), user.getId(), Pageable.ofSize(1)).stream().findFirst();
         if (sessionOptional.isPresent()) {
             var session = sessionOptional.get();
@@ -196,34 +195,25 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
             }
         }
 
-        // create a new session with an initial message from Iris
-        return createSessionInternal(course, user, sendInitialMessageIfCreated);
+        return createSessionInternal(course, user);
     }
 
     /**
      * Creates a new Iris session for the course and user.
      *
-     * @param course             The course to create the session for
-     * @param user               The user to create the session for
-     * @param sendInitialMessage Whether to send an initial message from Iris
+     * @param course The course to create the session for
+     * @param user   The user to create the session for
      * @return The created Iris session
      */
-    public IrisCourseChatSession createSession(Course course, User user, boolean sendInitialMessage) {
+    public IrisCourseChatSession createSession(Course course, User user) {
         user.hasOptedIntoLLMUsageElseThrow();
         irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
-        return createSessionInternal(course, user, sendInitialMessage);
+        return createSessionInternal(course, user);
     }
 
-    private IrisCourseChatSession createSessionInternal(Course course, User user, boolean sendInitialMessage) {
+    private IrisCourseChatSession createSessionInternal(Course course, User user) {
         var courseChat = new IrisCourseChatSession(course, user);
         courseChat.setTitle(AbstractIrisChatSessionService.getLocalizedNewChatTitle(user.getLangKey(), messageSource));
-        var session = irisCourseChatSessionRepository.save(courseChat);
-
-        if (sendInitialMessage) {
-            // Run async to allow the session to be returned immediately
-            CompletableFuture.runAsync(() -> requestAndHandleResponse(session));
-        }
-
-        return session;
+        return irisCourseChatSessionRepository.save(courseChat);
     }
 }
