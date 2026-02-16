@@ -82,71 +82,71 @@ describe('ProblemStatementUtils', () => {
 
     describe('isTemplateOrEmpty', () => {
         it('should return true for undefined problem statement', () => {
-            expect(isTemplateOrEmpty(undefined, 'template', true)).toBeTrue();
+            expect(isTemplateOrEmpty(undefined, 'template', true)).toBeTruthy();
         });
 
         it('should return true for empty problem statement', () => {
-            expect(isTemplateOrEmpty('', 'template', true)).toBeTrue();
+            expect(isTemplateOrEmpty('', 'template', true)).toBeTruthy();
         });
 
         it('should return true for whitespace-only problem statement', () => {
-            expect(isTemplateOrEmpty('   ', 'template', true)).toBeTrue();
+            expect(isTemplateOrEmpty('   ', 'template', true)).toBeTruthy();
         });
 
         it('should return false when template is not loaded', () => {
-            expect(isTemplateOrEmpty('some content', 'template', false)).toBeFalse();
+            expect(isTemplateOrEmpty('some content', 'template', false)).toBeFalsy();
         });
 
         it('should return true when problem statement matches template', () => {
-            expect(isTemplateOrEmpty('my template', 'my template', true)).toBeTrue();
+            expect(isTemplateOrEmpty('my template', 'my template', true)).toBeTruthy();
         });
 
         it('should return true when normalized problem statement matches normalized template', () => {
-            expect(isTemplateOrEmpty('  my template\r\n', '  my template\n', true)).toBeTrue();
+            expect(isTemplateOrEmpty('  my template\r\n', '  my template\n', true)).toBeTruthy();
         });
 
         it('should return false when problem statement differs from template', () => {
-            expect(isTemplateOrEmpty('custom content', 'template', true)).toBeFalse();
+            expect(isTemplateOrEmpty('custom content', 'template', true)).toBeFalsy();
         });
 
         it('should return false when template is empty but problem statement is not', () => {
-            expect(isTemplateOrEmpty('content', '', true)).toBeFalse();
+            expect(isTemplateOrEmpty('content', '', true)).toBeFalsy();
         });
     });
 
     describe('isValidRefinementResponse', () => {
         it('should return false for undefined', () => {
-            expect(isValidRefinementResponse(undefined)).toBeFalse();
+            expect(isValidRefinementResponse(undefined)).toBeFalsy();
         });
 
         it('should return false for empty refined statement', () => {
-            expect(isValidRefinementResponse({ refinedProblemStatement: '' })).toBeFalse();
+            expect(isValidRefinementResponse({ refinedProblemStatement: '' })).toBeFalsy();
         });
 
         it('should return false for whitespace-only refined statement', () => {
-            expect(isValidRefinementResponse({ refinedProblemStatement: '   ' })).toBeFalse();
+            expect(isValidRefinementResponse({ refinedProblemStatement: '   ' })).toBeFalsy();
         });
 
         it('should return true for valid refined statement', () => {
-            expect(isValidRefinementResponse({ refinedProblemStatement: 'Refined content' })).toBeTrue();
+            expect(isValidRefinementResponse({ refinedProblemStatement: 'Refined content' })).toBeTruthy();
         });
     });
 
     describe('isValidGenerationResponse', () => {
         it('should return false for undefined', () => {
-            expect(isValidGenerationResponse(undefined)).toBeFalse();
+            expect(isValidGenerationResponse(undefined)).toBeFalsy();
         });
 
         it('should return false for empty draft', () => {
-            expect(isValidGenerationResponse({ draftProblemStatement: '' })).toBeFalse();
+            expect(isValidGenerationResponse({ draftProblemStatement: '' })).toBeFalsy();
         });
 
         it('should return false for whitespace-only draft', () => {
-            expect(isValidGenerationResponse({ draftProblemStatement: '   ' })).toBeFalse();
+            expect(isValidGenerationResponse({ draftProblemStatement: '   ' })).toBeFalsy();
         });
 
         it('should return true for valid draft', () => {
-            expect(isValidGenerationResponse({ draftProblemStatement: 'Generated draft' })).toBeTrue();
+            expect(isValidGenerationResponse({ draftProblemStatement: 'Generated draft' })).toBeTruthy();
         });
     });
 

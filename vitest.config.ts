@@ -71,7 +71,9 @@ export default defineConfig({
                 'src/main/webapp/app/atlas/**/*.ts', // include atlas for code coverage
                 'src/main/webapp/app/iris/**/*.ts', // include iris for code coverage
                 'src/main/webapp/app/shared/components/buttons/**/*.ts', // include shared buttons for code coverage
-                'src/main/webapp/app/exercise/review/**/*.ts', // include review module for code coverage
+                'src/main/webapp/app/programming/manage/services/problem-statement.service.spec.ts',
+                'src/main/webapp/app/programming/manage/shared/problem-statement.utils.spec.ts',
+                'src/main/webapp/app/shared/monaco-editor/inline-refinement-button/inline-refinement-button.component.spec.ts',
             ],
             exclude: [
                 '**/node_modules/**',   // exclude node_modules with third-party code

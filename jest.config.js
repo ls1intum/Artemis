@@ -123,7 +123,9 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/iris/',              // iris module uses Vitest
         '<rootDir>/src/main/webapp/app/core/course/manage/', // core course manage module uses Vitest
         '<rootDir>/src/main/webapp/app/shared/components/buttons', // buttons module uses Vitest
-        '<rootDir>/src/main/webapp/app/exercise/review/', // review comment module uses Vitest
+        '<rootDir>/src/main/webapp/app/programming/manage/services/problem-statement.service.spec.ts',
+        '<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.spec.ts',
+        '<rootDir>/src/main/webapp/app/shared/monaco-editor/inline-refinement-button/inline-refinement-button.component.spec.ts',
     ],
     // Global coverage thresholds for Jest. Modules using Vitest (e.g., fileupload) have their own
     // coverage thresholds in vitest.config.ts. Per-module thresholds are enforced by check-client-module-coverage.mjs

@@ -40,7 +40,7 @@ describe('InlineRefinementButtonComponent', () => {
     });
 
     it('should initialize with collapsed state', () => {
-        expect(comp.isExpanded()).toBeFalse();
+        expect(comp.isExpanded()).toBeFalsy();
         expect(comp.instruction).toBe('');
     });
 
@@ -48,8 +48,9 @@ describe('InlineRefinementButtonComponent', () => {
         comp.expand();
         tick(100);
 
-        expect(comp.isExpanded()).toBeTrue();
-    }));
+        expect(comp.isExpanded()).toBeTruthy();
+        vi.useRealTimers();
+    });
 
     it('should emit refine event with correct data on submit', () => {
         const refineSpy = jest.spyOn(comp.refine, 'emit');

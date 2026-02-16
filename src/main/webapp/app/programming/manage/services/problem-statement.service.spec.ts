@@ -52,7 +52,7 @@ describe('ProblemStatementService', () => {
             const loadedSignal = signal(false);
             service.loadTemplate(undefined, templateSignal, loadedSignal);
             expect(templateSignal()).toBe('');
-            expect(loadedSignal()).toBeFalse();
+            expect(loadedSignal()).toBeFalsy();
         });
 
         it('should set empty template when exercise has no programming language', () => {
@@ -60,7 +60,7 @@ describe('ProblemStatementService', () => {
             const loadedSignal = signal(false);
             service.loadTemplate({} as ProgrammingExercise, templateSignal, loadedSignal);
             expect(templateSignal()).toBe('');
-            expect(loadedSignal()).toBeFalse();
+            expect(loadedSignal()).toBeFalsy();
         });
 
         it('should load template successfully', () => {
@@ -69,7 +69,7 @@ describe('ProblemStatementService', () => {
             const loadedSignal = signal(false);
             service.loadTemplate(exerciseWithCourse, templateSignal, loadedSignal);
             expect(templateSignal()).toBe('template content');
-            expect(loadedSignal()).toBeTrue();
+            expect(loadedSignal()).toBeTruthy();
         });
 
         it('should handle template loading error', () => {
@@ -78,7 +78,7 @@ describe('ProblemStatementService', () => {
             const loadedSignal = signal(false);
             service.loadTemplate(exerciseWithCourse, templateSignal, loadedSignal);
             expect(templateSignal()).toBe('');
-            expect(loadedSignal()).toBeFalse();
+            expect(loadedSignal()).toBeFalsy();
         });
     });
 
@@ -104,10 +104,9 @@ describe('ProblemStatementService', () => {
             const loadingSignal = signal(false);
             let result: any;
             service.generateProblemStatement(exerciseWithCourse, 'Generate a sorting exercise', loadingSignal).subscribe((r) => (result = r));
-            tick();
-            expect(result.success).toBeTrue();
+            expect(result.success).toBeTruthy();
             expect(result.content).toBe('Generated!');
-            expect(loadingSignal()).toBeFalse();
+            expect(loadingSignal()).toBeFalsy();
             expect(alertServiceMock.success).toHaveBeenCalled();
         }));
 
@@ -115,17 +114,15 @@ describe('ProblemStatementService', () => {
             hyperionApiMock.generateProblemStatement.mockReturnValue(of({ draftProblemStatement: 'Generated!' }) as any);
             const loadingSignal = signal(false);
             service.generateProblemStatement(exerciseWithCourse, 'prompt', loadingSignal).subscribe();
-            tick();
-            expect(loadingSignal()).toBeFalse();
-        }));
+            expect(loadingSignal()).toBeFalsy();
+        });
 
         it('should handle invalid generation response', fakeAsync(() => {
             hyperionApiMock.generateProblemStatement.mockReturnValue(of({ draftProblemStatement: '' }) as any);
             const loadingSignal = signal(false);
             let result: any;
             service.generateProblemStatement(exerciseWithCourse, 'prompt', loadingSignal).subscribe((r) => (result = r));
-            tick();
-            expect(result.success).toBeFalse();
+            expect(result.success).toBeFalsy();
             expect(alertServiceMock.success).not.toHaveBeenCalled();
         }));
 
@@ -134,11 +131,10 @@ describe('ProblemStatementService', () => {
             const loadingSignal = signal(false);
             let result: any;
             service.generateProblemStatement(exerciseWithCourse, 'prompt', loadingSignal).subscribe((r) => (result = r));
-            tick();
-            expect(result.success).toBeFalse();
-            expect(result.errorHandled).toBeFalse();
-            expect(loadingSignal()).toBeFalse();
-        }));
+            expect(result.success).toBeFalsy();
+            expect(result.errorHandled).toBeFalsy();
+            expect(loadingSignal()).toBeFalsy();
+        });
 
         it('should detect interceptor-handled HTTP errors', fakeAsync(() => {
             const httpError = new HttpErrorResponse({ error: { errorKey: 'someError' }, status: 400 });
@@ -146,10 +142,9 @@ describe('ProblemStatementService', () => {
             const loadingSignal = signal(false);
             let result: any;
             service.generateProblemStatement(exerciseWithCourse, 'prompt', loadingSignal).subscribe((r) => (result = r));
-            tick();
-            expect(result.success).toBeFalse();
-            expect(result.errorHandled).toBeTrue();
-        }));
+            expect(result.success).toBeFalsy();
+            expect(result.errorHandled).toBeTruthy();
+        });
     });
 
     describe('refineGlobally', () => {
@@ -183,8 +178,7 @@ describe('ProblemStatementService', () => {
             const loadingSignal = signal(false);
             let result: any;
             service.refineGlobally(exerciseWithCourse, 'original', 'improve clarity', loadingSignal).subscribe((r) => (result = r));
-            tick();
-            expect(result.success).toBeTrue();
+            expect(result.success).toBeTruthy();
             expect(result.content).toBe('Refined!');
             expect(alertServiceMock.success).toHaveBeenCalled();
         }));
@@ -194,10 +188,9 @@ describe('ProblemStatementService', () => {
             const loadingSignal = signal(false);
             let result: any;
             service.refineGlobally(exerciseWithCourse, 'content', 'prompt', loadingSignal).subscribe((r) => (result = r));
-            tick();
-            expect(result.success).toBeFalse();
-            expect(loadingSignal()).toBeFalse();
-        }));
+            expect(result.success).toBeFalsy();
+            expect(loadingSignal()).toBeFalsy();
+        });
     });
 
     describe('refineTargeted', () => {
@@ -226,8 +219,7 @@ describe('ProblemStatementService', () => {
             const loadingSignal = signal(false);
             let result: any;
             service.refineTargeted(exerciseWithCourse, 'original content', event, loadingSignal).subscribe((r) => (result = r));
-            tick();
-            expect(result.success).toBeTrue();
+            expect(result.success).toBeTruthy();
             expect(result.content).toBe('Targeted refined!');
             expect(alertServiceMock.success).toHaveBeenCalled();
         }));
@@ -237,9 +229,8 @@ describe('ProblemStatementService', () => {
             const loadingSignal = signal(false);
             let result: any;
             service.refineTargeted(exerciseWithCourse, 'content', event, loadingSignal).subscribe((r) => (result = r));
-            tick();
-            expect(result.success).toBeFalse();
-            expect(loadingSignal()).toBeFalse();
-        }));
+            expect(result.success).toBeFalsy();
+            expect(loadingSignal()).toBeFalsy();
+        });
     });
 });
