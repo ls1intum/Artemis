@@ -45,6 +45,7 @@
 // Welcome modal with two-column layout (Step 0)
 .iris-onboarding-modal-welcome {
     position: relative;
+    border: var(--onboarding-border);
     border-radius: var(--onboarding-radius);
     box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
     width: 700px;
@@ -70,7 +71,7 @@
 // Right side - Illustration
 .welcome-illustration-section {
     flex: 1;
-    background: var(--iris-chat-history-background);
+    background: var(--iris-secondary-background);
     padding: 0.5rem;
     display: flex;
     flex-direction: column;
@@ -113,7 +114,7 @@
 .icon-btn {
     width: 24px;
     height: 20px;
-    background: var(--iris-client-chat-background);
+    background: var(--iris-secondary-background);
     border-radius: 4px;
 }
 
@@ -135,7 +136,7 @@
 }
 
 .chat-bubble-preview {
-    background: var(--iris-client-chat-background);
+    background: var(--iris-tertiary-background);
     border-radius: var(--onboarding-radius);
     padding: 1rem;
     width: 200px;
@@ -182,7 +183,7 @@
     }
 
     &:focus-visible {
-        outline: 2px solid var(--bs-primary);
+        outline: 2px solid var(--primary);
         outline-offset: 2px;
     }
 }
@@ -205,7 +206,7 @@
 }
 
 .title {
-    font-size: 1.5rem;
+    font-size: 1.35rem;
     font-weight: 700;
     color: var(--bs-body-color);
     margin: 0;
@@ -213,9 +214,9 @@
 }
 
 .description {
-    font-size: 1rem;
+    font-size: 0.9rem;
     line-height: 1.6;
-    color: var(--bs-body-color);
+    color: var(--bs-secondary-color);
     margin: 0;
 }
 
@@ -435,7 +436,7 @@
     position: absolute;
     width: 12px;
     height: 12px;
-    background: var(--bs-primary, #3e8acc);
+    background: var(--primary);
     border-radius: 50%;
     z-index: 1052;
     pointer-events: none; // Don't block clicks on the coach mark
@@ -448,7 +449,7 @@
         left: -4px;
         right: -4px;
         bottom: -4px;
-        border: 2px solid var(--bs-primary, #3e8acc);
+        border: 2px solid var(--primary);
         border-radius: 50%;
         opacity: 0;
         animation: pulse-ring 1.5s ease-in-out infinite;
@@ -494,12 +495,21 @@
     padding: 1.5rem;
     box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
     max-width: 450px;
+    height: 400px;
     width: 90%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    pointer-events: auto; // Enable clicks on the modal
+}
+
+.modal-content-group {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
     align-items: center;
-    pointer-events: auto; // Enable clicks on the modal
+    width: 100%;
 }
 
 .final-modal-backdrop {
@@ -548,26 +558,27 @@
 }
 
 .prompt-chip {
-    background: var(--iris-chat-history-background);
+    background: var(--iris-secondary-background);
     border: var(--onboarding-border);
     border-radius: var(--onboarding-radius);
     padding: 1rem;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.5rem;
     cursor: pointer;
     transition: all 0.2s ease;
-    font-size: 0.875rem;
+    font-size: 1rem;
     color: var(--bs-body-color);
     width: 100%;
 
     &:hover {
-        background: var(--iris-client-chat-background);
+        background: var(--iris-tertiary-background);
         transform: translateY(-1px);
     }
 
     &:focus-visible {
-        outline: 2px solid var(--bs-primary);
+        outline: 2px solid var(--primary);
         outline-offset: 2px;
     }
 
@@ -575,12 +586,4 @@
         font-size: 1rem;
         color: var(--bs-body-color);
     }
-}
-
-.replay-hint {
-    font-size: 0.75rem;
-    color: var(--bs-secondary-color);
-    text-align: center;
-    margin: 0;
-    line-height: 1.6;
 }

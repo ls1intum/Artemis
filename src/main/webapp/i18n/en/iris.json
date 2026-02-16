@@ -16,7 +16,7 @@
                     "description": "Iris can explain concepts, help locate errors, and offer hints, without giving away full answers."
                 },
                 "step3": {
-                    "description": "Return to Dashboard to complete the tour."
+                    "description": "Return to Iris to complete the tour."
                 },
                 "step4": {
                     "title": "Try a first question",
@@ -29,7 +29,6 @@
                         "studyTips": "Give me study tips",
                         "studyTipsStarter": "Give me 3 tips to be effective at learning "
                     },
-                    "replayHint": "Click the (i) icon to see this tour again",
                     "promptSuggestions": "Prompt suggestions"
                 }
             },
