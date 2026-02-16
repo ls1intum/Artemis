@@ -3,7 +3,7 @@
     <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepMessage"></p>
     <!-- User Prompt Input -->
     @if (hyperionEnabled) {
-        <div class="mb-4">
+        <div class="mb-1">
             <label for="userPrompt" class="form-label" jhiTranslate="artemisApp.programmingExercise.problemStatement.yourRequirements"></label>
             <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.problemStatement.generateDraftDescription" />
             <textarea
@@ -15,11 +15,10 @@
                 [placeholder]="getTranslatedPlaceholder()"
                 [disabled]="isAiApplying()"
                 maxlength="1000"
-            >
-            </textarea>
+            ></textarea>
             <div class="text-end text-muted small mt-1">{{ userPrompt()?.length || 0 }}/1000</div>
         </div>
-        <div class="d-flex justify-content-start gap-2">
+        <div class="d-flex justify-content-start gap-2 mb-3">
             <button class="btn btn-outline-primary" type="button" [disabled]="!userPrompt()?.trim() || isAiApplying()" (click)="handleProblemStatementAction()">
                 @if (isAiApplying()) {
                     <fa-icon [icon]="faSpinner" animation="spin" />
@@ -37,48 +36,52 @@
                 <span class="d-none d-sm-inline" jhiTranslate="entity.action.cancel"></span>
             </button>
         </div>
-
-        <!-- Pending Inline Comments Bar -->
     }
     @if (isEditFieldDisplayedRecord()?.problemStatement) {
         <div class="form-group" id="field_problemStatement" name="problemStatement">
             <label class="form-control-label" for="field_problemStatement" jhiTranslate="artemisApp.programmingExercise.problemStatement.title"></label>
             @if (showDiff()) {
-                <div class="alert alert-info d-flex justify-content-between align-items-center mb-2">
-                    <div class="d-flex align-items-center">
-                        <span>
-                            <strong jhiTranslate="artemisApp.programmingExercise.problemStatement.reviewChanges"></strong>
-                            <span class="ms-2 text-muted" jhiTranslate="artemisApp.programmingExercise.problemStatement.changesAppliedLive"></span>
-                        </span>
-                        <div class="d-flex flex-row gap-2 ms-4">
+                <div class="alert alert-info mb-2 p-0 overflow-hidden">
+                    <!-- Row 1: Info -->
+                    <div class="px-3 pt-2 pb-1">
+                        <strong jhiTranslate="artemisApp.programmingExercise.problemStatement.reviewChanges"></strong>
+                        <span class="text-muted ms-2 small" jhiTranslate="artemisApp.programmingExercise.problemStatement.reviewChangesDescription"></span>
+                    </div>
+                    <!-- Row 2: Controls toolbar -->
+                    <div class="d-flex flex-wrap justify-content-between align-items-center px-3 py-2 gap-2">
+                        <jhi-button
+                            [btnType]="ButtonType.PRIMARY"
+                            [btnSize]="ButtonSize.SMALL"
+                            [icon]="faTableColumns"
+                            tooltip="artemisApp.programmingExercise.diffReport.splitView.tooltip"
+                            [tooltipPlacement]="TooltipPlacement.BOTTOM"
+                            [title]="'artemisApp.programmingExercise.diffReport.splitView.' + (allowSplitView() ? 'disable' : 'enable')"
+                            (onClick)="allowSplitView.set(!allowSplitView())"
+                        />
+                        <div class="d-flex align-items-center gap-2 ms-auto">
                             <jhi-button
-                                [btnType]="ButtonType.PRIMARY"
+                                [btnType]="ButtonType.SECONDARY"
                                 [btnSize]="ButtonSize.SMALL"
-                                [icon]="faTableColumns"
-                                tooltip="artemisApp.programmingExercise.diffReport.splitView.tooltip"
-                                [tooltipPlacement]="TooltipPlacement.BOTTOM"
-                                [title]="'artemisApp.programmingExercise.diffReport.splitView.' + (allowSplitView() ? 'disable' : 'enable')"
-                                (onClick)="allowSplitView.set(!allowSplitView())"
+                                [icon]="faBan"
+                                [title]="'artemisApp.programmingExercise.problemStatement.revertAll'"
+                                [disabled]="isAiApplying()"
+                                (onClick)="revertAllChanges()"
                             />
                             <jhi-git-diff-line-stat
-                                class="mt-1 fw-bold"
+                                class="fw-bold mx-1"
                                 [addedLineCount]="addedLineCount()"
                                 [removedLineCount]="removedLineCount()"
-                                ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.lineStatTooltipFullReport' | artemisTranslate }}"
+                                [ngbTooltip]="'artemisApp.programmingExercise.diffReport.lineStatTooltipFullReport' | artemisTranslate"
+                            />
+                            <jhi-button
+                                [btnType]="ButtonType.SUCCESS"
+                                [btnSize]="ButtonSize.SMALL"
+                                [icon]="faSave"
+                                [title]="'artemisApp.programmingExercise.problemStatement.doneReviewing'"
+                                [disabled]="isAiApplying()"
+                                (onClick)="closeDiffView()"
                             />
                         </div>
-                    </div>
-
-                    <div class="d-flex gap-2 align-items-center">
-                        <span class="text-muted small" jhiTranslate="artemisApp.programmingExercise.problemStatement.useRevertButtons"></span>
-                        <button class="btn btn-outline-danger btn-sm" type="button" [disabled]="isAiApplying()" (click)="revertAllChanges()">
-                            <fa-icon [icon]="faBan" class="me-1" />
-                            <span jhiTranslate="artemisApp.programmingExercise.problemStatement.revertAll"></span>
-                        </button>
-                        <button class="btn btn-success btn-sm" type="button" [disabled]="isAiApplying()" (click)="closeDiffView()">
-                            <fa-icon [icon]="faSave" class="me-1" />
-                            <span jhiTranslate="artemisApp.programmingExercise.problemStatement.doneReviewing"></span>
-                        </button>
                     </div>
                 </div>
             }
