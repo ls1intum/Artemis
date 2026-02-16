@@ -109,17 +109,17 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         const choice = await this.llmModalService.open();
 
         switch (choice) {
-            case 'cloud':
+            case LLMSelectionDecision.CLOUD_AI:
                 this.acceptLLMUsage(LLMSelectionDecision.CLOUD_AI);
                 break;
-            case 'local':
+            case LLMSelectionDecision.LOCAL_AI:
                 this.acceptLLMUsage(LLMSelectionDecision.LOCAL_AI);
                 break;
-            case 'no_ai':
+            case LLMSelectionDecision.NO_AI:
                 // Store that the user actively declined AI usage
                 this.acceptLLMUsage(LLMSelectionDecision.NO_AI);
                 break;
-            case 'none':
+            case LLMSelectionDecision.NONE:
                 break;
         }
     }

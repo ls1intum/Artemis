@@ -5,6 +5,7 @@ export enum LLMSelectionDecision {
     CLOUD_AI = 'CLOUD_AI',
     LOCAL_AI = 'LOCAL_AI',
     NO_AI = 'NO_AI',
+    NONE = 'NONE',
 }
 
 export interface UpdateLLMSelectionDecisionDto {

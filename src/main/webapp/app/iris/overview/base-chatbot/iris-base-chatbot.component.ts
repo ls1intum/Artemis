@@ -274,18 +274,18 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         const choice = await this.llmModalService.open();
 
         switch (choice) {
-            case 'cloud':
+            case LLMSelectionDecision.CLOUD_AI:
                 this.acceptPermission(LLMSelectionDecision.CLOUD_AI);
                 this.reopenChat.emit();
                 break;
-            case 'local':
+            case LLMSelectionDecision.LOCAL_AI:
                 this.acceptPermission(LLMSelectionDecision.LOCAL_AI);
                 this.reopenChat.emit();
                 break;
-            case 'no_ai':
+            case LLMSelectionDecision.NO_AI:
                 this.chatService.updateLLMUsageConsent(LLMSelectionDecision.NO_AI);
                 break;
-            case 'none':
+            case LLMSelectionDecision.NONE:
                 break;
         }
     }

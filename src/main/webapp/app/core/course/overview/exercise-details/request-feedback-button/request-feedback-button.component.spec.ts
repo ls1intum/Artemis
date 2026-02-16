@@ -34,7 +34,7 @@ describe('RequestFeedbackButtonComponent', () => {
     let exerciseService: ExerciseService;
 
     const mockLLMModalService = {
-        open: jest.fn().mockResolvedValue('none'),
+        open: jest.fn().mockResolvedValue(LLMSelectionDecision.NONE),
     } as any;
 
     const mockUserService = {

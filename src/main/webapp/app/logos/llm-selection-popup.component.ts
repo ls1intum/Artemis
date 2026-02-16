@@ -5,8 +5,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-
-export type LLMSelectionChoice = 'cloud' | 'local' | 'no_ai' | 'none';
+import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 
 @Component({
     selector: 'jhi-llm-selection-modal',
@@ -21,10 +20,10 @@ export class LLMSelectionModalComponent implements OnInit, OnDestroy {
     private profileService = inject(ProfileService);
     private router = inject(Router);
 
-    @Output() choice = new EventEmitter<LLMSelectionChoice>();
+    @Output() choice = new EventEmitter<LLMSelectionDecision>();
 
     isVisible = false;
-    currentSelection?: LLMSelectionChoice;
+    currentSelection?: LLMSelectionDecision;
     private modalSubscription?: Subscription;
 
     isOnPremiseEnabled: boolean;
@@ -51,34 +50,34 @@ export class LLMSelectionModalComponent implements OnInit, OnDestroy {
     }
 
     selectCloud(): void {
-        this.choice.emit('cloud');
-        this.modalService.emitChoice('cloud');
+        this.choice.emit(LLMSelectionDecision.CLOUD_AI);
+        this.modalService.emitChoice(LLMSelectionDecision.CLOUD_AI);
         this.close();
     }
 
     selectLocal(): void {
-        this.choice.emit('local');
-        this.modalService.emitChoice('local');
+        this.choice.emit(LLMSelectionDecision.LOCAL_AI);
+        this.modalService.emitChoice(LLMSelectionDecision.LOCAL_AI);
         this.close();
     }
 
     selectNone(): void {
-        this.choice.emit('no_ai');
-        this.modalService.emitChoice('no_ai');
+        this.choice.emit(LLMSelectionDecision.NO_AI);
+        this.modalService.emitChoice(LLMSelectionDecision.NO_AI);
         this.close();
     }
 
     onBackdropClick(event: MouseEvent): void {
         if (event.target === event.currentTarget) {
-            this.choice.emit('none');
-            this.modalService.emitChoice('none');
+            this.choice.emit(LLMSelectionDecision.NONE);
+            this.modalService.emitChoice(LLMSelectionDecision.NONE);
             this.close();
         }
     }
 
     onLearnMoreClick(event: MouseEvent): void {
         event.preventDefault();
-        this.modalService.emitChoice('none');
+        this.modalService.emitChoice(LLMSelectionDecision.NONE);
         this.router.navigate(['/llm-selection']);
         this.close();
     }

@@ -97,47 +97,47 @@ describe('LlmUsageSettingsComponent', () => {
     });
 
     describe('openSelectionModal', () => {
-        it('should handle cloud choice', async () => {
+        it('should handle CLOUD_AI choice', async () => {
             component.ngOnInit();
-            (llmModalService.open as jest.Mock).mockResolvedValue('cloud');
+            (llmModalService.open as jest.Mock).mockResolvedValue(LLMSelectionDecision.CLOUD_AI);
             const updateSpy = jest.spyOn(component, 'updateLLMSelectionDecision');
 
             await component.openSelectionModal();
 
-            expect(llmModalService.open).toHaveBeenCalledWith('cloud');
+            expect(llmModalService.open).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
             expect(updateSpy).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
         });
 
-        it('should handle local choice', async () => {
+        it('should handle LOCAL_AI choice', async () => {
             component.ngOnInit();
-            (llmModalService.open as jest.Mock).mockResolvedValue('local');
+            (llmModalService.open as jest.Mock).mockResolvedValue(LLMSelectionDecision.LOCAL_AI);
             const updateSpy = jest.spyOn(component, 'updateLLMSelectionDecision');
 
             await component.openSelectionModal();
 
-            expect(llmModalService.open).toHaveBeenCalledWith('cloud');
+            expect(llmModalService.open).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
             expect(updateSpy).toHaveBeenCalledWith(LLMSelectionDecision.LOCAL_AI);
         });
 
-        it('should handle no_ai choice', async () => {
+        it('should handle NO_AI choice', async () => {
             component.ngOnInit();
-            (llmModalService.open as jest.Mock).mockResolvedValue('no_ai');
+            (llmModalService.open as jest.Mock).mockResolvedValue(LLMSelectionDecision.NO_AI);
             const updateSpy = jest.spyOn(component, 'updateLLMSelectionDecision');
 
             await component.openSelectionModal();
 
-            expect(llmModalService.open).toHaveBeenCalledWith('cloud');
+            expect(llmModalService.open).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
             expect(updateSpy).toHaveBeenCalledWith(LLMSelectionDecision.NO_AI);
         });
 
-        it('should not update when choice is none', async () => {
+        it('should not update when choice is NONE', async () => {
             component.ngOnInit();
-            (llmModalService.open as jest.Mock).mockResolvedValue('none');
+            (llmModalService.open as jest.Mock).mockResolvedValue(LLMSelectionDecision.NONE);
             const updateSpy = jest.spyOn(component, 'updateLLMSelectionDecision');
 
             await component.openSelectionModal();
 
-            expect(llmModalService.open).toHaveBeenCalledWith('cloud');
+            expect(llmModalService.open).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
             expect(updateSpy).not.toHaveBeenCalled();
         });
 
@@ -148,7 +148,7 @@ describe('LlmUsageSettingsComponent', () => {
 
             await component.openSelectionModal();
 
-            expect(llmModalService.open).toHaveBeenCalledWith('cloud');
+            expect(llmModalService.open).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
             expect(updateSpy).not.toHaveBeenCalled();
         });
 
@@ -159,7 +159,7 @@ describe('LlmUsageSettingsComponent', () => {
 
             await component.openSelectionModal();
 
-            expect(llmModalService.open).toHaveBeenCalledWith('cloud');
+            expect(llmModalService.open).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
             expect(updateSpy).not.toHaveBeenCalled();
         });
 
@@ -169,11 +169,11 @@ describe('LlmUsageSettingsComponent', () => {
                 selectedLLMUsage: LLMSelectionDecision.LOCAL_AI,
             } as User);
             component.ngOnInit();
-            (llmModalService.open as jest.Mock).mockResolvedValue('none');
+            (llmModalService.open as jest.Mock).mockResolvedValue(LLMSelectionDecision.NONE);
 
             await component.openSelectionModal();
 
-            expect(llmModalService.open).toHaveBeenCalledWith('local');
+            expect(llmModalService.open).toHaveBeenCalledWith(LLMSelectionDecision.LOCAL_AI);
         });
 
         it('should pass current selection to modal when user has NO_AI selected', async () => {
@@ -182,11 +182,11 @@ describe('LlmUsageSettingsComponent', () => {
                 selectedLLMUsage: LLMSelectionDecision.NO_AI,
             } as User);
             component.ngOnInit();
-            (llmModalService.open as jest.Mock).mockResolvedValue('none');
+            (llmModalService.open as jest.Mock).mockResolvedValue(LLMSelectionDecision.NONE);
 
             await component.openSelectionModal();
 
-            expect(llmModalService.open).toHaveBeenCalledWith('no_ai');
+            expect(llmModalService.open).toHaveBeenCalledWith(LLMSelectionDecision.NO_AI);
         });
 
         it('should pass undefined to modal when user has no selection', async () => {
@@ -195,7 +195,7 @@ describe('LlmUsageSettingsComponent', () => {
                 selectedLLMUsage: undefined,
             } as User);
             component.ngOnInit();
-            (llmModalService.open as jest.Mock).mockResolvedValue('none');
+            (llmModalService.open as jest.Mock).mockResolvedValue(LLMSelectionDecision.NONE);
 
             await component.openSelectionModal();
 

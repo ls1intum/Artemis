@@ -61,7 +61,7 @@ describe('IrisBaseChatbotComponent', () => {
         setCurrentCourse: vi.fn(),
     } as any;
     const mockLLMModalService = {
-        open: vi.fn().mockResolvedValue('none'),
+        open: vi.fn().mockResolvedValue(LLMSelectionDecision.NONE),
     } as any;
     const mockUserService = {
         updateLLMSelectionDecision: vi.fn().mockReturnValue(of(new HttpResponse<void>())),
@@ -885,7 +885,7 @@ describe('IrisBaseChatbotComponent', () => {
         it('should show LLM selection modal when userAccepted is undefined', async () => {
             accountService.userIdentity.set({ selectedLLMUsage: undefined } as User);
 
-            const openSpy = vi.spyOn(mockLLMModalService, 'open').mockResolvedValue('none');
+            const openSpy = vi.spyOn(mockLLMModalService, 'open').mockResolvedValue(LLMSelectionDecision.NONE);
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
@@ -923,7 +923,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         it('should set userAccepted to CLOUD_AI when user selects cloud in modal', async () => {
             accountService.userIdentity.set({ selectedLLMUsage: undefined } as User);
-            vi.spyOn(mockLLMModalService, 'open').mockResolvedValue('cloud');
+            vi.spyOn(mockLLMModalService, 'open').mockResolvedValue(LLMSelectionDecision.CLOUD_AI);
             vi.spyOn(chatService, 'updateLLMUsageConsent').mockImplementation(() => {});
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
@@ -939,7 +939,7 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         it('should set userAccepted to LOCAL_AI when user selects local in modal', async () => {
-            vi.spyOn(mockLLMModalService, 'open').mockResolvedValue('local');
+            vi.spyOn(mockLLMModalService, 'open').mockResolvedValue(LLMSelectionDecision.LOCAL_AI);
             vi.spyOn(chatService, 'updateLLMUsageConsent').mockImplementation(() => {});
 
             await component.showAISelectionModal();
@@ -948,7 +948,7 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         it('should close chat when user selects no_ai in modal', async () => {
-            vi.spyOn(mockLLMModalService, 'open').mockResolvedValue('no_ai');
+            vi.spyOn(mockLLMModalService, 'open').mockResolvedValue(LLMSelectionDecision.NO_AI);
             vi.spyOn(chatService, 'updateLLMUsageConsent').mockImplementation(() => {});
             vi.spyOn(component.closeClicked, 'emit');
 
@@ -959,7 +959,7 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         it('should close chat when user dismisses modal (none)', async () => {
-            vi.spyOn(mockLLMModalService, 'open').mockResolvedValue('none');
+            vi.spyOn(mockLLMModalService, 'open').mockResolvedValue(LLMSelectionDecision.NONE);
             vi.spyOn(component.closeClicked, 'emit');
 
             await component.showAISelectionModal();

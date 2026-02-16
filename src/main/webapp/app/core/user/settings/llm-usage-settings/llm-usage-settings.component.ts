@@ -6,7 +6,6 @@ import dayjs from 'dayjs/esm';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
-import { LLMSelectionChoice } from 'app/logos/llm-selection-popup.component';
 
 @Component({
     selector: 'jhi-llm-usage-settings',
@@ -26,26 +25,10 @@ export class LlmUsageSettingsComponent implements OnInit {
     }
 
     async openSelectionModal(): Promise<void> {
-        const currentChoice = this.mapDecisionToChoice(this.currentLLMSelectionDecision());
-        const choice = await this.llmModalService.open(currentChoice);
+        const choice = await this.llmModalService.open(this.currentLLMSelectionDecision());
 
-        if (choice) {
-            // Map the Choice to the Enum
-            let decision: LLMSelectionDecision;
-            switch (choice) {
-                case 'cloud':
-                    decision = LLMSelectionDecision.CLOUD_AI;
-                    this.updateLLMSelectionDecision(decision);
-                    break;
-                case 'local':
-                    decision = LLMSelectionDecision.LOCAL_AI;
-                    this.updateLLMSelectionDecision(decision);
-                    break;
-                case 'no_ai':
-                    decision = LLMSelectionDecision.NO_AI;
-                    this.updateLLMSelectionDecision(decision);
-                    break;
-            }
+        if (choice && choice !== LLMSelectionDecision.NONE) {
+            this.updateLLMSelectionDecision(choice);
         }
     }
 
@@ -60,19 +43,6 @@ export class LlmUsageSettingsComponent implements OnInit {
         this.irisChatService.updateLLMUsageConsent(accepted);
         this.accountService.setUserLLMSelectionDecision(accepted);
         this.updateLLMUsageDecision();
-    }
-
-    private mapDecisionToChoice(decision: LLMSelectionDecision | undefined): LLMSelectionChoice | undefined {
-        switch (decision) {
-            case LLMSelectionDecision.CLOUD_AI:
-                return 'cloud';
-            case LLMSelectionDecision.LOCAL_AI:
-                return 'local';
-            case LLMSelectionDecision.NO_AI:
-                return 'no_ai';
-            default:
-                return undefined;
-        }
     }
 
     protected readonly LLMSelectionDecision = LLMSelectionDecision;

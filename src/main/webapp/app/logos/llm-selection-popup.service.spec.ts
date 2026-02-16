@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { LLMSelectionModalService } from './llm-selection-popup.service';
-import { LLMSelectionChoice } from './llm-selection-popup.component';
+import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 
 describe('LLMSelectionModalService', () => {
     let service: LLMSelectionModalService;
@@ -31,7 +31,7 @@ describe('LLMSelectionModalService', () => {
 
                 // Call open() to trigger openModal$ emission, then clean up with emitChoice
                 service.open();
-                service.emitChoice('cloud');
+                service.emitChoice(LLMSelectionDecision.CLOUD_AI);
             });
         });
     });
@@ -43,7 +43,7 @@ describe('LLMSelectionModalService', () => {
 
         it('should emit choice when emitChoice is called', () => {
             return new Promise<void>((resolve) => {
-                const expectedChoice: LLMSelectionChoice = 'cloud';
+                const expectedChoice = LLMSelectionDecision.CLOUD_AI;
 
                 service.choice$.subscribe({
                     next: (choice) => {
@@ -63,7 +63,7 @@ describe('LLMSelectionModalService', () => {
             expect(result).toBeInstanceOf(Promise);
 
             // Clean up by emitting a choice
-            service.emitChoice('cloud');
+            service.emitChoice(LLMSelectionDecision.CLOUD_AI);
         });
 
         it('should emit to openModalSubject', () => {
@@ -73,105 +73,105 @@ describe('LLMSelectionModalService', () => {
                 });
 
                 service.open();
-                service.emitChoice('cloud'); // Clean up
+                service.emitChoice(LLMSelectionDecision.CLOUD_AI); // Clean up
             });
         });
 
-        it('should resolve with cloud choice', async () => {
+        it('should resolve with CLOUD_AI choice', async () => {
             const promise = service.open();
-            service.emitChoice('cloud');
+            service.emitChoice(LLMSelectionDecision.CLOUD_AI);
 
             const result = await promise;
-            expect(result).toBe('cloud');
+            expect(result).toBe(LLMSelectionDecision.CLOUD_AI);
         });
 
-        it('should resolve with local choice', async () => {
+        it('should resolve with LOCAL_AI choice', async () => {
             const promise = service.open();
-            service.emitChoice('local');
+            service.emitChoice(LLMSelectionDecision.LOCAL_AI);
 
             const result = await promise;
-            expect(result).toBe('local');
+            expect(result).toBe(LLMSelectionDecision.LOCAL_AI);
         });
 
-        it('should resolve with no_ai choice', async () => {
+        it('should resolve with NO_AI choice', async () => {
             const promise = service.open();
-            service.emitChoice('no_ai');
+            service.emitChoice(LLMSelectionDecision.NO_AI);
 
             const result = await promise;
-            expect(result).toBe('no_ai');
+            expect(result).toBe(LLMSelectionDecision.NO_AI);
         });
 
-        it('should resolve with none choice', async () => {
+        it('should resolve with NONE choice', async () => {
             const promise = service.open();
-            service.emitChoice('none');
+            service.emitChoice(LLMSelectionDecision.NONE);
 
             const result = await promise;
-            expect(result).toBe('none');
+            expect(result).toBe(LLMSelectionDecision.NONE);
         });
 
         it('should handle multiple open calls sequentially', async () => {
             const promise1 = service.open();
-            service.emitChoice('cloud');
+            service.emitChoice(LLMSelectionDecision.CLOUD_AI);
             const result1 = await promise1;
 
             const promise2 = service.open();
-            service.emitChoice('local');
+            service.emitChoice(LLMSelectionDecision.LOCAL_AI);
             const result2 = await promise2;
 
-            expect(result1).toBe('cloud');
-            expect(result2).toBe('local');
+            expect(result1).toBe(LLMSelectionDecision.CLOUD_AI);
+            expect(result2).toBe(LLMSelectionDecision.LOCAL_AI);
         });
     });
 
     describe('emitChoice', () => {
-        it('should emit cloud choice to choice$', () => {
+        it('should emit CLOUD_AI choice to choice$', () => {
             return new Promise<void>((done) => {
                 service.choice$.subscribe((choice) => {
-                    expect(choice).toBe('cloud');
+                    expect(choice).toBe(LLMSelectionDecision.CLOUD_AI);
                     done();
                 });
 
-                service.emitChoice('cloud');
+                service.emitChoice(LLMSelectionDecision.CLOUD_AI);
             });
         });
 
-        it('should emit local choice to choice$', () => {
+        it('should emit LOCAL_AI choice to choice$', () => {
             return new Promise<void>((done) => {
                 service.choice$.subscribe((choice) => {
-                    expect(choice).toBe('local');
+                    expect(choice).toBe(LLMSelectionDecision.LOCAL_AI);
                     done();
                 });
 
-                service.emitChoice('local');
+                service.emitChoice(LLMSelectionDecision.LOCAL_AI);
             });
         });
 
-        it('should emit no_ai choice to choice$', () => {
+        it('should emit NO_AI choice to choice$', () => {
             return new Promise<void>((done) => {
                 service.choice$.subscribe((choice) => {
-                    expect(choice).toBe('no_ai');
+                    expect(choice).toBe(LLMSelectionDecision.NO_AI);
                     done();
                 });
 
-                service.emitChoice('no_ai');
+                service.emitChoice(LLMSelectionDecision.NO_AI);
             });
         });
 
-        it('should emit none choice to choice$', () => {
+        it('should emit NONE choice to choice$', () => {
             return new Promise<void>((done) => {
                 service.choice$.subscribe((choice) => {
-                    expect(choice).toBe('none');
+                    expect(choice).toBe(LLMSelectionDecision.NONE);
                     done();
                 });
 
-                service.emitChoice('none');
+                service.emitChoice(LLMSelectionDecision.NONE);
             });
         });
 
         it('should allow multiple subscribers to receive the same choice', () => {
             return new Promise<void>((done) => {
                 let receivedCount = 0;
-                const expectedChoice: LLMSelectionChoice = 'cloud';
+                const expectedChoice = LLMSelectionDecision.CLOUD_AI;
 
                 service.choice$.subscribe((choice) => {
                     expect(choice).toBe(expectedChoice);
@@ -196,22 +196,22 @@ describe('LLMSelectionModalService', () => {
             const openPromise = service.open();
 
             setTimeout(() => {
-                service.emitChoice('cloud');
+                service.emitChoice(LLMSelectionDecision.CLOUD_AI);
             }, 10);
 
             const result = await openPromise;
-            expect(result).toBe('cloud');
+            expect(result).toBe(LLMSelectionDecision.CLOUD_AI);
         });
 
         it('should work with async/await pattern', async () => {
             const openAndRespond = async () => {
                 const promise = service.open();
-                setTimeout(() => service.emitChoice('local'), 10);
+                setTimeout(() => service.emitChoice(LLMSelectionDecision.LOCAL_AI), 10);
                 return promise;
             };
 
             const result = await openAndRespond();
-            expect(result).toBe('local');
+            expect(result).toBe(LLMSelectionDecision.LOCAL_AI);
         });
     });
 });
