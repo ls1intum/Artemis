@@ -726,7 +726,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * @param lecture The lecture to check
      */
     hasReferencableAttachments(lecture: LectureWithDetails): boolean {
-        const hasAttachments = !!lecture.attachments;
+        const hasAttachments = !!lecture.attachments?.length;
         const hasReferencableAttachmentVideoUnits =
             lecture.attachmentVideoUnits?.some((unit) => {
                 return unit.attachment && unit.attachment.link;
