@@ -228,7 +228,8 @@ public class TextExerciseResource {
      * Returns the data needed for the text editor, which includes the participation, textSubmission
      * with answer if existing and the assessments if the submission was already submitted.
      *
-     * @param participationId the participationId for which to find the data for the text editor
+     * @param participationId   the participationId for which to find the data for the text editor
+     * @param includeAllResults if true, includes all results; if false, only includes the latest result
      * @return the ResponseEntity with the participation as body
      */
     // TODO: fix the URL scheme

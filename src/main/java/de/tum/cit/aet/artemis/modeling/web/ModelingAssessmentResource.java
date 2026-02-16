@@ -76,6 +76,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
      * Get the result of the modeling submission with the given id. See {@link AssessmentResource#getAssessmentBySubmissionId}.
      *
      * @param submissionId the id of the submission that should be sent to the client
+     * @param resultId     optional id of a specific result to retrieve; if not provided, returns the latest result
      * @return the assessment of the given submission
      */
     @GetMapping("modeling-submissions/{submissionId}/result")
