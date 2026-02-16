@@ -43,6 +43,12 @@ export class ModelingAssessmentService {
         return this.http.put<Result>(url, assessmentUpdate, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertResultEntityResponseTypeFromServer(res)));
     }
 
+    /**
+     * Retrieves the assessment result for a modeling submission.
+     * @param submissionId - The ID of the submission
+     * @param resultId - Optional ID of a specific result to retrieve; if not provided, returns the latest result
+     * @returns Observable of the assessment result
+     */
     getAssessment(submissionId: number, resultId?: number): Observable<Result> {
         const params = resultId ? { resultId: resultId.toString() } : undefined;
         return this.http.get<Result>(`${this.resourceUrl}/modeling-submissions/${submissionId}/result`, { params }).pipe(map((res) => this.convertResult(res)));

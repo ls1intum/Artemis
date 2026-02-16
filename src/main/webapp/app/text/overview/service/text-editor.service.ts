@@ -10,6 +10,12 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 export class TextEditorService {
     private http = inject(HttpClient);
 
+    /**
+     * Retrieves the participation data for the text editor.
+     * @param participationId - The ID of the participation
+     * @param includeAllResults - If true, includes all results; if false, only includes the latest result
+     * @returns Observable of the student participation with exercise data
+     */
     get(participationId: number, includeAllResults: boolean = false): Observable<StudentParticipation> {
         const params = includeAllResults ? { includeAllResults: 'true' } : undefined;
         return this.http
