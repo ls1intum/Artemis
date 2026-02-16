@@ -228,7 +228,7 @@
     },
     "engines": {
         "node": ">=24.7.0",
-        "npm": ">=11.6.3"
+        "npm": ">=11.5.1"
     },
     "scripts": {
         "build": "npm run webapp:prod --",
