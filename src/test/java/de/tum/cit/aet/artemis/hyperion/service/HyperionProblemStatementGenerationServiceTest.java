@@ -48,13 +48,7 @@ class HyperionProblemStatementGenerationServiceTest {
         mocks = MockitoAnnotations.openMocks(this);
         ChatClient chatClient = ChatClient.create(chatModel);
         var templateService = new HyperionPromptTemplateService();
-        when(llmTokenUsageService.buildLLMRequest(any(), any(Integer.class), any(Integer.class), any())).thenReturn(new LLMRequest("model", 10, 0.0f, 10, 0.0f, "pipeline"));
         this.hyperionProblemStatementGenerationService = new HyperionProblemStatementGenerationService(chatClient, templateService, llmTokenUsageService, userRepository);
-    }
-
-    @AfterEach
-    void tearDown() throws Exception {
-        mocks.close();
     }
 
     @Test

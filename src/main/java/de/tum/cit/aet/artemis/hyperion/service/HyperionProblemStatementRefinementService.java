@@ -13,7 +13,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
@@ -89,10 +88,9 @@ public class HyperionProblemStatementRefinementService {
      * @param chatClient           the AI chat client for refining problem
      *                                 statements,
      *                                 may be null if AI is not configured
-     * @param templateService      the prompt template service for rendering AI
-     *                                 prompts
+     * @param templateService      the prompt template service for rendering AI prompts
      * @param llmTokenUsageService service for tracking LLM token usage
-     * @param userRepository       repository for user data
+     * @param userRepository       repository for resolving current user
      */
     public HyperionProblemStatementRefinementService(@Nullable ChatClient chatClient, HyperionPromptTemplateService templateService, LLMTokenUsageService llmTokenUsageService,
             UserRepository userRepository) {
@@ -136,39 +134,11 @@ public class HyperionProblemStatementRefinementService {
 
         String refinedProblemStatementText;
         try {
-            // Validate input length
-            if (originalProblemStatementText.length() > MAX_PROBLEM_STATEMENT_LENGTH) {
-                throw new InternalServerErrorAlertException("Original problem statement is too long", "ProblemStatement", "ProblemStatementRefinement.problemStatementTooLong");
-            }
-
-            GlobalRefinementPromptVariables variables = new GlobalRefinementPromptVariables(originalProblemStatementText.trim(), userPrompt, getCourseTitleOrDefault(course),
-                    getCourseDescriptionOrDefault(course));
-
-            String prompt = templateService.render("/prompts/hyperion/refine_problem_statement.st", variables.asMap());
-
-            ChatResponse chatResponse = null;
-            if (chatClient != null) {
-                chatResponse = chatClient.prompt().user(prompt).call().chatResponse();
-            }
-            String refinedProblemStatementText = null;
-            if (chatResponse != null) {
-                refinedProblemStatementText = chatResponse.getResult().getOutput().getText();
-            }
-
-            // Store token usage
-            if (chatResponse != null && chatResponse.getMetadata().getUsage() != null) {
-                var usage = chatResponse.getMetadata().getUsage();
-                LLMRequest llmRequest = llmTokenUsageService.buildLLMRequest(chatResponse.getMetadata().getModel(), usage.getPromptTokens() != null ? usage.getPromptTokens() : 0,
-                        usage.getCompletionTokens() != null ? usage.getCompletionTokens() : 0, REFINEMENT_PIPELINE_ID);
-                Long userId = SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findIdByLogin).orElse(null);
-                llmTokenUsageService.saveLLMTokenUsage(List.of(llmRequest), LLMServiceType.HYPERION, builder -> builder.withCourse(course.getId()).withUser(userId));
-            }
-
-            if (refinedProblemStatementText == null) {
-                throw new InternalServerErrorAlertException("Refined problem statement is null", "ProblemStatement", "ProblemStatementRefinement.problemStatementRefinementNull");
-            }
-
-            return validateAndReturnResponse(originalProblemStatementText, refinedProblemStatementText);
+            var chatResponse = chatClient.prompt().system(systemPrompt).user(userMessage).call().chatResponse();
+            refinedProblemStatementText = LLMTokenUsageService.extractResponseText(chatResponse);
+            Long userId = SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findIdByLogin).orElse(null);
+            llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, GLOBAL_REFINEMENT_PIPELINE_ID,
+                    builder -> builder.withCourse(course.getId()).withUser(userId));
         }
         catch (Exception e) {
             log.error("Error refining problem statement for course [{}]. Original statement length: {}. Error: {}", course.getId(), originalProblemStatementText.length(),
@@ -236,50 +206,11 @@ public class HyperionProblemStatementRefinementService {
 
         String refinedProblemStatementText;
         try {
-            // Build the instruction string
-            String[] lines = originalProblemStatementText.split("\n", -1);
-            String locationRef = buildLocationReference(request, lines);
-            String targetedInstruction = locationRef + ": " + request.instruction();
-
-            // Add line numbers to help the LLM identify exact lines to modify
-            String textWithLineNumbers = addLineNumbers(originalProblemStatementText);
-
-            // Validate total input length
-            int totalLength = textWithLineNumbers.length() + targetedInstruction.length();
-            if (totalLength > MAX_PROBLEM_STATEMENT_LENGTH) {
-                throw new InternalServerErrorAlertException("Input is too long (including instructions)", "ProblemStatement", "ProblemStatementRefinement.problemStatementTooLong");
-            }
-
-            TargetedRefinementPromptVariables variables = new TargetedRefinementPromptVariables(textWithLineNumbers, targetedInstruction, getCourseTitleOrDefault(course),
-                    getCourseDescriptionOrDefault(course));
-
-            // Use the targeted refinement template for selection-based instructions
-            String prompt = templateService.render("/prompts/hyperion/refine_problem_statement_targeted.st", variables.asMap());
-
-            ChatResponse chatResponse = null;
-            if (chatClient != null) {
-                chatResponse = chatClient.prompt().user(prompt).call().chatResponse();
-            }
-            String refinedProblemStatementText = null;
-            if (chatResponse != null) {
-                refinedProblemStatementText = chatResponse.getResult().getOutput().getText();
-            }
-
-            // Store token usage
-            if (chatResponse != null && chatResponse.getMetadata().getUsage() != null) {
-                var usage = chatResponse.getMetadata().getUsage();
-                LLMRequest llmRequest = llmTokenUsageService.buildLLMRequest(chatResponse.getMetadata().getModel(), usage.getPromptTokens() != null ? usage.getPromptTokens() : 0,
-                        usage.getCompletionTokens() != null ? usage.getCompletionTokens() : 0, REFINEMENT_PIPELINE_ID);
-                Long userId = SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findIdByLogin).orElse(null);
-                llmTokenUsageService.saveLLMTokenUsage(List.of(llmRequest), LLMServiceType.HYPERION, builder -> builder.withCourse(course.getId()).withUser(userId));
-            }
-
-            if (refinedProblemStatementText == null) {
-                throw new InternalServerErrorAlertException("AI returned null when refining the problem statement", "ProblemStatement",
-                        "ProblemStatementRefinement.problemStatementRefinementNull");
-            }
-
-            return validateAndReturnResponse(originalProblemStatementText, refinedProblemStatementText);
+            var chatResponse = chatClient.prompt().system(systemPrompt).user(userMessage).call().chatResponse();
+            refinedProblemStatementText = LLMTokenUsageService.extractResponseText(chatResponse);
+            Long userId = SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findIdByLogin).orElse(null);
+            llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, TARGETED_REFINEMENT_PIPELINE_ID,
+                    builder -> builder.withCourse(course.getId()).withUser(userId));
         }
         catch (Exception e) {
             log.error("Error refining problem statement for course [{}]. Original statement length: {}. Error: {}", course.getId(), request.problemStatementText().length(),

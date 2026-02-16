@@ -15,9 +15,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
-import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
@@ -55,10 +53,10 @@ public class HyperionProblemStatementRewriteService {
      * @param chatClient           the AI chat client, may be null if AI is not configured
      * @param templateService      prompt template service
      * @param observationRegistry  the observation registry for metrics
-     * @param llmTokenUsageService persist token usage in DB
-     * @param userRepository       Spring Data JPA repository for the User entity
+     * @param llmTokenUsageService service for tracking LLM token usage
+     * @param userRepository       repository for resolving current user
      */
-    public HyperionProblemStatementRewriteService(@Nullable ChatClient chatClient, HyperionPromptTemplateService templateService, ObservationRegistry observationRegistry,
+    public HyperionProblemStatementRewriteService(ChatClient chatClient, HyperionPromptTemplateService templateService, ObservationRegistry observationRegistry,
             LLMTokenUsageService llmTokenUsageService, UserRepository userRepository) {
         this.chatClient = chatClient;
         this.templateService = templateService;
@@ -100,8 +98,10 @@ public class HyperionProblemStatementRewriteService {
                     .user(renderedPrompt)
                     .call();
 
-            ChatResponse chatResponse = promptResponse.chatResponse();
-            String responseContent = chatResponse.getResult().getOutput().getText();
+            String responseContent = LLMTokenUsageService.extractResponseText(chatResponse);
+            Long userId = SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findIdByLogin).orElse(null);
+            llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, REWRITE_PIPELINE_ID,
+                    builder -> builder.withCourse(course.getId()).withUser(userId));
 
             // Store token usage
             if (chatResponse.getMetadata() != null && chatResponse.getMetadata().getUsage() != null) {
@@ -121,4 +121,5 @@ public class HyperionProblemStatementRewriteService {
             return new ProblemStatementRewriteResponseDTO(problemStatementText.trim(), false);
         }
     }
+
 }

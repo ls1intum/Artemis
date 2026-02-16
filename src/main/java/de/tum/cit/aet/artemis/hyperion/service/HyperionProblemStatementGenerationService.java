@@ -13,7 +13,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -56,9 +55,9 @@ public class HyperionProblemStatementGenerationService {
      * @param chatClient           the AI chat client (optional)
      * @param templateService      prompt template service
      * @param llmTokenUsageService service for tracking LLM token usage
-     * @param userRepository       repository for user data
+     * @param userRepository       repository for resolving current user
      */
-    public HyperionProblemStatementGenerationService(ChatClient chatClient, HyperionPromptTemplateService templateService, LLMTokenUsageService llmTokenUsageService,
+    public HyperionProblemStatementGenerationService(@Nullable ChatClient chatClient, HyperionPromptTemplateService templateService, LLMTokenUsageService llmTokenUsageService,
             UserRepository userRepository) {
         this.chatClient = chatClient;
         this.templateService = templateService;
@@ -125,7 +124,11 @@ public class HyperionProblemStatementGenerationService {
 
         String generatedProblemStatement;
         try {
-            generatedProblemStatement = chatClient.prompt().system(systemPrompt).user(userMessage).call().content();
+            var chatResponse = chatClient.prompt().system(systemPrompt).user(userMessage).call().chatResponse();
+            generatedProblemStatement = LLMTokenUsageService.extractResponseText(chatResponse);
+            Long userId = SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findIdByLogin).orElse(null);
+            llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, GENERATION_PIPELINE_ID,
+                    builder -> builder.withCourse(course.getId()).withUser(userId));
         }
         catch (Exception e) {
             log.error("Error generating problem statement for course [{}]: {}", course.getId(), e.getMessage(), e);
