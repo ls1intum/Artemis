@@ -1,4 +1,4 @@
-import { Component, DestroyRef, ElementRef, OnDestroy, computed, inject, signal, viewChildren } from '@angular/core';
+import { Component, DestroyRef, ElementRef, OnDestroy, computed, inject, signal, viewChild, viewChildren } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { Subscription, switchMap, tap } from 'rxjs';
@@ -49,6 +49,7 @@ export class CourseDashboardComponent implements OnDestroy {
     private courseDashboardService = inject(CourseDashboardService);
     private profileService = inject(ProfileService);
     private destroyRef = inject(DestroyRef);
+    private readonly courseChatbot = viewChild('courseChatbot', { read: CourseChatbotComponent });
 
     private readonly _courseId = signal<number>(0);
     private readonly _points = signal(0);
@@ -64,6 +65,7 @@ export class CourseDashboardComponent implements OnDestroy {
     private readonly _competencies = signal<CompetencyInformation[]>([]);
     private readonly _openedAccordionIndex = signal<number | undefined>(undefined);
     private readonly _course = signal<Course | undefined>(undefined);
+    private readonly _isCollapsed = signal(false);
 
     readonly courseId = computed(() => this._courseId());
     readonly points = computed(() => this._points());
@@ -79,6 +81,7 @@ export class CourseDashboardComponent implements OnDestroy {
     readonly competencies = computed(() => this._competencies());
     readonly openedAccordionIndex = computed(() => this._openedAccordionIndex());
     readonly course = computed(() => this._course());
+    readonly isCollapsed = computed(() => this._isCollapsed());
 
     private metricsSubscription?: Subscription;
 
@@ -86,6 +89,11 @@ export class CourseDashboardComponent implements OnDestroy {
     protected readonly round = round;
 
     readonly competencyAccordions = viewChildren('competencyAccordionElement', { read: ElementRef });
+
+    toggleSidebar(): void {
+        this.courseChatbot()?.toggleChatHistory();
+        this._isCollapsed.set(!this._isCollapsed());
+    }
 
     constructor() {
         this.route?.parent?.params

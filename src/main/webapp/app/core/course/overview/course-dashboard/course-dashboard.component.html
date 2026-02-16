@@ -1,6 +1,6 @@
 @if (course()?.irisEnabledInCourse) {
     <div class="chat-container">
-        <jhi-course-chatbot [courseId]="courseId()" />
+        <jhi-course-chatbot #courseChatbot [courseId]="courseId()" />
     </div>
 }
 @if (course()?.studentCourseAnalyticsDashboardEnabled) {

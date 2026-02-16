@@ -12,6 +12,8 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
+import { ScienceService } from 'app/shared/science/science.service';
+import { ScienceEventType } from 'app/shared/science/science.model';
 
 export interface CourseActionItem {
     title: string;
@@ -71,9 +73,11 @@ export class CourseSidebarComponent {
     hasUnreadMessages = input<boolean>(false);
     communicationRouteLoaded = input<boolean>(false);
     layoutService = inject(LayoutService);
+    private readonly scienceService = inject(ScienceService);
 
     hiddenItems = signal<SidebarItem[]>([]);
     anyItemHidden = signal<boolean>(false);
+    private readonly irisImpressionLoggedForCourseId = signal<number | undefined>(undefined);
 
     switchCourse = output<Course>();
     courseActionItemClick = output<CourseActionItem>();
@@ -92,6 +96,11 @@ export class CourseSidebarComponent {
         this.canExpand = computed(() => {
             this.activeBreakpoints();
             return this.layoutService.isBreakpointActive(CustomBreakpointNames.sidebarExpandable);
+        });
+
+        effect(() => {
+            this.course();
+            this.irisImpressionLoggedForCourseId.set(undefined);
         });
 
         effect(() => {
@@ -140,6 +149,7 @@ export class CourseSidebarComponent {
 
         this.anyItemHidden.set(newAnyItemHidden);
         this.hiddenItems.set(newHiddenItems);
+        this.logIrisEntrypointImpression();
     }
 
     /** Calculate threshold levels based on the number of entries in the sidebar */
@@ -148,5 +158,28 @@ export class CourseSidebarComponent {
             return this.WINDOW_OFFSET;
         }
         return this.sidebarItems().length * this.ITEM_HEIGHT + this.WINDOW_OFFSET;
+    }
+
+    onSidebarItemClick(item: SidebarItem): void {
+        if (item.routerLink !== 'iris') {
+            return;
+        }
+        const courseId = this.course()?.id;
+        if (courseId) {
+            this.scienceService.logEvent(ScienceEventType.IRIS__OPENED_SIDEBAR, courseId);
+        }
+    }
+
+    private logIrisEntrypointImpression(): void {
+        const courseId = this.course()?.id;
+        if (!courseId || this.irisImpressionLoggedForCourseId() === courseId) {
+            return;
+        }
+        const irisItem = this.sidebarItems()?.find((item) => item.routerLink === 'iris' && !item.bottom);
+        if (!irisItem || irisItem.hidden) {
+            return;
+        }
+        this.scienceService.logEvent(ScienceEventType.IRIS__ENTRYPOINT_IMPRESSION, courseId);
+        this.irisImpressionLoggedForCourseId.set(courseId);
     }
 }

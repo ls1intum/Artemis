@@ -3,7 +3,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseDashboardComponent } from 'app/core/course/overview/course-dashboard/course-dashboard.component';
 import { By } from '@angular/platform-browser';
-import { DebugElement } from '@angular/core';
+import { Component, DebugElement, input } from '@angular/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -15,7 +15,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockComponent, MockDirective } from 'ng-mocks';
-import { CourseChatbotComponent } from 'app/iris/overview/course-chatbot/course-chatbot.component';
 import { CourseExerciseLatenessComponent } from 'app/core/course/overview/course-dashboard/course-exercise-lateness/course-exercise-lateness.component';
 import { CourseExercisePerformanceComponent } from 'app/core/course/overview/course-dashboard/course-exercise-performance/course-exercise-performance.component';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
@@ -32,6 +31,15 @@ import { StudentMetrics } from 'app/atlas/shared/entities/student-metrics.model'
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { provideNoopAnimationsForTests } from 'test/helpers/animations';
+
+// Manual mock for CourseChatbotComponent to avoid ng-mocks issues with signal queries (viewChild)
+@Component({
+    selector: 'jhi-course-chatbot',
+    template: '',
+})
+class MockCourseChatbotComponent {
+    readonly courseId = input<number>();
+}
 
 describe('CourseDashboardComponent', () => {
     setupTestBed({ zoneless: true });
@@ -150,7 +158,7 @@ describe('CourseDashboardComponent', () => {
         await TestBed.configureTestingModule({
             imports: [
                 CourseDashboardComponent,
-                MockComponent(CourseChatbotComponent),
+                MockCourseChatbotComponent,
                 NgbProgressbar,
                 TranslatePipeMock,
                 MockComponent(CourseExerciseLatenessComponent),
