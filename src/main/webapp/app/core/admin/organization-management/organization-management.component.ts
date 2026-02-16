@@ -7,7 +7,7 @@ import { faEye, faPenToSquare, faPlus, faTimes, faTrashCan, faWrench } from '@fo
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-// import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title-bar-actions.directive';
 import { TableView } from 'app/shared/table-view/table-view';
@@ -24,7 +24,7 @@ export type OrganizationKey = keyof Organization;
     selector: 'jhi-organization-management',
     templateUrl: './organization-management.component.html',
     styleUrl: './organization-management.component.scss',
-    imports: [TranslateDirective, RouterLink, FaIconComponent, AdminTitleBarTitleDirective, AdminTitleBarActionsDirective, TableView, ButtonModule],
+    imports: [TranslateDirective, RouterLink, FaIconComponent, DeleteButtonDirective, AdminTitleBarTitleDirective, AdminTitleBarActionsDirective, TableView, ButtonModule],
 })
 export class OrganizationManagementComponent implements OnInit {
     private readonly organizationService = inject(OrganizationManagementService);

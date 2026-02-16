@@ -1,30 +1,25 @@
-<!--<ng-template #orgActions let-organization>-->
-<!--    <div class="btn-group flex-btn-group-container">-->
-<!--        <button type="submit" [routerLink]="['./', organization.id]" class="btn btn-info btn-sm">-->
-<!--            <fa-icon [icon]="faEye" />-->
-<!--            <span class="d-none d-md-inline" jhiTranslate="entity.action.view"></span>-->
-<!--        </button>-->
-
-<!--        <button type="submit" [routerLink]="['./', organization.id, 'edit']" queryParamsHandling="merge" class="btn btn-warning btn-sm">-->
-<!--            <fa-icon [icon]="faPenToSquare" />-->
-<!--        </button>-->
-
-<!--        <button type="submit" [routerLink]="['./', organization.id, 'edit']" queryParamsHandling="merge" class="btn btn-warning btn-sm">-->
-<!--            <fa-icon [icon]="faTrashCan" />-->
-<!--        </button>-->
-
-<!--        <button-->
-<!--            jhiDeleteButton-->
-<!--            [entityTitle]="organization.name!"-->
-<!--            deleteQuestion="artemisApp.organizationManagement.delete.question"-->
-<!--            (delete)="deleteOrganization(organization.id!)"-->
-<!--            [dialogError]="dialogError$"-->
-<!--        >-->
-<!--            <fa-icon [icon]="faTimes" />-->
-<!--        </button>-->
-<!--    </div>-->
-<!--</ng-template>-->
 <ng-template #orgActions let-organization>
+    <div class="btn-group flex-btn-group-container">
+        <button type="submit" [routerLink]="['./', organization.id]" class="btn btn-info btn-sm">
+            <fa-icon [icon]="faEye" />
+            <span class="d-none d-md-inline" jhiTranslate="entity.action.view"></span>
+        </button>
+        <button type="submit" [routerLink]="['./', organization.id, 'edit']" queryParamsHandling="merge" class="btn btn-warning btn-sm">
+            <fa-icon [icon]="faWrench" />
+            <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
+        </button>
+        <button
+            jhiDeleteButton
+            [entityTitle]="organization.name!"
+            deleteQuestion="artemisApp.organizationManagement.delete.question"
+            (delete)="deleteOrganization(organization.id!)"
+            [dialogError]="dialogError$"
+        >
+            <fa-icon [icon]="faTimes" />
+        </button>
+    </div>
+</ng-template>
+<!-- <ng-template #orgActions let-organization>
     <div class="flex justify-center flex-wrap gap-4">
         <p-button [rounded]="true" [outlined]="true" type="submit" size="small" [routerLink]="['./', organization.id, 'edit']" queryParamsHandling="merge" styleClass="circle-btn">
             <fa-icon [icon]="faPenToSquare" />
@@ -33,7 +28,7 @@
             <fa-icon [icon]="faTrashCan" />
         </p-button>
     </div>
-</ng-template>
+</ng-template> -->
 
 <div>
     <h5 *adminTitleBarTitle id="organization-management-page-heading" class="mb-0" jhiTranslate="artemisApp.organizationManagement.title"></h5>
