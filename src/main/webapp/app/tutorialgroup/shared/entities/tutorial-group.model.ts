@@ -2,7 +2,7 @@ import { BaseEntity } from 'app/shared/model/base-entity';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { TutorialGroupSchedule } from 'app/tutorialgroup/shared/entities/tutorial-group-schedule.model';
-import { RawTutorialGroupDetailSessionDTO, TutorialGroupDetailSessionDTO, TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { RawTutorialGroupSessionDTO, TutorialGroupSession, TutorialGroupSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroupRegistration } from 'app/tutorialgroup/shared/entities/tutorial-group-registration.model';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import dayjs from 'dayjs/esm';
@@ -39,7 +39,7 @@ export class TutorialGroupDTO {
     title: string;
     language: string;
     isOnline: boolean;
-    sessions: TutorialGroupDetailSessionDTO[];
+    sessions: TutorialGroupSessionDTO[];
     tutorName: string;
     tutorLogin: string;
     tutorId: number;
@@ -56,8 +56,8 @@ export class TutorialGroupDTO {
         this.language = rawDto.language;
         this.isOnline = rawDto.isOnline;
         this.sessions = (rawDto.sessions ?? []).map(
-            (rawSessionDto: RawTutorialGroupDetailSessionDTO) =>
-                new TutorialGroupDetailSessionDTO(
+            (rawSessionDto: RawTutorialGroupSessionDTO) =>
+                new TutorialGroupSessionDTO(
                     rawSessionDto.id,
                     dayjs(rawSessionDto.start),
                     dayjs(rawSessionDto.end),
@@ -89,7 +89,7 @@ export class RawTutorialGroupDTO {
     tutorName: string;
     tutorLogin: string;
     tutorId: number;
-    sessions: RawTutorialGroupDetailSessionDTO[] | undefined;
+    sessions: RawTutorialGroupSessionDTO[] | undefined;
     tutorImageUrl?: string;
     capacity?: number;
     campus?: string;

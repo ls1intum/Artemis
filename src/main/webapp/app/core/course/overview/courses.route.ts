@@ -265,7 +265,7 @@ export const courseRoutes: Routes = [
             },
             {
                 path: CourseOverviewRoutePath.TUTORIAL_GROUPS,
-                loadComponent: () => import('app/tutorialgroup/shared/course-tutorial-groups/course-tutorial-groups.component').then((m) => m.CourseTutorialGroupsComponent),
+                loadComponent: () => import('app/tutorialgroup/overview/course-tutorial-groups/course-tutorial-groups.component').then((m) => m.CourseTutorialGroupsComponent),
                 data: {
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.tutorialGroups',

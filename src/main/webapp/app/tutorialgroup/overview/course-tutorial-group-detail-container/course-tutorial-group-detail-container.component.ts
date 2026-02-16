@@ -3,7 +3,7 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { CourseTutorialGroupDetailComponent } from 'app/tutorialgroup/overview/course-tutorial-group-detail/course-tutorial-group-detail.component';
+import { TutorialGroupDetailComponent } from 'app/tutorialgroup/shared/tutorial-group-detail/tutorial-group-detail.component';
 import { getNumericPathVariableSignal } from 'app/shared/route/getPathVariableSignal';
 import { TutorialGroupService } from 'app/tutorialgroup/shared/service/tutorial-group.service';
 import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-overlay/loading-indicator-overlay.component';
@@ -11,7 +11,7 @@ import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-o
 @Component({
     selector: 'jhi-course-tutorial-group-detail-container',
     templateUrl: './course-tutorial-group-detail-container.component.html',
-    imports: [CourseTutorialGroupDetailComponent, LoadingIndicatorOverlayComponent],
+    imports: [TutorialGroupDetailComponent, LoadingIndicatorOverlayComponent],
 })
 export class CourseTutorialGroupDetailContainerComponent {
     private route = inject(ActivatedRoute);

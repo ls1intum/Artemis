@@ -3,7 +3,7 @@ import { TutorialGroupScheduleDTO } from 'app/tutorialgroup/shared/entities/tuto
 import { ActivatedRoute, Router } from '@angular/router';
 import { getNumericPathVariableSignal } from 'app/shared/route/getPathVariableSignal';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { TutorialCreateOrEditComponent, UpdateTutorialGroupEvent } from 'app/tutorialgroup/manage/tutorial-edit/tutorial-create-or-edit.component';
+import { TutorialCreateOrEditComponent, UpdateTutorialGroupEvent } from 'app/tutorialgroup/manage/tutorial-create-or-edit/tutorial-create-or-edit.component';
 import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-overlay/loading-indicator-overlay.component';
 import { TutorialGroupService } from 'app/tutorialgroup/shared/service/tutorial-group.service';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';

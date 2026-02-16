@@ -238,7 +238,6 @@
                 "creatTutorialGroupButton": "Create New Tutorial Group",
                 "editConfigurationButton": "Edit Global Configuration",
                 "rowButtons": {
-                    "sessions": "Sessions",
                     "registrations": "Registrations"
                 },
                 "deleteDialog": {

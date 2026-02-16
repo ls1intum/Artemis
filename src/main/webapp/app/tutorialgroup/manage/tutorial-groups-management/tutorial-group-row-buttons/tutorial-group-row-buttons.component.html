@@ -1,0 +1,40 @@
+@if (course() && tutorialGroup()) {
+    <div class="btn-group flex-btn-group-container">
+        <!-- Registered Students -->
+        @if (isAtLeastInstructor() || tutorialGroup().isUserTutor) {
+            <a
+                [id]="'registrations-' + tutorialGroup().id"
+                [routerLink]="['/course-management', course().id!, 'tutorial-groups', tutorialGroup().id, 'registrations']"
+                class="btn btn-primary btn-sm me-1"
+            >
+                <fa-icon [icon]="faUsers" />
+                <span class="d-none d-md-inline" jhiTranslate="artemisApp.pages.registeredStudents.title"></span>
+            </a>
+        }
+        <!-- Edit -->
+        @if (isAtLeastInstructor()) {
+            <a
+                [id]="'edit-' + tutorialGroup().id"
+                [routerLink]="['/course-management', course().id!, 'tutorial-groups', tutorialGroup().id, 'edit']"
+                class="btn btn-warning btn-sm me-1"
+            >
+                <fa-icon [icon]="faWrench" />
+                <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
+            </a>
+        }
+        <!-- Delete -->
+        @if (isAtLeastInstructor()) {
+            <button
+                [id]="'delete-' + tutorialGroup().id"
+                jhiDeleteButton
+                [entityTitle]="tutorialGroup().title || ''"
+                deleteQuestion="artemisApp.pages.tutorialGroupsManagement.deleteDialog.question"
+                deleteConfirmationText="artemisApp.pages.tutorialGroupsManagement.deleteDialog.confirm"
+                (delete)="deleteTutorialGroup()"
+                [dialogError]="dialogError$"
+            >
+                <fa-icon [icon]="faTrash" />
+            </button>
+        }
+    </div>
+}

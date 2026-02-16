@@ -9,8 +9,7 @@ import { Routes } from '@angular/router';
 export const tutorialGroupManagementRoutes: Routes = [
     {
         path: '',
-        loadComponent: () =>
-            import('app/tutorialgroup/manage/tutorial-groups/tutorial-groups-management/tutorial-groups-management.component').then((m) => m.TutorialGroupsManagementComponent),
+        loadComponent: () => import('app/tutorialgroup/manage/tutorial-groups-management/tutorial-groups-management.component').then((m) => m.TutorialGroupsManagementComponent),
         data: {
             authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'artemisApp.pages.tutorialGroupsManagement.title',
@@ -19,8 +18,7 @@ export const tutorialGroupManagementRoutes: Routes = [
     },
     {
         path: 'configuration',
-        loadComponent: () =>
-            import('app/tutorialgroup/manage/tutorial-groups/tutorial-groups-management/tutorial-groups-management.component').then((m) => m.TutorialGroupsManagementComponent),
+        loadComponent: () => import('app/tutorialgroup/manage/tutorial-groups-management/tutorial-groups-management.component').then((m) => m.TutorialGroupsManagementComponent),
         data: {
             authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.pages.tutorialGroupsManagement.title',
@@ -62,15 +60,6 @@ export const tutorialGroupManagementRoutes: Routes = [
     },
     {
         path: ':tutorialGroupId/edit',
-        loadComponent: () => import('app/tutorialgroup/manage/tutorial-groups/crud/edit-tutorial-group/edit-tutorial-group.component').then((m) => m.EditTutorialGroupComponent),
-        data: {
-            authorities: IS_AT_LEAST_INSTRUCTOR,
-            pageTitle: 'artemisApp.pages.editTutorialGroup.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':tutorialGroupId/edit2',
         loadComponent: () => import('app/tutorialgroup/manage/tutorial-edit-container/tutorial-edit-container.component').then((m) => m.TutorialEditContainerComponent),
         data: {
             authorities: IS_AT_LEAST_INSTRUCTOR,
@@ -91,7 +80,7 @@ export const tutorialGroupManagementRoutes: Routes = [
     {
         path: ':tutorialGroupId',
         loadComponent: () =>
-            import('app/tutorialgroup/manage/tutorial-groups/detail/management-tutorial-group-detail-container.component').then(
+            import('app/tutorialgroup/manage/management-tutorial-group-detail-container/management-tutorial-group-detail-container.component').then(
                 (m) => m.ManagementTutorialGroupDetailContainerComponent,
             ),
         data: {

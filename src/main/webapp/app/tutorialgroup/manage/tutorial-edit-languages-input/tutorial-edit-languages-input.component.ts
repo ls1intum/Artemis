@@ -1,7 +1,7 @@
 import { Component, ElementRef, TemplateRef, ViewContainerRef, computed, inject, input, model, signal, viewChild } from '@angular/core';
 import { Overlay, OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
-import { TutorialCreateOrEditValidation, TutorialCreateOrEditValidationStatus } from 'app/tutorialgroup/manage/tutorial-edit/tutorial-create-or-edit.component';
+import { TutorialCreateOrEditValidation, TutorialCreateOrEditValidationStatus } from 'app/tutorialgroup/manage/tutorial-create-or-edit/tutorial-create-or-edit.component';
 import { InputGroupModule } from 'primeng/inputgroup';
 import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
 import { InputTextModule } from 'primeng/inputtext';

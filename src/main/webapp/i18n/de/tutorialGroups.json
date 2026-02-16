@@ -238,7 +238,6 @@
                 "creatTutorialGroupButton": "Neue Übungsgruppe",
                 "editConfigurationButton": "Globale Konfiguration bearbeiten",
                 "rowButtons": {
-                    "sessions": "Sitzungen",
                     "registrations": "Registrierungen"
                 },
                 "deleteDialog": {

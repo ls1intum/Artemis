@@ -6,7 +6,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 
 import { CourseTutorialGroupDetailContainerComponent } from 'app/tutorialgroup/overview/course-tutorial-group-detail-container/course-tutorial-group-detail-container.component';
-import { CourseTutorialGroupDetailComponent } from 'app/tutorialgroup/overview/course-tutorial-group-detail/course-tutorial-group-detail.component';
+import { TutorialGroupDetailComponent } from 'app/tutorialgroup/shared/tutorial-group-detail/tutorial-group-detail.component';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -55,7 +55,7 @@ describe('CourseTutorialGroupDetailContainerComponent', () => {
         });
 
         TestBed.overrideComponent(CourseTutorialGroupDetailContainerComponent as any, {
-            remove: { imports: [CourseTutorialGroupDetailComponent] as any },
+            remove: { imports: [TutorialGroupDetailComponent] as any },
             add: { imports: [CourseTutorialGroupDetailStubComponent] },
         });
 
