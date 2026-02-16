@@ -25,7 +25,6 @@ services:
             SLOW_TEST_TIMEOUT_SECONDS: '${SLOW_TEST_TIMEOUT_SECONDS}'
             FAST_TEST_TIMEOUT_SECONDS: '${FAST_TEST_TIMEOUT_SECONDS}'
             PLAYWRIGHT_TEST_PATHS: '${PLAYWRIGHT_TEST_PATHS:-}'
-            PLAYWRIGHT_IGNORE_PATHS: '${PLAYWRIGHT_IGNORE_PATHS:-}'
         command: >
           sh -c '
           cd /app/artemis/src/test/playwright &&
