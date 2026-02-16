@@ -33,11 +33,6 @@ export class IrisCitationTextComponent {
         'iris-citation--source': faCircleExclamation, // Unknown source citations
     };
 
-    /**
-     * Padding in pixels for tooltip boundary collision detection.
-     */
-    private readonly TOOLTIP_BOUNDARY_PADDING_LEFT = 10;
-
     readonly text = input.required<string>();
     readonly citationInfo = input<IrisCitationMetaDTO[]>([]);
 
@@ -328,8 +323,8 @@ export class IrisCitationTextComponent {
         const summaryRect = summary.getBoundingClientRect();
 
         let shift = 0;
-        if (summaryRect.left < boundaryRect.left + this.TOOLTIP_BOUNDARY_PADDING_LEFT) {
-            shift = boundaryRect.left - summaryRect.left + this.TOOLTIP_BOUNDARY_PADDING_LEFT;
+        if (summaryRect.left < boundaryRect.left) {
+            shift = boundaryRect.left - summaryRect.left;
         } else if (summaryRect.right > boundaryRect.right) {
             shift = boundaryRect.right - summaryRect.right;
         }

@@ -2,12 +2,10 @@ jhi-iris-citation-text {
     // Base z-index for citation layering
     $citation-base-z-index: 1;
 
-    --iris-citation-bg: var(--iris-rate-background);
-    --iris-citation-summary-bg: var(--tutor-suggestion-background);
+    --iris-citation-bg: var(--iris-accent-background);
+    --iris-citation-summary-bg: var(--iris-accent-background);
     --iris-citation-agg-bg: var(--iris-chat-citation-aggregation);
-    --iris-citation-agg-text: var(--iris-rate-background);
-    --iris-citation-meta-color: var(--iris-chat-history-label-color);
-    --iris-citation-nav-hover-bg: var(--iris-citation-nav-button-hover-bg);
+    --iris-citation-agg-text: var(--iris-accent-background);
     --iris-citation-icon-bg: var(--secondary);
     --iris-citation-source-color: var(--iris-chat-history-label-color);
     --iris-citation-lecture-color: var(--iris-citation-lecture-text-color);
@@ -152,12 +150,8 @@ jhi-iris-citation-text {
         font: inherit;
         pointer-events: auto;
 
-        &:hover {
-            background-color: var(--iris-citation-nav-hover-bg);
-        }
-
         &:focus-visible {
-            outline: 2px solid var(--iris-citation-nav-hover-bg);
+            outline: 2px solid currentColor;
             outline-offset: 1px;
         }
 
