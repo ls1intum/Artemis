@@ -50,7 +50,7 @@ class CourseRequestEmailIntegrationTest extends AbstractSpringIntegrationIndepen
     private static final int EMAIL_TIMEOUT_MS = 5000;
 
     @RegisterExtension
-    static GreenMailExtension greenMail = new GreenMailExtension(ServerSetupTest.SMTP);
+    static GreenMailExtension greenMail = new GreenMailExtension(ServerSetupTest.SMTP.dynamicPort());
 
     @Autowired
     private SpringTemplateEngine templateEngine;

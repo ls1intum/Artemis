@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 
 import jakarta.mail.internet.MimeMessage;
@@ -27,6 +29,10 @@ import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingSer
 import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
 import de.tum.cit.aet.artemis.core.domain.DataExport;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.ArtemisVersionDTO;
+import de.tum.cit.aet.artemis.core.dto.ComponentVulnerabilitiesDTO;
+import de.tum.cit.aet.artemis.core.dto.ComponentWithVulnerabilitiesDTO;
+import de.tum.cit.aet.artemis.core.dto.VulnerabilityDTO;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import tech.jhipster.config.JHipsterProperties;
@@ -42,7 +48,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     private static final int EMAIL_TIMEOUT_MS = 5000;
 
     @RegisterExtension
-    static GreenMailExtension greenMail = new GreenMailExtension(ServerSetupTest.SMTP);
+    static GreenMailExtension greenMail = new GreenMailExtension(ServerSetupTest.SMTP.dynamicPort());
 
     @Autowired
     private SpringTemplateEngine templateEngine;
@@ -337,6 +343,142 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         assertThat(body).contains("fehlbenutzer");
         assertThat(body).contains("Festplatte voll");
         assertThat(body).contains("admin/data-exports");
+    }
+
+    // -- Data export email failed admin email --
+
+    @Test
+    void dataExportEmailFailedAdminEmail_shouldRenderAndDeliverInEnglish() throws Exception {
+        var exportUser = new User();
+        exportUser.setLogin("emailfailuser");
+
+        var dataExport = new DataExport();
+        dataExport.setUser(exportUser);
+
+        testMailService.sendDataExportEmailFailedEmailToAdmin(recipient, dataExport, new RuntimeException("SMTP connection refused"));
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("emailfailuser");
+        assertThat(body).contains("SMTP connection refused");
+        assertThat(body).contains("admin/data-exports");
+    }
+
+    @Test
+    void dataExportEmailFailedAdminEmail_shouldRenderAndDeliverInGerman() throws Exception {
+        recipient.setLangKey("de");
+
+        var exportUser = new User();
+        exportUser.setLogin("emailfehlnutzer");
+
+        var dataExport = new DataExport();
+        dataExport.setUser(exportUser);
+
+        testMailService.sendDataExportEmailFailedEmailToAdmin(recipient, dataExport, new RuntimeException("SMTP Verbindung abgelehnt"));
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("emailfehlnutzer");
+        assertThat(body).contains("SMTP Verbindung abgelehnt");
+        assertThat(body).contains("admin/data-exports");
+    }
+
+    // -- Successful data exports admin email --
+
+    @Test
+    void successfulDataExportsAdminEmail_shouldRenderAndDeliverInEnglish() throws Exception {
+        var user1 = new User();
+        user1.setLogin("exportuser1");
+        var export1 = new DataExport();
+        export1.setUser(user1);
+
+        var user2 = new User();
+        user2.setLogin("exportuser2");
+        var export2 = new DataExport();
+        export2.setUser(user2);
+
+        var dataExports = new LinkedHashSet<DataExport>();
+        dataExports.add(export1);
+        dataExports.add(export2);
+
+        testMailService.sendSuccessfulDataExportsEmailToAdmin(recipient, dataExports);
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("exportuser1");
+        assertThat(body).contains("exportuser2");
+    }
+
+    @Test
+    void successfulDataExportsAdminEmail_shouldRenderAndDeliverInGerman() throws Exception {
+        recipient.setLangKey("de");
+
+        var user1 = new User();
+        user1.setLogin("exportnutzer1");
+        var export1 = new DataExport();
+        export1.setUser(user1);
+
+        var dataExports = new LinkedHashSet<DataExport>();
+        dataExports.add(export1);
+
+        testMailService.sendSuccessfulDataExportsEmailToAdmin(recipient, dataExports);
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("exportnutzer1");
+    }
+
+    // -- Build agent self-paused admin email --
+
+    @Test
+    void buildAgentSelfPausedEmail_shouldRenderAndDeliverInEnglish() throws Exception {
+        testMailService.sendBuildAgentSelfPausedEmailToAdmin(recipient, "build-agent-01", 5);
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("build-agent-01");
+        assertThat(body).contains("5");
+    }
+
+    @Test
+    void buildAgentSelfPausedEmail_shouldRenderAndDeliverInGerman() throws Exception {
+        recipient.setLangKey("de");
+
+        testMailService.sendBuildAgentSelfPausedEmailToAdmin(recipient, "build-agent-02", 10);
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("build-agent-02");
+        assertThat(body).contains("10");
+    }
+
+    // -- Vulnerability scan result email --
+
+    @Test
+    void vulnerabilityScanResultEmail_shouldRenderAndDeliverInEnglish() throws Exception {
+        var vuln = new VulnerabilityDTO("CVE-2025-1234", "Test vulnerability summary", "details", "HIGH", 7.5, List.of(), List.of("2.0.0"), List.of());
+        var component = new ComponentWithVulnerabilitiesDTO("pkg:maven/com.example/test@1.0.0", List.of(vuln));
+        var vulnerabilities = new ComponentVulnerabilitiesDTO(List.of(component), 1, 0, 1, 0, 0, "2026-02-17T10:00:00Z");
+        var versionInfo = new ArtemisVersionDTO("7.8.0", "7.9.0", true, "https://github.com/ls1intum/Artemis/releases/tag/7.9.0", null, "2026-02-17");
+
+        testMailService.sendVulnerabilityScanResultEmail(recipient, vulnerabilities, versionInfo, true);
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("CVE-2025-1234");
+        assertThat(body).contains("Test vulnerability summary");
+        assertThat(body).contains("pkg:maven/com.example/test@1.0.0");
+        assertThat(body).contains("7.8.0");
+        assertThat(body).contains("7.9.0");
+        assertThat(body).contains("2.0.0");
+        assertThat(body).contains("admin/dependencies");
+    }
+
+    @Test
+    void vulnerabilityScanResultEmail_shouldRenderAndDeliverInGerman() throws Exception {
+        recipient.setLangKey("de");
+
+        var vulnerabilities = new ComponentVulnerabilitiesDTO(List.of(), 0, 0, 0, 0, 0, "2026-02-17T10:00:00Z");
+        var versionInfo = new ArtemisVersionDTO("7.8.0", null, false, null, null, "2026-02-17");
+
+        testMailService.sendVulnerabilityScanResultEmail(recipient, vulnerabilities, versionInfo, false);
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("7.8.0");
+        assertThat(body).contains("admin/dependencies");
     }
 
     private Map<String, Object> createLoginEmailContext(String authMethod, String loginDate, String loginTime, String requestOrigin, String resetLink) {
