@@ -53,12 +53,19 @@ record ExamUserLocationDTO(
 ) {
     static ExamUserLocationDTO plannedFrom(ExamUser examUser) {
         final boolean isLegacy = examUser.getPlannedRoomTransient() == null || examUser.getPlannedSeatTransient() == null;
-
-        return new ExamUserLocationDTO(
-            isLegacy ? null : examUser.getPlannedRoomTransient().getId(),
-            isLegacy ? examUser.getPlannedRoom() : examUser.getPlannedRoomTransient().getRoomNumber(),
-            isLegacy ? examUser.getPlannedSeat() : examUser.getPlannedSeatTransient().name()
-        );
+        if (isLegacy) {
+            return new ExamUserLocationDTO(
+                null,
+                StringUtils.hasText(examUser.getPlannedRoom()) ? examUser.getPlannedRoom() : "No Room set",
+                StringUtils.hasText(examUser.getPlannedSeat()) ? examUser.getPlannedSeat() : "No Seat set"
+            );
+        } else {
+            return new ExamUserLocationDTO(
+                examUser.getPlannedRoomTransient().getId(),
+                examUser.getPlannedRoomTransient().getRoomNumber(),
+                examUser.getPlannedSeatTransient().name()
+            );
+        }
     }
 
     static ExamUserLocationDTO actualFrom(ExamUser examUser) {

@@ -346,7 +346,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Test
     @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
-    void testGetAttendanceCheckerInformationRegisteredStudentsWithModernDistribution() throws Exception {
+    void testGetAttendanceCheckerInformationRegisteredStudentsWithAutomaticDistribution() throws Exception {
         examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, 10);
         examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileSingleExamRoom);
         List<Long> ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001")).stream().toList();
@@ -399,7 +399,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
 
         verifyBasicAttendanceCheckerInformation(attendanceCheckerInformation);
         assertThat(attendanceCheckerInformation.examRoomsUsedInExam()).isNullOrEmpty();
-        assertThat(attendanceCheckerInformation.examUsersWithExamRoomAndSeat()).hasSize(5);
+        assertThat(attendanceCheckerInformation.examUsersWithExamRoomAndSeat()).hasSize(10);
     }
 
     @Test
@@ -418,6 +418,29 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(attendanceCheckerInformation.examUsersWithExamRoomAndSeat()).hasSize(10);
     }
 
+    @Test
+    @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+    void testGetAttendanceCheckerInformationRegisteredStudentsWithAutomaticDistributionNotAllDistributed() throws Exception {
+        uploadFourRoomsAndDistributeStudentsInExam1(10);
+        examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, 5);
+
+        var attendanceCheckerInformation = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance-checker-information", HttpStatus.OK,
+                AttendanceCheckerAppExamInformationDTO.class);
+
+        verifyBasicAttendanceCheckerInformation(attendanceCheckerInformation);
+        assertThat(attendanceCheckerInformation.examUsersWithExamRoomAndSeat()).hasSize(15);
+
+        List<Map<String, Object>> examUsers = (List<Map<String, Object>>) request
+                .get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance-checker-information", HttpStatus.OK, Map.class)
+                .get("examUsersWithExamRoomAndSeat");
+        assertThat(examUsers).hasSize(15);  // sanity check
+
+        long unseatedUsersCount = examUsers.stream().map(user -> (Map<String, Object>) user.get("plannedLocation"))
+                .filter(plannedLocation -> "No Room set".equalsIgnoreCase((String) plannedLocation.get("roomNumber"))).count();
+
+        assertThat(unseatedUsersCount).isEqualTo(5);
+    }
+
     /* Tests for the GET /api/exam/courses/{courseId}/exams/{examId}/rooms-used endpoint */
 
     @Test
@@ -432,8 +455,8 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/rooms-used", HttpStatus.OK, Set.class);
     }
 
-    private void uploadFourRoomsAndDistributeStudentsInExam1() {
-        examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, NUMBER_OF_STUDENTS);
+    private void uploadFourRoomsAndDistributeStudentsInExam1(int numberOfStudents) {
+        examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, numberOfStudents);
         examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileFourExamRooms);
         List<Long> ids = examRoomRepository.findAllNewestExamRoomVersions().stream().map(ExamRoom::getId).toList();
         examRoomDistributionService.distributeRegisteredStudents(exam1.getId(), ids, Map.of(), true, 0.1);
@@ -446,7 +469,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
     void testGetUsedRoomsOfExam() throws Exception {
-        uploadFourRoomsAndDistributeStudentsInExam1();
+        uploadFourRoomsAndDistributeStudentsInExam1(NUMBER_OF_STUDENTS);
 
         Set<ExamRoomForDistributionDTO> usedRooms = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/rooms-used", HttpStatus.OK,
                 new TypeReference<>() {
@@ -518,7 +541,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
     void testReseatStudentAsInstructorFixedSeat() throws Exception {
-        uploadFourRoomsAndDistributeStudentsInExam1();
+        uploadFourRoomsAndDistributeStudentsInExam1(NUMBER_OF_STUDENTS);
         reloadExam1WithExamUsers();
 
         ExamUser anyExamUser = exam1.getExamUsers().stream().findAny().orElseThrow();
@@ -535,7 +558,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
     void testReseatStudentAsInstructorDynamicSeat() throws Exception {
-        uploadFourRoomsAndDistributeStudentsInExam1();
+        uploadFourRoomsAndDistributeStudentsInExam1(NUMBER_OF_STUDENTS);
         reloadExam1WithExamUsers();
 
         ExamUser anyExamUser = exam1.getExamUsers().stream().findAny().orElseThrow();
