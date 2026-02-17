@@ -80,7 +80,7 @@ public class ExamRoomDistributionResource {
             return Map.of();
         }
 
-        examRoomAliases.replaceAll((id, alias) -> alias != null ? alias.trim() : null);
+        examRoomAliases.replaceAll((_, alias) -> alias != null ? alias.trim() : null);
         examRoomAliases.values().removeIf(alias -> alias == null || alias.isEmpty());
 
         if (examRoomAliases.values().stream().anyMatch(alias -> alias != null && alias.length() > ALIAS_NAME_MAX_LENGTH)) {

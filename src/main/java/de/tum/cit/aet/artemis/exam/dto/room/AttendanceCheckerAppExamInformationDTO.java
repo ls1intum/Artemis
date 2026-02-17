@@ -146,10 +146,6 @@ public record AttendanceCheckerAppExamInformationDTO(
      * @return information for the attendance checker app
      */
     public static AttendanceCheckerAppExamInformationDTO from(Exam exam, Set<ExamRoom> examRooms, Map<String, String> roomAliases) {
-        Set<ExamUser> examUsersWhoHaveBeenDistributed = exam.getExamUsers().stream()
-            .filter(examUser -> StringUtils.hasText(examUser.getPlannedRoom()) && StringUtils.hasText(examUser.getPlannedSeat()))
-            .collect(Collectors.toSet());
-
         return new AttendanceCheckerAppExamInformationDTO(
             exam.getId(),
             exam.getTitle(),
@@ -159,7 +155,7 @@ public record AttendanceCheckerAppExamInformationDTO(
             exam.getCourse().getId(),
             exam.getCourse().getTitle(),
             examRooms.stream().map(room -> ExamRoomForAttendanceCheckerDTO.from(room, roomAliases)).collect(Collectors.toSet()),
-            examUsersWhoHaveBeenDistributed.stream().map(ExamUserWithExamRoomAndSeatDTO::from).collect(Collectors.toSet())
+            exam.getExamUsers().stream().map(ExamUserWithExamRoomAndSeatDTO::from).collect(Collectors.toSet())
         );
     }
 }

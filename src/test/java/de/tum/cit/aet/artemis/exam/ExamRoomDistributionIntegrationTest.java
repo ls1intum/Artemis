@@ -422,7 +422,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
     void testGetAttendanceCheckerInformationRegisteredStudentsWithAutomaticDistributionNotAllDistributed() throws Exception {
         uploadFourRoomsAndDistributeStudentsInExam1(10);
-        examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, 5);
+        examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, 11, 15);
 
         var attendanceCheckerInformation = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance-checker-information", HttpStatus.OK,
                 AttendanceCheckerAppExamInformationDTO.class);
