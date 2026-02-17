@@ -97,7 +97,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
      */
     private ResponseEntity<Result> getSpecificResult(Long submissionId, Long resultId) {
         log.debug("REST request to get result {} for modeling submission {}", resultId, submissionId);
-        ModelingSubmission submission = modelingSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(submissionId);
+        ModelingSubmission submission = modelingSubmissionRepository.findByIdWithEagerResultAndFeedbackAndAssessorAndAssessmentNoteAndParticipationResultsElseThrow(submissionId);
         Result result = submission.getResults().stream().filter(r -> r.getId().equals(resultId)).findFirst().orElseThrow(() -> new EntityNotFoundException("Result", resultId));
 
         if (!(submission.getParticipation() instanceof StudentParticipation participation)) {
