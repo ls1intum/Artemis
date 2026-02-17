@@ -37,6 +37,7 @@ currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
 <div class="p-inputgroup">
     <input type="text" pInputText pSize="small" placeholder="Search..." [(ngModel)]="globalSearch" (input)="onGlobalSearchInput($event)" />
 </div>
+
 <p-table
     #dt
     stripedRows
@@ -58,7 +59,7 @@ currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
                 <th [pSortableColumn]="col.sort ? col.field : undefined" [style]="{ 'min-width': col.width ?? 'auto' }">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <span>{{ col.header }}</span>
+                            <span>{{ col?.header ?? '' }}</span>
                             @if (col.sort) {
                                 <p-sortIcon [field]="col.field" />
                             }
@@ -69,18 +70,23 @@ currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
                     </div>
                 </th>
             }
+
             <th>
                 <div class="flex items-center gap-2"></div>
             </th>
         </tr>
     </ng-template>
-    <ng-template #body let-rowData let-columns="columns">
+
+    <ng-template #body let-rowData let-columns="columns" let-rowIndex="rowIndex">
         <tr>
             @for (col of columns; track col) {
-                <!-- @if (col.cellRenderer) {
-                    <ng-container *ngComponentOutlet="col.cellRenderer; injector: cellInjector(row, col, ri)"> </ng-container>
-                } @else { -->
-                <td>{{ rowData[col.field] }}</td>
+                <td>
+                    @if (col.cellRenderer) {
+                        <ng-container *ngComponentOutlet="col.cellRenderer; inputs: { params: { value: rowData, rowIndex: rowIndex } }" />
+                    } @else {
+                        {{ rowData[col.field] }}
+                    }
+                </td>
             }
             @if (rowActions()) {
                 <td class="text-end">
@@ -90,4 +96,5 @@ currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
         </tr>
     </ng-template>
 </p-table>
+
 <!-- </div> -->

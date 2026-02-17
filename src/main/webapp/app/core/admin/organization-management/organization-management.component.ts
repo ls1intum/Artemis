@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Organization } from 'app/core/shared/entities/organization.model';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
+import { RowActionsCellRenderer } from 'app/core/admin/organization-management/row-actions-cell-renderer';
 import { Subject } from 'rxjs';
 import { faEye, faPenToSquare, faPlus, faTimes, faTrashCan, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -56,6 +57,7 @@ export class OrganizationManagementComponent implements OnInit {
             { field: 'numberOfUsers' satisfies OrganizationKey, header: 'Users', sort: true, width: '100px', filter: false, filterType: 'text' },
             { field: 'numberOfCourses' satisfies OrganizationKey, header: 'Courses', sort: true, width: '100px', filter: false, filterType: 'text' },
             { field: 'emailPattern' satisfies OrganizationKey, header: 'Email Pattern', sort: true, width: '200px', filter: false, filterType: 'text' },
+            { cellRenderer: RowActionsCellRenderer },
         ]);
     }
 
