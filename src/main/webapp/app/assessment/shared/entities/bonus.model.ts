@@ -40,3 +40,9 @@ export class BonusResult {
     public achievedPresentationScore?: number;
     public presentationScoreThreshold?: number;
 }
+
+export class BonusDTO {
+    public id: number;
+    public sourceGradingScaleId: number;
+    public weight?: number;
+}

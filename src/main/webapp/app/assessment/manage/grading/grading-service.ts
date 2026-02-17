@@ -8,9 +8,10 @@ import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageabl
 import { captureException } from '@sentry/angular';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { toUpdateDTO } from 'app/assessment/shared/entities/grading-scale-request-dto.model';
+import { GradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
 
-export type EntityResponseType = HttpResponse<GradingScale>;
-export type EntityArrayResponseType = HttpResponse<GradingScale[]>;
+export type EntityResponseType = HttpResponse<GradingScaleDTO>;
+export type EntityArrayResponseType = HttpResponse<GradingScaleDTO[]>;
 
 @Injectable({ providedIn: 'root' })
 export class GradingService {
@@ -26,7 +27,7 @@ export class GradingService {
      */
     createGradingScaleForCourse(courseId: number, gradingScale: GradingScale): Observable<EntityResponseType> {
         const dto = toUpdateDTO(gradingScale);
-        return this.http.post<GradingScale>(`${this.resourceUrl}/${courseId}/grading-scale`, dto, { observe: 'response' });
+        return this.http.post<GradingScaleDTO>(`${this.resourceUrl}/${courseId}/grading-scale`, dto, { observe: 'response' });
     }
 
     /**
@@ -37,7 +38,7 @@ export class GradingService {
      */
     updateGradingScaleForCourse(courseId: number, gradingScale: GradingScale): Observable<EntityResponseType> {
         const dto = toUpdateDTO(gradingScale);
-        return this.http.put<GradingScale>(`${this.resourceUrl}/${courseId}/grading-scale`, dto, { observe: 'response' });
+        return this.http.put<GradingScaleDTO>(`${this.resourceUrl}/${courseId}/grading-scale`, dto, { observe: 'response' });
     }
 
     /**
@@ -46,7 +47,7 @@ export class GradingService {
      * @param courseId the course for which the grading scale will be retrieved
      */
     findGradingScaleForCourse(courseId: number): Observable<EntityResponseType> {
-        return this.http.get<GradingScale>(`${this.resourceUrl}/${courseId}/grading-scale`, { observe: 'response' });
+        return this.http.get<GradingScaleDTO>(`${this.resourceUrl}/${courseId}/grading-scale`, { observe: 'response' });
     }
 
     /**
@@ -67,7 +68,7 @@ export class GradingService {
      */
     createGradingScaleForExam(courseId: number, examId: number, gradingScale: GradingScale): Observable<EntityResponseType> {
         const dto = toUpdateDTO(gradingScale);
-        return this.http.post<GradingScale>(`${this.resourceUrl}/${courseId}/exams/${examId}/grading-scale`, dto, { observe: 'response' });
+        return this.http.post<GradingScaleDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/grading-scale`, dto, { observe: 'response' });
     }
 
     /**
@@ -79,7 +80,7 @@ export class GradingService {
      */
     updateGradingScaleForExam(courseId: number, examId: number, gradingScale: GradingScale): Observable<EntityResponseType> {
         const dto = toUpdateDTO(gradingScale);
-        return this.http.put<GradingScale>(`${this.resourceUrl}/${courseId}/exams/${examId}/grading-scale`, dto, { observe: 'response' });
+        return this.http.put<GradingScaleDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/grading-scale`, dto, { observe: 'response' });
     }
 
     /**
@@ -89,7 +90,7 @@ export class GradingService {
      * @param examId the exam for which the grading scale will be retrieved
      */
     findGradingScaleForExam(courseId: number, examId: number): Observable<EntityResponseType> {
-        return this.http.get<GradingScale>(`${this.resourceUrl}/${courseId}/exams/${examId}/grading-scale`, { observe: 'response' });
+        return this.http.get<GradingScaleDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/grading-scale`, { observe: 'response' });
     }
 
     /**
