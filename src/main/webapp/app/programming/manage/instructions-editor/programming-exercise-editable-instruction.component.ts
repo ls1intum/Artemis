@@ -1,30 +1,11 @@
-import {
-    AfterViewInit,
-    Component,
-    EventEmitter,
-    HostListener,
-    Input,
-    OnChanges,
-    OnDestroy,
-    OnInit,
-    Output,
-    SimpleChanges,
-    ViewChild,
-    ViewEncapsulation,
-    computed,
-    inject,
-    input,
-    signal,
-} from '@angular/core';
+import { AfterViewInit, Component, HostListener, OnDestroy, ViewChild, ViewEncapsulation, computed, effect, inject, input, output, signal } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Observable, Subject, Subscription, of, throwError } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { ProblemStatementAnalysis } from 'app/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
-import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { hasExerciseChanged } from 'app/exercise/util/exercise.utils';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -46,11 +27,13 @@ import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_IRIS } from 'app/app.constants'
 import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
-import { ActivatedRoute } from '@angular/router';
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
+import { ProblemStatementSyncService, ProblemStatementSyncState } from 'app/programming/manage/services/problem-statement-sync.service';
 import { editor } from 'monaco-editor';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { MonacoBinding } from 'y-monaco';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -68,17 +51,24 @@ import { editor } from 'monaco-editor';
         ProgrammingExerciseInstructionComponent,
     ],
 })
-export class ProgrammingExerciseEditableInstructionComponent implements AfterViewInit, OnChanges, OnDestroy, OnInit {
-    private activatedRoute = inject(ActivatedRoute);
+export class ProgrammingExerciseEditableInstructionComponent implements AfterViewInit, OnDestroy {
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private alertService = inject(AlertService);
     private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
     private testCaseService = inject(ProgrammingExerciseGradingService);
     private profileService = inject(ProfileService);
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
+    private problemStatementSyncService = inject(ProblemStatementSyncService);
 
-    participationValue: Participation;
-    programmingExercise: ProgrammingExercise;
+    /**
+     * Legacy manual diff state used inside the `effect()` below.
+     * This is intentionally mutable and not a signal; therefore it does not retrigger the effect.
+     * Caveat: if `exercise()` changes multiple times synchronously, intermediate states can be skipped.
+     * Keep this in mind when extending the effect logic.
+     */
+    private previousExercise?: ProgrammingExercise;
+
+    unsavedChangesValue = false;
 
     exerciseTestCases: string[] = [];
 
@@ -86,18 +76,17 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     testCaseAction = new TestCaseAction();
     domainActions: TextEditorDomainAction[] = [new FormulaAction(), new TaskAction(), this.testCaseAction];
 
-    courseId: number;
-    exerciseId: number;
     irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
     hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
     artemisIntelligenceActions = computed(() => {
         const actions = [];
-        if (this.hyperionEnabled) {
+        const courseId = this.exercise().course?.id;
+        if (this.hyperionEnabled && !!courseId) {
             actions.push(
                 new RewriteAction(
                     this.artemisIntelligenceService,
                     RewritingVariant.PROBLEM_STATEMENT,
-                    this.courseId, // Use exerciseId for Hyperion, not courseId
+                    courseId, // courseId is required by Hyperion API.
                     signal<RewriteResult>({ result: '', inconsistencies: undefined, suggestions: undefined, improvement: undefined }),
                 ),
             );
@@ -106,66 +95,71 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     });
 
     savingInstructions = false;
-    unsavedChangesValue = false;
 
     testCaseSubscription: Subscription;
     forceRenderSubscription: Subscription;
+    private problemStatementStateReplacementSubscription?: Subscription;
+    private problemStatementSyncState?: ProblemStatementSyncState;
+    private problemStatementBinding?: MonacoBinding;
+    private problemStatementBindingDestroyed = false;
 
     @ViewChild(MarkdownEditorMonacoComponent, { static: false }) markdownEditorMonaco?: MarkdownEditorMonacoComponent;
 
-    @Input() showStatus = true;
+    readonly showStatus = input<boolean>(true);
     // If the programming exercise is being created, some features have to be disabled (saving the problemStatement & querying test cases).
-    @Input() editMode = true;
-    @Input() enableResize = true;
-    @Input({ required: true }) initialEditorHeight: MarkdownEditorHeight;
+    readonly editMode = input<boolean>(true);
+    readonly enableResize = input<boolean>(true);
+    readonly initialEditorHeight = input.required<MarkdownEditorHeight>();
     /**
      * If true, the editor height is managed externally by the parent container.
      * Use this when embedding in a layout that controls height (e.g., code editor view).
      */
-    @Input() externalHeight = false;
-    @Input() showSaveButton = false;
+    readonly externalHeight = input<boolean>(false);
+    readonly showSaveButton = input<boolean>(false);
     /**
      * Whether to show the preview button and default preview in the markdown editor.
      * Set to false when using an external preview component (e.g., in the code editor).
      */
-    @Input() showPreview = true;
-    @Input() templateParticipation?: Participation;
-    @Input() forceRender: Observable<void>;
+    readonly showPreview = input<boolean>(true);
+    readonly forceRender = input<Observable<void> | undefined>();
+
+    readonly participation = input<Participation>();
+    readonly exercise = input.required<ProgrammingExercise>();
     readonly consistencyIssues = input<ConsistencyIssue[]>([]);
+    readonly hasUnsavedChanges = output<boolean>();
+    readonly instructionChange = output<string>();
 
-    @Input()
-    get exercise() {
-        return this.programmingExercise;
-    }
-    @Input()
-    get participation() {
-        return this.participationValue;
-    }
-
-    @Output() participationChange = new EventEmitter<Participation>();
-    @Output() hasUnsavedChanges = new EventEmitter<boolean>();
-    @Output() exerciseChange = new EventEmitter<ProgrammingExercise>();
-    @Output() instructionChange = new EventEmitter<string>();
     generateHtmlSubject: Subject<void> = new Subject<void>();
-
-    set participation(participation: Participation) {
-        this.participationValue = participation;
-        this.participationChange.emit(this.participationValue);
-    }
-
-    set exercise(exercise: ProgrammingExercise) {
-        if (this.programmingExercise && exercise.problemStatement !== this.programmingExercise.problemStatement) {
-            this.unsavedChanges = true;
-        }
-        this.programmingExercise = exercise;
-        this.exerciseChange.emit(this.programmingExercise);
-    }
 
     set unsavedChanges(hasChanges: boolean) {
         this.unsavedChangesValue = hasChanges;
+        // Why emit only `true` transitions? Once an exercise is saved, the page would automatically re-navigate to the exercise page.
+        // This would unmount this component and clear the unsaved changes indicator.
         if (hasChanges) {
             this.hasUnsavedChanges.emit(hasChanges);
         }
+    }
+
+    constructor() {
+        /**
+         * React to exercise changes.
+         * Note: this effect mutates `previousExercise` as an implementation detail for manual diffing.
+         * This is a known legacy pattern and can be fragile for bursty synchronous updates.
+         */
+        effect(() => {
+            const currentExercise = this.exercise();
+
+            if (this.previousExercise && currentExercise.problemStatement !== this.previousExercise.problemStatement) {
+                this.unsavedChanges = true;
+            }
+
+            const hasExerciseIdChanged = !this.previousExercise || this.previousExercise.id !== currentExercise.id;
+            if (hasExerciseIdChanged && currentExercise.id) {
+                this.setupTestCaseSubscription();
+            }
+
+            this.previousExercise = currentExercise;
+        });
     }
 
     // Icons
@@ -176,17 +170,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 
-    ngOnInit() {
-        this.courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));
-        this.exerciseId = Number(this.activatedRoute.snapshot.paramMap.get('exerciseId'));
-    }
-
-    ngOnChanges(changes: SimpleChanges): void {
-        if (hasExerciseChanged(changes)) {
-            this.setupTestCaseSubscription();
-        }
-    }
-
     ngOnDestroy(): void {
         if (this.testCaseSubscription) {
             this.testCaseSubscription.unsubscribe();
@@ -194,19 +177,27 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         if (this.forceRenderSubscription) {
             this.forceRenderSubscription.unsubscribe();
         }
+        this.teardownProblemStatementSync();
     }
 
     ngAfterViewInit() {
         // If forced to render, generate the instruction HTML.
-        if (this.forceRender) {
-            this.forceRenderSubscription = this.forceRender.subscribe(() => this.generateHtml());
+        const forceRender = this.forceRender();
+        if (forceRender) {
+            this.forceRenderSubscription = forceRender.subscribe(() => this.generateHtml());
         }
         // Trigger initial preview render after view initialization.
         // This ensures the ProgrammingExerciseInstructionComponent renders when first shown.
-        if (this.showPreview) {
+        if (this.showPreview()) {
             // Small delay to allow the instruction component to initialize
             setTimeout(() => this.generateHtmlSubject.next(), 0);
         }
+
+        const exercise = this.exercise();
+        if (!exercise.id) {
+            return;
+        }
+        this.initializeProblemStatementSync(exercise.id, exercise.problemStatement ?? '');
     }
 
     /** Save the problem statement on the server.
@@ -215,9 +206,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     saveInstructions(event: any) {
         event.stopPropagation();
         this.savingInstructions = true;
-        const problemStatementToSave = this.exercise.problemStatement?.trim() || undefined;
+        const problemStatementToSave = this.exercise().problemStatement?.trim() || undefined;
         return this.programmingExerciseService
-            .updateProblemStatement(this.exercise.id!, problemStatementToSave)
+            .updateProblemStatement(this.exercise().id!, problemStatementToSave)
             .pipe(
                 tap(() => {
                     this.unsavedChanges = false;
@@ -250,9 +241,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     }
 
     updateProblemStatement(problemStatement: string) {
-        if (this.exercise.problemStatement !== problemStatement) {
-            this.exercise = { ...this.exercise, problemStatement };
+        if (this.exercise().problemStatement !== problemStatement) {
             this.unsavedChanges = true;
+            // parent component should update `problemStatement` in `exercise`
             this.instructionChange.emit(problemStatement);
             // Trigger preview update when showPreview is enabled
             this.generateHtmlSubject.next();
@@ -272,9 +263,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         }
 
         // Only set up a subscription for test cases if the exercise already exists.
-        if (this.editMode) {
+        if (this.editMode()) {
             this.testCaseSubscription = this.testCaseService
-                .subscribeForTestCases(this.exercise.id!)
+                .subscribeForTestCases(this.exercise().id!)
                 .pipe(
                     switchMap((testCases: ProgrammingExerciseTestCase[] | undefined) => {
                         // If there are test cases, map them to their names, sort them and use them for the markdown editor.
@@ -284,9 +275,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                                 .map((testCase) => testCase.testName!)
                                 .sort();
                             return of(sortedTestCaseNames);
-                        } else if (this.exercise.templateParticipation) {
+                        } else if (this.exercise().templateParticipation) {
                             // Legacy case: If there are no test cases, but a template participation, use its feedbacks for generating test names.
-                            return this.loadTestCasesFromTemplateParticipationResult(this.exercise.templateParticipation!.id!);
+                            return this.loadTestCasesFromTemplateParticipationResult(this.exercise().templateParticipation!.id!);
                         }
                         return of();
                     }),
@@ -357,4 +348,78 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
         return annotations;
     };
+
+    /**
+     * Set up collaborative Yjs synchronization for the markdown editor.
+     * Creates the Yjs document/binding and wires Monaco to the shared text.
+     *
+     * Note: This method is only called once during ngAfterViewInit(). The component is always
+     * destroyed and recreated when navigating to a different exercise, so there is no need to
+     * watch for exercise ID changes or reinitialize sync when the exercise input changes.
+     *
+     * @param exerciseId The exercise id to scope synchronization updates.
+     * @param initialText The initial problem statement content used for seeding.
+     */
+    private initializeProblemStatementSync(exerciseId: number, initialText: string) {
+        if (!this.editMode() || this.problemStatementBinding) {
+            return;
+        }
+        if (!this.markdownEditorMonaco?.monacoEditor) {
+            return;
+        }
+        const model = this.markdownEditorMonaco.monacoEditor.getModel();
+        const editorInstance = this.markdownEditorMonaco.monacoEditor.getEditor();
+        if (!model || !editorInstance) {
+            return;
+        }
+        this.teardownProblemStatementSync();
+        this.problemStatementSyncState = this.problemStatementSyncService.init(exerciseId, initialText);
+        this.createProblemStatementBinding(this.problemStatementSyncState, model, editorInstance);
+        this.problemStatementStateReplacementSubscription = this.problemStatementSyncService.stateReplaced$.subscribe((syncState) => {
+            this.problemStatementSyncState = syncState;
+            // Force model content to the replacement Yjs state to avoid merge/appending when rebinding.
+            model.setValue(syncState.text.toString());
+            this.createProblemStatementBinding(syncState, model, editorInstance);
+        });
+    }
+
+    /**
+     * Tear down Yjs synchronization and release Monaco binding resources.
+     */
+    private teardownProblemStatementSync() {
+        this.problemStatementStateReplacementSubscription?.unsubscribe();
+        this.problemStatementStateReplacementSubscription = undefined;
+        this.problemStatementBinding?.destroy();
+        this.problemStatementBinding = undefined;
+        this.problemStatementBindingDestroyed = false;
+        this.problemStatementSyncState = undefined;
+        this.problemStatementSyncService.reset();
+    }
+
+    /**
+     * Create (or recreate) the Monaco <-> Yjs binding for the problem statement editor.
+     *
+     * This is called on initial setup and whenever the sync service replaces the Y.Doc
+     * after accepting a late winning full-content response. Recreating the binding keeps
+     * Monaco attached to the active Y.Text/Y.Awareness objects.
+     *
+     * @param syncState Current synchronized Yjs primitives.
+     * @param model Monaco text model backing the editor.
+     * @param editorInstance Monaco editor instance bound to the model.
+     */
+    private createProblemStatementBinding(syncState: ProblemStatementSyncState, model: editor.ITextModel, editorInstance: editor.IStandaloneCodeEditor) {
+        this.problemStatementBinding?.destroy();
+        const binding = new MonacoBinding(syncState.text, model, new Set([editorInstance]), syncState.awareness);
+        // Monaco may or may not dispose its model and call destroy(); this is a guard against a second call from ngOnDestroy.
+        const originalDestroy = binding.destroy.bind(binding);
+        this.problemStatementBindingDestroyed = false;
+        binding.destroy = () => {
+            if (this.problemStatementBindingDestroyed) {
+                return;
+            }
+            this.problemStatementBindingDestroyed = true;
+            originalDestroy();
+        };
+        this.problemStatementBinding = binding;
+    }
 }
