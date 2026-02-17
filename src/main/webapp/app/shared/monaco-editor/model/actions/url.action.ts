@@ -15,7 +15,8 @@ interface UrlArguments {
 export class UrlAction extends TextEditorAction {
     static readonly ID = 'url.action';
     static readonly DEFAULT_LINK_TEXT = 'Link';
-    static readonly DEFAULT_INSERT_TEXT = `[🔗 ${this.DEFAULT_LINK_TEXT}](https://)`;
+    static readonly DEFAULT_LINK_PLACEHOLDER = 'https://';
+    static readonly DEFAULT_INSERT_TEXT = `[🔗 ${this.DEFAULT_LINK_TEXT}](${this.DEFAULT_LINK_PLACEHOLDER})`;
 
     constructor() {
         super(UrlAction.ID, 'artemisApp.multipleChoiceQuestion.editor.link', faLink, undefined);
@@ -38,7 +39,11 @@ export class UrlAction extends TextEditorAction {
      */
     run(editor: TextEditor, args?: UrlArguments): void {
         if (!args?.text || !args?.url) {
-            this.wrapSelectionOrInsertDefault(editor, (selectedText) => `[${sanitizeStringForMarkdownEditor(selectedText)}](https://)`, UrlAction.DEFAULT_INSERT_TEXT);
+            this.wrapSelectionOrInsertDefault(
+                editor,
+                (selectedText) => `[${sanitizeStringForMarkdownEditor(selectedText)}](${UrlAction.DEFAULT_LINK_PLACEHOLDER})`,
+                UrlAction.DEFAULT_INSERT_TEXT,
+            );
             this.shrinkSelectionToUrlPart(editor);
         } else {
             this.replaceTextAtCurrentSelection(editor, `[${sanitizeStringForMarkdownEditor(args.text)}](${args.url})`);
@@ -57,7 +62,7 @@ export class UrlAction extends TextEditorAction {
         if (selection) {
             const end = selection.getEndPosition();
             // Exclude everything up to "("
-            const newStart = end.withColumn(end.getColumn() - 9);
+            const newStart = end.withColumn(end.getColumn() - UrlAction.DEFAULT_LINK_PLACEHOLDER.length - 1);
             // Exclude trailing ")"
             const newEnd = end.withColumn(end.getColumn() - 1);
             editor.setSelection(new TextEditorRange(newStart, newEnd));
