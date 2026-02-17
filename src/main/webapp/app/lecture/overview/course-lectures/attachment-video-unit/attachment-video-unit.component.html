@@ -7,6 +7,7 @@
     [viewIsolatedButtonLabel]="'artemisApp.attachmentVideoUnit.download'"
     [viewIsolatedButtonIcon]="faDownload"
     [isPresentationMode]="isPresentationMode()"
+    [initiallyExpanded]="initiallyExpanded()"
     (onCompletion)="toggleCompletion($event)"
     (onCollapse)="toggleCollapse($event)"
     (onShowIsolated)="handleDownload()"
@@ -48,7 +49,12 @@
                 </div>
             </div>
         } @else if (pdfUrl()) {
-            <jhi-pdf-viewer [pdfUrl]="pdfUrl()!" [uploadDate]="lectureUnit().attachment?.uploadDate" [version]="lectureUnit().attachment?.version" />
+            <jhi-pdf-viewer
+                [pdfUrl]="pdfUrl()!"
+                [uploadDate]="lectureUnit().attachment?.uploadDate"
+                [version]="lectureUnit().attachment?.version"
+                [initialPage]="targetPdfPage()"
+            />
         }
     }
 </jhi-lecture-unit-card>

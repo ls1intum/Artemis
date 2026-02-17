@@ -20,6 +20,7 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     pdfUrl = input.required<string>();
     uploadDate = input<Dayjs | undefined>(undefined);
     version = input<number | undefined>(undefined);
+    initialPage = input<number | undefined>(undefined);
     pdfContainer = viewChild<ElementRef<HTMLDivElement>>('pdfContainer');
     pdfViewerBox = viewChild<ElementRef<HTMLDivElement>>('pdfViewerBox');
 
@@ -54,6 +55,18 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
 
             if (url && viewReady) {
                 this.loadPdf(url);
+            }
+        });
+
+        // Handle initial page navigation after PDF is loaded
+        effect(() => {
+            const targetPage = this.initialPage();
+            const loaded = !this.isLoading();
+            const hasPages = this.totalPages() > 0;
+
+            if (targetPage && loaded && hasPages) {
+                // Delay to ensure DOM is fully rendered
+                setTimeout(() => this.goToPage(targetPage), 300);
             }
         });
     }
@@ -194,6 +207,42 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     resetZoom(): void {
         this.zoomLevel.set(1.0);
         this.centerHorizontalScroll();
+    }
+
+    /**
+     * Navigate to a specific page in the PDF viewer.
+     * @param pageNumber The page number to navigate to (1-indexed)
+     */
+    goToPage(pageNumber: number): void {
+        if (!this.pdfDocument || pageNumber < 1 || pageNumber > this.totalPages()) {
+            return;
+        }
+
+        const container = this.pdfContainer()?.nativeElement;
+        if (!container) {
+            return;
+        }
+
+        // Find the page element
+        const pageElements = container.querySelectorAll('.pdf-page');
+        const targetPage = pageElements[pageNumber - 1];
+
+        if (targetPage) {
+            // Scroll to page with offset for better visibility
+            const viewerBox = this.pdfViewerBox()?.nativeElement;
+            if (viewerBox) {
+                const pageRect = (targetPage as HTMLElement).getBoundingClientRect();
+                const containerRect = viewerBox.getBoundingClientRect();
+                const offset = pageRect.top - containerRect.top + viewerBox.scrollTop;
+
+                viewerBox.scrollTo({
+                    top: offset - 20, // 20px offset from top
+                    behavior: 'smooth',
+                });
+            }
+        }
+
+        this.currentPage.set(pageNumber);
     }
 
     /**

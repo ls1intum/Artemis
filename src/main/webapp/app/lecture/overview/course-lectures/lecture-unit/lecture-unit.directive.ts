@@ -7,6 +7,7 @@ import { LectureUnitCompletionEvent } from 'app/lecture/overview/course-lectures
 export class LectureUnitDirective<T extends LectureUnit> {
     courseId = input.required<number>();
     lectureUnit = input.required<T>();
+    initiallyExpanded = input<boolean>(false);
 
     readonly onCompletion = output<LectureUnitCompletionEvent>();
     readonly onCollapse = output<boolean>();

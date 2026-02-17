@@ -71,13 +71,29 @@
                                         <jhi-exercise-unit [exerciseUnit]="lectureUnit" [course]="lecture!.course!" />
                                     }
                                     @case (LectureUnitType.ATTACHMENT_VIDEO) {
-                                        <jhi-attachment-video-unit [courseId]="courseId!" [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                        <jhi-attachment-video-unit
+                                            [courseId]="courseId!"
+                                            [lectureUnit]="lectureUnit"
+                                            [initiallyExpanded]="lectureUnit.id === targetUnitId()"
+                                            [targetPdfPage]="lectureUnit.id === targetUnitId() ? targetPdfPage() : undefined"
+                                            (onCompletion)="completeLectureUnit($event)"
+                                        />
                                     }
                                     @case (LectureUnitType.TEXT) {
-                                        <jhi-text-unit [courseId]="courseId!" [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                        <jhi-text-unit
+                                            [courseId]="courseId!"
+                                            [lectureUnit]="lectureUnit"
+                                            [initiallyExpanded]="lectureUnit.id === targetUnitId()"
+                                            (onCompletion)="completeLectureUnit($event)"
+                                        />
                                     }
                                     @case (LectureUnitType.ONLINE) {
-                                        <jhi-online-unit [courseId]="courseId!" [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                        <jhi-online-unit
+                                            [courseId]="courseId!"
+                                            [lectureUnit]="lectureUnit"
+                                            [initiallyExpanded]="lectureUnit.id === targetUnitId()"
+                                            (onCompletion)="completeLectureUnit($event)"
+                                        />
                                     }
                                 }
                             </div>

@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnDestroy, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, computed, inject, input, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpClient } from '@angular/common/http';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
@@ -49,6 +49,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     private readonly lectureTranscriptionService = inject(LectureTranscriptionService);
     private readonly httpClient = inject(HttpClient);
+
+    // Deep-linking: target PDF page to jump to
+    targetPdfPage = input<number | undefined>(undefined);
 
     readonly transcriptSegments = signal<TranscriptSegment[]>([]);
     readonly playlistUrl = signal<string | undefined>(undefined);

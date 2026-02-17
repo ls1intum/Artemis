@@ -1,4 +1,4 @@
-import { Component, ElementRef, Injector, afterNextRender, computed, inject, input, output, signal } from '@angular/core';
+import { Component, ElementRef, Injector, OnInit, afterNextRender, computed, inject, input, output, signal } from '@angular/core';
 import { IconDefinition, faCheckCircle, faCircle, faDownload, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
@@ -17,7 +17,7 @@ import { CompetencyContributionComponent } from 'app/atlas/shared/competency-con
     templateUrl: './lecture-unit.component.html',
     styleUrl: './lecture-unit.component.scss',
 })
-export class LectureUnitComponent {
+export class LectureUnitComponent implements OnInit {
     private router = inject(Router);
     private elementRef = inject(ElementRef);
     private injector = inject(Injector);
@@ -35,6 +35,7 @@ export class LectureUnitComponent {
     viewIsolatedButtonLabel = input<string>('artemisApp.textUnit.isolated');
     viewIsolatedButtonIcon = input<IconDefinition>(faExternalLinkAlt);
     isPresentationMode = input.required<boolean>();
+    initiallyExpanded = input<boolean>(false);
 
     readonly showOriginalVersionButton = input<boolean>(false);
     readonly onShowOriginalVersion = output<void>();
@@ -47,6 +48,29 @@ export class LectureUnitComponent {
 
     readonly isVisibleToStudents = computed(() => this.lectureUnit().visibleToStudents);
     readonly isStudentPath = computed(() => this.router.url.startsWith('/courses'));
+
+    ngOnInit(): void {
+        // If initially expanded, trigger the collapse toggle to load content and scroll into view
+        if (this.initiallyExpanded()) {
+            // Set collapsed state and emit event so parent components can load content
+            this.isCollapsed.set(false);
+            this.onCollapse.emit(false);
+
+            // Scroll into view after content is rendered and loaded
+            // Use a delay to ensure async content (PDF, video) has time to render
+            afterNextRender(
+                () => {
+                    setTimeout(() => {
+                        this.elementRef.nativeElement.scrollIntoView?.({
+                            behavior: 'smooth',
+                            block: 'start',
+                        });
+                    }, 500);
+                },
+                { injector: this.injector },
+            );
+        }
+    }
 
     toggleCompletion(event: Event) {
         event.stopPropagation();

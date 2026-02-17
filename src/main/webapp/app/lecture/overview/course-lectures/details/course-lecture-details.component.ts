@@ -1,4 +1,5 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MODULE_FEATURE_IRIS, addPublicFilePrefix } from 'app/app.constants';
@@ -72,6 +73,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     private readonly profileService = inject(ProfileService);
     private readonly irisSettingsService = inject(IrisSettingsService);
     private readonly scienceService = inject(ScienceService);
+    private readonly destroyRef = inject(DestroyRef);
 
     protected readonly LectureUnitType = LectureUnitType;
     protected readonly isCommunicationEnabled = isCommunicationEnabled;
@@ -94,6 +96,10 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     irisEnabled = false;
     informationBoxData: InformationBox[] = [];
 
+    // Deep-linking state for targeting specific units and PDF pages
+    readonly targetUnitId = signal<number | undefined>(undefined);
+    readonly targetPdfPage = signal<number | undefined>(undefined);
+
     ngOnInit(): void {
         this.irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
 
@@ -111,6 +117,22 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
             if (this.lectureId) {
                 this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN, this.lectureId);
                 this.loadData();
+            }
+        });
+
+        // Handle query parameters for deep-linking to specific units and pages
+        this.activatedRoute.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+            if (params['unit']) {
+                const unitId = Number(params['unit']);
+                if (!isNaN(unitId)) {
+                    this.targetUnitId.set(unitId);
+                }
+            }
+            if (params['page']) {
+                const pageNum = Number(params['page']);
+                if (!isNaN(pageNum) && pageNum > 0) {
+                    this.targetPdfPage.set(pageNum);
+                }
             }
         });
     }
