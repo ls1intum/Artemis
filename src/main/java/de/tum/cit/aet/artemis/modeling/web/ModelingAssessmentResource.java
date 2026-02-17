@@ -100,7 +100,9 @@ public class ModelingAssessmentResource extends AssessmentResource {
         ModelingSubmission submission = modelingSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(submissionId);
         Result result = submission.getResults().stream().filter(r -> r.getId().equals(resultId)).findFirst().orElseThrow(() -> new EntityNotFoundException("Result", resultId));
 
-        StudentParticipation participation = (StudentParticipation) submission.getParticipation();
+        if (!(submission.getParticipation() instanceof StudentParticipation participation)) {
+            throw new AccessForbiddenException();
+        }
         ModelingExercise exercise = modelingExerciseRepository.findByIdElseThrow(participation.getExercise().getId());
 
         if (!authCheckService.isUserAllowedToGetResult(exercise, participation, result)) {

@@ -27,7 +27,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { vi } from 'vitest';
 
 const mockExercise: Exercise = {
     id: 1,
@@ -208,7 +207,7 @@ describe('ResultComponent', () => {
     it('should navigate to text exercise details when exercise type is TEXT', () => {
         comp.exercise = { ...mockExercise, type: ExerciseType.TEXT };
         comp.participation = mockParticipation;
-        const navigateSpy = vi.spyOn(router, 'navigate');
+        const navigateSpy = jest.spyOn(router, 'navigate');
         const courseId = 42;
         comp.showDetails(mockResult);
 
@@ -230,7 +229,7 @@ describe('ResultComponent', () => {
     it('should navigate to modeling exercise details when exercise type is MODELING', () => {
         comp.exercise = { ...mockExercise, type: ExerciseType.MODELING };
         comp.participation = mockParticipation;
-        const navigateSpy = vi.spyOn(router, 'navigate');
+        const navigateSpy = jest.spyOn(router, 'navigate');
         const courseId = 42;
         comp.showDetails(mockResult);
 
