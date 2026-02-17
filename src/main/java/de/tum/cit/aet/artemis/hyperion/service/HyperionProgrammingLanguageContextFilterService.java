@@ -44,18 +44,23 @@ public class HyperionProgrammingLanguageContextFilterService {
 
     private final Map<ProgrammingLanguage, Strategy> strategies = new EnumMap<>(ProgrammingLanguage.class);
 
-    private static final Strategy DEFAULT_STRATEGY = new ExclusionStrategy(null, List.of());
-
-    private static final long maxFileSizeKb = 100;
+    private static final long MAX_FILE_SIZE = 100;
 
     /**
      * Default exclusions common to all languages (VCS, git, IDE configs, build outputs etc).
      */
-    private static final List<String> GLOBAL_EXCLUSIONS = List.of("glob:**/.git/**", "glob:**/.idea/**", "glob:**/.vscode/**", "glob:**/.DS_Store", "glob:**/bin/**",
-            "glob:**/obj/**", "glob:**/out/**", "glob:**/target/**", "glob:**/build/**", "glob:**/node_modules/**", "glob:**/__pycache__/**", "glob:**/*.class", "glob:**/*.jar",
-            "glob:**/*.war", "glob:**/*.o", "glob:**/*.obj", "glob:**/*.dll", "glob:**/*.exe", "glob:**/*.so", "glob:**/*.dylib", "glob:**/*.db", "glob:**/*.sqlite",
-            "glob:**/*.png", "glob:**/*.jpg", "glob:**/*.jpeg", "glob:**/*.svg", "glob:**/*.zip", "glob:**/*.tar.gz", "glob:**/exercise-details.json",
-            "glob:**/Exercise-Details-*.json", "glob:**/problem-statement.md", "glob:**/Problem-Statement-*.md");
+    private static final List<String> GLOBAL_EXCLUSIONS = List.of(
+            // Version Control & IDEs
+            "glob:{**/,}.git/**", "glob:{**/,}.idea/**", "glob:{**/,}.vscode/**", "glob:{**/,}.DS_Store",
+            // Build Artifacts & Dependencies
+            "glob:{**/,}bin/**", "glob:{**/,}obj/**", "glob:{**/,}out/**", "glob:{**/,}target/**", "glob:{**/,}build/**", "glob:{**/,}node_modules/**", "glob:{**/,}__pycache__/**",
+            "glob:{**/,}dist/**", "glob:{**/,}coverage/**",
+            // Binary Extensions (Simple suffix match works everywhere)
+            "glob:**/*.class", "glob:**/*.jar", "glob:**/*.war", "glob:**/*.o", "glob:**/*.obj", "glob:**/*.dll", "glob:**/*.exe", "glob:**/*.so", "glob:**/*.dylib",
+            "glob:**/*.db", "glob:**/*.sqlite", "glob:**/*.png", "glob:**/*.jpg", "glob:**/*.jpeg", "glob:**/*.svg", "glob:**/*.zip", "glob:**/*.tar.gz",
+            // Metadata Files (Split for safety)
+            "glob:exercise-details.json", "glob:**/exercise-details.json", "glob:problem-statement.md", "glob:**/problem-statement.md", "glob:Exercise-Details-*.json",
+            "glob:**/Exercise-Details-*.json", "glob:Problem-Statement-*.md", "glob:**/Problem-Statement-*.md");
 
     /**
      * Safety net of text-based extensions that are allowed to pass.
@@ -72,13 +77,17 @@ public class HyperionProgrammingLanguageContextFilterService {
     /**
      * Safety net of exact filenames that are allowed to pass.
      */
-    private static final Set<String> SAFE_FILENAMES = Set.of("Dockerfile", "Makefile", "Jenkinsfile");
+    private static final Set<String> SAFE_FILENAMES = Set.of("Dockerfile", "Makefile", "Jenkinsfile", "LICENSE", "LICENSE.md", "LICENSE.txt", "NOTICE", "CONTRIBUTING.md",
+            "README.md");
+
+    private static final Strategy DEFAULT_STRATEGY = new ExclusionStrategy(null, List.of());
 
     public HyperionProgrammingLanguageContextFilterService() {
-        register(new ExclusionStrategy(ProgrammingLanguage.JAVA, List.of("glob:**/gradlew*", "glob:**/mvnw*", "glob:**/.settings/**", "glob:**/.classpath", "glob:**/.project")));
+        register(new ExclusionStrategy(ProgrammingLanguage.JAVA,
+                List.of("glob:gradlew*", "glob:**/gradlew*", "glob:mvnw*", "glob:**/mvnw*", "glob:{**/,}.settings/**", "glob:{**/,}.classpath", "glob:{**/,}.project")));
 
         register(new ExclusionStrategy(ProgrammingLanguage.PYTHON,
-                List.of("glob:**/venv/**", "glob:**/.venv/**", "glob:**/env/**", "glob:**/.env/**", "glob:**/*.pyc", "glob:**/*.egg-info/**")));
+                List.of("glob:{**/,}venv/**", "glob:{**/,}.venv/**", "glob:{**/,}env/**", "glob:{**/,}.env/**", "glob:**/*.pyc", "glob:**/*.egg-info/**")));
 
         register(new ExclusionStrategy(ProgrammingLanguage.C, List.of("glob:**/cmake-build-*/**", "glob:**/CMakeCache.txt")));
 
@@ -177,13 +186,13 @@ public class HyperionProgrammingLanguageContextFilterService {
                 }
                 boolean isSafeText = SAFE_EXTENSIONS.contains(extension) || SAFE_FILENAMES.contains(fileName);
 
-                // 3. If not in the safety net, do a quick content check for non-text characters
+                // 3. If not in the safety net, skip the file (likely binary or unsupported)
                 if (!isSafeText) {
                     log.debug("Skipping potentially binary or unknown file: {}", filePath);
                     continue;
                 }
                 // 4. File Size check
-                if (content != null && content.length() > maxFileSizeKb * 1024) {
+                if (content != null && content.length() > MAX_FILE_SIZE * 1024) {
                     continue;
                 }
 
