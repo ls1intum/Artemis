@@ -173,7 +173,7 @@ public class MailSendingService {
             content = templateEngine.process(contentTemplate, context);
         }
         catch (NoSuchMessageException | TemplateProcessingException ex) {
-            log.error("Failed to build email with subject key '{}' and template '{}': {}", subjectKey, contentTemplate, ex.getMessage());
+            log.error("Failed to build email with subject key '{}' and template '{}': {}", subjectKey, contentTemplate, ex.getMessage(), ex);
             return;
         }
 

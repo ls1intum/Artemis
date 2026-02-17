@@ -378,26 +378,40 @@ public class CourseRequestService {
             String requesterName, String requesterEmail) {
     }
 
+    /**
+     * DTO for course request email templates to avoid lazy loading issues in async context.
+     * The post-save entity returned by merge() may contain uninitialized lazy proxies, so we
+     * extract all scalar values needed by the templates before passing to the async email method.
+     */
+    private record CourseRequestEmailData(String title, String shortName, String semester, ZonedDateTime startDate, ZonedDateTime endDate, boolean testCourse, String reason,
+            String decisionReason) {
+    }
+
+    private static CourseRequestEmailData toEmailData(CourseRequest request) {
+        return new CourseRequestEmailData(request.getTitle(), request.getShortName(), request.getSemester(), request.getStartDate(), request.getEndDate(), request.isTestCourse(),
+                request.getReason(), request.getDecisionReason());
+    }
+
     private void sendAcceptedEmail(User requester, CourseRequest request, Course course) {
         if (requester == null) {
             return;
         }
         mailSendingService.buildAndSendAsync(requester, "email.courseRequest.accepted.title", "mail/courseRequestAcceptedEmail",
-                Map.of("course", course, "courseRequest", request));
+                Map.of("course", course, "courseRequest", toEmailData(request)));
     }
 
     private void sendRejectedEmail(User requester, CourseRequest request) {
         if (requester == null) {
             return;
         }
-        mailSendingService.buildAndSendAsync(requester, "email.courseRequest.rejected.title", "mail/courseRequestRejectedEmail", Map.of("courseRequest", request));
+        mailSendingService.buildAndSendAsync(requester, "email.courseRequest.rejected.title", "mail/courseRequestRejectedEmail", Map.of("courseRequest", toEmailData(request)));
     }
 
     private void sendReceivedEmail(User requester, CourseRequest request) {
         if (requester == null) {
             return;
         }
-        mailSendingService.buildAndSendAsync(requester, "email.courseRequest.received.title", "mail/courseRequestReceivedEmail", Map.of("courseRequest", request));
+        mailSendingService.buildAndSendAsync(requester, "email.courseRequest.received.title", "mail/courseRequestReceivedEmail", Map.of("courseRequest", toEmailData(request)));
     }
 
     private CourseRequestDTO toDto(CourseRequest courseRequest) {
