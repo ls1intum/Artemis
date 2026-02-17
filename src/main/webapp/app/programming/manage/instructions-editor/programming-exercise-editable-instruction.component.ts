@@ -133,7 +133,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     set unsavedChanges(hasChanges: boolean) {
         this.unsavedChangesValue = hasChanges;
-        // Why emit only `true` transitions? Once an exercise is saved, the page would automatically re-nagivate to the exercise page.
+        // Why emit only `true` transitions? Once an exercise is saved, the page would automatically re-navigate to the exercise page.
         // This would unmount this component and clear the unsaved changes indicator.
         if (hasChanges) {
             this.hasUnsavedChanges.emit(hasChanges);
