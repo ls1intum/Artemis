@@ -89,11 +89,15 @@ describe('CourseChatbotComponent', () => {
         fixture.componentRef.setInput('courseId', 1);
         await fixture.whenStable();
 
+        expect(chatService.setCourseId).toHaveBeenCalledWith(1);
+        expect(chatService.switchTo).toHaveBeenCalledWith(ChatServiceMode.COURSE, 1);
+
         fixture.componentRef.setInput('courseId', 2);
         await fixture.whenStable();
 
-        expect(chatService.switchTo).toHaveBeenCalledWith(ChatServiceMode.COURSE, 1);
+        expect(chatService.setCourseId).toHaveBeenCalledWith(2);
         expect(chatService.switchTo).toHaveBeenCalledWith(ChatServiceMode.COURSE, 2);
+        expect(chatService.setCourseId).toHaveBeenCalledTimes(2);
         expect(chatService.switchTo).toHaveBeenCalledTimes(2);
     });
 
