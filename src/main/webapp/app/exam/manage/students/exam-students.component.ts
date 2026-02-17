@@ -167,8 +167,6 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
                     if (actualRoom && actualRoom in aliases) {
                         examUser.actualRoom = aliases[actualRoom];
                     }
-
-                    return examUser;
                 });
             },
             error: () => {
