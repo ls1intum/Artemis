@@ -38,11 +38,8 @@ If structure is missing or inconsistent, reorganize while preserving all content
 - Do NOT remove tasks or their test mappings unless explicitly requested
 
 ### Code & Formatting Rules:
-- Use backticks for:
-- Class names
-- Method names
-- Interfaces
-- Code snippets
+- In normal Markdown text, use backticks for class names, method names, interfaces, and code snippets
+- NEVER use backticks inside @startuml/@enduml blocks — PlantUML has its own syntax and backticks break it
 - Fix broken Markdown (lists, headings, code blocks)
 - Use **bold** for important requirements and constraints
 - Maintain consistent numbering and indentation

@@ -106,7 +106,7 @@ const SEVERITY_ORDER = {
 export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent implements OnDestroy {
     @ViewChild('codeGenerationRunningModal', { static: true }) codeGenerationRunningModal: TemplateRef<unknown>;
     @ViewChild(UpdatingResultComponent, { static: false }) resultComp: UpdatingResultComponent;
-    @ViewChild(ProgrammingExerciseEditableInstructionComponent, { static: false }) editableInstructions: ProgrammingExerciseEditableInstructionComponent;
+    readonly editableInstructions = viewChild(ProgrammingExerciseEditableInstructionComponent);
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly MAX_USER_PROMPT_LENGTH = MAX_USER_PROMPT_LENGTH;
@@ -454,7 +454,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     },
                 });
             },
-            error: (err) => {
+            error: () => {
                 this.alertService.error(this.translateService.instant('artemisApp.hyperion.consistencyCheck.checkFailedAlert'));
             },
         });
@@ -487,7 +487,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * Syncs the reverted content back to the model.
      */
     revertAllRefinement(): void {
-        this.editableInstructions?.revertAll();
+        this.editableInstructions()?.revertAll();
         this.closeDiff();
     }
 
@@ -495,7 +495,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * Closes the diff view after syncing the current editor content to the model.
      */
     closeDiff(): void {
-        const currentContent = this.editableInstructions?.getCurrentContent();
+        const currentContent = this.editableInstructions()?.getCurrentContent();
         if (this.exercise && currentContent != null) {
             this.exercise.problemStatement = currentContent;
             this.onInstructionChanged(currentContent);
@@ -528,15 +528,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     /**
-     * Called when the popover is hidden (dismiss, escape, or programmatic hide).
-     * Intentionally does NOT clear the prompt so users don't lose typed text on accidental dismiss.
-     * The prompt is cleared on successful submission instead.
-     */
-    onRefinementPopoverHide(): void {
-        // No-op: prompt is preserved so the user can reopen and retry.
-    }
-
-    /**
      * Submits the full problem statement refinement.
      * Uses the user prompt to refine the entire problem statement.
      */
@@ -560,8 +551,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 if (result.success && result.content) {
                     const draftContent = result.content;
 
-                    // Update the editor directly
-                    this.editableInstructions?.setText(draftContent);
+                    // Update the editor with retry logic
+                    this.updateEditorWhenReady(draftContent, 'generate');
 
                     // Update model and trigger change
                     if (this.exercise) {
@@ -581,7 +572,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     private refineProblemStatement(prompt: string): void {
-        const currentContent = this.editableInstructions?.getCurrentContent() ?? this.exercise?.problemStatement;
+        const currentContent = this.editableInstructions()?.getCurrentContent() ?? this.exercise?.problemStatement;
         if (!currentContent?.trim()) {
             this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
             return;
@@ -595,7 +586,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 if (result.success && result.content) {
                     this.showDiff.set(true);
                     const refinedContent = result.content;
-                    afterNextRender(() => this.editableInstructions?.applyRefinedContent(refinedContent), { injector: this.injector });
+                    this.updateEditorWhenReady(refinedContent, 'refine');
                     this.refinementPrompt.set('');
                 } else if (!result.errorHandled) {
                     this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
@@ -605,6 +596,52 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
             },
         });
+    }
+
+    /**
+     * Updates the editor content once it's available.
+     * Uses afterNextRender with a retry loop to handle cases where the
+     * viewChild isn't ready immediately (e.g., when showDiff triggers a re-render).
+     *
+     * @param content The content to apply
+     * @param type 'refine' to use applyRefinedContent (diff mode), 'generate' to use setText (replace all)
+     */
+    private updateEditorWhenReady(content: string, type: 'refine' | 'generate'): void {
+        afterNextRender(
+            () => {
+                const editor = this.editableInstructions();
+
+                const apply = (comp: ProgrammingExerciseEditableInstructionComponent) => {
+                    if (type === 'refine') {
+                        comp.applyRefinedContent(content);
+                    } else {
+                        comp.setText(content);
+                    }
+                };
+
+                if (editor) {
+                    apply(editor);
+                    return;
+                }
+
+                // Editor not ready yet — retry with a bounded loop
+                let retries = 0;
+                const maxRetries = 10;
+                const intervalId = setInterval(() => {
+                    retries++;
+                    const editorRetry = this.editableInstructions();
+                    if (editorRetry) {
+                        clearInterval(intervalId);
+                        apply(editorRetry);
+                    } else if (retries >= maxRetries) {
+                        clearInterval(intervalId);
+                        // eslint-disable-next-line no-undef
+                        console.warn('updateEditorWhenReady: editor not available after max retries');
+                    }
+                }, 50);
+            },
+            { injector: this.injector },
+        );
     }
 
     /**
@@ -715,7 +752,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         // We can always jump to the problem statement
         if (location.type === 'PROBLEM_STATEMENT') {
             this.codeEditorContainer.selectedFile = this.codeEditorContainer.problemStatementIdentifier;
-            this.editableInstructions.jumpToLine(location.endLine);
+            this.editableInstructions()?.jumpToLine(location.endLine);
             return;
         }
 

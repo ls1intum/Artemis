@@ -61,7 +61,7 @@ public class HyperionProblemStatementGenerationService {
             throw new InternalServerErrorAlertException("AI chat client is not configured", "Hyperion", "ProblemStatementGeneration.generationFailed");
         }
 
-        String sanitizedPrompt = sanitizeInput(userPrompt != null ? userPrompt : "Generate a programming exercise problem statement");
+        String sanitizedPrompt = sanitizeInput(userPrompt);
         HyperionPromptSanitizer.validateUserPrompt(sanitizedPrompt, "ProblemStatementGeneration");
 
         String systemPrompt = templateService.render("/prompts/hyperion/generate_draft_problem_statement_system.st", Map.of());

@@ -572,8 +572,7 @@ describe('MonacoEditorComponent', () => {
 
         expect(comp['_diffEditor']).toBeDefined();
 
-        // (Accessing private property)
-        (comp as any).useLiveSyncedDiff = false;
+        expect(comp['_diffEditor']).toBeDefined();
 
         // Switch back to normal
         fixture.componentRef.setInput('mode', 'normal');
@@ -581,7 +580,8 @@ describe('MonacoEditorComponent', () => {
         tick();
 
         expect(mockDiffEditor.dispose).toHaveBeenCalled();
-        expect(editorSetValueSpy).toHaveBeenCalledWith('modified content');
+        // Since we share the model, valid code implies we don't manually set value back
+        expect(editorSetValueSpy).not.toHaveBeenCalled();
     }));
 
     it('should apply diff content in diff mode', fakeAsync(() => {

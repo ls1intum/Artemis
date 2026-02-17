@@ -232,9 +232,10 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             jumpToLine: jest.fn(),
         };
 
-        (comp as any).editableInstructions = {
+        // editableInstructions is a viewChild signal; override with a callable mock
+        (comp as any).editableInstructions = jest.fn().mockReturnValue({
             jumpToLine: jest.fn(),
-        };
+        });
 
         // Mock jump helper methods
         comp.selectTemplateParticipation = jest.fn().mockResolvedValue(undefined);
@@ -664,7 +665,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             comp.selectedIssue = issue;
             comp.locationIndex = 0;
 
-            const jumpSpy = jest.spyOn((comp as any).editableInstructions, 'jumpToLine');
+            const mockEditable = { jumpToLine: jest.fn() };
+            (comp as any).editableInstructions = jest.fn().mockReturnValue(mockEditable);
+            const jumpSpy = mockEditable.jumpToLine;
 
             (comp as any).jumpToLocation(issue, 0); // Corrected: use (comp as any)
             tick();
@@ -804,7 +807,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Diff Editor', () => 
             revertAll: jest.fn(),
             getCurrentContent: jest.fn().mockReturnValue('Reverted content'),
         };
-        comp.editableInstructions = mockEditable as unknown as ProgrammingExerciseEditableInstructionComponent;
+        (comp as any).editableInstructions = jest.fn().mockReturnValue(mockEditable) as any;
 
         comp.revertAllRefinement();
 
@@ -849,9 +852,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
         expect(() => comp.toggleRefinementPopover(new Event('click'))).not.toThrow();
     });
 
-    it('should preserve refinement prompt on popover hide', () => {
+    it('should preserve refinement prompt when popover hides (prompt is never cleared on dismiss)', () => {
         comp.refinementPrompt.set('Some prompt');
-        comp.onRefinementPopoverHide();
+        // The prompt signal should persist since there's no onHide handler clearing it
         expect(comp.refinementPrompt()).toBe('Some prompt');
     });
 

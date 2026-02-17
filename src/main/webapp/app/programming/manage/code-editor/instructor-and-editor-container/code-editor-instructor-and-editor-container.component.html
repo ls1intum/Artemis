@@ -250,12 +250,8 @@
                         }
 
                         <!-- Refinement Prompt Popover -->
-                        <p-popover
-                            #refinementPopover
-                            [dismissable]="true"
-                            (onHide)="onRefinementPopoverHide()"
-                            [style]="{ width: 'min(32rem, 90vw)', border: '1px solid var(--p-primary-color)' }"
-                        >
+                        <!-- Prompt is intentionally preserved on dismiss so users don't lose typed text -->
+                        <p-popover #refinementPopover [dismissable]="true" [style]="{ width: 'min(32rem, 90vw)', border: '1px solid var(--p-primary-color)' }">
                             <div class="d-flex justify-content-between align-items-center p-3 refinement-popup-header fw-medium">
                                 <span
                                     [jhiTranslate]="
@@ -410,29 +406,21 @@
                         <span jhiTranslate="artemisApp.programmingExercise.problemStatement.aiRefining"></span>
                     </p-message>
                 }
-                @if (exercise.templateParticipation && selectedParticipation) {
-                    <jhi-programming-exercise-editable-instructions
-                        [exercise]="exercise"
-                        [participation]="selectedParticipation!"
-                        [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
-                        [externalHeight]="true"
-                        [enableResize]="false"
-                        [showPreview]="false"
-                        [consistencyIssues]="consistencyIssues()"
-                        [isGeneratingOrRefining]="isGeneratingOrRefining()"
-                        [mode]="showDiff() ? 'diff' : 'normal'"
-                        [renderSideBySide]="allowSplitView()"
-                        (diffLineChange)="onDiffLineChange($event)"
-                        class="flex-grow-1 overflow-auto"
-                        (instructionChange)="onInstructionChanged($event)"
-                    />
-                } @else {
-                    <!-- Loading state while waiting for templateParticipation -->
-                    <div class="d-flex justify-content-center align-items-center h-100">
-                        <fa-icon [icon]="faCircleNotch" animation="spin" class="me-2" />
-                        <span jhiTranslate="artemisApp.editor.fetchingParticipation"></span>
-                    </div>
-                }
+                <jhi-programming-exercise-editable-instructions
+                    [exercise]="exercise"
+                    [participation]="selectedParticipation!"
+                    [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
+                    [externalHeight]="true"
+                    [enableResize]="false"
+                    [showPreview]="false"
+                    [consistencyIssues]="consistencyIssues()"
+                    [isGeneratingOrRefining]="isGeneratingOrRefining()"
+                    [mode]="showDiff() ? 'diff' : 'normal'"
+                    [renderSideBySide]="allowSplitView()"
+                    (diffLineChange)="onDiffLineChange($event)"
+                    class="flex-grow-1 overflow-auto"
+                    (instructionChange)="onInstructionChanged($event)"
+                />
             </div>
             <!-- Preview-only component for right sidebar -->
             <jhi-programming-exercise-instructions

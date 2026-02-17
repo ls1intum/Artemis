@@ -189,4 +189,29 @@ class HyperionProblemStatementRefinementServiceTest {
         assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatement(course, originalStatement, "Refine this"))
                 .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("same after refinement");
     }
+
+    @Test
+    void refineProblemStatement_throwsExceptionWhenUserPromptTooLong() {
+        String originalStatement = "Original problem statement";
+        // 1001 characters exceeds MAX_USER_PROMPT_LENGTH (1000)
+        String tooLongPrompt = "a".repeat(1001);
+        var course = new Course();
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatement(course, originalStatement, tooLongPrompt))
+                .isInstanceOf(BadRequestAlertException.class).hasMessageContaining("exceeds maximum length");
+    }
+
+    @Test
+    void refineProblemStatement_throwsExceptionWhenProblemStatementTooLong() {
+        // 50001 characters exceeds MAX_PROBLEM_STATEMENT_LENGTH (50000)
+        String tooLongProblemStatement = "a".repeat(50_001);
+        var course = new Course();
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatement(course, tooLongProblemStatement, "Refine this"))
+                .isInstanceOf(BadRequestAlertException.class).hasMessageContaining("exceeds maximum length");
+    }
 }

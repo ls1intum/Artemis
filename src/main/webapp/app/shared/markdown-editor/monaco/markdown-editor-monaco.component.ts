@@ -5,17 +5,20 @@ import {
     Component,
     ElementRef,
     EventEmitter,
+    Injector,
     Input,
     OnDestroy,
     Output,
     Signal,
     ViewChild,
+    afterNextRender,
     computed,
     effect,
     inject,
     input,
     output,
     signal,
+    untracked,
 } from '@angular/core';
 import { MonacoEditorComponent, MonacoEditorMode } from 'app/shared/monaco-editor/monaco-editor.component';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
@@ -367,9 +370,24 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     constructor() {
         this.uniqueMarkdownEditorId = 'markdown-editor-' + window.crypto.randomUUID().toString();
+        const injector = inject(Injector);
 
         effect(() => {
             this.renderConsistencyIssues();
+        });
+
+        effect(() => {
+            this.mode();
+            untracked(() => {
+                afterNextRender(
+                    () => {
+                        if (this.monacoEditor) {
+                            this.adjustEditorDimensions();
+                        }
+                    },
+                    { injector },
+                );
+            });
         });
     }
 

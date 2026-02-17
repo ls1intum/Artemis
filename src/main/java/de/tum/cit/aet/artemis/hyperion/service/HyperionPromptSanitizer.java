@@ -35,6 +35,12 @@ final class HyperionPromptSanitizer {
     /** Pattern matching control characters except newline (\n), carriage return (\r), and tab (\t). */
     private static final Pattern CONTROL_CHAR_PATTERN = Pattern.compile("[\\p{Cc}&&[^\\n\\r\\t]]");
 
+    /**
+     * Pattern matching prompt template delimiter lines (e.g. "--- BEGIN USER REQUIREMENTS ---").
+     * Stripping these prevents users from injecting fake section boundaries that could break out of their designated prompt section.
+     */
+    private static final Pattern DELIMITER_PATTERN = Pattern.compile("^-{3,}\\s*(BEGIN|END)\\s+.*-{3,}$", Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
+
     private HyperionPromptSanitizer() {
         // utility class
     }
@@ -43,8 +49,7 @@ final class HyperionPromptSanitizer {
      * Validates that the user prompt is not empty and does not exceed the maximum allowed length.
      *
      * @param userPrompt     the sanitized user prompt to validate
-     * @param errorKeyPrefix prefix for error keys (e.g. "ProblemStatementRefinement" or
-     *                           "ProblemStatementGeneration")
+     * @param errorKeyPrefix prefix for error keys (e.g. "ProblemStatementRefinement" or "ProblemStatementGeneration")
      * @throws BadRequestAlertException if the prompt is blank or exceeds the maximum length
      */
     static void validateUserPrompt(String userPrompt, String errorKeyPrefix) {
@@ -58,7 +63,8 @@ final class HyperionPromptSanitizer {
     }
 
     /**
-     * Sanitizes user input by stripping control characters (except newlines, carriage returns, and tabs).
+     * Sanitizes user input by stripping control characters (except newlines, carriage returns, and tabs)
+     * and removing prompt template delimiter lines to prevent prompt injection.
      *
      * @param input the raw input string, may be null
      * @return the sanitized and trimmed string, never null
@@ -68,6 +74,7 @@ final class HyperionPromptSanitizer {
             return "";
         }
         String sanitized = CONTROL_CHAR_PATTERN.matcher(input).replaceAll("");
+        sanitized = DELIMITER_PATTERN.matcher(sanitized).replaceAll("");
         return sanitized.trim();
     }
 

@@ -66,8 +66,8 @@ export function isValidGenerationResponse(response: ProblemStatementGenerationRe
  */
 export function buildGlobalRefinementRequest(problemStatementText: string, userPrompt: string): ProblemStatementGlobalRefinementRequest {
     return {
-        problemStatementText: problemStatementText ?? '',
-        userPrompt: (userPrompt ?? '').trim(),
+        problemStatementText: problemStatementText,
+        userPrompt: userPrompt.trim(),
     };
 }
 
@@ -76,6 +76,6 @@ export function buildGlobalRefinementRequest(problemStatementText: string, userP
  */
 export function buildGenerationRequest(userPrompt: string): ProblemStatementGenerationRequest {
     return {
-        userPrompt: (userPrompt ?? '').trim(),
+        userPrompt: userPrompt.trim(),
     };
 }

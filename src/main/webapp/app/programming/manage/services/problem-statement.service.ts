@@ -95,7 +95,6 @@ export class ProblemStatementService {
     ): OperatorFunction<T, OperationResult> {
         return (source) =>
             source.pipe(
-                finalize(() => loadingSignal.set(false)),
                 map((response) => {
                     const success = isValid(response);
                     if (success) {
@@ -109,6 +108,7 @@ export class ProblemStatementService {
                     const handledByInterceptor = error instanceof HttpErrorResponse && !!error.error?.errorKey;
                     return of({ success: false, errorHandled: handledByInterceptor });
                 }),
+                finalize(() => loadingSignal.set(false)),
             );
     }
 }

@@ -19,6 +19,7 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementGenerationResponseDTO;
 
@@ -80,19 +81,14 @@ class HyperionProblemStatementGenerationServiceTest {
     }
 
     @Test
-    void generateProblemStatement_handlesNullUserPrompt() {
-        String generatedDraft = "Generated draft with default prompt";
-        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(generatedDraft)))));
-
+    void generateProblemStatement_throwsExceptionWhenUserPromptIsNull() {
         var course = new Course();
         course.setTitle("Test Course");
         course.setDescription("Test Description");
 
-        // Should use default prompt when userPrompt is null
-        ProblemStatementGenerationResponseDTO resp = hyperionProblemStatementGenerationService.generateProblemStatement(course, null);
-        assertThat(resp).isNotNull();
-        assertThat(resp.draftProblemStatement()).isEqualTo(generatedDraft);
-        assertThat(resp.error()).isNull();
+        // Should throw exception when userPrompt is null (sanitized to empty string)
+        assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, null)).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("User prompt cannot be empty");
     }
 
     @Test

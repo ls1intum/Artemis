@@ -40,7 +40,6 @@ import { LineChange } from 'app/programming/shared/utils/diff.utils';
         NgbAlert,
         TooltipModule,
         TextareaModule,
-
         ProgrammingExerciseInstructionComponent,
         ProgrammingExerciseEditableInstructionComponent,
         CompetencySelectionComponent,
@@ -163,7 +162,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
         this.currentGenerationSubscription?.unsubscribe();
         this.currentGenerationSubscription = this.problemStatementService.generateProblemStatement(exercise, prompt, this.isGeneratingOrRefining).subscribe({
             next: (result) => {
-                if (result.success && result.content && exercise) {
+                if (result.success && result.content) {
                     const draftContent = result.content;
                     const editorComponent = this.editableInstructions();
 
@@ -178,15 +177,11 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                     this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
                     this.problemStatementChange.emit(draftContent);
                     this.programmingExerciseChange.emit(exercise);
+                    this.userPrompt.set('');
 
                     // If editor was unavailable, schedule a retry when ready
                     if (!editorComponent) {
-                        afterNextRender(
-                            () => {
-                                this.editableInstructions()?.setText(draftContent);
-                            },
-                            { injector: this.injector },
-                        );
+                        this.updateEditorWhenReady(draftContent, 'generate');
                     }
                 } else if (!result.errorHandled) {
                     this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
@@ -208,7 +203,12 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
         const currentContent = this.editableInstructions()?.getCurrentContent() ?? exercise?.problemStatement;
         const prompt = this.userPrompt();
 
-        if (!exercise || !prompt?.trim() || !currentContent?.trim()) {
+        if (!exercise || !prompt?.trim()) {
+            return;
+        }
+
+        if (!currentContent?.trim()) {
+            this.alertService.warning('artemisApp.programmingExercise.problemStatement.refinementError');
             return;
         }
 
@@ -217,23 +217,16 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
             next: (result) => {
                 if (result.success && result.content) {
                     this.showDiff.set(true);
+                    this.userPrompt.set('');
                     const refinedContent = result.content;
-                    afterNextRender(
-                        () => {
-                            const editor = this.editableInstructions();
-                            if (editor) {
-                                editor.applyRefinedContent(refinedContent);
-                            } else {
-                                afterNextRender(() => this.editableInstructions()?.applyRefinedContent(refinedContent), { injector: this.injector });
-                            }
-                        },
-                        { injector: this.injector },
-                    );
+                    this.updateEditorWhenReady(refinedContent, 'refine');
                 } else if (!result.errorHandled) {
                     this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
                 }
             },
-            error: () => {
+            // Safety net: catchError in handleApiResponse converts errors to next values,
+            // so this callback is unreachable in practice but retained defensively.
+            error: /* istanbul ignore next */ () => {
                 this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
             },
         });
@@ -255,6 +248,51 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
             this.currentProblemStatement.set(currentContent);
         }
         this.showDiff.set(false);
+    }
+
+    /**
+     * Updates the editor content once it's available.
+     * Uses afterNextRender with a retry loop to handle cases where the
+     * viewChild isn't ready immediately (e.g., when showDiff triggers a re-render).
+     *
+     * @param content The content to apply
+     * @param type 'refine' to use applyRefinedContent (diff mode), 'generate' to use setText (replace all)
+     */
+    private updateEditorWhenReady(content: string, type: 'refine' | 'generate'): void {
+        afterNextRender(
+            () => {
+                const editor = this.editableInstructions();
+                const apply = (comp: ProgrammingExerciseEditableInstructionComponent) => {
+                    if (type === 'refine') {
+                        comp.applyRefinedContent(content);
+                    } else {
+                        comp.setText(content);
+                    }
+                };
+
+                if (editor) {
+                    apply(editor);
+                    return;
+                }
+
+                // Editor not ready yet — retry with a bounded loop
+                let retries = 0;
+                const maxRetries = 10;
+                const intervalId = setInterval(() => {
+                    retries++;
+                    const editorRetry = this.editableInstructions();
+                    if (editorRetry) {
+                        clearInterval(intervalId);
+                        apply(editorRetry);
+                    } else if (retries >= maxRetries) {
+                        clearInterval(intervalId);
+                        // eslint-disable-next-line no-undef
+                        console.warn('updateEditorWhenReady: editor not available after max retries');
+                    }
+                }, 50);
+            },
+            { injector: this.injector },
+        );
     }
 
     /**

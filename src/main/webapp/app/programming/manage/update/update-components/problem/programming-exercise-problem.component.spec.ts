@@ -47,7 +47,6 @@ describe('ProgrammingExerciseProblemComponent', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: HyperionProblemStatementApiService, useValue: mockHyperionApiService },
                 { provide: AlertService, useValue: mockAlertService },
-
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
