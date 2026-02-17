@@ -34,7 +34,7 @@ export class ScoreDisplayComponent {
             const currentScore = this.score();
             const currentCourse = this.course();
 
-            if (maxPts != undefined && maxPts > 0 && maxBonusPts > 0) {
+            if (maxPts !== undefined && maxPts > 0 && maxBonusPts > 0) {
                 if (currentScore !== undefined && currentScore > maxPts) {
                     this.bonusPoints.set(roundValueSpecifiedByCourseSettings(currentScore - maxPts, currentCourse));
                 } else {

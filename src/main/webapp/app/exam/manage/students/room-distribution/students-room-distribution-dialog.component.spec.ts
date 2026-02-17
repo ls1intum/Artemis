@@ -170,6 +170,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         expect(searchResult).toHaveLength(2);
         expect(searchResult).toContainEqual(rooms[1]);
         expect(searchResult).toContainEqual(rooms[2]);
+        vi.useRealTimers();
     });
 
     it('should update reserve percentage when typing valid numbers', () => {

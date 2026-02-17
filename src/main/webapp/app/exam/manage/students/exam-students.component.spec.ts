@@ -92,7 +92,7 @@ describe('ExamStudentsComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: DeleteDialogService, useValue: MockDialogService },
+                { provide: DeleteDialogService, useClass: MockDialogService },
                 provideHttpClientTesting(),
             ],
         }).compileComponents();

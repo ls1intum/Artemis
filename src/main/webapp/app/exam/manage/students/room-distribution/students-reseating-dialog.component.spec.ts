@@ -62,6 +62,7 @@ describe('StudentsReseatingDialogComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+        vi.useRealTimers();
     });
 
     it('should request used rooms on creation', () => {
@@ -168,6 +169,7 @@ describe('StudentsReseatingDialogComponent', () => {
     });
 
     it('should find correct rooms', () => {
+        vi.useFakeTimers();
         vi.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
         fixture.detectChanges();
         vi.advanceTimersByTime(0);

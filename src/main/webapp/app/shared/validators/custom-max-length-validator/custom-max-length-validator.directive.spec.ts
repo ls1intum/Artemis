@@ -10,13 +10,13 @@ import { CustomMaxLengthDirective } from './custom-max-length-validator.directiv
     standalone: true,
     imports: [CustomMaxLengthDirective, FormsModule],
 })
-class HostComponent {
+class TestHostComponent {
     maxLength = 10;
 }
 
 describe('CustomMaxLengthDirective', () => {
-    let fixture: ComponentFixture<HostComponent>;
-    let host: HostComponent;
+    let fixture: ComponentFixture<TestHostComponent>;
+    let host: TestHostComponent;
 
     function getDirective(): CustomMaxLengthDirective {
         const inputDe = fixture.debugElement.query(By.css('input'));
@@ -25,10 +25,10 @@ describe('CustomMaxLengthDirective', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [HostComponent],
+            imports: [TestHostComponent],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(HostComponent);
+        fixture = TestBed.createComponent(TestHostComponent);
         host = fixture.componentInstance;
     });
 

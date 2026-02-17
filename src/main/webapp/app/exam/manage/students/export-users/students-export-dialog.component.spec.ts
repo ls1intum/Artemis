@@ -67,6 +67,7 @@ describe('StudentsExportDialogComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+        vi.useRealTimers();
     });
 
     it('should open the dialog', () => {
