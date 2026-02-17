@@ -5,7 +5,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { MockPipe } from 'ng-mocks';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { GlobalSearchNavbarComponent } from './global-search-navbar.component';
