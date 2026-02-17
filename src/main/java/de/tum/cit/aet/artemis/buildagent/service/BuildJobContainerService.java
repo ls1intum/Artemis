@@ -19,6 +19,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -252,6 +253,7 @@ public class BuildJobContainerService {
      * @param destinationPath the path of the directory where the files shall be moved
      */
     public void moveResultsToSpecifiedDirectory(String containerId, List<String> sourcePaths, String destinationPath) {
+        checkPath(destinationPath);
         String command = "shopt -s globstar && mkdir -p " + destinationPath;
         executeDockerCommand(containerId, null, true, "bash", "-c", command);
 
@@ -853,7 +855,13 @@ public class BuildJobContainerService {
             final var execCreateCommand = forceRoot ? execCreateCommandTemp.withUser("root") : execCreateCommandTemp;
             ExecCreateCmdResponse execCreateCmdResponse = execCreateCommand.exec();
             final CountDownLatch latch = new CountDownLatch(1);
+            final AtomicReference<Throwable> errorRef = new AtomicReference<>();
             try {
+                // IMPORTANT: withDetach(false) is critical here. It ensures the Docker daemon keeps the HTTP response stream open
+                // until the exec process finishes inside the container, so onComplete/onError fires only after the command has
+                // actually completed. Without this (i.e. withDetach(true)), the call returns immediately while the process may still
+                // be running in the container, causing race conditions where subsequent commands (e.g. the build script) start before
+                // setup commands (mkdir, chmod, cp) have finished.
                 dockerClient.execStartCmd(execCreateCmdResponse.getId()).withDetach(false).exec(new ResultCallback.Adapter<>() {
 
                     @Override
@@ -882,6 +890,7 @@ public class BuildJobContainerService {
                     @Override
                     public void onError(Throwable throwable) {
                         log.error("Error while executing Docker command: {} on container {}", String.join(" ", command), containerId, throwable);
+                        errorRef.set(throwable);
                         latch.countDown();
                     }
                 });
@@ -894,7 +903,13 @@ public class BuildJobContainerService {
                 latch.await();
             }
             catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
                 throw new LocalCIException("Interrupted while executing Docker command: " + String.join(" ", command), e);
+            }
+
+            Throwable execError = errorRef.get();
+            if (execError != null) {
+                throw new LocalCIException("Docker command failed: " + String.join(" ", command), execError);
             }
         }
     }
