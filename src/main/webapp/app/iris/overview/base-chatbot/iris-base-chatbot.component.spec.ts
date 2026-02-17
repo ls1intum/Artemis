@@ -1195,6 +1195,45 @@ describe('IrisBaseChatbotComponent', () => {
         });
     });
 
+    describe('prompt suggestion chips', () => {
+        it('should render prompt suggestion chips when chat is empty (empty state)', () => {
+            const chipsContainer = fixture.nativeElement.querySelector('.prompt-suggestion-chips');
+            expect(chipsContainer).not.toBeNull();
+
+            const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+            expect(chips).toHaveLength(3);
+        });
+
+        it('should not render prompt suggestion chips when messages exist', () => {
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([mockClientMessage, mockServerMessage]));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+            expect(chips).toHaveLength(0);
+        });
+
+        it('should not render prompt suggestion chips in embedded chat mode', () => {
+            fixture.componentRef.setInput('isEmbeddedChat', true);
+            fixture.detectChanges();
+
+            const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+            expect(chips).toHaveLength(0);
+        });
+
+        it('should call applyPromptStarter when a chip is clicked', () => {
+            const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+            const applyPromptStarterSpy = vi.spyOn(component, 'applyPromptStarter');
+
+            chips[0].click();
+
+            expect(applyPromptStarterSpy).toHaveBeenCalledWith('artemisApp.iris.onboarding.step4.prompts.explainConceptStarter');
+        });
+    });
+
     describe('processMessages newline handling', () => {
         it('should not apply newline doubling to any messages', () => {
             const tableMarkdown = '| Item | Details |\n|------|--------|\n| Lang | Java |';

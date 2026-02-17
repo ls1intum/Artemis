@@ -13,8 +13,6 @@
     --onboarding-radius: 0.5rem;
     --onboarding-modal-surface: var(--bs-modal-bg, var(--bs-card-bg));
     --onboarding-border: 1px solid var(--bs-border-color);
-    --onboarding-backdrop: rgba(34, 34, 34, 0.75);
-    --onboarding-spotlight-backdrop: rgba(34, 34, 34, 0.6);
 }
 
 %absolute-fill {
@@ -28,7 +26,7 @@
 .full-backdrop {
     @extend %absolute-fill;
 
-    background: var(--onboarding-backdrop);
+    background: var(--iris-onboarding-backdrop);
     pointer-events: auto; // Block clicks on the backdrop
 }
 
@@ -245,7 +243,7 @@
 
 .spotlight-section {
     position: absolute;
-    background: var(--onboarding-spotlight-backdrop);
+    background: var(--iris-onboarding-backdrop);
     pointer-events: auto; // Block clicks outside the spotlight cutout
 }
 
@@ -267,7 +265,7 @@
 }
 
 .spotlight-blocker.rounded-cutout {
-    box-shadow: 0 0 0 200vmax var(--onboarding-spotlight-backdrop);
+    box-shadow: 0 0 0 200vmax var(--iris-onboarding-backdrop);
 }
 
 .spotlight-top {

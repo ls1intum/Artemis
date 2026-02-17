@@ -1,15 +1,18 @@
 import {
     faArrowDown,
+    faBook,
     faCheck,
     faCircleInfo,
     faCircleNotch,
     faCompress,
     faCopy,
     faExpand,
+    faLightbulb,
     faLink,
     faMagnifyingGlass,
     faPaperPlane,
     faPenToSquare,
+    faQuestionCircle,
     faThumbsDown,
     faThumbsUp,
     faXmark,
@@ -130,6 +133,13 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faCopy = faCopy;
     protected readonly faCheck = faCheck;
+
+    // Prompt starter chips shown below the chat textarea
+    protected readonly promptSuggestionChips = [
+        { icon: faBook, labelKey: 'artemisApp.iris.onboarding.step4.prompts.explainConcept', starterKey: 'artemisApp.iris.onboarding.step4.prompts.explainConceptStarter' },
+        { icon: faQuestionCircle, labelKey: 'artemisApp.iris.onboarding.step4.prompts.quizTopic', starterKey: 'artemisApp.iris.onboarding.step4.prompts.quizTopicStarter' },
+        { icon: faLightbulb, labelKey: 'artemisApp.iris.onboarding.step4.prompts.studyTips', starterKey: 'artemisApp.iris.onboarding.step4.prompts.studyTipsStarter' },
+    ];
 
     // Types
     protected readonly IrisLogoSize = IrisLogoSize;

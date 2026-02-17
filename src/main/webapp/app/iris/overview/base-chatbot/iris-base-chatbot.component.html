@@ -384,6 +384,16 @@
                             />
                         </div>
                     </div>
+                    @if (isEmptyState()) {
+                        <div class="prompt-suggestion-chips">
+                            @for (chip of promptSuggestionChips; track chip.starterKey) {
+                                <button type="button" class="prompt-suggestion-chip" (click)="applyPromptStarter(chip.starterKey)">
+                                    <fa-icon [icon]="chip.icon" aria-hidden="true" />
+                                    <span [jhiTranslate]="chip.labelKey"></span>
+                                </button>
+                            }
+                        </div>
+                    }
                     @if (!isChatGptWrapper()) {
                         <span class="disclaimer-message" jhiTranslate="artemisApp.exerciseChatbot.disclaimer"></span>
                     } @else {
