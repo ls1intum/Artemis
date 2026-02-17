@@ -1,4 +1,3 @@
-import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import { of } from 'rxjs';
@@ -58,8 +57,8 @@ describe('CourseOverviewGuard', () => {
         it('should return true if course is fetched from server', () => {
             const route = { parent: { paramMap: { get: () => '1' } }, routeConfig: { path: CourseOverviewRoutePath.EXERCISES } } as unknown as ActivatedRouteSnapshot;
             let resultValue = false;
-            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(undefined);
-            vi.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(of(responseFakeCourse));
+            jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(undefined);
+            jest.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(of(responseFakeCourse));
             guard.canActivate(route).subscribe((result) => {
                 resultValue = result;
             });
@@ -141,7 +140,7 @@ describe('CourseOverviewGuard', () => {
         it('should redirect to iris when dashboard is accessed but only iris is enabled', () => {
             mockCourse.studentCourseAnalyticsDashboardEnabled = false;
             mockCourse.irisEnabledInCourse = true;
-            const navigateSpy = vi.spyOn(router, 'navigate');
+            const navigateSpy = jest.spyOn(router, 'navigate');
             const result = guard.handleReturn(mockCourse, CourseOverviewRoutePath.DASHBOARD);
             let resultValue = true;
             result.subscribe((value) => {
@@ -154,7 +153,7 @@ describe('CourseOverviewGuard', () => {
         it('should return false and redirect to exercises when neither dashboard nor iris is enabled', () => {
             mockCourse.studentCourseAnalyticsDashboardEnabled = false;
             mockCourse.irisEnabledInCourse = false;
-            const navigateSpy = vi.spyOn(router, 'navigate');
+            const navigateSpy = jest.spyOn(router, 'navigate');
             const result = guard.handleReturn(mockCourse, CourseOverviewRoutePath.DASHBOARD);
             let resultValue = true;
             result.subscribe((value) => {
@@ -203,7 +202,7 @@ describe('CourseOverviewGuard', () => {
         });
 
         it('should navigate to exercises if type is unknown', () => {
-            const navigateSpy = vi.spyOn(router, 'navigate');
+            const navigateSpy = jest.spyOn(router, 'navigate');
             guard.handleReturn(mockCourse, 'unknown');
             expect(navigateSpy).toHaveBeenCalledWith(['/courses/1/exercises']);
         });
