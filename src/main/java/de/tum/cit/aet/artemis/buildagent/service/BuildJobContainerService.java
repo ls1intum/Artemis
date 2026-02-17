@@ -540,27 +540,27 @@ public class BuildJobContainerService {
         String defaultTestCheckoutPath = RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
         testCheckoutPath = (!StringUtils.isBlank(testCheckoutPath)) ? testCheckoutPath : defaultTestCheckoutPath;
 
-        // Make sure to create the working directory in case it does not exist.
-        // In case the test checkout path is the working directory, we only create up to the parent, as the working directory is created below.
-        addDirectory(buildJobContainerId, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + (testCheckoutPath.isEmpty() ? "" : "/" + TESTING_DIR), true);
+        // Create the testing directory inside the container's working directory.
+        // This must always be created so that the subsequent chmod and repository copy operations have a valid target.
+        addDirectory(buildJobContainerId, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/" + TESTING_DIR, true);
         // Make sure the working directory and all subdirectories are accessible
         executeDockerCommand(buildJobContainerId, null, true, "chmod", "-R", "777", LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/" + TESTING_DIR);
 
         // Copy the test repository to the container and move it to the test checkout path (may be the working directory)
-        addAndPrepareDirectoryAndReplaceContent(buildJobContainerId, testRepositoryPath, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/" + testCheckoutPath,
+        addAndPrepareDirectoryAndReplaceContent(buildJobContainerId, testRepositoryPath, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/" + TESTING_DIR + "/" + testCheckoutPath,
                 buildJobId);
         // Copy the assignment repository to the container and move it to the assignment checkout path
         addAndPrepareDirectoryAndReplaceContent(buildJobContainerId, assignmentRepositoryPath,
-                LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/" + assignmentCheckoutPath, buildJobId);
+                LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/" + TESTING_DIR + "/" + assignmentCheckoutPath, buildJobId);
         if (solutionRepositoryPath != null) {
             solutionCheckoutPath = (!StringUtils.isBlank(solutionCheckoutPath)) ? solutionCheckoutPath
                     : RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage);
             addAndPrepareDirectoryAndReplaceContent(buildJobContainerId, solutionRepositoryPath,
-                    LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/" + solutionCheckoutPath, buildJobId);
+                    LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/" + TESTING_DIR + "/" + solutionCheckoutPath, buildJobId);
         }
         for (int i = 0; i < auxiliaryRepositoriesPaths.length; i++) {
             addAndPrepareDirectoryAndReplaceContent(buildJobContainerId, auxiliaryRepositoriesPaths[i],
-                    LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/" + auxiliaryRepositoryCheckoutDirectories[i], buildJobId);
+                    LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/" + TESTING_DIR + "/" + auxiliaryRepositoryCheckoutDirectories[i], buildJobId);
         }
 
         createScriptFile(buildJobContainerId);

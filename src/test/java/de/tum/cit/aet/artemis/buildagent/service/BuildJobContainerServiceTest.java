@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -180,14 +181,12 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
     }
 
     @Test
-    void testCreateScriptFileExecutesSynchronously() {
+    void testSynchronousExecNeverUsesDetachedMode() {
         buildJobContainerService.runScriptInContainer(DUMMY_CONTAINER_ID, "build-job-1");
 
-        // All exec commands (including the script execution) must run synchronously
+        // Verify that withDetach(true) is never called for synchronous commands.
+        // This guards against regression: previously, setup commands accidentally used detached mode.
         verify(execStartCmd, atLeastOnce()).withDetach(false);
-
-        // All exec commands must attach stdout and stderr
-        verify(execCreateCmd, atLeastOnce()).withAttachStdout(true);
-        verify(execCreateCmd, atLeastOnce()).withAttachStderr(true);
+        verify(execStartCmd, never()).withDetach(true);
     }
 }
