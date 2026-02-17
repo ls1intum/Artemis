@@ -23,6 +23,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { GradingScaleDTO, toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
 
 describe('BonusComponent', () => {
     setupTestBed({ zoneless: true });
@@ -192,8 +193,8 @@ describe('BonusComponent', () => {
         ],
     };
 
-    const searchResult: SearchResult<GradingScale> = {
-        resultsOnPage: [sourceGradingScale],
+    const searchResult: SearchResult<GradingScaleDTO> = {
+        resultsOnPage: [toGradingScaleDTO(sourceGradingScale)],
         numberOfPages: 1,
     };
 
@@ -287,7 +288,9 @@ describe('BonusComponent', () => {
         gradingService = TestBed.inject(GradingService);
 
         findBonusForExamSpy = vi.spyOn(bonusService, 'findBonusForExam').mockReturnValue(of({ body: bonus } as EntityResponseType));
-        findWithBonusSpy = vi.spyOn(gradingService, 'findWithBonusGradeTypeForInstructor').mockReturnValue(of({ body: searchResult } as HttpResponse<SearchResult<GradingScale>>));
+        findWithBonusSpy = vi
+            .spyOn(gradingService, 'findWithBonusGradeTypeForInstructor')
+            .mockReturnValue(of({ body: searchResult } as HttpResponse<SearchResult<GradingScaleDTO>>));
         findGradeStepsSpy = vi.spyOn(gradingService, 'findGradeSteps').mockReturnValue(of(examGradeSteps));
         vi.spyOn(bonusService, 'generateBonusExamples').mockReturnValue(bonusExamples);
     });

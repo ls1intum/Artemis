@@ -9,7 +9,6 @@ import java.util.Optional;
 
 import jakarta.validation.Valid;
 
-import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -361,7 +360,7 @@ public class GradingScaleResource {
         return scale;
     }
 
-    private static @NonNull GradingScale getGradingScale(GradingScaleDTO dto) {
+    private static GradingScale getGradingScale(GradingScaleDTO dto) {
         GradingScale scale = new GradingScale();
         scale.setGradeType(dto.gradeSteps().gradeType());
         scale.setBonusStrategy(dto.bonusStrategy());

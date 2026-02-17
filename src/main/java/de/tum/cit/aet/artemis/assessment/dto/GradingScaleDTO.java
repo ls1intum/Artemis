@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
  * DTO representing a {@link GradingScale}.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record GradingScaleDTO(@NotNull Long id, @NotNull GradeStepsDTO gradeSteps, BonusStrategy bonusStrategy, Set<BonusDTO> bonusFrom) {
+public record GradingScaleDTO(Long id, @NotNull GradeStepsDTO gradeSteps, BonusStrategy bonusStrategy, Set<BonusDTO> bonusFrom) {
 
     public GradingScaleDTO {
         bonusFrom = bonusFrom == null ? Set.of() : bonusFrom;
