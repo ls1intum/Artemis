@@ -53,6 +53,9 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
             """)
     Set<Course> findAllWithCampusOnlineConfiguration();
 
+    @EntityGraph(type = LOAD, attributePaths = { "campusOnlineConfiguration" })
+    Optional<Course> findWithEagerCampusOnlineConfigurationById(long courseId);
+
     @Query("""
             SELECT DISTINCT course.instructorGroupName
             FROM Course course

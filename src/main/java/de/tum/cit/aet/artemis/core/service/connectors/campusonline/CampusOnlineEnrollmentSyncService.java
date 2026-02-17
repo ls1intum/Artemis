@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.config.CampusOnlineEnabled;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.dto.CampusOnlineSyncResultDTO;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlinePerson;
@@ -98,7 +99,7 @@ public class CampusOnlineEnrollmentSyncService {
      * @return the sync result for this single course
      */
     public CampusOnlineSyncResultDTO performSingleCourseSync(long courseId) {
-        Course course = courseRepository.findByIdElseThrow(courseId);
+        Course course = courseRepository.findWithEagerCampusOnlineConfigurationById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
         if (course.getCampusOnlineConfiguration() == null) {
             throw new CampusOnlineApiException("Course " + courseId + " has no CAMPUSOnline configuration");
         }

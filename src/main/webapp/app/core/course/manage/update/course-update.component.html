@@ -130,7 +130,7 @@
                                 [ngModelOptions]="{ standalone: true }"
                                 [suggestions]="campusOnlineSuggestions()"
                                 (completeMethod)="searchCampusOnline($event)"
-                                (onSelect)="onCampusOnlineCourseSelected($event)"
+                                (onSelect)="onCampusOnlineCourseSelected($event.value)"
                                 optionLabel="title"
                                 [placeholder]="'artemisApp.course.campusOnline.search' | artemisTranslate"
                                 [minLength]="3"
