@@ -183,7 +183,11 @@ public class ConversationResource extends ConversationManagementResource {
         checkCommunicationEnabledElseThrow(courseId);
 
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        var conversationFromDatabase = this.conversationService.getConversationById(conversationId);
+
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
+        checkConversationMembership(conversationFromDatabase, requestingUser);
+        checkEntityIdMatchesPathIds(conversationFromDatabase, Optional.of(courseId), Optional.of(conversationId));
 
         conversationService.markAsRead(conversationId, requestingUser.getId());
 

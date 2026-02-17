@@ -72,7 +72,7 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
                 UPDATE ConversationParticipant cp
                 SET cp.unreadMessagesCount = (
                     SELECT COUNT(p) FROM Post p
-                    WHERE p.conversation.id = cp.conversation.id
+                    WHERE p.conversation.id = :conversationId
                     AND p.creationDate >= :messageDate
                     AND p.author.id <> :userId
                 ), cp.lastRead = :lastRead
