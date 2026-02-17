@@ -60,6 +60,7 @@ export class MonacoEditorService {
     createStandaloneCodeEditor(domElement: HTMLElement): monaco.editor.IStandaloneCodeEditor {
         const editor = monaco.editor.create(domElement, {
             value: '',
+            automaticLayout: true,
             glyphMargin: true,
             minimap: { enabled: false },
             lineNumbersMinChars: 4,
