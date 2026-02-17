@@ -165,6 +165,11 @@ describe('CourseDashboardComponent', () => {
         expect(component.hasAvailableExercises).toBeTrue();
     });
 
+    it('should set hasAvailableExercises to true when exercises property is undefined', () => {
+        (component as any).setCourse({ id: 123 });
+        expect(component.hasAvailableExercises).toBeTrue();
+    });
+
     it('should correctly calculate overall performance', () => {
         const exerciseMetrics = {
             exerciseInformation: {

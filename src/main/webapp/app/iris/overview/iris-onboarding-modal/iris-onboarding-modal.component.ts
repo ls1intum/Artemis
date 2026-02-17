@@ -8,8 +8,14 @@ import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iri
 import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { StepperComponent } from './stepper/stepper.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faBook, faLightbulb, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { filter } from 'rxjs/operators';
+import { CdkTrapFocus } from '@angular/cdk/a11y';
+import { IRIS_PROMPT_CONFIGS } from 'app/iris/shared/iris-prompt.constants';
+
+// Sidebar selectors used by onboarding to locate navigation items.
+// If sidebar markup changes, update these selectors and the corresponding data-sidebar-item attributes.
+const SIDEBAR_EXERCISES_SELECTOR = "jhi-course-sidebar a.nav-link-sidebar[data-sidebar-item='Exercises']";
+const SIDEBAR_IRIS_SELECTOR = "jhi-course-sidebar a.nav-link-sidebar[data-sidebar-item='Iris']";
 
 type SidebarTooltipConfig = {
     spotlight: { top: number; left: number; width: number; height: number };
@@ -19,14 +25,12 @@ type SidebarTooltipConfig = {
     currentStep: 1 | 3;
 };
 
-type PromptOptionKey = 'explainConcept' | 'quizTopic' | 'studyTips';
-
 @Component({
     selector: 'jhi-iris-onboarding-modal',
     standalone: true,
     templateUrl: './iris-onboarding-modal.component.html',
     styleUrls: ['./iris-onboarding-modal.component.scss'],
-    imports: [TranslateDirective, ArtemisTranslatePipe, IrisLogoComponent, ButtonComponent, StepperComponent, FaIconComponent],
+    imports: [TranslateDirective, ArtemisTranslatePipe, IrisLogoComponent, ButtonComponent, StepperComponent, FaIconComponent, CdkTrapFocus],
 })
 export class IrisOnboardingModalComponent {
     private activeModal = inject(NgbActiveModal);
@@ -35,11 +39,7 @@ export class IrisOnboardingModalComponent {
 
     protected readonly IrisLogoSize = IrisLogoSize;
     protected readonly ButtonType = ButtonType;
-    readonly promptOptions: ReadonlyArray<{ type: PromptOptionKey; icon: typeof faBook; translationKey: string }> = [
-        { type: 'explainConcept', icon: faBook, translationKey: 'artemisApp.iris.onboarding.step4.prompts.explainConcept' },
-        { type: 'quizTopic', icon: faQuestionCircle, translationKey: 'artemisApp.iris.onboarding.step4.prompts.quizTopic' },
-        { type: 'studyTips', icon: faLightbulb, translationKey: 'artemisApp.iris.onboarding.step4.prompts.studyTips' },
-    ];
+    readonly promptOptions = IRIS_PROMPT_CONFIGS;
 
     // Timer cleanup
     private readonly pendingTimers = new Set<ReturnType<typeof setTimeout>>();
@@ -57,7 +57,7 @@ export class IrisOnboardingModalComponent {
 
     // Position for Step 2 (Iris icon)
     readonly irisIconSpotlight = signal({ top: 594, left: 944, width: 48, height: 48 });
-    readonly tooltipPosition = signal({ top: 680 });
+    readonly tooltipPosition = signal({ top: 680, right: 140 });
     readonly isStep2PositionReady = signal(false);
 
     // Position for Step 3 tooltip (aligned with Iris tab)
@@ -175,14 +175,12 @@ export class IrisOnboardingModalComponent {
      * Handles prompt selection from the final step modal.
      */
     selectPrompt(promptType: string): void {
-        const starterKeys: Record<PromptOptionKey, string> = {
-            explainConcept: 'artemisApp.iris.onboarding.step4.prompts.explainConceptStarter',
-            quizTopic: 'artemisApp.iris.onboarding.step4.prompts.quizTopicStarter',
-            studyTips: 'artemisApp.iris.onboarding.step4.prompts.studyTipsStarter',
-        };
-
-        const promptKey = starterKeys[promptType as PromptOptionKey];
-        this.activeModal.close({ action: 'promptSelected', promptKey });
+        const config = IRIS_PROMPT_CONFIGS.find((c) => c.type === promptType);
+        if (config) {
+            this.activeModal.close({ action: 'promptSelected', promptKey: config.starterKey });
+        } else {
+            this.activeModal.close({ action: 'finish' });
+        }
     }
 
     /**
@@ -240,12 +238,16 @@ export class IrisOnboardingModalComponent {
 
         // Place tooltip close to the Iris button (to the left and slightly above it).
         const tooltipHeightEstimate = 180;
+        const tooltipWidthEstimate = 280;
+        const tooltipGap = 16;
         const viewportPadding = 12;
         const preferredTop = spotlight.top - tooltipHeightEstimate + spotlight.height / 2;
         const minTop = viewportPadding;
         const maxTop = window.innerHeight - tooltipHeightEstimate - viewportPadding;
+        const rightOffset = Math.max(viewportPadding, window.innerWidth - spotlight.left + tooltipGap);
         const tooltipPos = {
             top: Math.min(Math.max(preferredTop, minTop), maxTop),
+            right: Math.min(rightOffset, window.innerWidth - tooltipWidthEstimate - viewportPadding),
         };
 
         this.tooltipPosition.set(tooltipPos);
@@ -288,21 +290,11 @@ export class IrisOnboardingModalComponent {
     }
 
     private calculateExerciseTabCoachMarkPosition(): boolean {
-        return this.calculateSidebarTabPositions(
-            "jhi-course-sidebar a.nav-link-sidebar[data-sidebar-item='Exercises']",
-            this.exerciseTabSpotlight,
-            this.exerciseTabCoachMarkPosition,
-            this.exerciseTooltipPosition,
-        );
+        return this.calculateSidebarTabPositions(SIDEBAR_EXERCISES_SELECTOR, this.exerciseTabSpotlight, this.exerciseTabCoachMarkPosition, this.exerciseTooltipPosition);
     }
 
     private calculateIrisTabCoachMarkPosition(): boolean {
-        return this.calculateSidebarTabPositions(
-            "jhi-course-sidebar a.nav-link-sidebar[data-sidebar-item='Iris']",
-            this.irisTabSpotlight,
-            this.irisTabCoachMarkPosition,
-            this.irisTabTooltipPosition,
-        );
+        return this.calculateSidebarTabPositions(SIDEBAR_IRIS_SELECTOR, this.irisTabSpotlight, this.irisTabCoachMarkPosition, this.irisTabTooltipPosition);
     }
 
     private scheduleExerciseTabPositionCalculation(retries = 20): void {
@@ -329,6 +321,8 @@ export class IrisOnboardingModalComponent {
         }
 
         // Avoid trapping onboarding on a hidden step when target elements are not available.
+        // eslint-disable-next-line no-undef
+        console.warn(`Onboarding step ${expectedStep}: target element not found after all retries, using default position`);
         readinessSignal.set(true);
     }
 

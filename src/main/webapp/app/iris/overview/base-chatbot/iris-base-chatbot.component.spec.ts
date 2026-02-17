@@ -115,6 +115,9 @@ describe('IrisBaseChatbotComponent', () => {
                 wsMock = TestBed.inject(IrisWebsocketService);
                 accountService = TestBed.inject(AccountService);
 
+                // Ensure onboarding mock always returns a resolved promise (needed since ngAfterViewInit always calls it)
+                mockOnboardingService.showOnboardingIfNeeded.mockResolvedValue(undefined);
+
                 // Set user identity BEFORE creating component (constructor reads this)
                 accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
                 vi.spyOn(accountService, 'getAuthenticationState').mockReturnValue(of());
@@ -986,23 +989,29 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     describe('Onboarding', () => {
-        let onboardingService: IrisOnboardingService;
-
-        beforeEach(() => {
-            onboardingService = TestBed.inject(IrisOnboardingService);
+        afterEach(() => {
+            mockOnboardingService.showOnboardingIfNeeded.mockReset();
         });
 
-        it('should call showOnboardingIfNeeded on ngAfterViewInit', () => {
+        it('should call showOnboardingIfNeeded on ngAfterViewInit regardless of userAccepted state', () => {
+            accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
             mockOnboardingService.showOnboardingIfNeeded.mockClear();
-            const spy = vi.spyOn(onboardingService, 'showOnboardingIfNeeded').mockResolvedValue(undefined);
+            mockOnboardingService.showOnboardingIfNeeded.mockResolvedValue(undefined);
 
             component.ngAfterViewInit();
 
-            expect(spy).toHaveBeenCalledOnce();
+            expect(mockOnboardingService.showOnboardingIfNeeded).toHaveBeenCalledOnce();
         });
 
         it('should set userAccepted to undefined when user has no LLM selection', async () => {
             accountService.userIdentity.set({ selectedLLMUsage: undefined } as User);
+            mockOnboardingService.showOnboardingIfNeeded.mockResolvedValue(undefined);
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
@@ -1013,6 +1022,7 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         it('should apply prompt starter when onboarding returns promptSelected', async () => {
+            accountService.userIdentity.set({ selectedLLMUsage: undefined } as User);
             const promptKey = 'artemisApp.iris.onboarding.step4.prompts.explainConceptStarter';
             mockOnboardingService.showOnboardingIfNeeded.mockResolvedValue({ action: 'promptSelected', promptKey });
 
@@ -1027,12 +1037,10 @@ describe('IrisBaseChatbotComponent', () => {
             await new Promise((resolve) => setTimeout(resolve, 50));
 
             expect(component.newMessageTextContent()).toBe(promptKey);
-
-            // Reset mock for other tests
-            mockOnboardingService.showOnboardingIfNeeded.mockResolvedValue(undefined);
         });
 
         it('should not apply prompt starter when onboarding returns finish', async () => {
+            accountService.userIdentity.set({ selectedLLMUsage: undefined } as User);
             mockOnboardingService.showOnboardingIfNeeded.mockResolvedValue({ action: 'finish' });
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
@@ -1044,13 +1052,16 @@ describe('IrisBaseChatbotComponent', () => {
             await fixture.whenStable();
 
             expect(component.newMessageTextContent()).toBe('');
-
-            // Reset mock for other tests
-            mockOnboardingService.showOnboardingIfNeeded.mockResolvedValue(undefined);
         });
 
         it('should not apply prompt starter when onboarding returns undefined', async () => {
+            accountService.userIdentity.set({ selectedLLMUsage: undefined } as User);
             mockOnboardingService.showOnboardingIfNeeded.mockResolvedValue(undefined);
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
 
             component.ngAfterViewInit();
             await fixture.whenStable();
@@ -1058,12 +1069,12 @@ describe('IrisBaseChatbotComponent', () => {
             expect(component.newMessageTextContent()).toBe('');
         });
 
-        it('should not show onboarding modal when userAccepted is already set', async () => {
+        it('should still show onboarding when userAccepted is already set (service handles localStorage check)', async () => {
             const mockUser = { selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User;
             accountService.userIdentity.set(mockUser);
-            vi.spyOn(accountService, 'userIdentity').mockReturnValue(mockUser as any);
 
             mockOnboardingService.showOnboardingIfNeeded.mockClear();
+            mockOnboardingService.showOnboardingIfNeeded.mockResolvedValue(undefined);
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
@@ -1073,9 +1084,11 @@ describe('IrisBaseChatbotComponent', () => {
             }
             fixture.detectChanges();
 
+            component.ngAfterViewInit();
             await fixture.whenStable();
 
             expect(component.userAccepted()).toBe(LLMSelectionDecision.CLOUD_AI);
+            expect(mockOnboardingService.showOnboardingIfNeeded).toHaveBeenCalled();
         });
 
         it('should set userAccepted to CLOUD_AI when acceptPermission is called with CLOUD_AI', () => {

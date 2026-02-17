@@ -71,7 +71,13 @@
 
         <div class="coach-mark" aria-hidden="true" [style.top.px]="sidebarStep.coachMarkPosition.top" [style.left.px]="sidebarStep.coachMarkPosition.left"></div>
 
-        <div class="onboarding-tooltip sidebar-tooltip" [style.top.px]="sidebarStep.tooltipPosition.top" [style.left.px]="sidebarStep.tooltipPosition.left">
+        <div
+            class="onboarding-tooltip sidebar-tooltip"
+            [style.top.px]="sidebarStep.tooltipPosition.top"
+            [style.left.px]="sidebarStep.tooltipPosition.left"
+            cdkTrapFocus
+            [cdkTrapFocusAutoCapture]="true"
+        >
             <p class="tooltip-description" [jhiTranslate]="sidebarStep.descriptionTranslationKey"></p>
             <jhi-stepper [currentStep]="sidebarStep.currentStep" [totalSteps]="3" />
         </div>
@@ -90,7 +96,7 @@
         ></div>
 
         <!-- Tooltip positioned above/beside Iris icon -->
-        <div class="onboarding-tooltip tooltip-bottom-right-arrow" [style.top.px]="tooltipPosition().top" [style.right.px]="140">
+        <div class="onboarding-tooltip tooltip-bottom-right-arrow" [style.top.px]="tooltipPosition().top" [style.right.px]="tooltipPosition().right">
             <div class="tooltip-header">
                 <p class="tooltip-header-text" jhiTranslate="artemisApp.iris.onboarding.step2.header"></p>
             </div>
@@ -121,7 +127,7 @@
                         @for (prompt of promptOptions; track prompt.type) {
                             <button type="button" class="prompt-chip" (click)="selectPrompt(prompt.type)">
                                 <fa-icon [icon]="prompt.icon" aria-hidden="true" />
-                                <span [jhiTranslate]="prompt.translationKey"></span>
+                                <span [jhiTranslate]="prompt.labelKey"></span>
                             </button>
                         }
                     </div>

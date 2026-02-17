@@ -8,6 +8,7 @@
                 "close": "Close",
                 "getStarted": "Take the tour",
                 "next": "Next",
+                "stepOf": "Step {{current}} of {{total}}",
                 "step1": {
                     "description": "Click Exercises to continue."
                 },

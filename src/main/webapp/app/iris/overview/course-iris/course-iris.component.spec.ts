@@ -6,6 +6,8 @@ import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 import { CourseIrisComponent } from './course-iris.component';
 import { CourseChatbotComponent } from 'app/iris/overview/course-chatbot/course-chatbot.component';
+import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { Course } from 'app/core/course/shared/entities/course.model';
 
 @Component({
     selector: 'jhi-course-chatbot',
@@ -14,6 +16,7 @@ import { CourseChatbotComponent } from 'app/iris/overview/course-chatbot/course-
 })
 class MockCourseChatbotComponent {
     readonly courseId = input<number>();
+    readonly hasAvailableExercises = input(true);
 
     toggleChatHistory = vi.fn();
 }
@@ -24,6 +27,7 @@ describe('CourseIrisComponent', () => {
     let component: CourseIrisComponent;
     let fixture: ComponentFixture<CourseIrisComponent>;
     let paramMapSubject: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
+    let courseStorageService: CourseStorageService;
 
     beforeEach(async () => {
         paramMapSubject = new BehaviorSubject(convertToParamMap({ courseId: '123' }));
@@ -46,6 +50,8 @@ describe('CourseIrisComponent', () => {
                 add: { imports: [MockCourseChatbotComponent] },
             })
             .compileComponents();
+
+        courseStorageService = TestBed.inject(CourseStorageService);
 
         fixture = TestBed.createComponent(CourseIrisComponent);
         component = fixture.componentInstance;
@@ -89,5 +95,27 @@ describe('CourseIrisComponent', () => {
 
     it('should initialize isCollapsed to false', () => {
         expect(component.isCollapsed).toBe(false);
+    });
+
+    it('should return hasAvailableExercises as false when course has no exercises', async () => {
+        const course = { id: 456, exercises: [] } as Course;
+        courseStorageService.updateCourse(course);
+        paramMapSubject.next(convertToParamMap({ courseId: '456' }));
+        await fixture.whenStable();
+        expect(component.hasAvailableExercises()).toBe(false);
+    });
+
+    it('should return hasAvailableExercises as true when course has exercises', async () => {
+        const course = { id: 456, exercises: [{}] } as Course;
+        courseStorageService.updateCourse(course);
+        paramMapSubject.next(convertToParamMap({ courseId: '456' }));
+        await fixture.whenStable();
+        expect(component.hasAvailableExercises()).toBe(true);
+    });
+
+    it('should return hasAvailableExercises as true when courseId is undefined', async () => {
+        paramMapSubject.next(convertToParamMap({}));
+        await fixture.whenStable();
+        expect(component.hasAvailableExercises()).toBe(true);
     });
 });

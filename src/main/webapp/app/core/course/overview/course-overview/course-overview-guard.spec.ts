@@ -128,12 +128,26 @@ describe('CourseOverviewGuard', () => {
 
         it('should return true if type is dashboard and course has studentCourseAnalyticsDashboardEnabled', () => {
             mockCourse.studentCourseAnalyticsDashboardEnabled = true;
+            mockCourse.irisEnabledInCourse = true;
+            const result = guard.handleReturn(mockCourse, CourseOverviewRoutePath.DASHBOARD);
+            let resultValue = false;
+            result.subscribe((value) => {
+                resultValue = value;
+            });
+            expect(resultValue).toBeTrue();
+        });
+
+        it('should redirect to iris when dashboard is accessed but only iris is enabled', () => {
+            mockCourse.studentCourseAnalyticsDashboardEnabled = false;
+            mockCourse.irisEnabledInCourse = true;
+            const navigateSpy = jest.spyOn(router, 'navigate');
             const result = guard.handleReturn(mockCourse, CourseOverviewRoutePath.DASHBOARD);
             let resultValue = true;
             result.subscribe((value) => {
                 resultValue = value;
             });
-            expect(resultValue).toBeTrue();
+            expect(resultValue).toBeFalse();
+            expect(navigateSpy).toHaveBeenCalledWith(['/courses/1/iris']);
         });
 
         it('should return true if type is iris and course has irisEnabledInCourse', () => {

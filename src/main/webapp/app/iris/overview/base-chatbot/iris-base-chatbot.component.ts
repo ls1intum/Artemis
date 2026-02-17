@@ -1,18 +1,15 @@
 import {
     faArrowDown,
-    faBook,
     faCheck,
     faCircleInfo,
     faCircleNotch,
     faCompress,
     faCopy,
     faExpand,
-    faLightbulb,
     faLink,
     faMagnifyingGlass,
     faPaperPlane,
     faPenToSquare,
-    faQuestionCircle,
     faThumbsDown,
     faThumbsUp,
     faXmark,
@@ -54,6 +51,7 @@ import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
 import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
 import { IrisOnboardingService, OnboardingResult } from 'app/iris/overview/iris-onboarding-modal/iris-onboarding.service';
+import { IRIS_PROMPT_CONFIGS } from 'app/iris/shared/iris-prompt.constants';
 
 // Session history time bucket boundaries (in days ago)
 const YESTERDAY_OFFSET = 1;
@@ -73,10 +71,6 @@ const COPY_FEEDBACK_DURATION_MS = 1500;
     selector: 'jhi-iris-base-chatbot',
     templateUrl: './iris-base-chatbot.component.html',
     styleUrls: ['./iris-base-chatbot.component.scss'],
-    host: {
-        '[class.layout-client]': "layout() === 'client'",
-        '[class.layout-widget]': "layout() === 'widget'",
-    },
     imports: [
         IrisLogoComponent,
         RouterLink,
@@ -117,6 +111,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected route = inject(ActivatedRoute);
     private readonly destroyRef = inject(DestroyRef);
     private readonly onboardingService = inject(IrisOnboardingService);
+    private readonly clipboard = inject(Clipboard);
 
     // Icons
     protected readonly faPaperPlane = faPaperPlane;
@@ -135,11 +130,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected readonly faCheck = faCheck;
 
     // Prompt starter chips shown below the chat textarea
-    protected readonly promptSuggestionChips = [
-        { icon: faBook, labelKey: 'artemisApp.iris.onboarding.step4.prompts.explainConcept', starterKey: 'artemisApp.iris.onboarding.step4.prompts.explainConceptStarter' },
-        { icon: faQuestionCircle, labelKey: 'artemisApp.iris.onboarding.step4.prompts.quizTopic', starterKey: 'artemisApp.iris.onboarding.step4.prompts.quizTopicStarter' },
-        { icon: faLightbulb, labelKey: 'artemisApp.iris.onboarding.step4.prompts.studyTips', starterKey: 'artemisApp.iris.onboarding.step4.prompts.studyTipsStarter' },
-    ];
+    protected readonly promptSuggestionChips = IRIS_PROMPT_CONFIGS;
 
     // Types
     protected readonly IrisLogoSize = IrisLogoSize;
@@ -368,12 +359,18 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         // Delay ensures initial message batch doesn't trigger animations
         setTimeout(() => (this.shouldAnimate = true), 500);
 
-        // Show onboarding modal for first-time users
-        this.onboardingService.showOnboardingIfNeeded(this.hasAvailableExercises()).then((result?: OnboardingResult) => {
-            if (result?.action === 'promptSelected') {
-                this.applyPromptStarter(result.promptKey);
-            }
-        });
+        // Show onboarding modal for first-time users (localStorage check is handled by the service)
+        this.onboardingService
+            .showOnboardingIfNeeded(this.hasAvailableExercises())
+            .then((result?: OnboardingResult) => {
+                if (result?.action === 'promptSelected') {
+                    this.applyPromptStarter(result.promptKey);
+                }
+            })
+            .catch((error) => {
+                // eslint-disable-next-line no-undef
+                console.error('Onboarding failed:', error);
+            });
     }
 
     /**
