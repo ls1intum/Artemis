@@ -105,6 +105,58 @@
                         ></button>
                     </div>
                 }
+                @if (isAdmin && campusOnlineEnabled) {
+                    <div class="form-group mt-3">
+                        <label class="form-control-label" jhiTranslate="artemisApp.course.campusOnline.title"></label>
+                        @if (campusOnlineLinked) {
+                            <div class="alert alert-success d-flex align-items-center justify-content-between mb-0">
+                                <div>
+                                    <strong>{{ course.campusOnlineConfiguration?.campusOnlineCourseId }}</strong>
+                                    @if (course.campusOnlineConfiguration?.responsibleInstructor) {
+                                        <span> — {{ course.campusOnlineConfiguration?.responsibleInstructor }}</span>
+                                    }
+                                    @if (course.campusOnlineConfiguration?.department) {
+                                        <span> ({{ course.campusOnlineConfiguration?.department }})</span>
+                                    }
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-danger" (click)="unlinkCampusOnline()">
+                                    <fa-icon [icon]="faTimes" />
+                                    <span jhiTranslate="artemisApp.course.campusOnline.unlink"></span>
+                                </button>
+                            </div>
+                        } @else {
+                            <p-autoComplete
+                                [(ngModel)]="selectedCampusOnlineCourse"
+                                [ngModelOptions]="{ standalone: true }"
+                                [suggestions]="campusOnlineSuggestions()"
+                                (completeMethod)="searchCampusOnline($event)"
+                                (onSelect)="onCampusOnlineCourseSelected($event)"
+                                optionLabel="title"
+                                [placeholder]="'artemisApp.course.campusOnline.search' | artemisTranslate"
+                                [minLength]="3"
+                                [delay]="300"
+                                [forceSelection]="true"
+                                styleClass="w-100"
+                                inputStyleClass="form-control"
+                            >
+                                <ng-template let-campusOnlineCourse pTemplate="item">
+                                    <div class="d-flex flex-column">
+                                        <strong>{{ campusOnlineCourse.title }}</strong>
+                                        <small class="text-muted">
+                                            {{ campusOnlineCourse.responsibleInstructor }}
+                                            @if (campusOnlineCourse.department) {
+                                                <span> · {{ campusOnlineCourse.department }}</span>
+                                            }
+                                            @if (campusOnlineCourse.semester) {
+                                                <span> · {{ campusOnlineCourse.semester }}</span>
+                                            }
+                                        </small>
+                                    </div>
+                                </ng-template>
+                            </p-autoComplete>
+                        }
+                    </div>
+                }
                 <div class="row g-2">
                     <div class="form-group col-md">
                         <jhi-date-time-picker

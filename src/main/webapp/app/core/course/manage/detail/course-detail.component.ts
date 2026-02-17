@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_IRIS, MODULE_FEATURE_LTI, PROFILE_ATHENA } from 'app/app.constants';
+import { MODULE_FEATURE_CAMPUS_ONLINE, MODULE_FEATURE_HYPERION, MODULE_FEATURE_IRIS, MODULE_FEATURE_LTI, PROFILE_ATHENA } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Subscription, firstValueFrom } from 'rxjs';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -77,6 +77,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     readonly ltiEnabled = signal(false);
     readonly isAthenaEnabled = signal(false);
     readonly isHyperionEnabled = signal(false);
+    readonly campusOnlineEnabled = signal(false);
 
     readonly isAdmin = signal(false);
 
@@ -91,6 +92,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         this.isAthenaEnabled.set(this.profileService.isProfileActive(PROFILE_ATHENA));
         this.isHyperionEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION));
         this.irisEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS));
+        this.campusOnlineEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_CAMPUS_ONLINE));
 
         this.route.data.subscribe(({ course }) => {
             if (course) {
@@ -296,12 +298,35 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         };
     }
 
+    getCampusOnlineDetailSection(): DetailOverviewSection | undefined {
+        const currentCourse = this.course();
+        if (!this.campusOnlineEnabled() || !currentCourse?.campusOnlineConfiguration) {
+            return undefined;
+        }
+        const config = currentCourse.campusOnlineConfiguration;
+        const details: Detail[] = [
+            { type: DetailType.Text, title: 'artemisApp.course.campusOnline.courseId', data: { text: config.campusOnlineCourseId } },
+            { type: DetailType.Text, title: 'artemisApp.course.campusOnline.responsibleInstructor', data: { text: config.responsibleInstructor } },
+            { type: DetailType.Text, title: 'artemisApp.course.campusOnline.department', data: { text: config.department } },
+            { type: DetailType.Text, title: 'artemisApp.course.campusOnline.studyProgram', data: { text: config.studyProgram } },
+        ];
+        return {
+            headline: 'artemisApp.course.campusOnline.title',
+            details,
+        };
+    }
+
     getCourseDetailSections() {
         const generalSection = this.getGeneralDetailSection();
         const modeSection = this.getModeDetailSection();
         const enrollmentSection = this.getEnrollmentDetailSection();
         const messagingSection = this.getMessagingDetailSection();
-        this.courseDetailSections.set([generalSection, modeSection, enrollmentSection, messagingSection]);
+        const sections = [generalSection, modeSection, enrollmentSection, messagingSection];
+        const campusOnlineSection = this.getCampusOnlineDetailSection();
+        if (campusOnlineSection) {
+            sections.push(campusOnlineSection);
+        }
+        this.courseDetailSections.set(sections);
     }
 
     /**

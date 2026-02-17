@@ -398,7 +398,21 @@
                 "title": "Bild zuschneiden",
                 "uploadTitle": "Ein Bild hinzufügen"
             },
-            "overview": "Übersicht"
+            "overview": "Übersicht",
+            "campusOnline": {
+                "title": "CAMPUSOnline",
+                "search": "CAMPUSOnline-Kurse suchen...",
+                "linked": "Mit CAMPUSOnline verknüpft",
+                "notLinked": "Nicht mit CAMPUSOnline verknüpft",
+                "courseId": "CAMPUSOnline Kurs-ID",
+                "responsibleInstructor": "Verantwortliche Lehrperson",
+                "department": "Lehrstuhl / Fachgebiet",
+                "studyProgram": "Studiengang",
+                "unlink": "Verknüpfung aufheben",
+                "syncEnrollment": "Einschreibung synchronisieren",
+                "syncSuccess": "Einschreibungssynchronisierung abgeschlossen: {{ added }} Nutzer hinzugefügt, {{ notFound }} nicht gefunden",
+                "noResults": "Keine passenden Kurse in CAMPUSOnline gefunden"
+            }
         },
         "courseStatistics": {
             "statistics": "Statistiken",

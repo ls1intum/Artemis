@@ -3,5 +3,6 @@ package de.tum.cit.aet.artemis.core.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CampusOnlineCourseDTO(String campusOnlineCourseId, String title, String semester, String language, boolean alreadyImported) {
+public record CampusOnlineCourseDTO(String campusOnlineCourseId, String title, String semester, String language, String responsibleInstructor, String department,
+        String studyProgram, boolean alreadyImported) {
 }

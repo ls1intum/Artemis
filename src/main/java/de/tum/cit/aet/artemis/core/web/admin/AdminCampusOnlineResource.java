@@ -8,9 +8,11 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -20,6 +22,7 @@ import de.tum.cit.aet.artemis.core.config.CampusOnlineEnabled;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.dto.CampusOnlineCourseDTO;
 import de.tum.cit.aet.artemis.core.dto.CampusOnlineCourseImportRequestDTO;
+import de.tum.cit.aet.artemis.core.dto.CampusOnlineLinkRequestDTO;
 import de.tum.cit.aet.artemis.core.dto.CampusOnlineSyncResultDTO;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.connectors.campusonline.CampusOnlineCourseImportService;
@@ -54,6 +57,44 @@ public class AdminCampusOnlineResource {
     public ResponseEntity<List<CampusOnlineCourseDTO>> searchCourses(@RequestParam String orgUnitId, @RequestParam String from, @RequestParam String until) {
         List<CampusOnlineCourseDTO> courses = courseImportService.searchCourses(orgUnitId, from, until);
         return ResponseEntity.ok(courses);
+    }
+
+    /**
+     * GET /api/core/admin/campus-online/courses/search : Search for courses by name for typeahead.
+     *
+     * @param query    the course name query
+     * @param semester optional semester filter
+     * @return list of matching courses with metadata
+     */
+    @GetMapping("courses/search")
+    public ResponseEntity<List<CampusOnlineCourseDTO>> searchCoursesByName(@RequestParam String query, @RequestParam(required = false) String semester) {
+        List<CampusOnlineCourseDTO> courses = courseImportService.searchCoursesByName(query, semester);
+        return ResponseEntity.ok(courses);
+    }
+
+    /**
+     * PUT /api/core/admin/campus-online/courses/{courseId}/link : Link a CAMPUSOnline course to an Artemis course.
+     *
+     * @param courseId the Artemis course ID
+     * @param request  the link request containing CAMPUSOnline course details
+     * @return the updated course
+     */
+    @PutMapping("courses/{courseId}/link")
+    public ResponseEntity<Course> linkCourse(@PathVariable long courseId, @RequestBody CampusOnlineLinkRequestDTO request) {
+        Course course = courseImportService.linkCourse(courseId, request.campusOnlineCourseId(), request.responsibleInstructor(), request.department(), request.studyProgram());
+        return ResponseEntity.ok(course);
+    }
+
+    /**
+     * DELETE /api/core/admin/campus-online/courses/{courseId}/link : Unlink a CAMPUSOnline course from an Artemis course.
+     *
+     * @param courseId the Artemis course ID
+     * @return empty response
+     */
+    @DeleteMapping("courses/{courseId}/link")
+    public ResponseEntity<Void> unlinkCourse(@PathVariable long courseId) {
+        courseImportService.unlinkCourse(courseId);
+        return ResponseEntity.noContent().build();
     }
 
     /**

@@ -1,5 +1,5 @@
 import { ActivatedRoute, Router } from '@angular/router';
-import { Component, DestroyRef, ElementRef, OnInit, inject, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, OnInit, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -10,7 +10,7 @@ import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled, unsetCourseIcon } from 'app/core/course/shared/entities/course.model';
 import { CourseManagementService } from '../services/course-management.service';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
-import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_ATLAS, MODULE_FEATURE_LTI, PROFILE_ATHENA } from 'app/app.constants';
+import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_ATLAS, MODULE_FEATURE_CAMPUS_ONLINE, MODULE_FEATURE_LTI, PROFILE_ATHENA } from 'app/app.constants';
 import { ImageComponent } from 'app/shared/image/image.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import dayjs from 'dayjs/esm';
@@ -46,6 +46,9 @@ import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 import { FileService } from 'app/shared/service/file.service';
 import { IS_AT_LEAST_ADMIN } from 'app/shared/constants/authority.constants';
+import { CampusOnlineCourseDTO, CampusOnlineService } from 'app/core/course/manage/services/campus-online.service';
+import { AutoComplete } from 'primeng/autocomplete';
+import { PrimeTemplate } from 'primeng/api';
 
 const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
 
@@ -74,6 +77,8 @@ const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
         FeatureOverlayComponent,
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
+        AutoComplete,
+        PrimeTemplate,
     ],
 })
 export class CourseUpdateComponent implements OnInit {
@@ -91,6 +96,7 @@ export class CourseUpdateComponent implements OnInit {
     private readonly router = inject(Router);
     private readonly accountService = inject(AccountService);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly campusOnlineService = inject(CampusOnlineService);
 
     protected readonly ProgrammingLanguage = ProgrammingLanguage;
     protected readonly IS_AT_LEAST_ADMIN = IS_AT_LEAST_ADMIN;
@@ -130,6 +136,11 @@ export class CourseUpdateComponent implements OnInit {
     atlasEnabled = false;
     ltiEnabled = false;
     isAthenaEnabled = false;
+    campusOnlineEnabled = false;
+
+    campusOnlineSuggestions = signal<CampusOnlineCourseDTO[]>([]);
+    selectedCampusOnlineCourse: CampusOnlineCourseDTO | undefined;
+    campusOnlineLinked = false;
 
     private courseStorageService = inject(CourseStorageService);
 
@@ -194,6 +205,8 @@ export class CourseUpdateComponent implements OnInit {
         this.atlasEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
         this.ltiEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_LTI);
         this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
+        this.campusOnlineEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_CAMPUS_ONLINE);
+        this.campusOnlineLinked = !!this.course.campusOnlineConfiguration?.campusOnlineCourseId;
 
         this.communicationEnabled = isCommunicationEnabled(this.course);
         this.messagingEnabled = isMessagingEnabled(this.course);
@@ -335,6 +348,8 @@ export class CourseUpdateComponent implements OnInit {
         // NOTE: prevent overriding this value accidentally
         // TODO: move presentationScore to gradingScale to avoid this
         course.presentationScore = this.course.presentationScore;
+        // Preserve campusOnlineConfiguration since it's not a form control
+        course.campusOnlineConfiguration = this.course.campusOnlineConfiguration;
 
         if (this.communicationEnabled && this.messagingEnabled) {
             course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
@@ -696,6 +711,59 @@ export class CourseUpdateComponent implements OnInit {
         unsetCourseIcon(this.course);
         this.croppedImage = undefined;
         this.courseForm.controls['courseIcon'].setValue(undefined);
+    }
+
+    searchCampusOnline(event: { query: string }) {
+        this.campusOnlineService.searchCourses(event.query, this.course.semester).subscribe({
+            next: (results) => this.campusOnlineSuggestions.set(results),
+            error: () => this.campusOnlineSuggestions.set([]),
+        });
+    }
+
+    onCampusOnlineCourseSelected(event: CampusOnlineCourseDTO) {
+        if (!this.course.id) {
+            // For new courses, store the config to be saved with the course
+            this.course.campusOnlineConfiguration = {
+                campusOnlineCourseId: event.campusOnlineCourseId,
+                responsibleInstructor: event.responsibleInstructor,
+                department: event.department,
+                studyProgram: event.studyProgram,
+            };
+            this.campusOnlineLinked = true;
+        } else {
+            // For existing courses, link via API
+            this.campusOnlineService
+                .linkCourse(this.course.id, {
+                    campusOnlineCourseId: event.campusOnlineCourseId,
+                    responsibleInstructor: event.responsibleInstructor,
+                    department: event.department,
+                    studyProgram: event.studyProgram,
+                })
+                .subscribe({
+                    next: (response) => {
+                        this.course.campusOnlineConfiguration = response.body?.campusOnlineConfiguration;
+                        this.campusOnlineLinked = true;
+                    },
+                    error: (err) => onError(this.alertService, err),
+                });
+        }
+    }
+
+    unlinkCampusOnline() {
+        if (this.course.id) {
+            this.campusOnlineService.unlinkCourse(this.course.id).subscribe({
+                next: () => {
+                    this.course.campusOnlineConfiguration = undefined;
+                    this.campusOnlineLinked = false;
+                    this.selectedCampusOnlineCourse = undefined;
+                },
+                error: (err) => onError(this.alertService, err),
+            });
+        } else {
+            this.course.campusOnlineConfiguration = undefined;
+            this.campusOnlineLinked = false;
+            this.selectedCampusOnlineCourse = undefined;
+        }
     }
 
     protected readonly FeatureToggle = FeatureToggle;

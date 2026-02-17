@@ -11,6 +11,15 @@
             <column name="campus_online_course_id" type="VARCHAR(50)">
                 <constraints nullable="false"/>
             </column>
+            <column name="responsible_instructor" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="department" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="study_program" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
         </createTable>
     </changeSet>
 

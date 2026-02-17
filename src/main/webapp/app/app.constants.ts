@@ -63,6 +63,8 @@ export const MODULE_FEATURE_SHARING = 'sharing';
 
 export const MODULE_FEATURE_LTI = 'lti';
 
+export const MODULE_FEATURE_CAMPUS_ONLINE = 'campusonline';
+
 export type ModuleFeature =
     | typeof MODULE_FEATURE_PASSKEY
     | typeof MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN
@@ -78,7 +80,8 @@ export type ModuleFeature =
     | typeof MODULE_FEATURE_TUTORIALGROUP
     | typeof MODULE_FEATURE_NEBULA
     | typeof MODULE_FEATURE_SHARING
-    | typeof MODULE_FEATURE_LTI;
+    | typeof MODULE_FEATURE_LTI
+    | typeof MODULE_FEATURE_CAMPUS_ONLINE;
 
 export const PROFILE_LOCALCI = 'localci';
 
