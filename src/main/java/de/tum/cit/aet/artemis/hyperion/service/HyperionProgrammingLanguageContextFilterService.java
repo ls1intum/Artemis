@@ -44,8 +44,12 @@ public class HyperionProgrammingLanguageContextFilterService {
 
     private final Map<ProgrammingLanguage, Strategy> strategies = new EnumMap<>(ProgrammingLanguage.class);
 
+    private static final Strategy DEFAULT_STRATEGY = new ExclusionStrategy(null, List.of());
+
+    private static final long maxFileSizeKb = 100;
+
     /**
-     * Default exclusions common to all languages (VCS, git, IDE configs, build outputs and etc).
+     * Default exclusions common to all languages (VCS, git, IDE configs, build outputs etc).
      */
     private static final List<String> GLOBAL_EXCLUSIONS = List.of("glob:**/.git/**", "glob:**/.idea/**", "glob:**/.vscode/**", "glob:**/.DS_Store", "glob:**/bin/**",
             "glob:**/obj/**", "glob:**/out/**", "glob:**/target/**", "glob:**/build/**", "glob:**/node_modules/**", "glob:**/__pycache__/**", "glob:**/*.class", "glob:**/*.jar",
@@ -54,23 +58,27 @@ public class HyperionProgrammingLanguageContextFilterService {
             "glob:**/Exercise-Details-*.json", "glob:**/problem-statement.md", "glob:**/Problem-Statement-*.md");
 
     /**
-     * Safety net of text-based extensions and filenames that are allowed to pass.
+     * Safety net of text-based extensions that are allowed to pass.
      */
-    private static final Set<String> SAFE_INCLUSIONS = Set.of(
+    private static final Set<String> SAFE_EXTENSIONS = Set.of(
             // Code
             ".java", ".py", ".c", ".h", ".cpp", ".hpp", ".cs", ".js", ".ts", ".html", ".css", ".scss", ".kt", ".swift", ".php", ".rb", ".go", ".rs", ".dart", ".asm", ".s", ".inc",
             ".vhd", ".vhdl", ".hs", ".ml", ".lua", ".pl", ".sh", ".bat", ".cmd", ".ps1",
             // Data / Config
             ".xml", ".json", ".yaml", ".yml", ".toml", ".properties", ".gradle", ".sql", ".ini", ".conf", ".config", ".env",
             // Docs
-            ".md", ".txt", ".csv", ".adoc", ".rst",
-            // Files
-            "Dockerfile", "Makefile", "Jenkinsfile");
+            ".md", ".txt", ".csv", ".adoc", ".rst");
+
+    /**
+     * Safety net of exact filenames that are allowed to pass.
+     */
+    private static final Set<String> SAFE_FILENAMES = Set.of("Dockerfile", "Makefile", "Jenkinsfile");
 
     public HyperionProgrammingLanguageContextFilterService() {
         register(new ExclusionStrategy(ProgrammingLanguage.JAVA, List.of("glob:**/gradlew*", "glob:**/mvnw*", "glob:**/.settings/**", "glob:**/.classpath", "glob:**/.project")));
 
-        register(new ExclusionStrategy(ProgrammingLanguage.PYTHON, List.of("glob:**/venv/**", "glob:**/.venv/**", "glob:**/env/**", "glob:**/*.pyc", "glob:**/*.egg-info/**")));
+        register(new ExclusionStrategy(ProgrammingLanguage.PYTHON,
+                List.of("glob:**/venv/**", "glob:**/.venv/**", "glob:**/env/**", "glob:**/.env/**", "glob:**/*.pyc", "glob:**/*.egg-info/**")));
 
         register(new ExclusionStrategy(ProgrammingLanguage.C, List.of("glob:**/cmake-build-*/**", "glob:**/CMakeCache.txt")));
 
@@ -110,11 +118,8 @@ public class HyperionProgrammingLanguageContextFilterService {
         if (files == null || files.isEmpty()) {
             return Map.of();
         }
-        Strategy strategy = strategies.get(language);
-        if (strategy == null) {
-            // Applies only global exclusions + safety net
-            strategy = new ExclusionStrategy(null, List.of());
-        }
+        Strategy strategy = strategies.getOrDefault(language, DEFAULT_STRATEGY);
+
         return strategy.filter(files);
     }
 
@@ -126,8 +131,6 @@ public class HyperionProgrammingLanguageContextFilterService {
         private final ProgrammingLanguage language;
 
         private final List<PathMatcher> excludeMatchers;
-
-        private final long maxFileSizeKb = 100;
 
         /**
          * Creates a strategy that merges global exclusions with language-specific ones.
@@ -162,13 +165,24 @@ public class HyperionProgrammingLanguageContextFilterService {
                     continue;
                 }
 
-                // 2. Binary Safety Net: Check Extension OR Filename
-                boolean isSafeText = SAFE_INCLUSIONS.stream().anyMatch(filePath::endsWith);
+                String fileName = pathObj.getFileName().toString();
+
+                // 2. Binary Safety Net
+                String extension = "";
+                int lastDotIndex = fileName.lastIndexOf('.');
+                // Extract extension (e.g., ".java") if a dot exists.
+                // for ".env", lastIndex is 0, so extension becomes ".env", which also works
+                if (lastDotIndex != -1) {
+                    extension = fileName.substring(lastDotIndex);
+                }
+                boolean isSafeText = SAFE_EXTENSIONS.contains(extension) || SAFE_FILENAMES.contains(fileName);
+
+                // 3. If not in the safety net, do a quick content check for non-text characters
                 if (!isSafeText) {
                     log.debug("Skipping potentially binary or unknown file: {}", filePath);
                     continue;
                 }
-                // 3. File Size check
+                // 4. File Size check
                 if (content != null && content.length() > maxFileSizeKb * 1024) {
                     continue;
                 }
