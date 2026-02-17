@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import dayjs from 'dayjs/esm';
@@ -209,7 +209,7 @@ export class ExerciseService {
             return of({} as EntitySummary);
         }
 
-        return this.http.get<ExerciseDeletionSummaryDTO>(`${this.resourceUrl}/${exercise.id!}/deletion-summary`, { observe: 'response' }).pipe(
+        return this.http.get<ExerciseDeletionSummaryDTO>(`${this.resourceUrl}/${exercise.id}/deletion-summary`, { observe: 'response' }).pipe(
             map((response) => {
                 const summary = response.body;
                 return summary ? this.createExerciseEntitySummary(summary, exercise.type!) : {};
