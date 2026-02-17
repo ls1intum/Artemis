@@ -103,6 +103,7 @@ artemis:
     programming-exercises-retrigger-submission-without-result-time: 0 0 2 * * * # every day at 2am
     continuous-plagiarism-control-trigger-time: 0 0 5 * * * # every day at 5am
     vulnerability-scan-time: 0 0 8 * * MON # every Monday at 8am
+    campus-online-enrollment-sync-time: 0 0 */6 * * * # every 6 hours
 
   data-export:
     days-between-data-exports: 14
@@ -123,6 +124,12 @@ artemis:
     enabled: false
     url: <your-pyris-url>
     secret-token: <your-secret>
+
+  campus-online:
+    enabled: false
+    base-url: ""           # e.g. https://campus.tum.de/tumonline
+    tokens: []             # API tokens with fallback support
+    default-org-unit-id: "" # for bulk course search
 
   weaviate:
     enabled: false

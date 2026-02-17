@@ -115,6 +115,10 @@ public class Course extends DomainObject {
     @JoinColumn(name = "online_course_configuration_id")
     private OnlineCourseConfiguration onlineCourseConfiguration;
 
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "campus_online_configuration_id")
+    private CampusOnlineConfiguration campusOnlineConfiguration;
+
     @Enumerated(EnumType.ORDINAL)
     @Column(name = "info_sharing_config", nullable = false)
     private CourseInformationSharingConfiguration courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING; // default value
@@ -478,6 +482,14 @@ public class Course extends DomainObject {
 
     public void setOnlineCourseConfiguration(OnlineCourseConfiguration onlineCourseConfiguration) {
         this.onlineCourseConfiguration = onlineCourseConfiguration;
+    }
+
+    public CampusOnlineConfiguration getCampusOnlineConfiguration() {
+        return Hibernate.isInitialized(campusOnlineConfiguration) ? campusOnlineConfiguration : null;
+    }
+
+    public void setCampusOnlineConfiguration(CampusOnlineConfiguration campusOnlineConfiguration) {
+        this.campusOnlineConfiguration = campusOnlineConfiguration;
     }
 
     public Integer getMaxComplaints() {

@@ -46,6 +46,14 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
 
     @Query("""
+            SELECT DISTINCT c
+            FROM Course c
+                JOIN FETCH c.campusOnlineConfiguration co
+            WHERE co IS NOT NULL
+            """)
+    Set<Course> findAllWithCampusOnlineConfiguration();
+
+    @Query("""
             SELECT DISTINCT course.instructorGroupName
             FROM Course course
             """)
