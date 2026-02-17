@@ -242,7 +242,7 @@ public class BuildJobContainerService {
         // container's
         // main process. The execution command can run concurrently with the main process. This setup with the ExecCreateCmdResponse gives us the ability to wait in code until the
         // command has finished before trying to extract the results.
-        executeDockerCommand(containerId, buildJobId, true, true, false, "bash", LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/script.sh");
+        executeDockerCommand(containerId, buildJobId, false, "bash", LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/script.sh");
     }
 
     /**
@@ -254,12 +254,12 @@ public class BuildJobContainerService {
      */
     public void moveResultsToSpecifiedDirectory(String containerId, List<String> sourcePaths, String destinationPath) {
         String command = "shopt -s globstar && mkdir -p " + destinationPath;
-        executeDockerCommand(containerId, null, true, true, true, "bash", "-c", command);
+        executeDockerCommand(containerId, null, true, "bash", "-c", command);
 
         for (String sourcePath : sourcePaths) {
             checkPath(sourcePath);
             command = "shopt -s globstar && mv " + sourcePath + " " + destinationPath;
-            executeDockerCommand(containerId, null, true, true, true, "bash", "-c", command);
+            executeDockerCommand(containerId, null, true, "bash", "-c", command);
         }
     }
 
@@ -528,7 +528,7 @@ public class BuildJobContainerService {
         // In case the test checkout path is the working directory, we only create up to the parent, as the working directory is created below.
         addDirectory(buildJobContainerId, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + (testCheckoutPath.isEmpty() ? "" : "/testing-dir"), true);
         // Make sure the working directory and all subdirectories are accessible
-        executeDockerCommand(buildJobContainerId, null, false, false, true, "chmod", "-R", "777", LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir");
+        executeDockerCommand(buildJobContainerId, null, true, "chmod", "-R", "777", LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir");
 
         // Copy the test repository to the container and move it to the test checkout path (may be the working directory)
         addAndPrepareDirectoryAndReplaceContent(buildJobContainerId, testRepositoryPath, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/" + testCheckoutPath,
@@ -552,8 +552,8 @@ public class BuildJobContainerService {
     }
 
     private void createScriptFile(String buildJobContainerId) {
-        executeDockerCommand(buildJobContainerId, null, false, false, true, "bash", "-c", "echo \"$SCRIPT\" > " + LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/script.sh");
-        executeDockerCommand(buildJobContainerId, null, false, false, true, "bash", "-c", "chmod +x " + LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/script.sh");
+        executeDockerCommand(buildJobContainerId, null, true, "bash", "-c", "echo \"$SCRIPT\" > " + LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/script.sh");
+        executeDockerCommand(buildJobContainerId, null, true, "bash", "-c", "chmod +x " + LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/script.sh");
     }
 
     /**
@@ -586,7 +586,7 @@ public class BuildJobContainerService {
      * @param newName     the destination directory path inside the container
      */
     private void insertRepositoryFiles(String containerId, String oldName, String newName) {
-        executeDockerCommand(containerId, null, false, false, true, "cp", "-r", oldName + (oldName.endsWith("/") ? "." : "/."), newName);
+        executeDockerCommand(containerId, null, true, "cp", "-r", oldName + (oldName.endsWith("/") ? "." : "/."), newName);
     }
 
     /**
@@ -598,7 +598,7 @@ public class BuildJobContainerService {
      */
     private void addDirectory(String containerId, String directoryName, boolean createParentsIfNecessary) {
         String[] command = createParentsIfNecessary ? new String[] { "mkdir", "-p", directoryName } : new String[] { "mkdir", directoryName };
-        executeDockerCommand(containerId, null, false, false, true, command);
+        executeDockerCommand(containerId, null, true, command);
     }
 
     /**
@@ -832,36 +832,30 @@ public class BuildJobContainerService {
     }
 
     /**
-     * Executes a command in a Docker container and optionally captures output.
+     * Executes a command in a Docker container and waits for it to complete.
      * <p>
-     * This method is the core Docker command execution mechanism. It supports:
-     * <ul>
-     * <li>Capturing stdout/stderr output to build logs</li>
-     * <li>Running commands as root user</li>
-     * <li>Synchronous or detached execution</li>
-     * </ul>
+     * This method is the core Docker command execution mechanism. It always attaches to stdout/stderr
+     * and runs synchronously (non-detached), ensuring each command completes before control returns.
+     * This prevents race conditions where subsequent commands or the build script could start before
+     * container setup operations (mkdir, cp, chmod) have finished.
      * <p>
-     * If {@code buildJobId} is provided and output is attached, command output is captured
-     * and stored in the build logs via {@link BuildLogsMap}.
+     * If {@code buildJobId} is provided, command output is captured and stored in the build logs
+     * via {@link BuildLogsMap}.
      *
-     * @param containerId  the Docker container ID
-     * @param buildJobId   the build job ID for logging (can be null if output capture not needed)
-     * @param attachStdout if true, capture stdout from the command
-     * @param attachStderr if true, capture stderr from the command
-     * @param forceRoot    if true, execute the command as root user
-     * @param command      the command and arguments to execute
+     * @param containerId the Docker container ID
+     * @param buildJobId  the build job ID for logging (can be null if output capture not needed)
+     * @param forceRoot   if true, execute the command as root user
+     * @param command     the command and arguments to execute
      * @throws LocalCIException if the command execution fails or is interrupted
      */
-    private void executeDockerCommand(String containerId, String buildJobId, boolean attachStdout, boolean attachStderr, boolean forceRoot, String... command) {
+    private void executeDockerCommand(String containerId, String buildJobId, boolean forceRoot, String... command) {
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
-        boolean detach = !attachStdout && !attachStderr;
-
-        try (var execCreateCommandTemp = dockerClient.execCreateCmd(containerId).withAttachStdout(attachStdout).withAttachStderr(attachStderr).withCmd(command)) {
+        try (var execCreateCommandTemp = dockerClient.execCreateCmd(containerId).withAttachStdout(true).withAttachStderr(true).withCmd(command)) {
             final var execCreateCommand = forceRoot ? execCreateCommandTemp.withUser("root") : execCreateCommandTemp;
             ExecCreateCmdResponse execCreateCmdResponse = execCreateCommand.exec();
             final CountDownLatch latch = new CountDownLatch(1);
             try {
-                dockerClient.execStartCmd(execCreateCmdResponse.getId()).withDetach(detach).exec(new ResultCallback.Adapter<>() {
+                dockerClient.execStartCmd(execCreateCmdResponse.getId()).withDetach(false).exec(new ResultCallback.Adapter<>() {
 
                     @Override
                     public void onNext(Frame item) {
