@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ComponentRef } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { StepperComponent } from './stepper.component';
 
 describe('StepperComponent', () => {
@@ -12,6 +14,11 @@ describe('StepperComponent', () => {
     let componentRef: ComponentRef<StepperComponent>;
 
     beforeEach(async () => {
+        TestBed.configureTestingModule({
+            imports: [StepperComponent],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+        });
+
         fixture = TestBed.createComponent(StepperComponent);
         component = fixture.componentInstance;
         componentRef = fixture.componentRef;

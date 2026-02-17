@@ -8,6 +8,7 @@
                 "close": "Schließen",
                 "getStarted": "Zur Tour",
                 "next": "Weiter",
+                "stepOf": "Schritt {{current}} von {{total}}",
                 "step1": {
                     "description": "Klicke auf Übungen, um fortzufahren."
                 },
@@ -23,7 +24,7 @@
                     "description": "Wähle unten einen vorgeschlagenen Prompt aus, um zu beginnen.",
                     "prompts": {
                         "explainConcept": "Erkläre ein Konzept",
-                        "explainConceptStarter": "Hilf mir, das Konzept von ... zu verstehen: ",
+                        "explainConceptStarter": "Hilf mir, das Konzept von ",
                         "quizTopic": "Frage mich zu einem Thema ab",
                         "quizTopicStarter": "Erstelle 5 Multiple-Choice-Fragen zum Thema ",
                         "studyTips": "Gib mir Lerntipps",

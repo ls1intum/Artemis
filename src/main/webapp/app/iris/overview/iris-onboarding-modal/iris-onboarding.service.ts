@@ -33,21 +33,33 @@ export class IrisOnboardingService {
      * @returns true if onboarding was completed, false otherwise
      */
     hasCompletedOnboarding(): boolean {
-        return localStorage.getItem(this.getStorageKey()) === 'true';
+        try {
+            return localStorage.getItem(this.getStorageKey()) === 'true';
+        } catch {
+            return false;
+        }
     }
 
     /**
      * Marks the onboarding as completed.
      */
     markOnboardingCompleted(): void {
-        localStorage.setItem(this.getStorageKey(), 'true');
+        try {
+            localStorage.setItem(this.getStorageKey(), 'true');
+        } catch {
+            // Storage unavailable; onboarding state is lost after the session.
+        }
     }
 
     /**
      * Resets the onboarding state (useful for testing).
      */
     resetOnboarding(): void {
-        localStorage.removeItem(this.getStorageKey());
+        try {
+            localStorage.removeItem(this.getStorageKey());
+        } catch {
+            // Storage unavailable; nothing to remove.
+        }
     }
 
     /**
@@ -55,6 +67,10 @@ export class IrisOnboardingService {
      * @returns Promise that resolves to an OnboardingResult or undefined if dismissed
      */
     async showOnboardingIfNeeded(hasAvailableExercises = true): Promise<OnboardingResult | undefined> {
+        if (!this.accountService.userIdentity()?.id) {
+            return undefined;
+        }
+
         if (!this.isDesktopViewport()) {
             return undefined;
         }

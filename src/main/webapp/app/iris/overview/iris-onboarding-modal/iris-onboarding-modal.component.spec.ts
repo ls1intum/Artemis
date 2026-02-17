@@ -5,6 +5,7 @@ import { Subject } from 'rxjs';
 import { NavigationEnd, Router } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -66,6 +67,7 @@ describe('IrisOnboardingModalComponent', () => {
                 MockComponent(StepperComponent),
                 MockComponent(FaIconComponent),
                 MockDirective(TranslateDirective),
+                MockDirective(CdkTrapFocus),
                 MockPipe(ArtemisTranslatePipe),
             ],
             providers: [
@@ -159,7 +161,6 @@ describe('IrisOnboardingModalComponent', () => {
             ['explainConcept', 'artemisApp.iris.onboarding.step4.prompts.explainConceptStarter'],
             ['quizTopic', 'artemisApp.iris.onboarding.step4.prompts.quizTopicStarter'],
             ['studyTips', 'artemisApp.iris.onboarding.step4.prompts.studyTipsStarter'],
-            ['unknown', undefined],
         ])('should close modal with correct promptKey for %s', (promptType, expectedKey) => {
             const closeSpy = vi.spyOn(activeModal, 'close');
             component.selectPrompt(promptType);
@@ -167,6 +168,12 @@ describe('IrisOnboardingModalComponent', () => {
                 action: 'promptSelected',
                 promptKey: expectedKey,
             });
+        });
+
+        it('should close modal with finish action for unknown prompt type', () => {
+            const closeSpy = vi.spyOn(activeModal, 'close');
+            component.selectPrompt('unknown');
+            expect(closeSpy).toHaveBeenCalledWith({ action: 'finish' });
         });
     });
 
