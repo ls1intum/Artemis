@@ -2,8 +2,10 @@
     transition: all 0.3s;
     opacity: 0;
     overflow: hidden;
-    background: var(--iris-client-chat-background);
-    border-top: 0 solid var(--border-color);
+    background: var(--iris-secondary-background);
+    border-radius: 0.25rem;
+    width: min(800px, 100%);
+    margin-inline: auto;
 
     .display {
         white-space: nowrap;
@@ -14,7 +16,7 @@
         padding: 0 5px;
         display: flex;
         align-items: center;
-        gap: 5px;
+        gap: 8px;
 
         &.active {
             max-height: 1.5lh;

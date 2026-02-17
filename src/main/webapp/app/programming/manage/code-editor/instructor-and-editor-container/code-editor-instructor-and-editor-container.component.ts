@@ -1,4 +1,5 @@
-import { Component, ViewChild, computed, inject, signal } from '@angular/core';
+import { Component, TemplateRef, ViewChild, computed, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
@@ -77,6 +78,7 @@ const SEVERITY_ORDER = {
     ],
 })
 export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent {
+    @ViewChild('codeGenerationRunningModal', { static: true }) codeGenerationRunningModal: TemplateRef<unknown>;
     @ViewChild(UpdatingResultComponent, { static: false }) resultComp: UpdatingResultComponent;
     @ViewChild(ProgrammingExerciseEditableInstructionComponent, { static: false }) editableInstructions: ProgrammingExerciseEditableInstructionComponent;
 
@@ -121,6 +123,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     isGeneratingCode = signal(false);
     private jobSubscription?: Subscription;
     private jobTimeoutHandle?: number;
+    private activeJobId?: string;
+    private statusSubscription?: Subscription;
+    private restoreRequestId = 0;
 
     /**
      * Starts Hyperion code generation after user confirmation.
@@ -160,8 +165,12 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 }
                 this.subscribeToJob(res.jobId);
             },
-            error: (err) => {
+            error: (error: HttpErrorResponse) => {
                 this.isGeneratingCode.set(false);
+                if (this.isCodeGenerationAlreadyRunning(error)) {
+                    this.openCodeGenerationRunningModal();
+                    return;
+                }
                 this.codeGenAlertService.addAlert({
                     type: AlertType.DANGER,
                     translationKey: 'artemisApp.programmingExercise.codeGeneration.error',
@@ -171,21 +180,82 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         });
     }
 
+    private isCodeGenerationAlreadyRunning(error: HttpErrorResponse): boolean {
+        if (!error || error.status !== 409) {
+            return false;
+        }
+        const payload = typeof error.error === 'object' && error.error !== null ? (error.error as Record<string, unknown>) : {};
+        const errorKey =
+            payload['errorKey'] ?? payload['X-artemisApp-error'] ?? payload['message'] ?? error.headers?.get('X-artemisApp-error') ?? error.headers?.get('X-artemisApp-message');
+        return errorKey === 'codeGenerationRunning' || errorKey === 'error.codeGenerationRunning';
+    }
+
+    private openCodeGenerationRunningModal(): void {
+        this.modalService.open(this.codeGenerationRunningModal, { backdrop: 'static', keyboard: false, size: 'md' });
+    }
+
+    protected override applyDomainChange(domainType: any, domainValue: any) {
+        super.applyDomainChange(domainType, domainValue);
+        this.restoreCodeGenerationState();
+    }
+
+    override ngOnDestroy() {
+        this.clearJobSubscription(true);
+        this.statusSubscription?.unsubscribe();
+        super.ngOnDestroy();
+    }
+
+    private restoreCodeGenerationState() {
+        this.restoreRequestId += 1;
+        this.statusSubscription?.unsubscribe();
+        this.statusSubscription = undefined;
+
+        if (!this.hyperionEnabled || !this.exercise?.id) {
+            return;
+        }
+        if (this.isGeneratingCode()) {
+            return;
+        }
+        if (this.selectedRepository !== RepositoryType.TEMPLATE && this.selectedRepository !== RepositoryType.SOLUTION && this.selectedRepository !== RepositoryType.TESTS) {
+            return;
+        }
+        const repositoryType = this.selectedRepository as CodeGenerationRequestDTO.RepositoryTypeEnum;
+        const requestId = this.restoreRequestId;
+        this.statusSubscription = this.hyperionCodeGenerationApi.generateCode(this.exercise.id, { repositoryType, checkOnly: true }).subscribe({
+            next: (res) => {
+                if (requestId !== this.restoreRequestId) {
+                    return;
+                }
+                if (res?.jobId) {
+                    this.subscribeToJob(res.jobId);
+                } else {
+                    this.clearJobSubscription(true);
+                }
+            },
+            error: () => {
+                if (requestId !== this.restoreRequestId) {
+                    return;
+                }
+                this.clearJobSubscription(true);
+            },
+        });
+    }
+
     /**
      * Subscribes to job updates, refreshes files on updates, and stops spinner on terminal events.
      * @param jobId job identifier
      */
     private subscribeToJob(jobId: string) {
+        if (this.activeJobId === jobId && this.jobSubscription) {
+            return;
+        }
+        this.clearJobSubscription(false);
+        this.activeJobId = jobId;
         const cleanup = () => {
-            this.isGeneratingCode.set(false);
-            this.hyperionWs.unsubscribeFromJob(jobId);
-            this.jobSubscription?.unsubscribe();
-            if (this.jobTimeoutHandle) {
-                clearTimeout(this.jobTimeoutHandle);
-                this.jobTimeoutHandle = undefined;
-            }
+            this.clearJobSubscription(true);
         };
 
+        this.isGeneratingCode.set(true);
         this.jobSubscription = this.hyperionWs.subscribeToJob(jobId).subscribe({
             next: (event) => {
                 switch (event.type) {
@@ -256,6 +326,22 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 });
             }
         }, 1_200_000);
+    }
+
+    private clearJobSubscription(stopSpinner: boolean) {
+        if (stopSpinner) {
+            this.isGeneratingCode.set(false);
+        }
+        if (this.activeJobId) {
+            this.hyperionWs.unsubscribeFromJob(this.activeJobId);
+            this.activeJobId = undefined;
+        }
+        this.jobSubscription?.unsubscribe();
+        this.jobSubscription = undefined;
+        if (this.jobTimeoutHandle) {
+            clearTimeout(this.jobTimeoutHandle);
+            this.jobTimeoutHandle = undefined;
+        }
     }
 
     /**
