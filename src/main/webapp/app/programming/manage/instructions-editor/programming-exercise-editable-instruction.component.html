@@ -17,8 +17,14 @@
             [showEditButton]="showPreview"
             [consistencyIssues]="consistencyIssues()"
             [enableExerciseReviewComments]="enableExerciseReviewComments()"
+            [reviewCommentThreads]="reviewCommentThreads()"
             [showLocationWarning]="unsavedChangesValue"
             (markdownChange)="updateProblemStatement($event)"
+            (onSubmitReviewComment)="onSubmitReviewComment.emit($event)"
+            (onDeleteReviewComment)="onDeleteReviewComment.emit($event)"
+            (onReplyReviewComment)="onReplyReviewComment.emit($event)"
+            (onUpdateReviewComment)="onUpdateReviewComment.emit($event)"
+            (onToggleResolveReviewThread)="onToggleResolveReviewThread.emit($event)"
         >
             <!-- Custom preview using ProgrammingExerciseInstructionComponent for proper rendering
                  of programming-specific syntax (task markers, PlantUML, test case status, etc.).

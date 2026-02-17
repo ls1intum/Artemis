@@ -1,38 +1,39 @@
 import { ComponentRef, ViewContainerRef } from '@angular/core';
-import { ReviewCommentFacade } from 'app/exercise/review/review-comment-facade.service';
-import { ReviewCommentDraftLocation } from 'app/exercise/review/review-comment.store';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { ReviewCommentDraftWidgetComponent } from 'app/exercise/review/review-comment-draft-widget/review-comment-draft-widget.component';
 import { ReviewCommentThreadWidgetComponent } from 'app/exercise/review/review-comment-thread-widget/review-comment-thread-widget.component';
 import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
-
-type ReviewCommentDraftPayload = { lineNumber: number; fileName: string };
+import { CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
 
 export type ReviewCommentWidgetManagerConfig = {
     hoverButtonClass: string;
     shouldShowHoverButton: () => boolean;
     canSubmit: () => boolean;
     getDraftFileName: () => string | undefined;
-    buildDraftLocation: (payload: ReviewCommentDraftPayload) => ReviewCommentDraftLocation | undefined;
+    getThreads: () => CommentThread[];
     filterThread: (thread: CommentThread) => boolean;
     getThreadLine: (thread: CommentThread) => number;
+    onAdd: (payload: { lineNumber: number; fileName: string }) => void;
+    onSubmit: (payload: { lineNumber: number; fileName: string; initialComment: CreateComment }) => void;
+    onDelete: (commentId: number) => void;
+    onReply: (payload: { threadId: number; comment: CreateComment }) => void;
+    onUpdate: (payload: { commentId: number; content: UpdateCommentContent }) => void;
+    onToggleResolved: (payload: { threadId: number; resolved: boolean }) => void;
     showLocationWarning: () => boolean;
 };
 
 export class ReviewCommentWidgetManager {
     private readonly draftLinesByFile: Map<string, Set<number>> = new Map();
     private readonly draftWidgetRefs: Map<string, ComponentRef<ReviewCommentDraftWidgetComponent>> = new Map();
+    private readonly pendingDraftSubmissions: Set<string> = new Set();
     private readonly threadWidgetRefs: Map<number, ComponentRef<ReviewCommentThreadWidgetComponent>> = new Map();
     private readonly collapseState: Map<number, boolean> = new Map();
 
     constructor(
         private readonly editor: MonacoEditorComponent,
         private readonly viewContainerRef: ViewContainerRef,
-        private readonly reviewCommentFacade: ReviewCommentFacade,
         private readonly config: ReviewCommentWidgetManagerConfig,
-    ) {
-        this.editor.onDidScrollChange(() => this.hideThreadMenus());
-    }
+    ) {}
 
     /**
      * Updates the hover button visibility and callback based on configuration.
@@ -57,16 +58,8 @@ export class ReviewCommentWidgetManager {
      * Pushes the latest submit availability to all draft widgets.
      */
     updateDraftInputs(): void {
-        this.synchronizeDraftWidgetsWithState();
         const canSubmit = this.config.canSubmit();
-        this.draftWidgetRefs.forEach((ref, widgetKey) => {
-            const { fileName, line } = this.parseDraftKey(widgetKey);
-            const location = this.buildDraftLocation({ lineNumber: line + 1, fileName });
-            if (!location) {
-                this.removeDraft(fileName, line, false);
-                return;
-            }
-            ref.setInput('location', location);
+        this.draftWidgetRefs.forEach((ref) => {
             ref.setInput('canSubmit', canSubmit);
         });
     }
@@ -74,17 +67,11 @@ export class ReviewCommentWidgetManager {
     /**
      * Updates thread inputs in-place when widgets already exist.
      *
+     * @param threads The latest thread data to apply to widgets.
      * @returns True if all widgets were updated, false if any were missing.
      */
-    updateThreadInputs(): boolean {
-        const threads = this.reviewCommentFacade.threads().filter((thread) => this.config.filterThread(thread));
-        const threadIds = new Set<number>(threads.map((thread) => thread.id));
+    updateThreadInputs(threads: CommentThread[]): boolean {
         let updated = true;
-        for (const [threadId, ref] of this.threadWidgetRefs.entries()) {
-            if (!threadIds.has(threadId)) {
-                this.disposeThreadWidget(threadId, ref);
-            }
-        }
         for (const thread of threads) {
             const widgetRef = this.threadWidgetRefs.get(thread.id);
             if (!widgetRef) {
@@ -115,7 +102,6 @@ export class ReviewCommentWidgetManager {
     clearDrafts(): void {
         for (const [fileName, lines] of this.draftLinesByFile.entries()) {
             for (const line of lines) {
-                this.cancelDraft({ lineNumber: line + 1, fileName });
                 this.editor.disposeWidgetsByPrefix(this.buildDraftWidgetId(fileName, line));
             }
         }
@@ -134,10 +120,6 @@ export class ReviewCommentWidgetManager {
             return;
         }
         const lineNumberZeroBased = lineNumber - 1;
-        const location = this.buildDraftLocation({ lineNumber, fileName });
-        if (!location) {
-            return;
-        }
         const existing = this.draftLinesByFile.get(fileName) ?? new Set<number>();
         if (!existing.has(lineNumberZeroBased)) {
             existing.add(lineNumberZeroBased);
@@ -146,26 +128,22 @@ export class ReviewCommentWidgetManager {
         const widgetKey = this.getDraftKey(fileName, lineNumberZeroBased);
         let widgetRef = this.draftWidgetRefs.get(widgetKey);
         if (!widgetRef) {
-            const createdWidgetRef = this.viewContainerRef.createComponent(ReviewCommentDraftWidgetComponent);
-            createdWidgetRef.instance.onCancel.subscribe(() => this.removeDraft(fileName, lineNumberZeroBased, false));
-            this.draftWidgetRefs.set(widgetKey, createdWidgetRef);
-            widgetRef = createdWidgetRef;
+            widgetRef = this.viewContainerRef.createComponent(ReviewCommentDraftWidgetComponent);
+            widgetRef.instance.onSubmit.subscribe((text) => this.submitDraft(fileName, lineNumberZeroBased, text));
+            widgetRef.instance.onCancel.subscribe(() => this.removeDraft(fileName, lineNumberZeroBased));
+            this.draftWidgetRefs.set(widgetKey, widgetRef);
         }
-        if (!widgetRef) {
-            return;
-        }
-        widgetRef.setInput('location', location);
         widgetRef.setInput('canSubmit', this.config.canSubmit());
         // Re-adding the same draft line must replace the existing Monaco widget to avoid stacked view zones.
         this.editor.disposeWidgetsByPrefix(this.buildDraftWidgetId(fileName, lineNumberZeroBased));
         this.editor.addLineWidget(lineNumber, this.buildDraftWidgetId(fileName, lineNumberZeroBased), widgetRef.location.nativeElement);
+        this.config.onAdd({ lineNumber, fileName });
     }
 
     /**
      * Renders draft widgets for the active file based on tracked draft lines.
      */
     private addDraftWidgets(): void {
-        this.synchronizeDraftWidgetsWithState();
         const activeFileName = this.config.getDraftFileName();
         if (!activeFileName) {
             return;
@@ -175,28 +153,18 @@ export class ReviewCommentWidgetManager {
             return;
         }
         for (const line of lines) {
-            const lineNumber = line + 1;
-            const location = this.buildDraftLocation({ lineNumber, fileName: activeFileName });
-            if (!location) {
-                this.removeDraft(activeFileName, line, false);
-                continue;
-            }
             const widgetKey = this.getDraftKey(activeFileName, line);
             let widgetRef = this.draftWidgetRefs.get(widgetKey);
             if (!widgetRef) {
-                const createdWidgetRef = this.viewContainerRef.createComponent(ReviewCommentDraftWidgetComponent);
-                createdWidgetRef.instance.onCancel.subscribe(() => this.removeDraft(activeFileName, line, false));
-                this.draftWidgetRefs.set(widgetKey, createdWidgetRef);
-                widgetRef = createdWidgetRef;
+                widgetRef = this.viewContainerRef.createComponent(ReviewCommentDraftWidgetComponent);
+                widgetRef.instance.onSubmit.subscribe((text) => this.submitDraft(activeFileName, line, text));
+                widgetRef.instance.onCancel.subscribe(() => this.removeDraft(activeFileName, line));
+                this.draftWidgetRefs.set(widgetKey, widgetRef);
             }
-            if (!widgetRef) {
-                continue;
-            }
-            widgetRef.setInput('location', location);
             widgetRef.setInput('canSubmit', this.config.canSubmit());
             // Keep rendering idempotent when renderWidgets() runs repeatedly for the same draft.
             this.editor.disposeWidgetsByPrefix(this.buildDraftWidgetId(activeFileName, line));
-            this.editor.addLineWidget(lineNumber, this.buildDraftWidgetId(activeFileName, line), widgetRef.location.nativeElement);
+            this.editor.addLineWidget(line + 1, this.buildDraftWidgetId(activeFileName, line), widgetRef.location.nativeElement);
         }
     }
 
@@ -204,14 +172,16 @@ export class ReviewCommentWidgetManager {
      * Renders thread widgets, disposing stale ones and preserving collapse state.
      */
     private addSavedWidgets(): void {
-        const threads = this.reviewCommentFacade.threads().filter((thread) => this.config.filterThread(thread));
+        const threads = this.config.getThreads().filter((thread) => this.config.filterThread(thread));
         const threadIds = new Set<number>();
         for (const thread of threads) {
             threadIds.add(thread.id);
         }
         for (const [threadId, ref] of this.threadWidgetRefs.entries()) {
             if (!threadIds.has(threadId)) {
-                this.disposeThreadWidget(threadId, ref);
+                this.editor.disposeWidgetsByPrefix(this.buildThreadWidgetId(threadId));
+                ref.destroy();
+                this.threadWidgetRefs.delete(threadId);
             }
         }
         for (const thread of threads) {
@@ -220,27 +190,39 @@ export class ReviewCommentWidgetManager {
             const showLocationWarning = this.config.showLocationWarning();
             let widgetRef = this.threadWidgetRefs.get(thread.id);
             if (!widgetRef) {
-                const createdWidgetRef = this.viewContainerRef.createComponent(ReviewCommentThreadWidgetComponent);
-                createdWidgetRef.setInput('thread', thread);
-                createdWidgetRef.setInput('showLocationWarning', showLocationWarning);
+                widgetRef = this.viewContainerRef.createComponent(ReviewCommentThreadWidgetComponent);
+                widgetRef.setInput('thread', thread);
+                widgetRef.setInput('showLocationWarning', showLocationWarning);
                 if (!this.collapseState.has(thread.id)) {
                     const shouldCollapse = thread.resolved || showLocationWarning;
                     this.collapseState.set(thread.id, shouldCollapse);
                 }
-                createdWidgetRef.setInput('initialCollapsed', this.collapseState.get(thread.id) ?? false);
-                createdWidgetRef.instance.onToggleCollapse.subscribe((collapsed) => this.collapseState.set(thread.id, collapsed));
-                this.threadWidgetRefs.set(thread.id, createdWidgetRef);
-                widgetRef = createdWidgetRef;
+                widgetRef.setInput('initialCollapsed', this.collapseState.get(thread.id) ?? false);
+                widgetRef.instance.onDelete.subscribe((commentId) => this.config.onDelete(commentId));
+                widgetRef.instance.onReply.subscribe((comment) => this.config.onReply({ threadId: thread.id, comment }));
+                widgetRef.instance.onUpdate.subscribe((event) => this.config.onUpdate(event));
+                widgetRef.instance.onToggleResolved.subscribe((resolved) => this.config.onToggleResolved({ threadId: thread.id, resolved }));
+                widgetRef.instance.onToggleCollapse.subscribe((collapsed) => this.collapseState.set(thread.id, collapsed));
+                this.threadWidgetRefs.set(thread.id, widgetRef);
             } else {
                 widgetRef.setInput('thread', thread);
                 widgetRef.setInput('showLocationWarning', showLocationWarning);
             }
-            if (!widgetRef) {
-                continue;
-            }
             this.editor.disposeWidgetsByPrefix(widgetId);
             this.editor.addLineWidget(line + 1, widgetId, widgetRef.location.nativeElement);
         }
+    }
+
+    /**
+     * Emits the draft submit callback and removes the draft widget.
+     *
+     * @param fileName The file where the draft was created.
+     * @param line The zero-based line index of the draft.
+     * @param text The submitted draft text.
+     */
+    private submitDraft(fileName: string, line: number, text: string): void {
+        this.config.onSubmit({ lineNumber: line + 1, fileName, initialComment: { contentType: 'USER', text } });
+        this.removeDraft(fileName, line);
     }
 
     /**
@@ -249,10 +231,7 @@ export class ReviewCommentWidgetManager {
      * @param fileName The file where the draft was created.
      * @param line The zero-based line index of the draft.
      */
-    private removeDraft(fileName: string, line: number, notifyCancel: boolean = true): void {
-        if (notifyCancel) {
-            this.cancelDraft({ lineNumber: line + 1, fileName });
-        }
+    private removeDraft(fileName: string, line: number): void {
         const existing = this.draftLinesByFile.get(fileName);
         if (existing) {
             existing.delete(line);
@@ -284,81 +263,6 @@ export class ReviewCommentWidgetManager {
             ref.destroy();
         });
         this.threadWidgetRefs.clear();
-        this.collapseState.clear();
-    }
-
-    /**
-     * Disposes a specific thread widget and clears associated local state.
-     */
-    private disposeThreadWidget(threadId: number, ref?: ComponentRef<ReviewCommentThreadWidgetComponent>): void {
-        this.editor.disposeWidgetsByPrefix(this.buildThreadWidgetId(threadId));
-        (ref ?? this.threadWidgetRefs.get(threadId))?.destroy();
-        this.threadWidgetRefs.delete(threadId);
-        this.collapseState.delete(threadId);
-    }
-
-    /**
-     * Hides all open thread action menus, e.g. when editor scrolling changes widget positions.
-     */
-    private hideThreadMenus(): void {
-        this.threadWidgetRefs.forEach((ref) => {
-            ref.instance.hideCommentMenus();
-        });
-    }
-
-    /**
-     * Removes draft widgets that no longer exist in external state.
-     */
-    private synchronizeDraftWidgetsWithState(): void {
-        for (const [fileName, lines] of this.draftLinesByFile.entries()) {
-            for (const line of [...lines]) {
-                const payload = { lineNumber: line + 1, fileName };
-                if (!this.hasDraft(payload)) {
-                    this.removeDraft(fileName, line, false);
-                }
-            }
-        }
-    }
-
-    /**
-     * Builds a store draft location from manager payload.
-     */
-    private buildDraftLocation(payload: ReviewCommentDraftPayload): ReviewCommentDraftLocation | undefined {
-        return this.config.buildDraftLocation(payload);
-    }
-
-    /**
-     * Checks whether a draft exists for the payload location.
-     */
-    private hasDraft(payload: ReviewCommentDraftPayload): boolean {
-        const location = this.buildDraftLocation(payload);
-        return location ? this.reviewCommentFacade.hasDraft(location) : false;
-    }
-
-    /**
-     * Removes draft text for the payload location.
-     */
-    private cancelDraft(payload: ReviewCommentDraftPayload): void {
-        const location = this.buildDraftLocation(payload);
-        if (location) {
-            this.reviewCommentFacade.removeDraft(location);
-        }
-    }
-
-    /**
-     * Parses a draft key back into file/line information.
-     *
-     * @param key The internal draft key.
-     * @returns Parsed file and zero-based line.
-     */
-    private parseDraftKey(key: string): { fileName: string; line: number } {
-        const separatorIndex = key.lastIndexOf(':');
-        if (separatorIndex < 0) {
-            return { fileName: key, line: 0 };
-        }
-        const fileName = key.substring(0, separatorIndex);
-        const line = Number(key.substring(separatorIndex + 1));
-        return { fileName, line: Number.isFinite(line) ? line : 0 };
     }
 
     /**

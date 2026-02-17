@@ -90,13 +90,13 @@
                         </p-menu>
                     </div>
                 </div>
-                @if (editingCommentId() === commentVm.comment.id) {
-                    <textarea class="monaco-review-comment-textarea" [ngModel]="editText()" (ngModelChange)="onEditDraftChanged($event)"></textarea>
+                @if (editingCommentId === commentVm.comment.id) {
+                    <textarea class="monaco-review-comment-textarea" [(ngModel)]="editText"></textarea>
                     <div class="monaco-review-comment-actions">
                         <button pButton type="button" severity="secondary" size="small" (click)="cancelEditing()">
                             {{ 'artemisApp.review.editCancel' | artemisTranslate }}
                         </button>
-                        <button pButton type="button" size="small" [disabled]="isEditSubmitting()" (click)="submitEdit()">
+                        <button pButton type="button" size="small" (click)="saveEditing()">
                             {{ 'artemisApp.review.editSubmit' | artemisTranslate }}
                         </button>
                     </div>
@@ -110,19 +110,18 @@
             <textarea
                 class="monaco-review-comment-textarea monaco-review-comment-textarea--compact"
                 [placeholder]="'artemisApp.review.replyPlaceholder' | artemisTranslate"
-                [ngModel]="replyText()"
-                (ngModelChange)="onReplyDraftChanged($event)"
+                [(ngModel)]="replyText"
                 rows="1"
             ></textarea>
             <div class="monaco-review-comment-actions">
-                <button pButton type="button" severity="secondary" size="small" [disabled]="isResolveSubmitting()" (click)="toggleResolved()">
+                <button pButton type="button" severity="secondary" size="small" (click)="toggleResolved()">
                     @if (thread()?.resolved) {
                         {{ 'artemisApp.review.unresolveThread' | artemisTranslate }}
                     } @else {
                         {{ 'artemisApp.review.resolveThread' | artemisTranslate }}
                     }
                 </button>
-                <button pButton type="button" size="small" [disabled]="isReplySubmitting()" (click)="submitReply()">
+                <button pButton type="button" size="small" (click)="submitReply()">
                     {{ 'artemisApp.review.replySubmit' | artemisTranslate }}
                 </button>
             </div>

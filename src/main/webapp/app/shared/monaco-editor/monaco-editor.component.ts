@@ -134,10 +134,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         return this._editor.onDidChangeModelContent(listener);
     }
 
-    public onDidScrollChange(listener: (event: monaco.IScrollEvent) => void): monaco.IDisposable {
-        return this._editor.onDidScrollChange(listener);
-    }
-
     public getModel() {
         return this._editor.getModel();
     }

@@ -1,6 +1,4 @@
-import { ChangeDetectionStrategy, Component, ViewEncapsulation, computed, effect, inject, input, output } from '@angular/core';
-import { ReviewCommentFacade } from 'app/exercise/review/review-comment-facade.service';
-import { ReviewCommentDraftLocation } from 'app/exercise/review/review-comment.store';
+import { ChangeDetectionStrategy, Component, ViewEncapsulation, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonDirective } from 'primeng/button';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -15,73 +13,30 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [FormsModule, ButtonDirective, ArtemisTranslatePipe],
 })
 export class ReviewCommentDraftWidgetComponent {
-    private readonly reviewCommentFacade = inject(ReviewCommentFacade);
-
-    readonly location = input<ReviewCommentDraftLocation>();
     readonly canSubmit = input<boolean>(true);
-    readonly text = computed(() => {
-        const location = this.location();
-        return location ? this.reviewCommentFacade.getDraftText(location) : '';
-    });
-    readonly isSubmitting = computed(() => {
-        const location = this.location();
-        return location ? this.reviewCommentFacade.isDraftSubmitting(location) : false;
-    });
+    readonly onSubmit = output<string>();
     readonly onCancel = output<void>();
 
-    constructor() {
-        effect(() => {
-            const location = this.location();
-            if (location) {
-                this.reviewCommentFacade.ensureDraft(location);
-            }
-        });
-    }
+    text = '';
 
     /**
-     * Submits a new comment thread from the current draft location.
+     * Emits the trimmed text when submission is allowed and non-empty.
      */
-    submitDraft(): void {
-        const location = this.location();
-        if (!location) {
+    submit(): void {
+        if (!this.canSubmit()) {
             return;
         }
-        if (!this.canSubmit() || this.reviewCommentFacade.isDraftSubmitting(location)) {
+        const trimmed = this.text.trim();
+        if (!trimmed) {
             return;
         }
-        const text = this.reviewCommentFacade.getDraftText(location).trim();
-        if (!text) {
-            return;
-        }
-        this.reviewCommentFacade.submitCreateThread({
-            targetType: location.targetType,
-            initialLineNumber: location.lineNumber,
-            initialFilePath: location.filePath,
-            auxiliaryRepositoryId: location.auxiliaryRepositoryId,
-            initialComment: { contentType: 'USER', text },
-        });
-    }
-
-    /**
-     * Stores draft text changes in the review-comment store.
-     *
-     * @param text The updated draft text.
-     */
-    onDraftTextChanged(text: string): void {
-        const location = this.location();
-        if (location) {
-            this.reviewCommentFacade.setDraftText(location, text);
-        }
+        this.onSubmit.emit(trimmed);
     }
 
     /**
      * Cancels the draft and notifies the parent component.
      */
     cancel(): void {
-        const location = this.location();
-        if (location) {
-            this.reviewCommentFacade.removeDraft(location);
-        }
         this.onCancel.emit();
     }
 }

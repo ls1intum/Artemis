@@ -27,9 +27,15 @@
             [allowHiddenFiles]="true"
             [consistencyIssues]="consistencyIssues()"
             [enableExerciseReviewComments]="true"
+            [reviewCommentThreads]="reviewCommentThreads()"
             (onFileLoad)="onFileLoad($event)"
             (onEditorLoaded)="onEditorLoaded()"
             (onCommit)="onCommit()"
+            (onSubmitReviewComment)="onSubmitReviewComment($event)"
+            (onDeleteReviewComment)="onDeleteReviewComment($event)"
+            (onReplyReviewComment)="onReplyReviewComment($event)"
+            (onUpdateReviewComment)="onUpdateReviewComment($event)"
+            (onToggleResolveReviewThread)="onToggleResolveReviewThread($event)"
         >
             <div editorTitle>
                 <span>{{ exercise?.title }}</span>
@@ -288,8 +294,14 @@
                 [showPreview]="false"
                 [consistencyIssues]="consistencyIssues()"
                 [enableExerciseReviewComments]="true"
+                [reviewCommentThreads]="reviewCommentThreads()"
                 class="instructions-wrapper__content card-body p-0"
                 (instructionChange)="onInstructionChanged($event)"
+                (onSubmitReviewComment)="onSubmitReviewComment($event)"
+                (onDeleteReviewComment)="onDeleteReviewComment($event)"
+                (onReplyReviewComment)="onReplyReviewComment($event)"
+                (onUpdateReviewComment)="onUpdateReviewComment($event)"
+                (onToggleResolveReviewThread)="onToggleResolveReviewThread($event)"
                 (onProblemStatementSaved)="onProblemStatementSaved()"
             />
             <jhi-programming-exercise-instructions

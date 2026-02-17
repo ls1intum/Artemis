@@ -5,44 +5,21 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { ReviewCommentFacade } from 'app/exercise/review/review-comment-facade.service';
 
 describe('ReviewCommentThreadWidgetComponent', () => {
     setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ReviewCommentThreadWidgetComponent>;
     let comp: ReviewCommentThreadWidgetComponent;
-    let facade: any;
 
     beforeEach(async () => {
-        facade = {
-            isDeleteSubmitting: vi.fn(() => false),
-            deleteComment: vi.fn(),
-            startEditDraft: vi.fn(),
-            cancelEditDraft: vi.fn(),
-            getEditDraft: vi.fn(() => 'edited text'),
-            setEditDraft: vi.fn(),
-            isEditSubmitting: vi.fn(() => false),
-            updateComment: vi.fn(),
-            isReplySubmitting: vi.fn(() => false),
-            getReplyDraft: vi.fn(() => 'reply text'),
-            setReplyDraft: vi.fn(),
-            createReply: vi.fn(),
-            isResolveSubmitting: vi.fn(() => false),
-            toggleResolved: vi.fn(),
-        };
-
         await TestBed.configureTestingModule({
             imports: [ReviewCommentThreadWidgetComponent],
-            providers: [
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: ReviewCommentFacade, useValue: facade },
-            ],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ReviewCommentThreadWidgetComponent);
         comp = fixture.componentInstance;
         fixture.componentRef.setInput('thread', { id: 1, resolved: false, comments: [] } as any);
-        fixture.detectChanges();
     });
 
     afterEach(() => {
@@ -56,94 +33,85 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         expect(comp.showThreadBody).toBe(false);
     });
 
-    it('should delete comment when no delete operation is pending', () => {
+    it('should emit delete on deleteComment', () => {
+        const deleteSpy = vi.fn();
+        comp.onDelete.subscribe(deleteSpy);
+
         comp.deleteComment(5);
-        expect(facade.deleteComment).toHaveBeenCalledWith(5);
+        expect(deleteSpy).toHaveBeenCalledWith(5);
     });
 
-    it('should not delete comment when delete operation is pending', () => {
-        facade.isDeleteSubmitting.mockReturnValue(true);
-        comp.deleteComment(5);
-        expect(facade.deleteComment).not.toHaveBeenCalled();
+    it('should emit update on saveEditing and clear editing state', () => {
+        const updateSpy = vi.fn();
+        comp.onUpdate.subscribe(updateSpy);
+
+        comp.editingCommentId = 7;
+        comp.editingCommentType = CommentType.USER;
+        comp.editText = '  updated  ';
+        comp.saveEditing();
+
+        expect(updateSpy).toHaveBeenCalledWith({ commentId: 7, content: { contentType: 'USER', text: 'updated' } });
+        expect(comp.editingCommentId).toBeUndefined();
+        expect(comp.editText).toBe('');
     });
 
-    it('should submit edit and clear local editing state', () => {
-        comp.editingCommentId.set(7);
-        comp.editingCommentType.set(CommentType.USER);
+    it('should not emit update when edit text is empty', () => {
+        const updateSpy = vi.fn();
+        comp.onUpdate.subscribe(updateSpy);
 
-        comp.submitEdit();
+        comp.editingCommentId = 4;
+        comp.editingCommentType = CommentType.USER;
+        comp.editText = '   ';
+        comp.saveEditing();
 
-        expect(facade.updateComment).toHaveBeenCalledWith(7, { contentType: 'USER', text: 'edited text' });
-        expect(comp.editingCommentId()).toBeUndefined();
+        expect(updateSpy).not.toHaveBeenCalled();
     });
 
-    it('should not submit edit when comment type is not USER', () => {
-        comp.editingCommentId.set(4);
-        comp.editingCommentType.set(CommentType.CONSISTENCY_CHECK);
+    it('should not emit update when editing comment type is not USER', () => {
+        const updateSpy = vi.fn();
+        comp.onUpdate.subscribe(updateSpy);
 
-        comp.submitEdit();
+        comp.editingCommentId = 4;
+        comp.editingCommentType = CommentType.CONSISTENCY_CHECK;
+        comp.editText = 'updated';
+        comp.saveEditing();
 
-        expect(facade.updateComment).not.toHaveBeenCalled();
+        expect(updateSpy).not.toHaveBeenCalled();
     });
 
-    it('should not submit edit while edit submission is pending', () => {
-        facade.isEditSubmitting.mockReturnValue(true);
-        comp.editingCommentId.set(4);
-        comp.editingCommentType.set(CommentType.USER);
+    it('should emit reply and clear reply text', () => {
+        const replySpy = vi.fn();
+        comp.onReply.subscribe(replySpy);
 
-        comp.submitEdit();
-
-        expect(facade.updateComment).not.toHaveBeenCalled();
-    });
-
-    it('should store edit draft changes with comment id', () => {
-        comp.editingCommentId.set(15);
-
-        comp.onEditDraftChanged('updated text');
-
-        expect(facade.setEditDraft).toHaveBeenCalledWith(15, 'updated text');
-    });
-
-    it('should submit reply', () => {
+        comp.replyText = '  reply  ';
         comp.submitReply();
 
-        expect(facade.createReply).toHaveBeenCalledWith(1, { contentType: 'USER', text: 'reply text' });
+        expect(replySpy).toHaveBeenCalledWith({ contentType: 'USER', text: 'reply' });
+        expect(comp.replyText).toBe('');
     });
 
-    it('should not submit reply while pending', () => {
-        facade.isReplySubmitting.mockReturnValue(true);
+    it('should not emit reply when reply text is empty', () => {
+        const replySpy = vi.fn();
+        comp.onReply.subscribe(replySpy);
 
+        comp.replyText = '   ';
         comp.submitReply();
 
-        expect(facade.createReply).not.toHaveBeenCalled();
-    });
-
-    it('should store reply draft changes', () => {
-        comp.onReplyDraftChanged('reply text');
-
-        expect(facade.setReplyDraft).toHaveBeenCalledWith(1, 'reply text');
+        expect(replySpy).not.toHaveBeenCalled();
     });
 
     it('should toggle resolved and collapse when resolving', () => {
+        const resolvedSpy = vi.fn();
         const collapseSpy = vi.fn();
+        comp.onToggleResolved.subscribe(resolvedSpy);
         comp.onToggleCollapse.subscribe(collapseSpy);
         fixture.componentRef.setInput('thread', { id: 1, resolved: false } as any);
 
         comp.toggleResolved();
 
-        expect(facade.toggleResolved).toHaveBeenCalledWith(1, true);
+        expect(resolvedSpy).toHaveBeenCalledWith(true);
         expect(comp.showThreadBody).toBe(false);
         expect(collapseSpy).toHaveBeenCalledWith(true);
-    });
-
-    it('should not toggle resolved while resolve operation is pending', () => {
-        facade.isResolveSubmitting.mockReturnValue(true);
-        fixture.componentRef.setInput('thread', { id: 1, resolved: false } as any);
-        fixture.detectChanges();
-
-        comp.toggleResolved();
-
-        expect(facade.toggleResolved).not.toHaveBeenCalled();
     });
 
     it('should toggle thread body and emit collapse state', () => {
@@ -192,7 +160,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         expect(comp.formatReviewCommentText(nonUserComment)).toBe('ERROR - CODE - msg');
     });
 
-    it('should initialize edit draft when starting editing', () => {
+    it('should set edit text when starting editing', () => {
         const comment = {
             id: 1,
             type: 'USER',
@@ -200,18 +168,8 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         } as any;
 
         comp.startEditing(comment);
-        expect(comp.editingCommentId()).toBe(1);
-        expect(facade.startEditDraft).toHaveBeenCalledWith(1, 'note');
-    });
-
-    it('should cancel edit mode and clear edit draft', () => {
-        comp.editingCommentId.set(3);
-        comp.editingCommentType.set(CommentType.USER);
-
-        comp.cancelEditing();
-
-        expect(facade.cancelEditDraft).toHaveBeenCalledWith(3);
-        expect(comp.editingCommentId()).toBeUndefined();
+        expect(comp.editingCommentId).toBe(1);
+        expect(comp.editText).toBe('note');
     });
 
     it('should ignore startEditing for non-user comments', () => {
@@ -222,7 +180,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         } as any;
 
         comp.startEditing(comment);
-        expect(comp.editingCommentId()).toBeUndefined();
-        expect(facade.startEditDraft).not.toHaveBeenCalled();
+        expect(comp.editingCommentId).toBeUndefined();
+        expect(comp.editText).toBe('');
     });
 });
