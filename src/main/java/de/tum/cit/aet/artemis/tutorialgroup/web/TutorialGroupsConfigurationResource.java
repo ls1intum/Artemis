@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -77,6 +78,7 @@ public class TutorialGroupsConfigurationResource {
         if (configuration == null) {
             return ResponseEntity.ok().body(null);
         }
+        checkCourseTimeZone(course);
         return ResponseEntity.ok().body(TutorialGroupConfigurationDTO.of(configuration));
     }
 
@@ -100,9 +102,7 @@ public class TutorialGroupsConfigurationResource {
         if (tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(course.getId()).isPresent()) {
             throw new BadRequestAlertException("A tutorial group configuration already exists for this course", ENTITY_NAME, "alreadyExists");
         }
-        if (course.getTimeZone() == null) {
-            throw new BadRequestAlertException("The course has no configured time zone.", ENTITY_NAME, "courseHasNoTimeZone");
-        }
+        checkCourseTimeZone(course);
         TutorialGroupsConfiguration configuration = TutorialGroupConfigurationDTO.from(tutorialGroupConfigurationDto);
 
         validateTutorialGroupConfiguration(configuration);
@@ -138,26 +138,22 @@ public class TutorialGroupsConfigurationResource {
 
         var configurationFromDatabase = this.tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(updatedTutorialGroupConfigurationDto.id());
         var course = configurationFromDatabase.getCourse();
-        if (course.getTimeZone() == null) {
-            throw new BadRequestAlertException("The course has no configured time zone.", ENTITY_NAME, "courseHasNoTimeZone");
-        }
+        checkCourseTimeZone(course);
 
         checkEntityIdMatchesPathIds(configurationFromDatabase, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupsConfigurationId));
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, configurationFromDatabase.getCourse(), null);
 
-        TutorialGroupsConfiguration updatedTutorialGroupConfiguration = TutorialGroupConfigurationDTO.from(updatedTutorialGroupConfigurationDto);
+        TutorialGroupsConfiguration tempForValidation = getTutorialGroupsConfigurationFromDTO(updatedTutorialGroupConfigurationDto);
+        validateTutorialGroupConfiguration(tempForValidation);
 
-        validateTutorialGroupConfiguration(updatedTutorialGroupConfiguration);
-
-        boolean useTutorialGroupChannelSettingChanged = !Objects.equals(configurationFromDatabase.getUseTutorialGroupChannels(),
-                updatedTutorialGroupConfiguration.getUseTutorialGroupChannels());
+        boolean useTutorialGroupChannelSettingChanged = !Objects.equals(configurationFromDatabase.getUseTutorialGroupChannels(), tempForValidation.getUseTutorialGroupChannels());
         boolean usePublicChannelSettingChanged = !Objects.equals(configurationFromDatabase.getUsePublicTutorialGroupChannels(),
-                updatedTutorialGroupConfiguration.getUsePublicTutorialGroupChannels());
+                tempForValidation.getUsePublicTutorialGroupChannels());
 
-        configurationFromDatabase.setTutorialPeriodEndInclusive(updatedTutorialGroupConfiguration.getTutorialPeriodEndInclusive());
-        configurationFromDatabase.setTutorialPeriodStartInclusive(updatedTutorialGroupConfiguration.getTutorialPeriodStartInclusive());
-        configurationFromDatabase.setUseTutorialGroupChannels(updatedTutorialGroupConfiguration.getUseTutorialGroupChannels());
-        configurationFromDatabase.setUsePublicTutorialGroupChannels(updatedTutorialGroupConfiguration.getUsePublicTutorialGroupChannels());
+        configurationFromDatabase.setTutorialPeriodEndInclusive(tempForValidation.getTutorialPeriodEndInclusive());
+        configurationFromDatabase.setTutorialPeriodStartInclusive(tempForValidation.getTutorialPeriodStartInclusive());
+        configurationFromDatabase.setUseTutorialGroupChannels(tempForValidation.getUseTutorialGroupChannels());
+        configurationFromDatabase.setUsePublicTutorialGroupChannels(tempForValidation.getUsePublicTutorialGroupChannels());
 
         var persistedConfiguration = tutorialGroupsConfigurationRepository.save(configurationFromDatabase);
 
@@ -177,6 +173,18 @@ public class TutorialGroupsConfigurationResource {
             }
         }
         return ResponseEntity.ok(TutorialGroupConfigurationDTO.of(persistedConfiguration));
+    }
+
+    private static TutorialGroupsConfiguration getTutorialGroupsConfigurationFromDTO(TutorialGroupConfigurationDTO updatedTutorialGroupConfigurationDto) {
+        if (updatedTutorialGroupConfigurationDto == null) {
+            return new TutorialGroupsConfiguration();
+        }
+        TutorialGroupsConfiguration tempForValidation = new TutorialGroupsConfiguration();
+        tempForValidation.setTutorialPeriodStartInclusive(updatedTutorialGroupConfigurationDto.tutorialPeriodStartInclusive());
+        tempForValidation.setTutorialPeriodEndInclusive(updatedTutorialGroupConfigurationDto.tutorialPeriodEndInclusive());
+        tempForValidation.setUseTutorialGroupChannels(updatedTutorialGroupConfigurationDto.useTutorialGroupChannels());
+        tempForValidation.setUsePublicTutorialGroupChannels(updatedTutorialGroupConfigurationDto.usePublicTutorialGroupChannels());
+        return tempForValidation;
     }
 
     private static void validateTutorialGroupConfiguration(TutorialGroupsConfiguration tutorialGroupsConfiguration) {
@@ -206,4 +214,9 @@ public class TutorialGroupsConfigurationResource {
         });
     }
 
+    private void checkCourseTimeZone(Course course) {
+        if (course.getTimeZone() == null) {
+            throw new BadRequestAlertException("The Tutorial group configuration has no configured time zone.", ENTITY_NAME, "tutorialGroupConfigurationHasNoTimeZone");
+        }
+    }
 }

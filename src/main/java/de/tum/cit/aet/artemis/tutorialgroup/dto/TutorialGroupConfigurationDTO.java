@@ -11,7 +11,6 @@ import org.hibernate.Hibernate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 
@@ -45,8 +44,6 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record TutorialGroupConfigurationDTO(Long id, @NotNull String tutorialPeriodStartInclusive, @NotNull String tutorialPeriodEndInclusive,
         @NotNull Boolean useTutorialGroupChannels, @NotNull Boolean usePublicTutorialGroupChannels, Set<TutorialGroupFreePeriodDTO> tutorialGroupFreePeriods) {
-
-    private static final String ENTITY_NAME = "tutorialGroupsConfiguration";
 
     /**
      * DTO representing a {@link TutorialGroupFreePeriod}.
@@ -98,11 +95,6 @@ public record TutorialGroupConfigurationDTO(Long id, @NotNull String tutorialPer
      */
     public static TutorialGroupConfigurationDTO of(TutorialGroupsConfiguration config) {
         Objects.requireNonNull(config, "tutorialGroupsConfiguration must exist");
-        var course = config.getCourse();
-        if (course == null || course.getTimeZone() == null) {
-            throw new BadRequestAlertException("The Tutorial group configuration has no configured time zone.", ENTITY_NAME, "tutorialGroupConfigurationHasNoTimeZone");
-        }
-
         Set<TutorialGroupFreePeriod> freePeriods = config.getTutorialGroupFreePeriods();
         Set<TutorialGroupFreePeriodDTO> freePeriodDTOs = Set.of();
 
