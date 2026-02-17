@@ -4,11 +4,11 @@ import { ProblemStatementGenerationRequest } from 'app/openapi/model/problemStat
 import { ProblemStatementRefinementResponse } from 'app/openapi/model/problemStatementRefinementResponse';
 import { ProblemStatementGenerationResponse } from 'app/openapi/model/problemStatementGenerationResponse';
 
-/** Matches Windows-style line endings (`\r\n`), e.g. `"line1\r\nline2"`. */
-const WINDOWS_LINE_ENDING_PATTERN = /\r\n/g;
+/** Maximum allowed length for user prompts. Must match HyperionPromptSanitizer.MAX_USER_PROMPT_LENGTH on the server. */
+export const MAX_USER_PROMPT_LENGTH = 1000;
 
-/** Matches remaining standalone carriage returns (`\r`), e.g. `"line1\rline2"` (old Mac style). */
-const CARRIAGE_RETURN_PATTERN = /\r/g;
+/** Matches `\r\n` (Windows) and standalone `\r` (old Mac) line endings in a single pass. */
+const CARRIAGE_RETURN_PATTERN = /\r\n?/g;
 
 /**
  * Normalizes a string by trimming whitespace and normalizing line endings.
@@ -16,7 +16,7 @@ const CARRIAGE_RETURN_PATTERN = /\r/g;
  */
 export function normalizeString(str: string | undefined): string {
     if (!str) return '';
-    return str.replace(WINDOWS_LINE_ENDING_PATTERN, '\n').replace(CARRIAGE_RETURN_PATTERN, '\n').trim();
+    return str.replace(CARRIAGE_RETURN_PATTERN, '\n').trim();
 }
 
 /**

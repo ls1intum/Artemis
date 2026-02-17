@@ -62,12 +62,17 @@ public class HyperionProblemStatementRefinementService {
     public ProblemStatementRefinementResponseDTO refineProblemStatement(Course course, String originalProblemStatementText, String userPrompt) {
         log.debug("Refining problem statement for course [{}]", course.getId());
 
-        validateRefinementPrerequisites(originalProblemStatementText);
+        if (chatClient == null) {
+            throw new InternalServerErrorAlertException("AI chat client is not configured", "Hyperion", "ProblemStatementRefinement.chatClientNotConfigured");
+        }
+
+        // Sanitize inputs first, then validate the sanitized versions to prevent
+        // edge cases where raw input passes validation but becomes empty after sanitization
+        String sanitizedProblemStatement = sanitizeInput(originalProblemStatementText);
+        validateSanitizedProblemStatement(sanitizedProblemStatement);
 
         String sanitizedPrompt = sanitizeInput(userPrompt);
         HyperionPromptSanitizer.validateUserPrompt(sanitizedPrompt, "ProblemStatementRefinement");
-
-        String sanitizedProblemStatement = sanitizeInput(originalProblemStatementText);
 
         String systemPrompt = templateService.render("/prompts/hyperion/refine_problem_statement_system.st", Map.of());
 
@@ -122,18 +127,17 @@ public class HyperionProblemStatementRefinementService {
     }
 
     /**
-     * Validates that the problem statement and chat client are ready for refinement.
+     * Validates the sanitized problem statement is non-empty and within length limits.
+     * Called after sanitization to ensure edge cases (e.g., input consisting entirely of
+     * control characters) are properly rejected.
      */
-    private void validateRefinementPrerequisites(String problemStatementText) {
-        if (problemStatementText == null || problemStatementText.isBlank()) {
+    private void validateSanitizedProblemStatement(String sanitizedProblemStatement) {
+        if (sanitizedProblemStatement.isBlank()) {
             throw new BadRequestAlertException("Cannot refine empty problem statement", "ProblemStatement", "ProblemStatementRefinement.problemStatementEmpty");
         }
-        if (problemStatementText.length() > MAX_PROBLEM_STATEMENT_LENGTH) {
+        if (sanitizedProblemStatement.length() > MAX_PROBLEM_STATEMENT_LENGTH) {
             throw new BadRequestAlertException("Problem statement exceeds maximum length of " + MAX_PROBLEM_STATEMENT_LENGTH + " characters", "ProblemStatement",
                     "ProblemStatementRefinement.problemStatementTooLong");
-        }
-        if (chatClient == null) {
-            throw new InternalServerErrorAlertException("AI chat client is not configured", "Hyperion", "ProblemStatementRefinement.chatClientNotConfigured");
         }
     }
 

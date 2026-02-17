@@ -166,6 +166,7 @@
                     <div class="position-relative">
                         <div ngbDropdown class="btn-group" [autoClose]="'outside'" #aiDropdown="ngbDropdown">
                             <button
+                                #aiDropdownToggle
                                 class="btn btn-outline-primary"
                                 type="button"
                                 ngbDropdownToggle
@@ -202,7 +203,7 @@
 
                                 @if (exercise.isAtLeastEditor) {
                                     <!-- Problem Statement Refinement -->
-                                    <button ngbDropdownItem (click)="toggleRefinementPrompt(); aiDropdown.close()" [disabled]="isAiApplying()">
+                                    <button ngbDropdownItem (click)="toggleRefinementPopover($event, aiDropdownToggle); aiDropdown.close()" [disabled]="isAiApplying()">
                                         <fa-icon [icon]="facArtemisIntelligence" class="me-2" />
                                         <span
                                             [jhiTranslate]="
@@ -248,52 +249,54 @@
                             </button>
                         }
 
-                        <!-- Refinement Prompt Popup (positioned relative to dropdown) -->
-                        @if (showRefinementPrompt()) {
-                            <!-- Backdrop for click-outside-to-close -->
-                            <div class="refinement-backdrop" (click)="toggleRefinementPrompt()"></div>
-                            <div class="refinement-prompt-popup" (keydown.escape)="toggleRefinementPrompt()">
-                                <div class="d-flex justify-content-between align-items-center p-3 refinement-popup-header fw-medium">
+                        <!-- Refinement Prompt Popover -->
+                        <p-popover
+                            #refinementPopover
+                            [dismissable]="true"
+                            (onHide)="onRefinementPopoverHide()"
+                            styleClass="refinement-prompt-popover"
+                            [style]="{ width: 'min(32rem, 90vw)' }"
+                        >
+                            <div class="d-flex justify-content-between align-items-center p-3 refinement-popup-header fw-medium">
+                                <span
+                                    [jhiTranslate]="
+                                        shouldShowGenerateButton()
+                                            ? 'artemisApp.programmingExercise.problemStatement.generationAssistance'
+                                            : 'artemisApp.programmingExercise.problemStatement.refinementAssistance'
+                                    "
+                                ></span>
+                                <button pButton type="button" severity="secondary" text rounded (click)="refinementPopover.hide()" aria-label="Close">
+                                    <fa-icon [icon]="faTimes" />
+                                </button>
+                            </div>
+                            <div class="p-3">
+                                <textarea
+                                    [value]="refinementPrompt()"
+                                    (input)="onRefinementPromptInput($event)"
+                                    pTextarea
+                                    class="refinement-textarea"
+                                    rows="5"
+                                    cdkTrapFocus
+                                    cdkTrapFocusAutoCapture
+                                    [placeholder]="'artemisApp.programmingExercise.problemStatement.yourRequirements' | artemisTranslate"
+                                    [disabled]="isAiApplying()"
+                                    [attr.maxlength]="MAX_USER_PROMPT_LENGTH"
+                                ></textarea>
+                                <div class="text-end text-muted small mt-1">{{ refinementPrompt()?.length || 0 }}/{{ MAX_USER_PROMPT_LENGTH }}</div>
+                            </div>
+                            <div class="d-flex justify-content-end p-3" style="border-top: 1px solid var(--p-content-border-color)">
+                                <button pButton type="button" size="small" [disabled]="!refinementPrompt()?.trim()" (click)="submitRefinement()">
+                                    <fa-icon [icon]="faPaperPlane" class="me-1" />
                                     <span
                                         [jhiTranslate]="
                                             shouldShowGenerateButton()
-                                                ? 'artemisApp.programmingExercise.problemStatement.generationAssistance'
-                                                : 'artemisApp.programmingExercise.problemStatement.refinementAssistance'
+                                                ? 'artemisApp.programmingExercise.problemStatement.generate'
+                                                : 'artemisApp.programmingExercise.problemStatement.refine'
                                         "
                                     ></span>
-                                    <button pButton type="button" severity="secondary" text rounded (click)="toggleRefinementPrompt()" aria-label="Close">
-                                        <fa-icon [icon]="faTimes" />
-                                    </button>
-                                </div>
-                                <div class="p-3">
-                                    <textarea
-                                        [value]="refinementPrompt()"
-                                        (input)="onRefinementPromptInput($event)"
-                                        pTextarea
-                                        class="refinement-textarea"
-                                        rows="5"
-                                        cdkTrapFocus
-                                        cdkTrapFocusAutoCapture
-                                        [placeholder]="'artemisApp.programmingExercise.problemStatement.yourRequirements' | artemisTranslate"
-                                        [disabled]="isAiApplying()"
-                                        maxlength="1000"
-                                    ></textarea>
-                                    <div class="text-end text-muted small mt-1">{{ refinementPrompt()?.length || 0 }}/1000</div>
-                                </div>
-                                <div class="d-flex justify-content-end p-3" style="border-top: 1px solid var(--p-content-border-color)">
-                                    <button pButton type="button" size="small" [disabled]="!refinementPrompt()?.trim()" (click)="submitRefinement()">
-                                        <fa-icon [icon]="faPaperPlane" class="me-1" />
-                                        <span
-                                            [jhiTranslate]="
-                                                shouldShowGenerateButton()
-                                                    ? 'artemisApp.programmingExercise.problemStatement.generate'
-                                                    : 'artemisApp.programmingExercise.problemStatement.refine'
-                                            "
-                                        ></span>
-                                    </button>
-                                </div>
+                                </button>
                             </div>
-                        }
+                        </p-popover>
                     </div>
                 }
 
@@ -366,14 +369,10 @@
             <div editorCenter class="d-flex flex-column h-100 instructions-wrapper__content card-body p-0">
                 @if (showDiff()) {
                     <!-- Diff review banner -->
-                    <p-message severity="info" styleClass="w-100 mb-2" [closable]="false">
-                        <!-- Row 1: Info -->
-                        <div class="px-3 pt-2 pb-1">
-                            <strong jhiTranslate="artemisApp.programmingExercise.problemStatement.reviewChanges"></strong>
-                            <span class="text-muted ms-2 small" jhiTranslate="artemisApp.programmingExercise.problemStatement.reviewChangesDescription"></span>
-                        </div>
-                        <!-- Row 2: Controls toolbar -->
-                        <div class="d-flex flex-wrap justify-content-between align-items-center px-3 py-2 gap-2">
+                    <p-message severity="info" styleClass="w-100 mb-1" [closable]="false">
+                        <div class="d-flex flex-wrap align-items-center px-2 py-1 gap-2">
+                            <strong class="small" jhiTranslate="artemisApp.programmingExercise.problemStatement.reviewChanges"></strong>
+                            <span class="text-muted small" jhiTranslate="artemisApp.programmingExercise.problemStatement.reviewChangesDescription"></span>
                             <button
                                 pButton
                                 type="button"

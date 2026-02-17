@@ -36,35 +36,20 @@
     color: var(--p-primary-contrast-color);
 }
 
-/* Refinement Prompt Modal Styles */
-.refinement-backdrop {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: var(--p-mask-background);
-    z-index: 1100;
+/* Refinement Prompt Popover Styles (applied via styleClass on p-popover) */
+:host ::ng-deep .refinement-prompt-popover {
+    border: 1px solid var(--p-primary-color);
+
+    .p-popover-content {
+        padding: 0;
+    }
 }
 
-.refinement-prompt-popup {
-    position: absolute;
-    top: calc(100% + 0.5rem);
-    left: 0;
-    z-index: 1101;
-    width: 32rem;
-    max-width: 90vw;
-    background: var(--p-dialog-background);
-    border: 1px solid var(--p-primary-color);
-    border-radius: var(--p-dialog-border-radius);
-    box-shadow: var(--p-dialog-shadow);
-    overflow: hidden;
-
-    .refinement-textarea {
-        min-height: 8rem;
-        resize: vertical;
-        font-size: 0.875rem;
-    }
+.refinement-textarea {
+    width: 100%;
+    min-height: 8rem;
+    resize: vertical;
+    font-size: 0.875rem;
 }
 
 .code-generation-running-text {

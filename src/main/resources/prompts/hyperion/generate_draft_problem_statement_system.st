@@ -40,7 +40,6 @@ When creating UML diagrams, use these styling guidelines:
 - Use skinparam settings for consistent appearance
 
 ### Example UML with Theme-Aware Styling:
-```
 @startuml
 !theme plain
 skinparam backgroundColor transparent
@@ -56,7 +55,6 @@ class ExampleClass {
   +method()
 }
 @enduml
-```
 
 ### Example Structure:
 ```

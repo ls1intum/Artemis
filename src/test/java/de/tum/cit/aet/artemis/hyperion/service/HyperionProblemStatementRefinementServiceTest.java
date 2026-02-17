@@ -150,6 +150,17 @@ class HyperionProblemStatementRefinementServiceTest {
     }
 
     @Test
+    void refineProblemStatement_throwsExceptionWhenChatClientIsNull() {
+        var serviceWithNullClient = new HyperionProblemStatementRefinementService(null, new HyperionPromptTemplateService());
+        var course = new Course();
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        assertThatThrownBy(() -> serviceWithNullClient.refineProblemStatement(course, "Original problem statement", "Refine this"))
+                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("AI chat client is not configured");
+    }
+
+    @Test
     void refineProblemStatement_throwsExceptionWhenRefinementUnchanged() throws Exception {
         String originalStatement = "Original problem statement";
         // AI returns the exact same content

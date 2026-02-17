@@ -19,7 +19,7 @@ import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { Subscription } from 'rxjs';
 import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
-import { isTemplateOrEmpty } from 'app/programming/manage/shared/problem-statement.utils';
+import { MAX_USER_PROMPT_LENGTH, isTemplateOrEmpty } from 'app/programming/manage/shared/problem-statement.utils';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -56,6 +56,7 @@ import { LineChange } from 'app/programming/shared/utils/diff.utils';
 })
 export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
+    protected readonly MAX_USER_PROMPT_LENGTH = MAX_USER_PROMPT_LENGTH;
 
     programmingExerciseCreationConfig = input.required<ProgrammingExerciseCreationConfig>();
     isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
@@ -307,6 +308,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
         const exercise = this.programmingExercise();
         if (exercise) {
             exercise.problemStatement = problemStatement;
+            this.currentProblemStatement.set(problemStatement);
             this.programmingExerciseChange.emit(exercise);
             this.problemStatementChange.emit(problemStatement);
         }

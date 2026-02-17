@@ -1,4 +1,4 @@
-import { Component, DestroyRef, Injector, OnDestroy, TemplateRef, ViewChild, afterNextRender, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, Injector, OnDestroy, TemplateRef, ViewChild, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { A11yModule } from '@angular/cdk/a11y';
@@ -57,12 +57,13 @@ import { ButtonSize } from 'app/shared/components/buttons/button/button.componen
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
 import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
-import { isTemplateOrEmpty } from 'app/programming/manage/shared/problem-statement.utils';
+import { MAX_USER_PROMPT_LENGTH, isTemplateOrEmpty } from 'app/programming/manage/shared/problem-statement.utils';
 import { TooltipModule } from 'primeng/tooltip';
 import { TextareaModule } from 'primeng/textarea';
 import { BadgeModule } from 'primeng/badge';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
+import { Popover, PopoverModule } from 'primeng/popover';
 
 const SEVERITY_ORDER = {
     HIGH: 0,
@@ -98,6 +99,7 @@ const SEVERITY_ORDER = {
         BadgeModule,
         ButtonModule,
         MessageModule,
+        PopoverModule,
     ],
 })
 export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent implements OnDestroy {
@@ -106,6 +108,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     @ViewChild(ProgrammingExerciseEditableInstructionComponent, { static: false }) editableInstructions: ProgrammingExerciseEditableInstructionComponent;
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
+    protected readonly MAX_USER_PROMPT_LENGTH = MAX_USER_PROMPT_LENGTH;
     readonly MarkdownEditorHeight = MarkdownEditorHeight;
     readonly consistencyIssues = signal<ConsistencyIssue[]>([]);
     readonly sortedIssues = computed(() => [...this.consistencyIssues()].sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]));
@@ -372,7 +375,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     showDiff = signal(false);
 
-    showRefinementPrompt = signal(false);
+    refinementPopover = viewChild<Popover>('refinementPopover');
     refinementPrompt = signal('');
     protected readonly faPaperPlane = faPaperPlane;
 
@@ -517,13 +520,17 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     /**
-     * Toggles the refinement prompt visibility.
+     * Toggles the refinement prompt popover visibility.
      */
-    toggleRefinementPrompt(): void {
-        this.showRefinementPrompt.update((value) => !value);
-        if (!this.showRefinementPrompt()) {
-            this.refinementPrompt.set('');
-        }
+    toggleRefinementPopover(event: Event, target?: HTMLElement): void {
+        this.refinementPopover()?.toggle(event, target);
+    }
+
+    /**
+     * Called when the popover is hidden (dismiss, escape, or programmatic hide).
+     */
+    onRefinementPopoverHide(): void {
+        this.refinementPrompt.set('');
     }
 
     /**
@@ -544,7 +551,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     private generateProblemStatement(prompt: string): void {
-        this.showRefinementPrompt.set(false);
+        this.refinementPopover()?.hide();
 
         this.currentRefinementSubscription?.unsubscribe();
         this.currentRefinementSubscription = this.problemStatementService.generateProblemStatement(this.exercise, prompt, this.isGeneratingOrRefining).subscribe({
@@ -579,7 +586,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
 
-        this.showRefinementPrompt.set(false);
+        this.refinementPopover()?.hide();
 
         this.currentRefinementSubscription?.unsubscribe();
         this.currentRefinementSubscription = this.problemStatementService.refineGlobally(this.exercise, currentContent, prompt, this.isGeneratingOrRefining).subscribe({
