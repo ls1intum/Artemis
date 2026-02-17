@@ -160,9 +160,18 @@
                             </button>
                             <mat-menu #subMenuLecture="matMenu" type="button">
                                 @for (lecture of displayedActions.lecture.lecturesWithDetails; track lecture.id) {
-                                    <button class="ps-1 me-1" mat-menu-item [matMenuTriggerFor]="lectureMenuUnits" type="button">
+                                    <button
+                                        class="ps-1 me-1"
+                                        mat-menu-item
+                                        [matMenuTriggerFor]="hasReferencableAttachments(lecture) ? lectureMenuUnits : null"
+                                        (click)="
+                                            !hasReferencableAttachments(lecture) && displayedActions.lecture.executeInCurrentEditor({ reference: ReferenceType.LECTURE, lecture })
+                                        "
+                                        type="button"
+                                    >
                                         {{ lecture.title }}
                                     </button>
+
                                     <mat-menu #lectureMenuUnits="matMenu" type="button">
                                         <button
                                             class="border-bottom ps-1 me-1"
@@ -175,7 +184,20 @@
                                         @for (unit of lecture.attachmentVideoUnits; track unit.id) {
                                             <!-- Only show attachment units with an attachment -->
                                             @if (unit.attachment && unit.attachment.link) {
-                                                <button class="ps-1 me-1" mat-menu-item [matMenuTriggerFor]="lectureMenuUnitsSlide" type="button">
+                                                <button
+                                                    class="ps-1 me-1"
+                                                    mat-menu-item
+                                                    [matMenuTriggerFor]="unit.slides?.length ? lectureMenuUnitsSlide : null"
+                                                    (click)="
+                                                        !unit.slides?.length &&
+                                                            displayedActions.lecture.executeInCurrentEditor({
+                                                                reference: ReferenceType.ATTACHMENT_UNITS,
+                                                                lecture,
+                                                                attachmentVideoUnit: unit,
+                                                            })
+                                                    "
+                                                    type="button"
+                                                >
                                                     <span>{{ unit.name }}</span>
                                                 </button>
                                                 <mat-menu #lectureMenuUnitsSlide="matMenu" type="button">
@@ -210,8 +232,6 @@
                                                         >
                                                             <span [jhiTranslate]="'artemisApp.markdownEditor.slideWithNumber'" [translateValues]="{ number: index + 1 }"></span>
                                                         </button>
-                                                    } @empty {
-                                                        <ng-container [ngTemplateOutlet]="noItemsAvailable" />
                                                     }
                                                 </mat-menu>
                                             }
