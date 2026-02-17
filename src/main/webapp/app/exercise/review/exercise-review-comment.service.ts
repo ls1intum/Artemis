@@ -12,7 +12,7 @@ type ReviewCommentSuccessCallback = () => void;
 
 @Injectable({ providedIn: 'root' })
 export class ExerciseReviewCommentService {
-    public resourceUrl = 'api/exercise/exercises';
+    public readonly resourceUrl = 'api/exercise/exercises';
 
     private http = inject(HttpClient);
     private alertService = inject(AlertService);
@@ -74,7 +74,7 @@ export class ExerciseReviewCommentService {
                 if (!createdThread?.id) {
                     return;
                 }
-                const normalizedThread: CommentThread = createdThread.comments ? createdThread : { ...createdThread, comments: [] };
+                const normalizedThread: CommentThread = createdThread.comments ? createdThread : Object.assign({}, createdThread, { comments: [] });
                 this.threads.update((threads) => this.appendThreadToThreads(threads, normalizedThread));
                 onSuccess?.();
             },
@@ -267,7 +267,7 @@ export class ExerciseReviewCommentService {
                 if (remainingComments.length === thread.comments.length) {
                     return thread;
                 }
-                return { ...thread, comments: remainingComments };
+                return Object.assign({}, thread, { comments: remainingComments });
             })
             .filter((thread) => !thread.comments || thread.comments.length > 0);
     }
@@ -280,7 +280,7 @@ export class ExerciseReviewCommentService {
      * @returns The updated thread list.
      */
     appendCommentToThreads(threads: CommentThread[], createdComment: Comment): CommentThread[] {
-        if (!createdComment.threadId) {
+        if (createdComment.threadId === undefined) {
             return threads;
         }
         return threads.map((thread) => {
@@ -288,7 +288,7 @@ export class ExerciseReviewCommentService {
                 return thread;
             }
             const comments = thread.comments ?? [];
-            return { ...thread, comments: [...comments, createdComment] };
+            return Object.assign({}, thread, { comments: [...comments, createdComment] });
         });
     }
 
@@ -300,17 +300,16 @@ export class ExerciseReviewCommentService {
      * @returns The updated thread list.
      */
     updateCommentInThreads(threads: CommentThread[], updatedComment: Comment): CommentThread[] {
-        if (!updatedComment.id || !updatedComment.threadId) {
+        if (updatedComment.id === undefined || updatedComment.threadId === undefined) {
             return threads;
         }
         return threads.map((thread) => {
             if (thread.id !== updatedComment.threadId || !thread.comments) {
                 return thread;
             }
-            return {
-                ...thread,
-                comments: thread.comments.map((comment) => (comment.id === updatedComment.id ? { ...comment, ...updatedComment } : comment)),
-            };
+            return Object.assign({}, thread, {
+                comments: thread.comments.map((comment) => (comment.id === updatedComment.id ? Object.assign({}, comment, updatedComment) : comment)),
+            });
         });
     }
 

@@ -25,7 +25,7 @@ import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from '../../status/programming-exercise-instructor-exercise-status.component';
-import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CodeGenerationRequestDTO } from 'app/openapi/model/codeGenerationRequestDTO';
@@ -33,7 +33,6 @@ import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { HyperionWebsocketService } from 'app/hyperion/services/hyperion-websocket.service';
 import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
@@ -101,18 +100,18 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     locationIndex: number = 0;
 
     // Icons
-    faPlus = faPlus;
-    faTimes = faTimes;
-    faCircleNotch = faCircleNotch;
-    faTimesCircle = faTimesCircle;
-    faArrowLeft = faArrowLeft;
-    faArrowRight = faArrowRight;
-    faCircleExclamation = faCircleExclamation;
-    faTriangleExclamation = faTriangleExclamation;
-    faCircleInfo = faCircleInfo;
+    protected readonly faPlus = faPlus;
+    protected readonly faTimes = faTimes;
+    protected readonly faCircleNotch = faCircleNotch;
+    protected readonly faTimesCircle = faTimesCircle;
+    protected readonly faArrowLeft = faArrowLeft;
+    protected readonly faArrowRight = faArrowRight;
+    protected readonly faCircleExclamation = faCircleExclamation;
+    protected readonly faTriangleExclamation = faTriangleExclamation;
+    protected readonly faCircleInfo = faCircleInfo;
 
-    faSpinner = faSpinner;
-    facArtemisIntelligence = facArtemisIntelligence;
+    protected readonly faSpinner = faSpinner;
+    protected readonly facArtemisIntelligence = facArtemisIntelligence;
 
     hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
 
@@ -433,7 +432,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     },
                 });
             },
-            error: (err) => {
+            error: () => {
                 this.alertService.error(this.translateService.instant('artemisApp.hyperion.consistencyCheck.checkFailedAlert'));
             },
         });

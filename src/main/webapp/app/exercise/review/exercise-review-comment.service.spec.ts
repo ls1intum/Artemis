@@ -165,7 +165,7 @@ describe('ExerciseReviewCommentService', () => {
 
         const req = httpMock.expectOne('api/exercise/exercises/1/review-comments/7');
         expect(req.request.method).toBe('DELETE');
-        req.flush(null);
+        req.flush({});
 
         expect(service.threads()).toEqual([{ id: 2, comments: [{ id: 8 }] }] as any);
     });
@@ -310,7 +310,7 @@ describe('ExerciseReviewCommentService', () => {
 
         const req = httpMock.expectOne('api/exercise/exercises/10/review-comments/11');
         expect(req.request.method).toBe('DELETE');
-        req.flush(null);
+        req.flush({});
     });
 
     it('removeCommentFromThreads should remove comment and drop empty threads', () => {

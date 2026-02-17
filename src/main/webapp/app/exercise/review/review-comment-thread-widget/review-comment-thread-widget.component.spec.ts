@@ -42,7 +42,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         fixture.componentRef.setInput('initialCollapsed', true);
         fixture.componentRef.setInput('thread', { id: 2, resolved: false, comments: [] } as any);
         comp.ngOnInit();
-        expect(comp.showThreadBody).toBe(false);
+        expect(comp.showThreadBody()).toBe(false);
     });
 
     it('should emit delete on deleteComment', () => {
@@ -52,29 +52,29 @@ describe('ReviewCommentThreadWidgetComponent', () => {
 
     it('should update comment on saveEditing and clear editing state', () => {
         reviewCommentService.updateCommentInContext.mockImplementation((_id: number, _content: any, onSuccess?: () => void) => onSuccess?.());
-        comp.editingCommentId = 7;
-        comp.editingCommentType = CommentType.USER;
-        comp.editText = '  updated  ';
+        comp.editingCommentId.set(7);
+        comp.editingCommentType.set(CommentType.USER);
+        comp.editText.set('  updated  ');
         comp.saveEditing();
 
         expect(reviewCommentService.updateCommentInContext).toHaveBeenCalledWith(7, { contentType: 'USER', text: 'updated' }, expect.any(Function));
-        expect(comp.editingCommentId).toBeUndefined();
-        expect(comp.editText).toBe('');
+        expect(comp.editingCommentId()).toBeUndefined();
+        expect(comp.editText()).toBe('');
     });
 
     it('should not emit update when edit text is empty', () => {
-        comp.editingCommentId = 4;
-        comp.editingCommentType = CommentType.USER;
-        comp.editText = '   ';
+        comp.editingCommentId.set(4);
+        comp.editingCommentType.set(CommentType.USER);
+        comp.editText.set('   ');
         comp.saveEditing();
 
         expect(reviewCommentService.updateCommentInContext).not.toHaveBeenCalled();
     });
 
     it('should not emit update when editing comment type is not USER', () => {
-        comp.editingCommentId = 4;
-        comp.editingCommentType = CommentType.CONSISTENCY_CHECK;
-        comp.editText = 'updated';
+        comp.editingCommentId.set(4);
+        comp.editingCommentType.set(CommentType.CONSISTENCY_CHECK);
+        comp.editText.set('updated');
         comp.saveEditing();
 
         expect(reviewCommentService.updateCommentInContext).not.toHaveBeenCalled();
@@ -82,39 +82,39 @@ describe('ReviewCommentThreadWidgetComponent', () => {
 
     it('should create reply and clear reply text', () => {
         reviewCommentService.createReplyInContext.mockImplementation((_threadId: number, _comment: any, onSuccess?: () => void) => onSuccess?.());
-        comp.replyText = '  reply  ';
+        comp.replyText.set('  reply  ');
         comp.submitReply();
 
         expect(reviewCommentService.createReplyInContext).toHaveBeenCalledWith(1, { contentType: 'USER', text: 'reply' }, expect.any(Function));
-        expect(comp.replyText).toBe('');
+        expect(comp.replyText()).toBe('');
     });
 
     it('should not emit reply when reply text is empty', () => {
-        comp.replyText = '   ';
+        comp.replyText.set('   ');
         comp.submitReply();
 
         expect(reviewCommentService.createReplyInContext).not.toHaveBeenCalled();
     });
 
     it('should keep edit text when update is not confirmed', () => {
-        comp.editingCommentId = 7;
-        comp.editingCommentType = CommentType.USER;
-        comp.editText = 'updated';
+        comp.editingCommentId.set(7);
+        comp.editingCommentType.set(CommentType.USER);
+        comp.editText.set('updated');
 
         comp.saveEditing();
 
         expect(reviewCommentService.updateCommentInContext).toHaveBeenCalledWith(7, { contentType: 'USER', text: 'updated' }, expect.any(Function));
-        expect(comp.editingCommentId).toBe(7);
-        expect(comp.editText).toBe('updated');
+        expect(comp.editingCommentId()).toBe(7);
+        expect(comp.editText()).toBe('updated');
     });
 
     it('should keep reply text when reply creation is not confirmed', () => {
-        comp.replyText = 'reply';
+        comp.replyText.set('reply');
 
         comp.submitReply();
 
         expect(reviewCommentService.createReplyInContext).toHaveBeenCalledWith(1, { contentType: 'USER', text: 'reply' }, expect.any(Function));
-        expect(comp.replyText).toBe('reply');
+        expect(comp.replyText()).toBe('reply');
     });
 
     it('should toggle resolved and collapse when resolving', () => {
@@ -125,18 +125,18 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         comp.toggleResolved();
 
         expect(reviewCommentService.toggleResolvedInContext).toHaveBeenCalledWith(1, true);
-        expect(comp.showThreadBody).toBe(false);
+        expect(comp.showThreadBody()).toBe(false);
         expect(collapseSpy).toHaveBeenCalledWith(true);
     });
 
     it('should toggle thread body and emit collapse state', () => {
         const collapseSpy = vi.fn();
         comp.onToggleCollapse.subscribe(collapseSpy);
-        comp.showThreadBody = true;
+        comp.showThreadBody.set(true);
 
         comp.toggleThreadBody();
 
-        expect(comp.showThreadBody).toBe(false);
+        expect(comp.showThreadBody()).toBe(false);
         expect(collapseSpy).toHaveBeenCalledWith(true);
     });
 
@@ -183,8 +183,8 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         } as any;
 
         comp.startEditing(comment);
-        expect(comp.editingCommentId).toBe(1);
-        expect(comp.editText).toBe('note');
+        expect(comp.editingCommentId()).toBe(1);
+        expect(comp.editText()).toBe('note');
     });
 
     it('should ignore startEditing for non-user comments', () => {
@@ -195,7 +195,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         } as any;
 
         comp.startEditing(comment);
-        expect(comp.editingCommentId).toBeUndefined();
-        expect(comp.editText).toBe('');
+        expect(comp.editingCommentId()).toBeUndefined();
+        expect(comp.editText()).toBe('');
     });
 });

@@ -17,6 +17,7 @@ import {
     input,
     output,
     signal,
+    untracked,
 } from '@angular/core';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import {
@@ -395,7 +396,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.monacoEditor.disposeWidgetsByPrefix('comment-');
         addCommentBoxes(this.monacoEditor, issues, PROBLEM_STATEMENT_FILE_PATH, CommentThreadLocationType.PROBLEM_STATEMENT, this.translateService);
         if (this.enableExerciseReviewComments()) {
-            this.getReviewCommentManager()?.renderWidgets();
+            // Avoid tracking UI-only signals (e.g. showLocationWarning) as rerender dependencies.
+            untracked(() => this.getReviewCommentManager()?.renderWidgets());
         } else {
             this.reviewCommentManager?.disposeAll();
             this.monacoEditor.clearLineDecorationsHoverButton();

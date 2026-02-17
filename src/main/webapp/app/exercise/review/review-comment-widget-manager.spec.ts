@@ -13,12 +13,26 @@ describe('ReviewCommentWidgetManager', () => {
     });
 
     const createDraftRef = () => {
+        const submittedSubscription = { unsubscribe: vi.fn() };
+        const cancelSubscription = { unsubscribe: vi.fn() };
         const instance: any = {
-            onSubmitted: { subscribe: vi.fn((cb) => (instance._onSubmitted = cb)) },
-            onCancel: { subscribe: vi.fn((cb) => (instance._onCancel = cb)) },
+            onSubmitted: {
+                subscribe: vi.fn((cb) => {
+                    instance._onSubmitted = cb;
+                    return submittedSubscription;
+                }),
+            },
+            onCancel: {
+                subscribe: vi.fn((cb) => {
+                    instance._onCancel = cb;
+                    return cancelSubscription;
+                }),
+            },
         };
         return {
             instance,
+            submittedSubscription,
+            cancelSubscription,
             location: { nativeElement: document.createElement('div') },
             setInput: vi.fn(),
             destroy: vi.fn(),

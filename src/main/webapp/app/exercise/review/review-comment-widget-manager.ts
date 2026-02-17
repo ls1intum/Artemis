@@ -1,4 +1,4 @@
-import { ComponentRef, ViewContainerRef } from '@angular/core';
+import { ComponentRef, OutputRefSubscription, ViewContainerRef } from '@angular/core';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { ReviewCommentDraftWidgetComponent } from 'app/exercise/review/review-comment-draft-widget/review-comment-draft-widget.component';
 import { ReviewCommentThreadWidgetComponent } from 'app/exercise/review/review-comment-thread-widget/review-comment-thread-widget.component';
@@ -26,6 +26,7 @@ export type ReviewCommentWidgetManagerConfig = {
 export class ReviewCommentWidgetManager {
     private readonly draftLinesByFile: Map<string, Set<number>> = new Map();
     private readonly draftWidgetRefs: Map<string, ComponentRef<ReviewCommentDraftWidgetComponent>> = new Map();
+    private readonly draftWidgetSubscriptions: Map<string, OutputRefSubscription[]> = new Map();
     private readonly threadWidgetRefs: Map<number, ComponentRef<ReviewCommentThreadWidgetComponent>> = new Map();
     private readonly collapseState: Map<number, boolean> = new Map();
 
@@ -133,8 +134,7 @@ export class ReviewCommentWidgetManager {
         let widgetRef = this.draftWidgetRefs.get(widgetKey);
         if (!widgetRef) {
             widgetRef = this.viewContainerRef.createComponent(ReviewCommentDraftWidgetComponent);
-            widgetRef.instance.onSubmitted.subscribe(() => this.removeDraft(fileName, lineNumberZeroBased));
-            widgetRef.instance.onCancel.subscribe(() => this.removeDraft(fileName, lineNumberZeroBased));
+            this.registerDraftWidgetSubscriptions(widgetKey, widgetRef, fileName, lineNumberZeroBased);
             this.draftWidgetRefs.set(widgetKey, widgetRef);
         }
         this.setDraftWidgetInputs(widgetRef, lineNumberZeroBased, draftContext);
@@ -166,8 +166,7 @@ export class ReviewCommentWidgetManager {
             let widgetRef = this.draftWidgetRefs.get(widgetKey);
             if (!widgetRef) {
                 widgetRef = this.viewContainerRef.createComponent(ReviewCommentDraftWidgetComponent);
-                widgetRef.instance.onSubmitted.subscribe(() => this.removeDraft(activeFileName, line));
-                widgetRef.instance.onCancel.subscribe(() => this.removeDraft(activeFileName, line));
+                this.registerDraftWidgetSubscriptions(widgetKey, widgetRef, activeFileName, line);
                 this.draftWidgetRefs.set(widgetKey, widgetRef);
             }
             this.setDraftWidgetInputs(widgetRef, line, draftContext);
@@ -233,6 +232,9 @@ export class ReviewCommentWidgetManager {
             }
         }
         const widgetKey = this.getDraftKey(fileName, line);
+        const subscriptions = this.draftWidgetSubscriptions.get(widgetKey);
+        subscriptions?.forEach((subscription) => subscription.unsubscribe());
+        this.draftWidgetSubscriptions.delete(widgetKey);
         this.editor.disposeWidgetsByPrefix(this.buildDraftWidgetId(fileName, line));
         this.draftWidgetRefs.get(widgetKey)?.destroy();
         this.draftWidgetRefs.delete(widgetKey);
@@ -242,6 +244,10 @@ export class ReviewCommentWidgetManager {
      * Disposes all draft widget component refs.
      */
     private disposeDraftWidgets(): void {
+        this.draftWidgetSubscriptions.forEach((subscriptions) => {
+            subscriptions.forEach((subscription) => subscription.unsubscribe());
+        });
+        this.draftWidgetSubscriptions.clear();
         this.draftWidgetRefs.forEach((ref) => {
             ref.destroy();
         });
@@ -288,6 +294,20 @@ export class ReviewCommentWidgetManager {
      */
     private getDraftKey(fileName: string, line: number): string {
         return `${fileName}:${line}`;
+    }
+
+    /**
+     * Registers draft-widget output subscriptions so they can be cleaned up explicitly.
+     *
+     * @param widgetKey The internal key for the draft widget.
+     * @param widgetRef The draft widget component reference.
+     * @param fileName The file name where the draft is shown.
+     * @param line The zero-based line index of the draft.
+     */
+    private registerDraftWidgetSubscriptions(widgetKey: string, widgetRef: ComponentRef<ReviewCommentDraftWidgetComponent>, fileName: string, line: number): void {
+        const submittedSubscription = widgetRef.instance.onSubmitted.subscribe(() => this.removeDraft(fileName, line));
+        const cancelSubscription = widgetRef.instance.onCancel.subscribe(() => this.removeDraft(fileName, line));
+        this.draftWidgetSubscriptions.set(widgetKey, [submittedSubscription, cancelSubscription]);
     }
 
     /**

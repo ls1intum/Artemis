@@ -10,6 +10,7 @@ import { CommentThreadLocationType, CreateCommentThread } from 'app/exercise/sha
     templateUrl: './review-comment-draft-widget.component.html',
     styleUrls: ['./review-comment-draft-widget.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    // Monaco view zones render outside Angular's host tree, so styles must stay global.
     encapsulation: ViewEncapsulation.None,
     standalone: true,
     imports: [FormsModule, ButtonDirective, ArtemisTranslatePipe],

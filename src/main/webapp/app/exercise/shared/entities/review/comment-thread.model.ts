@@ -1,4 +1,4 @@
-import { Comment as Comment, CreateComment as CreateComment } from 'app/exercise/shared/entities/review/comment.model';
+import { Comment, CreateComment } from 'app/exercise/shared/entities/review/comment.model';
 
 export enum CommentThreadLocationType {
     PROBLEM_STATEMENT = 'PROBLEM_STATEMENT',

@@ -1,4 +1,4 @@
-<div class="monaco-review-comment-widget monaco-review-comment-thread" [class.monaco-review-comment-thread--collapsed]="!showThreadBody">
+<div class="monaco-review-comment-widget monaco-review-comment-thread" [class.monaco-review-comment-thread--collapsed]="!showThreadBody()">
     <div class="monaco-review-comment-thread-header">
         <div class="monaco-review-comment-thread-title">
             @if (showLocationWarning()) {
@@ -9,22 +9,22 @@
             <span class="monaco-review-comment-thread-title-text">
                 {{ 'artemisApp.review.threadTitle' | artemisTranslate }}
             </span>
-            @if (thread()?.resolved) {
+            @if (thread().resolved) {
                 <span class="monaco-review-comment-thread-tag monaco-review-comment-thread-tag--resolved">
                     {{ 'artemisApp.review.threadResolved' | artemisTranslate }}
                 </span>
             }
-            @if (thread()?.outdated) {
+            @if (thread().outdated) {
                 <span class="monaco-review-comment-thread-tag monaco-review-comment-thread-tag--outdated">
                     {{ 'artemisApp.review.threadOutdated' | artemisTranslate }}
                 </span>
             }
         </div>
         <button pButton type="button" text size="small" class="monaco-review-comment-thread-toggle" (click)="toggleThreadBody()">
-            <span class="monaco-review-comment-thread-toggle-icon" [class.monaco-review-comment-thread-toggle--collapsed]="!showThreadBody" aria-hidden="true"></span>
+            <span class="monaco-review-comment-thread-toggle-icon" [class.monaco-review-comment-thread-toggle--collapsed]="!showThreadBody()" aria-hidden="true"></span>
         </button>
     </div>
-    @if (showThreadBody) {
+    @if (showThreadBody()) {
         <div class="monaco-review-comment-thread-divider"></div>
         @for (commentVm of renderedComments(); track commentVm.comment.id; let first = $first) {
             <div class="monaco-review-comment-item" [class.monaco-review-comment-item--with-divider]="!first">
@@ -76,7 +76,7 @@
                                     class="monaco-review-comment-menu-item"
                                     [class.monaco-review-comment-menu-item-delete]="item.id === 'delete'"
                                     [attr.aria-label]="(item.id === 'edit' ? 'artemisApp.review.editComment' : 'artemisApp.review.deleteComment') | artemisTranslate"
-                                    (click)="item.id === 'edit' ? startEditing(commentVm.comment) : deleteComment(commentVm.comment.id!); commentMenu.hide()"
+                                    (click)="handleCommentMenuAction(item.id, commentVm.comment); commentMenu.hide()"
                                 >
                                     @if (item.id === 'edit') {
                                         <fa-icon [icon]="faPen" />
@@ -90,8 +90,8 @@
                         </p-menu>
                     </div>
                 </div>
-                @if (editingCommentId === commentVm.comment.id) {
-                    <textarea class="monaco-review-comment-textarea" [(ngModel)]="editText"></textarea>
+                @if (editingCommentId() === commentVm.comment.id) {
+                    <textarea class="monaco-review-comment-textarea" [ngModel]="editText()" (ngModelChange)="editText.set($event)"></textarea>
                     <div class="monaco-review-comment-actions">
                         <button pButton type="button" severity="secondary" size="small" (click)="cancelEditing()">
                             {{ 'artemisApp.review.editCancel' | artemisTranslate }}
@@ -110,12 +110,13 @@
             <textarea
                 class="monaco-review-comment-textarea monaco-review-comment-textarea--compact"
                 [placeholder]="'artemisApp.review.replyPlaceholder' | artemisTranslate"
-                [(ngModel)]="replyText"
+                [ngModel]="replyText()"
+                (ngModelChange)="replyText.set($event)"
                 rows="1"
             ></textarea>
             <div class="monaco-review-comment-actions">
                 <button pButton type="button" severity="secondary" size="small" (click)="toggleResolved()">
-                    @if (thread()?.resolved) {
+                    @if (thread().resolved) {
                         {{ 'artemisApp.review.unresolveThread' | artemisTranslate }}
                     } @else {
                         {{ 'artemisApp.review.resolveThread' | artemisTranslate }}
