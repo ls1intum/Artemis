@@ -238,10 +238,9 @@ public class BuildJobContainerService {
      */
     public void runScriptInContainer(String containerId, String buildJobId) {
         log.info("Started running the build script for build job in container with id {}", containerId);
-        // The "sh script.sh" execution command specified here is run inside the container as an additional process. This command runs in the background, independent of the
-        // container's
-        // main process. The execution command can run concurrently with the main process. This setup with the ExecCreateCmdResponse gives us the ability to wait in code until the
-        // command has finished before trying to extract the results.
+        // The build script is executed as an additional process inside the container (docker exec), independent of the container's main process.
+        // The call blocks until the script finishes, so it is safe to extract results after it returns.
+        // forceRoot=false: the build script runs as the container's default user (not root) for security.
         executeDockerCommand(containerId, buildJobId, false, "bash", LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/script.sh");
     }
 
