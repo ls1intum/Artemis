@@ -41,63 +41,79 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         expect(deleteSpy).toHaveBeenCalledWith(5);
     });
 
-    it('should emit update on saveEditing and clear editing state', () => {
-        const updateSpy = vi.fn();
-        comp.onUpdate.subscribe(updateSpy);
+    it('should emit submit edit intent and clear local editing state', () => {
+        const submitEditSpy = vi.fn();
+        comp.onSubmitEdit.subscribe(submitEditSpy);
 
         comp.editingCommentId = 7;
         comp.editingCommentType = CommentType.USER;
-        comp.editText = '  updated  ';
-        comp.saveEditing();
+        comp.submitEdit();
 
-        expect(updateSpy).toHaveBeenCalledWith({ commentId: 7, content: { contentType: 'USER', text: 'updated' } });
+        expect(submitEditSpy).toHaveBeenCalledWith(7);
         expect(comp.editingCommentId).toBeUndefined();
-        expect(comp.editText).toBe('');
     });
 
-    it('should not emit update when edit text is empty', () => {
-        const updateSpy = vi.fn();
-        comp.onUpdate.subscribe(updateSpy);
-
-        comp.editingCommentId = 4;
-        comp.editingCommentType = CommentType.USER;
-        comp.editText = '   ';
-        comp.saveEditing();
-
-        expect(updateSpy).not.toHaveBeenCalled();
-    });
-
-    it('should not emit update when editing comment type is not USER', () => {
-        const updateSpy = vi.fn();
-        comp.onUpdate.subscribe(updateSpy);
+    it('should not emit submit edit intent when comment type is not USER', () => {
+        const submitEditSpy = vi.fn();
+        comp.onSubmitEdit.subscribe(submitEditSpy);
 
         comp.editingCommentId = 4;
         comp.editingCommentType = CommentType.CONSISTENCY_CHECK;
-        comp.editText = 'updated';
-        comp.saveEditing();
+        comp.submitEdit();
 
-        expect(updateSpy).not.toHaveBeenCalled();
+        expect(submitEditSpy).not.toHaveBeenCalled();
     });
 
-    it('should emit reply and clear reply text', () => {
-        const replySpy = vi.fn();
-        comp.onReply.subscribe(replySpy);
+    it('should not emit submit edit intent while edit submission is pending', () => {
+        const submitEditSpy = vi.fn();
+        comp.onSubmitEdit.subscribe(submitEditSpy);
+        fixture.componentRef.setInput('isEditSubmitting', true);
+        fixture.detectChanges();
 
-        comp.replyText = '  reply  ';
-        comp.submitReply();
+        comp.editingCommentId = 4;
+        comp.editingCommentType = CommentType.USER;
+        comp.submitEdit();
 
-        expect(replySpy).toHaveBeenCalledWith({ contentType: 'USER', text: 'reply' });
-        expect(comp.replyText).toBe('');
+        expect(submitEditSpy).not.toHaveBeenCalled();
     });
 
-    it('should not emit reply when reply text is empty', () => {
-        const replySpy = vi.fn();
-        comp.onReply.subscribe(replySpy);
+    it('should emit edit draft changes with comment id', () => {
+        const editChangeSpy = vi.fn();
+        comp.onEditTextChange.subscribe(editChangeSpy);
+        comp.editingCommentId = 15;
 
-        comp.replyText = '   ';
+        comp.onEditDraftChanged('updated text');
+
+        expect(editChangeSpy).toHaveBeenCalledWith({ commentId: 15, text: 'updated text' });
+    });
+
+    it('should emit reply submit intent', () => {
+        const submitReplySpy = vi.fn();
+        comp.onSubmitReply.subscribe(submitReplySpy);
+
         comp.submitReply();
 
-        expect(replySpy).not.toHaveBeenCalled();
+        expect(submitReplySpy).toHaveBeenCalledOnce();
+    });
+
+    it('should not emit reply submit intent while pending', () => {
+        const submitReplySpy = vi.fn();
+        comp.onSubmitReply.subscribe(submitReplySpy);
+        fixture.componentRef.setInput('isReplySubmitting', true);
+        fixture.detectChanges();
+
+        comp.submitReply();
+
+        expect(submitReplySpy).not.toHaveBeenCalled();
+    });
+
+    it('should emit reply draft changes', () => {
+        const replyChangeSpy = vi.fn();
+        comp.onReplyTextChange.subscribe(replyChangeSpy);
+
+        comp.onReplyDraftChanged('reply text');
+
+        expect(replyChangeSpy).toHaveBeenCalledWith('reply text');
     });
 
     it('should toggle resolved and collapse when resolving', () => {
@@ -112,6 +128,18 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         expect(resolvedSpy).toHaveBeenCalledWith(true);
         expect(comp.showThreadBody).toBe(false);
         expect(collapseSpy).toHaveBeenCalledWith(true);
+    });
+
+    it('should not toggle resolved while resolve operation is pending', () => {
+        const resolvedSpy = vi.fn();
+        comp.onToggleResolved.subscribe(resolvedSpy);
+        fixture.componentRef.setInput('isResolveSubmitting', true);
+        fixture.componentRef.setInput('thread', { id: 1, resolved: false } as any);
+        fixture.detectChanges();
+
+        comp.toggleResolved();
+
+        expect(resolvedSpy).not.toHaveBeenCalled();
     });
 
     it('should toggle thread body and emit collapse state', () => {
@@ -160,7 +188,9 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         expect(comp.formatReviewCommentText(nonUserComment)).toBe('ERROR - CODE - msg');
     });
 
-    it('should set edit text when starting editing', () => {
+    it('should emit start-edit intent when starting editing', () => {
+        const startEditSpy = vi.fn();
+        comp.onStartEdit.subscribe(startEditSpy);
         const comment = {
             id: 1,
             type: 'USER',
@@ -169,10 +199,24 @@ describe('ReviewCommentThreadWidgetComponent', () => {
 
         comp.startEditing(comment);
         expect(comp.editingCommentId).toBe(1);
-        expect(comp.editText).toBe('note');
+        expect(startEditSpy).toHaveBeenCalledWith({ commentId: 1, initialText: 'note' });
+    });
+
+    it('should emit cancel-edit intent when cancelling edit mode', () => {
+        const cancelEditSpy = vi.fn();
+        comp.onCancelEdit.subscribe(cancelEditSpy);
+        comp.editingCommentId = 3;
+        comp.editingCommentType = CommentType.USER;
+
+        comp.cancelEditing();
+
+        expect(cancelEditSpy).toHaveBeenCalledWith(3);
+        expect(comp.editingCommentId).toBeUndefined();
     });
 
     it('should ignore startEditing for non-user comments', () => {
+        const startEditSpy = vi.fn();
+        comp.onStartEdit.subscribe(startEditSpy);
         const comment = {
             id: 2,
             type: 'CONSISTENCY_CHECK',
@@ -181,6 +225,6 @@ describe('ReviewCommentThreadWidgetComponent', () => {
 
         comp.startEditing(comment);
         expect(comp.editingCommentId).toBeUndefined();
-        expect(comp.editText).toBe('');
+        expect(startEditSpy).not.toHaveBeenCalled();
     });
 });

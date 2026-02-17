@@ -1,6 +1,11 @@
 <div class="monaco-review-comment-widget">
     <div class="monaco-review-comment-title">{{ 'artemisApp.review.addCommentTitle' | artemisTranslate }}</div>
-    <textarea class="monaco-review-comment-textarea" [placeholder]="'artemisApp.review.addCommentPlaceholder' | artemisTranslate" [(ngModel)]="text"></textarea>
+    <textarea
+        class="monaco-review-comment-textarea"
+        [placeholder]="'artemisApp.review.addCommentPlaceholder' | artemisTranslate"
+        [ngModel]="text()"
+        (ngModelChange)="onDraftTextChanged($event)"
+    ></textarea>
     <div class="monaco-review-comment-actions">
         @if (!canSubmit()) {
             <span class="monaco-review-comment-error">{{ 'artemisApp.review.submitBeforeComment' | artemisTranslate }}</span>
@@ -8,7 +13,7 @@
         <button pButton type="button" severity="secondary" size="small" (click)="cancel()">
             {{ 'artemisApp.review.addCommentCancel' | artemisTranslate }}
         </button>
-        <button pButton data-testid="review-draft-submit" type="button" size="small" [disabled]="!canSubmit()" (click)="submit()">
+        <button pButton data-testid="review-draft-submit" type="button" size="small" [disabled]="!canSubmit() || isSubmitting()" (click)="submitDraft()">
             {{ 'artemisApp.review.addCommentSubmit' | artemisTranslate }}
         </button>
     </div>

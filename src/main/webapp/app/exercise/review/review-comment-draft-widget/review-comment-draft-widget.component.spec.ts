@@ -24,40 +24,48 @@ describe('ReviewCommentDraftWidgetComponent', () => {
         vi.restoreAllMocks();
     });
 
-    it('should emit submit when allowed and text is non-empty', () => {
+    it('should emit submit intent when allowed', () => {
         const submitSpy = vi.fn();
-        comp.onSubmit.subscribe(submitSpy);
+        comp.onSubmitDraft.subscribe(submitSpy);
 
-        comp.text = '  hello  ';
-        comp.submit();
+        comp.submitDraft();
 
-        expect(submitSpy).toHaveBeenCalledWith('hello');
+        expect(submitSpy).toHaveBeenCalledOnce();
     });
 
-    it('should not emit submit when text is empty', () => {
-        const submitSpy = vi.fn();
-        comp.onSubmit.subscribe(submitSpy);
+    it('should emit draft text changes', () => {
+        const changeSpy = vi.fn();
+        comp.onTextChange.subscribe(changeSpy);
 
-        comp.text = '   ';
-        comp.submit();
+        comp.onDraftTextChanged('updated');
 
-        expect(submitSpy).not.toHaveBeenCalled();
+        expect(changeSpy).toHaveBeenCalledWith('updated');
     });
 
     it('should block submit when canSubmit is false', () => {
         const submitSpy = vi.fn();
-        comp.onSubmit.subscribe(submitSpy);
+        comp.onSubmitDraft.subscribe(submitSpy);
         fixture.componentRef.setInput('canSubmit', false);
         fixture.detectChanges();
 
-        comp.text = 'text';
-        comp.submit();
+        comp.submitDraft();
 
         expect(submitSpy).not.toHaveBeenCalled();
         const submitButton = fixture.nativeElement.querySelector('[data-testid="review-draft-submit"]');
         const errorMessage = fixture.nativeElement.querySelector('.monaco-review-comment-error');
         expect(submitButton.disabled).toBe(true);
         expect(errorMessage).not.toBeNull();
+    });
+
+    it('should block submit while operation is pending', () => {
+        const submitSpy = vi.fn();
+        comp.onSubmitDraft.subscribe(submitSpy);
+        fixture.componentRef.setInput('isSubmitting', true);
+        fixture.detectChanges();
+
+        comp.submitDraft();
+
+        expect(submitSpy).not.toHaveBeenCalled();
     });
 
     it('should emit cancel and reset error flag', () => {

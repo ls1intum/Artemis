@@ -14,23 +14,29 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 })
 export class ReviewCommentDraftWidgetComponent {
     readonly canSubmit = input<boolean>(true);
-    readonly onSubmit = output<string>();
+    readonly text = input<string>('');
+    readonly isSubmitting = input<boolean>(false);
+    readonly onSubmitDraft = output<void>();
+    readonly onTextChange = output<string>();
     readonly onCancel = output<void>();
 
-    text = '';
+    /**
+     * Emits a submit intent when submission is allowed.
+     */
+    submitDraft(): void {
+        if (!this.canSubmit() || this.isSubmitting()) {
+            return;
+        }
+        this.onSubmitDraft.emit();
+    }
 
     /**
-     * Emits the trimmed text when submission is allowed and non-empty.
+     * Emits draft text changes so state can be stored outside the component.
+     *
+     * @param text The updated draft text.
      */
-    submit(): void {
-        if (!this.canSubmit()) {
-            return;
-        }
-        const trimmed = this.text.trim();
-        if (!trimmed) {
-            return;
-        }
-        this.onSubmit.emit(trimmed);
+    onDraftTextChanged(text: string): void {
+        this.onTextChange.emit(text);
     }
 
     /**

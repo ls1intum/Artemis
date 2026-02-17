@@ -29,8 +29,6 @@ import { Annotation, CodeEditorMonacoComponent } from 'app/programming/shared/co
 import { KeysPipe } from 'app/shared/pipes/keys.pipe';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
-import { CommentThread, CreateCommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
 import { editor } from 'monaco-editor';
 
 export enum CollapsableCodeEditorElement {
@@ -87,7 +85,6 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     course = input<Course | undefined>();
     selectedRepository = input<RepositoryType>();
     enableExerciseReviewComments = input<boolean>(false);
-    reviewCommentThreads = input<CommentThread[]>([]);
     selectedAuxiliaryRepositoryId = input<number | undefined>();
 
     onCommitStateChange = output<CommitState>();
@@ -97,12 +94,6 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     onAcceptSuggestion = output<Feedback>();
     onDiscardSuggestion = output<Feedback>();
     onEditorLoaded = output<void>();
-    onSubmitReviewComment = output<CreateCommentThread>();
-    onDeleteReviewComment = output<number>();
-    onReplyReviewComment = output<{ threadId: number; comment: CreateComment }>();
-    onUpdateReviewComment = output<{ commentId: number; content: UpdateCommentContent }>();
-    onToggleResolveReviewThread = output<{ threadId: number; resolved: boolean }>();
-    onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
     onCommit = output<void>();
 
     /** Work in Progress: temporary properties needed to get first prototype working */

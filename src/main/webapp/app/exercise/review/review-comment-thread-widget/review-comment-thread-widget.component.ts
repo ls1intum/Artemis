@@ -1,14 +1,14 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation, computed, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation, computed, inject, input, output, viewChildren } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ButtonDirective } from 'primeng/button';
 import { MenuItem } from 'primeng/api';
-import { MenuModule } from 'primeng/menu';
+import { Menu, MenuModule } from 'primeng/menu';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faEllipsisVertical, faPen, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { Comment, CommentType, CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
+import { Comment, CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContent } from 'app/exercise/shared/entities/review/comment-content.model';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
@@ -27,14 +27,22 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     readonly thread = input.required<CommentThread>();
     readonly initialCollapsed = input<boolean>(false);
     readonly showLocationWarning = input<boolean>(false);
+    readonly replyText = input<string>('');
+    readonly editText = input<string>('');
+    readonly isReplySubmitting = input<boolean>(false);
+    readonly isEditSubmitting = input<boolean>(false);
+    readonly isResolveSubmitting = input<boolean>(false);
 
     readonly onDelete = output<number>();
-    readonly onReply = output<CreateComment>();
-    readonly onUpdate = output<{ commentId: number; content: UpdateCommentContent }>();
+    readonly onSubmitReply = output<void>();
+    readonly onSubmitEdit = output<number>();
+    readonly onReplyTextChange = output<string>();
+    readonly onEditTextChange = output<{ commentId: number; text: string }>();
+    readonly onStartEdit = output<{ commentId: number; initialText: string }>();
+    readonly onCancelEdit = output<number>();
     readonly onToggleResolved = output<boolean>();
     readonly onToggleCollapse = output<boolean>();
 
-    replyText = '';
     protected readonly faTriangleExclamation = faTriangleExclamation;
     protected readonly faEllipsisVertical = faEllipsisVertical;
     protected readonly faPen = faPen;
@@ -42,9 +50,9 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     showThreadBody = true;
     editingCommentId?: number;
     editingCommentType?: CommentType;
-    editText = '';
     readonly userCommentMenuItems: MenuItem[] = [{ id: 'edit' }, { id: 'delete' }];
     readonly nonUserCommentMenuItems: MenuItem[] = [{ id: 'delete' }];
+    private readonly commentMenus = viewChildren(Menu);
 
     private readonly destroyed$ = new Subject<void>();
     private readonly translateService = inject(TranslateService);
@@ -78,47 +86,72 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         }
         this.editingCommentId = comment.id;
         this.editingCommentType = comment.type;
-        this.editText = this.formatReviewCommentText(comment);
+        this.onStartEdit.emit({ commentId: comment.id, initialText: this.formatReviewCommentText(comment) });
     }
 
     /**
      * Cancels the current edit and clears the editor state.
      */
     cancelEditing(): void {
+        const editingCommentId = this.editingCommentId;
         this.editingCommentId = undefined;
         this.editingCommentType = undefined;
-        this.editText = '';
+        if (editingCommentId !== undefined) {
+            this.onCancelEdit.emit(editingCommentId);
+        }
     }
 
     /**
-     * Saves the edited comment text when non-empty and emits an update event.
+     * Emits an edit-submit intent for the currently edited comment.
      */
-    saveEditing(): void {
+    submitEdit(): void {
         const id = this.editingCommentId;
-        const trimmed = this.editText.trim();
-        if (id === undefined || !trimmed || this.editingCommentType !== CommentType.USER) {
+        if (id === undefined || this.editingCommentType !== CommentType.USER || this.isEditSubmitting()) {
             return;
         }
-        this.onUpdate.emit({ commentId: id, content: { contentType: 'USER', text: trimmed } });
-        this.cancelEditing();
+        this.onSubmitEdit.emit(id);
+        this.editingCommentId = undefined;
+        this.editingCommentType = undefined;
     }
 
     /**
-     * Emits a reply event with trimmed text and clears the reply field.
+     * Emits a reply-submit intent.
      */
     submitReply(): void {
-        const trimmed = this.replyText.trim();
-        if (!trimmed) {
+        if (this.isReplySubmitting()) {
             return;
         }
-        this.onReply.emit({ contentType: 'USER', text: trimmed });
-        this.replyText = '';
+        this.onSubmitReply.emit();
+    }
+
+    /**
+     * Emits reply text changes so state can be synchronized externally.
+     *
+     * @param text The updated reply text.
+     */
+    onReplyDraftChanged(text: string): void {
+        this.onReplyTextChange.emit(text);
+    }
+
+    /**
+     * Emits edit text changes for the currently edited comment.
+     *
+     * @param text The updated edit text.
+     */
+    onEditDraftChanged(text: string): void {
+        if (this.editingCommentId === undefined) {
+            return;
+        }
+        this.onEditTextChange.emit({ commentId: this.editingCommentId, text });
     }
 
     /**
      * Toggles the resolved state and collapses the thread when resolved.
      */
     toggleResolved(): void {
+        if (this.isResolveSubmitting()) {
+            return;
+        }
         const thread = this.thread();
         const nextResolved = !thread.resolved;
         this.onToggleResolved.emit(nextResolved);
@@ -144,6 +177,13 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void {
         this.destroyed$.next();
         this.destroyed$.complete();
+    }
+
+    /**
+     * Hides all open comment action menus in this thread widget.
+     */
+    hideCommentMenus(): void {
+        this.commentMenus().forEach((menu) => menu.hide());
     }
 
     /**

@@ -518,15 +518,13 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         });
 
         it('onCommit clears draft widgets and reloads threads', () => {
-            const updatedThreads = [{ id: 1 }] as any;
-            reviewCommentService.loadThreads.mockReturnValue(of(updatedThreads));
+            reviewCommentService.loadThreads.mockReturnValue(of([{ id: 1 }] as any));
             const clearEditorDraftsSpy = jest.spyOn((comp as any).codeEditorContainer.monacoEditor, 'clearReviewCommentDrafts');
 
             comp.onCommit();
 
             expect(clearEditorDraftsSpy).toHaveBeenCalledOnce();
             expect(reviewCommentService.loadThreads).toHaveBeenCalledWith(42);
-            expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
         });
 
         it('onProblemStatementSaved does nothing when exercise id is missing', () => {
@@ -540,183 +538,13 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         });
 
         it('onProblemStatementSaved clears markdown drafts and reloads threads', () => {
-            const updatedThreads = [{ id: 2 }] as any;
-            reviewCommentService.loadThreads.mockReturnValue(of(updatedThreads));
+            reviewCommentService.loadThreads.mockReturnValue(of([{ id: 2 }] as any));
             const clearInstructionDraftsSpy = jest.spyOn((comp as any).editableInstructions, 'clearReviewCommentDrafts');
 
             comp.onProblemStatementSaved();
 
             expect(clearInstructionDraftsSpy).toHaveBeenCalledOnce();
             expect(reviewCommentService.loadThreads).toHaveBeenCalledWith(42);
-            expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
-        });
-
-        it('onSubmitReviewComment creates thread with initial comment and updates local threads', () => {
-            const updatedThreads = [{ id: 3 }] as any;
-            reviewCommentService.createThread.mockReturnValue(of({ body: { id: 3, comments: [] } } as any));
-            reviewCommentService.appendThreadToThreads.mockReturnValue(updatedThreads);
-            comp.reviewCommentThreads.set([]);
-
-            const createThreadRequest = {
-                targetType: CommentThreadLocationType.TEMPLATE_REPO,
-                initialFilePath: 'src/Main.java',
-                initialLineNumber: 5,
-                initialComment: { contentType: 'USER', text: 'Initial comment' } as const,
-            };
-            comp.onSubmitReviewComment(createThreadRequest);
-
-            expect(reviewCommentService.createThread).toHaveBeenCalledWith(42, createThreadRequest);
-            expect(reviewCommentService.appendThreadToThreads).toHaveBeenCalledWith([], { id: 3, comments: [] });
-            expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
-        });
-
-        it('onSubmitReviewComment does nothing when exercise id is missing', () => {
-            comp.exercise = undefined as any;
-
-            comp.onSubmitReviewComment({
-                targetType: CommentThreadLocationType.TEMPLATE_REPO,
-                initialFilePath: 'src/Main.java',
-                initialLineNumber: 5,
-                initialComment: { contentType: 'USER', text: 'Initial comment' } as const,
-            });
-
-            expect(reviewCommentService.createThread).not.toHaveBeenCalled();
-        });
-
-        it('onSubmitReviewComment shows saveFailed error on service failure', () => {
-            reviewCommentService.createThread.mockReturnValue(throwError(() => new Error('fail')));
-            const errorSpy = jest.spyOn(alertService, 'error');
-
-            comp.onSubmitReviewComment({
-                targetType: CommentThreadLocationType.TEMPLATE_REPO,
-                initialFilePath: 'src/Main.java',
-                initialLineNumber: 5,
-                initialComment: { contentType: 'USER', text: 'Initial comment' } as const,
-            });
-
-            expect(errorSpy).toHaveBeenCalledWith('artemisApp.review.saveFailed');
-        });
-
-        it('onDeleteReviewComment deletes comment and updates local threads', () => {
-            const updatedThreads = [{ id: 4 }] as any;
-            reviewCommentService.deleteComment.mockReturnValue(of({} as any));
-            reviewCommentService.removeCommentFromThreads.mockReturnValue(updatedThreads);
-            comp.reviewCommentThreads.set([{ id: 1 }] as any);
-
-            comp.onDeleteReviewComment(99);
-
-            expect(reviewCommentService.deleteComment).toHaveBeenCalledWith(42, 99);
-            expect(reviewCommentService.removeCommentFromThreads).toHaveBeenCalledWith([{ id: 1 }], 99);
-            expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
-        });
-
-        it('onDeleteReviewComment does nothing when exercise id is missing', () => {
-            comp.exercise = undefined as any;
-
-            comp.onDeleteReviewComment(99);
-
-            expect(reviewCommentService.deleteComment).not.toHaveBeenCalled();
-        });
-
-        it('onDeleteReviewComment shows deleteFailed error on service failure', () => {
-            reviewCommentService.deleteComment.mockReturnValue(throwError(() => new Error('fail')));
-            const errorSpy = jest.spyOn(alertService, 'error');
-
-            comp.onDeleteReviewComment(99);
-
-            expect(errorSpy).toHaveBeenCalledWith('artemisApp.review.deleteFailed');
-        });
-
-        it('onReplyReviewComment adds reply and updates local threads', () => {
-            const updatedThreads = [{ id: 5, comments: [{ id: 10 }] }] as any;
-            reviewCommentService.createUserComment.mockReturnValue(of({ body: { id: 10, threadId: 5 } } as any));
-            reviewCommentService.appendCommentToThreads.mockReturnValue(updatedThreads);
-            comp.reviewCommentThreads.set([{ id: 5, comments: [] }] as any);
-            const comment = { contentType: 'USER', text: 'Reply' } as const;
-
-            comp.onReplyReviewComment({ threadId: 5, comment });
-
-            expect(reviewCommentService.createUserComment).toHaveBeenCalledWith(42, 5, comment);
-            expect(reviewCommentService.appendCommentToThreads).toHaveBeenCalledWith([{ id: 5, comments: [] }], { id: 10, threadId: 5 });
-            expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
-        });
-
-        it('onReplyReviewComment does nothing when exercise id is missing', () => {
-            comp.exercise = undefined as any;
-
-            comp.onReplyReviewComment({ threadId: 5, comment: { contentType: 'USER', text: 'Reply' } as const });
-
-            expect(reviewCommentService.createUserComment).not.toHaveBeenCalled();
-        });
-
-        it('onReplyReviewComment shows saveFailed error on service failure', () => {
-            reviewCommentService.createUserComment.mockReturnValue(throwError(() => new Error('fail')));
-            const errorSpy = jest.spyOn(alertService, 'error');
-
-            comp.onReplyReviewComment({ threadId: 5, comment: { contentType: 'USER', text: 'Reply' } as const });
-
-            expect(errorSpy).toHaveBeenCalledWith('artemisApp.review.saveFailed');
-        });
-
-        it('onUpdateReviewComment updates comment content and local threads', () => {
-            const updatedThreads = [{ id: 5 }] as any;
-            const content = { contentType: 'USER', text: 'Updated' } as const;
-            reviewCommentService.updateUserCommentContent.mockReturnValue(of({ body: { id: 7, threadId: 1, content } } as any));
-            reviewCommentService.updateCommentInThreads.mockReturnValue(updatedThreads);
-            comp.reviewCommentThreads.set([{ id: 1 }] as any);
-
-            comp.onUpdateReviewComment({ commentId: 7, content });
-
-            expect(reviewCommentService.updateUserCommentContent).toHaveBeenCalledWith(42, 7, content);
-            expect(reviewCommentService.updateCommentInThreads).toHaveBeenCalledWith([{ id: 1 }], { id: 7, threadId: 1, content });
-            expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
-        });
-
-        it('onUpdateReviewComment does nothing when exercise id is missing', () => {
-            comp.exercise = undefined as any;
-
-            comp.onUpdateReviewComment({ commentId: 7, content: { contentType: 'USER', text: 'Updated' } as const });
-
-            expect(reviewCommentService.updateUserCommentContent).not.toHaveBeenCalled();
-        });
-
-        it('onUpdateReviewComment shows saveFailed error on service failure', () => {
-            reviewCommentService.updateUserCommentContent.mockReturnValue(throwError(() => new Error('fail')));
-            const errorSpy = jest.spyOn(alertService, 'error');
-
-            comp.onUpdateReviewComment({ commentId: 7, content: { contentType: 'USER', text: 'Updated' } as const });
-
-            expect(errorSpy).toHaveBeenCalledWith('artemisApp.review.saveFailed');
-        });
-
-        it('onToggleResolveReviewThread updates resolved state and local threads', () => {
-            const updatedThreads = [{ id: 6, resolved: true }] as any;
-            reviewCommentService.updateThreadResolvedState.mockReturnValue(of({ body: { id: 6, resolved: true } } as any));
-            reviewCommentService.replaceThreadInThreads.mockReturnValue(updatedThreads);
-            comp.reviewCommentThreads.set([{ id: 1, resolved: false }] as any);
-
-            comp.onToggleResolveReviewThread({ threadId: 6, resolved: true });
-
-            expect(reviewCommentService.updateThreadResolvedState).toHaveBeenCalledWith(42, 6, true);
-            expect(reviewCommentService.replaceThreadInThreads).toHaveBeenCalledWith([{ id: 1, resolved: false }], { id: 6, resolved: true });
-            expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
-        });
-
-        it('onToggleResolveReviewThread does nothing when exercise id is missing', () => {
-            comp.exercise = undefined as any;
-
-            comp.onToggleResolveReviewThread({ threadId: 6, resolved: true });
-
-            expect(reviewCommentService.updateThreadResolvedState).not.toHaveBeenCalled();
-        });
-
-        it('onToggleResolveReviewThread shows resolveFailed error on service failure', () => {
-            reviewCommentService.updateThreadResolvedState.mockReturnValue(throwError(() => new Error('fail')));
-            const errorSpy = jest.spyOn(alertService, 'error');
-
-            comp.onToggleResolveReviewThread({ threadId: 6, resolved: true });
-
-            expect(errorSpy).toHaveBeenCalledWith('artemisApp.review.resolveFailed');
         });
 
         it('onCommit shows loadFailed error when loading threads fails', () => {
@@ -726,7 +554,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             comp.onCommit();
 
             expect(errorSpy).toHaveBeenCalledWith('artemisApp.review.loadFailed');
-            expect(comp.reviewCommentThreads()).toEqual([]);
         });
     });
 
