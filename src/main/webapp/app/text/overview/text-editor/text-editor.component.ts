@@ -170,7 +170,10 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             // Include all results when viewing a specific result (resultId is present)
             const includeAllResults = !!this.resultId;
             this.textService.get(participationId!, includeAllResults).subscribe({
-                next: (data: StudentParticipation) => this.updateParticipation(data, this.submissionId, this.resultId),
+                next: (data: StudentParticipation) => {
+                    this.updateParticipation(data, this.submissionId, this.resultId);
+                    this.loadIrisSettings();
+                },
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
 
@@ -199,7 +202,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                     }
                 }
                 this.updateParticipation(this.participation);
-                this.loadIrisSettings();
             });
     }
 
