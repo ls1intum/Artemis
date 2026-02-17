@@ -54,7 +54,7 @@ import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector
 import { CdkDrag, CdkDragMove, Point } from '@angular/cdk/drag-drop';
 import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action.model';
 import { TextEditorDomainActionWithOptions } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action-with-options.model';
-import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
+import { LectureAttachmentReferenceAction, LectureWithDetails } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
 import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { PostingEditType, ReferenceType } from 'app/communication/metis.util';
 import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
@@ -806,5 +806,16 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     private getProblemStatementThreadLine(thread: CommentThread): number {
         return (thread.lineNumber ?? thread.initialLineNumber ?? 1) - 1;
+    /**
+     * Checks whether the given lecture has any content/attachments that can explicitly be linked
+     * @param lecture The lecture to check
+     */
+    hasReferencableAttachments(lecture: LectureWithDetails): boolean {
+        const hasAttachments = !!lecture.attachments?.length;
+        const hasReferencableAttachmentVideoUnits =
+            lecture.attachmentVideoUnits?.some((unit) => {
+                return unit.attachment && unit.attachment.link;
+            }) === true;
+        return hasAttachments || hasReferencableAttachmentVideoUnits;
     }
 }

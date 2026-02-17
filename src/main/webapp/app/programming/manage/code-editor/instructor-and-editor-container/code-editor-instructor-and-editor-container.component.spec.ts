@@ -30,6 +30,7 @@ import { ConsistencyCheckService } from 'app/programming/manage/consistency-chec
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
 import { ConsistencyCheckError, ErrorType } from 'app/programming/shared/entities/consistency-check-result.model';
 import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { ArtifactLocation } from 'app/openapi/model/artifactLocation';
 import { faCircleExclamation, faCircleInfo, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
@@ -384,6 +385,34 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(pullSpy).toHaveBeenCalledTimes(2);
         });
 
+        it('should show modal when code generation is already running', async () => {
+            const addAlertSpy = jest.spyOn(alertService, 'addAlert');
+            const modalService = TestBed.inject(NgbModal);
+            const openSpy = jest.spyOn(modalService, 'open');
+            comp.selectedRepository = RepositoryType.TEMPLATE;
+
+            const conflict = new HttpErrorResponse({
+                status: 409,
+                error: { 'X-artemisApp-error': 'error.codeGenerationRunning' },
+            });
+            (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(throwError(() => conflict) as any);
+
+            comp.generateCode();
+            await Promise.resolve();
+            await Promise.resolve();
+
+            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.TEMPLATE });
+            expect(comp.isGeneratingCode()).toBeFalse();
+            // One modal from generateCode() confirmation and one from the "already running" error handler.
+            expect(openSpy).toHaveBeenCalledTimes(2);
+            expect(addAlertSpy).not.toHaveBeenCalledWith(
+                expect.objectContaining({
+                    type: AlertType.DANGER,
+                    translationKey: 'artemisApp.programmingExercise.codeGeneration.error',
+                }),
+            );
+        });
+
         it('should call executeRefresh and cleanup on DONE', async () => {
             comp.selectedRepository = RepositoryType.SOLUTION;
             (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-4' }));
@@ -480,6 +509,17 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             } finally {
                 window.setTimeout = originalSetTimeout;
             }
+        });
+
+        it('should clear subscription when restore check-only has no active job', () => {
+            comp.selectedRepository = RepositoryType.SOLUTION;
+            const clearSpy = jest.spyOn(comp as any, 'clearJobSubscription');
+            (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({}));
+
+            (comp as any).restoreCodeGenerationState();
+
+            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.SOLUTION, checkOnly: true });
+            expect(clearSpy).toHaveBeenCalledWith(true);
         });
     });
 
