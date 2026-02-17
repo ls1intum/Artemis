@@ -13,7 +13,6 @@ describe('UrlAction', () => {
         jest.spyOn(editor, 'replaceTextAtRange').mockReturnValue(undefined);
         jest.spyOn(editor, 'focus').mockReturnValue(undefined);
         jest.spyOn(editor, 'setSelection').mockReturnValue(undefined);
-        jest.spyOn(editor, 'getTextAtRange').mockReturnValue(undefined);
     });
 
     afterEach(() => {
@@ -24,6 +23,7 @@ describe('UrlAction', () => {
         const currentPosition = new TextEditorPosition(1, 50);
         jest.spyOn(editor, 'getSelection').mockReturnValue(new TextEditorRange(currentPosition, currentPosition));
         jest.spyOn(editor, 'getPosition').mockReturnValue(currentPosition);
+        jest.spyOn(editor, 'getTextAtRange').mockReturnValue('');
 
         action.run(editor);
 
