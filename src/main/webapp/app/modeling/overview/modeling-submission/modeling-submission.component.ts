@@ -375,7 +375,10 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
         this.resultWithComplaint = getFirstResultWithComplaint(this.submission);
         if (this.submission.submitted && this.result && this.result.completionDate) {
-            if (!this.isFeedbackView) {
+            if (this.isAutomaticResult) {
+                this.assessmentResult = this.modelingAssessmentService.convertResult(this.result);
+                this.prepareAssessmentData();
+            } else if (!this.isFeedbackView) {
                 this.modelingAssessmentService.getAssessment(this.submission.id!).subscribe((assessmentResult: Result) => {
                     this.assessmentResult = assessmentResult;
                     this.prepareAssessmentData();
@@ -625,7 +628,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.submission.participation!.submissions = [this.submission];
                     this.participationWebsocketService.addParticipation(this.participation, this.modelingExercise);
                     this.modelingExercise.studentParticipations = [this.participation];
-                    this.modelingExerciseHeader.studentParticipations = [this.participation];
+                    if (this.modelingExerciseHeader) {
+                        this.modelingExerciseHeader.studentParticipations = [this.participation];
+                    }
                     this.result = getLatestSubmissionResult(this.submission);
                     this.retryStarted = false;
 
@@ -722,6 +727,13 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             return this.assessmentResult?.feedbacks?.filter((feedbackElement) => feedbackElement.reference != undefined);
         }
         return undefined;
+    }
+
+    /*
+     * Check if the result's assessment type is Athena
+     */
+    get isAutomaticResult(): boolean {
+        return this.result?.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
     }
 
     /*

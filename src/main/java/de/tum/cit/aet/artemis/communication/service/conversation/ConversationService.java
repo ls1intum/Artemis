@@ -247,6 +247,9 @@ public class ConversationService {
         if (!post.getConversation().getId().equals(conversationId)) {
             throw new EntityNotFoundException("Message with id \"" + messageId + "\" does not exist in the conversation");
         }
+        if (post.getAuthor().getId().equals(userId)) {
+            throw new BadRequestAlertException("You cannot mark your own message as unread", "post", "cannotMarkOwnAsUnread");
+        }
         ZonedDateTime messageDate = post.getCreationDate();
         ZonedDateTime lastRead = messageDate.minusNanos(1_000_000); // set last read to 1ms before the message date
         // Recalculate unread count from this message onwards

@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.MAX_PROCESSING_RETRIES;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -10,14 +9,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
-import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
+import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisOrNebulaEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
@@ -38,10 +36,9 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepos
  * Note: Cleanup of orphaned states (where lecture unit was deleted) is handled
  * automatically by database CASCADE DELETE on the foreign key constraint.
  */
-@Conditional(LectureEnabled.class)
+@Conditional(LectureWithIrisOrNebulaEnabled.class)
 @Component
 @Lazy
-@Profile(PROFILE_CORE_AND_SCHEDULING)
 public class LectureContentProcessingScheduler {
 
     private static final Logger log = LoggerFactory.getLogger(LectureContentProcessingScheduler.class);
@@ -96,6 +93,11 @@ public class LectureContentProcessingScheduler {
     public void processScheduledRetries() {
         if (!featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)) {
             log.debug("LectureContentProcessing feature is disabled, skipping scheduled retries");
+            return;
+        }
+
+        if (!processingService.hasProcessingCapabilities()) {
+            log.debug("No processing services available, skipping scheduled retries");
             return;
         }
 
@@ -231,7 +233,7 @@ public class LectureContentProcessingScheduler {
         }
         else {
             // Schedule retry with exponential backoff
-            long backoffMinutes = LectureContentProcessingService.calculateBackoffMinutes(freshState.getRetryCount());
+            long backoffMinutes = ProcessingStateCallbackService.calculateBackoffMinutes(freshState.getRetryCount());
             freshState.scheduleRetry(backoffMinutes);
             log.info("Stuck state for unit {} scheduled for retry in {} minutes (attempt {}/{})", freshState.getLectureUnit().getId(), backoffMinutes, freshState.getRetryCount(),
                     MAX_PROCESSING_RETRIES);
