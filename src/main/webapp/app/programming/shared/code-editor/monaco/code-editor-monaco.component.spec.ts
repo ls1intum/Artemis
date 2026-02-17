@@ -24,6 +24,7 @@ import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { IKeyboardEvent } from 'monaco-editor';
+import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 
 describe('CodeEditorMonacoComponent', () => {
     let comp: CodeEditorMonacoComponent;
@@ -692,5 +693,78 @@ describe('CodeEditorMonacoComponent', () => {
         fixture.componentRef.setInput('selectedFile', scrolledFile);
         await comp.selectFileInEditor(scrolledFile);
         expect(setScrollTopStub).toHaveBeenCalledExactlyOnceWith(scrollTop);
+    });
+
+    it('should expose review comment manager callbacks for repository context', () => {
+        fixture.componentRef.setInput('selectedFile', 'src/Foo.java');
+        fixture.componentRef.setInput('selectedRepository', RepositoryType.AUXILIARY);
+        fixture.componentRef.setInput('selectedAuxiliaryRepositoryId', 7);
+        fixture.componentRef.setInput('enableExerciseReviewComments', true);
+        fixture.componentRef.setInput('commitState', CommitState.CLEAN);
+        fixture.changeDetectorRef.detectChanges();
+
+        const manager = (comp as any).getReviewCommentManager();
+        const config = (manager as any).config;
+
+        expect(config.shouldShowHoverButton()).toBeTrue();
+        expect(config.canSubmit()).toBeTrue();
+        expect(config.getDraftFileName()).toBe('src/Foo.java');
+
+        fixture.componentRef.setInput('selectedRepository', RepositoryType.ASSIGNMENT);
+        fixture.changeDetectorRef.detectChanges();
+        expect(config.getDraftContext({ lineNumber: 2, fileName: 'src/Foo.java' })).toBeUndefined();
+
+        fixture.componentRef.setInput('selectedRepository', RepositoryType.AUXILIARY);
+        fixture.changeDetectorRef.detectChanges();
+        expect(config.getDraftContext({ lineNumber: 2, fileName: 'src/Foo.java' })).toEqual({
+            targetType: CommentThreadLocationType.AUXILIARY_REPO,
+            filePath: 'src/Foo.java',
+            auxiliaryRepositoryId: 7,
+        });
+
+        const thread = {
+            id: 11,
+            exerciseId: 1,
+            targetType: CommentThreadLocationType.AUXILIARY_REPO,
+            auxiliaryRepositoryId: 7,
+            filePath: 'src/Foo.java',
+            initialLineNumber: 1,
+            lineNumber: 9,
+            outdated: false,
+            resolved: false,
+            comments: [],
+        } as any;
+        (comp as any).exerciseReviewCommentService.threads.set([thread]);
+
+        expect(config.getThreads()).toEqual([thread]);
+        expect(config.filterThread(thread)).toBeTrue();
+        expect(config.filterThread({ ...thread, auxiliaryRepositoryId: 9 })).toBeFalse();
+        expect(config.getThreadLine(thread)).toBe(8);
+
+        const onAddSpy = jest.spyOn(comp.onAddReviewComment, 'emit');
+        config.onAdd({ lineNumber: 4, fileName: 'src/Foo.java' });
+        expect(onAddSpy).toHaveBeenCalledExactlyOnceWith({ lineNumber: 4, fileName: 'src/Foo.java' });
+
+        expect(config.showLocationWarning()).toBeFalse();
+        fixture.componentRef.setInput('commitState', CommitState.UNCOMMITTED_CHANGES);
+        fixture.changeDetectorRef.detectChanges();
+        expect(config.showLocationWarning()).toBeTrue();
+        expect(config.canSubmit()).toBeFalse();
+    });
+
+    it('should clear review comment drafts through the manager', () => {
+        const clearDrafts = jest.fn();
+        (comp as any).reviewCommentManager = {
+            clearDrafts,
+            disposeAll: jest.fn(),
+            updateDraftInputs: jest.fn(),
+            updateThreadInputs: jest.fn(),
+            renderWidgets: jest.fn(),
+            updateHoverButton: jest.fn(),
+        };
+
+        comp.clearReviewCommentDrafts();
+
+        expect(clearDrafts).toHaveBeenCalledOnce();
     });
 });

@@ -348,6 +348,13 @@ describe('MonacoEditorComponent', () => {
         expect(model?.getValue()).toBe(singleLineText);
     });
 
+    it('should return empty line content when no model is active', () => {
+        fixture.detectChanges();
+        comp.disposeModels();
+
+        expect(comp.getLineContent(1)).toBe('');
+    });
+
     it('should get the content of a specific line', () => {
         fixture.detectChanges();
         comp.setText(multiLineText);
@@ -367,6 +374,16 @@ describe('MonacoEditorComponent', () => {
         // Empty line
         comp.setText('line1\n\nline3');
         expect(comp.getLineContent(2)).toBe('');
+    });
+
+    it('should delegate setPosition to the Monaco editor', () => {
+        fixture.detectChanges();
+        const setPositionSpy = jest.spyOn((comp as any)._editor, 'setPosition');
+        const position = { lineNumber: 3, column: 2 };
+
+        comp.setPosition(position);
+
+        expect(setPositionSpy).toHaveBeenCalledExactlyOnceWith(position);
     });
 
     it('should delete a combined emoji entirely on backspace press', fakeAsync(() => {
