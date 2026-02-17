@@ -15,22 +15,9 @@ export class OsDetectorService {
     }
 
     private detectOs() {
-        const userAgent = window.navigator.userAgent;
-        const platform = window.navigator.platform;
-        const navigator = window.navigator as any; // For experimental userAgentData
-
-        // 1. Modern: Navigator.userAgentData (Chromium based)
-        if (navigator.userAgentData?.platform) {
-            this._isMac.set(navigator.userAgentData.platform === 'macOS');
-        }
-        // 2. Legacy/Fallback: Navigator.platform & UserAgent
-        else {
-            const macPlatforms = ['Macintosh', 'MacIntel', 'MacPPC', 'Mac68K'];
-            this._isMac.set(macPlatforms.indexOf(platform) !== -1 || /Mac/.test(userAgent));
-        }
-
-        // Optional: Detect iOS (often relevant for shortcuts on iPads with keyboards)
-        this._isIos.set(/iPhone|iPad|iPod/.test(platform) || (this._isMac() && navigator.maxTouchPoints > 1));
+        const { userAgent } = window.navigator;
+        this._isMac.set(/Mac/.test(userAgent));
+        this._isIos.set(/iPhone|iPad|iPod/.test(userAgent) || (this._isMac() && window.navigator.maxTouchPoints > 1));
     }
 
     /** Returns true if the OS is macOS or iOS */
