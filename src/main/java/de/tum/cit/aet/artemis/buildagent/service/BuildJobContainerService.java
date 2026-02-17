@@ -94,6 +94,17 @@ public class BuildJobContainerService {
     private static final Logger log = LoggerFactory.getLogger(BuildJobContainerService.class);
 
     /**
+     * Timeout in minutes for Docker exec commands. If a command does not complete within this time,
+     * the build job thread is unblocked and an exception is thrown to prevent permanently stuck threads.
+     */
+    private static final int DOCKER_EXEC_TIMEOUT_MINUTES = 5;
+
+    /**
+     * Subdirectory within the container's working directory where repositories are placed during build setup.
+     */
+    private static final String TESTING_DIR = "testing-dir";
+
+    /**
      * Maximum number of retry attempts for tar archive operations (creation and retrieval).
      * Operations will be retried with exponential backoff before failing permanently.
      */
@@ -361,7 +372,14 @@ public class BuildJobContainerService {
         // Create a file "stop_container.txt" in the root directory of the container to indicate that the test results have been extracted or that the container should be stopped
         // for some other reason.
         // The container's main process is waiting for this file to appear and then stops the main process, thus stopping and removing the container.
-        executeDockerCommandWithoutAwaitingResponse(containerId, "touch", LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/stop_container.txt");
+        try {
+            executeDockerCommandWithoutAwaitingResponse(containerId, "touch", LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/stop_container.txt");
+        }
+        catch (Exception e) {
+            // The container may have been stopped/removed between the state check and this exec (TOCTOU race).
+            // This is expected in concurrent scenarios and not an error.
+            log.warn("Could not send stop signal to container {}, it may have already stopped: {}", containerId, e.getMessage());
+        }
     }
 
     /**
@@ -407,9 +425,6 @@ public class BuildJobContainerService {
                     // Attempt to kill the container if stop fails
                     killContainer(containerId, executor);
                 }
-            }
-            finally {
-                executor.shutdown();
             }
         }
     }
@@ -473,10 +488,10 @@ public class BuildJobContainerService {
     }
 
     /**
-     * Get the ID of a running container by its name.
+     * Get the ID of a container by its name.
      *
      * @param containerName The name of the container.
-     * @return The ID of the running container or null if no running container with the given name was found.
+     * @return The ID of the container or null if no container with the given name was found.
      */
     public String getIDOfRunningContainer(String containerName) {
         Container container = getContainerForName(containerName);
@@ -523,13 +538,13 @@ public class BuildJobContainerService {
                 : RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
 
         String defaultTestCheckoutPath = RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
-        testCheckoutPath = (!StringUtils.isBlank(defaultTestCheckoutPath) && !StringUtils.isBlank(testCheckoutPath)) ? testCheckoutPath : defaultTestCheckoutPath;
+        testCheckoutPath = (!StringUtils.isBlank(testCheckoutPath)) ? testCheckoutPath : defaultTestCheckoutPath;
 
         // Make sure to create the working directory in case it does not exist.
         // In case the test checkout path is the working directory, we only create up to the parent, as the working directory is created below.
-        addDirectory(buildJobContainerId, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + (testCheckoutPath.isEmpty() ? "" : "/testing-dir"), true);
+        addDirectory(buildJobContainerId, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + (testCheckoutPath.isEmpty() ? "" : "/" + TESTING_DIR), true);
         // Make sure the working directory and all subdirectories are accessible
-        executeDockerCommand(buildJobContainerId, null, true, "chmod", "-R", "777", LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir");
+        executeDockerCommand(buildJobContainerId, null, true, "chmod", "-R", "777", LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/" + TESTING_DIR);
 
         // Copy the test repository to the container and move it to the test checkout path (may be the working directory)
         addAndPrepareDirectoryAndReplaceContent(buildJobContainerId, testRepositoryPath, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/" + testCheckoutPath,
@@ -791,7 +806,7 @@ public class BuildJobContainerService {
             if (Files.isRegularFile(path)) {
                 // For regular files: read content and write to archive
                 try (InputStream is = Files.newInputStream(path)) {
-                    byte[] buffer = new byte[1024];
+                    byte[] buffer = new byte[8192];
                     int count;
                     while ((count = is.read(buffer)) != -1) {
                         tarArchiveOutputStream.write(buffer, 0, count);
@@ -900,7 +915,10 @@ public class BuildJobContainerService {
             }
 
             try {
-                latch.await();
+                boolean completed = latch.await(DOCKER_EXEC_TIMEOUT_MINUTES, TimeUnit.MINUTES);
+                if (!completed) {
+                    throw new LocalCIException("Docker command timed out after " + DOCKER_EXEC_TIMEOUT_MINUTES + " minutes: " + String.join(" ", command));
+                }
             }
             catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -945,7 +963,9 @@ public class BuildJobContainerService {
     private Container getContainerForName(String containerName) {
         try (final var listContainerCommand = buildAgentConfiguration.getDockerClient().listContainersCmd().withShowAll(true)) {
             List<Container> containers = listContainerCommand.exec();
-            return containers.stream().filter(container -> container.getNames()[0].equals("/" + containerName)).findFirst().orElse(null);
+            String expectedName = "/" + containerName;
+            return containers.stream().filter(container -> container.getNames() != null && container.getNames().length > 0 && expectedName.equals(container.getNames()[0]))
+                    .findFirst().orElse(null);
         }
         catch (Exception ex) {
             if (DockerUtil.isDockerNotAvailable(ex)) {
