@@ -102,7 +102,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
 
             this.gradingService.findGradingScaleForExam(this.exam.course!.id!, this.exam.id!).subscribe((gradingSystemResponse) => {
                 if (gradingSystemResponse.body) {
-                    this.canHaveBonus = gradingSystemResponse.body.gradeType === GradeType.GRADE;
+                    this.canHaveBonus = gradingSystemResponse.body.gradeSteps.gradeType === GradeType.GRADE;
                 }
             });
 
