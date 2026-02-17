@@ -198,20 +198,6 @@ describe('CodeEditorMonacoComponent', () => {
         expect(disposeAll).toHaveBeenCalled();
     });
 
-    it('should fall back to initial review thread location when current location is missing', () => {
-        const thread = { initialFilePath: 'src/File.java', initialLineNumber: 7 } as any;
-
-        expect((comp as any).getThreadFilePath(thread)).toBe('src/File.java');
-        expect((comp as any).getReviewThreadLine(thread)).toBe(6);
-    });
-
-    it('should prefer current review thread location over initial fallback', () => {
-        const thread = { filePath: 'src/Current.java', initialFilePath: 'src/Initial.java', lineNumber: 4, initialLineNumber: 9 } as any;
-
-        expect((comp as any).getThreadFilePath(thread)).toBe('src/Current.java');
-        expect((comp as any).getReviewThreadLine(thread)).toBe(3);
-    });
-
     it('should clear hover button when neither tutor feedback nor review mode is active', () => {
         const setupReviewCommentButtonStub = jest.spyOn(comp, 'setupAddReviewCommentButton').mockImplementation();
         const setupAddFeedbackButtonStub = jest.spyOn(comp, 'setupAddFeedbackButton').mockImplementation();

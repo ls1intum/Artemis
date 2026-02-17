@@ -43,8 +43,10 @@ export default defineConfig({
             'src/main/webapp/app/exercise/review/review-comment-draft-widget/review-comment-draft-widget.component.spec.ts', // include review draft widget test
             'src/main/webapp/app/exercise/review/review-comment-thread-widget/review-comment-thread-widget.component.spec.ts', // include review thread widget test
             'src/main/webapp/app/exercise/review/review-comment-widget-manager.spec.ts', // include review widget manager test
+            'src/main/webapp/app/exercise/review/review-comment-facade.service.spec.ts', // include review facade test
+            'src/main/webapp/app/exercise/review/review-comment.store.spec.ts', // include review store test
+            'src/main/webapp/app/exercise/review/review-comment-utils.spec.ts', // include review utils test
             'src/main/webapp/app/exercise/services/exercise-review-comment.service.spec.ts', // include review comment service test
-            'src/main/webapp/app/programming/shared/code-editor/util/review-comment-utils.spec.ts', // include review comment utils test
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
@@ -78,8 +80,10 @@ export default defineConfig({
                 'src/main/webapp/app/exercise/review/review-comment-draft-widget/review-comment-draft-widget.component.ts', // include review draft widget for code coverage
                 'src/main/webapp/app/exercise/review/review-comment-thread-widget/review-comment-thread-widget.component.ts', // include review thread widget for code coverage
                 'src/main/webapp/app/exercise/review/review-comment-widget-manager.ts', // include review widget manager for code coverage
+                'src/main/webapp/app/exercise/review/review-comment-facade.service.ts', // include review facade for code coverage
+                'src/main/webapp/app/exercise/review/review-comment.store.ts', // include review store for code coverage
+                'src/main/webapp/app/exercise/review/review-comment-utils.ts', // include review utils for code coverage
                 'src/main/webapp/app/exercise/services/exercise-review-comment.service.ts', // include review comment service for code coverage
-                'src/main/webapp/app/programming/shared/code-editor/util/review-comment-utils.ts', // include review comment utils for code coverage
             ],
             exclude: [
                 '**/node_modules/**',   // exclude node_modules with third-party code

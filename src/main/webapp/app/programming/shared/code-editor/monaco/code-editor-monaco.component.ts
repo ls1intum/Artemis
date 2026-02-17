@@ -40,10 +40,14 @@ import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { addCommentBoxes } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 import { TranslateService } from '@ngx-translate/core';
 import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-widget-manager';
-import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { ReviewCommentFacade } from 'app/exercise/review/review-comment-facade.service';
-import { ReviewCommentDraftLocation } from 'app/exercise/review/review-comment.store';
-import { isReviewCommentsSupportedRepository, mapRepositoryToThreadLocationType, matchesSelectedRepository } from 'app/programming/shared/code-editor/util/review-comment-utils';
+import {
+    buildRepositoryDraftLocation,
+    getReviewThreadLine,
+    getThreadFilePath,
+    isReviewCommentsSupportedRepository,
+    matchesSelectedRepository,
+} from 'app/exercise/review/review-comment-utils';
 
 type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; scrollTop: number; loadingError: boolean } };
 type FeedbackWithLineAndReference = Feedback & { line: number; reference: string };
@@ -188,7 +192,6 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
             const reviewCommentsEnabled = this.enableExerciseReviewComments() && isReviewCommentsSupportedRepository(this.selectedRepository());
             this.commitState();
             this.reviewCommentFacade.threads();
-            this.reviewCommentFacade.pendingOps();
             untracked(() => {
                 this.reviewCommentManager?.updateDraftInputs();
                 const allThreadsUpdated = this.reviewCommentManager?.updateThreadInputs();
@@ -537,56 +540,15 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
                 shouldShowHoverButton: () => this.enableExerciseReviewComments() && isReviewCommentsSupportedRepository(this.selectedRepository()),
                 canSubmit: () => this.commitState() !== CommitState.UNCOMMITTED_CHANGES,
                 getDraftFileName: () => this.selectedFile(),
-                buildDraftLocation: (payload) => this.buildRepositoryDraftLocation(payload.fileName, payload.lineNumber),
-                buildCreateThreadRequest: (payload) => {
-                    const repositoryType = this.selectedRepository();
-                    if (!repositoryType) {
-                        return undefined;
-                    }
-                    const targetType = mapRepositoryToThreadLocationType(repositoryType);
-                    if (!targetType) {
-                        return undefined;
-                    }
-                    return {
-                        targetType,
-                        auxiliaryRepositoryId: repositoryType === RepositoryType.AUXILIARY ? this.selectedAuxiliaryRepositoryId() : undefined,
-                        initialFilePath: payload.fileName,
-                        initialLineNumber: payload.lineNumber,
-                        initialComment: payload.initialComment,
-                    };
-                },
+                buildDraftLocation: (payload) =>
+                    buildRepositoryDraftLocation(this.selectedRepository(), payload.fileName, payload.lineNumber, this.selectedAuxiliaryRepositoryId()),
                 filterThread: (thread) =>
-                    this.getThreadFilePath(thread) === this.selectedFile() && matchesSelectedRepository(thread, this.selectedRepository(), this.selectedAuxiliaryRepositoryId()),
-                getThreadLine: (thread) => this.getReviewThreadLine(thread),
+                    getThreadFilePath(thread) === this.selectedFile() && matchesSelectedRepository(thread, this.selectedRepository(), this.selectedAuxiliaryRepositoryId()),
+                getThreadLine: (thread) => getReviewThreadLine(thread),
                 showLocationWarning: () => this.commitState() === CommitState.UNCOMMITTED_CHANGES,
             });
         }
         return this.reviewCommentManager;
-    }
-
-    private getThreadFilePath(thread: CommentThread): string | undefined {
-        return thread.filePath ?? thread.initialFilePath;
-    }
-
-    private buildRepositoryDraftLocation(fileName: string, lineNumber: number): ReviewCommentDraftLocation | undefined {
-        const repositoryType = this.selectedRepository();
-        if (!repositoryType) {
-            return undefined;
-        }
-        const targetType = mapRepositoryToThreadLocationType(repositoryType);
-        if (!targetType) {
-            return undefined;
-        }
-        return {
-            targetType,
-            filePath: fileName,
-            lineNumber,
-            auxiliaryRepositoryId: repositoryType === RepositoryType.AUXILIARY ? this.selectedAuxiliaryRepositoryId() : undefined,
-        };
-    }
-
-    private getReviewThreadLine(thread: CommentThread): number {
-        return (thread.lineNumber ?? thread.initialLineNumber ?? 1) - 1;
     }
 
     clearReviewCommentDrafts(): void {

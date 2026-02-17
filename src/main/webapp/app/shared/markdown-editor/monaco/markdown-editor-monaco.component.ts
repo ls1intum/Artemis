@@ -82,10 +82,10 @@ import { facArtemisIntelligence } from 'app/shared/icons/icons';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { addCommentBoxes } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 import { TranslateService } from '@ngx-translate/core';
-import { CommentThread, CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-widget-manager';
 import { ReviewCommentFacade } from 'app/exercise/review/review-comment-facade.service';
-import { ReviewCommentDraftLocation } from 'app/exercise/review/review-comment.store';
+import { buildProblemStatementDraftLocation, getReviewThreadLine, isProblemStatementThread } from 'app/exercise/review/review-comment-utils';
 
 export enum MarkdownEditorHeight {
     INLINE = 125,
@@ -390,7 +390,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             const reviewCommentsEnabled = this.enableExerciseReviewComments();
             this.showLocationWarning();
             this.reviewCommentFacade.threads();
-            this.reviewCommentFacade.pendingOps();
             untracked(() => {
                 this.reviewCommentManager?.updateDraftInputs();
                 const allThreadsUpdated = this.reviewCommentManager?.updateThreadInputs();
@@ -792,32 +791,12 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                 shouldShowHoverButton: () => this.enableExerciseReviewComments() && this.inEditMode,
                 canSubmit: () => this.inEditMode && !this.showLocationWarning(),
                 getDraftFileName: () => PROBLEM_STATEMENT_FILE_PATH,
-                buildDraftLocation: (payload) => this.buildProblemStatementDraftLocation(payload.fileName, payload.lineNumber),
-                buildCreateThreadRequest: (payload) => ({
-                    targetType: CommentThreadLocationType.PROBLEM_STATEMENT,
-                    initialLineNumber: payload.lineNumber,
-                    initialComment: payload.initialComment,
-                }),
-                filterThread: (thread) => this.isProblemStatementThread(thread),
-                getThreadLine: (thread) => this.getProblemStatementThreadLine(thread),
+                buildDraftLocation: ({ lineNumber }) => buildProblemStatementDraftLocation(lineNumber),
+                filterThread: (thread) => isProblemStatementThread(thread),
+                getThreadLine: (thread) => getReviewThreadLine(thread),
                 showLocationWarning: () => this.showLocationWarning(),
             });
         }
         return this.reviewCommentManager;
-    }
-
-    private buildProblemStatementDraftLocation(_fileName: string, lineNumber: number): ReviewCommentDraftLocation {
-        return {
-            targetType: CommentThreadLocationType.PROBLEM_STATEMENT,
-            lineNumber,
-        };
-    }
-
-    private isProblemStatementThread(thread: CommentThread): boolean {
-        return thread.targetType === CommentThreadLocationType.PROBLEM_STATEMENT;
-    }
-
-    private getProblemStatementThreadLine(thread: CommentThread): number {
-        return (thread.lineNumber ?? thread.initialLineNumber ?? 1) - 1;
     }
 }

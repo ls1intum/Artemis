@@ -1,4 +1,18 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation, computed, inject, input, output, viewChildren } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    OnDestroy,
+    OnInit,
+    ViewEncapsulation,
+    computed,
+    effect,
+    inject,
+    input,
+    output,
+    signal,
+    viewChildren,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -13,6 +27,7 @@ import { CommentContent } from 'app/exercise/shared/entities/review/comment-cont
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs/operators';
+import { ReviewCommentFacade } from 'app/exercise/review/review-comment-facade.service';
 
 @Component({
     selector: 'jhi-review-comment-thread-widget',
@@ -27,20 +42,6 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     readonly thread = input.required<CommentThread>();
     readonly initialCollapsed = input<boolean>(false);
     readonly showLocationWarning = input<boolean>(false);
-    readonly replyText = input<string>('');
-    readonly editText = input<string>('');
-    readonly isReplySubmitting = input<boolean>(false);
-    readonly isEditSubmitting = input<boolean>(false);
-    readonly isResolveSubmitting = input<boolean>(false);
-
-    readonly onDelete = output<number>();
-    readonly onSubmitReply = output<void>();
-    readonly onSubmitEdit = output<number>();
-    readonly onReplyTextChange = output<string>();
-    readonly onEditTextChange = output<{ commentId: number; text: string }>();
-    readonly onStartEdit = output<{ commentId: number; initialText: string }>();
-    readonly onCancelEdit = output<number>();
-    readonly onToggleResolved = output<boolean>();
     readonly onToggleCollapse = output<boolean>();
 
     protected readonly faTriangleExclamation = faTriangleExclamation;
@@ -48,8 +49,8 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     protected readonly faPen = faPen;
     protected readonly faTrash = faTrash;
     showThreadBody = true;
-    editingCommentId?: number;
-    editingCommentType?: CommentType;
+    readonly editingCommentId = signal<number | undefined>(undefined);
+    readonly editingCommentType = signal<CommentType | undefined>(undefined);
     readonly userCommentMenuItems: MenuItem[] = [{ id: 'edit' }, { id: 'delete' }];
     readonly nonUserCommentMenuItems: MenuItem[] = [{ id: 'delete' }];
     private readonly commentMenus = viewChildren(Menu);
@@ -57,6 +58,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     private readonly destroyed$ = new Subject<void>();
     private readonly translateService = inject(TranslateService);
     private readonly changeDetectorRef = inject(ChangeDetectorRef);
+    private readonly reviewCommentFacade = inject(ReviewCommentFacade);
     readonly renderedComments = computed(() => {
         return this.orderedComments().map((comment) => ({
             comment,
@@ -65,14 +67,42 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
             displayText: this.formatReviewCommentText(comment),
         }));
     });
+    readonly replyText = computed(() => this.reviewCommentFacade.getReplyDraft(this.thread().id));
+    readonly isReplySubmitting = computed(() => this.reviewCommentFacade.isReplySubmitting(this.thread().id));
+    readonly isResolveSubmitting = computed(() => this.reviewCommentFacade.isResolveSubmitting(this.thread().id));
+    readonly editText = computed(() => {
+        const commentId = this.editingCommentId();
+        return commentId !== undefined ? this.reviewCommentFacade.getEditDraft(commentId) : '';
+    });
+    readonly isEditSubmitting = computed(() => {
+        const commentId = this.editingCommentId();
+        return commentId !== undefined ? this.reviewCommentFacade.isEditSubmitting(commentId) : false;
+    });
+
+    constructor() {
+        effect(() => {
+            const editingCommentId = this.editingCommentId();
+            if (editingCommentId === undefined) {
+                return;
+            }
+            const commentStillExists = (this.thread().comments ?? []).some((comment) => comment.id === editingCommentId);
+            if (!commentStillExists) {
+                this.editingCommentId.set(undefined);
+                this.editingCommentType.set(undefined);
+            }
+        });
+    }
 
     /**
-     * Emits a delete event for the given comment id.
+     * Deletes the given comment if no delete operation for it is currently pending.
      *
      * @param commentId The id of the comment to delete.
      */
     deleteComment(commentId: number): void {
-        this.onDelete.emit(commentId);
+        if (this.reviewCommentFacade.isDeleteSubmitting(commentId)) {
+            return;
+        }
+        this.reviewCommentFacade.deleteComment(commentId);
     }
 
     /**
@@ -84,77 +114,87 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         if (!this.isUserComment(comment)) {
             return;
         }
-        this.editingCommentId = comment.id;
-        this.editingCommentType = comment.type;
-        this.onStartEdit.emit({ commentId: comment.id, initialText: this.formatReviewCommentText(comment) });
+        this.editingCommentId.set(comment.id);
+        this.editingCommentType.set(comment.type);
+        this.reviewCommentFacade.startEditDraft(comment.id, this.formatReviewCommentText(comment));
     }
 
     /**
      * Cancels the current edit and clears the editor state.
      */
     cancelEditing(): void {
-        const editingCommentId = this.editingCommentId;
-        this.editingCommentId = undefined;
-        this.editingCommentType = undefined;
+        const editingCommentId = this.editingCommentId();
+        this.editingCommentId.set(undefined);
+        this.editingCommentType.set(undefined);
         if (editingCommentId !== undefined) {
-            this.onCancelEdit.emit(editingCommentId);
+            this.reviewCommentFacade.cancelEditDraft(editingCommentId);
         }
     }
 
     /**
-     * Emits an edit-submit intent for the currently edited comment.
+     * Submits the current edit draft if valid.
      */
     submitEdit(): void {
-        const id = this.editingCommentId;
-        if (id === undefined || this.editingCommentType !== CommentType.USER || this.isEditSubmitting()) {
+        const id = this.editingCommentId();
+        if (id === undefined || this.editingCommentType() !== CommentType.USER || this.reviewCommentFacade.isEditSubmitting(id)) {
             return;
         }
-        this.onSubmitEdit.emit(id);
-        this.editingCommentId = undefined;
-        this.editingCommentType = undefined;
+        const text = this.reviewCommentFacade.getEditDraft(id).trim();
+        if (!text) {
+            return;
+        }
+        this.reviewCommentFacade.updateComment(id, { contentType: 'USER', text });
+        this.editingCommentId.set(undefined);
+        this.editingCommentType.set(undefined);
     }
 
     /**
-     * Emits a reply-submit intent.
+     * Submits the current reply draft if valid.
      */
     submitReply(): void {
-        if (this.isReplySubmitting()) {
+        const threadId = this.thread().id;
+        if (this.reviewCommentFacade.isReplySubmitting(threadId)) {
             return;
         }
-        this.onSubmitReply.emit();
+        const text = this.reviewCommentFacade.getReplyDraft(threadId).trim();
+        if (!text) {
+            return;
+        }
+        this.reviewCommentFacade.createReply(threadId, { contentType: 'USER', text });
     }
 
     /**
-     * Emits reply text changes so state can be synchronized externally.
+     * Stores reply draft text in the review-comment store.
      *
      * @param text The updated reply text.
      */
     onReplyDraftChanged(text: string): void {
-        this.onReplyTextChange.emit(text);
+        this.reviewCommentFacade.setReplyDraft(this.thread().id, text);
     }
 
     /**
-     * Emits edit text changes for the currently edited comment.
+     * Stores edit draft text in the review-comment store.
      *
      * @param text The updated edit text.
      */
     onEditDraftChanged(text: string): void {
-        if (this.editingCommentId === undefined) {
+        const editingCommentId = this.editingCommentId();
+        if (editingCommentId === undefined) {
             return;
         }
-        this.onEditTextChange.emit({ commentId: this.editingCommentId, text });
+        this.reviewCommentFacade.setEditDraft(editingCommentId, text);
     }
 
     /**
      * Toggles the resolved state and collapses the thread when resolved.
      */
     toggleResolved(): void {
-        if (this.isResolveSubmitting()) {
+        const thread = this.thread();
+        if (this.reviewCommentFacade.isResolveSubmitting(thread.id)) {
             return;
         }
-        const thread = this.thread();
         const nextResolved = !thread.resolved;
-        this.onToggleResolved.emit(nextResolved);
+        this.reviewCommentFacade.toggleResolved(thread.id, nextResolved);
         if (nextResolved) {
             this.showThreadBody = false;
             this.onToggleCollapse.emit(true);
@@ -243,7 +283,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
      * @returns True if the comment is currently being edited.
      */
     isEditing(comment: Comment): boolean {
-        return this.editingCommentId === comment.id;
+        return this.editingCommentId() === comment.id;
     }
 
     isUserComment(comment: Comment): boolean {

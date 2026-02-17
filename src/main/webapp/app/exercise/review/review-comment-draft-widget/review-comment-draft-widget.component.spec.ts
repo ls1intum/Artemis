@@ -4,53 +4,78 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ReviewCommentFacade } from 'app/exercise/review/review-comment-facade.service';
+import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 
 describe('ReviewCommentDraftWidgetComponent', () => {
     setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ReviewCommentDraftWidgetComponent>;
     let comp: ReviewCommentDraftWidgetComponent;
+    let facade: any;
 
     beforeEach(async () => {
+        facade = {
+            ensureDraft: vi.fn(),
+            getDraftText: vi.fn(() => 'text'),
+            isDraftSubmitting: vi.fn(() => false),
+            submitCreateThread: vi.fn(),
+            setDraftText: vi.fn(),
+            removeDraft: vi.fn(),
+        };
         await TestBed.configureTestingModule({
             imports: [ReviewCommentDraftWidgetComponent],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ReviewCommentFacade, useValue: facade },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ReviewCommentDraftWidgetComponent);
         comp = fixture.componentInstance;
+        fixture.componentRef.setInput('location', {
+            targetType: CommentThreadLocationType.TEMPLATE_REPO,
+            lineNumber: 3,
+            filePath: 'file.java',
+        });
+        fixture.detectChanges();
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
     });
 
-    it('should emit submit intent when allowed', () => {
-        const submitSpy = vi.fn();
-        comp.onSubmitDraft.subscribe(submitSpy);
-
+    it('should submit a thread when allowed', () => {
         comp.submitDraft();
 
-        expect(submitSpy).toHaveBeenCalledOnce();
+        expect(facade.submitCreateThread).toHaveBeenCalledWith({
+            targetType: CommentThreadLocationType.TEMPLATE_REPO,
+            initialLineNumber: 3,
+            initialFilePath: 'file.java',
+            auxiliaryRepositoryId: undefined,
+            initialComment: { contentType: 'USER', text: 'text' },
+        });
     });
 
-    it('should emit draft text changes', () => {
-        const changeSpy = vi.fn();
-        comp.onTextChange.subscribe(changeSpy);
-
+    it('should store draft text changes', () => {
         comp.onDraftTextChanged('updated');
 
-        expect(changeSpy).toHaveBeenCalledWith('updated');
+        expect(facade.setDraftText).toHaveBeenCalledWith(
+            {
+                targetType: CommentThreadLocationType.TEMPLATE_REPO,
+                lineNumber: 3,
+                filePath: 'file.java',
+            },
+            'updated',
+        );
     });
 
     it('should block submit when canSubmit is false', () => {
-        const submitSpy = vi.fn();
-        comp.onSubmitDraft.subscribe(submitSpy);
         fixture.componentRef.setInput('canSubmit', false);
         fixture.detectChanges();
 
         comp.submitDraft();
 
-        expect(submitSpy).not.toHaveBeenCalled();
+        expect(facade.submitCreateThread).not.toHaveBeenCalled();
         const submitButton = fixture.nativeElement.querySelector('[data-testid="review-draft-submit"]');
         const errorMessage = fixture.nativeElement.querySelector('.monaco-review-comment-error');
         expect(submitButton.disabled).toBe(true);
@@ -58,22 +83,33 @@ describe('ReviewCommentDraftWidgetComponent', () => {
     });
 
     it('should block submit while operation is pending', () => {
-        const submitSpy = vi.fn();
-        comp.onSubmitDraft.subscribe(submitSpy);
-        fixture.componentRef.setInput('isSubmitting', true);
+        facade.isDraftSubmitting.mockReturnValue(true);
         fixture.detectChanges();
 
         comp.submitDraft();
 
-        expect(submitSpy).not.toHaveBeenCalled();
+        expect(facade.submitCreateThread).not.toHaveBeenCalled();
     });
 
-    it('should emit cancel and reset error flag', () => {
+    it('should remove draft and emit cancel', () => {
         const cancelSpy = vi.fn();
         comp.onCancel.subscribe(cancelSpy);
 
         comp.cancel();
 
+        expect(facade.removeDraft).toHaveBeenCalledWith({
+            targetType: CommentThreadLocationType.TEMPLATE_REPO,
+            lineNumber: 3,
+            filePath: 'file.java',
+        });
         expect(cancelSpy).toHaveBeenCalled();
+    });
+
+    it('should ensure draft on init', () => {
+        expect(facade.ensureDraft).toHaveBeenCalledWith({
+            targetType: CommentThreadLocationType.TEMPLATE_REPO,
+            lineNumber: 3,
+            filePath: 'file.java',
+        });
     });
 });

@@ -1,13 +1,56 @@
-import { isReviewCommentsSupportedRepository, mapRepositoryToThreadLocationType, matchesSelectedRepository } from 'app/programming/shared/code-editor/util/review-comment-utils';
+import {
+    buildProblemStatementDraftLocation,
+    buildRepositoryDraftLocation,
+    getReviewThreadLine,
+    getThreadFilePath,
+    isProblemStatementThread,
+    isReviewCommentsSupportedRepository,
+    mapRepositoryToThreadLocationType,
+    matchesSelectedRepository,
+} from 'app/exercise/review/review-comment-utils';
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-describe('matchesSelectedRepository', () => {
+describe('review-comment-utils', () => {
     afterEach(() => {
         vi.restoreAllMocks();
     });
 
+    it('should fall back to initial file path when current file path is missing', () => {
+        const thread = { initialFilePath: 'src/File.java', initialLineNumber: 7 } as any;
+        expect(getThreadFilePath(thread)).toBe('src/File.java');
+    });
+
+    it('should prefer current file path over initial fallback', () => {
+        const thread = { filePath: 'src/Current.java', initialFilePath: 'src/Initial.java', lineNumber: 4, initialLineNumber: 9 } as any;
+        expect(getThreadFilePath(thread)).toBe('src/Current.java');
+    });
+
+    it('should compute 0-based line from initial line number fallback', () => {
+        const thread = { initialLineNumber: 7 } as any;
+        expect(getReviewThreadLine(thread)).toBe(6);
+    });
+
+    it('should prefer current line over initial fallback', () => {
+        const thread = { lineNumber: 4, initialLineNumber: 9 } as any;
+        expect(getReviewThreadLine(thread)).toBe(3);
+    });
+
+    it('should build a problem-statement draft location', () => {
+        expect(buildProblemStatementDraftLocation(12)).toEqual({
+            targetType: CommentThreadLocationType.PROBLEM_STATEMENT,
+            lineNumber: 12,
+        });
+    });
+
+    it('should detect problem-statement threads', () => {
+        expect(isProblemStatementThread({ targetType: CommentThreadLocationType.PROBLEM_STATEMENT } as any)).toBe(true);
+        expect(isProblemStatementThread({ targetType: CommentThreadLocationType.TEMPLATE_REPO } as any)).toBe(false);
+    });
+});
+
+describe('matchesSelectedRepository', () => {
     it('should match template repository', () => {
         const thread = { targetType: CommentThreadLocationType.TEMPLATE_REPO } as any;
         expect(matchesSelectedRepository(thread, RepositoryType.TEMPLATE)).toBe(true);
@@ -89,5 +132,29 @@ describe('isReviewCommentsSupportedRepository', () => {
 
     it('should not support undefined repository', () => {
         expect(isReviewCommentsSupportedRepository(undefined)).toBe(false);
+    });
+});
+
+describe('buildRepositoryDraftLocation', () => {
+    it('should return undefined when repository type is missing', () => {
+        expect(buildRepositoryDraftLocation(undefined, 'src/File.java', 3)).toBeUndefined();
+    });
+
+    it('should build template repository draft location', () => {
+        expect(buildRepositoryDraftLocation(RepositoryType.TEMPLATE, 'src/File.java', 3)).toEqual({
+            targetType: CommentThreadLocationType.TEMPLATE_REPO,
+            filePath: 'src/File.java',
+            lineNumber: 3,
+            auxiliaryRepositoryId: undefined,
+        });
+    });
+
+    it('should include auxiliary repository id for auxiliary repositories', () => {
+        expect(buildRepositoryDraftLocation(RepositoryType.AUXILIARY, 'src/File.java', 8, 11)).toEqual({
+            targetType: CommentThreadLocationType.AUXILIARY_REPO,
+            filePath: 'src/File.java',
+            lineNumber: 8,
+            auxiliaryRepositoryId: 11,
+        });
     });
 });

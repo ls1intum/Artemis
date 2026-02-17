@@ -106,8 +106,10 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/exercise/review/review-comment-draft-widget/**', // review comment draft widget uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exercise/review/review-comment-thread-widget/**', // review comment thread widget uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exercise/review/review-comment-widget-manager.ts', // review comment widget manager uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/review/review-comment-facade.service.ts', // review comment facade uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/review/review-comment.store.ts', // review comment store uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/review/review-comment-utils.ts', // review comment utils uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exercise/services/exercise-review-comment.service.ts', // review comment service uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/programming/shared/code-editor/util/review-comment-utils.ts', // review comment utils uses Vitest (see vitest.config.ts)
     ],
     coveragePathIgnorePatterns: [
         '<rootDir>/src/main/webapp/app/core/config/prod.config.ts',
@@ -130,8 +132,10 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/exercise/review/review-comment-draft-widget/', // review comment draft widget uses Vitest
         '<rootDir>/src/main/webapp/app/exercise/review/review-comment-thread-widget/', // review comment thread widget uses Vitest
         '<rootDir>/src/main/webapp/app/exercise/review/review-comment-widget-manager.ts', // review comment widget manager uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/review/review-comment-facade.service.ts', // review comment facade uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/review/review-comment.store.ts', // review comment store uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/review/review-comment-utils.ts', // review comment utils uses Vitest
         '<rootDir>/src/main/webapp/app/exercise/services/exercise-review-comment.service.ts', // review comment service uses Vitest
-        '<rootDir>/src/main/webapp/app/programming/shared/code-editor/util/review-comment-utils.ts', // review comment utils uses Vitest
     ],
     // Global coverage thresholds for Jest. Modules using Vitest (e.g., fileupload) have their own
     // coverage thresholds in vitest.config.ts. Per-module thresholds are enforced by check-client-module-coverage.mjs
@@ -181,8 +185,10 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/exercise/review/review-comment-draft-widget/review-comment-draft-widget.component.spec.ts', // review comment draft widget
         '<rootDir>/src/main/webapp/app/exercise/review/review-comment-thread-widget/review-comment-thread-widget.component.spec.ts', // review comment thread widget
         '<rootDir>/src/main/webapp/app/exercise/review/review-comment-widget-manager.spec.ts', // review comment widget manager
+        '<rootDir>/src/main/webapp/app/exercise/review/review-comment-facade.service.spec.ts', // review comment facade
+        '<rootDir>/src/main/webapp/app/exercise/review/review-comment.store.spec.ts', // review comment store
+        '<rootDir>/src/main/webapp/app/exercise/review/review-comment-utils.spec.ts', // review comment utils
         '<rootDir>/src/main/webapp/app/exercise/services/exercise-review-comment.service.spec.ts', // review comment service
-        '<rootDir>/src/main/webapp/app/programming/shared/code-editor/util/review-comment-utils.spec.ts', // review comment utils
     ],
     testTimeout: 3000,
     testMatch: [

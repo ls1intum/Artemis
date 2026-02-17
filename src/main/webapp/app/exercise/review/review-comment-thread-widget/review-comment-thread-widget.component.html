@@ -90,7 +90,7 @@
                         </p-menu>
                     </div>
                 </div>
-                @if (editingCommentId === commentVm.comment.id) {
+                @if (editingCommentId() === commentVm.comment.id) {
                     <textarea class="monaco-review-comment-textarea" [ngModel]="editText()" (ngModelChange)="onEditDraftChanged($event)"></textarea>
                     <div class="monaco-review-comment-actions">
                         <button pButton type="button" severity="secondary" size="small" (click)="cancelEditing()">

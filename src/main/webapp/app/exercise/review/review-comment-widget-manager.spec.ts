@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 describe('ReviewCommentWidgetManager', () => {
     const createEditorMock = () => ({
+        onDidScrollChange: vi.fn(() => ({ dispose: vi.fn() })),
         setLineDecorationsHoverButton: vi.fn(),
         clearLineDecorationsHoverButton: vi.fn(),
         addLineWidget: vi.fn(),
@@ -14,8 +15,6 @@ describe('ReviewCommentWidgetManager', () => {
 
     const createDraftRef = () => {
         const instance: any = {
-            onSubmitDraft: { subscribe: vi.fn((cb) => (instance._onSubmitDraft = cb)) },
-            onTextChange: { subscribe: vi.fn((cb) => (instance._onTextChange = cb)) },
             onCancel: { subscribe: vi.fn((cb) => (instance._onCancel = cb)) },
         };
         return {
@@ -28,15 +27,8 @@ describe('ReviewCommentWidgetManager', () => {
 
     const createThreadRef = () => {
         const instance: any = {
-            onDelete: { subscribe: vi.fn((cb) => (instance._onDelete = cb)) },
-            onReplyTextChange: { subscribe: vi.fn((cb) => (instance._onReplyTextChange = cb)) },
-            onSubmitReply: { subscribe: vi.fn((cb) => (instance._onSubmitReply = cb)) },
-            onStartEdit: { subscribe: vi.fn((cb) => (instance._onStartEdit = cb)) },
-            onEditTextChange: { subscribe: vi.fn((cb) => (instance._onEditTextChange = cb)) },
-            onCancelEdit: { subscribe: vi.fn((cb) => (instance._onCancelEdit = cb)) },
-            onSubmitEdit: { subscribe: vi.fn((cb) => (instance._onSubmitEdit = cb)) },
-            onToggleResolved: { subscribe: vi.fn((cb) => (instance._onToggleResolved = cb)) },
             onToggleCollapse: { subscribe: vi.fn((cb) => (instance._onToggleCollapse = cb)) },
+            hideCommentMenus: vi.fn(),
         };
         return {
             instance,
@@ -61,27 +53,8 @@ describe('ReviewCommentWidgetManager', () => {
 
     const createFacadeMock = () => ({
         threads: vi.fn(() => [] as CommentThread[]),
-        ensureDraft: vi.fn(),
         hasDraft: vi.fn(() => true),
-        getDraftText: vi.fn(() => 'text'),
-        setDraftText: vi.fn(),
         removeDraft: vi.fn(),
-        isDraftSubmitting: vi.fn(() => false),
-        submitCreateThread: vi.fn(),
-        deleteComment: vi.fn(),
-        isDeleteSubmitting: vi.fn(() => false),
-        getReplyDraft: vi.fn(() => 'reply'),
-        setReplyDraft: vi.fn(),
-        isReplySubmitting: vi.fn(() => false),
-        createReply: vi.fn(),
-        startEditDraft: vi.fn(),
-        getEditDraft: vi.fn(() => 'edit'),
-        setEditDraft: vi.fn(),
-        cancelEditDraft: vi.fn(),
-        isEditSubmitting: vi.fn(() => false),
-        updateComment: vi.fn(),
-        isResolveSubmitting: vi.fn(() => false),
-        toggleResolved: vi.fn(),
     });
 
     const createConfig = (overrides: Partial<ReviewCommentWidgetManagerConfig> = {}): ReviewCommentWidgetManagerConfig => ({
@@ -93,12 +66,6 @@ describe('ReviewCommentWidgetManager', () => {
             targetType: CommentThreadLocationType.TEMPLATE_REPO,
             lineNumber,
             filePath: fileName,
-        }),
-        buildCreateThreadRequest: ({ lineNumber, fileName, initialComment }) => ({
-            targetType: CommentThreadLocationType.TEMPLATE_REPO,
-            initialFilePath: fileName,
-            initialLineNumber: lineNumber,
-            initialComment,
         }),
         filterThread: () => true,
         getThreadLine: (thread) => (thread.lineNumber ?? 1) - 1,
@@ -130,25 +97,17 @@ describe('ReviewCommentWidgetManager', () => {
         const editor = createEditorMock();
         const vcRef = createViewContainerRefMock();
         const facade = createFacadeMock();
-        const config = createConfig();
-        const manager = new ReviewCommentWidgetManager(editor as any, vcRef as any, facade as any, config);
+        const manager = new ReviewCommentWidgetManager(editor as any, vcRef as any, facade as any, createConfig());
 
         manager.updateHoverButton();
         const addCallback = editor.setLineDecorationsHoverButton.mock.calls[0][1];
         addCallback(5);
 
         expect(editor.addLineWidget).toHaveBeenCalledWith(5, expect.stringContaining('review-comment-'), expect.any(HTMLElement));
-        expect(facade.ensureDraft).toHaveBeenCalledWith({
-            targetType: CommentThreadLocationType.TEMPLATE_REPO,
-            lineNumber: 5,
-            filePath: 'file.java',
-        });
-
         const draftRef = vcRef.createComponent.mock.results[0].value;
-        draftRef.instance._onCancel();
 
+        draftRef.instance._onCancel();
         expect(editor.disposeWidgetsByPrefix).toHaveBeenCalledWith(expect.stringContaining('review-comment-'));
-        expect(facade.removeDraft).toHaveBeenCalled();
         expect(draftRef.destroy).toHaveBeenCalled();
     });
 
@@ -156,8 +115,7 @@ describe('ReviewCommentWidgetManager', () => {
         const editor = createEditorMock();
         const vcRef = createViewContainerRefMock();
         const facade = createFacadeMock();
-        const config = createConfig();
-        const manager = new ReviewCommentWidgetManager(editor as any, vcRef as any, facade as any, config);
+        const manager = new ReviewCommentWidgetManager(editor as any, vcRef as any, facade as any, createConfig());
 
         manager.updateHoverButton();
         const addCallback = editor.setLineDecorationsHoverButton.mock.calls[0][1];
@@ -173,15 +131,13 @@ describe('ReviewCommentWidgetManager', () => {
         const editor = createEditorMock();
         const vcRef = createViewContainerRefMock();
         const facade = createFacadeMock();
-        const threads: CommentThread[] = [{ id: 1, lineNumber: 2, resolved: false } as any];
-        facade.threads.mockReturnValue(threads);
-        const config = createConfig();
-        const manager = new ReviewCommentWidgetManager(editor as any, vcRef as any, facade as any, config);
+        facade.threads.mockReturnValue([{ id: 1, lineNumber: 2, resolved: false } as any]);
+        const manager = new ReviewCommentWidgetManager(editor as any, vcRef as any, facade as any, createConfig());
 
         manager.renderWidgets();
         expect(editor.addLineWidget).toHaveBeenCalledWith(2, 'review-comment-thread-1', expect.any(HTMLElement));
 
-        const threadRef = vcRef.createComponent.mock.results.find((r: any) => r.value.instance.onToggleResolved)?.value;
+        const threadRef = vcRef.createComponent.mock.results.find((r: any) => r.value.instance.onToggleCollapse)?.value;
         facade.threads.mockReturnValue([]);
         manager.renderWidgets();
 
@@ -189,42 +145,16 @@ describe('ReviewCommentWidgetManager', () => {
         expect(threadRef.destroy).toHaveBeenCalled();
     });
 
-    it('should submit draft using externally stored text', () => {
-        const editor = createEditorMock();
-        const vcRef = createViewContainerRefMock();
-        const facade = createFacadeMock();
-        facade.getDraftText.mockReturnValue('text');
-        const config = createConfig();
-        const manager = new ReviewCommentWidgetManager(editor as any, vcRef as any, facade as any, config);
-
-        manager.updateHoverButton();
-        const addCallback = editor.setLineDecorationsHoverButton.mock.calls[0][1];
-        addCallback(3);
-
-        const draftRef = vcRef.createComponent.mock.results[0].value;
-        draftRef.instance._onSubmitDraft();
-
-        expect(facade.submitCreateThread).toHaveBeenCalledWith({
-            targetType: CommentThreadLocationType.TEMPLATE_REPO,
-            initialFilePath: 'file.java',
-            initialLineNumber: 3,
-            initialComment: { contentType: 'USER', text: 'text' },
-        });
-        expect(editor.disposeWidgetsByPrefix).toHaveBeenCalledWith(expect.stringContaining('review-comment-file.java-2'));
-    });
-
     it('should render draft widgets from stored lines', () => {
         const editor = createEditorMock();
         const vcRef = createViewContainerRefMock();
         const facade = createFacadeMock();
-        const config = createConfig();
-        const manager = new ReviewCommentWidgetManager(editor as any, vcRef as any, facade as any, config);
+        const manager = new ReviewCommentWidgetManager(editor as any, vcRef as any, facade as any, createConfig());
 
         manager.updateHoverButton();
         const addCallback = editor.setLineDecorationsHoverButton.mock.calls[0][1];
         addCallback(4);
 
-        // simulate fresh render without existing draft refs
         (manager as any).draftWidgetRefs.clear();
         manager.renderWidgets();
 
@@ -237,16 +167,15 @@ describe('ReviewCommentWidgetManager', () => {
         const vcRef = createViewContainerRefMock();
         const facade = createFacadeMock();
         facade.threads.mockReturnValue([{ id: 2, lineNumber: 1, resolved: false } as any]);
-        const config = createConfig();
-        const manager = new ReviewCommentWidgetManager(editor as any, vcRef as any, facade as any, config);
+        const manager = new ReviewCommentWidgetManager(editor as any, vcRef as any, facade as any, createConfig());
 
         manager.updateHoverButton();
         const addCallback = editor.setLineDecorationsHoverButton.mock.calls[0][1];
         addCallback(2);
         manager.renderWidgets();
 
-        const draftRef = vcRef.createComponent.mock.results.find((r: any) => r.value.instance.onSubmitDraft)?.value;
-        const threadRef = vcRef.createComponent.mock.results.find((r: any) => r.value.instance.onToggleResolved)?.value;
+        const draftRef = vcRef.createComponent.mock.results.find((r: any) => r.value.instance.onCancel)?.value;
+        const threadRef = vcRef.createComponent.mock.results.find((r: any) => r.value.instance.onToggleCollapse)?.value;
 
         manager.disposeAll();
 
@@ -259,10 +188,8 @@ describe('ReviewCommentWidgetManager', () => {
         const editor = createEditorMock();
         const vcRef = createViewContainerRefMock();
         const facade = createFacadeMock();
-        const threads: CommentThread[] = [{ id: 3, lineNumber: 1, resolved: false } as any];
-        facade.threads.mockReturnValue(threads);
-        const config = createConfig();
-        const manager = new ReviewCommentWidgetManager(editor as any, vcRef as any, facade as any, config);
+        facade.threads.mockReturnValue([{ id: 3, lineNumber: 1, resolved: false } as any]);
+        const manager = new ReviewCommentWidgetManager(editor as any, vcRef as any, facade as any, createConfig());
 
         manager.renderWidgets();
         const updated = manager.updateThreadInputs();
@@ -274,8 +201,7 @@ describe('ReviewCommentWidgetManager', () => {
         const vcRef = createViewContainerRefMock();
         const facade = createFacadeMock();
         facade.threads.mockReturnValue([{ id: 99 } as any]);
-        const config = createConfig();
-        const manager = new ReviewCommentWidgetManager(editor as any, vcRef as any, facade as any, config);
+        const manager = new ReviewCommentWidgetManager(editor as any, vcRef as any, facade as any, createConfig());
 
         const updated = manager.updateThreadInputs();
         expect(updated).toBe(false);

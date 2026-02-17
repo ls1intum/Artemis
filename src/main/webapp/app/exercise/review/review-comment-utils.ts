@@ -1,5 +1,49 @@
 import { CommentThread, CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
+import type { ReviewCommentDraftLocation } from 'app/exercise/review/review-comment.store';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+
+/**
+ * Returns the current thread file path, falling back to the initial file path.
+ *
+ * @param thread The review comment thread.
+ * @returns Current file path or the initial fallback path.
+ */
+export function getThreadFilePath(thread: CommentThread): string | undefined {
+    return thread.filePath ?? thread.initialFilePath;
+}
+
+/**
+ * Returns the 0-based Monaco line for a thread, falling back to initial location.
+ *
+ * @param thread The review comment thread.
+ * @returns 0-based line index.
+ */
+export function getReviewThreadLine(thread: CommentThread): number {
+    return (thread.lineNumber ?? thread.initialLineNumber ?? 1) - 1;
+}
+
+/**
+ * Builds a problem-statement draft location.
+ *
+ * @param lineNumber The 1-based line number.
+ * @returns Draft location for problem-statement comments.
+ */
+export function buildProblemStatementDraftLocation(lineNumber: number): ReviewCommentDraftLocation {
+    return {
+        targetType: CommentThreadLocationType.PROBLEM_STATEMENT,
+        lineNumber,
+    };
+}
+
+/**
+ * Checks whether a thread targets the problem statement.
+ *
+ * @param thread The review comment thread.
+ * @returns True when the thread belongs to the problem statement.
+ */
+export function isProblemStatementThread(thread: CommentThread): boolean {
+    return thread.targetType === CommentThreadLocationType.PROBLEM_STATEMENT;
+}
 
 /**
  * Checks whether a thread belongs to the currently selected repository.
@@ -68,4 +112,34 @@ export function isReviewCommentsSupportedRepository(repositoryType?: RepositoryT
         default:
             return false;
     }
+}
+
+/**
+ * Builds a repository-scoped draft location for review comments.
+ *
+ * @param repositoryType The selected repository type.
+ * @param fileName The selected file path.
+ * @param lineNumber The 1-based line number.
+ * @param auxiliaryRepositoryId Selected auxiliary repository id for auxiliary repositories.
+ * @returns Draft location for the selected repository or undefined when unsupported.
+ */
+export function buildRepositoryDraftLocation(
+    repositoryType: RepositoryType | undefined,
+    fileName: string,
+    lineNumber: number,
+    auxiliaryRepositoryId?: number,
+): ReviewCommentDraftLocation | undefined {
+    if (!repositoryType) {
+        return undefined;
+    }
+    const targetType = mapRepositoryToThreadLocationType(repositoryType);
+    if (!targetType) {
+        return undefined;
+    }
+    return {
+        targetType,
+        filePath: fileName,
+        lineNumber,
+        auxiliaryRepositoryId: repositoryType === RepositoryType.AUXILIARY ? auxiliaryRepositoryId : undefined,
+    };
 }

@@ -48,7 +48,7 @@ import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGe
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { ReviewCommentFacade } from 'app/exercise/review/review-comment-facade.service';
 import { ReviewCommentStore } from 'app/exercise/review/review-comment.store';
-import { mapRepositoryToThreadLocationType } from 'app/programming/shared/code-editor/util/review-comment-utils';
+import { mapRepositoryToThreadLocationType } from 'app/exercise/review/review-comment-utils';
 
 import { getRepoPath } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 
