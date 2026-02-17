@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -16,20 +17,23 @@ import { CreatePrerequisiteComponent } from 'app/atlas/manage/create/create-prer
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { PrerequisiteFormComponent } from 'app/atlas/manage/forms/prerequisite/prerequisite-form.component';
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CreatePrerequisite', () => {
+    setupTestBed({ zoneless: true });
     let createPrerequisiteComponentFixture: ComponentFixture<CreatePrerequisiteComponent>;
     let createPrerequisiteComponent: CreatePrerequisiteComponent;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [CreatePrerequisiteComponent, PrerequisiteFormComponent],
-            declarations: [
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [
+                CreatePrerequisiteComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(DocumentationButtonComponent),
                 MockComponent(PrerequisiteFormComponent),
                 MockDirective(TranslateDirective),
             ],
+            declarations: [],
             providers: [
                 MockProvider(PrerequisiteService),
                 MockProvider(LectureService),
@@ -48,15 +52,20 @@ describe('CreatePrerequisite', () => {
                 },
             ],
         })
-            .compileComponents()
-            .then(() => {
-                createPrerequisiteComponentFixture = TestBed.createComponent(CreatePrerequisiteComponent);
-                createPrerequisiteComponent = createPrerequisiteComponentFixture.componentInstance;
-            });
+            .overrideComponent(CreatePrerequisiteComponent, {
+                remove: { imports: [PrerequisiteFormComponent, DocumentationButtonComponent, TranslateDirective] },
+                add: {
+                    imports: [MockComponent(PrerequisiteFormComponent), MockComponent(DocumentationButtonComponent), MockDirective(TranslateDirective)],
+                },
+            })
+            .compileComponents();
+
+        createPrerequisiteComponentFixture = TestBed.createComponent(CreatePrerequisiteComponent);
+        createPrerequisiteComponent = createPrerequisiteComponentFixture.componentInstance;
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -80,8 +89,8 @@ describe('CreatePrerequisite', () => {
             status: 201,
         });
 
-        const createSpy = jest.spyOn(prerequisiteService, 'create').mockReturnValue(of(response));
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        const createSpy = vi.spyOn(prerequisiteService, 'create').mockReturnValue(of(response));
+        const navigateSpy = vi.spyOn(router, 'navigate');
 
         createPrerequisiteComponentFixture.detectChanges();
 
@@ -114,7 +123,7 @@ describe('CreatePrerequisite', () => {
             optional: true,
         };
 
-        const createSpy = jest.spyOn(prerequisiteService, 'create');
+        const createSpy = vi.spyOn(prerequisiteService, 'create');
 
         createPrerequisiteComponent.createPrerequisite(formData);
 
