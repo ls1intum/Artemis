@@ -5,12 +5,23 @@ import { CommentThread, CommentThreadLocationType } from 'app/exercise/shared/en
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 describe('ReviewCommentWidgetManager', () => {
-    const createEditorMock = () => ({
-        setLineDecorationsHoverButton: vi.fn(),
-        clearLineDecorationsHoverButton: vi.fn(),
-        addLineWidget: vi.fn(),
-        disposeWidgetsByPrefix: vi.fn(),
-    });
+    const createEditorMock = () => {
+        let onDidScrollChangeCallback: (() => void) | undefined;
+        const monacoEditorMock = {
+            onDidScrollChange: vi.fn((callback: () => void) => {
+                onDidScrollChangeCallback = callback;
+                return { dispose: vi.fn() };
+            }),
+        };
+        return {
+            setLineDecorationsHoverButton: vi.fn(),
+            clearLineDecorationsHoverButton: vi.fn(),
+            addLineWidget: vi.fn(),
+            disposeWidgetsByPrefix: vi.fn(),
+            getEditor: vi.fn(() => monacoEditorMock),
+            triggerScroll: () => onDidScrollChangeCallback?.(),
+        };
+    };
 
     const createDraftRef = () => {
         const submittedSubscription = { unsubscribe: vi.fn() };
@@ -42,6 +53,7 @@ describe('ReviewCommentWidgetManager', () => {
     const createThreadRef = () => {
         const instance: any = {
             onToggleCollapse: { subscribe: vi.fn((cb) => (instance._onToggleCollapse = cb)) },
+            hideAllCommentMenus: vi.fn(),
         };
         return {
             instance,
@@ -131,7 +143,7 @@ describe('ReviewCommentWidgetManager', () => {
 
         expect(vcRef.createComponent).toHaveBeenCalledOnce();
         expect(editor.addLineWidget).toHaveBeenCalledTimes(2);
-        expect(editor.disposeWidgetsByPrefix).toHaveBeenCalledWith(expect.stringContaining('review-comment-file.java-4'));
+        expect(editor.disposeWidgetsByPrefix).toHaveBeenCalledWith(expect.stringContaining('review-comment-file.java::4::'));
     });
 
     it('should add and remove thread widgets incrementally', () => {
@@ -228,5 +240,19 @@ describe('ReviewCommentWidgetManager', () => {
 
         const updated = manager.updateThreadInputs([{ id: 99 } as any]);
         expect(updated).toBe(false);
+    });
+
+    it('should hide open thread menus when the editor scrolls', () => {
+        const editor = createEditorMock();
+        const vcRef = createViewContainerRefMock();
+        const threads: CommentThread[] = [{ id: 11, lineNumber: 3, resolved: false } as any];
+        const config = createConfig({ getThreads: () => threads });
+        const manager = new ReviewCommentWidgetManager(editor as any, vcRef as any, config);
+
+        manager.renderWidgets();
+        const threadRef = vcRef.createComponent.mock.results.find((r: any) => r.value.instance.onToggleCollapse)?.value;
+        editor.triggerScroll();
+
+        expect(threadRef.instance.hideAllCommentMenus).toHaveBeenCalledTimes(1);
     });
 });

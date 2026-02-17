@@ -49,8 +49,16 @@ export class ExerciseReviewCommentService {
             return;
         }
         this.loadThreads(exerciseId).subscribe({
-            next: (threads) => this.threads.set(threads),
+            next: (threads) => {
+                if (this.activeExerciseId !== exerciseId) {
+                    return;
+                }
+                this.threads.set(threads);
+            },
             error: () => {
+                if (this.activeExerciseId !== exerciseId) {
+                    return;
+                }
                 this.threads.set([]);
                 this.alertService.error('artemisApp.review.loadFailed');
             },
@@ -70,6 +78,9 @@ export class ExerciseReviewCommentService {
         }
         this.createThread(exerciseId, thread).subscribe({
             next: (response) => {
+                if (this.activeExerciseId !== exerciseId) {
+                    return;
+                }
                 const createdThread = response.body;
                 if (!createdThread?.id) {
                     return;
@@ -78,7 +89,12 @@ export class ExerciseReviewCommentService {
                 this.threads.update((threads) => this.appendThreadToThreads(threads, normalizedThread));
                 onSuccess?.();
             },
-            error: () => this.alertService.error('artemisApp.review.saveFailed'),
+            error: () => {
+                if (this.activeExerciseId !== exerciseId) {
+                    return;
+                }
+                this.alertService.error('artemisApp.review.saveFailed');
+            },
         });
     }
 
@@ -93,8 +109,18 @@ export class ExerciseReviewCommentService {
             return;
         }
         this.deleteComment(exerciseId, commentId).subscribe({
-            next: () => this.threads.update((threads) => this.removeCommentFromThreads(threads, commentId)),
-            error: () => this.alertService.error('artemisApp.review.deleteFailed'),
+            next: () => {
+                if (this.activeExerciseId !== exerciseId) {
+                    return;
+                }
+                this.threads.update((threads) => this.removeCommentFromThreads(threads, commentId));
+            },
+            error: () => {
+                if (this.activeExerciseId !== exerciseId) {
+                    return;
+                }
+                this.alertService.error('artemisApp.review.deleteFailed');
+            },
         });
     }
 
@@ -112,6 +138,9 @@ export class ExerciseReviewCommentService {
         }
         this.createUserComment(exerciseId, threadId, comment).subscribe({
             next: (response) => {
+                if (this.activeExerciseId !== exerciseId) {
+                    return;
+                }
                 const createdComment = response.body;
                 if (!createdComment) {
                     return;
@@ -119,7 +148,12 @@ export class ExerciseReviewCommentService {
                 this.threads.update((threads) => this.appendCommentToThreads(threads, createdComment));
                 onSuccess?.();
             },
-            error: () => this.alertService.error('artemisApp.review.saveFailed'),
+            error: () => {
+                if (this.activeExerciseId !== exerciseId) {
+                    return;
+                }
+                this.alertService.error('artemisApp.review.saveFailed');
+            },
         });
     }
 
@@ -137,6 +171,9 @@ export class ExerciseReviewCommentService {
         }
         this.updateUserCommentContent(exerciseId, commentId, content).subscribe({
             next: (response) => {
+                if (this.activeExerciseId !== exerciseId) {
+                    return;
+                }
                 const updatedComment = response.body;
                 if (!updatedComment) {
                     return;
@@ -144,7 +181,12 @@ export class ExerciseReviewCommentService {
                 this.threads.update((threads) => this.updateCommentInThreads(threads, updatedComment));
                 onSuccess?.();
             },
-            error: () => this.alertService.error('artemisApp.review.saveFailed'),
+            error: () => {
+                if (this.activeExerciseId !== exerciseId) {
+                    return;
+                }
+                this.alertService.error('artemisApp.review.saveFailed');
+            },
         });
     }
 
@@ -161,13 +203,21 @@ export class ExerciseReviewCommentService {
         }
         this.updateThreadResolvedState(exerciseId, threadId, resolved).subscribe({
             next: (response) => {
+                if (this.activeExerciseId !== exerciseId) {
+                    return;
+                }
                 const updatedThread = response.body;
                 if (!updatedThread?.id) {
                     return;
                 }
                 this.threads.update((threads) => this.replaceThreadInThreads(threads, updatedThread));
             },
-            error: () => this.alertService.error('artemisApp.review.resolveFailed'),
+            error: () => {
+                if (this.activeExerciseId !== exerciseId) {
+                    return;
+                }
+                this.alertService.error('artemisApp.review.resolveFailed');
+            },
         });
     }
 

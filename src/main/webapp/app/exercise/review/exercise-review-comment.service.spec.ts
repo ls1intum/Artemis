@@ -83,6 +83,31 @@ describe('ExerciseReviewCommentService', () => {
         expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.review.loadFailed');
     });
 
+    it('reloadThreads should ignore stale success responses after exercise switch', () => {
+        service.setExercise(1);
+
+        service.reloadThreads();
+        const req = httpMock.expectOne('api/exercise/exercises/1/review-threads');
+
+        service.setExercise(2);
+        req.flush([{ id: 11 }]);
+
+        expect(service.threads()).toEqual([]);
+    });
+
+    it('reloadThreads should ignore stale error responses after exercise switch', () => {
+        service.setExercise(1);
+
+        service.reloadThreads();
+        const req = httpMock.expectOne('api/exercise/exercises/1/review-threads');
+
+        service.setExercise(2);
+        req.flush('failed', { status: 500, statusText: 'Server Error' });
+
+        expect(service.threads()).toEqual([]);
+        expect(alertServiceMock.error).not.toHaveBeenCalled();
+    });
+
     it('createThreadInContext should be ignored without active exercise', () => {
         service.createThreadInContext({
             targetType: CommentThreadLocationType.TEMPLATE_REPO,
@@ -151,6 +176,26 @@ describe('ExerciseReviewCommentService', () => {
         const req = httpMock.expectOne('api/exercise/exercises/1/review-threads');
         req.flush('failed', { status: 500, statusText: 'Server Error' });
 
+        expect(onSuccess).not.toHaveBeenCalled();
+    });
+
+    it('createThreadInContext should ignore stale success responses after exercise switch', () => {
+        service.setExercise(1);
+        const onSuccess = vi.fn();
+        const payload = {
+            targetType: CommentThreadLocationType.TEMPLATE_REPO,
+            initialLineNumber: 1,
+            initialFilePath: 'file.java',
+            initialComment: { contentType: 'USER', text: 'hi' },
+        } as any;
+
+        service.createThreadInContext(payload, onSuccess);
+        const req = httpMock.expectOne('api/exercise/exercises/1/review-threads');
+
+        service.setExercise(2);
+        req.flush({ id: 2, comments: [] });
+
+        expect(service.threads()).toEqual([]);
         expect(onSuccess).not.toHaveBeenCalled();
     });
 

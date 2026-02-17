@@ -34,7 +34,9 @@ export class ReviewCommentWidgetManager {
         private readonly editor: MonacoEditorComponent,
         private readonly viewContainerRef: ViewContainerRef,
         private readonly config: ReviewCommentWidgetManagerConfig,
-    ) {}
+    ) {
+        this.editor.getEditor().onDidScrollChange(() => this.hideAllThreadMenus());
+    }
 
     /**
      * Updates the hover button visibility and callback based on configuration.
@@ -282,7 +284,7 @@ export class ReviewCommentWidgetManager {
      * @returns The widget id used for Monaco line widgets.
      */
     private buildDraftWidgetId(fileName: string, line: number): string {
-        return `review-comment-${fileName}-${line}`;
+        return `review-comment-${fileName}::${line}::`;
     }
 
     /**
@@ -334,5 +336,14 @@ export class ReviewCommentWidgetManager {
         widgetRef.setInput('lineNumber', line + 1);
         widgetRef.setInput('filePath', draftContext.filePath);
         widgetRef.setInput('auxiliaryRepositoryId', draftContext.auxiliaryRepositoryId);
+    }
+
+    /**
+     * Hides all currently open thread menus so detached overlays cannot drift while the editor scrolls.
+     */
+    private hideAllThreadMenus(): void {
+        for (const ref of this.threadWidgetRefs.values()) {
+            ref.instance.hideAllCommentMenus();
+        }
     }
 }

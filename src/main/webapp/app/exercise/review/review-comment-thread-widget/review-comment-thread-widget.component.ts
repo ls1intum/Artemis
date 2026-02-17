@@ -1,10 +1,10 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation, computed, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation, computed, inject, input, output, signal, viewChildren } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ButtonDirective } from 'primeng/button';
 import { MenuItem } from 'primeng/api';
-import { MenuModule } from 'primeng/menu';
+import { Menu, MenuModule } from 'primeng/menu';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faEllipsisVertical, faPen, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
@@ -46,6 +46,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         { id: 'delete', label: 'Delete comment' },
     ];
     readonly nonUserCommentMenuItems: MenuItem[] = [{ id: 'delete', label: 'Delete comment' }];
+    readonly commentMenus = viewChildren<Menu>('commentMenu');
 
     private readonly destroyed$ = new Subject<void>();
     private readonly translateService = inject(TranslateService);
@@ -227,5 +228,14 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
      */
     isUserComment(comment: Comment): boolean {
         return comment.type === CommentType.USER;
+    }
+
+    /**
+     * Hides all currently open comment action menus in this thread widget.
+     */
+    hideAllCommentMenus(): void {
+        for (const menu of this.commentMenus()) {
+            menu.hide();
+        }
     }
 }
