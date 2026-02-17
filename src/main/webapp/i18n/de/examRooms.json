@@ -2,7 +2,7 @@
     "artemisApp": {
         "exam": {
             "examUsers": {
-                "changeLocationButton": "Sitzplatz ändern",
+                "changeLocationButton": "Sitz ändern",
                 "rooms": {
                     "reseating": {
                         "dialogTitle": "Studierende:n Umsetzen",

@@ -14,7 +14,7 @@ import { ExamManagementService } from 'app/exam/manage/services/exam-management.
 import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { faChair, faCheck, faFileExport, faInfoCircle, faPlus, faThLarge, faTimes, faUpload, faUserSlash, faUserTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faFileExport, faInfoCircle, faPlus, faThLarge, faTimes, faUpload, faUserSlash, faUserTimes } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -102,7 +102,6 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     protected readonly faCheck = faCheck;
     protected readonly faTimes = faTimes;
     protected readonly faThLarge = faThLarge;
-    protected readonly faChair = faChair;
     protected readonly faFileExport = faFileExport;
 
     ngOnInit() {
