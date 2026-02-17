@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+
 import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import {
     toAuxiliaryRepositories,
@@ -64,7 +66,7 @@ describe('ExerciseMetadataSnapshotProgrammingMapper', () => {
         expect(policy?.type).toBe(SubmissionPolicyType.SUBMISSION_PENALTY);
         expect(policy?.exceedingPenalty).toBe(10);
         expect(policy?.submissionLimit).toBe(3);
-        expect(policy?.active).toBeTrue();
+        expect(policy?.active).toBe(true);
     });
 
     it('maps lock repository policies by default', () => {
@@ -79,7 +81,7 @@ describe('ExerciseMetadataSnapshotProgrammingMapper', () => {
 
         expect(policy?.type).toBe(SubmissionPolicyType.LOCK_REPOSITORY);
         expect(policy?.submissionLimit).toBe(5);
-        expect(policy?.active).toBeFalse();
+        expect(policy?.active).toBe(false);
         expect(policy?.exceedingPenalty).toBeUndefined();
     });
 
@@ -95,7 +97,7 @@ describe('ExerciseMetadataSnapshotProgrammingMapper', () => {
 
         expect(policy?.type).toBe(SubmissionPolicyType.LOCK_REPOSITORY);
         expect(policy?.submissionLimit).toBe(2);
-        expect(policy?.active).toBeTrue();
+        expect(policy?.active).toBe(true);
         expect(policy?.exceedingPenalty).toBeUndefined();
     });
 
@@ -120,17 +122,17 @@ describe('ExerciseMetadataSnapshotProgrammingMapper', () => {
 
         const config = toBuildConfig(snapshot);
 
-        expect(config?.sequentialTestRuns).toBeTrue();
+        expect(config?.sequentialTestRuns).toBe(true);
         expect(config?.buildPlanConfiguration).toBe('Maven');
         expect(config?.buildScript).toBe('gradle test');
-        expect(config?.checkoutSolutionRepository).toBeTrue();
+        expect(config?.checkoutSolutionRepository).toBe(true);
         expect(config?.testCheckoutPath).toBe('tests');
         expect(config?.assignmentCheckoutPath).toBe('assignment');
         expect(config?.solutionCheckoutPath).toBe('solution');
         expect(config?.timeoutSeconds).toBe(120);
         expect(config?.dockerFlags).toBe('--platform linux/amd64');
         expect(config?.theiaImage).toBe('theia:latest');
-        expect(config?.allowBranching).toBeTrue();
+        expect(config?.allowBranching).toBe(true);
         expect(config?.branchRegex).toBe('.*');
     });
 
@@ -144,8 +146,8 @@ describe('ExerciseMetadataSnapshotProgrammingMapper', () => {
         const config = toBuildConfig(snapshot);
 
         expect(config?.branchRegex).toBe('feature/.*');
-        expect(config?.checkoutSolutionRepository).toBeFalse();
-        expect(config?.allowBranching).toBeFalse();
+        expect(config?.checkoutSolutionRepository).toBe(false);
+        expect(config?.allowBranching).toBe(false);
     });
 
     it('uses defaults for omitted build configuration booleans and branch regex', () => {
@@ -153,8 +155,8 @@ describe('ExerciseMetadataSnapshotProgrammingMapper', () => {
 
         const config = toBuildConfig(snapshot);
 
-        expect(config?.checkoutSolutionRepository).toBeFalse();
-        expect(config?.allowBranching).toBeFalse();
+        expect(config?.checkoutSolutionRepository).toBe(false);
+        expect(config?.allowBranching).toBe(false);
         expect(config?.branchRegex).toBe('.*');
     });
 

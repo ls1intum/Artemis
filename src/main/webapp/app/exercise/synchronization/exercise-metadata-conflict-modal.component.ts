@@ -1,9 +1,11 @@
-import { Component, computed, inject, signal } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { CheckboxModule } from 'primeng/checkbox';
+import { ButtonModule } from 'primeng/button';
 
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
@@ -39,14 +41,26 @@ export interface ExerciseMetadataConflictModalResult {
     decisions: ExerciseMetadataConflictDecision[];
 }
 
+/**
+ * Data passed to the dynamic dialog via DynamicDialogConfig.
+ */
+export interface ExerciseMetadataConflictModalData {
+    conflicts: ExerciseMetadataConflictItem[];
+    author: UserPublicInfoDTO;
+    versionId: number;
+    exerciseId?: number;
+    exerciseType?: ExerciseType;
+}
+
 @Component({
     selector: 'jhi-exercise-metadata-conflict-modal',
     templateUrl: './exercise-metadata-conflict-modal.component.html',
     styleUrls: ['./exercise-metadata-conflict-modal.component.scss'],
-    imports: [FormsModule, TranslateDirective, FaIconComponent, CustomExerciseCategoryBadgeComponent],
+    imports: [FormsModule, TranslateDirective, FaIconComponent, CustomExerciseCategoryBadgeComponent, CheckboxModule, ButtonModule],
 })
-export class ExerciseMetadataConflictModalComponent {
-    activeModal = inject(NgbActiveModal);
+export class ExerciseMetadataConflictModalComponent implements OnInit {
+    private readonly dialogRef = inject(DynamicDialogRef);
+    private readonly dialogConfig = inject(DynamicDialogConfig);
 
     readonly conflicts = signal<ExerciseMetadataConflictItem[]>([]);
     readonly author = signal<UserPublicInfoDTO | undefined>(undefined);
@@ -66,6 +80,17 @@ export class ExerciseMetadataConflictModalComponent {
 
     readonly faExclamationTriangle = faExclamationTriangle;
 
+    ngOnInit(): void {
+        const data = this.dialogConfig.data as ExerciseMetadataConflictModalData | undefined;
+        if (data) {
+            this.setConflicts(data.conflicts);
+            this.author.set(data.author);
+            this.versionId.set(data.versionId);
+            this.exerciseId.set(data.exerciseId);
+            this.exerciseType.set(data.exerciseType);
+        }
+    }
+
     /**
      * Initializes conflicts and decision state for the modal.
      */
@@ -76,34 +101,6 @@ export class ExerciseMetadataConflictModalComponent {
             nextDecisions[conflict.field] = false;
         }
         this.decisions.set(nextDecisions);
-    }
-
-    /**
-     * Sets the author of the incoming exercise version.
-     */
-    setAuthor(author: UserPublicInfoDTO): void {
-        this.author.set(author);
-    }
-
-    /**
-     * Sets the incoming exercise version id.
-     */
-    setVersionId(versionId: number): void {
-        this.versionId.set(versionId);
-    }
-
-    /**
-     * Sets the current exercise id and triggers any required metadata loading.
-     */
-    setExerciseId(exerciseId: number): void {
-        this.exerciseId.set(exerciseId);
-    }
-
-    /**
-     * Sets the current exercise type and triggers any required metadata loading.
-     */
-    setExerciseType(exerciseType: ExerciseType): void {
-        this.exerciseType.set(exerciseType);
     }
 
     /**
@@ -123,7 +120,7 @@ export class ExerciseMetadataConflictModalComponent {
             field: conflict.field,
             useIncoming: Boolean(this.decisions()[conflict.field]),
         }));
-        this.activeModal.close({ decisions } satisfies ExerciseMetadataConflictModalResult);
+        this.dialogRef.close({ decisions } satisfies ExerciseMetadataConflictModalResult);
     }
 
     /**
@@ -134,14 +131,14 @@ export class ExerciseMetadataConflictModalComponent {
             field: conflict.field,
             useIncoming: false,
         }));
-        this.activeModal.close({ decisions } satisfies ExerciseMetadataConflictModalResult);
+        this.dialogRef.close({ decisions } satisfies ExerciseMetadataConflictModalResult);
     }
 
     /**
      * Dismisses the modal without applying changes.
      */
     close(): void {
-        this.activeModal.dismiss();
+        this.dialogRef.close();
     }
 
     /**
@@ -149,7 +146,7 @@ export class ExerciseMetadataConflictModalComponent {
      */
     formatValue(value: unknown): string {
         if (value === undefined || value === null) {
-            return '—';
+            return '\u2014';
         }
         if (dayjs.isDayjs(value)) {
             return value.format('YYYY-MM-DD HH:mm');

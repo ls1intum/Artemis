@@ -1,4 +1,4 @@
-import { Component, TemplateRef, ViewChild, computed, inject, signal } from '@angular/core';
+import { Component, ViewChild, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
@@ -47,6 +47,7 @@ import { ConsistencyCheckError } from 'app/programming/shared/entities/consisten
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
 import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
 import { getRepoPath } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
+import { DialogModule } from 'primeng/dialog';
 
 const SEVERITY_ORDER = {
     HIGH: 0,
@@ -75,10 +76,10 @@ const SEVERITY_ORDER = {
         ProgrammingExerciseStudentTriggerBuildButtonComponent,
         ProgrammingExerciseEditableInstructionComponent,
         ProgrammingExerciseInstructionComponent,
+        DialogModule,
     ],
 })
 export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent {
-    @ViewChild('codeGenerationRunningModal', { static: true }) codeGenerationRunningModal: TemplateRef<unknown>;
     @ViewChild(UpdatingResultComponent, { static: false }) resultComp: UpdatingResultComponent;
     @ViewChild(ProgrammingExerciseEditableInstructionComponent, { static: false }) editableInstructions: ProgrammingExerciseEditableInstructionComponent;
 
@@ -121,6 +122,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private repoService = inject(CodeEditorRepositoryService);
     private hyperionCodeGenerationApi = inject(HyperionCodeGenerationApiService);
     isGeneratingCode = signal(false);
+    showCodeGenerationRunningDialog = signal(false);
     private jobSubscription?: Subscription;
     private jobTimeoutHandle?: number;
     private activeJobId?: string;
@@ -191,7 +193,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     private openCodeGenerationRunningModal(): void {
-        this.modalService.open(this.codeGenerationRunningModal, { backdrop: 'static', keyboard: false, size: 'md' });
+        this.showCodeGenerationRunningDialog.set(true);
     }
 
     protected override applyDomainChange(domainType: any, domainValue: any) {

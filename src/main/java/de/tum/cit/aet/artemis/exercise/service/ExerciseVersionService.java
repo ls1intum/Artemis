@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
-import de.tum.cit.aet.artemis.exercise.domain.synchronization.ExerciseEditorSyncTarget;
+import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ProgrammingExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionRepository;
@@ -263,6 +263,9 @@ public class ExerciseVersionService {
 
     /**
      * Collects the set of changed exercise fields between two snapshots.
+     * <p>
+     * IMPORTANT: When adding new fields to {@link ExerciseSnapshotDTO}, a corresponding
+     * {@code addIfChanged} call must be added here so that metadata sync can detect the change.
      *
      * @param newSnapshot      the new snapshot
      * @param previousSnapshot the previous snapshot

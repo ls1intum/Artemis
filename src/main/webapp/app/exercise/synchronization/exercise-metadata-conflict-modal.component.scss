@@ -1,10 +1,11 @@
-.modal-body {
+.conflict-body {
     max-height: 75vh;
     overflow-y: auto;
+}
 
-    .build-config-grid {
-        display: grid;
-        grid-template-columns: minmax(180px, 1fr) 1fr 1fr;
-        gap: 0.5rem 1rem;
-    }
+.build-config-grid {
+    display: grid;
+    // label column fits content, value columns share remaining space equally
+    grid-template-columns: auto 1fr 1fr;
+    gap: 0.5rem 1rem;
 }

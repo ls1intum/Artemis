@@ -1,7 +1,9 @@
+import { Mocked, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Subject } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { Competency, CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
@@ -20,40 +22,27 @@ import { ExerciseMetadataSyncContext, ExerciseMetadataSyncService } from 'app/ex
 import { ExerciseSnapshotDTO } from 'app/exercise/synchronization/exercise-metadata-snapshot.dto';
 import { ExerciseMetadataConflictModalResult } from 'app/exercise/synchronization/exercise-metadata-conflict-modal.component';
 
-interface Deferred<T> {
-    promise: Promise<T>;
-    resolve: (value: T) => void;
-    reject: (reason?: unknown) => void;
-}
-
-const deferred = <T>(): Deferred<T> => {
-    let resolve!: (value: T) => void;
-    let reject!: (reason?: unknown) => void;
-    const promise = new Promise<T>((res, rej) => {
-        resolve = res;
-        reject = rej;
-    });
-    return { promise, resolve, reject };
+/**
+ * Creates a mock DynamicDialogRef whose onClose Subject can be resolved or completed externally.
+ */
+const createMockDialogRef = (): { ref: DynamicDialogRef; onClose: Subject<ExerciseMetadataConflictModalResult | undefined> } => {
+    const onClose = new Subject<ExerciseMetadataConflictModalResult | undefined>();
+    const ref = { onClose } as unknown as DynamicDialogRef;
+    return { ref, onClose };
 };
 
 describe('ExerciseMetadataSyncService', () => {
+    setupTestBed({ zoneless: true });
     let service: ExerciseMetadataSyncService;
     let httpMock: HttpTestingController;
     let syncEvents$: Subject<ExerciseEditorSyncEvent>;
-    let exerciseEditorSyncService: jest.Mocked<ExerciseEditorSyncService>;
-    let modalService: { open: jest.Mock };
-    let modalComponentInstance: {
-        setConflicts: jest.Mock;
-        setAuthor: jest.Mock;
-        setVersionId: jest.Mock;
-        setExerciseId: jest.Mock;
-        setExerciseType: jest.Mock;
-    };
+    let exerciseEditorSyncService: Mocked<ExerciseEditorSyncService>;
+    let dialogService: { open: ReturnType<typeof vi.fn> };
 
     let currentExercise: ProgrammingExercise;
     let baselineExercise: ProgrammingExercise;
     let context: ExerciseMetadataSyncContext<ProgrammingExercise>;
-    let setBaselineExercise: jest.Mock;
+    let setBaselineExercise: ReturnType<typeof vi.fn>;
 
     const createAlert = (versionId: number, changedFields: string[]): ExerciseNewVersionAlertEvent => ({
         eventType: ExerciseEditorSyncEventType.NEW_EXERCISE_VERSION_ALERT,
@@ -81,20 +70,13 @@ describe('ExerciseMetadataSyncService', () => {
 
     beforeEach(() => {
         syncEvents$ = new Subject<ExerciseEditorSyncEvent>();
-        modalComponentInstance = {
-            setConflicts: jest.fn(),
-            setAuthor: jest.fn(),
-            setVersionId: jest.fn(),
-            setExerciseId: jest.fn(),
-            setExerciseType: jest.fn(),
-        };
 
-        modalService = {
-            open: jest.fn().mockReturnValue({
-                componentInstance: modalComponentInstance,
-                result: Promise.resolve({ decisions: [] } satisfies ExerciseMetadataConflictModalResult),
-            }),
+        const defaultMock = createMockDialogRef();
+        dialogService = {
+            open: vi.fn().mockReturnValue(defaultMock.ref),
         };
+        // Resolve the default mock immediately
+        setTimeout(() => defaultMock.onClose.next({ decisions: [] } satisfies ExerciseMetadataConflictModalResult), 0);
 
         TestBed.configureTestingModule({
             providers: [
@@ -104,17 +86,17 @@ describe('ExerciseMetadataSyncService', () => {
                 {
                     provide: ExerciseEditorSyncService,
                     useValue: {
-                        subscribeToUpdates: jest.fn().mockReturnValue(syncEvents$.asObservable()),
-                        unsubscribe: jest.fn(),
+                        subscribeToUpdates: vi.fn().mockReturnValue(syncEvents$.asObservable()),
+                        unsubscribe: vi.fn(),
                     },
                 },
-                { provide: NgbModal, useValue: modalService },
+                { provide: DialogService, useValue: dialogService },
             ],
         });
 
         service = TestBed.inject(ExerciseMetadataSyncService);
         httpMock = TestBed.inject(HttpTestingController);
-        exerciseEditorSyncService = TestBed.inject(ExerciseEditorSyncService) as jest.Mocked<ExerciseEditorSyncService>;
+        exerciseEditorSyncService = TestBed.inject(ExerciseEditorSyncService) as Mocked<ExerciseEditorSyncService>;
 
         currentExercise = new ProgrammingExercise(undefined, undefined);
         baselineExercise = new ProgrammingExercise(undefined, undefined);
@@ -125,7 +107,7 @@ describe('ExerciseMetadataSyncService', () => {
         currentExercise.maxPoints = 10;
         baselineExercise.maxPoints = 10;
 
-        setBaselineExercise = jest.fn((updated) => {
+        setBaselineExercise = vi.fn((updated) => {
             baselineExercise = updated;
         });
 
@@ -169,7 +151,7 @@ describe('ExerciseMetadataSyncService', () => {
         });
 
         httpMock.expectNone(() => true);
-        expect(modalService.open).not.toHaveBeenCalled();
+        expect(dialogService.open).not.toHaveBeenCalled();
     });
 
     it('applies non-conflicting incoming changes to current and baseline without modal', async () => {
@@ -181,7 +163,7 @@ describe('ExerciseMetadataSyncService', () => {
 
         expect(currentExercise.title).toBe('incoming-title');
         expect(baselineExercise.title).toBe('incoming-title');
-        expect(modalService.open).not.toHaveBeenCalled();
+        expect(dialogService.open).not.toHaveBeenCalled();
         expect(setBaselineExercise).toHaveBeenCalled();
     });
 
@@ -220,7 +202,7 @@ describe('ExerciseMetadataSyncService', () => {
         expect(currentExercise.auxiliaryRepositories?.[0].description).toBe('incoming-desc');
         expect(baselineExercise.auxiliaryRepositories).toHaveLength(1);
         expect(baselineExercise.auxiliaryRepositories?.[0].name).toBe('incoming');
-        expect(modalService.open).not.toHaveBeenCalled();
+        expect(dialogService.open).not.toHaveBeenCalled();
     });
 
     it('updates only baseline when changed fields have no registered handlers', async () => {
@@ -232,7 +214,7 @@ describe('ExerciseMetadataSyncService', () => {
 
         expect(currentExercise.title).toBe('baseline-title');
         expect(baselineExercise.title).toBe('baseline-title');
-        expect(modalService.open).not.toHaveBeenCalled();
+        expect(dialogService.open).not.toHaveBeenCalled();
     });
 
     it('handles alerts with undefined changedFields as empty updates', async () => {
@@ -249,7 +231,7 @@ describe('ExerciseMetadataSyncService', () => {
 
         expect(currentExercise.title).toBe('baseline-title');
         expect(baselineExercise.title).toBe('baseline-title');
-        expect(modalService.open).not.toHaveBeenCalled();
+        expect(dialogService.open).not.toHaveBeenCalled();
     });
 
     it('ignores problem statement-only changes without fetching snapshots', async () => {
@@ -259,17 +241,15 @@ describe('ExerciseMetadataSyncService', () => {
         httpMock.expectNone(() => true);
         await flushPromises();
 
-        expect(modalService.open).not.toHaveBeenCalled();
+        expect(dialogService.open).not.toHaveBeenCalled();
     });
 
     it('opens conflict modal and applies selected incoming values', async () => {
         const resolution: ExerciseMetadataConflictModalResult = {
             decisions: [{ field: 'title', useIncoming: true }],
         };
-        modalService.open.mockReturnValue({
-            componentInstance: modalComponentInstance,
-            result: Promise.resolve(resolution),
-        });
+        const mock = createMockDialogRef();
+        dialogService.open.mockReturnValue(mock.ref);
 
         currentExercise.title = 'local-title';
         baselineExercise.title = 'baseline-title';
@@ -279,10 +259,15 @@ describe('ExerciseMetadataSyncService', () => {
 
         flushSnapshot(1, 103, { id: 1, title: 'incoming-title' });
         await flushPromises();
+
+        // Resolve dialog
+        mock.onClose.next(resolution);
+        mock.onClose.complete();
         await flushPromises();
 
-        expect(modalService.open).toHaveBeenCalledOnce();
-        expect(modalComponentInstance.setConflicts).toHaveBeenCalledWith([
+        expect(dialogService.open).toHaveBeenCalledOnce();
+        const openCallData = dialogService.open.mock.calls[0][1]?.data;
+        expect(openCallData.conflicts).toEqual([
             {
                 field: 'title',
                 labelKey: 'artemisApp.exercise.title',
@@ -290,17 +275,15 @@ describe('ExerciseMetadataSyncService', () => {
                 incomingValue: 'incoming-title',
             },
         ]);
-        expect(modalComponentInstance.setExerciseId).toHaveBeenCalledWith(1);
-        expect(modalComponentInstance.setExerciseType).toHaveBeenCalledWith(ExerciseType.PROGRAMMING);
+        expect(openCallData.exerciseId).toBe(1);
+        expect(openCallData.exerciseType).toBe(ExerciseType.PROGRAMMING);
         expect(currentExercise.title).toBe('incoming-title');
         expect(baselineExercise.title).toBe('incoming-title');
     });
 
     it('keeps local values when conflict modal is dismissed', async () => {
-        modalService.open.mockReturnValue({
-            componentInstance: modalComponentInstance,
-            result: Promise.reject(new Error('dismissed')),
-        });
+        const mock = createMockDialogRef();
+        dialogService.open.mockReturnValue(mock.ref);
 
         currentExercise.title = 'local-title';
         baselineExercise.title = 'baseline-title';
@@ -311,7 +294,12 @@ describe('ExerciseMetadataSyncService', () => {
         flushSnapshot(1, 104, { id: 1, title: 'incoming-title' });
         await flushPromises();
 
-        expect(modalService.open).toHaveBeenCalledOnce();
+        // Dismiss dialog (close without value)
+        mock.onClose.next(undefined);
+        mock.onClose.complete();
+        await flushPromises();
+
+        expect(dialogService.open).toHaveBeenCalledOnce();
         expect(currentExercise.title).toBe('local-title');
         expect(baselineExercise.title).toBe('incoming-title');
     });
@@ -320,10 +308,8 @@ describe('ExerciseMetadataSyncService', () => {
         const resolution: ExerciseMetadataConflictModalResult = {
             decisions: [{ field: 'title', useIncoming: false }],
         };
-        modalService.open.mockReturnValue({
-            componentInstance: modalComponentInstance,
-            result: Promise.resolve(resolution),
-        });
+        const mock = createMockDialogRef();
+        dialogService.open.mockReturnValue(mock.ref);
 
         currentExercise.title = 'local-title';
         baselineExercise.title = 'baseline-title';
@@ -332,6 +318,10 @@ describe('ExerciseMetadataSyncService', () => {
         emitAlert(createAlert(105, ['title']));
 
         flushSnapshot(1, 105, { id: 1, title: 'incoming-title' });
+        await flushPromises();
+
+        mock.onClose.next(resolution);
+        mock.onClose.complete();
         await flushPromises();
 
         expect(currentExercise.title).toBe('local-title');
@@ -361,7 +351,7 @@ describe('ExerciseMetadataSyncService', () => {
         });
         await flushPromises();
 
-        expect(modalService.open).not.toHaveBeenCalled();
+        expect(dialogService.open).not.toHaveBeenCalled();
     });
 
     it('continues queue processing after a failed snapshot fetch', async () => {
@@ -382,17 +372,9 @@ describe('ExerciseMetadataSyncService', () => {
     });
 
     it('processes queued alerts sequentially while waiting for modal resolution', async () => {
-        const firstResolution = deferred<ExerciseMetadataConflictModalResult>();
-        const secondResolution = deferred<ExerciseMetadataConflictModalResult>();
-        modalService.open
-            .mockReturnValueOnce({
-                componentInstance: modalComponentInstance,
-                result: firstResolution.promise,
-            })
-            .mockReturnValueOnce({
-                componentInstance: modalComponentInstance,
-                result: secondResolution.promise,
-            });
+        const firstMock = createMockDialogRef();
+        const secondMock = createMockDialogRef();
+        dialogService.open.mockReturnValueOnce(firstMock.ref).mockReturnValueOnce(secondMock.ref);
 
         currentExercise.title = 'local-title';
         baselineExercise.title = 'baseline-title';
@@ -405,18 +387,21 @@ describe('ExerciseMetadataSyncService', () => {
         await flushPromises();
 
         httpMock.expectNone('api/exercise/1/version/109');
-        expect(modalService.open).toHaveBeenCalledOnce();
+        expect(dialogService.open).toHaveBeenCalledOnce();
 
-        firstResolution.resolve({ decisions: [{ field: 'title', useIncoming: false }] });
+        firstMock.onClose.next({ decisions: [{ field: 'title', useIncoming: false }] });
+        firstMock.onClose.complete();
         await flushPromises();
 
         flushSnapshot(1, 109, { id: 1, title: 'incoming-v109' });
         await flushPromises();
         await flushPromises();
-        secondResolution.resolve({ decisions: [{ field: 'title', useIncoming: true }] });
+
+        secondMock.onClose.next({ decisions: [{ field: 'title', useIncoming: true }] });
+        secondMock.onClose.complete();
         await flushPromises();
 
-        expect(modalService.open).toHaveBeenCalledTimes(2);
+        expect(dialogService.open).toHaveBeenCalledTimes(2);
         expect(currentExercise.title).toBe('incoming-v109');
         expect(baselineExercise.title).toBe('incoming-v109');
     });
@@ -427,7 +412,7 @@ describe('ExerciseMetadataSyncService', () => {
         (service as any).processQueue();
 
         httpMock.expectNone(() => true);
-        expect(modalService.open).not.toHaveBeenCalled();
+        expect(dialogService.open).not.toHaveBeenCalled();
     });
 
     it('returns early from alert processing when context is missing', async () => {
@@ -436,17 +421,16 @@ describe('ExerciseMetadataSyncService', () => {
         httpMock.expectNone(() => true);
     });
 
-    it('does not set exercise id/type on modal when context is missing', async () => {
-        modalService.open.mockReturnValue({
-            componentInstance: modalComponentInstance,
-            result: Promise.resolve({ decisions: [] } satisfies ExerciseMetadataConflictModalResult),
-        });
+    it('returns undefined when dialog is dismissed without data', async () => {
+        const mock = createMockDialogRef();
+        dialogService.open.mockReturnValue(mock.ref);
 
-        const result = await (service as any).openConflictModal([], { login: 'editor' }, 123);
+        const resultPromise = (service as any).openConflictModal([], { login: 'editor' }, 123);
+        mock.onClose.next(undefined);
+        mock.onClose.complete();
 
-        expect(result).toEqual({ decisions: [] });
-        expect(modalComponentInstance.setExerciseId).not.toHaveBeenCalled();
-        expect(modalComponentInstance.setExerciseType).not.toHaveBeenCalled();
+        const result = await resultPromise;
+        expect(result).toBeUndefined();
     });
 
     it('ignores conflict decisions for unknown fields', () => {
@@ -462,9 +446,9 @@ describe('ExerciseMetadataSyncService', () => {
         const leftStringRightDayjsEqual = (service as any).valuesEqual('2026-01-01T00:00:00.000Z', dayjs('2026-01-01T00:00:00.000Z'));
         const invalidNormalizedValue = (service as any).valuesEqual(dayjs('2026-01-01T00:00:00.000Z'), undefined);
 
-        expect(leftDayjsRightStringEqual).toBeTrue();
-        expect(leftStringRightDayjsEqual).toBeTrue();
-        expect(invalidNormalizedValue).toBeFalse();
+        expect(leftDayjsRightStringEqual).toBe(true);
+        expect(leftStringRightDayjsEqual).toBe(true);
+        expect(invalidNormalizedValue).toBe(false);
     });
 
     it('resolves competency links using current exercise from the handler resolver', async () => {
@@ -477,10 +461,8 @@ describe('ExerciseMetadataSyncService', () => {
         currentExercise.competencyLinks = [new CompetencyExerciseLink(competency, currentExercise, 1)];
         baselineExercise.competencyLinks = undefined;
 
-        modalService.open.mockReturnValue({
-            componentInstance: modalComponentInstance,
-            result: Promise.resolve({ decisions: [{ field: 'competencyLinks', useIncoming: true }] } satisfies ExerciseMetadataConflictModalResult),
-        });
+        const mock = createMockDialogRef();
+        dialogService.open.mockReturnValue(mock.ref);
 
         service.initialize(context);
         emitAlert(createAlert(112, ['competencyLinks']));
@@ -491,7 +473,11 @@ describe('ExerciseMetadataSyncService', () => {
         });
         await flushPromises();
 
-        expect(modalService.open).toHaveBeenCalled();
+        mock.onClose.next({ decisions: [{ field: 'competencyLinks', useIncoming: true }] });
+        mock.onClose.complete();
+        await flushPromises();
+
+        expect(dialogService.open).toHaveBeenCalled();
         expect(currentExercise.competencyLinks).toHaveLength(1);
         expect(currentExercise.competencyLinks?.[0].competency?.id).toBe(42);
         expect(currentExercise.competencyLinks?.[0].weight).toBe(0.5);

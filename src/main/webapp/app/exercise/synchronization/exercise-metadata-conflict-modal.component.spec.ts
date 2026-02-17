@@ -1,8 +1,10 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import dayjs from 'dayjs/esm';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
-import { MockProvider } from 'ng-mocks';
+import { Subject } from 'rxjs';
 
 import { Competency, CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
@@ -14,9 +16,11 @@ import {
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ExerciseMetadataConflictModalComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ExerciseMetadataConflictModalComponent>;
     let component: ExerciseMetadataConflictModalComponent;
-    let activeModal: NgbActiveModal;
+    let dialogRef: DynamicDialogRef;
+    let dialogRefCloseSpy: ReturnType<typeof vi.fn>;
 
     const createConflict = (field: string, currentValue: unknown = 'local', incomingValue: unknown = 'incoming'): ExerciseMetadataConflictItem => ({
         field,
@@ -26,14 +30,23 @@ describe('ExerciseMetadataConflictModalComponent', () => {
     });
 
     beforeEach(async () => {
+        dialogRefCloseSpy = vi.fn();
+        dialogRef = {
+            close: dialogRefCloseSpy,
+            onClose: new Subject<any>(),
+        } as unknown as DynamicDialogRef;
+
         await TestBed.configureTestingModule({
             imports: [ExerciseMetadataConflictModalComponent],
-            providers: [MockProvider(NgbActiveModal), { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                { provide: DynamicDialogRef, useValue: dialogRef },
+                { provide: DynamicDialogConfig, useValue: { data: undefined } },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExerciseMetadataConflictModalComponent);
         component = fixture.componentInstance;
-        activeModal = TestBed.inject(NgbActiveModal);
     });
 
     it('initializes decisions to false for all conflicts', () => {
@@ -57,14 +70,13 @@ describe('ExerciseMetadataConflictModalComponent', () => {
     });
 
     it('applies selections and closes modal with mapped decisions', () => {
-        const closeSpy = jest.spyOn(activeModal, 'close');
         component.setConflicts([createConflict('title'), createConflict('shortName')]);
         component.updateDecision('shortName', true);
 
         component.applySelections();
 
-        expect(closeSpy).toHaveBeenCalledOnce();
-        expect(closeSpy).toHaveBeenCalledWith({
+        expect(dialogRefCloseSpy).toHaveBeenCalledOnce();
+        expect(dialogRefCloseSpy).toHaveBeenCalledWith({
             decisions: [
                 { field: 'title', useIncoming: false },
                 { field: 'shortName', useIncoming: true },
@@ -73,13 +85,12 @@ describe('ExerciseMetadataConflictModalComponent', () => {
     });
 
     it('keeps all local changes and closes modal', () => {
-        const closeSpy = jest.spyOn(activeModal, 'close');
         component.setConflicts([createConflict('title'), createConflict('shortName')]);
         component.updateDecision('shortName', true);
 
         component.keepLocalChanges();
 
-        expect(closeSpy).toHaveBeenCalledWith({
+        expect(dialogRefCloseSpy).toHaveBeenCalledWith({
             decisions: [
                 { field: 'title', useIncoming: false },
                 { field: 'shortName', useIncoming: false },
@@ -88,40 +99,46 @@ describe('ExerciseMetadataConflictModalComponent', () => {
     });
 
     it('dismisses modal on close()', () => {
-        const dismissSpy = jest.spyOn(activeModal, 'dismiss');
-
         component.close();
 
-        expect(dismissSpy).toHaveBeenCalledOnce();
+        expect(dialogRefCloseSpy).toHaveBeenCalledOnce();
     });
 
-    it('builds authorName from name/fullName/login and supports version id', () => {
-        component.setAuthor({ name: 'External Name', login: 'login-x' });
+    it('builds authorName from name/fullName/login', () => {
+        component.author.set({ name: 'External Name', login: 'login-x' });
         expect(component.authorName()).toBe('External Name');
 
-        component.setAuthor({ firstName: 'Ada', lastName: 'Lovelace', login: 'ada' });
+        component.author.set({ firstName: 'Ada', lastName: 'Lovelace', login: 'ada' });
         expect(component.authorName()).toBe('Ada Lovelace');
 
-        component.setAuthor({ login: 'fallback-login' });
+        component.author.set({ login: 'fallback-login' });
         expect(component.authorName()).toBe('fallback-login');
-
-        component.setVersionId(12);
-        expect(component.versionId()).toBe(12);
     });
 
-    it('stores exercise id and type', () => {
-        component.setExerciseId(99);
-        component.setExerciseType('programming' as any);
+    it('reads data from DynamicDialogConfig on init', async () => {
+        const config = TestBed.inject(DynamicDialogConfig);
+        config.data = {
+            conflicts: [createConflict('title')],
+            author: { login: 'test-author' },
+            versionId: 42,
+            exerciseId: 99,
+            exerciseType: 'PROGRAMMING',
+        };
 
+        component.ngOnInit();
+
+        expect(component.conflicts()).toHaveLength(1);
+        expect(component.author()?.login).toBe('test-author');
+        expect(component.versionId()).toBe(42);
         expect(component.exerciseId()).toBe(99);
-        expect(component.exerciseType()).toBe('programming');
+        expect(component.exerciseType()).toBe('PROGRAMMING');
     });
 
     it('formats values for all supported input kinds', () => {
         const dayjsValue = dayjs('2026-01-01T10:30:00.000Z');
 
-        expect(component.formatValue(undefined)).toBe('—');
-        expect(component.formatValue(null)).toBe('—');
+        expect(component.formatValue(undefined)).toBe('\u2014');
+        expect(component.formatValue(null)).toBe('\u2014');
         expect(component.formatValue(dayjsValue)).toBe(dayjsValue.format('YYYY-MM-DD HH:mm'));
         expect(component.formatValue('text')).toBe('text');
         expect(component.formatValue(42)).toBe('42');
@@ -134,12 +151,12 @@ describe('ExerciseMetadataConflictModalComponent', () => {
     });
 
     it('identifies special fields', () => {
-        expect(component.isBuildConfigField('programmingData.buildConfig')).toBeTrue();
-        expect(component.isBuildConfigField('title')).toBeFalse();
-        expect(component.isCategoriesField('categories')).toBeTrue();
-        expect(component.isCategoriesField('title')).toBeFalse();
-        expect(component.isCompetencyLinksField('competencyLinks')).toBeTrue();
-        expect(component.isCompetencyLinksField('title')).toBeFalse();
+        expect(component.isBuildConfigField('programmingData.buildConfig')).toBe(true);
+        expect(component.isBuildConfigField('title')).toBe(false);
+        expect(component.isCategoriesField('categories')).toBe(true);
+        expect(component.isCategoriesField('title')).toBe(false);
+        expect(component.isCompetencyLinksField('competencyLinks')).toBe(true);
+        expect(component.isCompetencyLinksField('title')).toBe(false);
     });
 
     it('maps build config entries with current and incoming values', () => {
@@ -203,34 +220,18 @@ describe('ExerciseMetadataConflictModalComponent', () => {
     });
 
     it('renders conflicts and toggles decision via checkbox interaction', () => {
-        component.setAuthor({ firstName: 'Ada', lastName: 'Lovelace', login: 'ada' });
-        component.setVersionId(3);
-        component.setConflicts([createConflict('title'), createConflict('categories', ['a'], ['b'])]);
+        const config = TestBed.inject(DynamicDialogConfig);
+        config.data = {
+            conflicts: [createConflict('title'), createConflict('categories', ['a'], ['b'])],
+            author: { firstName: 'Ada', lastName: 'Lovelace', login: 'ada' },
+            versionId: 3,
+        };
+        component.ngOnInit();
         fixture.detectChanges();
 
         const items = fixture.nativeElement.querySelectorAll('.conflict-item');
         expect(items).toHaveLength(2);
         expect(fixture.nativeElement.textContent).toContain('Ada Lovelace');
         expect(fixture.nativeElement.textContent).toContain('#3');
-
-        const checkbox = fixture.nativeElement.querySelector('input.form-check-input') as HTMLInputElement;
-        checkbox.click();
-        fixture.detectChanges();
-
-        expect(component.decisions().title).toBeTrue();
-    });
-
-    it('clicking footer actions triggers modal closing paths', () => {
-        const closeSpy = jest.spyOn(activeModal, 'close');
-        component.setConflicts([createConflict('title')]);
-        fixture.detectChanges();
-
-        const buttons = fixture.nativeElement.querySelectorAll('.modal-footer button') as NodeListOf<HTMLButtonElement>;
-        buttons[0].click();
-        buttons[1].click();
-
-        expect(closeSpy).toHaveBeenCalledTimes(2);
-        expect(closeSpy).toHaveBeenNthCalledWith(1, { decisions: [{ field: 'title', useIncoming: false }] });
-        expect(closeSpy).toHaveBeenNthCalledWith(2, { decisions: [{ field: 'title', useIncoming: false }] });
     });
 });

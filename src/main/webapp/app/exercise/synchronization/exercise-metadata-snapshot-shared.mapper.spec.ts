@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { Competency, CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { toCompetencyLinks, toExerciseCategories, toTeamAssignmentConfig } from 'app/exercise/synchronization/exercise-metadata-snapshot-shared.mapper';

@@ -40,6 +40,11 @@ export default defineConfig({
             'src/main/webapp/app/atlas/**/*.spec.ts', // include atlas tests
             'src/main/webapp/app/iris/**/*.spec.ts', // include iris tests
             'src/main/webapp/app/shared/components/buttons/**/*.spec.ts', // include shared buttons
+            'src/main/webapp/app/exercise/services/exercise-editor-sync.service.spec.ts', // include exercise editor sync tests
+            'src/main/webapp/app/exercise/services/exercise-metadata-sync.service.spec.ts', // include exercise metadata sync tests
+            'src/main/webapp/app/exercise/synchronization/**/*.spec.ts', // include exercise synchronization tests
+            'src/main/webapp/app/programming/manage/services/problem-statement-sync.service.spec.ts', // include problem statement sync tests
+            'src/main/webapp/app/programming/manage/services/yjs-utils.spec.ts', // include yjs utils tests
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
@@ -70,6 +75,11 @@ export default defineConfig({
                 'src/main/webapp/app/atlas/**/*.ts', // include atlas for code coverage
                 'src/main/webapp/app/iris/**/*.ts', // include iris for code coverage
                 'src/main/webapp/app/shared/components/buttons/**/*.ts', // include shared buttons for code coverage
+                'src/main/webapp/app/exercise/services/exercise-editor-sync.service.ts', // include exercise editor sync for code coverage
+                'src/main/webapp/app/exercise/services/exercise-metadata-sync.service.ts', // include exercise metadata sync for code coverage
+                'src/main/webapp/app/exercise/synchronization/**/*.ts', // include exercise synchronization for code coverage
+                'src/main/webapp/app/programming/manage/services/problem-statement-sync.service.ts', // include problem statement sync for code coverage
+                'src/main/webapp/app/programming/manage/services/yjs-utils.ts', // include yjs utils for code coverage
             ],
             exclude: [
                 '**/node_modules/**',   // exclude node_modules with third-party code

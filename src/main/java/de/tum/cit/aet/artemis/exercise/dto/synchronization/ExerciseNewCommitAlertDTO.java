@@ -4,7 +4,6 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.exercise.domain.synchronization.ExerciseEditorSyncTarget;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**

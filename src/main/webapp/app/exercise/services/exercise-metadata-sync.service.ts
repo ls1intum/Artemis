@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Subscription, firstValueFrom } from 'rxjs';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import dayjs from 'dayjs/esm';
 import isEqual from 'lodash-es/isEqual';
 
@@ -15,7 +15,11 @@ import {
 } from 'app/exercise/services/exercise-editor-sync.service';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { ExerciseMetadataFieldHandler, createExerciseMetadataHandlers } from 'app/exercise/synchronization/exercise-metadata-handlers';
-import { ExerciseMetadataConflictModalComponent, ExerciseMetadataConflictModalResult } from 'app/exercise/synchronization/exercise-metadata-conflict-modal.component';
+import {
+    ExerciseMetadataConflictModalComponent,
+    ExerciseMetadataConflictModalData,
+    ExerciseMetadataConflictModalResult,
+} from 'app/exercise/synchronization/exercise-metadata-conflict-modal.component';
 import { ExerciseSnapshotDTO } from 'app/exercise/synchronization/exercise-metadata-snapshot.dto';
 
 /**
@@ -36,11 +40,16 @@ interface ConflictCandidate {
     incomingValue: unknown;
 }
 
+/**
+ * Fields excluded from metadata sync because they are handled by a separate synchronization mechanism (e.g. Yjs live sync).
+ */
+const METADATA_SYNC_EXCLUDED_FIELDS = new Set(['problemStatement']);
+
 @Injectable({ providedIn: 'root' })
 export class ExerciseMetadataSyncService {
     private readonly exerciseEditorSyncService = inject(ExerciseEditorSyncService);
     private readonly http = inject(HttpClient);
-    private readonly modalService = inject(NgbModal);
+    private readonly dialogService = inject(DialogService);
 
     private context?: ExerciseMetadataSyncContext<Exercise>;
     private subscriptionActive = false;
@@ -142,7 +151,7 @@ export class ExerciseMetadataSyncService {
 
         const handlers = this.getHandlers(context);
         const changedFields = alert.changedFields ?? [];
-        const effectiveFields = changedFields.filter((field) => field !== 'problemStatement');
+        const effectiveFields = changedFields.filter((field) => !METADATA_SYNC_EXCLUDED_FIELDS.has(field));
         if (effectiveFields.length === 0) {
             return;
         }
@@ -288,25 +297,24 @@ export class ExerciseMetadataSyncService {
      * @returns the modal result or undefined if dismissed
      */
     private async openConflictModal(conflicts: ConflictCandidate[], author: UserPublicInfoDTO, versionId: number): Promise<ExerciseMetadataConflictModalResult | undefined> {
-        const modalRef = this.modalService.open(ExerciseMetadataConflictModalComponent, {
-            size: 'xl',
-            windowClass: 'exercise-metadata-conflict-modal',
-            backdrop: 'static',
-            keyboard: false,
-        });
-        modalRef.componentInstance.setConflicts(conflicts);
-        modalRef.componentInstance.setAuthor(author);
-        modalRef.componentInstance.setVersionId(versionId);
-        if (this.context) {
-            modalRef.componentInstance.setExerciseId(this.context.exerciseId);
-            modalRef.componentInstance.setExerciseType(this.context.exerciseType);
-        }
+        const data: ExerciseMetadataConflictModalData = {
+            conflicts,
+            author,
+            versionId,
+            exerciseId: this.context?.exerciseId,
+            exerciseType: this.context?.exerciseType,
+        };
 
-        try {
-            return (await modalRef.result) as ExerciseMetadataConflictModalResult;
-        } catch {
-            return undefined;
-        }
+        const dialogRef = this.dialogService.open(ExerciseMetadataConflictModalComponent, {
+            width: '80rem',
+            modal: true,
+            closable: false,
+            closeOnEscape: false,
+            dismissableMask: false,
+            data,
+        });
+
+        return firstValueFrom(dialogRef!.onClose) as Promise<ExerciseMetadataConflictModalResult | undefined>;
     }
 
     /**
@@ -346,6 +354,9 @@ export class ExerciseMetadataSyncService {
      * @returns true if the values are considered equal
      */
     private valuesEqual(value: unknown, otherValue: unknown): boolean {
+        if (value == undefined && otherValue == undefined) {
+            return true;
+        }
         if (this.isCompetencyLinkArray(value) || this.isCompetencyLinkArray(otherValue)) {
             return isEqual(this.normalizeCompetencyLinks(value), this.normalizeCompetencyLinks(otherValue));
         }

@@ -18,8 +18,8 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
-import de.tum.cit.aet.artemis.exercise.domain.synchronization.ExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseEditorSyncEventType;
+import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseNewCommitAlertDTO;
 import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseNewVersionAlertDTO;
 
@@ -94,7 +94,7 @@ public class ExerciseEditorSyncService {
      */
     public void broadcastNewExerciseVersionAlert(@NonNull Long exerciseId, @NonNull Long exerciseVersionId, @NonNull User author, @NonNull Set<String> changedFields) {
         ExerciseNewVersionAlertDTO payload = new ExerciseNewVersionAlertDTO(ExerciseEditorSyncEventType.NEW_EXERCISE_VERSION_ALERT, ExerciseEditorSyncTarget.EXERCISE_METADATA,
-                exerciseVersionId, new UserPublicInfoDTO(author), changedFields, getClientSessionId());
+                exerciseVersionId, new UserPublicInfoDTO(author), changedFields, getClientSessionId(), System.currentTimeMillis());
         websocketMessagingService.sendMessage(getSynchronizationTopic(exerciseId), payload).exceptionally(exception -> {
             log.warn("Cannot send new exercise version alert for exercise {}", exerciseId, exception);
             return null;

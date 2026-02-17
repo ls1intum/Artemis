@@ -1,4 +1,6 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { Mocked, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Subject } from 'rxjs';
 import * as Y from 'yjs';
 import { Awareness, encodeAwarenessUpdate } from 'y-protocols/awareness';
@@ -8,17 +10,24 @@ import { ExerciseEditorSyncEvent, ExerciseEditorSyncEventType, ExerciseEditorSyn
 import * as yjsUtils from 'app/programming/manage/services/yjs-utils';
 
 describe('ProblemStatementSyncService', () => {
+    setupTestBed({ zoneless: true });
     let service: ProblemStatementSyncService;
-    let syncService: jest.Mocked<ExerciseEditorSyncService>;
-    let syncServiceMock: { subscribeToUpdates: jest.Mock; sendSynchronizationUpdate: jest.Mock; unsubscribe: jest.Mock; sessionId: string | undefined };
+    let syncService: Mocked<ExerciseEditorSyncService>;
+    let syncServiceMock: {
+        subscribeToUpdates: ReturnType<typeof vi.fn>;
+        sendSynchronizationUpdate: ReturnType<typeof vi.fn>;
+        unsubscribe: ReturnType<typeof vi.fn>;
+        sessionId: string | undefined;
+    };
     let incomingMessages$: Subject<ExerciseEditorSyncEvent>;
 
     beforeEach(() => {
+        vi.useFakeTimers();
         incomingMessages$ = new Subject<ExerciseEditorSyncEvent>();
         syncServiceMock = {
-            subscribeToUpdates: jest.fn().mockReturnValue(incomingMessages$.asObservable()),
-            sendSynchronizationUpdate: jest.fn(),
-            unsubscribe: jest.fn(),
+            subscribeToUpdates: vi.fn().mockReturnValue(incomingMessages$.asObservable()),
+            sendSynchronizationUpdate: vi.fn(),
+            unsubscribe: vi.fn(),
             sessionId: undefined,
         };
 
@@ -32,19 +41,20 @@ describe('ProblemStatementSyncService', () => {
                 {
                     provide: AccountService,
                     useValue: {
-                        userIdentity: jest.fn().mockReturnValue(undefined),
+                        userIdentity: vi.fn().mockReturnValue(undefined),
                     },
                 },
             ],
         });
 
         service = TestBed.inject(ProblemStatementSyncService);
-        syncService = TestBed.inject(ExerciseEditorSyncService) as jest.Mocked<ExerciseEditorSyncService>;
+        syncService = TestBed.inject(ExerciseEditorSyncService) as Mocked<ExerciseEditorSyncService>;
     });
 
     afterEach(() => {
         service?.reset();
-        jest.clearAllMocks();
+        vi.useRealTimers();
+        vi.clearAllMocks();
     });
 
     it('initializes synchronization and requests initial content', () => {
@@ -75,7 +85,7 @@ describe('ProblemStatementSyncService', () => {
         );
     });
 
-    it('applies incoming yjs updates to the doc', fakeAsync(() => {
+    it('applies incoming yjs updates to the doc', () => {
         const state = service.init(99, '');
 
         const doc = new Y.Doc();
@@ -88,13 +98,13 @@ describe('ProblemStatementSyncService', () => {
             timestamp: 1,
         });
 
-        // tick(500) fires the initial sync timeout, which finalizes initialization and applies
+        // Advance past the initial sync timeout, which finalizes initialization and applies
         // buffered updates. Updates arriving during the pending init window are held until then.
-        tick(500);
+        vi.advanceTimersByTime(500);
         expect(state.text.toString()).toBe('Hello Artemis');
-    }));
+    });
 
-    it('responds to full-content requests with the current document state', fakeAsync(() => {
+    it('responds to full-content requests with the current document state', () => {
         const state = service.init(7, '');
         state.text.insert(0, 'Current content');
         syncService.sendSynchronizationUpdate.mockClear();
@@ -105,7 +115,7 @@ describe('ProblemStatementSyncService', () => {
             requestId: 'req-123',
             timestamp: 1,
         });
-        tick(500);
+        vi.advanceTimersByTime(500);
 
         expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
             7,
@@ -118,16 +128,16 @@ describe('ProblemStatementSyncService', () => {
             }),
         );
 
-        const response = (syncService.sendSynchronizationUpdate as jest.Mock).mock.calls[0][1] as { yjsUpdate: string };
+        const response = (syncService.sendSynchronizationUpdate as ReturnType<typeof vi.fn>).mock.calls[0][1] as { yjsUpdate: string };
         const decoded = yjsUtils.decodeBase64ToUint8Array(response.yjsUpdate);
         const responseDoc = new Y.Doc();
         Y.applyUpdate(responseDoc, decoded);
         expect(responseDoc.getText('problem-statement').toString()).toBe('Current content');
-    }));
+    });
 
-    it('uses the earliest leader response during initial sync', fakeAsync(() => {
+    it('uses the earliest leader response during initial sync', () => {
         const state = service.init(11, '');
-        const requestCall = (syncService.sendSynchronizationUpdate as jest.Mock).mock.calls.find(
+        const requestCall = (syncService.sendSynchronizationUpdate as ReturnType<typeof vi.fn>).mock.calls.find(
             ([, message]) => message.eventType === ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST,
         );
         const requestId = requestCall?.[1].requestId as string;
@@ -158,11 +168,11 @@ describe('ProblemStatementSyncService', () => {
             timestamp: 2,
         });
 
-        tick(500);
+        vi.advanceTimersByTime(500);
         expect(state.text.toString()).toBe('Earlier leader');
-    }));
+    });
 
-    it('queues full-content requests while initializing and responds after finalize', fakeAsync(() => {
+    it('queues full-content requests while initializing and responds after finalize', () => {
         const state = service.init(12, '');
         const requestIdToQueue = 'queued-request';
         syncService.sendSynchronizationUpdate.mockClear();
@@ -175,7 +185,7 @@ describe('ProblemStatementSyncService', () => {
         });
         expect(syncService.sendSynchronizationUpdate).not.toHaveBeenCalled();
 
-        tick(500);
+        vi.advanceTimersByTime(500);
 
         expect(state.text.toString()).toBe('');
         expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
@@ -186,11 +196,11 @@ describe('ProblemStatementSyncService', () => {
                 responseTo: requestIdToQueue,
             }),
         );
-    }));
+    });
 
-    it('replaces the yjs state when a late winning full-content response arrives', fakeAsync(() => {
+    it('replaces the yjs state when a late winning full-content response arrives', () => {
         const state = service.init(14, 'Fallback statement');
-        const requestCall = (syncService.sendSynchronizationUpdate as jest.Mock).mock.calls.find(
+        const requestCall = (syncService.sendSynchronizationUpdate as ReturnType<typeof vi.fn>).mock.calls.find(
             ([, message]) => message.eventType === ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST,
         );
         const requestId = requestCall?.[1].requestId as string;
@@ -201,7 +211,7 @@ describe('ProblemStatementSyncService', () => {
             replacedState = nextState;
         });
 
-        tick(500);
+        vi.advanceTimersByTime(500);
         expect(state.text.toString()).toBe('Fallback statement');
 
         const lateLeaderDoc = new Y.Doc();
@@ -218,13 +228,13 @@ describe('ProblemStatementSyncService', () => {
         expect(replacedState).toBeDefined();
         expect(replacedState?.text.toString()).toBe('Late winning leader');
         subscription.unsubscribe();
-    }));
+    });
 
-    it('seeds fallback content without rebroadcasting seed as sync update', fakeAsync(() => {
+    it('seeds fallback content without rebroadcasting seed as sync update', () => {
         const state = service.init(13, 'Fallback statement');
         syncService.sendSynchronizationUpdate.mockClear();
 
-        tick(500);
+        vi.advanceTimersByTime(500);
 
         expect(state.text.toString()).toBe('Fallback statement');
         expect(syncService.sendSynchronizationUpdate).not.toHaveBeenCalledWith(
@@ -234,12 +244,12 @@ describe('ProblemStatementSyncService', () => {
                 eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
             }),
         );
-    }));
+    });
 
     it('applies awareness updates and registers remote client styles', () => {
         service.init(15, '');
 
-        const ensureStyleSpy = jest.spyOn(yjsUtils, 'ensureRemoteSelectionStyle').mockImplementation(() => undefined);
+        const ensureStyleSpy = vi.spyOn(yjsUtils, 'ensureRemoteSelectionStyle').mockImplementation(() => undefined);
 
         const remoteDoc = new Y.Doc();
         const remoteAwareness = new Awareness(remoteDoc);
@@ -259,7 +269,7 @@ describe('ProblemStatementSyncService', () => {
     });
 
     it('uses userIdentity directly without promises for awareness', () => {
-        const accountService = TestBed.inject(AccountService) as jest.Mocked<AccountService>;
+        const accountService = TestBed.inject(AccountService) as Mocked<AccountService>;
         accountService.userIdentity.mockReturnValue({ name: 'Ada Lovelace', login: 'ada' } as any);
 
         const state = service.init(17, '');
@@ -270,7 +280,7 @@ describe('ProblemStatementSyncService', () => {
     });
 
     it('uses fallback name when userIdentity returns undefined', () => {
-        const accountService = TestBed.inject(AccountService) as jest.Mocked<AccountService>;
+        const accountService = TestBed.inject(AccountService) as Mocked<AccountService>;
         accountService.userIdentity.mockReturnValue(undefined);
         syncServiceMock.sessionId = 'abc123';
 
@@ -279,9 +289,9 @@ describe('ProblemStatementSyncService', () => {
         expect(state.awareness.getLocalState()?.user?.name).toContain('Editor');
     });
 
-    it('uses sessionId tie-breaker when timestamps are equal', fakeAsync(() => {
+    it('uses sessionId tie-breaker when timestamps are equal', () => {
         const state = service.init(20, '');
-        const requestCall = (syncService.sendSynchronizationUpdate as jest.Mock).mock.calls.find(
+        const requestCall = (syncService.sendSynchronizationUpdate as ReturnType<typeof vi.fn>).mock.calls.find(
             ([, message]) => message.eventType === ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST,
         );
         const requestId = requestCall?.[1].requestId as string;
@@ -315,14 +325,14 @@ describe('ProblemStatementSyncService', () => {
             timestamp: 2,
         });
 
-        tick(500);
+        vi.advanceTimersByTime(500);
         // Should select 'session-aaa' due to tie-breaker
         expect(state.text.toString()).toBe('Response 2');
-    }));
+    });
 
-    it('replaces state when late response has better sessionId with same timestamp', fakeAsync(() => {
+    it('replaces state when late response has better sessionId with same timestamp', () => {
         const state = service.init(21, 'Fallback');
-        const requestCall = (syncService.sendSynchronizationUpdate as jest.Mock).mock.calls.find(
+        const requestCall = (syncService.sendSynchronizationUpdate as ReturnType<typeof vi.fn>).mock.calls.find(
             ([, message]) => message.eventType === ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST,
         );
         const requestId = requestCall?.[1].requestId as string;
@@ -341,7 +351,7 @@ describe('ProblemStatementSyncService', () => {
             timestamp: 1,
         });
 
-        tick(500);
+        vi.advanceTimersByTime(500);
         expect(state.text.toString()).toBe('Initial content');
 
         let replacedState: ProblemStatementSyncState | undefined;
@@ -365,12 +375,12 @@ describe('ProblemStatementSyncService', () => {
         expect(replacedState).toBeDefined();
         expect(replacedState?.text.toString()).toBe('Late better content');
         subscription.unsubscribe();
-    }));
+    });
 
-    it('clears activeLeaderSessionId on reset so stale state does not persist across init cycles', fakeAsync(() => {
+    it('clears activeLeaderSessionId on reset so stale state does not persist across init cycles', () => {
         // First session: establish a leader with sessionId 'session-aaa'
         service.init(30, '');
-        const requestCall1 = (syncService.sendSynchronizationUpdate as jest.Mock).mock.calls.find(
+        const requestCall1 = (syncService.sendSynchronizationUpdate as ReturnType<typeof vi.fn>).mock.calls.find(
             ([, message]) => message.eventType === ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST,
         );
         const requestId1 = requestCall1?.[1].requestId as string;
@@ -387,13 +397,13 @@ describe('ProblemStatementSyncService', () => {
             sessionId: 'session-aaa',
             timestamp: 1,
         });
-        tick(500);
+        vi.advanceTimersByTime(500);
 
         // Reset and start a new session
         service.reset();
         syncService.sendSynchronizationUpdate.mockClear();
         const state2 = service.init(31, '');
-        const requestCall2 = (syncService.sendSynchronizationUpdate as jest.Mock).mock.calls.find(
+        const requestCall2 = (syncService.sendSynchronizationUpdate as ReturnType<typeof vi.fn>).mock.calls.find(
             ([, message]) => message.eventType === ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST,
         );
         const requestId2 = requestCall2?.[1].requestId as string;
@@ -411,21 +421,21 @@ describe('ProblemStatementSyncService', () => {
             sessionId: 'session-bbb',
             timestamp: 2,
         });
-        tick(500);
+        vi.advanceTimersByTime(500);
 
         expect(state2.text.toString()).toBe('Session 2');
-    }));
+    });
 
-    it('resets state and destroys the Yjs document', fakeAsync(() => {
+    it('resets state and destroys the Yjs document', () => {
         const state = service.init(19, 'Seed');
-        const destroySpy = jest.spyOn(state.doc, 'destroy');
-        const clearRemoteStylesSpy = jest.spyOn(yjsUtils, 'clearRemoteSelectionStyles');
+        const destroySpy = vi.spyOn(state.doc, 'destroy');
+        const clearRemoteStylesSpy = vi.spyOn(yjsUtils, 'clearRemoteSelectionStyles');
 
         service.reset();
 
         expect(destroySpy).toHaveBeenCalled();
         expect(clearRemoteStylesSpy).toHaveBeenCalledOnce();
-        tick(500);
+        vi.advanceTimersByTime(500);
         clearRemoteStylesSpy.mockRestore();
-    }));
+    });
 });

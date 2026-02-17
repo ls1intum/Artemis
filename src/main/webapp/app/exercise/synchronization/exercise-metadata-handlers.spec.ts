@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import dayjs from 'dayjs/esm';
 import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -118,22 +119,22 @@ describe('ExerciseMetadataHandlers', () => {
         expect(exercise.channelName).toBe('incoming-channel');
         expect(exercise.maxPoints).toBe(10);
         expect(exercise.bonusPoints).toBe(2);
-        expect(dayjs.isDayjs(exercise.releaseDate)).toBeTrue();
-        expect(dayjs.isDayjs(exercise.startDate)).toBeTrue();
-        expect(dayjs.isDayjs(exercise.dueDate)).toBeTrue();
-        expect(dayjs.isDayjs(exercise.assessmentDueDate)).toBeTrue();
-        expect(dayjs.isDayjs(exercise.exampleSolutionPublicationDate)).toBeTrue();
+        expect(dayjs.isDayjs(exercise.releaseDate)).toBe(true);
+        expect(dayjs.isDayjs(exercise.startDate)).toBe(true);
+        expect(dayjs.isDayjs(exercise.dueDate)).toBe(true);
+        expect(dayjs.isDayjs(exercise.assessmentDueDate)).toBe(true);
+        expect(dayjs.isDayjs(exercise.exampleSolutionPublicationDate)).toBe(true);
         expect(exercise.categories?.map((category) => category.category)).toEqual(['alpha', 'beta']);
         expect(exercise.teamAssignmentConfig?.id).toBe(7);
-        expect(exercise.secondCorrectionEnabled).toBeTrue();
+        expect(exercise.secondCorrectionEnabled).toBe(true);
         expect(exercise.feedbackSuggestionModule).toBe('module');
-        expect(exercise.allowOnlineEditor).toBeTrue();
-        expect(exercise.allowOfflineIde).toBeFalse();
-        expect(exercise.allowOnlineIde).toBeTrue();
+        expect(exercise.allowOnlineEditor).toBe(true);
+        expect(exercise.allowOfflineIde).toBe(false);
+        expect(exercise.allowOnlineIde).toBe(true);
         expect(exercise.maxStaticCodeAnalysisPenalty).toBe(25);
-        expect(exercise.showTestNamesToStudents).toBeTrue();
-        expect(dayjs.isDayjs(exercise.buildAndTestStudentSubmissionsAfterDueDate)).toBeTrue();
-        expect(exercise.releaseTestsWithExampleSolution).toBeTrue();
+        expect(exercise.showTestNamesToStudents).toBe(true);
+        expect(dayjs.isDayjs(exercise.buildAndTestStudentSubmissionsAfterDueDate)).toBe(true);
+        expect(exercise.releaseTestsWithExampleSolution).toBe(true);
         expect(exercise.auxiliaryRepositories).toHaveLength(2);
         expect(exercise.auxiliaryRepositories?.[0].name).toBe('aux-1');
         expect(exercise.auxiliaryRepositories?.[0].checkoutDirectory).toBe('aux-1');
@@ -141,7 +142,7 @@ describe('ExerciseMetadataHandlers', () => {
         expect(exercise.competencyLinks).toHaveLength(1);
         expect(exercise.competencyLinks?.[0].competency?.id).toBe(99);
         expect(exercise.competencyLinks?.[0].weight).toBe(0.5);
-        expect(exercise.buildConfig?.sequentialTestRuns).toBeTrue();
+        expect(exercise.buildConfig?.sequentialTestRuns).toBe(true);
         expect(exercise.buildConfig?.buildPlanConfiguration).toBe('Maven');
 
         const buildConfigHandler = handlerMap.get('programmingData.buildConfig')!;
@@ -172,7 +173,7 @@ describe('ExerciseMetadataHandlers', () => {
 
         secondCorrectionHandler.applyValue(exercise, undefined as any);
 
-        expect(exercise.secondCorrectionEnabled).toBeFalse();
+        expect(exercise.secondCorrectionEnabled).toBe(false);
     });
 
     it('updates categories in place to keep existing references synchronized', () => {

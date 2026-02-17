@@ -1,4 +1,6 @@
+import { Mocked, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { BehaviorSubject, Subject } from 'rxjs';
 
 import { ExerciseEditorSyncEvent, ExerciseEditorSyncEventType, ExerciseEditorSyncService, ExerciseEditorSyncTarget } from 'app/exercise/services/exercise-editor-sync.service';
@@ -6,8 +8,9 @@ import { ConnectionState, WebsocketService } from 'app/shared/service/websocket.
 import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
 
 describe('ExerciseEditorSyncService', () => {
+    setupTestBed({ zoneless: true });
     let service: ExerciseEditorSyncService;
-    let websocketService: jest.Mocked<WebsocketService>;
+    let websocketService: Mocked<WebsocketService>;
     let receiveSubject: Subject<ExerciseEditorSyncEvent>;
     let browserSessionId: BehaviorSubject<string | undefined>;
     let connectionState$: BehaviorSubject<ConnectionState>;
@@ -23,9 +26,9 @@ describe('ExerciseEditorSyncService', () => {
                 {
                     provide: WebsocketService,
                     useValue: {
-                        subscribe: jest.fn().mockReturnValue(receiveSubject.asObservable()),
-                        send: jest.fn(),
-                        unsubscribe: jest.fn(),
+                        subscribe: vi.fn().mockReturnValue(receiveSubject.asObservable()),
+                        send: vi.fn(),
+                        unsubscribe: vi.fn(),
                         connectionState: connectionState$.asObservable(),
                     },
                 },
@@ -39,7 +42,7 @@ describe('ExerciseEditorSyncService', () => {
         });
 
         service = TestBed.inject(ExerciseEditorSyncService);
-        websocketService = TestBed.inject(WebsocketService) as jest.Mocked<WebsocketService>;
+        websocketService = TestBed.inject(WebsocketService) as Mocked<WebsocketService>;
     });
 
     afterEach(() => {
@@ -239,7 +242,7 @@ describe('ExerciseEditorSyncService', () => {
 
         service.unsubscribe();
 
-        expect(completed).toBeTrue();
+        expect(completed).toBe(true);
     });
 
     it('stops receiving messages after unsubscribing', () => {
@@ -304,7 +307,7 @@ describe('ExerciseEditorSyncService', () => {
         const secondReceived: ExerciseEditorSyncEvent[] = [];
         service.subscribeToUpdates(6).subscribe((message) => secondReceived.push(message));
 
-        expect(firstCompleted).toBeTrue();
+        expect(firstCompleted).toBe(true);
         expect(websocketService.subscribe).toHaveBeenNthCalledWith(1, '/topic/exercises/5/synchronization');
         expect(websocketService.subscribe).toHaveBeenNthCalledWith(2, '/topic/exercises/6/synchronization');
 
