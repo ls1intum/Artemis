@@ -34,7 +34,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { ArtifactLocation } from 'app/openapi/model/artifactLocation';
 import { faCircleExclamation, faCircleInfo, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
-import { ExerciseReviewCommentService } from 'app/exercise/services/exercise-review-comment.service';
+import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { CodeEditorInstructorBaseContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-base-container.component';
 

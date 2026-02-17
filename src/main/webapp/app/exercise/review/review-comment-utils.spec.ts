@@ -1,4 +1,4 @@
-import { isReviewCommentsSupportedRepository, mapRepositoryToThreadLocationType, matchesSelectedRepository } from 'app/programming/shared/code-editor/util/review-comment-utils';
+import { isReviewCommentsSupportedRepository, mapRepositoryToThreadLocationType, matchesSelectedRepository } from 'app/exercise/review/review-comment-utils';
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { afterEach, describe, expect, it, vi } from 'vitest';

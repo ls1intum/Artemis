@@ -40,11 +40,7 @@ export default defineConfig({
             'src/main/webapp/app/atlas/**/*.spec.ts', // include atlas tests
             'src/main/webapp/app/iris/**/*.spec.ts', // include iris tests
             'src/main/webapp/app/shared/components/buttons/**/*.spec.ts', // include shared buttons
-            'src/main/webapp/app/exercise/review/review-comment-draft-widget/review-comment-draft-widget.component.spec.ts', // include review draft widget test
-            'src/main/webapp/app/exercise/review/review-comment-thread-widget/review-comment-thread-widget.component.spec.ts', // include review thread widget test
-            'src/main/webapp/app/exercise/review/review-comment-widget-manager.spec.ts', // include review widget manager test
-            'src/main/webapp/app/exercise/services/exercise-review-comment.service.spec.ts', // include review comment service test
-            'src/main/webapp/app/programming/shared/code-editor/util/review-comment-utils.spec.ts', // include review comment utils test
+            'src/main/webapp/app/exercise/review/**/*.spec.ts', // include review module tests
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
@@ -75,11 +71,7 @@ export default defineConfig({
                 'src/main/webapp/app/atlas/**/*.ts', // include atlas for code coverage
                 'src/main/webapp/app/iris/**/*.ts', // include iris for code coverage
                 'src/main/webapp/app/shared/components/buttons/**/*.ts', // include shared buttons for code coverage
-                'src/main/webapp/app/exercise/review/review-comment-draft-widget/review-comment-draft-widget.component.ts', // include review draft widget for code coverage
-                'src/main/webapp/app/exercise/review/review-comment-thread-widget/review-comment-thread-widget.component.ts', // include review thread widget for code coverage
-                'src/main/webapp/app/exercise/review/review-comment-widget-manager.ts', // include review widget manager for code coverage
-                'src/main/webapp/app/exercise/services/exercise-review-comment.service.ts', // include review comment service for code coverage
-                'src/main/webapp/app/programming/shared/code-editor/util/review-comment-utils.ts', // include review comment utils for code coverage
+                'src/main/webapp/app/exercise/review/**/*.ts', // include review module for code coverage
             ],
             exclude: [
                 '**/node_modules/**',   // exclude node_modules with third-party code

@@ -42,7 +42,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-widget-manager';
 import { CommentThread, CreateCommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
-import { isReviewCommentsSupportedRepository, mapRepositoryToThreadLocationType, matchesSelectedRepository } from 'app/programming/shared/code-editor/util/review-comment-utils';
+import { isReviewCommentsSupportedRepository, mapRepositoryToThreadLocationType, matchesSelectedRepository } from 'app/exercise/review/review-comment-utils';
 
 type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; scrollTop: number; loadingError: boolean } };
 type FeedbackWithLineAndReference = Feedback & { line: number; reference: string };
