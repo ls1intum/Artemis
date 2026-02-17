@@ -849,10 +849,10 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
         expect(() => comp.toggleRefinementPopover(new Event('click'))).not.toThrow();
     });
 
-    it('should clear refinement prompt on popover hide', () => {
+    it('should preserve refinement prompt on popover hide', () => {
         comp.refinementPrompt.set('Some prompt');
         comp.onRefinementPopoverHide();
-        expect(comp.refinementPrompt()).toBe('');
+        expect(comp.refinementPrompt()).toBe('Some prompt');
     });
 
     it('should submit full refinement successfully', () => {

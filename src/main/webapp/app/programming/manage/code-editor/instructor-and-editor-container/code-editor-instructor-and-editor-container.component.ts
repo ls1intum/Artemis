@@ -124,10 +124,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     protected readonly isAiApplying = computed(() => this.isGeneratingOrRefining() || this.artemisIntelligenceService.isLoading());
     private currentRefinementSubscription: Subscription | undefined;
 
-    protected showDiff = signal(false);
+    showDiff = signal(false);
 
     refinementPopover = viewChild<Popover>('refinementPopover');
-    protected refinementPrompt = signal('');
+    refinementPrompt = signal('');
     protected readonly faPaperPlane = faPaperPlane;
 
     private consistencyCheckService = inject(ConsistencyCheckService);
@@ -529,9 +529,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     /**
      * Called when the popover is hidden (dismiss, escape, or programmatic hide).
+     * Intentionally does NOT clear the prompt so users don't lose typed text on accidental dismiss.
+     * The prompt is cleared on successful submission instead.
      */
     onRefinementPopoverHide(): void {
-        this.refinementPrompt.set('');
+        // No-op: prompt is preserved so the user can reopen and retry.
     }
 
     /**

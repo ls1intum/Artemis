@@ -100,8 +100,10 @@ export class ProblemStatementService {
                     const success = isValid(response);
                     if (success) {
                         this.alertService.success(successKey);
+                    } else {
+                        this.alertService.error(errorKey);
                     }
-                    return { success, content: getContent(response) };
+                    return { success, content: getContent(response), errorHandled: !success };
                 }),
                 catchError((error) => {
                     const handledByInterceptor = error instanceof HttpErrorResponse && !!error.error?.errorKey;
