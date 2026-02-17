@@ -252,21 +252,9 @@ public class ProgrammingExerciseParticipationService {
         User coAuthor = login != null ? userRepository.findOneByLogin(login).orElse(null) : null;
         String commitMessage = "Reset Exercise";
 
-        if (coAuthor != null) {
-            StringBuilder displayIdentifier = new StringBuilder("\n\nCo-authored-by:");
-
-            if (coAuthor.getName() != null) {
-                displayIdentifier.append(" ").append(coAuthor.getName());
-            }
-            else {
-                displayIdentifier.append(" ").append(login);
-            }
-
-            if (coAuthor.getEmail() != null) {
-                displayIdentifier.append(" <").append(coAuthor.getEmail()).append(">");
-            }
-
-            commitMessage += displayIdentifier.toString();
+        if (coAuthor != null && coAuthor.getEmail() != null) {
+            String name = coAuthor.getName() != null ? coAuthor.getName() : login;
+            commitMessage += String.format("\n\nCo-authored-by: %s <%s>", name, coAuthor.getEmail());
         }
 
         gitService.stageAllChanges(targetRepo);
