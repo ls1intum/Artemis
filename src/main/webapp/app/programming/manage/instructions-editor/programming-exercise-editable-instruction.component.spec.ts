@@ -405,11 +405,9 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     });
 
     it('should cleanup subscriptions on destroy', fakeAsync(() => {
-        comp.exercise = exercise;
-        comp.participation = participation;
-
-        triggerChanges(comp, { property: 'exercise', currentValue: exercise });
-        fixture.changeDetectorRef.detectChanges();
+        setRequiredInputs(fixture, exercise);
+        fixture.componentRef.setInput('participation', templateParticipation);
+        fixture.detectChanges();
         tick();
 
         // Get subscription reference before destroy
@@ -428,20 +426,17 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
     it('should subscribe for test cases when exercise changes', fakeAsync(() => {
         const newExercise = { ...exercise, id: 31 } as ProgrammingExercise;
-        comp.exercise = exercise;
-        comp.participation = participation;
-
-        triggerChanges(comp, { property: 'exercise', currentValue: exercise });
-        fixture.changeDetectorRef.detectChanges();
+        setRequiredInputs(fixture, exercise);
+        fixture.componentRef.setInput('participation', templateParticipation);
+        fixture.detectChanges();
         tick();
 
         // Reset spy
         generateHtmlSubjectStub.mockClear();
 
         // Trigger exercise change
-        comp.exercise = newExercise;
-        triggerChanges(comp, { property: 'exercise', currentValue: newExercise, previousValue: exercise });
-        fixture.changeDetectorRef.detectChanges();
+        fixture.componentRef.setInput('exercise', newExercise);
+        fixture.detectChanges();
         tick();
 
         expect(subscribeForTestCaseSpy).toHaveBeenCalledWith(newExercise.id);
