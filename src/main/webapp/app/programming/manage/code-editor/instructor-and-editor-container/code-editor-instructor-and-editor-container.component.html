@@ -1,3 +1,13 @@
+<ng-template #codeGenerationRunningModal let-modal>
+    <div class="modal-header">
+        <h4 class="modal-title" jhiTranslate="artemisApp.programmingExercise.codeGeneration.runningTitle"></h4>
+        <button type="button" class="btn-close" [attr.aria-label]="'entity.action.close' | artemisTranslate" (click)="modal.dismiss('Cross click')"></button>
+    </div>
+    <div class="modal-body">
+        <p class="code-generation-running-text" jhiTranslate="artemisApp.programmingExercise.codeGeneration.runningText"></p>
+    </div>
+</ng-template>
+
 @if (loadingState === LOADING_STATE.INITIALIZING || loadingState === LOADING_STATE.FETCHING_FAILED) {
     <nav class="card">
         <div class="card-body">
@@ -276,9 +286,8 @@
             </div>
             <jhi-programming-exercise-editable-instructions
                 editorCenter
-                [(exercise)]="exercise"
-                [(participation)]="selectedParticipation!"
-                [templateParticipation]="exercise.templateParticipation!"
+                [exercise]="exercise"
+                [participation]="selectedParticipation!"
                 [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
                 [externalHeight]="true"
                 [enableResize]="false"
