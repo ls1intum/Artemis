@@ -130,7 +130,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     readonly participation = input<Participation>();
     readonly exercise = input.required<ProgrammingExercise>();
-    readonly consistencyIssues = input<ConsistencyIssue[]>([]);
     readonly hasUnsavedChanges = output<boolean>();
     readonly instructionChange = output<string>();
 

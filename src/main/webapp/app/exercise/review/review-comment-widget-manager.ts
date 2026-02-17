@@ -25,7 +25,6 @@ export type ReviewCommentWidgetManagerConfig = {
 export class ReviewCommentWidgetManager {
     private readonly draftLinesByFile: Map<string, Set<number>> = new Map();
     private readonly draftWidgetRefs: Map<string, ComponentRef<ReviewCommentDraftWidgetComponent>> = new Map();
-    private readonly pendingDraftSubmissions: Set<string> = new Set();
     private readonly threadWidgetRefs: Map<number, ComponentRef<ReviewCommentThreadWidgetComponent>> = new Map();
     private readonly collapseState: Map<number, boolean> = new Map();
 
