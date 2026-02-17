@@ -11,9 +11,9 @@ describe('UrlAction', () => {
     const editor: TextEditor = new MonacoTextEditorAdapter(monaco.editor.IStandaloneCodeEditor);
 
     beforeEach(() => {
-        jest.spyOn(editor, 'replaceTextAtRange').mockReturnValue(null);
-        jest.spyOn(editor, 'focus').mockReturnValue(null);
-        jest.spyOn(editor, 'setSelection').mockReturnValue(null);
+        jest.spyOn(editor, 'replaceTextAtRange').mockReturnValue(undefined);
+        jest.spyOn(editor, 'focus').mockReturnValue(undefined);
+        jest.spyOn(editor, 'setSelection').mockReturnValue(undefined);
     });
 
     afterEach(() => {
@@ -22,7 +22,7 @@ describe('UrlAction', () => {
 
     it('should add a placeholder at cursor position if no text is selected', () => {
         const currentPosition = new TextEditorPosition(1, 50);
-        jest.spyOn(editor, 'getSelection').mockReturnValue(null);
+        jest.spyOn(editor, 'getSelection').mockReturnValue(undefined);
         jest.spyOn(editor, 'getPosition').mockReturnValue(currentPosition);
 
         action.run(editor);
