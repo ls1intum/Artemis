@@ -806,6 +806,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     private getProblemStatementThreadLine(thread: CommentThread): number {
         return (thread.lineNumber ?? thread.initialLineNumber ?? 1) - 1;
+    }
+
     /**
      * Checks whether the given lecture has any content/attachments that can explicitly be linked
      * @param lecture The lecture to check
