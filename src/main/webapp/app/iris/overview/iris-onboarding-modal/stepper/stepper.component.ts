@@ -1,4 +1,5 @@
 import { Component, computed, inject, input } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({
@@ -24,5 +25,12 @@ export class StepperComponent {
         return Array.from({ length: total }, (_, i) => i + 1);
     });
 
-    ariaLabel = computed(() => this.translateService.instant('artemisApp.iris.onboarding.stepOf', { current: this.currentStep(), total: this.totalSteps() }));
+    private readonly langChange = toSignal(this.translateService.stream('artemisApp.iris.onboarding.stepOf'), {
+        initialValue: this.translateService.instant('artemisApp.iris.onboarding.stepOf'),
+    });
+
+    ariaLabel = computed(() => {
+        this.langChange(); // subscribe to language changes to trigger recomputation
+        return this.translateService.instant('artemisApp.iris.onboarding.stepOf', { current: this.currentStep(), total: this.totalSteps() });
+    });
 }
