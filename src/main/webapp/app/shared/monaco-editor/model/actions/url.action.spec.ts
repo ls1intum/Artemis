@@ -1,5 +1,4 @@
 import { UrlAction } from './url.action';
-import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 import { TextEditorPosition } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-position.model';
 import { TextEditorRange } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-range.model';
 import { MonacoTextEditorAdapter } from 'app/shared/monaco-editor/model/actions/adapter/monaco-text-editor.adapter';
@@ -8,12 +7,13 @@ import * as monaco from 'monaco-editor';
 describe('UrlAction', () => {
     const action = new UrlAction();
 
-    const editor: TextEditor = new MonacoTextEditorAdapter(monaco.editor.IStandaloneCodeEditor);
+    const editor = new MonacoTextEditorAdapter({} as monaco.editor.IStandaloneCodeEditor);
 
     beforeEach(() => {
         jest.spyOn(editor, 'replaceTextAtRange').mockReturnValue(undefined);
         jest.spyOn(editor, 'focus').mockReturnValue(undefined);
         jest.spyOn(editor, 'setSelection').mockReturnValue(undefined);
+        jest.spyOn(editor, 'getTextAtRange').mockReturnValue(undefined);
     });
 
     afterEach(() => {
@@ -22,7 +22,7 @@ describe('UrlAction', () => {
 
     it('should add a placeholder at cursor position if no text is selected', () => {
         const currentPosition = new TextEditorPosition(1, 50);
-        jest.spyOn(editor, 'getSelection').mockReturnValue(undefined);
+        jest.spyOn(editor, 'getSelection').mockReturnValue(new TextEditorRange(currentPosition, currentPosition));
         jest.spyOn(editor, 'getPosition').mockReturnValue(currentPosition);
 
         action.run(editor);
