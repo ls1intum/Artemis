@@ -208,14 +208,14 @@ describe('ProgrammingExerciseProblemComponent', () => {
         expect(comp.isGeneratingOrRefining()).toBeFalse();
     });
 
-    it('should handle onProblemStatementChange', () => {
+    it('should handle onInstructionChange and set hasUnsavedChanges', () => {
         const programmingExercise = new ProgrammingExercise(undefined, undefined);
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
         fixture.detectChanges();
 
         const emitSpy = jest.spyOn(comp.problemStatementChange, 'emit');
 
-        comp.onProblemStatementChange('New problem statement');
+        comp.onInstructionChange('New problem statement');
 
         expect(emitSpy).toHaveBeenCalledWith('New problem statement');
         expect(programmingExercise.problemStatement).toBe('New problem statement');

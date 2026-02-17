@@ -1,5 +1,5 @@
 import { Component, DestroyRef, Injector, OnDestroy, OnInit, afterNextRender, computed, inject, input, output, signal, viewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { faBan, faSave, faSpinner, faTableColumns } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -36,7 +36,6 @@ import { LineChange } from 'app/programming/shared/utils/diff.utils';
     templateUrl: './programming-exercise-problem.component.html',
     styleUrls: ['../../../../shared/programming-exercise-form.scss', './programming-exercise-problem.component.scss'],
     imports: [
-        CommonModule,
         TranslateDirective,
         NgbAlert,
         TooltipModule,
@@ -94,20 +93,6 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
         }
     }
 
-    /**
-     * Handles problem statement changes from the editor
-     */
-    onProblemStatementChange(newProblemStatement: string): void {
-        const exercise = this.programmingExercise();
-        this.currentProblemStatement.set(newProblemStatement);
-        this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
-        if (exercise) {
-            exercise.problemStatement = newProblemStatement;
-            this.programmingExerciseChange.emit(exercise);
-        }
-        this.problemStatementChange.emit(newProblemStatement);
-    }
-
     showDiff = signal(false);
     allowSplitView = signal(true);
     addedLineCount = signal(0);
@@ -132,7 +117,13 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
         const exercise = this.programmingExercise();
 
         this.currentProblemStatement.set(exercise?.problemStatement ?? '');
-        this.problemStatementService.loadTemplate(exercise, this.templateProblemStatement, this.templateLoaded, this.destroyRef);
+        this.problemStatementService
+            .loadTemplate(exercise)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((result) => {
+                this.templateProblemStatement.set(result.template);
+                this.templateLoaded.set(result.loaded);
+            });
     }
 
     /**
@@ -229,7 +220,12 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                     const refinedContent = result.content;
                     afterNextRender(
                         () => {
-                            this.editableInstructions()?.applyRefinedContent(refinedContent);
+                            const editor = this.editableInstructions();
+                            if (editor) {
+                                editor.applyRefinedContent(refinedContent);
+                            } else {
+                                afterNextRender(() => this.editableInstructions()?.applyRefinedContent(refinedContent), { injector: this.injector });
+                            }
                         },
                         { injector: this.injector },
                     );
@@ -306,11 +302,12 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
 
     onInstructionChange(problemStatement: string) {
         const exercise = this.programmingExercise();
+        this.currentProblemStatement.set(problemStatement);
+        this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
         if (exercise) {
             exercise.problemStatement = problemStatement;
-            this.currentProblemStatement.set(problemStatement);
             this.programmingExerciseChange.emit(exercise);
-            this.problemStatementChange.emit(problemStatement);
         }
+        this.problemStatementChange.emit(problemStatement);
     }
 }

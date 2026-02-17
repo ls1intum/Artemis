@@ -844,19 +844,14 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
 
     // Full Refinement Tests
 
-    it('should toggle refinement prompt visibility', () => {
-        expect(comp.showRefinementPrompt()).toBeFalse();
-        comp.toggleRefinementPrompt();
-        expect(comp.showRefinementPrompt()).toBeTrue();
-        comp.toggleRefinementPrompt();
-        expect(comp.showRefinementPrompt()).toBeFalse();
+    it('should handle toggleRefinementPopover gracefully when popover is undefined', () => {
+        // popover viewChild is undefined because the template is overridden to empty
+        expect(() => comp.toggleRefinementPopover(new Event('click'))).not.toThrow();
     });
 
-    it('should clear refinement prompt when closing', () => {
-        comp.showRefinementPrompt.set(true);
+    it('should clear refinement prompt on popover hide', () => {
         comp.refinementPrompt.set('Some prompt');
-        comp.toggleRefinementPrompt();
-        expect(comp.showRefinementPrompt()).toBeFalse();
+        comp.onRefinementPopoverHide();
         expect(comp.refinementPrompt()).toBe('');
     });
 

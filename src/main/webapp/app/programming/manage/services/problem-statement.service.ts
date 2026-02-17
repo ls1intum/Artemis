@@ -1,6 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { DestroyRef, Injectable, WritableSignal, inject } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Injectable, WritableSignal, inject } from '@angular/core';
 import { Observable, OperatorFunction, catchError, finalize, map, of } from 'rxjs';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { FileService } from 'app/shared/service/file.service';
@@ -32,25 +31,14 @@ export class ProblemStatementService {
     private readonly alertService = inject(AlertService);
 
     /** Loads the template problem statement for the given exercise. */
-    loadTemplate(exercise: ProgrammingExercise | undefined, templateSignal: WritableSignal<string>, loadedSignal: WritableSignal<boolean>, destroyRef: DestroyRef): void {
+    loadTemplate(exercise: ProgrammingExercise | undefined): Observable<{ template: string; loaded: boolean }> {
         if (!exercise?.programmingLanguage) {
-            templateSignal.set('');
-            loadedSignal.set(false);
-            return;
+            return of({ template: '', loaded: false });
         }
-        this.fileService
-            .getTemplateFile(exercise.programmingLanguage, exercise.projectType)
-            .pipe(takeUntilDestroyed(destroyRef))
-            .subscribe({
-                next: (template) => {
-                    templateSignal.set(template);
-                    loadedSignal.set(true);
-                },
-                error: () => {
-                    templateSignal.set('');
-                    loadedSignal.set(false);
-                },
-            });
+        return this.fileService.getTemplateFile(exercise.programmingLanguage, exercise.projectType).pipe(
+            map((template) => ({ template, loaded: true })),
+            catchError(() => of({ template: '', loaded: false })),
+        );
     }
 
     /** Generates a problem statement using the provided prompt. */
@@ -77,10 +65,11 @@ export class ProblemStatementService {
     refineGlobally(exercise: ProgrammingExercise | undefined, currentContent: string, prompt: string, loadingSignal: WritableSignal<boolean>): Observable<OperationResult> {
         const courseId = getCourseId(exercise);
         if (!courseId || !prompt?.trim() || !currentContent?.trim()) {
-            if (!currentContent?.trim()) {
+            const emptyContent = !currentContent?.trim();
+            if (emptyContent) {
                 this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
             }
-            return of({ success: false });
+            return of({ success: false, errorHandled: emptyContent });
         }
         loadingSignal.set(true);
         return this.hyperionApiService

@@ -1,4 +1,5 @@
 import { Component, DestroyRef, Injector, OnDestroy, TemplateRef, ViewChild, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { A11yModule } from '@angular/cdk/a11y';
@@ -113,11 +114,21 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     readonly consistencyIssues = signal<ConsistencyIssue[]>([]);
     readonly sortedIssues = computed(() => [...this.consistencyIssues()].sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]));
 
-    readonly allowSplitView = signal<boolean>(true);
-    readonly addedLineCount = signal<number>(0);
-    readonly removedLineCount = signal<number>(0);
+    protected readonly allowSplitView = signal<boolean>(true);
+    protected readonly addedLineCount = signal<number>(0);
+    protected readonly removedLineCount = signal<number>(0);
     readonly faTableColumns = faTableColumns;
     readonly ButtonSize = ButtonSize;
+
+    protected isGeneratingOrRefining = signal(false);
+    protected readonly isAiApplying = computed(() => this.isGeneratingOrRefining() || this.artemisIntelligenceService.isLoading());
+    private currentRefinementSubscription: Subscription | undefined;
+
+    protected showDiff = signal(false);
+
+    refinementPopover = viewChild<Popover>('refinementPopover');
+    protected refinementPrompt = signal('');
+    protected readonly faPaperPlane = faPaperPlane;
 
     private consistencyCheckService = inject(ConsistencyCheckService);
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
@@ -369,16 +380,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }, 1_200_000);
     }
 
-    protected isGeneratingOrRefining = signal(false);
-    protected readonly isAiApplying = computed(() => this.isGeneratingOrRefining() || this.artemisIntelligenceService.isLoading());
-    private currentRefinementSubscription: Subscription | undefined;
-
-    showDiff = signal(false);
-
-    refinementPopover = viewChild<Popover>('refinementPopover');
-    refinementPrompt = signal('');
-    protected readonly faPaperPlane = faPaperPlane;
-
     private clearJobSubscription(stopSpinner: boolean) {
         if (stopSpinner) {
             this.isGeneratingCode.set(false);
@@ -540,8 +541,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     submitRefinement(): void {
         const prompt = this.refinementPrompt().trim();
         if (!prompt || !this.exercise) return;
-
-        this.currentRefinementSubscription?.unsubscribe();
 
         if (this.shouldShowGenerateButton()) {
             this.generateProblemStatement(prompt);
@@ -798,7 +797,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     private loadTemplate(exercise: ProgrammingExercise) {
-        this.problemStatementService.loadTemplate(exercise, this.templateProblemStatement, this.templateLoaded, this.destroyRef);
+        this.problemStatementService
+            .loadTemplate(exercise)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((result) => {
+                this.templateProblemStatement.set(result.template);
+                this.templateLoaded.set(result.loaded);
+            });
     }
 
     /**
