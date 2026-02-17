@@ -266,6 +266,7 @@
 
 .bubble-left {
     --_d: 0%;
+
     margin-bottom: 8px;
     place-self: center;
     max-width: 100%;
@@ -273,6 +274,7 @@
 
 .bubble-right {
     --_d: 100%;
+
     place-self: end;
     float: right;
     background-color: var(--iris-tertiary-background);
@@ -417,6 +419,7 @@ pre {
     display: flex;
     flex-direction: column;
     flex: 0 1 auto;
+    gap: 1rem;
 
     textarea {
         background-color: var(--iris-secondary-background);
@@ -450,6 +453,34 @@ pre {
         position: relative;
         display: flex;
         flex: 1;
+    }
+}
+
+.prompt-suggestion-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 4px 0;
+    justify-content: center;
+}
+
+.prompt-suggestion-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius-lg);
+    background-color: var(--iris-secondary-background);
+    color: var(--bs-body-color);
+    cursor: pointer;
+    transition:
+        background-color 0.2s,
+        border-color 0.2s;
+
+    &:hover {
+        background-color: var(--iris-tertiary-background);
     }
 }
 
