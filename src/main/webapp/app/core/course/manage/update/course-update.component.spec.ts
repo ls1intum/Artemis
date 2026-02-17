@@ -31,7 +31,9 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ImageCropperModalComponent } from 'app/core/course/manage/image-cropper-modal/image-cropper-modal.component';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
-import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_LTI } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_CAMPUS_ONLINE, MODULE_FEATURE_LTI } from 'app/app.constants';
+import { CampusOnlineCourseDTO, CampusOnlineService } from 'app/core/course/manage/services/campus-online.service';
+import { CampusOnlineConfiguration } from 'app/core/course/shared/entities/campus-online-configuration.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
@@ -1205,6 +1207,178 @@ describe('Course Management Update Component', () => {
             await comp.changeCommunicationEnabled();
 
             expect(disableMessagingSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('CAMPUSOnline integration', () => {
+        let campusOnlineService: CampusOnlineService;
+
+        beforeEach(() => {
+            campusOnlineService = TestBed.inject(CampusOnlineService);
+        });
+
+        it('should set campusOnlineEnabled from profile service', () => {
+            const profileInfo = { activeProfiles: [], activeModuleFeatures: [MODULE_FEATURE_CAMPUS_ONLINE] } as unknown as ProfileInfo;
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
+            vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => feature === MODULE_FEATURE_CAMPUS_ONLINE);
+
+            comp.ngOnInit();
+            fixture.detectChanges();
+
+            expect(comp.campusOnlineEnabled).toBe(true);
+        });
+
+        it('should set campusOnlineLinked when course has configuration', () => {
+            course.campusOnlineConfiguration = new CampusOnlineConfiguration();
+            course.campusOnlineConfiguration.campusOnlineCourseId = 'CO-101';
+
+            comp.ngOnInit();
+            fixture.detectChanges();
+
+            expect(comp.campusOnlineLinked).toBe(true);
+        });
+
+        it('should search campus online courses', () => {
+            comp.course = course;
+            const mockResults: CampusOnlineCourseDTO[] = [
+                {
+                    campusOnlineCourseId: 'CO-101',
+                    title: 'Introduction to CS',
+                    semester: '2025W',
+                    alreadyImported: false,
+                },
+            ];
+            const searchSpy = vi.spyOn(campusOnlineService, 'searchCourses').mockReturnValue(of(mockResults));
+
+            comp.searchCampusOnline({ query: 'CS' });
+
+            expect(searchSpy).toHaveBeenCalledWith('CS', course.semester);
+            expect(comp.campusOnlineSuggestions()).toEqual(mockResults);
+        });
+
+        it('should link campus online course for new course (no id)', () => {
+            const newCourse = new Course();
+            comp.course = newCourse;
+
+            const selectedCourse: CampusOnlineCourseDTO = {
+                campusOnlineCourseId: 'CO-101',
+                title: 'CS Course',
+                responsibleInstructor: 'Prof. Smith',
+                department: 'CS Dept',
+                studyProgram: 'Informatik BSc',
+                alreadyImported: false,
+            };
+
+            comp.onCampusOnlineCourseSelected(selectedCourse);
+
+            expect(comp.course.campusOnlineConfiguration).toBeTruthy();
+            expect(comp.course.campusOnlineConfiguration?.campusOnlineCourseId).toBe('CO-101');
+            expect(comp.course.campusOnlineConfiguration?.responsibleInstructor).toBe('Prof. Smith');
+            expect(comp.campusOnlineLinked).toBe(true);
+        });
+
+        it('should link campus online course for existing course via API', () => {
+            const existingCourse = new Course();
+            existingCourse.id = 42;
+            const returnedCourse = new Course();
+            returnedCourse.id = 42;
+            returnedCourse.campusOnlineConfiguration = new CampusOnlineConfiguration();
+            returnedCourse.campusOnlineConfiguration.campusOnlineCourseId = 'CO-101';
+            comp.course = existingCourse;
+
+            const linkSpy = vi.spyOn(campusOnlineService, 'linkCourse').mockReturnValue(of(new HttpResponse({ body: returnedCourse })));
+
+            const selectedCourse: CampusOnlineCourseDTO = {
+                campusOnlineCourseId: 'CO-101',
+                title: 'CS Course',
+                responsibleInstructor: 'Prof. Smith',
+                department: 'CS Dept',
+                studyProgram: 'Informatik BSc',
+                alreadyImported: false,
+            };
+
+            comp.onCampusOnlineCourseSelected(selectedCourse);
+
+            expect(linkSpy).toHaveBeenCalledWith(42, {
+                campusOnlineCourseId: 'CO-101',
+                responsibleInstructor: 'Prof. Smith',
+                department: 'CS Dept',
+                studyProgram: 'Informatik BSc',
+            });
+            expect(comp.campusOnlineLinked).toBe(true);
+        });
+
+        it('should unlink campus online course for existing course via API', () => {
+            const existingCourse = new Course();
+            existingCourse.id = 42;
+            existingCourse.campusOnlineConfiguration = new CampusOnlineConfiguration();
+            existingCourse.campusOnlineConfiguration.campusOnlineCourseId = 'CO-101';
+            comp.course = existingCourse;
+            comp.campusOnlineLinked = true;
+
+            const unlinkSpy = vi.spyOn(campusOnlineService, 'unlinkCourse').mockReturnValue(of(new HttpResponse()));
+
+            comp.unlinkCampusOnline();
+
+            expect(unlinkSpy).toHaveBeenCalledWith(42);
+            expect(comp.campusOnlineLinked).toBe(false);
+            expect(comp.course.campusOnlineConfiguration).toBeUndefined();
+            expect(comp.selectedCampusOnlineCourse).toBeUndefined();
+        });
+
+        it('should unlink campus online course for new course without API call', () => {
+            const newCourse = new Course();
+            newCourse.campusOnlineConfiguration = new CampusOnlineConfiguration();
+            newCourse.campusOnlineConfiguration.campusOnlineCourseId = 'CO-101';
+            comp.course = newCourse;
+            comp.campusOnlineLinked = true;
+
+            const unlinkSpy = vi.spyOn(campusOnlineService, 'unlinkCourse');
+
+            comp.unlinkCampusOnline();
+
+            expect(unlinkSpy).not.toHaveBeenCalled();
+            expect(comp.campusOnlineLinked).toBe(false);
+            expect(comp.course.campusOnlineConfiguration).toBeUndefined();
+        });
+
+        it('should preserve campusOnlineConfiguration on save', async () => {
+            const entity = new Course();
+            entity.id = 123;
+            entity.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
+            entity.campusOnlineConfiguration = new CampusOnlineConfiguration();
+            entity.campusOnlineConfiguration.campusOnlineCourseId = 'CO-101';
+
+            const updateStub = vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
+            comp.course = entity;
+            comp.courseForm = new FormGroup({
+                id: new FormControl(entity.id),
+                onlineCourse: new FormControl(entity.onlineCourse),
+                enrollmentEnabled: new FormControl(entity.enrollmentEnabled),
+                restrictedAthenaModulesAccess: new FormControl(entity.restrictedAthenaModulesAccess),
+                presentationScore: new FormControl(entity.presentationScore),
+                maxComplaints: new FormControl(entity.maxComplaints),
+                accuracyOfScores: new FormControl(entity.accuracyOfScores),
+                maxTeamComplaints: new FormControl(entity.maxTeamComplaints),
+                maxComplaintTimeDays: new FormControl(entity.maxComplaintTimeDays),
+                maxComplaintTextLimit: new FormControl(entity.maxComplaintTextLimit),
+                maxComplaintResponseTextLimit: new FormControl(entity.maxComplaintResponseTextLimit),
+                complaintsEnabled: new FormControl(entity.complaintsEnabled),
+                requestMoreFeedbackEnabled: new FormControl(entity.requestMoreFeedbackEnabled),
+                maxRequestMoreFeedbackTimeDays: new FormControl(entity.maxRequestMoreFeedbackTimeDays),
+                isAtLeastTutor: new FormControl(entity.isAtLeastTutor),
+                isAtLeastEditor: new FormControl(entity.isAtLeastEditor),
+                isAtLeastInstructor: new FormControl(entity.isAtLeastInstructor),
+            });
+
+            comp.save();
+            fixture.detectChanges();
+            await Promise.resolve();
+
+            expect(updateStub).toHaveBeenCalledOnce();
+            const savedCourse = updateStub.mock.calls[0][1] as Course;
+            expect(savedCourse.campusOnlineConfiguration).toBeTruthy();
+            expect(savedCourse.campusOnlineConfiguration?.campusOnlineCourseId).toBe('CO-101');
         });
     });
 });

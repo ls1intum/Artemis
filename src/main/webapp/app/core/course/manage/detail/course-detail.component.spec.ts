@@ -21,6 +21,8 @@ import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settin
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
+import { MODULE_FEATURE_CAMPUS_ONLINE } from 'app/app.constants';
+import { CampusOnlineConfiguration } from 'app/core/course/shared/entities/campus-online-configuration.model';
 
 describe('Course Management Detail Component', () => {
     setupTestBed({ zoneless: true });
@@ -155,5 +157,60 @@ describe('Course Management Detail Component', () => {
                 expect(detail).toBeTruthy();
             }
         }
+    });
+
+    describe('CAMPUSOnline detail section', () => {
+        it('should return campus online section when enabled and config exists', () => {
+            component.campusOnlineEnabled.set(true);
+            const config = new CampusOnlineConfiguration();
+            config.campusOnlineCourseId = 'CO-101';
+            config.responsibleInstructor = 'Prof. Smith';
+            config.department = 'CS Department';
+            config.studyProgram = 'Informatik BSc';
+            component.course.set({ ...course, campusOnlineConfiguration: config });
+
+            const section = component.getCampusOnlineDetailSection();
+
+            expect(section).toBeTruthy();
+            expect(section!.headline).toBe('artemisApp.course.campusOnline.title');
+            expect(section!.details).toHaveLength(4);
+        });
+
+        it('should return undefined when campus online is not enabled', () => {
+            component.campusOnlineEnabled.set(false);
+            const config = new CampusOnlineConfiguration();
+            config.campusOnlineCourseId = 'CO-101';
+            component.course.set({ ...course, campusOnlineConfiguration: config });
+
+            const section = component.getCampusOnlineDetailSection();
+
+            expect(section).toBeUndefined();
+        });
+
+        it('should return undefined when course has no campus online configuration', () => {
+            component.campusOnlineEnabled.set(true);
+            component.course.set({ ...course });
+
+            const section = component.getCampusOnlineDetailSection();
+
+            expect(section).toBeUndefined();
+        });
+
+        it('should include campus online section in course detail sections when available', () => {
+            vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => feature === MODULE_FEATURE_CAMPUS_ONLINE);
+            component.campusOnlineEnabled.set(true);
+            const config = new CampusOnlineConfiguration();
+            config.campusOnlineCourseId = 'CO-101';
+            config.responsibleInstructor = 'Prof. Smith';
+            config.department = 'CS Department';
+            config.studyProgram = 'Informatik BSc';
+            component.course.set({ ...course, campusOnlineConfiguration: config });
+
+            component.getCourseDetailSections();
+
+            const sections = component.courseDetailSections();
+            const campusOnlineSection = sections.find((s) => s.headline === 'artemisApp.course.campusOnline.title');
+            expect(campusOnlineSection).toBeTruthy();
+        });
     });
 });
