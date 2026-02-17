@@ -144,7 +144,7 @@ export class GradingService {
      *
      * @param pageable search, sort, and pagination parameters
      */
-    findWithBonusGradeTypeForInstructor(pageable: SearchTermPageableSearch): Observable<HttpResponse<SearchResult<GradingScale>>> {
+    findWithBonusGradeTypeForInstructor(pageable: SearchTermPageableSearch): Observable<HttpResponse<SearchResult<GradingScaleDTO>>> {
         const params = new HttpParams()
             .set('pageSize', String(pageable.pageSize))
             .set('page', String(pageable.page))
@@ -152,7 +152,7 @@ export class GradingService {
             .set('searchTerm', pageable.searchTerm)
             .set('sortedColumn', pageable.sortedColumn);
 
-        return this.http.get<SearchResult<GradingScale>>('api/assessment/grading-scales', {
+        return this.http.get<SearchResult<GradingScaleDTO>>('api/assessment/grading-scales', {
             params,
             observe: 'response',
         });
