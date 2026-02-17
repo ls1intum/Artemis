@@ -1,10 +1,11 @@
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faBook, faLightbulb, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 
 export type PromptOptionKey = 'explainConcept' | 'quizTopic' | 'studyTips';
 
 export const IRIS_PROMPT_CONFIGS: ReadonlyArray<{
     type: PromptOptionKey;
-    icon: typeof faBook;
+    icon: IconDefinition;
     labelKey: string;
     starterKey: string;
 }> = [
