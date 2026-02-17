@@ -28,14 +28,18 @@ export class OrganizationManagementService {
     getOrganizations(params: {
         page?: number;
         pageSize?: number;
-        sort?: string; // e.g. 'name,asc'
+        sortedColumn?: string;
+        sortingOrder?: 'ASCENDING' | 'DESCENDING';
+        searchTerm?: string;
     }): Observable<PagedResponse<Organization>> {
         return this.http
             .get<Organization[]>(this.adminResourceUrl, {
                 params: {
                     page: params.page ?? 0,
                     pageSize: params.pageSize ?? 20,
-                    ...(params.sort ? { sort: params.sort } : {}),
+                    sortedColumn: params.sortedColumn ?? 'id',
+                    sortingOrder: params.sortingOrder ?? 'ASCENDING',
+                    ...(params.searchTerm ? { searchTerm: params.searchTerm } : {}),
                 },
                 observe: 'response',
             })

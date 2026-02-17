@@ -11,9 +11,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,13 +21,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.OrganizationCountDTO;
 import de.tum.cit.aet.artemis.core.dto.OrganizationDTO;
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.OrganizationRepository;
@@ -38,6 +36,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.OrganizationService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import tech.jhipster.web.util.PaginationUtil;
 
 /**
  * REST controller for administrating the Organization entities
@@ -208,7 +207,7 @@ public class AdminOrganizationResource {
      * @return ResponseEntity containing a list of all organizations with status 200
      *         (OK)
      */
-    @GetMapping("organizations")
+    @GetMapping("organizationss")
     public ResponseEntity<List<Organization>> getAllOrganizations() {
         log.debug("REST request to get all organizations");
         // TODO: we should avoid findAll() and instead load batches of organizations
@@ -217,32 +216,10 @@ public class AdminOrganizationResource {
     }
 
     @GetMapping("organizations")
-    public ResponseEntity<List<OrganizationDTO>> getOrganizations(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int pageSize,
-            @RequestParam(defaultValue = "id,asc") String sort) {
-        log.debug("REST request to get all organizations page={} pageSize={} sort={}", page, pageSize, sort);
-
-        Sort springSort = parseSingleSort(sort);
-        Pageable pageable = PageRequest.of(page, pageSize, springSort);
-
-        Page<OrganizationDTO> result = organizationRepository.findAllWithUserAndCourseCounts(pageable);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("X-Total-Count", String.valueOf(result.getTotalElements()));
-
-        return ResponseEntity.ok().headers(headers).body(result.getContent());
-    }
-
-    private Sort parseSingleSort(String sort) {
-        // Expected format: field,asc | field,desc
-        if (sort == null || sort.isBlank()) {
-            return Sort.by("id").ascending();
-        }
-
-        String[] parts = sort.split(",");
-        String field = parts[0].trim();
-        String direction = parts.length > 1 ? parts[1].trim().toLowerCase() : "asc";
-
-        return "desc".equals(direction) ? Sort.by(field).descending() : Sort.by(field).ascending();
+    public ResponseEntity<List<OrganizationDTO>> getOrganizations(SearchTermPageableSearchDTO<String> search) {
+        final Page<OrganizationDTO> page = organizationRepository.getAllOrganizations(search);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 
     /**

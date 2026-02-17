@@ -7,7 +7,7 @@ import { faEye, faPenToSquare, faPlus, faTimes, faTrashCan, faWrench } from '@fo
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-// import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title-bar-actions.directive';
 import { TableView } from 'app/shared/table-view/table-view';
@@ -24,7 +24,7 @@ export type OrganizationKey = keyof Organization;
     selector: 'jhi-organization-management',
     templateUrl: './organization-management.component.html',
     styleUrl: './organization-management.component.scss',
-    imports: [TranslateDirective, RouterLink, FaIconComponent, AdminTitleBarTitleDirective, AdminTitleBarActionsDirective, TableView, ButtonModule],
+    imports: [TranslateDirective, RouterLink, FaIconComponent, DeleteButtonDirective, AdminTitleBarTitleDirective, AdminTitleBarActionsDirective, TableView, ButtonModule],
 })
 export class OrganizationManagementComponent implements OnInit {
     private readonly organizationService = inject(OrganizationManagementService);
@@ -49,19 +49,13 @@ export class OrganizationManagementComponent implements OnInit {
      * Loads organizations and their user/course counts on initialization.
      */
     ngOnInit(): void {
-        this.organizationService.getOrganizations({ page: 0, pageSize: 2, sort: 'id,asc' }).subscribe((organizations) => {
-            this.organizations.set(organizations.data);
-            this.totalRows.set(organizations.total);
-        });
         this.columns.set([
-            { field: 'id' satisfies OrganizationKey, header: 'ID', sort: true, filter: false, filterType: 'text' },
-            { field: 'name' satisfies OrganizationKey, header: 'Name', sort: true, filter: false, filterType: 'text' },
-            { field: 'shortName' satisfies OrganizationKey, header: 'Short Name', sort: true, filter: false, filterType: 'text' },
-            { field: 'url' satisfies OrganizationKey, header: 'URL', sort: true, filter: false, filterType: 'text' },
-            { field: 'description' satisfies OrganizationKey, header: 'Description', sort: true, filter: false, filterType: 'text' },
-            { field: 'numberOfUsers' satisfies OrganizationKey, header: 'Users', sort: false, filter: false, filterType: 'text' },
-            { field: 'numberOfCourses' satisfies OrganizationKey, header: 'Courses', sort: false, filter: false, filterType: 'text' },
-            { field: 'emailPattern' satisfies OrganizationKey, header: 'Email Pattern', sort: true, filter: false, filterType: 'text' },
+            { field: 'id' satisfies OrganizationKey, header: 'ID', sort: true, width: '100px', filter: false, filterType: 'text' },
+            { field: 'name' satisfies OrganizationKey, header: 'Name', sort: true, width: '300px', filter: false, filterType: 'text' },
+            { field: 'shortName' satisfies OrganizationKey, header: 'Short Name', sort: true, width: '150px', filter: false, filterType: 'text' },
+            { field: 'numberOfUsers' satisfies OrganizationKey, header: 'Users', sort: true, width: '100px', filter: false, filterType: 'text' },
+            { field: 'numberOfCourses' satisfies OrganizationKey, header: 'Courses', sort: true, width: '100px', filter: false, filterType: 'text' },
+            { field: 'emailPattern' satisfies OrganizationKey, header: 'Email Pattern', sort: true, width: '200px', filter: false, filterType: 'text' },
         ]);
     }
 
@@ -92,9 +86,17 @@ export class OrganizationManagementComponent implements OnInit {
 
     loadOrganizations(event: any): void {
         const q = buildDbQueryFromLazyEvent(event);
-        this.organizationService.getOrganizations({ page: q.page, pageSize: q.size, sort: q.sort }).subscribe((organizations) => {
-            this.organizations.set(organizations.data);
-            this.totalRows.set(organizations.total);
-        });
+        this.organizationService
+            .getOrganizations({
+                page: q.page,
+                pageSize: q.pageSize,
+                searchTerm: q.searchTerm,
+                sortingOrder: q.sortingOrder,
+                sortedColumn: q.sortedColumn,
+            })
+            .subscribe((organizations) => {
+                this.organizations.set(organizations.data);
+                this.totalRows.set(organizations.total);
+            });
     }
 }
