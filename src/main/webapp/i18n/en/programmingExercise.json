@@ -251,6 +251,8 @@
                 "generateCode": "Generate Code",
                 "generateWithAi": "Generate with AI",
                 "generating": "Generating...",
+                "runningTitle": "Code generation in progress",
+                "runningText": "Code generation is currently running for this exercise by another user. Please try again later.",
                 "description": "Generate solution, template, and test code using AI",
                 "tooltip": "AI Code Generation - Generate solution, template, and test code",
                 "confirmTitle": "Confirm Code Generation",
