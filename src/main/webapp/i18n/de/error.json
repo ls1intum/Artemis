@@ -209,7 +209,8 @@
         "PlagiarismPost": {
             "idNull": "Der Beitrag muss eine ID besitzen.",
             "courseInformationSharingDisabled": "Beiträge sind in diesem Kurs deaktiviert.",
-            "plagiarismCaseMissing": "Der Beitrag muss einem Plagiatsfall zugeordnet sein."
+            "plagiarismCaseMissing": "Der Beitrag muss einem Plagiatsfall zugeordnet sein.",
+            "idExists": "Ein neuer Beitrag darf noch keine ID haben"
         },
         "noCourse": "Eine Klausur muss zu einem Kurs gehören.",
         "wrongCourseId": "Die Kurs-ID stimmt nicht mit dem Kurs der Klausur überein.",

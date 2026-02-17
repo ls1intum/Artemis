@@ -69,11 +69,11 @@ public class PlagiarismPostService extends PostingService {
         Post post = postDto.toEntity();
         // checks
         if (post.getId() != null) {
-            throw new BadRequestAlertException("A new post cannot already have an ID", METIS_POST_ENTITY_NAME, "idExists");
+            throw new BadRequestAlertException("A new post cannot already have an ID", PLAGIARISM_POST_ENTITY_NAME, "idExists");
         }
 
         if (post.getPlagiarismCase() == null) {
-            throw new BadRequestAlertException("A new post must belong to a plagiarism case", METIS_POST_ENTITY_NAME, "noPlagiarismCase");
+            throw new BadRequestAlertException("The post must be associated with a plagiarism case.", PLAGIARISM_POST_ENTITY_NAME, "plagiarismCaseMissing");
         }
 
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();

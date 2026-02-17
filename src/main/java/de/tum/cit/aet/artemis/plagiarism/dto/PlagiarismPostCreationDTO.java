@@ -21,6 +21,11 @@ public record PlagiarismPostCreationDTO(Long id, @NotNull(message = "The post mu
     /**
      * Converts this DTO to a PlagiarismPost entity.
      *
+     * <p>
+     * For creation requests, {@code id} can be {@code null}. The
+     * {@code createPost()} service method will reject entities with a non-null id.
+     * </p>
+     *
      * @return a new Post entity with the data from this DTO
      */
     public Post toEntity() {

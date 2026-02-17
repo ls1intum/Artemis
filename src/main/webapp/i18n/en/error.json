@@ -209,7 +209,8 @@
         "PlagiarismPost": {
             "idNull": "The plagiarism post must have an id.",
             "courseInformationSharingDisabled": "Posting is disabled for this course.",
-            "plagiarismCaseMissing": "The post must be associated with a plagiarism case."
+            "plagiarismCaseMissing": "The post must be associated with a plagiarism case.",
+            "idExists": "A new post cannot already have an ID"
         },
         "noCourse": "An exam must belong to a course.",
         "wrongCourseId": "The course ID does not match the course connected to the exam.",
