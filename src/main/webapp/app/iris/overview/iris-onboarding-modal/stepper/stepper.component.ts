@@ -14,7 +14,7 @@ import { TranslateService } from '@ngx-translate/core';
     styleUrls: ['./stepper.component.scss'],
 })
 export class StepperComponent {
-    private translateService = inject(TranslateService);
+    private readonly translateService = inject(TranslateService);
 
     currentStep = input.required<number>();
     totalSteps = input.required<number>();

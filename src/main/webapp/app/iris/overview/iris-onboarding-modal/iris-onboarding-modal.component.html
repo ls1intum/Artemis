@@ -3,7 +3,7 @@
     @if (step() === 0) {
         <div class="full-backdrop"></div>
         <div class="centered-modal-wrapper">
-            <div class="iris-onboarding-modal-welcome" role="dialog" aria-modal="true" aria-labelledby="onboarding-welcome-title">
+            <div class="iris-onboarding-modal-welcome" role="dialog" aria-modal="true" aria-labelledby="onboarding-welcome-title" cdkTrapFocus [cdkTrapFocusAutoCapture]="true">
                 <!-- Left Side: Text Content -->
                 <div class="welcome-text-section">
                     <div class="text-content">
@@ -112,7 +112,14 @@
     @if (step() === 4) {
         <div class="full-backdrop final-modal-backdrop"></div>
         <div class="centered-modal-wrapper">
-            <div class="prompt-selection-modal final-modal-enter" role="dialog" aria-modal="true" aria-labelledby="onboarding-prompt-title">
+            <div
+                class="prompt-selection-modal final-modal-enter"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="onboarding-prompt-title"
+                cdkTrapFocus
+                [cdkTrapFocusAutoCapture]="true"
+            >
                 <button type="button" class="close-button" (click)="close()" [attr.aria-label]="'artemisApp.iris.onboarding.close' | artemisTranslate">
                     <span aria-hidden="true">&times;</span>
                 </button>
