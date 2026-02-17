@@ -67,13 +67,7 @@
                                     }
                                 </td>
                                 <td>
-                                    <input
-                                        type="text"
-                                        id="alias-input"
-                                        [maxLength]="ALIAS_NAME_MAX_LENGTH"
-                                        [defaultValue]="examRoom.alias ?? ''"
-                                        (change)="setRoomAlias($event, examRoom.id)"
-                                    />
+                                    <input type="text" [maxLength]="ALIAS_NAME_MAX_LENGTH" [defaultValue]="examRoom.alias ?? ''" (change)="setRoomAlias($event, examRoom.id)" />
                                 </td>
                                 <td>
                                     <button type="button" jhiTranslate="entity.action.remove" class="btn btn-sm btn-danger" (click)="removeSelectedRoom(examRoom)"></button>

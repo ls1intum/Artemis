@@ -105,12 +105,7 @@ export class StudentsRoomDistributionService {
         }
 
         const requestUrl = `${this.BASE_URL}/courses/${courseId}/exams/${examId}/rooms-used`;
-        return this.http.get<RoomForDistributionDTO[]>(requestUrl).pipe(
-            map((rooms: RoomForDistributionDTO[]) => rooms),
-            catchError((error) => {
-                return throwError(() => error);
-            }),
-        );
+        return this.http.get<RoomForDistributionDTO[]>(requestUrl);
     }
 
     /**
@@ -121,12 +116,7 @@ export class StudentsRoomDistributionService {
     loadSeatsOfExamRoom(examRoomId: number): Observable<SeatsOfExamRoomDTO> {
         const requestUrl = `${this.BASE_URL}/rooms/${examRoomId}/seats`;
 
-        return this.http.get<SeatsOfExamRoomDTO>(requestUrl).pipe(
-            map((seatsOfExamRoom: SeatsOfExamRoomDTO) => seatsOfExamRoom),
-            catchError((error) => {
-                return throwError(() => error);
-            }),
-        );
+        return this.http.get<SeatsOfExamRoomDTO>(requestUrl);
     }
 
     /**
@@ -146,12 +136,7 @@ export class StudentsRoomDistributionService {
             newSeat: newSeat,
         };
 
-        return this.http.post<void>(requestUrl, requestBody).pipe(
-            map(() => {}),
-            catchError((error) => {
-                return throwError(() => error);
-            }),
-        );
+        return this.http.post<void>(requestUrl, requestBody).pipe(map(() => {}));
     }
 
     /**
@@ -163,10 +148,7 @@ export class StudentsRoomDistributionService {
     getAliases(courseId: number, examId: number): Observable<Record<string, string>> {
         const requestUrl = `${this.BASE_URL}/courses/${courseId}/exams/${examId}/room-aliases`;
 
-        return this.http.get<Record<string, string>>(requestUrl).pipe(
-            map((aliases) => aliases),
-            catchError((error) => throwError(() => error)),
-        );
+        return this.http.get<Record<string, string>>(requestUrl);
     }
 
     /**

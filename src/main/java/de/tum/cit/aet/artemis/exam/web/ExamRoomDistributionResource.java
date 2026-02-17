@@ -6,6 +6,7 @@ import java.util.Set;
 
 import jakarta.validation.Valid;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -72,6 +73,23 @@ public class ExamRoomDistributionResource {
         this.examUserService = examUserService;
     }
 
+    // This method can modify the input parameter
+    // Re-assign the input parameter to this method's return value before further operations
+    private Map<Long, String> trimAndVerifyExamRoomAliases(@Nullable Map<Long, String> examRoomAliases) {
+        if (examRoomAliases == null) {
+            return Map.of();
+        }
+
+        examRoomAliases.replaceAll((id, alias) -> alias != null ? alias.trim() : null);
+        examRoomAliases.values().removeIf(alias -> alias == null || alias.isEmpty());
+
+        if (examRoomAliases.values().stream().anyMatch(alias -> alias != null && alias.length() > ALIAS_NAME_MAX_LENGTH)) {
+            throw new BadRequestAlertException("Alias name too long", ENTITY_NAME, "aliasNameTooLong");
+        }
+
+        return examRoomAliases;
+    }
+
     /**
      * POST /courses/{courseId}/exams/{examId}/distribute-registered-students : Distribute all students registered to
      * an exam across a selection of rooms.
@@ -100,10 +118,7 @@ public class ExamRoomDistributionResource {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
         List<Long> examRoomIds = examRoomDistributionRequestBody.roomIds();
-        Map<Long, String> examRoomAliases = examRoomDistributionRequestBody.examRoomAliases();
-        if (examRoomAliases == null) {
-            examRoomAliases = Map.of();
-        }
+        Map<Long, String> examRoomAliases = trimAndVerifyExamRoomAliases(examRoomDistributionRequestBody.examRoomAliases());
 
         if (reserveFactor < 0 || reserveFactor > 1) {
             throw new BadRequestAlertException("Reserve factor outside of allowed range [0,1]", ENTITY_NAME, "reserveFactorOutOfRange");
@@ -115,10 +130,6 @@ public class ExamRoomDistributionResource {
 
         if (!examRoomService.allRoomsExistAndAreNewestVersions(Set.copyOf(examRoomIds))) {
             throw new BadRequestAlertException("You have invalid room IDs", ENTITY_NAME, "invalidRoomIDs");
-        }
-
-        if (examRoomAliases.values().stream().anyMatch(alias -> alias != null && alias.length() > ALIAS_NAME_MAX_LENGTH)) {
-            throw new BadRequestAlertException("Alias name too long", ENTITY_NAME, "aliasNameTooLong");
         }
 
         examRoomDistributionService.distributeRegisteredStudents(examId, examRoomIds, examRoomAliases, useOnlyDefaultLayouts, reserveFactor);
@@ -302,13 +313,7 @@ public class ExamRoomDistributionResource {
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
-        if (examRoomAliases == null) {
-            examRoomAliases = Map.of();
-        }
-
-        if (examRoomAliases.values().stream().anyMatch(alias -> alias != null && alias.length() > ALIAS_NAME_MAX_LENGTH)) {
-            throw new BadRequestAlertException("Alias name too long", ENTITY_NAME, "aliasNameTooLong");
-        }
+        examRoomAliases = trimAndVerifyExamRoomAliases(examRoomAliases);
 
         examRoomDistributionService.updateAliases(examId, examRoomAliases);
         return ResponseEntity.ok().build();

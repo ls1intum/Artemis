@@ -157,7 +157,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     private exchangeRoomsForAliasesIfPossible(): void {
         this.studentsRoomDistributionService.getAliases(this.courseId, this.exam.id!).subscribe({
             next: (aliases: Record<string, string>) => {
-                this.allRegisteredUsers = this.allRegisteredUsers.map((examUser) => {
+                this.allRegisteredUsers.forEach((examUser) => {
                     const plannedRoom: string = examUser.plannedRoom ?? '';
                     const actualRoom: string = examUser.actualRoom ?? '';
 
@@ -170,6 +170,9 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
 
                     return examUser;
                 });
+            },
+            error: () => {
+                // Aliases are optional; room numbers remain as-is on failure
             },
         });
     }
