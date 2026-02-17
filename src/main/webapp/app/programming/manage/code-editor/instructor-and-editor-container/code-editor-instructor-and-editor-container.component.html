@@ -1,12 +1,12 @@
-<p-dialog
-    [header]="'artemisApp.programmingExercise.codeGeneration.runningTitle' | artemisTranslate"
-    [(visible)]="showCodeGenerationRunningDialog"
-    [modal]="true"
-    [closable]="true"
-    [style]="{ width: '30rem' }"
->
-    <p class="code-generation-running-text" jhiTranslate="artemisApp.programmingExercise.codeGeneration.runningText"></p>
-</p-dialog>
+<ng-template #codeGenerationRunningModal let-modal>
+    <div class="modal-header">
+        <h4 class="modal-title" jhiTranslate="artemisApp.programmingExercise.codeGeneration.runningTitle"></h4>
+        <button type="button" class="btn-close" [attr.aria-label]="'entity.action.close' | artemisTranslate" (click)="modal.dismiss('Cross click')"></button>
+    </div>
+    <div class="modal-body">
+        <p class="code-generation-running-text" jhiTranslate="artemisApp.programmingExercise.codeGeneration.runningText"></p>
+    </div>
+</ng-template>
 
 @if (loadingState === LOADING_STATE.INITIALIZING || loadingState === LOADING_STATE.FETCHING_FAILED) {
     <nav class="card">
