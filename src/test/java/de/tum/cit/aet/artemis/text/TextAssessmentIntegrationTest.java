@@ -440,33 +440,65 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldReturnAllResultsWhenIncludeAllResultsParameterTrue() throws Exception {
+    void shouldReturnSpecificResultWhenResultIdProvided() throws Exception {
         exerciseUtilService.updateAssessmentDueDate(textExercise.getId(), null);
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
 
         // Reload submission to avoid detached entity issues
         textSubmission = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(textSubmission.getId()).orElseThrow();
+        Long firstResultId = textSubmission.getResults().getFirst().getId();
 
         // Add a second result (simulating Athena assessment)
         Result secondResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC_ATHENA, now(), textSubmission);
         secondResult.setScore(85.0);
         secondResult = resultRepository.save(secondResult);
 
-        // Without includeAllResults parameter - should get only one result (default behavior)
+        // Without resultId parameter - should get only the latest result (default behavior)
         Participation actualParticipationWithoutParam = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, Participation.class);
         final TextSubmission actualSubmissionWithoutParam = (TextSubmission) actualParticipationWithoutParam.getSubmissions().iterator().next();
         assertThat(actualSubmissionWithoutParam.getResults()).hasSize(1);
 
-        // With includeAllResults parameter - should get all results
+        // With resultId parameter - should get only the specific result
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("includeAllResults", "true");
+        params.add("resultId", firstResultId.toString());
         Participation actualParticipationWithParam = request.get(
                 "/api/text/text-editor/" + textSubmission.getParticipation().getId() + "?"
                         + params.toSingleValueMap().entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).reduce((a, b) -> a + "&" + b).orElse(""),
                 HttpStatus.OK, Participation.class);
         final TextSubmission actualSubmissionWithParam = (TextSubmission) actualParticipationWithParam.getSubmissions().iterator().next();
-        assertThat(actualSubmissionWithParam.getResults()).hasSize(2);
+        assertThat(actualSubmissionWithParam.getResults()).hasSize(1);
+        assertThat(actualSubmissionWithParam.getResults().getFirst().getId()).isEqualTo(firstResultId);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReturn404WhenResultIdDoesNotExist() throws Exception {
+        exerciseUtilService.updateAssessmentDueDate(textExercise.getId(), null);
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+
+        long nonExistentResultId = Long.MAX_VALUE;
+        request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId() + "?resultId=" + nonExistentResultId, HttpStatus.NOT_FOUND, Participation.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReturn404WhenResultIdBelongsToDifferentSubmission() throws Exception {
+        exerciseUtilService.updateAssessmentDueDate(textExercise.getId(), null);
+
+        // Create student1's submission with a result
+        TextSubmission student1Submission = ParticipationFactory.generateTextSubmission("Student 1 text", Language.ENGLISH, true);
+        student1Submission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, student1Submission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+
+        // Create student2's submission with a result
+        TextSubmission student2Submission = ParticipationFactory.generateTextSubmission("Student 2 text", Language.ENGLISH, true);
+        student2Submission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, student2Submission, TEST_PREFIX + "student2", TEST_PREFIX + "tutor1");
+        student2Submission = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(student2Submission.getId()).orElseThrow();
+        Long student2ResultId = student2Submission.getResults().getFirst().getId();
+
+        // Student1 requests their own participation but with student2's resultId - should be 404
+        request.get("/api/text/text-editor/" + student1Submission.getParticipation().getId() + "?resultId=" + student2ResultId, HttpStatus.NOT_FOUND, Participation.class);
     }
 
     @Test

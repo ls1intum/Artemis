@@ -82,31 +82,37 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @GetMapping("modeling-submissions/{submissionId}/result")
     @EnforceAtLeastStudent
     public ResponseEntity<Result> getAssessmentBySubmissionId(@PathVariable Long submissionId, @RequestParam(value = "resultId", required = false) Long resultId) {
-
-        // If resultId is provided, return that specific result
         if (resultId != null) {
-            log.debug("REST request to get result {} for modeling submission {}", resultId, submissionId);
-            ModelingSubmission submission = modelingSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(submissionId);
-            Result result = submission.getResults().stream().filter(r -> r.getId().equals(resultId)).findFirst().orElseThrow(() -> new EntityNotFoundException("Result", resultId));
+            return getSpecificResult(submissionId, resultId);
+        }
+        return super.getAssessmentBySubmissionId(submissionId);
+    }
 
-            StudentParticipation participation = (StudentParticipation) submission.getParticipation();
-            ModelingExercise exercise = modelingExerciseRepository.findByIdElseThrow(participation.getExercise().getId());
+    /**
+     * Retrieves a specific result by its id for the given modeling submission, applying authorization and sensitive data filtering.
+     *
+     * @param submissionId the id of the submission
+     * @param resultId     the id of the result to retrieve
+     * @return the specific result
+     */
+    private ResponseEntity<Result> getSpecificResult(Long submissionId, Long resultId) {
+        log.debug("REST request to get result {} for modeling submission {}", resultId, submissionId);
+        ModelingSubmission submission = modelingSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(submissionId);
+        Result result = submission.getResults().stream().filter(r -> r.getId().equals(resultId)).findFirst().orElseThrow(() -> new EntityNotFoundException("Result", resultId));
 
-            if (!authCheckService.isUserAllowedToGetResult(exercise, participation, result)) {
-                throw new AccessForbiddenException();
-            }
+        StudentParticipation participation = (StudentParticipation) submission.getParticipation();
+        ModelingExercise exercise = modelingExerciseRepository.findByIdElseThrow(participation.getExercise().getId());
 
-            // remove sensitive information for students
-            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-                exercise.filterSensitiveInformation();
-                result.filterSensitiveInformation();
-            }
-
-            return ResponseEntity.ok(result);
+        if (!authCheckService.isUserAllowedToGetResult(exercise, participation, result)) {
+            throw new AccessForbiddenException();
         }
 
-        // Otherwise, return the latest result
-        return super.getAssessmentBySubmissionId(submissionId);
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+            exercise.filterSensitiveInformation();
+            result.filterSensitiveInformation();
+        }
+
+        return ResponseEntity.ok(result);
     }
 
     /**

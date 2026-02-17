@@ -66,7 +66,7 @@ describe('TextEditorService', () => {
         expect(textEditorService.predictLanguage(testString)).toBe(Language.ENGLISH);
     });
 
-    it('should get participation without includeAllResults parameter', () => {
+    it('should get participation without resultId parameter', () => {
         const participationId = 123;
         const mockParticipation = { id: participationId } as StudentParticipation;
 
@@ -80,20 +80,21 @@ describe('TextEditorService', () => {
         req.flush(mockParticipation);
     });
 
-    it('should get participation with includeAllResults parameter', () => {
+    it('should get participation with resultId parameter', () => {
         const participationId = 123;
+        const resultId = 456;
         const mockParticipation = {
             id: participationId,
-            submissions: [{ results: [{ id: 1 }, { id: 2 }] }],
+            submissions: [{ results: [{ id: resultId }] }],
         } as StudentParticipation;
 
-        textEditorService.get(participationId, true).subscribe((participation) => {
+        textEditorService.get(participationId, resultId).subscribe((participation) => {
             expect(participation.id).toBe(participationId);
         });
 
-        const req = httpMock.expectOne('api/text/text-editor/123?includeAllResults=true');
+        const req = httpMock.expectOne(`api/text/text-editor/123?resultId=${resultId}`);
         expect(req.request.method).toBe('GET');
-        expect(req.request.params.get('includeAllResults')).toBe('true');
+        expect(req.request.params.get('resultId')).toBe(resultId.toString());
         req.flush(mockParticipation);
     });
 });

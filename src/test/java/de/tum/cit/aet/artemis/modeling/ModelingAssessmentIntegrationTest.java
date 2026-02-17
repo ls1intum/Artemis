@@ -229,6 +229,37 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void shouldReturn404WhenResultIdDoesNotExist() throws Exception {
+        ModelingSubmission submission = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json",
+                TEST_PREFIX + "student1");
+        exerciseUtilService.updateAssessmentDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
+
+        long nonExistentResultId = Long.MAX_VALUE;
+        request.get(API_MODELING_SUBMISSIONS + submission.getId() + "/result?resultId=" + nonExistentResultId, HttpStatus.NOT_FOUND, Result.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void shouldReturn404WhenResultIdBelongsToDifferentSubmission() throws Exception {
+        // Create student1's submission
+        ModelingSubmission student1Submission = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json",
+                TEST_PREFIX + "student1");
+
+        // Create student2's submission with an assessment
+        ModelingSubmission student2Submission = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json",
+                TEST_PREFIX + "student2");
+        exerciseUtilService.addAssessmentToExercise(classExercise, userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
+        exerciseUtilService.updateAssessmentDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
+
+        student2Submission = modelingSubmissionRepo.findWithEagerResultById(student2Submission.getId()).orElseThrow();
+        Long student2ResultId = student2Submission.getLatestResult().getId();
+
+        // Student1 requests their own submission but with student2's resultId - should be 404
+        request.get(API_MODELING_SUBMISSIONS + student1Submission.getId() + "/result?resultId=" + student2ResultId, HttpStatus.NOT_FOUND, Result.class);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetExampleAssessmentAsTutor() throws Exception {
         ExampleSubmission storedExampleSubmission = participationUtilService

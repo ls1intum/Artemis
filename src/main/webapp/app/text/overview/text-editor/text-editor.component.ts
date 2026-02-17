@@ -167,9 +167,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 this.updateParticipation(this.participation, this.submissionId, this.resultId);
             });
 
-            // Include all results when viewing a specific result (resultId is present)
-            const includeAllResults = !!this.resultId;
-            this.textService.get(participationId!, includeAllResults).subscribe({
+            this.textService.get(participationId!, this.resultId).subscribe({
                 next: (data: StudentParticipation) => {
                     this.updateParticipation(data, this.submissionId, this.resultId);
                     this.loadIrisSettings();

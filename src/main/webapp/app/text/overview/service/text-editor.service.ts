@@ -13,11 +13,11 @@ export class TextEditorService {
     /**
      * Retrieves the participation data for the text editor.
      * @param participationId - The ID of the participation
-     * @param includeAllResults - If true, includes all results; if false, only includes the latest result
+     * @param resultId - Optional ID of a specific result to retrieve; if not provided, returns the latest result
      * @returns Observable of the student participation with exercise data
      */
-    get(participationId: number, includeAllResults: boolean = false): Observable<StudentParticipation> {
-        const params = includeAllResults ? { includeAllResults: 'true' } : undefined;
+    get(participationId: number, resultId?: number): Observable<StudentParticipation> {
+        const params = resultId ? { resultId: resultId.toString() } : undefined;
         return this.http
             .get<StudentParticipation>(`api/text/text-editor/${participationId}`, { params })
             .pipe(tap((participation: StudentParticipation) => ExerciseService.convertExerciseDatesFromServer(participation.exercise)));
