@@ -1,17 +1,16 @@
-import { AfterContentInit, ContentChild, Directive, HostListener, effect, inject, input } from '@angular/core';
+import { Directive, HostListener, contentChild, effect, inject, input } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition, faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
 
 import { SortDirective } from './sort.directive';
 
 @Directive({ selector: '[jhiSortBy]' })
-export class SortByDirective<T> implements AfterContentInit {
+export class SortByDirective<T> {
     private sort = inject<SortDirective<T>>(SortDirective, { host: true });
 
     jhiSortBy = input.required<T>();
 
-    @ContentChild(FaIconComponent, { static: false })
-    iconComponent?: FaIconComponent;
+    iconComponent = contentChild(FaIconComponent);
 
     sortIcon = faSort;
     sortAscIcon = faSortUp;
@@ -19,7 +18,7 @@ export class SortByDirective<T> implements AfterContentInit {
 
     constructor() {
         effect(() => {
-            // Track changes to predicate and ascending
+            // Track changes to predicate, ascending, and iconComponent
             this.sort.predicate();
             this.sort.ascending();
             this.updateIconDefinition();
@@ -28,22 +27,19 @@ export class SortByDirective<T> implements AfterContentInit {
 
     @HostListener('click')
     onClick(): void {
-        if (this.iconComponent) {
+        if (this.iconComponent()) {
             this.sort.sort(this.jhiSortBy());
         }
     }
 
-    ngAfterContentInit(): void {
-        this.updateIconDefinition();
-    }
-
     private updateIconDefinition(): void {
-        if (this.iconComponent) {
-            let icon: IconDefinition = this.sortIcon;
+        const icon = this.iconComponent();
+        if (icon) {
+            let iconDef: IconDefinition = this.sortIcon;
             if (this.sort.predicate() === this.jhiSortBy()) {
-                icon = this.sort.ascending() ? this.sortAscIcon : this.sortDescIcon;
+                iconDef = this.sort.ascending() ? this.sortAscIcon : this.sortDescIcon;
             }
-            this.iconComponent.icon.set(icon);
+            icon.icon.set(iconDef);
         }
     }
 }

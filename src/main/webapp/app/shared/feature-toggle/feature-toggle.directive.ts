@@ -16,13 +16,7 @@ export class FeatureToggleDirective {
     overwriteDisabled = input<boolean | null>(null);
     skipFeatureToggle = input<boolean>(false);
     private featureActive = signal(true);
-    disabled = computed(() => {
-        const overwrite = this.overwriteDisabled();
-        if (overwrite !== null) {
-            return overwrite;
-        }
-        return !this.featureActive();
-    });
+    disabled = computed(() => this.overwriteDisabled() === true || !this.featureActive());
 
     constructor() {
         effect((onCleanup) => {
