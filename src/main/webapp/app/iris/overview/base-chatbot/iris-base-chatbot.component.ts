@@ -42,7 +42,7 @@ import { facSidebar } from 'app/shared/icons/icons';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
-import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
 
 @Component({
@@ -271,7 +271,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     async showAISelectionModal(): Promise<void> {
         this.closeChat();
-        const choice = await this.llmModalService.open();
+        const choice = await this.llmModalService.open(this.accountService.userIdentity()?.selectedLLMUsage);
 
         switch (choice) {
             case LLMSelectionDecision.CLOUD_AI:
@@ -285,7 +285,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             case LLMSelectionDecision.NO_AI:
                 this.chatService.updateLLMUsageConsent(LLMSelectionDecision.NO_AI);
                 break;
-            case LLMSelectionDecision.NONE:
+            case LLM_MODAL_DISMISSED:
                 break;
         }
     }

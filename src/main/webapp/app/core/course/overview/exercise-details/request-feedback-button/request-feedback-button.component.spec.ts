@@ -22,7 +22,7 @@ import { ParticipationWebsocketService } from 'app/core/course/shared/services/p
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { UserService } from 'app/core/user/shared/user.service';
-import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 
 describe('RequestFeedbackButtonComponent', () => {
     let component: RequestFeedbackButtonComponent;
@@ -34,7 +34,7 @@ describe('RequestFeedbackButtonComponent', () => {
     let exerciseService: ExerciseService;
 
     const mockLLMModalService = {
-        open: jest.fn().mockResolvedValue(LLMSelectionDecision.NONE),
+        open: jest.fn().mockResolvedValue(LLM_MODAL_DISMISSED),
     } as any;
 
     const mockUserService = {

@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { LLMSelectionModalService } from './llm-selection-popup.service';
-import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 
 describe('LLMSelectionModalService', () => {
     let service: LLMSelectionModalService;
@@ -101,12 +101,12 @@ describe('LLMSelectionModalService', () => {
             expect(result).toBe(LLMSelectionDecision.NO_AI);
         });
 
-        it('should resolve with NONE choice', async () => {
+        it('should resolve with DISMISSED choice', async () => {
             const promise = service.open();
-            service.emitChoice(LLMSelectionDecision.NONE);
+            service.emitChoice(LLM_MODAL_DISMISSED);
 
             const result = await promise;
-            expect(result).toBe(LLMSelectionDecision.NONE);
+            expect(result).toBe(LLM_MODAL_DISMISSED);
         });
 
         it('should handle multiple open calls sequentially', async () => {
@@ -157,14 +157,14 @@ describe('LLMSelectionModalService', () => {
             });
         });
 
-        it('should emit NONE choice to choice$', () => {
+        it('should emit DISMISSED choice to choice$', () => {
             return new Promise<void>((done) => {
                 service.choice$.subscribe((choice) => {
-                    expect(choice).toBe(LLMSelectionDecision.NONE);
+                    expect(choice).toBe(LLM_MODAL_DISMISSED);
                     done();
                 });
 
-                service.emitChoice(LLMSelectionDecision.NONE);
+                service.emitChoice(LLM_MODAL_DISMISSED);
             });
         });
 

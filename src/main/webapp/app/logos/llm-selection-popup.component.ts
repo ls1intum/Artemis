@@ -5,7 +5,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LLMModalResult, LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 
 @Component({
     selector: 'jhi-llm-selection-modal',
@@ -20,7 +20,7 @@ export class LLMSelectionModalComponent implements OnInit, OnDestroy {
     private profileService = inject(ProfileService);
     private router = inject(Router);
 
-    @Output() choice = new EventEmitter<LLMSelectionDecision>();
+    @Output() choice = new EventEmitter<LLMModalResult>();
 
     isVisible = false;
     currentSelection?: LLMSelectionDecision;
@@ -69,18 +69,19 @@ export class LLMSelectionModalComponent implements OnInit, OnDestroy {
 
     onBackdropClick(event: MouseEvent): void {
         if (event.target === event.currentTarget) {
-            this.choice.emit(LLMSelectionDecision.NONE);
-            this.modalService.emitChoice(LLMSelectionDecision.NONE);
+            this.choice.emit(LLM_MODAL_DISMISSED);
+            this.modalService.emitChoice(LLM_MODAL_DISMISSED);
             this.close();
         }
     }
 
     onLearnMoreClick(event: MouseEvent): void {
         event.preventDefault();
-        this.modalService.emitChoice(LLMSelectionDecision.NONE);
+        this.modalService.emitChoice(LLM_MODAL_DISMISSED);
         this.router.navigate(['/llm-selection']);
         this.close();
     }
 
     protected readonly Theme = Theme;
+    protected readonly LLMSelectionDecision = LLMSelectionDecision;
 }

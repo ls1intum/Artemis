@@ -6,7 +6,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 
 describe('LLMSelectionModalComponent', () => {
     let component: LLMSelectionModalComponent;
@@ -183,7 +183,7 @@ describe('LLMSelectionModalComponent', () => {
 
             component.onBackdropClick(event);
 
-            expect(choiceSpy).toHaveBeenCalledWith(LLMSelectionDecision.NONE);
+            expect(choiceSpy).toHaveBeenCalledWith(LLM_MODAL_DISMISSED);
         });
 
         it('should call modalService.emitChoice with NONE', () => {
@@ -192,7 +192,7 @@ describe('LLMSelectionModalComponent', () => {
 
             component.onBackdropClick(event);
 
-            expect(modalService.emitChoice).toHaveBeenCalledWith(LLMSelectionDecision.NONE);
+            expect(modalService.emitChoice).toHaveBeenCalledWith(LLM_MODAL_DISMISSED);
         });
 
         it('should close modal when target equals currentTarget', () => {
@@ -242,8 +242,8 @@ describe('LLMSelectionModalComponent', () => {
 
             component.onBackdropClick(event);
 
-            expect(choiceSpy).toHaveBeenCalledWith(LLMSelectionDecision.NONE);
-            expect(emitChoiceSpy).toHaveBeenCalledWith(LLMSelectionDecision.NONE);
+            expect(choiceSpy).toHaveBeenCalledWith(LLM_MODAL_DISMISSED);
+            expect(emitChoiceSpy).toHaveBeenCalledWith(LLM_MODAL_DISMISSED);
             expect(closeSpy).toHaveBeenCalled();
         });
     });

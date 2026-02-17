@@ -5,7 +5,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
-import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { User } from 'app/core/user/user.model';
@@ -115,6 +115,7 @@ describe('LlmUsageSettingsComponent', () => {
 
             await component.openSelectionModal();
 
+            // Default mockUser has CLOUD_AI selected, so open receives CLOUD_AI
             expect(llmModalService.open).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
             expect(updateSpy).toHaveBeenCalledWith(LLMSelectionDecision.LOCAL_AI);
         });
@@ -132,7 +133,7 @@ describe('LlmUsageSettingsComponent', () => {
 
         it('should not update when choice is NONE', async () => {
             component.ngOnInit();
-            (llmModalService.open as jest.Mock).mockResolvedValue(LLMSelectionDecision.NONE);
+            (llmModalService.open as jest.Mock).mockResolvedValue(LLM_MODAL_DISMISSED);
             const updateSpy = jest.spyOn(component, 'updateLLMSelectionDecision');
 
             await component.openSelectionModal();
@@ -169,7 +170,7 @@ describe('LlmUsageSettingsComponent', () => {
                 selectedLLMUsage: LLMSelectionDecision.LOCAL_AI,
             } as User);
             component.ngOnInit();
-            (llmModalService.open as jest.Mock).mockResolvedValue(LLMSelectionDecision.NONE);
+            (llmModalService.open as jest.Mock).mockResolvedValue(LLM_MODAL_DISMISSED);
 
             await component.openSelectionModal();
 
@@ -182,7 +183,7 @@ describe('LlmUsageSettingsComponent', () => {
                 selectedLLMUsage: LLMSelectionDecision.NO_AI,
             } as User);
             component.ngOnInit();
-            (llmModalService.open as jest.Mock).mockResolvedValue(LLMSelectionDecision.NONE);
+            (llmModalService.open as jest.Mock).mockResolvedValue(LLM_MODAL_DISMISSED);
 
             await component.openSelectionModal();
 
@@ -195,7 +196,7 @@ describe('LlmUsageSettingsComponent', () => {
                 selectedLLMUsage: undefined,
             } as User);
             component.ngOnInit();
-            (llmModalService.open as jest.Mock).mockResolvedValue(LLMSelectionDecision.NONE);
+            (llmModalService.open as jest.Mock).mockResolvedValue(LLM_MODAL_DISMISSED);
 
             await component.openSelectionModal();
 
