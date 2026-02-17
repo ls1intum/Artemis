@@ -104,7 +104,6 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     readonly pageType = PageType.PLAGIARISM_CASE_INSTRUCTOR;
     private postsSubscription: Subscription;
     posts: Post[];
-    studentNotified = false;
 
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
@@ -236,7 +235,6 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
             this.posts = [...currentPosts, createdPost];
         }
 
-        this.studentNotified = true;
         this.alertService.success('artemisApp.plagiarism.plagiarismCases.studentNotified');
         this.metisService.getFilteredPosts({ plagiarismCaseId: this.plagiarismCaseId }, true);
     }
@@ -281,10 +279,10 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
 
     createPlagiarismPost = (post: Post): Observable<Post> => {
         const dto: PlagiarismPostCreationDTO = {
-            title: post.title!,
-            content: post.content!,
+            title: post.title ?? '',
+            content: post.content ?? '',
             visibleForStudents: true,
-            hasForwardedMessages: post.hasForwardedMessages!,
+            hasForwardedMessages: post.hasForwardedMessages ?? false,
             plagiarismCaseId: this.plagiarismCaseId,
         };
         return this.plagiarismPostService.createPlagiarismPost(this.courseId, dto);
