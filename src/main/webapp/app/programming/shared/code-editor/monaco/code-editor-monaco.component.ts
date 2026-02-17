@@ -40,8 +40,8 @@ import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { addCommentBoxes } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 import { TranslateService } from '@ngx-translate/core';
 import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-widget-manager';
-import { CommentThread, CreateCommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
+import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { isReviewCommentsSupportedRepository, mapRepositoryToThreadLocationType, matchesSelectedRepository } from 'app/exercise/review/review-comment-utils';
 
 type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; scrollTop: number; loadingError: boolean } };
@@ -79,6 +79,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     private readonly translateService = inject(TranslateService);
     private readonly ngZone = inject(NgZone);
     private readonly viewContainerRef = inject(ViewContainerRef);
+    private readonly exerciseReviewCommentService = inject(ExerciseReviewCommentService);
 
     readonly editor = viewChild.required<MonacoEditorComponent>('editor');
     readonly inlineFeedbackComponents = viewChildren(CodeEditorTutorAssessmentInlineFeedbackComponent);
@@ -97,7 +98,6 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     readonly sessionId = input.required<number | string>();
     readonly buildAnnotations = input<Annotation[]>([]);
     readonly consistencyIssues = input<ConsistencyIssue[]>([]);
-    readonly reviewCommentThreads = input<CommentThread[]>([]);
     readonly enableExerciseReviewComments = input<boolean>(false);
     readonly selectedAuxiliaryRepositoryId = input<number | undefined>();
 
@@ -109,11 +109,6 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     readonly onDiscardSuggestion = output<Feedback>();
     readonly onHighlightLines = output<MonacoEditorLineHighlight[]>();
     readonly onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
-    readonly onSubmitReviewComment = output<CreateCommentThread>();
-    readonly onDeleteReviewComment = output<number>();
-    readonly onReplyReviewComment = output<{ threadId: number; comment: CreateComment }>();
-    readonly onUpdateReviewComment = output<{ commentId: number; content: UpdateCommentContent }>();
-    readonly onToggleResolveReviewThread = output<{ threadId: number; resolved: boolean }>();
     readonly onEditorLoaded = output<void>();
 
     readonly loadingCount = signal<number>(0);
@@ -177,7 +172,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
 
         effect(() => {
             const reviewCommentsEnabled = this.enableExerciseReviewComments() && isReviewCommentsSupportedRepository(this.selectedRepository());
-            this.reviewCommentThreads();
+            this.exerciseReviewCommentService.threads();
             this.selectedAuxiliaryRepositoryId();
             if (reviewCommentsEnabled) {
                 this.renderReviewCommentWidgets();
@@ -193,7 +188,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
         effect(() => {
             this.commitState();
             this.reviewCommentManager?.updateDraftInputs();
-            const threads = this.reviewCommentThreads();
+            const threads = this.exerciseReviewCommentService.threads();
             this.reviewCommentManager?.updateThreadInputs(threads);
         });
     }
@@ -536,32 +531,26 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
                 shouldShowHoverButton: () => this.enableExerciseReviewComments() && isReviewCommentsSupportedRepository(this.selectedRepository()),
                 canSubmit: () => this.commitState() !== CommitState.UNCOMMITTED_CHANGES,
                 getDraftFileName: () => this.selectedFile(),
-                getThreads: () => this.reviewCommentThreads(),
+                getDraftContext: (payload) => {
+                    const repositoryType = this.selectedRepository();
+                    if (!repositoryType) {
+                        return undefined;
+                    }
+                    const targetType = mapRepositoryToThreadLocationType(repositoryType);
+                    if (!targetType) {
+                        return undefined;
+                    }
+                    return {
+                        targetType,
+                        filePath: payload.fileName,
+                        auxiliaryRepositoryId: repositoryType === RepositoryType.AUXILIARY ? this.selectedAuxiliaryRepositoryId() : undefined,
+                    };
+                },
+                getThreads: () => this.exerciseReviewCommentService.threads(),
                 filterThread: (thread) =>
                     this.getThreadFilePath(thread) === this.selectedFile() && matchesSelectedRepository(thread, this.selectedRepository(), this.selectedAuxiliaryRepositoryId()),
                 getThreadLine: (thread) => this.getReviewThreadLine(thread),
                 onAdd: (payload) => this.onAddReviewComment.emit(payload),
-                onSubmit: (payload) => {
-                    const repositoryType = this.selectedRepository();
-                    if (!repositoryType) {
-                        return;
-                    }
-                    const targetType = mapRepositoryToThreadLocationType(repositoryType);
-                    if (!targetType) {
-                        return;
-                    }
-                    this.onSubmitReviewComment.emit({
-                        targetType,
-                        auxiliaryRepositoryId: repositoryType === RepositoryType.AUXILIARY ? this.selectedAuxiliaryRepositoryId() : undefined,
-                        initialFilePath: payload.fileName,
-                        initialLineNumber: payload.lineNumber,
-                        initialComment: payload.initialComment,
-                    });
-                },
-                onDelete: (commentId) => this.onDeleteReviewComment.emit(commentId),
-                onReply: (payload) => this.onReplyReviewComment.emit(payload),
-                onUpdate: (payload) => this.onUpdateReviewComment.emit(payload),
-                onToggleResolved: (payload) => this.onToggleResolveReviewThread.emit(payload),
                 showLocationWarning: () => this.commitState() === CommitState.UNCOMMITTED_CHANGES,
             });
         }

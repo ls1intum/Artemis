@@ -47,8 +47,7 @@ import { ConsistencyCheckError } from 'app/programming/shared/entities/consisten
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
 import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
-import { CommentThread, CommentThreadLocationType, CreateCommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
+import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 
 import { getRepoPath } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 
@@ -89,7 +88,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly MarkdownEditorHeight = MarkdownEditorHeight;
     readonly consistencyIssues = signal<ConsistencyIssue[]>([]);
-    readonly reviewCommentThreads = signal<CommentThread[]>([]);
     readonly sortedIssues = computed(() => [...this.consistencyIssues()].sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]));
 
     private consistencyCheckService = inject(ConsistencyCheckService);
@@ -137,7 +135,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         return super.loadExercise(exerciseId).pipe(
             tap((exercise) => {
                 if (exercise.id) {
-                    this.loadReviewCommentThreads(exercise.id);
+                    this.exerciseReviewCommentService.setExercise(exercise.id);
+                    this.exerciseReviewCommentService.reloadThreads();
                 }
             }),
         );
@@ -147,24 +146,16 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * Clears draft widgets and reloads review comment threads after a commit.
      */
     onCommit(): void {
-        const exerciseId = this.exercise?.id;
-        if (!exerciseId) {
-            return;
-        }
         this.codeEditorContainer?.monacoEditor?.clearReviewCommentDrafts();
-        this.loadReviewCommentThreads(exerciseId);
+        this.exerciseReviewCommentService.reloadThreads();
     }
 
     /**
      * Clears problem-statement draft widgets and reloads review comment threads after saving.
      */
     onProblemStatementSaved(): void {
-        const exerciseId = this.exercise?.id;
-        if (!exerciseId) {
-            return;
-        }
         this.editableInstructions?.clearReviewCommentDrafts();
-        this.loadReviewCommentThreads(exerciseId);
+        this.exerciseReviewCommentService.reloadThreads();
     }
 
     /**
@@ -446,162 +437,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 this.alertService.error(this.translateService.instant('artemisApp.hyperion.consistencyCheck.checkFailedAlert'));
             },
         });
-    }
-
-    /**
-     * Creates a review comment thread and updates local thread state.
-     *
-     * @param thread The thread creation payload.
-     */
-    onSubmitReviewComment(thread: CreateCommentThread): void {
-        const exerciseId = this.exercise?.id;
-        if (!exerciseId) {
-            return;
-        }
-        this.exerciseReviewCommentService
-            .createThread(exerciseId, thread)
-            .pipe(
-                tap((response) => {
-                    const createdThread = response.body;
-                    if (!createdThread?.id) {
-                        return;
-                    }
-                    const newThread: CommentThread = createdThread.comments ? createdThread : { ...createdThread, comments: [] };
-                    this.reviewCommentThreads.update((threads) => this.exerciseReviewCommentService.appendThreadToThreads(threads, newThread));
-                }),
-                catchError(() => {
-                    this.alertService.error('artemisApp.review.saveFailed');
-                    return of(undefined);
-                }),
-            )
-            .subscribe();
-    }
-
-    /**
-     * Deletes a review comment and updates the local thread state.
-     *
-     * @param commentId The id of the comment to delete.
-     */
-    onDeleteReviewComment(commentId: number): void {
-        const exerciseId = this.exercise?.id;
-        if (!exerciseId) {
-            return;
-        }
-
-        this.exerciseReviewCommentService
-            .deleteComment(exerciseId, commentId)
-            .pipe(
-                tap(() => this.reviewCommentThreads.update((threads) => this.exerciseReviewCommentService.removeCommentFromThreads(threads, commentId))),
-                catchError(() => {
-                    this.alertService.error('artemisApp.review.deleteFailed');
-                    return of(undefined);
-                }),
-            )
-            .subscribe();
-    }
-
-    /**
-     * Creates a reply comment and updates the local thread state.
-     *
-     * @param event The thread id and reply text.
-     */
-    onReplyReviewComment(event: { threadId: number; comment: CreateComment }): void {
-        const exerciseId = this.exercise?.id;
-        if (!exerciseId) {
-            return;
-        }
-
-        this.exerciseReviewCommentService
-            .createUserComment(exerciseId, event.threadId, event.comment)
-            .pipe(
-                tap((response) => {
-                    const createdComment = response.body;
-                    if (!createdComment) {
-                        return;
-                    }
-                    this.reviewCommentThreads.update((threads) => this.exerciseReviewCommentService.appendCommentToThreads(threads, createdComment));
-                }),
-                catchError(() => {
-                    this.alertService.error('artemisApp.review.saveFailed');
-                    return of(undefined);
-                }),
-            )
-            .subscribe();
-    }
-
-    /**
-     * Updates a comment's content and refreshes it in the local thread state.
-     *
-     * @param event The comment id and updated text.
-     */
-    onUpdateReviewComment(event: { commentId: number; content: UpdateCommentContent }): void {
-        const exerciseId = this.exercise?.id;
-        if (!exerciseId) {
-            return;
-        }
-
-        this.exerciseReviewCommentService
-            .updateUserCommentContent(exerciseId, event.commentId, event.content)
-            .pipe(
-                tap((response) => {
-                    const updatedComment = response.body;
-                    if (!updatedComment) {
-                        return;
-                    }
-                    this.reviewCommentThreads.update((threads) => this.exerciseReviewCommentService.updateCommentInThreads(threads, updatedComment));
-                }),
-                catchError(() => {
-                    this.alertService.error('artemisApp.review.saveFailed');
-                    return of(undefined);
-                }),
-            )
-            .subscribe();
-    }
-
-    /**
-     * Updates the resolved state of a thread and refreshes it locally.
-     *
-     * @param event The thread id and new resolved state.
-     */
-    onToggleResolveReviewThread(event: { threadId: number; resolved: boolean }): void {
-        const exerciseId = this.exercise?.id;
-        if (!exerciseId) {
-            return;
-        }
-
-        this.exerciseReviewCommentService
-            .updateThreadResolvedState(exerciseId, event.threadId, event.resolved)
-            .pipe(
-                tap((response) => {
-                    const updatedThread = response.body;
-                    if (!updatedThread?.id) {
-                        return;
-                    }
-                    this.reviewCommentThreads.update((threads) => this.exerciseReviewCommentService.replaceThreadInThreads(threads, updatedThread));
-                }),
-                catchError(() => {
-                    this.alertService.error('artemisApp.review.resolveFailed');
-                    return of(undefined);
-                }),
-            )
-            .subscribe();
-    }
-
-    /**
-     * Loads all review comment threads for the given exercise.
-     *
-     * @param exerciseId The exercise to fetch threads for.
-     */
-    private loadReviewCommentThreads(exerciseId: number): void {
-        this.exerciseReviewCommentService
-            .loadThreads(exerciseId)
-            .pipe(
-                catchError(() => {
-                    this.alertService.error('artemisApp.review.loadFailed');
-                    return of([] as CommentThread[]);
-                }),
-            )
-            .subscribe((threads) => this.reviewCommentThreads.set(threads));
     }
 
     /**

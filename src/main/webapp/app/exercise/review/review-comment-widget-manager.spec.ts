@@ -1,7 +1,7 @@
 import { ReviewCommentWidgetManager, ReviewCommentWidgetManagerConfig } from 'app/exercise/review/review-comment-widget-manager';
 import { ReviewCommentDraftWidgetComponent } from 'app/exercise/review/review-comment-draft-widget/review-comment-draft-widget.component';
 import { ReviewCommentThreadWidgetComponent } from 'app/exercise/review/review-comment-thread-widget/review-comment-thread-widget.component';
-import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CommentThread, CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 describe('ReviewCommentWidgetManager', () => {
@@ -14,7 +14,7 @@ describe('ReviewCommentWidgetManager', () => {
 
     const createDraftRef = () => {
         const instance: any = {
-            onSubmit: { subscribe: vi.fn((cb) => (instance._onSubmit = cb)) },
+            onSubmitted: { subscribe: vi.fn((cb) => (instance._onSubmitted = cb)) },
             onCancel: { subscribe: vi.fn((cb) => (instance._onCancel = cb)) },
         };
         return {
@@ -27,10 +27,6 @@ describe('ReviewCommentWidgetManager', () => {
 
     const createThreadRef = () => {
         const instance: any = {
-            onDelete: { subscribe: vi.fn((cb) => (instance._onDelete = cb)) },
-            onReply: { subscribe: vi.fn((cb) => (instance._onReply = cb)) },
-            onUpdate: { subscribe: vi.fn((cb) => (instance._onUpdate = cb)) },
-            onToggleResolved: { subscribe: vi.fn((cb) => (instance._onToggleResolved = cb)) },
             onToggleCollapse: { subscribe: vi.fn((cb) => (instance._onToggleCollapse = cb)) },
         };
         return {
@@ -59,15 +55,11 @@ describe('ReviewCommentWidgetManager', () => {
         shouldShowHoverButton: () => true,
         canSubmit: () => true,
         getDraftFileName: () => 'file.java',
+        getDraftContext: () => ({ targetType: CommentThreadLocationType.TEMPLATE_REPO, filePath: 'file.java' }),
         getThreads: () => [],
         filterThread: () => true,
         getThreadLine: (thread) => (thread.lineNumber ?? 1) - 1,
         onAdd: vi.fn(),
-        onSubmit: vi.fn(),
-        onDelete: vi.fn(),
-        onReply: vi.fn(),
-        onUpdate: vi.fn(),
-        onToggleResolved: vi.fn(),
         showLocationWarning: () => false,
         ...overrides,
     });
@@ -138,7 +130,7 @@ describe('ReviewCommentWidgetManager', () => {
         manager.renderWidgets();
         expect(editor.addLineWidget).toHaveBeenCalledWith(2, 'review-comment-thread-1', expect.any(HTMLElement));
 
-        const threadRef = vcRef.createComponent.mock.results.find((r: any) => r.value.instance.onToggleResolved)?.value;
+        const threadRef = vcRef.createComponent.mock.results.find((r: any) => r.value.instance.onToggleCollapse)?.value;
         config.getThreads = () => [];
         manager.renderWidgets();
 
@@ -149,8 +141,7 @@ describe('ReviewCommentWidgetManager', () => {
     it('should submit draft and remove it', () => {
         const editor = createEditorMock();
         const vcRef = createViewContainerRefMock();
-        const onSubmit = vi.fn();
-        const config = createConfig({ onSubmit });
+        const config = createConfig();
         const manager = new ReviewCommentWidgetManager(editor as any, vcRef as any, config);
 
         manager.updateHoverButton();
@@ -158,9 +149,8 @@ describe('ReviewCommentWidgetManager', () => {
         addCallback(3);
 
         const draftRef = vcRef.createComponent.mock.results[0].value;
-        draftRef.instance._onSubmit('text');
+        draftRef.instance._onSubmitted();
 
-        expect(onSubmit).toHaveBeenCalledWith({ lineNumber: 3, fileName: 'file.java', initialComment: { contentType: 'USER', text: 'text' } });
         expect(editor.disposeWidgetsByPrefix).toHaveBeenCalledWith(expect.stringContaining('review-comment-'));
     });
 
@@ -194,8 +184,8 @@ describe('ReviewCommentWidgetManager', () => {
         addCallback(2);
         manager.renderWidgets();
 
-        const draftRef = vcRef.createComponent.mock.results.find((r: any) => r.value.instance.onSubmit)?.value;
-        const threadRef = vcRef.createComponent.mock.results.find((r: any) => r.value.instance.onToggleResolved)?.value;
+        const draftRef = vcRef.createComponent.mock.results.find((r: any) => r.value.instance.onSubmitted)?.value;
+        const threadRef = vcRef.createComponent.mock.results.find((r: any) => r.value.instance.onToggleCollapse)?.value;
 
         manager.disposeAll();
 

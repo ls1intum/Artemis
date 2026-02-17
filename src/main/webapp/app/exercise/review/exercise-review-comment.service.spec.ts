@@ -1,20 +1,27 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
-import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+import { AlertService } from 'app/shared/service/alert.service';
+import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 
 describe('ExerciseReviewCommentService', () => {
     setupTestBed({ zoneless: true });
     let service: ExerciseReviewCommentService;
     let httpMock: HttpTestingController;
+    let alertServiceMock: { error: ReturnType<typeof vi.fn> };
 
     beforeEach(() => {
+        alertServiceMock = {
+            error: vi.fn(),
+        };
+
         TestBed.configureTestingModule({
-            providers: [ExerciseReviewCommentService, provideHttpClient(), provideHttpClientTesting()],
+            providers: [ExerciseReviewCommentService, provideHttpClient(), provideHttpClientTesting(), { provide: AlertService, useValue: alertServiceMock }],
         });
+
         service = TestBed.inject(ExerciseReviewCommentService);
         httpMock = TestBed.inject(HttpTestingController);
     });
@@ -24,7 +31,215 @@ describe('ExerciseReviewCommentService', () => {
         vi.restoreAllMocks();
     });
 
-    it('should create a thread', () => {
+    it('setExercise should clear thread state when exercise id changes', () => {
+        service.threads.set([{ id: 1 } as any]);
+
+        const changed = service.setExercise(42);
+
+        expect(changed).toBe(true);
+        expect(service.threads()).toEqual([]);
+    });
+
+    it('setExercise should not clear thread state when exercise id is unchanged', () => {
+        service.setExercise(42);
+        service.threads.set([{ id: 1 } as any]);
+
+        const changed = service.setExercise(42);
+
+        expect(changed).toBe(false);
+        expect(service.threads()).toEqual([{ id: 1 } as any]);
+    });
+
+    it('reloadThreads should clear state when no active exercise exists', () => {
+        service.threads.set([{ id: 1 } as any]);
+
+        service.reloadThreads();
+
+        expect(service.threads()).toEqual([]);
+    });
+
+    it('reloadThreads should load and store threads for active exercise', () => {
+        service.setExercise(2);
+
+        service.reloadThreads();
+
+        const req = httpMock.expectOne('api/exercise/exercises/2/review-threads');
+        expect(req.request.method).toBe('GET');
+        req.flush([{ id: 11 }]);
+
+        expect(service.threads()).toEqual([{ id: 11 } as any]);
+    });
+
+    it('reloadThreads should clear state and show alert on failure', () => {
+        service.setExercise(2);
+        service.threads.set([{ id: 99 } as any]);
+
+        service.reloadThreads();
+
+        const req = httpMock.expectOne('api/exercise/exercises/2/review-threads');
+        req.flush('failed', { status: 500, statusText: 'Server Error' });
+
+        expect(service.threads()).toEqual([]);
+        expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.review.loadFailed');
+    });
+
+    it('createThreadInContext should be ignored without active exercise', () => {
+        service.createThreadInContext({
+            targetType: CommentThreadLocationType.TEMPLATE_REPO,
+            initialLineNumber: 1,
+            initialFilePath: 'file.java',
+            initialComment: { contentType: 'USER', text: 'hi' },
+        } as any);
+
+        expect(httpMock.match(() => true)).toHaveLength(0);
+    });
+
+    it('createThreadInContext should append created thread', () => {
+        service.setExercise(1);
+        service.threads.set([{ id: 1, comments: [] } as any]);
+        const payload = {
+            targetType: CommentThreadLocationType.TEMPLATE_REPO,
+            initialLineNumber: 1,
+            initialFilePath: 'file.java',
+            initialComment: { contentType: 'USER', text: 'hi' },
+        } as any;
+
+        service.createThreadInContext(payload);
+
+        const req = httpMock.expectOne('api/exercise/exercises/1/review-threads');
+        expect(req.request.method).toBe('POST');
+        expect(req.request.body).toEqual(payload);
+        req.flush({ id: 2, comments: [] });
+
+        expect(service.threads()).toEqual([
+            { id: 1, comments: [] },
+            { id: 2, comments: [] },
+        ] as any);
+    });
+
+    it('createThreadInContext should invoke success callback only after persistence', () => {
+        service.setExercise(1);
+        const onSuccess = vi.fn();
+        const payload = {
+            targetType: CommentThreadLocationType.TEMPLATE_REPO,
+            initialLineNumber: 1,
+            initialFilePath: 'file.java',
+            initialComment: { contentType: 'USER', text: 'hi' },
+        } as any;
+
+        service.createThreadInContext(payload, onSuccess);
+        expect(onSuccess).not.toHaveBeenCalled();
+
+        const req = httpMock.expectOne('api/exercise/exercises/1/review-threads');
+        req.flush({ id: 2, comments: [] });
+
+        expect(onSuccess).toHaveBeenCalledOnce();
+    });
+
+    it('createThreadInContext should not invoke success callback on failure', () => {
+        service.setExercise(1);
+        const onSuccess = vi.fn();
+        const payload = {
+            targetType: CommentThreadLocationType.TEMPLATE_REPO,
+            initialLineNumber: 1,
+            initialFilePath: 'file.java',
+            initialComment: { contentType: 'USER', text: 'hi' },
+        } as any;
+
+        service.createThreadInContext(payload, onSuccess);
+
+        const req = httpMock.expectOne('api/exercise/exercises/1/review-threads');
+        req.flush('failed', { status: 500, statusText: 'Server Error' });
+
+        expect(onSuccess).not.toHaveBeenCalled();
+    });
+
+    it('deleteCommentInContext should remove comments and empty threads', () => {
+        service.setExercise(1);
+        service.threads.set([
+            { id: 1, comments: [{ id: 7 }] },
+            { id: 2, comments: [{ id: 8 }] },
+        ] as any);
+
+        service.deleteCommentInContext(7);
+
+        const req = httpMock.expectOne('api/exercise/exercises/1/review-comments/7');
+        expect(req.request.method).toBe('DELETE');
+        req.flush(null);
+
+        expect(service.threads()).toEqual([{ id: 2, comments: [{ id: 8 }] }] as any);
+    });
+
+    it('createReplyInContext should append reply to the matching thread', () => {
+        service.setExercise(3);
+        service.threads.set([{ id: 5, comments: [] }] as any);
+
+        service.createReplyInContext(5, { contentType: 'USER', text: 'reply' } as any);
+
+        const req = httpMock.expectOne('api/exercise/exercises/3/review-threads/5/comments');
+        expect(req.request.method).toBe('POST');
+        req.flush({ id: 10, threadId: 5 });
+
+        expect(service.threads()).toEqual([{ id: 5, comments: [{ id: 10, threadId: 5 }] }] as any);
+    });
+
+    it('createReplyInContext should invoke success callback only after persistence', () => {
+        service.setExercise(3);
+        const onSuccess = vi.fn();
+
+        service.createReplyInContext(5, { contentType: 'USER', text: 'reply' } as any, onSuccess);
+        expect(onSuccess).not.toHaveBeenCalled();
+
+        const req = httpMock.expectOne('api/exercise/exercises/3/review-threads/5/comments');
+        req.flush({ id: 10, threadId: 5 });
+
+        expect(onSuccess).toHaveBeenCalledOnce();
+    });
+
+    it('updateCommentInContext should replace comment content in-place', () => {
+        service.setExercise(3);
+        service.threads.set([{ id: 5, comments: [{ id: 10, threadId: 5, content: { text: 'old' } }] }] as any);
+        const content = { contentType: 'USER', text: 'new' } as any;
+
+        service.updateCommentInContext(10, content);
+
+        const req = httpMock.expectOne('api/exercise/exercises/3/review-comments/10');
+        expect(req.request.method).toBe('PUT');
+        expect(req.request.body).toEqual(content);
+        req.flush({ id: 10, threadId: 5, content: { text: 'new' } });
+
+        expect(service.threads()).toEqual([{ id: 5, comments: [{ id: 10, threadId: 5, content: { text: 'new' } }] }] as any);
+    });
+
+    it('updateCommentInContext should invoke success callback only after persistence', () => {
+        service.setExercise(3);
+        const content = { contentType: 'USER', text: 'new' } as any;
+        const onSuccess = vi.fn();
+
+        service.updateCommentInContext(10, content, onSuccess);
+        expect(onSuccess).not.toHaveBeenCalled();
+
+        const req = httpMock.expectOne('api/exercise/exercises/3/review-comments/10');
+        req.flush({ id: 10, threadId: 5, content: { text: 'new' } });
+
+        expect(onSuccess).toHaveBeenCalledOnce();
+    });
+
+    it('toggleResolvedInContext should replace updated thread', () => {
+        service.setExercise(3);
+        service.threads.set([{ id: 7, resolved: false }] as any);
+
+        service.toggleResolvedInContext(7, true);
+
+        const req = httpMock.expectOne('api/exercise/exercises/3/review-threads/7/resolved');
+        expect(req.request.method).toBe('PUT');
+        expect(req.request.body).toEqual({ resolved: true });
+        req.flush({ id: 7, resolved: true });
+
+        expect(service.threads()).toEqual([{ id: 7, resolved: true }] as any);
+    });
+
+    it('createThread should send POST request', () => {
         const payload = {
             targetType: CommentThreadLocationType.TEMPLATE_REPO,
             initialLineNumber: 1,
@@ -40,7 +255,7 @@ describe('ExerciseReviewCommentService', () => {
         req.flush({});
     });
 
-    it('should get threads', () => {
+    it('getThreads should send GET request', () => {
         service.getThreads(2).subscribe();
 
         const req = httpMock.expectOne('api/exercise/exercises/2/review-threads');
@@ -48,19 +263,18 @@ describe('ExerciseReviewCommentService', () => {
         req.flush([]);
     });
 
-    it('should load threads from response body', () => {
+    it('loadThreads should map response body to thread array', () => {
         let threads: any[] = [];
         service.loadThreads(2).subscribe((result) => (threads = result as any[]));
 
         const req = httpMock.expectOne('api/exercise/exercises/2/review-threads');
-        expect(req.request.method).toBe('GET');
         req.flush([{ id: 11 }]);
 
         expect(threads).toHaveLength(1);
         expect(threads[0].id).toBe(11);
     });
 
-    it('should create a user comment', () => {
+    it('createUserComment should send POST request', () => {
         const payload = { contentType: 'USER', text: 'reply' } as any;
 
         service.createUserComment(3, 5, payload).subscribe();
@@ -71,7 +285,7 @@ describe('ExerciseReviewCommentService', () => {
         req.flush({});
     });
 
-    it('should update resolved state', () => {
+    it('updateThreadResolvedState should send PUT request', () => {
         service.updateThreadResolvedState(4, 7, true).subscribe();
 
         const req = httpMock.expectOne('api/exercise/exercises/4/review-threads/7/resolved');
@@ -80,7 +294,7 @@ describe('ExerciseReviewCommentService', () => {
         req.flush({});
     });
 
-    it('should update comment content', () => {
+    it('updateUserCommentContent should send PUT request', () => {
         const payload = { contentType: 'USER', text: 'update' } as any;
 
         service.updateUserCommentContent(8, 9, payload).subscribe();
@@ -91,7 +305,7 @@ describe('ExerciseReviewCommentService', () => {
         req.flush({});
     });
 
-    it('should delete a comment', () => {
+    it('deleteComment should send DELETE request', () => {
         service.deleteComment(10, 11).subscribe();
 
         const req = httpMock.expectOne('api/exercise/exercises/10/review-comments/11');
@@ -99,19 +313,17 @@ describe('ExerciseReviewCommentService', () => {
         req.flush(null);
     });
 
-    it('should remove a comment from threads and drop empty threads', () => {
+    it('removeCommentFromThreads should remove comment and drop empty threads', () => {
         const threads = [{ id: 1, comments: [{ id: 5 }, { id: 6 }] }, { id: 2, comments: [{ id: 7 }] }, { id: 3 }] as any;
 
         const result = service.removeCommentFromThreads(threads, 7);
 
         expect(result).toHaveLength(2);
         expect(result.find((t: any) => t.id === 2)).toBeUndefined();
-        const remainingThread = result.find((t: any) => t.id === 1);
-        expect(remainingThread).toBeDefined();
-        expect(remainingThread!.comments).toHaveLength(2);
+        expect(result.find((t: any) => t.id === 1)?.comments).toHaveLength(2);
     });
 
-    it('should append a created comment to its thread', () => {
+    it('appendCommentToThreads should append to matching thread', () => {
         const threads = [
             { id: 1, comments: [] },
             { id: 2, comments: [{ id: 9 }] },
@@ -120,23 +332,19 @@ describe('ExerciseReviewCommentService', () => {
 
         const result = service.appendCommentToThreads(threads, created);
 
-        const thread = result.find((t: any) => t.id === 2);
-        expect(thread).toBeDefined();
-        expect(thread!.comments).toHaveLength(2);
+        expect(result.find((t: any) => t.id === 2)?.comments).toHaveLength(2);
     });
 
-    it('should update a comment in its thread', () => {
+    it('updateCommentInThreads should update matching comment', () => {
         const threads = [{ id: 1, comments: [{ id: 5, content: { text: 'old' } }] }] as any;
         const updated = { id: 5, threadId: 1, content: { text: 'new' } } as any;
 
         const result = service.updateCommentInThreads(threads, updated);
 
-        const updatedComment = result[0]?.comments?.[0];
-        expect(updatedComment).toBeDefined();
-        expect(updatedComment!.content.text).toBe('new');
+        expect(result[0]?.comments?.[0]?.content?.text).toBe('new');
     });
 
-    it('should replace an updated thread', () => {
+    it('replaceThreadInThreads should replace updated thread', () => {
         const threads = [
             { id: 1, resolved: false },
             { id: 2, resolved: false },
@@ -145,12 +353,10 @@ describe('ExerciseReviewCommentService', () => {
 
         const result = service.replaceThreadInThreads(threads, updatedThread);
 
-        const updated = result.find((t: any) => t.id === 2);
-        expect(updated).toBeDefined();
-        expect(updated!.resolved).toBe(true);
+        expect(result.find((t: any) => t.id === 2)?.resolved).toBe(true);
     });
 
-    it('should append a new thread', () => {
+    it('appendThreadToThreads should append new thread', () => {
         const threads = [{ id: 1 }] as any;
         const newThread = { id: 2 } as any;
 

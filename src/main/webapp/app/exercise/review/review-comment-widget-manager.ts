@@ -2,23 +2,24 @@ import { ComponentRef, ViewContainerRef } from '@angular/core';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { ReviewCommentDraftWidgetComponent } from 'app/exercise/review/review-comment-draft-widget/review-comment-draft-widget.component';
 import { ReviewCommentThreadWidgetComponent } from 'app/exercise/review/review-comment-thread-widget/review-comment-thread-widget.component';
-import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
+import { CommentThread, CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
+
+export type ReviewCommentDraftContext = {
+    targetType: CommentThreadLocationType;
+    filePath?: string;
+    auxiliaryRepositoryId?: number;
+};
 
 export type ReviewCommentWidgetManagerConfig = {
     hoverButtonClass: string;
     shouldShowHoverButton: () => boolean;
     canSubmit: () => boolean;
     getDraftFileName: () => string | undefined;
+    getDraftContext: (payload: { lineNumber: number; fileName: string }) => ReviewCommentDraftContext | undefined;
     getThreads: () => CommentThread[];
     filterThread: (thread: CommentThread) => boolean;
     getThreadLine: (thread: CommentThread) => number;
     onAdd: (payload: { lineNumber: number; fileName: string }) => void;
-    onSubmit: (payload: { lineNumber: number; fileName: string; initialComment: CreateComment }) => void;
-    onDelete: (commentId: number) => void;
-    onReply: (payload: { threadId: number; comment: CreateComment }) => void;
-    onUpdate: (payload: { commentId: number; content: UpdateCommentContent }) => void;
-    onToggleResolved: (payload: { threadId: number; resolved: boolean }) => void;
     showLocationWarning: () => boolean;
 };
 
@@ -119,6 +120,10 @@ export class ReviewCommentWidgetManager {
             return;
         }
         const lineNumberZeroBased = lineNumber - 1;
+        const draftContext = this.resolveDraftContext(fileName, lineNumberZeroBased);
+        if (!draftContext) {
+            return;
+        }
         const existing = this.draftLinesByFile.get(fileName) ?? new Set<number>();
         if (!existing.has(lineNumberZeroBased)) {
             existing.add(lineNumberZeroBased);
@@ -128,11 +133,11 @@ export class ReviewCommentWidgetManager {
         let widgetRef = this.draftWidgetRefs.get(widgetKey);
         if (!widgetRef) {
             widgetRef = this.viewContainerRef.createComponent(ReviewCommentDraftWidgetComponent);
-            widgetRef.instance.onSubmit.subscribe((text) => this.submitDraft(fileName, lineNumberZeroBased, text));
+            widgetRef.instance.onSubmitted.subscribe(() => this.removeDraft(fileName, lineNumberZeroBased));
             widgetRef.instance.onCancel.subscribe(() => this.removeDraft(fileName, lineNumberZeroBased));
             this.draftWidgetRefs.set(widgetKey, widgetRef);
         }
-        widgetRef.setInput('canSubmit', this.config.canSubmit());
+        this.setDraftWidgetInputs(widgetRef, lineNumberZeroBased, draftContext);
         // Re-adding the same draft line must replace the existing Monaco widget to avoid stacked view zones.
         this.editor.disposeWidgetsByPrefix(this.buildDraftWidgetId(fileName, lineNumberZeroBased));
         this.editor.addLineWidget(lineNumber, this.buildDraftWidgetId(fileName, lineNumberZeroBased), widgetRef.location.nativeElement);
@@ -151,16 +156,21 @@ export class ReviewCommentWidgetManager {
         if (!lines) {
             return;
         }
-        for (const line of lines) {
+        for (const line of [...lines]) {
+            const draftContext = this.resolveDraftContext(activeFileName, line);
+            if (!draftContext) {
+                this.removeDraft(activeFileName, line);
+                continue;
+            }
             const widgetKey = this.getDraftKey(activeFileName, line);
             let widgetRef = this.draftWidgetRefs.get(widgetKey);
             if (!widgetRef) {
                 widgetRef = this.viewContainerRef.createComponent(ReviewCommentDraftWidgetComponent);
-                widgetRef.instance.onSubmit.subscribe((text) => this.submitDraft(activeFileName, line, text));
+                widgetRef.instance.onSubmitted.subscribe(() => this.removeDraft(activeFileName, line));
                 widgetRef.instance.onCancel.subscribe(() => this.removeDraft(activeFileName, line));
                 this.draftWidgetRefs.set(widgetKey, widgetRef);
             }
-            widgetRef.setInput('canSubmit', this.config.canSubmit());
+            this.setDraftWidgetInputs(widgetRef, line, draftContext);
             // Keep rendering idempotent when renderWidgets() runs repeatedly for the same draft.
             this.editor.disposeWidgetsByPrefix(this.buildDraftWidgetId(activeFileName, line));
             this.editor.addLineWidget(line + 1, this.buildDraftWidgetId(activeFileName, line), widgetRef.location.nativeElement);
@@ -197,10 +207,6 @@ export class ReviewCommentWidgetManager {
                     this.collapseState.set(thread.id, shouldCollapse);
                 }
                 widgetRef.setInput('initialCollapsed', this.collapseState.get(thread.id) ?? false);
-                widgetRef.instance.onDelete.subscribe((commentId) => this.config.onDelete(commentId));
-                widgetRef.instance.onReply.subscribe((comment) => this.config.onReply({ threadId: thread.id, comment }));
-                widgetRef.instance.onUpdate.subscribe((event) => this.config.onUpdate(event));
-                widgetRef.instance.onToggleResolved.subscribe((resolved) => this.config.onToggleResolved({ threadId: thread.id, resolved }));
                 widgetRef.instance.onToggleCollapse.subscribe((collapsed) => this.collapseState.set(thread.id, collapsed));
                 this.threadWidgetRefs.set(thread.id, widgetRef);
             } else {
@@ -210,18 +216,6 @@ export class ReviewCommentWidgetManager {
             this.editor.disposeWidgetsByPrefix(widgetId);
             this.editor.addLineWidget(line + 1, widgetId, widgetRef.location.nativeElement);
         }
-    }
-
-    /**
-     * Emits the draft submit callback and removes the draft widget.
-     *
-     * @param fileName The file where the draft was created.
-     * @param line The zero-based line index of the draft.
-     * @param text The submitted draft text.
-     */
-    private submitDraft(fileName: string, line: number, text: string): void {
-        this.config.onSubmit({ lineNumber: line + 1, fileName, initialComment: { contentType: 'USER', text } });
-        this.removeDraft(fileName, line);
     }
 
     /**
@@ -294,5 +288,31 @@ export class ReviewCommentWidgetManager {
      */
     private getDraftKey(fileName: string, line: number): string {
         return `${fileName}:${line}`;
+    }
+
+    /**
+     * Resolves draft context for a file/line pair.
+     *
+     * @param fileName The file where the draft is shown.
+     * @param line The zero-based line index.
+     * @returns Draft context for creating a thread, if available.
+     */
+    private resolveDraftContext(fileName: string, line: number): ReviewCommentDraftContext | undefined {
+        return this.config.getDraftContext({ lineNumber: line + 1, fileName });
+    }
+
+    /**
+     * Applies draft-widget inputs required to create a thread in the active exercise context.
+     *
+     * @param widgetRef The draft widget component reference.
+     * @param line The zero-based line index.
+     * @param draftContext The resolved draft context for thread creation.
+     */
+    private setDraftWidgetInputs(widgetRef: ComponentRef<ReviewCommentDraftWidgetComponent>, line: number, draftContext: ReviewCommentDraftContext): void {
+        widgetRef.setInput('canSubmit', this.config.canSubmit());
+        widgetRef.setInput('targetType', draftContext.targetType);
+        widgetRef.setInput('lineNumber', line + 1);
+        widgetRef.setInput('filePath', draftContext.filePath);
+        widgetRef.setInput('auxiliaryRepositoryId', draftContext.auxiliaryRepositoryId);
     }
 }

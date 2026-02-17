@@ -30,8 +30,6 @@ import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actio
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
-import { CommentThread, CreateCommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
 import { ProblemStatementSyncService, ProblemStatementSyncState } from 'app/programming/manage/services/problem-statement-sync.service';
 import { editor } from 'monaco-editor';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
@@ -123,7 +121,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * Set to false when using an external preview component (e.g., in the code editor).
      */
     readonly consistencyIssues = input<ConsistencyIssue[]>([]);
-    readonly reviewCommentThreads = input<CommentThread[]>([]);
     readonly enableExerciseReviewComments = input<boolean>(false);
     readonly showPreview = input<boolean>(true);
     readonly forceRender = input<Observable<void> | undefined>();
@@ -132,12 +129,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     readonly exercise = input.required<ProgrammingExercise>();
     readonly hasUnsavedChanges = output<boolean>();
     readonly instructionChange = output<string>();
-
-    readonly onSubmitReviewComment = output<CreateCommentThread>();
-    readonly onDeleteReviewComment = output<number>();
-    readonly onReplyReviewComment = output<{ threadId: number; comment: CreateComment }>();
-    readonly onUpdateReviewComment = output<{ commentId: number; content: UpdateCommentContent }>();
-    readonly onToggleResolveReviewThread = output<{ threadId: number; resolved: boolean }>();
     readonly onProblemStatementSaved = output<void>();
     generateHtmlSubject: Subject<void> = new Subject<void>();
 

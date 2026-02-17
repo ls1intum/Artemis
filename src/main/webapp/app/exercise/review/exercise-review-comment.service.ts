@@ -1,18 +1,175 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { Comment, CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentThread, CreateCommentThread, UpdateThreadResolvedState } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { AlertService } from 'app/shared/service/alert.service';
 
 type CommentThreadArrayResponseType = HttpResponse<CommentThread[]>;
 type CommentThreadResponseType = HttpResponse<CommentThread>;
 type CommentResponseType = HttpResponse<Comment>;
+type ReviewCommentSuccessCallback = () => void;
 
 @Injectable({ providedIn: 'root' })
 export class ExerciseReviewCommentService {
     public resourceUrl = 'api/exercise/exercises';
 
     private http = inject(HttpClient);
+    private alertService = inject(AlertService);
+    private activeExerciseId?: number;
+
+    /**
+     * Source of truth for currently loaded review comment threads.
+     * This intentionally tracks only persisted comments/threads, not draft input state.
+     */
+    readonly threads = signal<CommentThread[]>([]);
+
+    /**
+     * Sets the active exercise context and clears thread state when it changes.
+     *
+     * @param exerciseId The currently active exercise id.
+     * @returns True if the context changed.
+     */
+    setExercise(exerciseId: number | undefined): boolean {
+        if (this.activeExerciseId === exerciseId) {
+            return false;
+        }
+        this.activeExerciseId = exerciseId;
+        this.threads.set([]);
+        return true;
+    }
+
+    /**
+     * Reloads threads for the active exercise context.
+     */
+    reloadThreads(): void {
+        const exerciseId = this.activeExerciseId;
+        if (!exerciseId) {
+            this.threads.set([]);
+            return;
+        }
+        this.loadThreads(exerciseId).subscribe({
+            next: (threads) => this.threads.set(threads),
+            error: () => {
+                this.threads.set([]);
+                this.alertService.error('artemisApp.review.loadFailed');
+            },
+        });
+    }
+
+    /**
+     * Creates a thread in the active exercise and reconciles local thread state.
+     *
+     * @param thread The thread payload.
+     * @param onSuccess Callback invoked only after successful backend persistence.
+     */
+    createThreadInContext(thread: CreateCommentThread, onSuccess?: ReviewCommentSuccessCallback): void {
+        const exerciseId = this.activeExerciseId;
+        if (!exerciseId) {
+            return;
+        }
+        this.createThread(exerciseId, thread).subscribe({
+            next: (response) => {
+                const createdThread = response.body;
+                if (!createdThread?.id) {
+                    return;
+                }
+                const normalizedThread: CommentThread = createdThread.comments ? createdThread : { ...createdThread, comments: [] };
+                this.threads.update((threads) => this.appendThreadToThreads(threads, normalizedThread));
+                onSuccess?.();
+            },
+            error: () => this.alertService.error('artemisApp.review.saveFailed'),
+        });
+    }
+
+    /**
+     * Deletes a comment in the active exercise and reconciles local thread state.
+     *
+     * @param commentId The comment id to delete.
+     */
+    deleteCommentInContext(commentId: number): void {
+        const exerciseId = this.activeExerciseId;
+        if (!exerciseId) {
+            return;
+        }
+        this.deleteComment(exerciseId, commentId).subscribe({
+            next: () => this.threads.update((threads) => this.removeCommentFromThreads(threads, commentId)),
+            error: () => this.alertService.error('artemisApp.review.deleteFailed'),
+        });
+    }
+
+    /**
+     * Creates a reply in the active exercise and reconciles local thread state.
+     *
+     * @param threadId The target thread id.
+     * @param comment The reply payload.
+     * @param onSuccess Callback invoked only after successful backend persistence.
+     */
+    createReplyInContext(threadId: number, comment: CreateComment, onSuccess?: ReviewCommentSuccessCallback): void {
+        const exerciseId = this.activeExerciseId;
+        if (!exerciseId) {
+            return;
+        }
+        this.createUserComment(exerciseId, threadId, comment).subscribe({
+            next: (response) => {
+                const createdComment = response.body;
+                if (!createdComment) {
+                    return;
+                }
+                this.threads.update((threads) => this.appendCommentToThreads(threads, createdComment));
+                onSuccess?.();
+            },
+            error: () => this.alertService.error('artemisApp.review.saveFailed'),
+        });
+    }
+
+    /**
+     * Updates a comment in the active exercise and reconciles local thread state.
+     *
+     * @param commentId The comment id to update.
+     * @param content The updated content payload.
+     * @param onSuccess Callback invoked only after successful backend persistence.
+     */
+    updateCommentInContext(commentId: number, content: UpdateCommentContent, onSuccess?: ReviewCommentSuccessCallback): void {
+        const exerciseId = this.activeExerciseId;
+        if (!exerciseId) {
+            return;
+        }
+        this.updateUserCommentContent(exerciseId, commentId, content).subscribe({
+            next: (response) => {
+                const updatedComment = response.body;
+                if (!updatedComment) {
+                    return;
+                }
+                this.threads.update((threads) => this.updateCommentInThreads(threads, updatedComment));
+                onSuccess?.();
+            },
+            error: () => this.alertService.error('artemisApp.review.saveFailed'),
+        });
+    }
+
+    /**
+     * Toggles thread resolved state in the active exercise and reconciles local thread state.
+     *
+     * @param threadId The thread id.
+     * @param resolved The desired resolved state.
+     */
+    toggleResolvedInContext(threadId: number, resolved: boolean): void {
+        const exerciseId = this.activeExerciseId;
+        if (!exerciseId) {
+            return;
+        }
+        this.updateThreadResolvedState(exerciseId, threadId, resolved).subscribe({
+            next: (response) => {
+                const updatedThread = response.body;
+                if (!updatedThread?.id) {
+                    return;
+                }
+                this.threads.update((threads) => this.replaceThreadInThreads(threads, updatedThread));
+            },
+            error: () => this.alertService.error('artemisApp.review.resolveFailed'),
+        });
+    }
 
     /**
      * Creates a new review comment thread.

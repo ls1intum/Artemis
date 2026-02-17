@@ -8,11 +8,12 @@ import { MenuModule } from 'primeng/menu';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faEllipsisVertical, faPen, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { Comment, CommentType, CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
+import { Comment, CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContent } from 'app/exercise/shared/entities/review/comment-content.model';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs/operators';
+import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 
 @Component({
     selector: 'jhi-review-comment-thread-widget',
@@ -28,10 +29,6 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     readonly initialCollapsed = input<boolean>(false);
     readonly showLocationWarning = input<boolean>(false);
 
-    readonly onDelete = output<number>();
-    readonly onReply = output<CreateComment>();
-    readonly onUpdate = output<{ commentId: number; content: UpdateCommentContent }>();
-    readonly onToggleResolved = output<boolean>();
     readonly onToggleCollapse = output<boolean>();
 
     replyText = '';
@@ -49,6 +46,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     private readonly destroyed$ = new Subject<void>();
     private readonly translateService = inject(TranslateService);
     private readonly changeDetectorRef = inject(ChangeDetectorRef);
+    private readonly reviewCommentService = inject(ExerciseReviewCommentService);
     readonly renderedComments = computed(() => {
         return this.orderedComments().map((comment) => ({
             comment,
@@ -59,12 +57,12 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     });
 
     /**
-     * Emits a delete event for the given comment id.
+     * Deletes the given comment via the review comment service.
      *
      * @param commentId The id of the comment to delete.
      */
     deleteComment(commentId: number): void {
-        this.onDelete.emit(commentId);
+        this.reviewCommentService.deleteCommentInContext(commentId);
     }
 
     /**
@@ -91,7 +89,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Saves the edited comment text when non-empty and emits an update event.
+     * Saves the edited comment text when non-empty.
      */
     saveEditing(): void {
         const id = this.editingCommentId;
@@ -99,20 +97,20 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         if (id === undefined || !trimmed || this.editingCommentType !== CommentType.USER) {
             return;
         }
-        this.onUpdate.emit({ commentId: id, content: { contentType: 'USER', text: trimmed } });
-        this.cancelEditing();
+        this.reviewCommentService.updateCommentInContext(id, { contentType: 'USER', text: trimmed }, () => this.cancelEditing());
     }
 
     /**
-     * Emits a reply event with trimmed text and clears the reply field.
+     * Creates a reply with trimmed text and clears the reply field.
      */
     submitReply(): void {
         const trimmed = this.replyText.trim();
         if (!trimmed) {
             return;
         }
-        this.onReply.emit({ contentType: 'USER', text: trimmed });
-        this.replyText = '';
+        this.reviewCommentService.createReplyInContext(this.thread().id, { contentType: 'USER', text: trimmed }, () => {
+            this.replyText = '';
+        });
     }
 
     /**
@@ -121,7 +119,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     toggleResolved(): void {
         const thread = this.thread();
         const nextResolved = !thread.resolved;
-        this.onToggleResolved.emit(nextResolved);
+        this.reviewCommentService.toggleResolvedInContext(thread.id, nextResolved);
         if (nextResolved) {
             this.showThreadBody = false;
             this.onToggleCollapse.emit(true);

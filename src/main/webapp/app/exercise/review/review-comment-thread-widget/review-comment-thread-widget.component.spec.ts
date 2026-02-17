@@ -5,16 +5,28 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 
 describe('ReviewCommentThreadWidgetComponent', () => {
     setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ReviewCommentThreadWidgetComponent>;
     let comp: ReviewCommentThreadWidgetComponent;
+    let reviewCommentService: any;
 
     beforeEach(async () => {
+        reviewCommentService = {
+            deleteCommentInContext: vi.fn(),
+            createReplyInContext: vi.fn(),
+            updateCommentInContext: vi.fn(),
+            toggleResolvedInContext: vi.fn(),
+        };
+
         await TestBed.configureTestingModule({
             imports: [ReviewCommentThreadWidgetComponent],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ExerciseReviewCommentService, useValue: reviewCommentService },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ReviewCommentThreadWidgetComponent);
@@ -34,82 +46,85 @@ describe('ReviewCommentThreadWidgetComponent', () => {
     });
 
     it('should emit delete on deleteComment', () => {
-        const deleteSpy = vi.fn();
-        comp.onDelete.subscribe(deleteSpy);
-
         comp.deleteComment(5);
-        expect(deleteSpy).toHaveBeenCalledWith(5);
+        expect(reviewCommentService.deleteCommentInContext).toHaveBeenCalledWith(5);
     });
 
-    it('should emit update on saveEditing and clear editing state', () => {
-        const updateSpy = vi.fn();
-        comp.onUpdate.subscribe(updateSpy);
-
+    it('should update comment on saveEditing and clear editing state', () => {
+        reviewCommentService.updateCommentInContext.mockImplementation((_id: number, _content: any, onSuccess?: () => void) => onSuccess?.());
         comp.editingCommentId = 7;
         comp.editingCommentType = CommentType.USER;
         comp.editText = '  updated  ';
         comp.saveEditing();
 
-        expect(updateSpy).toHaveBeenCalledWith({ commentId: 7, content: { contentType: 'USER', text: 'updated' } });
+        expect(reviewCommentService.updateCommentInContext).toHaveBeenCalledWith(7, { contentType: 'USER', text: 'updated' }, expect.any(Function));
         expect(comp.editingCommentId).toBeUndefined();
         expect(comp.editText).toBe('');
     });
 
     it('should not emit update when edit text is empty', () => {
-        const updateSpy = vi.fn();
-        comp.onUpdate.subscribe(updateSpy);
-
         comp.editingCommentId = 4;
         comp.editingCommentType = CommentType.USER;
         comp.editText = '   ';
         comp.saveEditing();
 
-        expect(updateSpy).not.toHaveBeenCalled();
+        expect(reviewCommentService.updateCommentInContext).not.toHaveBeenCalled();
     });
 
     it('should not emit update when editing comment type is not USER', () => {
-        const updateSpy = vi.fn();
-        comp.onUpdate.subscribe(updateSpy);
-
         comp.editingCommentId = 4;
         comp.editingCommentType = CommentType.CONSISTENCY_CHECK;
         comp.editText = 'updated';
         comp.saveEditing();
 
-        expect(updateSpy).not.toHaveBeenCalled();
+        expect(reviewCommentService.updateCommentInContext).not.toHaveBeenCalled();
     });
 
-    it('should emit reply and clear reply text', () => {
-        const replySpy = vi.fn();
-        comp.onReply.subscribe(replySpy);
-
+    it('should create reply and clear reply text', () => {
+        reviewCommentService.createReplyInContext.mockImplementation((_threadId: number, _comment: any, onSuccess?: () => void) => onSuccess?.());
         comp.replyText = '  reply  ';
         comp.submitReply();
 
-        expect(replySpy).toHaveBeenCalledWith({ contentType: 'USER', text: 'reply' });
+        expect(reviewCommentService.createReplyInContext).toHaveBeenCalledWith(1, { contentType: 'USER', text: 'reply' }, expect.any(Function));
         expect(comp.replyText).toBe('');
     });
 
     it('should not emit reply when reply text is empty', () => {
-        const replySpy = vi.fn();
-        comp.onReply.subscribe(replySpy);
-
         comp.replyText = '   ';
         comp.submitReply();
 
-        expect(replySpy).not.toHaveBeenCalled();
+        expect(reviewCommentService.createReplyInContext).not.toHaveBeenCalled();
+    });
+
+    it('should keep edit text when update is not confirmed', () => {
+        comp.editingCommentId = 7;
+        comp.editingCommentType = CommentType.USER;
+        comp.editText = 'updated';
+
+        comp.saveEditing();
+
+        expect(reviewCommentService.updateCommentInContext).toHaveBeenCalledWith(7, { contentType: 'USER', text: 'updated' }, expect.any(Function));
+        expect(comp.editingCommentId).toBe(7);
+        expect(comp.editText).toBe('updated');
+    });
+
+    it('should keep reply text when reply creation is not confirmed', () => {
+        comp.replyText = 'reply';
+
+        comp.submitReply();
+
+        expect(reviewCommentService.createReplyInContext).toHaveBeenCalledWith(1, { contentType: 'USER', text: 'reply' }, expect.any(Function));
+        expect(comp.replyText).toBe('reply');
     });
 
     it('should toggle resolved and collapse when resolving', () => {
-        const resolvedSpy = vi.fn();
         const collapseSpy = vi.fn();
-        comp.onToggleResolved.subscribe(resolvedSpy);
         comp.onToggleCollapse.subscribe(collapseSpy);
         fixture.componentRef.setInput('thread', { id: 1, resolved: false } as any);
 
         comp.toggleResolved();
 
-        expect(resolvedSpy).toHaveBeenCalledWith(true);
+        expect(reviewCommentService.toggleResolvedInContext).toHaveBeenCalledWith(1, true);
         expect(comp.showThreadBody).toBe(false);
         expect(collapseSpy).toHaveBeenCalledWith(true);
     });
