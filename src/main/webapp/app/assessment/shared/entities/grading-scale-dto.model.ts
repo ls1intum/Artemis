@@ -38,8 +38,8 @@ export function toGradingScaleDTO(entity?: GradingScale): GradingScaleDTO {
         gradeType: entity.gradeType,
         gradeSteps: entity.gradeSteps ?? [],
         maxPoints: entity.exam?.examMaxPoints ?? entity.course?.maxPoints ?? 0,
-        plagiarismGrade: entity.plagiarismGrade ?? '',
-        noParticipationGrade: entity.noParticipationGrade ?? '',
+        plagiarismGrade: entity.plagiarismGrade ?? GradingScale.DEFAULT_PLAGIARISM_GRADE,
+        noParticipationGrade: entity.noParticipationGrade ?? GradingScale.DEFAULT_NO_PARTICIPATION_GRADE,
         presentationsNumber: entity.presentationsNumber,
         presentationsWeight: entity.presentationsWeight,
     };

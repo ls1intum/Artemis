@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 import org.jspecify.annotations.Nullable;
@@ -35,7 +36,7 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record GradingScaleRequestDTO(@NotNull GradeType gradeType, @Nullable BonusStrategy bonusStrategy, @Nullable @Size(max = 100) String plagiarismGrade,
         @Nullable @Size(max = 100) String noParticipationGrade, @Nullable Integer presentationsNumber, @Nullable Double presentationsWeight, @Nullable Set<GradeStepDTO> gradeSteps,
-        @Nullable Integer courseMaxPoints, @Nullable Integer coursePresentationScore, @Nullable Integer examMaxPoints) {
+        @Nullable @Positive Integer courseMaxPoints, @Nullable Integer coursePresentationScore, @Nullable @Positive Integer examMaxPoints) {
 
     /**
      * Returns the grade steps, defaulting to an empty set if null.

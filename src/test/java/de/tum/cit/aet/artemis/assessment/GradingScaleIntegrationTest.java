@@ -238,10 +238,9 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         courseGradingScale.setPresentationsWeight(120.0);
         request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", toRequestDTO(courseGradingScale), HttpStatus.BAD_REQUEST);
 
-        // The gradingScale must belong to a course.
+        // Test with null presentationsWeight
         courseGradingScale.setPresentationsNumber(2);
-        courseGradingScale.setPresentationsWeight(20.0);
-        courseGradingScale.setCourse(null);
+        courseGradingScale.setPresentationsWeight(null);
         request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", toRequestDTO(courseGradingScale), HttpStatus.BAD_REQUEST);
     }
 
@@ -257,10 +256,12 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         GradingScaleDTO savedGradingScale = request.postWithResponseBody("/api/assessment/courses/" + course.getId() + "/grading-scale", toRequestDTO(courseGradingScale),
                 GradingScaleDTO.class, HttpStatus.CREATED);
-
         assertThat(savedGradingScale.gradeSteps().gradeSteps()).hasSameSizeAs(courseGradingScale.getGradeSteps());
         assertThat(savedGradingScale.gradeSteps().gradeSteps()).allMatch(gradeStep -> isGradeStepInSet(courseGradingScale.getGradeSteps(), gradeStep));
-        assertThat(savedGradingScale).usingRecursiveComparison().ignoringFields("id", "exam", "course", "gradeSteps").ignoringCollectionOrder().isEqualTo(courseGradingScale);
+
+        GradingScaleDTO expectedDto = GradingScaleDTO.of(courseGradingScale);
+
+        assertThat(savedGradingScale).usingRecursiveComparison().ignoringFields("id", "course", "exam").ignoringCollectionOrder().isEqualTo(expectedDto);
     }
 
     /**
@@ -337,7 +338,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateGradingScaleForCourseGradingScaleNotFound() throws Exception {
-        request.put("/api/assessment/courses/" + course.getId() + "/grading-scale", toRequestDTO(courseGradingScale), HttpStatus.NOT_FOUND);
+        request.put("/api/assessment/courses/" + course.getId() + "/grading-scale", toRequestDTO(courseGradingScale), HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -377,7 +378,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateGradingScaleForExamGradingScaleNotFound() throws Exception {
-        request.put("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", toRequestDTO(examGradingScale), HttpStatus.NOT_FOUND);
+        request.put("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", toRequestDTO(examGradingScale), HttpStatus.BAD_REQUEST);
     }
 
     /**

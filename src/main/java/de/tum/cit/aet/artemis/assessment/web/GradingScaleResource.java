@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Objects;
 import java.util.Optional;
 
 import jakarta.validation.Valid;
@@ -24,7 +23,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.assessment.domain.Bonus;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.dto.GradingScaleDTO;
 import de.tum.cit.aet.artemis.assessment.dto.GradingScaleRequestDTO;
@@ -163,7 +161,7 @@ public class GradingScaleResource {
     }
 
     /**
-     * POST /courses/{courseId}/exams/{examId}grading-scale : Create grading scale for exam
+     * POST /courses/{courseId}/exams/{examId}/grading-scale : Create grading scale for exam
      *
      * @param courseId        the course to which the exam belongs
      * @param examId          the exam to which the grading scale belongs
@@ -344,36 +342,6 @@ public class GradingScaleResource {
         return course;
     }
 
-    private GradingScale from(GradingScaleDTO dto) {
-        Objects.requireNonNull(dto, "gradingScale DTO must exist");
-
-        GradingScale scale = getGradingScale(dto);
-        for (GradingScaleDTO.BonusDTO bonusDTO : dto.bonusFrom()) {
-            Bonus bonus = new Bonus();
-            bonus.setWeight(bonusDTO.weight());
-
-            GradingScale source = gradingScaleRepository.findByIdElseThrow(bonusDTO.sourceGradingScaleId());
-
-            bonus.setSourceGradingScale(source);
-            bonus.setBonusToGradingScale(scale);
-
-            scale.addBonusFrom(bonus);
-        }
-        return scale;
-    }
-
-    private static GradingScale getGradingScale(GradingScaleDTO dto) {
-        GradingScale scale = new GradingScale();
-        scale.setGradeType(dto.gradeSteps().gradeType());
-        scale.setBonusStrategy(dto.bonusStrategy());
-        scale.setPlagiarismGrade(dto.gradeSteps().plagiarismGrade());
-        scale.setNoParticipationGrade(dto.gradeSteps().noParticipationGrade());
-        scale.setPresentationsNumber(dto.gradeSteps().presentationsNumber());
-        scale.setPresentationsWeight(dto.gradeSteps().presentationsWeight());
-        scale.setGradeSteps(dto.gradeSteps().gradeSteps());
-        return scale;
-    }
-
     private void validateGradingScaleForCreate(Optional<GradingScale> existingGradingScale, GradingScaleRequestDTO dto) {
         if (existingGradingScale.isPresent()) {
             throw new BadRequestAlertException("A grading scale already exists", ENTITY_NAME, "gradingScaleAlreadyExists");
@@ -417,8 +385,8 @@ public class GradingScaleResource {
             return;
         }
 
-        // If either value was provided in the DTO, we need to save
-        if (dto.courseMaxPoints() != null || dto.coursePresentationScore() != null) {
+        if ((dto.courseMaxPoints() != null && !dto.courseMaxPoints().equals(course.getMaxPoints()))
+                || (dto.coursePresentationScore() != null && !dto.coursePresentationScore().equals(course.getPresentationScore()))) {
             courseRepository.save(course);
         }
     }

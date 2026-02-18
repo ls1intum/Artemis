@@ -31,7 +31,7 @@ export interface GradeStepDTO {
 /**
  * Converts a GradingScale to an update DTO for sending to the server.
  */
-export function toUpdateDTO(gradingScale: GradingScale): GradingScaleRequestDTO {
+export function toRequestDTO(gradingScale: GradingScale): GradingScaleRequestDTO {
     return {
         gradeType: gradingScale.gradeType,
         bonusStrategy: gradingScale.bonusStrategy,
