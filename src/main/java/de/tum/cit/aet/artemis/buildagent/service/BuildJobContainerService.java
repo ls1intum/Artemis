@@ -94,10 +94,19 @@ public class BuildJobContainerService {
     private static final Logger log = LoggerFactory.getLogger(BuildJobContainerService.class);
 
     /**
-     * Timeout in minutes for Docker exec commands. If a command does not complete within this time,
-     * the build job thread is unblocked and an exception is thrown to prevent permanently stuck threads.
+     * Timeout in minutes for Docker exec setup commands (mkdir, chmod, cp, etc.).
+     * If a setup command does not complete within this time, an exception is thrown.
      */
-    private static final int DOCKER_EXEC_TIMEOUT_MINUTES = 5;
+    private static final int DOCKER_SETUP_TIMEOUT_MINUTES = 5;
+
+    /**
+     * Timeout in minutes for the build script execution. This is intentionally longer than setup commands
+     * because build scripts may legitimately run for extended periods. The actual build timeout is enforced
+     * by the outer {@code future.get(buildJobTimeoutSeconds, ...)} in {@link BuildJobManagementService};
+     * this timeout serves only as a safety net to prevent permanently stuck threads if the outer timeout
+     * mechanism fails.
+     */
+    private static final int DOCKER_BUILD_SCRIPT_TIMEOUT_MINUTES = 20;
 
     /**
      * Subdirectory within the container's working directory where repositories are placed during build setup.
@@ -259,7 +268,7 @@ public class BuildJobContainerService {
         // The build script is executed as an additional process inside the container (docker exec), independent of the container's main process.
         // The call blocks until the script finishes, so it is safe to extract results after it returns.
         // forceRoot=false: the build script runs as the container's default user (not root) for security.
-        executeDockerCommand(containerId, buildJobId, false, "bash", LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/script.sh");
+        executeDockerCommand(containerId, buildJobId, false, DOCKER_BUILD_SCRIPT_TIMEOUT_MINUTES, "bash", LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/script.sh");
     }
 
     /**
@@ -880,6 +889,10 @@ public class BuildJobContainerService {
      * @throws LocalCIException if the command execution fails or is interrupted
      */
     private void executeDockerCommand(String containerId, String buildJobId, boolean forceRoot, String... command) {
+        executeDockerCommand(containerId, buildJobId, forceRoot, DOCKER_SETUP_TIMEOUT_MINUTES, command);
+    }
+
+    private void executeDockerCommand(String containerId, String buildJobId, boolean forceRoot, int timeoutMinutes, String... command) {
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
         try (var execCreateCommandTemp = dockerClient.execCreateCmd(containerId).withAttachStdout(true).withAttachStderr(true).withCmd(command)) {
             final var execCreateCommand = forceRoot ? execCreateCommandTemp.withUser("root") : execCreateCommandTemp;
@@ -930,9 +943,9 @@ public class BuildJobContainerService {
             }
 
             try {
-                boolean completed = latch.await(DOCKER_EXEC_TIMEOUT_MINUTES, TimeUnit.MINUTES);
+                boolean completed = latch.await(timeoutMinutes, TimeUnit.MINUTES);
                 if (!completed) {
-                    throw new LocalCIException("Docker command timed out after " + DOCKER_EXEC_TIMEOUT_MINUTES + " minutes: " + String.join(" ", command));
+                    throw new LocalCIException("Docker command timed out after " + timeoutMinutes + " minutes: " + String.join(" ", command));
                 }
             }
             catch (InterruptedException e) {
