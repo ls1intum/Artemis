@@ -105,7 +105,7 @@ const SEVERITY_ORDER = {
 })
 export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent implements OnDestroy {
     @ViewChild('codeGenerationRunningModal', { static: true }) codeGenerationRunningModal: TemplateRef<unknown>;
-    @ViewChild(UpdatingResultComponent, { static: false }) resultComp: UpdatingResultComponent;
+    readonly resultComp = viewChild(UpdatingResultComponent);
     readonly editableInstructions = viewChild(ProgrammingExerciseEditableInstructionComponent);
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
