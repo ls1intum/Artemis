@@ -12,12 +12,14 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -162,6 +164,9 @@ public class ExerciseVersionService {
             });
         }
         catch (Exception e) {
+            // Intentionally swallowed: exercise version creation is a non-critical side effect
+            // of saving an exercise. Failures here (e.g. serialization issues, DB errors) must
+            // not prevent the exercise save itself from succeeding.
             log.error("Error creating exercise version for exercise with id {}: {}", targetExercise.getId(), e.getMessage(), e);
         }
     }
@@ -175,6 +180,7 @@ public class ExerciseVersionService {
      *         eagerly with versioned fields,
      *         or null if the exercise does not exist
      */
+    @Nullable
     private Exercise fetchExerciseEagerly(Exercise exercise) {
         if (exercise == null || exercise.getId() == null) {
             log.error("fetchExerciseEagerly for versioning is called with null");
@@ -189,7 +195,7 @@ public class ExerciseVersionService {
             case FILE_UPLOAD -> fileUploadApi.flatMap(api -> api.findForVersioningById(exercise.getId())).orElse(null);
         };
         if (fetched != null) {
-            var channel = channelRepository.findChannelByExerciseId(fetched.getId());
+            Channel channel = channelRepository.findChannelByExerciseId(fetched.getId());
             if (channel != null) {
                 fetched.setChannelName(channel.getName());
             }
@@ -221,6 +227,8 @@ public class ExerciseVersionService {
         ExerciseEditorSyncTarget target = null;
         Long auxiliaryRepositoryId = null;
 
+        // Repository commits cannot change simultaneously because each commit triggers a separate
+        // version creation. The if-else chain intentionally detects only the first changed repository.
         if (newProgrammingData != null && previousProgrammingData != null) {
             if (participationCommitChanged(previousProgrammingData.templateParticipation(), newProgrammingData.templateParticipation())) {
                 target = ExerciseEditorSyncTarget.TEMPLATE_REPOSITORY;
@@ -237,7 +245,7 @@ public class ExerciseVersionService {
                                 ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO::commitId));
                 for (ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO auxiliary : Optional.ofNullable(newProgrammingData.auxiliaryRepositories())
                         .orElseGet(List::of)) {
-                    var previousCommitId = previousAuxiliaries.get(auxiliary.id());
+                    String previousCommitId = previousAuxiliaries.get(auxiliary.id());
                     if (!Objects.equals(previousCommitId, auxiliary.commitId())) {
                         target = ExerciseEditorSyncTarget.AUXILIARY_REPOSITORY;
                         auxiliaryRepositoryId = auxiliary.id();
@@ -266,6 +274,8 @@ public class ExerciseVersionService {
      * <p>
      * IMPORTANT: When adding new fields to {@link ExerciseSnapshotDTO}, a corresponding
      * {@code addIfChanged} call must be added here so that metadata sync can detect the change.
+     * {@code ExerciseVersionServiceTest.testCollectChangedFieldsCoversAllExerciseSnapshotFields}
+     * will fail if a new field is not accounted for.
      *
      * @param newSnapshot      the new snapshot
      * @param previousSnapshot the previous snapshot
@@ -327,33 +337,27 @@ public class ExerciseVersionService {
         addIfChanged(changedFields, "programmingData.allowOnlineIde", newData, previousData, ProgrammingExerciseSnapshotDTO::allowOnlineIde);
         addIfChanged(changedFields, "programmingData.maxStaticCodeAnalysisPenalty", newData, previousData, ProgrammingExerciseSnapshotDTO::maxStaticCodeAnalysisPenalty);
         addIfChanged(changedFields, "programmingData.showTestNamesToStudents", newData, previousData, ProgrammingExerciseSnapshotDTO::showTestNamesToStudents);
-        addIfChanged(changedFields, "programmingData.auxiliaryRepositories", newData, previousData, this::extractAuxiliaryRepositoryMetadata);
+        // Uses the full DTO including commitId and repositoryUri. Git commits may trigger a
+        // false metadata change detection here, but this is harmless: the client-side handler
+        // compares only the editable fields (name, checkoutDirectory, description) so no
+        // conflict will be raised in the UI.
+        addIfChanged(changedFields, "programmingData.auxiliaryRepositories", newData, previousData, ProgrammingExerciseSnapshotDTO::auxiliaryRepositories);
         addIfChanged(changedFields, "programmingData.buildAndTestStudentSubmissionsAfterDueDate", newData, previousData,
                 ProgrammingExerciseSnapshotDTO::buildAndTestStudentSubmissionsAfterDueDate);
         addIfChanged(changedFields, "programmingData.releaseTestsWithExampleSolution", newData, previousData, ProgrammingExerciseSnapshotDTO::releaseTestsWithExampleSolution);
         addIfChanged(changedFields, "programmingData.buildConfig", newData, previousData, ProgrammingExerciseSnapshotDTO::buildConfig);
     }
 
-    private List<AuxiliaryRepositoryMetadata> extractAuxiliaryRepositoryMetadata(ProgrammingExerciseSnapshotDTO snapshot) {
-        var auxiliaryRepositories = snapshot.auxiliaryRepositories();
-        if (auxiliaryRepositories == null) {
-            return null;
-        }
-        return auxiliaryRepositories.stream()
-                .map((repository) -> new AuxiliaryRepositoryMetadata(repository.id(), repository.name(), repository.checkoutDirectory(), repository.description()))
-                .sorted((left, right) -> Long.compare(left.id(), right.id())).toList();
-    }
-
-    private record AuxiliaryRepositoryMetadata(long id, String name, String checkoutDirectory, String description) {
-    }
-
     /**
      * Adds the field identifier to the set if the values differ.
      *
-     * @param changedFields the set to update
-     * @param field         the field identifier
-     * @param newValue      the new value
-     * @param previousValue the previous value
+     * @param <T>              the snapshot type
+     * @param <V>              the field value type
+     * @param changedFields    the set to update
+     * @param field            the field identifier
+     * @param newSnapshot      the new snapshot
+     * @param previousSnapshot the previous snapshot
+     * @param fieldAccessor    extracts the field value from a snapshot
      */
     private <T, V> void addIfChanged(Set<String> changedFields, String field, T newSnapshot, T previousSnapshot, Function<T, V> fieldAccessor) {
         if (!Objects.equals(fieldAccessor.apply(newSnapshot), fieldAccessor.apply(previousSnapshot))) {

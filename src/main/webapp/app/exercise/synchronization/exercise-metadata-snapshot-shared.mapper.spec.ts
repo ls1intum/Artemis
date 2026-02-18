@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Competency, CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { toCompetencyLinks, toExerciseCategories, toTeamAssignmentConfig } from 'app/exercise/synchronization/exercise-metadata-snapshot-shared.mapper';
+import { toCompetencyLinks, toTeamAssignmentConfig } from 'app/exercise/synchronization/exercise-metadata-snapshot-shared.mapper';
 
 import { CompetencyExerciseLinkSnapshotDTO, TeamAssignmentConfigSnapshot } from 'app/exercise/synchronization/exercise-metadata-snapshot.dto';
 
@@ -22,29 +22,6 @@ describe('ExerciseMetadataSnapshotSharedMapper', () => {
         expect(config?.id).toBe(9);
         expect(config?.minTeamSize).toBe(2);
         expect(config?.maxTeamSize).toBe(5);
-    });
-
-    it('returns undefined when categories are missing or empty', () => {
-        expect(toExerciseCategories(undefined)).toBeUndefined();
-        expect(toExerciseCategories([])).toBeUndefined();
-    });
-
-    it('maps exercise categories to entities', () => {
-        const categories = toExerciseCategories(['alpha', 'beta']);
-
-        expect(categories?.length).toBe(2);
-        expect(categories?.[0].category).toBe('alpha');
-        expect(categories?.[1].category).toBe('beta');
-    });
-
-    it('maps JSON-encoded exercise categories and keeps their color', () => {
-        const categories = toExerciseCategories(['{"category":"alpha","color":"#123456"}', '{"category":"beta","color":"#abcdef"}']);
-
-        expect(categories?.length).toBe(2);
-        expect(categories?.[0].category).toBe('alpha');
-        expect(categories?.[0].color).toBe('#123456');
-        expect(categories?.[1].category).toBe('beta');
-        expect(categories?.[1].color).toBe('#abcdef');
     });
 
     it('returns undefined when competency links snapshot is missing', () => {

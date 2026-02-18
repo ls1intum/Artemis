@@ -18,9 +18,10 @@ import {
     ExerciseEditorSyncTarget,
     ExerciseNewVersionAlertEvent,
 } from 'app/exercise/services/exercise-editor-sync.service';
-import { ExerciseMetadataSyncContext, ExerciseMetadataSyncService } from 'app/exercise/services/exercise-metadata-sync.service';
+import { ExerciseMetadataSyncContext, ExerciseMetadataSyncService, metadataValuesEqual } from 'app/exercise/services/exercise-metadata-sync.service';
 import { ExerciseSnapshotDTO } from 'app/exercise/synchronization/exercise-metadata-snapshot.dto';
 import { ExerciseMetadataConflictModalResult } from 'app/exercise/synchronization/exercise-metadata-conflict-modal.component';
+import { AlertService } from 'app/shared/service/alert.service';
 
 /**
  * Creates a mock DynamicDialogRef whose onClose Subject can be resolved or completed externally.
@@ -38,6 +39,7 @@ describe('ExerciseMetadataSyncService', () => {
     let syncEvents$: Subject<ExerciseEditorSyncEvent>;
     let exerciseEditorSyncService: Mocked<ExerciseEditorSyncService>;
     let dialogService: { open: ReturnType<typeof vi.fn> };
+    let alertService: { warning: ReturnType<typeof vi.fn> };
 
     let currentExercise: ProgrammingExercise;
     let baselineExercise: ProgrammingExercise;
@@ -62,6 +64,11 @@ describe('ExerciseMetadataSyncService', () => {
         req.flush(snapshot);
     };
 
+    // Multiple microtask ticks are needed because the processing chain is composed of
+    // chained awaits and signal updates: enqueueAlert → processQueue (reads signal) →
+    // processAlert (await fetchSnapshot → collectConflicts → applyChanges) → finally
+    // (updates signal, recurses). Each `await` and each signal read/write yields to the
+    // microtask queue, so 6 iterations provides enough headroom for the deepest chain.
     const flushPromises = async (iterations = 6) => {
         for (let i = 0; i < iterations; i++) {
             await Promise.resolve();
@@ -74,6 +81,9 @@ describe('ExerciseMetadataSyncService', () => {
         const defaultMock = createMockDialogRef();
         dialogService = {
             open: vi.fn().mockReturnValue(defaultMock.ref),
+        };
+        alertService = {
+            warning: vi.fn(),
         };
         // Resolve the default mock immediately
         setTimeout(() => defaultMock.onClose.next({ decisions: [] } satisfies ExerciseMetadataConflictModalResult), 0);
@@ -91,6 +101,7 @@ describe('ExerciseMetadataSyncService', () => {
                     },
                 },
                 { provide: DialogService, useValue: dialogService },
+                { provide: AlertService, useValue: alertService },
             ],
         });
 
@@ -354,7 +365,7 @@ describe('ExerciseMetadataSyncService', () => {
         expect(dialogService.open).not.toHaveBeenCalled();
     });
 
-    it('continues queue processing after a failed snapshot fetch', async () => {
+    it('continues queue processing after a failed snapshot fetch and shows a warning', async () => {
         service.initialize(context);
 
         emitAlert(createAlert(106, ['title']));
@@ -364,11 +375,26 @@ describe('ExerciseMetadataSyncService', () => {
         first.flush('network-failure', { status: 500, statusText: 'Server Error' });
         await flushPromises();
 
+        expect(alertService.warning).toHaveBeenCalledWith('artemisApp.exercise.metadataSync.snapshotFetchFailed');
+
         flushSnapshot(1, 107, { id: 1, title: 'incoming-after-failure' });
         await flushPromises();
 
         expect(currentExercise.title).toBe('incoming-after-failure');
         expect(baselineExercise.title).toBe('incoming-after-failure');
+    });
+
+    it('shows warning alert when a single snapshot fetch fails', async () => {
+        service.initialize(context);
+        emitAlert(createAlert(130, ['title']));
+
+        const req = httpMock.expectOne('api/exercise/1/version/130');
+        req.flush('error', { status: 404, statusText: 'Not Found' });
+        await flushPromises();
+
+        expect(alertService.warning).toHaveBeenCalledWith('artemisApp.exercise.metadataSync.snapshotFetchFailed');
+        expect(currentExercise.title).toBe('baseline-title');
+        expect(dialogService.open).not.toHaveBeenCalled();
     });
 
     it('processes queued alerts sequentially while waiting for modal resolution', async () => {
@@ -406,49 +432,122 @@ describe('ExerciseMetadataSyncService', () => {
         expect(baselineExercise.title).toBe('incoming-v109');
     });
 
-    it('returns early when queue processing starts with no pending alerts', () => {
+    it('does not trigger processing when initialized without any alerts', async () => {
         service.initialize(context);
-
-        (service as any).processQueue();
+        await flushPromises();
 
         httpMock.expectNone(() => true);
         expect(dialogService.open).not.toHaveBeenCalled();
     });
 
-    it('returns early from alert processing when context is missing', async () => {
-        await (service as any).processAlert(createAlert(111, ['title']));
+    it('ignores alerts emitted before initialization', async () => {
+        // Service not initialized — emitting directly on the subject should do nothing
+        syncEvents$.next(createAlert(111, ['title']));
+        await flushPromises();
 
         httpMock.expectNone(() => true);
     });
 
-    it('returns undefined when dialog is dismissed without data', async () => {
+    it('ignores conflict decisions for unknown fields via modal resolution', async () => {
+        const resolution: ExerciseMetadataConflictModalResult = {
+            decisions: [
+                { field: 'title', useIncoming: false },
+                { field: 'not.a.handler', useIncoming: true },
+            ],
+        };
         const mock = createMockDialogRef();
         dialogService.open.mockReturnValue(mock.ref);
 
-        const resultPromise = (service as any).openConflictModal([], { login: 'editor' }, 123);
-        mock.onClose.next(undefined);
-        mock.onClose.complete();
-
-        const result = await resultPromise;
-        expect(result).toBeUndefined();
-    });
-
-    it('ignores conflict decisions for unknown fields', () => {
         currentExercise.title = 'local-title';
+        baselineExercise.title = 'baseline-title';
 
-        (service as any).applyConflictResolution(context, { id: 1, title: 'incoming-title' }, { decisions: [{ field: 'not.a.handler', useIncoming: true }] });
+        service.initialize(context);
+        emitAlert(createAlert(111, ['title']));
 
+        flushSnapshot(1, 111, { id: 1, title: 'incoming-title' });
+        await flushPromises();
+
+        mock.onClose.next(resolution);
+        mock.onClose.complete();
+        await flushPromises();
+
+        // 'title' kept local, 'not.a.handler' silently ignored
         expect(currentExercise.title).toBe('local-title');
     });
 
     it('compares dayjs and serialized date values correctly', () => {
-        const leftDayjsRightStringEqual = (service as any).valuesEqual(dayjs('2026-01-01T00:00:00.000Z'), '2026-01-01T00:00:00.000Z');
-        const leftStringRightDayjsEqual = (service as any).valuesEqual('2026-01-01T00:00:00.000Z', dayjs('2026-01-01T00:00:00.000Z'));
-        const invalidNormalizedValue = (service as any).valuesEqual(dayjs('2026-01-01T00:00:00.000Z'), undefined);
+        expect(metadataValuesEqual(dayjs('2026-01-01T00:00:00.000Z'), '2026-01-01T00:00:00.000Z')).toBe(true);
+        expect(metadataValuesEqual('2026-01-01T00:00:00.000Z', dayjs('2026-01-01T00:00:00.000Z'))).toBe(true);
+        expect(metadataValuesEqual(dayjs('2026-01-01T00:00:00.000Z'), undefined)).toBe(false);
+        expect(metadataValuesEqual(undefined, dayjs('2026-01-01T00:00:00.000Z'))).toBe(false);
+        // dayjs('invalid') produces an actually invalid dayjs; dayjs(undefined) returns the current date (valid)
+        expect(metadataValuesEqual(dayjs('invalid'), dayjs('invalid'))).toBe(true);
+        expect(metadataValuesEqual(dayjs('invalid'), undefined)).toBe(true);
+    });
 
-        expect(leftDayjsRightStringEqual).toBe(true);
-        expect(leftStringRightDayjsEqual).toBe(true);
-        expect(invalidNormalizedValue).toBe(false);
+    it('applies snapshot to baseline only for changed fields, leaving others unchanged', async () => {
+        currentExercise.title = 'baseline-title';
+        currentExercise.maxPoints = 10;
+        baselineExercise.title = 'baseline-title';
+        baselineExercise.maxPoints = 10;
+
+        service.initialize(context);
+        // Alert says only 'title' changed, but snapshot also has different maxPoints
+        emitAlert(createAlert(140, ['title']));
+
+        flushSnapshot(1, 140, { id: 1, title: 'incoming-title', maxPoints: 99 });
+        await flushPromises();
+
+        // title was in changedFields → applied to both current and baseline
+        expect(currentExercise.title).toBe('incoming-title');
+        expect(baselineExercise.title).toBe('incoming-title');
+        // maxPoints was NOT in changedFields → unchanged
+        expect(currentExercise.maxPoints).toBe(10);
+        expect(baselineExercise.maxPoints).toBe(10);
+    });
+
+    it('handles destroy during pending snapshot fetch gracefully', async () => {
+        service.initialize(context);
+        emitAlert(createAlert(150, ['title']));
+        await flushPromises(1);
+
+        // HTTP request is in-flight; destroy before flushing the snapshot
+        service.destroy();
+
+        // Cancel the pending request to satisfy httpMock.verify()
+        const pendingReq = httpMock.expectOne('api/exercise/1/version/150');
+        pendingReq.flush('cancelled', { status: 0, statusText: 'Cancelled' });
+        await flushPromises();
+
+        // No modal should have been opened
+        expect(dialogService.open).not.toHaveBeenCalled();
+    });
+
+    it('handles destroy during modal open gracefully', async () => {
+        const mock = createMockDialogRef();
+        dialogService.open.mockReturnValue(mock.ref);
+
+        currentExercise.title = 'local-title';
+        baselineExercise.title = 'baseline-title';
+
+        service.initialize(context);
+        emitAlert(createAlert(151, ['title']));
+
+        flushSnapshot(1, 151, { id: 1, title: 'incoming-title' });
+        await flushPromises();
+
+        expect(dialogService.open).toHaveBeenCalledOnce();
+
+        // Destroy while modal is open
+        service.destroy();
+
+        // Complete the modal — service should handle the resolution gracefully
+        mock.onClose.next({ decisions: [{ field: 'title', useIncoming: true }] });
+        mock.onClose.complete();
+        await flushPromises();
+
+        // Exercise should retain its state since context was destroyed
+        expect(currentExercise.title).toBe('local-title');
     });
 
     it('resolves competency links using current exercise from the handler resolver', async () => {

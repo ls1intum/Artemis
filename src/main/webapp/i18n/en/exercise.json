@@ -236,6 +236,7 @@
                 "incomingValue": "Incoming value",
                 "keepLocal": "Keep my changes",
                 "applySelections": "Apply selections",
+                "snapshotFetchFailed": "Could not fetch the latest exercise version. Please refresh the page to see the most recent changes.",
                 "fields": {
                     "buildConfig": {
                         "sequentialTestRuns": "Sequential test runs",

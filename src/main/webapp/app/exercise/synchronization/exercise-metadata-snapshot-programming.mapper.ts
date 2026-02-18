@@ -1,15 +1,9 @@
-import { LockRepositoryPolicy, SubmissionPenaltyPolicy, SubmissionPolicy, SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 
-import {
-    AuxiliaryRepositorySnapshotDTO,
-    ParticipationSnapshotDTO,
-    ProgrammingExerciseBuildConfigSnapshotDTO,
-    SubmissionPolicySnapshotDTO,
-} from 'app/exercise/synchronization/exercise-metadata-snapshot.dto';
+import { AuxiliaryRepositorySnapshotDTO, ParticipationSnapshotDTO, ProgrammingExerciseBuildConfigSnapshotDTO } from 'app/exercise/synchronization/exercise-metadata-snapshot.dto';
 
 export const toAuxiliaryRepositories = (repositories?: AuxiliaryRepositorySnapshotDTO[]): AuxiliaryRepository[] | undefined => {
     if (!repositories) {
@@ -26,33 +20,8 @@ export const toAuxiliaryRepositories = (repositories?: AuxiliaryRepositorySnapsh
     });
 };
 
-export const toSubmissionPolicy = (snapshot?: SubmissionPolicySnapshotDTO): SubmissionPolicy | undefined => {
-    if (!snapshot) {
-        return undefined;
-    }
-    let policy: SubmissionPolicy;
-    switch (snapshot.type) {
-        case 'SubmissionPenaltyPolicy':
-            policy = new SubmissionPenaltyPolicy();
-            policy.type = SubmissionPolicyType.SUBMISSION_PENALTY;
-            policy.exceedingPenalty = snapshot.exceedingPenalty;
-            break;
-        case 'LockRepositoryPolicy':
-            policy = new LockRepositoryPolicy();
-            policy.type = SubmissionPolicyType.LOCK_REPOSITORY;
-            policy.exceedingPenalty = undefined;
-            break;
-        default:
-            policy = new LockRepositoryPolicy();
-            policy.type = SubmissionPolicyType.LOCK_REPOSITORY;
-            break;
-    }
-    policy.id = snapshot.id;
-    policy.active = snapshot.active;
-    policy.submissionLimit = snapshot.submissionLimit;
-    return policy;
-};
-
+// Note: `branch` is intentionally not mapped — it is not an editable field on the
+// exercise edit page and has no corresponding property on ProgrammingExerciseBuildConfig.
 export const toBuildConfig = (snapshot?: ProgrammingExerciseBuildConfigSnapshotDTO): ProgrammingExerciseBuildConfig | undefined => {
     if (!snapshot) {
         return undefined;

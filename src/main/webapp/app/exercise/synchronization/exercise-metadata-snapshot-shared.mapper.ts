@@ -63,14 +63,6 @@ export const normalizeCategoryArray = (values: unknown[]): ExerciseCategory[] =>
     return values.map(normalizeCategoryEntry).filter((entry): entry is ExerciseCategory => entry !== undefined);
 };
 
-export const toExerciseCategories = (categories?: string[]): ExerciseCategory[] | undefined => {
-    if (!categories || categories.length === 0) {
-        return undefined;
-    }
-    const parsed = normalizeCategoryArray(categories);
-    return parsed.length > 0 ? parsed : undefined;
-};
-
 /**
  * Maps competency link snapshots onto the current exercise's resolved competencies.
  */
@@ -100,6 +92,13 @@ export const toCompetencyLinks = (exercise: Exercise, snapshotLinks: CompetencyE
         }
         const competency = competencyById.get(competencyId);
         if (!competency) {
+            // Competency not found locally — this can happen if another instructor added
+            // a competency that is not yet in the current editor's course data. The link
+            // is intentionally dropped from the resolved result; a page refresh will
+            // resolve it with the latest course competencies. Note: when the user accepts
+            // "incoming" during conflict resolution, this dropped link will be missing
+            // from the applied value — this is an accepted limitation of the current
+            // approach and does not affect the persisted exercise state.
             continue;
         }
         mapped.push(new CompetencyExerciseLink(competency, exercise, link.weight ?? MEDIUM_COMPETENCY_LINK_WEIGHT));

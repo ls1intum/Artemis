@@ -5,6 +5,7 @@ import { DialogService } from 'primeng/dynamicdialog';
 import dayjs from 'dayjs/esm';
 import isEqual from 'lodash-es/isEqual';
 
+import { AlertService } from 'app/shared/service/alert.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import {
     ExerciseEditorSyncEvent,
@@ -45,13 +46,94 @@ interface ConflictCandidate {
  */
 const METADATA_SYNC_EXCLUDED_FIELDS = new Set(['problemStatement']);
 
+/**
+ * Type guard for competency link arrays. This relies on the presence of the `competency`
+ * property, which is specific to `CompetencyExerciseLink` objects in the exercise domain.
+ * It is only called within `metadataValuesEqual` where the values originate from exercise
+ * field handlers, so false positives from unrelated object shapes are not a concern.
+ */
+const isCompetencyLinkArray = (value: unknown): value is Array<{ competency?: { id?: number }; weight?: number }> => {
+    if (!Array.isArray(value) || value.length === 0) {
+        return false;
+    }
+    return value.every((entry) => entry && typeof entry === 'object' && 'competency' in entry);
+};
+
+const normalizeCompetencyLinks = (value: unknown): Array<{ competencyId?: number; weight?: number }> | undefined => {
+    if (!Array.isArray(value)) {
+        return undefined;
+    }
+    const normalized = value
+        .filter((entry) => entry && typeof entry === 'object')
+        .map((entry) => {
+            const link = entry as { competency?: { id?: number }; weight?: number };
+            return {
+                competencyId: link.competency?.id,
+                weight: link.weight,
+            };
+        });
+    return normalized.sort((left, right) => {
+        const leftId = left.competencyId ?? -1;
+        const rightId = right.competencyId ?? -1;
+        if (leftId !== rightId) {
+            return leftId - rightId;
+        }
+        const leftWeight = left.weight ?? -1;
+        const rightWeight = right.weight ?? -1;
+        return leftWeight - rightWeight;
+    });
+};
+
+/**
+ * Compares values including dayjs timestamps with normalized server dates.
+ * Exported for direct testing.
+ */
+export const metadataValuesEqual = (value: unknown, otherValue: unknown): boolean => {
+    // Treat null, undefined, and empty arrays as equivalent absent values
+    // (server may send null or [] while client uses undefined for absent collections)
+    const isAbsent = (v: unknown): boolean => v === undefined || v === null || (Array.isArray(v) && v.length === 0);
+    if (isAbsent(value) && isAbsent(otherValue)) {
+        return true;
+    }
+    if (isCompetencyLinkArray(value) || isCompetencyLinkArray(otherValue)) {
+        return isEqual(normalizeCompetencyLinks(value), normalizeCompetencyLinks(otherValue));
+    }
+    if (dayjs.isDayjs(value) || dayjs.isDayjs(otherValue)) {
+        const normalizedLeft = dayjs.isDayjs(value) ? value : typeof value === 'string' ? dayjs(value) : undefined;
+        const normalizedRight = dayjs.isDayjs(otherValue) ? otherValue : typeof otherValue === 'string' ? dayjs(otherValue) : undefined;
+        const leftValid = normalizedLeft?.isValid() ?? false;
+        const rightValid = normalizedRight?.isValid() ?? false;
+        if (!leftValid || !rightValid) {
+            // Both absent/invalid → equal; one valid and one not → not equal
+            return leftValid === rightValid;
+        }
+        return normalizedLeft!.isSame(normalizedRight!);
+    }
+    return isEqual(value, otherValue);
+};
+
+/**
+ * Synchronizes exercise metadata changes from other editors into the current
+ * exercise editor session.
+ *
+ * This service is intentionally `providedIn: 'root'` (singleton) because it
+ * shares the WebSocket subscription managed by {@link ExerciseEditorSyncService},
+ * which is also root-scoped. Only one exercise can be edited at a time, so the
+ * singleton holds mutable state for the active exercise. Calling {@link initialize}
+ * with a different exercise ID automatically tears down the previous state.
+ *
+ * Consumers MUST call {@link destroy} in their `ngOnDestroy` to clean up
+ * the WebSocket subscription and reset internal state before navigating away.
+ */
 @Injectable({ providedIn: 'root' })
 export class ExerciseMetadataSyncService {
     private readonly exerciseEditorSyncService = inject(ExerciseEditorSyncService);
     private readonly http = inject(HttpClient);
     private readonly dialogService = inject(DialogService);
+    private readonly alertService = inject(AlertService);
 
     private context?: ExerciseMetadataSyncContext<Exercise>;
+    private cachedHandlers?: ExerciseMetadataFieldHandler<Exercise>[];
     private subscriptionActive = false;
     private updateSubscription?: Subscription;
     private readonly pendingAlerts = signal<ExerciseNewVersionAlertEvent[]>([]);
@@ -68,6 +150,7 @@ export class ExerciseMetadataSyncService {
             this.destroy();
         }
         this.context = context as ExerciseMetadataSyncContext<Exercise>;
+        this.cachedHandlers = this.buildHandlers(this.context);
         if (this.subscriptionActive) {
             return;
         }
@@ -77,6 +160,14 @@ export class ExerciseMetadataSyncService {
 
     /**
      * Cleans up the websocket subscription and resets internal state.
+     *
+     * Note: This unconditionally calls `exerciseEditorSyncService.unsubscribe()`
+     * which tears down the shared WebSocket subscription. This is safe because all
+     * services consuming the shared subscription (ExerciseMetadataSyncService,
+     * ProblemStatementSyncService) live in the same exercise editor component and
+     * are always destroyed together. Calling `unsubscribe()` without a prior
+     * `initialize()` is harmless — the shared service treats redundant unsubscribe
+     * calls as no-ops.
      */
     destroy(): void {
         if (this.updateSubscription) {
@@ -87,6 +178,7 @@ export class ExerciseMetadataSyncService {
         this.pendingAlerts.set([]);
         this.processing.set(false);
         this.context = undefined;
+        this.cachedHandlers = undefined;
         this.exerciseEditorSyncService.unsubscribe();
     }
 
@@ -149,10 +241,12 @@ export class ExerciseMetadataSyncService {
             return;
         }
 
-        const handlers = this.getHandlers(context);
+        const handlers = this.getHandlers();
         const changedFields = alert.changedFields ?? [];
         const effectiveFields = changedFields.filter((field) => !METADATA_SYNC_EXCLUDED_FIELDS.has(field));
         if (effectiveFields.length === 0) {
+            // No actionable fields — either changedFields was empty/undefined or all fields
+            // are handled by a separate sync mechanism (e.g. Yjs for problemStatement).
             return;
         }
 
@@ -177,10 +271,10 @@ export class ExerciseMetadataSyncService {
         }
 
         const resolution = await this.openConflictModal(conflicts, alert.author, alert.exerciseVersionId);
-        if (!resolution) {
+        if (!resolution || !this.context) {
             return;
         }
-        this.applyConflictResolution(context, snapshot, resolution);
+        this.applyConflictResolution(context, snapshot, resolution, handlers);
     }
 
     /**
@@ -194,6 +288,7 @@ export class ExerciseMetadataSyncService {
         try {
             return await firstValueFrom(this.http.get<ExerciseSnapshotDTO>(`api/exercise/${exerciseId}/version/${versionId}`));
         } catch {
+            this.alertService.warning('artemisApp.exercise.metadataSync.snapshotFetchFailed');
             return undefined;
         }
     }
@@ -220,10 +315,10 @@ export class ExerciseMetadataSyncService {
             const baselineValue = handler.getBaselineValue(baselineExercise);
             const incomingValue = handler.getIncomingValue(snapshot);
 
-            const hasLocalChange = !this.valuesEqual(currentValue, baselineValue);
-            const hasIncomingChange = !this.valuesEqual(incomingValue, baselineValue);
+            const hasLocalChange = !metadataValuesEqual(currentValue, baselineValue);
+            const hasIncomingChange = !metadataValuesEqual(incomingValue, baselineValue);
 
-            if (hasLocalChange && hasIncomingChange && !this.valuesEqual(currentValue, incomingValue)) {
+            if (hasLocalChange && hasIncomingChange && !metadataValuesEqual(currentValue, incomingValue)) {
                 conflicts.push({
                     field: handler.key,
                     labelKey: handler.labelKey,
@@ -264,6 +359,13 @@ export class ExerciseMetadataSyncService {
 
     /**
      * Updates the baseline snapshot for changed fields.
+     *
+     * This method mutates the baseline exercise object **in place** and then
+     * calls {@link ExerciseMetadataSyncContext.setBaselineExercise} with the
+     * same reference. The setter call is intentional: it notifies the consumer
+     * that the baseline was updated so it can trigger side effects (e.g.
+     * re-assignment for Angular binding), even though the object identity
+     * has not changed.
      *
      * @param context the metadata synchronization context
      * @param snapshot the incoming exercise snapshot
@@ -314,7 +416,15 @@ export class ExerciseMetadataSyncService {
             data,
         });
 
-        return firstValueFrom(dialogRef!.onClose) as Promise<ExerciseMetadataConflictModalResult | undefined>;
+        if (!dialogRef) {
+            return undefined;
+        }
+        try {
+            return (await firstValueFrom(dialogRef.onClose)) as ExerciseMetadataConflictModalResult | undefined;
+        } catch {
+            // firstValueFrom rejects if the Observable completes without emitting (e.g. dialog destroyed externally)
+            return undefined;
+        }
     }
 
     /**
@@ -323,14 +433,15 @@ export class ExerciseMetadataSyncService {
      * @param context the metadata synchronization context
      * @param snapshot the incoming exercise snapshot
      * @param resolution the modal resolution with per-field decisions
+     * @param handlers the same handler instances used during conflict detection
      */
-    private applyConflictResolution<T extends Exercise>(
-        context: ExerciseMetadataSyncContext<T>,
+    private applyConflictResolution(
+        context: ExerciseMetadataSyncContext<Exercise>,
         snapshot: ExerciseSnapshotDTO,
         resolution: ExerciseMetadataConflictModalResult,
+        handlers: ExerciseMetadataFieldHandler<Exercise>[],
     ): void {
         const currentExercise = context.getCurrentExercise();
-        const handlers = this.getHandlers(context);
         const handlerMap = new Map(handlers.map((handler) => [handler.key, handler]));
 
         for (const decision of resolution.decisions) {
@@ -347,74 +458,17 @@ export class ExerciseMetadataSyncService {
     }
 
     /**
-     * Compares values including dayjs timestamps with normalized server dates.
-     *
-     * @param value the left value
-     * @param otherValue the right value
-     * @returns true if the values are considered equal
+     * Returns the cached metadata handlers for the current context.
+     * Handlers are built once in {@link initialize} and reused across all alerts.
      */
-    private valuesEqual(value: unknown, otherValue: unknown): boolean {
-        if (value == undefined && otherValue == undefined) {
-            return true;
-        }
-        if (this.isCompetencyLinkArray(value) || this.isCompetencyLinkArray(otherValue)) {
-            return isEqual(this.normalizeCompetencyLinks(value), this.normalizeCompetencyLinks(otherValue));
-        }
-        if (dayjs.isDayjs(value) || dayjs.isDayjs(otherValue)) {
-            const normalizedLeft = dayjs.isDayjs(value) ? value : typeof value === 'string' ? dayjs(value) : undefined;
-            const normalizedRight = dayjs.isDayjs(otherValue) ? otherValue : typeof otherValue === 'string' ? dayjs(otherValue) : undefined;
-            if (!normalizedLeft?.isValid() || !normalizedRight?.isValid()) {
-                return normalizedLeft === normalizedRight;
-            }
-            return normalizedLeft.isSame(normalizedRight);
-        }
-        return isEqual(value, otherValue);
-    }
-
-    private isCompetencyLinkArray(value: unknown): value is Array<{ competency?: { id?: number }; weight?: number }> {
-        if (!Array.isArray(value)) {
-            return false;
-        }
-        return value.some((entry) => {
-            if (!entry || typeof entry !== 'object') {
-                return false;
-            }
-            return 'competency' in entry || 'weight' in entry;
-        });
-    }
-
-    private normalizeCompetencyLinks(value: unknown): Array<{ competencyId?: number; weight?: number }> | undefined {
-        if (!Array.isArray(value)) {
-            return undefined;
-        }
-        const normalized = value
-            .filter((entry) => entry && typeof entry === 'object')
-            .map((entry) => {
-                const link = entry as { competency?: { id?: number }; weight?: number };
-                return {
-                    competencyId: link.competency?.id,
-                    weight: link.weight,
-                };
-            });
-        return normalized.sort((left, right) => {
-            const leftId = left.competencyId ?? -1;
-            const rightId = right.competencyId ?? -1;
-            if (leftId !== rightId) {
-                return leftId - rightId;
-            }
-            const leftWeight = left.weight ?? -1;
-            const rightWeight = right.weight ?? -1;
-            return leftWeight - rightWeight;
-        });
+    private getHandlers(): ExerciseMetadataFieldHandler<Exercise>[] {
+        return this.cachedHandlers ?? [];
     }
 
     /**
-     * Creates the metadata handlers for a given exercise type.
-     *
-     * @param context the metadata synchronization context
-     * @returns the handlers used for metadata resolution
+     * Builds metadata handlers for a given context.
      */
-    private getHandlers(context: ExerciseMetadataSyncContext<Exercise>): ExerciseMetadataFieldHandler<Exercise>[] {
+    private buildHandlers(context: ExerciseMetadataSyncContext<Exercise>): ExerciseMetadataFieldHandler<Exercise>[] {
         return createExerciseMetadataHandlers(context.exerciseType, () => context.getCurrentExercise());
     }
 }

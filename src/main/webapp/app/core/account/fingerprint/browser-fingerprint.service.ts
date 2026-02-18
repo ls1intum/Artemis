@@ -59,7 +59,6 @@ export class BrowserFingerprintService {
         if (browserFingerprintsEnabled !== false) {
             this.generateBrowserFingerprint();
             this.initializeInstanceIdentifier();
-            this.initializeSessionIdentifier();
         } else {
             this.clearStoredInstanceData();
         }

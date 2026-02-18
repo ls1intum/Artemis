@@ -5,6 +5,7 @@ import { CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.mod
 import { DifficultyLevel, Exercise, ExerciseMode, ExerciseType, IncludedInOverallScore, PlagiarismDetectionConfig } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
+import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
@@ -30,8 +31,7 @@ const normalizeCategories = (value: unknown): ExerciseCategory[] | undefined => 
     if (!Array.isArray(value)) {
         return undefined;
     }
-    const categories = normalizeCategoryArray(value);
-    return categories.length > 0 ? categories : undefined;
+    return normalizeCategoryArray(value);
 };
 
 const applyCategories = (exercise: Exercise, value: unknown): void => {
@@ -50,11 +50,17 @@ const applyCategories = (exercise: Exercise, value: unknown): void => {
 };
 
 const applyAuxiliaryRepositories = (exercise: ProgrammingExercise, value: unknown): void => {
-    exercise.auxiliaryRepositories = toAuxiliaryRepositories(value as any[] | undefined) ?? [];
+    exercise.auxiliaryRepositories = (value as AuxiliaryRepository[] | undefined) ?? [];
 };
 
 /**
  * Creates a basic handler for scalar exercise fields stored directly on the snapshot.
+ *
+ * The `as V` cast in `getIncomingValue` is necessary because the snapshot field type
+ * (`ExerciseSnapshotDTO[K]`) may not exactly match the exercise field type `V` (e.g.
+ * categories are `string[]` in the snapshot but `ExerciseCategory[]` on the exercise).
+ * Type correctness is ensured by matching getter/setter pairs and verified by the
+ * reflection-based coverage tests in {@link ExerciseVersionServiceTest}.
  */
 const baseHandler = <K extends keyof ExerciseSnapshotDTO, V>(
     key: K,

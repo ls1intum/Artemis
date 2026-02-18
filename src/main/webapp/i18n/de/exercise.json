@@ -236,6 +236,7 @@
                 "incomingValue": "Eingehender Wert",
                 "keepLocal": "Meine Änderungen behalten",
                 "applySelections": "Auswahl übernehmen",
+                "snapshotFetchFailed": "Die neueste Übungsversion konnte nicht geladen werden. Bitte lade die Seite neu, um die aktuellen Änderungen zu sehen.",
                 "fields": {
                     "buildConfig": {
                         "sequentialTestRuns": "Sequenzielle Testläufe",

@@ -729,8 +729,8 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         thread.setExercise(programmingExercise);
         commentThreadRepository.save(thread);
 
-        var previousAux = new ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO(42L, history.repositoryUri().toString(), history.oldCommit());
-        var currentAux = new ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO(42L, history.repositoryUri().toString(), history.newCommit());
+        var previousAux = new ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO(42L, "aux", "/aux", "desc", history.repositoryUri().toString(), history.oldCommit());
+        var currentAux = new ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO(42L, "aux", "/aux", "desc", history.repositoryUri().toString(), history.newCommit());
         var previousProgramming = buildProgrammingSnapshot(null, null, null, null, List.of(previousAux));
         var currentProgramming = buildProgrammingSnapshot(null, null, null, null, List.of(currentAux));
         ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), previousProgramming);
@@ -770,8 +770,8 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         thread.setExercise(programmingExercise);
         commentThreadRepository.save(thread);
 
-        var previousAux = new ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO(42L, "http://repo", "old");
-        var currentAux = new ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO(42L, "http://repo", null);
+        var previousAux = new ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO(42L, "aux", "/aux", "desc", "http://repo", "old");
+        var currentAux = new ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO(42L, "aux", "/aux", "desc", "http://repo", null);
         var previousProgramming = buildProgrammingSnapshot(null, null, null, null, List.of(previousAux));
         var currentProgramming = buildProgrammingSnapshot(null, null, null, null, List.of(currentAux));
         ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), previousProgramming);
@@ -901,8 +901,8 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     private ExerciseSnapshotDTO buildExerciseSnapshot(long exerciseId, String problemStatement, ProgrammingExerciseSnapshotDTO programmingData) {
-        return new ExerciseSnapshotDTO(exerciseId, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, problemStatement, null, null,
-                null, null, null, null, null, null, programmingData, null, null, null, null);
+        return new ExerciseSnapshotDTO(exerciseId, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, problemStatement, null,
+                null, null, null, null, null, null, null, programmingData, null, null, null, null);
     }
 
     private ProgrammingExerciseSnapshotDTO buildProgrammingSnapshot(String testRepositoryUri, String testsCommitId,

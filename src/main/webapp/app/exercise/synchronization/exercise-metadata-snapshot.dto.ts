@@ -1,7 +1,9 @@
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { DifficultyLevel, ExerciseMode, IncludedInOverallScore, PlagiarismDetectionConfig } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
+import { StaticCodeAnalysisCategoryState } from 'app/programming/shared/entities/static-code-analysis-category.model';
 import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
+import { Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 
 export interface ExerciseSnapshotDTO {
     id: number;
@@ -50,6 +52,13 @@ export interface CompetencyExerciseIdSnapshotDTO {
     competencyId?: number;
 }
 
+/**
+ * Client-side representation of the server's {@code ProgrammingExerciseSnapshotDTO}.
+ *
+ * Fields like {@link testCases}, {@link tasks}, {@link staticCodeAnalysisCategories},
+ * and {@link testsCommitId} are not used by metadata sync (they are excluded from
+ * change detection) but are included here for DTO completeness.
+ */
 export interface ProgrammingExerciseSnapshotDTO {
     testRepositoryUri?: string;
     auxiliaryRepositories?: AuxiliaryRepositorySnapshotDTO[];
@@ -65,10 +74,14 @@ export interface ProgrammingExerciseSnapshotDTO {
     projectKey?: string;
     templateParticipation?: ParticipationSnapshotDTO;
     solutionParticipation?: ParticipationSnapshotDTO;
+    testCases?: TestCaseSnapshotDTO[];
+    tasks?: TaskSnapshotDTO[];
+    staticCodeAnalysisCategories?: StaticCodeAnalysisCategorySnapshotDTO[];
     submissionPolicy?: SubmissionPolicySnapshotDTO;
     projectType?: ProjectType;
     releaseTestsWithExampleSolution?: boolean;
     buildConfig?: ProgrammingExerciseBuildConfigSnapshotDTO;
+    testsCommitId?: string;
 }
 
 export interface AuxiliaryRepositorySnapshotDTO {
@@ -84,6 +97,7 @@ export interface ParticipationSnapshotDTO {
     id?: number;
     repositoryUri?: string;
     buildPlanId?: string;
+    commitId?: string;
 }
 
 export interface SubmissionPolicySnapshotDTO {
@@ -92,6 +106,28 @@ export interface SubmissionPolicySnapshotDTO {
     active?: boolean;
     exceedingPenalty?: number;
     type?: string;
+}
+
+export interface TestCaseSnapshotDTO {
+    id?: number;
+    weight?: number;
+    bonusMultiplier?: number;
+    bonusPoints?: number;
+    visibility?: Visibility;
+}
+
+export interface TaskSnapshotDTO {
+    id?: number;
+    taskName?: string;
+    testCases?: TestCaseSnapshotDTO[];
+}
+
+export interface StaticCodeAnalysisCategorySnapshotDTO {
+    id?: number;
+    name?: string;
+    penalty?: number;
+    maxPenalty?: number;
+    state?: StaticCodeAnalysisCategoryState;
 }
 
 export interface ProgrammingExerciseBuildConfigSnapshotDTO {
