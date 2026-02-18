@@ -60,7 +60,13 @@ import { ButtonSize } from 'app/shared/components/buttons/button/button.componen
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
 import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
-import { InlineRefinementEvent, isTemplateOrEmpty } from 'app/programming/manage/shared/problem-statement.utils';
+import { InlineRefinementEvent, MAX_USER_PROMPT_LENGTH, PROMPT_LENGTH_WARNING_THRESHOLD, isTemplateOrEmpty } from 'app/programming/manage/shared/problem-statement.utils';
+import { TooltipModule } from 'primeng/tooltip';
+import { TextareaModule } from 'primeng/textarea';
+import { BadgeModule } from 'primeng/badge';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
+import { Popover, PopoverModule } from 'primeng/popover';
 
 const SEVERITY_ORDER = {
     HIGH: 0,
@@ -544,23 +550,23 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
 
-        this.currentRefinementSubscription?.unsubscribe();
-        this.currentRefinementSubscription = this.problemStatementService
+        this.currentAiOperationSubscription?.unsubscribe();
+        this.currentAiOperationSubscription = this.problemStatementService
             .refineTargeted(this.exercise, this.exercise.problemStatement, event, this.isGeneratingOrRefining)
             .subscribe({
                 next: (result) => {
                     if (result.success && result.content) {
                         this.showDiff.set(true);
                         const refinedContent = result.content;
-                        afterNextRender(() => this.editableInstructions?.applyRefinedContent(refinedContent), { injector: this.injector });
+                        afterNextRender(() => this.editableInstructions()?.applyRefinedContent(refinedContent), { injector: this.injector });
                     } else if (!result.errorHandled) {
                         this.alertService.error('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
                     }
-                    this.currentRefinementSubscription = undefined;
+                    this.currentAiOperationSubscription = undefined;
                 },
                 error: () => {
                     this.alertService.error('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
-                    this.currentRefinementSubscription = undefined;
+                    this.currentAiOperationSubscription = undefined;
                 },
             });
     }

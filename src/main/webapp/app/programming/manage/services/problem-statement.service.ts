@@ -1,5 +1,5 @@
+import { Injectable, WritableSignal, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
 import { Observable, OperatorFunction, catchError, finalize, map, of } from 'rxjs';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { FileService } from 'app/shared/service/file.service';
@@ -56,6 +56,7 @@ export class ProblemStatementService {
                 this.handleApiResponse(
                     setLoading,
                     'artemisApp.programmingExercise.problemStatement.generationSuccess',
+                    'artemisApp.programmingExercise.problemStatement.generationError',
                     isValidGenerationResponse,
                     (response) => response?.draftProblemStatement,
                 ),
@@ -83,6 +84,7 @@ export class ProblemStatementService {
                 this.handleApiResponse(
                     setLoading,
                     'artemisApp.programmingExercise.problemStatement.refinementSuccess',
+                    'artemisApp.programmingExercise.problemStatement.refinementError',
                     isValidRefinementResponse,
                     (response) => response?.refinedProblemStatement,
                 ),
@@ -102,22 +104,22 @@ export class ProblemStatementService {
             return of({ success: false });
         }
         loadingSignal.set(true);
-        return this.hyperionApiService
-            .refineProblemStatementTargeted(courseId, buildTargetedRefinementRequest(currentContent, event))
-            .pipe(
-                this.handleApiResponse(
-                    loadingSignal,
-                    'artemisApp.programmingExercise.problemStatement.inlineRefinement.success',
-                    isValidRefinementResponse,
-                    (r) => r?.refinedProblemStatement,
-                ),
-            );
+        return this.hyperionApiService.refineProblemStatementTargeted(courseId, buildTargetedRefinementRequest(currentContent, event)).pipe(
+            this.handleApiResponse(
+                (loading) => loadingSignal.set(loading),
+                'artemisApp.programmingExercise.problemStatement.inlineRefinement.success',
+                'artemisApp.programmingExercise.problemStatement.inlineRefinement.error',
+                isValidRefinementResponse,
+                (r) => r?.refinedProblemStatement,
+            ),
+        );
     }
 
     /** Shared pipe operator for handling API responses with consistent loading, alerts, and error handling. */
     private handleApiResponse<T>(
         setLoading: (loading: boolean) => void,
         successKey: string,
+        errorKey: string,
         isValid: (response: T) => boolean,
         getContent: (response: T) => string | undefined,
     ): OperatorFunction<T, OperationResult> {

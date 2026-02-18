@@ -270,7 +270,8 @@
                     "success": "Selected section has been successfully refined.",
                     "error": "Failed to refine the selected section. Please try again.",
                     "emptyStatementError": "Cannot refine: the problem statement is empty."
-                }
+                },
+                "diffLineStatTooltip": "Lines added and removed by the AI refinement."
             },
             "codeGeneration": {
                 "creationAssistance": "Creation Assistance",

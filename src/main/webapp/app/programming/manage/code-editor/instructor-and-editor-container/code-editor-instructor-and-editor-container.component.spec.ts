@@ -1028,6 +1028,17 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
         expect(comp.showDiff()).toBeTrue();
     });
 
+    it('should handle toggleRefinementPopover gracefully when popover is undefined', () => {
+        // popover viewChild is undefined because the template is overridden to empty
+        expect(() => comp.toggleRefinementPopover(new Event('click'))).not.toThrow();
+    });
+
+    it('should preserve refinement prompt when popover hides (prompt is never cleared on dismiss)', () => {
+        comp.refinementPrompt.set('Some prompt');
+        // The prompt signal should persist since there's no onHide handler clearing it
+        expect(comp.refinementPrompt()).toBe('Some prompt');
+    });
+
     it('should delegate global refinement to service and show diff on success', () => {
         (problemStatementService.refineGlobally as jest.Mock).mockReturnValue(of({ success: true, content: 'Refined content' }));
 

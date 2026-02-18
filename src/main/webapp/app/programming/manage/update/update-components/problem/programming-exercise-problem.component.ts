@@ -299,8 +299,8 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
             return;
         }
 
-        this.currentGenerationSubscription?.unsubscribe();
-        this.currentGenerationSubscription = this.problemStatementService.refineTargeted(exercise, currentContent, event, this.isGeneratingOrRefining).subscribe({
+        this.currentAiOperationSubscription?.unsubscribe();
+        this.currentAiOperationSubscription = this.problemStatementService.refineTargeted(exercise, currentContent, event, this.isGeneratingOrRefining).subscribe({
             next: (result) => {
                 if (result.success && result.content) {
                     this.showDiff.set(true);
@@ -314,11 +314,11 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                 } else {
                     this.alertService.error('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
                 }
-                this.currentGenerationSubscription = undefined;
+                this.currentAiOperationSubscription = undefined;
             },
             error: () => {
                 this.alertService.error('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
-                this.currentGenerationSubscription = undefined;
+                this.currentAiOperationSubscription = undefined;
             },
         });
     }

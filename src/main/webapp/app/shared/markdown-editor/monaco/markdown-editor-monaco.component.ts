@@ -543,7 +543,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         if (this.useDefaultMarkdownEditorOptions) {
             this.monacoEditor.applyOptionPreset(DEFAULT_MARKDOWN_EDITOR_OPTIONS);
         }
-        this.renderConsistencyIssues();
+        this.renderEditorWidgets();
 
         // Set up selection change listener for inline comments/refinement
         this.selectionChangeDisposable = this.monacoEditor.onSelectionChange((selection) => {

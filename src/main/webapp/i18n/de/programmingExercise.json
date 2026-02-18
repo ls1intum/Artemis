@@ -270,7 +270,8 @@
                     "success": "Ausgewählter Abschnitt wurde erfolgreich verfeinert.",
                     "error": "Fehler beim Verfeinern des ausgewählten Abschnitts. Bitte versuche es erneut.",
                     "emptyStatementError": "Verfeinerung nicht möglich: Die Aufgabenstellung ist leer."
-                }
+                },
+                "diffLineStatTooltip": "Zeilen, die durch die KI-Verfeinerung hinzugefügt und entfernt wurden."
             },
             "codeGeneration": {
                 "creationAssistance": "Erstellungsassistenz",
