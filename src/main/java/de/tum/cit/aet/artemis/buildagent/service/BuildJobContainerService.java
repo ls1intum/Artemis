@@ -161,6 +161,9 @@ public class BuildJobContainerService {
      * @return {@link CreateContainerResponse} that can be used to start the container
      */
     public CreateContainerResponse configureContainer(String containerName, String image, String buildScript, DockerRunConfig runConfig) {
+        if (!buildAgentConfiguration.isDockerAvailable()) {
+            throw new LocalCIException("Docker is not available. Cannot configure container " + containerName);
+        }
         // Remove any existing container with the same name to avoid ConflictException.
         // This can happen when a job is re-queued after agent disconnect (same job ID = same container name).
         removeExistingContainer(containerName);
@@ -237,6 +240,9 @@ public class BuildJobContainerService {
      * @param containerId the ID of the container to be started
      */
     public void startContainer(String containerId) {
+        if (!buildAgentConfiguration.isDockerAvailable()) {
+            throw new LocalCIException("Docker is not available. Cannot start container " + containerId);
+        }
         try (final var startCommand = buildAgentConfiguration.getDockerClient().startContainerCmd(containerId)) {
             startCommand.exec();
         }
@@ -331,7 +337,12 @@ public class BuildJobContainerService {
                 throw nfe;
             }
             String errorMessage = "Could not retrieve archive from container " + containerId + " at path " + path + " after " + MAX_TAR_OPERATION_RETRIES + " attempts";
-            log.error(errorMessage, e);
+            if (DockerUtil.isDockerNotAvailable(e)) {
+                log.warn("Docker is not available. {}: {}", errorMessage, e.getMessage());
+            }
+            else {
+                log.error(errorMessage, e);
+            }
             if (buildJobId != null) {
                 buildLogsMap.appendBuildLogEntry(buildJobId,
                         "Failed to retrieve build results after multiple attempts. This is an infrastructure issue, not a problem with your code. Please try rerunning your build.");
@@ -674,8 +685,7 @@ public class BuildJobContainerService {
             }
         }
 
-        // All retries exhausted
-        log.error("{} failed after {} attempts", operationName, MAX_TAR_OPERATION_RETRIES, lastException);
+        // All retries exhausted — callers handle Docker-unavailability vs. generic error logging
         throw lastException;
     }
 
@@ -720,7 +730,12 @@ public class BuildJobContainerService {
         catch (IOException e) {
             String errorMessage = "Could not copy to container " + containerId + " from source path " + sourcePath.toAbsolutePath() + " after " + MAX_TAR_OPERATION_RETRIES
                     + " attempts";
-            log.error(errorMessage, e);
+            if (DockerUtil.isDockerNotAvailable(e)) {
+                log.warn("Docker is not available. {}: {}", errorMessage, e.getMessage());
+            }
+            else {
+                log.error(errorMessage, e);
+            }
             if (buildJobId != null) {
                 buildLogsMap.appendBuildLogEntry(buildJobId,
                         "Failed to copy files to build container after multiple attempts. This is an infrastructure issue, not a problem with your code. Please try rerunning your build.");
@@ -961,6 +976,13 @@ public class BuildJobContainerService {
      * @return the Container object if found, null otherwise
      */
     private Container getContainerForName(String containerName) {
+        // When Docker is temporarily unavailable, we skip the container lookup and return null.
+        // Any containers left behind will be cleaned up by the scheduled cleanUpContainers() task
+        // in BuildAgentDockerService once Docker becomes available again.
+        if (!buildAgentConfiguration.isDockerAvailable()) {
+            log.debug("Docker is not available. Cannot get container for name {}", containerName);
+            return null;
+        }
         try (final var listContainerCommand = buildAgentConfiguration.getDockerClient().listContainersCmd().withShowAll(true)) {
             List<Container> containers = listContainerCommand.exec();
             String expectedName = "/" + containerName;
@@ -969,7 +991,7 @@ public class BuildJobContainerService {
         }
         catch (Exception ex) {
             if (DockerUtil.isDockerNotAvailable(ex)) {
-                log.error("Docker is not available: {}", ex.getMessage());
+                log.debug("Docker is not available: {}", ex.getMessage());
             }
             else {
                 log.error("Failed to get container for name {}: {}", containerName, ex.getMessage());
