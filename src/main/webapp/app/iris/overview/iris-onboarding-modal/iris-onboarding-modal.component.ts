@@ -1,7 +1,7 @@
-import { Component, DestroyRef, HostListener, WritableSignal, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, WritableSignal, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
@@ -11,11 +11,14 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { filter } from 'rxjs/operators';
 import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { IRIS_PROMPT_CONFIGS } from 'app/iris/shared/iris-prompt.constants';
+import { OnboardingResult } from './iris-onboarding.service';
 
 // Sidebar selectors used by onboarding to locate navigation items.
-// If sidebar markup changes, update these selectors and the corresponding data-sidebar-item attributes.
-const SIDEBAR_EXERCISES_SELECTOR = "jhi-course-sidebar a.nav-link-sidebar[data-sidebar-item='Exercises']";
-const SIDEBAR_IRIS_SELECTOR = "jhi-course-sidebar a.nav-link-sidebar[data-sidebar-item='Iris']";
+// data-sidebar-item holds sidebarItem.routerLink (a locale-independent stable identifier).
+// Exercises routerLink ends with 'exercises' (may be prefixed with courseId); Iris is always exactly 'iris'.
+// If sidebar markup changes, update these selectors and the corresponding data-sidebar-item attribute binding.
+const SIDEBAR_EXERCISES_SELECTOR = "jhi-course-sidebar a.nav-link-sidebar[data-sidebar-item$='exercises']";
+const SIDEBAR_IRIS_SELECTOR = "jhi-course-sidebar a.nav-link-sidebar[data-sidebar-item='iris']";
 
 type SidebarTooltipConfig = {
     spotlight: { top: number; left: number; width: number; height: number };
@@ -31,9 +34,14 @@ type SidebarTooltipConfig = {
     templateUrl: './iris-onboarding-modal.component.html',
     styleUrls: ['./iris-onboarding-modal.component.scss'],
     imports: [TranslateDirective, ArtemisTranslatePipe, IrisLogoComponent, ButtonComponent, StepperComponent, FaIconComponent, CdkTrapFocus],
+    // Escape is handled here rather than relying on DialogService's built-in keyboard
+    // handling because the dialog is opened with closable: false (to prevent accidental
+    // dismissal) — this gives us explicit control over the Escape key behaviour.
+    host: { '(document:keydown.escape)': 'onEscapeKey()' },
 })
 export class IrisOnboardingModalComponent {
-    private activeModal = inject(NgbActiveModal);
+    private dialogRef = inject(DynamicDialogRef);
+    private dialogConfig = inject(DynamicDialogConfig);
     private router = inject(Router);
     private destroyRef = inject(DestroyRef);
 
@@ -47,7 +55,7 @@ export class IrisOnboardingModalComponent {
     // Step management
     readonly step = signal(0);
     readonly totalSteps = 5;
-    readonly hasAvailableExercises = signal(true);
+    readonly hasAvailableExercises = signal<boolean>(this.dialogConfig.data?.hasAvailableExercises ?? true);
 
     // Position for Step 1 tooltip (aligned with Exercises tab)
     readonly exerciseTooltipPosition = signal({ top: 172, left: 232 });
@@ -116,7 +124,6 @@ export class IrisOnboardingModalComponent {
         this.pendingTimers.add(timer);
     }
 
-    @HostListener('document:keydown.escape')
     onEscapeKey(): void {
         this.close();
     }
@@ -161,14 +168,14 @@ export class IrisOnboardingModalComponent {
      * Finishes the onboarding and closes the modal.
      */
     finish(): void {
-        this.activeModal.close('finish');
+        this.dialogRef.close({ action: 'finish' } satisfies OnboardingResult);
     }
 
     /**
      * Closes the modal without completing.
      */
     close(): void {
-        this.activeModal.dismiss();
+        this.dialogRef.close();
     }
 
     /**
@@ -177,9 +184,9 @@ export class IrisOnboardingModalComponent {
     selectPrompt(promptType: string): void {
         const config = IRIS_PROMPT_CONFIGS.find((c) => c.type === promptType);
         if (config) {
-            this.activeModal.close({ action: 'promptSelected', promptKey: config.starterKey });
+            this.dialogRef.close({ action: 'promptSelected', promptKey: config.starterKey } satisfies OnboardingResult);
         } else {
-            this.activeModal.close({ action: 'finish' });
+            this.dialogRef.close({ action: 'finish' } satisfies OnboardingResult);
         }
     }
 
@@ -321,7 +328,6 @@ export class IrisOnboardingModalComponent {
         }
 
         // Avoid trapping onboarding on a hidden step when target elements are not available.
-        // eslint-disable-next-line no-undef
         console.warn(`Onboarding step ${expectedStep}: target element not found after all retries, using default position`);
         readinessSignal.set(true);
     }

@@ -3,7 +3,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Subject } from 'rxjs';
 import { NavigationEnd, Router } from '@angular/router';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -46,7 +46,7 @@ describe('IrisOnboardingModalComponent', () => {
 
     let component: IrisOnboardingModalComponent;
     let fixture: ComponentFixture<IrisOnboardingModalComponent>;
-    let activeModal: NgbActiveModal;
+    let dialogRef: DynamicDialogRef;
     let routerEventsSubject: Subject<NavigationEnd>;
 
     async function detectChanges(): Promise<void> {
@@ -71,7 +71,8 @@ describe('IrisOnboardingModalComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
             ],
             providers: [
-                MockProvider(NgbActiveModal),
+                MockProvider(DynamicDialogRef),
+                { provide: DynamicDialogConfig, useValue: { data: { hasAvailableExercises: true } } },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useValue: { events: routerEventsSubject.asObservable() } },
             ],
@@ -79,7 +80,7 @@ describe('IrisOnboardingModalComponent', () => {
 
         fixture = TestBed.createComponent(IrisOnboardingModalComponent);
         component = fixture.componentInstance;
-        activeModal = TestBed.inject(NgbActiveModal);
+        dialogRef = TestBed.inject(DynamicDialogRef);
         fixture.detectChanges();
     });
 
@@ -135,24 +136,24 @@ describe('IrisOnboardingModalComponent', () => {
     });
 
     describe('finish', () => {
-        it('should close modal with finish result', () => {
-            const closeSpy = vi.spyOn(activeModal, 'close');
+        it('should close dialog with finish result', () => {
+            const closeSpy = vi.spyOn(dialogRef, 'close');
             component.finish();
-            expect(closeSpy).toHaveBeenCalledWith('finish');
+            expect(closeSpy).toHaveBeenCalledWith({ action: 'finish' });
         });
     });
 
     describe('close', () => {
-        it('should dismiss the modal', () => {
-            const dismissSpy = vi.spyOn(activeModal, 'dismiss');
+        it('should close the dialog without a result', () => {
+            const closeSpy = vi.spyOn(dialogRef, 'close');
             component.close();
-            expect(dismissSpy).toHaveBeenCalledOnce();
+            expect(closeSpy).toHaveBeenCalledOnce();
         });
 
-        it('should dismiss the modal on Escape key', () => {
-            const dismissSpy = vi.spyOn(activeModal, 'dismiss');
+        it('should close the dialog on Escape key', () => {
+            const closeSpy = vi.spyOn(dialogRef, 'close');
             document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
-            expect(dismissSpy).toHaveBeenCalledOnce();
+            expect(closeSpy).toHaveBeenCalledOnce();
         });
     });
 
@@ -161,8 +162,8 @@ describe('IrisOnboardingModalComponent', () => {
             ['explainConcept', 'artemisApp.iris.onboarding.step4.prompts.explainConceptStarter'],
             ['quizTopic', 'artemisApp.iris.onboarding.step4.prompts.quizTopicStarter'],
             ['studyTips', 'artemisApp.iris.onboarding.step4.prompts.studyTipsStarter'],
-        ])('should close modal with correct promptKey for %s', (promptType, expectedKey) => {
-            const closeSpy = vi.spyOn(activeModal, 'close');
+        ])('should close dialog with correct promptKey for %s', (promptType, expectedKey) => {
+            const closeSpy = vi.spyOn(dialogRef, 'close');
             component.selectPrompt(promptType);
             expect(closeSpy).toHaveBeenCalledWith({
                 action: 'promptSelected',
@@ -170,8 +171,8 @@ describe('IrisOnboardingModalComponent', () => {
             });
         });
 
-        it('should close modal with finish action for unknown prompt type', () => {
-            const closeSpy = vi.spyOn(activeModal, 'close');
+        it('should close dialog with finish action for unknown prompt type', () => {
+            const closeSpy = vi.spyOn(dialogRef, 'close');
             component.selectPrompt('unknown');
             expect(closeSpy).toHaveBeenCalledWith({ action: 'finish' });
         });
@@ -438,7 +439,7 @@ describe('IrisOnboardingModalComponent', () => {
         it('should calculate exercise tab position when sidebar link is found', () => {
             vi.useFakeTimers();
             vi.spyOn(document, 'querySelector').mockImplementation((selector: string) => {
-                if (selector === "jhi-course-sidebar a.nav-link-sidebar[data-sidebar-item='Exercises']") {
+                if (selector === "jhi-course-sidebar a.nav-link-sidebar[data-sidebar-item$='exercises']") {
                     return createMockElement({ top: 130, left: 0, width: 220, height: 44 });
                 }
                 return null;
@@ -461,7 +462,7 @@ describe('IrisOnboardingModalComponent', () => {
         it('should calculate Iris tab position when sidebar link is found', () => {
             vi.useFakeTimers();
             vi.spyOn(document, 'querySelector').mockImplementation((selector: string) => {
-                if (selector === "jhi-course-sidebar a.nav-link-sidebar[data-sidebar-item='Iris']") {
+                if (selector === "jhi-course-sidebar a.nav-link-sidebar[data-sidebar-item='iris']") {
                     return createMockElement({ top: 58, left: 0, width: 220, height: 44 });
                 }
                 return null;
