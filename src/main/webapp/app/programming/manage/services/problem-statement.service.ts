@@ -68,7 +68,7 @@ export class ProblemStatementService {
         if (!courseId || !prompt?.trim() || !currentContent?.trim()) {
             const emptyContent = !currentContent?.trim();
             if (emptyContent) {
-                this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
+                this.alertService.error('artemisApp.programmingExercise.problemStatement.cannotRefineEmpty');
             }
             return of({ success: false, errorHandled: emptyContent });
         }

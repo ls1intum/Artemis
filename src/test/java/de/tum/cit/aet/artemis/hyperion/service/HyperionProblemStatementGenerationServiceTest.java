@@ -160,7 +160,20 @@ class HyperionProblemStatementGenerationServiceTest {
         course.setDescription("Test Description");
 
         assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, "Prompt")).isInstanceOf(InternalServerErrorAlertException.class)
-                .hasMessageContaining("Generated problem statement is null");
+                .hasMessageContaining("Generated problem statement is null or empty");
+    }
+
+    @Test
+    void generateProblemStatement_throwsExceptionWhenResponseIsBlank() {
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage("   ")))));
+
+        var course = new Course();
+        course.setId(999L);
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, "Prompt")).isInstanceOf(InternalServerErrorAlertException.class)
+                .hasMessageContaining("Generated problem statement is null or empty");
     }
 
     @Test

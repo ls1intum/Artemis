@@ -65,7 +65,7 @@ public class HyperionProblemStatementRefinementService {
         log.debug("Refining problem statement for course [{}]", course.getId());
 
         if (chatClient == null) {
-            throw new InternalServerErrorAlertException("AI chat client is not configured", "Hyperion", "ProblemStatementRefinement.chatClientNotConfigured");
+            throw new InternalServerErrorAlertException("AI chat client is not configured", "ProblemStatement", "ProblemStatementRefinement.chatClientNotConfigured");
         }
 
         // Sanitize inputs first, then validate the sanitized versions to prevent
@@ -92,11 +92,12 @@ public class HyperionProblemStatementRefinementService {
             throw new InternalServerErrorAlertException("Failed to refine problem statement", "ProblemStatement", "ProblemStatementRefinement.problemStatementRefinementFailed");
         }
 
-        if (refinedProblemStatementText == null) {
-            throw new InternalServerErrorAlertException("Refined problem statement is null", "ProblemStatement", "ProblemStatementRefinement.problemStatementRefinementNull");
+        if (refinedProblemStatementText == null || refinedProblemStatementText.isBlank()) {
+            throw new InternalServerErrorAlertException("Refined problem statement is null or empty", "ProblemStatement",
+                    "ProblemStatementRefinement.problemStatementRefinementNull");
         }
 
-        return validateAndReturnResponse(sanitizedProblemStatement, refinedProblemStatementText);
+        return validateAndReturnResponse(sanitizedProblemStatement, refinedProblemStatementText.trim());
     }
 
     /**
@@ -109,8 +110,8 @@ public class HyperionProblemStatementRefinementService {
                     "ProblemStatementRefinement.refinedProblemStatementTooLong");
         }
 
-        // Refinement didn't change content — originalProblemStatementText is already sanitized/trimmed, so only the AI response needs trimming for a fair comparison.
-        if (refinedProblemStatementText.trim().equals(originalProblemStatementText)) {
+        // Refinement didn't change content — both sides are already sanitized/trimmed.
+        if (refinedProblemStatementText.equals(originalProblemStatementText)) {
             throw new BadRequestAlertException("Problem statement is the same after refinement", "ProblemStatement", "ProblemStatementRefinement.refinedProblemStatementUnchanged");
         }
 

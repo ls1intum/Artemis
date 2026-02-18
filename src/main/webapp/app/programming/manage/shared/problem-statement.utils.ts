@@ -10,6 +10,9 @@ export const MAX_USER_PROMPT_LENGTH = 1000;
 /** Maximum allowed length for problem statements. Must match HyperionPromptSanitizer.MAX_PROBLEM_STATEMENT_LENGTH on the server. */
 export const MAX_PROBLEM_STATEMENT_LENGTH = 50_000;
 
+/** Fraction of MAX_USER_PROMPT_LENGTH at which the character counter shows a warning. */
+export const PROMPT_LENGTH_WARNING_THRESHOLD = 0.9;
+
 /** Matches `\r\n` (Windows) and standalone `\r` (old Mac) line endings in a single pass. */
 const CARRIAGE_RETURN_PATTERN = /\r\n?/g;
 

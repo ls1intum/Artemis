@@ -60,7 +60,7 @@ public class HyperionProblemStatementGenerationService {
         log.debug("Generating problem statement for course [{}]", course.getId());
 
         if (chatClient == null) {
-            throw new InternalServerErrorAlertException("AI chat client is not configured", "ProblemStatement", "ProblemStatementGeneration.generationFailed");
+            throw new InternalServerErrorAlertException("AI chat client is not configured", "ProblemStatement", "ProblemStatementGeneration.chatClientNotConfigured");
         }
 
         String sanitizedPrompt = sanitizeInput(userPrompt);
@@ -78,12 +78,15 @@ public class HyperionProblemStatementGenerationService {
         }
         catch (Exception e) {
             log.error("Error generating problem statement for course [{}]: {}", course.getId(), e.getMessage(), e);
-            throw new InternalServerErrorAlertException("Failed to generate problem statement", "ProblemStatement", "ProblemStatementGeneration.generationFailed");
+            throw new InternalServerErrorAlertException("Failed to generate problem statement", "ProblemStatement", "ProblemStatementGeneration.problemStatementGenerationFailed");
         }
 
-        if (generatedProblemStatement == null) {
-            throw new InternalServerErrorAlertException("Generated problem statement is null", "ProblemStatement", "ProblemStatementGeneration.generationFailed");
+        if (generatedProblemStatement == null || generatedProblemStatement.isBlank()) {
+            throw new InternalServerErrorAlertException("Generated problem statement is null or empty", "ProblemStatement",
+                    "ProblemStatementGeneration.problemStatementGenerationNull");
         }
+
+        generatedProblemStatement = generatedProblemStatement.trim();
 
         // Validate response length
         if (generatedProblemStatement.length() > MAX_PROBLEM_STATEMENT_LENGTH) {

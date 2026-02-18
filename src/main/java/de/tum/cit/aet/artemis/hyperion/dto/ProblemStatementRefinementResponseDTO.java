@@ -13,7 +13,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  *
  * @param refinedProblemStatement the refined problem statement text
  */
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(description = "Response containing refined problem statement")
 public record ProblemStatementRefinementResponseDTO(@Schema(description = "Refined problem statement text") String refinedProblemStatement) {
 }

@@ -68,7 +68,7 @@ public class HyperionPromptTemplateService {
      */
     public String renderObject(String resourcePath, Map<String, Object> variables) {
         String template = loadTemplate(resourcePath);
-        return replacePlaceholders(template, variables);
+        return replacePlaceholders(template, variables, resourcePath);
     }
 
     private String loadTemplate(String resourcePath) {
@@ -84,12 +84,15 @@ public class HyperionPromptTemplateService {
         });
     }
 
-    private static String replacePlaceholders(String template, Map<String, Object> variables) {
+    private static String replacePlaceholders(String template, Map<String, Object> variables, String resourcePath) {
         Matcher matcher = PLACEHOLDER_PATTERN.matcher(template);
         StringBuilder result = new StringBuilder();
         while (matcher.find()) {
             String key = matcher.group(1);
             Object value = variables.get(key);
+            if (value == null) {
+                log.warn("Template placeholder '{{{}}}' has no matching variable in resource '{}'", key, resourcePath);
+            }
             matcher.appendReplacement(result, Matcher.quoteReplacement(value != null ? value.toString() : matcher.group(0)));
         }
         matcher.appendTail(result);

@@ -21,7 +21,7 @@
                     [maxlength]="MAX_USER_PROMPT_LENGTH"
                     class="textarea-with-counter"
                 ></textarea>
-                <span class="textarea-char-count">{{ userPrompt()?.length || 0 }}/{{ MAX_USER_PROMPT_LENGTH }}</span>
+                <span class="textarea-char-count" [class.text-danger]="isPromptNearLimit()">{{ userPrompt()?.length || 0 }}/{{ MAX_USER_PROMPT_LENGTH }}</span>
             </div>
         </div>
         <div class="d-flex align-items-center gap-2 mb-3">

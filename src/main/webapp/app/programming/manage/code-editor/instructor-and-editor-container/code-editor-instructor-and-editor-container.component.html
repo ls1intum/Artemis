@@ -285,7 +285,9 @@
                                     [disabled]="isAiApplying()"
                                     [attr.maxlength]="MAX_USER_PROMPT_LENGTH"
                                 ></textarea>
-                                <div class="text-end text-muted small mt-1">{{ refinementPrompt().length }}/{{ MAX_USER_PROMPT_LENGTH }}</div>
+                                <div class="text-end small mt-1" [class.text-danger]="isPromptNearLimit()" [class.text-muted]="!isPromptNearLimit()">
+                                    {{ refinementPrompt().length }}/{{ MAX_USER_PROMPT_LENGTH }}
+                                </div>
                             </div>
                             <div class="d-flex justify-content-end p-3 refinement-popup-footer">
                                 <button pButton type="button" size="small" [disabled]="!refinementPrompt().trim() || isAiApplying()" (click)="submitRefinement()">

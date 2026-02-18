@@ -208,7 +208,10 @@
         },
         "ProblemStatementGeneration": {
             "generatedProblemStatementTooLong": "The generated problem statement is too long. Please try again with a different prompt.",
-            "generationFailed": "Failed to generate problem statement. Please try again.",
+            "chatClientNotConfigured": "AI generation is currently unavailable. Please contact your administrator.",
+            "chatClientNotConfigured_detail": "AI chat client is not configured.",
+            "problemStatementGenerationFailed": "Failed to generate problem statement. Please try again later.",
+            "problemStatementGenerationNull": "The AI returned an empty response. Please try again.",
             "userPromptEmpty": "The user prompt cannot be empty.",
             "userPromptTooLong": "The user prompt is too long. Please shorten your instructions and try again."
         },

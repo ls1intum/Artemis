@@ -60,7 +60,7 @@ import { ButtonSize } from 'app/shared/components/buttons/button/button.componen
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
 import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
-import { MAX_USER_PROMPT_LENGTH, isTemplateOrEmpty } from 'app/programming/manage/shared/problem-statement.utils';
+import { MAX_USER_PROMPT_LENGTH, PROMPT_LENGTH_WARNING_THRESHOLD, isTemplateOrEmpty } from 'app/programming/manage/shared/problem-statement.utils';
 import { TooltipModule } from 'primeng/tooltip';
 import { TextareaModule } from 'primeng/textarea';
 import { BadgeModule } from 'primeng/badge';
@@ -126,12 +126,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     protected isGeneratingOrRefining = signal(false);
     protected readonly isAiApplying = computed(() => this.isGeneratingOrRefining() || this.artemisIntelligenceService.isLoading());
-    private currentRefinementSubscription: Subscription | undefined;
+    private currentAiOperationSubscription: Subscription | undefined;
 
     readonly showDiff = signal(false);
 
     readonly refinementPopover = viewChild<Popover>('refinementPopover');
     readonly refinementPrompt = signal('');
+    protected readonly isPromptNearLimit = computed(() => this.refinementPrompt().length >= MAX_USER_PROMPT_LENGTH * PROMPT_LENGTH_WARNING_THRESHOLD);
     protected readonly faPaperPlane = faPaperPlane;
 
     private consistencyCheckService = inject(ConsistencyCheckService);
@@ -288,7 +289,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     override ngOnDestroy() {
         this.clearJobSubscription(true);
         this.statusSubscription?.unsubscribe();
-        this.currentRefinementSubscription?.unsubscribe();
+        this.currentAiOperationSubscription?.unsubscribe();
         super.ngOnDestroy();
     }
 
@@ -543,8 +544,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * Preserves the user's prompt so they can retry or modify it.
      */
     cancelAiOperation(): void {
-        this.currentRefinementSubscription?.unsubscribe();
-        this.currentRefinementSubscription = undefined;
+        this.currentAiOperationSubscription?.unsubscribe();
+        this.currentAiOperationSubscription = undefined;
         this.isGeneratingOrRefining.set(false);
     }
 
@@ -573,8 +574,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private generateProblemStatement(prompt: string): void {
         this.refinementPopover()?.hide();
 
-        this.currentRefinementSubscription?.unsubscribe();
-        this.currentRefinementSubscription = this.problemStatementService
+        this.currentAiOperationSubscription?.unsubscribe();
+        this.currentAiOperationSubscription = this.problemStatementService
             .generateProblemStatement(this.exercise, prompt, (v) => this.isGeneratingOrRefining.set(v))
             .subscribe({
                 next: (result) => {
@@ -604,22 +605,25 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private refineProblemStatement(prompt: string): void {
         const currentContent = this.editableInstructions()?.getCurrentContent() ?? this.exercise?.problemStatement;
         if (!currentContent?.trim()) {
-            this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
+            this.alertService.error('artemisApp.programmingExercise.problemStatement.cannotRefineEmpty');
             return;
         }
 
         this.refinementPopover()?.hide();
 
-        this.currentRefinementSubscription?.unsubscribe();
-        this.currentRefinementSubscription = this.problemStatementService
+        this.currentAiOperationSubscription?.unsubscribe();
+        this.currentAiOperationSubscription = this.problemStatementService
             .refineGlobally(this.exercise, currentContent, prompt, (v) => this.isGeneratingOrRefining.set(v))
             .subscribe({
                 next: (result) => {
                     if (result.success && result.content) {
+                        const expectedContent = result.content;
                         this.showDiff.set(true);
                         afterNextRender(
                             () => {
-                                this.editableInstructions()?.applyRefinedContent(result.content!);
+                                if (this.isGeneratingOrRefining() || this.showDiff()) {
+                                    this.editableInstructions()?.applyRefinedContent(expectedContent);
+                                }
                             },
                             { injector: this.injector },
                         );

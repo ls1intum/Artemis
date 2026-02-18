@@ -179,7 +179,22 @@ class HyperionProblemStatementRefinementServiceTest {
         course.setDescription("Test Description");
 
         assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatement(course, originalStatement, "Refine this"))
-                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("Refined problem statement is null");
+                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("Refined problem statement is null or empty");
+    }
+
+    @Test
+    void refineProblemStatement_throwsExceptionWhenResponseIsBlank() throws Exception {
+        String originalStatement = "Original problem statement";
+        // AI returns blank content
+        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage("   ")))));
+
+        var course = new Course();
+        course.setId(999L);
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatement(course, originalStatement, "Refine this"))
+                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("Refined problem statement is null or empty");
     }
 
     @Test

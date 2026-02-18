@@ -254,6 +254,7 @@
                 "generationError": "Fehler beim Generieren der Aufgabenstellung. Bitte versuche es erneut.",
                 "refinementSuccess": "Aufgabenstellung wurde erfolgreich verfeinert.",
                 "refinementError": "Fehler beim Verfeinern der Aufgabenstellung. Bitte versuche es erneut.",
+                "cannotRefineEmpty": "Eine leere Aufgabenstellung kann nicht verfeinert werden. Bitte f\u00fcge zuerst Inhalt hinzu.",
                 "problemStatementTooLong": "Die Aufgabenstellung ist zu lang zum Verfeinern. Bitte kürze den Inhalt und versuche es erneut.",
                 "reviewChanges": "Änderungen überprüfen",
                 "reviewChangesDescription": "Grüne Zeilen werden hinzugefügt, rote Zeilen werden entfernt.",

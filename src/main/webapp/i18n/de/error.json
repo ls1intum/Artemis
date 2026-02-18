@@ -208,7 +208,10 @@
         },
         "ProblemStatementGeneration": {
             "generatedProblemStatementTooLong": "Die generierte Aufgabenbeschreibung ist zu lang. Bitte versuche es erneut mit einer anderen Eingabe.",
-            "generationFailed": "Fehler beim Generieren der Aufgabenstellung. Bitte versuche es erneut.",
+            "chatClientNotConfigured": "KI-Generierung ist derzeit nicht verfügbar. Bitte kontaktiere den Administrator.",
+            "chatClientNotConfigured_detail": "Der KI-Chat-Client ist nicht konfiguriert.",
+            "problemStatementGenerationFailed": "Fehler beim Generieren der Aufgabenstellung. Bitte versuche es später erneut.",
+            "problemStatementGenerationNull": "Die KI hat eine leere Antwort zurückgegeben. Bitte versuche es erneut.",
             "userPromptEmpty": "Die Benutzereingabe darf nicht leer sein.",
             "userPromptTooLong": "Die Benutzereingabe ist zu lang. Bitte kürze deine Anweisungen und versuche es erneut."
         },

@@ -19,7 +19,7 @@ import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { Subscription } from 'rxjs';
 import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
-import { MAX_USER_PROMPT_LENGTH, isTemplateOrEmpty } from 'app/programming/manage/shared/problem-statement.utils';
+import { MAX_USER_PROMPT_LENGTH, PROMPT_LENGTH_WARNING_THRESHOLD, isTemplateOrEmpty } from 'app/programming/manage/shared/problem-statement.utils';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -64,7 +64,8 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
 
     userPrompt = signal('');
     isGeneratingOrRefining = signal(false);
-    private currentGenerationSubscription: Subscription | undefined = undefined;
+    protected readonly isPromptNearLimit = computed(() => (this.userPrompt()?.length ?? 0) >= MAX_USER_PROMPT_LENGTH * PROMPT_LENGTH_WARNING_THRESHOLD);
+    private currentAiOperationSubscription: Subscription | undefined = undefined;
     private profileService = inject(ProfileService);
     hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
 
@@ -86,9 +87,9 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
      * Cleans up the subscription to prevent memory leaks.
      */
     ngOnDestroy(): void {
-        if (this.currentGenerationSubscription) {
-            this.currentGenerationSubscription.unsubscribe();
-            this.currentGenerationSubscription = undefined;
+        if (this.currentAiOperationSubscription) {
+            this.currentAiOperationSubscription.unsubscribe();
+            this.currentAiOperationSubscription = undefined;
         }
     }
 
@@ -98,7 +99,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     removedLineCount = signal(0);
 
     private templateProblemStatement = signal<string>('');
-    private templateLoaded = signal<boolean>(false);
+    protected templateLoaded = signal<boolean>(false);
     private currentProblemStatement = signal<string>('');
 
     readonly editableInstructions = viewChild<ProgrammingExerciseEditableInstructionComponent>('editableInstructions');
@@ -131,9 +132,9 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
      * Resets all in-progress states.
      */
     cancelAiOperation(): void {
-        if (this.currentGenerationSubscription) {
-            this.currentGenerationSubscription.unsubscribe();
-            this.currentGenerationSubscription = undefined;
+        if (this.currentAiOperationSubscription) {
+            this.currentAiOperationSubscription.unsubscribe();
+            this.currentAiOperationSubscription = undefined;
         }
 
         this.isGeneratingOrRefining.set(false);
@@ -159,8 +160,8 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
             return;
         }
 
-        this.currentGenerationSubscription?.unsubscribe();
-        this.currentGenerationSubscription = this.problemStatementService
+        this.currentAiOperationSubscription?.unsubscribe();
+        this.currentAiOperationSubscription = this.problemStatementService
             .generateProblemStatement(exercise, prompt, (v) => this.isGeneratingOrRefining.set(v))
             .subscribe({
                 next: (result) => {
@@ -202,21 +203,25 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
         }
 
         if (!currentContent?.trim()) {
-            this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
+            this.alertService.error('artemisApp.programmingExercise.problemStatement.cannotRefineEmpty');
             return;
         }
 
-        this.currentGenerationSubscription?.unsubscribe();
-        this.currentGenerationSubscription = this.problemStatementService
+        this.currentAiOperationSubscription?.unsubscribe();
+        this.currentAiOperationSubscription = this.problemStatementService
             .refineGlobally(exercise, currentContent, prompt, (v) => this.isGeneratingOrRefining.set(v))
             .subscribe({
                 next: (result) => {
                     if (result.success && result.content) {
                         this.showDiff.set(true);
                         this.userPrompt.set('');
+                        const expectedContent = result.content;
                         afterNextRender(
                             () => {
-                                this.editableInstructions()?.applyRefinedContent(result.content!);
+                                // Staleness guard: only apply if this is still the active operation
+                                if (this.isGeneratingOrRefining() || this.showDiff()) {
+                                    this.editableInstructions()?.applyRefinedContent(expectedContent);
+                                }
                             },
                             { injector: this.injector },
                         );
