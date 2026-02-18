@@ -103,13 +103,14 @@ export class IrisOnboardingService {
             return this.pendingResult;
         }
 
-        this.dialogRef = this.dialogService.open(IrisOnboardingModalComponent, {
-            modal: false,
-            closable: false,
-            showHeader: false,
-            styleClass: 'iris-onboarding-dialog',
-            data: { hasAvailableExercises },
-        });
+        this.dialogRef =
+            this.dialogService.open(IrisOnboardingModalComponent, {
+                modal: false,
+                closable: false,
+                showHeader: false,
+                styleClass: 'iris-onboarding-dialog',
+                data: { hasAvailableExercises },
+            }) ?? undefined;
 
         this.pendingResult = new Promise<OnboardingResult | undefined>((resolve) => {
             this.dialogRef!.onClose.subscribe((result: OnboardingResult | undefined) => {
