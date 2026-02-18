@@ -1,44 +1,20 @@
-// Backdrop overlay
-.modal-backdrop {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: var(--global-search-modal-backdrop-bg);
-    z-index: 9998;
-    transition: opacity 0.2s;
-}
-
-// Modal wrapper - centers the modal
-.modal-wrapper {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 9999;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    padding-top: 10vh;
-    pointer-events: none;
-}
-
-// Modal content box
-.modal-content {
+// Override PrimeNG dialog structure
+::ng-deep .global-search-dialog.p-dialog {
     width: 100%;
     max-width: 768px;
     height: 70vh;
     max-height: 600px;
-    background: var(--bs-body-bg);
-    border-radius: 0.5rem;
-    box-shadow: var(--bs-box-shadow);
+    margin-top: 10vh;
     overflow: hidden;
-    pointer-events: auto;
-    border: 1px solid var(--bs-border-color);
+    background: var(--module-bg);
+}
+
+::ng-deep .global-search-dialog .p-dialog-content {
+    padding: 0;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
+    height: 100%;
 }
 
 // Search input section
@@ -81,9 +57,9 @@
 }
 
 // Footer with keyboard shortcuts
-.modal-footer {
+.search-footer {
     padding: 0.75rem 1rem;
-    background: var(--bs-body-bg);
+    background: var(--global-search-modal-footer-bg);
     border-top: 1px solid var(--bs-border-color);
     flex-shrink: 0; // Don't let it shrink
     text-align: left; // Force text alignment to left
@@ -105,18 +81,24 @@
     gap: 0.25rem;
 }
 
+.key-group {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
 .hint-text {
     margin-left: 0.5rem;
 }
 
 .key-hint-small {
-    padding: 0.25rem 0.5rem;
-    background: var(--global-search-modal-kbd-bg);
+    padding: 0.25rem 0.35rem;
+    background: var(--module-bg);
     border: 1px solid var(--bs-border-color);
     border-radius: 0.25rem;
     font-size: 0.75rem;
     font-family: monospace;
-    color: var(--bs-body-color);
+    color: var(--bs-secondary);
     display: inline-flex;
     align-items: center;
 }

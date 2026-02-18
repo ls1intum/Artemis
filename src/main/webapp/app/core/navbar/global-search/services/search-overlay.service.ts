@@ -12,12 +12,10 @@ export class SearchOverlayService {
 
     open() {
         this._isOpen.set(true);
-        document.body.style.overflow = 'hidden';
     }
 
     close() {
         this._isOpen.set(false);
-        document.body.style.overflow = '';
     }
 
     toggle() {
