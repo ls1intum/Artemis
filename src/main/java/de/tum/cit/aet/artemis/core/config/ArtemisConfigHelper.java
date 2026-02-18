@@ -9,6 +9,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.NEBULA_ENABLED_PROPER
 import static de.tum.cit.aet.artemis.core.config.Constants.PASSKEY_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.SHARING_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.THEIA_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.WEAVIATE_ENABLED_PROPERTY_NAME;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -181,6 +182,18 @@ public class ArtemisConfigHelper {
      */
     public boolean isTheiaEnabled(Environment environment) {
         return getPropertyOrExitArtemis(THEIA_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if the Weaviate integration is enabled.
+     * Defaults to false if not configured, as this is a development feature.
+     *
+     * @param environment the Spring environment
+     * @return true if the Weaviate integration is enabled, false otherwise
+     */
+    public boolean isWeaviateEnabled(Environment environment) {
+        // For now this is a development feature only, so we default to false instead of throwing an error if the property is missing
+        return environment.getProperty(WEAVIATE_ENABLED_PROPERTY_NAME, Boolean.class, false);
     }
 
     /**
