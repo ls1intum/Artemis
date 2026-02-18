@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { CourseDashboardComponent } from 'app/core/course/overview/course-dashboard/course-dashboard.component';
 import { By } from '@angular/platform-browser';
-import { DebugElement } from '@angular/core';
+import { Component, DebugElement, input } from '@angular/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -13,13 +13,22 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
 import { MockComponent, MockDirective } from 'ng-mocks';
-import { CourseChatbotComponent } from 'app/iris/overview/course-chatbot/course-chatbot.component';
 import { CourseExerciseLatenessComponent } from 'app/core/course/overview/course-dashboard/course-exercise-lateness/course-exercise-lateness.component';
 import { CourseExercisePerformanceComponent } from 'app/core/course/overview/course-dashboard/course-exercise-performance/course-exercise-performance.component';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { of } from 'rxjs';
+
+// Manual mock for CourseChatbotComponent to avoid ng-mocks issues with signal queries (viewChild)
+@Component({
+    selector: 'jhi-course-chatbot',
+    template: '',
+})
+class MockCourseChatbotComponent {
+    readonly courseId = input<number>();
+}
 
 describe('CourseDashboardComponent', () => {
     let component: CourseDashboardComponent;
@@ -31,7 +40,7 @@ describe('CourseDashboardComponent', () => {
         TestBed.configureTestingModule({
             declarations: [
                 CourseDashboardComponent,
-                MockComponent(CourseChatbotComponent),
+                MockCourseChatbotComponent,
                 NgbProgressbar,
                 TranslatePipeMock,
                 MockComponent(CourseExerciseLatenessComponent),
@@ -51,7 +60,7 @@ describe('CourseDashboardComponent', () => {
                     provide: CourseStorageService,
                     useValue: {
                         getCourse: () => ({ id: 123, studentCourseAnalyticsDashboardEnabled: true, irisEnabledInCourse: true, learningPathsEnabled: true }),
-                        subscribeToCourseUpdates: () => ({ subscribe: jest.fn() }),
+                        subscribeToCourseUpdates: () => of({ id: 123, studentCourseAnalyticsDashboardEnabled: true, irisEnabledInCourse: true, learningPathsEnabled: true }),
                     },
                 },
             ],
@@ -121,23 +130,27 @@ describe('CourseDashboardComponent', () => {
 
     it('should not load course metrics when studentCourseAnalyticsDashboardEnabled is false', () => {
         const metricsSpy = jest.spyOn(component, 'loadMetrics');
-        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({
+        const courseData = {
             id: 456,
             studentCourseAnalyticsDashboardEnabled: false,
             irisEnabledInCourse: true,
             learningPathsEnabled: true,
-        });
+        };
+        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(courseData);
+        jest.spyOn(courseStorageService, 'subscribeToCourseUpdates').mockReturnValue(of(courseData));
         component.ngOnInit();
         expect(metricsSpy).not.toHaveBeenCalled();
     });
     it('should load course metrics when studentCourseAnalyticsDashboardEnabled is true', () => {
         const metricsSpy = jest.spyOn(component, 'loadMetrics');
-        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({
+        const courseData = {
             id: 456,
             studentCourseAnalyticsDashboardEnabled: true,
             irisEnabledInCourse: true,
             learningPathsEnabled: true,
-        });
+        };
+        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(courseData);
+        jest.spyOn(courseStorageService, 'subscribeToCourseUpdates').mockReturnValue(of(courseData));
         component.ngOnInit();
         expect(metricsSpy).toHaveBeenCalledOnce();
     });
