@@ -84,7 +84,6 @@ export default tseslint.config(
                 Buffer: 'readonly',
                 getComputedStyle: 'readonly',
                 MarkdownIt: 'readonly',
-                console: 'readonly',
             },
         },
         plugins: {
