@@ -228,7 +228,7 @@ describe('ReviewCommentWidgetManager', () => {
         const manager = new ReviewCommentWidgetManager(editor as any, vcRef as any, config);
 
         manager.renderWidgets();
-        const updated = manager.updateThreadInputs(threads);
+        const updated = manager.tryUpdateThreadInputs(threads);
         expect(updated).toBe(true);
     });
 
@@ -238,7 +238,7 @@ describe('ReviewCommentWidgetManager', () => {
         const config = createConfig();
         const manager = new ReviewCommentWidgetManager(editor as any, vcRef as any, config);
 
-        const updated = manager.updateThreadInputs([{ id: 99 } as any]);
+        const updated = manager.tryUpdateThreadInputs([{ id: 99 } as any]);
         expect(updated).toBe(false);
     });
 

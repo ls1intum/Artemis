@@ -69,11 +69,12 @@ export class ReviewCommentWidgetManager {
 
     /**
      * Updates thread inputs in-place when widgets already exist.
+     * Returns false when at least one thread widget is missing, so callers can fall back to a full render.
      *
      * @param threads The latest thread data to apply to widgets.
      * @returns True if all widgets were updated, false if any were missing.
      */
-    updateThreadInputs(threads: CommentThread[]): boolean {
+    tryUpdateThreadInputs(threads: CommentThread[]): boolean {
         let updated = true;
         for (const thread of threads) {
             const widgetRef = this.threadWidgetRefs.get(thread.id);

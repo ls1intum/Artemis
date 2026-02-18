@@ -377,7 +377,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             this.showLocationWarning();
             const threads = this.exerciseReviewCommentService.threads();
             this.reviewCommentManager?.updateDraftInputs();
-            this.reviewCommentManager?.updateThreadInputs(threads);
+            this.reviewCommentManager?.tryUpdateThreadInputs(threads);
         });
     }
 

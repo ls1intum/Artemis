@@ -60,6 +60,8 @@ const SEVERITY_ORDER = {
     selector: 'jhi-code-editor-instructor',
     templateUrl: './code-editor-instructor-and-editor-container.component.html',
     styleUrl: 'code-editor-instructor-and-editor-container.scss',
+    // Keep review comment state scoped to each editor container instance.
+    providers: [ExerciseReviewCommentService],
     imports: [
         FaIconComponent,
         TranslateDirective,

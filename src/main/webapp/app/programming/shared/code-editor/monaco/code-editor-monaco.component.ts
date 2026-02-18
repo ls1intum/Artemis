@@ -172,6 +172,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
 
         effect(() => {
             const reviewCommentsEnabled = this.enableExerciseReviewComments() && isReviewCommentsSupportedRepository(this.selectedRepository());
+            // Intentionally read both signals so this effect re-runs when threads or auxiliary repository selection changes.
             this.exerciseReviewCommentService.threads();
             this.selectedAuxiliaryRepositoryId();
             if (reviewCommentsEnabled) {
@@ -189,7 +190,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
             this.commitState();
             this.reviewCommentManager?.updateDraftInputs();
             const threads = this.exerciseReviewCommentService.threads();
-            this.reviewCommentManager?.updateThreadInputs(threads);
+            this.reviewCommentManager?.tryUpdateThreadInputs(threads);
         });
     }
 

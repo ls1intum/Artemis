@@ -41,11 +41,8 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     readonly editingCommentId = signal<number | undefined>(undefined);
     readonly editingCommentType = signal<CommentType | undefined>(undefined);
     readonly editText = signal('');
-    readonly userCommentMenuItems: MenuItem[] = [
-        { id: 'edit', label: 'Edit comment' },
-        { id: 'delete', label: 'Delete comment' },
-    ];
-    readonly nonUserCommentMenuItems: MenuItem[] = [{ id: 'delete', label: 'Delete comment' }];
+    userCommentMenuItems: MenuItem[] = [];
+    nonUserCommentMenuItems: MenuItem[] = [];
     readonly commentMenus = viewChildren<Menu>('commentMenu');
 
     private readonly destroyed$ = new Subject<void>();
@@ -153,7 +150,11 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.showThreadBody.set(!this.initialCollapsed());
-        this.translateService.onLangChange.pipe(takeUntil(this.destroyed$)).subscribe(() => this.changeDetectorRef.detectChanges());
+        this.updateMenuItems();
+        this.translateService.onLangChange.pipe(takeUntil(this.destroyed$)).subscribe(() => {
+            this.updateMenuItems();
+            this.changeDetectorRef.detectChanges();
+        });
     }
 
     ngOnDestroy(): void {
@@ -237,5 +238,13 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         for (const menu of this.commentMenus()) {
             menu.hide();
         }
+    }
+
+    private updateMenuItems(): void {
+        this.userCommentMenuItems = [
+            { id: 'edit', label: this.translateService.instant('artemisApp.review.editComment') },
+            { id: 'delete', label: this.translateService.instant('artemisApp.review.deleteComment') },
+        ];
+        this.nonUserCommentMenuItems = [{ id: 'delete', label: this.translateService.instant('artemisApp.review.deleteComment') }];
     }
 }

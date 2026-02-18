@@ -178,7 +178,11 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         })
             // Avoid rendering heavy template dependencies for these tests
             .overrideComponent(CodeEditorInstructorAndEditorContainerComponent, {
-                set: { template: '', imports: [] as any },
+                set: {
+                    template: '',
+                    imports: [] as any,
+                    providers: [{ provide: ExerciseReviewCommentService, useValue: reviewCommentService }],
+                },
             })
             .compileComponents();
 
