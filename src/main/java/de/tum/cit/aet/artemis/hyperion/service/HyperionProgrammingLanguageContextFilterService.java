@@ -165,8 +165,9 @@ public class HyperionProgrammingLanguageContextFilterService {
                 String filePath = entry.getKey();
                 String content = entry.getValue();
 
-                if (filePath == null)
+                if (filePath == null) {
                     continue;
+                }
 
                 // 1. Exclude based on Patterns (Global + Specific)
                 Path pathObj = Path.of(filePath);
