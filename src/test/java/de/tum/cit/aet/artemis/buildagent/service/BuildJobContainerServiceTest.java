@@ -65,6 +65,9 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
         ReflectionTestUtils.setField(buildJobContainerService, "maxMemory", MAX_XXX_VALUE);
         ReflectionTestUtils.setField(buildJobContainerService, "maxMemorySwap", MAX_XXX_VALUE);
 
+        // Ensure Docker is marked as available for tests using mocked Docker clients
+        when(buildAgentConfiguration.isDockerAvailable()).thenReturn(true);
+
         when(buildAgentConfiguration.getDockerClient().createContainerCmd(anyString())).thenReturn(createContainerCmd);
         when(createContainerCmd.withName(anyString())).thenReturn(createContainerCmd);
         when(createContainerCmd.withHostConfig(any())).thenReturn(createContainerCmd);
