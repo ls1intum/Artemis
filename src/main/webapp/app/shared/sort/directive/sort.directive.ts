@@ -1,9 +1,9 @@
-import { Directive, input, output } from '@angular/core';
+import { Directive, model, output } from '@angular/core';
 
 @Directive({ selector: '[jhiSort]' })
 export class SortDirective<T> {
-    predicate = input<T | undefined>();
-    ascending = input<boolean>(false);
+    predicate = model<T | undefined>();
+    ascending = model<boolean>(false);
 
     predicateChange = output<T>();
     ascendingChange = output<boolean>();
@@ -11,8 +11,8 @@ export class SortDirective<T> {
 
     sort(field: T): void {
         const newAscending = field !== this.predicate() ? true : !this.ascending();
-        this.predicateChange.emit(field);
-        this.ascendingChange.emit(newAscending);
+        this.predicate.set(field);
+        this.ascending.set(newAscending);
         this.sortChange.emit({ predicate: field, ascending: newAscending });
     }
 }

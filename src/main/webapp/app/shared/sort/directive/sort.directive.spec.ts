@@ -75,7 +75,6 @@ describe('Directive: SortDirective', () => {
         // WHEN
         fixture.detectChanges();
         sortDirective.sort('ID');
-        fixture.detectChanges(); // manual changeDetection in zoneless
         // sort again
         sortDirective.sort('NAME');
 
