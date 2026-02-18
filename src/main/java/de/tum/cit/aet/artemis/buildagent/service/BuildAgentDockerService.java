@@ -488,7 +488,7 @@ public class BuildAgentDockerService {
                     }
                 }
                 mutableSortedImagesByLastBuildDate.remove(oldestImage);
-                oldestImage = mutableSortedImagesByLastBuildDate.getFirst();
+                oldestImage = mutableSortedImagesByLastBuildDate.isEmpty() ? null : mutableSortedImagesByLastBuildDate.getFirst();
                 totalAttempts--;
             }
         }
