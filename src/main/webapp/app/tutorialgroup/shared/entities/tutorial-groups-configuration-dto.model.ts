@@ -2,13 +2,13 @@ import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/t
 import { TutorialGroupFreePeriodDTO, fromTutorialGroupFreePeriodDTO, toTutorialGroupFreePeriodDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-free-period-dto.model';
 import { convertDateFromClient, convertDateStringFromServer } from 'app/shared/util/date.utils';
 
-export interface TutorialGroupConfigurationDTO {
-    id?: number;
-    tutorialPeriodStartInclusive?: string;
-    tutorialPeriodEndInclusive?: string;
-    useTutorialGroupChannels?: boolean;
-    usePublicTutorialGroupChannels?: boolean;
-    tutorialGroupFreePeriods?: TutorialGroupFreePeriodDTO[];
+export class TutorialGroupConfigurationDTO {
+    public id?: number;
+    public tutorialPeriodStartInclusive?: string;
+    public tutorialPeriodEndInclusive?: string;
+    public useTutorialGroupChannels?: boolean;
+    public usePublicTutorialGroupChannels?: boolean;
+    public tutorialGroupFreePeriods?: TutorialGroupFreePeriodDTO[];
 }
 
 export function tutorialGroupConfigurationDtoFromEntity(entity: TutorialGroupsConfiguration): TutorialGroupConfigurationDTO {
