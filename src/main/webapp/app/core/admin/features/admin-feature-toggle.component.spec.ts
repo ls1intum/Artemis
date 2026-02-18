@@ -138,7 +138,7 @@ describe('AdminFeatureToggleComponentTest', () => {
         it('ngOnInit should load module features', () => {
             expect(comp.moduleFeatures()).toHaveLength(0);
             comp.ngOnInit();
-            expect(comp.moduleFeatures()).toHaveLength(14);
+            expect(comp.moduleFeatures()).toHaveLength(15);
         });
 
         it('should set isActive based on active module features', () => {

@@ -411,7 +411,8 @@
                 "unlink": "Unlink",
                 "syncEnrollment": "Sync Enrollment",
                 "syncSuccess": "Enrollment sync completed: {{ added }} users added, {{ notFound }} not found",
-                "noResults": "No matching courses found in CAMPUSOnline"
+                "noResults": "No matching courses found in CAMPUSOnline",
+                "selectOrgUnit": "Select organizational unit..."
             }
         },
         "courseStatistics": {

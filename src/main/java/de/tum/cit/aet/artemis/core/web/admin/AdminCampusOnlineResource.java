@@ -4,7 +4,11 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
 
@@ -24,11 +28,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.config.CampusOnlineEnabled;
+import de.tum.cit.aet.artemis.core.domain.CampusOnlineOrgUnit;
 import de.tum.cit.aet.artemis.core.dto.CampusOnlineCourseDTO;
 import de.tum.cit.aet.artemis.core.dto.CampusOnlineCourseImportRequestDTO;
 import de.tum.cit.aet.artemis.core.dto.CampusOnlineLinkRequestDTO;
+import de.tum.cit.aet.artemis.core.dto.CampusOnlineOrgUnitDTO;
+import de.tum.cit.aet.artemis.core.dto.CampusOnlineOrgUnitImportDTO;
 import de.tum.cit.aet.artemis.core.dto.CampusOnlineSyncResultDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.repository.CampusOnlineOrgUnitRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.connectors.campusonline.CampusOnlineCourseImportService;
 import de.tum.cit.aet.artemis.core.service.connectors.campusonline.CampusOnlineEnrollmentSyncService;
@@ -38,19 +46,138 @@ import de.tum.cit.aet.artemis.core.service.connectors.campusonline.CampusOnlineE
 @Conditional(CampusOnlineEnabled.class)
 @Lazy
 @RestController
-@RequestMapping("api/core/admin/campus-online")
+@RequestMapping("api/core/admin/campus-online/")
 public class AdminCampusOnlineResource {
 
     private static final int MIN_SEARCH_QUERY_LENGTH = 3;
+
+    private static final int MAX_IMPORT_SIZE = 10_000;
 
     private final CampusOnlineCourseImportService courseImportService;
 
     private final CampusOnlineEnrollmentSyncService enrollmentSyncService;
 
-    public AdminCampusOnlineResource(CampusOnlineCourseImportService courseImportService, CampusOnlineEnrollmentSyncService enrollmentSyncService) {
+    private final CampusOnlineOrgUnitRepository orgUnitRepository;
+
+    public AdminCampusOnlineResource(CampusOnlineCourseImportService courseImportService, CampusOnlineEnrollmentSyncService enrollmentSyncService,
+            CampusOnlineOrgUnitRepository orgUnitRepository) {
         this.courseImportService = courseImportService;
         this.enrollmentSyncService = enrollmentSyncService;
+        this.orgUnitRepository = orgUnitRepository;
     }
+
+    // ==================== Org Unit CRUD ====================
+
+    /**
+     * GET /api/core/admin/campus-online/org-units : Get all organizational units.
+     *
+     * @return list of all org units
+     */
+    @GetMapping("org-units")
+    public ResponseEntity<List<CampusOnlineOrgUnitDTO>> getAllOrgUnits() {
+        List<CampusOnlineOrgUnitDTO> orgUnits = orgUnitRepository.findAll().stream().map(CampusOnlineOrgUnitDTO::fromEntity).toList();
+        return ResponseEntity.ok(orgUnits);
+    }
+
+    /**
+     * GET /api/core/admin/campus-online/org-units/{orgUnitId} : Get a single organizational unit.
+     *
+     * @param orgUnitId the ID of the org unit
+     * @return the org unit
+     */
+    @GetMapping("org-units/{orgUnitId}")
+    public ResponseEntity<CampusOnlineOrgUnitDTO> getOrgUnit(@PathVariable long orgUnitId) {
+        CampusOnlineOrgUnit orgUnit = orgUnitRepository.findByIdElseThrow(orgUnitId);
+        return ResponseEntity.ok(CampusOnlineOrgUnitDTO.fromEntity(orgUnit));
+    }
+
+    /**
+     * POST /api/core/admin/campus-online/org-units : Create a new organizational unit.
+     *
+     * @param orgUnitDTO the org unit to create
+     * @return the created org unit
+     */
+    @PostMapping("org-units")
+    public ResponseEntity<CampusOnlineOrgUnitDTO> createOrgUnit(@RequestBody @Valid CampusOnlineOrgUnitDTO orgUnitDTO) {
+        if (orgUnitDTO.id() != null) {
+            throw new BadRequestAlertException("A new org unit cannot already have an ID", "campusOnline", "idExists");
+        }
+        if (orgUnitRepository.existsByExternalId(orgUnitDTO.externalId())) {
+            throw new BadRequestAlertException("An org unit with this external ID already exists", "campusOnline", "externalIdExists");
+        }
+        CampusOnlineOrgUnit orgUnit = new CampusOnlineOrgUnit();
+        orgUnit.setExternalId(orgUnitDTO.externalId());
+        orgUnit.setName(orgUnitDTO.name());
+        CampusOnlineOrgUnit saved = orgUnitRepository.save(orgUnit);
+        return ResponseEntity.status(HttpStatus.CREATED).body(CampusOnlineOrgUnitDTO.fromEntity(saved));
+    }
+
+    /**
+     * POST /api/core/admin/campus-online/org-units/import : Bulk import organizational units.
+     * Skips entries with duplicate external IDs (both within the import and against existing data).
+     *
+     * @param importDTOs the list of org units to import
+     * @return list of all org units after import
+     */
+    @PostMapping("org-units/import")
+    public ResponseEntity<List<CampusOnlineOrgUnitDTO>> importOrgUnits(@RequestBody @Valid List<CampusOnlineOrgUnitImportDTO> importDTOs) {
+        if (importDTOs.size() > MAX_IMPORT_SIZE) {
+            throw new BadRequestAlertException("Import size exceeds maximum of " + MAX_IMPORT_SIZE, "campusOnline", "importTooLarge");
+        }
+
+        Set<String> existingExternalIds = orgUnitRepository.findAll().stream().map(CampusOnlineOrgUnit::getExternalId).collect(Collectors.toSet());
+        Set<String> seen = new HashSet<>();
+        List<CampusOnlineOrgUnit> toSave = new ArrayList<>();
+
+        for (CampusOnlineOrgUnitImportDTO dto : importDTOs) {
+            if (existingExternalIds.contains(dto.externalId()) || !seen.add(dto.externalId())) {
+                continue; // skip duplicates (existing or within batch)
+            }
+            CampusOnlineOrgUnit orgUnit = new CampusOnlineOrgUnit();
+            orgUnit.setExternalId(dto.externalId());
+            orgUnit.setName(dto.name());
+            toSave.add(orgUnit);
+        }
+
+        List<CampusOnlineOrgUnit> saved = orgUnitRepository.saveAll(toSave);
+        List<CampusOnlineOrgUnitDTO> created = saved.stream().map(CampusOnlineOrgUnitDTO::fromEntity).toList();
+        return ResponseEntity.ok(created);
+    }
+
+    /**
+     * PUT /api/core/admin/campus-online/org-units/{orgUnitId} : Update an existing organizational unit.
+     *
+     * @param orgUnitId  the ID of the org unit to update
+     * @param orgUnitDTO the updated org unit data
+     * @return the updated org unit
+     */
+    @PutMapping("org-units/{orgUnitId}")
+    public ResponseEntity<CampusOnlineOrgUnitDTO> updateOrgUnit(@PathVariable long orgUnitId, @RequestBody @Valid CampusOnlineOrgUnitDTO orgUnitDTO) {
+        CampusOnlineOrgUnit existing = orgUnitRepository.findByIdElseThrow(orgUnitId);
+        // Check for duplicate externalId (only if it changed)
+        if (!existing.getExternalId().equals(orgUnitDTO.externalId()) && orgUnitRepository.existsByExternalId(orgUnitDTO.externalId())) {
+            throw new BadRequestAlertException("An org unit with this external ID already exists", "campusOnline", "externalIdExists");
+        }
+        existing.setExternalId(orgUnitDTO.externalId());
+        existing.setName(orgUnitDTO.name());
+        CampusOnlineOrgUnit saved = orgUnitRepository.save(existing);
+        return ResponseEntity.ok(CampusOnlineOrgUnitDTO.fromEntity(saved));
+    }
+
+    /**
+     * DELETE /api/core/admin/campus-online/org-units/{orgUnitId} : Delete an organizational unit.
+     *
+     * @param orgUnitId the ID of the org unit to delete
+     * @return empty response
+     */
+    @DeleteMapping("org-units/{orgUnitId}")
+    public ResponseEntity<Void> deleteOrgUnit(@PathVariable long orgUnitId) {
+        CampusOnlineOrgUnit orgUnit = orgUnitRepository.findByIdElseThrow(orgUnitId);
+        orgUnitRepository.delete(orgUnit);
+        return ResponseEntity.noContent().build();
+    }
+
+    // ==================== Course Search ====================
 
     /**
      * GET /api/core/admin/campus-online/courses : Search for courses in a CAMPUSOnline organizational unit.
@@ -62,6 +189,7 @@ public class AdminCampusOnlineResource {
      */
     @GetMapping("courses")
     public ResponseEntity<List<CampusOnlineCourseDTO>> searchCourses(@RequestParam String orgUnitId, @RequestParam String from, @RequestParam String until) {
+        validateOrgUnitId(orgUnitId);
         validateDateParam(from, "from");
         validateDateParam(until, "until");
         List<CampusOnlineCourseDTO> courses = courseImportService.searchCourses(orgUnitId, from, until);
@@ -71,18 +199,23 @@ public class AdminCampusOnlineResource {
     /**
      * GET /api/core/admin/campus-online/courses/search : Search for courses by name for typeahead.
      *
-     * @param query    the course name query
-     * @param semester optional semester filter
+     * @param query     the course name query
+     * @param orgUnitId the organizational unit ID to search in
+     * @param semester  optional semester filter
      * @return list of matching courses with metadata
      */
     @GetMapping("courses/search")
-    public ResponseEntity<List<CampusOnlineCourseDTO>> searchCoursesByName(@RequestParam String query, @RequestParam(required = false) String semester) {
+    public ResponseEntity<List<CampusOnlineCourseDTO>> searchCoursesByName(@RequestParam String query, @RequestParam String orgUnitId,
+            @RequestParam(required = false) String semester) {
+        validateOrgUnitId(orgUnitId);
         if (query == null || query.length() < MIN_SEARCH_QUERY_LENGTH) {
             throw new BadRequestAlertException("Search query must be at least " + MIN_SEARCH_QUERY_LENGTH + " characters", "campusOnline", "queryTooShort");
         }
-        List<CampusOnlineCourseDTO> courses = courseImportService.searchCoursesByName(query, semester);
+        List<CampusOnlineCourseDTO> courses = courseImportService.searchCoursesByName(query, orgUnitId, semester);
         return ResponseEntity.ok(courses);
     }
+
+    // ==================== Course Link/Unlink/Import ====================
 
     /**
      * PUT /api/core/admin/campus-online/courses/{courseId}/link : Link a CAMPUSOnline course to an Artemis course.
@@ -122,6 +255,8 @@ public class AdminCampusOnlineResource {
         return ResponseEntity.status(HttpStatus.CREATED).body(course);
     }
 
+    // ==================== Enrollment Sync ====================
+
     /**
      * POST /api/core/admin/campus-online/sync : Manually trigger enrollment sync for all courses.
      *
@@ -143,6 +278,12 @@ public class AdminCampusOnlineResource {
     public ResponseEntity<CampusOnlineSyncResultDTO> syncSingleCourse(@PathVariable long courseId) {
         CampusOnlineSyncResultDTO result = enrollmentSyncService.performSingleCourseSync(courseId);
         return ResponseEntity.ok(result);
+    }
+
+    private void validateOrgUnitId(String orgUnitId) {
+        if (orgUnitId == null || orgUnitId.isBlank() || !orgUnitId.matches("\\d+")) {
+            throw new BadRequestAlertException("orgUnitId must be a numeric value", "campusOnline", "invalidOrgUnitId");
+        }
     }
 
     private void validateDateParam(String date, String paramName) {

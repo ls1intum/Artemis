@@ -162,7 +162,8 @@
                     "privacy": "Datenschutz",
                     "notifications": "Mitteilungen",
                     "examRooms": "Prüfungsräume",
-                    "dependencies": "Abhängigkeiten"
+                    "dependencies": "Abhängigkeiten",
+                    "campusOnlineOrgUnits": "CAMPUSOnline"
                 },
                 "collapseMenu": "Menü einklappen (Strg + M)",
                 "expandMenu": "Menü ausklappen (Strg + M)",

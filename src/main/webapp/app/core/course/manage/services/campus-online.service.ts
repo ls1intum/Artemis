@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export interface CampusOnlineCourseDTO {
@@ -27,17 +27,52 @@ export interface CampusOnlineSyncResultDTO {
     usersNotFound: number;
 }
 
+export interface CampusOnlineOrgUnit {
+    id?: number;
+    externalId: string;
+    name: string;
+}
+
+export interface CampusOnlineOrgUnitImportDTO {
+    externalId: string;
+    name: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CampusOnlineService {
     private http = inject(HttpClient);
     private resourceUrl = 'api/core/admin/campus-online';
 
-    searchCourses(query: string, semester?: string): Observable<CampusOnlineCourseDTO[]> {
-        let url = `${this.resourceUrl}/courses/search?query=${encodeURIComponent(query)}`;
+    getOrgUnits(): Observable<CampusOnlineOrgUnit[]> {
+        return this.http.get<CampusOnlineOrgUnit[]>(`${this.resourceUrl}/org-units`);
+    }
+
+    getOrgUnit(orgUnitId: number): Observable<CampusOnlineOrgUnit> {
+        return this.http.get<CampusOnlineOrgUnit>(`${this.resourceUrl}/org-units/${orgUnitId}`);
+    }
+
+    createOrgUnit(orgUnit: CampusOnlineOrgUnit): Observable<HttpResponse<CampusOnlineOrgUnit>> {
+        return this.http.post<CampusOnlineOrgUnit>(`${this.resourceUrl}/org-units`, orgUnit, { observe: 'response' });
+    }
+
+    updateOrgUnit(orgUnit: CampusOnlineOrgUnit): Observable<HttpResponse<CampusOnlineOrgUnit>> {
+        return this.http.put<CampusOnlineOrgUnit>(`${this.resourceUrl}/org-units/${orgUnit.id}`, orgUnit, { observe: 'response' });
+    }
+
+    deleteOrgUnit(orgUnitId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/org-units/${orgUnitId}`, { observe: 'response' });
+    }
+
+    importOrgUnits(orgUnits: CampusOnlineOrgUnitImportDTO[]): Observable<CampusOnlineOrgUnit[]> {
+        return this.http.post<CampusOnlineOrgUnit[]>(`${this.resourceUrl}/org-units/import`, orgUnits);
+    }
+
+    searchCourses(query: string, orgUnitId: string, semester?: string): Observable<CampusOnlineCourseDTO[]> {
+        let params = new HttpParams().set('query', query).set('orgUnitId', orgUnitId);
         if (semester) {
-            url += `&semester=${encodeURIComponent(semester)}`;
+            params = params.set('semester', semester);
         }
-        return this.http.get<CampusOnlineCourseDTO[]>(url);
+        return this.http.get<CampusOnlineCourseDTO[]>(`${this.resourceUrl}/courses/search`, { params });
     }
 
     linkCourse(courseId: number, request: CampusOnlineLinkRequest): Observable<HttpResponse<CampusOnlineCourseDTO>> {

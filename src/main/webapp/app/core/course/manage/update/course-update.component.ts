@@ -46,9 +46,10 @@ import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 import { FileService } from 'app/shared/service/file.service';
 import { IS_AT_LEAST_ADMIN } from 'app/shared/constants/authority.constants';
-import { CampusOnlineCourseDTO, CampusOnlineService } from 'app/core/course/manage/services/campus-online.service';
+import { CampusOnlineCourseDTO, CampusOnlineOrgUnit, CampusOnlineService } from 'app/core/course/manage/services/campus-online.service';
 import { AutoComplete } from 'primeng/autocomplete';
 import { PrimeTemplate } from 'primeng/api';
+import { Select } from 'primeng/select';
 
 const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
 
@@ -79,6 +80,7 @@ const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
         HasAnyAuthorityDirective,
         AutoComplete,
         PrimeTemplate,
+        Select,
     ],
 })
 export class CourseUpdateComponent implements OnInit {
@@ -138,6 +140,8 @@ export class CourseUpdateComponent implements OnInit {
     isAthenaEnabled = false;
     campusOnlineEnabled = false;
 
+    campusOnlineOrgUnits = signal<CampusOnlineOrgUnit[]>([]);
+    selectedOrgUnit: CampusOnlineOrgUnit | undefined;
     campusOnlineSuggestions = signal<CampusOnlineCourseDTO[]>([]);
     selectedCampusOnlineCourse: CampusOnlineCourseDTO | undefined;
     campusOnlineLinked = false;
@@ -207,6 +211,13 @@ export class CourseUpdateComponent implements OnInit {
         this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
         this.campusOnlineEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_CAMPUS_ONLINE);
         this.campusOnlineLinked = !!this.course.campusOnlineConfiguration?.campusOnlineCourseId;
+
+        if (this.campusOnlineEnabled) {
+            this.campusOnlineService.getOrgUnits().subscribe({
+                next: (orgUnits) => this.campusOnlineOrgUnits.set(orgUnits),
+                error: () => this.campusOnlineOrgUnits.set([]),
+            });
+        }
 
         this.communicationEnabled = isCommunicationEnabled(this.course);
         this.messagingEnabled = isMessagingEnabled(this.course);
@@ -714,7 +725,11 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     searchCampusOnline(event: { query: string }) {
-        this.campusOnlineService.searchCourses(event.query, this.course.semester).subscribe({
+        if (!this.selectedOrgUnit) {
+            this.campusOnlineSuggestions.set([]);
+            return;
+        }
+        this.campusOnlineService.searchCourses(event.query, this.selectedOrgUnit.externalId, this.course.semester).subscribe({
             next: (results) => this.campusOnlineSuggestions.set(results),
             error: () => this.campusOnlineSuggestions.set([]),
         });

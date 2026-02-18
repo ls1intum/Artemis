@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -27,9 +26,9 @@ import de.tum.cit.aet.artemis.core.dto.CampusOnlineCourseDTO;
 import de.tum.cit.aet.artemis.core.dto.CampusOnlineCourseImportRequestDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineCourseMetadataResponse;
-import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineOrgCourse;
-import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineOrgCoursesResponse;
+import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineCourseMetadataResponseDTO;
+import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineOrgCourseDTO;
+import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineOrgCoursesResponseDTO;
 
 @Lazy
 @Service
@@ -41,14 +40,11 @@ public class CampusOnlineCourseImportService {
 
     private static final String ENTITY_NAME = "campusOnline";
 
-    @Value("${artemis.campus-online.default-org-unit-id:}")
-    private String defaultOrgUnitId;
-
-    private final CampusOnlineClient campusOnlineClient;
+    private final CampusOnlineClientService campusOnlineClient;
 
     private final CourseRepository courseRepository;
 
-    public CampusOnlineCourseImportService(CampusOnlineClient campusOnlineClient, CourseRepository courseRepository) {
+    public CampusOnlineCourseImportService(CampusOnlineClientService campusOnlineClient, CourseRepository courseRepository) {
         this.campusOnlineClient = campusOnlineClient;
         this.courseRepository = courseRepository;
     }
@@ -62,7 +58,7 @@ public class CampusOnlineCourseImportService {
      * @return list of courses with import status
      */
     public List<CampusOnlineCourseDTO> searchCourses(String orgUnitId, String from, String until) {
-        CampusOnlineOrgCoursesResponse response = campusOnlineClient.fetchCoursesForOrg(orgUnitId, from, until);
+        CampusOnlineOrgCoursesResponseDTO response = campusOnlineClient.fetchCoursesForOrg(orgUnitId, from, until);
         if (response.courses() == null) {
             return Collections.emptyList();
         }
@@ -80,7 +76,7 @@ public class CampusOnlineCourseImportService {
     public CampusOnlineCourseDTO importCourse(CampusOnlineCourseImportRequestDTO request) {
         checkDuplicateLink(request.campusOnlineCourseId());
 
-        CampusOnlineCourseMetadataResponse metadata = campusOnlineClient.fetchCourseMetadata(request.campusOnlineCourseId());
+        CampusOnlineCourseMetadataResponseDTO metadata = campusOnlineClient.fetchCourseMetadata(request.campusOnlineCourseId());
 
         CampusOnlineConfiguration config = new CampusOnlineConfiguration();
         config.setCampusOnlineCourseId(request.campusOnlineCourseId());
@@ -115,16 +111,17 @@ public class CampusOnlineCourseImportService {
     }
 
     /**
-     * Searches for courses by name within the default organizational unit.
+     * Searches for courses by name within the specified organizational unit.
      * Used by the typeahead in the course form to find matching CAMPUSOnline courses.
      *
-     * @param query    the course name query
-     * @param semester the semester filter (e.g. "2025W"), can be null
+     * @param query     the course name query
+     * @param orgUnitId the organizational unit ID to search in
+     * @param semester  the semester filter (e.g. "2025W"), can be null
      * @return list of matching courses with metadata
      */
-    public List<CampusOnlineCourseDTO> searchCoursesByName(String query, String semester) {
-        if (defaultOrgUnitId == null || defaultOrgUnitId.isBlank()) {
-            log.warn("Cannot search CAMPUSOnline courses: default org unit ID not configured");
+    public List<CampusOnlineCourseDTO> searchCoursesByName(String query, String orgUnitId, String semester) {
+        if (orgUnitId == null || orgUnitId.isBlank()) {
+            log.warn("Cannot search CAMPUSOnline courses: org unit ID not provided");
             return Collections.emptyList();
         }
 
@@ -132,7 +129,7 @@ public class CampusOnlineCourseImportService {
         String from = semester != null ? semesterToFromDate(semester) : LocalDate.now().minusYears(1).toString();
         String until = semester != null ? semesterToUntilDate(semester) : LocalDate.now().plusYears(1).toString();
 
-        CampusOnlineOrgCoursesResponse response = campusOnlineClient.fetchCoursesForOrg(defaultOrgUnitId, from, until);
+        CampusOnlineOrgCoursesResponseDTO response = campusOnlineClient.fetchCoursesForOrg(orgUnitId, from, until);
         if (response.courses() == null) {
             return Collections.emptyList();
         }
@@ -226,7 +223,7 @@ public class CampusOnlineCourseImportService {
         }
     }
 
-    private CampusOnlineCourseDTO mapToDTO(CampusOnlineOrgCourse orgCourse, boolean alreadyImported) {
+    private CampusOnlineCourseDTO mapToDTO(CampusOnlineOrgCourseDTO orgCourse, boolean alreadyImported) {
         return new CampusOnlineCourseDTO(orgCourse.courseId(), orgCourse.courseName(), orgCourse.teachingTerm(), null, null, null, null, alreadyImported);
     }
 }

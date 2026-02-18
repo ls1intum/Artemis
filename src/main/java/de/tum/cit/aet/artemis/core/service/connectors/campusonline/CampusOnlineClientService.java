@@ -24,17 +24,17 @@ import com.fasterxml.jackson.dataformat.xml.XmlFactory;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 
 import de.tum.cit.aet.artemis.core.config.CampusOnlineEnabled;
-import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineCourseMetadataResponse;
-import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineOrgCoursesResponse;
-import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineStudentListResponse;
+import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineCourseMetadataResponseDTO;
+import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineOrgCoursesResponseDTO;
+import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineStudentListResponseDTO;
 
 @Service
 @Conditional(CampusOnlineEnabled.class)
 @Profile(PROFILE_CORE)
 @Lazy
-public class CampusOnlineClient {
+public class CampusOnlineClientService {
 
-    private static final Logger log = LoggerFactory.getLogger(CampusOnlineClient.class);
+    private static final Logger log = LoggerFactory.getLogger(CampusOnlineClientService.class);
 
     private static final XmlMapper xmlMapper;
 
@@ -54,7 +54,7 @@ public class CampusOnlineClient {
     @Value("${artemis.campus-online.tokens}")
     private List<String> tokens;
 
-    public CampusOnlineClient(@Qualifier("campusOnlineRestTemplate") RestTemplate restTemplate) {
+    public CampusOnlineClientService(@Qualifier("campusOnlineRestTemplate") RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
 
@@ -64,10 +64,10 @@ public class CampusOnlineClient {
      * @param courseId the CAMPUSOnline course ID
      * @return the parsed student list response
      */
-    public CampusOnlineStudentListResponse fetchStudents(String courseId) {
+    public CampusOnlineStudentListResponseDTO fetchStudents(String courseId) {
         String url = buildUrl("/cdm/course/students/xml", "courseID", courseId);
         String xml = fetchWithTokenFallback(url);
-        return parseXml(xml, CampusOnlineStudentListResponse.class);
+        return parseXml(xml, CampusOnlineStudentListResponseDTO.class);
     }
 
     /**
@@ -76,10 +76,10 @@ public class CampusOnlineClient {
      * @param courseId the CAMPUSOnline course ID
      * @return the parsed course metadata response
      */
-    public CampusOnlineCourseMetadataResponse fetchCourseMetadata(String courseId) {
+    public CampusOnlineCourseMetadataResponseDTO fetchCourseMetadata(String courseId) {
         String url = buildUrl("/cdm/course/xml", "courseID", courseId);
         String xml = fetchWithTokenFallback(url);
-        return parseXml(xml, CampusOnlineCourseMetadataResponse.class);
+        return parseXml(xml, CampusOnlineCourseMetadataResponseDTO.class);
     }
 
     /**
@@ -90,10 +90,10 @@ public class CampusOnlineClient {
      * @param until     the end date (format: YYYY-MM-DD)
      * @return the parsed org courses response
      */
-    public CampusOnlineOrgCoursesResponse fetchCoursesForOrg(String orgUnitId, String from, String until) {
+    public CampusOnlineOrgCoursesResponseDTO fetchCoursesForOrg(String orgUnitId, String from, String until) {
         String url = buildUrl("/xcal/organization/courses/xml", "orgUnitID", orgUnitId, "from", from, "until", until);
         String xml = fetchWithTokenFallback(url);
-        return parseXml(xml, CampusOnlineOrgCoursesResponse.class);
+        return parseXml(xml, CampusOnlineOrgCoursesResponseDTO.class);
     }
 
     private String buildUrl(String path, String... queryParams) {

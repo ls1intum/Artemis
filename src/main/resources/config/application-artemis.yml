@@ -129,7 +129,6 @@ artemis:
     enabled: false
     base-url: ""           # e.g. https://campus.tum.de/tumonline
     tokens: []             # API tokens with fallback support
-    default-org-unit-id: "" # for bulk course search
 
   weaviate:
     enabled: false

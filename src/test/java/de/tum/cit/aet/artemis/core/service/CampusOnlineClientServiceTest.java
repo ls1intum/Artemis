@@ -20,25 +20,25 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.core.service.connectors.campusonline.CampusOnlineApiException;
-import de.tum.cit.aet.artemis.core.service.connectors.campusonline.CampusOnlineClient;
-import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineCourseMetadataResponse;
-import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineOrgCoursesResponse;
-import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineStudentListResponse;
+import de.tum.cit.aet.artemis.core.service.connectors.campusonline.CampusOnlineClientService;
+import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineCourseMetadataResponseDTO;
+import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineOrgCoursesResponseDTO;
+import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineStudentListResponseDTO;
 
 /**
- * Unit tests for {@link CampusOnlineClient}.
+ * Unit tests for {@link CampusOnlineClientService}.
  * Tests token fallback logic, XML parsing error handling, and API error scenarios.
  */
-class CampusOnlineClientTest {
+class CampusOnlineClientServiceTest {
 
     private RestTemplate restTemplate;
 
-    private CampusOnlineClient client;
+    private CampusOnlineClientService client;
 
     @BeforeEach
     void setUp() {
         restTemplate = mock(RestTemplate.class);
-        client = new CampusOnlineClient(restTemplate);
+        client = new CampusOnlineClientService(restTemplate);
         ReflectionTestUtils.setField(client, "baseUrl", "https://campus.example.com");
         ReflectionTestUtils.setField(client, "tokens", List.of("token1", "token2"));
     }
@@ -50,7 +50,7 @@ class CampusOnlineClientTest {
         String xml = "<students></students>";
         when(restTemplate.getForObject(anyString(), eq(String.class))).thenReturn(xml);
 
-        CampusOnlineStudentListResponse result = client.fetchStudents("CO-101");
+        CampusOnlineStudentListResponseDTO result = client.fetchStudents("CO-101");
 
         assertThat(result).isNotNull();
         // Should only call once since first token works
@@ -62,7 +62,7 @@ class CampusOnlineClientTest {
         String xml = "<students></students>";
         when(restTemplate.getForObject(anyString(), eq(String.class))).thenThrow(new HttpClientErrorException(HttpStatus.UNAUTHORIZED)).thenReturn(xml);
 
-        CampusOnlineStudentListResponse result = client.fetchStudents("CO-101");
+        CampusOnlineStudentListResponseDTO result = client.fetchStudents("CO-101");
 
         assertThat(result).isNotNull();
         verify(restTemplate, times(2)).getForObject(anyString(), eq(String.class));
@@ -73,7 +73,7 @@ class CampusOnlineClientTest {
         String xml = "<students></students>";
         when(restTemplate.getForObject(anyString(), eq(String.class))).thenThrow(new HttpClientErrorException(HttpStatus.FORBIDDEN)).thenReturn(xml);
 
-        CampusOnlineStudentListResponse result = client.fetchStudents("CO-101");
+        CampusOnlineStudentListResponseDTO result = client.fetchStudents("CO-101");
 
         assertThat(result).isNotNull();
         verify(restTemplate, times(2)).getForObject(anyString(), eq(String.class));
@@ -103,7 +103,7 @@ class CampusOnlineClientTest {
         String xml = "<students></students>";
         when(restTemplate.getForObject(anyString(), eq(String.class))).thenThrow(new ResourceAccessException("Connection timeout")).thenReturn(xml);
 
-        CampusOnlineStudentListResponse result = client.fetchStudents("CO-101");
+        CampusOnlineStudentListResponseDTO result = client.fetchStudents("CO-101");
 
         assertThat(result).isNotNull();
         verify(restTemplate, times(2)).getForObject(anyString(), eq(String.class));
@@ -130,7 +130,7 @@ class CampusOnlineClientTest {
         when(restTemplate.getForObject(anyString(), eq(String.class))).thenReturn("not valid xml <<<<");
 
         assertThatThrownBy(() -> client.fetchStudents("CO-101")).isInstanceOf(CampusOnlineApiException.class)
-                .hasMessageContaining("Failed to parse CAMPUSOnline XML response for CampusOnlineStudentListResponse");
+                .hasMessageContaining("Failed to parse CAMPUSOnline XML response for CampusOnlineStudentListResponseDTO");
     }
 
     @Test
@@ -138,7 +138,7 @@ class CampusOnlineClientTest {
         when(restTemplate.getForObject(anyString(), eq(String.class))).thenReturn("{this is json, not xml}");
 
         assertThatThrownBy(() -> client.fetchCourseMetadata("CO-101")).isInstanceOf(CampusOnlineApiException.class)
-                .hasMessageContaining("Failed to parse CAMPUSOnline XML response for CampusOnlineCourseMetadataResponse");
+                .hasMessageContaining("Failed to parse CAMPUSOnline XML response for CampusOnlineCourseMetadataResponseDTO");
     }
 
     // ==================== Successful parsing ====================
@@ -155,7 +155,7 @@ class CampusOnlineClientTest {
                 """;
         when(restTemplate.getForObject(anyString(), eq(String.class))).thenReturn(xml);
 
-        CampusOnlineCourseMetadataResponse result = client.fetchCourseMetadata("CO-101");
+        CampusOnlineCourseMetadataResponseDTO result = client.fetchCourseMetadata("CO-101");
 
         assertThat(result.courseName()).isEqualTo("Test Course");
         assertThat(result.teachingTerm()).isEqualTo("2025W");
@@ -175,7 +175,7 @@ class CampusOnlineClientTest {
                 """;
         when(restTemplate.getForObject(anyString(), eq(String.class))).thenReturn(xml);
 
-        CampusOnlineOrgCoursesResponse result = client.fetchCoursesForOrg("999", "2025-01-01", "2025-12-31");
+        CampusOnlineOrgCoursesResponseDTO result = client.fetchCoursesForOrg("999", "2025-01-01", "2025-12-31");
 
         assertThat(result.courses()).hasSize(1);
         assertThat(result.courses().getFirst().courseId()).isEqualTo("CO-101");

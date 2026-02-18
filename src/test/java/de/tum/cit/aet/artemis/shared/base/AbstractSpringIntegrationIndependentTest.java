@@ -66,7 +66,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
         "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_independent", "artemis.nebula.enabled=true", "artemis.iris.enabled=true", "artemis.lti.enabled=true",
         // Property moved here to avoid creating a separate Spring context in AutomaticBuildJobCleanupServiceIntegrationTest
         "artemis.continuous-integration.build-job.retention-period=30", "artemis.campus-online.enabled=true", "artemis.campus-online.base-url=https://test.campus.example.com",
-        "artemis.campus-online.tokens=test-token-1", "artemis.campus-online.default-org-unit-id=12345" })
+        "artemis.campus-online.tokens=test-token-1" })
 public abstract class AbstractSpringIntegrationIndependentTest extends AbstractArtemisIntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractSpringIntegrationIndependentTest.class);

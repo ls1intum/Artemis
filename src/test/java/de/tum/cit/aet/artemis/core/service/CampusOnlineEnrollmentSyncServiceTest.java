@@ -22,17 +22,17 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CampusOnlineSyncResultDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.service.connectors.campusonline.CampusOnlineApiException;
-import de.tum.cit.aet.artemis.core.service.connectors.campusonline.CampusOnlineClient;
+import de.tum.cit.aet.artemis.core.service.connectors.campusonline.CampusOnlineClientService;
 import de.tum.cit.aet.artemis.core.service.connectors.campusonline.CampusOnlineEnrollmentSyncService;
-import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineAttendance;
-import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineContactData;
-import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineExtension;
-import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlinePerson;
-import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlinePersonName;
-import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineStudentListResponse;
+import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineAttendanceDTO;
+import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineContactDataDTO;
+import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineExtensionDTO;
+import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlinePersonDTO;
+import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlinePersonNameDTO;
+import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineStudentListResponseDTO;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 
 /**
  * Unit tests for {@link CampusOnlineEnrollmentSyncService}.
@@ -40,9 +40,9 @@ import de.tum.cit.aet.artemis.core.service.user.UserService;
  */
 class CampusOnlineEnrollmentSyncServiceTest {
 
-    private CampusOnlineClient campusOnlineClient;
+    private CampusOnlineClientService campusOnlineClient;
 
-    private CourseRepository courseRepository;
+    private CourseTestRepository courseRepository;
 
     private UserService userService;
 
@@ -52,8 +52,8 @@ class CampusOnlineEnrollmentSyncServiceTest {
 
     @BeforeEach
     void setUp() {
-        campusOnlineClient = mock(CampusOnlineClient.class);
-        courseRepository = mock(CourseRepository.class);
+        campusOnlineClient = mock(CampusOnlineClientService.class);
+        courseRepository = mock(CourseTestRepository.class);
         userService = mock(UserService.class);
         profileService = mock(ProfileService.class);
         service = new CampusOnlineEnrollmentSyncService(campusOnlineClient, courseRepository, userService, profileService);
@@ -68,8 +68,8 @@ class CampusOnlineEnrollmentSyncServiceTest {
         when(courseRepository.findAllWithCampusOnlineConfiguration()).thenReturn(Set.of(course1, course2));
 
         var student = createConfirmedStudent("ab12cde", "student@example.com");
-        when(campusOnlineClient.fetchStudents("CO-101")).thenReturn(new CampusOnlineStudentListResponse(List.of(student)));
-        when(campusOnlineClient.fetchStudents("CO-202")).thenReturn(new CampusOnlineStudentListResponse(List.of(student)));
+        when(campusOnlineClient.fetchStudents("CO-101")).thenReturn(new CampusOnlineStudentListResponseDTO(List.of(student)));
+        when(campusOnlineClient.fetchStudents("CO-202")).thenReturn(new CampusOnlineStudentListResponseDTO(List.of(student)));
         when(userService.findUserAndAddToCourse(any(), isNull(), any(), any())).thenReturn(Optional.of(new User()));
 
         CampusOnlineSyncResultDTO result = service.performEnrollmentSync();
@@ -86,7 +86,7 @@ class CampusOnlineEnrollmentSyncServiceTest {
         Course course2 = createCourseWithConfig(2L, "CO-FAIL", "Bad Course", "students-2");
         when(courseRepository.findAllWithCampusOnlineConfiguration()).thenReturn(Set.of(course1, course2));
 
-        when(campusOnlineClient.fetchStudents("CO-101")).thenReturn(new CampusOnlineStudentListResponse(List.of()));
+        when(campusOnlineClient.fetchStudents("CO-101")).thenReturn(new CampusOnlineStudentListResponseDTO(List.of()));
         when(campusOnlineClient.fetchStudents("CO-FAIL")).thenThrow(new CampusOnlineApiException("API error"));
 
         CampusOnlineSyncResultDTO result = service.performEnrollmentSync();
@@ -140,7 +140,7 @@ class CampusOnlineEnrollmentSyncServiceTest {
     void performSingleCourseSync_shouldHandleNullPersonsList() {
         Course course = createCourseWithConfig(1L, "CO-101", "Test Course", "students");
         when(courseRepository.findWithEagerCampusOnlineConfigurationById(1L)).thenReturn(Optional.of(course));
-        when(campusOnlineClient.fetchStudents("CO-101")).thenReturn(new CampusOnlineStudentListResponse(null));
+        when(campusOnlineClient.fetchStudents("CO-101")).thenReturn(new CampusOnlineStudentListResponseDTO(null));
 
         CampusOnlineSyncResultDTO result = service.performSingleCourseSync(1L);
 
@@ -155,12 +155,12 @@ class CampusOnlineEnrollmentSyncServiceTest {
         when(courseRepository.findWithEagerCampusOnlineConfigurationById(1L)).thenReturn(Optional.of(course));
 
         var confirmed = createConfirmedStudent("ab12cde", "confirmed@example.com");
-        var unconfirmed = new CampusOnlinePerson("2", new CampusOnlinePersonName("Not", "Confirmed"), new CampusOnlineContactData("nc@example.com"),
-                new CampusOnlineExtension("xx99xxx"), new CampusOnlineAttendance("N"));
-        var nullAttendance = new CampusOnlinePerson("3", new CampusOnlinePersonName("No", "Attendance"), new CampusOnlineContactData("na@example.com"),
-                new CampusOnlineExtension("yy88yyy"), null);
+        var unconfirmed = new CampusOnlinePersonDTO("2", new CampusOnlinePersonNameDTO("Not", "Confirmed"), new CampusOnlineContactDataDTO("nc@example.com"),
+                new CampusOnlineExtensionDTO("xx99xxx"), new CampusOnlineAttendanceDTO("N"));
+        var nullAttendance = new CampusOnlinePersonDTO("3", new CampusOnlinePersonNameDTO("No", "Attendance"), new CampusOnlineContactDataDTO("na@example.com"),
+                new CampusOnlineExtensionDTO("yy88yyy"), null);
 
-        when(campusOnlineClient.fetchStudents("CO-101")).thenReturn(new CampusOnlineStudentListResponse(List.of(confirmed, unconfirmed, nullAttendance)));
+        when(campusOnlineClient.fetchStudents("CO-101")).thenReturn(new CampusOnlineStudentListResponseDTO(List.of(confirmed, unconfirmed, nullAttendance)));
         when(userService.findUserAndAddToCourse(eq("ab12cde"), isNull(), eq("confirmed@example.com"), eq("students"))).thenReturn(Optional.of(new User()));
 
         CampusOnlineSyncResultDTO result = service.performSingleCourseSync(1L);
@@ -177,8 +177,8 @@ class CampusOnlineEnrollmentSyncServiceTest {
         when(courseRepository.findWithEagerCampusOnlineConfigurationById(1L)).thenReturn(Optional.of(course));
 
         // Student with null extension and null contactData
-        var student = new CampusOnlinePerson("1", new CampusOnlinePersonName("No", "Data"), null, null, new CampusOnlineAttendance("J"));
-        when(campusOnlineClient.fetchStudents("CO-101")).thenReturn(new CampusOnlineStudentListResponse(List.of(student)));
+        var student = new CampusOnlinePersonDTO("1", new CampusOnlinePersonNameDTO("No", "Data"), null, null, new CampusOnlineAttendanceDTO("J"));
+        when(campusOnlineClient.fetchStudents("CO-101")).thenReturn(new CampusOnlineStudentListResponseDTO(List.of(student)));
         when(userService.findUserAndAddToCourse(isNull(), isNull(), isNull(), eq("students"))).thenReturn(Optional.empty());
 
         CampusOnlineSyncResultDTO result = service.performSingleCourseSync(1L);
@@ -197,7 +197,7 @@ class CampusOnlineEnrollmentSyncServiceTest {
         var found = createConfirmedStudent("found001", "found@example.com");
         var notFound = createConfirmedStudent("notfound", "notfound@example.com");
 
-        when(campusOnlineClient.fetchStudents("CO-101")).thenReturn(new CampusOnlineStudentListResponse(List.of(found, notFound)));
+        when(campusOnlineClient.fetchStudents("CO-101")).thenReturn(new CampusOnlineStudentListResponseDTO(List.of(found, notFound)));
         when(userService.findUserAndAddToCourse(eq("found001"), isNull(), eq("found@example.com"), eq("students"))).thenReturn(Optional.of(new User()));
         when(userService.findUserAndAddToCourse(eq("notfound"), isNull(), eq("notfound@example.com"), eq("students"))).thenReturn(Optional.empty());
 
@@ -256,8 +256,8 @@ class CampusOnlineEnrollmentSyncServiceTest {
         return course;
     }
 
-    private CampusOnlinePerson createConfirmedStudent(String regNumber, String email) {
-        return new CampusOnlinePerson("1", new CampusOnlinePersonName("Test", "Student"), new CampusOnlineContactData(email), new CampusOnlineExtension(regNumber),
-                new CampusOnlineAttendance("J"));
+    private CampusOnlinePersonDTO createConfirmedStudent(String regNumber, String email) {
+        return new CampusOnlinePersonDTO("1", new CampusOnlinePersonNameDTO("Test", "Student"), new CampusOnlineContactDataDTO(email), new CampusOnlineExtensionDTO(regNumber),
+                new CampusOnlineAttendanceDTO("J"));
     }
 }

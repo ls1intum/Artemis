@@ -4,6 +4,7 @@ import {
     faBell,
     faBookOpen,
     faBroom,
+    faBuilding,
     faClipboardList,
     faCubes,
     faDownload,
@@ -59,6 +60,7 @@ export class AdminSidebarComponent {
     protected readonly faUserShield = faUserShield;
 
     isNavbarCollapsed = input<boolean>(false);
+    campusOnlineEnabled = input<boolean>(false);
     localCIActive = input<boolean>(false);
     ltiEnabled = input<boolean>(false);
     standardizedCompetenciesEnabled = input<boolean>(false);
@@ -286,6 +288,16 @@ export class AdminSidebarComponent {
                 testId: 'admin-system-notifications',
             },
         ];
+
+        if (this.campusOnlineEnabled()) {
+            systemConfigItems.push({
+                routerLink: '/admin/campus-online-org-units',
+                icon: faBuilding,
+                title: 'CAMPUSOnline',
+                translation: 'global.menu.admin.sidebar.campusOnlineOrgUnits',
+                testId: 'admin-campus-online-org-units',
+            });
+        }
 
         if (this.examEnabled()) {
             systemConfigItems.push({

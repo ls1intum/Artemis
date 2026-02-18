@@ -1,0 +1,57 @@
+<div>
+    <h5 *adminTitleBarTitle id="campus-online-org-units-heading" class="mb-0" jhiTranslate="artemisApp.campusOnlineOrgUnits.title"></h5>
+    <div *adminTitleBarActions>
+        <input #fileInput type="file" accept=".csv" (change)="onCSVFileSelected($event)" class="d-none" />
+        <button class="btn btn-outline-primary btn-sm me-2" (click)="fileInput.click()" [disabled]="isImporting()">
+            @if (isImporting()) {
+                <fa-icon [icon]="faSpinner" animation="spin" />
+            } @else {
+                <fa-icon [icon]="faFileImport" />
+            }
+            <span jhiTranslate="artemisApp.campusOnlineOrgUnits.importCsv"></span>
+        </button>
+        <button class="btn btn-primary btn-sm jh-create-entity" [routerLink]="['./new']">
+            <fa-icon [icon]="faPlus" /> <span jhiTranslate="artemisApp.campusOnlineOrgUnits.addLabel"></span>
+        </button>
+    </div>
+
+    <p-table [value]="orgUnits()" [tableStyle]="{ 'min-width': '100%' }" class="p-datatable-sm p-datatable-striped">
+        <ng-template #header>
+            <tr>
+                <th jhiTranslate="global.field.id"></th>
+                <th jhiTranslate="artemisApp.campusOnlineOrgUnits.externalId"></th>
+                <th jhiTranslate="artemisApp.campusOnlineOrgUnits.name"></th>
+                <th></th>
+            </tr>
+        </ng-template>
+        <ng-template #body let-orgUnit>
+            <tr>
+                <td>{{ orgUnit.id }}</td>
+                <td>{{ orgUnit.externalId }}</td>
+                <td>{{ orgUnit.name }}</td>
+                <td class="text-end">
+                    <div class="btn-group flex-btn-group-container">
+                        <button type="submit" [routerLink]="['./', orgUnit.id, 'edit']" queryParamsHandling="merge" class="btn btn-warning btn-sm">
+                            <fa-icon [icon]="faWrench" />
+                            <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
+                        </button>
+                        <button
+                            jhiDeleteButton
+                            [entityTitle]="orgUnit.name"
+                            deleteQuestion="artemisApp.campusOnlineOrgUnits.delete.question"
+                            (delete)="deleteOrgUnit(orgUnit.id)"
+                            [dialogError]="dialogError$"
+                        >
+                            <fa-icon [icon]="faTimes" />
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+            <tr>
+                <td colspan="4" class="text-center" jhiTranslate="artemisApp.campusOnlineOrgUnits.noOrgUnits"></td>
+            </tr>
+        </ng-template>
+    </p-table>
+</div>

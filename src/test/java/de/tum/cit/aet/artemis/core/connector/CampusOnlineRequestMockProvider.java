@@ -19,11 +19,11 @@ import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 
-import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineOrgCourse;
+import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineOrgCourseDTO;
 
 /**
  * Mock provider for CAMPUSOnline API requests used in integration tests.
- * Intercepts outgoing HTTP calls from {@link de.tum.cit.aet.artemis.core.service.connectors.campusonline.CampusOnlineClient}
+ * Intercepts outgoing HTTP calls from {@link de.tum.cit.aet.artemis.core.service.connectors.campusonline.CampusOnlineClientService}
  * and returns predefined XML responses.
  */
 @Component
@@ -79,7 +79,7 @@ public class CampusOnlineRequestMockProvider {
      * @param until     the expected end date
      * @param courses   the courses to return
      */
-    public void mockFetchCoursesForOrg(String orgUnitId, String from, String until, List<CampusOnlineOrgCourse> courses) {
+    public void mockFetchCoursesForOrg(String orgUnitId, String from, String until, List<CampusOnlineOrgCourseDTO> courses) {
         String token = tokens.isEmpty() ? "" : tokens.getFirst();
         String url = baseUrl + "/xcal/organization/courses/xml?orgUnitID=" + orgUnitId + "&from=" + from + "&until=" + until + "&token=" + token;
         String xml = buildOrgCoursesXml(courses);
@@ -148,9 +148,9 @@ public class CampusOnlineRequestMockProvider {
         mockServer.expect(ExpectedCount.once(), requestTo(url)).andExpect(method(HttpMethod.GET)).andRespond(withServerError());
     }
 
-    private String buildOrgCoursesXml(List<CampusOnlineOrgCourse> courses) {
+    private String buildOrgCoursesXml(List<CampusOnlineOrgCourseDTO> courses) {
         StringBuilder sb = new StringBuilder("<courses>");
-        for (CampusOnlineOrgCourse course : courses) {
+        for (CampusOnlineOrgCourseDTO course : courses) {
             sb.append("<course>");
             sb.append("<courseID>").append(course.courseId()).append("</courseID>");
             sb.append("<courseName>").append(course.courseName()).append("</courseName>");

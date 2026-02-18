@@ -411,7 +411,8 @@
                 "unlink": "Verknüpfung aufheben",
                 "syncEnrollment": "Einschreibung synchronisieren",
                 "syncSuccess": "Einschreibungssynchronisierung abgeschlossen: {{ added }} Nutzer hinzugefügt, {{ notFound }} nicht gefunden",
-                "noResults": "Keine passenden Kurse in CAMPUSOnline gefunden"
+                "noResults": "Keine passenden Kurse in CAMPUSOnline gefunden",
+                "selectOrgUnit": "Organisationseinheit auswählen..."
             }
         },
         "courseStatistics": {

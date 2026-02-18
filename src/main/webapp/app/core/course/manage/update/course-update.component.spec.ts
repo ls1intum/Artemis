@@ -1238,8 +1238,24 @@ describe('Course Management Update Component', () => {
             expect(comp.campusOnlineLinked).toBe(true);
         });
 
-        it('should search campus online courses', () => {
+        it('should load org units when campus online is enabled', () => {
+            const mockOrgUnits = [
+                { id: 1, externalId: '12345', name: 'CIT' },
+                { id: 2, externalId: '67890', name: 'Management' },
+            ];
+            vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => feature === MODULE_FEATURE_CAMPUS_ONLINE);
+            const getOrgUnitsSpy = vi.spyOn(campusOnlineService, 'getOrgUnits').mockReturnValue(of(mockOrgUnits));
+
+            comp.ngOnInit();
+            fixture.detectChanges();
+
+            expect(getOrgUnitsSpy).toHaveBeenCalled();
+            expect(comp.campusOnlineOrgUnits()).toEqual(mockOrgUnits);
+        });
+
+        it('should search campus online courses with org unit', () => {
             comp.course = course;
+            comp.selectedOrgUnit = { id: 1, externalId: '12345', name: 'CIT' };
             const mockResults: CampusOnlineCourseDTO[] = [
                 {
                     campusOnlineCourseId: 'CO-101',
@@ -1252,8 +1268,19 @@ describe('Course Management Update Component', () => {
 
             comp.searchCampusOnline({ query: 'CS' });
 
-            expect(searchSpy).toHaveBeenCalledWith('CS', course.semester);
+            expect(searchSpy).toHaveBeenCalledWith('CS', '12345', course.semester);
             expect(comp.campusOnlineSuggestions()).toEqual(mockResults);
+        });
+
+        it('should not search campus online courses without selected org unit', () => {
+            comp.course = course;
+            comp.selectedOrgUnit = undefined;
+            const searchSpy = vi.spyOn(campusOnlineService, 'searchCourses');
+
+            comp.searchCampusOnline({ query: 'CS' });
+
+            expect(searchSpy).not.toHaveBeenCalled();
+            expect(comp.campusOnlineSuggestions()).toEqual([]);
         });
 
         it('should link campus online course for new course (no id)', () => {
@@ -1320,7 +1347,7 @@ describe('Course Management Update Component', () => {
             comp.course = existingCourse;
             comp.campusOnlineLinked = true;
 
-            const unlinkSpy = vi.spyOn(campusOnlineService, 'unlinkCourse').mockReturnValue(of(new HttpResponse()));
+            const unlinkSpy = vi.spyOn(campusOnlineService, 'unlinkCourse').mockReturnValue(of(new HttpResponse<void>()));
 
             comp.unlinkCampusOnline();
 

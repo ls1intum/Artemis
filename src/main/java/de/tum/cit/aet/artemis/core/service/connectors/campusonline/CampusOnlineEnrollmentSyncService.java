@@ -8,10 +8,10 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.config.CampusOnlineEnabled;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -19,18 +19,19 @@ import de.tum.cit.aet.artemis.core.dto.CampusOnlineSyncResultDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
-import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlinePerson;
-import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineStudentListResponse;
+import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlinePersonDTO;
+import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineStudentListResponseDTO;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
 
 @Service
 @Conditional(CampusOnlineEnabled.class)
+@Lazy
 @Profile(PROFILE_CORE)
 public class CampusOnlineEnrollmentSyncService {
 
     private static final Logger log = LoggerFactory.getLogger(CampusOnlineEnrollmentSyncService.class);
 
-    private final CampusOnlineClient campusOnlineClient;
+    private final CampusOnlineClientService campusOnlineClient;
 
     private final CourseRepository courseRepository;
 
@@ -38,7 +39,8 @@ public class CampusOnlineEnrollmentSyncService {
 
     private final ProfileService profileService;
 
-    public CampusOnlineEnrollmentSyncService(CampusOnlineClient campusOnlineClient, CourseRepository courseRepository, UserService userService, ProfileService profileService) {
+    public CampusOnlineEnrollmentSyncService(CampusOnlineClientService campusOnlineClient, CourseRepository courseRepository, UserService userService,
+            ProfileService profileService) {
         this.campusOnlineClient = campusOnlineClient;
         this.courseRepository = courseRepository;
         this.userService = userService;
@@ -107,20 +109,19 @@ public class CampusOnlineEnrollmentSyncService {
         return new CampusOnlineSyncResultDTO(1, 0, counts.usersAdded, counts.usersNotFound);
     }
 
-    @Transactional
     SyncCounts syncCourseEnrollment(Course course) {
         String campusOnlineCourseId = course.getCampusOnlineConfiguration().getCampusOnlineCourseId();
         log.info("Syncing enrollment for course '{}' (CAMPUSOnline ID: {})", course.getTitle(), campusOnlineCourseId);
 
-        CampusOnlineStudentListResponse response = campusOnlineClient.fetchStudents(campusOnlineCourseId);
-        List<CampusOnlinePerson> confirmedStudents = response.persons() != null
+        CampusOnlineStudentListResponseDTO response = campusOnlineClient.fetchStudents(campusOnlineCourseId);
+        List<CampusOnlinePersonDTO> confirmedStudents = response.persons() != null
                 ? response.persons().stream().filter(p -> p.attendance() != null && "J".equals(p.attendance().confirmed())).toList()
                 : List.of();
 
         int usersAdded = 0;
         int usersNotFound = 0;
 
-        for (CampusOnlinePerson person : confirmedStudents) {
+        for (CampusOnlinePersonDTO person : confirmedStudents) {
             String registrationNumber = person.extension() != null ? person.extension().registrationNumber() : null;
             String email = person.contactData() != null ? person.contactData().email() : null;
 

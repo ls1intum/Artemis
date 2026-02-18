@@ -125,35 +125,45 @@
                                 </button>
                             </div>
                         } @else {
-                            <p-autoComplete
-                                [(ngModel)]="selectedCampusOnlineCourse"
+                            <p-select
+                                [(ngModel)]="selectedOrgUnit"
+                                [options]="campusOnlineOrgUnits()"
+                                optionLabel="name"
+                                [placeholder]="'artemisApp.course.campusOnline.selectOrgUnit' | artemisTranslate"
+                                styleClass="w-100 mb-2"
                                 [ngModelOptions]="{ standalone: true }"
-                                [suggestions]="campusOnlineSuggestions()"
-                                (completeMethod)="searchCampusOnline($event)"
-                                (onSelect)="onCampusOnlineCourseSelected($event.value)"
-                                optionLabel="title"
-                                [placeholder]="'artemisApp.course.campusOnline.search' | artemisTranslate"
-                                [minLength]="3"
-                                [delay]="300"
-                                [forceSelection]="true"
-                                styleClass="w-100"
-                                inputStyleClass="form-control"
-                            >
-                                <ng-template let-campusOnlineCourse pTemplate="item">
-                                    <div class="d-flex flex-column">
-                                        <strong>{{ campusOnlineCourse.title }}</strong>
-                                        <small class="text-muted">
-                                            {{ campusOnlineCourse.responsibleInstructor }}
-                                            @if (campusOnlineCourse.department) {
-                                                <span> · {{ campusOnlineCourse.department }}</span>
-                                            }
-                                            @if (campusOnlineCourse.semester) {
-                                                <span> · {{ campusOnlineCourse.semester }}</span>
-                                            }
-                                        </small>
-                                    </div>
-                                </ng-template>
-                            </p-autoComplete>
+                            />
+                            @if (selectedOrgUnit) {
+                                <p-autoComplete
+                                    [(ngModel)]="selectedCampusOnlineCourse"
+                                    [ngModelOptions]="{ standalone: true }"
+                                    [suggestions]="campusOnlineSuggestions()"
+                                    (completeMethod)="searchCampusOnline($event)"
+                                    (onSelect)="onCampusOnlineCourseSelected($event.value)"
+                                    optionLabel="title"
+                                    [placeholder]="'artemisApp.course.campusOnline.search' | artemisTranslate"
+                                    [minLength]="3"
+                                    [delay]="300"
+                                    [forceSelection]="true"
+                                    styleClass="w-100"
+                                    inputStyleClass="form-control"
+                                >
+                                    <ng-template let-campusOnlineCourse pTemplate="item">
+                                        <div class="d-flex flex-column">
+                                            <strong>{{ campusOnlineCourse.title }}</strong>
+                                            <small class="text-muted">
+                                                {{ campusOnlineCourse.responsibleInstructor }}
+                                                @if (campusOnlineCourse.department) {
+                                                    <span> · {{ campusOnlineCourse.department }}</span>
+                                                }
+                                                @if (campusOnlineCourse.semester) {
+                                                    <span> · {{ campusOnlineCourse.semester }}</span>
+                                                }
+                                            </small>
+                                        </div>
+                                    </ng-template>
+                                </p-autoComplete>
+                            }
                         }
                     </div>
                 }

@@ -13,13 +13,17 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.connector.CampusOnlineRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.CampusOnlineConfiguration;
+import de.tum.cit.aet.artemis.core.domain.CampusOnlineOrgUnit;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.dto.CampusOnlineCourseDTO;
 import de.tum.cit.aet.artemis.core.dto.CampusOnlineCourseImportRequestDTO;
 import de.tum.cit.aet.artemis.core.dto.CampusOnlineLinkRequestDTO;
+import de.tum.cit.aet.artemis.core.dto.CampusOnlineOrgUnitDTO;
+import de.tum.cit.aet.artemis.core.dto.CampusOnlineOrgUnitImportDTO;
 import de.tum.cit.aet.artemis.core.dto.CampusOnlineSyncResultDTO;
 import de.tum.cit.aet.artemis.core.repository.CampusOnlineConfigurationRepository;
-import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineOrgCourse;
+import de.tum.cit.aet.artemis.core.repository.CampusOnlineOrgUnitRepository;
+import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineOrgCourseDTO;
 import de.tum.cit.aet.artemis.core.web.admin.AdminCampusOnlineResource;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -42,12 +46,22 @@ class AdminCampusOnlineResourceIntegrationTest extends AbstractSpringIntegration
     @Autowired
     private CampusOnlineConfigurationRepository campusOnlineConfigRepository;
 
+    @Autowired
+    private CampusOnlineOrgUnitRepository orgUnitRepository;
+
     private Course testCourse;
+
+    private CampusOnlineOrgUnit testOrgUnit;
 
     @BeforeEach
     void setUp() {
         campusOnlineMockProvider.enableMockingOfRequests();
         testCourse = courseUtilService.createCourse();
+
+        testOrgUnit = new CampusOnlineOrgUnit();
+        testOrgUnit.setExternalId("12345");
+        testOrgUnit.setName("CIT - Computation, Information and Technology");
+        testOrgUnit = orgUnitRepository.save(testOrgUnit);
     }
 
     @AfterEach
@@ -59,6 +73,141 @@ class AdminCampusOnlineResourceIntegrationTest extends AbstractSpringIntegration
             courseRepository.save(course);
         }
         campusOnlineConfigRepository.deleteAll();
+        orgUnitRepository.deleteAll();
+    }
+
+    // ==================== GET /org-units ====================
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void getAllOrgUnits_returnsOk_withOrgUnits() throws Exception {
+        List<CampusOnlineOrgUnitDTO> result = request.getList(BASE_URL + "org-units", HttpStatus.OK, CampusOnlineOrgUnitDTO.class);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().externalId()).isEqualTo("12345");
+        assertThat(result.getFirst().name()).isEqualTo("CIT - Computation, Information and Technology");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student", roles = "USER")
+    void getAllOrgUnits_returnsForbidden_whenNotAdmin() throws Exception {
+        request.getList(BASE_URL + "org-units", HttpStatus.FORBIDDEN, CampusOnlineOrgUnitDTO.class);
+    }
+
+    // ==================== POST /org-units ====================
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void createOrgUnit_returnsCreated() throws Exception {
+        var newOrgUnit = new CampusOnlineOrgUnitDTO(null, "99999", "New Faculty");
+
+        CampusOnlineOrgUnitDTO result = request.postWithResponseBody(BASE_URL + "org-units", newOrgUnit, CampusOnlineOrgUnitDTO.class, HttpStatus.CREATED);
+
+        assertThat(result).isNotNull();
+        assertThat(result.id()).isNotNull();
+        assertThat(result.externalId()).isEqualTo("99999");
+        assertThat(result.name()).isEqualTo("New Faculty");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void createOrgUnit_returnsBadRequest_whenDuplicateExternalId() throws Exception {
+        var newOrgUnit = new CampusOnlineOrgUnitDTO(null, "12345", "Duplicate Faculty"); // same as testOrgUnit
+
+        request.postWithResponseBody(BASE_URL + "org-units", newOrgUnit, CampusOnlineOrgUnitDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void createOrgUnit_returnsBadRequest_whenIdExists() throws Exception {
+        var newOrgUnit = new CampusOnlineOrgUnitDTO(1L, "99999", "New Faculty");
+
+        request.postWithResponseBody(BASE_URL + "org-units", newOrgUnit, CampusOnlineOrgUnitDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    // ==================== PUT /org-units/{orgUnitId} ====================
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void updateOrgUnit_returnsOk() throws Exception {
+        var update = new CampusOnlineOrgUnitDTO(null, "12345-updated", "Updated Name");
+
+        CampusOnlineOrgUnitDTO result = request.putWithResponseBody(BASE_URL + "org-units/" + testOrgUnit.getId(), update, CampusOnlineOrgUnitDTO.class, HttpStatus.OK);
+
+        assertThat(result.externalId()).isEqualTo("12345-updated");
+        assertThat(result.name()).isEqualTo("Updated Name");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void updateOrgUnit_returnsBadRequest_whenDuplicateExternalId() throws Exception {
+        // Create a second org unit
+        CampusOnlineOrgUnit second = new CampusOnlineOrgUnit();
+        second.setExternalId("67890");
+        second.setName("Second Faculty");
+        second = orgUnitRepository.save(second);
+
+        // Try to update its externalId to match testOrgUnit's
+        var update = new CampusOnlineOrgUnitDTO(null, "12345", "Second Faculty Updated"); // conflicts with testOrgUnit
+
+        request.putWithResponseBody(BASE_URL + "org-units/" + second.getId(), update, CampusOnlineOrgUnitDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void updateOrgUnit_returnsNotFound_whenNotExists() throws Exception {
+        var update = new CampusOnlineOrgUnitDTO(null, "99999", "Non-existent");
+
+        request.putWithResponseBody(BASE_URL + "org-units/999999", update, CampusOnlineOrgUnitDTO.class, HttpStatus.NOT_FOUND);
+    }
+
+    // ==================== DELETE /org-units/{orgUnitId} ====================
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void deleteOrgUnit_returnsNoContent() throws Exception {
+        request.delete(BASE_URL + "org-units/" + testOrgUnit.getId(), HttpStatus.NO_CONTENT);
+
+        assertThat(orgUnitRepository.findById(testOrgUnit.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void deleteOrgUnit_returnsNotFound_whenNotExists() throws Exception {
+        request.delete(BASE_URL + "org-units/999999", HttpStatus.NOT_FOUND);
+    }
+
+    // ==================== POST /org-units/import ====================
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void importOrgUnits_returnsOk_withCreatedUnits() throws Exception {
+        var importDTOs = List.of(new CampusOnlineOrgUnitImportDTO("99001", "Faculty A"), new CampusOnlineOrgUnitImportDTO("99002", "Faculty B"));
+
+        List<CampusOnlineOrgUnitDTO> result = request.postListWithResponseBody(BASE_URL + "org-units/import", importDTOs, CampusOnlineOrgUnitDTO.class, HttpStatus.OK);
+
+        assertThat(result).hasSize(2);
+        assertThat(result).extracting(CampusOnlineOrgUnitDTO::externalId).containsExactlyInAnyOrder("99001", "99002");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void importOrgUnits_skipsDuplicates() throws Exception {
+        // testOrgUnit has externalId "12345" — import should skip it
+        var importDTOs = List.of(new CampusOnlineOrgUnitImportDTO("12345", "Duplicate"), new CampusOnlineOrgUnitImportDTO("99003", "New Faculty"));
+
+        List<CampusOnlineOrgUnitDTO> result = request.postListWithResponseBody(BASE_URL + "org-units/import", importDTOs, CampusOnlineOrgUnitDTO.class, HttpStatus.OK);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().externalId()).isEqualTo("99003");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student", roles = "USER")
+    void importOrgUnits_returnsForbidden_whenNotAdmin() throws Exception {
+        var importDTOs = List.of(new CampusOnlineOrgUnitImportDTO("99001", "Faculty A"));
+
+        request.postListWithResponseBody(BASE_URL + "org-units/import", importDTOs, CampusOnlineOrgUnitDTO.class, HttpStatus.FORBIDDEN);
     }
 
     // ==================== GET /courses (search by org unit) ====================
@@ -66,8 +215,8 @@ class AdminCampusOnlineResourceIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void searchCourses_returnsOk_withMatchingCourses() throws Exception {
-        var course1 = new CampusOnlineOrgCourse("CO-101", "Introduction to Computer Science", "2025W");
-        var course2 = new CampusOnlineOrgCourse("CO-202", "Advanced Mathematics", "2025W");
+        var course1 = new CampusOnlineOrgCourseDTO("CO-101", "Introduction to Computer Science", "2025W");
+        var course2 = new CampusOnlineOrgCourseDTO("CO-202", "Advanced Mathematics", "2025W");
         campusOnlineMockProvider.mockFetchCoursesForOrg("999", "2025-10-01", "2026-03-31", List.of(course1, course2));
 
         List<CampusOnlineCourseDTO> result = request.getList(BASE_URL + "courses?orgUnitId=999&from=2025-10-01&until=2026-03-31", HttpStatus.OK, CampusOnlineCourseDTO.class);
@@ -103,8 +252,8 @@ class AdminCampusOnlineResourceIntegrationTest extends AbstractSpringIntegration
         testCourse.setCampusOnlineConfiguration(config);
         courseRepository.save(testCourse);
 
-        var course1 = new CampusOnlineOrgCourse("CO-101", "Already Imported Course", "2025W");
-        var course2 = new CampusOnlineOrgCourse("CO-202", "New Course", "2025W");
+        var course1 = new CampusOnlineOrgCourseDTO("CO-101", "Already Imported Course", "2025W");
+        var course2 = new CampusOnlineOrgCourseDTO("CO-202", "New Course", "2025W");
         campusOnlineMockProvider.mockFetchCoursesForOrg("999", "2025-01-01", "2025-12-31", List.of(course1, course2));
 
         List<CampusOnlineCourseDTO> result = request.getList(BASE_URL + "courses?orgUnitId=999&from=2025-01-01&until=2025-12-31", HttpStatus.OK, CampusOnlineCourseDTO.class);
@@ -140,13 +289,12 @@ class AdminCampusOnlineResourceIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void searchCoursesByName_returnsOk_withFilteredResults() throws Exception {
-        var course1 = new CampusOnlineOrgCourse("CO-901", "Introduction to Computer Science", "2025W");
-        var course2 = new CampusOnlineOrgCourse("CO-902", "Advanced Mathematics", "2025W");
-        var course3 = new CampusOnlineOrgCourse("CO-903", "Computer Networks", "2025W");
-        // The default-org-unit-id is set to "12345" via @TestPropertySource
+        var course1 = new CampusOnlineOrgCourseDTO("CO-901", "Introduction to Computer Science", "2025W");
+        var course2 = new CampusOnlineOrgCourseDTO("CO-902", "Advanced Mathematics", "2025W");
+        var course3 = new CampusOnlineOrgCourseDTO("CO-903", "Computer Networks", "2025W");
         campusOnlineMockProvider.mockFetchCoursesForOrg("12345", "2025-10-01", "2026-03-31", List.of(course1, course2, course3));
 
-        List<CampusOnlineCourseDTO> result = request.getList(BASE_URL + "courses/search?query=Computer&semester=2025W", HttpStatus.OK, CampusOnlineCourseDTO.class);
+        List<CampusOnlineCourseDTO> result = request.getList(BASE_URL + "courses/search?query=Computer&orgUnitId=12345&semester=2025W", HttpStatus.OK, CampusOnlineCourseDTO.class);
 
         assertThat(result).hasSize(2);
         assertThat(result).extracting(CampusOnlineCourseDTO::title).containsExactlyInAnyOrder("Introduction to Computer Science", "Computer Networks");
@@ -158,10 +306,10 @@ class AdminCampusOnlineResourceIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void searchCoursesByName_returnsOk_caseInsensitive() throws Exception {
-        var course1 = new CampusOnlineOrgCourse("CO-101", "COMPUTER SCIENCE", "2025W");
+        var course1 = new CampusOnlineOrgCourseDTO("CO-101", "COMPUTER SCIENCE", "2025W");
         campusOnlineMockProvider.mockFetchCoursesForOrg("12345", "2025-10-01", "2026-03-31", List.of(course1));
 
-        List<CampusOnlineCourseDTO> result = request.getList(BASE_URL + "courses/search?query=computer&semester=2025W", HttpStatus.OK, CampusOnlineCourseDTO.class);
+        List<CampusOnlineCourseDTO> result = request.getList(BASE_URL + "courses/search?query=computer&orgUnitId=12345&semester=2025W", HttpStatus.OK, CampusOnlineCourseDTO.class);
 
         assertThat(result).hasSize(1);
         assertThat(result.getFirst().title()).isEqualTo("COMPUTER SCIENCE");
@@ -172,10 +320,11 @@ class AdminCampusOnlineResourceIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void searchCoursesByName_returnsOk_withNoMatchingResults() throws Exception {
-        var course1 = new CampusOnlineOrgCourse("CO-101", "Physics", "2025W");
+        var course1 = new CampusOnlineOrgCourseDTO("CO-101", "Physics", "2025W");
         campusOnlineMockProvider.mockFetchCoursesForOrg("12345", "2025-10-01", "2026-03-31", List.of(course1));
 
-        List<CampusOnlineCourseDTO> result = request.getList(BASE_URL + "courses/search?query=Chemistry&semester=2025W", HttpStatus.OK, CampusOnlineCourseDTO.class);
+        List<CampusOnlineCourseDTO> result = request.getList(BASE_URL + "courses/search?query=Chemistry&orgUnitId=12345&semester=2025W", HttpStatus.OK,
+                CampusOnlineCourseDTO.class);
 
         assertThat(result).isEmpty();
         campusOnlineMockProvider.verify();
@@ -184,13 +333,19 @@ class AdminCampusOnlineResourceIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "student", roles = "USER")
     void searchCoursesByName_returnsForbidden_whenNotAdmin() throws Exception {
-        request.getList(BASE_URL + "courses/search?query=Test&semester=2025W", HttpStatus.FORBIDDEN, CampusOnlineCourseDTO.class);
+        request.getList(BASE_URL + "courses/search?query=Test&orgUnitId=12345&semester=2025W", HttpStatus.FORBIDDEN, CampusOnlineCourseDTO.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void searchCoursesByName_returnsBadRequest_whenQueryTooShort() throws Exception {
-        request.getList(BASE_URL + "courses/search?query=ab&semester=2025W", HttpStatus.BAD_REQUEST, CampusOnlineCourseDTO.class);
+        request.getList(BASE_URL + "courses/search?query=ab&orgUnitId=12345&semester=2025W", HttpStatus.BAD_REQUEST, CampusOnlineCourseDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void searchCoursesByName_returnsBadRequest_whenOrgUnitIdMissing() throws Exception {
+        request.getList(BASE_URL + "courses/search?query=Computer&semester=2025W", HttpStatus.BAD_REQUEST, CampusOnlineCourseDTO.class);
     }
 
     // ==================== PUT /courses/{courseId}/link ====================
@@ -209,7 +364,7 @@ class AdminCampusOnlineResourceIntegrationTest extends AbstractSpringIntegration
         assertThat(result.studyProgram()).isEqualTo("Informatik BSc");
 
         // Verify it was persisted in the database
-        Course fromDb = courseRepository.findByIdForUpdateElseThrow(testCourse.getId());
+        Course fromDb = courseRepository.findWithEagerCampusOnlineConfigurationById(testCourse.getId()).orElseThrow();
         assertThat(fromDb.getCampusOnlineConfiguration()).isNotNull();
         assertThat(fromDb.getCampusOnlineConfiguration().getCampusOnlineCourseId()).isEqualTo("CO-101");
     }
@@ -271,7 +426,7 @@ class AdminCampusOnlineResourceIntegrationTest extends AbstractSpringIntegration
         request.delete(BASE_URL + "courses/" + testCourse.getId() + "/link", HttpStatus.NO_CONTENT);
 
         // Verify it was removed from the database
-        Course fromDb = courseRepository.findByIdForUpdateElseThrow(testCourse.getId());
+        Course fromDb = courseRepository.findWithEagerCampusOnlineConfigurationById(testCourse.getId()).orElseThrow();
         assertThat(fromDb.getCampusOnlineConfiguration()).isNull();
     }
 

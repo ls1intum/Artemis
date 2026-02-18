@@ -13,17 +13,16 @@ import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.core.domain.CampusOnlineConfiguration;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.dto.CampusOnlineCourseDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.service.connectors.campusonline.CampusOnlineClient;
+import de.tum.cit.aet.artemis.core.service.connectors.campusonline.CampusOnlineClientService;
 import de.tum.cit.aet.artemis.core.service.connectors.campusonline.CampusOnlineCourseImportService;
-import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineOrgCourse;
-import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineOrgCoursesResponse;
+import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineOrgCourseDTO;
+import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineOrgCoursesResponseDTO;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 
 /**
  * Unit tests for {@link CampusOnlineCourseImportService}.
@@ -31,32 +30,31 @@ import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnl
  */
 class CampusOnlineCourseImportServiceTest {
 
-    private CampusOnlineClient campusOnlineClient;
+    private CampusOnlineClientService campusOnlineClient;
 
-    private CourseRepository courseRepository;
+    private CourseTestRepository courseRepository;
 
     private CampusOnlineCourseImportService service;
 
     @BeforeEach
     void setUp() {
-        campusOnlineClient = mock(CampusOnlineClient.class);
-        courseRepository = mock(CourseRepository.class);
+        campusOnlineClient = mock(CampusOnlineClientService.class);
+        courseRepository = mock(CourseTestRepository.class);
         service = new CampusOnlineCourseImportService(campusOnlineClient, courseRepository);
-        ReflectionTestUtils.setField(service, "defaultOrgUnitId", "12345");
     }
 
     @Test
     void searchCoursesByName_shouldReturnFilteredResults() {
         // Given
-        var course1 = new CampusOnlineOrgCourse("CO-101", "Introduction to Computer Science", "2025W");
-        var course2 = new CampusOnlineOrgCourse("CO-202", "Advanced Mathematics", "2025W");
-        var course3 = new CampusOnlineOrgCourse("CO-303", "Computer Networks", "2025W");
-        var response = new CampusOnlineOrgCoursesResponse(List.of(course1, course2, course3));
+        var course1 = new CampusOnlineOrgCourseDTO("CO-101", "Introduction to Computer Science", "2025W");
+        var course2 = new CampusOnlineOrgCourseDTO("CO-202", "Advanced Mathematics", "2025W");
+        var course3 = new CampusOnlineOrgCourseDTO("CO-303", "Computer Networks", "2025W");
+        var response = new CampusOnlineOrgCoursesResponseDTO(List.of(course1, course2, course3));
         when(campusOnlineClient.fetchCoursesForOrg(anyString(), anyString(), anyString())).thenReturn(response);
         when(courseRepository.findAllWithCampusOnlineConfiguration()).thenReturn(Set.of());
 
         // When
-        List<CampusOnlineCourseDTO> results = service.searchCoursesByName("Computer", "2025W");
+        List<CampusOnlineCourseDTO> results = service.searchCoursesByName("Computer", "12345", "2025W");
 
         // Then
         assertThat(results).hasSize(2);
@@ -64,12 +62,19 @@ class CampusOnlineCourseImportServiceTest {
     }
 
     @Test
-    void searchCoursesByName_shouldReturnEmptyList_whenNoDefaultOrgUnit() {
-        // Given
-        ReflectionTestUtils.setField(service, "defaultOrgUnitId", "");
-
+    void searchCoursesByName_shouldReturnEmptyList_whenOrgUnitIdBlank() {
         // When
-        List<CampusOnlineCourseDTO> results = service.searchCoursesByName("Computer", null);
+        List<CampusOnlineCourseDTO> results = service.searchCoursesByName("Computer", "", null);
+
+        // Then
+        assertThat(results).isEmpty();
+        verify(campusOnlineClient, never()).fetchCoursesForOrg(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    void searchCoursesByName_shouldReturnEmptyList_whenOrgUnitIdNull() {
+        // When
+        List<CampusOnlineCourseDTO> results = service.searchCoursesByName("Computer", null, null);
 
         // Then
         assertThat(results).isEmpty();
@@ -79,11 +84,11 @@ class CampusOnlineCourseImportServiceTest {
     @Test
     void searchCoursesByName_shouldReturnEmptyList_whenResponseIsNull() {
         // Given
-        var response = new CampusOnlineOrgCoursesResponse(null);
+        var response = new CampusOnlineOrgCoursesResponseDTO(null);
         when(campusOnlineClient.fetchCoursesForOrg(anyString(), anyString(), anyString())).thenReturn(response);
 
         // When
-        List<CampusOnlineCourseDTO> results = service.searchCoursesByName("Computer", null);
+        List<CampusOnlineCourseDTO> results = service.searchCoursesByName("Computer", "12345", null);
 
         // Then
         assertThat(results).isEmpty();
@@ -92,8 +97,8 @@ class CampusOnlineCourseImportServiceTest {
     @Test
     void searchCoursesByName_shouldMarkAlreadyImportedCourses() {
         // Given
-        var course1 = new CampusOnlineOrgCourse("CO-101", "Computer Science", "2025W");
-        var response = new CampusOnlineOrgCoursesResponse(List.of(course1));
+        var course1 = new CampusOnlineOrgCourseDTO("CO-101", "Computer Science", "2025W");
+        var response = new CampusOnlineOrgCoursesResponseDTO(List.of(course1));
         when(campusOnlineClient.fetchCoursesForOrg(anyString(), anyString(), anyString())).thenReturn(response);
 
         Course existingCourse = new Course();
@@ -104,7 +109,7 @@ class CampusOnlineCourseImportServiceTest {
         when(courseRepository.findAllWithCampusOnlineConfiguration()).thenReturn(Set.of(existingCourse));
 
         // When
-        List<CampusOnlineCourseDTO> results = service.searchCoursesByName("Computer", "2025W");
+        List<CampusOnlineCourseDTO> results = service.searchCoursesByName("Computer", "12345", "2025W");
 
         // Then
         assertThat(results).hasSize(1);
@@ -114,13 +119,13 @@ class CampusOnlineCourseImportServiceTest {
     @Test
     void searchCoursesByName_shouldBeCaseInsensitive() {
         // Given
-        var course1 = new CampusOnlineOrgCourse("CO-101", "COMPUTER Science", "2025W");
-        var response = new CampusOnlineOrgCoursesResponse(List.of(course1));
+        var course1 = new CampusOnlineOrgCourseDTO("CO-101", "COMPUTER Science", "2025W");
+        var response = new CampusOnlineOrgCoursesResponseDTO(List.of(course1));
         when(campusOnlineClient.fetchCoursesForOrg(anyString(), anyString(), anyString())).thenReturn(response);
         when(courseRepository.findAllWithCampusOnlineConfiguration()).thenReturn(Set.of());
 
         // When
-        List<CampusOnlineCourseDTO> results = service.searchCoursesByName("computer", null);
+        List<CampusOnlineCourseDTO> results = service.searchCoursesByName("computer", "12345", null);
 
         // Then
         assertThat(results).hasSize(1);
@@ -190,12 +195,12 @@ class CampusOnlineCourseImportServiceTest {
     @Test
     void searchCoursesByName_shouldUseSemesterDatesForWinterSemester() {
         // Given
-        var response = new CampusOnlineOrgCoursesResponse(List.of());
+        var response = new CampusOnlineOrgCoursesResponseDTO(List.of());
         when(campusOnlineClient.fetchCoursesForOrg("12345", "2025-10-01", "2026-03-31")).thenReturn(response);
         when(courseRepository.findAllWithCampusOnlineConfiguration()).thenReturn(Set.of());
 
         // When
-        service.searchCoursesByName("Test", "2025W");
+        service.searchCoursesByName("Test", "12345", "2025W");
 
         // Then
         verify(campusOnlineClient).fetchCoursesForOrg("12345", "2025-10-01", "2026-03-31");
@@ -204,12 +209,12 @@ class CampusOnlineCourseImportServiceTest {
     @Test
     void searchCoursesByName_shouldUseSemesterDatesForSummerSemester() {
         // Given
-        var response = new CampusOnlineOrgCoursesResponse(List.of());
+        var response = new CampusOnlineOrgCoursesResponseDTO(List.of());
         when(campusOnlineClient.fetchCoursesForOrg("12345", "2025-04-01", "2025-09-30")).thenReturn(response);
         when(courseRepository.findAllWithCampusOnlineConfiguration()).thenReturn(Set.of());
 
         // When
-        service.searchCoursesByName("Test", "2025S");
+        service.searchCoursesByName("Test", "12345", "2025S");
 
         // Then
         verify(campusOnlineClient).fetchCoursesForOrg("12345", "2025-04-01", "2025-09-30");
@@ -218,12 +223,12 @@ class CampusOnlineCourseImportServiceTest {
     @Test
     void searchCoursesByName_shouldHandleInvalidSemesterFormat() {
         // Given - invalid semester format should use dynamic fallback dates
-        var response = new CampusOnlineOrgCoursesResponse(List.of());
+        var response = new CampusOnlineOrgCoursesResponseDTO(List.of());
         when(campusOnlineClient.fetchCoursesForOrg(anyString(), anyString(), anyString())).thenReturn(response);
         when(courseRepository.findAllWithCampusOnlineConfiguration()).thenReturn(Set.of());
 
         // When - should not throw
-        List<CampusOnlineCourseDTO> results = service.searchCoursesByName("Test", "XX");
+        List<CampusOnlineCourseDTO> results = service.searchCoursesByName("Test", "12345", "XX");
 
         // Then
         assertThat(results).isEmpty();

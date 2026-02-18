@@ -21,7 +21,7 @@ Before enabling the integration, ensure you have:
 
 1. Access to a **CAMPUSOnline instance** with API endpoints enabled (the `xcal` and `cdm` XML APIs).
 2. One or more **API tokens** issued by your CAMPUSOnline administrator. Artemis supports multiple tokens with automatic fallback if one fails.
-3. The **organizational unit ID** of your department or faculty in CAMPUSOnline (used for course search).
+3. The **organizational unit IDs** of your departments or faculties in CAMPUSOnline (managed via the admin API).
 
 ---
 
@@ -37,8 +37,9 @@ artemis:
     tokens:
       - "your-primary-api-token"
       - "your-backup-api-token"                   # Optional: fallback token
-    default-org-unit-id: "12345"                  # Your organizational unit ID
 ```
+
+Organizational units are managed dynamically via the admin API (see below) and stored in the database, so no YAML configuration is needed for them.
 
 ### Configuration Properties
 
@@ -47,7 +48,6 @@ artemis:
 | `artemis.campus-online.enabled` | Yes | `false` | Enables or disables the entire CAMPUSOnline module. When `false`, all CAMPUSOnline beans, REST endpoints, and scheduled tasks are deactivated. |
 | `artemis.campus-online.base-url` | Yes | `""` | The base URL of your CAMPUSOnline instance (without trailing slash). Example: `https://campus.tum.de/tumonline` |
 | `artemis.campus-online.tokens` | Yes | `[]` | A list of API tokens for authenticating with the CAMPUSOnline API. Artemis tries each token in order and falls back to the next one if a request fails. At least one token is required. |
-| `artemis.campus-online.default-org-unit-id` | Yes | `""` | The default organizational unit ID used when searching for courses by name in the course creation/edit form. |
 
 ### Enrollment Sync Schedule
 
@@ -90,9 +90,10 @@ After enabling the module, administrators can link an Artemis course to a CAMPUS
 **Option A: Link an existing Artemis course**
 1. Navigate to Course Management and edit an existing course
 2. Scroll to the "CAMPUSOnline" section (visible only to administrators)
-3. Type the course name in the search field (minimum 3 characters)
-4. Select the correct course from the dropdown (shows instructor, department, and semester for disambiguation)
-5. Save the course
+3. Select the organizational unit from the dropdown
+4. Type the course name in the search field (minimum 3 characters)
+5. Select the correct course from the dropdown (shows instructor, department, and semester for disambiguation)
+6. Save the course
 
 **Option B: Import a new course from CAMPUSOnline**
 1. Use the admin API endpoint `POST /api/core/admin/campus-online/courses/import`
@@ -130,8 +131,12 @@ All endpoints require the `ADMIN` role.
 
 | Method | Endpoint | Description |
 |---|---|---|
+| `GET` | `/api/core/admin/campus-online/org-units` | Get all organizational units |
+| `POST` | `/api/core/admin/campus-online/org-units` | Create a new organizational unit |
+| `PUT` | `/api/core/admin/campus-online/org-units/{orgUnitId}` | Update an organizational unit |
+| `DELETE` | `/api/core/admin/campus-online/org-units/{orgUnitId}` | Delete an organizational unit |
 | `GET` | `/api/core/admin/campus-online/courses?orgUnitId={id}&from={date}&until={date}` | Search courses by organizational unit and date range |
-| `GET` | `/api/core/admin/campus-online/courses/search?query={name}&semester={sem}` | Search courses by name (typeahead) |
+| `GET` | `/api/core/admin/campus-online/courses/search?query={name}&orgUnitId={id}&semester={sem}` | Search courses by name (typeahead) |
 | `PUT` | `/api/core/admin/campus-online/courses/{courseId}/link` | Link an Artemis course to a CAMPUSOnline course |
 | `DELETE` | `/api/core/admin/campus-online/courses/{courseId}/link` | Unlink a CAMPUSOnline course from an Artemis course |
 | `POST` | `/api/core/admin/campus-online/courses/import` | Import a new Artemis course from CAMPUSOnline |
@@ -167,7 +172,8 @@ When the feature is disabled (`enabled: false`), all CAMPUSOnline-related Spring
 - Trigger a manual sync and check the result: `POST /api/core/admin/campus-online/courses/{courseId}/sync`
 
 ### Course search returning empty results
-- Verify `default-org-unit-id` is set correctly for your organizational unit
+- Verify that at least one organizational unit has been created via the admin API
+- Ensure you have selected the correct organizational unit from the dropdown
 - Check that the date range covers the semester you are searching for
 - Winter semester: October 1 to March 31 of the following year
 - Summer semester: April 1 to September 30
