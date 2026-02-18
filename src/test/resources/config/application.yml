@@ -323,7 +323,7 @@ jhipster:
             port: 5000
             ring-buffer-size: 512
     mail: # specific JHipster mail property, for standard properties see MailProperties
-        from: Artemis@localhost
+        from: test@localhost
         base-url: http://127.0.0.1:8080
     security:
         authentication:
