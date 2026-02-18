@@ -311,6 +311,26 @@ class AdminCampusOnlineResourceIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void importCourse_returnsBadRequest_whenDuplicateCourseId() throws Exception {
+        // First import a course
+        campusOnlineMockProvider.mockFetchCourseMetadata("CO-DUP", "Duplicate Course", "2025W");
+        var importRequest = new CampusOnlineCourseImportRequestDTO("CO-DUP", "duptest");
+        request.postWithResponseBody(BASE_URL + "courses/import", importRequest, CampusOnlineCourseDTO.class, HttpStatus.OK);
+
+        // Try to import again with same CAMPUSOnline course ID — should fail
+        request.postWithResponseBody(BASE_URL + "courses/import", importRequest, CampusOnlineCourseDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void importCourse_returnsBadRequest_whenInvalidShortName() throws Exception {
+        // Short name with special characters violates @Pattern
+        var importRequest = new CampusOnlineCourseImportRequestDTO("CO-555", "invalid-name!");
+        request.postWithResponseBody(BASE_URL + "courses/import", importRequest, CampusOnlineCourseDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student", roles = "USER")
     void importCourse_returnsForbidden_whenNotAdmin() throws Exception {
         var importRequest = new CampusOnlineCourseImportRequestDTO("CO-555", "algods");
