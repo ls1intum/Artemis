@@ -182,7 +182,7 @@ describe('CodeEditorMonacoComponent', () => {
         (comp as any).reviewCommentManager = {
             disposeAll,
             updateDraftInputs: jest.fn(),
-            updateThreadInputs: jest.fn(),
+            tryUpdateThreadInputs: jest.fn(),
             renderWidgets: jest.fn(),
             updateHoverButton: jest.fn(),
             clearDrafts: jest.fn(),
@@ -758,7 +758,7 @@ describe('CodeEditorMonacoComponent', () => {
             clearDrafts,
             disposeAll: jest.fn(),
             updateDraftInputs: jest.fn(),
-            updateThreadInputs: jest.fn(),
+            tryUpdateThreadInputs: jest.fn(),
             renderWidgets: jest.fn(),
             updateHoverButton: jest.fn(),
         };

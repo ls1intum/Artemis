@@ -184,7 +184,7 @@ describe('MarkdownEditorMonacoComponent', () => {
         (comp as any).reviewCommentManager = {
             updateHoverButton,
             updateDraftInputs: jest.fn(),
-            updateThreadInputs: jest.fn(),
+            tryUpdateThreadInputs: jest.fn(),
             clearDrafts: jest.fn(),
             disposeAll: jest.fn(),
             renderWidgets: jest.fn(),
