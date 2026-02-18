@@ -50,6 +50,14 @@ public record TutorialGroupConfigurationDTO(Long id, @NotNull String tutorialPer
     private static final String ENTITY_NAME = "tutorialGroupsConfiguration";
 
     /**
+     * If the field is omitted during JSON deserialization, it is replaced
+     * with an empty set to maintain a consistent API contract.
+     */
+    public TutorialGroupConfigurationDTO {
+        tutorialGroupFreePeriods = tutorialGroupFreePeriods == null ? Set.of() : tutorialGroupFreePeriods;
+    }
+
+    /**
      * DTO representing a {@link TutorialGroupFreePeriod}.
      *
      * @param id     the unique identifier of the free period

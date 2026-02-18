@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.tutorialgroup;
 
 import static de.tum.cit.aet.artemis.tutorialgroup.AbstractTutorialGroupIntegrationTest.RandomTutorialGroupGenerator.generateRandomTitle;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
@@ -9,17 +10,23 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupConfigurationDTO;
@@ -278,6 +285,144 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
                 persistedSchedule.getLocation(), TutorialGroupSessionStatus.ACTIVE, null);
         assertThat(tutorialGroupFreePeriodRepository.findAllByTutorialGroupsConfigurationCourseId(courseId)).hasSize(0);
 
+    }
+
+    @Nested
+    class TutorialGroupConfigurationDTOTests {
+
+        @Nested
+        class FromTests {
+
+            @Test
+            void shouldThrowNullPointerExceptionWhenDtoIsNull() {
+                assertThatThrownBy(() -> TutorialGroupConfigurationDTO.from(null)).isInstanceOf(NullPointerException.class);
+            }
+
+            @Test
+            void shouldReturnEntityWithoutFreePeriodsWhenDtoHasNoFreePeriods() {
+                var dto = new TutorialGroupConfigurationDTO(14L, "2024-01-01", "2024-02-01", true, false, null);
+
+                var actual = TutorialGroupConfigurationDTO.from(dto);
+
+                assertThat(actual.getTutorialPeriodStartInclusive()).isEqualTo("2024-01-01");
+                assertThat(actual.getTutorialPeriodEndInclusive()).isEqualTo("2024-02-01");
+                assertThat(actual.getUseTutorialGroupChannels()).isTrue();
+                assertThat(actual.getUsePublicTutorialGroupChannels()).isFalse();
+                assertThat(actual.getTutorialGroupFreePeriods()).isEmpty();
+            }
+
+            @Test
+            void shouldReturnEntityWithFreePeriodsWhenDtoContainsFreePeriods() {
+                var freePeriodDTO = new TutorialGroupConfigurationDTO.TutorialGroupFreePeriodDTO(18L, "2024-01-10T10:00:00Z", "2024-01-10T12:00:00Z", "Holiday");
+
+                var dto = new TutorialGroupConfigurationDTO(1L, "2024-01-01", "2024-02-01", true, true, Set.of(freePeriodDTO));
+
+                var actual = TutorialGroupConfigurationDTO.from(dto);
+
+                assertThat(actual.getTutorialGroupFreePeriods()).hasSize(1);
+            }
+        }
+
+        @Nested
+        class FreePeriodFromTests {
+
+            @Test
+            void shouldThrowNullPointerExceptionWhenFreePeriodDtoIsNull() {
+                assertThatThrownBy(() -> TutorialGroupConfigurationDTO.TutorialGroupFreePeriodDTO.from(null)).isInstanceOf(NullPointerException.class);
+            }
+
+            @Test
+            void shouldThrowBadRequestWhenStartDateIsInvalid() {
+                var invalid = new TutorialGroupConfigurationDTO.TutorialGroupFreePeriodDTO(1L, "invalid-date", null, "");
+
+                assertThatThrownBy(() -> TutorialGroupConfigurationDTO.TutorialGroupFreePeriodDTO.from(invalid)).as("free period start date should be ISO 8601")
+                        .isInstanceOf(BadRequestAlertException.class);
+            }
+
+            @Test
+            void shouldThrowBadRequestWhenEndDateIsInvalid() {
+                var invalid = new TutorialGroupConfigurationDTO.TutorialGroupFreePeriodDTO(1L, "2024-01-10T10:00:00Z", "invalid-date", "");
+
+                assertThatThrownBy(() -> TutorialGroupConfigurationDTO.TutorialGroupFreePeriodDTO.from(invalid)).as("free period end date should be ISO 8601")
+                        .isInstanceOf(BadRequestAlertException.class);
+            }
+        }
+
+        @Nested
+        class OfTests {
+
+            @Test
+            void shouldThrowNullPointerExceptionWhenEntityIsNull() {
+                assertThatThrownBy(() -> TutorialGroupConfigurationDTO.of(null)).isInstanceOf(NullPointerException.class);
+            }
+
+            @Test
+            void shouldReturnEmptyFreePeriodsWhenEntityFreePeriodsIsNull() {
+                var entity = new TutorialGroupsConfiguration();
+                entity.setId(5L);
+                entity.setTutorialPeriodStartInclusive("2024-01-01");
+                entity.setTutorialPeriodEndInclusive("2024-02-01");
+                entity.setUseTutorialGroupChannels(true);
+                entity.setUsePublicTutorialGroupChannels(true);
+                entity.setTutorialGroupFreePeriods(null);
+
+                var actual = TutorialGroupConfigurationDTO.of(entity);
+
+                assertThat(actual.tutorialGroupFreePeriods()).isEmpty();
+            }
+
+            @Test
+            void shouldMapFreePeriodsCorrectlyWhenEntityContainsFreePeriods() {
+                var freePeriod = new TutorialGroupFreePeriod();
+                freePeriod.setId(42L);
+                freePeriod.setStart(ZonedDateTime.parse("2024-01-10T10:00:00Z"));
+                freePeriod.setEnd(ZonedDateTime.parse("2024-01-10T12:00:00Z"));
+                freePeriod.setReason("Holiday");
+
+                var entity = new TutorialGroupsConfiguration();
+                entity.setId(7L);
+                entity.setTutorialPeriodStartInclusive("2024-01-01");
+                entity.setTutorialPeriodEndInclusive("2024-02-01");
+                entity.setUseTutorialGroupChannels(true);
+                entity.setUsePublicTutorialGroupChannels(true);
+                entity.setTutorialGroupFreePeriods(Set.of(freePeriod));
+
+                var actual = TutorialGroupConfigurationDTO.of(entity);
+
+                assertThat(actual.tutorialGroupFreePeriods()).hasSize(1);
+                var mapped = actual.tutorialGroupFreePeriods().iterator().next();
+
+                assertThat(mapped.id()).isEqualTo(42L);
+                assertThat(ZonedDateTime.parse(mapped.start())).isEqualTo(ZonedDateTime.parse("2024-01-10T10:00:00Z"));
+                assertThat(ZonedDateTime.parse(mapped.end())).isEqualTo(ZonedDateTime.parse("2024-01-10T12:00:00Z"));
+                assertThat(mapped.reason()).isEqualTo("Holiday");
+            }
+
+            @Test
+            void shouldSerializeAndDeserializeCorrectly() throws Exception {
+                ObjectMapper mapper = JsonMapper.builder().findAndAddModules().build();
+
+                var dto = new TutorialGroupConfigurationDTO(1L, "2024-01-01", "2024-02-01", true, false, Set.of());
+
+                var json = mapper.writeValueAsString(dto);
+                var back = mapper.readValue(json, TutorialGroupConfigurationDTO.class);
+
+                assertThat(back.tutorialPeriodStartInclusive()).isEqualTo("2024-01-01");
+                assertThat(back.tutorialPeriodEndInclusive()).isEqualTo("2024-02-01");
+                assertThat(back.useTutorialGroupChannels()).isTrue();
+                assertThat(back.usePublicTutorialGroupChannels()).isFalse();
+                assertThat(back.tutorialGroupFreePeriods()).isEmpty();
+            }
+        }
+
+        @Nested
+        class FreePeriodOfTests {
+
+            @Test
+            void shouldThrowNullPointerExceptionWhenFreePeriodEntityIsNull() {
+                assertThatThrownBy(() -> TutorialGroupConfigurationDTO.TutorialGroupFreePeriodDTO.of(null)).isInstanceOf(NullPointerException.class);
+            }
+        }
     }
 
     private TutorialGroupConfigurationDTO withNormalizedFreePeriods(TutorialGroupConfigurationDTO dto) {
