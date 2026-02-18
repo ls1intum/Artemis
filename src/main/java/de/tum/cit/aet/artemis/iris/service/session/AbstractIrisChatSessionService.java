@@ -162,7 +162,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
         if (statusUpdate.result() != null) {
             var message = new IrisMessage();
             message.addContent(new IrisTextMessageContent(statusUpdate.result()));
-            var citationInfo = irisCitationService.map(service -> service.resolveCitationInfo(statusUpdate.result())).orElse(null);
+            var citationInfo = irisCitationService.map(service -> service.resolveCitationInfo(statusUpdate.result())).orElse(List.of());
             message.setAccessedMemories(statusUpdate.accessedMemories());
             message.setCreatedMemories(statusUpdate.createdMemories());
             savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);

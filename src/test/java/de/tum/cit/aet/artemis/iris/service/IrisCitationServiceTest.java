@@ -47,14 +47,14 @@ class IrisCitationServiceTest {
     }
 
     @Test
-    void resolveCitationInfo_returnsNullForBlankText() {
-        assertThat(citationService.resolveCitationInfo(null)).isNull();
-        assertThat(citationService.resolveCitationInfo("   ")).isNull();
+    void resolveCitationInfo_returnsEmptyForBlankText() {
+        assertThat(citationService.resolveCitationInfo(null)).isEmpty();
+        assertThat(citationService.resolveCitationInfo("   ")).isEmpty();
     }
 
     @Test
-    void resolveCitationInfo_returnsNullWhenNoReferencesFound() {
-        assertThat(citationService.resolveCitationInfo("No citations here.")).isNull();
+    void resolveCitationInfo_returnsEmptyWhenNoReferencesFound() {
+        assertThat(citationService.resolveCitationInfo("No citations here.")).isEmpty();
         verifyNoInteractions(lectureUnitRepositoryApi);
     }
 
@@ -62,7 +62,7 @@ class IrisCitationServiceTest {
     void resolveCitationInfo_skipsInvalidReferences() {
         var text = "[cite:L] [cite:X:12] [cite:L:abc]";
 
-        assertThat(citationService.resolveCitationInfo(text)).isNull();
+        assertThat(citationService.resolveCitationInfo(text)).isEmpty();
         verifyNoInteractions(lectureUnitRepositoryApi);
     }
 
@@ -87,7 +87,7 @@ class IrisCitationServiceTest {
         var unit = lectureUnit(LECTURE_UNIT_ID, "  ", "Unit Title");
         when(lectureUnitRepositoryApi.findAllByIdsWithLecture(anyCollection())).thenReturn(List.of(unit));
 
-        assertThat(citationService.resolveCitationInfo("[cite:L:42:::::]")).isNull();
+        assertThat(citationService.resolveCitationInfo("[cite:L:42:::::]")).isEmpty();
         verify(lectureUnitRepositoryApi).findAllByIdsWithLecture(anyCollection());
     }
 
@@ -96,15 +96,15 @@ class IrisCitationServiceTest {
         var unit = lectureUnit(LECTURE_UNIT_ID, "Lecture Title", "   ");
         when(lectureUnitRepositoryApi.findAllByIdsWithLecture(anyCollection())).thenReturn(List.of(unit));
 
-        assertThat(citationService.resolveCitationInfo("[cite:L:42:::::]")).isNull();
+        assertThat(citationService.resolveCitationInfo("[cite:L:42:::::]")).isEmpty();
         verify(lectureUnitRepositoryApi).findAllByIdsWithLecture(anyCollection());
     }
 
     @Test
-    void resolveCitationInfo_returnsNullWhenLectureUnitNotFound() {
+    void resolveCitationInfo_returnsEmptyWhenLectureUnitNotFound() {
         when(lectureUnitRepositoryApi.findAllByIdsWithLecture(anyCollection())).thenReturn(List.of());
 
-        assertThat(citationService.resolveCitationInfo("[cite:L:42:::::]")).isNull();
+        assertThat(citationService.resolveCitationInfo("[cite:L:42:::::]")).isEmpty();
         verify(lectureUnitRepositoryApi).findAllByIdsWithLecture(anyCollection());
     }
 
@@ -128,10 +128,10 @@ class IrisCitationServiceTest {
     }
 
     @Test
-    void resolveCitationInfo_returnsNullWhenRepositoryUnavailable() {
+    void resolveCitationInfo_returnsEmptyWhenRepositoryUnavailable() {
         var serviceWithoutRepository = new IrisCitationService(Optional.empty(), irisSessionRepository);
 
-        assertThat(serviceWithoutRepository.resolveCitationInfo("[cite:L:1:::::]")).isNull();
+        assertThat(serviceWithoutRepository.resolveCitationInfo("[cite:L:1:::::]")).isEmpty();
     }
 
     private static LectureUnit lectureUnit(long id, String lectureTitle, String unitTitle) {

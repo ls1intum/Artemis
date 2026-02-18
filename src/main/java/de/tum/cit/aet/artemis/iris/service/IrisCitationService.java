@@ -48,19 +48,19 @@ public class IrisCitationService {
      * Extracts citation placeholders from the supplied text and resolves metadata (lecture name and lecture unit name) for each lecture unit found.
      *
      * @param text text to scan for citation placeholders; may be {@code null} or blank
-     * @return a {@link List} of {@link IrisCitationMetaDTO} for each resolved lecture unit, or {@code null} if none were found
+     * @return a {@link List} of {@link IrisCitationMetaDTO} for each resolved lecture unit; empty if none were found
      * @see #resolveCitationInfoFromMessages(List)
      */
     public List<IrisCitationMetaDTO> resolveCitationInfo(String text) {
         if (text == null || text.isBlank()) {
-            return null;
+            return List.of();
         }
         if (lectureUnitRepositoryApi.isEmpty()) {
-            return null;
+            return List.of();
         }
         var entityIds = extractEntityIds(text);
         if (entityIds.isEmpty()) {
-            return null;
+            return List.of();
         }
         var unitMap = lectureUnitRepositoryApi.get().findAllByIdsWithLecture(entityIds).stream().collect(Collectors.toMap(LectureUnit::getId, unit -> unit));
         var citations = entityIds.stream().map(unitMap::get).filter(Objects::nonNull).map(unit -> {
@@ -71,24 +71,24 @@ public class IrisCitationService {
             }
             return new IrisCitationMetaDTO(unit.getId(), lectureTitle, lectureUnitTitle);
         }).filter(Objects::nonNull).toList();
-        return citations.isEmpty() ? null : citations;
+        return citations;
     }
 
     /**
      * Collects non-null contents from the supplied {@link IrisMessage} list, joins them, and delegates to {@link #resolveCitationInfo(String)}.
      *
-     * @param messages nullable list of {@link IrisMessage}; returns {@code null} when {@code null} or empty
-     * @return a {@link List} of {@link IrisCitationMetaDTO} for each resolved lecture unit, or {@code null} if no citations were found
+     * @param messages nullable list of {@link IrisMessage}; returns empty list when {@code null} or empty
+     * @return a {@link List} of {@link IrisCitationMetaDTO} for each resolved lecture unit; empty if no citations were found
      * @see #resolveCitationInfo(String)
      */
     public List<IrisCitationMetaDTO> resolveCitationInfoFromMessages(List<IrisMessage> messages) {
         if (messages == null || messages.isEmpty()) {
-            return null;
+            return List.of();
         }
         var contentStrings = messages.stream().filter(Objects::nonNull).filter(message -> message.getContent() != null).flatMap(message -> message.getContent().stream())
                 .map(IrisMessageContent::getContentAsString).filter(content -> content != null && !content.isBlank()).toList();
         if (contentStrings.isEmpty()) {
-            return null;
+            return List.of();
         }
         return resolveCitationInfo(String.join("\n", contentStrings));
     }
