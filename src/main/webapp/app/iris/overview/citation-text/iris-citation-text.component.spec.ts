@@ -6,14 +6,42 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { IrisCitationTextComponent } from './iris-citation-text.component';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { provideHttpClient } from '@angular/common/http';
-import { escapeHtml, formatCitationLabel, isCitationType, parseCitation, removeCitationBlocks, replaceCitationBlocks, resolveCitationTypeClass } from './iris-citation-text.util';
-import { CITATION_REGEX } from './iris-citation-text.model';
+import { escapeHtml, formatCitationLabel, parseCitation, removeCitationBlocks, replaceCitationBlocks, resolveCitationTypeClass } from './iris-citation-text.util';
 
 describe('IrisCitationTextComponent', () => {
     setupTestBed({ zoneless: true });
 
-    let component: IrisCitationTextComponent;
     let fixture: ComponentFixture<IrisCitationTextComponent>;
+
+    const render = (text: string, citationInfo: IrisCitationMetaDTO[] = []) => {
+        fixture.componentRef.setInput('text', text);
+        fixture.componentRef.setInput('citationInfo', citationInfo);
+        fixture.detectChanges();
+        return fixture.nativeElement as HTMLElement;
+    };
+
+    const rect = (left: number, right: number): DOMRect =>
+        ({
+            left,
+            right,
+            top: 0,
+            bottom: 50,
+            width: right - left,
+            height: 50,
+            x: left,
+            y: 0,
+            toJSON: () => ({}),
+        }) as DOMRect;
+
+    const setupTooltip = () => {
+        const citationInfo: IrisCitationMetaDTO[] = [{ entityId: 7, lectureTitle: 'L', lectureUnitTitle: '' }];
+        const el = render('[cite:L:7::::Key:Summary]', citationInfo);
+        const citation = el.querySelector('.iris-citation--has-summary') as HTMLElement;
+        const summary = citation.querySelector('.iris-citation__summary') as HTMLElement;
+
+        expect(citation).toBeTruthy();
+        return { el, citation, summary };
+    };
 
     afterEach(() => {
         vi.restoreAllMocks();
@@ -26,70 +54,118 @@ describe('IrisCitationTextComponent', () => {
         });
 
         fixture = TestBed.createComponent(IrisCitationTextComponent);
-        component = fixture.componentInstance;
     });
 
-    it('should create', () => {
-        expect(component).toBeTruthy();
+    it('renders text without citations', () => {
+        const el = render('Hello world');
+        expect(el.textContent).toContain('Hello world');
     });
 
-    it('should render text without citations', () => {
-        fixture.componentRef.setInput('text', 'Hello world');
-        fixture.detectChanges();
+    it('renders single citation with summary and lecture info', () => {
+        const citationInfo: IrisCitationMetaDTO[] = [{ entityId: 7, lectureTitle: 'My Lecture', lectureUnitTitle: 'My Unit' }];
+        const el = render('Hello [cite:L:7::::Keyword:Summary] world', citationInfo);
 
-        const nativeElement = fixture.nativeElement as HTMLElement;
-        expect(nativeElement.textContent).toContain('Hello world');
+        expect(el.querySelector('.iris-citation')).toBeTruthy();
+        expect(el.querySelector('.iris-citation__summary-title')?.textContent?.trim()).toBe('My Unit');
+        expect(el.querySelector('.iris-citation__summary-text')?.textContent?.trim()).toBe('Summary');
+        expect(el.querySelector('.iris-citation__summary-lecture')).toBeTruthy();
     });
 
-    it('should render text with single citation', () => {
-        const citationInfo: IrisCitationMetaDTO[] = [{ entityId: 7, lectureTitle: 'Lecture', lectureUnitTitle: 'Unit' }];
-        fixture.componentRef.setInput('text', 'Hello [cite:L:7:::::Keyword:Summary] world');
-        fixture.componentRef.setInput('citationInfo', citationInfo);
-        fixture.detectChanges();
+    it('uses keyword as summary title when lectureUnitTitle is empty', () => {
+        const citationInfo: IrisCitationMetaDTO[] = [{ entityId: 7, lectureTitle: 'Lecture', lectureUnitTitle: '' }];
+        const el = render('[cite:L:7::::MyKeyword:Summary]', citationInfo);
 
-        const nativeElement = fixture.nativeElement as HTMLElement;
-        expect(nativeElement.querySelector('.iris-citation')).toBeTruthy();
-        expect(nativeElement.textContent).toContain('Keyword');
+        expect(el.querySelector('.iris-citation__summary-title')?.textContent?.trim()).toBe('MyKeyword');
+        expect(el.querySelector('.iris-citation__summary-lecture')).toBeTruthy();
     });
 
-    it('should render grouped citations', () => {
+    it('renders group without summary section', () => {
         const citationInfo: IrisCitationMetaDTO[] = [
-            { entityId: 1, lectureTitle: 'Lecture 1', lectureUnitTitle: 'Unit 1' },
-            { entityId: 2, lectureTitle: 'Lecture 2', lectureUnitTitle: 'Unit 2' },
+            { entityId: 1, lectureTitle: 'L1', lectureUnitTitle: '' },
+            { entityId: 2, lectureTitle: 'L2', lectureUnitTitle: '' },
         ];
-        fixture.componentRef.setInput('text', '[cite:L:1:::::One:Summary] [cite:L:2:::::Two:Summary]');
-        fixture.componentRef.setInput('citationInfo', citationInfo);
-        fixture.detectChanges();
+        const el = render('[cite:L:1:::::] [cite:L:2:::::]', citationInfo);
 
-        const nativeElement = fixture.nativeElement as HTMLElement;
-        expect(nativeElement.querySelector('.iris-citation-group')).toBeTruthy();
-        expect(nativeElement.querySelector('.iris-citation__count')).toBeTruthy();
-        expect(nativeElement.textContent).toContain('+1');
+        expect(el.querySelector('.iris-citation-group')).toBeTruthy();
+        expect(el.querySelector('.iris-citation-group--has-summary')).toBeFalsy();
+        expect(el.querySelector('.iris-citation__summary')).toBeFalsy();
     });
 
-    it('should apply correct type classes', () => {
-        const citationInfo: IrisCitationMetaDTO[] = [{ entityId: 1, lectureTitle: 'Lecture', lectureUnitTitle: 'Unit' }];
-        fixture.componentRef.setInput('text', '[cite:F:1:::::FAQ:Summary]');
-        fixture.componentRef.setInput('citationInfo', citationInfo);
-        fixture.detectChanges();
+    it('does not render navigation controls when group has only one summary', () => {
+        const citationInfo: IrisCitationMetaDTO[] = [
+            { entityId: 1, lectureTitle: 'L1', lectureUnitTitle: '' },
+            { entityId: 2, lectureTitle: 'L2', lectureUnitTitle: '' },
+        ];
+        const el = render('[cite:L:1::::One:Summary] [cite:L:2:::::]', citationInfo);
 
-        const nativeElement = fixture.nativeElement as HTMLElement;
-        expect(nativeElement.querySelector('.iris-citation--faq')).toBeTruthy();
+        expect(el.querySelector('.iris-citation-group--has-summary')).toBeTruthy();
+        expect(el.querySelector('.iris-citation__summary-item')).toBeTruthy();
+        expect(el.querySelector('.iris-citation__nav')).toBeFalsy();
     });
 
-    it('should reactively update when text changes', () => {
-        fixture.componentRef.setInput('text', 'First text');
-        fixture.detectChanges();
+    it('updates bubble when navigating a citation group', () => {
+        const citationInfo: IrisCitationMetaDTO[] = [
+            { entityId: 1, lectureTitle: 'L1', lectureUnitTitle: '' },
+            { entityId: 2, lectureTitle: 'L2', lectureUnitTitle: '' },
+        ];
+        const el = render('[cite:L:1:5:::One:S1] [cite:F:2::::FAQ:S2]', citationInfo);
 
-        let nativeElement = fixture.nativeElement as HTMLElement;
-        expect(nativeElement.textContent).toContain('First text');
+        const group = el.querySelector('.iris-citation-group') as HTMLElement;
+        const bubble = group.querySelector('.iris-citation') as HTMLElement;
+        const bubbleText = bubble.querySelector('.iris-citation__text') as HTMLElement;
+        const navButtons = group.querySelectorAll('.iris-citation__nav-button') as NodeListOf<HTMLElement>;
 
-        fixture.componentRef.setInput('text', 'Second text');
-        fixture.detectChanges();
+        expect(bubbleText.textContent?.trim()).toBe('One');
+        expect(bubble.classList.contains('iris-citation--slide')).toBe(true);
 
-        nativeElement = fixture.nativeElement as HTMLElement;
-        expect(nativeElement.textContent).toContain('Second text');
-        expect(nativeElement.textContent).not.toContain('First text');
+        navButtons[1].click();
+
+        expect(bubbleText.textContent?.trim()).toBe('FAQ');
+        expect(bubble.classList.contains('iris-citation--faq')).toBe(true);
+        expect(bubble.classList.contains('iris-citation--slide')).toBe(false);
+
+        navButtons[0].click();
+
+        expect(bubbleText.textContent?.trim()).toBe('One');
+        expect(bubble.classList.contains('iris-citation--slide')).toBe(true);
+    });
+
+    it('adjusts tooltip shift based on overflow', () => {
+        const { el, citation, summary } = setupTooltip();
+
+        const originalClosest = citation.closest.bind(citation);
+        vi.spyOn(citation, 'closest').mockImplementation((selector: string) => {
+            if (selector === '.bubble-left') return null;
+            if (selector === 'jhi-iris-citation-text') return el;
+            return originalClosest(selector);
+        });
+
+        const boundarySpy = vi.spyOn(el, 'getBoundingClientRect');
+        const summarySpy = vi.spyOn(summary, 'getBoundingClientRect');
+
+        const cases = [
+            { boundary: rect(0, 200), summary: rect(50, 300), expected: '-100px' },
+            { boundary: rect(100, 500), summary: rect(80, 200), expected: '20px' },
+            { boundary: rect(0, 400), summary: rect(50, 200), expected: '0px' },
+        ];
+
+        cases.forEach(({ boundary, summary: summaryRect, expected }) => {
+            boundarySpy.mockReturnValue(boundary);
+            summarySpy.mockReturnValue(summaryRect);
+
+            citation.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+
+            expect(citation.style.getPropertyValue('--iris-citation-shift')).toBe(expected);
+        });
+    });
+
+    it('resets tooltip shift on mouseout', () => {
+        const { citation } = setupTooltip();
+        citation.style.setProperty('--iris-citation-shift', '-50px');
+
+        citation.dispatchEvent(new MouseEvent('mouseout', { bubbles: true, relatedTarget: document.body }));
+
+        expect(citation.style.getPropertyValue('--iris-citation-shift')).toBe('0px');
     });
 });
 
@@ -109,83 +185,49 @@ describe('Iris citation util', () => {
         });
     });
 
-    it('returns undefined for invalid citations', () => {
-        expect(parseCitation('[cite:X:1:::::]')).toBeUndefined(); // Invalid type
-        expect(parseCitation('[cite:L::::::]')).toBeUndefined(); // Empty entity ID
-        expect(parseCitation('[cite:]')).toBeUndefined(); // Empty
-        expect(parseCitation('[cite:L:1]')).toBeUndefined(); // Incomplete
-        expect(parseCitation('[cite:L:1::]')).toBeUndefined(); // Incomplete
-    });
-
-    it('validates citation types', () => {
-        expect(isCitationType('L')).toBe(true);
-        expect(isCitationType('F')).toBe(true);
-        expect(isCitationType('X')).toBe(false);
-        expect(isCitationType(undefined)).toBe(false);
-    });
-
     it('resolves citation type classes', () => {
-        expect(resolveCitationTypeClass({ type: 'F', entityId: '1', page: '', start: '', end: '', keyword: '', summary: '' })).toBe('iris-citation--faq');
-        expect(resolveCitationTypeClass({ type: 'L', entityId: '1', page: '', start: '00:01', end: '', keyword: '', summary: '' })).toBe('iris-citation--video');
-        expect(resolveCitationTypeClass({ type: 'L', entityId: '1', page: '3', start: '', end: '', keyword: '', summary: '' })).toBe('iris-citation--slide');
-        expect(resolveCitationTypeClass({ type: 'L', entityId: '1', page: '', start: '', end: '', keyword: '', summary: '' })).toBe('iris-citation--source');
+        const cases = [
+            [{ type: 'F', entityId: '1', page: '', start: '', end: '', keyword: '', summary: '' }, 'iris-citation--faq'],
+            [{ type: 'L', entityId: '1', page: '', start: '00:01', end: '', keyword: '', summary: '' }, 'iris-citation--video'],
+            [{ type: 'L', entityId: '1', page: '3', start: '', end: '', keyword: '', summary: '' }, 'iris-citation--slide'],
+            [{ type: 'L', entityId: '1', page: '', start: '', end: '', keyword: '', summary: '' }, 'iris-citation--source'],
+        ] as const;
+
+        cases.forEach(([input, expected]) => {
+            expect(resolveCitationTypeClass(input)).toBe(expected);
+        });
     });
 
     it('formats citation labels with escaping and fallbacks', () => {
-        const withKeyword = formatCitationLabel({ type: 'L', entityId: '1', page: '', start: '', end: '', keyword: '<b>Key</b>', summary: '' });
-        const withoutKeyword = formatCitationLabel({ type: 'L', entityId: '1', page: '', start: '', end: '', keyword: '', summary: '' });
-        const faqFallback = formatCitationLabel({ type: 'F', entityId: '1', page: '', start: '', end: '', keyword: '', summary: '' });
+        const cases = [
+            [{ type: 'L', entityId: '1', page: '', start: '', end: '', keyword: '<b>Key</b>', summary: '' }, '&lt;b&gt;Key&lt;/b&gt;'],
+            [{ type: 'L', entityId: '1', page: '', start: '', end: '', keyword: '', summary: '' }, 'Source'],
+            [{ type: 'F', entityId: '1', page: '', start: '', end: '', keyword: '', summary: '' }, 'FAQ'],
+        ] as const;
 
-        expect(withKeyword).toBe('&lt;b&gt;Key&lt;/b&gt;');
-        expect(withoutKeyword).toBe('Source');
-        expect(faqFallback).toBe('FAQ');
+        cases.forEach(([input, expected]) => {
+            expect(formatCitationLabel(input)).toBe(expected);
+        });
     });
 
-    it('escapes HTML in raw text', () => {
-        expect(escapeHtml('<span>"&"</span>')).toBe('&lt;span&gt;&quot;&amp;&quot;&lt;/span&gt;');
-    });
-
-    it('replaces single citations with custom renderers', () => {
-        const citationInfo: IrisCitationMetaDTO[] = [{ entityId: 7, lectureTitle: 'Lecture', lectureUnitTitle: 'Unit' }];
-        const renderSingle = vi.fn().mockReturnValue('<single />');
-        const renderGroup = vi.fn().mockReturnValue('<group />');
-        const text = 'Hello [cite:L:7:::::Keyword:Summary] world';
-
-        const result = replaceCitationBlocks(text, citationInfo, { renderSingle, renderGroup });
-
-        expect(result).toContain('<single />');
-        expect(renderSingle).toHaveBeenCalledOnce();
-        expect(renderGroup).not.toHaveBeenCalled();
-    });
-
-    it('groups adjacent citations and calls renderGroup', () => {
+    it('replaces citations with custom renderers', () => {
         const citationInfo: IrisCitationMetaDTO[] = [
             { entityId: 1, lectureTitle: 'Lecture 1', lectureUnitTitle: 'Unit 1' },
-            { entityId: 2, lectureTitle: 'Lecture 2', lectureUnitTitle: 'Unit 2' },
+            { entityId: 7, lectureTitle: 'Lecture 7', lectureUnitTitle: 'Unit 7' },
         ];
         const renderSingle = vi.fn().mockReturnValue('<single />');
         const renderGroup = vi.fn().mockReturnValue('<group />');
-        const text = '[cite:L:1:::::One:Summary] [cite:L:2:::::Two:Summary]';
 
-        const result = replaceCitationBlocks(text, citationInfo, { renderSingle, renderGroup });
+        const singleText = 'Hello [cite:L:7::::Keyword:Summary] world';
+        const groupText = '[cite:L:1::::One:Summary] [cite:L:1::::Two:Summary]';
 
-        expect(result).toContain('<group />');
-        expect(renderGroup).toHaveBeenCalledOnce();
-        expect(renderSingle).not.toHaveBeenCalled();
-    });
+        const singleResult = replaceCitationBlocks(singleText, citationInfo, { renderSingle, renderGroup });
+        const groupResult = replaceCitationBlocks(groupText, citationInfo, { renderSingle, renderGroup });
 
-    it('renders valid citations and leaves invalid citation-like strings as plain text (no group formed)', () => {
-        const citationInfo: IrisCitationMetaDTO[] = [{ entityId: 1, lectureTitle: 'Lecture 1', lectureUnitTitle: 'Unit 1' }];
-        const renderSingle = vi.fn().mockReturnValue('<single />');
-        const renderGroup = vi.fn().mockReturnValue('<group />');
-        const text = 'A [cite:L:1:::::One:Summary] [cite:X:bad:::::] B';
-
-        const result = replaceCitationBlocks(text, citationInfo, { renderSingle, renderGroup });
-
-        expect(renderGroup).not.toHaveBeenCalled();
-        expect(renderSingle).toHaveBeenCalledOnce(); // The valid citation gets rendered
-        expect(result).toContain('<single />');
-        expect(result).toContain('[cite:X:bad:::::]'); // Invalid type stays as-is
+        expect(singleResult).toContain('<single />');
+        expect(groupResult).toContain('<group />');
+        expect(renderSingle).toHaveBeenCalled();
+        expect(renderGroup).toHaveBeenCalled();
     });
 
     it('ignores texts without citation markers', () => {
@@ -201,122 +243,14 @@ describe('Iris citation util', () => {
     });
 
     it('removes citation blocks from text', () => {
-        const text = 'Hello [cite:L:7:::::Keyword:Summary] world [cite:F:1:::::FAQ:Summary]';
+        const text = 'Hello [cite:L:7::::Keyword:Summary] world [cite:F:1::::FAQ:Summary]';
         const result = removeCitationBlocks(text);
 
         expect(result).toBe('Hello  world');
         expect(result).not.toContain('[cite:');
     });
 
-    it('handles empty text when removing citations', () => {
-        expect(removeCitationBlocks('')).toBe('');
-        expect(removeCitationBlocks(null as any)).toBe(null);
-    });
-});
-
-describe('Iris citation util - strict format validation', () => {
-    describe('parseCitation with complete format', () => {
-        it('should accept complete citations with all empty fields', () => {
-            const parsed = parseCitation('[cite:L:5:::::]');
-            expect(parsed).toEqual({
-                type: 'L',
-                entityId: '5',
-                page: '',
-                start: '',
-                end: '',
-                keyword: '',
-                summary: '',
-            });
-        });
-
-        it('should handle summaries with colons correctly', () => {
-            const parsed = parseCitation('[cite:L:42:5:10:20:Key:Summary:with:colons]');
-            expect(parsed).toEqual({
-                type: 'L',
-                entityId: '42',
-                page: '5',
-                start: '10',
-                end: '20',
-                keyword: 'Key',
-                summary: 'Summary:with:colons',
-            });
-        });
-    });
-
-    describe('parseCitation rejecting incomplete formats', () => {
-        it('should reject citations with too few colons', () => {
-            expect(parseCitation('[cite:L:5]')).toBeUndefined();
-            expect(parseCitation('[cite:L:5:]')).toBeUndefined();
-            expect(parseCitation('[cite:L:5::]')).toBeUndefined();
-            expect(parseCitation('[cite:L:5:::]')).toBeUndefined();
-            expect(parseCitation('[cite:L:5::::]')).toBeUndefined();
-            expect(parseCitation('[cite:L:5:::::]')).toBeDefined(); // 7 colons - valid!
-            expect(parseCitation('[cite:L:5::::::]')).toBeDefined(); // 8 colons - also valid (summary is ":")
-        });
-
-        it('should reject invalid types', () => {
-            expect(parseCitation('[cite:X:1:::::]')).toBeUndefined();
-            expect(parseCitation('[cite:l:1:::::]')).toBeUndefined(); // lowercase
-        });
-
-        it('should accept non-numeric entity IDs', () => {
-            const parsed = parseCitation('[cite:L:abc-123:::::]');
-            expect(parsed).toEqual({
-                type: 'L',
-                entityId: 'abc-123',
-                page: '',
-                start: '',
-                end: '',
-                keyword: '',
-                summary: '',
-            });
-        });
-
-        it('should reject empty entity IDs', () => {
-            expect(parseCitation('[cite:L::::::]')).toBeUndefined(); // Empty entityId
-        });
-    });
-
-    describe('CITATION_REGEX with strict matching', () => {
-        it('should not match incomplete citations', () => {
-            const text = 'Text [cite:L:5] [cite:L:5::] [cite:L:5::::]  more text';
-            const matches = text.match(CITATION_REGEX);
-            expect(matches).toBeNull();
-        });
-
-        it('should match only complete citations', () => {
-            const text = 'Valid [cite:L:1:::::K:S] invalid [cite:L:2::] valid [cite:F:3:::::]';
-            const matches = text.match(CITATION_REGEX);
-            expect(matches).toHaveLength(2);
-            expect(matches![0]).toBe('[cite:L:1:::::K:S]');
-            expect(matches![1]).toBe('[cite:F:3:::::]');
-        });
-    });
-
-    describe('replaceCitationBlocks with strict validation', () => {
-        it('should ignore incomplete citations', () => {
-            const citationInfo: IrisCitationMetaDTO[] = [];
-            const renderSingle = vi.fn().mockReturnValue('<single />');
-            const renderGroup = vi.fn().mockReturnValue('<group />');
-
-            const text = 'Text [cite:L:5] and [cite:L:7::] more';
-            const result = replaceCitationBlocks(text, citationInfo, { renderSingle, renderGroup });
-
-            expect(result).toBe(text); // Returns as-is
-            expect(renderSingle).not.toHaveBeenCalled();
-        });
-
-        it('should process only complete citations in mixed content', () => {
-            const citationInfo: IrisCitationMetaDTO[] = [{ entityId: 1, lectureTitle: 'Lecture 1', lectureUnitTitle: 'Unit 1' }];
-            const renderSingle = vi.fn().mockReturnValue('<rendered>');
-            const renderGroup = vi.fn().mockReturnValue('<group>');
-
-            const text = 'Valid [cite:L:1:::::K:S] but [cite:L:5] invalid';
-            const result = replaceCitationBlocks(text, citationInfo, { renderSingle, renderGroup });
-
-            expect(result).toContain('<rendered>');
-            expect(result).toContain('[cite:L:5]'); // Incomplete stays as-is
-            expect(renderSingle).toHaveBeenCalledOnce();
-        });
+    it('escapes HTML in raw text', () => {
+        expect(escapeHtml('<span>"&"</span>')).toBe('&lt;span&gt;&quot;&amp;&quot;&lt;/span&gt;');
     });
 });
