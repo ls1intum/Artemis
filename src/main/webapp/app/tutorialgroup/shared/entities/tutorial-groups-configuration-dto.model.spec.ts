@@ -81,8 +81,8 @@ describe('TutorialGroupConfigurationDTO mapping', () => {
             const entity = tutorialGroupsConfigurationEntityFromDto(dto);
 
             expect(entity.id).toBe(8);
-            expect(entity.tutorialPeriodStartInclusive?.isSame(dayjs.utc('2024-01-01'))).toBeTrue();
-            expect(entity.tutorialPeriodEndInclusive?.isSame(dayjs.utc('2024-01-01'))).toBeTrue();
+            expect(entity.tutorialPeriodStartInclusive?.isSame(dayjs.utc('2024-01-01'))).toBe(true);
+            expect(entity.tutorialPeriodEndInclusive?.isSame(dayjs.utc('2024-01-01'))).toBe(true);
             expect(entity.useTutorialGroupChannels).toBe(true);
             expect(entity.usePublicTutorialGroupChannels).toBe(false);
             expect(entity.tutorialGroupFreePeriods).toHaveLength(0);
