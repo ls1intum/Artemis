@@ -217,7 +217,9 @@ describe('ExamUpdateComponent', () => {
 
         it('should update', fakeAsync(() => {
             // Mock console.warn to suppress Monaco editor's monospace font assumption warning
-            const consoleWarnMock = jest.spyOn(console, 'warn').mockImplementation();
+            // jest-fail-on-console checks in afterEach whether console.warn has a .mock property;
+            // keeping the spy active (no mockRestore) signals that the warning is intentional.
+            jest.spyOn(console, 'warn').mockImplementation();
             const calendarService = TestBed.inject(CalendarService);
             const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
 
@@ -242,8 +244,6 @@ describe('ExamUpdateComponent', () => {
             expect(updateSpy).toHaveBeenCalledOnce();
             expect(component.isSaving).toBeFalse();
             expect(refreshSpy).toHaveBeenCalledOnce();
-            // Do NOT call mockRestore() here — jest-fail-on-console checks in afterEach
-            // whether console.warn is still mocked; restoring it early causes the failure.
         }));
 
         it('should calculate the working time for real exams correctly', () => {

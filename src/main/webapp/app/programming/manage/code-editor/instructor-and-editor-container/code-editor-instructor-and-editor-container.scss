@@ -50,13 +50,13 @@
     white-space: nowrap;
     cursor: pointer;
 
-    &:hover:not(:disabled) {
-        background: var(--p-content-hover-background);
-    }
-
     &:disabled {
         opacity: 0.5;
         cursor: default;
+    }
+
+    &:hover:not(:disabled) {
+        background: var(--p-content-hover-background);
     }
 }
 
