@@ -54,8 +54,8 @@ describe('TutorialGroupFreePeriodDTO', () => {
             const entity = fromTutorialGroupFreePeriodDTO(dto);
 
             expect(entity.id).toBe(3);
-            expect(entity.start?.isSame(dayjs.utc('2024-01-10T10:00:00Z'))).toBeTrue();
-            expect(entity.end?.isSame(dayjs.utc('2024-01-10T12:00:00Z'))).toBeTrue();
+            expect(entity.start?.isSame(dayjs.utc('2024-01-10T10:00:00Z'))).toBe(true);
+            expect(entity.end?.isSame(dayjs.utc('2024-01-10T12:00:00Z'))).toBe(true);
             expect(entity.reason).toBe('Exam');
         });
 

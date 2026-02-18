@@ -32,8 +32,8 @@ describe('TutorialGroupConfigurationDTO mapping', () => {
             expect(dto.id).toBe(5);
             expect(dto.tutorialPeriodStartInclusive).toBe('2024-01-01');
             expect(dto.tutorialPeriodEndInclusive).toBe('2024-01-01'); // mocked
-            expect(dto.useTutorialGroupChannels).toBeTrue();
-            expect(dto.usePublicTutorialGroupChannels).toBeFalse();
+            expect(dto.useTutorialGroupChannels).toBe(true);
+            expect(dto.usePublicTutorialGroupChannels).toBe(false);
             expect(dto.tutorialGroupFreePeriods).toHaveLength(0);
             expect(convertSpy).toHaveBeenCalledTimes(2);
         });
@@ -83,8 +83,8 @@ describe('TutorialGroupConfigurationDTO mapping', () => {
             expect(entity.id).toBe(8);
             expect(entity.tutorialPeriodStartInclusive?.isSame(dayjs.utc('2024-01-01'))).toBeTrue();
             expect(entity.tutorialPeriodEndInclusive?.isSame(dayjs.utc('2024-01-01'))).toBeTrue();
-            expect(entity.useTutorialGroupChannels).toBeTrue();
-            expect(entity.usePublicTutorialGroupChannels).toBeFalse();
+            expect(entity.useTutorialGroupChannels).toBe(true);
+            expect(entity.usePublicTutorialGroupChannels).toBe(false);
             expect(entity.tutorialGroupFreePeriods).toHaveLength(0);
             expect(convertSpy).toHaveBeenCalledTimes(2);
         });
