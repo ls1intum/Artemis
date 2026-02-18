@@ -13,7 +13,6 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
@@ -54,11 +53,22 @@ public class IrisCitationService {
         if (text == null || text.isBlank()) {
             return null;
         }
+        if (lectureUnitRepositoryApi.isEmpty()) {
+            return null;
+        }
         var entityIds = extractEntityIds(text);
         if (entityIds.isEmpty()) {
             return null;
         }
-        var citations = entityIds.stream().map(this::resolveLectureUnit).filter(Optional::isPresent).map(Optional::get).toList();
+        var unitMap = lectureUnitRepositoryApi.get().findAllByIdsWithLecture(entityIds).stream().collect(Collectors.toMap(LectureUnit::getId, unit -> unit));
+        var citations = entityIds.stream().map(unitMap::get).filter(Objects::nonNull).map(unit -> {
+            var lectureTitle = unit.getLecture() != null ? unit.getLecture().getTitle() : null;
+            var lectureUnitTitle = unit.getName();
+            if (lectureTitle == null || lectureTitle.isBlank() || lectureUnitTitle == null || lectureUnitTitle.isBlank()) {
+                return null;
+            }
+            return new IrisCitationMetaDTO(unit.getId(), lectureTitle, lectureUnitTitle);
+        }).filter(Objects::nonNull).toList();
         return citations.isEmpty() ? null : citations;
     }
 
@@ -110,23 +120,5 @@ public class IrisCitationService {
                 return null;
             }
         }).filter(Objects::nonNull).collect(Collectors.toCollection(LinkedHashSet::new));
-    }
-
-    private Optional<IrisCitationMetaDTO> resolveLectureUnit(long entityId) {
-        if (lectureUnitRepositoryApi.isEmpty()) {
-            return Optional.empty();
-        }
-        try {
-            LectureUnit unit = lectureUnitRepositoryApi.get().findByIdElseThrow(entityId);
-            var lectureTitle = unit.getLecture() != null ? unit.getLecture().getTitle() : null;
-            var lectureUnitTitle = unit.getName();
-            if (lectureTitle == null || lectureTitle.isBlank() || lectureUnitTitle == null || lectureUnitTitle.isBlank()) {
-                return Optional.empty();
-            }
-            return Optional.of(new IrisCitationMetaDTO(entityId, lectureTitle, lectureUnitTitle));
-        }
-        catch (EntityNotFoundException ex) {
-            return Optional.empty();
-        }
     }
 }

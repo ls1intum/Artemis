@@ -2,12 +2,13 @@ package de.tum.cit.aet.artemis.iris.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
-import static org.mockito.Mockito.times;
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -16,7 +17,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.dto.IrisCitationMetaDTO;
@@ -71,8 +71,7 @@ class IrisCitationServiceTest {
         var firstUnit = lectureUnit(LECTURE_UNIT_ID, "Intro Lecture", "Basics");
         var secondUnit = lectureUnit(SECOND_LECTURE_UNIT_ID, "Advanced Lecture", "Deep Dive");
 
-        when(lectureUnitRepositoryApi.findByIdElseThrow(LECTURE_UNIT_ID)).thenReturn(firstUnit);
-        when(lectureUnitRepositoryApi.findByIdElseThrow(SECOND_LECTURE_UNIT_ID)).thenReturn(secondUnit);
+        when(lectureUnitRepositoryApi.findAllByIdsWithLecture(anyCollection())).thenReturn(List.of(firstUnit, secondUnit));
 
         var text = "First [cite:L:42:::::] again [cite:L:42:::::] then [cite:L:7:::::].";
 
@@ -80,40 +79,39 @@ class IrisCitationServiceTest {
 
         assertThat(resolved).extracting(IrisCitationMetaDTO::entityId, IrisCitationMetaDTO::lectureTitle, IrisCitationMetaDTO::lectureUnitTitle)
                 .containsExactly(tuple(LECTURE_UNIT_ID, "Intro Lecture", "Basics"), tuple(SECOND_LECTURE_UNIT_ID, "Advanced Lecture", "Deep Dive"));
-        verify(lectureUnitRepositoryApi, times(1)).findByIdElseThrow(LECTURE_UNIT_ID);
-        verify(lectureUnitRepositoryApi, times(1)).findByIdElseThrow(SECOND_LECTURE_UNIT_ID);
+        verify(lectureUnitRepositoryApi).findAllByIdsWithLecture(anyCollection());
     }
 
     @Test
     void resolveCitationInfo_skipsWhenLectureTitleMissing() {
         var unit = lectureUnit(LECTURE_UNIT_ID, "  ", "Unit Title");
-        when(lectureUnitRepositoryApi.findByIdElseThrow(LECTURE_UNIT_ID)).thenReturn(unit);
+        when(lectureUnitRepositoryApi.findAllByIdsWithLecture(anyCollection())).thenReturn(List.of(unit));
 
         assertThat(citationService.resolveCitationInfo("[cite:L:42:::::]")).isNull();
-        verify(lectureUnitRepositoryApi).findByIdElseThrow(LECTURE_UNIT_ID);
+        verify(lectureUnitRepositoryApi).findAllByIdsWithLecture(anyCollection());
     }
 
     @Test
     void resolveCitationInfo_skipsWhenLectureUnitTitleMissing() {
         var unit = lectureUnit(LECTURE_UNIT_ID, "Lecture Title", "   ");
-        when(lectureUnitRepositoryApi.findByIdElseThrow(LECTURE_UNIT_ID)).thenReturn(unit);
+        when(lectureUnitRepositoryApi.findAllByIdsWithLecture(anyCollection())).thenReturn(List.of(unit));
 
         assertThat(citationService.resolveCitationInfo("[cite:L:42:::::]")).isNull();
-        verify(lectureUnitRepositoryApi).findByIdElseThrow(LECTURE_UNIT_ID);
+        verify(lectureUnitRepositoryApi).findAllByIdsWithLecture(anyCollection());
     }
 
     @Test
     void resolveCitationInfo_returnsNullWhenLectureUnitNotFound() {
-        when(lectureUnitRepositoryApi.findByIdElseThrow(LECTURE_UNIT_ID)).thenThrow(new EntityNotFoundException("LectureUnit", LECTURE_UNIT_ID));
+        when(lectureUnitRepositoryApi.findAllByIdsWithLecture(anyCollection())).thenReturn(List.of());
 
         assertThat(citationService.resolveCitationInfo("[cite:L:42:::::]")).isNull();
-        verify(lectureUnitRepositoryApi).findByIdElseThrow(LECTURE_UNIT_ID);
+        verify(lectureUnitRepositoryApi).findAllByIdsWithLecture(anyCollection());
     }
 
     @Test
     void resolveCitationInfoFromMessages_aggregatesMessageContents() {
         var unit = lectureUnit(LECTURE_UNIT_ID, "Lecture Title", "Unit Title");
-        when(lectureUnitRepositoryApi.findByIdElseThrow(LECTURE_UNIT_ID)).thenReturn(unit);
+        when(lectureUnitRepositoryApi.findAllByIdsWithLecture(anyCollection())).thenReturn(List.of(unit));
 
         var messageWithCitation = new IrisMessage();
         messageWithCitation.addContent(new IrisTextMessageContent("Answer [cite:L:42:::::]"));
