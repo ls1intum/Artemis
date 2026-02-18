@@ -4,7 +4,8 @@
     display: flex;
     align-items: center;
     height: 100%;
-    padding-right: 0.5rem;
+    padding-right: 0.75rem;
+    padding-left: 0.5rem;
 }
 
 .search-trigger {
@@ -56,7 +57,7 @@
 .keyboard-hint {
     /* Reset */
     margin-left: 0.25rem;
-    padding: 0;
+    padding: 0 0.25rem 0 0;
     border: none;
     background: transparent;
 
