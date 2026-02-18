@@ -340,4 +340,27 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
                 post("/api/hyperion/courses/{courseId}/problem-statements/refine/global", nonExistentCourseId).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void shouldReturnBadRequestForBlankGenerateUserPrompt() throws Exception {
+        long courseId = persistedCourseId;
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        courseRepository.findById(courseId).orElseThrow();
+        String body = "{\"userPrompt\":\"   \"}";
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/generate", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void shouldReturnBadRequestForOverlongGenerateUserPrompt() throws Exception {
+        long courseId = persistedCourseId;
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        courseRepository.findById(courseId).orElseThrow();
+        String longPrompt = "a".repeat(1001);
+        String body = "{\"userPrompt\":\"" + longPrompt + "\"}";
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/generate", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isBadRequest());
+    }
 }

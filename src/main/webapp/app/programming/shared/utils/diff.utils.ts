@@ -637,8 +637,10 @@ export function convertMonacoLineChanges(monacoLineChanges: monaco.editor.ILineC
     }
 
     for (const change of monacoLineChanges) {
-        const addedLines = change.modifiedEndLineNumber >= change.modifiedStartLineNumber ? change.modifiedEndLineNumber - change.modifiedStartLineNumber + 1 : 0;
-        const removedLines = change.originalEndLineNumber >= change.originalStartLineNumber ? change.originalEndLineNumber - change.originalStartLineNumber + 1 : 0;
+        // Monaco signals "no lines on this side" by setting endLineNumber to 0.
+        // Using === 0 (consistent with computeDiffsMonaco) avoids a subtle bug when both start and end are 0.
+        const addedLines = change.modifiedEndLineNumber === 0 ? 0 : change.modifiedEndLineNumber - change.modifiedStartLineNumber + 1;
+        const removedLines = change.originalEndLineNumber === 0 ? 0 : change.originalEndLineNumber - change.originalStartLineNumber + 1;
         lineChange.addedLineCount += addedLines;
         lineChange.removedLineCount += removedLines;
     }

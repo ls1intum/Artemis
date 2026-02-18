@@ -242,7 +242,8 @@ describe('ExamUpdateComponent', () => {
             expect(updateSpy).toHaveBeenCalledOnce();
             expect(component.isSaving).toBeFalse();
             expect(refreshSpy).toHaveBeenCalledOnce();
-            consoleWarnMock.mockRestore();
+            // Do NOT call mockRestore() here — jest-fail-on-console checks in afterEach
+            // whether console.warn is still mocked; restoring it early causes the failure.
         }));
 
         it('should calculate the working time for real exams correctly', () => {

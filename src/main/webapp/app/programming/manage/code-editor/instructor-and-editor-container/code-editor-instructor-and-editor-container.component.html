@@ -163,15 +163,16 @@
                     <!-- Toolbar divider -->
                     <div class="vr mx-2"></div>
 
-                    <div class="position-relative">
-                        <div ngbDropdown class="btn-group" [autoClose]="'outside'" #aiDropdown="ngbDropdown">
+                    <div class="position-relative d-flex align-items-center">
+                        <div class="btn-group">
                             <button
                                 #aiDropdownToggle
+                                class="ai-dropdown-toggle"
                                 pButton
                                 severity="primary"
                                 [outlined]="true"
                                 type="button"
-                                ngbDropdownToggle
+                                (click)="aiMenuPopover.toggle($event)"
                                 [disabled]="
                                     isAiApplying() ||
                                     isGeneratingCode() ||
@@ -196,52 +197,53 @@
                                     <p-badge [value]="'' + consistencyIssues().length" severity="warn" class="ms-1" />
                                 }
                             </button>
-                            <div ngbDropdownMenu class="ai-dropdown-menu">
-                                <!-- AI Generation Actions -->
-                                <button ngbDropdownItem (click)="generateCode(); aiDropdown.close()" [disabled]="isGeneratingCode()">
-                                    <fa-icon [icon]="facArtemisIntelligence" class="me-2" />
-                                    <span jhiTranslate="artemisApp.programmingExercise.codeGeneration.generateCode">Generate Code</span>
-                                </button>
-
-                                @if (exercise.isAtLeastEditor) {
-                                    <!-- Problem Statement Refinement -->
-                                    <button ngbDropdownItem (click)="toggleRefinementPopover($event, aiDropdownToggle); aiDropdown.close()" [disabled]="isAiApplying()">
+                            <p-popover #aiMenuPopover [dismissable]="true" styleClass="ai-dropdown-menu p-0">
+                                <div class="ai-menu-items">
+                                    <!-- AI Generation Actions -->
+                                    <button class="ai-menu-item" (click)="generateCode(); aiMenuPopover.hide()" [disabled]="isGeneratingCode()">
                                         <fa-icon [icon]="facArtemisIntelligence" class="me-2" />
-                                        <span
-                                            [jhiTranslate]="
-                                                shouldShowGenerateButton()
-                                                    ? 'artemisApp.programmingExercise.problemStatement.generationAssistance'
-                                                    : 'artemisApp.programmingExercise.problemStatement.refinementAssistance'
-                                            "
-                                        ></span>
+                                        <span jhiTranslate="artemisApp.programmingExercise.codeGeneration.generateCode">Generate Code</span>
                                     </button>
 
-                                    <!-- Split Button for Consistency Check if issues exist -->
-                                    @if (consistencyIssues().length) {
-                                        <div class="d-flex w-100">
-                                            <button
-                                                ngbDropdownItem
-                                                class="flex-grow-1"
-                                                (click)="checkConsistencies(exercise); aiDropdown.close()"
-                                                [disabled]="isCheckingConsistency()"
-                                            >
+                                    @if (exercise.isAtLeastEditor) {
+                                        <!-- Problem Statement Refinement -->
+                                        <button class="ai-menu-item" (click)="toggleRefinementPopover($event, aiDropdownToggle); aiMenuPopover.hide()" [disabled]="isAiApplying()">
+                                            <fa-icon [icon]="facArtemisIntelligence" class="me-2" />
+                                            <span
+                                                [jhiTranslate]="
+                                                    shouldShowGenerateButton()
+                                                        ? 'artemisApp.programmingExercise.problemStatement.generationAssistance'
+                                                        : 'artemisApp.programmingExercise.problemStatement.refinementAssistance'
+                                                "
+                                            ></span>
+                                        </button>
+
+                                        <!-- Split Button for Consistency Check if issues exist -->
+                                        @if (consistencyIssues().length) {
+                                            <div class="d-flex w-100">
+                                                <button
+                                                    class="ai-menu-item flex-grow-1"
+                                                    (click)="checkConsistencies(exercise); aiMenuPopover.hide()"
+                                                    [disabled]="isCheckingConsistency()"
+                                                >
+                                                    <fa-icon [icon]="faCheckDouble" class="me-2" />
+                                                    <span jhiTranslate="artemisApp.hyperion.consistencyCheck.button"></span>
+                                                </button>
+                                                <div class="vr my-1"></div>
+                                                <button class="ai-menu-item flex-shrink-1 w-auto px-3" (click)="toggleConsistencyIssuesToolbar(); aiMenuPopover.hide()">
+                                                    <fa-icon [icon]="faTriangleExclamation" class="me-2 text-warning" />
+                                                    <span jhiTranslate="artemisApp.hyperion.consistencyCheck.issues"></span>
+                                                </button>
+                                            </div>
+                                        } @else {
+                                            <button class="ai-menu-item" (click)="checkConsistencies(exercise); aiMenuPopover.hide()" [disabled]="isCheckingConsistency()">
                                                 <fa-icon [icon]="faCheckDouble" class="me-2" />
                                                 <span jhiTranslate="artemisApp.hyperion.consistencyCheck.button"></span>
                                             </button>
-                                            <div class="vr my-1"></div>
-                                            <button ngbDropdownItem class="flex-shrink-1 w-auto px-3" (click)="toggleConsistencyIssuesToolbar(); aiDropdown.close()">
-                                                <fa-icon [icon]="faTriangleExclamation" class="me-2 text-warning" />
-                                                <span jhiTranslate="artemisApp.hyperion.consistencyCheck.issues"></span>
-                                            </button>
-                                        </div>
-                                    } @else {
-                                        <button ngbDropdownItem (click)="checkConsistencies(exercise); aiDropdown.close()" [disabled]="isCheckingConsistency()">
-                                            <fa-icon [icon]="faCheckDouble" class="me-2" />
-                                            <span jhiTranslate="artemisApp.hyperion.consistencyCheck.button"></span>
-                                        </button>
+                                        }
                                     }
-                                }
-                            </div>
+                                </div>
+                            </p-popover>
                         </div>
 
                         @if (isGeneratingOrRefining()) {
@@ -370,21 +372,23 @@
                     <!-- Diff review banner -->
                     <p-message severity="info" styleClass="w-100 mb-1" [closable]="false">
                         <div class="d-flex flex-wrap align-items-center px-2 py-1 gap-2">
-                            <strong class="small" jhiTranslate="artemisApp.programmingExercise.problemStatement.reviewChanges"></strong>
-                            <span class="text-muted small" jhiTranslate="artemisApp.programmingExercise.problemStatement.reviewChangesDescription"></span>
-                            <button
-                                pButton
-                                type="button"
-                                severity="primary"
-                                size="small"
-                                [pTooltip]="'artemisApp.programmingExercise.diffReport.splitView.tooltip' | artemisTranslate"
-                                tooltipPosition="bottom"
-                                (click)="allowSplitView.set(!allowSplitView())"
-                            >
-                                <fa-icon [icon]="faTableColumns" class="me-1" />
-                                <span [jhiTranslate]="'artemisApp.programmingExercise.diffReport.splitView.' + (allowSplitView() ? 'disable' : 'enable')"></span>
-                            </button>
+                            <div>
+                                <strong class="small" jhiTranslate="artemisApp.programmingExercise.problemStatement.reviewChanges"></strong>
+                                <span class="text-muted small ms-1" jhiTranslate="artemisApp.programmingExercise.problemStatement.reviewChangesDescription"></span>
+                            </div>
                             <div class="d-flex align-items-center gap-2 ms-auto">
+                                <button
+                                    pButton
+                                    type="button"
+                                    severity="primary"
+                                    size="small"
+                                    [pTooltip]="'artemisApp.programmingExercise.diffReport.splitView.tooltip' | artemisTranslate"
+                                    tooltipPosition="bottom"
+                                    (click)="allowSplitView.set(!allowSplitView())"
+                                >
+                                    <fa-icon [icon]="faTableColumns" class="me-1" />
+                                    <span [jhiTranslate]="'artemisApp.programmingExercise.diffReport.splitView.' + (allowSplitView() ? 'disable' : 'enable')"></span>
+                                </button>
                                 <button pButton type="button" severity="secondary" size="small" [disabled]="isAiApplying() || isGeneratingCode()" (click)="revertAllRefinement()">
                                     <fa-icon [icon]="faBan" class="me-1" />
                                     <span jhiTranslate="artemisApp.programmingExercise.problemStatement.revertAll"></span>

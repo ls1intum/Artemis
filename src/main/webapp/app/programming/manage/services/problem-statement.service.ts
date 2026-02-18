@@ -105,7 +105,9 @@ export class ProblemStatementService {
                     return { success, content: getContent(response), errorHandled: !success };
                 }),
                 catchError((error) => {
-                    const handledByInterceptor = error instanceof HttpErrorResponse && !!error.error?.errorKey;
+                    // Consider the error handled by the global interceptor if it is an HTTP error
+                    // with a recognized alert key (errorKey or title) in the response body.
+                    const handledByInterceptor = error instanceof HttpErrorResponse && !!(error.error?.errorKey || error.error?.title);
                     return of({ success: false, errorHandled: handledByInterceptor });
                 }),
                 finalize(() => setLoading(false)),

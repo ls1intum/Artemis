@@ -175,4 +175,18 @@ class HyperionPromptSanitizerTest {
         assertThat(result).doesNotContain("{{");
         assertThat(result).isEqualTo("A course about");
     }
+
+    @Test
+    void getSanitizedCourseDescription_stripsHtmlTags() {
+        Course course = new Course();
+        course.setDescription("<p>Learn <strong>programming</strong> with <em>Java</em></p>");
+        assertThat(HyperionPromptSanitizer.getSanitizedCourseDescription(course)).isEqualTo("Learn programming with Java");
+    }
+
+    @Test
+    void getSanitizedCourseDescription_stripsHtmlAndFallsBackWhenOnlyTags() {
+        Course course = new Course();
+        course.setDescription("<br/><hr/>");
+        assertThat(HyperionPromptSanitizer.getSanitizedCourseDescription(course)).isEqualTo(HyperionPromptSanitizer.DEFAULT_COURSE_DESCRIPTION);
+    }
 }

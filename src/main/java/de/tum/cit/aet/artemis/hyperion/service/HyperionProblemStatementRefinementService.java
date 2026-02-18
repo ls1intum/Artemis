@@ -107,8 +107,9 @@ public class HyperionProblemStatementRefinementService {
                     "ProblemStatementRefinement.refinedProblemStatementTooLong");
         }
 
-        // Refinement didn't change content (compare trimmed values to detect semantically unchanged content)
-        if (refinedProblemStatementText.trim().equals(originalProblemStatementText.trim())) {
+        // Refinement didn't change content — originalProblemStatementText is already sanitized/trimmed,
+        // so only the AI response needs trimming for a fair comparison.
+        if (refinedProblemStatementText.trim().equals(originalProblemStatementText)) {
             throw new BadRequestAlertException("Problem statement is the same after refinement", "ProblemStatement", "ProblemStatementRefinement.refinedProblemStatementUnchanged");
         }
 

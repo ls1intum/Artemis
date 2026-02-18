@@ -28,7 +28,13 @@ public class HyperionPromptTemplateService {
     /** Matches template placeholders of the form {{key}}. */
     private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("\\{\\{([^}]+)\\}\\}");
 
-    /** Cache for loaded template strings, keyed by classpath resource path. */
+    /**
+     * Cache for loaded template strings, keyed by classpath resource path.
+     * <p>
+     * Entries are never evicted because the templates are classpath resources that do not
+     * change at runtime. In development / hot-reload scenarios a server restart is required
+     * for template changes to take effect.
+     */
     private final ConcurrentHashMap<String, String> templateCache = new ConcurrentHashMap<>();
 
     /**

@@ -664,36 +664,36 @@ describe('DiffUtils', () => {
             expect(result.removedLineCount).toBe(0);
         });
 
-        it('should handle edge case where modified end line is less than start line', () => {
+        it('should treat endLineNumber=0 as "no lines on this side"', () => {
             const mockLineChanges: monaco.editor.ILineChange[] = [
                 {
                     originalStartLineNumber: 1,
                     originalEndLineNumber: 2,
-                    modifiedStartLineNumber: 5,
-                    modifiedEndLineNumber: 3, // End line < start line
+                    modifiedStartLineNumber: 0,
+                    modifiedEndLineNumber: 0, // Monaco signals "no modified lines"
                     charChanges: undefined,
                 },
             ];
 
             const result = convertMonacoLineChanges(mockLineChanges);
-            expect(result.addedLineCount).toBe(0); // Should use the ternary fallback : 0
+            expect(result.addedLineCount).toBe(0);
             expect(result.removedLineCount).toBe(2);
         });
 
-        it('should handle edge case where original end line is less than start line', () => {
+        it('should treat both sides zero as zero changes', () => {
             const mockLineChanges: monaco.editor.ILineChange[] = [
                 {
-                    originalStartLineNumber: 5,
-                    originalEndLineNumber: 3, // End line < start line
-                    modifiedStartLineNumber: 1,
-                    modifiedEndLineNumber: 2,
+                    originalStartLineNumber: 0,
+                    originalEndLineNumber: 0,
+                    modifiedStartLineNumber: 0,
+                    modifiedEndLineNumber: 0,
                     charChanges: undefined,
                 },
             ];
 
             const result = convertMonacoLineChanges(mockLineChanges);
-            expect(result.addedLineCount).toBe(2);
-            expect(result.removedLineCount).toBe(0); // Should use the ternary fallback : 0
+            expect(result.addedLineCount).toBe(0);
+            expect(result.removedLineCount).toBe(0);
         });
     });
 });

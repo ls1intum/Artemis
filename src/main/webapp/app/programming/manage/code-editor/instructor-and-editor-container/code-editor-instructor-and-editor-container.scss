@@ -16,8 +16,48 @@
     gap: 0.25rem;
 }
 
+.ai-dropdown-toggle::after {
+    display: inline-block;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+    content: '';
+    border-top: 0.3em solid;
+    border-right: 0.3em solid transparent;
+    border-bottom: 0;
+    border-left: 0.3em solid transparent;
+}
+
 .ai-dropdown-menu {
     min-width: 17.5rem;
+}
+
+.ai-menu-items {
+    display: flex;
+    flex-direction: column;
+    padding: 0.25rem 0;
+}
+
+.ai-menu-item {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 0.5rem 1rem;
+    border: none;
+    background: transparent;
+    color: var(--p-text-color);
+    font-size: 0.875rem;
+    text-align: start;
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+        background: var(--p-content-hover-background);
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: default;
+    }
 }
 
 .consistency-issue-nav-btn {
