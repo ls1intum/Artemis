@@ -48,7 +48,6 @@ describe('ProblemStatementService', () => {
 
     describe('loadTemplate', () => {
         it('should return empty template when exercise is undefined', () => {
-            const loadingSignal = signal(false);
             let result: any;
             service.loadTemplate(undefined).subscribe((r) => (result = r));
             expect(result.template).toBe('');
