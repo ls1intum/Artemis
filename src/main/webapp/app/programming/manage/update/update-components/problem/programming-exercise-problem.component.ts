@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, Injector, OnDestroy, OnInit, afterNextRender, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { faBan, faSave, faSpinner, faTableColumns } from '@fortawesome/free-solid-svg-icons';
@@ -79,6 +79,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     private problemStatementService = inject(ProblemStatementService);
     private alertService = inject(AlertService);
     private destroyRef = inject(DestroyRef);
+    private injector = inject(Injector);
 
     /**
      * Lifecycle hook that is called when the component is destroyed.
@@ -213,7 +214,12 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                     if (result.success && result.content) {
                         this.showDiff.set(true);
                         this.userPrompt.set('');
-                        this.editableInstructions()?.applyRefinedContent(result.content);
+                        afterNextRender(
+                            () => {
+                                this.editableInstructions()?.applyRefinedContent(result.content!);
+                            },
+                            { injector: this.injector },
+                        );
                     } else if (!result.errorHandled) {
                         this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
                     }

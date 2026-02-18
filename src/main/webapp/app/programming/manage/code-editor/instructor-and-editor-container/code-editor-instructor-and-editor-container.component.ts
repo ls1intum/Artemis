@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnDestroy, TemplateRef, ViewChild, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, Injector, OnDestroy, TemplateRef, ViewChild, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
@@ -135,6 +135,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private profileService = inject(ProfileService);
     private problemStatementService = inject(ProblemStatementService);
     private destroyRef = inject(DestroyRef);
+    private injector = inject(Injector);
 
     templateProblemStatement = signal<string>('');
     templateLoaded = signal<boolean>(false);
@@ -581,7 +582,12 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 next: (result) => {
                     if (result.success && result.content) {
                         this.showDiff.set(true);
-                        this.editableInstructions()?.applyRefinedContent(result.content);
+                        afterNextRender(
+                            () => {
+                                this.editableInstructions()?.applyRefinedContent(result.content!);
+                            },
+                            { injector: this.injector },
+                        );
                         this.refinementPrompt.set('');
                     } else if (!result.errorHandled) {
                         this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
