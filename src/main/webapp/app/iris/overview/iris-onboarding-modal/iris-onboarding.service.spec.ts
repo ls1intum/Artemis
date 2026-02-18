@@ -1,15 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { Subject } from 'rxjs';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AccountService } from 'app/core/auth/account.service';
-import { IrisOnboardingService } from './iris-onboarding.service';
+import { IrisOnboardingService, OnboardingResult } from './iris-onboarding.service';
 
 describe('IrisOnboardingService', () => {
     setupTestBed({ zoneless: true });
 
     let service: IrisOnboardingService;
-    let modalService: NgbModal;
+    let dialogService: DialogService;
     let matchMediaMock: ReturnType<typeof vi.spyOn>;
 
     const MOCK_USER_ID = 42;
@@ -31,6 +32,10 @@ describe('IrisOnboardingService', () => {
         });
     };
 
+    function createMockDialogRef(closeSubject: Subject<OnboardingResult | undefined>): DynamicDialogRef {
+        return { onClose: closeSubject.asObservable() } as unknown as DynamicDialogRef;
+    }
+
     beforeEach(() => {
         matchMediaMock = vi.spyOn(window, 'matchMedia');
         setDesktopViewport(true);
@@ -38,13 +43,13 @@ describe('IrisOnboardingService', () => {
         TestBed.configureTestingModule({
             providers: [
                 IrisOnboardingService,
-                { provide: NgbModal, useValue: { open: vi.fn() } },
+                { provide: DialogService, useValue: { open: vi.fn() } },
                 { provide: AccountService, useValue: { userIdentity: () => ({ id: MOCK_USER_ID }) } },
             ],
         });
 
         service = TestBed.inject(IrisOnboardingService);
-        modalService = TestBed.inject(NgbModal);
+        dialogService = TestBed.inject(DialogService);
         localStorage.removeItem(STORAGE_KEY);
     });
 
@@ -84,78 +89,86 @@ describe('IrisOnboardingService', () => {
             setDesktopViewport(false);
             const result = await service.openOnboardingModal();
 
-            expect(modalService.open).not.toHaveBeenCalled();
+            expect(dialogService.open).not.toHaveBeenCalled();
             expect(result).toBeUndefined();
         });
 
         it('should open the modal with correct options', async () => {
-            const mockModalRef = { result: Promise.resolve('finish') } as NgbModalRef;
-            vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
+            const closeSubject = new Subject<OnboardingResult | undefined>();
+            vi.spyOn(dialogService, 'open').mockReturnValue(createMockDialogRef(closeSubject));
 
-            const result = await service.openOnboardingModal();
+            const resultPromise = service.openOnboardingModal();
+            closeSubject.next({ action: 'finish' });
+            closeSubject.complete();
+            const result = await resultPromise;
 
-            expect(modalService.open).toHaveBeenCalledOnce();
-            const openCall = vi.mocked(modalService.open).mock.calls[0];
+            expect(dialogService.open).toHaveBeenCalledOnce();
+            const openCall = vi.mocked(dialogService.open).mock.calls[0];
             expect(openCall[1]).toEqual(
                 expect.objectContaining({
-                    backdrop: false,
-                    keyboard: false,
-                    windowClass: 'iris-onboarding-modal-window',
-                    modalDialogClass: 'iris-onboarding-dialog',
+                    modal: false,
+                    closable: false,
+                    showHeader: false,
+                    styleClass: 'iris-onboarding-dialog',
                 }),
             );
             expect(result).toEqual({ action: 'finish' });
         });
 
-        it('should return promptSelected result when modal closes with prompt selection', async () => {
-            const promptResult = { action: 'promptSelected', promptKey: 'artemisApp.iris.onboarding.step4.prompts.explainConceptStarter' };
-            const mockModalRef = { result: Promise.resolve(promptResult) } as NgbModalRef;
-            vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
+        it('should pass hasAvailableExercises via dialog data', async () => {
+            const closeSubject = new Subject<OnboardingResult | undefined>();
+            vi.spyOn(dialogService, 'open').mockReturnValue(createMockDialogRef(closeSubject));
 
-            const result = await service.openOnboardingModal();
+            const resultPromise = service.openOnboardingModal(false);
+            closeSubject.next({ action: 'finish' });
+            closeSubject.complete();
+            await resultPromise;
+
+            const openCall = vi.mocked(dialogService.open).mock.calls[0];
+            expect(openCall[1]).toEqual(expect.objectContaining({ data: { hasAvailableExercises: false } }));
+        });
+
+        it('should return promptSelected result when modal closes with prompt selection', async () => {
+            const promptResult: OnboardingResult = { action: 'promptSelected', promptKey: 'artemisApp.iris.onboarding.step4.prompts.explainConceptStarter' };
+            const closeSubject = new Subject<OnboardingResult | undefined>();
+            vi.spyOn(dialogService, 'open').mockReturnValue(createMockDialogRef(closeSubject));
+
+            const resultPromise = service.openOnboardingModal();
+            closeSubject.next(promptResult);
+            closeSubject.complete();
+            const result = await resultPromise;
 
             expect(result).toEqual(promptResult);
         });
 
         it('should mark onboarding as completed after modal closes', async () => {
-            const mockModalRef = { result: Promise.resolve('finish') } as NgbModalRef;
-            vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
+            const closeSubject = new Subject<OnboardingResult | undefined>();
+            vi.spyOn(dialogService, 'open').mockReturnValue(createMockDialogRef(closeSubject));
 
-            await service.openOnboardingModal();
+            const resultPromise = service.openOnboardingModal();
+            closeSubject.next({ action: 'finish' });
+            closeSubject.complete();
+            await resultPromise;
 
             expect(service.hasCompletedOnboarding()).toBeTruthy();
         });
 
-        it('should pass hasAvailableExercises to the modal component', async () => {
-            const setHasAvailableExercises = vi.fn();
-            const mockModalRef = {
-                result: Promise.resolve('finish'),
-                componentInstance: { hasAvailableExercises: { set: setHasAvailableExercises } },
-            } as NgbModalRef;
-            vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
-
-            await service.openOnboardingModal(false);
-
-            expect(setHasAvailableExercises).toHaveBeenCalledWith(false);
-        });
-
         it('should return undefined when modal is dismissed', async () => {
-            const mockModalRef = { result: Promise.reject('dismissed') } as NgbModalRef;
-            vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
+            const closeSubject = new Subject<OnboardingResult | undefined>();
+            vi.spyOn(dialogService, 'open').mockReturnValue(createMockDialogRef(closeSubject));
 
-            const result = await service.openOnboardingModal();
+            const resultPromise = service.openOnboardingModal();
+            closeSubject.next(undefined);
+            closeSubject.complete();
+            const result = await resultPromise;
 
             expect(result).toBeUndefined();
             expect(service.hasCompletedOnboarding()).toBeTruthy();
         });
 
         it('should not open a second modal if one is already open', async () => {
-            let resolveModal: (value: unknown) => void;
-            const modalPromise = new Promise((resolve) => {
-                resolveModal = resolve;
-            });
-            const mockModalRef = { result: modalPromise } as NgbModalRef;
-            vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
+            const closeSubject = new Subject<OnboardingResult | undefined>();
+            vi.spyOn(dialogService, 'open').mockReturnValue(createMockDialogRef(closeSubject));
 
             // Start first modal (won't resolve yet)
             const firstCall = service.openOnboardingModal();
@@ -163,11 +176,12 @@ describe('IrisOnboardingService', () => {
             // Try opening second modal — should NOT open a new modal
             const secondCall = service.openOnboardingModal();
 
-            expect(modalService.open).toHaveBeenCalledOnce();
+            expect(dialogService.open).toHaveBeenCalledOnce();
 
             // Resolve the modal with a prompt selection
-            const promptResult = { action: 'promptSelected', promptKey: 'artemisApp.iris.onboarding.step4.prompts.explainConceptStarter' };
-            resolveModal!(promptResult);
+            const promptResult: OnboardingResult = { action: 'promptSelected', promptKey: 'artemisApp.iris.onboarding.step4.prompts.explainConceptStarter' };
+            closeSubject.next(promptResult);
+            closeSubject.complete();
 
             // Both calls should receive the same result
             const firstResult = await firstCall;
@@ -176,18 +190,23 @@ describe('IrisOnboardingService', () => {
             expect(secondResult).toEqual(promptResult);
         });
 
-        it('should clear modalRef after modal closes', async () => {
-            const mockModalRef = { result: Promise.resolve('finish') } as NgbModalRef;
-            vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
+        it('should clear dialogRef after modal closes', async () => {
+            const closeSubject1 = new Subject<OnboardingResult | undefined>();
+            const closeSubject2 = new Subject<OnboardingResult | undefined>();
+            vi.spyOn(dialogService, 'open').mockReturnValueOnce(createMockDialogRef(closeSubject1)).mockReturnValueOnce(createMockDialogRef(closeSubject2));
 
-            await service.openOnboardingModal();
+            const firstPromise = service.openOnboardingModal();
+            closeSubject1.next({ action: 'finish' });
+            closeSubject1.complete();
+            await firstPromise;
 
             // Should be able to open again
-            const mockModalRef2 = { result: Promise.resolve('finish') } as NgbModalRef;
-            vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef2);
-            await service.openOnboardingModal();
+            const secondPromise = service.openOnboardingModal();
+            closeSubject2.next({ action: 'finish' });
+            closeSubject2.complete();
+            await secondPromise;
 
-            expect(modalService.open).toHaveBeenCalledTimes(2);
+            expect(dialogService.open).toHaveBeenCalledTimes(2);
         });
     });
 
@@ -196,17 +215,20 @@ describe('IrisOnboardingService', () => {
             setDesktopViewport(false);
             const result = await service.showOnboardingIfNeeded();
 
-            expect(modalService.open).not.toHaveBeenCalled();
+            expect(dialogService.open).not.toHaveBeenCalled();
             expect(result).toBeUndefined();
         });
 
         it('should delegate to openOnboardingModal', async () => {
-            const mockModalRef = { result: Promise.resolve('finish') } as NgbModalRef;
-            vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
+            const closeSubject = new Subject<OnboardingResult | undefined>();
+            vi.spyOn(dialogService, 'open').mockReturnValue(createMockDialogRef(closeSubject));
 
-            const result = await service.showOnboardingIfNeeded();
+            const resultPromise = service.showOnboardingIfNeeded();
+            closeSubject.next({ action: 'finish' });
+            closeSubject.complete();
+            const result = await resultPromise;
 
-            expect(modalService.open).toHaveBeenCalledOnce();
+            expect(dialogService.open).toHaveBeenCalledOnce();
             expect(result).toEqual({ action: 'finish' });
         });
 
@@ -216,7 +238,7 @@ describe('IrisOnboardingService', () => {
             const result = await service.showOnboardingIfNeeded();
 
             expect(result).toBeUndefined();
-            expect(modalService.open).not.toHaveBeenCalled();
+            expect(dialogService.open).not.toHaveBeenCalled();
         });
     });
 });

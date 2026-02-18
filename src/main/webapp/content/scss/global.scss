@@ -845,44 +845,37 @@ Course Info Bar
     width: 50%;
 }
 
-.iris-onboarding-modal-window {
-    // Allow clicks to pass through the NgBootstrap modal wrapper to the page beneath.
+.iris-onboarding-dialog {
+    // Allow clicks to pass through the PrimeNG dialog wrapper to the page beneath.
     // The onboarding component manages its own pointer-events on backdrops, tooltips, and modals.
     pointer-events: none;
 
-    // Make the modal container cover the full screen
-    .modal-dialog {
-        max-width: 100%;
-        width: 100%;
-        height: 100%;
-        margin: 0;
-        padding: 0;
-    }
+    // Cover the full screen
+    max-width: 100% !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    margin: 0 !important;
+    top: 0 !important;
+    left: 0 !important;
 
-    .modal-content {
+    .p-dialog-content {
         background: transparent;
         border: none;
         box-shadow: none;
         width: 100%;
         height: 100%;
+        padding: 0;
         pointer-events: none;
     }
 }
 
-.iris-onboarding-dialog {
-    max-width: 100% !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    margin: 0 !important;
-}
-
 // Cross-component button styling for onboarding modal (replaces ::ng-deep)
-.iris-onboarding-modal-window .actions jhi-button button {
+.iris-onboarding-dialog .actions jhi-button button {
     border-radius: 0.5rem;
     padding: 0.5rem 1rem;
 }
 
-.iris-onboarding-modal-window .tooltip-footer jhi-button button {
+.iris-onboarding-dialog .tooltip-footer jhi-button button {
     border-radius: 0.25rem;
     font-size: 0.75rem;
     padding: 0.3rem 0.75rem;

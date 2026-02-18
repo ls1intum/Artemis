@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AccountService } from 'app/core/auth/account.service';
 import { IrisOnboardingModalComponent } from './iris-onboarding-modal.component';
 
@@ -11,9 +11,9 @@ const IRIS_ONBOARDING_KEY_PREFIX = 'iris-onboarding-completed';
     providedIn: 'root',
 })
 export class IrisOnboardingService {
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
     private accountService = inject(AccountService);
-    private modalRef: NgbModalRef | undefined;
+    private dialogRef: DynamicDialogRef | undefined;
     private pendingResult: Promise<OnboardingResult | undefined> | undefined;
 
     private getStorageKey(): string {
@@ -87,6 +87,10 @@ export class IrisOnboardingService {
      * @returns Promise that resolves to an OnboardingResult or undefined if dismissed
      */
     async openOnboardingModal(hasAvailableExercises = true): Promise<OnboardingResult | undefined> {
+        if (!this.accountService.userIdentity()?.id) {
+            return undefined;
+        }
+
         if (!this.isDesktopViewport()) {
             return undefined;
         }
@@ -95,38 +99,36 @@ export class IrisOnboardingService {
         // This handles the case where the chatbot component is destroyed and
         // re-created during navigation (e.g., exercises tour steps 1-3) — the
         // new component instance receives the modal result from the existing modal.
-        if (this.modalRef) {
+        if (this.dialogRef) {
             return this.pendingResult;
         }
 
-        this.modalRef = this.modalService.open(IrisOnboardingModalComponent, {
-            centered: false,
-            backdrop: false,
-            keyboard: false,
-            windowClass: 'iris-onboarding-modal-window',
-            modalDialogClass: 'iris-onboarding-dialog',
+        this.dialogRef = this.dialogService.open(IrisOnboardingModalComponent, {
+            modal: false,
+            closable: false,
+            showHeader: false,
+            styleClass: 'iris-onboarding-dialog',
+            data: { hasAvailableExercises },
         });
-        this.modalRef.componentInstance?.hasAvailableExercises?.set(hasAvailableExercises);
 
-        this.pendingResult = this.modalRef.result.then(
-            (result) => {
+        this.pendingResult = new Promise<OnboardingResult | undefined>((resolve) => {
+            this.dialogRef!.onClose.subscribe((result: OnboardingResult | undefined) => {
                 this.markOnboardingCompleted();
                 if (result && typeof result === 'object' && result.action === 'promptSelected') {
-                    return result as OnboardingResult;
+                    resolve(result);
+                } else if (result) {
+                    resolve({ action: 'finish' });
+                } else {
+                    // Modal was dismissed (e.g., clicked X button)
+                    resolve(undefined);
                 }
-                return { action: 'finish' } as OnboardingResult;
-            },
-            () => {
-                // Modal was dismissed (e.g., clicked X button)
-                this.markOnboardingCompleted();
-                return undefined;
-            },
-        );
+            });
+        });
 
         try {
             return await this.pendingResult;
         } finally {
-            this.modalRef = undefined;
+            this.dialogRef = undefined;
             this.pendingResult = undefined;
         }
     }

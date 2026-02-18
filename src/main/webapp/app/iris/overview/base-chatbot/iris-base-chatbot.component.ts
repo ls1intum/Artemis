@@ -368,7 +368,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
                 }
             })
             .catch((error) => {
-                // eslint-disable-next-line no-undef
                 console.error('Onboarding failed:', error);
             });
     }
