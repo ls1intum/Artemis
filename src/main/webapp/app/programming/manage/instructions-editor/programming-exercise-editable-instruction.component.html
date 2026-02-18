@@ -20,6 +20,8 @@
             [isAiLoading]="isAiApplying()"
             [renderSideBySide]="renderSideBySide()"
             [consistencyIssues]="consistencyIssues()"
+            [enableExerciseReviewComments]="enableExerciseReviewComments()"
+            [showLocationWarning]="unsavedChangesValue"
             (markdownChange)="updateProblemStatement($event)"
             (diffLineChange)="diffLineChange.emit($event)"
         >

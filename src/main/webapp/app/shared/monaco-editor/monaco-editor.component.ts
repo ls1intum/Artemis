@@ -54,6 +54,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     lineHighlights: MonacoEditorLineHighlight[] = [];
     actions: TextEditorAction[] = [];
     lineDecorationsHoverButton?: MonacoEditorLineDecorationsHoverButton;
+    private lineDecorationsFoldingBeforeHoverButton?: boolean;
+    private lineDecorationsWidthBeforeHoverButton?: string | number;
 
     /*
      * Diff/editor switching state.
@@ -654,6 +656,22 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.disposeAndClear(this.lineWidgets);
     }
 
+    /**
+     * Dispose all line widgets whose IDs start with the given prefix.
+     * This allows selective widget updates without clearing unrelated widgets.
+     */
+    disposeWidgetsByPrefix(prefix: string): void {
+        const remaining: MonacoEditorLineWidget[] = [];
+        for (const widget of this.lineWidgets) {
+            if (widget.getId().startsWith(prefix)) {
+                widget.dispose();
+            } else {
+                remaining.push(widget);
+            }
+        }
+        this.lineWidgets = remaining;
+    }
+
     disposeAnnotations(): void {
         this.disposeAndClear(this.buildAnnotations);
     }
@@ -734,6 +752,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * @param clickCallback The callback to invoke when the button is clicked. The line number is passed as an argument.
      */
     setLineDecorationsHoverButton(className: string, clickCallback: (lineNumber: number) => void): void {
+        if (!this.lineDecorationsHoverButton) {
+            this.lineDecorationsFoldingBeforeHoverButton = this._editor.getOption(monaco.editor.EditorOption.folding);
+            this.lineDecorationsWidthBeforeHoverButton = this._editor.getOption(monaco.editor.EditorOption.lineDecorationsWidth) as string | number;
+        }
         this.lineDecorationsHoverButton?.dispose();
         this.lineDecorationsHoverButton = new MonacoEditorLineDecorationsHoverButton(
             this.getActiveEditor(),
@@ -746,6 +768,32 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             folding: false,
             lineDecorationsWidth: MonacoEditorComponent.DEFAULT_LINE_DECORATION_BUTTON_WIDTH,
         });
+    }
+
+    /**
+     * Removes the line decorations hover button and restores the editor options from before the button was added.
+     */
+    clearLineDecorationsHoverButton(): void {
+        const hadHoverButton = !!this.lineDecorationsHoverButton;
+        this.lineDecorationsHoverButton?.dispose();
+        this.lineDecorationsHoverButton = undefined;
+        if (!hadHoverButton) {
+            return;
+        }
+
+        const optionsToRestore: monaco.editor.IEditorOptions = {};
+        if (this.lineDecorationsFoldingBeforeHoverButton !== undefined) {
+            optionsToRestore.folding = this.lineDecorationsFoldingBeforeHoverButton;
+        }
+        if (this.lineDecorationsWidthBeforeHoverButton !== undefined) {
+            optionsToRestore.lineDecorationsWidth = this.lineDecorationsWidthBeforeHoverButton;
+        }
+        if (Object.keys(optionsToRestore).length > 0) {
+            this._editor.updateOptions(optionsToRestore);
+        }
+
+        this.lineDecorationsFoldingBeforeHoverButton = undefined;
+        this.lineDecorationsWidthBeforeHoverButton = undefined;
     }
 
     /**

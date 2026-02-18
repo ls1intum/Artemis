@@ -32,7 +32,7 @@ import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from '../../status/programming-exercise-instructor-exercise-status.component';
-import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CodeGenerationRequestDTO } from 'app/openapi/model/codeGenerationRequestDTO';
@@ -40,7 +40,6 @@ import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { HyperionWebsocketService } from 'app/hyperion/services/hyperion-websocket.service';
 import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
@@ -53,6 +52,9 @@ import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
 import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
+import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
+
 import { getRepoPath } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
@@ -76,6 +78,8 @@ const SEVERITY_ORDER = {
     selector: 'jhi-code-editor-instructor',
     templateUrl: './code-editor-instructor-and-editor-container.component.html',
     styleUrl: 'code-editor-instructor-and-editor-container.scss',
+    // Keep review comment state scoped to each editor container instance.
+    providers: [ExerciseReviewCommentService],
     imports: [
         FaIconComponent,
         TranslateDirective,
@@ -136,6 +140,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private problemStatementService = inject(ProblemStatementService);
     private destroyRef = inject(DestroyRef);
     private injector = inject(Injector);
+    private exerciseReviewCommentService = inject(ExerciseReviewCommentService);
 
     templateProblemStatement = signal<string>('');
     templateLoaded = signal<boolean>(false);
@@ -146,20 +151,21 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     selectedIssue: ConsistencyIssue | undefined = undefined;
     locationIndex: number = 0;
 
-    faPlus = faPlus;
-    faTimes = faTimes;
-    faCircleNotch = faCircleNotch;
-    faTimesCircle = faTimesCircle;
-    faSave = faSave;
-    faBan = faBan;
-    faArrowLeft = faArrowLeft;
-    faArrowRight = faArrowRight;
-    faCircleExclamation = faCircleExclamation;
-    faTriangleExclamation = faTriangleExclamation;
-    faCircleInfo = faCircleInfo;
+    // Icons
+    protected readonly faPlus = faPlus;
+    protected readonly faTimes = faTimes;
+    protected readonly faCircleNotch = faCircleNotch;
+    protected readonly faTimesCircle = faTimesCircle;
+    protected readonly faSave = faSave;
+    protected readonly faBan = faBan;
+    protected readonly faArrowLeft = faArrowLeft;
+    protected readonly faArrowRight = faArrowRight;
+    protected readonly faCircleExclamation = faCircleExclamation;
+    protected readonly faTriangleExclamation = faTriangleExclamation;
+    protected readonly faCircleInfo = faCircleInfo;
 
-    faSpinner = faSpinner;
-    facArtemisIntelligence = facArtemisIntelligence;
+    protected readonly faSpinner = faSpinner;
+    protected readonly facArtemisIntelligence = facArtemisIntelligence;
 
     hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
 
@@ -177,6 +183,35 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private activeJobId?: string;
     private statusSubscription?: Subscription;
     private restoreRequestId = 0;
+
+    override loadExercise(exerciseId: number): Observable<ProgrammingExercise> {
+        return super.loadExercise(exerciseId).pipe(
+            tap((exercise) => {
+                if (exercise.id) {
+                    this.exerciseReviewCommentService.setExercise(exercise.id);
+                    this.exerciseReviewCommentService.reloadThreads();
+                }
+                this.loadTemplate(exercise);
+                this.currentProblemStatement.set(exercise.problemStatement ?? '');
+            }),
+        );
+    }
+
+    /**
+     * Clears draft widgets and reloads review comment threads after a commit.
+     */
+    onCommit(): void {
+        this.codeEditorContainer?.monacoEditor?.clearReviewCommentDrafts();
+        this.exerciseReviewCommentService.reloadThreads();
+    }
+
+    /**
+     * Clears problem-statement draft widgets and reloads review comment threads after saving.
+     */
+    onProblemStatementSaved(): void {
+        this.editableInstructions()?.clearReviewCommentDrafts();
+        this.exerciseReviewCommentService.reloadThreads();
+    }
 
     /**
      * Starts Hyperion code generation after user confirmation.
@@ -703,32 +738,77 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
         const location = issue.relatedLocations[index];
+        const targetType = (() => {
+            switch (location.type) {
+                case 'TEMPLATE_REPOSITORY':
+                    return CommentThreadLocationType.TEMPLATE_REPO;
+                case 'SOLUTION_REPOSITORY':
+                    return CommentThreadLocationType.SOLUTION_REPO;
+                case 'TESTS_REPOSITORY':
+                    return CommentThreadLocationType.TEST_REPO;
+                case 'PROBLEM_STATEMENT':
+                default:
+                    return CommentThreadLocationType.PROBLEM_STATEMENT;
+            }
+        })();
+        this.navigateToLocation({
+            targetType,
+            filePath: targetType === CommentThreadLocationType.PROBLEM_STATEMENT ? undefined : getRepoPath(location),
+            lineNumber: location.endLine,
+        });
+    }
 
-        // We can always jump to the problem statement
-        if (location.type === 'PROBLEM_STATEMENT') {
+    private navigateToLocation(location: { targetType: CommentThreadLocationType; filePath?: string; lineNumber?: number; auxiliaryRepositoryId?: number }): void {
+        if (location.targetType === CommentThreadLocationType.PROBLEM_STATEMENT) {
             this.codeEditorContainer.selectedFile = this.codeEditorContainer.problemStatementIdentifier;
-            this.editableInstructions()?.jumpToLine(location.endLine);
+            if (location.lineNumber !== undefined) {
+                this.editableInstructions()?.jumpToLine(location.lineNumber);
+            }
             return;
         }
 
-        // Set parameters for when fileLoad is called
-        this.lineJumpOnFileLoad = location.endLine;
-        this.fileToJumpOn = getRepoPath(location);
+        if (!location.filePath) {
+            return;
+        }
 
-        // Jump to the right repo
+        this.lineJumpOnFileLoad = location.lineNumber;
+        this.fileToJumpOn = location.filePath;
+
         try {
-            if (location.type === 'TEMPLATE_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'TEMPLATE') {
-                this.selectTemplateParticipation();
-                return;
-            } else if (location.type === 'SOLUTION_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'SOLUTION') {
-                this.selectSolutionParticipation();
-                return;
-            } else if (location.type === 'TESTS_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'TESTS') {
-                this.selectTestRepository();
-                return;
+            switch (location.targetType) {
+                case CommentThreadLocationType.TEMPLATE_REPO:
+                    if (this.codeEditorContainer.selectedRepository() !== RepositoryType.TEMPLATE) {
+                        this.selectTemplateParticipation();
+                        return;
+                    }
+                    break;
+                case CommentThreadLocationType.SOLUTION_REPO:
+                    if (this.codeEditorContainer.selectedRepository() !== RepositoryType.SOLUTION) {
+                        this.selectSolutionParticipation();
+                        return;
+                    }
+                    break;
+                case CommentThreadLocationType.TEST_REPO:
+                    if (this.codeEditorContainer.selectedRepository() !== RepositoryType.TESTS) {
+                        this.selectTestRepository();
+                        return;
+                    }
+                    break;
+                case CommentThreadLocationType.AUXILIARY_REPO: {
+                    const auxiliaryRepositoryId = location.auxiliaryRepositoryId;
+                    if (
+                        auxiliaryRepositoryId !== undefined &&
+                        (this.codeEditorContainer.selectedRepository() !== RepositoryType.AUXILIARY || this.selectedRepositoryId !== auxiliaryRepositoryId)
+                    ) {
+                        this.selectAuxiliaryRepository(auxiliaryRepositoryId);
+                        return;
+                    }
+                    break;
+                }
+                default:
             }
-        } catch (error) {
-            this.alertService.error(this.translateService.instant('artemisApp.hyperion.consistencyCheck.navigationFailed'));
+        } catch {
+            this.alertService.error('artemisApp.hyperion.consistencyCheck.navigationFailed');
             this.lineJumpOnFileLoad = undefined;
             this.fileToJumpOn = undefined;
             return;
@@ -765,24 +845,18 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      *        The name of the file that was just loaded.
      */
     onFileLoad(fileName: string) {
-        if (this.lineJumpOnFileLoad && this.fileToJumpOn === fileName) {
-            this.codeEditorContainer.jumpToLine(this.lineJumpOnFileLoad);
+        if (this.fileToJumpOn === fileName) {
+            if (this.lineJumpOnFileLoad !== undefined) {
+                this.codeEditorContainer.jumpToLine(this.lineJumpOnFileLoad);
+            }
             this.lineJumpOnFileLoad = undefined;
+            this.fileToJumpOn = undefined;
         }
     }
 
     onDiffLineChange(event: { ready: boolean; lineChange: LineChange }): void {
         this.addedLineCount.set(event.lineChange.addedLineCount);
         this.removedLineCount.set(event.lineChange.removedLineCount);
-    }
-
-    override loadExercise(exerciseId: number): Observable<ProgrammingExercise> {
-        return super.loadExercise(exerciseId).pipe(
-            tap((exercise) => {
-                this.loadTemplate(exercise);
-                this.currentProblemStatement.set(exercise.problemStatement ?? '');
-            }),
-        );
     }
 
     override onInstructionChanged(markdown: string) {
