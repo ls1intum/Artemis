@@ -37,11 +37,13 @@ public record GradingScaleDTO(Long id, @NotNull GradeStepsDTO gradeSteps, BonusS
          */
         public static BonusDTO of(Bonus bonus) {
             Objects.requireNonNull(bonus, "bonus must exist");
+            final Long bonusId = Objects.requireNonNull(bonus.getId(), "bonus id must exist");
 
             if (bonus.getSourceGradingScale() == null || bonus.getSourceGradingScale().getId() == null) {
-                throw new BadRequestAlertException("Bonus source grading scale must exist", "Bonus", "invalidSourceGradingScale");
+                throw new BadRequestAlertException("The bonus source's grading scale could not be found. Please ensure that a valid grading scale exists.", "Bonus",
+                        "invalidSourceGradingScale");
             }
-            return new BonusDTO(bonus.getId(), bonus.getWeight(), bonus.getSourceGradingScale().getId());
+            return new BonusDTO(bonusId, bonus.getWeight(), bonus.getSourceGradingScale().getId());
         }
     }
 

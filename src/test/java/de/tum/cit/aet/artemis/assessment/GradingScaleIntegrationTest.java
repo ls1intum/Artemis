@@ -494,19 +494,19 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         String url = "/api/assessment/grading-scales";
         var search = pageableSearchUtilService.configureSearch("abcdefghijklmnop");
         search.setPageSize(100);
-        var result = request.getSearchResult(url, HttpStatus.OK, GradingScale.class, pageableSearchUtilService.searchMapping(search));
+        var result = request.getSearchResult(url, HttpStatus.OK, GradingScaleDTO.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).isEmpty();
 
         courseGradingScale.setGradeType(GradeType.BONUS);
         gradingScaleRepository.save(courseGradingScale);
 
-        result = request.getSearchResult(url, HttpStatus.OK, GradingScale.class, pageableSearchUtilService.searchMapping(search));
+        result = request.getSearchResult(url, HttpStatus.OK, GradingScaleDTO.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1);
 
         examGradingScale.setGradeType(GradeType.BONUS);
         gradingScaleRepository.save(examGradingScale);
 
-        result = request.getSearchResult(url, HttpStatus.OK, GradingScale.class, pageableSearchUtilService.searchMapping(search));
+        result = request.getSearchResult(url, HttpStatus.OK, GradingScaleDTO.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(2);
     }
 
@@ -518,19 +518,19 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         var search = pageableSearchUtilService.configureSearch("");
         search.setPageSize(100);
         search.setSortingOrder(SortingOrder.DESCENDING);
-        var result = request.getSearchResult(url, HttpStatus.OK, GradingScale.class, pageableSearchUtilService.searchMapping(search));
+        var result = request.getSearchResult(url, HttpStatus.OK, GradingScaleDTO.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).isEmpty();
 
         courseGradingScale.setGradeType(GradeType.BONUS);
         gradingScaleRepository.save(courseGradingScale);
 
-        result = request.getSearchResult(url, HttpStatus.OK, GradingScale.class, pageableSearchUtilService.searchMapping(search));
+        result = request.getSearchResult(url, HttpStatus.OK, GradingScaleDTO.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1);
 
         examGradingScale.setGradeType(GradeType.BONUS);
         gradingScaleRepository.save(examGradingScale);
 
-        result = request.getSearchResult(url, HttpStatus.OK, GradingScale.class, pageableSearchUtilService.searchMapping(search));
+        result = request.getSearchResult(url, HttpStatus.OK, GradingScaleDTO.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(2);
     }
 

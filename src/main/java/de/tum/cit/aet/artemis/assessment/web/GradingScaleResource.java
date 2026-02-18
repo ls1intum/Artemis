@@ -86,7 +86,7 @@ public class GradingScaleResource {
      * GET /courses/{courseId}/grading-scale : Find grading scale for course
      *
      * @param courseId the course to which the grading scale belongs
-     * @return ResponseEntity with status 200 (Ok) with body the grading scale dto if it exists and 404 (Not found) otherwise
+     * @return the ResponseEntity with status 200 (OK) and with body the grading scale, or with a null body if no grading scale exists
      */
     @GetMapping("courses/{courseId}/grading-scale")
     @EnforceAtLeastInstructor
@@ -125,7 +125,7 @@ public class GradingScaleResource {
      */
     @GetMapping("grading-scales")
     @EnforceAtLeastInstructor
-    public ResponseEntity<SearchResultPageDTO<GradingScale>> getAllGradingScalesInInstructorGroupOnPage(SearchTermPageableSearchDTO<String> search) {
+    public ResponseEntity<SearchResultPageDTO<GradingScaleDTO>> getAllGradingScalesInInstructorGroupOnPage(SearchTermPageableSearchDTO<String> search) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(gradingScaleService.getAllOnPageWithSize(search, user));
     }
@@ -252,7 +252,7 @@ public class GradingScaleResource {
         GradingScale existingGradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
 
         // Update exam max points if provided
-        if (dto.examMaxPoints() != null && dto.examMaxPoints() != exam.getExamMaxPoints()) {
+        if (dto.examMaxPoints() != null && !dto.examMaxPoints().equals(exam.getExamMaxPoints())) {
             exam.setExamMaxPoints(dto.examMaxPoints());
             api.save(exam);
         }
@@ -342,7 +342,7 @@ public class GradingScaleResource {
         return course;
     }
 
-    public GradingScale from(GradingScaleDTO dto) {
+    private GradingScale from(GradingScaleDTO dto) {
         Objects.requireNonNull(dto, "gradingScale DTO must exist");
 
         GradingScale scale = getGradingScale(dto);

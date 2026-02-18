@@ -221,7 +221,7 @@
             "cannotRemoveDefaultAdminRights": "Du kannst die Super-Admin-Rechte des Standard-Admin-Benutzers nicht entfernen."
         },
         "Bonus": {
-            "invalidSourceGradingScale": "Es muss eine Bewertungsskala für Bonusquellen geben."
+            "invalidSourceGradingScale": "Die Bewertungsskala der Bonusquelle konnte nicht gefunden werden. Bitte stelle sicher, dass eine gültige Bewertungsskala existiert."
         }
     }
 }

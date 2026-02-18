@@ -221,7 +221,7 @@
             "cannotRemoveDefaultAdminRights": "You cannot remove super admin rights from the default admin user."
         },
         "Bonus": {
-            "invalidSourceGradingScale": "Bonus source grading scale must exist"
+            "invalidSourceGradingScale": "The bonus source's grading scale could not be found. Please ensure that a valid grading scale exists."
         }
     }
 }
