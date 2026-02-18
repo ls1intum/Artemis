@@ -201,8 +201,8 @@ public class BuildAgentDockerService {
 
             try {
                 danglingBuildContainers = dockerClient.listContainersCmd().withShowAll(true).exec().stream()
-                        .filter(container -> container.getNames()[0].startsWith("/" + buildContainerPrefix)).filter(container -> (now - container.getCreated()) > ageThreshold)
-                        .toList();
+                        .filter(container -> container.getNames() != null && container.getNames().length > 0 && container.getNames()[0].startsWith("/" + buildContainerPrefix))
+                        .filter(container -> (now - container.getCreated()) > ageThreshold).toList();
             }
             catch (Exception ex) {
                 if (DockerUtil.isDockerNotAvailable(ex)) {
@@ -503,10 +503,8 @@ public class BuildAgentDockerService {
      * @return a set of image names that are not associated with any running containers.
      */
     private Set<String> getUnusedDockerImages() {
+        // Callers (deleteOldDockerImages, checkUsableDiskSpaceThenCleanUp) already check dockerClientNotAvailable()
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
-        if (dockerClientNotAvailable("Cannot get unused Docker images")) {
-            return Set.of();
-        }
 
         // Get list of all running containers
         List<Container> containers = dockerClient.listContainersCmd().exec();

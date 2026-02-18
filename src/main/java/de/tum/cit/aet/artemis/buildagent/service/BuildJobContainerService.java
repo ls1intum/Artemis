@@ -685,13 +685,7 @@ public class BuildJobContainerService {
             }
         }
 
-        // All retries exhausted
-        if (DockerUtil.isDockerNotAvailable(lastException)) {
-            log.warn("Docker is not available. {} failed after {} attempts: {}", operationName, MAX_TAR_OPERATION_RETRIES, lastException.getMessage());
-        }
-        else {
-            log.error("{} failed after {} attempts", operationName, MAX_TAR_OPERATION_RETRIES, lastException);
-        }
+        // All retries exhausted — callers handle Docker-unavailability vs. generic error logging
         throw lastException;
     }
 

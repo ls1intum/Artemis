@@ -90,11 +90,11 @@ public class BuildAgentInformationService {
             if (!wasAvailable) {
                 log.info("Docker is now available (version: {})", newVersion);
                 buildAgentConfiguration.setDockerAvailable(true);
+                updateLocalBuildAgentInformation(false);
             }
             if (!Objects.equals(newVersion, dockerVersion)) {
                 log.info("Docker version: {}", newVersion);
                 dockerVersion = newVersion;
-                // Update the build agent information in the distributed map
                 updateLocalBuildAgentInformation(false);
             }
         }

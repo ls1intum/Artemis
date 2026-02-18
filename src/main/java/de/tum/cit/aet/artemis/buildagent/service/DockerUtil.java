@@ -8,6 +8,10 @@ import java.util.Set;
 
 public final class DockerUtil {
 
+    private DockerUtil() {
+        // Utility class
+    }
+
     public static boolean isDockerSocketNotAvailable(Throwable throwable) {
         return throwable instanceof SocketException && throwable.getMessage() != null && throwable.getMessage().contains("No such file or directory");
     }
