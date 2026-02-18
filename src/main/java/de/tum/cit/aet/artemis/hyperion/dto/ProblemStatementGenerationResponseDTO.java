@@ -12,7 +12,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  *
  * @param draftProblemStatement the generated problem statement text (non-empty on success, never null)
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "Response containing generated problem statement")
 public record ProblemStatementGenerationResponseDTO(@Schema(description = "Draft problem statement text") String draftProblemStatement) {
 }
