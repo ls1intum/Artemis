@@ -75,7 +75,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     onBlurEditor = output<void>();
 
     mode = input<MonacoEditorMode>('normal');
-    private lastMode: MonacoEditorMode | undefined;
+    private lastMode: MonacoEditorMode | undefined = 'normal';
     renderSideBySide = input<boolean>(true);
     diffChanged = output<{ ready: boolean; lineChange: LineChange }>();
 
