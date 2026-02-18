@@ -1,6 +1,5 @@
-@if (!showConfirm) {
+@if (!showConfirm()) {
     <fa-icon style="display: inline-flex; justify-content: center" [icon]="initialIcon()" [ngbTooltip]="initialTooltip()" (click)="toggle()" />
-}
-@if (showConfirm) {
+} @else {
     <fa-icon [ngClass]="'text-danger'" [icon]="confirmIcon()" [ngbTooltip]="confirmTooltip()" [size]="iconSize()" (mouseleave)="toggle()" (click)="confirmAction()" />
 }

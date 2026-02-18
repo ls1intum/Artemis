@@ -1,5 +1,5 @@
 <div class="display-container">
-    <span>{{ roundedScore() || 0 }}&nbsp;</span>
+    <span>{{ roundedScore() ?? 0 }}&nbsp;</span>
     @if (maxPoints()) {
         <span>/&nbsp;{{ maxPoints() }}&nbsp;</span>
     }
