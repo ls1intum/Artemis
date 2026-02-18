@@ -35,7 +35,6 @@
             [selectedAuxiliaryRepositoryId]="selectedRepository === RepositoryType.AUXILIARY ? selectedRepositoryId : undefined"
             [course]="course"
             [allowHiddenFiles]="true"
-            [consistencyIssues]="consistencyIssues()"
             [enableExerciseReviewComments]="true"
             (onFileLoad)="onFileLoad($event)"
             (onEditorLoaded)="onEditorLoaded()"
@@ -189,8 +188,8 @@
                                 <fa-icon [icon]="facArtemisIntelligence" />
                             }
                             <span class="ms-2" jhiTranslate="artemisApp.programmingExercise.artemisIntelligence.title"></span>
-                            @if (consistencyIssues().length) {
-                                <span class="badge bg-warning ms-1">{{ consistencyIssues().length }}</span>
+                            @if (sortedIssues().length) {
+                                <span class="badge bg-warning ms-1">{{ sortedIssues().length }}</span>
                             }
                         </button>
                         <div ngbDropdownMenu class="ai-dropdown-menu">
@@ -201,8 +200,7 @@
                             </button>
 
                             @if (exercise.isAtLeastInstructor) {
-                                <!-- Split Button for Consistency Check if issues exist -->
-                                @if (consistencyIssues().length) {
+                                @if (sortedIssues().length) {
                                     <div class="d-flex w-100">
                                         <button ngbDropdownItem class="flex-grow-1" (click)="checkConsistencies(exercise); aiDropdown.close()" [disabled]="isCheckingConsistency()">
                                             <fa-icon [icon]="faCheckDouble" class="me-2" />
@@ -226,7 +224,7 @@
                 }
 
                 <!-- Consistency Issue Navigator Toolbar -->
-                @if (showConsistencyIssuesToolbar() && consistencyIssues().length) {
+                @if (showConsistencyIssuesToolbar() && sortedIssues().length) {
                     <div class="btn-group ms-2">
                         <button
                             type="button"
@@ -295,7 +293,6 @@
                 [externalHeight]="true"
                 [enableResize]="false"
                 [showPreview]="false"
-                [consistencyIssues]="consistencyIssues()"
                 [enableExerciseReviewComments]="true"
                 class="instructions-wrapper__content card-body p-0"
                 (instructionChange)="onInstructionChanged($event)"

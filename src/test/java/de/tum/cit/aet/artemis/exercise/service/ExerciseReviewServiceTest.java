@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.exercise.domain.review.Comment;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThread;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThreadLocationType;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentType;
+import de.tum.cit.aet.artemis.exercise.dto.review.ConsistencyIssueCommentContentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CreateCommentThreadDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CreateCommentThreadGroupDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UpdateThreadResolvedStateDTO;
@@ -43,6 +44,11 @@ import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadRepository
 import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewService;
 import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewService.LineMappingResult;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.hyperion.domain.ArtifactType;
+import de.tum.cit.aet.artemis.hyperion.domain.ConsistencyIssueCategory;
+import de.tum.cit.aet.artemis.hyperion.domain.Severity;
+import de.tum.cit.aet.artemis.hyperion.dto.ArtifactLocationDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueDTO;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -199,6 +205,66 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
 
         assertThat(reply.getInitialVersion()).isEqualTo(latestVersion);
         assertThat(reply.getInitialVersion()).isNotEqualTo(initialVersion);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldReplaceConsistencyCheckThreadsWithLatestIssues() {
+        CommentThread oldConsistencyThread = persistThread(programmingExercise);
+        Comment oldConsistencyComment = buildConsistencyIssueCommentEntity("Old consistency issue");
+        oldConsistencyComment.setThread(oldConsistencyThread);
+        commentRepository.save(oldConsistencyComment);
+
+        CommentThread userThread = persistThread(programmingExercise);
+        Comment userComment = buildUserCommentEntity("Keep me");
+        userComment.setThread(userThread);
+        commentRepository.save(userComment);
+
+        ConsistencyIssueDTO issue = buildConsistencyIssue("New consistency issue", ArtifactType.PROBLEM_STATEMENT, "", 2);
+        exerciseReviewService.replaceConsistencyCheckComments(programmingExercise.getId(), List.of(issue));
+
+        Set<CommentThread> threads = commentThreadRepository.findWithCommentsByExerciseId(programmingExercise.getId());
+        assertThat(threads).hasSize(2);
+
+        CommentThread persistedUserThread = threads.stream().filter(thread -> thread.getId().equals(userThread.getId())).findFirst().orElseThrow();
+        assertThat(persistedUserThread.getComments()).singleElement().extracting(Comment::getType).isEqualTo(CommentType.USER);
+
+        CommentThread generatedConsistencyThread = threads.stream().filter(thread -> !thread.getId().equals(userThread.getId())).findFirst().orElseThrow();
+        assertThat(generatedConsistencyThread.getTargetType()).isEqualTo(CommentThreadLocationType.PROBLEM_STATEMENT);
+        assertThat(generatedConsistencyThread.getLineNumber()).isEqualTo(2);
+        assertThat(generatedConsistencyThread.getComments()).singleElement().extracting(Comment::getType).isEqualTo(CommentType.CONSISTENCY_CHECK);
+        var content = generatedConsistencyThread.getComments().iterator().next().getContent();
+        assertThat(content).isInstanceOf(ConsistencyIssueCommentContentDTO.class);
+        assertThat(((ConsistencyIssueCommentContentDTO) content).text()).contains("New consistency issue");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldDeletePreviousConsistencyCheckThreadsWhenNoIssuesRemain() {
+        CommentThread oldConsistencyThread = persistThread(programmingExercise);
+        Comment oldConsistencyComment = buildConsistencyIssueCommentEntity("Old consistency issue");
+        oldConsistencyComment.setThread(oldConsistencyThread);
+        commentRepository.save(oldConsistencyComment);
+
+        exerciseReviewService.replaceConsistencyCheckComments(programmingExercise.getId(), List.of());
+
+        assertThat(commentThreadRepository.findById(oldConsistencyThread.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldMapTemplateRepositoryIssueToTemplateReviewThread() {
+        ConsistencyIssueDTO issue = buildConsistencyIssue("Template issue", ArtifactType.TEMPLATE_REPOSITORY, "src/Main.java", 8);
+
+        exerciseReviewService.replaceConsistencyCheckComments(programmingExercise.getId(), List.of(issue));
+
+        Set<CommentThread> threads = commentThreadRepository.findWithCommentsByExerciseId(programmingExercise.getId());
+        assertThat(threads).singleElement().satisfies(thread -> {
+            assertThat(thread.getTargetType()).isEqualTo(CommentThreadLocationType.TEMPLATE_REPO);
+            assertThat(thread.getFilePath()).isEqualTo("src/Main.java");
+            assertThat(thread.getLineNumber()).isEqualTo(8);
+            assertThat(thread.getComments()).singleElement().extracting(Comment::getType).isEqualTo(CommentType.CONSISTENCY_CHECK);
+        });
     }
 
     @Test
@@ -891,8 +957,20 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         return comment;
     }
 
+    private Comment buildConsistencyIssueCommentEntity(String text) {
+        Comment comment = new Comment();
+        comment.setType(CommentType.CONSISTENCY_CHECK);
+        comment.setContent(new ConsistencyIssueCommentContentDTO(Severity.HIGH, ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH, text, null));
+        return comment;
+    }
+
     private UserCommentContentDTO buildUserCommentContent(String text) {
         return new UserCommentContentDTO(text);
+    }
+
+    private ConsistencyIssueDTO buildConsistencyIssue(String description, ArtifactType artifactType, String filePath, int lineNumber) {
+        ArtifactLocationDTO location = new ArtifactLocationDTO(artifactType, filePath, lineNumber, lineNumber);
+        return new ConsistencyIssueDTO(Severity.HIGH, ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH, description, "Use matching signatures", List.of(location));
     }
 
     private ExerciseVersion createExerciseVersion() {

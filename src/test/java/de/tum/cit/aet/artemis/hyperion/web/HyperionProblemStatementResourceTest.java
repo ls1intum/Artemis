@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.web;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -21,6 +22,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.exercise.domain.review.CommentType;
+import de.tum.cit.aet.artemis.exercise.dto.review.ConsistencyIssueCommentContentDTO;
+import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
@@ -32,6 +36,9 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    private CommentThreadRepository commentThreadRepository;
 
     private static final String TEST_PREFIX = "hyperionproblemstatementresource";
 
@@ -80,6 +87,30 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Improved problem statement."))))).when(azureOpenAiChatModel).call(any(Prompt.class));
     }
 
+    private void mockConsistencyWithIssue() {
+        String json = """
+                {
+                  "issues": [
+                    {
+                      "severity": "HIGH",
+                      "category": "METHOD_PARAMETER_MISMATCH",
+                      "description": "Mismatch between statement and tests",
+                      "suggestedFix": "Align names",
+                      "relatedLocations": [
+                        {
+                          "type": "PROBLEM_STATEMENT",
+                          "filePath": "",
+                          "startLine": 3,
+                          "endLine": 3
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """;
+        doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(json))))).when(azureOpenAiChatModel).call(any(Prompt.class));
+    }
+
     private void mockGenerateSuccess() {
         doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Draft problem statement generated successfully."))))).when(azureOpenAiChatModel)
                 .call(any(Prompt.class));
@@ -107,6 +138,26 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         userUtilService.changeUser(TEST_PREFIX + "editor1");
         programmingExerciseRepository.findById(exerciseId).orElseThrow();
         request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/consistency-check", exerciseId)).andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void shouldPersistConsistencyIssuesAsReviewComments() throws Exception {
+        long exerciseId = persistedExerciseId;
+        mockConsistencyWithIssue();
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+
+        request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/consistency-check", exerciseId)).andExpect(status().isOk());
+
+        var threads = commentThreadRepository.findWithCommentsByExerciseId(exerciseId);
+        assertThat(threads).isNotEmpty();
+        assertThat(threads).anySatisfy(thread -> {
+            assertThat(thread.getComments()).isNotEmpty();
+            assertThat(thread.getComments()).anySatisfy(comment -> {
+                assertThat(comment.getType()).isEqualTo(CommentType.CONSISTENCY_CHECK);
+                assertThat(comment.getContent()).isInstanceOf(ConsistencyIssueCommentContentDTO.class);
+            });
+        });
     }
 
     @Test

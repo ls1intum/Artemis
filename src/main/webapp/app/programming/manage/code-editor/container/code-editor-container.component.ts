@@ -28,7 +28,6 @@ import { ConnectionError } from 'app/programming/shared/code-editor/services/cod
 import { Annotation, CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { KeysPipe } from 'app/shared/pipes/keys.pipe';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
-import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { editor } from 'monaco-editor';
 
 export enum CollapsableCodeEditorElement {
@@ -80,7 +79,6 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     readOnlyManualFeedback = input<boolean>(false);
     highlightDifferences = input<boolean>(false);
     disableAutoSave = input<boolean>(false);
-    consistencyIssues = input<ConsistencyIssue[]>([]);
     isProblemStatementVisible = input<boolean>(true);
     course = input<Course | undefined>();
     selectedRepository = input<RepositoryType>();

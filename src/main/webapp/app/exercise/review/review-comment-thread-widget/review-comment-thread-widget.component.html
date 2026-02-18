@@ -9,6 +9,23 @@
             <span class="monaco-review-comment-thread-title-text">
                 {{ 'artemisApp.review.threadTitle' | artemisTranslate }}
             </span>
+            @if (isConsistencyIssueThread() && firstConsistencyIssueContent(); as issueContent) {
+                <span class="monaco-review-comment-thread-tag monaco-review-comment-thread-tag--consistency">
+                    {{ 'artemisApp.review.threadConsistencyIssue' | artemisTranslate }}
+                </span>
+                <span class="monaco-review-comment-thread-tag monaco-review-comment-thread-tag--consistency-severity">
+                    {{
+                        'artemisApp.review.threadConsistencySeverity'
+                            | artemisTranslate
+                                : {
+                                      severity: 'artemisApp.review.consistencySeverity.' + issueContent.severity | artemisTranslate,
+                                  }
+                    }}
+                </span>
+                <span class="monaco-review-comment-thread-tag monaco-review-comment-thread-tag--consistency-type">
+                    {{ 'artemisApp.hyperion.consistencyCheck.category.' + issueContent.category | artemisTranslate }}
+                </span>
+            }
             @if (thread().resolved) {
                 <span class="monaco-review-comment-thread-tag monaco-review-comment-thread-tag--resolved">
                     {{ 'artemisApp.review.threadResolved' | artemisTranslate }}
@@ -30,7 +47,15 @@
             <div class="monaco-review-comment-item" [class.monaco-review-comment-item--with-divider]="!first">
                 <div class="monaco-review-comment-header">
                     <div class="monaco-review-comment-title">
-                        @if (commentVm.authorName) {
+                        @if (isConsistencyCheckComment(commentVm.comment)) {
+                            {{
+                                'artemisApp.review.requestedBy'
+                                    | artemisTranslate
+                                        : {
+                                              name: commentVm.authorName || ('artemisApp.review.systemAuthor' | artemisTranslate),
+                                          }
+                            }}
+                        } @else if (commentVm.authorName) {
                             {{ commentVm.authorName }}
                         } @else {
                             {{ 'artemisApp.review.systemAuthor' | artemisTranslate }}

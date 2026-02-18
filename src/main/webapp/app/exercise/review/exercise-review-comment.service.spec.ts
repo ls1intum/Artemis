@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CommentContentType } from 'app/exercise/shared/entities/review/comment-content.model';
 
 describe('ExerciseReviewCommentService', () => {
     setupTestBed({ zoneless: true });
@@ -113,7 +114,7 @@ describe('ExerciseReviewCommentService', () => {
             targetType: CommentThreadLocationType.TEMPLATE_REPO,
             initialLineNumber: 1,
             initialFilePath: 'file.java',
-            initialComment: { contentType: 'USER', text: 'hi' },
+            initialComment: { contentType: CommentContentType.USER, text: 'hi' },
         } as any);
 
         expect(httpMock.match(() => true)).toHaveLength(0);
@@ -126,7 +127,7 @@ describe('ExerciseReviewCommentService', () => {
             targetType: CommentThreadLocationType.TEMPLATE_REPO,
             initialLineNumber: 1,
             initialFilePath: 'file.java',
-            initialComment: { contentType: 'USER', text: 'hi' },
+            initialComment: { contentType: CommentContentType.USER, text: 'hi' },
         } as any;
 
         service.createThreadInContext(payload);
@@ -149,7 +150,7 @@ describe('ExerciseReviewCommentService', () => {
             targetType: CommentThreadLocationType.TEMPLATE_REPO,
             initialLineNumber: 1,
             initialFilePath: 'file.java',
-            initialComment: { contentType: 'USER', text: 'hi' },
+            initialComment: { contentType: CommentContentType.USER, text: 'hi' },
         } as any;
 
         service.createThreadInContext(payload, onSuccess);
@@ -168,7 +169,7 @@ describe('ExerciseReviewCommentService', () => {
             targetType: CommentThreadLocationType.TEMPLATE_REPO,
             initialLineNumber: 1,
             initialFilePath: 'file.java',
-            initialComment: { contentType: 'USER', text: 'hi' },
+            initialComment: { contentType: CommentContentType.USER, text: 'hi' },
         } as any;
 
         service.createThreadInContext(payload, onSuccess);
@@ -186,7 +187,7 @@ describe('ExerciseReviewCommentService', () => {
             targetType: CommentThreadLocationType.TEMPLATE_REPO,
             initialLineNumber: 1,
             initialFilePath: 'file.java',
-            initialComment: { contentType: 'USER', text: 'hi' },
+            initialComment: { contentType: CommentContentType.USER, text: 'hi' },
         } as any;
 
         service.createThreadInContext(payload, onSuccess);
@@ -219,7 +220,7 @@ describe('ExerciseReviewCommentService', () => {
         service.setExercise(3);
         service.threads.set([{ id: 5, comments: [] }] as any);
 
-        service.createReplyInContext(5, { contentType: 'USER', text: 'reply' } as any);
+        service.createReplyInContext(5, { contentType: CommentContentType.USER, text: 'reply' } as any);
 
         const req = httpMock.expectOne('api/exercise/exercises/3/review-threads/5/comments');
         expect(req.request.method).toBe('POST');
@@ -232,7 +233,7 @@ describe('ExerciseReviewCommentService', () => {
         service.setExercise(3);
         const onSuccess = vi.fn();
 
-        service.createReplyInContext(5, { contentType: 'USER', text: 'reply' } as any, onSuccess);
+        service.createReplyInContext(5, { contentType: CommentContentType.USER, text: 'reply' } as any, onSuccess);
         expect(onSuccess).not.toHaveBeenCalled();
 
         const req = httpMock.expectOne('api/exercise/exercises/3/review-threads/5/comments');
@@ -244,7 +245,7 @@ describe('ExerciseReviewCommentService', () => {
     it('updateCommentInContext should replace comment content in-place', () => {
         service.setExercise(3);
         service.threads.set([{ id: 5, comments: [{ id: 10, threadId: 5, content: { text: 'old' } }] }] as any);
-        const content = { contentType: 'USER', text: 'new' } as any;
+        const content = { contentType: CommentContentType.USER, text: 'new' } as any;
 
         service.updateCommentInContext(10, content);
 
@@ -258,7 +259,7 @@ describe('ExerciseReviewCommentService', () => {
 
     it('updateCommentInContext should invoke success callback only after persistence', () => {
         service.setExercise(3);
-        const content = { contentType: 'USER', text: 'new' } as any;
+        const content = { contentType: CommentContentType.USER, text: 'new' } as any;
         const onSuccess = vi.fn();
 
         service.updateCommentInContext(10, content, onSuccess);
@@ -289,7 +290,7 @@ describe('ExerciseReviewCommentService', () => {
             targetType: CommentThreadLocationType.TEMPLATE_REPO,
             initialLineNumber: 1,
             initialFilePath: 'file.java',
-            initialComment: { contentType: 'USER', text: 'hi' },
+            initialComment: { contentType: CommentContentType.USER, text: 'hi' },
         } as any;
 
         service.createThread(1, payload).subscribe();
@@ -320,7 +321,7 @@ describe('ExerciseReviewCommentService', () => {
     });
 
     it('createUserComment should send POST request', () => {
-        const payload = { contentType: 'USER', text: 'reply' } as any;
+        const payload = { contentType: CommentContentType.USER, text: 'reply' } as any;
 
         service.createUserComment(3, 5, payload).subscribe();
 
@@ -340,7 +341,7 @@ describe('ExerciseReviewCommentService', () => {
     });
 
     it('updateUserCommentContent should send PUT request', () => {
-        const payload = { contentType: 'USER', text: 'update' } as any;
+        const payload = { contentType: CommentContentType.USER, text: 'update' } as any;
 
         service.updateUserCommentContent(8, 9, payload).subscribe();
 

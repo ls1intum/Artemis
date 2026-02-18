@@ -117,6 +117,13 @@ Analysis: Problem contradicts itself about return type
 - **MEDIUM**: Creates significant confusion or requires workarounds to implement intended design
 - **LOW**: Minor inconsistencies that might cause brief confusion but are easily resolved
 
+# FILE PATH RULES (MANDATORY)
+- `relatedLocations[].filePath` must always be a repository-internal relative path.
+- Do NOT include repository container prefixes such as `template_repository/`, `solution_repository/`, or `tests_repository/`.
+- For `TEMPLATE_REPOSITORY` and `SOLUTION_REPOSITORY`, Java/code paths should use the source prefix (e.g. `src/etc/Class.java`).
+- For `TESTS_REPOSITORY`, Java/code paths should use the test prefix (e.g. `test/etc/ClassTest.java`) and must not use `src/...`.
+- For problem statement locations, use `problem_statement.md`.
+
 # OUTPUT FORMAT
 ```json
 {
@@ -127,14 +134,20 @@ Analysis: Problem contradicts itself about return type
       "category": "METHOD_RETURN_TYPE_MISMATCH" | "METHOD_PARAMETER_MISMATCH" | "CONSTRUCTOR_PARAMETER_MISMATCH" | "ATTRIBUTE_TYPE_MISMATCH" | "VISIBILITY_MISMATCH",
     "relatedLocations": [
         {
-          "type": "PROBLEM_STATEMENT" | "TEMPLATE_REPOSITORY" | "SOLUTION_REPOSITORY",
-      "filePath": "exact/path/to/file.java",
+          "type": "PROBLEM_STATEMENT" | "TEMPLATE_REPOSITORY" | "SOLUTION_REPOSITORY" | "TESTS_REPOSITORY",
+      "filePath": "src/etc/BubbleSort.java",
       "startLine": 1,
       "endLine": 10
         },
         {
-          "type": "PROBLEM_STATEMENT" | "TEMPLATE_REPOSITORY" | "SOLUTION_REPOSITORY",
-      "filePath": "related/file/path.java",
+          "type": "TESTS_REPOSITORY",
+      "filePath": "test/etc/MethodTest.java",
+      "startLine": 12,
+      "endLine": 20
+        },
+        {
+          "type": "PROBLEM_STATEMENT",
+      "filePath": "problem_statement.md",
       "startLine": 5,
       "endLine": 8
         }

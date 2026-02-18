@@ -177,6 +177,21 @@
     color: var(--artemis-alert-neutral-color);
 }
 
+.monaco-review-comment-thread-tag--consistency {
+    background-color: var(--artemis-alert-neutral-background);
+    color: var(--artemis-alert-neutral-color);
+}
+
+.monaco-review-comment-thread-tag--consistency-severity {
+    background-color: var(--artemis-alert-warning-background);
+    color: var(--artemis-alert-warning-color);
+}
+
+.monaco-review-comment-thread-tag--consistency-type {
+    background-color: var(--artemis-alert-info-background);
+    color: var(--artemis-alert-info-color);
+}
+
 .monaco-review-comment-thread-warning {
     display: inline-flex;
     align-items: center;

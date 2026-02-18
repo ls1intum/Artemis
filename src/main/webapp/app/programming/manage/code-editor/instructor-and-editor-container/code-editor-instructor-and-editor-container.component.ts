@@ -46,15 +46,25 @@ import { ConsistencyCheckError } from 'app/programming/shared/entities/consisten
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
 import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
-import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { Comment, CommentType } from 'app/exercise/shared/entities/review/comment.model';
+import { CommentContent, CommentContentType, ConsistencyIssueCommentContent } from 'app/exercise/shared/entities/review/comment-content.model';
+import { CommentThread, CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 
-import { getRepoPath } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
+const SEVERITY_ORDER: Record<ConsistencyIssue.SeverityEnum, number> = {
+    [ConsistencyIssue.SeverityEnum.High]: 0,
+    [ConsistencyIssue.SeverityEnum.Medium]: 1,
+    [ConsistencyIssue.SeverityEnum.Low]: 2,
+};
 
-const SEVERITY_ORDER = {
-    HIGH: 0,
-    MEDIUM: 1,
-    LOW: 2,
-} as const;
+interface ConsistencyIssueNavigationIssue {
+    threadId: number;
+    targetType: CommentThreadLocationType;
+    filePath?: string;
+    lineNumber?: number;
+    auxiliaryRepositoryId?: number;
+    severity: ConsistencyIssue.SeverityEnum;
+    category: ConsistencyIssue.CategoryEnum;
+}
 
 @Component({
     selector: 'jhi-code-editor-instructor',
@@ -88,8 +98,17 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly MarkdownEditorHeight = MarkdownEditorHeight;
-    readonly consistencyIssues = signal<ConsistencyIssue[]>([]);
-    readonly sortedIssues = computed(() => [...this.consistencyIssues()].sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]));
+    readonly sortedIssues = computed(() =>
+        this.exerciseReviewCommentService
+            .threads()
+            .map((thread) => this.mapConsistencyThreadToNavigationIssue(thread))
+            .filter((issue): issue is ConsistencyIssueNavigationIssue => issue !== undefined)
+            .sort(
+                (a, b) =>
+                    (SEVERITY_ORDER[a.severity] ?? SEVERITY_ORDER[ConsistencyIssue.SeverityEnum.Medium]) -
+                        (SEVERITY_ORDER[b.severity] ?? SEVERITY_ORDER[ConsistencyIssue.SeverityEnum.Medium]) || a.threadId - b.threadId,
+            ),
+    );
 
     private consistencyCheckService = inject(ConsistencyCheckService);
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
@@ -98,8 +117,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     lineJumpOnFileLoad: number | undefined = undefined;
     fileToJumpOn: string | undefined = undefined;
-    selectedIssue: ConsistencyIssue | undefined = undefined;
-    locationIndex: number = 0;
+    selectedIssue: ConsistencyIssueNavigationIssue | undefined = undefined;
 
     // Icons
     protected readonly faPlus = faPlus;
@@ -395,8 +413,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @param {ProgrammingExercise} exercise - The exercise to check.
      */
     checkConsistencies(exercise: ProgrammingExercise) {
-        // Clear previous consistency issues and reset toolbar state
-        this.consistencyIssues.set([]);
         this.selectedIssue = undefined;
         this.showConsistencyIssuesToolbar.set(false);
 
@@ -419,13 +435,12 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 // Now the content is checked
                 this.artemisIntelligenceService.consistencyCheck(exercise.id!).subscribe({
                     next: (response: ConsistencyCheckResponse) => {
-                        this.consistencyIssues.set(response.issues ?? []);
+                        this.exerciseReviewCommentService.reloadThreads();
 
-                        if (this.consistencyIssues().length === 0) {
+                        if (!response.issues || response.issues.length === 0) {
                             this.alertService.success(this.translateService.instant('artemisApp.hyperion.consistencyCheck.noInconsistencies'));
                         } else {
                             this.alertService.warning(this.translateService.instant('artemisApp.hyperion.consistencyCheck.inconsistenciesFoundAlert'));
-                            this.selectedIssue = this.consistencyIssues()[0];
                             this.showConsistencyIssuesToolbar.set(true);
                         }
                     },
@@ -449,13 +464,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @returns
      *          A FontAwesome icon representing high, medium, or low severity.
      */
-    getSeverityIcon(severity: ConsistencyIssue.SeverityEnum) {
+    getSeverityIcon(severity: ConsistencyIssue.SeverityEnum | undefined) {
         switch (severity) {
-            case 'HIGH':
+            case ConsistencyIssue.SeverityEnum.High:
                 return this.faCircleExclamation;
-            case 'MEDIUM':
+            case ConsistencyIssue.SeverityEnum.Medium:
                 return this.faTriangleExclamation;
-            case 'LOW':
+            case ConsistencyIssue.SeverityEnum.Low:
                 return this.faCircleInfo;
             default:
                 return this.faCircleInfo;
@@ -471,50 +486,40 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @returns
      *          A text color class (`text-danger`, `text-warning`, `text-info`, or `text-secondary`).
      */
-    getSeverityColor(severity: ConsistencyIssue.SeverityEnum) {
+    getSeverityColor(severity: ConsistencyIssue.SeverityEnum | undefined) {
         switch (severity) {
-            case 'HIGH':
+            case ConsistencyIssue.SeverityEnum.High:
                 return 'text-danger';
-            case 'MEDIUM':
+            case ConsistencyIssue.SeverityEnum.Medium:
                 return 'text-warning';
-            case 'LOW':
+            case ConsistencyIssue.SeverityEnum.Low:
                 return 'text-info';
             default:
                 return 'text-secondary';
         }
     }
 
-    readonly totalLocationsCount = computed(() => this.sortedIssues().reduce((acc, issue) => acc + (issue.relatedLocations?.length ?? 0), 0));
+    readonly totalLocationsCount = computed(() => this.sortedIssues().length);
     readonly showConsistencyIssuesToolbar = signal(false);
 
     get currentGlobalIndex(): number {
         const issues = this.sortedIssues();
-        let count = 0;
-        for (const issue of issues) {
-            if (issue === this.selectedIssue) {
-                return count + this.locationIndex + 1; // 1-based
-            }
-            count += issue.relatedLocations?.length ?? 0;
+        if (!this.selectedIssue) {
+            return 0;
         }
-        return 0;
+        const index = issues.findIndex((issue) => issue.threadId === this.selectedIssue?.threadId);
+        return index >= 0 ? index + 1 : 0;
     }
 
     toggleConsistencyIssuesToolbar() {
         this.showConsistencyIssuesToolbar.update((v) => !v);
         const issues = this.sortedIssues();
 
-        // If newly opened
         if (this.showConsistencyIssuesToolbar()) {
-            // Check if selection is invalid (stale issue, issue not in list anymore, or index out of bounds)
-            const isIssueValid = this.selectedIssue && issues.includes(this.selectedIssue);
-            const isIndexValid =
-                this.selectedIssue && this.selectedIssue.relatedLocations && this.locationIndex < this.selectedIssue.relatedLocations.length && this.locationIndex >= 0;
-
-            if ((!isIssueValid || !isIndexValid) && issues.length > 0) {
+            const isIssueValid = this.selectedIssue && issues.some((issue) => issue.threadId === this.selectedIssue?.threadId);
+            if (!isIssueValid && issues.length > 0) {
                 this.selectedIssue = issues[0];
-                this.locationIndex = 0;
-                // Jump to it immediately
-                this.jumpToLocation(this.selectedIssue, 0);
+                this.jumpToLocation(this.selectedIssue);
             }
         }
     }
@@ -525,65 +530,82 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      */
     navigateGlobal(step: number): void {
         const issues = this.sortedIssues();
-        if (!issues.length) return;
+        if (!issues.length) {
+            return;
+        }
 
-        // Flatten all locations
-        const allLocations: { issue: ConsistencyIssue; locIndex: number }[] = [];
-        issues.forEach((issue) => {
-            (issue.relatedLocations || []).forEach((_, idx) => {
-                allLocations.push({ issue, locIndex: idx });
-            });
-        });
-
-        if (allLocations.length === 0) return;
-
-        // Find current index
         let currentIndex = -1;
         if (this.selectedIssue) {
-            currentIndex = allLocations.findIndex((item) => item.issue === this.selectedIssue && item.locIndex === this.locationIndex);
+            currentIndex = issues.findIndex((issue) => issue.threadId === this.selectedIssue?.threadId);
         }
 
-        // Calculate new index
         let newIndex = currentIndex + step;
-        if (newIndex >= allLocations.length) {
-            newIndex = 0; // Wrap to start
+        if (newIndex >= issues.length) {
+            newIndex = 0;
         } else if (newIndex < 0) {
-            newIndex = allLocations.length - 1; // Wrap to end
+            newIndex = issues.length - 1;
         }
 
-        const target = allLocations[newIndex];
-        this.selectedIssue = target.issue;
-        this.locationIndex = target.locIndex;
-
-        this.jumpToLocation(target.issue, target.locIndex);
+        this.selectedIssue = issues[newIndex];
+        this.jumpToLocation(this.selectedIssue);
     }
 
     /**
      * Helper to perform the actual editor jump.
      */
-    private jumpToLocation(issue: ConsistencyIssue, index: number) {
-        if (!issue.relatedLocations || !issue.relatedLocations[index]) {
-            return;
-        }
-        const location = issue.relatedLocations[index];
-        const targetType = (() => {
-            switch (location.type) {
-                case 'TEMPLATE_REPOSITORY':
-                    return CommentThreadLocationType.TEMPLATE_REPO;
-                case 'SOLUTION_REPOSITORY':
-                    return CommentThreadLocationType.SOLUTION_REPO;
-                case 'TESTS_REPOSITORY':
-                    return CommentThreadLocationType.TEST_REPO;
-                case 'PROBLEM_STATEMENT':
-                default:
-                    return CommentThreadLocationType.PROBLEM_STATEMENT;
-            }
-        })();
+    private jumpToLocation(issue: ConsistencyIssueNavigationIssue) {
         this.navigateToLocation({
-            targetType,
-            filePath: targetType === CommentThreadLocationType.PROBLEM_STATEMENT ? undefined : getRepoPath(location),
-            lineNumber: location.endLine,
+            targetType: issue.targetType,
+            filePath: issue.filePath,
+            lineNumber: issue.lineNumber,
+            auxiliaryRepositoryId: issue.auxiliaryRepositoryId,
         });
+    }
+
+    private mapConsistencyThreadToNavigationIssue(thread: CommentThread): ConsistencyIssueNavigationIssue | undefined {
+        const content = this.extractConsistencyIssueContent(thread);
+        if (!content) {
+            return undefined;
+        }
+
+        return {
+            threadId: thread.id,
+            targetType: thread.targetType,
+            filePath: thread.filePath ?? thread.initialFilePath ?? undefined,
+            lineNumber: thread.lineNumber ?? thread.initialLineNumber,
+            auxiliaryRepositoryId: thread.auxiliaryRepositoryId,
+            severity: content.severity,
+            category: content.category,
+        };
+    }
+
+    private extractConsistencyIssueContent(thread: CommentThread): ConsistencyIssueCommentContent | undefined {
+        const firstComment = this.findFirstComment(thread);
+        if (!firstComment || firstComment.type !== CommentType.CONSISTENCY_CHECK) {
+            return undefined;
+        }
+
+        const content = firstComment.content as CommentContent | undefined;
+        if (!content || content.contentType !== CommentContentType.CONSISTENCY_CHECK) {
+            return undefined;
+        }
+
+        return content;
+    }
+
+    private findFirstComment(thread: CommentThread): Comment | undefined {
+        if (!thread.comments?.length) {
+            return undefined;
+        }
+
+        return [...thread.comments].sort((a, b) => {
+            const aDate = a.createdDate ? Date.parse(a.createdDate) : 0;
+            const bDate = b.createdDate ? Date.parse(b.createdDate) : 0;
+            if (aDate !== bDate) {
+                return aDate - bDate;
+            }
+            return (a.id ?? 0) - (b.id ?? 0);
+        })[0];
     }
 
     private navigateToLocation(location: { targetType: CommentThreadLocationType; filePath?: string; lineNumber?: number; auxiliaryRepositoryId?: number }): void {

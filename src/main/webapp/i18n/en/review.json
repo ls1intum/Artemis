@@ -12,6 +12,7 @@
             "deleteFailed": "Could not delete the review comment.",
             "replyPlaceholder": "Add reply...",
             "replySubmit": "Reply",
+            "requestedBy": "Requested by: {{name}}",
             "commentedOn": "commented on {{date}}",
             "lastEdited": "last edited: {{date}}",
             "systemAuthor": "Artemis User",
@@ -25,6 +26,13 @@
             "resolveFailed": "Could not update the thread status.",
             "threadResolved": "Resolved",
             "threadOutdated": "Outdated",
+            "threadConsistencyIssue": "Consistency issue",
+            "threadConsistencySeverity": "{{severity}} Severity",
+            "consistencySeverity": {
+                "LOW": "Low",
+                "MEDIUM": "Medium",
+                "HIGH": "High"
+            },
             "submitBeforeComment": "Submit the exercise before starting a thread."
         }
     }

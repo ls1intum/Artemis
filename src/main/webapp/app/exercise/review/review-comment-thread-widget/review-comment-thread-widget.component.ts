@@ -9,7 +9,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faEllipsisVertical, faPen, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { Comment, CommentType } from 'app/exercise/shared/entities/review/comment.model';
-import { CommentContent } from 'app/exercise/shared/entities/review/comment-content.model';
+import { CommentContent, CommentContentType, ConsistencyIssueCommentContent } from 'app/exercise/shared/entities/review/comment-content.model';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs/operators';
@@ -68,6 +68,19 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
             displayText: this.formatReviewCommentText(comment),
         }));
     });
+    readonly firstComment = computed(() => this.orderedComments()[0]);
+    readonly firstConsistencyIssueContent = computed<ConsistencyIssueCommentContent | undefined>(() => {
+        const firstComment = this.firstComment();
+        if (!firstComment || !this.isConsistencyCheckComment(firstComment)) {
+            return undefined;
+        }
+        const content = firstComment.content as CommentContent | undefined;
+        if (!content || content.contentType !== CommentContentType.CONSISTENCY_CHECK) {
+            return undefined;
+        }
+        return content;
+    });
+    readonly isConsistencyIssueThread = computed(() => this.firstConsistencyIssueContent() !== undefined);
 
     /**
      * Deletes the given comment via the review comment service.
@@ -110,7 +123,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         if (id === undefined || !trimmed || this.editingCommentType() !== CommentType.USER) {
             return;
         }
-        this.reviewCommentService.updateCommentInContext(id, { contentType: 'USER', text: trimmed }, () => this.cancelEditing());
+        this.reviewCommentService.updateCommentInContext(id, { contentType: CommentContentType.USER, text: trimmed }, () => this.cancelEditing());
     }
 
     /**
@@ -121,7 +134,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         if (!trimmed) {
             return;
         }
-        this.reviewCommentService.createReplyInContext(this.thread().id, { contentType: 'USER', text: trimmed }, () => {
+        this.reviewCommentService.createReplyInContext(this.thread().id, { contentType: CommentContentType.USER, text: trimmed }, () => {
             this.replyText.set('');
         });
     }
@@ -186,11 +199,8 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         if (!content) {
             return '';
         }
-        if ('contentType' in content && content.contentType === 'CONSISTENCY_CHECK') {
-            const severity = content.severity ?? '';
-            const category = content.category ?? '';
-            const text = content.text ?? '';
-            return [severity, category, text].filter(Boolean).join(' - ');
+        if ('contentType' in content && content.contentType === CommentContentType.CONSISTENCY_CHECK) {
+            return content.text ?? '';
         }
         return content.text ?? '';
     }
@@ -229,6 +239,16 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
      */
     isUserComment(comment: Comment): boolean {
         return comment.type === CommentType.USER;
+    }
+
+    /**
+     * Checks whether a comment is a consistency-check comment.
+     *
+     * @param comment The comment to check.
+     * @returns True if it is a consistency-check comment.
+     */
+    isConsistencyCheckComment(comment: Comment): boolean {
+        return comment.type === CommentType.CONSISTENCY_CHECK;
     }
 
     /**

@@ -12,6 +12,7 @@
             "deleteFailed": "Der Review-Kommentar konnte nicht gel\u00f6scht werden.",
             "replyPlaceholder": "Antwort hinzuf\u00fcgen...",
             "replySubmit": "Antworten",
+            "requestedBy": "Angefragt von: {{name}}",
             "commentedOn": "kommentiert am {{date}}",
             "lastEdited": "zuletzt bearbeitet: {{date}}",
             "systemAuthor": "Artemis-Benutzer",
@@ -25,6 +26,13 @@
             "resolveFailed": "Der Thread-Status konnte nicht aktualisiert werden.",
             "threadResolved": "Erledigt",
             "threadOutdated": "Veraltet",
+            "threadConsistencyIssue": "Konsistenzproblem",
+            "threadConsistencySeverity": "{{severity}} Schweregrad",
+            "consistencySeverity": {
+                "LOW": "Niedriger",
+                "MEDIUM": "Mittlerer",
+                "HIGH": "Hoher"
+            },
             "submitBeforeComment": "Bitte gib die Aufgabe zuerst ab, bevor du einen Thread startest."
         }
     }

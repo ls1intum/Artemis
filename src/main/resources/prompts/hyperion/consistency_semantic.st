@@ -147,6 +147,13 @@ Analysis: Same entity with different names - students cannot map requirements to
 - **MEDIUM**: Similar but inconsistent names that require cognitive effort to map
 - **LOW**: Minor naming variations that might cause brief confusion but are resolvable
 
+# FILE PATH RULES (MANDATORY)
+- `relatedLocations[].filePath` must always be a repository-internal relative path.
+- Do NOT include repository container prefixes such as `template_repository/`, `solution_repository/`, or `tests_repository/`.
+- For `TEMPLATE_REPOSITORY` and `SOLUTION_REPOSITORY`, Java/code paths should use the source prefix (e.g. `src/etc/Class.java`).
+- For `TESTS_REPOSITORY`, Java/code paths should use the test prefix (e.g. `test/etc/ClassTest.java`) and must not use `src/...`.
+- For problem statement locations, use `problem_statement.md`.
+
 # OUTPUT FORMAT
 ```json
 {
@@ -157,14 +164,20 @@ Analysis: Same entity with different names - students cannot map requirements to
       "category": "IDENTIFIER_NAMING_INCONSISTENCY",
     "relatedLocations": [
         {
-          "type": "PROBLEM_STATEMENT" | "TEMPLATE_REPOSITORY" | "SOLUTION_REPOSITORY",
-      "filePath": "exact/path/to/file.java",
+          "type": "PROBLEM_STATEMENT" | "TEMPLATE_REPOSITORY" | "SOLUTION_REPOSITORY" | "TESTS_REPOSITORY",
+      "filePath": "src/etc/BubbleSort.java",
       "startLine": 1,
       "endLine": 10
         },
         {
-          "type": "PROBLEM_STATEMENT" | "TEMPLATE_REPOSITORY" | "SOLUTION_REPOSITORY",
-      "filePath": "related/file/path.java",
+          "type": "TESTS_REPOSITORY",
+      "filePath": "test/etc/MethodTest.java",
+      "startLine": 12,
+      "endLine": 20
+        },
+        {
+          "type": "PROBLEM_STATEMENT",
+      "filePath": "problem_statement.md",
       "startLine": 5,
       "endLine": 8
         }

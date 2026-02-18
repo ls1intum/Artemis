@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -57,6 +58,10 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadGroupRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadRepository;
+import de.tum.cit.aet.artemis.hyperion.domain.ConsistencyIssueCategory;
+import de.tum.cit.aet.artemis.hyperion.domain.Severity;
+import de.tum.cit.aet.artemis.hyperion.dto.ArtifactLocationDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueDTO;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
@@ -133,6 +138,48 @@ public class ExerciseReviewService {
     public Set<CommentThread> findThreadsWithCommentsByExerciseId(long exerciseId) {
         authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, exerciseId);
         return commentThreadRepository.findWithCommentsByExerciseId(exerciseId);
+    }
+
+    /**
+     * Replaces previously generated consistency-check comment threads with the provided issues.
+     * Existing consistency-check threads are identified by checking whether their first comment has type {@link CommentType#CONSISTENCY_CHECK}.
+     *
+     * @param exerciseId the programming exercise id that owns the review comments
+     * @param issues     the latest consistency issues to persist as review comments
+     */
+    public void replaceConsistencyCheckComments(long exerciseId, List<ConsistencyIssueDTO> issues) {
+        authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.EDITOR, exerciseId);
+        Exercise exercise = exerciseRepository.findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
+
+        Set<CommentThread> existingThreads = commentThreadRepository.findWithCommentsByExerciseId(exerciseId);
+        List<CommentThread> existingConsistencyThreads = existingThreads.stream().filter(this::startsWithConsistencyCheckComment).toList();
+        if (!existingConsistencyThreads.isEmpty()) {
+            List<Long> potentiallyEmptyGroupIds = existingConsistencyThreads.stream().map(CommentThread::getGroup).filter(Objects::nonNull).map(CommentThreadGroup::getId)
+                    .filter(Objects::nonNull).distinct().toList();
+
+            commentThreadRepository.deleteAll(existingConsistencyThreads);
+            commentThreadRepository.flush();
+
+            for (Long groupId : potentiallyEmptyGroupIds) {
+                if (commentThreadRepository.countByGroupId(groupId) == 0) {
+                    commentThreadGroupRepository.deleteById(groupId);
+                }
+            }
+        }
+
+        if (issues == null || issues.isEmpty()) {
+            return;
+        }
+
+        for (ConsistencyIssueDTO issue : issues) {
+            if (issue == null) {
+                continue;
+            }
+            CommentThread thread = buildConsistencyCheckThread(exercise, issue);
+            Comment comment = buildConsistencyCheckComment(thread, issue);
+            thread.getComments().add(comment);
+            commentThreadRepository.save(thread);
+        }
     }
 
     /**
@@ -816,6 +863,89 @@ public class ExerciseReviewService {
     public record ThreadCreationResult(CommentThread thread, Comment comment) {
     }
 
+    private boolean startsWithConsistencyCheckComment(CommentThread thread) {
+        return findFirstComment(thread).map(comment -> comment.getType() == CommentType.CONSISTENCY_CHECK).orElse(false);
+    }
+
+    private Optional<Comment> findFirstComment(CommentThread thread) {
+        if (thread == null || thread.getComments() == null || thread.getComments().isEmpty()) {
+            return Optional.empty();
+        }
+        return thread.getComments().stream().min(Comparator.comparing(Comment::getCreatedDate, Comparator.nullsLast(Comparator.naturalOrder())).thenComparing(Comment::getId,
+                Comparator.nullsLast(Comparator.naturalOrder())));
+    }
+
+    private CommentThread buildConsistencyCheckThread(Exercise exercise, ConsistencyIssueDTO issue) {
+        ConsistencyThreadLocation location = mapConsistencyIssueLocation(issue);
+        CommentThread thread = new CommentThread();
+        thread.setExercise(exercise);
+        thread.setTargetType(location.targetType());
+        thread.setInitialFilePath(location.filePath());
+        thread.setFilePath(location.filePath());
+        thread.setInitialLineNumber(location.lineNumber());
+        thread.setLineNumber(location.lineNumber());
+        thread.setOutdated(false);
+        thread.setResolved(false);
+        return thread;
+    }
+
+    private Comment buildConsistencyCheckComment(CommentThread thread, ConsistencyIssueDTO issue) {
+        Severity severity = issue.severity() != null ? issue.severity() : Severity.MEDIUM;
+        ConsistencyIssueCategory category = issue.category() != null ? issue.category() : ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH;
+        User author = userRepository.getUser();
+
+        Comment comment = new Comment();
+        comment.setType(CommentType.CONSISTENCY_CHECK);
+        comment.setContent(new ConsistencyIssueCommentContentDTO(severity, category, buildConsistencyIssueText(issue), null));
+        comment.setAuthor(author);
+        comment.setThread(thread);
+        return comment;
+    }
+
+    private String buildConsistencyIssueText(ConsistencyIssueDTO issue) {
+        String description = issue.description();
+        String safeDescription = description != null && !description.isBlank() ? description : "Consistency issue detected.";
+        String suggestedFix = issue.suggestedFix();
+        if (suggestedFix == null || suggestedFix.isBlank()) {
+            return safeDescription;
+        }
+        return safeDescription + "\n\nSuggested fix: " + suggestedFix;
+    }
+
+    private ConsistencyThreadLocation mapConsistencyIssueLocation(ConsistencyIssueDTO issue) {
+        ArtifactLocationDTO firstLocation = issue.relatedLocations() == null ? null : issue.relatedLocations().stream().filter(Objects::nonNull).findFirst().orElse(null);
+        int lineNumber = resolveLineNumber(firstLocation);
+        if (firstLocation == null || firstLocation.type() == null) {
+            return new ConsistencyThreadLocation(CommentThreadLocationType.PROBLEM_STATEMENT, null, lineNumber);
+        }
+        return switch (firstLocation.type()) {
+            case PROBLEM_STATEMENT -> new ConsistencyThreadLocation(CommentThreadLocationType.PROBLEM_STATEMENT, null, lineNumber);
+            case TEMPLATE_REPOSITORY -> mapRepositoryLocation(CommentThreadLocationType.TEMPLATE_REPO, firstLocation.filePath(), lineNumber);
+            case SOLUTION_REPOSITORY -> mapRepositoryLocation(CommentThreadLocationType.SOLUTION_REPO, firstLocation.filePath(), lineNumber);
+            case TESTS_REPOSITORY -> mapRepositoryLocation(CommentThreadLocationType.TEST_REPO, firstLocation.filePath(), lineNumber);
+        };
+    }
+
+    private ConsistencyThreadLocation mapRepositoryLocation(CommentThreadLocationType targetType, String filePath, int lineNumber) {
+        if (filePath == null || filePath.isBlank()) {
+            return new ConsistencyThreadLocation(CommentThreadLocationType.PROBLEM_STATEMENT, null, lineNumber);
+        }
+        return new ConsistencyThreadLocation(targetType, filePath, lineNumber);
+    }
+
+    private int resolveLineNumber(ArtifactLocationDTO location) {
+        if (location == null) {
+            return 1;
+        }
+        if (location.endLine() != null && location.endLine() > 0) {
+            return location.endLine();
+        }
+        if (location.startLine() != null && location.startLine() > 0) {
+            return location.startLine();
+        }
+        return 1;
+    }
+
     private Comment buildUserComment(CommentThread thread, UserCommentContentDTO dto) {
         User author = userRepository.getUser();
         Comment comment = new Comment();
@@ -826,5 +956,8 @@ public class ExerciseReviewService {
         comment.setInitialCommitSha(resolveLatestCommitSha(thread.getTargetType(), thread.getAuxiliaryRepositoryId(), thread.getExercise().getId()));
         comment.setThread(thread);
         return comment;
+    }
+
+    private record ConsistencyThreadLocation(CommentThreadLocationType targetType, @Nullable String filePath, int lineNumber) {
     }
 }

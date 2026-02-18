@@ -4,6 +4,7 @@ import { ButtonDirective } from 'primeng/button';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { CommentThreadLocationType, CreateCommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CommentContentType } from 'app/exercise/shared/entities/review/comment-content.model';
 
 @Component({
     selector: 'jhi-review-comment-draft-widget',
@@ -44,7 +45,7 @@ export class ReviewCommentDraftWidgetComponent {
         const payload: CreateCommentThread = {
             targetType,
             initialLineNumber: lineNumber,
-            initialComment: { contentType: 'USER', text: trimmed },
+            initialComment: { contentType: CommentContentType.USER, text: trimmed },
         };
         if (targetType !== CommentThreadLocationType.PROBLEM_STATEMENT && this.filePath()) {
             payload.initialFilePath = this.filePath();

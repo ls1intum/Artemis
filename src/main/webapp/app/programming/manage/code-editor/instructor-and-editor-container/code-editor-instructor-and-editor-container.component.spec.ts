@@ -37,6 +37,8 @@ import { faCircleExclamation, faCircleInfo, faTriangleExclamation } from '@forta
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { CodeEditorInstructorBaseContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-base-container.component';
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
+import { CommentContentType } from 'app/exercise/shared/entities/review/comment-content.model';
 import { WritableSignal, signal } from '@angular/core';
 
 describe('CodeEditorInstructorAndEditorContainerComponent', () => {
@@ -137,6 +139,56 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             ],
         },
     ];
+
+    const createConsistencyThreads = (issues: ConsistencyIssue[]) =>
+        issues.map((issue, index) => {
+            const firstLocation = issue.relatedLocations[0];
+            const targetType = (() => {
+                switch (firstLocation?.type) {
+                    case ArtifactLocation.TypeEnum.TemplateRepository:
+                        return CommentThreadLocationType.TEMPLATE_REPO;
+                    case ArtifactLocation.TypeEnum.SolutionRepository:
+                        return CommentThreadLocationType.SOLUTION_REPO;
+                    case ArtifactLocation.TypeEnum.TestsRepository:
+                        return CommentThreadLocationType.TEST_REPO;
+                    case ArtifactLocation.TypeEnum.ProblemStatement:
+                    default:
+                        return CommentThreadLocationType.PROBLEM_STATEMENT;
+                }
+            })();
+
+            const lineNumber = firstLocation?.endLine ?? firstLocation?.startLine ?? 1;
+            const filePath = targetType === CommentThreadLocationType.PROBLEM_STATEMENT ? undefined : firstLocation?.filePath;
+            const timestamp = new Date(2024, 0, index + 1).toISOString();
+
+            return {
+                id: index + 1,
+                exerciseId: 42,
+                targetType,
+                filePath,
+                initialFilePath: filePath,
+                lineNumber,
+                initialLineNumber: lineNumber,
+                outdated: false,
+                resolved: false,
+                comments: [
+                    {
+                        id: index + 1_000,
+                        threadId: index + 1,
+                        type: CommentType.CONSISTENCY_CHECK,
+                        authorName: 'Hyperion',
+                        createdDate: timestamp,
+                        lastModifiedDate: timestamp,
+                        content: {
+                            contentType: CommentContentType.CONSISTENCY_CHECK,
+                            severity: issue.severity,
+                            category: issue.category,
+                            text: issue.description,
+                        },
+                    },
+                ],
+            };
+        });
 
     beforeAll(() => {
         try {
@@ -566,6 +618,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(check1Spy).toHaveBeenCalledOnce();
             expect(check2Spy).toHaveBeenCalledOnce();
             expect(successSpy).toHaveBeenCalledOnce();
+            expect(reviewCommentService.reloadThreads).toHaveBeenCalledOnce();
         });
 
         it('error when first consistency check fails', () => {
@@ -579,6 +632,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(check1Spy).toHaveBeenCalledOnce();
             expect(check2Spy).not.toHaveBeenCalled();
             expect(failSpy).toHaveBeenCalledOnce();
+            expect(reviewCommentService.reloadThreads).not.toHaveBeenCalled();
         });
 
         it('error when exercise id undefined', () => {
@@ -616,89 +670,63 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         });
 
         it('should toggle toolbar and select first issue if none selected', () => {
-            comp.consistencyIssues.set(mockIssues);
+            reviewCommentService.threads.set(createConsistencyThreads(mockIssues) as any);
             expect(comp.showConsistencyIssuesToolbar()).toBeFalse();
 
             comp.toggleConsistencyIssuesToolbar();
             expect(comp.showConsistencyIssuesToolbar()).toBeTrue();
-            expect(comp.selectedIssue).toBe(mockIssues[0]);
 
             const sorted = comp.sortedIssues();
-            expect(comp.selectedIssue).toBe(sorted[0]);
-            expect(comp.locationIndex).toBe(0);
+            expect(comp.selectedIssue).toEqual(sorted[0]);
         });
 
         it('should navigate global next', () => {
-            comp.consistencyIssues.set(mockIssues);
+            reviewCommentService.threads.set(createConsistencyThreads(mockIssues) as any);
             const sorted = comp.sortedIssues();
 
             // Start at first issue
             comp.selectedIssue = sorted[0];
-            comp.locationIndex = 0;
 
             const jumpSpy = jest.spyOn(comp as any, 'jumpToLocation').mockImplementation();
 
             // Next step
             comp.navigateGlobal(1);
 
-            // Should go to sorted[1] (Issue 4), locIndex 0
             expect(comp.selectedIssue).toBe(sorted[1]);
-            expect(comp.locationIndex).toBe(0);
-            expect(jumpSpy).toHaveBeenCalledWith(sorted[1], 0);
-
-            // Next step (Issue 4 has 3 locations)
-            comp.navigateGlobal(1);
-            expect(comp.selectedIssue).toBe(sorted[1]);
-            expect(comp.locationIndex).toBe(1);
+            expect(jumpSpy).toHaveBeenCalledWith(sorted[1]);
 
             comp.navigateGlobal(1);
-            expect(comp.selectedIssue).toBe(sorted[1]);
-            expect(comp.locationIndex).toBe(2);
-
-            comp.navigateGlobal(1);
-            // Should go to sorted[2] (Issue 1), locIndex 0
             expect(comp.selectedIssue).toBe(sorted[2]);
-            expect(comp.locationIndex).toBe(0);
         });
 
         it('should navigate global previous and wrap around', () => {
-            comp.consistencyIssues.set(mockIssues);
+            reviewCommentService.threads.set(createConsistencyThreads(mockIssues) as any);
             const sorted = comp.sortedIssues();
 
             // Start at first issue
             comp.selectedIssue = sorted[0];
-            comp.locationIndex = 0;
 
             const jumpSpy = jest.spyOn(comp as any, 'jumpToLocation').mockImplementation();
 
-            // Previous step -> Wrap to last issue, last location
-            // Last issue is sorted[4] (Issue 3 Low), 1 location.
             const lastIssue = sorted[sorted.length - 1];
-            // Last issue has 1 location.
-            const lastLocIndex = lastIssue.relatedLocations.length - 1;
 
             comp.navigateGlobal(-1);
 
             expect(comp.selectedIssue).toBe(lastIssue);
-            expect(comp.locationIndex).toBe(lastLocIndex);
-            expect(jumpSpy).toHaveBeenCalledWith(lastIssue, lastLocIndex);
+            expect(jumpSpy).toHaveBeenCalledWith(lastIssue);
         });
 
         it('navigates to PROBLEM_STATEMENT and calls jumpToLine', fakeAsync(() => {
-            // Mock issue with ProblemStatement
-            const issue = mockIssues[0]; // ProblemStatement issue
-            const loc = issue.relatedLocations[0];
-
-            comp.selectedIssue = issue;
-            comp.locationIndex = 0;
+            reviewCommentService.threads.set(createConsistencyThreads(mockIssues) as any);
+            const issue = comp.sortedIssues().find((sortedIssue) => sortedIssue.targetType === CommentThreadLocationType.PROBLEM_STATEMENT)!;
 
             const jumpSpy = jest.spyOn((comp as any).editableInstructions, 'jumpToLine');
 
-            (comp as any).jumpToLocation(issue, 0); // Corrected: use (comp as any)
+            (comp as any).jumpToLocation(issue);
             tick();
 
             expect((comp as any).codeEditorContainer.selectedFile).toBe('problem_statement.md');
-            expect(jumpSpy).toHaveBeenCalledWith(loc.endLine);
+            expect(jumpSpy).toHaveBeenCalledWith(issue.lineNumber);
         }));
 
         it('onEditorLoaded calls onFileLoad immediately when file is already selected', () => {
@@ -784,7 +812,11 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         });
 
         it('shows error and clears jump state when repository selection fails', () => {
-            const issue = mockIssues[3]; // TESTS_REPOSITORY
+            const issue = {
+                targetType: CommentThreadLocationType.TEST_REPO,
+                filePath: 'src/tests/ExampleTest.java',
+                lineNumber: 70,
+            };
             (comp as any).codeEditorContainer.selectedRepository = jest.fn().mockReturnValue('SOLUTION');
 
             const error = new Error('repo selection failed');
@@ -795,7 +827,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             const alertErrorSpy = jest.spyOn(alertService, 'error');
             const onEditorLoadedSpy = jest.spyOn(comp, 'onEditorLoaded');
 
-            (comp as any).jumpToLocation(issue, 0);
+            (comp as any).jumpToLocation(issue);
 
             expect(alertErrorSpy).toHaveBeenCalled();
             expect(comp.lineJumpOnFileLoad).toBeUndefined();
@@ -889,9 +921,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         });
 
         it('should reset showConsistencyIssuesToolbar when re-running consistency check', () => {
-            comp.consistencyIssues.set(mockIssues);
+            reviewCommentService.threads.set(createConsistencyThreads(mockIssues) as any);
             (comp as any).showConsistencyIssuesToolbar.set(true);
-            comp.selectedIssue = mockIssues[0];
+            comp.selectedIssue = comp.sortedIssues()[0];
 
             jest.spyOn(consistencyCheckService, 'checkConsistencyForProgrammingExercise').mockReturnValue(of([]));
             jest.spyOn(artemisIntelligenceService, 'consistencyCheck').mockReturnValue(of({ issues: [] } as ConsistencyCheckResponse));
