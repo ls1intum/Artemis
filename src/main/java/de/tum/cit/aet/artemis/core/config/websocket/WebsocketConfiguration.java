@@ -86,6 +86,8 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     private static final Pattern EXAM_TOPIC_PATTERN = Pattern.compile("^/topic/exams/(\\d+)/.+$");
 
+    private static final Pattern EXERCISE_SYNCHRONIZATION_TOPIC_PATTERN = Pattern.compile("^/topic/exercises/(\\d+)/synchronization$");
+
     public static final String IP_ADDRESS = "IP_ADDRESS";
 
     private final ObjectMapper objectMapper;
@@ -416,6 +418,12 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 var exam = api.findByIdElseThrow(examId.get());
                 return authorizationCheckService.isAtLeastInstructorInCourse(login, exam.getCourse().getId());
             }
+
+            var synchronizationExerciseId = getExerciseIdFromSynchronizationDestination(destination);
+            if (synchronizationExerciseId.isPresent()) {
+                return authorizationCheckService.isAtLeastTeachingAssistantInExercise(login, synchronizationExerciseId.get());
+            }
+
             return true;
         }
 
@@ -443,6 +451,20 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
      */
     public static Optional<Long> getExamIdFromExamRootDestination(String destination) {
         var matcher = EXAM_TOPIC_PATTERN.matcher(destination);
+        if (matcher.matches()) {
+            return Optional.of(Long.valueOf(matcher.group(1)));
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Returns the exercise id if the given destination belongs to the exercise synchronization topic.
+     *
+     * @param destination websocket destination topic to inspect
+     * @return an optional containing the exercise id for synchronization topics; empty otherwise
+     */
+    public static Optional<Long> getExerciseIdFromSynchronizationDestination(String destination) {
+        var matcher = EXERCISE_SYNCHRONIZATION_TOPIC_PATTERN.matcher(destination);
         if (matcher.matches()) {
             return Optional.of(Long.valueOf(matcher.group(1)));
         }
