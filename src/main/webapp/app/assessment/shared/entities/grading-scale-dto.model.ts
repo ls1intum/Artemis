@@ -7,11 +7,11 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 /**
  * DTO for grading scale response.
  */
-export class GradingScaleDTO {
-    public id?: number;
-    public gradeSteps: GradeStepsDTO;
-    public bonusStrategy?: string;
-    public bonusFrom?: BonusDTO[];
+export interface GradingScaleDTO {
+    id?: number;
+    gradeSteps: GradeStepsDTO;
+    bonusStrategy?: string;
+    bonusFrom?: BonusDTO[];
 }
 
 export function toEntity(dto: GradingScaleDTO, course?: Course, exam?: Exam): GradingScale {
@@ -23,6 +23,7 @@ export function toEntity(dto: GradingScaleDTO, course?: Course, exam?: Exam): Gr
     entity.presentationsWeight = dto.gradeSteps.presentationsWeight;
     entity.course = course;
     entity.exam = exam;
+    entity.bonusStrategy = dto.bonusStrategy;
 
     return entity;
 }
@@ -46,7 +47,7 @@ export function toGradingScaleDTO(entity?: GradingScale): GradingScaleDTO {
     return {
         id: entity.id,
         gradeSteps: gradeStepsDTO,
-        bonusStrategy: undefined,
+        bonusStrategy: entity.bonusStrategy,
         bonusFrom: [],
     };
 }

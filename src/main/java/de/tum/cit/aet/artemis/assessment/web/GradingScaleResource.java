@@ -211,6 +211,7 @@ public class GradingScaleResource {
         log.debug("REST request to update a grading scale for course: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        validateGradingScaleForUpdate(gradingScaleDto);
 
         // Fetch the existing grading scale from the database (this is the managed entity)
         // Note: gradeSteps are eagerly fetched due to FetchType.EAGER
@@ -246,6 +247,7 @@ public class GradingScaleResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         Exam exam = api.findByIdElseThrow(examId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        validateGradingScaleForUpdate(dto);
 
         // Fetch the existing grading scale from the database (this is the managed entity)
         // Note: gradeSteps are eagerly fetched due to FetchType.EAGER
@@ -376,7 +378,15 @@ public class GradingScaleResource {
         if (existingGradingScale.isPresent()) {
             throw new BadRequestAlertException("A grading scale already exists", ENTITY_NAME, "gradingScaleAlreadyExists");
         }
-        else if (dto.gradeSteps() == null || dto.gradeSteps().isEmpty()) {
+        validateGradeSteps(dto);
+    }
+
+    private void validateGradingScaleForUpdate(GradingScaleRequestDTO dto) {
+        validateGradeSteps(dto);
+    }
+
+    private void validateGradeSteps(GradingScaleRequestDTO dto) {
+        if (dto.gradeSteps() == null || dto.gradeSteps().isEmpty()) {
             throw new BadRequestAlertException("A grading scale must contain grade steps", ENTITY_NAME, "emptyGradeSteps");
         }
     }

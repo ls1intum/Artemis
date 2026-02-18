@@ -34,7 +34,7 @@ export interface GradeStepDTO {
 export function toUpdateDTO(gradingScale: GradingScale): GradingScaleRequestDTO {
     return {
         gradeType: gradingScale.gradeType,
-        bonusStrategy: (gradingScale as any).bonusStrategy,
+        bonusStrategy: gradingScale.bonusStrategy,
         plagiarismGrade: gradingScale.plagiarismGrade,
         noParticipationGrade: gradingScale.noParticipationGrade,
         presentationsNumber: gradingScale.presentationsNumber,
