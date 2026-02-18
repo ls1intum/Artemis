@@ -265,6 +265,21 @@ class ExerciseDeletionSummaryIntegrationTest extends AbstractSpringIntegrationIn
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetDeletionSummary_allZeroResults() throws Exception {
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        final ProgrammingExercise programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+
+        var summary = request.get("/api/exercise/exercises/" + programmingExercise.getId() + "/deletion-summary", HttpStatus.OK, ExerciseDeletionSummaryDTO.class);
+
+        assertThat(summary.numberOfStudentParticipations()).isEqualTo(0);
+        assertThat(summary.numberOfBuilds()).isEqualTo(0);
+        assertThat(summary.numberOfAssessments()).isEqualTo(0);
+        assertThat(summary.numberOfCommunicationPosts()).isEqualTo(0);
+        assertThat(summary.numberOfAnswerPosts()).isEqualTo(0);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testGetDeletionSummary_editorForbidden() throws Exception {
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();

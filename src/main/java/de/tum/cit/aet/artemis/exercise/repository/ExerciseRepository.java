@@ -814,7 +814,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
                         AND (ex.dueDate IS NULL OR s.submissionDate <= ex.dueDate)
                 ),
                 (SELECT COUNT(post) FROM Post post WHERE post.conversation.id = c.id),
-                (SELECT COUNT(a) FROM AnswerPost a WHERE a.post.conversation.id = c.id)
+                (SELECT COUNT(a) FROM AnswerPost a JOIN a.post p WHERE p.conversation.id = c.id)
             )
             FROM Exercise e
                 LEFT JOIN Channel c ON c.exercise.id = e.id
