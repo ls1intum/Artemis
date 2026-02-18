@@ -33,7 +33,7 @@ plugins {
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "8.8.1"
+version = "8.8.2"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -494,6 +494,7 @@ dependencies {
     testImplementation "io.zonky.test:embedded-database-spring-test:2.7.1"
     testImplementation "com.redis:testcontainers-redis:2.2.4"
     testImplementation "org.testcontainers:weaviate:1.21.4"
+    testImplementation "com.icegreen:greenmail-junit5:2.1.8"
     testImplementation "com.tngtech.archunit:archunit:1.4.1"
     testImplementation "org.skyscreamer:jsonassert:1.5.3"
 

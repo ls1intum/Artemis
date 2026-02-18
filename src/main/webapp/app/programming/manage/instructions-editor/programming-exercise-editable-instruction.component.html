@@ -1,20 +1,20 @@
 <div class="editable-instruction-container">
     <!-- The position of the markdown-editor in the html should not be changed, as it is used for resizing!-->
-    @if (exercise) {
+    @if (exercise()) {
         <!-- showPreview controls whether the preview tab is available in the markdown editor.
              Set to false when using an external preview component (e.g., in the code editor view). -->
         <jhi-markdown-editor-monaco
             class="overflow-hidden flex-grow-1"
             [domainActions]="domainActions"
             [artemisIntelligenceActions]="artemisIntelligenceActions()"
-            [initialEditorHeight]="initialEditorHeight"
-            [externalHeight]="externalHeight"
+            [initialEditorHeight]="initialEditorHeight()"
+            [externalHeight]="externalHeight()"
             [useDefaultMarkdownEditorOptions]="false"
-            [enableResize]="enableResize"
-            [markdown]="exercise.problemStatement"
+            [enableResize]="enableResize()"
+            [markdown]="exercise().problemStatement"
             [showDefaultPreview]="false"
-            [showPreviewButton]="showPreview"
-            [showEditButton]="showPreview"
+            [showPreviewButton]="showPreview()"
+            [showEditButton]="showPreview()"
             [consistencyIssues]="consistencyIssues()"
             (markdownChange)="updateProblemStatement($event)"
         >
@@ -24,11 +24,11 @@
                  The div wrapper with id="previewMonaco" is projected into the markdown editor's preview slot.
                  Only renders when showPreview is true AND we have a valid participation to display results. -->
             <div id="previewMonaco" class="instructions-preview-wrapper">
-                @if (showPreview && (templateParticipation ?? participation)) {
+                @if (showPreview() && (participation() ?? exercise().templateParticipation)) {
                     <jhi-programming-exercise-instructions
                         class="instructions-preview"
-                        [exercise]="exercise"
-                        [participation]="(templateParticipation ?? participation)!"
+                        [exercise]="exercise()"
+                        [participation]="(participation() ?? exercise().templateParticipation)!"
                         [personalParticipation]="false"
                         [generateHtmlEvents]="generateHtmlSubject.asObservable()"
                     />
@@ -36,7 +36,7 @@
             </div>
         </jhi-markdown-editor-monaco>
     }
-    @if (editMode) {
+    @if (editMode()) {
         <button
             id="save-instructions-button"
             [disabled]="savingInstructions || !unsavedChangesValue"
@@ -45,7 +45,7 @@
             [ngClass]="{
                 'btn-light': savingInstructions || !unsavedChangesValue,
                 'btn-primary': !(savingInstructions || !unsavedChangesValue),
-                'btn-sm': externalHeight,
+                'btn-sm': externalHeight(),
             }"
         >
             @if (!savingInstructions) {
@@ -57,7 +57,7 @@
             <span jhiTranslate="entity.action.save"></span>
         </button>
     }
-    @if (showStatus) {
+    @if (showStatus()) {
         <div class="card-footer text-nowrap editable-instruction-container__status">
             <div class="instructions-status">
                 @if (!unsavedChangesValue && !savingInstructions) {
@@ -83,10 +83,10 @@
                     </div>
                 }
             </div>
-            @if (exercise?.id) {
+            @if (exercise()?.id) {
                 <jhi-programming-exercise-instruction-instructor-analysis
                     [exerciseTestCases]="exerciseTestCases"
-                    [problemStatement]="exercise.problemStatement || ''"
+                    [problemStatement]="exercise().problemStatement || ''"
                     [taskRegex]="taskRegex"
                     (problemStatementAnalysis)="onAnalysisUpdate($event)"
                     class="editable-instruction-container__status__testcase"
