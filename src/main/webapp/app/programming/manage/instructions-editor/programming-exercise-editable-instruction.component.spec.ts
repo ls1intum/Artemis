@@ -359,6 +359,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         fixture.detectChanges();
 
         const updateProblemStatement = jest.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(of(new HttpResponse({ body: exercise })));
+        const problemStatementSavedSpy = jest.spyOn(comp.onProblemStatementSaved, 'emit');
 
         comp.updateProblemStatement('new problem statement');
         fixture.componentRef.setInput('exercise', { ...exercise, problemStatement: 'new problem statement' } as ProgrammingExercise);
@@ -366,11 +367,13 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         comp.saveInstructions({ stopPropagation: () => {} } as Event);
 
         expect(updateProblemStatement).toHaveBeenCalledExactlyOnceWith(exercise.id, 'new problem statement');
+        expect(problemStatementSavedSpy).toHaveBeenCalledOnce();
     });
 
     it('should log an error on save', () => {
         const updateProblemStatementSpy = jest.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(throwError(() => undefined));
         const logErrorSpy = jest.spyOn(alertService, 'error');
+        const problemStatementSavedSpy = jest.spyOn(comp.onProblemStatementSaved, 'emit');
 
         fixture.componentRef.setInput('editMode', true);
         setRequiredInputs(fixture, exercise);
@@ -379,6 +382,8 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         comp.saveInstructions(new KeyboardEvent('cmd+s'));
         expect(updateProblemStatementSpy).toHaveBeenCalledOnce();
         expect(logErrorSpy).toHaveBeenCalledOnce();
+        expect(problemStatementSavedSpy).not.toHaveBeenCalled();
+        expect(comp.savingInstructions).toBeFalse();
     });
 
     it('should save on key commands', () => {
