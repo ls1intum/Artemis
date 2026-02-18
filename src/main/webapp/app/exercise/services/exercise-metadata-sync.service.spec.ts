@@ -118,7 +118,7 @@ describe('ExerciseMetadataSyncService', () => {
         currentExercise.maxPoints = 10;
         baselineExercise.maxPoints = 10;
 
-        setBaselineExercise = vi.fn((updated) => {
+        setBaselineExercise = vi.fn((updated: ProgrammingExercise) => {
             baselineExercise = updated;
         });
 

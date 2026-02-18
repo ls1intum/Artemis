@@ -227,7 +227,7 @@
             },
             "metadataSync": {
                 "conflictTitle": "Konflikte bei Übungsmetadaten",
-                "conflictIntro": "Während du bearbeitet hast, wurde eine neue Übungsversion gespeichert. Wähle, welche eingehenden Werte übernommen werden sollen.",
+                "conflictIntro": "Während du die Übung bearbeitet hast, wurde eine neue Übungsversion gespeichert. Wähle, welche eingehenden Werte übernommen werden sollen.",
                 "conflictAuthor": "Aktualisiert von ",
                 "useIncoming": "Eingehenden Wert verwenden für",
                 "useIncomingValue": "Eingehenden Wert verwenden",
