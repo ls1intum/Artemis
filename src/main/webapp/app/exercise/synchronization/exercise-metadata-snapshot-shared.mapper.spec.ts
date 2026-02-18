@@ -74,11 +74,18 @@ describe('ExerciseMetadataSnapshotSharedMapper', () => {
         expect(mapped?.[1].weight).toBe(1);
     });
 
-    it('returns undefined when no snapshot competency links can be resolved', () => {
+    it('returns empty array when no snapshot competency links can be resolved', () => {
         const exercise = new ProgrammingExercise(undefined, undefined);
         const snapshot: CompetencyExerciseLinkSnapshotDTO[] = [{ competencyId: { competencyId: 77 } }];
 
-        expect(toCompetencyLinks(exercise, snapshot)).toBeUndefined();
+        expect(toCompetencyLinks(exercise, snapshot)).toEqual([]);
+    });
+
+    it('returns empty array for empty snapshot links (intentional clear)', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.competencyLinks = [new CompetencyExerciseLink(new Competency(), exercise, 1)];
+
+        expect(toCompetencyLinks(exercise, [])).toEqual([]);
     });
 
     it('ignores competencies with undefined ids in existing links and course mappings', () => {
@@ -92,6 +99,6 @@ describe('ExerciseMetadataSnapshotSharedMapper', () => {
         const snapshot: CompetencyExerciseLinkSnapshotDTO[] = [{ competencyId: { competencyId: 1 }, weight: 1 }];
         const mapped = toCompetencyLinks(exercise, snapshot);
 
-        expect(mapped).toBeUndefined();
+        expect(mapped).toEqual([]);
     });
 });

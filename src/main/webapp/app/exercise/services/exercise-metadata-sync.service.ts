@@ -89,9 +89,8 @@ const normalizeCompetencyLinks = (value: unknown): Array<{ competencyId?: number
  * Exported for direct testing.
  */
 export const metadataValuesEqual = (value: unknown, otherValue: unknown): boolean => {
-    // Treat null, undefined, and empty arrays as equivalent absent values
-    // (server may send null or [] while client uses undefined for absent collections)
-    const isAbsent = (v: unknown): boolean => v === undefined || v === null || (Array.isArray(v) && v.length === 0);
+    // Treat null and undefined as equivalent absent values
+    const isAbsent = (v: unknown): boolean => v === undefined || v === null;
     if (isAbsent(value) && isAbsent(otherValue)) {
         return true;
     }

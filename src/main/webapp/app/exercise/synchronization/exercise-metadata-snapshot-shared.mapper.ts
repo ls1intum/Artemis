@@ -103,5 +103,5 @@ export const toCompetencyLinks = (exercise: Exercise, snapshotLinks: CompetencyE
         }
         mapped.push(new CompetencyExerciseLink(competency, exercise, link.weight ?? MEDIUM_COMPETENCY_LINK_WEIGHT));
     }
-    return mapped.length > 0 ? mapped : undefined;
+    return mapped;
 };
