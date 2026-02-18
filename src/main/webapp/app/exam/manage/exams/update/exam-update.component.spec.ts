@@ -66,11 +66,6 @@ describe('ExamUpdateComponent', () => {
         jest.restoreAllMocks();
     });
 
-    // Suppress Monaco editor warnings in JSDOM (e.g. monospace font assumptions)
-    beforeEach(() => {
-        jest.spyOn(console, 'warn').mockImplementation(() => {});
-    });
-
     describe('create and edit exams', () => {
         beforeEach(() => {
             examWithoutExercises = new Exam();

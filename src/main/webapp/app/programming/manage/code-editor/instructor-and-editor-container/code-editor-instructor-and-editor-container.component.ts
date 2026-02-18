@@ -1,4 +1,4 @@
-import { Component, DestroyRef, Injector, OnDestroy, TemplateRef, ViewChild, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, Injector, OnDestroy, TemplateRef, ViewChild, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
@@ -58,7 +58,7 @@ import { ButtonSize } from 'app/shared/components/buttons/button/button.componen
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
 import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
-import { MAX_USER_PROMPT_LENGTH, isTemplateOrEmpty } from 'app/programming/manage/shared/problem-statement.utils';
+import { MAX_USER_PROMPT_LENGTH, isTemplateOrEmpty, updateEditorWhenReady } from 'app/programming/manage/shared/problem-statement.utils';
 import { TooltipModule } from 'primeng/tooltip';
 import { TextareaModule } from 'primeng/textarea';
 import { BadgeModule } from 'primeng/badge';
@@ -123,11 +123,12 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     protected isGeneratingOrRefining = signal(false);
     protected readonly isAiApplying = computed(() => this.isGeneratingOrRefining() || this.artemisIntelligenceService.isLoading());
     private currentRefinementSubscription: Subscription | undefined;
+    private pendingEditorIntervals: ReturnType<typeof setInterval>[] = [];
 
-    showDiff = signal(false);
+    readonly showDiff = signal(false);
 
-    refinementPopover = viewChild<Popover>('refinementPopover');
-    refinementPrompt = signal('');
+    readonly refinementPopover = viewChild<Popover>('refinementPopover');
+    readonly refinementPrompt = signal('');
     protected readonly faPaperPlane = faPaperPlane;
 
     private consistencyCheckService = inject(ConsistencyCheckService);
@@ -254,6 +255,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.clearJobSubscription(true);
         this.statusSubscription?.unsubscribe();
         this.currentRefinementSubscription?.unsubscribe();
+        for (const id of this.pendingEditorIntervals) {
+            clearInterval(id);
+        }
+        this.pendingEditorIntervals = [];
         super.ngOnDestroy();
     }
 
@@ -506,8 +511,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     /**
      * Handles input events from the refinement prompt textarea with proper typing.
      */
-    onRefinementPromptInput(event: Event): void {
-        this.refinementPrompt.set((event.target as HTMLTextAreaElement).value);
+    onRefinementPromptInput(value: string): void {
+        this.refinementPrompt.set(value);
     }
 
     /**
@@ -546,29 +551,31 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.refinementPopover()?.hide();
 
         this.currentRefinementSubscription?.unsubscribe();
-        this.currentRefinementSubscription = this.problemStatementService.generateProblemStatement(this.exercise, prompt, this.isGeneratingOrRefining).subscribe({
-            next: (result) => {
-                if (result.success && result.content) {
-                    const draftContent = result.content;
+        this.currentRefinementSubscription = this.problemStatementService
+            .generateProblemStatement(this.exercise, prompt, (v) => this.isGeneratingOrRefining.set(v))
+            .subscribe({
+                next: (result) => {
+                    if (result.success && result.content) {
+                        const draftContent = result.content;
 
-                    // Update the editor with retry logic
-                    this.updateEditorWhenReady(draftContent, 'generate');
+                        // Update the editor with retry logic
+                        this.updateEditorWhenReady(draftContent, 'generate');
 
-                    // Update model and trigger change
-                    if (this.exercise) {
-                        this.exercise.problemStatement = draftContent;
-                        this.onInstructionChanged(draftContent);
-                        this.currentProblemStatement.set(draftContent);
+                        // Update model and trigger change
+                        if (this.exercise) {
+                            this.exercise.problemStatement = draftContent;
+                            this.onInstructionChanged(draftContent);
+                            this.currentProblemStatement.set(draftContent);
+                        }
+                        this.refinementPrompt.set('');
+                    } else if (!result.errorHandled) {
+                        this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
                     }
-                    this.refinementPrompt.set('');
-                } else if (!result.errorHandled) {
+                },
+                error: () => {
                     this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
-                }
-            },
-            error: () => {
-                this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
-            },
-        });
+                },
+            });
     }
 
     private refineProblemStatement(prompt: string): void {
@@ -581,67 +588,34 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.refinementPopover()?.hide();
 
         this.currentRefinementSubscription?.unsubscribe();
-        this.currentRefinementSubscription = this.problemStatementService.refineGlobally(this.exercise, currentContent, prompt, this.isGeneratingOrRefining).subscribe({
-            next: (result) => {
-                if (result.success && result.content) {
-                    this.showDiff.set(true);
-                    const refinedContent = result.content;
-                    this.updateEditorWhenReady(refinedContent, 'refine');
-                    this.refinementPrompt.set('');
-                } else if (!result.errorHandled) {
+        this.currentRefinementSubscription = this.problemStatementService
+            .refineGlobally(this.exercise, currentContent, prompt, (v) => this.isGeneratingOrRefining.set(v))
+            .subscribe({
+                next: (result) => {
+                    if (result.success && result.content) {
+                        this.showDiff.set(true);
+                        const refinedContent = result.content;
+                        this.updateEditorWhenReady(refinedContent, 'refine');
+                        this.refinementPrompt.set('');
+                    } else if (!result.errorHandled) {
+                        this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
+                    }
+                },
+                error: () => {
                     this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
-                }
-            },
-            error: () => {
-                this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
-            },
-        });
+                },
+            });
     }
 
     /**
      * Updates the editor content once it's available.
-     * Uses afterNextRender with a retry loop to handle cases where the
-     * viewChild isn't ready immediately (e.g., when showDiff triggers a re-render).
+     * Delegates to the shared utility which uses afterNextRender with a retry loop.
      *
      * @param content The content to apply
      * @param type 'refine' to use applyRefinedContent (diff mode), 'generate' to use setText (replace all)
      */
     private updateEditorWhenReady(content: string, type: 'refine' | 'generate'): void {
-        afterNextRender(
-            () => {
-                const editor = this.editableInstructions();
-
-                const apply = (comp: ProgrammingExerciseEditableInstructionComponent) => {
-                    if (type === 'refine') {
-                        comp.applyRefinedContent(content);
-                    } else {
-                        comp.setText(content);
-                    }
-                };
-
-                if (editor) {
-                    apply(editor);
-                    return;
-                }
-
-                // Editor not ready yet — retry with a bounded loop
-                let retries = 0;
-                const maxRetries = 10;
-                const intervalId = setInterval(() => {
-                    retries++;
-                    const editorRetry = this.editableInstructions();
-                    if (editorRetry) {
-                        clearInterval(intervalId);
-                        apply(editorRetry);
-                    } else if (retries >= maxRetries) {
-                        clearInterval(intervalId);
-                        // eslint-disable-next-line no-undef
-                        console.warn('updateEditorWhenReady: editor not available after max retries');
-                    }
-                }, 50);
-            },
-            { injector: this.injector },
-        );
+        updateEditorWhenReady(content, type, this.editableInstructions, this.pendingEditorIntervals, this.injector);
     }
 
     /**

@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -30,12 +31,19 @@ class HyperionProblemStatementGenerationServiceTest {
 
     private HyperionProblemStatementGenerationService hyperionProblemStatementGenerationService;
 
+    private AutoCloseable mocks;
+
     @BeforeEach
     void setup() {
-        MockitoAnnotations.openMocks(this);
+        mocks = MockitoAnnotations.openMocks(this);
         ChatClient chatClient = ChatClient.create(chatModel);
         var templateService = new HyperionPromptTemplateService();
         this.hyperionProblemStatementGenerationService = new HyperionProblemStatementGenerationService(chatClient, templateService);
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        mocks.close();
     }
 
     @Test
@@ -49,7 +57,6 @@ class HyperionProblemStatementGenerationServiceTest {
         ProblemStatementGenerationResponseDTO resp = hyperionProblemStatementGenerationService.generateProblemStatement(course, "Prompt");
         assertThat(resp).isNotNull();
         assertThat(resp.draftProblemStatement()).isEqualTo(generatedDraft);
-        assertThat(resp.error()).isNull();
     }
 
     @Test
@@ -77,7 +84,7 @@ class HyperionProblemStatementGenerationServiceTest {
         course.setDescription("Test Description");
 
         assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, "Prompt")).isInstanceOf(InternalServerErrorAlertException.class)
-                .hasMessageContaining("too long").hasMessageContaining("50001 characters").hasMessageContaining("Maximum allowed: 50000");
+                .hasMessageContaining("exceeds the maximum allowed length");
     }
 
     @Test
@@ -103,7 +110,6 @@ class HyperionProblemStatementGenerationServiceTest {
         ProblemStatementGenerationResponseDTO resp = hyperionProblemStatementGenerationService.generateProblemStatement(course, "Prompt");
         assertThat(resp).isNotNull();
         assertThat(resp.draftProblemStatement()).isEqualTo(generatedDraft);
-        assertThat(resp.error()).isNull();
     }
 
     @Test
@@ -120,6 +126,41 @@ class HyperionProblemStatementGenerationServiceTest {
         ProblemStatementGenerationResponseDTO resp = hyperionProblemStatementGenerationService.generateProblemStatement(course, "Prompt");
         assertThat(resp).isNotNull();
         assertThat(resp.draftProblemStatement()).hasSize(50_000);
-        assertThat(resp.error()).isNull();
+    }
+
+    @Test
+    void generateProblemStatement_throwsExceptionWhenChatClientIsNull() {
+        var serviceWithNullClient = new HyperionProblemStatementGenerationService(null, new HyperionPromptTemplateService());
+        var course = new Course();
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        assertThatThrownBy(() -> serviceWithNullClient.generateProblemStatement(course, "Prompt")).isInstanceOf(InternalServerErrorAlertException.class)
+                .hasMessageContaining("AI chat client is not configured");
+    }
+
+    @Test
+    void generateProblemStatement_throwsExceptionWhenResponseIsNull() {
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(null)))));
+
+        var course = new Course();
+        course.setId(999L);
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, "Prompt")).isInstanceOf(InternalServerErrorAlertException.class)
+                .hasMessageContaining("Generated problem statement is null");
+    }
+
+    @Test
+    void generateProblemStatement_throwsExceptionWhenUserPromptTooLong() {
+        // 1001 characters exceeds MAX_USER_PROMPT_LENGTH (1000)
+        String tooLongPrompt = "a".repeat(1001);
+        var course = new Course();
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, tooLongPrompt)).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("exceeds maximum length");
     }
 }

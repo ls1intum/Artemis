@@ -3,12 +3,14 @@ package de.tum.cit.aet.artemis.hyperion.web;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.reset;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -38,6 +40,11 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     private long persistedExerciseId;
 
     private long persistedCourseId;
+
+    @AfterEach
+    void resetMocks() {
+        reset(azureOpenAiChatModel);
+    }
 
     @BeforeEach
     void setupTestData() {
@@ -311,5 +318,26 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         String body = "{\"problemStatementText\":\"\",\"userPrompt\":\"Make it better\"}";
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/refine/global", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isBadRequest()).andExpect(jsonPath("$.title").value("Method argument not valid")).andExpect(jsonPath("$.message").value("error.validation"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void shouldReturnNotFoundForGenerateWithNonExistentCourse() throws Exception {
+        long nonExistentCourseId = 999999L;
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        String body = "{\"userPrompt\":\"Prompt\"}";
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/generate", nonExistentCourseId).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void shouldReturnNotFoundForRefineWithNonExistentCourse() throws Exception {
+        long nonExistentCourseId = 999999L;
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        String body = "{\"problemStatementText\":\"Original problem statement\",\"userPrompt\":\"Make it better\"}";
+        request.performMvcRequest(
+                post("/api/hyperion/courses/{courseId}/problem-statements/refine/global", nonExistentCourseId).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isNotFound());
     }
 }

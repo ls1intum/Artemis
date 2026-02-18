@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRefinementResponseDTO;
+import io.micrometer.observation.annotation.Observed;
 
 /**
  * Service for refining existing problem statements using Spring AI. Supports two refinement modes:
@@ -59,6 +60,7 @@ public class HyperionProblemStatementRefinementService {
      * @throws BadRequestAlertException          if the input is invalid (empty problem statement)
      * @throws InternalServerErrorAlertException if the AI chat client is not configured or refinement fails
      */
+    @Observed(name = "hyperion.refine", contextualName = "problem statement refinement", lowCardinalityKeyValues = { "ai.span", "true" })
     public ProblemStatementRefinementResponseDTO refineProblemStatement(Course course, String originalProblemStatementText, String userPrompt) {
         log.debug("Refining problem statement for course [{}]", course.getId());
 
@@ -100,15 +102,14 @@ public class HyperionProblemStatementRefinementService {
      */
     private ProblemStatementRefinementResponseDTO validateAndReturnResponse(String originalProblemStatementText, String refinedProblemStatementText) {
         if (refinedProblemStatementText.length() > MAX_PROBLEM_STATEMENT_LENGTH) {
-            throw new InternalServerErrorAlertException(
-                    "Refined problem statement is too long (" + refinedProblemStatementText.length() + " characters). Maximum allowed: " + MAX_PROBLEM_STATEMENT_LENGTH,
-                    "ProblemStatement", "ProblemStatementRefinement.refinedProblemStatementTooLong");
+            log.warn("Refined problem statement exceeds maximum length: {} characters (max {})", refinedProblemStatementText.length(), MAX_PROBLEM_STATEMENT_LENGTH);
+            throw new InternalServerErrorAlertException("Refined problem statement exceeds the maximum allowed length", "ProblemStatement",
+                    "ProblemStatementRefinement.refinedProblemStatementTooLong");
         }
 
         // Refinement didn't change content (compare trimmed values to detect semantically unchanged content)
         if (refinedProblemStatementText.trim().equals(originalProblemStatementText.trim())) {
-            throw new InternalServerErrorAlertException("Problem statement is the same after refinement", "ProblemStatement",
-                    "ProblemStatementRefinement.refinedProblemStatementUnchanged");
+            throw new BadRequestAlertException("Problem statement is the same after refinement", "ProblemStatement", "ProblemStatementRefinement.refinedProblemStatementUnchanged");
         }
 
         return new ProblemStatementRefinementResponseDTO(refinedProblemStatementText);

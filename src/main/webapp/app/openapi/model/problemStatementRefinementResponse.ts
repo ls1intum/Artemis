@@ -16,6 +16,6 @@ export interface ProblemStatementRefinementResponse {
     /**
      * Refined problem statement text
      */
-    refinedProblemStatement: string;
+    refinedProblemStatement?: string;
 }
 

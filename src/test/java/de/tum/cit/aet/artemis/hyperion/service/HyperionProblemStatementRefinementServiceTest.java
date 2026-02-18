@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -30,12 +31,19 @@ class HyperionProblemStatementRefinementServiceTest {
 
     private HyperionProblemStatementRefinementService hyperionProblemStatementRefinementService;
 
+    private AutoCloseable mocks;
+
     @BeforeEach
     void setup() {
-        MockitoAnnotations.openMocks(this);
+        mocks = MockitoAnnotations.openMocks(this);
         ChatClient chatClient = ChatClient.create(chatModel);
         var templateService = new HyperionPromptTemplateService();
         this.hyperionProblemStatementRefinementService = new HyperionProblemStatementRefinementService(chatClient, templateService);
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        mocks.close();
     }
 
     @Test
@@ -79,8 +87,7 @@ class HyperionProblemStatementRefinementServiceTest {
         course.setDescription("Test Description");
 
         assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatement(course, originalStatement, "Refine this"))
-                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("too long").hasMessageContaining("50001 characters")
-                .hasMessageContaining("Maximum allowed: 50000");
+                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("exceeds the maximum allowed length");
     }
 
     @Test
@@ -187,7 +194,7 @@ class HyperionProblemStatementRefinementServiceTest {
         course.setDescription("Test Description");
 
         assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatement(course, originalStatement, "Refine this"))
-                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("same after refinement");
+                .isInstanceOf(BadRequestAlertException.class).hasMessageContaining("same after refinement");
     }
 
     @Test

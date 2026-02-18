@@ -39,7 +39,18 @@ final class HyperionPromptSanitizer {
      * Pattern matching prompt template delimiter lines (e.g. "--- BEGIN USER REQUIREMENTS ---").
      * Stripping these prevents users from injecting fake section boundaries that could break out of their designated prompt section.
      */
-    private static final Pattern DELIMITER_PATTERN = Pattern.compile("^-{3,}\\s*(BEGIN|END)\\s+.*-{3,}$", Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
+    private static final Pattern DELIMITER_PATTERN = Pattern.compile("^\\s*-{3,}\\s*(BEGIN|END)\\s+.*-{3,}$", Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
+
+    /**
+     * Pattern matching template variable sequences (e.g. "{{variable}}").
+     * Stripping these prevents users from injecting fake template placeholders that could be expanded by the template engine.
+     */
+    private static final Pattern TEMPLATE_VAR_PATTERN = Pattern.compile("\\{\\{[^}]*\\}\\}");
+
+    /**
+     * Pattern matching HTML tags for stripping from rich-text content like course descriptions.
+     */
+    private static final Pattern HTML_TAG_PATTERN = Pattern.compile("<[^>]+>");
 
     private HyperionPromptSanitizer() {
         // utility class
@@ -75,6 +86,7 @@ final class HyperionPromptSanitizer {
         }
         String sanitized = CONTROL_CHAR_PATTERN.matcher(input).replaceAll("");
         sanitized = DELIMITER_PATTERN.matcher(sanitized).replaceAll("");
+        sanitized = TEMPLATE_VAR_PATTERN.matcher(sanitized).replaceAll("");
         return sanitized.trim();
     }
 
@@ -90,7 +102,11 @@ final class HyperionPromptSanitizer {
      * Returns the sanitized course description, falling back to {@link #DEFAULT_COURSE_DESCRIPTION} if blank.
      */
     static String getSanitizedCourseDescription(Course course) {
-        String sanitized = sanitizeInput(course.getDescription());
+        String description = course.getDescription();
+        if (description != null) {
+            description = HTML_TAG_PATTERN.matcher(description).replaceAll("");
+        }
+        String sanitized = sanitizeInput(description);
         return sanitized.isBlank() ? DEFAULT_COURSE_DESCRIPTION : sanitized;
     }
 

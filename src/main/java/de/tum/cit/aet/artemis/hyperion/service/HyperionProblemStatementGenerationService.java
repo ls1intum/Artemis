@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementGenerationResponseDTO;
+import io.micrometer.observation.annotation.Observed;
 
 /**
  * Service for generating initial draft problem statements using Spring AI.
@@ -54,11 +55,12 @@ public class HyperionProblemStatementGenerationService {
      * @return the generated problem statement response
      * @throws InternalServerErrorAlertException if generation fails or response is too long
      */
+    @Observed(name = "hyperion.generate", contextualName = "problem statement generation", lowCardinalityKeyValues = { "ai.span", "true" })
     public ProblemStatementGenerationResponseDTO generateProblemStatement(Course course, String userPrompt) {
         log.debug("Generating problem statement for course [{}]", course.getId());
 
         if (chatClient == null) {
-            throw new InternalServerErrorAlertException("AI chat client is not configured", "Hyperion", "ProblemStatementGeneration.generationFailed");
+            throw new InternalServerErrorAlertException("AI chat client is not configured", "ProblemStatement", "ProblemStatementGeneration.generationFailed");
         }
 
         String sanitizedPrompt = sanitizeInput(userPrompt);
@@ -85,10 +87,10 @@ public class HyperionProblemStatementGenerationService {
 
         // Validate response length
         if (generatedProblemStatement.length() > MAX_PROBLEM_STATEMENT_LENGTH) {
-            log.warn("Generated problem statement for course [{}] exceeds maximum length: {} characters", course.getId(), generatedProblemStatement.length());
-            throw new InternalServerErrorAlertException(
-                    "Generated problem statement is too long (" + generatedProblemStatement.length() + " characters). Maximum allowed: " + MAX_PROBLEM_STATEMENT_LENGTH,
-                    "ProblemStatement", "ProblemStatementGeneration.generatedProblemStatementTooLong");
+            log.warn("Generated problem statement for course [{}] exceeds maximum length: {} characters (max {})", course.getId(), generatedProblemStatement.length(),
+                    MAX_PROBLEM_STATEMENT_LENGTH);
+            throw new InternalServerErrorAlertException("Generated problem statement exceeds the maximum allowed length", "ProblemStatement",
+                    "ProblemStatementGeneration.generatedProblemStatementTooLong");
         }
 
         return new ProblemStatementGenerationResponseDTO(generatedProblemStatement);

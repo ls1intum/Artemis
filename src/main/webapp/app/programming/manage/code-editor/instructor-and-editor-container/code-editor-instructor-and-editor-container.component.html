@@ -167,7 +167,9 @@
                         <div ngbDropdown class="btn-group" [autoClose]="'outside'" #aiDropdown="ngbDropdown">
                             <button
                                 #aiDropdownToggle
-                                class="btn btn-outline-primary"
+                                pButton
+                                severity="primary"
+                                [outlined]="true"
                                 type="button"
                                 ngbDropdownToggle
                                 [disabled]="
@@ -266,21 +268,23 @@
                             </div>
                             <div class="p-3">
                                 <textarea
+                                    #refinementTextarea
                                     [value]="refinementPrompt()"
-                                    (input)="onRefinementPromptInput($event)"
+                                    (input)="onRefinementPromptInput(refinementTextarea.value)"
                                     pTextarea
                                     class="refinement-textarea"
                                     rows="5"
                                     cdkTrapFocus
                                     cdkTrapFocusAutoCapture
+                                    [attr.aria-label]="'artemisApp.programmingExercise.problemStatement.yourRequirements' | artemisTranslate"
                                     [placeholder]="'artemisApp.programmingExercise.problemStatement.yourRequirements' | artemisTranslate"
                                     [disabled]="isAiApplying()"
                                     [attr.maxlength]="MAX_USER_PROMPT_LENGTH"
                                 ></textarea>
-                                <div class="text-end text-muted small mt-1">{{ refinementPrompt()?.length || 0 }}/{{ MAX_USER_PROMPT_LENGTH }}</div>
+                                <div class="text-end text-muted small mt-1">{{ refinementPrompt().length }}/{{ MAX_USER_PROMPT_LENGTH }}</div>
                             </div>
                             <div class="d-flex justify-content-end p-3" style="border-top: 1px solid var(--p-content-border-color)">
-                                <button pButton type="button" size="small" [disabled]="!refinementPrompt()?.trim()" (click)="submitRefinement()">
+                                <button pButton type="button" size="small" [disabled]="!refinementPrompt().trim()" (click)="submitRefinement()">
                                     <fa-icon [icon]="faPaperPlane" class="me-1" />
                                     <span
                                         [jhiTranslate]="

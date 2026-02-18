@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Injectable, WritableSignal, inject } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable, OperatorFunction, catchError, finalize, map, of } from 'rxjs';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { FileService } from 'app/shared/service/file.service';
@@ -42,17 +42,17 @@ export class ProblemStatementService {
     }
 
     /** Generates a problem statement using the provided prompt. */
-    generateProblemStatement(exercise: ProgrammingExercise | undefined, prompt: string, loadingSignal: WritableSignal<boolean>): Observable<OperationResult> {
+    generateProblemStatement(exercise: ProgrammingExercise | undefined, prompt: string, setLoading: (loading: boolean) => void): Observable<OperationResult> {
         const courseId = getCourseId(exercise);
         if (!courseId || !prompt?.trim()) {
             return of({ success: false });
         }
-        loadingSignal.set(true);
+        setLoading(true);
         return this.hyperionApiService
             .generateProblemStatement(courseId, buildGenerationRequest(prompt))
             .pipe(
                 this.handleApiResponse(
-                    loadingSignal,
+                    setLoading,
                     'artemisApp.programmingExercise.problemStatement.generationSuccess',
                     'artemisApp.programmingExercise.problemStatement.generationError',
                     isValidGenerationResponse,
@@ -62,7 +62,7 @@ export class ProblemStatementService {
     }
 
     /** Refines a problem statement globally using the provided prompt. */
-    refineGlobally(exercise: ProgrammingExercise | undefined, currentContent: string, prompt: string, loadingSignal: WritableSignal<boolean>): Observable<OperationResult> {
+    refineGlobally(exercise: ProgrammingExercise | undefined, currentContent: string, prompt: string, setLoading: (loading: boolean) => void): Observable<OperationResult> {
         const courseId = getCourseId(exercise);
         if (!courseId || !prompt?.trim() || !currentContent?.trim()) {
             const emptyContent = !currentContent?.trim();
@@ -71,12 +71,12 @@ export class ProblemStatementService {
             }
             return of({ success: false, errorHandled: emptyContent });
         }
-        loadingSignal.set(true);
+        setLoading(true);
         return this.hyperionApiService
             .refineProblemStatementGlobally(courseId, buildGlobalRefinementRequest(currentContent, prompt))
             .pipe(
                 this.handleApiResponse(
-                    loadingSignal,
+                    setLoading,
                     'artemisApp.programmingExercise.problemStatement.refinementSuccess',
                     'artemisApp.programmingExercise.problemStatement.refinementError',
                     isValidRefinementResponse,
@@ -87,7 +87,7 @@ export class ProblemStatementService {
 
     /** Shared pipe operator for handling API responses with consistent loading, alerts, and error handling. */
     private handleApiResponse<T>(
-        loadingSignal: WritableSignal<boolean>,
+        setLoading: (loading: boolean) => void,
         successKey: string,
         errorKey: string,
         isValid: (response: T) => boolean,
@@ -108,7 +108,7 @@ export class ProblemStatementService {
                     const handledByInterceptor = error instanceof HttpErrorResponse && !!error.error?.errorKey;
                     return of({ success: false, errorHandled: handledByInterceptor });
                 }),
-                finalize(() => loadingSignal.set(false)),
+                finalize(() => setLoading(false)),
             );
     }
 }

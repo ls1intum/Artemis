@@ -84,6 +84,10 @@ describe('DiffUtils', () => {
         jest.spyOn(document.body, 'appendChild').mockImplementation((node: Node) => node as any);
     });
 
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
     describe('processRepositoryDiff', () => {
         it('should ignore files without content changes', async () => {
             const originalFiles = new Map([['unchanged.txt', 'same content']]);

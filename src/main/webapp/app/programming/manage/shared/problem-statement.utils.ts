@@ -1,4 +1,6 @@
+import { Injector, Signal, afterNextRender } from '@angular/core';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { ProblemStatementGlobalRefinementRequest } from 'app/openapi/model/problemStatementGlobalRefinementRequest';
 import { ProblemStatementGenerationRequest } from 'app/openapi/model/problemStatementGenerationRequest';
 import { ProblemStatementRefinementResponse } from 'app/openapi/model/problemStatementRefinementResponse';
@@ -78,4 +80,74 @@ export function buildGenerationRequest(userPrompt: string): ProblemStatementGene
     return {
         userPrompt: userPrompt.trim(),
     };
+}
+
+/**
+ * Applies content to the editable instructions editor once it's ready.
+ * Uses `afterNextRender` with a bounded retry loop to handle cases where the
+ * `viewChild` isn't available immediately (e.g., when a re-render is triggered).
+ *
+ * @param content           The content to apply to the editor
+ * @param type              'refine' to use applyRefinedContent (diff mode), 'generate' to use setText (replace all)
+ * @param editorSignal      Signal returning the editable instruction component (or undefined)
+ * @param pendingIntervals  Array tracking active interval IDs for cleanup on destroy
+ * @param injector          The component's injector for `afterNextRender`
+ */
+export function updateEditorWhenReady(
+    content: string,
+    type: 'refine' | 'generate',
+    editorSignal: Signal<ProgrammingExerciseEditableInstructionComponent | undefined>,
+    pendingIntervals: ReturnType<typeof setInterval>[],
+    injector: Injector,
+): void {
+    // Cancel any existing pending intervals before scheduling a new attempt
+    for (const id of pendingIntervals) {
+        clearInterval(id);
+    }
+    pendingIntervals.length = 0;
+
+    afterNextRender(
+        () => {
+            const editor = editorSignal();
+
+            const apply = (comp: ProgrammingExerciseEditableInstructionComponent) => {
+                if (type === 'refine') {
+                    comp.applyRefinedContent(content);
+                } else {
+                    comp.setText(content);
+                }
+            };
+
+            if (editor) {
+                apply(editor);
+                return;
+            }
+
+            // Editor not ready yet — retry with a bounded loop
+            let retries = 0;
+            const maxRetries = 10;
+            const intervalId = setInterval(() => {
+                retries++;
+                const editorRetry = editorSignal();
+                if (editorRetry) {
+                    clearInterval(intervalId);
+                    removeFromArray(pendingIntervals, intervalId);
+                    apply(editorRetry);
+                } else if (retries >= maxRetries) {
+                    clearInterval(intervalId);
+                    removeFromArray(pendingIntervals, intervalId);
+                }
+            }, 50);
+            pendingIntervals.push(intervalId);
+        },
+        { injector },
+    );
+}
+
+/** Removes the first occurrence of an item from an array in place. */
+function removeFromArray<T>(arr: T[], item: T): void {
+    const index = arr.indexOf(item);
+    if (index !== -1) {
+        arr.splice(index, 1);
+    }
 }
