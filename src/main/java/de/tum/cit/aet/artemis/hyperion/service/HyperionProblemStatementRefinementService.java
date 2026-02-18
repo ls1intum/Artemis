@@ -87,7 +87,9 @@ public class HyperionProblemStatementRefinementService {
             refinedProblemStatementText = chatClient.prompt().system(systemPrompt).user(userMessage).call().content();
         }
         catch (Exception e) {
-            throw handleRefinementError(course, originalProblemStatementText, e);
+            log.error("Error refining problem statement for course [{}]. Original statement length: {}. Error: {}", course.getId(), originalProblemStatementText.length(),
+                    e.getMessage(), e);
+            throw new InternalServerErrorAlertException("Failed to refine problem statement", "ProblemStatement", "ProblemStatementRefinement.problemStatementRefinementFailed");
         }
 
         if (refinedProblemStatementText == null) {
@@ -107,25 +109,12 @@ public class HyperionProblemStatementRefinementService {
                     "ProblemStatementRefinement.refinedProblemStatementTooLong");
         }
 
-        // Refinement didn't change content — originalProblemStatementText is already sanitized/trimmed,
-        // so only the AI response needs trimming for a fair comparison.
+        // Refinement didn't change content — originalProblemStatementText is already sanitized/trimmed, so only the AI response needs trimming for a fair comparison.
         if (refinedProblemStatementText.trim().equals(originalProblemStatementText)) {
             throw new BadRequestAlertException("Problem statement is the same after refinement", "ProblemStatement", "ProblemStatementRefinement.refinedProblemStatementUnchanged");
         }
 
         return new ProblemStatementRefinementResponseDTO(refinedProblemStatementText);
-    }
-
-    /**
-     * Handles refinement errors by logging and returning an appropriate exception to throw.
-     *
-     * @return a RuntimeException that the caller must throw
-     */
-    private RuntimeException handleRefinementError(Course course, String originalProblemStatementText, Exception e) {
-        log.error("Error refining problem statement for course [{}]. Original statement length: {}. Error: {}", course.getId(), originalProblemStatementText.length(),
-                e.getMessage(), e);
-
-        return new InternalServerErrorAlertException("Failed to refine problem statement", "ProblemStatement", "ProblemStatementRefinement.problemStatementRefinementFailed");
     }
 
     /**

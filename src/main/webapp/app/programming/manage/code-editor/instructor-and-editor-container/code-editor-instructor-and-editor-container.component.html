@@ -247,7 +247,7 @@
                         </div>
 
                         @if (isGeneratingOrRefining()) {
-                            <button pButton type="button" severity="secondary" outlined class="ms-1" (click)="cancelRefinement()">
+                            <button pButton type="button" severity="secondary" outlined class="ms-1" (click)="cancelAiOperation()">
                                 <fa-icon [icon]="faBan" class="me-1" />
                                 <span class="d-none d-sm-inline" jhiTranslate="entity.action.cancel"></span>
                             </button>
@@ -255,8 +255,8 @@
 
                         <!-- Refinement Prompt Popover -->
                         <!-- Prompt is intentionally preserved on dismiss so users don't lose typed text -->
-                        <p-popover #refinementPopover [dismissable]="true" [style]="{ width: 'min(32rem, 90vw)', border: '1px solid var(--p-primary-color)' }">
-                            <div class="d-flex justify-content-between align-items-center p-3 refinement-popup-header fw-medium">
+                        <p-popover #refinementPopover [dismissable]="true" [style]="{ width: 'min(32rem, 90vw)' }" styleClass="border-1 border-primary">
+                            <div class="d-flex justify-content-between align-items-center p-3 bg-primary text-primary-contrast fw-medium">
                                 <span
                                     [jhiTranslate]="
                                         shouldShowGenerateButton()
@@ -270,9 +270,8 @@
                             </div>
                             <div class="p-3">
                                 <textarea
-                                    #refinementTextarea
-                                    [value]="refinementPrompt()"
-                                    (input)="onRefinementPromptInput(refinementTextarea.value)"
+                                    [ngModel]="refinementPrompt()"
+                                    (ngModelChange)="refinementPrompt.set($event)"
                                     pTextarea
                                     class="refinement-textarea"
                                     rows="5"
@@ -285,8 +284,8 @@
                                 ></textarea>
                                 <div class="text-end text-muted small mt-1">{{ refinementPrompt().length }}/{{ MAX_USER_PROMPT_LENGTH }}</div>
                             </div>
-                            <div class="d-flex justify-content-end p-3" style="border-top: 1px solid var(--p-content-border-color)">
-                                <button pButton type="button" size="small" [disabled]="!refinementPrompt().trim()" (click)="submitRefinement()">
+                            <div class="d-flex justify-content-end p-3 refinement-popup-footer">
+                                <button pButton type="button" size="small" [disabled]="!refinementPrompt().trim() || isAiApplying()" (click)="submitRefinement()">
                                     <fa-icon [icon]="faPaperPlane" class="me-1" />
                                     <span
                                         [jhiTranslate]="

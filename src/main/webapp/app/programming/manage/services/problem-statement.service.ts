@@ -6,6 +6,7 @@ import { FileService } from 'app/shared/service/file.service';
 import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import {
+    MAX_PROBLEM_STATEMENT_LENGTH,
     buildGenerationRequest,
     buildGlobalRefinementRequest,
     getCourseId,
@@ -71,6 +72,10 @@ export class ProblemStatementService {
             }
             return of({ success: false, errorHandled: emptyContent });
         }
+        if (currentContent.length > MAX_PROBLEM_STATEMENT_LENGTH) {
+            this.alertService.error('artemisApp.programmingExercise.problemStatement.problemStatementTooLong');
+            return of({ success: false, errorHandled: true });
+        }
         setLoading(true);
         return this.hyperionApiService
             .refineProblemStatementGlobally(courseId, buildGlobalRefinementRequest(currentContent, prompt))
@@ -105,8 +110,6 @@ export class ProblemStatementService {
                     return { success, content: getContent(response), errorHandled: !success };
                 }),
                 catchError((error) => {
-                    // Consider the error handled by the global interceptor if it is an HTTP error
-                    // with a recognized alert key (errorKey or title) in the response body.
                     const handledByInterceptor = error instanceof HttpErrorResponse && !!(error.error?.errorKey || error.error?.title);
                     return of({ success: false, errorHandled: handledByInterceptor });
                 }),

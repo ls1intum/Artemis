@@ -1,4 +1,4 @@
-import { Component, DestroyRef, Injector, OnDestroy, TemplateRef, ViewChild, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, TemplateRef, ViewChild, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
@@ -32,7 +32,6 @@ import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from '../../status/programming-exercise-instructor-exercise-status.component';
-// TODO: Migrate pre-existing NgbDropdown/NgbTooltip to PrimeNG equivalents (e.g. p-menu / pTooltip)
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -59,7 +58,7 @@ import { ButtonSize } from 'app/shared/components/buttons/button/button.componen
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
 import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
-import { MAX_USER_PROMPT_LENGTH, isTemplateOrEmpty, updateEditorWhenReady } from 'app/programming/manage/shared/problem-statement.utils';
+import { MAX_USER_PROMPT_LENGTH, isTemplateOrEmpty } from 'app/programming/manage/shared/problem-statement.utils';
 import { TooltipModule } from 'primeng/tooltip';
 import { TextareaModule } from 'primeng/textarea';
 import { BadgeModule } from 'primeng/badge';
@@ -124,7 +123,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     protected isGeneratingOrRefining = signal(false);
     protected readonly isAiApplying = computed(() => this.isGeneratingOrRefining() || this.artemisIntelligenceService.isLoading());
     private currentRefinementSubscription: Subscription | undefined;
-    private pendingEditorIntervals: ReturnType<typeof setInterval>[] = [];
 
     readonly showDiff = signal(false);
 
@@ -136,7 +134,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
     private profileService = inject(ProfileService);
     private problemStatementService = inject(ProblemStatementService);
-    private injector = inject(Injector);
     private destroyRef = inject(DestroyRef);
 
     templateProblemStatement = signal<string>('');
@@ -256,10 +253,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.clearJobSubscription(true);
         this.statusSubscription?.unsubscribe();
         this.currentRefinementSubscription?.unsubscribe();
-        for (const id of this.pendingEditorIntervals) {
-            clearInterval(id);
-        }
-        this.pendingEditorIntervals = [];
         super.ngOnDestroy();
     }
 
@@ -510,17 +503,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     /**
-     * Handles input events from the refinement prompt textarea with proper typing.
-     */
-    onRefinementPromptInput(value: string): void {
-        this.refinementPrompt.set(value);
-    }
-
-    /**
      * Cancels the ongoing problem statement generation or refinement.
      * Preserves the user's prompt so they can retry or modify it.
      */
-    cancelRefinement(): void {
+    cancelAiOperation(): void {
         this.currentRefinementSubscription?.unsubscribe();
         this.currentRefinementSubscription = undefined;
         this.isGeneratingOrRefining.set(false);
@@ -559,8 +545,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     if (result.success && result.content) {
                         const draftContent = result.content;
 
-                        // Update the editor with retry logic
-                        this.updateEditorWhenReady(draftContent, 'generate');
+                        // Update the editor directly — editor is always present in this view
+                        this.editableInstructions()?.setText(draftContent);
 
                         // Update model and trigger change
                         if (this.exercise) {
@@ -595,8 +581,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 next: (result) => {
                     if (result.success && result.content) {
                         this.showDiff.set(true);
-                        const refinedContent = result.content;
-                        this.updateEditorWhenReady(refinedContent, 'refine');
+                        this.editableInstructions()?.applyRefinedContent(result.content);
                         this.refinementPrompt.set('');
                     } else if (!result.errorHandled) {
                         this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
@@ -606,17 +591,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
                 },
             });
-    }
-
-    /**
-     * Updates the editor content once it's available.
-     * Delegates to the shared utility which uses afterNextRender with a retry loop.
-     *
-     * @param content The content to apply
-     * @param type 'refine' to use applyRefinedContent (diff mode), 'generate' to use setText (replace all)
-     */
-    private updateEditorWhenReady(content: string, type: 'refine' | 'generate'): void {
-        updateEditorWhenReady(content, type, this.editableInstructions, this.pendingEditorIntervals, this.injector);
     }
 
     /**

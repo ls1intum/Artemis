@@ -61,6 +61,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
     private diffSnapshotModel?: monaco.editor.ITextModel;
     private diffListenersAttached = false;
+    private resizeObserver?: ResizeObserver;
 
     /*
      * Inputs and outputs.
@@ -220,15 +221,15 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
-        const resizeObserver = new ResizeObserver(() => {
+        this.resizeObserver = new ResizeObserver(() => {
             if (this.mode() === 'diff' && this._diffEditor) {
                 this._diffEditor.layout();
             } else {
                 this._editor.layout();
             }
         });
-        resizeObserver.observe(this.monacoEditorContainerElement);
-        resizeObserver.observe(this.diffEditorContainerElement);
+        this.resizeObserver.observe(this.monacoEditorContainerElement);
+        this.resizeObserver.observe(this.diffEditorContainerElement);
 
         this.ngZone.runOutsideAngular(() => {
             this.contentHeightListener = this._editor.onDidContentSizeChange((event) => {
@@ -249,11 +250,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
         // Wire listeners that depend on the "editable" editor (normal or diff modified).
         this.setActiveEditorContext();
-        // Ensure diff-only listeners are attached once.
-        this.ensureDiffListeners();
     }
 
     ngOnDestroy() {
+        this.resizeObserver?.disconnect();
         this.reset();
         this._editor.dispose();
         this._diffEditor?.dispose();
@@ -303,6 +303,12 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             return;
         }
 
+        // Dispose listener before the editor to prevent the onDidUpdateDiff callback
+        // from firing synchronously during _diffEditor.dispose() and accessing a disposed editor.
+        this.diffUpdateListener?.dispose();
+        this.diffUpdateListener = undefined;
+        this.diffListenersAttached = false;
+
         if (this._diffEditor) {
             // Clear cached editor before disposing to prevent race conditions
             // (e.g., ResizeObserver callback reading mode() as 'diff' during transition)
@@ -312,9 +318,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         }
 
         this.disposeDiffSnapshotModel();
-        this.diffListenersAttached = false;
-        this.diffUpdateListener?.dispose();
-        this.diffUpdateListener = undefined;
 
         this.setContainersVisibility('normal');
         this.setActiveEditorContext();
@@ -337,7 +340,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         // Recreate snapshot on every diff entry
         this.disposeDiffSnapshotModel();
 
-        const snapshotUri = monaco.Uri.parse(`inmemory://model/snapshot-${this._editor.getId()}/${Date.now()}`);
+        const snapshotUri = monaco.Uri.parse(`inmemory://model/snapshot-${this._editor.getId()}`);
         this.diffSnapshotModel = monaco.editor.createModel(currentContent, currentLanguage, snapshotUri);
 
         if (currentModel) {

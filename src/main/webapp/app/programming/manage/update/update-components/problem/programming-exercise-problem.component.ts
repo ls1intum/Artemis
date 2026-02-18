@@ -1,4 +1,4 @@
-import { Component, DestroyRef, Injector, OnDestroy, OnInit, computed, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { faBan, faSave, faSpinner, faTableColumns } from '@fortawesome/free-solid-svg-icons';
@@ -19,7 +19,7 @@ import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { Subscription } from 'rxjs';
 import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
-import { MAX_USER_PROMPT_LENGTH, isTemplateOrEmpty, updateEditorWhenReady } from 'app/programming/manage/shared/problem-statement.utils';
+import { MAX_USER_PROMPT_LENGTH, isTemplateOrEmpty } from 'app/programming/manage/shared/problem-statement.utils';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -65,7 +65,6 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     userPrompt = signal('');
     isGeneratingOrRefining = signal(false);
     private currentGenerationSubscription: Subscription | undefined = undefined;
-    private pendingEditorIntervals: ReturnType<typeof setInterval>[] = [];
     private profileService = inject(ProfileService);
     hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
 
@@ -79,7 +78,6 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     private translateService = inject(TranslateService);
     private problemStatementService = inject(ProblemStatementService);
     private alertService = inject(AlertService);
-    private injector = inject(Injector);
     private destroyRef = inject(DestroyRef);
 
     /**
@@ -91,10 +89,6 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
             this.currentGenerationSubscription.unsubscribe();
             this.currentGenerationSubscription = undefined;
         }
-        for (const id of this.pendingEditorIntervals) {
-            clearInterval(id);
-        }
-        this.pendingEditorIntervals = [];
     }
 
     showDiff = signal(false);
@@ -131,11 +125,11 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Cancels the ongoing problem statement generation, refinement.
+     * Cancels the ongoing problem statement generation or refinement.
      * Preserves the user's prompt so they can retry or modify it.
      * Resets all in-progress states.
      */
-    cancelGeneration(): void {
+    cancelAiOperation(): void {
         if (this.currentGenerationSubscription) {
             this.currentGenerationSubscription.unsubscribe();
             this.currentGenerationSubscription = undefined;
@@ -171,25 +165,17 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                 next: (result) => {
                     if (result.success && result.content) {
                         const draftContent = result.content;
-                        const editorComponent = this.editableInstructions();
 
-                        // Update the editor using the facade method
-                        if (editorComponent) {
-                            editorComponent.setText(draftContent);
-                        }
+                        // Update the editor directly
+                        this.editableInstructions()?.setText(draftContent);
 
-                        // Always update the model/state
+                        // Update the model/state
                         exercise.problemStatement = draftContent;
                         this.currentProblemStatement.set(draftContent);
                         this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
                         this.problemStatementChange.emit(draftContent);
                         this.programmingExerciseChange.emit(exercise);
                         this.userPrompt.set('');
-
-                        // If editor was unavailable, schedule a retry when ready
-                        if (!editorComponent) {
-                            this.updateEditorWhenReady(draftContent, 'generate');
-                        }
                     } else if (!result.errorHandled) {
                         this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
                     }
@@ -227,15 +213,12 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                     if (result.success && result.content) {
                         this.showDiff.set(true);
                         this.userPrompt.set('');
-                        const refinedContent = result.content;
-                        this.updateEditorWhenReady(refinedContent, 'refine');
+                        this.editableInstructions()?.applyRefinedContent(result.content);
                     } else if (!result.errorHandled) {
                         this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
                     }
                 },
-                // Safety net: catchError in handleApiResponse converts errors to next values,
-                // so this callback is unreachable in practice but retained defensively.
-                error: /* istanbul ignore next */ () => {
+                error: () => {
                     this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
                 },
             });
@@ -257,17 +240,6 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
             this.currentProblemStatement.set(currentContent);
         }
         this.showDiff.set(false);
-    }
-
-    /**
-     * Updates the editor content once it's available.
-     * Delegates to the shared utility which uses afterNextRender with a retry loop.
-     *
-     * @param content The content to apply
-     * @param type 'refine' to use applyRefinedContent (diff mode), 'generate' to use setText (replace all)
-     */
-    private updateEditorWhenReady(content: string, type: 'refine' | 'generate'): void {
-        updateEditorWhenReady(content, type, this.editableInstructions, this.pendingEditorIntervals, this.injector);
     }
 
     /**

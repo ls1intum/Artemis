@@ -254,6 +254,7 @@
                 "generationError": "Failed to generate problem statement. Please try again.",
                 "refinementSuccess": "Problem statement has been successfully refined.",
                 "refinementError": "Failed to refine problem statement. Please try again.",
+                "problemStatementTooLong": "The problem statement is too long to refine. Please reduce the content and try again.",
                 "reviewChanges": "Review Changes",
                 "reviewChangesDescription": "Green lines will be added, red lines will be removed.",
                 "revertAll": "Revert All",

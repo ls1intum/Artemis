@@ -31,11 +31,18 @@ public class HyperionPromptTemplateService {
     /**
      * Cache for loaded template strings, keyed by classpath resource path.
      * <p>
-     * Entries are never evicted because the templates are classpath resources that do not
-     * change at runtime. In development / hot-reload scenarios a server restart is required
-     * for template changes to take effect.
+     * This cache is unbounded but safe in practice because the number of prompt templates
+     * is small and fixed at compile time. Note: changes to template files on the classpath
+     * will not take effect until the server is restarted.
      */
     private final ConcurrentHashMap<String, String> templateCache = new ConcurrentHashMap<>();
+
+    /**
+     * Clears the template cache. Intended for testing only.
+     */
+    void clearCache() {
+        templateCache.clear();
+    }
 
     /**
      * Render the template at the given classpath resource path with the provided variables.

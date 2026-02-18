@@ -99,6 +99,17 @@ class HyperionProblemStatementGenerationServiceTest {
     }
 
     @Test
+    void generateProblemStatement_throwsExceptionWhenUserPromptIsBlank() {
+        var course = new Course();
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        // Should throw exception when userPrompt is whitespace-only (sanitized to empty string)
+        assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, "   ")).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("User prompt cannot be empty");
+    }
+
+    @Test
     void generateProblemStatement_handlesNullCourseFields() {
         String generatedDraft = "Generated draft with default course info";
         when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(generatedDraft)))));
