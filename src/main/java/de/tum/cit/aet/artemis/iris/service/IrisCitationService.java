@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.hibernate.Hibernate;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -81,13 +82,23 @@ public class IrisCitationService {
     }
 
     /**
-     * Loads the session with messages and contents, resolves citation info from the messages, and sets it on the provided session.
+     * Loads the session with messages and contents (if not already initialized), resolves citation info from the messages, and sets it on the provided session.
+     * <p>
+     * If the session's messages and each message's content collection are already initialized (e.g. loaded by a caller's EntityGraph), the existing
+     * in-memory data is used directly and no additional database query is issued. Otherwise, the session is reloaded via
+     * {@link IrisSessionRepository#findByIdWithMessagesAndContents}.
      *
      * @param session the session to enrich with citation info
      */
     public void enrichSessionWithCitationInfo(IrisSession session) {
-        IrisSession sessionWithContents = irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
-        session.setCitationInfo(resolveCitationInfoFromMessages(sessionWithContents.getMessages()));
+        List<IrisMessage> messages = session.getMessages();
+        boolean alreadyLoaded = Hibernate.isInitialized(messages)
+                && (messages == null || messages.isEmpty() || messages.stream().allMatch(m -> Hibernate.isInitialized(m.getContent())));
+        if (!alreadyLoaded) {
+            IrisSession sessionWithContents = irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
+            messages = sessionWithContents.getMessages();
+        }
+        session.setCitationInfo(resolveCitationInfoFromMessages(messages));
     }
 
     private Set<Long> extractEntityIds(String text) {
