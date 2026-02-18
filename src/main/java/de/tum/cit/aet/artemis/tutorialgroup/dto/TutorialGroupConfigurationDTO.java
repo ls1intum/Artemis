@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.tutorialgroup.dto;
 
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -11,6 +12,7 @@ import org.hibernate.Hibernate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 
@@ -45,6 +47,8 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 public record TutorialGroupConfigurationDTO(Long id, @NotNull String tutorialPeriodStartInclusive, @NotNull String tutorialPeriodEndInclusive,
         @NotNull Boolean useTutorialGroupChannels, @NotNull Boolean usePublicTutorialGroupChannels, Set<TutorialGroupFreePeriodDTO> tutorialGroupFreePeriods) {
 
+    private static final String ENTITY_NAME = "tutorialGroupsConfiguration";
+
     /**
      * DTO representing a {@link TutorialGroupFreePeriod}.
      *
@@ -54,7 +58,7 @@ public record TutorialGroupConfigurationDTO(Long id, @NotNull String tutorialPer
      * @param reason optional reason for the free period
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record TutorialGroupFreePeriodDTO(@NotNull Long id, String start, String end, String reason) {
+    public record TutorialGroupFreePeriodDTO(Long id, String start, String end, String reason) {
 
         /**
          * Creates a DTO from the given {@link TutorialGroupFreePeriod} entity.
@@ -80,8 +84,15 @@ public record TutorialGroupConfigurationDTO(Long id, @NotNull String tutorialPer
 
             TutorialGroupFreePeriod freePeriod = new TutorialGroupFreePeriod();
             freePeriod.setId(dto.id());
-            freePeriod.setStart(dto.start() != null ? ZonedDateTime.parse(dto.start()) : null);
-            freePeriod.setEnd(dto.end() != null ? ZonedDateTime.parse(dto.end()) : null);
+
+            try {
+                freePeriod.setStart(dto.start() != null ? ZonedDateTime.parse(dto.start()) : null);
+                freePeriod.setEnd(dto.end() != null ? ZonedDateTime.parse(dto.end()) : null);
+            }
+            catch (DateTimeParseException ex) {
+                throw new BadRequestAlertException("Tutorial period start date and end date must be valid ISO 8601 date strings.", ENTITY_NAME, "tutorialPeriodInvalidFormat");
+            }
+
             freePeriod.setReason(dto.reason());
             return freePeriod;
         }

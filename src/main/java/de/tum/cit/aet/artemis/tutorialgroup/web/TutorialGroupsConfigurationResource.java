@@ -78,7 +78,6 @@ public class TutorialGroupsConfigurationResource {
         if (configuration == null) {
             return ResponseEntity.ok().body(null);
         }
-        checkCourseTimeZone(course);
         return ResponseEntity.ok().body(TutorialGroupConfigurationDTO.of(configuration));
     }
 
@@ -176,9 +175,6 @@ public class TutorialGroupsConfigurationResource {
     }
 
     private static TutorialGroupsConfiguration getTutorialGroupsConfigurationFromDTO(TutorialGroupConfigurationDTO updatedTutorialGroupConfigurationDto) {
-        if (updatedTutorialGroupConfigurationDto == null) {
-            return new TutorialGroupsConfiguration();
-        }
         TutorialGroupsConfiguration tempForValidation = new TutorialGroupsConfiguration();
         tempForValidation.setTutorialPeriodStartInclusive(updatedTutorialGroupConfigurationDto.tutorialPeriodStartInclusive());
         tempForValidation.setTutorialPeriodEndInclusive(updatedTutorialGroupConfigurationDto.tutorialPeriodEndInclusive());
@@ -216,7 +212,7 @@ public class TutorialGroupsConfigurationResource {
 
     private void checkCourseTimeZone(Course course) {
         if (course.getTimeZone() == null) {
-            throw new BadRequestAlertException("The Tutorial group configuration has no configured time zone.", ENTITY_NAME, "tutorialGroupConfigurationHasNoTimeZone");
+            throw new BadRequestAlertException("The course has no configured time zone.", ENTITY_NAME, "courseHasNoTimeZone");
         }
     }
 }

@@ -224,7 +224,6 @@
             "idExists": "Eine neue Tutoriengruppen-Konfiguration darf noch keine ID besitzen.",
             "alreadyExists": "Für diesen Kurs existiert bereits eine Tutoriengruppen-Konfiguration.",
             "courseHasNoTimeZone": "Der Kurs hat keine konfigurierte Zeitzone.",
-            "tutorialGroupConfigurationHasNoTimeZone": "Die Tutoriengruppen-Konfiguration hat keine konfigurierte Zeitzone.",
             "idNull": "Eine Tutoriengruppen-Konfiguration kann nicht ohne ID aktualisiert werden.",
 
             "tutorialPeriodMissing": "Das Startdatum und das Enddatum des Tutorienzeitraums müssen gesetzt sein.",
