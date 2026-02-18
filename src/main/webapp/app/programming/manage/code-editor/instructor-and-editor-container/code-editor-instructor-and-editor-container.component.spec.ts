@@ -1,7 +1,7 @@
 import 'zone.js';
 import 'zone.js/testing';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { Provider } from '@angular/core';
+import { Provider, signal } from '@angular/core';
 import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing';
 import { Subject, of, throwError } from 'rxjs';
 import { CodeEditorInstructorAndEditorContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-and-editor-container.component';
@@ -231,8 +231,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             jumpToLine: jest.fn(),
         };
 
-        // editableInstructions is a viewChild signal; override with a callable mock
-        (comp as any).editableInstructions = jest.fn().mockReturnValue({
+        // editableInstructions is a viewChild() signal; override with a signal wrapping a mock object
+        (comp as any).editableInstructions = signal({
             jumpToLine: jest.fn(),
         });
 
@@ -665,7 +665,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             comp.locationIndex = 0;
 
             const mockEditable = { jumpToLine: jest.fn() };
-            (comp as any).editableInstructions = jest.fn().mockReturnValue(mockEditable);
+            (comp as any).editableInstructions = signal(mockEditable);
             const jumpSpy = mockEditable.jumpToLine;
 
             (comp as any).jumpToLocation(issue, 0); // Corrected: use (comp as any)
@@ -806,7 +806,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Diff Editor', () => 
             revertAll: jest.fn(),
             getCurrentContent: jest.fn().mockReturnValue('Reverted content'),
         };
-        (comp as any).editableInstructions = jest.fn().mockReturnValue(mockEditable) as any;
+        (comp as any).editableInstructions = signal(mockEditable);
 
         comp.revertAllRefinement();
 
