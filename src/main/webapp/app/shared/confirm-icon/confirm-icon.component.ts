@@ -15,7 +15,7 @@ export class ConfirmIconComponent {
     initialTooltip = input<string>();
     confirmIcon = input<IconProp>(faCheck);
     confirmTooltip = input<string>();
-    iconSize = input<SizeProp>('md');
+    iconSize = input<SizeProp>('1x');
     confirmEvent = output<boolean>();
     showConfirm = signal(false);
 
