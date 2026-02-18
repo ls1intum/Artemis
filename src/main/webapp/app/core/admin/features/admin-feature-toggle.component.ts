@@ -161,7 +161,7 @@ export class AdminFeatureToggleComponent implements OnInit {
         [MODULE_FEATURE_SHARING]: 'https://docs.artemis.tum.de/admin/extensions-setup#setup-guide-for-exchange-with-the-sharing-platform',
         [MODULE_FEATURE_LTI]: 'https://docs.artemis.tum.de/instructor/lti-configuration',
         [MODULE_FEATURE_PASSKEY]: 'https://docs.artemis.tum.de/admin/production-setup/security#passkey-authentication',
-        [MODULE_FEATURE_THEIA]: 'https://docs.artemis.tum.de/developer/setup#run-the-server-via-a-run-configuration-in-intellij',
+        [MODULE_FEATURE_THEIA]: 'https://docs.artemis.tum.de',
     };
 
     ngOnInit(): void {
