@@ -87,14 +87,17 @@ public class BuildAgentInformationService {
         boolean wasAvailable = buildAgentConfiguration.isDockerAvailable();
         try {
             String newVersion = dockerClient.versionCmd().exec().getVersion();
-            if (!wasAvailable) {
+            boolean stateChanged = !wasAvailable;
+            boolean versionChanged = !Objects.equals(newVersion, dockerVersion);
+            if (stateChanged) {
                 log.info("Docker is now available (version: {})", newVersion);
                 buildAgentConfiguration.setDockerAvailable(true);
-                updateLocalBuildAgentInformation(false);
             }
-            if (!Objects.equals(newVersion, dockerVersion)) {
+            if (versionChanged) {
                 log.info("Docker version: {}", newVersion);
                 dockerVersion = newVersion;
+            }
+            if (stateChanged || versionChanged) {
                 updateLocalBuildAgentInformation(false);
             }
         }
