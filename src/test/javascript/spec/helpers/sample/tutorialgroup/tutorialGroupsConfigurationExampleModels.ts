@@ -26,7 +26,7 @@ export const generateExampleTutorialGroupsConfigurationDTO = ({
     useTutorialGroupChannels = true,
     usePublicTutorialGroupChannels = true,
 }: Partial<TutorialGroupConfigurationDTO> = {}) => {
-    const dto = new TutorialGroupConfigurationDTO();
+    const dto = {} as TutorialGroupConfigurationDTO;
     dto.id = id;
     dto.tutorialPeriodStartInclusive = tutorialPeriodStartInclusive;
     dto.tutorialPeriodEndInclusive = tutorialPeriodEndInclusive;

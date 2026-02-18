@@ -83,8 +83,6 @@ public record TutorialGroupConfigurationDTO(Long id, @NotNull String tutorialPer
             Objects.requireNonNull(dto, "tutorialGroupFreePeriodDTO must exist");
 
             TutorialGroupFreePeriod freePeriod = new TutorialGroupFreePeriod();
-            freePeriod.setId(dto.id());
-
             try {
                 freePeriod.setStart(dto.start() != null ? ZonedDateTime.parse(dto.start()) : null);
                 freePeriod.setEnd(dto.end() != null ? ZonedDateTime.parse(dto.end()) : null);

@@ -142,7 +142,10 @@ public class TutorialGroupsConfigurationResource {
         checkEntityIdMatchesPathIds(configurationFromDatabase, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupsConfigurationId));
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, configurationFromDatabase.getCourse(), null);
 
-        TutorialGroupsConfiguration tempForValidation = getTutorialGroupsConfigurationFromDTO(updatedTutorialGroupConfigurationDto);
+        // Use full DTO mapping from() for validation purposes.
+        // Free periods are converted as well, although only scalar fields are used here
+        // to ensure that all validation annotations on the DTO are properly applied to the incoming data.
+        TutorialGroupsConfiguration tempForValidation = TutorialGroupConfigurationDTO.from(updatedTutorialGroupConfigurationDto);
         validateTutorialGroupConfiguration(tempForValidation);
 
         boolean useTutorialGroupChannelSettingChanged = !Objects.equals(configurationFromDatabase.getUseTutorialGroupChannels(), tempForValidation.getUseTutorialGroupChannels());
@@ -172,15 +175,6 @@ public class TutorialGroupsConfigurationResource {
             }
         }
         return ResponseEntity.ok(TutorialGroupConfigurationDTO.of(persistedConfiguration));
-    }
-
-    private static TutorialGroupsConfiguration getTutorialGroupsConfigurationFromDTO(TutorialGroupConfigurationDTO updatedTutorialGroupConfigurationDto) {
-        TutorialGroupsConfiguration tempForValidation = new TutorialGroupsConfiguration();
-        tempForValidation.setTutorialPeriodStartInclusive(updatedTutorialGroupConfigurationDto.tutorialPeriodStartInclusive());
-        tempForValidation.setTutorialPeriodEndInclusive(updatedTutorialGroupConfigurationDto.tutorialPeriodEndInclusive());
-        tempForValidation.setUseTutorialGroupChannels(updatedTutorialGroupConfigurationDto.useTutorialGroupChannels());
-        tempForValidation.setUsePublicTutorialGroupChannels(updatedTutorialGroupConfigurationDto.usePublicTutorialGroupChannels());
-        return tempForValidation;
     }
 
     private static void validateTutorialGroupConfiguration(TutorialGroupsConfiguration tutorialGroupsConfiguration) {
