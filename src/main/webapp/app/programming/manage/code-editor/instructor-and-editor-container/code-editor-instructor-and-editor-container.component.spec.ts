@@ -576,7 +576,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         });
 
         it('onProblemStatementSaved clears markdown drafts and reloads threads', () => {
-            const clearInstructionDraftsSpy = jest.spyOn((comp as any).editableInstructions, 'clearReviewCommentDrafts');
+            const mockInstructions = (comp as any).editableInstructions();
+            const clearInstructionDraftsSpy = jest.spyOn(mockInstructions, 'clearReviewCommentDrafts');
 
             comp.onProblemStatementSaved();
 
