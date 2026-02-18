@@ -33,6 +33,9 @@ export class IrisCitationTextComponent {
         'iris-citation--source': faCircleExclamation, // Unknown source citations
     };
 
+    private readonly citationGroupData = new Map<string, { parsed: IrisCitationParsed[]; metas: Array<IrisCitationMetaDTO | undefined> }>();
+    private groupIdCounter = 0;
+
     readonly text = input.required<string>();
     readonly citationInfo = input<IrisCitationMetaDTO[]>([]);
 
@@ -45,6 +48,9 @@ export class IrisCitationTextComponent {
      * Processes text by applying markdown rendering first, then replacing citation markers with HTML.
      */
     private processText(text: string, citationInfo: IrisCitationMetaDTO[]): string {
+        this.citationGroupData.clear();
+        this.groupIdCounter = 0;
+
         // Apply markdown rendering (this converts markdown syntax to HTML)
         const markdownHtml = htmlForMarkdown(text, [], undefined, undefined, true);
 
@@ -108,10 +114,12 @@ export class IrisCitationTextComponent {
                </span>`
             : '';
 
+        const groupId = String(this.groupIdCounter++);
+        this.citationGroupData.set(groupId, { parsed: parsedIrisCitation, metas: metadata });
+
         return `
             <span class="${groupClasses}"
-                  data-citations="${escapeHtml(JSON.stringify(parsedIrisCitation))}"
-                  data-metas="${escapeHtml(JSON.stringify(metadata))}">
+                  data-group-id="${groupId}">
                 <span class="iris-citation ${typeClass}">
                     <span class="iris-citation__icon">${iconSvg}</span>
                     <span class="iris-citation__text">${label}</span>
@@ -283,18 +291,11 @@ export class IrisCitationTextComponent {
         const activeSummaryItem = summaryItems[newIndex] as HTMLElement;
         const citationIndex = parseInt(activeSummaryItem.getAttribute('data-citation-index') || '0', 10);
 
-        const citationsData = citationGroup.getAttribute('data-citations');
-
-        if (citationsData) {
-            try {
-                const parsedCitations = JSON.parse(citationsData) as IrisCitationParsed[];
-                const citation = parsedCitations[citationIndex];
-
-                if (citation) {
-                    this.updateCitationBubble(citationGroup as HTMLElement, citation);
-                }
-            } catch (e) {
-                // Fail silently if JSON parsing fails
+        const groupId = citationGroup.getAttribute('data-group-id');
+        if (groupId !== null) {
+            const citation = this.citationGroupData.get(groupId)?.parsed[citationIndex];
+            if (citation) {
+                this.updateCitationBubble(citationGroup as HTMLElement, citation);
             }
         }
     }
