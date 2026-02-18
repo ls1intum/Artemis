@@ -380,17 +380,17 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
     it('should cancel active subscription on cancelAiOperation', () => {
         const mockSubscription = { unsubscribe: jest.fn() };
-        comp['currentGenerationSubscription'] = mockSubscription as any;
+        comp['currentAiOperationSubscription'] = mockSubscription as any;
 
         comp.cancelAiOperation();
 
         expect(mockSubscription.unsubscribe).toHaveBeenCalled();
-        expect(comp['currentGenerationSubscription']).toBeUndefined();
+        expect(comp['currentAiOperationSubscription']).toBeUndefined();
     });
 
     it('should unsubscribe on destroy', () => {
         const mockSubscription = { unsubscribe: jest.fn() };
-        comp['currentGenerationSubscription'] = mockSubscription as any;
+        comp['currentAiOperationSubscription'] = mockSubscription as any;
 
         comp.ngOnDestroy();
 
