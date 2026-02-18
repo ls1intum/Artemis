@@ -15,7 +15,7 @@ import { PageRibbonComponent } from 'app/core/layouts/profiles/page-ribbon.compo
 import { FooterComponent } from 'app/core/layouts/footer/footer.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LLMSelectionModalComponent } from 'app/logos/llm-selection-popup.component';
-import { GlobalSearchModalComponent } from 'app/core/navbar/global-search/components/Modal/global-search-modal.component';
+import { GlobalSearchModalComponent } from 'app/core/navbar/global-search/components/modal/global-search-modal.component';
 
 @Component({
     selector: 'jhi-app',

@@ -52,6 +52,11 @@
     &:focus-visible {
         outline: none;
     }
+
+    &:focus-visible::before {
+        border-radius: 0;
+        box-shadow: 0 0 0 var(--bs-focus-ring-width) var(--bs-focus-ring-color);
+    }
 }
 
 .keyboard-hint {
