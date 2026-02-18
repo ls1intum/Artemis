@@ -125,6 +125,14 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getOneOfCourse_asStudent_shouldReturnNullBodyWhenConfigurationDoesNotExist() throws Exception {
+        var configurationFromRequest = request.get(this.getTutorialGroupsConfigurationPath(courseId), HttpStatus.OK, TutorialGroupConfigurationDTO.class);
+
+        assertThat(configurationFromRequest).isNull();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void create_asInstructor_shouldCreateTutorialGroupsConfiguration() throws Exception {
         TutorialGroupConfigurationDTO configurationFromRequest = request.postWithResponseBody(getTutorialGroupsConfigurationPath(courseId),
@@ -133,6 +141,17 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
         assertThat(configurationFromRequest.id()).isNotNull();
         var persisted = tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId).orElseThrow();
         this.assertConfigurationStructure(persisted, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY, courseId, true, true);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void create_asInstructor_shouldReturnBadRequestWhenCourseHasNoTimeZone() throws Exception {
+        var course = courseRepository.findByIdElseThrow(courseId);
+        course.setTimeZone(null);
+        courseRepository.save(course);
+
+        var exampleConfigDto = TutorialGroupConfigurationDTO.of(buildExampleConfiguration(courseId));
+        request.postWithResponseBody(getTutorialGroupsConfigurationPath(courseId), exampleConfigDto, TutorialGroupConfigurationDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -175,6 +194,26 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
         // then
         configuration = tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(configuration.getId());
         this.assertConfigurationStructure(configuration, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY, courseId, true, true);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void update_shouldReturnBadRequestWhenCourseIdMismatch() throws Exception {
+        var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY);
+
+        var dto = TutorialGroupConfigurationDTO.of(configuration);
+
+        request.putWithResponseBody(getTutorialGroupsConfigurationPath(courseId + 5, configuration.getId()), dto, TutorialGroupConfigurationDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void update_shouldReturnBadRequestWhenConfigurationIdMismatch() throws Exception {
+        var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY);
+
+        var dto = TutorialGroupConfigurationDTO.of(configuration);
+
+        request.putWithResponseBody(getTutorialGroupsConfigurationPath(courseId, configuration.getId() + 5), dto, TutorialGroupConfigurationDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     /**
