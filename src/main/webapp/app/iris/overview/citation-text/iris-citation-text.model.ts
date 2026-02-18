@@ -3,6 +3,8 @@ import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta
 /**
  * Matches citation blocks in the form "[cite:TYPE:ENTITY_ID:PAGE:START:END:KEYWORD:SUMMARY]".
  * Enforces exactly 7 colons (complete format).
+ * Keep in sync with Artemis server regex in src/main/java/de/tum/cit/aet/artemis/iris/service/IrisCitationService.java
+ * and the regex defined in Pyris.
  */
 export const CITATION_REGEX = /\[cite:[LF]:[^:[\]]+:[^:[\]]*:[^:[\]]*:[^:[\]]*:[^:[\]]*:[^[\]]*\]/g;
 

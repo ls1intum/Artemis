@@ -31,6 +31,8 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 @Conditional(IrisEnabled.class)
 public class IrisCitationService {
 
+    // Keep in sync with Iris client regex in src/main/webapp/app/iris/overview/citation-text/iris-citation-text.model.ts
+    // and the regex defined in Pyris.
     private static final Pattern CITATION_PATTERN = Pattern.compile("\\[cite:L:(?<entityId>\\d+):[^:]*:[^:]*:[^:]*:[^:]*:[^\\]]*\\]");
 
     private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
