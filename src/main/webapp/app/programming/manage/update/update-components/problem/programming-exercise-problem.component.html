@@ -61,14 +61,12 @@
                 !programmingExerciseCreationConfig().isImportFromExistingExercise
             ) {
                 <jhi-programming-exercise-editable-instructions
-                    [participation]="programmingExercise()?.templateParticipation!"
                     [exercise]="programmingExercise()!"
+                    (instructionChange)="onInstructionChange($event)"
                     [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
                     [showStatus]="!!programmingExercise()?.id"
                     [editMode]="!!programmingExercise()?.id"
                     (hasUnsavedChanges)="programmingExerciseCreationConfig().hasUnsavedChanges = $event"
-                    (instructionChange)="problemStatementChange.emit($event)"
-                    (exerciseChange)="programmingExerciseChange.emit($event)"
                     [forceRender]="programmingExerciseCreationConfig().rerenderSubject"
                     class="form__editable-instructions"
                 />
