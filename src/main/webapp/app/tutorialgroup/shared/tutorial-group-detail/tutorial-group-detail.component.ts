@@ -39,6 +39,7 @@ import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { TutorialSessionCreateOrEditModalComponent } from 'app/tutorialgroup/manage/tutorial-group-session-create-or-edit-modal/tutorial-session-create-or-edit-modal.component';
 
 interface TutorialGroupDetailSession {
     id: number;
@@ -80,6 +81,7 @@ type ListOption = 'all-sessions' | 'future-sessions';
         RouterLink,
         ButtonModule,
         ConfirmDialogModule,
+        TutorialSessionCreateOrEditModalComponent,
     ],
     providers: [ConfirmationService],
     templateUrl: './tutorial-group-detail.component.html',
@@ -108,6 +110,7 @@ export class TutorialGroupDetailComponent {
     private router = inject(Router);
     private currentLocale = getCurrentLocaleSignal(this.translateService);
     private averageAttendanceRatio = computed<number | undefined>(() => this.computeAverageAttendanceRatio(this.tutorialGroup().sessions, this.tutorialGroup().capacity));
+    private sessionModal = viewChild.required<TutorialSessionCreateOrEditModalComponent>('sessionModal');
 
     activatedRoute = inject(ActivatedRoute);
     course = input.required<Course>();
@@ -198,6 +201,17 @@ export class TutorialGroupDetailComponent {
                 this.deleteTutorialGroupSession(sessionId);
             },
         });
+    }
+
+    openSessionModal(sessionId?: number) {
+        if (sessionId) {
+            const session = this.tutorialGroup().sessions.find((session) => session.id == sessionId);
+            if (session) {
+                this.sessionModal().open(session);
+            }
+        } else {
+            this.sessionModal().open();
+        }
     }
 
     private deleteTutorialGroupSession(sessionId: number) {

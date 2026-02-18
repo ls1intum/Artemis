@@ -179,7 +179,7 @@
         <h2 jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionsListTitle"></h2>
         <div class="spacer"></div>
         @if (allowManagementActions()) {
-            <button pButton class="p-button-primary p-button-sm" data-testid="new-session-button">New Session</button>
+            <button pButton class="p-button-primary p-button-sm" data-testid="new-session-button" (click)="openSessionModal()">New Session</button>
         }
         <p-selectbutton
             [options]="sessionListOptions()"
@@ -243,7 +243,7 @@
                         @if (allowManagementActions()) {
                             <td>
                                 <div class="session-actions">
-                                    <button>
+                                    <button (click)="openSessionModal(session.id)">
                                         <fa-icon [icon]="faPenToSquare" aria-hidden="true" />
                                     </button>
                                     <button class="danger" (click)="confirmSessionDeletion($event, session.id)">
@@ -259,3 +259,4 @@
     }
 </div>
 <p-confirmDialog />
+<jhi-tutorial-session-create-or-edit-modal #sessionModal />
