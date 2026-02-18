@@ -149,9 +149,14 @@ public class HyperionProblemStatementRefinementService {
     public ProblemStatementRefinementResponseDTO refineProblemStatementTargeted(Course course, ProblemStatementTargetedRefinementRequestDTO request) {
         log.debug("Refining problem statement with targeted instruction for course [{}]", course.getId());
 
-        String originalProblemStatementText = request.problemStatementText();
-        validateRefinementPrerequisites(originalProblemStatementText);
+        if (chatClient == null) {
+            throw new InternalServerErrorAlertException("AI chat client is not configured", "ProblemStatement", "ProblemStatementRefinement.chatClientNotConfigured");
+        }
 
+        String originalProblemStatementText = request.problemStatementText();
+        if (originalProblemStatementText == null || originalProblemStatementText.isBlank()) {
+            throw new BadRequestAlertException("Cannot refine empty problem statement", "ProblemStatement", "ProblemStatementRefinement.problemStatementEmpty");
+        }
         String sanitizedInstruction = sanitizeInput(request.instruction());
         HyperionPromptSanitizer.validateUserPrompt(sanitizedInstruction, "ProblemStatementRefinement");
 
@@ -182,7 +187,9 @@ public class HyperionProblemStatementRefinementService {
             refinedProblemStatementText = chatClient.prompt().system(systemPrompt).user(userMessage).call().content();
         }
         catch (Exception e) {
-            return handleRefinementError(course, originalProblemStatementText, e);
+            log.error("Error refining problem statement for course [{}]. Original statement length: {}. Error: {}", course.getId(), originalProblemStatementText.length(),
+                    e.getMessage(), e);
+            throw new InternalServerErrorAlertException("Failed to refine problem statement", "ProblemStatement", "ProblemStatementRefinement.problemStatementRefinementFailed");
         }
 
         if (refinedProblemStatementText == null) {

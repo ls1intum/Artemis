@@ -47,38 +47,35 @@ describe('ProblemStatementService', () => {
     });
 
     describe('loadTemplate', () => {
-        it('should set empty template when exercise is undefined', () => {
-            const templateSignal = signal('');
-            const loadedSignal = signal(false);
-            service.loadTemplate(undefined, templateSignal, loadedSignal);
-            expect(templateSignal()).toBe('');
-            expect(loadedSignal()).toBeFalsy();
+        it('should return empty template when exercise is undefined', () => {
+            const loadingSignal = signal(false);
+            let result: any;
+            service.loadTemplate(undefined).subscribe((r) => (result = r));
+            expect(result.template).toBe('');
+            expect(result.loaded).toBeFalsy();
         });
 
-        it('should set empty template when exercise has no programming language', () => {
-            const templateSignal = signal('');
-            const loadedSignal = signal(false);
-            service.loadTemplate({} as ProgrammingExercise, templateSignal, loadedSignal);
-            expect(templateSignal()).toBe('');
-            expect(loadedSignal()).toBeFalsy();
+        it('should return empty template when exercise has no programming language', () => {
+            let result: any;
+            service.loadTemplate({} as ProgrammingExercise).subscribe((r) => (result = r));
+            expect(result.template).toBe('');
+            expect(result.loaded).toBeFalsy();
         });
 
         it('should load template successfully', () => {
             fileServiceMock.getTemplateFile.mockReturnValue(of('template content'));
-            const templateSignal = signal('');
-            const loadedSignal = signal(false);
-            service.loadTemplate(exerciseWithCourse, templateSignal, loadedSignal);
-            expect(templateSignal()).toBe('template content');
-            expect(loadedSignal()).toBeTruthy();
+            let result: any;
+            service.loadTemplate(exerciseWithCourse).subscribe((r) => (result = r));
+            expect(result.template).toBe('template content');
+            expect(result.loaded).toBeTruthy();
         });
 
         it('should handle template loading error', () => {
             fileServiceMock.getTemplateFile.mockReturnValue(throwError(() => new Error('fail')));
-            const templateSignal = signal('');
-            const loadedSignal = signal(false);
-            service.loadTemplate(exerciseWithCourse, templateSignal, loadedSignal);
-            expect(templateSignal()).toBe('');
-            expect(loadedSignal()).toBeFalsy();
+            let result: any;
+            service.loadTemplate(exerciseWithCourse).subscribe((r) => (result = r));
+            expect(result.template).toBe('');
+            expect(result.loaded).toBeFalsy();
         });
     });
 

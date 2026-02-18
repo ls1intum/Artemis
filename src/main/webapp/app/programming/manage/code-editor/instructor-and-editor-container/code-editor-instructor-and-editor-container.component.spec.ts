@@ -31,6 +31,8 @@ import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResp
 import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
 import { ConsistencyCheckError, ErrorType } from 'app/programming/shared/entities/consistency-check-result.model';
 import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
+
+import { HttpErrorResponse } from '@angular/common/http';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { ArtifactLocation } from 'app/openapi/model/artifactLocation';
 import { faCircleExclamation, faCircleInfo, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
@@ -1058,12 +1060,5 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
         comp.submitRefinement();
         expect(problemStatementService.refineGlobally).not.toHaveBeenCalled();
         expect(problemStatementService.generateProblemStatement).not.toHaveBeenCalled();
-    });
-
-    it('should toggle and clear refinement prompt', () => {
-        comp.showRefinementPrompt.set(true);
-        comp.refinementPrompt.set('Some prompt');
-        // The prompt signal should persist since there's no onHide handler clearing it
-        expect(comp.refinementPrompt()).toBe('Some prompt');
     });
 });
