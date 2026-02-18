@@ -30,6 +30,7 @@ import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.transport.DockerHttpClient;
 import com.github.dockerjava.zerodep.ZerodepDockerHttpClient;
 
+import de.tum.cit.aet.artemis.buildagent.service.DockerUtil;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 
@@ -79,8 +80,7 @@ public class BuildAgentConfiguration {
     public void onApplicationReady() {
         buildExecutor = createBuildExecutor();
         dockerClient = createDockerClient();
-        // Optimistically mark Docker as available; the first scheduled check will correct if needed
-        dockerAvailable = true;
+        probeDockerAvailability();
     }
 
     public ThreadPoolExecutor getBuildExecutor() {
@@ -266,7 +266,26 @@ public class BuildAgentConfiguration {
     public void openBuildAgentServices() {
         this.buildExecutor = createBuildExecutor();
         this.dockerClient = createDockerClient();
-        // Optimistically mark Docker as available; the next scheduled check will correct if needed
-        this.dockerAvailable = true;
+        probeDockerAvailability();
+    }
+
+    /**
+     * Synchronously probes Docker availability by executing a lightweight version command.
+     * Sets {@link #dockerAvailable} based on whether Docker responds successfully.
+     */
+    private void probeDockerAvailability() {
+        try {
+            dockerClient.versionCmd().exec();
+            dockerAvailable = true;
+        }
+        catch (Exception e) {
+            dockerAvailable = false;
+            if (DockerUtil.isDockerNotAvailable(e)) {
+                log.warn("Docker is not available: {}", e.getMessage());
+            }
+            else {
+                log.warn("Failed to probe Docker availability", e);
+            }
+        }
     }
 }

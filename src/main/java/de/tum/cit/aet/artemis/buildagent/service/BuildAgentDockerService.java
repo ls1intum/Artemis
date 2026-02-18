@@ -9,6 +9,7 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -261,11 +262,11 @@ public class BuildAgentDockerService {
      * @throws LocalCIException if the image pull is interrupted or fails due to other exceptions.
      */
     public void pullDockerImage(BuildJobQueueItem buildJob, BuildLogsMap buildLogsMap) {
+        final String imageName = buildJob.buildConfig().dockerImage();
         if (dockerClientNotAvailable("Cannot pull Docker image.")) {
-            throw new LocalCIException("Docker is not available. Cannot pull image " + buildJob.buildConfig().dockerImage());
+            throw new LocalCIException("Docker is not available. Cannot pull image " + imageName);
         }
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
-        final String imageName = buildJob.buildConfig().dockerImage();
         try (var inspectImageCommand = dockerClient.inspectImageCmd(imageName)) {
             // First check if the image is already available
             String msg = "~~~~~~~~~~~~~~~~~~~~ Inspecting docker image " + imageName + " ~~~~~~~~~~~~~~~~~~~~";
@@ -571,8 +572,9 @@ public class BuildAgentDockerService {
      * @return true if the exception indicates a missing platform manifest, false otherwise
      */
     private boolean isNoMatchingManifestError(Exception ex) {
+        Set<Throwable> visited = Collections.newSetFromMap(new IdentityHashMap<>());
         Throwable cause = ex;
-        while (cause != null) {
+        while (cause != null && visited.add(cause)) {
             String message = cause.getMessage();
             if (message != null && message.contains("no matching manifest")) {
                 return true;

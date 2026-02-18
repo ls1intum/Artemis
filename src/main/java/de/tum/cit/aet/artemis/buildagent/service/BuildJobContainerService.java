@@ -149,6 +149,9 @@ public class BuildJobContainerService {
      * @return {@link CreateContainerResponse} that can be used to start the container
      */
     public CreateContainerResponse configureContainer(String containerName, String image, String buildScript, DockerRunConfig runConfig) {
+        if (!buildAgentConfiguration.isDockerAvailable()) {
+            throw new LocalCIException("Docker is not available. Cannot configure container " + containerName);
+        }
         // Remove any existing container with the same name to avoid ConflictException.
         // This can happen when a job is re-queued after agent disconnect (same job ID = same container name).
         removeExistingContainer(containerName);
@@ -225,6 +228,9 @@ public class BuildJobContainerService {
      * @param containerId the ID of the container to be started
      */
     public void startContainer(String containerId) {
+        if (!buildAgentConfiguration.isDockerAvailable()) {
+            throw new LocalCIException("Docker is not available. Cannot start container " + containerId);
+        }
         try (final var startCommand = buildAgentConfiguration.getDockerClient().startContainerCmd(containerId)) {
             startCommand.exec();
         }
@@ -950,6 +956,9 @@ public class BuildJobContainerService {
      * @return the Container object if found, null otherwise
      */
     private Container getContainerForName(String containerName) {
+        // When Docker is temporarily unavailable, we skip the container lookup and return null.
+        // Any containers left behind will be cleaned up by the scheduled cleanUpContainers() task
+        // in BuildAgentDockerService once Docker becomes available again.
         if (!buildAgentConfiguration.isDockerAvailable()) {
             log.debug("Docker is not available. Cannot get container for name {}", containerName);
             return null;
