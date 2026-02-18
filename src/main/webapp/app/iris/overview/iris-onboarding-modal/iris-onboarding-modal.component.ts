@@ -328,7 +328,7 @@ export class IrisOnboardingModalComponent {
         }
 
         // Avoid trapping onboarding on a hidden step when target elements are not available.
-        console.warn(`Onboarding step ${expectedStep}: target element not found after all retries, using default position`);
+        // Target element not found after all retries; fall back to default position.
         readinessSignal.set(true);
     }
 
