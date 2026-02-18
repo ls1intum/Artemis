@@ -1,18 +1,22 @@
 package de.tum.cit.aet.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisCourseChatSessionRepository;
+import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 
 class IrisCourseChatSessionResourceTest extends AbstractIrisIntegrationTest {
 
@@ -20,6 +24,9 @@ class IrisCourseChatSessionResourceTest extends AbstractIrisIntegrationTest {
 
     @Autowired
     private IrisCourseChatSessionRepository irisCourseChatSessionRepository;
+
+    @MockitoSpyBean
+    private IrisCitationService irisCitationService;
 
     @Autowired
     private CourseUtilService courseUtilService;
@@ -269,5 +276,13 @@ class IrisCourseChatSessionResourceTest extends AbstractIrisIntegrationTest {
 
         var sessionFromDb = irisCourseChatSessionRepository.findById(response.getId()).orElseThrow();
         assertThat(sessionFromDb.getCourseId()).isEqualTo(course.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCurrentSessionOrCreateIfNotExists_invokesIrisCitationService() throws Exception {
+        request.postWithResponseBody("/api/iris/course-chat/" + course.getId() + "/sessions/current", null, IrisCourseChatSession.class, HttpStatus.OK);
+
+        verify(irisCitationService).enrichSessionWithCitationInfo(any());
     }
 }

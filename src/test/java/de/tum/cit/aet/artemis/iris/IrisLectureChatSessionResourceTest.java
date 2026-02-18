@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -10,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -17,6 +20,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisLectureChatSessionRepository;
+import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 
@@ -26,6 +30,9 @@ class IrisLectureChatSessionResourceTest extends AbstractIrisIntegrationTest {
 
     @Autowired
     private IrisLectureChatSessionRepository irisLectureChatSessionRepository;
+
+    @MockitoSpyBean
+    private IrisCitationService irisCitationService;
 
     @Autowired
     private CourseUtilService courseUtilService;
@@ -183,5 +190,13 @@ class IrisLectureChatSessionResourceTest extends AbstractIrisIntegrationTest {
         // Verify the session is in the database with correct lecture ID
         var sessionFromDb = irisLectureChatSessionRepository.findById(response.getId()).orElseThrow();
         assertThat(sessionFromDb.getLectureId()).isEqualTo(lecture.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCurrentSessionOrCreateIfNotExists_invokesIrisCitationService() throws Exception {
+        request.postWithResponseBody("/api/iris/lecture-chat/" + lecture.getId() + "/sessions/current", null, IrisLectureChatSession.class, HttpStatus.CREATED);
+
+        verify(irisCitationService).enrichSessionWithCitationInfo(any());
     }
 }

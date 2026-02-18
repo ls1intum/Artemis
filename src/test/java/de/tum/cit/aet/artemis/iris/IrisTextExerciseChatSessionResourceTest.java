@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -10,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -17,6 +20,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisTextExerciseChatSessionRepository;
+import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
@@ -32,6 +36,9 @@ class IrisTextExerciseChatSessionResourceTest extends AbstractIrisIntegrationTes
 
     @Autowired
     private IrisTextExerciseChatSessionRepository irisTextExerciseChatSessionRepository;
+
+    @MockitoSpyBean
+    private IrisCitationService irisCitationService;
 
     private Course course;
 
@@ -204,5 +211,13 @@ class IrisTextExerciseChatSessionResourceTest extends AbstractIrisIntegrationTes
         // Verify the session is in the database with correct exercise ID
         var sessionFromDb = irisTextExerciseChatSessionRepository.findById(response.getId()).orElseThrow();
         assertThat(sessionFromDb.getExerciseId()).isEqualTo(textExercise.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCurrentSessionOrCreateIfNotExists_invokesIrisCitationService() throws Exception {
+        request.postWithResponseBody("/api/iris/text-exercise-chat/" + textExercise.getId() + "/sessions/current", null, IrisTextExerciseChatSession.class, HttpStatus.CREATED);
+
+        verify(irisCitationService).enrichSessionWithCitationInfo(any());
     }
 }

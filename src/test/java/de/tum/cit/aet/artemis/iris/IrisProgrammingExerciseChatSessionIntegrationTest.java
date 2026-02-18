@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -13,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -33,6 +36,7 @@ import de.tum.cit.aet.artemis.iris.dto.IrisMessageRequestDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisStatusDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisExerciseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
+import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.util.IrisMessageFactory;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -52,6 +56,9 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
 
     @Autowired
     private de.tum.cit.aet.artemis.iris.service.IrisSessionService irisSessionService;
+
+    @MockitoSpyBean
+    private IrisCitationService irisCitationService;
 
     private ProgrammingExercise exercise;
 
@@ -366,6 +373,14 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
         assertThat(response.getId()).isNotNull();
         assertThat(response.getContent()).hasSize(3);
         assertThat(response.getContent().get(0)).isInstanceOf(de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getCurrentSessionOrCreateIfNotExists_invokesIrisCitationService() throws Exception {
+        request.postWithResponseBody(exerciseChatUrl(exercise.getId()) + "/current", null, IrisProgrammingExerciseChatSession.class, HttpStatus.OK);
+
+        verify(irisCitationService).enrichSessionWithCitationInfo(any());
     }
 
     private static String exerciseChatUrl(long sessionId) {
