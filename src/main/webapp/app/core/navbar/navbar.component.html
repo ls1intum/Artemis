@@ -122,7 +122,7 @@
     <div class="navbar-collapse collapse" id="navbarResponsive" [ngbCollapse]="isNavbarCollapsed">
         <ul class="navbar-nav ms-auto" [class.vertical]="isNavbarNavVertical">
             @if (currAccount && !isExamActive && !isExamStarted && globalSearchEnabled) {
-                <li class="nav-item d-flex align-items-center">
+                <li class="nav-item">
                     <jhi-global-search-navbar />
                 </li>
             }
