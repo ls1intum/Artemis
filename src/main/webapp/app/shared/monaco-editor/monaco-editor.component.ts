@@ -134,6 +134,18 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         return this._editor.onDidChangeModelContent(listener);
     }
 
+    /**
+     * Calls the listener whenever the user selects/unselects text or moves the cursor.
+     * @param listener function to call when the event happens.
+     */
+    public onDidChangeTextSelection(listener: (selection: { isEmpty: boolean }) => void): monaco.IDisposable {
+        return this._editor.onDidChangeCursorSelection((event) => {
+            const selection = this._editor.getSelection();
+            if (!selection) return;
+            listener({ isEmpty: selection.isEmpty() });
+        });
+    }
+
     public getModel() {
         return this._editor.getModel();
     }

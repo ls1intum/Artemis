@@ -105,8 +105,16 @@
                 <ng-container ngbNavItem>
                     <div class="d-flex align-items-center" [style.flex-flow]="'row wrap'">
                         <!-- Standard -->
-                        @for (action of displayedActions.standard; track action.id) {
-                            <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
+                        @if (standardActionsVisibility) {
+                            @for (action of displayedActions.standard; track action.id) {
+                                <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
+                            }
+                        } @else {
+                            <button type="button" class="btn btn-sm py-0 packed" (click)="standardActionsVisibility = true">
+                                <fa-icon [icon]="boldIcon" />
+                                <fa-icon [icon]="italicIcon" />
+                                <fa-icon [icon]="underlineIcon" />
+                            </button>
                         }
                         <!-- Headers -->
                         @if (displayedActions.header.length) {

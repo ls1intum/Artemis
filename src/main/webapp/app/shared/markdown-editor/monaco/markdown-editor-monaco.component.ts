@@ -2,6 +2,7 @@ import {
     AfterContentInit,
     AfterViewInit,
     ChangeDetectionStrategy,
+    ChangeDetectorRef,
     Component,
     ElementRef,
     EventEmitter,
@@ -19,6 +20,7 @@ import {
     signal,
     untracked,
 } from '@angular/core';
+import { faBold, faItalic, faUnderline } from '@fortawesome/free-solid-svg-icons';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import {
     NgbDropdown,
@@ -163,6 +165,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     protected readonly artemisIntelligenceService = inject(ArtemisIntelligenceService); // used in template
     private readonly viewContainerRef = inject(ViewContainerRef);
     private readonly exerciseReviewCommentService = inject(ExerciseReviewCommentService);
+    private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
     @ViewChild(MonacoEditorComponent, { static: false }) monacoEditor: MonacoEditorComponent;
     @ViewChild('fullElement', { static: true }) fullElement: ElementRef<HTMLDivElement>;
@@ -324,6 +327,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         artemisIntelligence: [],
         meta: [],
     };
+    standardActionsVisibility: boolean = true;
 
     readonly colorToClassMap = new Map<string, string>([
         ['#ca2024', 'red'],
@@ -342,6 +346,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     static readonly TAB_EDIT = 'editor_edit';
     static readonly TAB_PREVIEW = 'editor_preview';
     static readonly TAB_VISUAL = 'editor_visual';
+    readonly boldIcon = faBold;
+    readonly italicIcon = faItalic;
+    readonly underlineIcon = faUnderline;
     readonly colorPickerMarginTop = 35;
     readonly colorPickerHeight = 110;
     // Icons
@@ -490,6 +497,10 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         if (this.useDefaultMarkdownEditorOptions) {
             this.monacoEditor.applyOptionPreset(DEFAULT_MARKDOWN_EDITOR_OPTIONS);
         }
+        if (this.isInCommunication()) {
+            this.standardActionsVisibility = false;
+            this.monacoEditor.onDidChangeTextSelection((selection) => this.onSelectionChanged(selection));
+        }
         this.renderEditorWidgets();
         this.updateReviewCommentButton();
     }
@@ -518,6 +529,14 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     onTextChanged(event: { text: string; fileName: string }): void {
         this.markdown = event.text;
         this.markdownChange.emit(event.text);
+    }
+
+    onSelectionChanged(selection: { isEmpty: boolean }): void {
+        if (!selection.isEmpty === this.standardActionsVisibility) {
+            return;
+        }
+        this.standardActionsVisibility = !selection.isEmpty;
+        this.changeDetectorRef.markForCheck();
     }
 
     /**
