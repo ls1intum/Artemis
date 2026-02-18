@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, inject, viewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, inject, viewChild } from '@angular/core';
 import { SearchOverlayService } from '../../services/search-overlay.service';
 import { OsDetectorService } from '../../services/os-detector.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -13,7 +13,7 @@ import { DialogModule } from 'primeng/dialog';
     templateUrl: './global-search-modal.component.html',
     styleUrls: ['./global-search-modal.component.scss'],
 })
-export class GlobalSearchModalComponent {
+export class GlobalSearchModalComponent implements OnDestroy {
     protected overlay = inject(SearchOverlayService);
     protected osDetector = inject(OsDetectorService);
 
@@ -37,6 +37,12 @@ export class GlobalSearchModalComponent {
         }
         if (event.key === 'Escape' && this.overlay.isOpen()) {
             event.preventDefault();
+            this.overlay.close();
+        }
+    }
+
+    ngOnDestroy() {
+        if (this.overlay.isOpen()) {
             this.overlay.close();
         }
     }

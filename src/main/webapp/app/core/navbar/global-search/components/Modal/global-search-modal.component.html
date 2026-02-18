@@ -16,13 +16,13 @@
     <!-- Search Input -->
     <div class="search-input-container">
         <fa-icon [icon]="faSearch" class="search-icon" />
-        <input #searchInput type="text" [placeholder]="'global.search.placeholder' | artemisTranslate" class="search-input" />
+        <input #searchInput type="text" [placeholder]="'global.search.placeholder' | artemisTranslate" class="search-input" aria-describedby="search-keyboard-hints" />
     </div>
     <!-- Results Area -->
     <div class="results-container">{{ 'global.search.noResultsFound' | artemisTranslate }}</div>
     <!-- Keyboard hints footer -->
     <div class="search-footer">
-        <div class="keyboard-hints">
+        <div class="keyboard-hints" id="search-keyboard-hints" aria-label="Keyboard shortcuts">
             <span class="hint-group">
                 <span class="key-group">
                     <kbd class="key-hint-small">

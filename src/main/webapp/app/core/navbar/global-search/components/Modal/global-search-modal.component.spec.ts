@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { Dialog } from 'primeng/dialog';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { signal } from '@angular/core';
@@ -32,6 +34,7 @@ describe('GlobalSearchModalComponent', () => {
     };
 
     beforeEach(() => {
+        vi.clearAllMocks();
         TestBed.configureTestingModule({
             imports: [GlobalSearchModalComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
@@ -50,7 +53,7 @@ describe('GlobalSearchModalComponent', () => {
     });
 
     afterEach(() => {
-        vi.clearAllMocks();
+        mockSearchOverlayService.isOpen.set(false);
     });
 
     it('should create', () => {
@@ -120,36 +123,39 @@ describe('GlobalSearchModalComponent', () => {
     });
 
     describe('Modal Rendering', () => {
-        it('should render modal when overlay is open', () => {
+        it('should show dialog when overlay is open', async () => {
             mockSearchOverlayService.isOpen.set(true);
             fixture.detectChanges();
+            await fixture.whenStable();
 
-            const modalElement = fixture.nativeElement.querySelector('.modal-backdrop');
-            expect(modalElement).toBeTruthy();
+            const dialog = document.body.querySelector('.p-dialog');
+            expect(dialog).toBeTruthy();
         });
 
-        it('should not render modal when overlay is closed', () => {
+        it('should not show dialog when overlay is closed', () => {
             mockSearchOverlayService.isOpen.set(false);
             fixture.detectChanges();
 
-            const modalElement = fixture.nativeElement.querySelector('.modal-backdrop');
-            expect(modalElement).toBeFalsy();
+            const dialog = document.body.querySelector('.p-dialog');
+            expect(dialog).toBeFalsy();
         });
 
-        it('should display search input when modal is open', () => {
+        it('should display search input when modal is open', async () => {
             mockSearchOverlayService.isOpen.set(true);
             fixture.detectChanges();
+            await fixture.whenStable();
 
-            const searchInput = fixture.nativeElement.querySelector('.search-input');
+            const searchInput = document.body.querySelector('.search-input');
             expect(searchInput).toBeTruthy();
         });
 
-        it('should display keyboard hints in footer', () => {
+        it('should display keyboard hints in footer', async () => {
             mockSearchOverlayService.isOpen.set(true);
             fixture.detectChanges();
+            await fixture.whenStable();
 
-            const footer = fixture.nativeElement.querySelector('.modal-footer');
-            const hints = fixture.nativeElement.querySelectorAll('.key-hint-small');
+            const footer = document.body.querySelector('.search-footer');
+            const hints = document.body.querySelectorAll('.key-hint-small');
 
             expect(footer).toBeTruthy();
             expect(hints.length).toBeGreaterThan(0);
@@ -162,10 +168,9 @@ describe('GlobalSearchModalComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            const searchInput = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
+            const searchInput = document.body.querySelector('.search-input') as HTMLInputElement;
             expect(searchInput).toBeTruthy();
 
-            // Wait for the effect to run and focus the input
             await new Promise((resolve) => setTimeout(resolve, 10));
 
             expect(document.activeElement).toBe(searchInput);
@@ -173,46 +178,53 @@ describe('GlobalSearchModalComponent', () => {
     });
 
     describe('Overlay Interaction', () => {
-        it('should close modal when backdrop is clicked', () => {
+        it('should close overlay when dialog onHide fires', () => {
             mockSearchOverlayService.isOpen.set(true);
             fixture.detectChanges();
 
-            const backdrop = fixture.nativeElement.querySelector('.modal-backdrop');
-            backdrop.click();
+            const dialog = fixture.debugElement.query(By.directive(Dialog)).componentInstance as Dialog;
+            dialog.onHide.emit();
 
             expect(searchOverlayService.close).toHaveBeenCalled();
         });
 
-        it('should not close modal when modal content is clicked', () => {
+        it('should close overlay when dialog visibleChange emits false', () => {
             mockSearchOverlayService.isOpen.set(true);
             fixture.detectChanges();
 
-            const modalContent = fixture.nativeElement.querySelector('.modal-content');
-            const clickEvent = new Event('click');
-            vi.spyOn(clickEvent, 'stopPropagation');
+            const dialog = fixture.debugElement.query(By.directive(Dialog)).componentInstance as Dialog;
+            dialog.visibleChange.emit(false);
 
-            modalContent.dispatchEvent(clickEvent);
+            expect(searchOverlayService.close).toHaveBeenCalled();
+        });
 
-            // stopPropagation should be called to prevent closing
-            expect(clickEvent.stopPropagation).toHaveBeenCalled();
+        it('should close overlay on destroy when modal is open', () => {
+            mockSearchOverlayService.isOpen.set(true);
+            fixture.detectChanges();
+
+            fixture.destroy();
+
+            expect(searchOverlayService.close).toHaveBeenCalled();
         });
     });
 
     describe('Icons', () => {
-        it('should display search icon', () => {
+        it('should display search icon', async () => {
             mockSearchOverlayService.isOpen.set(true);
             fixture.detectChanges();
+            await fixture.whenStable();
 
-            const searchIcon = fixture.nativeElement.querySelector('.search-icon');
+            const searchIcon = document.body.querySelector('.search-icon');
             expect(searchIcon).toBeTruthy();
         });
 
-        it('should display arrow icons in keyboard hints', () => {
+        it('should display arrow icons in keyboard hints', async () => {
             mockSearchOverlayService.isOpen.set(true);
             fixture.detectChanges();
+            await fixture.whenStable();
 
-            const icons = fixture.nativeElement.querySelectorAll('.key-hint-small fa-icon');
-            expect(icons.length).toBeGreaterThanOrEqual(2); // At least up and down arrows
+            const icons = document.body.querySelectorAll('.key-hint-small fa-icon');
+            expect(icons.length).toBeGreaterThanOrEqual(2);
         });
     });
 });
