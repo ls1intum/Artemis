@@ -29,6 +29,7 @@ import { Annotation, CodeEditorMonacoComponent } from 'app/programming/shared/co
 import { KeysPipe } from 'app/shared/pipes/keys.pipe';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { editor } from 'monaco-editor';
+import { ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 
 export enum CollapsableCodeEditorElement {
     FileBrowser,
@@ -93,6 +94,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     onDiscardSuggestion = output<Feedback>();
     onEditorLoaded = output<void>();
     onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
+    onNavigateToReviewCommentLocation = output<ReviewThreadLocation>();
     onCommit = output<void>();
 
     /** Work in Progress: temporary properties needed to get first prototype working */

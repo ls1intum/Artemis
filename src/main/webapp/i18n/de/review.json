@@ -28,6 +28,16 @@
             "threadOutdated": "Veraltet",
             "threadConsistencyIssue": "Konsistenzproblem",
             "threadConsistencySeverity": "{{severity}} Schweregrad",
+            "relatedLocationsTitle": "Verwandte Fundstellen:",
+            "goToRelatedLocation": "Zur Fundstelle springen",
+            "relatedLocationRepository": {
+                "problemStatement": "Aufgabenstellung",
+                "template": "Template",
+                "solution": "Lösung",
+                "tests": "Tests",
+                "auxiliary": "Hilfsrepository",
+                "repository": "Repository"
+            },
             "consistencySeverity": {
                 "LOW": "Niedriger",
                 "MEDIUM": "Mittlerer",

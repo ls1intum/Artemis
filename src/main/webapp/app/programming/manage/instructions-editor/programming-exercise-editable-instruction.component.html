@@ -18,6 +18,7 @@
             [enableExerciseReviewComments]="enableExerciseReviewComments()"
             [showLocationWarning]="unsavedChangesValue"
             (markdownChange)="updateProblemStatement($event)"
+            (onNavigateToReviewCommentLocation)="onNavigateToReviewCommentLocation.emit($event)"
         >
             <!-- Custom preview using ProgrammingExerciseInstructionComponent for proper rendering
                  of programming-specific syntax (task markers, PlantUML, test case status, etc.).

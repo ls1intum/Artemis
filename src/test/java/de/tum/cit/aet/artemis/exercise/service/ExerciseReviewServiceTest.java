@@ -232,6 +232,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         CommentThread generatedConsistencyThread = threads.stream().filter(thread -> !thread.getId().equals(userThread.getId())).findFirst().orElseThrow();
         assertThat(generatedConsistencyThread.getTargetType()).isEqualTo(CommentThreadLocationType.PROBLEM_STATEMENT);
         assertThat(generatedConsistencyThread.getLineNumber()).isEqualTo(2);
+        assertThat(generatedConsistencyThread.getGroup()).isNotNull();
         assertThat(generatedConsistencyThread.getComments()).singleElement().extracting(Comment::getType).isEqualTo(CommentType.CONSISTENCY_CHECK);
         var content = generatedConsistencyThread.getComments().iterator().next().getContent();
         assertThat(content).isInstanceOf(ConsistencyIssueCommentContentDTO.class);
@@ -263,7 +264,65 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
             assertThat(thread.getTargetType()).isEqualTo(CommentThreadLocationType.TEMPLATE_REPO);
             assertThat(thread.getFilePath()).isEqualTo("src/Main.java");
             assertThat(thread.getLineNumber()).isEqualTo(8);
+            assertThat(thread.getGroup()).isNotNull();
             assertThat(thread.getComments()).singleElement().extracting(Comment::getType).isEqualTo(CommentType.CONSISTENCY_CHECK);
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldCreateOneGroupPerIssueAndThreadsForAllRelatedLocations() {
+        ConsistencyIssueDTO firstIssue = new ConsistencyIssueDTO(Severity.HIGH, ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH, "First grouped issue", "Fix first issue",
+                List.of(new ArtifactLocationDTO(ArtifactType.TEMPLATE_REPOSITORY, "src/A.java", 3, 3),
+                        new ArtifactLocationDTO(ArtifactType.TESTS_REPOSITORY, "test/ATest.java", 8, 8)));
+        ConsistencyIssueDTO secondIssue = new ConsistencyIssueDTO(Severity.LOW, ConsistencyIssueCategory.ATTRIBUTE_TYPE_MISMATCH, "Second grouped issue", "Fix second issue",
+                List.of(new ArtifactLocationDTO(ArtifactType.SOLUTION_REPOSITORY, "src/B.java", 5, 5), new ArtifactLocationDTO(ArtifactType.PROBLEM_STATEMENT, "", 2, 2)));
+
+        exerciseReviewService.replaceConsistencyCheckComments(programmingExercise.getId(), List.of(firstIssue, secondIssue));
+
+        Set<CommentThread> threads = commentThreadRepository.findWithCommentsByExerciseId(programmingExercise.getId());
+        assertThat(threads).hasSize(4);
+
+        List<CommentThread> firstIssueThreads = threads.stream()
+                .filter(thread -> ((ConsistencyIssueCommentContentDTO) thread.getComments().iterator().next().getContent()).text().contains("First grouped issue")).toList();
+        List<CommentThread> secondIssueThreads = threads.stream()
+                .filter(thread -> ((ConsistencyIssueCommentContentDTO) thread.getComments().iterator().next().getContent()).text().contains("Second grouped issue")).toList();
+
+        assertThat(firstIssueThreads).hasSize(2);
+        assertThat(secondIssueThreads).hasSize(2);
+
+        Long firstIssueGroupId = firstIssueThreads.get(0).getGroup().getId();
+        Long secondIssueGroupId = secondIssueThreads.get(0).getGroup().getId();
+
+        assertThat(firstIssueThreads).allSatisfy(thread -> {
+            assertThat(thread.getGroup()).isNotNull();
+            assertThat(thread.getGroup().getId()).isEqualTo(firstIssueGroupId);
+        });
+        assertThat(secondIssueThreads).allSatisfy(thread -> {
+            assertThat(thread.getGroup()).isNotNull();
+            assertThat(thread.getGroup().getId()).isEqualTo(secondIssueGroupId);
+        });
+        assertThat(firstIssueGroupId).isNotEqualTo(secondIssueGroupId);
+
+        assertThat(firstIssueThreads).anySatisfy(thread -> {
+            assertThat(thread.getTargetType()).isEqualTo(CommentThreadLocationType.TEMPLATE_REPO);
+            assertThat(thread.getFilePath()).isEqualTo("src/A.java");
+            assertThat(thread.getLineNumber()).isEqualTo(3);
+        });
+        assertThat(firstIssueThreads).anySatisfy(thread -> {
+            assertThat(thread.getTargetType()).isEqualTo(CommentThreadLocationType.TEST_REPO);
+            assertThat(thread.getFilePath()).isEqualTo("test/ATest.java");
+            assertThat(thread.getLineNumber()).isEqualTo(8);
+        });
+        assertThat(secondIssueThreads).anySatisfy(thread -> {
+            assertThat(thread.getTargetType()).isEqualTo(CommentThreadLocationType.SOLUTION_REPO);
+            assertThat(thread.getFilePath()).isEqualTo("src/B.java");
+            assertThat(thread.getLineNumber()).isEqualTo(5);
+        });
+        assertThat(secondIssueThreads).anySatisfy(thread -> {
+            assertThat(thread.getTargetType()).isEqualTo(CommentThreadLocationType.PROBLEM_STATEMENT);
+            assertThat(thread.getFilePath()).isNull();
+            assertThat(thread.getLineNumber()).isEqualTo(2);
         });
     }
 

@@ -143,6 +143,7 @@ public class ExerciseReviewService {
     /**
      * Replaces previously generated consistency-check comment threads with the provided issues.
      * Existing consistency-check threads are identified by checking whether their first comment has type {@link CommentType#CONSISTENCY_CHECK}.
+     * For each consistency issue, one thread group is created and all related locations are persisted as threads within that group.
      *
      * @param exerciseId the programming exercise id that owns the review comments
      * @param issues     the latest consistency issues to persist as review comments
@@ -175,10 +176,16 @@ public class ExerciseReviewService {
             if (issue == null) {
                 continue;
             }
-            CommentThread thread = buildConsistencyCheckThread(exercise, issue);
-            Comment comment = buildConsistencyCheckComment(thread, issue);
-            thread.getComments().add(comment);
-            commentThreadRepository.save(thread);
+            List<ConsistencyThreadLocation> locations = mapConsistencyIssueLocations(issue);
+            CommentThreadGroup group = createConsistencyCheckGroup(exercise);
+
+            for (ConsistencyThreadLocation location : locations) {
+                CommentThread thread = buildConsistencyCheckThread(exercise, location);
+                thread.setGroup(group);
+                Comment comment = buildConsistencyCheckComment(thread, issue);
+                thread.getComments().add(comment);
+                commentThreadRepository.save(thread);
+            }
         }
     }
 
@@ -875,8 +882,7 @@ public class ExerciseReviewService {
                 Comparator.nullsLast(Comparator.naturalOrder())));
     }
 
-    private CommentThread buildConsistencyCheckThread(Exercise exercise, ConsistencyIssueDTO issue) {
-        ConsistencyThreadLocation location = mapConsistencyIssueLocation(issue);
+    private CommentThread buildConsistencyCheckThread(Exercise exercise, ConsistencyThreadLocation location) {
         CommentThread thread = new CommentThread();
         thread.setExercise(exercise);
         thread.setTargetType(location.targetType());
@@ -912,17 +918,34 @@ public class ExerciseReviewService {
         return safeDescription + "\n\nSuggested fix: " + suggestedFix;
     }
 
-    private ConsistencyThreadLocation mapConsistencyIssueLocation(ConsistencyIssueDTO issue) {
-        ArtifactLocationDTO firstLocation = issue.relatedLocations() == null ? null : issue.relatedLocations().stream().filter(Objects::nonNull).findFirst().orElse(null);
-        int lineNumber = resolveLineNumber(firstLocation);
-        if (firstLocation == null || firstLocation.type() == null) {
+    private CommentThreadGroup createConsistencyCheckGroup(Exercise exercise) {
+        CommentThreadGroup group = new CommentThreadGroup();
+        group.setExercise(exercise);
+        return commentThreadGroupRepository.save(group);
+    }
+
+    private List<ConsistencyThreadLocation> mapConsistencyIssueLocations(ConsistencyIssueDTO issue) {
+        if (issue.relatedLocations() == null || issue.relatedLocations().isEmpty()) {
+            return List.of(new ConsistencyThreadLocation(CommentThreadLocationType.PROBLEM_STATEMENT, null, 1));
+        }
+
+        List<ConsistencyThreadLocation> locations = issue.relatedLocations().stream().filter(Objects::nonNull).map(this::mapConsistencyIssueLocation).distinct().toList();
+        if (locations.isEmpty()) {
+            return List.of(new ConsistencyThreadLocation(CommentThreadLocationType.PROBLEM_STATEMENT, null, 1));
+        }
+        return locations;
+    }
+
+    private ConsistencyThreadLocation mapConsistencyIssueLocation(ArtifactLocationDTO location) {
+        int lineNumber = resolveLineNumber(location);
+        if (location.type() == null) {
             return new ConsistencyThreadLocation(CommentThreadLocationType.PROBLEM_STATEMENT, null, lineNumber);
         }
-        return switch (firstLocation.type()) {
+        return switch (location.type()) {
             case PROBLEM_STATEMENT -> new ConsistencyThreadLocation(CommentThreadLocationType.PROBLEM_STATEMENT, null, lineNumber);
-            case TEMPLATE_REPOSITORY -> mapRepositoryLocation(CommentThreadLocationType.TEMPLATE_REPO, firstLocation.filePath(), lineNumber);
-            case SOLUTION_REPOSITORY -> mapRepositoryLocation(CommentThreadLocationType.SOLUTION_REPO, firstLocation.filePath(), lineNumber);
-            case TESTS_REPOSITORY -> mapRepositoryLocation(CommentThreadLocationType.TEST_REPO, firstLocation.filePath(), lineNumber);
+            case TEMPLATE_REPOSITORY -> mapRepositoryLocation(CommentThreadLocationType.TEMPLATE_REPO, location.filePath(), lineNumber);
+            case SOLUTION_REPOSITORY -> mapRepositoryLocation(CommentThreadLocationType.SOLUTION_REPO, location.filePath(), lineNumber);
+            case TESTS_REPOSITORY -> mapRepositoryLocation(CommentThreadLocationType.TEST_REPO, location.filePath(), lineNumber);
         };
     }
 

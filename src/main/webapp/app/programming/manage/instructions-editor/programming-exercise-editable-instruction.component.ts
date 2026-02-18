@@ -33,6 +33,7 @@ import { ProblemStatementSyncService, ProblemStatementSyncState } from 'app/prog
 import { editor } from 'monaco-editor';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { MonacoBinding } from 'y-monaco';
+import { ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -128,6 +129,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     readonly hasUnsavedChanges = output<boolean>();
     readonly instructionChange = output<string>();
     readonly onProblemStatementSaved = output<void>();
+    readonly onNavigateToReviewCommentLocation = output<ReviewThreadLocation>();
     generateHtmlSubject: Subject<void> = new Subject<void>();
 
     set unsavedChanges(hasChanges: boolean) {

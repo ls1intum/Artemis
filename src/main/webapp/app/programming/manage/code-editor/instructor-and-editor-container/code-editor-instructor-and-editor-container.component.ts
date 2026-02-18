@@ -48,7 +48,7 @@ import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGe
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { Comment, CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContent, CommentContentType, ConsistencyIssueCommentContent } from 'app/exercise/shared/entities/review/comment-content.model';
-import { CommentThread, CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 
 const SEVERITY_ORDER: Record<ConsistencyIssue.SeverityEnum, number> = {
     [ConsistencyIssue.SeverityEnum.High]: 0,
@@ -548,6 +548,19 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
         this.selectedIssue = issues[newIndex];
         this.jumpToLocation(this.selectedIssue);
+    }
+
+    /**
+     * Navigates to a review-thread location emitted by review comment widgets.
+     */
+    onNavigateToReviewCommentLocation(location: ReviewThreadLocation): void {
+        if (location.threadId !== undefined) {
+            const selectedIssue = this.sortedIssues().find((issue) => issue.threadId === location.threadId);
+            if (selectedIssue) {
+                this.selectedIssue = selectedIssue;
+            }
+        }
+        this.navigateToLocation(location);
     }
 
     /**

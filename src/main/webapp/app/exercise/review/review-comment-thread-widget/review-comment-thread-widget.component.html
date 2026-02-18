@@ -130,6 +130,34 @@
                 }
             </div>
         }
+        @if (relatedGroupLocations().length > 0) {
+            <div class="monaco-review-comment-related-locations">
+                <div class="monaco-review-comment-related-locations-title">
+                    {{ 'artemisApp.review.relatedLocationsTitle' | artemisTranslate }}
+                </div>
+                <ul class="monaco-review-comment-related-locations-list">
+                    @for (location of relatedGroupLocations(); track location.locationLabel) {
+                        <li class="monaco-review-comment-related-locations-item">
+                            <span class="monaco-review-comment-related-location-entry">
+                                <span class="monaco-review-comment-related-location-label">{{ location.locationLabel }}</span>
+                                <button
+                                    pButton
+                                    type="button"
+                                    text
+                                    size="small"
+                                    class="monaco-review-comment-related-location-go-to"
+                                    [attr.aria-label]="'artemisApp.review.goToRelatedLocation' | artemisTranslate"
+                                    [title]="'artemisApp.review.goToRelatedLocation' | artemisTranslate"
+                                    (click)="goToRelatedLocation(location)"
+                                >
+                                    <fa-icon [icon]="faArrowUpRightFromSquare" />
+                                </button>
+                            </span>
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
         <div class="monaco-review-comment-reply">
             <div class="monaco-review-comment-separator"></div>
             <textarea

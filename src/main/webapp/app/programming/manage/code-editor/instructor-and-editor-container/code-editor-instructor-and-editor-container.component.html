@@ -39,6 +39,7 @@
             (onFileLoad)="onFileLoad($event)"
             (onEditorLoaded)="onEditorLoaded()"
             (onCommit)="onCommit()"
+            (onNavigateToReviewCommentLocation)="onNavigateToReviewCommentLocation($event)"
         >
             <div editorTitle>
                 <span>{{ exercise?.title }}</span>
@@ -297,6 +298,7 @@
                 class="instructions-wrapper__content card-body p-0"
                 (instructionChange)="onInstructionChanged($event)"
                 (onProblemStatementSaved)="onProblemStatementSaved()"
+                (onNavigateToReviewCommentLocation)="onNavigateToReviewCommentLocation($event)"
             />
             <jhi-programming-exercise-instructions
                 editorSidebar

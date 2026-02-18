@@ -8,6 +8,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+import { signal } from '@angular/core';
 
 describe('ReviewCommentThreadWidgetComponent', () => {
     setupTestBed({ zoneless: true });
@@ -21,6 +22,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
             createReplyInContext: vi.fn(),
             updateCommentInContext: vi.fn(),
             toggleResolvedInContext: vi.fn(),
+            threads: signal([]),
         };
 
         await TestBed.configureTestingModule({
@@ -189,6 +191,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
             comments: [
                 {
                     id: 3,
+                    type: CommentType.CONSISTENCY_CHECK,
                     createdDate: '2024-01-01T00:00:00Z',
                     content: {
                         contentType: CommentContentType.CONSISTENCY_CHECK,
@@ -199,6 +202,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
                 },
                 {
                     id: 4,
+                    type: CommentType.USER,
                     createdDate: '2024-01-02T00:00:00Z',
                     content: { contentType: CommentContentType.USER, text: 'reply' },
                 },

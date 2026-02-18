@@ -28,6 +28,16 @@
             "threadOutdated": "Outdated",
             "threadConsistencyIssue": "Consistency issue",
             "threadConsistencySeverity": "{{severity}} Severity",
+            "relatedLocationsTitle": "Related locations:",
+            "goToRelatedLocation": "Go to location",
+            "relatedLocationRepository": {
+                "problemStatement": "Problem statement",
+                "template": "Template",
+                "solution": "Solution",
+                "tests": "Tests",
+                "auxiliary": "Auxiliary",
+                "repository": "Repository"
+            },
             "consistencySeverity": {
                 "LOW": "Low",
                 "MEDIUM": "Medium",
