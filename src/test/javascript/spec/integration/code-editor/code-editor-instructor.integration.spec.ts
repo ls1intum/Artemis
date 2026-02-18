@@ -328,7 +328,7 @@ describe('CodeEditorInstructorIntegration', () => {
         expect(comp.editableInstructions()).toBeDefined(); // Have to use this as it's a component
         expect(comp.editableInstructions()!.participation()).toEqual(exercise.templateParticipation);
         expect(comp.resultComp()).not.toBeInstanceOf(UpdatingResultComponent);
-        expect(comp.codeEditorContainer.buildOutput).not.toBeInstanceOf(CodeEditorBuildOutputComponent);
+        expect(comp.codeEditorContainer.buildOutput).toBeUndefined();
     });
 
     const checkSolutionRepository = (exercise: ProgrammingExercise) => {
