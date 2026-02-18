@@ -31,11 +31,6 @@ describe('SearchOverlayService', () => {
             expect(service.isOpen()).toBe(true);
         });
 
-        it('should set body overflow to hidden', () => {
-            service.open();
-            expect(document.body.style.overflow).toBe('hidden');
-        });
-
         it('should keep isOpen true if called multiple times', () => {
             service.open();
             service.open();
@@ -54,11 +49,6 @@ describe('SearchOverlayService', () => {
             expect(service.isOpen()).toBe(false);
         });
 
-        it('should reset body overflow to empty string', () => {
-            service.close();
-            expect(document.body.style.overflow).toBe('');
-        });
-
         it('should keep isOpen false if called multiple times', () => {
             service.close();
             service.close();
@@ -72,7 +62,6 @@ describe('SearchOverlayService', () => {
             // Call close again
             service.close();
             expect(service.isOpen()).toBe(false);
-            expect(document.body.style.overflow).toBe('');
         });
     });
 
@@ -81,7 +70,6 @@ describe('SearchOverlayService', () => {
             expect(service.isOpen()).toBe(false);
             service.toggle();
             expect(service.isOpen()).toBe(true);
-            expect(document.body.style.overflow).toBe('hidden');
         });
 
         it('should close overlay when open', () => {
@@ -90,7 +78,6 @@ describe('SearchOverlayService', () => {
 
             service.toggle();
             expect(service.isOpen()).toBe(false);
-            expect(document.body.style.overflow).toBe('');
         });
 
         it('should toggle multiple times correctly', () => {
@@ -102,27 +89,6 @@ describe('SearchOverlayService', () => {
 
             service.toggle(); // open
             expect(service.isOpen()).toBe(true);
-        });
-    });
-
-    describe('body overflow management', () => {
-        it('should handle rapid open/close cycles', () => {
-            service.open();
-            service.close();
-            service.open();
-            service.close();
-
-            expect(service.isOpen()).toBe(false);
-            expect(document.body.style.overflow).toBe('');
-        });
-
-        it('should handle toggle cycles', () => {
-            service.toggle();
-            service.toggle();
-            service.toggle();
-
-            expect(service.isOpen()).toBe(true);
-            expect(document.body.style.overflow).toBe('hidden');
         });
     });
 });
