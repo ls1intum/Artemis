@@ -246,6 +246,61 @@ public record CourseInfoDTO(
 }
 ```
 
+
+### DTO Composition
+Java Records do not support inheritance.
+To share common attributes across multiple DTOs (e.g., standard fields like ID, creation date, or common exercise details)
+without duplicating code, use **composition** combined with the `@JsonUnwrapped` annotation.
+
+This technique keeps your Java code modular while ensuring the exposed REST API remains "flat" and easy for clients to consume.
+
+#### How it works
+1.  **Define the Shared Component:** Create a Record containing the common fields.
+2.  **Compose the DTO:** Add the shared record as a field in your specific DTO.
+3.  **Annotate:** Add `@JsonUnwrapped` to the field. Jackson will flatten the properties of that field into the parent JSON object.
+
+<Callout variant={CalloutVariant.danger}>
+  <strong>Server-to-Client Only:</strong> This technique is exclusively for <strong>Output DTOs</strong> (responses sent from the server). Do not use <code>@JsonUnwrapped</code> on Input DTOs (request bodies). Jackson cannot reliably deserialize flat JSON back into a nested Record structure, leading to deserialization failures.
+</Callout>
+
+#### Example
+**1. Define the Common Base**
+Create a reusable DTO for shared attributes.
+
+```java
+public record ExerciseDetailsDTO(
+    String title,
+    Double maxPoints,
+    String difficulty
+) {}
+```
+
+**2. Compose the Specific DTO**
+```java
+public record ProgrammingExerciseDTO(
+    Long id,
+    String programmingLanguage,
+    String packageName,
+
+    @JsonUnwrapped
+    ExerciseDetailsDTO details // Contains title, maxPoints, etc.
+) {}
+```
+
+**3. Resulting JSON Structure*
+When serialized, the JSON will be flat:
+
+```json
+{
+    "id": 123,
+    "programmingLanguage": "Java",
+    "packageName": "de.example",
+    "title": "Implement a REST API",
+    "maxPoints": 100.0,
+    "difficulty": "Hard"
+}
+```
+
 ### Architecture Test Enforcement
 
 We enforce DTO usage through architecture tests that verify:
@@ -290,6 +345,8 @@ These tests run as part of CI and will fail if violations are introduced. Curren
 
 ### Request Validation
 
+#### Define Constraints on DTOs
+
 Always validate incoming DTOs using Bean Validation:
 
 ```java
@@ -302,6 +359,39 @@ public record CreateExerciseDTO(
 
     @NotNull @Future
     ZonedDateTime dueDate
+) {}
+```
+
+#### Enable Validation in Controllers
+Validation is not automatic. You must annotate the DTO parameter in your REST controller method with `@Valid`.
+If this annotation is missing, the constraints defined in your DTO will be ignored.
+
+```
+@PostMapping
+// The @Valid annotation triggers the validation logic before the method body is executed
+public ResponseEntity<ExerciseDTO> createExercise(@RequestBody @Valid CreateExerciseDTO exerciseDTO) {
+    // ...
+}
+```
+
+#### Nested Validation (Cascading)
+If your DTO contains other DTOs (as fields or collections), validation does not cascade automatically.
+You must annotate the nested field with `@Valid` to ensure the inner objects are also checked.
+
+```
+public record ExamDTO(
+    @NotBlank
+    String title,
+
+    // Critical: The @Valid annotation here ensures that properties
+    // inside 'examConfig' are validated when the ExamDTO is validated.
+    @Valid
+    @NotNull
+    ExamConfigDTO examConfig,
+
+    // Also works for collections: This validates every StudentDTO inside the list
+    @NotEmpty
+    List<@Valid StudentDTO> registeredStudents
 ) {}
 ```
 
