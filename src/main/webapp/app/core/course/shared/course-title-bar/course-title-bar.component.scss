@@ -1,5 +1,9 @@
 @import '../course-base-container/course-variables';
 
+#course-title-bar-test {
+    z-index: 1030;
+}
+
 .btn-sidebar-collapse {
     position: relative;
     overflow: hidden;

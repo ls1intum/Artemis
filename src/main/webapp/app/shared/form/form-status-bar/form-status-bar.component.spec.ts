@@ -29,11 +29,36 @@ describe('FormStatusBarComponent', () => {
     });
 
     it('should scroll to correct headline', () => {
-        const mockDOMElement = { scrollIntoView: jest.fn(), style: {} };
-        const getElementSpy = jest.spyOn(document, 'getElementById').mockReturnValue(mockDOMElement as any as HTMLElement);
-        const scrollToSpy = jest.spyOn(mockDOMElement, 'scrollIntoView');
-        comp.scrollToHeadline(comp.formStatusSections()[0].title);
-        expect(getElementSpy).toHaveBeenCalledWith(comp.formStatusSections()[0].title);
-        expect(scrollToSpy).toHaveBeenCalledOnce();
+        const title = comp.formStatusSections()[0].title;
+        const containerElement = { scrollTop: 100, getBoundingClientRect: jest.fn().mockReturnValue({ top: 0 }), scrollTo: jest.fn() } as any as HTMLElement;
+        const targetElement = { style: {}, getBoundingClientRect: jest.fn().mockReturnValue({ top: 300 }), scrollIntoView: jest.fn() } as any as HTMLElement;
+
+        const getElementSpy = jest.spyOn(document, 'getElementById').mockImplementation((id: string) => {
+            if (id === 'course-body-container') {
+                return containerElement;
+            } else if (id === title) {
+                return targetElement;
+            }
+            return null;
+        });
+
+        comp.scrollToHeadline(title);
+
+        expect(getElementSpy).toHaveBeenCalledWith(title);
+        expect(getElementSpy).toHaveBeenCalledWith('course-body-container');
+        expect(containerElement.scrollTo).toHaveBeenCalledOnce();
+    });
+
+    it('should fall back to scrollIntoView when scroll container is missing', () => {
+        const title = comp.formStatusSections()[0].title;
+        const targetElement = { style: {}, getBoundingClientRect: jest.fn().mockReturnValue({ top: 300 }), scrollIntoView: jest.fn() } as any as HTMLElement;
+
+        jest.spyOn(document, 'getElementById').mockImplementation((id: string) => {
+            return id === title ? (targetElement as any) : null;
+        });
+
+        comp.scrollToHeadline(title);
+
+        expect(targetElement.scrollIntoView).toHaveBeenCalledOnce();
     });
 });
