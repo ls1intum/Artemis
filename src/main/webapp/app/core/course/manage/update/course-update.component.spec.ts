@@ -1280,13 +1280,14 @@ describe('Course Management Update Component', () => {
         it('should link campus online course for existing course via API', () => {
             const existingCourse = new Course();
             existingCourse.id = 42;
-            const returnedCourse = new Course();
-            returnedCourse.id = 42;
-            returnedCourse.campusOnlineConfiguration = new CampusOnlineConfiguration();
-            returnedCourse.campusOnlineConfiguration.campusOnlineCourseId = 'CO-101';
             comp.course = existingCourse;
 
-            const linkSpy = vi.spyOn(campusOnlineService, 'linkCourse').mockReturnValue(of(new HttpResponse({ body: returnedCourse })));
+            const returnedDTO: CampusOnlineCourseDTO = {
+                campusOnlineCourseId: 'CO-101',
+                title: 'CS Course',
+                alreadyImported: false,
+            };
+            const linkSpy = vi.spyOn(campusOnlineService, 'linkCourse').mockReturnValue(of(new HttpResponse({ body: returnedDTO })));
 
             const selectedCourse: CampusOnlineCourseDTO = {
                 campusOnlineCourseId: 'CO-101',
@@ -1306,6 +1307,9 @@ describe('Course Management Update Component', () => {
                 studyProgram: 'Informatik BSc',
             });
             expect(comp.campusOnlineLinked).toBe(true);
+            expect(comp.course.campusOnlineConfiguration?.campusOnlineCourseId).toBe('CO-101');
+            expect(comp.course.campusOnlineConfiguration?.responsibleInstructor).toBe('Prof. Smith');
+            expect(comp.course.campusOnlineConfiguration?.department).toBe('CS Dept');
         });
 
         it('should unlink campus online course for existing course via API', () => {

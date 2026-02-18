@@ -135,7 +135,7 @@ class CampusOnlineCourseImportServiceTest {
         course.setSemester("2025W");
         when(courseRepository.findByIdForUpdateElseThrow(1L)).thenReturn(course);
         when(courseRepository.save(course)).thenReturn(course);
-        when(courseRepository.findAllWithCampusOnlineConfiguration()).thenReturn(Set.of());
+        when(courseRepository.existsByCampusOnlineCourseId("CO-101")).thenReturn(false);
 
         // When
         CampusOnlineCourseDTO result = service.linkCourse(1L, "CO-101", "Prof. Smith", "CS Department", "Informatik BSc");
@@ -162,12 +162,7 @@ class CampusOnlineCourseImportServiceTest {
     @Test
     void linkCourse_shouldThrowException_whenDuplicateLink() {
         // Given - existing course already linked to CO-101
-        Course existingCourse = new Course();
-        existingCourse.setId(1L);
-        CampusOnlineConfiguration config = new CampusOnlineConfiguration();
-        config.setCampusOnlineCourseId("CO-101");
-        existingCourse.setCampusOnlineConfiguration(config);
-        when(courseRepository.findAllWithCampusOnlineConfiguration()).thenReturn(Set.of(existingCourse));
+        when(courseRepository.existsByCampusOnlineCourseId("CO-101")).thenReturn(true);
 
         // When/Then
         assertThatThrownBy(() -> service.linkCourse(2L, "CO-101", "Prof. Smith", "CS Dept", "Informatik BSc")).isInstanceOf(BadRequestAlertException.class);

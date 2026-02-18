@@ -1,7 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Course } from 'app/core/course/shared/entities/course.model';
 
 export interface CampusOnlineCourseDTO {
     campusOnlineCourseId: string;
@@ -41,8 +40,8 @@ export class CampusOnlineService {
         return this.http.get<CampusOnlineCourseDTO[]>(url);
     }
 
-    linkCourse(courseId: number, request: CampusOnlineLinkRequest): Observable<HttpResponse<Course>> {
-        return this.http.put<Course>(`${this.resourceUrl}/courses/${courseId}/link`, request, { observe: 'response' });
+    linkCourse(courseId: number, request: CampusOnlineLinkRequest): Observable<HttpResponse<CampusOnlineCourseDTO>> {
+        return this.http.put<CampusOnlineCourseDTO>(`${this.resourceUrl}/courses/${courseId}/link`, request, { observe: 'response' });
     }
 
     unlinkCourse(courseId: number): Observable<HttpResponse<void>> {

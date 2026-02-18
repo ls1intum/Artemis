@@ -187,6 +187,12 @@ class AdminCampusOnlineResourceIntegrationTest extends AbstractSpringIntegration
         request.getList(BASE_URL + "courses/search?query=Test&semester=2025W", HttpStatus.FORBIDDEN, CampusOnlineCourseDTO.class);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void searchCoursesByName_returnsBadRequest_whenQueryTooShort() throws Exception {
+        request.getList(BASE_URL + "courses/search?query=ab&semester=2025W", HttpStatus.BAD_REQUEST, CampusOnlineCourseDTO.class);
+    }
+
     // ==================== PUT /courses/{courseId}/link ====================
 
     @Test
@@ -290,7 +296,7 @@ class AdminCampusOnlineResourceIntegrationTest extends AbstractSpringIntegration
         campusOnlineMockProvider.mockFetchCourseMetadata("CO-555", "Algorithms and Data Structures", "2025W");
 
         var importRequest = new CampusOnlineCourseImportRequestDTO("CO-555", "algods");
-        CampusOnlineCourseDTO result = request.postWithResponseBody(BASE_URL + "courses/import", importRequest, CampusOnlineCourseDTO.class, HttpStatus.OK);
+        CampusOnlineCourseDTO result = request.postWithResponseBody(BASE_URL + "courses/import", importRequest, CampusOnlineCourseDTO.class, HttpStatus.CREATED);
 
         assertThat(result).isNotNull();
         assertThat(result.campusOnlineCourseId()).isEqualTo("CO-555");
@@ -316,7 +322,7 @@ class AdminCampusOnlineResourceIntegrationTest extends AbstractSpringIntegration
         // First import a course
         campusOnlineMockProvider.mockFetchCourseMetadata("CO-DUP", "Duplicate Course", "2025W");
         var importRequest = new CampusOnlineCourseImportRequestDTO("CO-DUP", "duptest");
-        request.postWithResponseBody(BASE_URL + "courses/import", importRequest, CampusOnlineCourseDTO.class, HttpStatus.OK);
+        request.postWithResponseBody(BASE_URL + "courses/import", importRequest, CampusOnlineCourseDTO.class, HttpStatus.CREATED);
 
         // Try to import again with same CAMPUSOnline course ID — should fail
         request.postWithResponseBody(BASE_URL + "courses/import", importRequest, CampusOnlineCourseDTO.class, HttpStatus.BAD_REQUEST);

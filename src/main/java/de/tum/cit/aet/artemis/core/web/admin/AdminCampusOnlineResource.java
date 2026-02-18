@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.core.web.admin;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 
 import jakarta.validation.Valid;
@@ -9,6 +11,7 @@ import jakarta.validation.Valid;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -38,7 +41,7 @@ import de.tum.cit.aet.artemis.core.service.connectors.campusonline.CampusOnlineE
 @RequestMapping("api/core/admin/campus-online")
 public class AdminCampusOnlineResource {
 
-    private static final String DATE_PATTERN = "\\d{4}-\\d{2}-\\d{2}";
+    private static final int MIN_SEARCH_QUERY_LENGTH = 3;
 
     private final CampusOnlineCourseImportService courseImportService;
 
@@ -74,6 +77,9 @@ public class AdminCampusOnlineResource {
      */
     @GetMapping("courses/search")
     public ResponseEntity<List<CampusOnlineCourseDTO>> searchCoursesByName(@RequestParam String query, @RequestParam(required = false) String semester) {
+        if (query == null || query.length() < MIN_SEARCH_QUERY_LENGTH) {
+            throw new BadRequestAlertException("Search query must be at least " + MIN_SEARCH_QUERY_LENGTH + " characters", "campusOnline", "queryTooShort");
+        }
         List<CampusOnlineCourseDTO> courses = courseImportService.searchCoursesByName(query, semester);
         return ResponseEntity.ok(courses);
     }
@@ -113,7 +119,7 @@ public class AdminCampusOnlineResource {
     @PostMapping("courses/import")
     public ResponseEntity<CampusOnlineCourseDTO> importCourse(@RequestBody @Valid CampusOnlineCourseImportRequestDTO request) {
         CampusOnlineCourseDTO course = courseImportService.importCourse(request);
-        return ResponseEntity.ok(course);
+        return ResponseEntity.status(HttpStatus.CREATED).body(course);
     }
 
     /**
@@ -140,7 +146,13 @@ public class AdminCampusOnlineResource {
     }
 
     private void validateDateParam(String date, String paramName) {
-        if (date == null || !date.matches(DATE_PATTERN)) {
+        if (date == null) {
+            throw new BadRequestAlertException("Date parameter '" + paramName + "' is required", "campusOnline", "invalidDateFormat");
+        }
+        try {
+            LocalDate.parse(date);
+        }
+        catch (DateTimeParseException e) {
             throw new BadRequestAlertException("Invalid date format for '" + paramName + "', expected YYYY-MM-DD", "campusOnline", "invalidDateFormat");
         }
     }

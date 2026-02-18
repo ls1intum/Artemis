@@ -8,10 +8,10 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.config.CampusOnlineEnabled;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -23,7 +23,6 @@ import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnl
 import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineStudentListResponse;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
 
-@Lazy
 @Service
 @Conditional(CampusOnlineEnabled.class)
 @Profile(PROFILE_CORE)
@@ -108,7 +107,8 @@ public class CampusOnlineEnrollmentSyncService {
         return new CampusOnlineSyncResultDTO(1, 0, counts.usersAdded, counts.usersNotFound);
     }
 
-    private SyncCounts syncCourseEnrollment(Course course) {
+    @Transactional
+    SyncCounts syncCourseEnrollment(Course course) {
         String campusOnlineCourseId = course.getCampusOnlineConfiguration().getCampusOnlineCourseId();
         log.info("Syncing enrollment for course '{}' (CAMPUSOnline ID: {})", course.getTitle(), campusOnlineCourseId);
 

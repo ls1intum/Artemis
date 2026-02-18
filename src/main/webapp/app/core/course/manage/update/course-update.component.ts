@@ -740,8 +740,13 @@ export class CourseUpdateComponent implements OnInit {
                     studyProgram: event.studyProgram,
                 })
                 .subscribe({
-                    next: (response) => {
-                        this.course.campusOnlineConfiguration = response.body?.campusOnlineConfiguration;
+                    next: () => {
+                        this.course.campusOnlineConfiguration = {
+                            campusOnlineCourseId: event.campusOnlineCourseId,
+                            responsibleInstructor: event.responsibleInstructor,
+                            department: event.department,
+                            studyProgram: event.studyProgram,
+                        };
                         this.campusOnlineLinked = true;
                     },
                     error: (err) => onError(this.alertService, err),

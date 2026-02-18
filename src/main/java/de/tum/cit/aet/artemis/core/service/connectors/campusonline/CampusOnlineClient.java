@@ -4,6 +4,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 
+import javax.xml.stream.XMLInputFactory;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -17,6 +19,8 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.dataformat.xml.XmlFactory;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 
 import de.tum.cit.aet.artemis.core.config.CampusOnlineEnabled;
@@ -32,7 +36,15 @@ public class CampusOnlineClient {
 
     private static final Logger log = LoggerFactory.getLogger(CampusOnlineClient.class);
 
-    private static final XmlMapper xmlMapper = new XmlMapper();
+    private static final XmlMapper xmlMapper;
+
+    static {
+        XMLInputFactory inputFactory = XMLInputFactory.newFactory();
+        inputFactory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+        inputFactory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
+        xmlMapper = new XmlMapper(new XmlFactory(inputFactory));
+        xmlMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    }
 
     private final RestTemplate restTemplate;
 
@@ -79,14 +91,17 @@ public class CampusOnlineClient {
      * @return the parsed org courses response
      */
     public CampusOnlineOrgCoursesResponse fetchCoursesForOrg(String orgUnitId, String from, String until) {
-        String url = UriComponentsBuilder.fromHttpUrl(baseUrl + "/xcal/organization/courses/xml").queryParam("orgUnitID", orgUnitId).queryParam("from", from)
-                .queryParam("until", until).build().toUriString();
+        String url = buildUrl("/xcal/organization/courses/xml", "orgUnitID", orgUnitId, "from", from, "until", until);
         String xml = fetchWithTokenFallback(url);
         return parseXml(xml, CampusOnlineOrgCoursesResponse.class);
     }
 
-    private String buildUrl(String path, String paramName, String paramValue) {
-        return UriComponentsBuilder.fromHttpUrl(baseUrl + path).queryParam(paramName, paramValue).build().toUriString();
+    private String buildUrl(String path, String... queryParams) {
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(baseUrl + path);
+        for (int i = 0; i < queryParams.length - 1; i += 2) {
+            builder.queryParam(queryParams[i], queryParams[i + 1]);
+        }
+        return builder.build().toUriString();
     }
 
     private String fetchWithTokenFallback(String urlWithoutToken) {

@@ -39,7 +39,8 @@
                                  baseColumnNames="campus_online_configuration_id"
                                  constraintName="fk_course_campus_online_configuration"
                                  referencedTableName="campus_online_configuration"
-                                 referencedColumnNames="id"/>
+                                 referencedColumnNames="id"
+                                 onDelete="SET NULL"/>
     </changeSet>
 
 </databaseChangeLog>

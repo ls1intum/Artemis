@@ -53,6 +53,14 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
             """)
     Set<Course> findAllWithCampusOnlineConfiguration();
 
+    @Query("""
+            SELECT COUNT(c) > 0
+            FROM Course c
+                JOIN c.campusOnlineConfiguration co
+            WHERE co.campusOnlineCourseId = :campusOnlineCourseId
+            """)
+    boolean existsByCampusOnlineCourseId(@Param("campusOnlineCourseId") String campusOnlineCourseId);
+
     @EntityGraph(type = LOAD, attributePaths = { "campusOnlineConfiguration" })
     Optional<Course> findWithEagerCampusOnlineConfigurationById(long courseId);
 

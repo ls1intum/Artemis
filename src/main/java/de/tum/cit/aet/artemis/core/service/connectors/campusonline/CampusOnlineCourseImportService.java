@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.service.connectors.campusonline;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.LocalDate;
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.config.CampusOnlineEnabled;
@@ -95,13 +97,18 @@ public class CampusOnlineCourseImportService {
         course.setMaxComplaintResponseTextLimit(2000);
         course.setAccuracyOfScores(1);
 
-        String groupPrefix = "artemis-" + request.shortName().toLowerCase();
+        String groupPrefix = ARTEMIS_GROUP_DEFAULT_PREFIX + request.shortName().toLowerCase();
         course.setStudentGroupName(groupPrefix + "-students");
         course.setTeachingAssistantGroupName(groupPrefix + "-tutors");
         course.setEditorGroupName(groupPrefix + "-editors");
         course.setInstructorGroupName(groupPrefix + "-instructors");
 
-        course = courseRepository.save(course);
+        try {
+            course = courseRepository.save(course);
+        }
+        catch (DataIntegrityViolationException e) {
+            throw new BadRequestAlertException("This CAMPUSOnline course is already linked to an Artemis course", ENTITY_NAME, "alreadyLinked");
+        }
         log.info("Imported CAMPUSOnline course '{}' (ID: {}) as Artemis course '{}' (ID: {})", metadata.courseName(), request.campusOnlineCourseId(), course.getTitle(),
                 course.getId());
         return new CampusOnlineCourseDTO(config.getCampusOnlineCourseId(), course.getTitle(), course.getSemester(), null, null, null, null, false);
@@ -162,7 +169,12 @@ public class CampusOnlineCourseImportService {
         config.setStudyProgram(studyProgram);
 
         course.setCampusOnlineConfiguration(config);
-        course = courseRepository.save(course);
+        try {
+            course = courseRepository.save(course);
+        }
+        catch (DataIntegrityViolationException e) {
+            throw new BadRequestAlertException("This CAMPUSOnline course is already linked to an Artemis course", ENTITY_NAME, "alreadyLinked");
+        }
         return new CampusOnlineCourseDTO(campusOnlineCourseId, course.getTitle(), course.getSemester(), null, responsibleInstructor, department, studyProgram, false);
     }
 
@@ -178,9 +190,7 @@ public class CampusOnlineCourseImportService {
     }
 
     private void checkDuplicateLink(String campusOnlineCourseId) {
-        boolean alreadyLinked = courseRepository.findAllWithCampusOnlineConfiguration().stream()
-                .anyMatch(c -> campusOnlineCourseId.equals(c.getCampusOnlineConfiguration().getCampusOnlineCourseId()));
-        if (alreadyLinked) {
+        if (courseRepository.existsByCampusOnlineCourseId(campusOnlineCourseId)) {
             throw new BadRequestAlertException("This CAMPUSOnline course is already linked to an Artemis course", ENTITY_NAME, "alreadyLinked");
         }
     }

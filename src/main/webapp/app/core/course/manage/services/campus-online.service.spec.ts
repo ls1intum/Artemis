@@ -88,12 +88,13 @@ describe('CampusOnline Service', () => {
                 .pipe(take(1))
                 .subscribe((res) => {
                     expect(res.body).toBeTruthy();
-                    expect(res.body!.id).toBe(1);
+                    expect(res.body!.campusOnlineCourseId).toBe('CO-101');
+                    expect(res.body!.title).toBe('Test Course');
                 });
 
             const req = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/courses/1/link` });
             expect(req.request.body).toEqual(linkRequest);
-            req.flush({ id: 1, title: 'Test Course' });
+            req.flush({ campusOnlineCourseId: 'CO-101', title: 'Test Course', alreadyImported: false });
         });
     });
 
