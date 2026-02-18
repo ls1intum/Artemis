@@ -129,6 +129,12 @@ class AdminCampusOnlineResourceIntegrationTest extends AbstractSpringIntegration
         request.getList(BASE_URL + "courses?orgUnitId=999&from=2025-01-01&until=2025-12-31", HttpStatus.UNAUTHORIZED, CampusOnlineCourseDTO.class);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void searchCourses_returnsBadRequest_whenInvalidDateFormat() throws Exception {
+        request.getList(BASE_URL + "courses?orgUnitId=999&from=invalid&until=2025-12-31", HttpStatus.BAD_REQUEST, CampusOnlineCourseDTO.class);
+    }
+
     // ==================== GET /courses/search (typeahead) ====================
 
     @Test
@@ -188,15 +194,13 @@ class AdminCampusOnlineResourceIntegrationTest extends AbstractSpringIntegration
     void linkCourse_returnsOk_withUpdatedCourse() throws Exception {
         var linkRequest = new CampusOnlineLinkRequestDTO("CO-101", "Prof. Smith", "CS Department", "Informatik BSc");
 
-        Course result = request.putWithResponseBody(BASE_URL + "courses/" + testCourse.getId() + "/link", linkRequest, Course.class, HttpStatus.OK);
+        CampusOnlineCourseDTO result = request.putWithResponseBody(BASE_URL + "courses/" + testCourse.getId() + "/link", linkRequest, CampusOnlineCourseDTO.class, HttpStatus.OK);
 
         assertThat(result).isNotNull();
-        assertThat(result.getId()).isEqualTo(testCourse.getId());
-        assertThat(result.getCampusOnlineConfiguration()).isNotNull();
-        assertThat(result.getCampusOnlineConfiguration().getCampusOnlineCourseId()).isEqualTo("CO-101");
-        assertThat(result.getCampusOnlineConfiguration().getResponsibleInstructor()).isEqualTo("Prof. Smith");
-        assertThat(result.getCampusOnlineConfiguration().getDepartment()).isEqualTo("CS Department");
-        assertThat(result.getCampusOnlineConfiguration().getStudyProgram()).isEqualTo("Informatik BSc");
+        assertThat(result.campusOnlineCourseId()).isEqualTo("CO-101");
+        assertThat(result.responsibleInstructor()).isEqualTo("Prof. Smith");
+        assertThat(result.department()).isEqualTo("CS Department");
+        assertThat(result.studyProgram()).isEqualTo("Informatik BSc");
 
         // Verify it was persisted in the database
         Course fromDb = courseRepository.findByIdForUpdateElseThrow(testCourse.getId());
@@ -209,7 +213,24 @@ class AdminCampusOnlineResourceIntegrationTest extends AbstractSpringIntegration
     void linkCourse_returnsBadRequest_whenCourseIdBlank() throws Exception {
         var linkRequest = new CampusOnlineLinkRequestDTO("", "Prof. Smith", "CS Department", "Informatik BSc");
 
-        request.putWithResponseBody(BASE_URL + "courses/" + testCourse.getId() + "/link", linkRequest, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        request.putWithResponseBody(BASE_URL + "courses/" + testCourse.getId() + "/link", linkRequest, CampusOnlineCourseDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void linkCourse_returnsBadRequest_whenDuplicateLink() throws Exception {
+        // First, link a course
+        CampusOnlineConfiguration config = new CampusOnlineConfiguration();
+        config.setCampusOnlineCourseId("CO-DUPLICATE");
+        config = campusOnlineConfigRepository.save(config);
+        testCourse.setCampusOnlineConfiguration(config);
+        courseRepository.save(testCourse);
+
+        // Try to link another course with the same CAMPUSOnline ID
+        Course secondCourse = courseUtilService.createCourse();
+        var linkRequest = new CampusOnlineLinkRequestDTO("CO-DUPLICATE", "Prof. Other", "Other Dept", "Other Program");
+
+        request.putWithResponseBody(BASE_URL + "courses/" + secondCourse.getId() + "/link", linkRequest, CampusOnlineCourseDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -217,7 +238,7 @@ class AdminCampusOnlineResourceIntegrationTest extends AbstractSpringIntegration
     void linkCourse_returnsNotFound_whenCourseDoesNotExist() throws Exception {
         var linkRequest = new CampusOnlineLinkRequestDTO("CO-101", "Prof. Smith", "CS Department", "Informatik BSc");
 
-        request.putWithResponseBody(BASE_URL + "courses/999999/link", linkRequest, Course.class, HttpStatus.NOT_FOUND);
+        request.putWithResponseBody(BASE_URL + "courses/999999/link", linkRequest, CampusOnlineCourseDTO.class, HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -225,7 +246,7 @@ class AdminCampusOnlineResourceIntegrationTest extends AbstractSpringIntegration
     void linkCourse_returnsForbidden_whenNotAdmin() throws Exception {
         var linkRequest = new CampusOnlineLinkRequestDTO("CO-101", "Prof. Smith", "CS Department", "Informatik BSc");
 
-        request.putWithResponseBody(BASE_URL + "courses/" + testCourse.getId() + "/link", linkRequest, Course.class, HttpStatus.FORBIDDEN);
+        request.putWithResponseBody(BASE_URL + "courses/" + testCourse.getId() + "/link", linkRequest, CampusOnlineCourseDTO.class, HttpStatus.FORBIDDEN);
     }
 
     // ==================== DELETE /courses/{courseId}/link ====================
@@ -269,23 +290,22 @@ class AdminCampusOnlineResourceIntegrationTest extends AbstractSpringIntegration
         campusOnlineMockProvider.mockFetchCourseMetadata("CO-555", "Algorithms and Data Structures", "2025W");
 
         var importRequest = new CampusOnlineCourseImportRequestDTO("CO-555", "algods");
-        Course result = request.postWithResponseBody(BASE_URL + "courses/import", importRequest, Course.class, HttpStatus.OK);
+        CampusOnlineCourseDTO result = request.postWithResponseBody(BASE_URL + "courses/import", importRequest, CampusOnlineCourseDTO.class, HttpStatus.OK);
 
         assertThat(result).isNotNull();
-        assertThat(result.getId()).isNotNull();
-        assertThat(result.getTitle()).isEqualTo("Algorithms and Data Structures");
-        assertThat(result.getShortName()).isEqualTo("algods");
-        assertThat(result.getSemester()).isEqualTo("2025W");
-        assertThat(result.getCampusOnlineConfiguration()).isNotNull();
-        assertThat(result.getCampusOnlineConfiguration().getCampusOnlineCourseId()).isEqualTo("CO-555");
-        assertThat(result.getStudentGroupName()).isEqualTo("artemis-algods-students");
-        assertThat(result.getTeachingAssistantGroupName()).isEqualTo("artemis-algods-tutors");
-        assertThat(result.getEditorGroupName()).isEqualTo("artemis-algods-editors");
-        assertThat(result.getInstructorGroupName()).isEqualTo("artemis-algods-instructors");
+        assertThat(result.campusOnlineCourseId()).isEqualTo("CO-555");
+        assertThat(result.title()).isEqualTo("Algorithms and Data Structures");
+        assertThat(result.semester()).isEqualTo("2025W");
 
-        // Verify persisted in DB
-        Course fromDb = courseRepository.findById(result.getId()).orElseThrow();
-        assertThat(fromDb.getTitle()).isEqualTo("Algorithms and Data Structures");
+        // Verify persisted in DB by finding the course with this CAMPUSOnline config
+        var courses = courseRepository.findAllWithCampusOnlineConfiguration();
+        var importedCourse = courses.stream().filter(c -> "CO-555".equals(c.getCampusOnlineConfiguration().getCampusOnlineCourseId())).findFirst().orElseThrow();
+        assertThat(importedCourse.getTitle()).isEqualTo("Algorithms and Data Structures");
+        assertThat(importedCourse.getShortName()).isEqualTo("algods");
+        assertThat(importedCourse.getStudentGroupName()).isEqualTo("artemis-algods-students");
+        assertThat(importedCourse.getTeachingAssistantGroupName()).isEqualTo("artemis-algods-tutors");
+        assertThat(importedCourse.getEditorGroupName()).isEqualTo("artemis-algods-editors");
+        assertThat(importedCourse.getInstructorGroupName()).isEqualTo("artemis-algods-instructors");
 
         campusOnlineMockProvider.verify();
     }
@@ -294,7 +314,7 @@ class AdminCampusOnlineResourceIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = TEST_PREFIX + "student", roles = "USER")
     void importCourse_returnsForbidden_whenNotAdmin() throws Exception {
         var importRequest = new CampusOnlineCourseImportRequestDTO("CO-555", "algods");
-        request.postWithResponseBody(BASE_URL + "courses/import", importRequest, Course.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody(BASE_URL + "courses/import", importRequest, CampusOnlineCourseDTO.class, HttpStatus.FORBIDDEN);
     }
 
     // ==================== POST /sync (all courses) ====================
@@ -398,9 +418,9 @@ class AdminCampusOnlineResourceIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void syncSingleCourse_returnsInternalServerError_whenNoCampusOnlineConfig() throws Exception {
-        // testCourse has no CAMPUSOnline configuration
-        request.postWithResponseBody(BASE_URL + "courses/" + testCourse.getId() + "/sync", null, CampusOnlineSyncResultDTO.class, HttpStatus.INTERNAL_SERVER_ERROR);
+    void syncSingleCourse_returnsBadGateway_whenNoCampusOnlineConfig() throws Exception {
+        // testCourse has no CAMPUSOnline configuration — CampusOnlineApiException maps to 502
+        request.postWithResponseBody(BASE_URL + "courses/" + testCourse.getId() + "/sync", null, CampusOnlineSyncResultDTO.class, HttpStatus.BAD_GATEWAY);
     }
 
     @Test

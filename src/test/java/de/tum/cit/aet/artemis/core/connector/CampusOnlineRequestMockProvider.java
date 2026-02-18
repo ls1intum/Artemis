@@ -8,6 +8,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -40,7 +41,7 @@ public class CampusOnlineRequestMockProvider {
 
     private MockRestServiceServer mockServer;
 
-    public CampusOnlineRequestMockProvider(RestTemplate restTemplate) {
+    public CampusOnlineRequestMockProvider(@Qualifier("campusOnlineRestTemplate") RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
 

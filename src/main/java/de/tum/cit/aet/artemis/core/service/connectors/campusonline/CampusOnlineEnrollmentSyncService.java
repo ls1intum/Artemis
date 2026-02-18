@@ -78,9 +78,9 @@ public class CampusOnlineEnrollmentSyncService {
 
         for (Course course : courses) {
             try {
-                int[] counts = syncCourseEnrollment(course);
-                totalUsersAdded += counts[0];
-                totalUsersNotFound += counts[1];
+                SyncCounts counts = syncCourseEnrollment(course);
+                totalUsersAdded += counts.usersAdded;
+                totalUsersNotFound += counts.usersNotFound;
                 coursesSynced++;
             }
             catch (Exception e) {
@@ -94,6 +94,7 @@ public class CampusOnlineEnrollmentSyncService {
 
     /**
      * Performs enrollment sync for a single course.
+     * Unlike batch sync, this method propagates errors so the admin gets actionable feedback.
      *
      * @param courseId the Artemis course ID
      * @return the sync result for this single course
@@ -103,17 +104,11 @@ public class CampusOnlineEnrollmentSyncService {
         if (course.getCampusOnlineConfiguration() == null) {
             throw new CampusOnlineApiException("Course " + courseId + " has no CAMPUSOnline configuration");
         }
-        try {
-            int[] counts = syncCourseEnrollment(course);
-            return new CampusOnlineSyncResultDTO(1, 0, counts[0], counts[1]);
-        }
-        catch (Exception e) {
-            log.error("Failed to sync enrollment for course {} (ID: {}): {}", course.getTitle(), course.getId(), e.getMessage());
-            return new CampusOnlineSyncResultDTO(0, 1, 0, 0);
-        }
+        SyncCounts counts = syncCourseEnrollment(course);
+        return new CampusOnlineSyncResultDTO(1, 0, counts.usersAdded, counts.usersNotFound);
     }
 
-    private int[] syncCourseEnrollment(Course course) {
+    private SyncCounts syncCourseEnrollment(Course course) {
         String campusOnlineCourseId = course.getCampusOnlineConfiguration().getCampusOnlineCourseId();
         log.info("Syncing enrollment for course '{}' (CAMPUSOnline ID: {})", course.getTitle(), campusOnlineCourseId);
 
@@ -140,6 +135,9 @@ public class CampusOnlineEnrollmentSyncService {
         }
 
         log.info("Synced course '{}': {} users added, {} users not found out of {} confirmed students", course.getTitle(), usersAdded, usersNotFound, confirmedStudents.size());
-        return new int[] { usersAdded, usersNotFound };
+        return new SyncCounts(usersAdded, usersNotFound);
+    }
+
+    private record SyncCounts(int usersAdded, int usersNotFound) {
     }
 }

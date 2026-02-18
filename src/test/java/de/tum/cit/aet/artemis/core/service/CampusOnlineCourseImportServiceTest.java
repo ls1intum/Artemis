@@ -18,6 +18,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import de.tum.cit.aet.artemis.core.domain.CampusOnlineConfiguration;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.dto.CampusOnlineCourseDTO;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.service.connectors.campusonline.CampusOnlineClient;
 import de.tum.cit.aet.artemis.core.service.connectors.campusonline.CampusOnlineCourseImportService;
@@ -130,31 +131,46 @@ class CampusOnlineCourseImportServiceTest {
         // Given
         Course course = new Course();
         course.setId(1L);
+        course.setTitle("Test Course");
+        course.setSemester("2025W");
         when(courseRepository.findByIdForUpdateElseThrow(1L)).thenReturn(course);
         when(courseRepository.save(course)).thenReturn(course);
+        when(courseRepository.findAllWithCampusOnlineConfiguration()).thenReturn(Set.of());
 
         // When
-        Course result = service.linkCourse(1L, "CO-101", "Prof. Smith", "CS Department", "Informatik BSc");
+        CampusOnlineCourseDTO result = service.linkCourse(1L, "CO-101", "Prof. Smith", "CS Department", "Informatik BSc");
 
         // Then
-        assertThat(result.getCampusOnlineConfiguration()).isNotNull();
-        assertThat(result.getCampusOnlineConfiguration().getCampusOnlineCourseId()).isEqualTo("CO-101");
-        assertThat(result.getCampusOnlineConfiguration().getResponsibleInstructor()).isEqualTo("Prof. Smith");
-        assertThat(result.getCampusOnlineConfiguration().getDepartment()).isEqualTo("CS Department");
-        assertThat(result.getCampusOnlineConfiguration().getStudyProgram()).isEqualTo("Informatik BSc");
+        assertThat(result).isNotNull();
+        assertThat(result.campusOnlineCourseId()).isEqualTo("CO-101");
+        assertThat(result.responsibleInstructor()).isEqualTo("Prof. Smith");
+        assertThat(result.department()).isEqualTo("CS Department");
+        assertThat(result.studyProgram()).isEqualTo("Informatik BSc");
         verify(courseRepository).save(course);
     }
 
     @Test
     void linkCourse_shouldThrowException_whenCourseIdBlank() {
-        assertThatThrownBy(() -> service.linkCourse(1L, "", "Prof. Smith", "CS Dept", "Informatik BSc")).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("must not be blank");
+        assertThatThrownBy(() -> service.linkCourse(1L, "", "Prof. Smith", "CS Dept", "Informatik BSc")).isInstanceOf(BadRequestAlertException.class);
     }
 
     @Test
     void linkCourse_shouldThrowException_whenCourseIdNull() {
-        assertThatThrownBy(() -> service.linkCourse(1L, null, "Prof. Smith", "CS Dept", "Informatik BSc")).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("must not be blank");
+        assertThatThrownBy(() -> service.linkCourse(1L, null, "Prof. Smith", "CS Dept", "Informatik BSc")).isInstanceOf(BadRequestAlertException.class);
+    }
+
+    @Test
+    void linkCourse_shouldThrowException_whenDuplicateLink() {
+        // Given - existing course already linked to CO-101
+        Course existingCourse = new Course();
+        existingCourse.setId(1L);
+        CampusOnlineConfiguration config = new CampusOnlineConfiguration();
+        config.setCampusOnlineCourseId("CO-101");
+        existingCourse.setCampusOnlineConfiguration(config);
+        when(courseRepository.findAllWithCampusOnlineConfiguration()).thenReturn(Set.of(existingCourse));
+
+        // When/Then
+        assertThatThrownBy(() -> service.linkCourse(2L, "CO-101", "Prof. Smith", "CS Dept", "Informatik BSc")).isInstanceOf(BadRequestAlertException.class);
     }
 
     @Test

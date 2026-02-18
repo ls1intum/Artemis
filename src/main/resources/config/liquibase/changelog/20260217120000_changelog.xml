@@ -23,6 +23,12 @@
         </createTable>
     </changeSet>
 
+    <changeSet id="20260217120000-add-unique-constraint-campus-online-course-id" author="krusche">
+        <addUniqueConstraint tableName="campus_online_configuration"
+                             columnNames="campus_online_course_id"
+                             constraintName="uk_campus_online_course_id"/>
+    </changeSet>
+
     <changeSet id="20260217120000-add-campus-online-config-to-course" author="krusche">
         <addColumn tableName="course">
             <column name="campus_online_configuration_id" type="BIGINT">

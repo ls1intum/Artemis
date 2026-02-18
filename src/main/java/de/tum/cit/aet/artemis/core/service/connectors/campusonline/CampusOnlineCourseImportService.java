@@ -20,8 +20,10 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.config.CampusOnlineEnabled;
 import de.tum.cit.aet.artemis.core.domain.CampusOnlineConfiguration;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.dto.CampusOnlineCourseDTO;
 import de.tum.cit.aet.artemis.core.dto.CampusOnlineCourseImportRequestDTO;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineCourseMetadataResponse;
 import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineOrgCourse;
@@ -34,6 +36,8 @@ import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnl
 public class CampusOnlineCourseImportService {
 
     private static final Logger log = LoggerFactory.getLogger(CampusOnlineCourseImportService.class);
+
+    private static final String ENTITY_NAME = "campusOnline";
 
     @Value("${artemis.campus-online.default-org-unit-id:}")
     private String defaultOrgUnitId;
@@ -61,9 +65,7 @@ public class CampusOnlineCourseImportService {
             return Collections.emptyList();
         }
 
-        Set<String> alreadyImportedIds = courseRepository.findAllWithCampusOnlineConfiguration().stream().map(c -> c.getCampusOnlineConfiguration().getCampusOnlineCourseId())
-                .collect(Collectors.toSet());
-
+        Set<String> alreadyImportedIds = getAlreadyImportedCourseIds();
         return response.courses().stream().map(c -> mapToDTO(c, alreadyImportedIds.contains(c.courseId()))).toList();
     }
 
@@ -71,9 +73,11 @@ public class CampusOnlineCourseImportService {
      * Imports a course from CAMPUSOnline into Artemis.
      *
      * @param request the import request containing the CAMPUSOnline course ID and desired short name
-     * @return the created Artemis course
+     * @return a DTO representing the created course
      */
-    public Course importCourse(CampusOnlineCourseImportRequestDTO request) {
+    public CampusOnlineCourseDTO importCourse(CampusOnlineCourseImportRequestDTO request) {
+        checkDuplicateLink(request.campusOnlineCourseId());
+
         CampusOnlineCourseMetadataResponse metadata = campusOnlineClient.fetchCourseMetadata(request.campusOnlineCourseId());
 
         CampusOnlineConfiguration config = new CampusOnlineConfiguration();
@@ -84,6 +88,12 @@ public class CampusOnlineCourseImportService {
         course.setShortName(request.shortName());
         course.setSemester(metadata.teachingTerm());
         course.setCampusOnlineConfiguration(config);
+        course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+        course.setMaxComplaints(3);
+        course.setMaxComplaintTimeDays(7);
+        course.setMaxComplaintTextLimit(2000);
+        course.setMaxComplaintResponseTextLimit(2000);
+        course.setAccuracyOfScores(1);
 
         String groupPrefix = "artemis-" + request.shortName().toLowerCase();
         course.setStudentGroupName(groupPrefix + "-students");
@@ -94,7 +104,7 @@ public class CampusOnlineCourseImportService {
         course = courseRepository.save(course);
         log.info("Imported CAMPUSOnline course '{}' (ID: {}) as Artemis course '{}' (ID: {})", metadata.courseName(), request.campusOnlineCourseId(), course.getTitle(),
                 course.getId());
-        return course;
+        return new CampusOnlineCourseDTO(config.getCampusOnlineCourseId(), course.getTitle(), course.getSemester(), null, null, null, null, false);
     }
 
     /**
@@ -120,8 +130,7 @@ public class CampusOnlineCourseImportService {
             return Collections.emptyList();
         }
 
-        Set<String> alreadyImportedIds = courseRepository.findAllWithCampusOnlineConfiguration().stream().map(c -> c.getCampusOnlineConfiguration().getCampusOnlineCourseId())
-                .collect(Collectors.toSet());
+        Set<String> alreadyImportedIds = getAlreadyImportedCourseIds();
 
         String lowerQuery = query.toLowerCase(Locale.ROOT);
         return response.courses().stream().filter(c -> c.courseName() != null && c.courseName().toLowerCase(Locale.ROOT).contains(lowerQuery))
@@ -136,12 +145,14 @@ public class CampusOnlineCourseImportService {
      * @param responsibleInstructor the responsible instructor name
      * @param department            the department name
      * @param studyProgram          the study program name
-     * @return the updated course
+     * @return a DTO with the linked course info
      */
-    public Course linkCourse(long courseId, String campusOnlineCourseId, String responsibleInstructor, String department, String studyProgram) {
+    public CampusOnlineCourseDTO linkCourse(long courseId, String campusOnlineCourseId, String responsibleInstructor, String department, String studyProgram) {
         if (campusOnlineCourseId == null || campusOnlineCourseId.isBlank()) {
-            throw new IllegalArgumentException("CAMPUSOnline course ID must not be blank");
+            throw new BadRequestAlertException("CAMPUSOnline course ID must not be blank", ENTITY_NAME, "campusOnlineCourseIdRequired");
         }
+        checkDuplicateLink(campusOnlineCourseId);
+
         Course course = courseRepository.findByIdForUpdateElseThrow(courseId);
 
         CampusOnlineConfiguration config = new CampusOnlineConfiguration();
@@ -151,7 +162,8 @@ public class CampusOnlineCourseImportService {
         config.setStudyProgram(studyProgram);
 
         course.setCampusOnlineConfiguration(config);
-        return courseRepository.save(course);
+        course = courseRepository.save(course);
+        return new CampusOnlineCourseDTO(campusOnlineCourseId, course.getTitle(), course.getSemester(), null, responsibleInstructor, department, studyProgram, false);
     }
 
     /**
@@ -163,6 +175,18 @@ public class CampusOnlineCourseImportService {
         Course course = courseRepository.findByIdForUpdateElseThrow(courseId);
         course.setCampusOnlineConfiguration(null);
         courseRepository.save(course);
+    }
+
+    private void checkDuplicateLink(String campusOnlineCourseId) {
+        boolean alreadyLinked = courseRepository.findAllWithCampusOnlineConfiguration().stream()
+                .anyMatch(c -> campusOnlineCourseId.equals(c.getCampusOnlineConfiguration().getCampusOnlineCourseId()));
+        if (alreadyLinked) {
+            throw new BadRequestAlertException("This CAMPUSOnline course is already linked to an Artemis course", ENTITY_NAME, "alreadyLinked");
+        }
+    }
+
+    private Set<String> getAlreadyImportedCourseIds() {
+        return courseRepository.findAllWithCampusOnlineConfiguration().stream().map(c -> c.getCampusOnlineConfiguration().getCampusOnlineCourseId()).collect(Collectors.toSet());
     }
 
     private String semesterToFromDate(String semester) {

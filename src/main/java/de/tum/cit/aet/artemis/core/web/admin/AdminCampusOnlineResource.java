@@ -4,6 +4,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 
+import jakarta.validation.Valid;
+
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -19,11 +21,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.config.CampusOnlineEnabled;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.dto.CampusOnlineCourseDTO;
 import de.tum.cit.aet.artemis.core.dto.CampusOnlineCourseImportRequestDTO;
 import de.tum.cit.aet.artemis.core.dto.CampusOnlineLinkRequestDTO;
 import de.tum.cit.aet.artemis.core.dto.CampusOnlineSyncResultDTO;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.connectors.campusonline.CampusOnlineCourseImportService;
 import de.tum.cit.aet.artemis.core.service.connectors.campusonline.CampusOnlineEnrollmentSyncService;
@@ -33,8 +35,10 @@ import de.tum.cit.aet.artemis.core.service.connectors.campusonline.CampusOnlineE
 @Conditional(CampusOnlineEnabled.class)
 @Lazy
 @RestController
-@RequestMapping("api/core/admin/campus-online/")
+@RequestMapping("api/core/admin/campus-online")
 public class AdminCampusOnlineResource {
+
+    private static final String DATE_PATTERN = "\\d{4}-\\d{2}-\\d{2}";
 
     private final CampusOnlineCourseImportService courseImportService;
 
@@ -55,6 +59,8 @@ public class AdminCampusOnlineResource {
      */
     @GetMapping("courses")
     public ResponseEntity<List<CampusOnlineCourseDTO>> searchCourses(@RequestParam String orgUnitId, @RequestParam String from, @RequestParam String until) {
+        validateDateParam(from, "from");
+        validateDateParam(until, "until");
         List<CampusOnlineCourseDTO> courses = courseImportService.searchCourses(orgUnitId, from, until);
         return ResponseEntity.ok(courses);
     }
@@ -77,12 +83,13 @@ public class AdminCampusOnlineResource {
      *
      * @param courseId the Artemis course ID
      * @param request  the link request containing CAMPUSOnline course details
-     * @return the updated course
+     * @return the updated course with campus online configuration
      */
     @PutMapping("courses/{courseId}/link")
-    public ResponseEntity<Course> linkCourse(@PathVariable long courseId, @RequestBody CampusOnlineLinkRequestDTO request) {
-        Course course = courseImportService.linkCourse(courseId, request.campusOnlineCourseId(), request.responsibleInstructor(), request.department(), request.studyProgram());
-        return ResponseEntity.ok(course);
+    public ResponseEntity<CampusOnlineCourseDTO> linkCourse(@PathVariable long courseId, @RequestBody @Valid CampusOnlineLinkRequestDTO request) {
+        CampusOnlineCourseDTO result = courseImportService.linkCourse(courseId, request.campusOnlineCourseId(), request.responsibleInstructor(), request.department(),
+                request.studyProgram());
+        return ResponseEntity.ok(result);
     }
 
     /**
@@ -101,11 +108,11 @@ public class AdminCampusOnlineResource {
      * POST /api/core/admin/campus-online/courses/import : Import a course from CAMPUSOnline.
      *
      * @param request the import request
-     * @return the created Artemis course
+     * @return the created course DTO
      */
     @PostMapping("courses/import")
-    public ResponseEntity<Course> importCourse(@RequestBody CampusOnlineCourseImportRequestDTO request) {
-        Course course = courseImportService.importCourse(request);
+    public ResponseEntity<CampusOnlineCourseDTO> importCourse(@RequestBody @Valid CampusOnlineCourseImportRequestDTO request) {
+        CampusOnlineCourseDTO course = courseImportService.importCourse(request);
         return ResponseEntity.ok(course);
     }
 
@@ -130,5 +137,11 @@ public class AdminCampusOnlineResource {
     public ResponseEntity<CampusOnlineSyncResultDTO> syncSingleCourse(@PathVariable long courseId) {
         CampusOnlineSyncResultDTO result = enrollmentSyncService.performSingleCourseSync(courseId);
         return ResponseEntity.ok(result);
+    }
+
+    private void validateDateParam(String date, String paramName) {
+        if (date == null || !date.matches(DATE_PATTERN)) {
+            throw new BadRequestAlertException("Invalid date format for '" + paramName + "', expected YYYY-MM-DD", "campusOnline", "invalidDateFormat");
+        }
     }
 }
