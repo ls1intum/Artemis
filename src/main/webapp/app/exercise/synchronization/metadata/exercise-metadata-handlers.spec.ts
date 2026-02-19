@@ -168,8 +168,8 @@ describe('ExerciseMetadataHandlers', () => {
         expect(dayjs.isDayjs(baselineRelease)).toBe(true);
         expect(dayjs.isDayjs(currentBuildTest)).toBe(true);
         expect(dayjs.isDayjs(baselineBuildTest)).toBe(true);
-        expect(currentRelease!.toISOString()).toBe('2026-03-15T12:00:00.000Z');
-        expect(currentBuildTest!.toISOString()).toBe('2026-04-01T08:00:00.000Z');
+        expect((currentRelease as dayjs.Dayjs).toISOString()).toBe('2026-03-15T12:00:00.000Z');
+        expect((currentBuildTest as dayjs.Dayjs).toISOString()).toBe('2026-04-01T08:00:00.000Z');
     });
 
     it('returns undefined for absent date fields via getCurrentValue', () => {

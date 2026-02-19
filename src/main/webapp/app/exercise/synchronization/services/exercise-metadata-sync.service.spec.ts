@@ -44,7 +44,7 @@ describe('ExerciseMetadataSyncService', () => {
     let currentExercise: ProgrammingExercise;
     let baselineExercise: ProgrammingExercise;
     let context: ExerciseMetadataSyncContext<ProgrammingExercise>;
-    let setBaselineExercise: ReturnType<typeof vi.fn>;
+    let setBaselineExercise: ReturnType<typeof vi.fn<(exercise: ProgrammingExercise) => void>>;
 
     const createAlert = (versionId: number, changedFields: string[]): ExerciseNewVersionAlertEvent => ({
         eventType: ExerciseEditorSyncEventType.NEW_EXERCISE_VERSION_ALERT,
