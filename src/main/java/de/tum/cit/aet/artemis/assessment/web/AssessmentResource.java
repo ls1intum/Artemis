@@ -62,8 +62,7 @@ public abstract class AssessmentResource {
     /**
      * Get the result of the submission with the given id. Returns a 403 Forbidden response if the user is not allowed to retrieve the assessment. The user is not allowed
      * to retrieve the assessment if they are not a student of the corresponding course, the submission is not their submission, the result is not finished or the assessment due
-     * date of
-     * the corresponding exercise is in the future (or not set).
+     * date of the corresponding exercise is in the future (or not set).
      *
      * @param submissionId the id of the submission that should be sent to the client
      * @return the assessment of the given id
