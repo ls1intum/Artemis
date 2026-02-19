@@ -3,7 +3,6 @@
 CONFIGURATION=$1
 TEST_FRAMEWORK=$2
 TEST_PATHS=$3  # Optional: space-separated list of test paths to run (passed through as-is, e.g., "e2e/exam/ e2e/atlas/")
-IGNORE_PATHS=$4  # Optional: space-separated list of test paths to ignore (passed through as-is)
 DB="mysql"
 
 echo "CONFIGURATION:"
@@ -40,14 +39,6 @@ else
     echo "Running all tests"
 fi
 
-# Export ignore paths for docker compose to pick up
-if [ -n "$IGNORE_PATHS" ]; then
-  export PLAYWRIGHT_IGNORE_PATHS="$IGNORE_PATHS"
-  echo "Ignoring tests: $IGNORE_PATHS"
-else
-  export PLAYWRIGHT_IGNORE_PATHS=""
-fi
-
 cd docker || { echo "ERROR: Failed to change to docker directory" >&2; exit 1; }
 
 # Pull the images to avoid using outdated images
@@ -58,9 +49,23 @@ docker compose -f $COMPOSE_FILE up --exit-code-from artemis-playwright
 exitCode=$?
 cd ..
 echo "Container exit code: $exitCode"
+
+# Check for reporter failure marker (e.g., monocart OOM that didn't affect test results)
+REPORTER_MARKER="src/test/playwright/test-reports/.reporter-failed"
+if [ -f "$REPORTER_MARKER" ]; then
+    echo "WARNING: Reporter failure detected (tests still passed):"
+    cat "$REPORTER_MARKER"
+    if [ -n "$GITHUB_OUTPUT" ]; then
+        echo "reporter_failed=true" >> "$GITHUB_OUTPUT"
+    fi
+    rm -f "$REPORTER_MARKER"
+fi
+
 if [ $exitCode -eq 0 ]
 then
     touch .successful
 else
     echo "Not creating success file because the tests failed"
 fi
+
+exit $exitCode

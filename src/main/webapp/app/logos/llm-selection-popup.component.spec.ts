@@ -2,19 +2,21 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LLMSelectionModalComponent } from './llm-selection-popup.component';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 
 describe('LLMSelectionModalComponent', () => {
     let component: LLMSelectionModalComponent;
     let fixture: ComponentFixture<LLMSelectionModalComponent>;
     let modalService: LLMSelectionModalService;
     let router: Router;
-    let openModalSubject: Subject<void>;
+    let openModalSubject: Subject<LLMSelectionDecision | undefined>;
 
     beforeEach(async () => {
-        openModalSubject = new Subject<void>();
+        openModalSubject = new Subject<LLMSelectionDecision | undefined>();
 
         const modalServiceMock = {
             openModal$: openModalSubject.asObservable(),
@@ -29,12 +31,17 @@ describe('LLMSelectionModalComponent', () => {
             navigate: jest.fn(),
         };
 
+        const profileServiceMock = {
+            isLLMDeploymentEnabled: jest.fn().mockReturnValue(false),
+        };
+
         await TestBed.configureTestingModule({
             imports: [LLMSelectionModalComponent, TranslateDirective],
             providers: [
                 { provide: LLMSelectionModalService, useValue: modalServiceMock },
                 { provide: ThemeService, useValue: themeServiceMock },
                 { provide: Router, useValue: routerMock },
+                { provide: ProfileService, useValue: profileServiceMock },
             ],
         }).compileComponents();
 
@@ -78,13 +85,13 @@ describe('LLMSelectionModalComponent', () => {
 
             component.selectCloud();
 
-            expect(choiceSpy).toHaveBeenCalledWith('cloud');
+            expect(choiceSpy).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
         });
 
-        it('should call modalService.emitChoice with cloud', () => {
+        it('should call modalService.emitChoice with CLOUD_AI', () => {
             component.selectCloud();
 
-            expect(modalService.emitChoice).toHaveBeenCalledWith('cloud');
+            expect(modalService.emitChoice).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
         });
 
         it('should close the modal', () => {
@@ -110,13 +117,13 @@ describe('LLMSelectionModalComponent', () => {
 
             component.selectLocal();
 
-            expect(choiceSpy).toHaveBeenCalledWith('local');
+            expect(choiceSpy).toHaveBeenCalledWith(LLMSelectionDecision.LOCAL_AI);
         });
 
-        it('should call modalService.emitChoice with local', () => {
+        it('should call modalService.emitChoice with LOCAL_AI', () => {
             component.selectLocal();
 
-            expect(modalService.emitChoice).toHaveBeenCalledWith('local');
+            expect(modalService.emitChoice).toHaveBeenCalledWith(LLMSelectionDecision.LOCAL_AI);
         });
 
         it('should close the modal', () => {
@@ -137,18 +144,18 @@ describe('LLMSelectionModalComponent', () => {
     });
 
     describe('selectNone', () => {
-        it('should emit no_ai choice', () => {
+        it('should emit NO_AI choice', () => {
             const choiceSpy = jest.spyOn(component.choice, 'emit');
 
             component.selectNone();
 
-            expect(choiceSpy).toHaveBeenCalledWith('no_ai');
+            expect(choiceSpy).toHaveBeenCalledWith(LLMSelectionDecision.NO_AI);
         });
 
-        it('should call modalService.emitChoice with no_ai', () => {
+        it('should call modalService.emitChoice with NO_AI', () => {
             component.selectNone();
 
-            expect(modalService.emitChoice).toHaveBeenCalledWith('no_ai');
+            expect(modalService.emitChoice).toHaveBeenCalledWith(LLMSelectionDecision.NO_AI);
         });
 
         it('should close the modal', () => {
@@ -169,23 +176,23 @@ describe('LLMSelectionModalComponent', () => {
     });
 
     describe('onBackdropClick', () => {
-        it('should emit none choice when backdrop is clicked', () => {
+        it('should emit NONE choice when backdrop is clicked', () => {
             const choiceSpy = jest.spyOn(component.choice, 'emit');
             const event = { target: document.createElement('div'), currentTarget: document.createElement('div') } as any;
             event.target = event.currentTarget;
 
             component.onBackdropClick(event);
 
-            expect(choiceSpy).toHaveBeenCalledWith('none');
+            expect(choiceSpy).toHaveBeenCalledWith(LLM_MODAL_DISMISSED);
         });
 
-        it('should call modalService.emitChoice with none', () => {
+        it('should call modalService.emitChoice with NONE', () => {
             const event = { target: document.createElement('div'), currentTarget: document.createElement('div') } as any;
             event.target = event.currentTarget;
 
             component.onBackdropClick(event);
 
-            expect(modalService.emitChoice).toHaveBeenCalledWith('none');
+            expect(modalService.emitChoice).toHaveBeenCalledWith(LLM_MODAL_DISMISSED);
         });
 
         it('should close modal when target equals currentTarget', () => {
@@ -235,8 +242,8 @@ describe('LLMSelectionModalComponent', () => {
 
             component.onBackdropClick(event);
 
-            expect(choiceSpy).toHaveBeenCalledWith('none');
-            expect(emitChoiceSpy).toHaveBeenCalledWith('none');
+            expect(choiceSpy).toHaveBeenCalledWith(LLM_MODAL_DISMISSED);
+            expect(emitChoiceSpy).toHaveBeenCalledWith(LLM_MODAL_DISMISSED);
             expect(closeSpy).toHaveBeenCalled();
         });
     });
@@ -280,6 +287,36 @@ describe('LLMSelectionModalComponent', () => {
     describe('Theme constant', () => {
         it('should expose Theme enum', () => {
             expect(component['Theme']).toBe(Theme);
+        });
+    });
+
+    describe('currentSelection', () => {
+        it('should set currentSelection when modal is opened with a selection', () => {
+            fixture.detectChanges();
+            openModalSubject.next(LLMSelectionDecision.CLOUD_AI);
+
+            expect(component.currentSelection).toBe(LLMSelectionDecision.CLOUD_AI);
+        });
+
+        it('should set currentSelection to LOCAL_AI when modal is opened with LOCAL_AI', () => {
+            fixture.detectChanges();
+            openModalSubject.next(LLMSelectionDecision.LOCAL_AI);
+
+            expect(component.currentSelection).toBe(LLMSelectionDecision.LOCAL_AI);
+        });
+
+        it('should set currentSelection to NO_AI when modal is opened with NO_AI', () => {
+            fixture.detectChanges();
+            openModalSubject.next(LLMSelectionDecision.NO_AI);
+
+            expect(component.currentSelection).toBe(LLMSelectionDecision.NO_AI);
+        });
+
+        it('should set currentSelection to undefined when modal is opened without selection', () => {
+            fixture.detectChanges();
+            openModalSubject.next(undefined);
+
+            expect(component.currentSelection).toBeUndefined();
         });
     });
 });

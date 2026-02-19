@@ -134,7 +134,7 @@ The following members of the project management team are responsible for specifi
 | Exercises             | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
 | Programming exercises | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
 | Build agents          | Robert Jandow ([@robertjndw](https://github.com/robertjndw))                       |
-| Quiz exercises        | Timor Morrien ([@Hialus](https://github.com/Hialus))                               |
+| Quiz exercises        | Phoebe Morrien ([@Hialus](https://github.com/Hialus))                                |
 | Modeling exercises    | Felix Dietrich ([@FelixTJDietrich](https://github.com/FelixTJDietrich))            |
 | Text exercises        | Felix Dietrich ([@FelixTJDietrich](https://github.com/FelixTJDietrich))            |
 | File upload exercises | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
@@ -205,7 +205,7 @@ Refer to [Using JHipster in production](http://www.jhipster.tech/production) for
 The following command can automate the deployment to a server. The example shows the deployment to the main Artemis test server (which runs a virtual machine):
 
 ```shell
-./artemis-server-cli deploy username@artemis-test0.artemis.in.tum.de -w build/libs/Artemis-8.8.1.war
+./artemis-server-cli deploy username@artemis-test0.artemis.in.tum.de -w build/libs/Artemis-8.8.2.war
 ```
 
 ## Architecture

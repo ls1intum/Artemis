@@ -1,3 +1,13 @@
+<ng-template #codeGenerationRunningModal let-modal>
+    <div class="modal-header">
+        <h4 class="modal-title" jhiTranslate="artemisApp.programmingExercise.codeGeneration.runningTitle"></h4>
+        <button type="button" class="btn-close" [attr.aria-label]="'entity.action.close' | artemisTranslate" (click)="modal.dismiss('Cross click')"></button>
+    </div>
+    <div class="modal-body">
+        <p class="code-generation-running-text" jhiTranslate="artemisApp.programmingExercise.codeGeneration.runningText"></p>
+    </div>
+</ng-template>
+
 @if (loadingState === LOADING_STATE.INITIALIZING || loadingState === LOADING_STATE.FETCHING_FAILED) {
     <nav class="card">
         <div class="card-body">
@@ -22,11 +32,14 @@
             [participation]="selectedParticipation!"
             [buildable]="selectedRepository !== RepositoryType.TESTS"
             [selectedRepository]="selectedRepository"
+            [selectedAuxiliaryRepositoryId]="selectedRepository === RepositoryType.AUXILIARY ? selectedRepositoryId : undefined"
             [course]="course"
             [allowHiddenFiles]="true"
             [consistencyIssues]="consistencyIssues()"
+            [enableExerciseReviewComments]="true"
             (onFileLoad)="onFileLoad($event)"
             (onEditorLoaded)="onEditorLoaded()"
+            (onCommit)="onCommit()"
         >
             <div editorTitle>
                 <span>{{ exercise?.title }}</span>
@@ -132,7 +145,7 @@
                             [style.background-color]="selectedRepository === RepositoryType.TESTS ? 'var(--link-color)' : 'transparent'"
                             jhiTranslate="artemisApp.editor.repoSelect.testRepo"
                         ></button>
-                        @for (auxiliaryRepository of exercise.auxiliaryRepositories; track exercise.auxiliaryRepositories; let i = $index) {
+                        @for (auxiliaryRepository of exercise.auxiliaryRepositories; track auxiliaryRepository.id ?? i; let i = $index) {
                             @if (auxiliaryRepository.id) {
                                 <button
                                     [disabled]="!exercise"
@@ -276,18 +289,18 @@
             </div>
             <jhi-programming-exercise-editable-instructions
                 editorCenter
-                [(exercise)]="exercise"
-                [(participation)]="selectedParticipation!"
-                [templateParticipation]="exercise.templateParticipation!"
+                [exercise]="exercise"
+                [participation]="selectedParticipation!"
                 [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
                 [externalHeight]="true"
                 [enableResize]="false"
                 [showPreview]="false"
                 [consistencyIssues]="consistencyIssues()"
+                [enableExerciseReviewComments]="true"
                 class="instructions-wrapper__content card-body p-0"
                 (instructionChange)="onInstructionChanged($event)"
+                (onProblemStatementSaved)="onProblemStatementSaved()"
             />
-            <!-- Preview-only component for right sidebar -->
             <jhi-programming-exercise-instructions
                 editorSidebar
                 id="previewMonaco"
