@@ -329,7 +329,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         artemisIntelligence: [],
         meta: [],
     };
-    standardActionsVisibility: boolean = true;
+    showTextStyleActions: boolean = true;
+    showNonTextStyleActions: boolean = true;
 
     readonly colorToClassMap = new Map<string, string>([
         ['#ca2024', 'red'],
@@ -501,7 +502,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             this.monacoEditor.applyOptionPreset(DEFAULT_MARKDOWN_EDITOR_OPTIONS);
         }
         if (this.isInCommunication()) {
-            this.standardActionsVisibility = false;
+            this.showTextStyleActions = false;
             this.monacoEditor.onDidChangeTextSelection((selection) => this.onSelectionChanged(selection));
         }
         this.renderEditorWidgets();
@@ -535,11 +536,13 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     }
 
     onSelectionChanged(selection: { isEmpty: boolean }): void {
-        if (!selection.isEmpty === this.standardActionsVisibility) {
+        if (!selection.isEmpty === this.showTextStyleActions) {
             return;
         }
-        this.standardActionsVisibility = !selection.isEmpty;
+        this.showTextStyleActions = !selection.isEmpty;
+        this.showNonTextStyleActions = selection.isEmpty;
         this.changeDetectorRef.markForCheck();
+        this.onResizeMoved({} as CdkDragMove);
     }
 
     /**

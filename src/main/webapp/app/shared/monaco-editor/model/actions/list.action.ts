@@ -1,4 +1,4 @@
-import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
+import { TextStyleTextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 import { TextEditorRange } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-range.model';
 import { TextEditorPosition } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-position.model';
@@ -13,7 +13,7 @@ import { TextEditorKeybinding } from 'app/shared/monaco-editor/model/actions/ada
  * @abstract
  * @extends TextEditorAction
  */
-export abstract class ListAction extends TextEditorAction {
+export abstract class ListAction extends TextStyleTextEditorAction {
     protected static editorsWithListener = new WeakMap<TextEditor, boolean>();
 
     protected abstract readonly PREFIX: string;

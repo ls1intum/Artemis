@@ -105,163 +105,170 @@
                 <ng-container ngbNavItem>
                     <div class="d-flex align-items-center" [style.flex-flow]="'row wrap'">
                         <!-- Standard -->
-                        @if (standardActionsVisibility) {
+                        @if (showTextStyleActions) {
                             @for (action of displayedActions.style; track action.id) {
                                 <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
                             }
                         } @else {
-                            <button type="button" class="btn btn-sm py-0 packed" (click)="standardActionsVisibility = true">
+                            <button type="button" class="btn btn-sm py-0 packed" (click)="showTextStyleActions = true">
                                 <fa-icon [icon]="boldIcon" />
                                 <fa-icon [icon]="italicIcon" />
                                 <fa-icon [icon]="underlineIcon" />
                             </button>
                         }
-                        @for (action of displayedActions.standard; track action.id) {
-                            <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
-                        }
-                        <!-- Headers -->
-                        @if (displayedActions.header.length) {
-                            <div class="btn-group" ngbDropdown role="group" aria-label="Button group with nested dropdown">
-                                <button class="btn btn-sm px-2 py-0" type="button" id="dropdownBasic1" ngbDropdownToggle>
-                                    <span [jhiTranslate]="headerActions!.translationKey"></span>
-                                </button>
-                                <div class="dropdown-menu" ngbDropdownMenu>
-                                    @for (action of displayedActions.header; track action.id) {
-                                        <button type="button" class="dropdown-item" (click)="action.executeInCurrentEditor()">
-                                            <span [jhiTranslate]="action.translationKey"></span>
-                                        </button>
-                                    }
-                                </div>
-                            </div>
-                        }
-                        @if (displayedActions.color) {
-                            <div class="btn-group col-xs-6">
-                                <div class="color-preview btn btn-sm px-2 py-0" (click)="openColorSelector($event)" [jhiTranslate]="displayedActions.color.translationKey"></div>
-                                <jhi-color-selector [tagColors]="colorSignal()" (selectedColor)="onSelectColor($event)" />
-                            </div>
-                        }
-                        <!-- Domain (without options) -->
-                        @for (action of displayedActions.domain.withoutOptions; track action.id) {
-                            <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
-                        }
-                        <!-- Domain (with options) -->
-                        @for (action of displayedActions.domain.withOptions; track action.id) {
-                            <div class="btn-group" ngbDropdown role="group" aria-label="Button group with nested dropdown">
-                                <button class="btn btn-sm px-2 py-0" type="button" ngbDropdownToggle>
-                                    <span [jhiTranslate]="action.translationKey"></span>
-                                </button>
-                                <div class="dropdown-menu" ngbDropdownMenu>
-                                    @if (action.values.length) {
-                                        @for (value of action.values; track value.id) {
-                                            <button type="button" class="dropdown-item" (click)="action.executeInCurrentEditor({ selectedItem: value })">
-                                                <span>{{ value.value }}</span>
+                        @if (showNonTextStyleActions) {
+                            @for (action of displayedActions.standard; track action.id) {
+                                <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
+                            }
+                            <!-- Headers -->
+                            @if (displayedActions.header.length) {
+                                <div class="btn-group" ngbDropdown role="group" aria-label="Button group with nested dropdown">
+                                    <button class="btn btn-sm px-2 py-0" type="button" id="dropdownBasic1" ngbDropdownToggle>
+                                        <span [jhiTranslate]="headerActions!.translationKey"></span>
+                                    </button>
+                                    <div class="dropdown-menu" ngbDropdownMenu>
+                                        @for (action of displayedActions.header; track action.id) {
+                                            <button type="button" class="dropdown-item" (click)="action.executeInCurrentEditor()">
+                                                <span [jhiTranslate]="action.translationKey"></span>
                                             </button>
                                         }
-                                    } @else {
-                                        <button type="button" class="dropdown-item" [disabled]="true" jhiTranslate="global.generic.emptyList"></button>
-                                    }
+                                    </div>
                                 </div>
-                            </div>
-                        }
-                        <!-- Special case: Lecture attachment reference. -->
-                        @if (displayedActions.lecture) {
-                            <button [matMenuTriggerFor]="subMenuLecture" type="button" class="btn btn-sm py-0 m-0">
-                                <span [jhiTranslate]="displayedActions.lecture.translationKey"></span>
-                                <fa-icon [icon]="faAngleDown" class="ms-1" />
-                            </button>
-                            <mat-menu #subMenuLecture="matMenu" type="button">
-                                @for (lecture of displayedActions.lecture.lecturesWithDetails; track lecture.id) {
-                                    <button
-                                        class="ps-1 me-1"
-                                        mat-menu-item
-                                        [matMenuTriggerFor]="hasReferencableAttachments(lecture) ? lectureMenuUnits : null"
-                                        (click)="
-                                            !hasReferencableAttachments(lecture) && displayedActions.lecture.executeInCurrentEditor({ reference: ReferenceType.LECTURE, lecture })
-                                        "
-                                        type="button"
-                                    >
-                                        {{ lecture.title }}
+                            }
+                            @if (displayedActions.color) {
+                                <div class="btn-group col-xs-6">
+                                    <div
+                                        class="color-preview btn btn-sm px-2 py-0"
+                                        (click)="openColorSelector($event)"
+                                        [jhiTranslate]="displayedActions.color.translationKey"
+                                    ></div>
+                                    <jhi-color-selector [tagColors]="colorSignal()" (selectedColor)="onSelectColor($event)" />
+                                </div>
+                            }
+                            <!-- Domain (without options) -->
+                            @for (action of displayedActions.domain.withoutOptions; track action.id) {
+                                <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
+                            }
+                            <!-- Domain (with options) -->
+                            @for (action of displayedActions.domain.withOptions; track action.id) {
+                                <div class="btn-group" ngbDropdown role="group" aria-label="Button group with nested dropdown">
+                                    <button class="btn btn-sm px-2 py-0" type="button" ngbDropdownToggle>
+                                        <span [jhiTranslate]="action.translationKey"></span>
                                     </button>
-
-                                    <mat-menu #lectureMenuUnits="matMenu" type="button">
+                                    <div class="dropdown-menu" ngbDropdownMenu>
+                                        @if (action.values.length) {
+                                            @for (value of action.values; track value.id) {
+                                                <button type="button" class="dropdown-item" (click)="action.executeInCurrentEditor({ selectedItem: value })">
+                                                    <span>{{ value.value }}</span>
+                                                </button>
+                                            }
+                                        } @else {
+                                            <button type="button" class="dropdown-item" [disabled]="true" jhiTranslate="global.generic.emptyList"></button>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                            <!-- Special case: Lecture attachment reference. -->
+                            @if (displayedActions.lecture) {
+                                <button [matMenuTriggerFor]="subMenuLecture" type="button" class="btn btn-sm py-0 m-0">
+                                    <span [jhiTranslate]="displayedActions.lecture.translationKey"></span>
+                                    <fa-icon [icon]="faAngleDown" class="ms-1" />
+                                </button>
+                                <mat-menu #subMenuLecture="matMenu" type="button">
+                                    @for (lecture of displayedActions.lecture.lecturesWithDetails; track lecture.id) {
                                         <button
-                                            class="border-bottom ps-1 me-1"
+                                            class="ps-1 me-1"
                                             mat-menu-item
-                                            (click)="displayedActions.lecture.executeInCurrentEditor({ reference: ReferenceType.LECTURE, lecture })"
+                                            [matMenuTriggerFor]="hasReferencableAttachments(lecture) ? lectureMenuUnits : null"
+                                            (click)="
+                                                !hasReferencableAttachments(lecture) &&
+                                                    displayedActions.lecture.executeInCurrentEditor({ reference: ReferenceType.LECTURE, lecture })
+                                            "
                                             type="button"
                                         >
                                             {{ lecture.title }}
                                         </button>
-                                        @for (unit of lecture.attachmentVideoUnits; track unit.id) {
-                                            <!-- Only show attachment units with an attachment -->
-                                            @if (unit.attachment && unit.attachment.link) {
-                                                <button
-                                                    class="ps-1 me-1"
-                                                    mat-menu-item
-                                                    [matMenuTriggerFor]="unit.slides?.length ? lectureMenuUnitsSlide : null"
-                                                    (click)="
-                                                        !unit.slides?.length &&
-                                                            displayedActions.lecture.executeInCurrentEditor({
-                                                                reference: ReferenceType.ATTACHMENT_UNITS,
-                                                                lecture,
-                                                                attachmentVideoUnit: unit,
-                                                            })
-                                                    "
-                                                    type="button"
-                                                >
-                                                    <span>{{ unit.name }}</span>
-                                                </button>
-                                                <mat-menu #lectureMenuUnitsSlide="matMenu" type="button">
+
+                                        <mat-menu #lectureMenuUnits="matMenu" type="button">
+                                            <button
+                                                class="border-bottom ps-1 me-1"
+                                                mat-menu-item
+                                                (click)="displayedActions.lecture.executeInCurrentEditor({ reference: ReferenceType.LECTURE, lecture })"
+                                                type="button"
+                                            >
+                                                {{ lecture.title }}
+                                            </button>
+                                            @for (unit of lecture.attachmentVideoUnits; track unit.id) {
+                                                <!-- Only show attachment units with an attachment -->
+                                                @if (unit.attachment && unit.attachment.link) {
                                                     <button
-                                                        class="border-bottom ps-1 me-1"
+                                                        class="ps-1 me-1"
                                                         mat-menu-item
+                                                        [matMenuTriggerFor]="unit.slides?.length ? lectureMenuUnitsSlide : null"
                                                         (click)="
-                                                            displayedActions.lecture.executeInCurrentEditor({
-                                                                reference: ReferenceType.ATTACHMENT_UNITS,
-                                                                lecture,
-                                                                attachmentVideoUnit: unit,
-                                                            })
+                                                            !unit.slides?.length &&
+                                                                displayedActions.lecture.executeInCurrentEditor({
+                                                                    reference: ReferenceType.ATTACHMENT_UNITS,
+                                                                    lecture,
+                                                                    attachmentVideoUnit: unit,
+                                                                })
                                                         "
                                                         type="button"
                                                     >
-                                                        {{ unit.name }}
+                                                        <span>{{ unit.name }}</span>
                                                     </button>
-                                                    @for (slide of unit.slides; track slide.id; let index = $index) {
+                                                    <mat-menu #lectureMenuUnitsSlide="matMenu" type="button">
                                                         <button
-                                                            class="ps-1 me-1"
+                                                            class="border-bottom ps-1 me-1"
                                                             mat-menu-item
                                                             (click)="
                                                                 displayedActions.lecture.executeInCurrentEditor({
-                                                                    reference: ReferenceType.SLIDE,
+                                                                    reference: ReferenceType.ATTACHMENT_UNITS,
                                                                     lecture,
-                                                                    slide,
                                                                     attachmentVideoUnit: unit,
-                                                                    slideIndex: index + 1,
                                                                 })
                                                             "
                                                             type="button"
                                                         >
-                                                            <span [jhiTranslate]="'artemisApp.markdownEditor.slideWithNumber'" [translateValues]="{ number: index + 1 }"></span>
+                                                            {{ unit.name }}
                                                         </button>
-                                                    }
-                                                </mat-menu>
+                                                        @for (slide of unit.slides; track slide.id; let index = $index) {
+                                                            <button
+                                                                class="ps-1 me-1"
+                                                                mat-menu-item
+                                                                (click)="
+                                                                    displayedActions.lecture.executeInCurrentEditor({
+                                                                        reference: ReferenceType.SLIDE,
+                                                                        lecture,
+                                                                        slide,
+                                                                        attachmentVideoUnit: unit,
+                                                                        slideIndex: index + 1,
+                                                                    })
+                                                                "
+                                                                type="button"
+                                                            >
+                                                                <span [jhiTranslate]="'artemisApp.markdownEditor.slideWithNumber'" [translateValues]="{ number: index + 1 }"></span>
+                                                            </button>
+                                                        }
+                                                    </mat-menu>
+                                                }
                                             }
-                                        }
-                                        @for (attachment of lecture.attachments; track attachment.id) {
-                                            <button
-                                                class="ps-1 me-1"
-                                                mat-menu-item
-                                                type="button"
-                                                (click)="displayedActions.lecture.executeInCurrentEditor({ reference: ReferenceType.ATTACHMENT, lecture, attachment })"
-                                            >
-                                                <span>{{ attachment.name }}</span>
-                                            </button>
-                                        }
-                                    </mat-menu>
-                                } @empty {
-                                    <ng-container [ngTemplateOutlet]="noItemsAvailable" />
-                                }
-                            </mat-menu>
+                                            @for (attachment of lecture.attachments; track attachment.id) {
+                                                <button
+                                                    class="ps-1 me-1"
+                                                    mat-menu-item
+                                                    type="button"
+                                                    (click)="displayedActions.lecture.executeInCurrentEditor({ reference: ReferenceType.ATTACHMENT, lecture, attachment })"
+                                                >
+                                                    <span>{{ attachment.name }}</span>
+                                                </button>
+                                            }
+                                        </mat-menu>
+                                    } @empty {
+                                        <ng-container [ngTemplateOutlet]="noItemsAvailable" />
+                                    }
+                                </mat-menu>
+                            }
                         }
                         <!-- AI Assistance -->
                         @if (displayedActions.artemisIntelligence.length > 0) {
