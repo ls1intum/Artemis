@@ -18,13 +18,23 @@ public class NewManualFeedbackRequestNotification extends CourseNotification {
 
     protected String exerciseTitle;
 
+    protected Long examId;
+
+    protected Long exerciseGroupId;
+
+    protected String exerciseType;
+
     /**
      * Default constructor used when creating a new post notification.
      */
-    public NewManualFeedbackRequestNotification(Long courseId, String courseTitle, String courseImageUrl, Long exerciseId, String exerciseTitle) {
+    public NewManualFeedbackRequestNotification(Long courseId, String courseTitle, String courseImageUrl, Long exerciseId, String exerciseTitle, Long examId, Long exerciseGroupId,
+            String exerciseType) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
         this.exerciseId = exerciseId;
         this.exerciseTitle = exerciseTitle;
+        this.examId = examId;
+        this.exerciseGroupId = exerciseGroupId;
+        this.exerciseType = exerciseType;
     }
 
     /**
@@ -51,6 +61,9 @@ public class NewManualFeedbackRequestNotification extends CourseNotification {
 
     @Override
     public String getRelativeWebAppUrl() {
+        if (examId != null && exerciseGroupId != null && exerciseType != null) {
+            return "/course-management/" + courseId + "/exams/" + examId + "/exercise-groups/" + exerciseGroupId + "/" + exerciseType + "-exercises/" + exerciseId;
+        }
         return "/courses/" + courseId + "/exercises/" + exerciseId;
     }
 }

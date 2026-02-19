@@ -102,8 +102,9 @@ public class SingleUserNotificationService {
 
         Double score = Objects.requireNonNull(studentParticipation.get().findLatestResult()).getScore();
 
+        Long examId = exercise.isExamExercise() ? exercise.getExerciseGroup().getExam().getId() : null;
         var exerciseAssessedNotification = new ExerciseAssessedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
-                exercise.getSanitizedExerciseTitle(), exercise.getType(), exercise.getMaxPoints().longValue(), score.longValue());
+                exercise.getSanitizedExerciseTitle(), exercise.getType(), exercise.getMaxPoints().longValue(), score.longValue(), examId);
 
         courseNotificationService.sendCourseNotification(exerciseAssessedNotification, List.of(recipient));
     }
@@ -149,8 +150,9 @@ public class SingleUserNotificationService {
         var plagiarismCaseExercise = plagiarismCase.getExercise();
         var course = plagiarismCaseExercise.getCourseViaExerciseGroupOrCourseMember();
 
+        Long examId = plagiarismCaseExercise.isExamExercise() ? plagiarismCaseExercise.getExerciseGroup().getExam().getId() : null;
         var newPlagiarismCaseNotification = new NewPlagiarismCaseNotification(course.getId(), course.getTitle(), course.getCourseIcon(), plagiarismCaseExercise.getId(),
-                plagiarismCaseExercise.getSanitizedExerciseTitle(), plagiarismCaseExercise.getType(), plagiarismCase.getPost().getContent());
+                plagiarismCaseExercise.getSanitizedExerciseTitle(), plagiarismCaseExercise.getType(), plagiarismCase.getPost().getContent(), examId);
 
         courseNotificationService.sendCourseNotification(newPlagiarismCaseNotification, List.of(student));
     }
@@ -166,8 +168,9 @@ public class SingleUserNotificationService {
         var plagiarismCaseExercise = plagiarismCase.getExercise();
         var course = plagiarismCaseExercise.getCourseViaExerciseGroupOrCourseMember();
 
+        Long examId = plagiarismCaseExercise.isExamExercise() ? plagiarismCaseExercise.getExerciseGroup().getExam().getId() : null;
         var newCpcPlagiarismCaseNotification = new NewCpcPlagiarismCaseNotification(course.getId(), course.getTitle(), course.getCourseIcon(), plagiarismCaseExercise.getId(),
-                plagiarismCaseExercise.getSanitizedExerciseTitle(), plagiarismCaseExercise.getType(), plagiarismCase.getPost().getContent());
+                plagiarismCaseExercise.getSanitizedExerciseTitle(), plagiarismCaseExercise.getType(), plagiarismCase.getPost().getContent(), examId);
 
         courseNotificationService.sendCourseNotification(newCpcPlagiarismCaseNotification, List.of(student));
     }
@@ -182,8 +185,9 @@ public class SingleUserNotificationService {
         var plagiarismCaseExercise = plagiarismCase.getExercise();
         var course = plagiarismCaseExercise.getCourseViaExerciseGroupOrCourseMember();
 
+        Long examId = plagiarismCaseExercise.isExamExercise() ? plagiarismCaseExercise.getExerciseGroup().getExam().getId() : null;
         var plagiarismCaseVerdictNotification = new PlagiarismCaseVerdictNotification(course.getId(), course.getTitle(), course.getCourseIcon(), plagiarismCaseExercise.getId(),
-                plagiarismCaseExercise.getSanitizedExerciseTitle(), plagiarismCaseExercise.getType(), plagiarismCase.getVerdict().toString());
+                plagiarismCaseExercise.getSanitizedExerciseTitle(), plagiarismCaseExercise.getType(), plagiarismCase.getVerdict().toString(), examId);
 
         courseNotificationService.sendCourseNotification(plagiarismCaseVerdictNotification, List.of(student));
     }

@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.communication.domain.course_notifications.Programm
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.QuizExerciseStartedNotification;
 import de.tum.cit.aet.artemis.communication.service.CourseNotificationService;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -91,6 +92,11 @@ public class GroupNotificationService {
      * @param exercise that has been opened for practice
      */
     public void notifyStudentGroupAboutExercisePractice(Exercise exercise) {
+        if (exercise.isExamExercise()) {
+            // Exam exercises have their own participation flow; do not send practice notifications to students.
+            return;
+        }
+
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         var recipients = userRepository.getStudents(course);
 
@@ -106,6 +112,11 @@ public class GroupNotificationService {
      * @param quizExercise that has been started
      */
     public void notifyStudentGroupAboutQuizExerciseStart(QuizExercise quizExercise) {
+        if (quizExercise.isExamExercise()) {
+            // Exam quiz exercises are managed through exam participation; do not send start notifications to students.
+            return;
+        }
+
         var course = quizExercise.getCourseViaExerciseGroupOrCourseMember();
         var recipients = userRepository.getStudents(course);
 
@@ -123,6 +134,13 @@ public class GroupNotificationService {
      * @param exercise that has been updated
      */
     public void notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(Exercise exercise) {
+        if (exercise.isExamExercise()) {
+            // Do not send exercise update notifications to students for exam exercises.
+            // The notification URL points to the course-management page which students cannot access.
+            // Use notifyEditorAndInstructorGroupAboutExerciseUpdate instead for exam exercises.
+            return;
+        }
+
         // Do not send a notification before the release date of the exercise.
         if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
             return;
@@ -133,7 +151,7 @@ public class GroupNotificationService {
                 Set.of(course.getEditorGroupName(), course.getInstructorGroupName(), course.getStudentGroupName()));
 
         var exerciseUpdatedNotification = new ExerciseUpdatedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
-                exercise.getExerciseNotificationTitle());
+                exercise.getExerciseNotificationTitle(), null, null, exercise.getType());
 
         courseNotificationService.sendCourseNotification(exerciseUpdatedNotification, recipients.stream().toList());
     }
@@ -145,6 +163,11 @@ public class GroupNotificationService {
      * @param exercise that has been created
      */
     public void notifyAllGroupsAboutReleasedExercise(Exercise exercise) {
+        if (exercise.isExamExercise()) {
+            // Exam exercises are not individually released; they are part of the exam flow.
+            return;
+        }
+
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         var recipients = userRepository.getUsersInCourse(course);
 
@@ -165,8 +188,10 @@ public class GroupNotificationService {
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         var recipients = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(Set.of(course.getEditorGroupName(), course.getInstructorGroupName()));
 
+        ExerciseGroup exerciseGroup = exercise.isExamExercise() ? exercise.getExerciseGroup() : null;
         var exerciseUpdatedNotification = new ExerciseUpdatedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
-                exercise.getExerciseNotificationTitle());
+                exercise.getExerciseNotificationTitle(), exerciseGroup != null ? exerciseGroup.getExam().getId() : null, exerciseGroup != null ? exerciseGroup.getId() : null,
+                exercise.getType());
 
         courseNotificationService.sendCourseNotification(exerciseUpdatedNotification, recipients.stream().toList());
     }
@@ -180,8 +205,9 @@ public class GroupNotificationService {
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         var recipients = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(Set.of(course.getEditorGroupName(), course.getInstructorGroupName()));
 
+        ExerciseGroup exerciseGroup = exercise.isExamExercise() ? exercise.getExerciseGroup() : null;
         var programmingTestCasesChangedNotification = new ProgrammingTestCasesChangedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
-                exercise.getExerciseNotificationTitle());
+                exercise.getExerciseNotificationTitle(), exerciseGroup != null ? exerciseGroup.getExam().getId() : null, exerciseGroup != null ? exerciseGroup.getId() : null);
 
         courseNotificationService.sendCourseNotification(programmingTestCasesChangedNotification, recipients.stream().toList());
     }
@@ -195,8 +221,9 @@ public class GroupNotificationService {
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         var recipients = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(Set.of(course.getEditorGroupName(), course.getInstructorGroupName()));
 
+        ExerciseGroup exerciseGroup = exercise.isExamExercise() ? exercise.getExerciseGroup() : null;
         var programmingBuildRunUpdateNotification = new ProgrammingBuildRunUpdateNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
-                exercise.getExerciseNotificationTitle());
+                exercise.getExerciseNotificationTitle(), exerciseGroup != null ? exerciseGroup.getExam().getId() : null, exerciseGroup != null ? exerciseGroup.getId() : null);
 
         courseNotificationService.sendCourseNotification(programmingBuildRunUpdateNotification, recipients.stream().toList());
     }
@@ -212,8 +239,10 @@ public class GroupNotificationService {
         var formattedReleaseDate = exercise.getReleaseDate() != null ? exercise.getReleaseDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")) : "-";
         var formattedDueDate = exercise.getDueDate() != null ? exercise.getDueDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")) : "-";
 
+        ExerciseGroup exerciseGroup = exercise.isExamExercise() ? exercise.getExerciseGroup() : null;
         var duplicateTestCaseNotification = new DuplicateTestCaseNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
-                exercise.getExerciseNotificationTitle(), formattedReleaseDate, formattedDueDate);
+                exercise.getExerciseNotificationTitle(), formattedReleaseDate, formattedDueDate, exerciseGroup != null ? exerciseGroup.getExam().getId() : null,
+                exerciseGroup != null ? exerciseGroup.getId() : null);
 
         courseNotificationService.sendCourseNotification(duplicateTestCaseNotification, recipients.stream().toList());
     }
@@ -227,8 +256,10 @@ public class GroupNotificationService {
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         var recipients = userRepository.getTutors(course);
 
+        ExerciseGroup exerciseGroup = exercise.isExamExercise() ? exercise.getExerciseGroup() : null;
         var manualFeedbackRequestNotification = new NewManualFeedbackRequestNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
-                exercise.getExerciseNotificationTitle());
+                exercise.getExerciseNotificationTitle(), exerciseGroup != null ? exerciseGroup.getExam().getId() : null, exerciseGroup != null ? exerciseGroup.getId() : null,
+                exercise.getType());
 
         courseNotificationService.sendCourseNotification(manualFeedbackRequestNotification, recipients.stream().toList());
     }
