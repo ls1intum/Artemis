@@ -30,9 +30,14 @@ import { ConsistencyCheckService } from 'app/programming/manage/consistency-chec
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
 import { ConsistencyCheckError, ErrorType } from 'app/programming/shared/entities/consistency-check-result.model';
 import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { ArtifactLocation } from 'app/openapi/model/artifactLocation';
 import { faCircleExclamation, faCircleInfo, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+import { CodeEditorInstructorBaseContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-base-container.component';
+import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { WritableSignal, signal } from '@angular/core';
 
 describe('CodeEditorInstructorAndEditorContainerComponent', () => {
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
@@ -45,6 +50,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
     let profileService: ProfileService;
     let artemisIntelligenceService: ArtemisIntelligenceService;
     let consistencyCheckService: ConsistencyCheckService;
+    let reviewCommentService: jest.Mocked<Pick<ExerciseReviewCommentService, 'setExercise' | 'reloadThreads'>> & { threads: WritableSignal<any[]> };
 
     const mockIssues: ConsistencyIssue[] = [
         {
@@ -141,6 +147,12 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
     });
 
     beforeEach(async () => {
+        reviewCommentService = {
+            setExercise: jest.fn(),
+            reloadThreads: jest.fn(),
+            threads: signal([]),
+        } as any;
+
         await TestBed.configureTestingModule({
             imports: [CodeEditorInstructorAndEditorContainerComponent],
             providers: [
@@ -161,11 +173,16 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ConsistencyCheckService, useValue: { checkConsistencyForProgrammingExercise: jest.fn() } },
                 { provide: ArtemisIntelligenceService, useValue: { consistencyCheck: jest.fn(), isLoading: () => false } },
+                { provide: ExerciseReviewCommentService, useValue: reviewCommentService },
             ],
         })
             // Avoid rendering heavy template dependencies for these tests
             .overrideComponent(CodeEditorInstructorAndEditorContainerComponent, {
-                set: { template: '', imports: [] as any },
+                set: {
+                    template: '',
+                    imports: [] as any,
+                    providers: [{ provide: ExerciseReviewCommentService, useValue: reviewCommentService }],
+                },
             })
             .compileComponents();
 
@@ -193,10 +210,14 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             selectedRepository: jest.fn().mockReturnValue('SOLUTION'),
             problemStatementIdentifier: 'problem_statement.md',
             jumpToLine: jest.fn(),
+            monacoEditor: {
+                clearReviewCommentDrafts: jest.fn(),
+            },
         };
 
         (comp as any).editableInstructions = {
             jumpToLine: jest.fn(),
+            clearReviewCommentDrafts: jest.fn(),
         };
 
         // Mock jump helper methods
@@ -346,6 +367,34 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(pullSpy).toHaveBeenCalledTimes(2);
         });
 
+        it('should show modal when code generation is already running', async () => {
+            const addAlertSpy = jest.spyOn(alertService, 'addAlert');
+            const modalService = TestBed.inject(NgbModal);
+            const openSpy = jest.spyOn(modalService, 'open');
+            comp.selectedRepository = RepositoryType.TEMPLATE;
+
+            const conflict = new HttpErrorResponse({
+                status: 409,
+                error: { 'X-artemisApp-error': 'error.codeGenerationRunning' },
+            });
+            (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(throwError(() => conflict) as any);
+
+            comp.generateCode();
+            await Promise.resolve();
+            await Promise.resolve();
+
+            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.TEMPLATE });
+            expect(comp.isGeneratingCode()).toBeFalse();
+            // One modal from generateCode() confirmation and one from the "already running" error handler.
+            expect(openSpy).toHaveBeenCalledTimes(2);
+            expect(addAlertSpy).not.toHaveBeenCalledWith(
+                expect.objectContaining({
+                    type: AlertType.DANGER,
+                    translationKey: 'artemisApp.programmingExercise.codeGeneration.error',
+                }),
+            );
+        });
+
         it('should call executeRefresh and cleanup on DONE', async () => {
             comp.selectedRepository = RepositoryType.SOLUTION;
             (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-4' }));
@@ -442,6 +491,61 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             } finally {
                 window.setTimeout = originalSetTimeout;
             }
+        });
+
+        it('should clear subscription when restore check-only has no active job', () => {
+            comp.selectedRepository = RepositoryType.SOLUTION;
+            const clearSpy = jest.spyOn(comp as any, 'clearJobSubscription');
+            (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({}));
+
+            (comp as any).restoreCodeGenerationState();
+
+            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.SOLUTION, checkOnly: true });
+            expect(clearSpy).toHaveBeenCalledWith(true);
+        });
+    });
+
+    describe('Review Comments', () => {
+        it('loadExercise sets review context and reloads threads when returned exercise has an id', () => {
+            const superLoadSpy = jest.spyOn(CodeEditorInstructorBaseContainerComponent.prototype, 'loadExercise').mockReturnValue(of({ id: 55 } as any));
+
+            comp.loadExercise(55).subscribe();
+
+            expect(superLoadSpy).toHaveBeenCalledWith(55);
+            expect(reviewCommentService.setExercise).toHaveBeenCalledWith(55);
+            expect(reviewCommentService.reloadThreads).toHaveBeenCalledOnce();
+
+            superLoadSpy.mockRestore();
+        });
+
+        it('loadExercise does not set review context when returned exercise has no id', () => {
+            const superLoadSpy = jest.spyOn(CodeEditorInstructorBaseContainerComponent.prototype, 'loadExercise').mockReturnValue(of({} as any));
+
+            comp.loadExercise(55).subscribe();
+
+            expect(superLoadSpy).toHaveBeenCalledWith(55);
+            expect(reviewCommentService.setExercise).not.toHaveBeenCalled();
+            expect(reviewCommentService.reloadThreads).not.toHaveBeenCalled();
+
+            superLoadSpy.mockRestore();
+        });
+
+        it('onCommit clears draft widgets and reloads threads', () => {
+            const clearEditorDraftsSpy = jest.spyOn((comp as any).codeEditorContainer.monacoEditor, 'clearReviewCommentDrafts');
+
+            comp.onCommit();
+
+            expect(clearEditorDraftsSpy).toHaveBeenCalledOnce();
+            expect(reviewCommentService.reloadThreads).toHaveBeenCalledOnce();
+        });
+
+        it('onProblemStatementSaved clears markdown drafts and reloads threads', () => {
+            const clearInstructionDraftsSpy = jest.spyOn((comp as any).editableInstructions, 'clearReviewCommentDrafts');
+
+            comp.onProblemStatementSaved();
+
+            expect(clearInstructionDraftsSpy).toHaveBeenCalledOnce();
+            expect(reviewCommentService.reloadThreads).toHaveBeenCalledOnce();
         });
     });
 
@@ -623,6 +727,26 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect((comp as any).codeEditorContainer.selectedFile).toBe(targetFile);
         });
 
+        it('onEditorLoaded keeps deferred jump state until onFileLoad is called', () => {
+            const targetFile = 'src/tests/ExampleTest.java';
+            const targetLine = 42;
+            comp.fileToJumpOn = targetFile;
+            comp.lineJumpOnFileLoad = targetLine;
+            (comp as any).codeEditorContainer.selectedFile = 'some/other/file.java';
+
+            comp.onEditorLoaded();
+
+            expect((comp as any).codeEditorContainer.selectedFile).toBe(targetFile);
+            expect(comp.fileToJumpOn).toBe(targetFile);
+            expect(comp.lineJumpOnFileLoad).toBe(targetLine);
+
+            comp.onFileLoad(targetFile);
+
+            expect((comp as any).codeEditorContainer.jumpToLine).toHaveBeenCalledWith(targetLine);
+            expect(comp.fileToJumpOn).toBeUndefined();
+            expect(comp.lineJumpOnFileLoad).toBeUndefined();
+        });
+
         it('onFileLoad jumps to line and clears lineJumpOnFileLoad when file matches', () => {
             const targetFile = 'src/solution/Solution.java';
             const targetLine = 60;
@@ -656,6 +780,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
             expect((comp as any).codeEditorContainer.jumpToLine).not.toHaveBeenCalled();
             expect(comp.lineJumpOnFileLoad).toBeUndefined();
+            expect(comp.fileToJumpOn).toBeUndefined();
         });
 
         it('shows error and clears jump state when repository selection fails', () => {
@@ -675,6 +800,91 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(alertErrorSpy).toHaveBeenCalled();
             expect(comp.lineJumpOnFileLoad).toBeUndefined();
             expect(comp.fileToJumpOn).toBeUndefined();
+            expect(onEditorLoadedSpy).not.toHaveBeenCalled();
+        });
+
+        it('navigateToLocation selects template repo when target is TEMPLATE_REPO and current repo differs', () => {
+            (comp as any).codeEditorContainer.selectedRepository = jest.fn().mockReturnValue(RepositoryType.SOLUTION);
+            const selectTemplateSpy = jest.spyOn(comp, 'selectTemplateParticipation');
+            const onEditorLoadedSpy = jest.spyOn(comp, 'onEditorLoaded');
+
+            (comp as any).navigateToLocation({ targetType: CommentThreadLocationType.TEMPLATE_REPO, filePath: 'src/template/A.java', lineNumber: 10 });
+
+            expect(selectTemplateSpy).toHaveBeenCalledOnce();
+            expect(onEditorLoadedSpy).not.toHaveBeenCalled();
+        });
+
+        it('navigateToLocation selects solution repo when target is SOLUTION_REPO and current repo differs', () => {
+            (comp as any).codeEditorContainer.selectedRepository = jest.fn().mockReturnValue(RepositoryType.TEMPLATE);
+            const selectSolutionSpy = jest.spyOn(comp, 'selectSolutionParticipation');
+            const onEditorLoadedSpy = jest.spyOn(comp, 'onEditorLoaded');
+
+            (comp as any).navigateToLocation({ targetType: CommentThreadLocationType.SOLUTION_REPO, filePath: 'src/solution/B.java', lineNumber: 11 });
+
+            expect(selectSolutionSpy).toHaveBeenCalledOnce();
+            expect(onEditorLoadedSpy).not.toHaveBeenCalled();
+        });
+
+        it('navigateToLocation selects test repo when target is TEST_REPO and current repo differs', () => {
+            (comp as any).codeEditorContainer.selectedRepository = jest.fn().mockReturnValue(RepositoryType.SOLUTION);
+            const selectTestSpy = jest.spyOn(comp, 'selectTestRepository');
+            const onEditorLoadedSpy = jest.spyOn(comp, 'onEditorLoaded');
+
+            (comp as any).navigateToLocation({ targetType: CommentThreadLocationType.TEST_REPO, filePath: 'src/test/C.java', lineNumber: 12 });
+
+            expect(selectTestSpy).toHaveBeenCalledOnce();
+            expect(onEditorLoadedSpy).not.toHaveBeenCalled();
+        });
+
+        it('navigateToLocation selects auxiliary repo when target is AUXILIARY_REPO and current repo differs', () => {
+            (comp as any).codeEditorContainer.selectedRepository = jest.fn().mockReturnValue(RepositoryType.TEMPLATE);
+            comp.selectAuxiliaryRepository = jest.fn();
+            const selectAuxSpy = jest.spyOn(comp, 'selectAuxiliaryRepository');
+            const onEditorLoadedSpy = jest.spyOn(comp, 'onEditorLoaded');
+
+            (comp as any).navigateToLocation({
+                targetType: CommentThreadLocationType.AUXILIARY_REPO,
+                auxiliaryRepositoryId: 77,
+                filePath: 'src/aux/D.java',
+                lineNumber: 13,
+            });
+
+            expect(selectAuxSpy).toHaveBeenCalledWith(77);
+            expect(onEditorLoadedSpy).not.toHaveBeenCalled();
+        });
+
+        it('navigateToLocation selects auxiliary repo when already in AUXILIARY but repository id differs', () => {
+            (comp as any).codeEditorContainer.selectedRepository = jest.fn().mockReturnValue(RepositoryType.AUXILIARY);
+            comp.selectedRepositoryId = 12;
+            comp.selectAuxiliaryRepository = jest.fn();
+            const selectAuxSpy = jest.spyOn(comp, 'selectAuxiliaryRepository');
+            const onEditorLoadedSpy = jest.spyOn(comp, 'onEditorLoaded');
+
+            (comp as any).navigateToLocation({
+                targetType: CommentThreadLocationType.AUXILIARY_REPO,
+                auxiliaryRepositoryId: 77,
+                filePath: 'src/aux/D.java',
+                lineNumber: 13,
+            });
+
+            expect(selectAuxSpy).toHaveBeenCalledWith(77);
+            expect(onEditorLoadedSpy).not.toHaveBeenCalled();
+        });
+
+        it('navigateToLocation selects auxiliary repo when auxiliaryRepositoryId is 0', () => {
+            (comp as any).codeEditorContainer.selectedRepository = jest.fn().mockReturnValue(RepositoryType.TEMPLATE);
+            comp.selectAuxiliaryRepository = jest.fn();
+            const selectAuxSpy = jest.spyOn(comp, 'selectAuxiliaryRepository');
+            const onEditorLoadedSpy = jest.spyOn(comp, 'onEditorLoaded');
+
+            (comp as any).navigateToLocation({
+                targetType: CommentThreadLocationType.AUXILIARY_REPO,
+                auxiliaryRepositoryId: 0,
+                filePath: 'src/aux/D.java',
+                lineNumber: 13,
+            });
+
+            expect(selectAuxSpy).toHaveBeenCalledWith(0);
             expect(onEditorLoadedSpy).not.toHaveBeenCalled();
         });
 
