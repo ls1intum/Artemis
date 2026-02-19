@@ -109,8 +109,9 @@ export class CampusOnlineOrgUnitsComponent implements OnInit {
                     next: (created) => {
                         this.isImporting.set(false);
                         // Reload full list
-                        this.campusOnlineService.getOrgUnits().subscribe((orgUnits) => {
-                            this.orgUnits.set(orgUnits);
+                        this.campusOnlineService.getOrgUnits().subscribe({
+                            next: (orgUnits) => this.orgUnits.set(orgUnits),
+                            error: (err: HttpErrorResponse) => this.alertService.error(err.error?.message ?? err.message),
                         });
                         const skipped = importDTOs.length - created.length;
                         this.alertService.success('artemisApp.campusOnlineOrgUnits.importSuccess', { created: created.length, skipped });

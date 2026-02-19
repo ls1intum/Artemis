@@ -15,6 +15,7 @@ import jakarta.validation.Valid;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -129,8 +130,13 @@ public class AdminCampusOnlineResource {
         CampusOnlineOrgUnit orgUnit = new CampusOnlineOrgUnit();
         orgUnit.setExternalId(orgUnitDTO.externalId());
         orgUnit.setName(orgUnitDTO.name());
-        CampusOnlineOrgUnit saved = orgUnitRepository.save(orgUnit);
-        return ResponseEntity.status(HttpStatus.CREATED).body(CampusOnlineOrgUnitDTO.fromEntity(saved));
+        try {
+            CampusOnlineOrgUnit saved = orgUnitRepository.save(orgUnit);
+            return ResponseEntity.status(HttpStatus.CREATED).body(CampusOnlineOrgUnitDTO.fromEntity(saved));
+        }
+        catch (DataIntegrityViolationException e) {
+            throw new BadRequestAlertException("An org unit with this external ID already exists", "campusOnline", "externalIdExists");
+        }
     }
 
     /**
@@ -160,9 +166,14 @@ public class AdminCampusOnlineResource {
             toSave.add(orgUnit);
         }
 
-        List<CampusOnlineOrgUnit> saved = orgUnitRepository.saveAll(toSave);
-        List<CampusOnlineOrgUnitDTO> created = saved.stream().map(CampusOnlineOrgUnitDTO::fromEntity).toList();
-        return ResponseEntity.ok(created);
+        try {
+            List<CampusOnlineOrgUnit> saved = orgUnitRepository.saveAll(toSave);
+            List<CampusOnlineOrgUnitDTO> created = saved.stream().map(CampusOnlineOrgUnitDTO::fromEntity).toList();
+            return ResponseEntity.ok(created);
+        }
+        catch (DataIntegrityViolationException e) {
+            throw new BadRequestAlertException("Duplicate external ID detected during import", "campusOnline", "externalIdExists");
+        }
     }
 
     /**
@@ -181,8 +192,13 @@ public class AdminCampusOnlineResource {
         }
         existing.setExternalId(orgUnitDTO.externalId());
         existing.setName(orgUnitDTO.name());
-        CampusOnlineOrgUnit saved = orgUnitRepository.save(existing);
-        return ResponseEntity.ok(CampusOnlineOrgUnitDTO.fromEntity(saved));
+        try {
+            CampusOnlineOrgUnit saved = orgUnitRepository.save(existing);
+            return ResponseEntity.ok(CampusOnlineOrgUnitDTO.fromEntity(saved));
+        }
+        catch (DataIntegrityViolationException e) {
+            throw new BadRequestAlertException("An org unit with this external ID already exists", "campusOnline", "externalIdExists");
+        }
     }
 
     /**

@@ -167,7 +167,7 @@ public class CampusOnlineEnrollmentSyncService {
                 usersAdded++;
             }
             else {
-                log.debug("Could not find user with registration number '{}' or email '{}' for course '{}'", registrationNumber, email, course.getTitle());
+                log.debug("Could not find user for course '{}' (student not registered in Artemis)", course.getTitle());
                 usersNotFound++;
             }
         }
