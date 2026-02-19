@@ -11,11 +11,20 @@ import { MockCodeEditorRepositoryFileService } from 'test/helpers/mocks/service/
 import { SimpleChange } from '@angular/core';
 import { BehaviorSubject, Subject, of } from 'rxjs';
 import { CodeEditorHeaderComponent } from 'app/programming/manage/code-editor/header/code-editor-header.component';
-import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileType, RenameFileChange } from 'app/programming/shared/code-editor/model/code-editor.model';
+import {
+    CommitState,
+    CreateFileChange,
+    DeleteFileChange,
+    EditorState,
+    FileType,
+    RenameFileChange,
+    RepositoryType,
+} from 'app/programming/shared/code-editor/model/code-editor.model';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { IKeyboardEvent } from 'monaco-editor';
+import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 
 describe('CodeEditorMonacoComponent', () => {
     let comp: CodeEditorMonacoComponent;
@@ -112,6 +121,130 @@ describe('CodeEditorMonacoComponent', () => {
         expect(element).not.toBeNull();
         expect(element!.hidden).toBeFalse();
         expect(comp.editor().isReadOnly()).toBeFalse();
+    });
+
+    it('should re-apply interaction mode after file selection in ngOnChanges', async () => {
+        const updateInteractionModeStub = jest.spyOn(comp as any, 'updateEditorInteractionMode');
+        const selectFileInEditorStub = jest.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+        fixture.componentRef.setInput('enableExerciseReviewComments', true);
+        fixture.componentRef.setInput('selectedFile', 'file1.java');
+        fixture.changeDetectorRef.detectChanges();
+        updateInteractionModeStub.mockClear();
+
+        await comp.ngOnChanges({ selectedFile: new SimpleChange(undefined, 'file1.java', false) });
+
+        expect(selectFileInEditorStub).toHaveBeenCalledWith('file1.java');
+        expect(updateInteractionModeStub).toHaveBeenCalled();
+    });
+
+    it('should configure review comment mode in updateEditorInteractionMode', () => {
+        const setupReviewCommentButtonStub = jest.spyOn(comp, 'setupAddReviewCommentButton').mockImplementation();
+        const setupAddFeedbackButtonStub = jest.spyOn(comp, 'setupAddFeedbackButton').mockImplementation();
+        const clearHoverButtonStub = jest.spyOn(comp.editor(), 'clearLineDecorationsHoverButton').mockImplementation();
+        const disposeFeedbackShortcutStub = jest.spyOn(comp as any, 'disposeAddFeedbackShortcut').mockImplementation();
+
+        fixture.componentRef.setInput('selectedFile', 'file1.java');
+        fixture.componentRef.setInput('isTutorAssessment', false);
+        fixture.componentRef.setInput('readOnlyManualFeedback', false);
+        fixture.componentRef.setInput('enableExerciseReviewComments', true);
+        fixture.componentRef.setInput('selectedRepository', RepositoryType.TEMPLATE);
+        fixture.changeDetectorRef.detectChanges();
+
+        (comp as any).updateEditorInteractionMode();
+
+        expect(setupReviewCommentButtonStub).toHaveBeenCalled();
+        expect(setupAddFeedbackButtonStub).not.toHaveBeenCalled();
+        expect(clearHoverButtonStub).not.toHaveBeenCalled();
+        expect(disposeFeedbackShortcutStub).toHaveBeenCalled();
+    });
+
+    it('should not configure review comment mode for assignment repository', () => {
+        const setupReviewCommentButtonStub = jest.spyOn(comp, 'setupAddReviewCommentButton').mockImplementation();
+        const clearHoverButtonStub = jest.spyOn(comp.editor(), 'clearLineDecorationsHoverButton').mockImplementation();
+        const disposeFeedbackShortcutStub = jest.spyOn(comp as any, 'disposeAddFeedbackShortcut').mockImplementation();
+
+        fixture.componentRef.setInput('selectedFile', 'file1.java');
+        fixture.componentRef.setInput('isTutorAssessment', false);
+        fixture.componentRef.setInput('readOnlyManualFeedback', false);
+        fixture.componentRef.setInput('enableExerciseReviewComments', true);
+        fixture.componentRef.setInput('selectedRepository', RepositoryType.ASSIGNMENT);
+        fixture.changeDetectorRef.detectChanges();
+
+        (comp as any).updateEditorInteractionMode();
+
+        expect(setupReviewCommentButtonStub).not.toHaveBeenCalled();
+        expect(clearHoverButtonStub).toHaveBeenCalled();
+        expect(disposeFeedbackShortcutStub).toHaveBeenCalled();
+    });
+
+    it('should dispose review widgets when repository switches to assignment', () => {
+        const disposeAll = jest.fn();
+        (comp as any).reviewCommentManager = {
+            disposeAll,
+            updateDraftInputs: jest.fn(),
+            tryUpdateThreadInputs: jest.fn(),
+            renderWidgets: jest.fn(),
+            updateHoverButton: jest.fn(),
+            clearDrafts: jest.fn(),
+        };
+
+        fixture.componentRef.setInput('enableExerciseReviewComments', true);
+        fixture.componentRef.setInput('selectedRepository', RepositoryType.TEMPLATE);
+        fixture.changeDetectorRef.detectChanges();
+        disposeAll.mockClear();
+
+        fixture.componentRef.setInput('selectedRepository', RepositoryType.ASSIGNMENT);
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(disposeAll).toHaveBeenCalled();
+    });
+
+    it('should fall back to initial review thread location when current location is missing', () => {
+        const thread = { initialFilePath: 'src/File.java', initialLineNumber: 7 } as any;
+
+        expect((comp as any).getThreadFilePath(thread)).toBe('src/File.java');
+        expect((comp as any).getReviewThreadLine(thread)).toBe(6);
+    });
+
+    it('should prefer current review thread location over initial fallback', () => {
+        const thread = { filePath: 'src/Current.java', initialFilePath: 'src/Initial.java', lineNumber: 4, initialLineNumber: 9 } as any;
+
+        expect((comp as any).getThreadFilePath(thread)).toBe('src/Current.java');
+        expect((comp as any).getReviewThreadLine(thread)).toBe(3);
+    });
+
+    it('should clear hover button when neither tutor feedback nor review mode is active', () => {
+        const setupReviewCommentButtonStub = jest.spyOn(comp, 'setupAddReviewCommentButton').mockImplementation();
+        const setupAddFeedbackButtonStub = jest.spyOn(comp, 'setupAddFeedbackButton').mockImplementation();
+        const clearHoverButtonStub = jest.spyOn(comp.editor(), 'clearLineDecorationsHoverButton').mockImplementation();
+        const disposeFeedbackShortcutStub = jest.spyOn(comp as any, 'disposeAddFeedbackShortcut').mockImplementation();
+
+        fixture.componentRef.setInput('selectedFile', 'file1.java');
+        fixture.componentRef.setInput('isTutorAssessment', false);
+        fixture.componentRef.setInput('enableExerciseReviewComments', false);
+        fixture.changeDetectorRef.detectChanges();
+
+        (comp as any).updateEditorInteractionMode();
+
+        expect(setupReviewCommentButtonStub).not.toHaveBeenCalled();
+        expect(setupAddFeedbackButtonStub).not.toHaveBeenCalled();
+        expect(clearHoverButtonStub).toHaveBeenCalled();
+        expect(disposeFeedbackShortcutStub).toHaveBeenCalled();
+    });
+
+    it('should clear consistency comment widgets before re-adding them', () => {
+        const disposeWidgetsByPrefixSpy = jest.spyOn(comp.editor(), 'disposeWidgetsByPrefix').mockImplementation();
+        const rafSpy = jest.spyOn(window, 'requestAnimationFrame').mockImplementation((cb: FrameRequestCallback) => {
+            cb(0);
+            return 1 as any;
+        });
+
+        (comp as any).renderFeedbackWidgets();
+
+        expect(disposeWidgetsByPrefixSpy).toHaveBeenCalledWith('feedback-');
+        expect(disposeWidgetsByPrefixSpy).toHaveBeenCalledWith('comment-');
+
+        rafSpy.mockRestore();
     });
 
     it.each([
@@ -560,5 +693,78 @@ describe('CodeEditorMonacoComponent', () => {
         fixture.componentRef.setInput('selectedFile', scrolledFile);
         await comp.selectFileInEditor(scrolledFile);
         expect(setScrollTopStub).toHaveBeenCalledExactlyOnceWith(scrollTop);
+    });
+
+    it('should expose review comment manager callbacks for repository context', () => {
+        fixture.componentRef.setInput('selectedFile', 'src/Foo.java');
+        fixture.componentRef.setInput('selectedRepository', RepositoryType.AUXILIARY);
+        fixture.componentRef.setInput('selectedAuxiliaryRepositoryId', 7);
+        fixture.componentRef.setInput('enableExerciseReviewComments', true);
+        fixture.componentRef.setInput('commitState', CommitState.CLEAN);
+        fixture.changeDetectorRef.detectChanges();
+
+        const manager = (comp as any).getReviewCommentManager();
+        const config = (manager as any).config;
+
+        expect(config.shouldShowHoverButton()).toBeTrue();
+        expect(config.canSubmit()).toBeTrue();
+        expect(config.getDraftFileName()).toBe('src/Foo.java');
+
+        fixture.componentRef.setInput('selectedRepository', RepositoryType.ASSIGNMENT);
+        fixture.changeDetectorRef.detectChanges();
+        expect(config.getDraftContext({ lineNumber: 2, fileName: 'src/Foo.java' })).toBeUndefined();
+
+        fixture.componentRef.setInput('selectedRepository', RepositoryType.AUXILIARY);
+        fixture.changeDetectorRef.detectChanges();
+        expect(config.getDraftContext({ lineNumber: 2, fileName: 'src/Foo.java' })).toEqual({
+            targetType: CommentThreadLocationType.AUXILIARY_REPO,
+            filePath: 'src/Foo.java',
+            auxiliaryRepositoryId: 7,
+        });
+
+        const thread = {
+            id: 11,
+            exerciseId: 1,
+            targetType: CommentThreadLocationType.AUXILIARY_REPO,
+            auxiliaryRepositoryId: 7,
+            filePath: 'src/Foo.java',
+            initialLineNumber: 1,
+            lineNumber: 9,
+            outdated: false,
+            resolved: false,
+            comments: [],
+        } as any;
+        (comp as any).exerciseReviewCommentService.threads.set([thread]);
+
+        expect(config.getThreads()).toEqual([thread]);
+        expect(config.filterThread(thread)).toBeTrue();
+        expect(config.filterThread({ ...thread, auxiliaryRepositoryId: 9 })).toBeFalse();
+        expect(config.getThreadLine(thread)).toBe(8);
+
+        const onAddSpy = jest.spyOn(comp.onAddReviewComment, 'emit');
+        config.onAdd({ lineNumber: 4, fileName: 'src/Foo.java' });
+        expect(onAddSpy).toHaveBeenCalledExactlyOnceWith({ lineNumber: 4, fileName: 'src/Foo.java' });
+
+        expect(config.showLocationWarning()).toBeFalse();
+        fixture.componentRef.setInput('commitState', CommitState.UNCOMMITTED_CHANGES);
+        fixture.changeDetectorRef.detectChanges();
+        expect(config.showLocationWarning()).toBeTrue();
+        expect(config.canSubmit()).toBeFalse();
+    });
+
+    it('should clear review comment drafts through the manager', () => {
+        const clearDrafts = jest.fn();
+        (comp as any).reviewCommentManager = {
+            clearDrafts,
+            disposeAll: jest.fn(),
+            updateDraftInputs: jest.fn(),
+            tryUpdateThreadInputs: jest.fn(),
+            renderWidgets: jest.fn(),
+            updateHoverButton: jest.fn(),
+        };
+
+        comp.clearReviewCommentDrafts();
+
+        expect(clearDrafts).toHaveBeenCalledOnce();
     });
 });
