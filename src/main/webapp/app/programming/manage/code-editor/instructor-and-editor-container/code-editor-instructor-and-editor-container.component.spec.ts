@@ -1025,7 +1025,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
             comp.exercise,
             'Original problem statement',
             expect.objectContaining({ instruction: 'Improve this' }),
-            comp['isGeneratingOrRefining'],
+            expect.any(Function),
         );
         expect(comp.showDiff()).toBeTrue();
     });
@@ -1051,7 +1051,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
 
         comp.submitRefinement();
 
-        expect(problemStatementService.refineGlobally).toHaveBeenCalledWith(comp.exercise, 'Original problem statement', 'Improve clarity', comp['isGeneratingOrRefining']);
+        expect(problemStatementService.refineGlobally).toHaveBeenCalledWith(comp.exercise, 'Original problem statement', 'Improve clarity', expect.any(Function));
         expect(comp.showDiff()).toBeTrue();
     });
 
