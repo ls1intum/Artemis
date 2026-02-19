@@ -191,6 +191,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         const updateFeedbackSpy = jest.spyOn(comp, 'updateFeedback');
         const shiftEnter = new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true });
 
+        comp.feedback.credits = undefined;
         (comp as any).handleKeydown(shiftEnter);
         expect(updateFeedbackSpy).not.toHaveBeenCalled();
 
