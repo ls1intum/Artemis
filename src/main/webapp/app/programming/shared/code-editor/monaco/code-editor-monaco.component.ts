@@ -329,7 +329,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
         if (existingComponent) {
             this.ngZone.run(() => {
                 existingComponent.editFeedback(lineNumberZeroBased);
-                this.changeDetectorRef.markForCheck();
+                this.changeDetectorRef.markForCheck(); // Ensure that the edit dialogue opens, even though angular cannot detect the variables changing.
             });
         } else {
             this.newFeedbackLines.set([...this.newFeedbackLines(), lineNumberZeroBased]);
