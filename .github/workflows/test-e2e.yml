@@ -191,13 +191,18 @@ jobs:
             body += `<!-- E2E Test Results -->`;
 
             const marker = '<!-- E2E Test Results -->';
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: prNumber,
-              per_page: 100
-            });
-            const existing = comments.find(c => c.body && c.body.includes(marker));
+            let existing = null;
+            for (let page = 1; !existing; page++) {
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                per_page: 100,
+                page: page
+              });
+              if (!comments.length) break;
+              existing = comments.find(c => c.body && c.body.includes(marker));
+            }
 
             if (existing) {
               await github.rest.issues.updateComment({
@@ -332,13 +337,18 @@ jobs:
             }
 
             const marker = '<!-- E2E Test Results -->';
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: prNumber,
-              per_page: 100
-            });
-            const existing = comments.find(c => c.body && c.body.includes(marker));
+            let existing = null;
+            for (let page = 1; !existing; page++) {
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                per_page: 100,
+                page: page
+              });
+              if (!comments.length) break;
+              existing = comments.find(c => c.body && c.body.includes(marker));
+            }
 
             if (existing) {
               let body = existing.body;
@@ -511,13 +521,18 @@ jobs:
             body += `<!-- E2E Test Results -->`;
 
             const marker = '<!-- E2E Test Results -->';
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: prNumber,
-              per_page: 100
-            });
-            const existing = comments.find(c => c.body && c.body.includes(marker));
+            let existing = null;
+            for (let page = 1; !existing; page++) {
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                per_page: 100,
+                page: page
+              });
+              if (!comments.length) break;
+              existing = comments.find(c => c.body && c.body.includes(marker));
+            }
 
             if (existing) {
               await github.rest.issues.updateComment({
@@ -708,13 +723,18 @@ jobs:
             const phase2Result = '${{ needs.run-e2e-remaining.result }}';
 
             const marker = '<!-- E2E Test Results -->';
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: prNumber,
-              per_page: 100
-            });
-            const existing = comments.find(c => c.body && c.body.includes(marker));
+            let existing = null;
+            for (let page = 1; !existing; page++) {
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                per_page: 100,
+                page: page
+              });
+              if (!comments.length) break;
+              existing = comments.find(c => c.body && c.body.includes(marker));
+            }
 
             if (existing) {
               let body = existing.body;
