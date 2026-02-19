@@ -216,10 +216,6 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('should update', fakeAsync(() => {
-            // Mock console.warn to suppress Monaco editor's monospace font assumption warning
-            // jest-fail-on-console checks in afterEach whether console.warn has a .mock property;
-            // keeping the spy active (no mockRestore) signals that the warning is intentional.
-            jest.spyOn(console, 'warn').mockImplementation();
             const calendarService = TestBed.inject(CalendarService);
             const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
 
