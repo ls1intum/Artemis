@@ -136,7 +136,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             config
                     // Enable the relay for "/topic"
                     .enableStompBrokerRelay("/topic")
-                    // Messages that could not be sent to a user (as he is not connected to this server) will be forwarded to "/topic/unresolved-user"
+                    // Messages that could not be sent to a user (as they are not connected to this server) will be forwarded to "/topic/unresolved-user"
                     .setUserDestinationBroadcast("/topic/unresolved-user")
                     // Information about connected users will be sent to "/topic/user-registry"
                     .setUserRegistryBroadcast("/topic/user-registry")
@@ -348,7 +348,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                     }
                 }
                 catch (EntityNotFoundException e) {
-                    // If the user is not found (e.g. because he is not logged in), he should not be able to subscribe to these topics
+                    // If the user is not found (e.g. because they are not logged in), they should not be able to subscribe to these topics
                     log.warn("An error occurred while subscribing user {} to destination {}: {}", principal != null ? principal.getName() : "null", destination, e.getMessage());
                     return null;
                 }
