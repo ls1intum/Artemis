@@ -163,7 +163,7 @@ public abstract class AssessmentResource {
         // It is allowed to get the example assessment, if the user is at least an editor or
         // if the user is a tutor and the submission is not used for tutorial in the assessment dashboard
         // The reason is that example submissions with isTutorial = false should be shown immediately (with the assessment) to the tutor and
-        // for example submission with isTutorial = true, the assessment should not be shown to the tutor. Instead, the tutor should try to assess it him/herself
+        // for example submission with isTutorial = true, the assessment should not be shown to the tutor. Instead, the tutor should try to assess it themselves
         // Therefore we send a result with only the references included, which is needed to tell the tutor which elements he missed to assess
         Result result = assessmentService.getExampleAssessment(submissionId);
 
