@@ -67,11 +67,11 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @BeforeEach
     void initTest() {
-        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void shouldCreateThreadWithInitialUserComment() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
 
@@ -119,7 +119,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void shouldCreateUserCommentWithUserContent() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
         CommentThreadDTO createdThread = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("Initial comment")),
@@ -133,7 +133,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void shouldUpdateUserCommentContentWithUserContent() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
         CommentThreadDTO createdThread = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("Initial comment")),
@@ -148,7 +148,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void shouldDeleteThreadWhenLastCommentRemoved() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
         CommentThreadDTO createdThread = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("Initial comment")),
@@ -162,7 +162,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void shouldReturnThreadsWithCommentsAndMetadata() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
         request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("Initial comment")), CommentThreadDTO.class, HttpStatus.CREATED);
@@ -173,7 +173,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void shouldUpdateThreadResolvedState() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
         CommentThreadDTO createdThread = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("Initial comment")),
@@ -378,7 +378,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void shouldCreateThreadGroupWithTwoThreads() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
         CommentThreadDTO first = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("First")), CommentThreadDTO.class,
@@ -397,7 +397,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void shouldDeleteThreadGroupKeepsThreads() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
         CommentThreadDTO first = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("First")), CommentThreadDTO.class,

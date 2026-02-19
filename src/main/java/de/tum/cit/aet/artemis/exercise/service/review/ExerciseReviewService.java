@@ -34,8 +34,6 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
@@ -93,14 +91,11 @@ public class ExerciseReviewService {
 
     private final UserRepository userRepository;
 
-    private final AuthorizationCheckService authorizationCheckService;
-
     private final GitService gitService;
 
     public ExerciseReviewService(CommentThreadGroupRepository commentThreadGroupRepository, CommentThreadRepository commentThreadRepository, CommentRepository commentRepository,
             ExerciseRepository exerciseRepository, ExerciseVersionRepository exerciseVersionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService,
-            GitService gitService) {
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, UserRepository userRepository, GitService gitService) {
         this.commentThreadGroupRepository = commentThreadGroupRepository;
         this.commentThreadRepository = commentThreadRepository;
         this.commentRepository = commentRepository;
@@ -109,7 +104,6 @@ public class ExerciseReviewService {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.userRepository = userRepository;
-        this.authorizationCheckService = authorizationCheckService;
         this.gitService = gitService;
     }
 
@@ -120,7 +114,6 @@ public class ExerciseReviewService {
      * @return list of comment threads
      */
     public List<CommentThread> findThreadsByExerciseId(long exerciseId) {
-        authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, exerciseId);
         return commentThreadRepository.findByExerciseId(exerciseId);
     }
 
@@ -131,7 +124,6 @@ public class ExerciseReviewService {
      * @return list of comment threads with comments
      */
     public Set<CommentThread> findThreadsWithCommentsByExerciseId(long exerciseId) {
-        authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, exerciseId);
         return commentThreadRepository.findWithCommentsByExerciseId(exerciseId);
     }
 
@@ -143,8 +135,7 @@ public class ExerciseReviewService {
      * @throws EntityNotFoundException if the thread does not exist
      */
     public List<Comment> findCommentsByThreadId(long threadId) {
-        CommentThread thread = findThreadByIdElseThrow(threadId);
-        authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, thread.getExercise().getId());
+        findThreadByIdElseThrow(threadId);
         return commentRepository.findByThreadIdOrderByCreatedDateAsc(threadId);
     }
 
@@ -161,7 +152,6 @@ public class ExerciseReviewService {
         if (dto == null) {
             throw new BadRequestAlertException("Request body must be set", THREAD_ENTITY_NAME, "bodyMissing");
         }
-        authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, exerciseId);
         validateThreadPayload(dto);
 
         Exercise exercise = exerciseRepository.findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
@@ -191,7 +181,6 @@ public class ExerciseReviewService {
             throw new BadRequestAlertException("Comment content must be set", COMMENT_ENTITY_NAME, "contentMissing");
         }
         CommentThread thread = findThreadByIdElseThrow(threadId);
-        authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, thread.getExercise().getId());
         validateExerciseIdMatchesRequest(exerciseId, thread.getExercise().getId(), THREAD_ENTITY_NAME);
 
         Comment comment = buildUserComment(thread, dto);
@@ -199,7 +188,7 @@ public class ExerciseReviewService {
     }
 
     /**
-     * Delete a comment by id after authorization, with cascade cleanup.
+     * Delete a comment by id with cascade cleanup.
      * If the deleted comment was the last one in its thread, the thread is removed.
      * If that thread was the last in its group, the group is removed as well.
      *
@@ -210,7 +199,6 @@ public class ExerciseReviewService {
      */
     public void deleteComment(long exerciseId, long commentId) {
         Comment comment = commentRepository.findWithThreadById(commentId).orElseThrow(() -> new EntityNotFoundException("Comment", commentId));
-        authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, comment.getThread().getExercise().getId());
         validateExerciseIdMatchesRequest(exerciseId, comment.getThread().getExercise().getId(), COMMENT_ENTITY_NAME);
         commentRepository.deleteCommentWithCascade(comment);
     }
@@ -230,7 +218,6 @@ public class ExerciseReviewService {
             throw new BadRequestAlertException("Request body must be set", THREAD_ENTITY_NAME, "bodyMissing");
         }
         CommentThread thread = findThreadByIdElseThrow(threadId);
-        authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, thread.getExercise().getId());
         validateExerciseIdMatchesRequest(exerciseId, thread.getExercise().getId(), THREAD_ENTITY_NAME);
         thread.setResolved(dto.resolved());
         CommentThread saved = commentThreadRepository.save(thread);
@@ -252,7 +239,6 @@ public class ExerciseReviewService {
             throw new BadRequestAlertException("Comment content must be set", COMMENT_ENTITY_NAME, "contentMissing");
         }
         Comment comment = commentRepository.findWithThreadById(commentId).orElseThrow(() -> new EntityNotFoundException("Comment", commentId));
-        authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, comment.getThread().getExercise().getId());
         validateExerciseIdMatchesRequest(exerciseId, comment.getThread().getExercise().getId(), COMMENT_ENTITY_NAME);
         validateContentMatchesType(comment.getType(), dto);
         comment.setContent(dto);
@@ -273,7 +259,6 @@ public class ExerciseReviewService {
         if (dto == null) {
             throw new BadRequestAlertException("Request body must be set", THREAD_GROUP_ENTITY_NAME, "bodyMissing");
         }
-        authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, exerciseId);
         Exercise exercise = exerciseRepository.findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
 
         List<Long> threadIds = dto.threadIds();
@@ -317,7 +302,6 @@ public class ExerciseReviewService {
     public void deleteGroup(long exerciseId, long groupId) {
         CommentThreadGroup group = commentThreadGroupRepository.findById(groupId).orElseThrow(() -> new EntityNotFoundException("CommentThreadGroup", groupId));
 
-        authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, group.getExercise().getId());
         validateExerciseIdMatchesRequest(exerciseId, group.getExercise().getId(), THREAD_GROUP_ENTITY_NAME);
 
         List<CommentThread> threads = commentThreadRepository.findByGroupId(groupId);

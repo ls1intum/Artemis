@@ -22,7 +22,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
@@ -117,12 +116,6 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
 
         assertThat(threads).hasSize(1);
         assertThat(threads.getFirst().getId()).isEqualTo(thread.getId());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void shouldThrowForbiddenWhenStudentRequestsThreads() {
-        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> exerciseReviewService.findThreadsByExerciseId(programmingExercise.getId()));
     }
 
     @Test
