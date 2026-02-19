@@ -316,7 +316,7 @@ describe('PostingReactionsBarComponent', () => {
         expect(getDeleteButton()).toBeNull();
     });
 
-    it('should display edit and delete options to instructor if his posting is announcement', () => {
+    it('should display edit and delete options to instructor if their posting is announcement', () => {
         metisServiceUserIsAtLeastInstructorStub.mockReturnValue(true);
         metisServiceUserIsAuthorOfPostingStub.mockReturnValue(true);
         fixture.componentRef.setInput('posting', metisAnnouncement);

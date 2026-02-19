@@ -61,7 +61,7 @@ public abstract class AssessmentResource {
 
     /**
      * Get the result of the submission with the given id. Returns a 403 Forbidden response if the user is not allowed to retrieve the assessment. The user is not allowed
-     * to retrieve the assessment if he is not a student of the corresponding course, the submission is not his submission, the result is not finished or the assessment due date of
+     * to retrieve the assessment if they are not a student of the corresponding course, the submission is not their submission, the result is not finished or the assessment due date of
      * the corresponding exercise is in the future (or not set).
      *
      * @param submissionId the id of the submission that should be sent to the client
@@ -164,7 +164,7 @@ public abstract class AssessmentResource {
         // if the user is a tutor and the submission is not used for tutorial in the assessment dashboard
         // The reason is that example submissions with isTutorial = false should be shown immediately (with the assessment) to the tutor and
         // for example submission with isTutorial = true, the assessment should not be shown to the tutor. Instead, the tutor should try to assess it themselves
-        // Therefore we send a result with only the references included, which is needed to tell the tutor which elements he missed to assess
+        // Therefore we send a result with only the references included, which is needed to tell the tutor which elements they missed to assess
         Result result = assessmentService.getExampleAssessment(submissionId);
 
         if (result != null && !(isAtLeastEditor || (isAtLeastTutor && !exampleSubmission.isUsedForTutorial()))) {
