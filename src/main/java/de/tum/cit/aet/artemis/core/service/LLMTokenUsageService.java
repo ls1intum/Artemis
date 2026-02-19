@@ -43,10 +43,11 @@ public class LLMTokenUsageService {
             LLMModelCostConfiguration costConfiguration) {
         this.llmTokenUsageTraceRepository = llmTokenUsageTraceRepository;
         this.llmTokenUsageRequestRepository = llmTokenUsageRequestRepository;
+        validateNoDashlessKeyCollisions(costConfiguration.getModelCosts());
         this.costs = costConfiguration.getModelCosts().entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> new ModelCost(e.getValue().getInputCostPerMillionEur(), e.getValue().getOutputCostPerMillionEur())));
-        this.costsByDashlessKey = costConfiguration.getModelCosts().entrySet().stream().collect(Collectors.toMap(entry -> entry.getKey().replace("-", ""),
-                entry -> new ModelCost(entry.getValue().getInputCostPerMillionEur(), entry.getValue().getOutputCostPerMillionEur()), (existing, replacement) -> existing));
+        this.costsByDashlessKey = costConfiguration.getModelCosts().entrySet().stream().collect(Collectors.toMap(entry -> toDashlessModelKey(entry.getKey()),
+                entry -> new ModelCost(entry.getValue().getInputCostPerMillionEur(), entry.getValue().getOutputCostPerMillionEur())));
     }
 
     /**
@@ -63,6 +64,18 @@ public class LLMTokenUsageService {
         String dashless = normalized.replace("-", "");
         ModelCost cost = costs.getOrDefault(normalized, costsByDashlessKey.getOrDefault(dashless, ModelCost.ZERO));
         return new LLMRequest(model, inputTokens, cost.input(), outputTokens, cost.output(), pipelineId);
+    }
+
+    private static String toDashlessModelKey(String modelName) {
+        return modelName.replace("-", "");
+    }
+
+    private static void validateNoDashlessKeyCollisions(Map<String, LLMModelCostConfiguration.ModelCostProperties> modelCosts) {
+        modelCosts.keySet().stream().collect(Collectors.groupingBy(LLMTokenUsageService::toDashlessModelKey)).entrySet().stream().filter(entry -> entry.getValue().size() > 1)
+                .findFirst().ifPresent(entry -> {
+                    String modelNames = entry.getValue().stream().collect(Collectors.joining(", "));
+                    throw new IllegalStateException("Conflicting model-cost keys after dashless normalization (" + entry.getKey() + "): " + modelNames);
+                });
     }
 
     private record ModelCost(float input, float output) {

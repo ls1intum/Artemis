@@ -1,11 +1,15 @@
 package de.tum.cit.aet.artemis.hyperion.service.codegeneration;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.ResponseEntity;
+import org.springframework.ai.chat.metadata.Usage;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.retry.NonTransientAiException;
 import org.springframework.ai.retry.TransientAiException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,8 +17,11 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.domain.LLMRequest;
+import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
+import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedFileDTO;
@@ -42,11 +49,14 @@ public abstract class HyperionCodeGenerationService {
 
     private final HyperionPromptTemplateService templates;
 
+    private final LLMTokenUsageService llmTokenUsageService;
+
     public HyperionCodeGenerationService(ProgrammingExerciseRepository programmingExerciseRepository, @Autowired(required = false) ChatClient chatClient,
-            HyperionPromptTemplateService templates) {
+            HyperionPromptTemplateService templates, LLMTokenUsageService llmTokenUsageService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.chatClient = chatClient;
         this.templates = templates;
+        this.llmTokenUsageService = llmTokenUsageService;
     }
 
     /**
@@ -61,10 +71,10 @@ public abstract class HyperionCodeGenerationService {
      * @throws NetworkingException if AI service communication fails
      */
     public List<GeneratedFileDTO> generateCode(User user, ProgrammingExercise exercise, String previousBuildLogs, String repositoryStructure) throws NetworkingException {
-        var solutionPlanResponse = generateSolutionPlan(user, exercise, previousBuildLogs, repositoryStructure);
+        CodeGenerationResponseDTO solutionPlanResponse = generateSolutionPlan(user, exercise, previousBuildLogs, repositoryStructure);
         defineFileStructure(user, exercise, solutionPlanResponse.getSolutionPlan(), repositoryStructure);
         generateClassAndMethodHeaders(user, exercise, solutionPlanResponse.getSolutionPlan(), repositoryStructure);
-        var coreLogicResponse = generateCoreLogic(user, exercise, solutionPlanResponse.getSolutionPlan(), repositoryStructure);
+        CodeGenerationResponseDTO coreLogicResponse = generateCoreLogic(user, exercise, solutionPlanResponse.getSolutionPlan(), repositoryStructure);
 
         return coreLogicResponse.getFiles();
     }
@@ -72,16 +82,24 @@ public abstract class HyperionCodeGenerationService {
     /**
      * Handles communication with the AI chat client, including prompt rendering and error handling.
      * Renders template variables into prompts and manages AI service exceptions.
+     * Uses {@link org.springframework.ai.chat.client.ChatClient.CallResponseSpec#responseEntity(Class)}
+     * so parsed entity and raw {@link ChatResponse} are produced from the same terminal operation.
      *
+     * @param user              user initiating the generation request
+     * @param exercise          programming exercise context for token-usage trace attribution
      * @param prompt            the prompt template path to render
      * @param templateVariables variables to substitute in the prompt template
      * @return the AI response containing generated content
      * @throws NetworkingException if AI service communication fails
      */
-    protected CodeGenerationResponseDTO callChatClient(String prompt, Map<String, Object> templateVariables) throws NetworkingException {
+    protected CodeGenerationResponseDTO callChatClient(User user, ProgrammingExercise exercise, String prompt, Map<String, Object> templateVariables) throws NetworkingException {
         String rendered = templates.renderObject(prompt, templateVariables);
         try {
-            var response = chatClient.prompt().user(rendered).call().entity(CodeGenerationResponseDTO.class);
+            ChatClient.CallResponseSpec responseSpec = chatClient.prompt().user(rendered).call();
+            ResponseEntity<ChatResponse, CodeGenerationResponseDTO> responseEntity = responseSpec.responseEntity(CodeGenerationResponseDTO.class);
+            ChatResponse chatResponse = responseEntity.getResponse();
+            CodeGenerationResponseDTO response = responseEntity.getEntity();
+            storeTokenUsage(user, exercise, prompt, chatResponse);
             return response;
         }
         catch (TransientAiException e) {
@@ -90,6 +108,46 @@ public abstract class HyperionCodeGenerationService {
         catch (NonTransientAiException e) {
             throw new NetworkingException("AI request failed due to configuration or input. Check model and request.", e);
         }
+        catch (RuntimeException e) {
+            throw new NetworkingException("AI response processing failed. Please retry.", e);
+        }
+    }
+
+    /**
+     * Persists token usage metadata for a successful generation call.
+     * <p>
+     * Metadata null checks are intentional: providers or proxies can return valid content while omitting
+     * usage metadata, and telemetry absence must not fail an otherwise successful code-generation workflow.
+     *
+     * @param user         user initiating the generation request
+     * @param exercise     programming exercise context for token-usage attribution
+     * @param prompt       prompt template identifier used for pipeline id generation
+     * @param chatResponse raw chat response that may contain usage metadata
+     */
+    private void storeTokenUsage(User user, ProgrammingExercise exercise, String prompt, ChatResponse chatResponse) {
+        if (chatResponse == null || chatResponse.getMetadata() == null || chatResponse.getMetadata().getUsage() == null) {
+            return;
+        }
+
+        try {
+            Usage usage = chatResponse.getMetadata().getUsage();
+            int promptTokens = usage.getPromptTokens() != null ? usage.getPromptTokens() : 0;
+            int completionTokens = usage.getCompletionTokens() != null ? usage.getCompletionTokens() : 0;
+            LLMRequest llmRequest = llmTokenUsageService.buildLLMRequest(chatResponse.getMetadata().getModel(), promptTokens, completionTokens, buildPipelineId(prompt));
+            Long courseId = exercise != null && exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
+            Long exerciseId = exercise != null ? exercise.getId() : null;
+            Long userId = user != null ? user.getId() : null;
+            llmTokenUsageService.saveLLMTokenUsage(List.of(llmRequest), LLMServiceType.HYPERION, builder -> builder.withCourse(courseId).withExercise(exerciseId).withUser(userId));
+        }
+        catch (RuntimeException e) {
+            Long exerciseId = exercise != null ? exercise.getId() : null;
+            log.warn("Failed to store token usage for Hyperion code generation (exerciseId={}, prompt={})", exerciseId, prompt, e);
+        }
+    }
+
+    private String buildPipelineId(String prompt) {
+        String promptId = prompt != null ? prompt.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]+", "_") : "UNKNOWN";
+        return String.join("_", "HYPERION", "CODE", "GENERATION", getRepositoryType().name(), promptId);
     }
 
     /**
