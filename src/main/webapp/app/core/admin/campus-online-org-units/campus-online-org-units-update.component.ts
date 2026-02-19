@@ -1,4 +1,5 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
@@ -18,6 +19,7 @@ export class CampusOnlineOrgUnitsUpdateComponent implements OnInit {
     private readonly route = inject(ActivatedRoute);
     private readonly campusOnlineService = inject(CampusOnlineService);
     private readonly alertService = inject(AlertService);
+    private readonly destroyRef = inject(DestroyRef);
 
     readonly orgUnit = signal<CampusOnlineOrgUnit>({ externalId: '', name: '' });
     readonly isSaving = signal(false);
@@ -27,7 +29,7 @@ export class CampusOnlineOrgUnitsUpdateComponent implements OnInit {
 
     ngOnInit() {
         this.isSaving.set(false);
-        this.route.parent!.data.subscribe(({ orgUnit }) => {
+        this.route.parent?.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(({ orgUnit }) => {
             if (orgUnit?.id) {
                 this.campusOnlineService.getOrgUnit(orgUnit.id).subscribe((data) => {
                     this.orgUnit.set(data);

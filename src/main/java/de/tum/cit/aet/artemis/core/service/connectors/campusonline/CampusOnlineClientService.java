@@ -28,6 +28,17 @@ import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnl
 import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineOrgCoursesResponseDTO;
 import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineStudentListResponseDTO;
 
+/**
+ * HTTP client service for the CAMPUSOnline external API.
+ * <p>
+ * This service handles all outgoing REST calls to the CAMPUSOnline CDM/xCal endpoints,
+ * including XML response deserialization and automatic token-fallback authentication.
+ * Multiple API tokens can be configured; if the first token fails with an authentication
+ * error, the service transparently retries with the next token.
+ * <p>
+ * The XML parser is configured to disable DTD and external entity processing
+ * to prevent XXE attacks.
+ */
 @Service
 @Conditional(CampusOnlineEnabled.class)
 @Profile(PROFILE_CORE)
@@ -36,26 +47,42 @@ public class CampusOnlineClientService {
 
     private static final Logger log = LoggerFactory.getLogger(CampusOnlineClientService.class);
 
+    /**
+     * Thread-safe, reusable XML mapper configured with XXE protections disabled.
+     * Initialized once in the static block and shared across all instances.
+     */
     private static final XmlMapper xmlMapper;
 
     static {
+        // Configure XMLInputFactory with XXE protections to prevent XML External Entity attacks
         XMLInputFactory inputFactory = XMLInputFactory.newFactory();
         inputFactory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
         inputFactory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
         xmlMapper = new XmlMapper(new XmlFactory(inputFactory));
+        // Ignore unknown XML elements to allow forward-compatible deserialization
         xmlMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
     private final RestTemplate restTemplate;
 
-    @Value("${artemis.campus-online.base-url}")
-    private String baseUrl;
+    /** Base URL of the CAMPUSOnline instance (e.g. "https://campus.tum.de/tumonline"). */
+    private final String baseUrl;
 
-    @Value("${artemis.campus-online.tokens}")
-    private List<String> tokens;
+    /** Ordered list of API tokens; tried sequentially until one succeeds. */
+    private final List<String> tokens;
 
-    public CampusOnlineClientService(@Qualifier("campusOnlineRestTemplate") RestTemplate restTemplate) {
+    /**
+     * Constructs the client service with the required dependencies.
+     *
+     * @param restTemplate the dedicated RestTemplate for CAMPUSOnline API calls
+     * @param baseUrl      the base URL of the CAMPUSOnline instance
+     * @param tokens       the list of API tokens for authentication (tried in order)
+     */
+    public CampusOnlineClientService(@Qualifier("campusOnlineRestTemplate") RestTemplate restTemplate, @Value("${artemis.campus-online.base-url}") String baseUrl,
+            @Value("${artemis.campus-online.tokens}") List<String> tokens) {
         this.restTemplate = restTemplate;
+        this.baseUrl = baseUrl;
+        this.tokens = tokens;
     }
 
     /**
@@ -96,14 +123,34 @@ public class CampusOnlineClientService {
         return parseXml(xml, CampusOnlineOrgCoursesResponseDTO.class);
     }
 
+    /**
+     * Builds a complete URL by appending the given path to the base URL and adding query parameters.
+     *
+     * @param path        the API endpoint path (e.g. "/cdm/course/students/xml")
+     * @param queryParams alternating key-value pairs for query parameters
+     * @return the fully constructed URL string
+     */
     private String buildUrl(String path, String... queryParams) {
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(baseUrl + path);
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(baseUrl + path);
+        // Query params are provided as alternating key-value pairs
         for (int i = 0; i < queryParams.length - 1; i += 2) {
             builder.queryParam(queryParams[i], queryParams[i + 1]);
         }
         return builder.build().toUriString();
     }
 
+    /**
+     * Executes an HTTP GET request with automatic token-fallback authentication.
+     * <p>
+     * Tries each configured API token in order. If a token results in a 401/403 error,
+     * the next token is attempted. Non-authentication errors are propagated immediately.
+     * If a token returns a {@code null} response (e.g. HTTP 204), it is treated as
+     * an authentication/authorization issue and the next token is tried.
+     *
+     * @param urlWithoutToken the complete URL without the token query parameter
+     * @return the raw XML response body
+     * @throws CampusOnlineApiException if all tokens fail or an unexpected error occurs
+     */
     private String fetchWithTokenFallback(String urlWithoutToken) {
         if (tokens == null || tokens.isEmpty()) {
             throw new CampusOnlineApiException("No CAMPUSOnline API tokens configured");
@@ -112,22 +159,28 @@ public class CampusOnlineClientService {
         RestClientException lastException = null;
         for (String token : tokens) {
             try {
+                // Append the token as a query parameter for authentication
                 String url = UriComponentsBuilder.fromUriString(urlWithoutToken).queryParam("token", token).build().toUriString();
                 String response = restTemplate.getForObject(url, String.class);
                 if (response != null) {
                     return response;
                 }
+                // Null response (e.g. HTTP 204) — treat as token issue and try next
+                log.warn("CAMPUSOnline API returned null response, trying next token");
             }
             catch (HttpClientErrorException e) {
                 if (e.getStatusCode().value() == 401 || e.getStatusCode().value() == 403) {
+                    // Authentication/authorization failure — try next token
                     log.warn("CAMPUSOnline API call failed with authentication error ({}), trying next token", e.getStatusCode());
                     lastException = e;
                 }
                 else {
+                    // Non-auth HTTP error — propagate immediately
                     throw new CampusOnlineApiException("CAMPUSOnline API returned error: " + e.getStatusCode(), e);
                 }
             }
             catch (RestClientException e) {
+                // Network or other REST client error — try next token
                 log.warn("CAMPUSOnline API call failed, trying next token: {}", e.getClass().getSimpleName());
                 lastException = e;
             }
@@ -135,6 +188,15 @@ public class CampusOnlineClientService {
         throw new CampusOnlineApiException("All CAMPUSOnline API tokens failed", lastException);
     }
 
+    /**
+     * Deserializes an XML string into the specified DTO type using the configured {@link XmlMapper}.
+     *
+     * @param xml   the raw XML response string
+     * @param clazz the target class to deserialize into
+     * @param <T>   the DTO type
+     * @return the deserialized DTO instance
+     * @throws CampusOnlineApiException if XML parsing fails
+     */
     private <T> T parseXml(String xml, Class<T> clazz) {
         try {
             return xmlMapper.readValue(xml, clazz);

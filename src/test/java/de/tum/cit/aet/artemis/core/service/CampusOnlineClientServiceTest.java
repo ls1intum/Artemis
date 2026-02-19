@@ -9,12 +9,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
@@ -35,12 +35,13 @@ class CampusOnlineClientServiceTest {
 
     private CampusOnlineClientService client;
 
+    private List<String> tokens;
+
     @BeforeEach
     void setUp() {
         restTemplate = mock(RestTemplate.class);
-        client = new CampusOnlineClientService(restTemplate);
-        ReflectionTestUtils.setField(client, "baseUrl", "https://campus.example.com");
-        ReflectionTestUtils.setField(client, "tokens", List.of("token1", "token2"));
+        tokens = new ArrayList<>(List.of("token1", "token2"));
+        client = new CampusOnlineClientService(restTemplate, "https://campus.example.com", tokens);
     }
 
     // ==================== Token fallback scenarios ====================
@@ -111,14 +112,14 @@ class CampusOnlineClientServiceTest {
 
     @Test
     void fetchStudents_shouldThrow_whenNoTokensConfigured() {
-        ReflectionTestUtils.setField(client, "tokens", List.of());
+        client = new CampusOnlineClientService(restTemplate, "https://campus.example.com", List.of());
 
         assertThatThrownBy(() -> client.fetchStudents("CO-101")).isInstanceOf(CampusOnlineApiException.class).hasMessageContaining("No CAMPUSOnline API tokens configured");
     }
 
     @Test
     void fetchStudents_shouldThrow_whenTokensNull() {
-        ReflectionTestUtils.setField(client, "tokens", null);
+        client = new CampusOnlineClientService(restTemplate, "https://campus.example.com", null);
 
         assertThatThrownBy(() -> client.fetchStudents("CO-101")).isInstanceOf(CampusOnlineApiException.class).hasMessageContaining("No CAMPUSOnline API tokens configured");
     }

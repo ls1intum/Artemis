@@ -2,7 +2,7 @@
     <h5 *adminTitleBarTitle id="campus-online-org-units-heading" class="mb-0" jhiTranslate="artemisApp.campusOnlineOrgUnits.title"></h5>
     <div *adminTitleBarActions>
         <input #fileInput type="file" accept=".csv" (change)="onCSVFileSelected($event)" class="d-none" />
-        <button class="btn btn-outline-primary btn-sm me-2" (click)="fileInput.click()" [disabled]="isImporting()">
+        <button type="button" class="btn btn-outline-primary btn-sm me-2" (click)="fileInput.click()" [disabled]="isImporting()">
             @if (isImporting()) {
                 <fa-icon [icon]="faSpinner" animation="spin" />
             } @else {
@@ -10,7 +10,7 @@
             }
             <span jhiTranslate="artemisApp.campusOnlineOrgUnits.importCsv"></span>
         </button>
-        <button class="btn btn-primary btn-sm jh-create-entity" [routerLink]="['./new']">
+        <button type="button" class="btn btn-primary btn-sm jh-create-entity" [routerLink]="['./new']">
             <fa-icon [icon]="faPlus" /> <span jhiTranslate="artemisApp.campusOnlineOrgUnits.addLabel"></span>
         </button>
     </div>
@@ -31,7 +31,7 @@
                 <td>{{ orgUnit.name }}</td>
                 <td class="text-end">
                     <div class="btn-group flex-btn-group-container">
-                        <button type="submit" [routerLink]="['./', orgUnit.id, 'edit']" queryParamsHandling="merge" class="btn btn-warning btn-sm">
+                        <button type="button" [routerLink]="['./', orgUnit.id, 'edit']" queryParamsHandling="merge" class="btn btn-warning btn-sm">
                             <fa-icon [icon]="faWrench" />
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
                         </button>

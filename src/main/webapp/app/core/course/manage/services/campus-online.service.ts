@@ -55,7 +55,7 @@ export class CampusOnlineService {
         return this.http.post<CampusOnlineOrgUnit>(`${this.resourceUrl}/org-units`, orgUnit, { observe: 'response' });
     }
 
-    updateOrgUnit(orgUnit: CampusOnlineOrgUnit): Observable<HttpResponse<CampusOnlineOrgUnit>> {
+    updateOrgUnit(orgUnit: CampusOnlineOrgUnit & { id: number }): Observable<HttpResponse<CampusOnlineOrgUnit>> {
         return this.http.put<CampusOnlineOrgUnit>(`${this.resourceUrl}/org-units/${orgUnit.id}`, orgUnit, { observe: 'response' });
     }
 

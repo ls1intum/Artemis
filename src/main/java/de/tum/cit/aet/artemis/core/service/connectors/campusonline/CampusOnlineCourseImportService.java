@@ -30,6 +30,18 @@ import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnl
 import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineOrgCourseDTO;
 import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineOrgCoursesResponseDTO;
 
+/**
+ * Service for importing courses from CAMPUSOnline into Artemis and managing the link between
+ * CAMPUSOnline courses and Artemis courses.
+ * <p>
+ * Provides functionality for:
+ * <ul>
+ * <li>Searching courses in a CAMPUSOnline organizational unit</li>
+ * <li>Importing a CAMPUSOnline course as a new Artemis course</li>
+ * <li>Linking/unlinking an existing Artemis course to a CAMPUSOnline course</li>
+ * <li>Searching courses by name (typeahead)</li>
+ * </ul>
+ */
 @Lazy
 @Service
 @Conditional(CampusOnlineEnabled.class)
@@ -44,6 +56,12 @@ public class CampusOnlineCourseImportService {
 
     private final CourseRepository courseRepository;
 
+    /**
+     * Constructs the course import service with the required dependencies.
+     *
+     * @param campusOnlineClient the client service for CAMPUSOnline API calls
+     * @param courseRepository   the repository for Artemis course persistence
+     */
     public CampusOnlineCourseImportService(CampusOnlineClientService campusOnlineClient, CourseRepository courseRepository) {
         this.campusOnlineClient = campusOnlineClient;
         this.courseRepository = courseRepository;
@@ -93,7 +111,8 @@ public class CampusOnlineCourseImportService {
         course.setMaxComplaintResponseTextLimit(2000);
         course.setAccuracyOfScores(1);
 
-        String groupPrefix = ARTEMIS_GROUP_DEFAULT_PREFIX + request.shortName().toLowerCase();
+        // Build user group names from the short name, using Locale.ROOT to avoid locale-sensitive behavior
+        String groupPrefix = ARTEMIS_GROUP_DEFAULT_PREFIX + request.shortName().toLowerCase(Locale.ROOT);
         course.setStudentGroupName(groupPrefix + "-students");
         course.setTeachingAssistantGroupName(groupPrefix + "-tutors");
         course.setEditorGroupName(groupPrefix + "-editors");
@@ -120,6 +139,10 @@ public class CampusOnlineCourseImportService {
      * @return list of matching courses with metadata
      */
     public List<CampusOnlineCourseDTO> searchCoursesByName(String query, String orgUnitId, String semester) {
+        if (query == null || query.isBlank()) {
+            log.warn("Cannot search CAMPUSOnline courses: search query is empty");
+            return Collections.emptyList();
+        }
         if (orgUnitId == null || orgUnitId.isBlank()) {
             log.warn("Cannot search CAMPUSOnline courses: org unit ID not provided");
             return Collections.emptyList();
@@ -186,20 +209,41 @@ public class CampusOnlineCourseImportService {
         courseRepository.save(course);
     }
 
+    /**
+     * Validates that a CAMPUSOnline course ID is not already linked to any Artemis course.
+     *
+     * @param campusOnlineCourseId the CAMPUSOnline course ID to check
+     * @throws BadRequestAlertException if the course ID is already linked
+     */
     private void checkDuplicateLink(String campusOnlineCourseId) {
         if (courseRepository.existsByCampusOnlineCourseId(campusOnlineCourseId)) {
             throw new BadRequestAlertException("This CAMPUSOnline course is already linked to an Artemis course", ENTITY_NAME, "alreadyLinked");
         }
     }
 
+    /**
+     * Retrieves the set of CAMPUSOnline course IDs that are already imported into Artemis.
+     * Used to mark courses as "already imported" in the search results.
+     *
+     * @return set of CAMPUSOnline course IDs that have a corresponding Artemis course
+     */
     private Set<String> getAlreadyImportedCourseIds() {
         return courseRepository.findAllWithCampusOnlineConfiguration().stream().map(c -> c.getCampusOnlineConfiguration().getCampusOnlineCourseId()).collect(Collectors.toSet());
     }
 
+    /**
+     * Converts a semester string (e.g. "2025W" or "2025S") to the start date of that semester.
+     * Winter semesters start on October 1st, summer semesters on April 1st.
+     * Falls back to one year ago if the semester format is invalid.
+     *
+     * @param semester the semester identifier (format: YYYYW or YYYYS)
+     * @return the start date as a string in YYYY-MM-DD format
+     */
     private String semesterToFromDate(String semester) {
-        // semester format: "2025W" (winter) or "2025S" (summer)
         try {
             String year = semester.substring(0, 4);
+            // Validate that the year portion is actually numeric
+            Integer.parseInt(year);
             if (semester.endsWith("W")) {
                 return year + "-10-01";
             }
@@ -210,12 +254,22 @@ public class CampusOnlineCourseImportService {
         }
     }
 
+    /**
+     * Converts a semester string (e.g. "2025W" or "2025S") to the end date of that semester.
+     * Winter semesters end on March 31st of the following year, summer semesters on September 30th.
+     * Falls back to one year from now if the semester format is invalid.
+     *
+     * @param semester the semester identifier (format: YYYYW or YYYYS)
+     * @return the end date as a string in YYYY-MM-DD format
+     */
     private String semesterToUntilDate(String semester) {
         try {
             String year = semester.substring(0, 4);
             if (semester.endsWith("W")) {
                 return (Integer.parseInt(year) + 1) + "-03-31";
             }
+            // For summer semester, validate that year is numeric
+            Integer.parseInt(year);
             return year + "-09-30";
         }
         catch (StringIndexOutOfBoundsException | NumberFormatException e) {
@@ -223,6 +277,13 @@ public class CampusOnlineCourseImportService {
         }
     }
 
+    /**
+     * Maps a CAMPUSOnline organization course DTO to the internal course DTO used by the REST API.
+     *
+     * @param orgCourse       the CAMPUSOnline course data from the organization endpoint
+     * @param alreadyImported whether this course is already linked to an Artemis course
+     * @return the mapped course DTO
+     */
     private CampusOnlineCourseDTO mapToDTO(CampusOnlineOrgCourseDTO orgCourse, boolean alreadyImported) {
         return new CampusOnlineCourseDTO(orgCourse.courseId(), orgCourse.courseName(), orgCourse.teachingTerm(), null, null, null, null, alreadyImported);
     }

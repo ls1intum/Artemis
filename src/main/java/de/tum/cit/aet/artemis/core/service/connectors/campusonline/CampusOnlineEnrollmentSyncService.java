@@ -23,6 +23,21 @@ import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnl
 import de.tum.cit.aet.artemis.core.service.connectors.campusonline.dto.CampusOnlineStudentListResponseDTO;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
 
+/**
+ * Service for synchronizing student enrollments from CAMPUSOnline into Artemis courses.
+ * <p>
+ * This service periodically fetches the student list from the CAMPUSOnline API for each
+ * course that has a {@link de.tum.cit.aet.artemis.core.domain.CampusOnlineConfiguration}
+ * and adds confirmed students to the corresponding Artemis course student group.
+ * <p>
+ * The sync can run:
+ * <ul>
+ * <li>Automatically via a scheduled cron job (default: every 6 hours)</li>
+ * <li>Manually for all courses via the admin API</li>
+ * <li>Manually for a single course via the admin API</li>
+ * </ul>
+ * Only students with a confirmed attendance status ("J") in CAMPUSOnline are synced.
+ */
 @Service
 @Conditional(CampusOnlineEnabled.class)
 @Lazy
@@ -39,6 +54,14 @@ public class CampusOnlineEnrollmentSyncService {
 
     private final ProfileService profileService;
 
+    /**
+     * Constructs the enrollment sync service with the required dependencies.
+     *
+     * @param campusOnlineClient the client service for CAMPUSOnline API calls
+     * @param courseRepository   the repository for Artemis course persistence
+     * @param userService        the user service for finding and enrolling users
+     * @param profileService     the profile service for checking scheduling and dev mode
+     */
     public CampusOnlineEnrollmentSyncService(CampusOnlineClientService campusOnlineClient, CourseRepository courseRepository, UserService userService,
             ProfileService profileService) {
         this.campusOnlineClient = campusOnlineClient;
@@ -109,11 +132,23 @@ public class CampusOnlineEnrollmentSyncService {
         return new CampusOnlineSyncResultDTO(1, 0, counts.usersAdded, counts.usersNotFound);
     }
 
+    /**
+     * Syncs enrollment for a single course by fetching the student list from CAMPUSOnline
+     * and adding confirmed students to the course's student group in Artemis.
+     * <p>
+     * Only students with attendance status "J" (confirmed/Ja) are considered.
+     * Students are matched by registration number or email address.
+     *
+     * @param course the Artemis course with an associated CAMPUSOnline configuration
+     * @return the sync counts (users added, users not found)
+     */
     SyncCounts syncCourseEnrollment(Course course) {
         String campusOnlineCourseId = course.getCampusOnlineConfiguration().getCampusOnlineCourseId();
         log.info("Syncing enrollment for course '{}' (CAMPUSOnline ID: {})", course.getTitle(), campusOnlineCourseId);
 
         CampusOnlineStudentListResponseDTO response = campusOnlineClient.fetchStudents(campusOnlineCourseId);
+
+        // Filter for students with confirmed attendance ("J" = Ja/Yes in German)
         List<CampusOnlinePersonDTO> confirmedStudents = response.persons() != null
                 ? response.persons().stream().filter(p -> p.attendance() != null && "J".equals(p.attendance().confirmed())).toList()
                 : List.of();
@@ -122,9 +157,11 @@ public class CampusOnlineEnrollmentSyncService {
         int usersNotFound = 0;
 
         for (CampusOnlinePersonDTO person : confirmedStudents) {
+            // Extract registration number and email from nested DTOs (may be null if not provided by API)
             String registrationNumber = person.extension() != null ? person.extension().registrationNumber() : null;
             String email = person.contactData() != null ? person.contactData().email() : null;
 
+            // Try to find the user in Artemis by registration number or email and add to course group
             var optionalUser = userService.findUserAndAddToCourse(registrationNumber, null, email, course.getStudentGroupName());
             if (optionalUser.isPresent()) {
                 usersAdded++;
@@ -139,6 +176,12 @@ public class CampusOnlineEnrollmentSyncService {
         return new SyncCounts(usersAdded, usersNotFound);
     }
 
+    /**
+     * Internal record to hold the sync result counts for a single course synchronization.
+     *
+     * @param usersAdded    the number of users successfully added to the course group
+     * @param usersNotFound the number of confirmed students that could not be matched to Artemis users
+     */
     private record SyncCounts(int usersAdded, int usersNotFound) {
     }
 }

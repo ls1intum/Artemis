@@ -135,6 +135,7 @@ All endpoints require the `ADMIN` role.
 | `POST` | `/api/core/admin/campus-online/org-units` | Create a new organizational unit |
 | `PUT` | `/api/core/admin/campus-online/org-units/{orgUnitId}` | Update an organizational unit |
 | `DELETE` | `/api/core/admin/campus-online/org-units/{orgUnitId}` | Delete an organizational unit |
+| `POST` | `/api/core/admin/campus-online/org-units/import` | Bulk-import organizational units from CSV |
 | `GET` | `/api/core/admin/campus-online/courses?orgUnitId={id}&from={date}&until={date}` | Search courses by organizational unit and date range |
 | `GET` | `/api/core/admin/campus-online/courses/search?query={name}&orgUnitId={id}&semester={sem}` | Search courses by name (typeahead) |
 | `PUT` | `/api/core/admin/campus-online/courses/{courseId}/link` | Link an Artemis course to a CAMPUSOnline course |

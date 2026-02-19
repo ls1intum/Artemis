@@ -9,6 +9,10 @@ import org.springframework.stereotype.Repository;
 import de.tum.cit.aet.artemis.core.domain.CampusOnlineConfiguration;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
+/**
+ * Spring Data JPA repository for {@link CampusOnlineConfiguration} entities.
+ * Provides basic CRUD operations for the CAMPUSOnline configuration linked to Artemis courses.
+ */
 @Profile(PROFILE_CORE)
 @Lazy
 @Repository

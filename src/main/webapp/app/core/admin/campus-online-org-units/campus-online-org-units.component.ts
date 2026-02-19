@@ -13,7 +13,9 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { TableModule } from 'primeng/table';
 import { CampusOnlineOrgUnit, CampusOnlineOrgUnitImportDTO, CampusOnlineService } from 'app/core/course/manage/services/campus-online.service';
 
-const POSSIBLE_EXTERNAL_ID_HEADERS = ['externalid', 'external_id', 'id', 'porgnr', 'orgnr', 'number', 'nummer'];
+// 'external_id' is not needed because transformHeader strips underscores, so 'external_id' becomes 'externalid'.
+// 'id' is placed last to avoid false matches with generic ID columns.
+const POSSIBLE_EXTERNAL_ID_HEADERS = ['externalid', 'porgnr', 'orgnr', 'number', 'nummer', 'id'];
 const POSSIBLE_NAME_HEADERS = ['name', 'title', 'bezeichnung', 'label', 'orgunit', 'organizationalunit'];
 
 @Component({
@@ -40,8 +42,13 @@ export class CampusOnlineOrgUnitsComponent implements OnInit {
     protected readonly faSpinner = faSpinner;
 
     ngOnInit(): void {
-        this.campusOnlineService.getOrgUnits().subscribe((orgUnits) => {
-            this.orgUnits.set(orgUnits);
+        this.campusOnlineService.getOrgUnits().subscribe({
+            next: (orgUnits) => {
+                this.orgUnits.set(orgUnits);
+            },
+            error: (error: HttpErrorResponse) => {
+                this.alertService.error(error.error?.message ?? error.message);
+            },
         });
     }
 
@@ -71,6 +78,10 @@ export class CampusOnlineOrgUnitsComponent implements OnInit {
             this.parseAndImport(reader.result as string);
             // Reset file input so the same file can be re-selected
             input.value = '';
+        };
+        reader.onerror = () => {
+            this.isImporting.set(false);
+            this.alertService.error('artemisApp.campusOnlineOrgUnits.importParseFailed', { message: 'Failed to read file' });
         };
         reader.readAsText(file);
     }

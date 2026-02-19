@@ -41,6 +41,18 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.connectors.campusonline.CampusOnlineCourseImportService;
 import de.tum.cit.aet.artemis.core.service.connectors.campusonline.CampusOnlineEnrollmentSyncService;
 
+/**
+ * REST controller for CAMPUSOnline administration endpoints.
+ * <p>
+ * Provides admin-only endpoints for:
+ * <ul>
+ * <li>CRUD operations on organizational units (faculties/departments)</li>
+ * <li>Bulk CSV import of organizational units</li>
+ * <li>Searching, importing, linking, and unlinking CAMPUSOnline courses</li>
+ * <li>Triggering enrollment synchronization (all courses or a single course)</li>
+ * </ul>
+ * All endpoints require the ADMIN role and are only available when the CAMPUSOnline module is enabled.
+ */
 @Profile(PROFILE_CORE)
 @EnforceAdmin
 @Conditional(CampusOnlineEnabled.class)
@@ -49,8 +61,10 @@ import de.tum.cit.aet.artemis.core.service.connectors.campusonline.CampusOnlineE
 @RequestMapping("api/core/admin/campus-online/")
 public class AdminCampusOnlineResource {
 
+    /** Minimum length for course name search queries to prevent overly broad API calls. */
     private static final int MIN_SEARCH_QUERY_LENGTH = 3;
 
+    /** Maximum number of org units that can be imported in a single bulk request. */
     private static final int MAX_IMPORT_SIZE = 10_000;
 
     private final CampusOnlineCourseImportService courseImportService;
@@ -59,6 +73,13 @@ public class AdminCampusOnlineResource {
 
     private final CampusOnlineOrgUnitRepository orgUnitRepository;
 
+    /**
+     * Constructs the admin resource with the required dependencies.
+     *
+     * @param courseImportService   the service for searching and importing CAMPUSOnline courses
+     * @param enrollmentSyncService the service for syncing student enrollments
+     * @param orgUnitRepository     the repository for managing organizational units
+     */
     public AdminCampusOnlineResource(CampusOnlineCourseImportService courseImportService, CampusOnlineEnrollmentSyncService enrollmentSyncService,
             CampusOnlineOrgUnitRepository orgUnitRepository) {
         this.courseImportService = courseImportService;
@@ -280,12 +301,25 @@ public class AdminCampusOnlineResource {
         return ResponseEntity.ok(result);
     }
 
+    /**
+     * Validates that the org unit ID is a non-blank numeric string.
+     *
+     * @param orgUnitId the org unit ID to validate
+     * @throws BadRequestAlertException if the ID is null, blank, or non-numeric
+     */
     private void validateOrgUnitId(String orgUnitId) {
         if (orgUnitId == null || orgUnitId.isBlank() || !orgUnitId.matches("\\d+")) {
             throw new BadRequestAlertException("orgUnitId must be a numeric value", "campusOnline", "invalidOrgUnitId");
         }
     }
 
+    /**
+     * Validates that a date parameter is in the ISO-8601 format (YYYY-MM-DD).
+     *
+     * @param date      the date string to validate
+     * @param paramName the parameter name for error messages
+     * @throws BadRequestAlertException if the date is null or not parseable
+     */
     private void validateDateParam(String date, String paramName) {
         if (date == null) {
             throw new BadRequestAlertException("Date parameter '" + paramName + "' is required", "campusOnline", "invalidDateFormat");
