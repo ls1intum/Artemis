@@ -1,16 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
 import { ServerAdministrationComponent } from './server-administration.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { By } from '@angular/platform-browser';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideHttpClient } from '@angular/common/http';
-import { Component } from '@angular/core';
 import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
-
-@Component({ template: '' })
-class MockEmptyComponent {}
+import { MockComponent, MockDirective } from 'ng-mocks';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 
 describe('ServerAdministrationComponent', () => {
     let component: ServerAdministrationComponent;
@@ -18,17 +14,28 @@ describe('ServerAdministrationComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ServerAdministrationComponent, TranslateModule.forRoot()],
-            providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([{ path: '**', component: MockEmptyComponent }])],
+            imports: [ServerAdministrationComponent],
         })
             .overrideComponent(ServerAdministrationComponent, {
-                remove: { imports: [HasAnyAuthorityDirective] },
-                add: { imports: [MockHasAnyAuthorityDirective] },
+                remove: { imports: [HasAnyAuthorityDirective, TranslateDirective, FaIconComponent, RouterLink, RouterLinkActive] },
+                add: {
+                    imports: [
+                        MockHasAnyAuthorityDirective,
+                        MockDirective(TranslateDirective),
+                        MockComponent(FaIconComponent),
+                        MockDirective(RouterLink),
+                        MockDirective(RouterLinkActive),
+                    ],
+                },
             })
             .compileComponents();
 
         fixture = TestBed.createComponent(ServerAdministrationComponent);
         component = fixture.componentInstance;
+    });
+
+    afterEach(() => {
+        fixture.destroy();
     });
 
     it('should create', () => {
