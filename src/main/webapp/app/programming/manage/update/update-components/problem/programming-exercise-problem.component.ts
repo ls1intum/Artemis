@@ -166,4 +166,13 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
             this.programmingExerciseChange.emit(exercise);
         }
     }
+
+    onInstructionChange(problemStatement: string) {
+        const exercise = this.programmingExercise();
+        if (exercise) {
+            exercise.problemStatement = problemStatement;
+            this.programmingExerciseChange.emit(exercise);
+            this.problemStatementChange.emit(problemStatement);
+        }
+    }
 }

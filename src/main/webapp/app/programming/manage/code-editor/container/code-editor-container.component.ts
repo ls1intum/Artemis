@@ -84,6 +84,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     isProblemStatementVisible = input<boolean>(true);
     course = input<Course | undefined>();
     selectedRepository = input<RepositoryType>();
+    enableExerciseReviewComments = input<boolean>(false);
+    selectedAuxiliaryRepositoryId = input<number | undefined>();
 
     onCommitStateChange = output<CommitState>();
     onFileChanged = output<void>();
@@ -92,6 +94,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     onAcceptSuggestion = output<Feedback>();
     onDiscardSuggestion = output<Feedback>();
     onEditorLoaded = output<void>();
+    onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
+    onCommit = output<void>();
 
     /** Work in Progress: temporary properties needed to get first prototype working */
 
@@ -324,7 +328,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
      * Returns the feedbacks for the current submission or an empty array if no feedbacks are available.
      */
     feedbackForSubmission(): Feedback[] {
-        const submission = this.participation().submissions?.[0];
+        const submission = this.participation()?.submissions?.[0];
         const result = submission?.results?.[0];
         return this.showInlineFeedback() && result?.feedbacks ? result.feedbacks : [];
     }

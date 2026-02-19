@@ -116,6 +116,10 @@ artemis:
         enabled: true
         url: http://localhost:8080  # dummy URL for tests
         secret-token: test-secret         # dummy secret for tests
+
+    weaviate:
+      enabled: false
+
     tum-live:
         api-base-url: https://mocke.tum.live/api/v2
 
@@ -316,7 +320,7 @@ jhipster:
             port: 5000
             ring-buffer-size: 512
     mail: # specific JHipster mail property, for standard properties see MailProperties
-        from: Artemis@localhost
+        from: test@localhost
         base-url: http://127.0.0.1:8080
     security:
         authentication:
