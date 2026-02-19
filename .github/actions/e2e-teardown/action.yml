@@ -38,7 +38,7 @@ runs:
         XML_FILE="src/test/playwright/test-reports/results.xml"
         if [ -f "$XML_FILE" ]; then
           echo "Converting <error> elements to <failure> in $XML_FILE"
-          sed -i.bak -e 's/<error\b/<failure/g' -e 's|</error>|</failure>|g' "$XML_FILE"
+          sed -i.bak -e 's/<error\([ >]\)/<failure\1/g' -e 's|</error>|</failure>|g' "$XML_FILE"
           # Merge errors count into failures count in testsuite attributes
           perl -i -pe '
             if (/<testsuite\b/) {
