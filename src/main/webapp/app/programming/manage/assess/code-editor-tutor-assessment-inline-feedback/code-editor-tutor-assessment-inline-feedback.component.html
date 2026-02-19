@@ -117,7 +117,7 @@
                 </div>
                 @if (!readOnly) {
                     <div class="col d-flex flex-grow-0 justify-content-end align-items-start pe-0">
-                        <button id="feedback-edit" type="submit" (click)="editFeedback(codeLine)" class="btn btn-primary btn-sm">
+                        <button type="submit" (click)="editFeedback(codeLine)" class="btn btn-primary btn-sm">
                             <fa-icon [icon]="faPencilAlt" />
                             <span jhiTranslate="entity.action.edit"></span>
                         </button>

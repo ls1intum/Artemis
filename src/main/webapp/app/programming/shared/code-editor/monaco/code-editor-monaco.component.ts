@@ -325,9 +325,12 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     addNewFeedback(lineNumber: number): void {
         // TODO for a follow-up: in the future, there might be multiple feedback items on the same line.
         const lineNumberZeroBased = lineNumber - 1;
-        const editButton = this.getInlineFeedbackNode(lineNumberZeroBased)?.querySelector<HTMLButtonElement>('#feedback-edit');
-        if (editButton) {
-            editButton.click();
+        const existingComponent = this.inlineFeedbackComponents().find((comp) => comp.codeLine === lineNumberZeroBased);
+        if (existingComponent) {
+            this.ngZone.run(() => {
+                existingComponent.editFeedback(lineNumberZeroBased);
+                this.changeDetectorRef.markForCheck();
+            });
         } else {
             this.newFeedbackLines.set([...this.newFeedbackLines(), lineNumberZeroBased]);
             this.renderFeedbackWidgets(lineNumberZeroBased);
