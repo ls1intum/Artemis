@@ -148,8 +148,7 @@ describe('ProblemStatementService', () => {
             const loadingSignal = signal(false);
             let result: any;
             service.refineGlobally(exerciseWithCourse, '', 'prompt', loadingSignal).subscribe((r) => (result = r));
-            tick();
-            expect(result).toEqual({ success: false });
+            expect(result).toEqual({ success: false, errorHandled: true });
             expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.refinementError');
         }));
 
@@ -157,17 +156,15 @@ describe('ProblemStatementService', () => {
             const loadingSignal = signal(false);
             let result: any;
             service.refineGlobally(exerciseWithCourse, 'content', '', loadingSignal).subscribe((r) => (result = r));
-            tick();
-            expect(result).toEqual({ success: false });
-        }));
+            expect(result).toEqual({ success: false, errorHandled: false });
+        });
 
         it('should return failure when exercise has no course', fakeAsync(() => {
             const loadingSignal = signal(false);
             let result: any;
             service.refineGlobally({} as ProgrammingExercise, 'content', 'prompt', loadingSignal).subscribe((r) => (result = r));
-            tick();
-            expect(result).toEqual({ success: false });
-        }));
+            expect(result).toEqual({ success: false, errorHandled: false });
+        });
 
         it('should refine globally successfully', fakeAsync(() => {
             hyperionApiMock.refineProblemStatementGlobally.mockReturnValue(of({ refinedProblemStatement: 'Refined!' }) as any);
