@@ -394,7 +394,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         mockChatSuccess("Refined targeted problem statement.");
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         courseRepository.findById(courseId).orElseThrow();
-        String body = buildTargetedRefinementBody("Line one\\nLine two\\nLine three", 1, 2, null, null, "Improve clarity");
+        String body = buildTargetedRefinementBody("Line one\nLine two\nLine three", 1, 2, null, null, "Improve clarity");
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/refine/targeted", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.refinedProblemStatement").isString());
     }
@@ -406,7 +406,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         mockChatSuccess("Refined targeted problem statement.");
         userUtilService.changeUser(TEST_PREFIX + "editor1");
         courseRepository.findById(courseId).orElseThrow();
-        String body = buildTargetedRefinementBody("Line one\\nLine two\\nLine three", 1, 2, null, null, "Improve clarity");
+        String body = buildTargetedRefinementBody("Line one\nLine two\nLine three", 1, 2, null, null, "Improve clarity");
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/refine/targeted", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.refinedProblemStatement").isString());
     }
@@ -498,7 +498,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         mockChatFailure();
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         courseRepository.findById(courseId).orElseThrow();
-        String body = buildTargetedRefinementBody("Line one\\nLine two\\nLine three", 1, 2, null, null, "Improve clarity");
+        String body = buildTargetedRefinementBody("Line one\nLine two\nLine three", 1, 2, null, null, "Improve clarity");
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/refine/targeted", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isInternalServerError()).andExpect(jsonPath("$.title").value("Failed to refine problem statement"))
                 .andExpect(jsonPath("$.message").value("error.ProblemStatementRefinement.problemStatementRefinementFailed"))

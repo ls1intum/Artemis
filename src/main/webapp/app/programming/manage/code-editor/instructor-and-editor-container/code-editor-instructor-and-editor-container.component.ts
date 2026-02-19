@@ -567,7 +567,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 },
                 error: () => {
                     this.alertService.error('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
-                    this.currentAiOperationSubscription = undefined;
                 },
             });
     }

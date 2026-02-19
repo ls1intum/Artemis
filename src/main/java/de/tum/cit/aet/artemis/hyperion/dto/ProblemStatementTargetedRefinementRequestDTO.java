@@ -31,13 +31,11 @@ public record ProblemStatementTargetedRefinementRequestDTO(
         @NotBlank @Size(max = 500) @Schema(description = "Instruction describing what should change") String instruction) {
 
     /**
-     * Validates that startLine <= endLine and startColumn < endColumn when on the same line.
+     * Validates cross-field constraints and trims instruction before the implicit field assignment.
      * <p>
-     * Note: the compact constructor trims {@code instruction} before the implicit field assignment,
-     * so the stored value may differ from what the caller passed in. This is intentional — we
-     * normalise whitespace early to simplify downstream consumers. Bean Validation ({@code @NotBlank})
-     * rejects blank values on the HTTP path, but the manual check here is needed for programmatic
-     * construction (e.g. in tests).
+     * These checks run during Jackson deserialization (before {@code @Valid}), which is intentional:
+     * Spring's exception handler catches {@link BadRequestAlertException} regardless of where it is thrown,
+     * and these cross-field rules cannot be expressed as single-field Bean Validation annotations.
      */
     public ProblemStatementTargetedRefinementRequestDTO {
         if (startLine != null && endLine != null && startLine > endLine) {
@@ -52,12 +50,8 @@ public record ProblemStatementTargetedRefinementRequestDTO(
                     "ProblemStatementRefinement.invalidColumnRange");
         }
         // Trim instruction early so downstream code always sees normalised whitespace.
-        // The reassignment in a compact constructor mutates the parameter before the implicit field assignment.
         if (instruction != null) {
             instruction = instruction.trim();
-            if (instruction.isEmpty()) {
-                throw new BadRequestAlertException("instruction must not be empty after trimming", "ProblemStatement", "ProblemStatementRefinement.instructionEmpty");
-            }
         }
     }
 

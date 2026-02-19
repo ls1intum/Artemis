@@ -134,7 +134,7 @@ public class HyperionProblemStatementRefinementService {
                     "ProblemStatementRefinement.problemStatementRefinementNull");
         }
 
-        return validateAndReturnResponse(sanitizedProblemStatement, refinedProblemStatementText.trim());
+        return validateAndReturnResponse(sanitizedProblemStatement, refinedProblemStatementText);
     }
 
     /**
@@ -203,7 +203,7 @@ public class HyperionProblemStatementRefinementService {
                     "ProblemStatementRefinement.problemStatementRefinementNull");
         }
 
-        return validateAndReturnResponse(sanitizedProblemStatement, refinedProblemStatementText.trim());
+        return validateAndReturnResponse(sanitizedProblemStatement, refinedProblemStatementText);
     }
 
     /**
@@ -333,20 +333,24 @@ public class HyperionProblemStatementRefinementService {
 
     /**
      * Validates the refined response and returns the appropriate DTO.
+     * Both inputs are trimmed before comparison to avoid false positives from
+     * whitespace-only differences (e.g. targeted refinement uses line-preserving
+     * sanitization which intentionally skips trimming).
      */
     private ProblemStatementRefinementResponseDTO validateAndReturnResponse(String originalProblemStatementText, String refinedProblemStatementText) {
-        if (refinedProblemStatementText.length() > MAX_PROBLEM_STATEMENT_LENGTH) {
-            log.warn("Refined problem statement exceeds maximum length: {} characters (max {})", refinedProblemStatementText.length(), MAX_PROBLEM_STATEMENT_LENGTH);
+        String trimmedRefined = refinedProblemStatementText.trim();
+
+        if (trimmedRefined.length() > MAX_PROBLEM_STATEMENT_LENGTH) {
+            log.warn("Refined problem statement exceeds maximum length: {} characters (max {})", trimmedRefined.length(), MAX_PROBLEM_STATEMENT_LENGTH);
             throw new InternalServerErrorAlertException("Refined problem statement exceeds the maximum allowed length", "ProblemStatement",
                     "ProblemStatementRefinement.refinedProblemStatementTooLong");
         }
 
-        // Refinement didn't change content — both sides are already sanitized/trimmed.
-        if (refinedProblemStatementText.equals(originalProblemStatementText)) {
+        if (trimmedRefined.equals(originalProblemStatementText.trim())) {
             throw new BadRequestAlertException("Problem statement is the same after refinement", "ProblemStatement", "ProblemStatementRefinement.refinedProblemStatementUnchanged");
         }
 
-        return new ProblemStatementRefinementResponseDTO(refinedProblemStatementText);
+        return new ProblemStatementRefinementResponseDTO(trimmedRefined);
     }
 
     /**
