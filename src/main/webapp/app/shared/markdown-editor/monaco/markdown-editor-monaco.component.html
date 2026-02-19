@@ -106,7 +106,7 @@
                     <div class="d-flex align-items-center" [style.flex-flow]="'row wrap'">
                         <!-- Standard -->
                         @if (standardActionsVisibility) {
-                            @for (action of displayedActions.standard; track action.id) {
+                            @for (action of displayedActions.style; track action.id) {
                                 <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
                             }
                         } @else {
@@ -115,6 +115,9 @@
                                 <fa-icon [icon]="italicIcon" />
                                 <fa-icon [icon]="underlineIcon" />
                             </button>
+                        }
+                        @for (action of displayedActions.standard; track action.id) {
+                            <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
                         }
                         <!-- Headers -->
                         @if (displayedActions.header.length) {
