@@ -553,6 +553,95 @@ describe('ExerciseMetadataSyncService', () => {
         expect(currentExercise.title).toBe('local-title');
     });
 
+    // The next two tests exercise a defensive guard against direct exercise-to-exercise
+    // navigation (e.g. hypothetical tab-based editing). The current UI always navigates
+    // through an intermediate page, so destroy() fully resets state before any new
+    // initialize() could run — making the guard a no-op in practice. These tests verify
+    // the guard works correctly should the navigation model change in the future.
+
+    it('does not corrupt new session queue when context changes during snapshot fetch', async () => {
+        service.initialize(context);
+        emitAlert(createAlert(160, ['title']));
+        await flushPromises(1);
+
+        // HTTP request is in-flight; navigate to a different exercise
+        service.destroy();
+
+        const newExercise = new ProgrammingExercise(undefined, undefined);
+        newExercise.id = 2;
+        newExercise.title = 'other-title';
+        const newBaseline = new ProgrammingExercise(undefined, undefined);
+        newBaseline.id = 2;
+        newBaseline.title = 'other-title';
+        const newContext: ExerciseMetadataSyncContext<ProgrammingExercise> = {
+            exerciseId: 2,
+            exerciseType: ExerciseType.PROGRAMMING,
+            getCurrentExercise: () => newExercise,
+            getBaselineExercise: () => newBaseline,
+            setBaselineExercise: vi.fn(),
+        };
+        service.initialize(newContext);
+
+        // Emit an alert for the new exercise
+        emitAlert(createAlert(161, ['title']));
+
+        // Flush the stale snapshot for exercise 1
+        const staleReq = httpMock.expectOne('api/exercise/1/version/160');
+        staleReq.flush('cancelled', { status: 0, statusText: 'Cancelled' });
+        await flushPromises();
+
+        // Flush the new snapshot for exercise 2
+        flushSnapshot(2, 161, { id: 2, title: 'incoming-other-title' });
+        await flushPromises();
+
+        // The new exercise should have been updated, not corrupted
+        expect(newExercise.title).toBe('incoming-other-title');
+    });
+
+    it('does not apply stale modal resolution when context changes to a different exercise', async () => {
+        const mock = createMockDialogRef();
+        dialogService.open.mockReturnValue(mock.ref);
+
+        currentExercise.title = 'local-title';
+        baselineExercise.title = 'baseline-title';
+
+        service.initialize(context);
+        emitAlert(createAlert(170, ['title']));
+
+        flushSnapshot(1, 170, { id: 1, title: 'incoming-title' });
+        await flushPromises();
+
+        expect(dialogService.open).toHaveBeenCalledOnce();
+
+        // Navigate to a different exercise while the modal is open
+        service.destroy();
+
+        const newExercise = new ProgrammingExercise(undefined, undefined);
+        newExercise.id = 2;
+        newExercise.title = 'exercise-2-title';
+        const newBaseline = new ProgrammingExercise(undefined, undefined);
+        newBaseline.id = 2;
+        newBaseline.title = 'exercise-2-title';
+        const newContext: ExerciseMetadataSyncContext<ProgrammingExercise> = {
+            exerciseId: 2,
+            exerciseType: ExerciseType.PROGRAMMING,
+            getCurrentExercise: () => newExercise,
+            getBaselineExercise: () => newBaseline,
+            setBaselineExercise: vi.fn(),
+        };
+        service.initialize(newContext);
+
+        // Resolve the stale modal — should be ignored
+        mock.onClose.next({ decisions: [{ field: 'title', useIncoming: true }] });
+        mock.onClose.complete();
+        await flushPromises();
+
+        // Old exercise should not have been modified by the resolution
+        expect(currentExercise.title).toBe('local-title');
+        // New exercise should be untouched
+        expect(newExercise.title).toBe('exercise-2-title');
+    });
+
     it('resolves competency links using current exercise from the handler resolver', async () => {
         const competency = new Competency();
         competency.id = 42;

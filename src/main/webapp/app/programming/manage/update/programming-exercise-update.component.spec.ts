@@ -48,6 +48,15 @@ import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
 import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
+import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
+import { ProblemStatementSyncService } from 'app/exercise/synchronization/services/problem-statement-sync.service';
+import { DialogService } from 'primeng/dynamicdialog';
+
+jest.mock('y-monaco', () => ({
+    MonacoBinding: jest.fn().mockImplementation(() => ({
+        destroy: jest.fn(),
+    })),
+}));
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -87,6 +96,16 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 provideHttpClientTesting(),
                 MockProvider(CalendarService),
                 MockProvider(ExerciseEditorSyncService),
+                MockProvider(ExerciseMetadataSyncService),
+                {
+                    provide: ProblemStatementSyncService,
+                    useValue: {
+                        init: jest.fn().mockReturnValue({ doc: {}, text: { toString: () => '' }, awareness: {} }),
+                        reset: jest.fn(),
+                        stateReplaced$: of(),
+                    },
+                },
+                MockProvider(DialogService),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);

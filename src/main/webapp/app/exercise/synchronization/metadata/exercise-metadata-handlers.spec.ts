@@ -225,6 +225,32 @@ describe('ExerciseMetadataHandlers', () => {
         expect(exercise.categories).toEqual([]);
     });
 
+    it('normalizes snapshot category strings into ExerciseCategory objects in getIncomingValue', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.categories = [new ExerciseCategory('alpha', '#123456'), new ExerciseCategory('beta', '#abcdef')];
+        const handlers = createExerciseMetadataHandlers(ExerciseType.PROGRAMMING);
+        const categoriesHandler = handlers.find((handler) => handler.key === 'categories')!;
+
+        const snapshot: ExerciseSnapshotDTO = {
+            id: 1,
+            categories: ['{"category":"alpha","color":"#123456"}', '{"category":"beta","color":"#abcdef"}'],
+        };
+
+        const incoming = categoriesHandler.getIncomingValue(snapshot) as ExerciseCategory[];
+        const current = categoriesHandler.getCurrentValue(exercise) as ExerciseCategory[];
+
+        expect(incoming).toHaveLength(2);
+        expect(incoming[0]).toBeInstanceOf(ExerciseCategory);
+        expect(incoming[1]).toBeInstanceOf(ExerciseCategory);
+        expect(incoming[0].category).toBe('alpha');
+        expect(incoming[0].color).toBe('#123456');
+        expect(incoming[1].category).toBe('beta');
+        expect(incoming[1].color).toBe('#abcdef');
+
+        // Verify structural equality so metadataValuesEqual (which uses isEqual) won't produce false conflicts
+        expect(incoming).toEqual(current);
+    });
+
     it('parses JSON-encoded category strings when applying category updates', () => {
         const exercise = new ProgrammingExercise(undefined, undefined);
         exercise.categories = [new ExerciseCategory('local', '#111111')];

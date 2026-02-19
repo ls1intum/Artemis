@@ -204,6 +204,16 @@ export class ExerciseMetadataSyncService {
 
     /**
      * Processes the next queued alert if none is currently in progress.
+     *
+     * The `ownerExerciseId` capture and the identity check in the `finally`
+     * block are a defensive measure. Currently the UI does not allow direct
+     * navigation from one exercise editor to another (there is always an
+     * intermediate page), so `destroy()` fully resets all signal state before
+     * any new `initialize()` could run, making the old `finally` a harmless
+     * no-op. The guard protects against a hypothetical future where
+     * `initialize(differentId)` is called while a promise is still in-flight
+     * (e.g. tab-based editing), which would cause the stale `finally` to
+     * corrupt the new session's `pendingAlerts` and `processing` signals.
      */
     private processQueue(): void {
         if (this.processing() || !this.context) {
@@ -214,8 +224,12 @@ export class ExerciseMetadataSyncService {
         if (!nextAlert) {
             return;
         }
+        const ownerExerciseId = this.context.exerciseId;
         this.processing.set(true);
-        void this.processAlert(nextAlert).finally(() => {
+        void this.processAlert(nextAlert, ownerExerciseId).finally(() => {
+            if (this.context?.exerciseId !== ownerExerciseId) {
+                return;
+            }
             const remaining = this.pendingAlerts().slice(1);
             this.pendingAlerts.set(remaining);
             this.processing.set(false);
@@ -228,9 +242,17 @@ export class ExerciseMetadataSyncService {
     /**
      * Processes a single metadata alert by fetching the snapshot and applying updates.
      *
+     * Identity checks after each `await` are defensive: the current UI always
+     * navigates through an intermediate page, so `destroy()` resets all state
+     * before a new exercise could be initialized. The checks guard against a
+     * future direct exercise-to-exercise transition where `initialize(newId)`
+     * runs while this promise is still pending. See {@link processQueue} for
+     * the same rationale applied to the `finally` block.
+     *
      * @param alert the alert to process
+     * @param ownerExerciseId the exercise ID that owned the context when processing started
      */
-    private async processAlert(alert: ExerciseNewVersionAlertEvent): Promise<void> {
+    private async processAlert(alert: ExerciseNewVersionAlertEvent, ownerExerciseId: number): Promise<void> {
         const context = this.context;
         if (!context) {
             return;
@@ -246,7 +268,7 @@ export class ExerciseMetadataSyncService {
         }
 
         const snapshot = await this.fetchSnapshot(context.exerciseId, alert.exerciseVersionId);
-        if (!snapshot) {
+        if (!snapshot || this.context?.exerciseId !== ownerExerciseId) {
             return;
         }
 
@@ -266,7 +288,7 @@ export class ExerciseMetadataSyncService {
         }
 
         const resolution = await this.openConflictModal(conflicts, alert.author, alert.exerciseVersionId);
-        if (!resolution || !this.context) {
+        if (!resolution || this.context?.exerciseId !== ownerExerciseId) {
             return;
         }
         this.applyConflictResolution(context, snapshot, resolution, handlers);

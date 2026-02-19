@@ -213,12 +213,14 @@ export const createBaseHandlers = (resolveExercise?: ExerciseResolver): Exercise
             (exercise) => exercise.gradingInstructions,
             (exercise, value) => (exercise.gradingInstructions = value as string | undefined),
         ),
-        baseHandler(
-            'categories',
-            'artemisApp.exercise.categories',
-            (exercise) => exercise.categories,
-            (exercise, value) => applyCategories(exercise, value),
-        ),
+        {
+            key: 'categories',
+            labelKey: 'artemisApp.exercise.categories',
+            getCurrentValue: (exercise) => exercise.categories,
+            getBaselineValue: (exercise) => exercise.categories,
+            getIncomingValue: (snapshot) => normalizeCategories(snapshot.categories),
+            applyValue: (exercise, value) => applyCategories(exercise, value),
+        },
         baseHandler(
             'teamAssignmentConfig',
             'artemisApp.exercise.teamAssignmentConfig.teamSize',
