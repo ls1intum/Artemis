@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.exercise.domain;
 /**
  * Enum that decides
  * - if and how max_points of the exercise increase the reachable points in a course/exam
- * - if and how points / bonus points achieved by a student in an exercise count towards his/her course / exam score
+ * - if and how points / bonus points achieved by a student in an exercise count towards their course / exam score
  */
 public enum IncludedInOverallScore {
 
