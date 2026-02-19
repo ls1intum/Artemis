@@ -300,27 +300,29 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
         }
 
         this.currentAiOperationSubscription?.unsubscribe();
-        this.currentAiOperationSubscription = this.problemStatementService.refineTargeted(exercise, currentContent, event, this.isGeneratingOrRefining).subscribe({
-            next: (result) => {
-                if (result.success && result.content) {
-                    this.showDiff.set(true);
-                    const refinedContent = result.content;
-                    afterNextRender(
-                        () => {
-                            this.editableInstructions()?.applyRefinedContent(refinedContent);
-                        },
-                        { injector: this.injector },
-                    );
-                } else {
+        this.currentAiOperationSubscription = this.problemStatementService
+            .refineTargeted(exercise, currentContent, event, (v) => this.isGeneratingOrRefining.set(v))
+            .subscribe({
+                next: (result) => {
+                    if (result.success && result.content) {
+                        this.showDiff.set(true);
+                        const refinedContent = result.content;
+                        afterNextRender(
+                            () => {
+                                this.editableInstructions()?.applyRefinedContent(refinedContent);
+                            },
+                            { injector: this.injector },
+                        );
+                    } else {
+                        this.alertService.error('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
+                    }
+                    this.currentAiOperationSubscription = undefined;
+                },
+                error: () => {
                     this.alertService.error('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
-                }
-                this.currentAiOperationSubscription = undefined;
-            },
-            error: () => {
-                this.alertService.error('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
-                this.currentAiOperationSubscription = undefined;
-            },
-        });
+                    this.currentAiOperationSubscription = undefined;
+                },
+            });
     }
 
     onDiffLineChange(event: { ready: boolean; lineChange: LineChange }): void {

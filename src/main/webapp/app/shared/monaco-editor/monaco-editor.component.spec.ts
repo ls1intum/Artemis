@@ -635,8 +635,6 @@ describe('MonacoEditorComponent', () => {
 
         expect(comp['_diffEditor']).toBeDefined();
 
-        expect(comp['_diffEditor']).toBeDefined();
-
         // Switch back to normal
         fixture.componentRef.setInput('mode', 'normal');
         fixture.detectChanges();

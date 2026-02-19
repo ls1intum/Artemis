@@ -146,6 +146,7 @@ public class HyperionProblemStatementRefinementService {
      * @throws BadRequestAlertException          if the input is invalid (empty problem statement)
      * @throws InternalServerErrorAlertException if the AI chat client is not configured or refinement fails
      */
+    @Observed(name = "hyperion.refine.targeted", contextualName = "problem statement targeted refinement", lowCardinalityKeyValues = { "ai.span", "true" })
     public ProblemStatementRefinementResponseDTO refineProblemStatementTargeted(Course course, ProblemStatementTargetedRefinementRequestDTO request) {
         log.debug("Refining problem statement with targeted instruction for course [{}]", course.getId());
 
@@ -160,9 +161,11 @@ public class HyperionProblemStatementRefinementService {
         String sanitizedInstruction = sanitizeInput(request.instruction());
         HyperionPromptSanitizer.validateInstruction(sanitizedInstruction, "ProblemStatementRefinement");
 
-        // Build the instruction string using sanitized inputs
+        // Sanitize and validate problem statement (may become empty after stripping control chars/delimiters)
         String sanitizedProblemStatement = sanitizeInput(originalProblemStatementText);
+        validateSanitizedProblemStatement(sanitizedProblemStatement);
         String[] lines = sanitizedProblemStatement.split("\n", -1);
+        validateLineRange(request.startLine() - 1, request.endLine() - 1, lines.length);
         String locationRef = buildLocationReference(request, lines);
         String targetedInstruction = locationRef + ": " + sanitizedInstruction;
 

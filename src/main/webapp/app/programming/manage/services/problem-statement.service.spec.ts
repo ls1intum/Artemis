@@ -192,8 +192,7 @@ describe('ProblemStatementService', () => {
         it('should return failure when exercise has no course', fakeAsync(() => {
             const loadingSignal = signal(false);
             let result: any;
-            service.refineTargeted({} as ProgrammingExercise, 'content', event, loadingSignal).subscribe((r) => (result = r));
-            tick();
+            service.refineTargeted({} as ProgrammingExercise, 'content', event, (v: boolean) => loadingSignal.set(v)).subscribe((r) => (result = r));
             expect(result).toEqual({ success: false });
             expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
         }));
@@ -201,8 +200,7 @@ describe('ProblemStatementService', () => {
         it('should return failure when content is empty', fakeAsync(() => {
             const loadingSignal = signal(false);
             let result: any;
-            service.refineTargeted(exerciseWithCourse, '', event, loadingSignal).subscribe((r) => (result = r));
-            tick();
+            service.refineTargeted(exerciseWithCourse, '', event, (v: boolean) => loadingSignal.set(v)).subscribe((r) => (result = r));
             expect(result).toEqual({ success: false });
             expect(alertServiceMock.error).toHaveBeenCalled();
         }));
@@ -211,7 +209,7 @@ describe('ProblemStatementService', () => {
             hyperionApiMock.refineProblemStatementTargeted.mockReturnValue(of({ refinedProblemStatement: 'Targeted refined!' }) as any);
             const loadingSignal = signal(false);
             let result: any;
-            service.refineTargeted(exerciseWithCourse, 'original content', event, loadingSignal).subscribe((r) => (result = r));
+            service.refineTargeted(exerciseWithCourse, 'original content', event, (v: boolean) => loadingSignal.set(v)).subscribe((r) => (result = r));
             expect(result.success).toBeTruthy();
             expect(result.content).toBe('Targeted refined!');
             expect(alertServiceMock.success).toHaveBeenCalled();
@@ -221,7 +219,7 @@ describe('ProblemStatementService', () => {
             hyperionApiMock.refineProblemStatementTargeted.mockReturnValue(throwError(() => new Error('fail')));
             const loadingSignal = signal(false);
             let result: any;
-            service.refineTargeted(exerciseWithCourse, 'content', event, loadingSignal).subscribe((r) => (result = r));
+            service.refineTargeted(exerciseWithCourse, 'content', event, (v: boolean) => loadingSignal.set(v)).subscribe((r) => (result = r));
             expect(result.success).toBeFalsy();
             expect(loadingSignal()).toBeFalsy();
         });

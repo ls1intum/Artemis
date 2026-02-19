@@ -1,4 +1,4 @@
-import { Injectable, WritableSignal, inject } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, OperatorFunction, catchError, finalize, map, of } from 'rxjs';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -96,23 +96,25 @@ export class ProblemStatementService {
         exercise: ProgrammingExercise | undefined,
         currentContent: string,
         event: InlineRefinementEvent,
-        loadingSignal: WritableSignal<boolean>,
+        setLoading: (loading: boolean) => void,
     ): Observable<OperationResult> {
         const courseId = getCourseId(exercise);
         if (!courseId || !currentContent?.trim()) {
             this.alertService.error('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
             return of({ success: false });
         }
-        loadingSignal.set(true);
-        return this.hyperionApiService.refineProblemStatementTargeted(courseId, buildTargetedRefinementRequest(currentContent, event)).pipe(
-            this.handleApiResponse(
-                (loading) => loadingSignal.set(loading),
-                'artemisApp.programmingExercise.problemStatement.inlineRefinement.success',
-                'artemisApp.programmingExercise.problemStatement.inlineRefinement.error',
-                isValidRefinementResponse,
-                (r) => r?.refinedProblemStatement,
-            ),
-        );
+        setLoading(true);
+        return this.hyperionApiService
+            .refineProblemStatementTargeted(courseId, buildTargetedRefinementRequest(currentContent, event))
+            .pipe(
+                this.handleApiResponse(
+                    setLoading,
+                    'artemisApp.programmingExercise.problemStatement.inlineRefinement.success',
+                    'artemisApp.programmingExercise.problemStatement.inlineRefinement.error',
+                    isValidRefinementResponse,
+                    (r) => r?.refinedProblemStatement,
+                ),
+            );
     }
 
     /** Shared pipe operator for handling API responses with consistent loading, alerts, and error handling. */

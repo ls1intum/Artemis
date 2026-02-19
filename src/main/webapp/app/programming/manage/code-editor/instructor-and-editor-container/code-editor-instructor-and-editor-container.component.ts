@@ -552,7 +552,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
         this.currentAiOperationSubscription?.unsubscribe();
         this.currentAiOperationSubscription = this.problemStatementService
-            .refineTargeted(this.exercise, this.exercise.problemStatement, event, this.isGeneratingOrRefining)
+            .refineTargeted(this.exercise, this.exercise.problemStatement, event, (v) => this.isGeneratingOrRefining.set(v))
             .subscribe({
                 next: (result) => {
                     if (result.success && result.content) {
