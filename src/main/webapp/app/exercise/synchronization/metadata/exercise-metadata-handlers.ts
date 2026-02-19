@@ -9,9 +9,9 @@ import { AuxiliaryRepository } from 'app/programming/shared/entities/programming
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
-import { ExerciseSnapshotDTO, TeamAssignmentConfigSnapshot } from 'app/exercise/synchronization/exercise-metadata-snapshot.dto';
-import { normalizeCategoryArray, toCompetencyLinks, toTeamAssignmentConfig } from 'app/exercise/synchronization/exercise-metadata-snapshot-shared.mapper';
-import { toAuxiliaryRepositories, toBuildConfig } from 'app/exercise/synchronization/exercise-metadata-snapshot-programming.mapper';
+import { ExerciseSnapshotDTO, TeamAssignmentConfigSnapshot } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot.dto';
+import { normalizeCategoryArray, toCompetencyLinks, toTeamAssignmentConfig } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot-shared.mapper';
+import { toAuxiliaryRepositories, toBuildConfig } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot-programming.mapper';
 
 /**
  * Defines how a specific exercise field is read, compared, and applied.

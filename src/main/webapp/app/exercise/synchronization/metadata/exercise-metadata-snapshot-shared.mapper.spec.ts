@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { Competency, CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { toCompetencyLinks, toTeamAssignmentConfig } from 'app/exercise/synchronization/exercise-metadata-snapshot-shared.mapper';
+import { toCompetencyLinks, toTeamAssignmentConfig } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot-shared.mapper';
 
-import { CompetencyExerciseLinkSnapshotDTO, TeamAssignmentConfigSnapshot } from 'app/exercise/synchronization/exercise-metadata-snapshot.dto';
+import { CompetencyExerciseLinkSnapshotDTO, TeamAssignmentConfigSnapshot } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot.dto';
 
 describe('ExerciseMetadataSnapshotSharedMapper', () => {
     it('returns undefined when team assignment config snapshot is missing', () => {

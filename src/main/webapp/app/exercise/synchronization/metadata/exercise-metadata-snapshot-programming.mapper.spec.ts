@@ -5,9 +5,13 @@ import {
     toBuildConfig,
     toSolutionParticipation,
     toTemplateParticipation,
-} from 'app/exercise/synchronization/exercise-metadata-snapshot-programming.mapper';
+} from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot-programming.mapper';
 
-import { AuxiliaryRepositorySnapshotDTO, ParticipationSnapshotDTO, ProgrammingExerciseBuildConfigSnapshotDTO } from 'app/exercise/synchronization/exercise-metadata-snapshot.dto';
+import {
+    AuxiliaryRepositorySnapshotDTO,
+    ParticipationSnapshotDTO,
+    ProgrammingExerciseBuildConfigSnapshotDTO,
+} from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot.dto';
 
 describe('ExerciseMetadataSnapshotProgrammingMapper', () => {
     it('returns undefined when auxiliary repositories snapshot is missing', () => {

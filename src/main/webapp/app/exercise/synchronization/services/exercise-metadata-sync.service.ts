@@ -13,15 +13,15 @@ import {
     ExerciseEditorSyncService,
     ExerciseEditorSyncTarget,
     ExerciseNewVersionAlertEvent,
-} from 'app/exercise/services/exercise-editor-sync.service';
+} from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
-import { ExerciseMetadataFieldHandler, createExerciseMetadataHandlers } from 'app/exercise/synchronization/exercise-metadata-handlers';
+import { ExerciseMetadataFieldHandler, createExerciseMetadataHandlers } from 'app/exercise/synchronization/metadata/exercise-metadata-handlers';
 import {
     ExerciseMetadataConflictModalComponent,
     ExerciseMetadataConflictModalData,
     ExerciseMetadataConflictModalResult,
-} from 'app/exercise/synchronization/exercise-metadata-conflict-modal.component';
-import { ExerciseSnapshotDTO } from 'app/exercise/synchronization/exercise-metadata-snapshot.dto';
+} from 'app/exercise/synchronization/metadata/exercise-metadata-conflict-modal.component';
+import { ExerciseSnapshotDTO } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot.dto';
 
 /**
  * Context required to apply metadata synchronization to a live exercise editor.

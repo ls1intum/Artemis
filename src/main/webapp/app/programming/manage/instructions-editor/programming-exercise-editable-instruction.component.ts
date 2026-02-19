@@ -30,7 +30,7 @@ import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actio
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
-import { ProblemStatementSyncService, ProblemStatementSyncState } from 'app/programming/manage/services/problem-statement-sync.service';
+import { ProblemStatementSyncService, ProblemStatementSyncState } from 'app/exercise/synchronization/services/problem-statement-sync.service';
 import { editor } from 'monaco-editor';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { MonacoBinding } from 'y-monaco';

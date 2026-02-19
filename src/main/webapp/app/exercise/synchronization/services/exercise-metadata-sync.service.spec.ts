@@ -17,10 +17,10 @@ import {
     ExerciseEditorSyncService,
     ExerciseEditorSyncTarget,
     ExerciseNewVersionAlertEvent,
-} from 'app/exercise/services/exercise-editor-sync.service';
-import { ExerciseMetadataSyncContext, ExerciseMetadataSyncService, metadataValuesEqual } from 'app/exercise/services/exercise-metadata-sync.service';
-import { ExerciseSnapshotDTO } from 'app/exercise/synchronization/exercise-metadata-snapshot.dto';
-import { ExerciseMetadataConflictModalResult } from 'app/exercise/synchronization/exercise-metadata-conflict-modal.component';
+} from 'app/exercise/synchronization/services/exercise-editor-sync.service';
+import { ExerciseMetadataSyncContext, ExerciseMetadataSyncService, metadataValuesEqual } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
+import { ExerciseSnapshotDTO } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot.dto';
+import { ExerciseMetadataConflictModalResult } from 'app/exercise/synchronization/metadata/exercise-metadata-conflict-modal.component';
 import { AlertService } from 'app/shared/service/alert.service';
 
 /**

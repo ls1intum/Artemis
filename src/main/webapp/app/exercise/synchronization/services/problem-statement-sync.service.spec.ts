@@ -4,10 +4,15 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Subject } from 'rxjs';
 import * as Y from 'yjs';
 import { Awareness, encodeAwarenessUpdate } from 'y-protocols/awareness';
-import { ProblemStatementSyncService, ProblemStatementSyncState } from 'app/programming/manage/services/problem-statement-sync.service';
+import { ProblemStatementSyncService, ProblemStatementSyncState } from 'app/exercise/synchronization/services/problem-statement-sync.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { ExerciseEditorSyncEvent, ExerciseEditorSyncEventType, ExerciseEditorSyncService, ExerciseEditorSyncTarget } from 'app/exercise/services/exercise-editor-sync.service';
-import * as yjsUtils from 'app/programming/manage/services/yjs-utils';
+import {
+    ExerciseEditorSyncEvent,
+    ExerciseEditorSyncEventType,
+    ExerciseEditorSyncService,
+    ExerciseEditorSyncTarget,
+} from 'app/exercise/synchronization/services/exercise-editor-sync.service';
+import * as yjsUtils from 'app/exercise/synchronization/services/yjs-utils';
 
 describe('ProblemStatementSyncService', () => {
     setupTestBed({ zoneless: true });

@@ -12,7 +12,7 @@ import {
     ExerciseMetadataConflictItem,
     ExerciseMetadataConflictModalComponent,
     ExerciseMetadataConflictModalResult,
-} from 'app/exercise/synchronization/exercise-metadata-conflict-modal.component';
+} from 'app/exercise/synchronization/metadata/exercise-metadata-conflict-modal.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ExerciseMetadataConflictModalComponent', () => {

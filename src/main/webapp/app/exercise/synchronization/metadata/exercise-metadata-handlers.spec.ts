@@ -4,8 +4,8 @@ import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
-import { createBaseHandlers, createExerciseMetadataHandlers } from 'app/exercise/synchronization/exercise-metadata-handlers';
-import { ExerciseSnapshotDTO } from 'app/exercise/synchronization/exercise-metadata-snapshot.dto';
+import { createBaseHandlers, createExerciseMetadataHandlers } from 'app/exercise/synchronization/metadata/exercise-metadata-handlers';
+import { ExerciseSnapshotDTO } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot.dto';
 
 const extractKeys = (handlers: { key: string }[]) => handlers.map((handler) => handler.key);
 

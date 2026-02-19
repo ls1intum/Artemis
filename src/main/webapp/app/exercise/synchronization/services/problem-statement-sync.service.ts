@@ -12,7 +12,7 @@ import {
     ProblemStatementSyncFullContentRequestEvent,
     ProblemStatementSyncFullContentResponseEvent,
     ProblemStatementSyncUpdateEvent,
-} from 'app/exercise/services/exercise-editor-sync.service';
+} from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import {
     AwarenessUpdatePayload,
     clearRemoteSelectionStyles,
@@ -20,7 +20,7 @@ import {
     encodeUint8ArrayToBase64,
     ensureRemoteSelectionStyle,
     getColorForClientId,
-} from 'app/programming/manage/services/yjs-utils';
+} from 'app/exercise/synchronization/services/yjs-utils';
 
 /**
  * Holds the shared Yjs primitives for the problem statement editor.

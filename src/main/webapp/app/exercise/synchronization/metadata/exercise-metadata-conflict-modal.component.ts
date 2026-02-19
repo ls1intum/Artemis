@@ -14,7 +14,7 @@ import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
-import { normalizeCategoryArray, normalizeCategoryEntry } from 'app/exercise/synchronization/exercise-metadata-snapshot-shared.mapper';
+import { normalizeCategoryArray, normalizeCategoryEntry } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot-shared.mapper';
 
 /**
  * Single field conflict between current editor state and incoming snapshot.

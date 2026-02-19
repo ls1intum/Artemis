@@ -3,7 +3,11 @@ import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/en
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 
-import { AuxiliaryRepositorySnapshotDTO, ParticipationSnapshotDTO, ProgrammingExerciseBuildConfigSnapshotDTO } from 'app/exercise/synchronization/exercise-metadata-snapshot.dto';
+import {
+    AuxiliaryRepositorySnapshotDTO,
+    ParticipationSnapshotDTO,
+    ProgrammingExerciseBuildConfigSnapshotDTO,
+} from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot.dto';
 
 export const toAuxiliaryRepositories = (repositories?: AuxiliaryRepositorySnapshotDTO[]): AuxiliaryRepository[] | undefined => {
     if (!repositories) {
