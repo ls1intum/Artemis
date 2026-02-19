@@ -15,6 +15,8 @@ import { HttpResponse } from '@angular/common/http';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { ActivatedRoute } from '@angular/router';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 
 describe('AiExperienceSettingsComponent', () => {
     let component: AiExperienceSettingsComponent;
@@ -38,6 +40,7 @@ describe('AiExperienceSettingsComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
             ],
         }).compileComponents();
 

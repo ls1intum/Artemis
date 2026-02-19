@@ -260,7 +260,8 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
 
         var countDto = request.get("/api/iris/chat-history/sessions/count", HttpStatus.OK, IrisChatSessionCountDTO.class);
         assertThat(countDto.sessions()).isEqualTo(2);
-        assertThat(countDto.messages()).isPositive();
+        // Each session created by the factory has 2 messages (1 LLM + 1 USER)
+        assertThat(countDto.messages()).isEqualTo(4);
     }
 
     @Test
