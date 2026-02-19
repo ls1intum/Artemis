@@ -407,7 +407,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      */
     applyRefinedContent(refined: string): void {
         this.markdownEditorMonaco?.applyRefinedContent(refined);
-        this.updateProblemStatement(refined);
+        // No explicit updateProblemStatement call needed: Monaco's onDidChangeModelContent
+        // event propagates the change via textChanged → markdownChange → updateProblemStatement.
     }
 
     /**

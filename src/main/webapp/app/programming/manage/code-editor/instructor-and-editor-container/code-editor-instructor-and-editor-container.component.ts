@@ -596,9 +596,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                         this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
                     }
                 },
-                error: () => {
-                    this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
-                },
             });
     }
 
@@ -631,9 +628,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     } else if (!result.errorHandled) {
                         this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
                     }
-                },
-                error: () => {
-                    this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
                 },
             });
     }

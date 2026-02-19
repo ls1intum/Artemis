@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, NgZone, OnDestroy, OnInit, Renderer2, ViewEncapsulation, effect, inject, input, isDevMode, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, NgZone, OnDestroy, OnInit, Renderer2, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { MonacoTextEditorAdapter } from 'app/shared/monaco-editor/model/actions/adapter/monaco-text-editor.adapter';
 import { Disposable, EditorPosition, EditorRange, MonacoEditorDiffText, MonacoEditorTextModel } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
@@ -832,11 +832,9 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                 action.dispose();
                 action.register(this.textEditorAdapter, this.translateService);
             } catch (error) {
-                // Expected: Some actions may fail if no model is attached yet.
-                if (isDevMode()) {
-                    // eslint-disable-next-line no-undef
-                    console.error('Failed to register action', action, error);
-                }
+                // Some actions may fail if no model is attached yet.
+                // eslint-disable-next-line no-undef
+                console.warn('Failed to re-register Monaco action', action.id, error);
             }
         }
     }

@@ -182,9 +182,6 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                         this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
                     }
                 },
-                error: () => {
-                    this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
-                },
             });
     }
 
@@ -228,9 +225,6 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                     } else if (!result.errorHandled) {
                         this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
                     }
-                },
-                error: () => {
-                    this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
                 },
             });
     }
