@@ -66,8 +66,8 @@ describe('MonacoEditorComponent', () => {
 
     it('should catch error during action re-registration', () => {
         fixture.detectChanges();
-        // Suppress console.error as it causes test failure in this environment
-        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+        // Suppress console.warn as it causes test failure with jest-fail-on-console
+        const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
 
         const mockAction = {
             id: 'mock-action',
@@ -83,9 +83,9 @@ describe('MonacoEditorComponent', () => {
         expect(() => comp['reRegisterActions']()).not.toThrow();
         expect(mockAction.dispose).toHaveBeenCalled();
         expect(mockAction.register).toHaveBeenCalled();
-        expect(consoleErrorSpy).toHaveBeenCalled();
+        expect(consoleWarnSpy).toHaveBeenCalled();
 
-        consoleErrorSpy.mockRestore();
+        consoleWarnSpy.mockRestore();
     });
 
     it('should set the text of the editor', () => {
