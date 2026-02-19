@@ -169,6 +169,16 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     protected handleKeydown(event: KeyboardEvent) {
         if (event.key === 'Backspace') {
             event.stopPropagation();
+        } else if (event.key === 'Escape') {
+            event.stopPropagation();
+            event.preventDefault();
+            this.cancelFeedback();
+        } else if (event.key === 'Enter' && event.shiftKey) {
+            event.stopPropagation();
+            event.preventDefault();
+            if (this.feedback.credits !== undefined) {
+                this.updateFeedback();
+            }
         }
     }
 }
