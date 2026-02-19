@@ -45,6 +45,7 @@ export default defineConfig({
             'src/main/webapp/app/exercise/synchronization/**/*.spec.ts', // include exercise synchronization tests
             'src/main/webapp/app/programming/manage/services/problem-statement-sync.service.spec.ts', // include problem statement sync tests
             'src/main/webapp/app/programming/manage/services/yjs-utils.spec.ts', // include yjs utils tests
+            'src/main/webapp/app/exercise/review/**/*.spec.ts', // include review module tests
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
@@ -80,6 +81,7 @@ export default defineConfig({
                 'src/main/webapp/app/exercise/synchronization/**/*.ts', // include exercise synchronization for code coverage
                 'src/main/webapp/app/programming/manage/services/problem-statement-sync.service.ts', // include problem statement sync for code coverage
                 'src/main/webapp/app/programming/manage/services/yjs-utils.ts', // include yjs utils for code coverage
+                'src/main/webapp/app/exercise/review/**/*.ts', // include review module for code coverage
             ],
             exclude: [
                 '**/node_modules/**',   // exclude node_modules with third-party code
