@@ -28,6 +28,34 @@ runs:
         echo "Listing remaining XML files:"
         ls -la src/test/playwright/test-reports/*.xml 2>/dev/null || echo "No XML files found"
 
+    - name: Convert JUnit XML error elements to failure elements
+      shell: bash
+      continue-on-error: true
+      run: |
+        # mikepenz/action-junit-report only counts <failure> elements, not <error> elements.
+        # Playwright writes timeouts as <error>, so they show as "0 failed" in the report.
+        # Convert <error> to <failure> so all failures are counted correctly.
+        XML_FILE="src/test/playwright/test-reports/results.xml"
+        if [ -f "$XML_FILE" ]; then
+          echo "Converting <error> elements to <failure> in $XML_FILE"
+          sed -i.bak -e 's/<error\b/<failure/g' -e 's|</error>|</failure>|g' "$XML_FILE"
+          # Merge errors count into failures count in testsuite attributes
+          perl -i -pe '
+            if (/<testsuite\b/) {
+              my $errors = 0; my $failures = 0;
+              $errors = $1 if /errors="(\d+)"/;
+              $failures = $1 if /failures="(\d+)"/;
+              my $total = $errors + $failures;
+              s/failures="\d+"/failures="$total"/;
+              s/\s*errors="\d+"//;
+            }
+          ' "$XML_FILE"
+          rm -f "${XML_FILE}.bak"
+          echo "Conversion complete"
+        else
+          echo "No results.xml found, skipping conversion"
+        fi
+
     - name: Upload JUnit Test Results
       if: success() || failure()
       uses: actions/upload-artifact@v6
