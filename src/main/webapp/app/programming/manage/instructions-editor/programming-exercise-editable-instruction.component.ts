@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, HostListener, OnDestroy, ViewChild, ViewEncapsulation, computed, effect, inject, input, output, signal } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
-import { Observable, Subject, Subscription, of, throwError } from 'rxjs';
-import { catchError, map, switchMap, tap } from 'rxjs/operators';
+import { EMPTY, Observable, Subject, Subscription, of, throwError } from 'rxjs';
+import { catchError, finalize, map, switchMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { ProblemStatementAnalysis } from 'app/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
@@ -120,15 +120,16 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * Whether to show the preview button and default preview in the markdown editor.
      * Set to false when using an external preview component (e.g., in the code editor).
      */
+    readonly consistencyIssues = input<ConsistencyIssue[]>([]);
+    readonly enableExerciseReviewComments = input<boolean>(false);
     readonly showPreview = input<boolean>(true);
     readonly forceRender = input<Observable<void> | undefined>();
 
     readonly participation = input<Participation>();
     readonly exercise = input.required<ProgrammingExercise>();
-    readonly consistencyIssues = input<ConsistencyIssue[]>([]);
     readonly hasUnsavedChanges = output<boolean>();
     readonly instructionChange = output<string>();
-
+    readonly onProblemStatementSaved = output<void>();
     generateHtmlSubject: Subject<void> = new Subject<void>();
 
     set unsavedChanges(hasChanges: boolean) {
@@ -212,16 +213,18 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             .pipe(
                 tap(() => {
                     this.unsavedChanges = false;
+                    this.onProblemStatementSaved.emit();
                 }),
                 catchError(() => {
                     // TODO: move to programming exercise translations
                     this.alertService.error(`artemisApp.editor.errors.problemStatementCouldNotBeUpdated`);
-                    return of(undefined);
+                    return EMPTY;
+                }),
+                finalize(() => {
+                    this.savingInstructions = false;
                 }),
             )
-            .subscribe(() => {
-                this.savingInstructions = false;
-            });
+            .subscribe();
     }
 
     @HostListener('document:keydown.control.s', ['$event'])
@@ -326,6 +329,10 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      */
     jumpToLine(lineNumber: number) {
         this.markdownEditorMonaco?.monacoEditor.revealLine(lineNumber, editor.ScrollType.Immediate);
+    }
+
+    clearReviewCommentDrafts(): void {
+        this.markdownEditorMonaco?.clearReviewCommentDrafts();
     }
 
     private mapAnalysisToWarnings = (analysis: ProblemStatementAnalysis) => {
