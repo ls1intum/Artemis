@@ -109,8 +109,8 @@ const SEVERITY_ORDER = {
 })
 export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent implements OnDestroy {
     @ViewChild('codeGenerationRunningModal', { static: true }) codeGenerationRunningModal: TemplateRef<unknown>;
-    readonly resultComp = viewChild(UpdatingResultComponent);
-    readonly editableInstructions = viewChild(ProgrammingExerciseEditableInstructionComponent);
+    @ViewChild(UpdatingResultComponent, { static: false }) resultComp: UpdatingResultComponent;
+    @ViewChild(ProgrammingExerciseEditableInstructionComponent, { static: false }) editableInstructions: ProgrammingExerciseEditableInstructionComponent;
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly MAX_USER_PROMPT_LENGTH = MAX_USER_PROMPT_LENGTH;
@@ -210,7 +210,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * Clears problem-statement draft widgets and reloads review comment threads after saving.
      */
     onProblemStatementSaved(): void {
-        this.editableInstructions()?.clearReviewCommentDrafts();
+        this.editableInstructions?.clearReviewCommentDrafts();
         this.exerciseReviewCommentService.reloadThreads();
     }
 
@@ -523,7 +523,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * Syncs the reverted content back to the model.
      */
     revertAllRefinement(): void {
-        this.editableInstructions()?.revertAll();
+        this.editableInstructions?.revertAll();
         this.closeDiff();
     }
 
@@ -531,7 +531,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * Closes the diff view after syncing the current editor content to the model.
      */
     closeDiff(): void {
-        const currentContent = this.editableInstructions()?.getCurrentContent();
+        const currentContent = this.editableInstructions?.getCurrentContent();
         if (this.exercise && currentContent != null) {
             this.exercise.problemStatement = currentContent;
             this.onInstructionChanged(currentContent);
@@ -583,7 +583,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                         const draftContent = result.content;
 
                         // Update the editor directly — editor is always present in this view
-                        this.editableInstructions()?.setText(draftContent);
+                        this.editableInstructions?.setText(draftContent);
 
                         // Update model and trigger change
                         if (this.exercise) {
@@ -603,7 +603,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     private refineProblemStatement(prompt: string): void {
-        const currentContent = this.editableInstructions()?.getCurrentContent() ?? this.exercise?.problemStatement;
+        const currentContent = this.editableInstructions?.getCurrentContent() ?? this.exercise?.problemStatement;
         if (!currentContent?.trim()) {
             this.alertService.error('artemisApp.programmingExercise.problemStatement.cannotRefineEmpty');
             return;
@@ -622,7 +622,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                         afterNextRender(
                             () => {
                                 if (this.isGeneratingOrRefining() || this.showDiff()) {
-                                    this.editableInstructions()?.applyRefinedContent(expectedContent);
+                                    this.editableInstructions?.applyRefinedContent(expectedContent);
                                 }
                             },
                             { injector: this.injector },
@@ -766,7 +766,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         if (location.targetType === CommentThreadLocationType.PROBLEM_STATEMENT) {
             this.codeEditorContainer.selectedFile = this.codeEditorContainer.problemStatementIdentifier;
             if (location.lineNumber !== undefined) {
-                this.editableInstructions()?.jumpToLine(location.lineNumber);
+                this.editableInstructions?.jumpToLine(location.lineNumber);
             }
             return;
         }

@@ -94,7 +94,6 @@ describe('MultipleChoiceQuestionEditComponent', () => {
             onDidBlurEditorText: vi.fn().mockReturnValue(mockDisposable),
             onDidPaste: vi.fn().mockReturnValue(mockDisposable),
             onDidChangeCursorPosition: vi.fn().mockReturnValue(mockDisposable),
-            onDidChangeCursorSelection: vi.fn().mockReturnValue(mockDisposable),
             onKeyDown: vi.fn().mockReturnValue(mockDisposable),
             onKeyUp: vi.fn().mockReturnValue(mockDisposable),
             getOption: vi.fn().mockReturnValue(16),
