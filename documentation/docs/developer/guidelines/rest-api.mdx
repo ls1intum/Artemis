@@ -301,6 +301,78 @@ When serialized, the JSON will be flat:
 }
 ```
 
+### DTO Polymorphism
+Since Java Records do not support class inheritance, you cannot use traditional inheritance trees for polymorphic request bodies (e.g., an endpoint that accepts a list of different quiz question types).
+
+To solve this, we combine **sealed interfaces** with Jackson's type handling annotations. This allows the REST controller to receive a single interface, while Jackson automatically instantiates the correct underlying Record based on a "type discriminator" field in the JSON payload.
+
+#### How it works
+
+1. **Define a Sealed Interface:** Create an interface that represents the base DTO and restrict implementations using the `sealed` and `permits` keywords.
+2. **Add `@JsonTypeInfo`:** Tell Jackson how to find the type discriminator (usually a property named `type`).
+3. **Add `@JsonSubTypes`:** Map the possible string values of the discriminator to their respective Record implementations.
+4. **Implement the Interface:** Have your specific Record DTOs implement this interface.
+
+#### Example
+
+**1. Define the Polymorphic Interface**
+This interface handles the routing. Notice how Jackson maps the string names (e.g., `"multiple-choice"`) to the specific DTO classes.
+
+```java
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = MultipleChoiceQuestionCreateDTO.class, name = "multiple-choice"),
+    @JsonSubTypes.Type(value = DragAndDropQuestionCreateDTO.class, name = "drag-and-drop"),
+    @JsonSubTypes.Type(value = ShortAnswerQuestionCreateDTO.class, name = "short-answer")
+})
+public sealed interface QuizQuestionCreateDTO permits
+    DragAndDropQuestionCreateDTO,
+    MultipleChoiceQuestionCreateDTO,
+    ShortAnswerQuestionCreateDTO {
+}
+```
+
+**2. Implement the records**
+Create the individual records that implement the sealed interface. They will act as standard DTOs.
+
+```java
+public record MultipleChoiceQuestionCreateDTO(
+    String title,
+    int points,
+    List<String> answerOptions
+) implements QuizQuestionCreateDTO {}
+```
+
+**3. Resulting JSON Structure**
+When the client sends a request, it must include the `type` field defined in `@JsonTypeInfo`:
+
+```json
+{
+    "type": "multiple-choice",
+    "title": "What is the capital of France?",
+    "points": 5,
+    "answerOptions": ["Berlin", "Paris", "Rome"]
+}
+```
+
+**4. Controller usage**
+In your REST controller, simply use the interface as the `@RequestBody`. Jackson handles the rest.
+```java
+@PostMapping
+public ResponseEntity<QuizQuestionDTO> createQuestion(@RequestBody @Valid QuizQuestionCreateDTO dto) {
+    // 'dto' will be an instance of MultipleChoiceQuestionCreateDTO,
+    // DragAndDropQuestionCreateDTO, or ShortAnswerQuestionCreateDTO
+    // depending on the "type" provided in the JSON.
+
+    if (dto instanceof MultipleChoiceQuestionCreateDTO mcq) {
+        // Handle multiple choice...
+    }
+
+    // ...
+}
+```
+
+
 ### Architecture Test Enforcement
 
 We enforce DTO usage through architecture tests that verify:
