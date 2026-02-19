@@ -104,6 +104,9 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/iris/**',           // iris module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/core/course/manage/**', // core course manage module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exercise/review/**', // review comment module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/programming/manage/services/problem-statement.service.ts', // problem-statement service uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.ts',     // problem-statement utils uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/shared/monaco-editor/inline-refinement-button/**',         // inline-refinement-button uses Vitest (see vitest.config.ts)
     ],
     coveragePathIgnorePatterns: [
         '<rootDir>/src/main/webapp/app/core/config/prod.config.ts',
