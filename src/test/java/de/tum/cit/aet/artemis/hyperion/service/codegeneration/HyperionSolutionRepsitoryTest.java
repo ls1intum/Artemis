@@ -24,7 +24,6 @@ import org.springframework.ai.retry.NonTransientAiException;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
-import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -43,9 +42,6 @@ class HyperionSolutionRepositoryServiceTest {
     @Mock
     private HyperionPromptTemplateService templates;
 
-    @Mock
-    private LLMTokenUsageService llmTokenUsageService;
-
     private HyperionSolutionRepositoryService solutionRepository;
 
     private User user;
@@ -56,7 +52,7 @@ class HyperionSolutionRepositoryServiceTest {
     void setup() {
         MockitoAnnotations.openMocks(this);
         ChatClient chatClient = ChatClient.create(chatModel);
-        this.solutionRepository = new HyperionSolutionRepositoryService(programmingExerciseRepository, chatClient, templates, llmTokenUsageService);
+        this.solutionRepository = new HyperionSolutionRepositoryService(programmingExerciseRepository, chatClient, templates);
 
         this.user = new User();
         user.setLogin("testuser");
