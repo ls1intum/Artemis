@@ -91,7 +91,7 @@ describe('CampusOnline Service', () => {
 
     describe('updateOrgUnit', () => {
         it('should update an existing org unit', () => {
-            const orgUnit: CampusOnlineOrgUnit = { id: 1, externalId: '12345', name: 'Updated CIT' };
+            const orgUnit = { id: 1, externalId: '12345', name: 'Updated CIT' } as CampusOnlineOrgUnit & { id: number };
 
             service
                 .updateOrgUnit(orgUnit)

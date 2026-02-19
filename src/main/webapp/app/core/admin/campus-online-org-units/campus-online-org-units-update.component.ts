@@ -46,7 +46,7 @@ export class CampusOnlineOrgUnitsUpdateComponent implements OnInit {
         this.isSaving.set(true);
         const currentOrgUnit = this.orgUnit();
         if (currentOrgUnit.id) {
-            this.campusOnlineService.updateOrgUnit(currentOrgUnit).subscribe({
+            this.campusOnlineService.updateOrgUnit(currentOrgUnit as CampusOnlineOrgUnit & { id: number }).subscribe({
                 next: () => this.onSaveSuccess(),
                 error: (error: HttpErrorResponse) => this.onSaveError(error),
             });
