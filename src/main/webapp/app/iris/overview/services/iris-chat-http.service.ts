@@ -112,4 +112,20 @@ export class IrisChatHttpService {
     getChatSessionById(courseId: number, sessionId: number): Observable<IrisSession> {
         return this.httpClient.get<IrisSession>(`${this.apiPrefix}/chat-history/${courseId}/session/${sessionId}`).pipe();
     }
+
+    /**
+     * Gets the session and message count for the current user.
+     * @return Observable of the count response
+     */
+    getSessionAndMessageCount(): Observable<{ sessions: number; messages: number }> {
+        return this.httpClient.get<{ sessions: number; messages: number }>(`${this.apiPrefix}/chat-history/sessions/count`);
+    }
+
+    /**
+     * Deletes all Iris chat sessions for the current user.
+     * @return Observable of the HTTP response
+     */
+    deleteAllSessions(): Observable<HttpResponse<void>> {
+        return this.httpClient.delete<void>(`${this.apiPrefix}/chat-history/sessions`, { observe: 'response' });
+    }
 }
