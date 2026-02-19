@@ -225,7 +225,12 @@
             "problemStatementRefinementNull": "Die KI hat eine leere Antwort zurückgegeben. Bitte versuche es erneut.",
             "refinedProblemStatementTooLong": "Die verfeinerte Aufgabenbeschreibung ist zu lang. Bitte passe die Verfeinerungsanweisungen an und versuche es erneut.",
             "refinedProblemStatementUnchanged": "Die KI hat keine Änderungen an der Aufgabenbeschreibung vorgenommen. Bitte passe die Verfeinerungsanweisungen an und versuche es erneut.",
-            "problemStatementRefinementFailed": "Die Verfeinerung der Aufgabenbeschreibung ist fehlgeschlagen. Bitte versuche es später erneut."
+            "problemStatementRefinementFailed": "Die Verfeinerung der Aufgabenbeschreibung ist fehlgeschlagen. Bitte versuche es später erneut.",
+            "textExtractionFailed": "Der ausgewählte Text konnte nicht extrahiert werden. Bitte passe die Auswahl an und versuche es erneut.",
+            "invalidLineRange": "Der ausgewählte Zeilenbereich liegt außerhalb der Grenzen. Bitte passe die Auswahl an und versuche es erneut.",
+            "invalidColumnRange": "Der ausgewählte Spaltenbereich ist ungültig. Bitte passe die Auswahl an und versuche es erneut.",
+            "instructionEmpty": "Die Verfeinerungsanweisung darf nicht leer sein.",
+            "instructionTooLong": "Die Verfeinerungsanweisung ist zu lang. Bitte kürze sie und versuche es erneut."
         },
         "noCourse": "Eine Klausur muss zu einem Kurs gehören.",
         "wrongCourseId": "Die Kurs-ID stimmt nicht mit dem Kurs der Klausur überein.",

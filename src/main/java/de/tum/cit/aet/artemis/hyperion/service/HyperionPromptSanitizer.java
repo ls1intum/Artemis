@@ -113,6 +113,29 @@ final class HyperionPromptSanitizer {
     }
 
     /**
+     * Sanitizes user input while preserving line structure (line count and positions).
+     * Unlike {@link #sanitizeInput(String)}, this method does not trim the result,
+     * ensuring that line numbers from the client remain valid for targeted (line-based) refinement.
+     * Delimiter lines are replaced with empty content but their newlines are preserved.
+     *
+     * @param input the raw input string, may be null
+     * @return the sanitized string with preserved line structure, never null
+     */
+    static String sanitizeInputPreserveLines(String input) {
+        if (input == null) {
+            return "";
+        }
+        // Apply per-character sanitizations globally (these don't affect line count)
+        String sanitized = CONTROL_CHAR_PATTERN.matcher(input).replaceAll("");
+        sanitized = TEMPLATE_VAR_PATTERN.matcher(sanitized).replaceAll("");
+        // DELIMITER_PATTERN uses MULTILINE so ^ and $ match per-line boundaries.
+        // replaceAll("") blanks the content but preserves the newline, keeping line count stable.
+        sanitized = DELIMITER_PATTERN.matcher(sanitized).replaceAll("");
+        // Intentionally NO trim() — trimming could strip leading newlines, shifting all line numbers.
+        return sanitized;
+    }
+
+    /**
      * Returns the sanitized course title, falling back to {@link #DEFAULT_COURSE_TITLE} if blank.
      */
     static String getSanitizedCourseTitle(Course course) {

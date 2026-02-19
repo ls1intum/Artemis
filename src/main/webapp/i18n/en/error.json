@@ -225,7 +225,12 @@
             "problemStatementRefinementNull": "The AI returned an empty response. Please try again.",
             "refinedProblemStatementTooLong": "The refined problem statement is too long. Please adjust the refinement instructions and try again.",
             "refinedProblemStatementUnchanged": "The AI did not make any changes to the problem statement. Please adjust the refinement instructions and try again.",
-            "problemStatementRefinementFailed": "Failed to refine the problem statement. Please try again later."
+            "problemStatementRefinementFailed": "Failed to refine the problem statement. Please try again later.",
+            "textExtractionFailed": "Failed to extract the selected text for refinement. Please adjust your selection and try again.",
+            "invalidLineRange": "The selected line range is out of bounds. Please adjust your selection and try again.",
+            "invalidColumnRange": "The selected column range is invalid. Please adjust your selection and try again.",
+            "instructionEmpty": "The refinement instruction cannot be empty.",
+            "instructionTooLong": "The refinement instruction is too long. Please shorten it and try again."
         },
         "noCourse": "An exam must belong to a course.",
         "wrongCourseId": "The course ID does not match the course connected to the exam.",

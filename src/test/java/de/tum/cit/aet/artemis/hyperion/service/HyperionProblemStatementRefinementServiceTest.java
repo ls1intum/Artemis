@@ -346,4 +346,42 @@ class HyperionProblemStatementRefinementServiceTest {
         assertThatThrownBy(() -> new ProblemStatementTargetedRefinementRequestDTO("Some text", 1, 1, null, null, "   ")).isInstanceOf(BadRequestAlertException.class)
                 .hasMessageContaining("instruction must not be empty after trimming");
     }
+
+    @Test
+    void refineProblemStatementTargeted_withEndColumnAtEndOfLine_succeeds() {
+        // Monaco sends endColumn = line.length() + 1 for "select to end of line" (1-indexed, exclusive)
+        String originalText = "Hello";
+        String refinedText = "World";
+        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(refinedText)))));
+
+        // endColumn=6 on a 5-char line ("Hello"): 1-indexed exclusive → selects chars 1-5
+        var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 1, 1, 1, 6, "Replace entire line");
+        ProblemStatementRefinementResponseDTO resp = hyperionProblemStatementRefinementService.refineProblemStatementTargeted(createTestCourse(), request);
+        assertThat(resp).isNotNull();
+        assertThat(resp.refinedProblemStatement()).isEqualTo(refinedText);
+    }
+
+    @Test
+    void refineProblemStatementTargeted_withEndColumnBeyondLineLength_clamps() {
+        // Monaco may send endColumn beyond the line length in edge cases
+        String originalText = "Hi";
+        String refinedText = "Bye";
+        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(refinedText)))));
+
+        // endColumn=100 on a 2-char line: should clamp to line length
+        var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 1, 1, 1, 100, "Replace it");
+        ProblemStatementRefinementResponseDTO resp = hyperionProblemStatementRefinementService.refineProblemStatementTargeted(createTestCourse(), request);
+        assertThat(resp).isNotNull();
+        assertThat(resp.refinedProblemStatement()).isEqualTo(refinedText);
+    }
+
+    @Test
+    void refineProblemStatementTargeted_throwsExceptionWhenResponseIsBlank() {
+        String originalText = "Line one\nLine two";
+        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage("   ")))));
+
+        var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 1, 1, null, null, "Improve this");
+        assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatementTargeted(createTestCourse(), request))
+                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("null or empty");
+    }
 }

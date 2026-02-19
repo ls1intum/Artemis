@@ -21,7 +21,8 @@ import {
     signal,
     untracked,
 } from '@angular/core';
-import { MonacoEditorComponent, MonacoEditorMode } from 'app/shared/monaco-editor/monaco-editor.component';
+import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { MonacoEditorMode } from 'app/shared/monaco-editor/model/monaco-editor.types';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
 import {
     NgbDropdown,

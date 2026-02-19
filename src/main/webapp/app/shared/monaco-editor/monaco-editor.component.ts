@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, ElementRef, NgZone, OnDestroy, OnInit, Renderer2, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { AlertService } from 'app/shared/service/alert.service';
 import { MonacoTextEditorAdapter } from 'app/shared/monaco-editor/model/actions/adapter/monaco-text-editor.adapter';
 import { Disposable, EditorPosition, EditorRange, MonacoEditorDiffText, MonacoEditorTextModel } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
@@ -17,10 +16,11 @@ import * as monaco from 'monaco-editor';
 import { MonacoEditorLineDecorationsHoverButton } from './model/monaco-editor-line-decorations-hover-button.model';
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { LineChange, convertMonacoLineChanges } from 'app/programming/shared/utils/diff.utils';
+import { MonacoEditorMode } from 'app/shared/monaco-editor/model/monaco-editor.types';
+
+export { MonacoEditorMode } from 'app/shared/monaco-editor/model/monaco-editor.types';
 
 export const MAX_TAB_SIZE = 8;
-
-export type MonacoEditorMode = 'normal' | 'diff';
 
 @Component({
     selector: 'jhi-monaco-editor',
@@ -111,7 +111,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      */
     private readonly renderer = inject(Renderer2);
     private readonly translateService = inject(TranslateService);
-    private readonly alertService = inject(AlertService);
+
     private readonly elementRef = inject(ElementRef);
     private readonly monacoEditorService = inject(MonacoEditorService);
     private readonly ngZone = inject(NgZone);
@@ -852,8 +852,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                 action.dispose();
                 action.register(this.textEditorAdapter, this.translateService);
             } catch (error) {
-                // Some actions may fail if no model is attached yet.
-                this.alertService.warning(`Failed to re-register Monaco action '${action.id}'`);
+                // eslint-disable-next-line no-undef
+                console.warn(`Failed to re-register Monaco action '${action.id}'`, error);
             }
         }
     }

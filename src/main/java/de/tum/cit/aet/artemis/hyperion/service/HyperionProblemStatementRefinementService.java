@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.MA
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.getSanitizedCourseDescription;
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.getSanitizedCourseTitle;
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.sanitizeInput;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.sanitizeInputPreserveLines;
 
 import java.util.Map;
 
@@ -161,8 +162,10 @@ public class HyperionProblemStatementRefinementService {
         String sanitizedInstruction = sanitizeInput(request.instruction());
         HyperionPromptSanitizer.validateInstruction(sanitizedInstruction, "ProblemStatementRefinement");
 
-        // Sanitize and validate problem statement (may become empty after stripping control chars/delimiters)
-        String sanitizedProblemStatement = sanitizeInput(originalProblemStatementText);
+        // For targeted refinement, use line-preserving sanitization to keep line numbers aligned
+        // with the client's selection. Full sanitizeInput() could remove entire lines (e.g., delimiter
+        // lines), shifting all subsequent line numbers and causing the LLM to edit the wrong lines.
+        String sanitizedProblemStatement = sanitizeInputPreserveLines(originalProblemStatementText);
         validateSanitizedProblemStatement(sanitizedProblemStatement);
         String[] lines = sanitizedProblemStatement.split("\n", -1);
         validateLineRange(request.startLine() - 1, request.endLine() - 1, lines.length);
@@ -195,12 +198,12 @@ public class HyperionProblemStatementRefinementService {
             throw new InternalServerErrorAlertException("Failed to refine problem statement", "ProblemStatement", "ProblemStatementRefinement.problemStatementRefinementFailed");
         }
 
-        if (refinedProblemStatementText == null) {
-            throw new InternalServerErrorAlertException("AI returned null when refining the problem statement", "ProblemStatement",
+        if (refinedProblemStatementText == null || refinedProblemStatementText.isBlank()) {
+            throw new InternalServerErrorAlertException("Refined problem statement is null or empty", "ProblemStatement",
                     "ProblemStatementRefinement.problemStatementRefinementNull");
         }
 
-        return validateAndReturnResponse(sanitizedProblemStatement, refinedProblemStatementText);
+        return validateAndReturnResponse(sanitizedProblemStatement, refinedProblemStatementText.trim());
     }
 
     /**

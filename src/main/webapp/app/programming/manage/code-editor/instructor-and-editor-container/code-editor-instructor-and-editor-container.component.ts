@@ -553,6 +553,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.currentAiOperationSubscription?.unsubscribe();
         this.currentAiOperationSubscription = this.problemStatementService
             .refineTargeted(this.exercise, this.exercise.problemStatement, event, (v) => this.isGeneratingOrRefining.set(v))
+            .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (result) => {
                     if (result.success && result.content) {
@@ -608,6 +609,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.currentAiOperationSubscription?.unsubscribe();
         this.currentAiOperationSubscription = this.problemStatementService
             .generateProblemStatement(this.exercise, prompt, (v) => this.isGeneratingOrRefining.set(v))
+            .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (result) => {
                     if (result.success && result.content) {
@@ -642,6 +644,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.currentAiOperationSubscription?.unsubscribe();
         this.currentAiOperationSubscription = this.problemStatementService
             .refineGlobally(this.exercise, currentContent, prompt, (v) => this.isGeneratingOrRefining.set(v))
+            .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (result) => {
                     if (result.success && result.content) {
