@@ -149,8 +149,8 @@ describe('ProblemStatementService', () => {
             let result: any;
             service.refineGlobally(exerciseWithCourse, '', 'prompt', loadingSignal).subscribe((r) => (result = r));
             expect(result).toEqual({ success: false, errorHandled: true });
-            expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.refinementError');
-        }));
+            expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.cannotRefineEmpty');
+        });
 
         it('should return failure when prompt is empty', fakeAsync(() => {
             const loadingSignal = signal(false);
