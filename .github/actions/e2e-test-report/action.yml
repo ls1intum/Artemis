@@ -38,6 +38,10 @@ inputs:
   is-pr:
     description: 'Whether this is a PR event'
     required: true
+  reporter-failed:
+    description: 'Whether the test reporter (e.g., monocart) failed during this phase'
+    required: false
+    default: ''
 
 runs:
   using: 'composite'
@@ -101,8 +105,13 @@ runs:
           let statusEmoji = jobStatus === 'success' ? '✅' : '❌';
           let statusText = jobStatus === 'success' ? 'passed' : 'failed';
 
+          const reporterFailed = '${{ inputs.reporter-failed }}';
+
           let body = `### ${phaseName}: E2E Tests ${statusEmoji}\n\n`;
           body += `**Status:** ${phaseName} ${statusText}\n\n`;
+          if (reporterFailed === 'true') {
+            body += `> **Note:** The test reporter (monocart) failed during this phase. Test results were not affected, but coverage data may be incomplete.\n\n`;
+          }
           if (testSummary) {
             body += `${testSummary}\n\n`;
           }

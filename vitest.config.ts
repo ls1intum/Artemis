@@ -40,6 +40,7 @@ export default defineConfig({
             'src/main/webapp/app/atlas/**/*.spec.ts', // include atlas tests
             'src/main/webapp/app/iris/**/*.spec.ts', // include iris tests
             'src/main/webapp/app/shared/components/buttons/**/*.spec.ts', // include shared buttons
+            'src/main/webapp/app/exercise/review/**/*.spec.ts', // include review module tests
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
@@ -68,6 +69,7 @@ export default defineConfig({
                 'src/main/webapp/app/atlas/**/*.ts', // include atlas for code coverage
                 'src/main/webapp/app/iris/**/*.ts', // include iris for code coverage
                 'src/main/webapp/app/shared/components/buttons/**/*.ts', // include shared buttons for code coverage
+                'src/main/webapp/app/exercise/review/**/*.ts', // include review module for code coverage
             ],
             exclude: [
                 '**/node_modules/**',   // exclude node_modules with third-party code

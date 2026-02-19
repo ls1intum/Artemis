@@ -16,6 +16,8 @@
             [showPreviewButton]="showPreview()"
             [showEditButton]="showPreview()"
             [consistencyIssues]="consistencyIssues()"
+            [enableExerciseReviewComments]="enableExerciseReviewComments()"
+            [showLocationWarning]="unsavedChangesValue"
             (markdownChange)="updateProblemStatement($event)"
         >
             <!-- Custom preview using ProgrammingExerciseInstructionComponent for proper rendering
