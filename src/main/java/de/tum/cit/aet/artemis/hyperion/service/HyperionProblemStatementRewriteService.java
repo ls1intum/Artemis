@@ -8,7 +8,6 @@ import jakarta.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.client.ChatClient.CallResponseSpec;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -17,7 +16,6 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteResponseDTO;
@@ -90,36 +88,34 @@ public class HyperionProblemStatementRewriteService {
         String resourcePath = "/prompts/hyperion/rewrite_problem_statement.st";
         Map<String, String> input = Map.of("text", problemStatementText.trim());
         String renderedPrompt = templateService.render(resourcePath, input);
+        ChatResponse chatResponse;
+        String responseContent;
         try {
-            // @formatter:off
-            CallResponseSpec promptResponse = chatClient
-                    .prompt()
+            chatResponse = chatClient.prompt()
                     .system("You are an expert technical writing assistant for programming exercise problem statements. Return only the rewritten statement, no explanations.")
-                    .user(renderedPrompt)
-                    .call();
-
-            String responseContent = LLMTokenUsageService.extractResponseText(chatResponse);
-            Long userId = SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findIdByLogin).orElse(null);
-            llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, REWRITE_PIPELINE_ID,
-                    builder -> builder.withCourse(course.getId()).withUser(userId));
-
-            // Store token usage
-            if (chatResponse.getMetadata() != null && chatResponse.getMetadata().getUsage() != null) {
-                var usage = chatResponse.getMetadata().getUsage();
-                LLMRequest llmRequest = llmTokenUsageService.buildLLMRequest(chatResponse.getMetadata().getModel(),
-                        usage.getPromptTokens() != null ? usage.getPromptTokens() : 0, usage.getCompletionTokens() != null ? usage.getCompletionTokens() : 0, REWRITE_PIPELINE_ID);
-                Long userId = SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findIdByLogin).orElse(null);
-                llmTokenUsageService.saveLLMTokenUsage(List.of(llmRequest), LLMServiceType.HYPERION, builder -> builder.withCourse(course.getId()).withUser(userId));
-            }
-            // @formatter:on
-            String result = responseContent.trim();
-            boolean improved = !result.equals(problemStatementText.trim());
-            return new ProblemStatementRewriteResponseDTO(result, improved);
+                    .user(renderedPrompt).call().chatResponse();
+            responseContent = LLMTokenUsageService.extractResponseText(chatResponse);
         }
         catch (RuntimeException e) {
             log.warn("Failed to obtain or parse AI response for {} - returning original text", resourcePath, e);
             return new ProblemStatementRewriteResponseDTO(problemStatementText.trim(), false);
         }
+        try {
+            Long userId = HyperionPromptSanitizer.resolveCurrentUserId(userRepository);
+            llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, REWRITE_PIPELINE_ID,
+                    builder -> builder.withCourse(course.getId()).withUser(userId));
+        }
+        catch (Exception e) {
+            log.error("Failed to track token usage for problem statement rewrite in course [{}]: {}", course.getId(), e.getMessage(), e);
+        }
+
+        if (responseContent == null) {
+            log.warn("AI returned null response for {} - returning original text", resourcePath);
+            return new ProblemStatementRewriteResponseDTO(problemStatementText.trim(), false);
+        }
+        String result = responseContent.trim();
+        boolean improved = !result.equals(problemStatementText.trim());
+        return new ProblemStatementRewriteResponseDTO(result, improved);
     }
 
 }

@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.domain.ArtifactType;
@@ -137,7 +136,7 @@ public class HyperionConsistencyCheckService {
             Long courseId = exerciseWithParticipations.getCourseViaExerciseGroupOrCourseMember() != null
                     ? exerciseWithParticipations.getCourseViaExerciseGroupOrCourseMember().getId()
                     : null;
-            Long userId = SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findIdByLogin).orElse(null);
+            Long userId = HyperionPromptSanitizer.resolveCurrentUserId(userRepository);
             llmTokenUsageService.saveLLMTokenUsage(validRequests, LLMServiceType.HYPERION,
                     builder -> builder.withCourse(courseId).withExercise(exerciseWithParticipations.getId()).withUser(userId));
         }

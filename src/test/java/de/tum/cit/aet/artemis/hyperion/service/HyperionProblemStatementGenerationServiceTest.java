@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -21,8 +22,8 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
@@ -74,9 +75,7 @@ class HyperionProblemStatementGenerationServiceTest {
         ProblemStatementGenerationResponseDTO resp = hyperionProblemStatementGenerationService.generateProblemStatement(course, "Prompt");
         assertThat(resp).isNotNull();
         assertThat(resp.draftProblemStatement()).isEqualTo(generatedDraft);
-        assertThat(resp.error()).isNull();
-
-        verify(llmTokenUsageService).saveLLMTokenUsage(any(), any(LLMServiceType.class), any());
+        verify(llmTokenUsageService).trackChatResponseTokenUsage(eq(chatResponse), eq(LLMServiceType.HYPERION), eq("HYPERION_PROBLEM_GENERATION"), any());
     }
 
     @Test
@@ -162,7 +161,7 @@ class HyperionProblemStatementGenerationServiceTest {
 
     @Test
     void generateProblemStatement_throwsExceptionWhenChatClientIsNull() {
-        var serviceWithNullClient = new HyperionProblemStatementGenerationService(null, new HyperionPromptTemplateService());
+        var serviceWithNullClient = new HyperionProblemStatementGenerationService(null, new HyperionPromptTemplateService(), llmTokenUsageService, userRepository);
         var course = new Course();
         course.setTitle("Test Course");
         course.setDescription("Test Description");

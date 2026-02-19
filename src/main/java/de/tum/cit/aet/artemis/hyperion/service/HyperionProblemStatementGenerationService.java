@@ -16,7 +16,6 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementGenerationResponseDTO;
@@ -122,17 +121,23 @@ public class HyperionProblemStatementGenerationService {
                 getSanitizedCourseDescription(course));
         String userMessage = templateService.render("/prompts/hyperion/generate_draft_problem_statement_user.st", userVariables);
 
+        ChatResponse chatResponse;
         String generatedProblemStatement;
         try {
-            var chatResponse = chatClient.prompt().system(systemPrompt).user(userMessage).call().chatResponse();
+            chatResponse = chatClient.prompt().system(systemPrompt).user(userMessage).call().chatResponse();
             generatedProblemStatement = LLMTokenUsageService.extractResponseText(chatResponse);
-            Long userId = SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findIdByLogin).orElse(null);
-            llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, GENERATION_PIPELINE_ID,
-                    builder -> builder.withCourse(course.getId()).withUser(userId));
         }
         catch (Exception e) {
             log.error("Error generating problem statement for course [{}]: {}", course.getId(), e.getMessage(), e);
             throw new InternalServerErrorAlertException("Failed to generate problem statement", "ProblemStatement", "ProblemStatementGeneration.problemStatementGenerationFailed");
+        }
+        try {
+            Long userId = HyperionPromptSanitizer.resolveCurrentUserId(userRepository);
+            llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, GENERATION_PIPELINE_ID,
+                    builder -> builder.withCourse(course.getId()).withUser(userId));
+        }
+        catch (Exception e) {
+            log.error("Failed to track token usage for problem statement generation in course [{}]: {}", course.getId(), e.getMessage(), e);
         }
 
         if (generatedProblemStatement == null || generatedProblemStatement.isBlank()) {

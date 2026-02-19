@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -21,7 +22,6 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
@@ -78,8 +78,7 @@ class HyperionProblemStatementRefinementServiceTest {
         ProblemStatementRefinementResponseDTO resp = hyperionProblemStatementRefinementService.refineProblemStatement(course, originalStatement, "Make it better");
         assertThat(resp).isNotNull();
         assertThat(resp.refinedProblemStatement()).isEqualTo(refinedStatement);
-
-        verify(llmTokenUsageService).saveLLMTokenUsage(any(), any(LLMServiceType.class), any());
+        verify(llmTokenUsageService).trackChatResponseTokenUsage(eq(chatResponse), eq(LLMServiceType.HYPERION), eq("HYPERION_PROBLEM_REFINEMENT_GLOBAL"), any());
     }
 
     @Test
@@ -179,7 +178,48 @@ class HyperionProblemStatementRefinementServiceTest {
     }
 
     @Test
-    void refineProblemStatement_throwsExceptionWhenRefinementUnchanged() {
+    void refineProblemStatement_throwsExceptionWhenChatClientIsNull() {
+        var serviceWithNullClient = new HyperionProblemStatementRefinementService(null, new HyperionPromptTemplateService(), llmTokenUsageService, userRepository);
+        var course = new Course();
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        assertThatThrownBy(() -> serviceWithNullClient.refineProblemStatement(course, "Original problem statement", "Refine this"))
+                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("AI chat client is not configured");
+    }
+
+    @Test
+    void refineProblemStatement_throwsExceptionWhenResponseIsNull() throws Exception {
+        String originalStatement = "Original problem statement";
+        // AI returns null content
+        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(null)))));
+
+        var course = new Course();
+        course.setId(999L);
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatement(course, originalStatement, "Refine this"))
+                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("Refined problem statement is null or empty");
+    }
+
+    @Test
+    void refineProblemStatement_throwsExceptionWhenResponseIsBlank() throws Exception {
+        String originalStatement = "Original problem statement";
+        // AI returns blank content
+        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage("   ")))));
+
+        var course = new Course();
+        course.setId(999L);
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatement(course, originalStatement, "Refine this"))
+                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("Refined problem statement is null or empty");
+    }
+
+    @Test
+    void refineProblemStatement_throwsExceptionWhenRefinementUnchanged() throws Exception {
         String originalStatement = "Original problem statement";
         // AI returns the exact same content
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(originalStatement)))));
@@ -237,6 +277,7 @@ class HyperionProblemStatementRefinementServiceTest {
         ProblemStatementRefinementResponseDTO resp = hyperionProblemStatementRefinementService.refineProblemStatementTargeted(createTestCourse(), request);
         assertThat(resp).isNotNull();
         assertThat(resp.refinedProblemStatement()).isEqualTo(refinedText);
+        verify(llmTokenUsageService).trackChatResponseTokenUsage(any(ChatResponse.class), eq(LLMServiceType.HYPERION), eq("HYPERION_PROBLEM_REFINEMENT_TARGETED"), any());
     }
 
     @Test
@@ -295,7 +336,7 @@ class HyperionProblemStatementRefinementServiceTest {
 
     @Test
     void refineProblemStatementTargeted_throwsExceptionWhenChatClientIsNull() {
-        var serviceWithNullClient = new HyperionProblemStatementRefinementService(null, new HyperionPromptTemplateService());
+        var serviceWithNullClient = new HyperionProblemStatementRefinementService(null, new HyperionPromptTemplateService(), llmTokenUsageService, userRepository);
         String originalText = "Some text";
 
         var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 1, 1, null, null, "Fix this");

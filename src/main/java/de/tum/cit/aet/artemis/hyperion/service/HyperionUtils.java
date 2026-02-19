@@ -4,6 +4,8 @@ import java.util.regex.Pattern;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 
 /**
  * Shared utility class for sanitizing, validating, and post-processing inputs and
@@ -156,42 +158,14 @@ final class HyperionUtils {
         return sanitized.isBlank() ? DEFAULT_COURSE_DESCRIPTION : sanitized;
     }
 
-    /** Pattern matching a line that starts with a line-number prefix: one or more digits followed by a colon and a space. */
-    private static final Pattern LINE_NUMBER_PREFIX = Pattern.compile("^\\d+: ");
-
     /**
-     * Defensively strips line-number prefixes ({@code "1: "}, {@code "2: "}, \u2026) that an
-     * LLM may have copied from numbered input despite being instructed not to.
-     * <p>
-     * To avoid false positives on content that legitimately starts with digits followed
-     * by a colon (e.g. numbered lists), stripping is only applied when <em>every non-empty
-     * line</em> carries a sequential prefix starting from 1.
+     * Resolves the current user's database ID from the security context.
      *
-     * @param text the raw LLM output, never null
-     * @return the text with line-number prefixes removed if they were consistently present, otherwise unchanged
+     * @param userRepository the repository used to look up the user ID by login
+     * @return the user ID, or {@code null} if the user is not authenticated or not found
      */
-    static String stripLineNumbers(String text) {
-        String[] lines = text.split("\n", -1);
-        int expectedNumber = 1;
-        for (String line : lines) {
-            if (line.isEmpty()) {
-                continue; // skip blank lines \u2014 they won\u2019t have a prefix
-            }
-            if (!line.startsWith(expectedNumber + ": ")) {
-                return text; // not a consistent line-number pattern \u2192 return unchanged
-            }
-            expectedNumber++;
-        }
-
-        // All non-empty lines matched sequential prefixes \u2014 strip them
-        StringBuilder result = new StringBuilder();
-        for (int i = 0; i < lines.length; i++) {
-            result.append(LINE_NUMBER_PREFIX.matcher(lines[i]).replaceFirst(""));
-            if (i < lines.length - 1) {
-                result.append("\n");
-            }
-        }
-        return result.toString();
+    static Long resolveCurrentUserId(UserRepository userRepository) {
+        return SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findIdByLogin).orElse(null);
     }
 
 }
