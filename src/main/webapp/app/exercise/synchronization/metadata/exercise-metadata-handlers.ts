@@ -90,8 +90,8 @@ const dateHandler = (
     return {
         key,
         labelKey,
-        getCurrentValue: getter,
-        getBaselineValue: getter,
+        getCurrentValue: (exercise) => convertDateFromServer(getter(exercise) as any),
+        getBaselineValue: (exercise) => convertDateFromServer(getter(exercise) as any),
         getIncomingValue: (snapshot) => convertDateFromServer(snapshot[key as keyof ExerciseSnapshotDTO] as any),
         applyValue: (exercise, value) => setter(exercise, value as dayjs.Dayjs | undefined),
     };
@@ -314,8 +314,8 @@ const createProgrammingHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] =
         {
             key: 'programmingData.buildAndTestStudentSubmissionsAfterDueDate',
             labelKey: 'artemisApp.programmingExercise.timeline.afterDueDate',
-            getCurrentValue: (exercise) => (exercise as ProgrammingExercise).buildAndTestStudentSubmissionsAfterDueDate,
-            getBaselineValue: (exercise) => (exercise as ProgrammingExercise).buildAndTestStudentSubmissionsAfterDueDate,
+            getCurrentValue: (exercise) => convertDateFromServer((exercise as ProgrammingExercise).buildAndTestStudentSubmissionsAfterDueDate as any),
+            getBaselineValue: (exercise) => convertDateFromServer((exercise as ProgrammingExercise).buildAndTestStudentSubmissionsAfterDueDate as any),
             getIncomingValue: (snapshot) => convertDateFromServer(snapshot.programmingData?.buildAndTestStudentSubmissionsAfterDueDate as any),
             applyValue: (exercise, value) => ((exercise as ProgrammingExercise).buildAndTestStudentSubmissionsAfterDueDate = value as dayjs.Dayjs | undefined),
         } satisfies ExerciseMetadataFieldHandler<Exercise, dayjs.Dayjs | undefined>,

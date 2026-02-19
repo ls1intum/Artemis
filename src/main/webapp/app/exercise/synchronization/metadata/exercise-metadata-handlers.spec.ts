@@ -150,6 +150,37 @@ describe('ExerciseMetadataHandlers', () => {
         expect(exercise.buildConfig).toBeUndefined();
     });
 
+    it('normalizes date getCurrentValue and getBaselineValue through convertDateFromServer', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.releaseDate = dayjs('2026-03-15T12:00:00.000Z');
+        exercise.buildAndTestStudentSubmissionsAfterDueDate = dayjs('2026-04-01T08:00:00.000Z');
+
+        const handlers = createExerciseMetadataHandlers(ExerciseType.PROGRAMMING);
+        const releaseDateHandler = handlers.find((handler) => handler.key === 'releaseDate')!;
+        const buildTestDateHandler = handlers.find((handler) => handler.key === 'programmingData.buildAndTestStudentSubmissionsAfterDueDate')!;
+
+        const currentRelease = releaseDateHandler.getCurrentValue(exercise);
+        const baselineRelease = releaseDateHandler.getBaselineValue(exercise);
+        const currentBuildTest = buildTestDateHandler.getCurrentValue(exercise);
+        const baselineBuildTest = buildTestDateHandler.getBaselineValue(exercise);
+
+        expect(dayjs.isDayjs(currentRelease)).toBe(true);
+        expect(dayjs.isDayjs(baselineRelease)).toBe(true);
+        expect(dayjs.isDayjs(currentBuildTest)).toBe(true);
+        expect(dayjs.isDayjs(baselineBuildTest)).toBe(true);
+        expect(currentRelease!.toISOString()).toBe('2026-03-15T12:00:00.000Z');
+        expect(currentBuildTest!.toISOString()).toBe('2026-04-01T08:00:00.000Z');
+    });
+
+    it('returns undefined for absent date fields via getCurrentValue', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        const handlers = createExerciseMetadataHandlers(ExerciseType.PROGRAMMING);
+        const releaseDateHandler = handlers.find((handler) => handler.key === 'releaseDate')!;
+
+        expect(releaseDateHandler.getCurrentValue(exercise)).toBeUndefined();
+        expect(releaseDateHandler.getBaselineValue(exercise)).toBeUndefined();
+    });
+
     it('uses raw snapshot competency links when no resolver is provided', () => {
         const baseHandlers = createBaseHandlers();
         const competencyHandler = baseHandlers.find((handler) => handler.key === 'competencyLinks')!;

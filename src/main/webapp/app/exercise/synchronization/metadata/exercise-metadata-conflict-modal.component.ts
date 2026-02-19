@@ -151,6 +151,13 @@ export class ExerciseMetadataConflictModalComponent implements OnInit {
         if (dayjs.isDayjs(value)) {
             return value.format('YYYY-MM-DD HH:mm');
         }
+        // Fallback for dayjs-like objects that fail isDayjs() due to module duplication
+        if (typeof value === 'object' && value !== null && typeof (value as any).format === 'function') {
+            const formatted = (value as any).format('YYYY-MM-DD HH:mm');
+            if (typeof formatted === 'string') {
+                return formatted;
+            }
+        }
         if (typeof value === 'string') {
             return value;
         }

@@ -150,6 +150,12 @@ describe('ExerciseMetadataConflictModalComponent', () => {
         expect(component.formatValue(circular)).toContain('[object Object]');
     });
 
+    it('formats dayjs-like objects that fail isDayjs via duck-typing fallback', () => {
+        const fakeDayjs = { format: (fmt: string) => `formatted:${fmt}` };
+
+        expect(component.formatValue(fakeDayjs)).toBe('formatted:YYYY-MM-DD HH:mm');
+    });
+
     it('identifies special fields', () => {
         expect(component.isBuildConfigField('programmingData.buildConfig')).toBe(true);
         expect(component.isBuildConfigField('title')).toBe(false);

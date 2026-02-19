@@ -59,6 +59,7 @@ import { FileService } from 'app/shared/service/file.service';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
@@ -101,6 +102,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly aeolusService = inject(AeolusService);
     private readonly calendarService = inject(CalendarService);
     private readonly localStorageService = inject(LocalStorageService);
+    private readonly exerciseEditorSyncService = inject(ExerciseEditorSyncService);
     private readonly metadataSyncService = inject(ExerciseMetadataSyncService);
 
     private readonly packageNameRegexForJavaKotlin = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN);
@@ -564,6 +566,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             subscription?.unsubscribe();
         }
         this.metadataSyncService.destroy();
+        this.exerciseEditorSyncService.disconnect();
     }
 
     private setupMetadataSync(): void {
@@ -571,6 +574,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             return;
         }
         this.ensureExerciseCategoriesReference();
+        this.exerciseEditorSyncService.connect(this.programmingExercise.id);
         this.metadataSyncService.initialize({
             exerciseId: this.programmingExercise.id,
             exerciseType: this.programmingExercise.type ?? ExerciseType.PROGRAMMING,

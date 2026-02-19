@@ -47,6 +47,7 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
+import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -85,6 +86,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 MockProvider(CalendarService),
+                MockProvider(ExerciseEditorSyncService),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);

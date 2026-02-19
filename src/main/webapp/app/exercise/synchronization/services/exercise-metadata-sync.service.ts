@@ -154,19 +154,16 @@ export class ExerciseMetadataSyncService {
             return;
         }
         this.subscriptionActive = true;
-        this.updateSubscription = this.exerciseEditorSyncService.subscribeToUpdates(context.exerciseId).subscribe((event: ExerciseEditorSyncEvent) => this.handleEvent(event));
+        this.updateSubscription = this.exerciseEditorSyncService.subscribeToUpdates().subscribe((event: ExerciseEditorSyncEvent) => this.handleEvent(event));
     }
 
     /**
-     * Cleans up the websocket subscription and resets internal state.
+     * Cleans up the local RxJS subscription and resets internal state.
      *
-     * Note: This unconditionally calls `exerciseEditorSyncService.unsubscribe()`
-     * which tears down the shared WebSocket subscription. This is safe because all
-     * services consuming the shared subscription (ExerciseMetadataSyncService,
-     * ProblemStatementSyncService) live in the same exercise editor component and
-     * are always destroyed together. Calling `unsubscribe()` without a prior
-     * `initialize()` is harmless — the shared service treats redundant unsubscribe
-     * calls as no-ops.
+     * This method only tears down the local observer subscription to the shared
+     * Subject. The shared WebSocket connection lifecycle is managed by the parent
+     * component via {@link ExerciseEditorSyncService.connect} and
+     * {@link ExerciseEditorSyncService.disconnect}.
      */
     destroy(): void {
         if (this.updateSubscription) {
@@ -178,7 +175,6 @@ export class ExerciseMetadataSyncService {
         this.processing.set(false);
         this.context = undefined;
         this.cachedHandlers = undefined;
-        this.exerciseEditorSyncService.unsubscribe();
     }
 
     /**

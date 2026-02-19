@@ -21,7 +21,8 @@ describe('ProblemStatementSyncService', () => {
     let syncServiceMock: {
         subscribeToUpdates: ReturnType<typeof vi.fn>;
         sendSynchronizationUpdate: ReturnType<typeof vi.fn>;
-        unsubscribe: ReturnType<typeof vi.fn>;
+        connect: ReturnType<typeof vi.fn>;
+        disconnect: ReturnType<typeof vi.fn>;
         sessionId: string | undefined;
     };
     let incomingMessages$: Subject<ExerciseEditorSyncEvent>;
@@ -32,7 +33,8 @@ describe('ProblemStatementSyncService', () => {
         syncServiceMock = {
             subscribeToUpdates: vi.fn().mockReturnValue(incomingMessages$.asObservable()),
             sendSynchronizationUpdate: vi.fn(),
-            unsubscribe: vi.fn(),
+            connect: vi.fn(),
+            disconnect: vi.fn(),
             sessionId: undefined,
         };
 
@@ -65,7 +67,7 @@ describe('ProblemStatementSyncService', () => {
     it('initializes synchronization and requests initial content', () => {
         service.init(42, 'Initial content');
 
-        expect(syncService.subscribeToUpdates).toHaveBeenCalledWith(42);
+        expect(syncService.subscribeToUpdates).toHaveBeenCalledWith();
         expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
             42,
             expect.objectContaining({

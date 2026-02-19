@@ -99,7 +99,7 @@ export class ProblemStatementSyncService {
         this.activeLeaderTimestamp = this.localLeaderTimestamp;
         this.fallbackInitialContent = initialContent ?? '';
         this.awaitingInitialSync = true;
-        this.incomingMessageSubscription = this.syncService.subscribeToUpdates(exerciseId).subscribe((message) => this.handleRemoteMessage(message));
+        this.incomingMessageSubscription = this.syncService.subscribeToUpdates().subscribe((message) => this.handleRemoteMessage(message));
         this.initializeYjsDocument();
         this.requestInitialSync();
         return { doc: this.yDoc!, text: this.yText!, awareness: this.awareness! };
@@ -108,20 +108,24 @@ export class ProblemStatementSyncService {
     /**
      * Reset all synchronization state and dispose the Yjs document.
      * Safe to call multiple times; clears any pending initial sync timeout.
+     *
+     * This method only tears down the local subscription, not the shared WebSocket
+     * subscription managed by {@link ExerciseEditorSyncService}. The shared teardown
+     * is handled by {@link ExerciseMetadataSyncService.destroy} when the containing
+     * editor component is destroyed.
      */
     reset() {
         // Clear pending timeout first to prevent finalizeInitialSync from firing
-        // after syncService.unsubscribe() has torn down the websocket subscription.
+        // after cleanup.
         if (this.pendingInitialSync?.timeoutId) {
             clearTimeout(this.pendingInitialSync.timeoutId);
         }
         this.pendingInitialSync = undefined;
         this.incomingMessageSubscription?.unsubscribe();
         this.incomingMessageSubscription = undefined;
-        // Clear exerciseId before unsubscribe/destroy so that any Yjs update events
+        // Clear exerciseId before doc destroy so that any Yjs update events
         // triggered by doc.destroy() bail out in the guard (line: if (!this.exerciseId)).
         this.exerciseId = undefined;
-        this.syncService.unsubscribe();
         this.yDoc?.destroy();
         this.yDoc = undefined;
         this.yText = undefined;

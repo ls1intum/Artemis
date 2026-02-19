@@ -100,9 +100,10 @@ export type ExerciseEditorSyncEvent =
  * Relays exercise editor synchronization messages over WebSocket.
  *
  * This service is provided at the root level (singleton) and supports only one exercise
- * subscription at a time. Calling `subscribeToUpdates()` for a different exercise will
- * silently complete the previous Subject and unsubscribe existing observers. This is by
- * design — the consuming component is always destroyed and recreated on navigation.
+ * connection at a time. The lifecycle is managed by parent components (exercise edit page
+ * or code editor page) via {@link connect} and {@link disconnect}. Consumer services
+ * (e.g. ExerciseMetadataSyncService, ProblemStatementSyncService) subscribe to the shared
+ * Subject via {@link subscribeToUpdates} but do not control the connection lifecycle.
  *
  * Outgoing messages are buffered until the WebSocket connection is established, ensuring
  * that messages sent during a cold page load (before the STOMP handshake completes) are
@@ -143,56 +144,21 @@ export class ExerciseEditorSyncService {
     }
 
     /**
-     * Sends a synchronization event to all other editors of the given exercise.
+     * Establishes the WebSocket connection for synchronizing the given exercise.
      *
-     * The message is enqueued in an internal buffer and flushed to the WebSocket
-     * as soon as the STOMP connection is established. If the connection is already
-     * active the message is sent immediately. A `timestamp` (epoch ms) and the
-     * current `sessionId` are automatically attached to the outgoing payload.
+     * This method creates the shared Subject, STOMP subscription, and outgoing
+     * message buffer. It must be called by the parent component that owns the
+     * exercise editing session **before** any consumer services call
+     * {@link subscribeToUpdates}.
      *
-     * @param exerciseId - must match the exercise that is currently subscribed to
-     * @param message    - the synchronization event to broadcast
-     * @throws Error if no subscription is active, the exercise ID does not match, or
-     *               the outgoing buffer has not been initialized
+     * Calling `connect()` for a different exercise will automatically tear down
+     * the previous connection first. Calling it for the same exercise is a no-op.
+     *
+     * @param exerciseId - the ID of the exercise to connect to
      */
-    sendSynchronizationUpdate(exerciseId: number, message: ExerciseEditorSyncEvent): void {
-        if (!this.subscription) {
-            throw new Error('Cannot send synchronization message: not subscribed to websocket topic');
-        }
-        if (this.exerciseId !== exerciseId) {
-            throw new Error(`Cannot send synchronization message: exerciseId ${exerciseId} does not match subscribed exerciseId ${this.exerciseId}`);
-        }
-        if (!this.outgoing$) {
-            throw new Error('Cannot send synchronization message: outgoing message buffer not initialized');
-        }
-        const topic = this.getTopic(exerciseId);
-        this.outgoing$.next({ topic, payload: { ...message, timestamp: message.timestamp ?? Date.now(), sessionId: this.sessionId } });
-    }
-
-    /**
-     * Subscribes to real-time synchronization events for the given exercise.
-     *
-     * On the first call (or after a previous {@link unsubscribe}), this method:
-     *  1. Creates a new `Subject` that downstream consumers observe.
-     *  2. Opens a STOMP subscription on the exercise's synchronization topic.
-     *  3. Initializes an outgoing message buffer that holds messages until the
-     *     WebSocket connection is ready, then flushes them in FIFO order.
-     *
-     * Subsequent calls with the **same** `exerciseId` return the existing Subject
-     * without creating a new subscription (idempotent). Calling with a **different**
-     * `exerciseId` automatically tears down the previous subscription first.
-     *
-     * Incoming messages whose `sessionId` matches this client's own session are
-     * filtered out so that a user never receives their own edits as remote changes.
-     *
-     * @param exerciseId - the ID of the exercise to subscribe to
-     * @returns an Observable that emits {@link ExerciseEditorSyncEvent}s from other
-     *          connected editors. The Observable completes when {@link unsubscribe}
-     *          is called or when a new exercise subscription replaces it.
-     */
-    subscribeToUpdates(exerciseId: number): Observable<ExerciseEditorSyncEvent> {
+    connect(exerciseId: number): void {
         if (this.exerciseId !== undefined && this.exerciseId !== exerciseId) {
-            this.unsubscribe();
+            this.disconnect();
         }
 
         if (!this.subject) {
@@ -223,11 +189,57 @@ export class ExerciseEditorSyncService {
                 )
                 .subscribe((message: ExerciseEditorSyncEvent) => this.handleIncomingMessage(message));
         }
+    }
+
+    /**
+     * Sends a synchronization event to all other editors of the given exercise.
+     *
+     * The message is enqueued in an internal buffer and flushed to the WebSocket
+     * as soon as the STOMP connection is established. If the connection is already
+     * active the message is sent immediately. A `timestamp` (epoch ms) and the
+     * current `sessionId` are automatically attached to the outgoing payload.
+     *
+     * @param exerciseId - must match the exercise that is currently connected to
+     * @param message    - the synchronization event to broadcast
+     * @throws Error if no connection is active, the exercise ID does not match, or
+     *               the outgoing buffer has not been initialized
+     */
+    sendSynchronizationUpdate(exerciseId: number, message: ExerciseEditorSyncEvent): void {
+        if (!this.subscription) {
+            throw new Error('Cannot send synchronization message: not connected to websocket topic');
+        }
+        if (this.exerciseId !== exerciseId) {
+            throw new Error(`Cannot send synchronization message: exerciseId ${exerciseId} does not match connected exerciseId ${this.exerciseId}`);
+        }
+        if (!this.outgoing$) {
+            throw new Error('Cannot send synchronization message: outgoing message buffer not initialized');
+        }
+        const topic = this.getTopic(exerciseId);
+        this.outgoing$.next({ topic, payload: { ...message, timestamp: message.timestamp ?? Date.now(), sessionId: this.sessionId } });
+    }
+
+    /**
+     * Returns the shared Observable for synchronization events.
+     *
+     * Consumer services call this method to observe incoming sync events. The
+     * connection must already be established via {@link connect} by the parent
+     * component. This method does **not** create the connection — it only
+     * returns the existing Subject.
+     *
+     * @returns an Observable that emits {@link ExerciseEditorSyncEvent}s from other
+     *          connected editors. The Observable completes when {@link disconnect}
+     *          is called.
+     * @throws Error if {@link connect} has not been called yet
+     */
+    subscribeToUpdates(): Observable<ExerciseEditorSyncEvent> {
+        if (!this.subject) {
+            throw new Error('Cannot subscribe to updates: not connected. Call connect(exerciseId) first.');
+        }
         return this.subject;
     }
 
     /**
-     * Tears down all synchronization state for the currently subscribed exercise.
+     * Tears down all synchronization state for the currently connected exercise.
      *
      * This method performs a full cleanup in the following order:
      *  1. **Completes** the `Subject` returned by {@link subscribeToUpdates}, signaling
@@ -236,14 +248,14 @@ export class ExerciseEditorSyncService {
      *     discarded and in-flight `concatMap` inner observables are unsubscribed.
      *  3. **Unsubscribes** from the STOMP topic, which also removes the server-side
      *     subscription so that the client stops receiving messages.
-     *  4. **Clears** the stored `exerciseId`, allowing a fresh subscription via
-     *     {@link subscribeToUpdates}.
+     *  4. **Clears** the stored `exerciseId`, allowing a fresh connection via
+     *     {@link connect}.
      *
      * Safe to call multiple times; subsequent calls are no-ops.
-     * Should be called when the consuming component is destroyed (e.g. navigating
-     * away from the exercise editor).
+     * Should be called by the parent component when the exercise editing session
+     * ends (e.g. navigating away from the exercise editor).
      */
-    unsubscribe(): void {
+    disconnect(): void {
         // Complete the Subject to notify all observers that the stream has ended
         if (this.subject) {
             this.subject.complete();

@@ -97,7 +97,8 @@ describe('ExerciseMetadataSyncService', () => {
                     provide: ExerciseEditorSyncService,
                     useValue: {
                         subscribeToUpdates: vi.fn().mockReturnValue(syncEvents$.asObservable()),
-                        unsubscribe: vi.fn(),
+                        connect: vi.fn(),
+                        disconnect: vi.fn(),
                     },
                 },
                 { provide: DialogService, useValue: dialogService },
@@ -140,17 +141,19 @@ describe('ExerciseMetadataSyncService', () => {
         service.initialize(context);
 
         expect(exerciseEditorSyncService.subscribeToUpdates).toHaveBeenCalledOnce();
-        expect(exerciseEditorSyncService.subscribeToUpdates).toHaveBeenCalledWith(1);
+        expect(exerciseEditorSyncService.subscribeToUpdates).toHaveBeenCalledWith();
 
         service.destroy();
 
-        expect(exerciseEditorSyncService.unsubscribe).toHaveBeenCalledOnce();
+        // destroy() no longer calls disconnect() — that's the parent component's responsibility
+        expect(exerciseEditorSyncService.disconnect).not.toHaveBeenCalled();
     });
 
     it('can destroy safely without prior initialization', () => {
         service.destroy();
 
-        expect(exerciseEditorSyncService.unsubscribe).toHaveBeenCalledOnce();
+        // destroy() no longer calls disconnect() — that's the parent component's responsibility
+        expect(exerciseEditorSyncService.disconnect).not.toHaveBeenCalled();
     });
 
     it('ignores non-metadata synchronization events', () => {
