@@ -105,6 +105,7 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/core/course/manage/**', // core course manage module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exam/manage/students/**', // exam manage students module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared/sort/**', // sort directives use vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/review/**', // review comment module uses Vitest (see vitest.config.ts)
     ],
     coveragePathIgnorePatterns: [
         '<rootDir>/src/main/webapp/app/core/config/prod.config.ts',
@@ -126,6 +127,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/exam/manage/students/', // exam manage students module uses Vitest
         '<rootDir>/src/main/webapp/app/shared/components/buttons/', // buttons module uses Vitest
         '<rootDir>/src/main/webapp/app/shared/sort/', // sort directives use Vitest
+        '<rootDir>/src/main/webapp/app/exercise/review/', // review comment module uses Vitest
     ],
     // Global coverage thresholds for Jest. Modules using Vitest (e.g., fileupload) have their own
     // coverage thresholds in vitest.config.ts. Per-module thresholds are enforced by check-client-module-coverage.mjs
@@ -174,7 +176,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/exam/manage/students/', // exam manage students module
         '<rootDir>/src/main/webapp/app/shared/components/buttons/', // shared/buttons components
         '<rootDir>/src/main/webapp/app/shared/sort/', // sort directives
-
+        '<rootDir>/src/main/webapp/app/exercise/review/', // review comment module
     ],
     testTimeout: 3000,
     testMatch: [
@@ -192,6 +194,7 @@ module.exports = {
         '^lodash-es$': 'lodash',
         '\\.css$': '<rootDir>/src/test/javascript/spec/stub.js',
         '^monaco-editor$': '<rootDir>/node_modules/monaco-editor/esm/vs/editor/editor.api.js',
+        'monaco-editor/esm/vs/editor/edcore.main': '<rootDir>/src/test/javascript/spec/helpers/mocks/mock-monaco-editor.ts',
         '^@ls1intum/apollon$': '<rootDir>/node_modules/@ls1intum/apollon/lib/es6/index.js', // adjust if the package.json "exports" points elsewhere
         '^@ls1intum/apollon/lib/es6/(.*)': '<rootDir>/node_modules/@ls1intum/apollon/lib/es6/$1',
     },
