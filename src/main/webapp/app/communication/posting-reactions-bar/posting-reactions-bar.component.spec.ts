@@ -202,7 +202,7 @@ describe('PostingReactionsBarComponent', () => {
 
         expect(getDeleteButton()).not.toBeNull();
     });
-    it('should not display the edit option to user (even instructor) if s/he is not the author of posting with given conversation', () => {
+    it('should not display the edit option to user (even instructor) if they are not the author of posting with given conversation', () => {
         fixture.componentRef.setInput('isReadOnlyMode', false);
         fixture.componentRef.setInput('previewMode', false);
         fixture.componentRef.setInput('isEmojiCount', false);
@@ -222,7 +222,7 @@ describe('PostingReactionsBarComponent', () => {
         expect(getEditButton()).toBeNull();
     });
 
-    it('should display the edit option to user if s/he is the author of posting', () => {
+    it('should display the edit option to user if they are the author of posting', () => {
         fixture.componentRef.setInput('isReadOnlyMode', false);
         fixture.componentRef.setInput('previewMode', false);
         fixture.componentRef.setInput('isEmojiCount', false);
@@ -265,7 +265,7 @@ describe('PostingReactionsBarComponent', () => {
         expect(getDeleteButton()).not.toBeNull();
     });
 
-    it('should not display the edit option to user (even instructor) if s/he is not the author of posting', () => {
+    it('should not display the edit option to user (even instructor) if they are not the author of posting', () => {
         metisServiceUserIsAtLeastInstructorStub.mockReturnValue(true);
         metisServiceUserIsAuthorOfPostingStub.mockReturnValue(false);
 
