@@ -77,6 +77,10 @@ export class AiExperienceSettingsComponent implements OnInit {
                 this.sessionCount.set(counts.sessions);
                 this.messageCount.set(counts.messages);
             },
+            error: () => {
+                // Show the delete button conservatively when count cannot be determined
+                this.sessionCount.set(-1);
+            },
         });
     }
 }

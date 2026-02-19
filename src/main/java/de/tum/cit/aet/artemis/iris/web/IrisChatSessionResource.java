@@ -143,7 +143,7 @@ public class IrisChatSessionResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteAllSessionsForCurrentUser() {
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        log.info("REST request to delete all Iris chat sessions for user {}", user.getLogin());
+        log.info("REST request to delete all Iris chat sessions for user id {}", user.getId());
         irisChatSessionRepository.deleteAllByUserId(user.getId());
         return ResponseEntity.noContent().build();
     }
