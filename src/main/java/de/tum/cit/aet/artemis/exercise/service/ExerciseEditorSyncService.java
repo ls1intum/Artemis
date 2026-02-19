@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exercise.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.Instant;
 import java.util.Set;
 
 import org.jspecify.annotations.NonNull;
@@ -77,7 +78,7 @@ public class ExerciseEditorSyncService {
      */
     public void broadcastNewCommitAlert(@NonNull Long exerciseId, @NonNull ExerciseEditorSyncTarget target, @Nullable Long auxiliaryRepositoryId) {
         ExerciseNewCommitAlertDTO payload = new ExerciseNewCommitAlertDTO(ExerciseEditorSyncEventType.NEW_COMMIT_ALERT, target, auxiliaryRepositoryId, getClientSessionId(),
-                System.currentTimeMillis());
+                Instant.now().toEpochMilli());
         websocketMessagingService.sendMessage(getSynchronizationTopic(exerciseId), payload).exceptionally(exception -> {
             log.warn("Cannot send new commit alert for exercise {}", exerciseId, exception);
             return null;
@@ -94,7 +95,7 @@ public class ExerciseEditorSyncService {
      */
     public void broadcastNewExerciseVersionAlert(@NonNull Long exerciseId, @NonNull Long exerciseVersionId, @NonNull User author, @NonNull Set<String> changedFields) {
         ExerciseNewVersionAlertDTO payload = new ExerciseNewVersionAlertDTO(ExerciseEditorSyncEventType.NEW_EXERCISE_VERSION_ALERT, ExerciseEditorSyncTarget.EXERCISE_METADATA,
-                exerciseVersionId, new UserPublicInfoDTO(author), changedFields, getClientSessionId(), System.currentTimeMillis());
+                exerciseVersionId, new UserPublicInfoDTO(author), changedFields, getClientSessionId(), Instant.now().toEpochMilli());
         websocketMessagingService.sendMessage(getSynchronizationTopic(exerciseId), payload).exceptionally(exception -> {
             log.warn("Cannot send new exercise version alert for exercise {}", exerciseId, exception);
             return null;

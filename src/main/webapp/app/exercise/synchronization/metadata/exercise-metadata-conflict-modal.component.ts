@@ -1,7 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import dayjs from 'dayjs/esm';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { CheckboxModule } from 'primeng/checkbox';
@@ -56,7 +55,7 @@ export interface ExerciseMetadataConflictModalData {
     selector: 'jhi-exercise-metadata-conflict-modal',
     templateUrl: './exercise-metadata-conflict-modal.component.html',
     styleUrls: ['./exercise-metadata-conflict-modal.component.scss'],
-    imports: [FormsModule, TranslateDirective, FaIconComponent, CustomExerciseCategoryBadgeComponent, CheckboxModule, ButtonModule],
+    imports: [FormsModule, TranslateDirective, CustomExerciseCategoryBadgeComponent, CheckboxModule, ButtonModule],
 })
 export class ExerciseMetadataConflictModalComponent implements OnInit {
     private readonly dialogRef = inject(DynamicDialogRef);
