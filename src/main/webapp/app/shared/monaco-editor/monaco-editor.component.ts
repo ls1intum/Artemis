@@ -18,7 +18,7 @@ import { Annotation } from 'app/programming/shared/code-editor/monaco/code-edito
 import { LineChange, convertMonacoLineChanges } from 'app/programming/shared/utils/diff.utils';
 import { MonacoEditorMode } from 'app/shared/monaco-editor/model/monaco-editor.types';
 
-export { MonacoEditorMode } from 'app/shared/monaco-editor/model/monaco-editor.types';
+export type { MonacoEditorMode } from 'app/shared/monaco-editor/model/monaco-editor.types';
 
 export const MAX_TAB_SIZE = 8;
 
