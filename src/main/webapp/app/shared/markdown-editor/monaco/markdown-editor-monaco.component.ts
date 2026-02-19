@@ -398,18 +398,25 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             this.reviewCommentManager?.tryUpdateThreadInputs(threads);
         });
 
+        // Adjust editor dimensions when mode changes (e.g. entering/leaving diff mode).
+        // Skip the initial run: the editor is already laid out by ngAfterViewInit, and an
+        // extra layout() call in tests triggers Monaco's monospace-font-assumption scheduler.
+        let lastObservedMode: MonacoEditorMode | undefined;
         effect(() => {
-            this.mode();
-            untracked(() => {
-                afterNextRender(
-                    () => {
-                        if (this.monacoEditor) {
-                            this.adjustEditorDimensions();
-                        }
-                    },
-                    { injector },
-                );
-            });
+            const currentMode = this.mode();
+            if (lastObservedMode !== undefined && lastObservedMode !== currentMode) {
+                untracked(() => {
+                    afterNextRender(
+                        () => {
+                            if (this.monacoEditor) {
+                                this.adjustEditorDimensions();
+                            }
+                        },
+                        { injector },
+                    );
+                });
+            }
+            lastObservedMode = currentMode;
         });
     }
 
