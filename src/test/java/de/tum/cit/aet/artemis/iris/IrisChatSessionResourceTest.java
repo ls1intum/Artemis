@@ -244,24 +244,22 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getSessionAndMessageCount_returnsZeroWhenNoSessions() throws Exception {
-        var countDto = request.get("/api/iris/chat-history/sessions/count", HttpStatus.OK, IrisChatSessionCountDTO.class);
-        assertThat(countDto.sessions()).isZero();
-        assertThat(countDto.messages()).isZero();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getSessionAndMessageCount_returnsCorrectCounts() throws Exception {
+    void getSessionAndMessageCount_returnsCountsAndIncreasesAfterCreatingSessions() throws Exception {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
+        // Get initial counts (may be non-zero due to other tests)
+        var initialCounts = request.get("/api/iris/chat-history/sessions/count", HttpStatus.OK, IrisChatSessionCountDTO.class);
+        assertThat(initialCounts.sessions()).isGreaterThanOrEqualTo(0);
+        assertThat(initialCounts.messages()).isGreaterThanOrEqualTo(0);
+
+        // Create 2 sessions with 2 messages each
         saveChatSessionWithMessages(IrisChatSessionFactory.createCourseSessionForUserWithMessages(course, user));
         saveChatSessionWithMessages(IrisChatSessionFactory.createLectureSessionForUserWithMessages(lecture, user));
 
-        var countDto = request.get("/api/iris/chat-history/sessions/count", HttpStatus.OK, IrisChatSessionCountDTO.class);
-        assertThat(countDto.sessions()).isEqualTo(2);
+        var updatedCounts = request.get("/api/iris/chat-history/sessions/count", HttpStatus.OK, IrisChatSessionCountDTO.class);
+        assertThat(updatedCounts.sessions()).isEqualTo(initialCounts.sessions() + 2);
         // Each session created by the factory has 2 messages (1 LLM + 1 USER)
-        assertThat(countDto.messages()).isEqualTo(4);
+        assertThat(updatedCounts.messages()).isEqualTo(initialCounts.messages() + 4);
     }
 
     @Test

@@ -118,7 +118,9 @@ export class IrisChatHttpService {
      * @return Observable of the count response
      */
     getSessionAndMessageCount(): Observable<{ sessions: number; messages: number }> {
-        return this.httpClient.get<{ sessions: number; messages: number }>(`${this.apiPrefix}/chat-history/sessions/count`);
+        return this.httpClient
+            .get<{ sessions?: number; messages?: number }>(`${this.apiPrefix}/chat-history/sessions/count`)
+            .pipe(map((counts) => ({ sessions: counts.sessions ?? 0, messages: counts.messages ?? 0 })));
     }
 
     /**
