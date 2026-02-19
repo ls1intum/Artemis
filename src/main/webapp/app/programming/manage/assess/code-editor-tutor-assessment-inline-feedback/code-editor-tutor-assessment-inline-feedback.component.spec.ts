@@ -180,4 +180,22 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         const paragraphElement = fixture.debugElement.query(By.css('.col-10 p')).nativeElement;
         expect(paragraphElement.innerHTML).toContain(comp.buildFeedbackTextForCodeEditor(comp.feedback));
     });
+
+    it('should cancel feedback on Escape', () => {
+        const cancelFeedbackSpy = jest.spyOn(comp, 'cancelFeedback');
+        (comp as any).handleKeydown(new KeyboardEvent('keydown', { key: 'Escape' }));
+        expect(cancelFeedbackSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should save feedback on Shift+Enter only when credits are defined', () => {
+        const updateFeedbackSpy = jest.spyOn(comp, 'updateFeedback');
+        const shiftEnter = new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true });
+
+        (comp as any).handleKeydown(shiftEnter);
+        expect(updateFeedbackSpy).not.toHaveBeenCalled();
+
+        comp.feedback.credits = 1;
+        (comp as any).handleKeydown(shiftEnter);
+        expect(updateFeedbackSpy).toHaveBeenCalledOnce();
+    });
 });

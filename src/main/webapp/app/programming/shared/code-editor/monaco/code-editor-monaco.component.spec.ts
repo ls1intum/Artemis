@@ -371,6 +371,16 @@ describe('CodeEditorMonacoComponent', () => {
         cancelRafSpy.mockRestore();
     }));
 
+    it('should open existing feedback for editing when "+" is pressed on a line with existing feedback', () => {
+        const editFeedbackMock = jest.fn();
+        (comp as any).inlineFeedbackComponents = jest.fn().mockReturnValue([{ codeLine: 1, editFeedback: editFeedbackMock }]);
+
+        comp.addNewFeedback(2); // editor line 2 (1-based) → component codeLine 1 (0-based)
+
+        expect(editFeedbackMock).toHaveBeenCalledExactlyOnceWith(1);
+        expect(comp.newFeedbackLines()).not.toContain(1);
+    });
+
     const shouldOpenFeedbackUsingKeybindHelper = (isTutorAssessment: boolean, readOnlyManualFeedback: boolean): [any, any, any] => {
         const feedbackLineOneBased = 4;
         const addNewFeedbackSpy = jest.spyOn(comp, 'addNewFeedback');
