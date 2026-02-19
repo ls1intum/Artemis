@@ -41,7 +41,7 @@ describe('InlineRefinementButtonComponent', () => {
 
     it('should initialize with collapsed state', () => {
         expect(comp.isExpanded()).toBeFalsy();
-        expect(comp.instruction).toBe('');
+        expect(comp.instruction()).toBe('');
     });
 
     it('should expand and focus input when expand is called', fakeAsync(() => {
@@ -56,7 +56,7 @@ describe('InlineRefinementButtonComponent', () => {
         const refineSpy = jest.spyOn(comp.refine, 'emit');
 
         comp.expand();
-        comp.instruction = 'Improve clarity';
+        comp.instruction.set('Improve clarity');
         comp.submit();
 
         expect(refineSpy).toHaveBeenCalledWith({
@@ -72,7 +72,7 @@ describe('InlineRefinementButtonComponent', () => {
         const refineSpy = jest.spyOn(comp.refine, 'emit');
 
         comp.expand();
-        comp.instruction = '';
+        comp.instruction.set('');
         comp.submit();
 
         expect(refineSpy).not.toHaveBeenCalled();
@@ -82,7 +82,7 @@ describe('InlineRefinementButtonComponent', () => {
         const refineSpy = jest.spyOn(comp.refine, 'emit');
 
         comp.expand();
-        comp.instruction = '   ';
+        comp.instruction.set('   ');
         comp.submit();
 
         expect(refineSpy).not.toHaveBeenCalled();
@@ -95,7 +95,7 @@ describe('InlineRefinementButtonComponent', () => {
         fixture.detectChanges();
 
         comp.expand();
-        comp.instruction = 'Test instruction';
+        comp.instruction.set('Test instruction');
         comp.submit();
 
         expect(refineSpy).not.toHaveBeenCalled();

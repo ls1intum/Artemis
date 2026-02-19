@@ -23,6 +23,11 @@ final class HyperionPromptSanitizer {
     static final int MAX_USER_PROMPT_LENGTH = 1_000;
 
     /**
+     * Maximum allowed length for targeted refinement instructions (500 characters).
+     */
+    static final int MAX_INSTRUCTION_LENGTH = 500;
+
+    /**
      * Default course title when not specified.
      */
     static final String DEFAULT_COURSE_TITLE = "Programming Course";
@@ -70,6 +75,23 @@ final class HyperionPromptSanitizer {
         if (userPrompt.length() > MAX_USER_PROMPT_LENGTH) {
             throw new BadRequestAlertException("User prompt exceeds maximum length of " + MAX_USER_PROMPT_LENGTH + " characters", "ProblemStatement",
                     errorKeyPrefix + ".userPromptTooLong");
+        }
+    }
+
+    /**
+     * Validates that the instruction is not empty and does not exceed the maximum allowed length.
+     *
+     * @param instruction    the sanitized instruction to validate
+     * @param errorKeyPrefix prefix for error keys (e.g. "ProblemStatementRefinement")
+     * @throws BadRequestAlertException if the instruction is blank or exceeds the maximum length
+     */
+    static void validateInstruction(String instruction, String errorKeyPrefix) {
+        if (instruction == null || instruction.isBlank()) {
+            throw new BadRequestAlertException("Instruction cannot be empty", "ProblemStatement", errorKeyPrefix + ".instructionEmpty");
+        }
+        if (instruction.length() > MAX_INSTRUCTION_LENGTH) {
+            throw new BadRequestAlertException("Instruction exceeds maximum length of " + MAX_INSTRUCTION_LENGTH + " characters", "ProblemStatement",
+                    errorKeyPrefix + ".instructionTooLong");
         }
     }
 

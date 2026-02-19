@@ -18,17 +18,18 @@
                 type="text"
                 class="refinement-input fs-small py-1 px-2 w-100"
                 [placeholder]="'artemisApp.programmingExercise.problemStatement.inlineRefinement.placeholder' | artemisTranslate"
-                [(ngModel)]="instruction"
+                [ngModel]="instruction()"
+                (ngModelChange)="instruction.set($event)"
                 (keydown)="onKeydown($event)"
                 [disabled]="isLoading()"
                 maxlength="500"
             />
-            <span class="text-secondary text-nowrap px-1 fs-x-small">{{ instruction.length }}/500</span>
+            <span class="text-secondary text-nowrap px-1 fs-x-small">{{ instruction().length }}/500</span>
             <button
                 type="button"
                 class="refinement-submit-btn btn btn-primary btn-sm rounded-circle d-flex align-items-center justify-content-center p-0"
                 (click)="submit()"
-                [disabled]="!instruction || isLoading()"
+                [disabled]="!instruction() || isLoading()"
                 [attr.title]="'artemisApp.programmingExercise.problemStatement.inlineRefinement.submitTooltip' | artemisTranslate"
             >
                 <fa-icon [icon]="faPaperPlane" />

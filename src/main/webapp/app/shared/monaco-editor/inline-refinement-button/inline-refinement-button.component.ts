@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, ElementRef, OnInit, inject, input, output, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, ElementRef, OnInit, inject, input, model, output, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -51,7 +51,7 @@ export class InlineRefinementButtonComponent implements OnInit {
 
     // State
     isExpanded = signal(false);
-    instruction = '';
+    instruction = model('');
     // Input: Whether submission is in progress
     isLoading = input<boolean>(false);
 
@@ -85,7 +85,7 @@ export class InlineRefinementButtonComponent implements OnInit {
      * Submits the refinement instruction.
      */
     submit(): void {
-        const text = this.instruction.trim();
+        const text = this.instruction().trim();
         if (!text || this.isLoading()) return;
 
         this.refine.emit({

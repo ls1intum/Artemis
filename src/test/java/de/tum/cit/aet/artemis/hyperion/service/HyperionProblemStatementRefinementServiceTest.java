@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRefinementResponseDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementTargetedRefinementRequestDTO;
 
 class HyperionProblemStatementRefinementServiceTest {
 
@@ -235,5 +236,114 @@ class HyperionProblemStatementRefinementServiceTest {
 
         assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatement(course, tooLongProblemStatement, "Refine this"))
                 .isInstanceOf(BadRequestAlertException.class).hasMessageContaining("exceeds maximum length");
+    }
+
+    // Targeted refinement tests
+
+    private Course createTestCourse() {
+        var course = new Course();
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+        return course;
+    }
+
+    @Test
+    void refineProblemStatementTargeted_returnsRefinedStatement() {
+        String originalText = "Line one\nLine two\nLine three";
+        String refinedText = "Line one\nImproved line two\nLine three";
+        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(refinedText)))));
+
+        var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 2, 2, null, null, "Improve this line");
+        ProblemStatementRefinementResponseDTO resp = hyperionProblemStatementRefinementService.refineProblemStatementTargeted(createTestCourse(), request);
+        assertThat(resp).isNotNull();
+        assertThat(resp.refinedProblemStatement()).isEqualTo(refinedText);
+    }
+
+    @Test
+    void refineProblemStatementTargeted_withColumnRange_returnsRefinedStatement() {
+        String originalText = "Hello world example";
+        String refinedText = "Hello universe example";
+        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(refinedText)))));
+
+        var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 1, 1, 7, 12, "Replace world");
+        ProblemStatementRefinementResponseDTO resp = hyperionProblemStatementRefinementService.refineProblemStatementTargeted(createTestCourse(), request);
+        assertThat(resp).isNotNull();
+        assertThat(resp.refinedProblemStatement()).isEqualTo(refinedText);
+    }
+
+    @Test
+    void refineProblemStatementTargeted_multiLineWithColumnRange_returnsRefinedStatement() {
+        String originalText = "First line content\nSecond line content\nThird line content";
+        String refinedText = "First line content\nModified content\nThird line content";
+        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(refinedText)))));
+
+        var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 1, 2, 7, 12, "Merge these lines");
+        ProblemStatementRefinementResponseDTO resp = hyperionProblemStatementRefinementService.refineProblemStatementTargeted(createTestCourse(), request);
+        assertThat(resp).isNotNull();
+        assertThat(resp.refinedProblemStatement()).isEqualTo(refinedText);
+    }
+
+    @Test
+    void refineProblemStatementTargeted_throwsExceptionOnAIFailure() {
+        String originalText = "Line one\nLine two";
+        when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("AI service unavailable"));
+
+        var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 1, 2, null, null, "Improve this");
+        assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatementTargeted(createTestCourse(), request))
+                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("Failed to refine problem statement");
+    }
+
+    @Test
+    void refineProblemStatementTargeted_throwsExceptionWhenResponseIsNull() {
+        String originalText = "Line one\nLine two";
+        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(null)))));
+
+        var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 1, 1, null, null, "Improve this");
+        assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatementTargeted(createTestCourse(), request))
+                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("null");
+    }
+
+    @Test
+    void refineProblemStatementTargeted_throwsExceptionWhenResponseUnchanged() {
+        String originalText = "Unchanged problem statement";
+        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(originalText)))));
+
+        var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 1, 1, null, null, "Change something");
+        assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatementTargeted(createTestCourse(), request)).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("same after refinement");
+    }
+
+    @Test
+    void refineProblemStatementTargeted_throwsExceptionWhenChatClientIsNull() {
+        var serviceWithNullClient = new HyperionProblemStatementRefinementService(null, new HyperionPromptTemplateService());
+        String originalText = "Some text";
+
+        var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 1, 1, null, null, "Fix this");
+        assertThatThrownBy(() -> serviceWithNullClient.refineProblemStatementTargeted(createTestCourse(), request)).isInstanceOf(InternalServerErrorAlertException.class)
+                .hasMessageContaining("AI chat client is not configured");
+    }
+
+    @Test
+    void refineProblemStatementTargeted_throwsExceptionWhenProblemStatementIsEmpty() {
+        var request = new ProblemStatementTargetedRefinementRequestDTO("   ", 1, 1, null, null, "Fix this");
+        assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatementTargeted(createTestCourse(), request)).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("Cannot refine empty problem statement");
+    }
+
+    @Test
+    void refineProblemStatementTargeted_throwsExceptionWhenLineRangeOutOfBounds() {
+        // Only 1 line but requesting line 5
+        String originalText = "Single line";
+        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage("Changed")))));
+
+        var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 5, 5, null, null, "Fix this");
+        assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatementTargeted(createTestCourse(), request)).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("Invalid line range");
+    }
+
+    @Test
+    void refineProblemStatementTargeted_throwsExceptionWhenInstructionIsEmpty() {
+        assertThatThrownBy(() -> new ProblemStatementTargetedRefinementRequestDTO("Some text", 1, 1, null, null, "   ")).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("instruction must not be empty after trimming");
     }
 }

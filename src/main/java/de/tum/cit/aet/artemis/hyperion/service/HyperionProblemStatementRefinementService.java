@@ -158,7 +158,7 @@ public class HyperionProblemStatementRefinementService {
             throw new BadRequestAlertException("Cannot refine empty problem statement", "ProblemStatement", "ProblemStatementRefinement.problemStatementEmpty");
         }
         String sanitizedInstruction = sanitizeInput(request.instruction());
-        HyperionPromptSanitizer.validateUserPrompt(sanitizedInstruction, "ProblemStatementRefinement");
+        HyperionPromptSanitizer.validateInstruction(sanitizedInstruction, "ProblemStatementRefinement");
 
         // Build the instruction string using sanitized inputs
         String sanitizedProblemStatement = sanitizeInput(originalProblemStatementText);
@@ -169,8 +169,8 @@ public class HyperionProblemStatementRefinementService {
         // Add line numbers to help the LLM identify exact lines to modify
         String textWithLineNumbers = addLineNumbers(sanitizedProblemStatement);
 
-        // Validate total input length
-        int totalLength = textWithLineNumbers.length() + targetedInstruction.length();
+        // Validate total input length (use sanitized problem statement length to avoid line number prefix inflation)
+        int totalLength = sanitizedProblemStatement.length() + targetedInstruction.length();
         if (totalLength > MAX_PROBLEM_STATEMENT_LENGTH) {
             throw new BadRequestAlertException("Input is too long (including instructions)", "ProblemStatement", "ProblemStatementRefinement.problemStatementTooLong");
         }
