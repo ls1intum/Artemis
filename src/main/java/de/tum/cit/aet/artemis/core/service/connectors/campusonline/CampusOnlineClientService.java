@@ -175,8 +175,8 @@ public class CampusOnlineClientService {
                     lastException = e;
                 }
                 else {
-                    // Non-auth HTTP error — propagate immediately
-                    throw new CampusOnlineApiException("CAMPUSOnline API returned error: " + e.getStatusCode(), e);
+                    // Non-auth HTTP error — propagate immediately (do not include cause to avoid token leakage in logs)
+                    throw new CampusOnlineApiException("CAMPUSOnline API returned error: " + e.getStatusCode());
                 }
             }
             catch (RestClientException e) {
@@ -185,7 +185,8 @@ public class CampusOnlineClientService {
                 lastException = e;
             }
         }
-        throw new CampusOnlineApiException("All CAMPUSOnline API tokens failed", lastException);
+        // Do not include the original exception as cause to avoid leaking API tokens (which are embedded in the request URL)
+        throw new CampusOnlineApiException("All CAMPUSOnline API tokens failed");
     }
 
     /**
