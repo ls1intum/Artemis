@@ -143,7 +143,7 @@ describe('AgentChatService', () => {
                     // Simulate timeout by advancing time past 30 seconds
                     vi.advanceTimersByTime(30001);
                     if (!req.cancelled) {
-                        req.error(new ErrorEvent('Timeout'));
+                        req.error(new ProgressEvent('error'));
                     }
                 } finally {
                     vi.useRealTimers();
