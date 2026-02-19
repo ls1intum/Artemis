@@ -21,6 +21,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -367,20 +370,21 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
 
     // Targeted refinement endpoint tests
 
-    private String buildTargetedRefinementBody(String problemStatement, int startLine, int endLine, Integer startColumn, Integer endColumn, String instruction) {
-        StringBuilder sb = new StringBuilder("{");
-        sb.append("\"problemStatementText\":\"").append(problemStatement).append("\",");
-        sb.append("\"startLine\":").append(startLine).append(",");
-        sb.append("\"endLine\":").append(endLine).append(",");
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
+    private String buildTargetedRefinementBody(String problemStatement, int startLine, int endLine, Integer startColumn, Integer endColumn, String instruction) throws Exception {
+        ObjectNode node = objectMapper.createObjectNode();
+        node.put("problemStatementText", problemStatement);
+        node.put("startLine", startLine);
+        node.put("endLine", endLine);
         if (startColumn != null) {
-            sb.append("\"startColumn\":").append(startColumn).append(",");
+            node.put("startColumn", startColumn);
         }
         if (endColumn != null) {
-            sb.append("\"endColumn\":").append(endColumn).append(",");
+            node.put("endColumn", endColumn);
         }
-        sb.append("\"instruction\":\"").append(instruction).append("\"");
-        sb.append("}");
-        return sb.toString();
+        node.put("instruction", instruction);
+        return objectMapper.writeValueAsString(node);
     }
 
     @Test

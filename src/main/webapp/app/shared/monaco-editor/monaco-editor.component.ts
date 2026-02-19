@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, ElementRef, NgZone, OnDestroy, OnInit, Renderer2, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MonacoTextEditorAdapter } from 'app/shared/monaco-editor/model/actions/adapter/monaco-text-editor.adapter';
 import { Disposable, EditorPosition, EditorRange, MonacoEditorDiffText, MonacoEditorTextModel } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
@@ -36,11 +37,16 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private static readonly DEFAULT_LINE_DECORATION_BUTTON_WIDTH = '2.3ch';
     private static readonly SHRINK_TO_FIT_CLASS = 'monaco-shrink-to-fit';
 
+    /** The primary code editor instance — created once in the constructor. Reassigned only during diff-mode transitions. */
     private _editor: monaco.editor.IStandaloneCodeEditor;
+    /** The diff editor instance — lazily created when entering diff mode, disposed when leaving it. */
     private _diffEditor?: monaco.editor.IStandaloneDiffEditor;
 
+    /** Adapter wrapping the currently active editor for {@link TextEditorAction} registration. Recreated on editor context switches. */
     private textEditorAdapter: MonacoTextEditorAdapter;
+    /** Container element for the primary editor — created in the constructor and never replaced. */
     private monacoEditorContainerElement: HTMLElement;
+    /** Container element for the diff editor — created in the constructor and never replaced. */
     private diffEditorContainerElement: HTMLElement;
 
     private readonly emojiConvertor = new EmojiConvertor();
@@ -105,6 +111,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      */
     private readonly renderer = inject(Renderer2);
     private readonly translateService = inject(TranslateService);
+    private readonly alertService = inject(AlertService);
     private readonly elementRef = inject(ElementRef);
     private readonly monacoEditorService = inject(MonacoEditorService);
     private readonly ngZone = inject(NgZone);
@@ -394,6 +401,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             return;
         }
         this.lastEditableEditor = editor;
+        // The old adapter is a stateless wrapper (no subscriptions or resources to release),
+        // so it can be safely replaced without explicit disposal.
         this.textEditorAdapter = new MonacoTextEditorAdapter(editor);
         this.attachEditableEditorListeners(editor);
         this.reRegisterActions();
@@ -844,8 +853,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                 action.register(this.textEditorAdapter, this.translateService);
             } catch (error) {
                 // Some actions may fail if no model is attached yet.
-                // eslint-disable-next-line no-undef
-                console.warn('Failed to re-register Monaco action', action.id, error);
+                this.alertService.warning(`Failed to re-register Monaco action '${action.id}'`);
             }
         }
     }

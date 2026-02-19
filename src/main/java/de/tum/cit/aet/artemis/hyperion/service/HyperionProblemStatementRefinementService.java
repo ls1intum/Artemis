@@ -289,6 +289,10 @@ public class HyperionProblemStatementRefinementService {
     /**
      * Converts a 1-indexed exclusive nullable column to a 0-indexed exclusive end column suitable for {@link String#substring(int, int)}.
      * When colObj is null, defaults to the full line length.
+     * <p>
+     * Example: endColumn=5 (1-indexed, exclusive → chars 1-4 selected) is converted to
+     * 0-indexed value 4, which is then used as the exclusive end in {@code String.substring(start, 4)},
+     * correctly selecting characters at 0-indexed positions 0-3.
      */
     private int resolveEndColumn(Integer colObj, int lineLength) {
         if (colObj == null) {

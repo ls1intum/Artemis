@@ -1,4 +1,19 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, ElementRef, OnInit, inject, input, model, output, signal, viewChild } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    DestroyRef,
+    ElementRef,
+    Injector,
+    OnInit,
+    afterNextRender,
+    inject,
+    input,
+    model,
+    output,
+    signal,
+    viewChild,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -23,6 +38,7 @@ export class InlineRefinementButtonComponent implements OnInit {
     private readonly translateService = inject(TranslateService);
     private readonly cdr = inject(ChangeDetectorRef);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly injector = inject(Injector);
 
     // Input: Position where the button should appear
     top = input.required<number>();
@@ -75,10 +91,13 @@ export class InlineRefinementButtonComponent implements OnInit {
      */
     expand(): void {
         this.isExpanded.set(true);
-        // Focus the input after expansion
-        setTimeout(() => {
-            this.inputElement()?.nativeElement.focus();
-        }, 50);
+        // Focus the input after the DOM updates following expansion
+        afterNextRender(
+            () => {
+                this.inputElement()?.nativeElement.focus();
+            },
+            { injector: this.injector },
+        );
     }
 
     /**
