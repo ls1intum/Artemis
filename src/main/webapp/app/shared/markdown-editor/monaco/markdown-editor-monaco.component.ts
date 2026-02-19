@@ -542,7 +542,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.showTextStyleActions = !selection.isEmpty;
         this.showNonTextStyleActions = selection.isEmpty;
         this.changeDetectorRef.markForCheck();
-        this.onResizeMoved({} as CdkDragMove);
     }
 
     /**
