@@ -438,7 +438,7 @@ public record CreateExerciseDTO(
 Validation is not automatic. You must annotate the DTO parameter in your REST controller method with `@Valid`.
 If this annotation is missing, the constraints defined in your DTO will be ignored.
 
-```
+```java
 @PostMapping
 // The @Valid annotation triggers the validation logic before the method body is executed
 public ResponseEntity<ExerciseDTO> createExercise(@RequestBody @Valid CreateExerciseDTO exerciseDTO) {
@@ -450,7 +450,7 @@ public ResponseEntity<ExerciseDTO> createExercise(@RequestBody @Valid CreateExer
 If your DTO contains other DTOs (as fields or collections), validation does not cascade automatically.
 You must annotate the nested field with `@Valid` to ensure the inner objects are also checked.
 
-```
+```java
 public record ExamDTO(
     @NotBlank
     String title,
