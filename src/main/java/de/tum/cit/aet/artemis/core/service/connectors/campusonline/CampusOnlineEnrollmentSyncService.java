@@ -126,7 +126,7 @@ public class CampusOnlineEnrollmentSyncService {
     public CampusOnlineSyncResultDTO performSingleCourseSync(long courseId) {
         Course course = courseRepository.findWithEagerCampusOnlineConfigurationById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
         if (course.getCampusOnlineConfiguration() == null) {
-            throw new CampusOnlineApiException("Course " + courseId + " has no CAMPUSOnline configuration");
+            throw new EntityNotFoundException("CampusOnlineConfiguration for Course", courseId);
         }
         SyncCounts counts = syncCourseEnrollment(course);
         return new CampusOnlineSyncResultDTO(1, 0, counts.usersAdded, counts.usersNotFound);

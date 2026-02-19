@@ -122,7 +122,7 @@ class CampusOnlineEnrollmentSyncServiceTest {
         course.setId(1L);
         when(courseRepository.findWithEagerCampusOnlineConfigurationById(1L)).thenReturn(Optional.of(course));
 
-        assertThatThrownBy(() -> service.performSingleCourseSync(1L)).isInstanceOf(CampusOnlineApiException.class).hasMessageContaining("has no CAMPUSOnline configuration");
+        assertThatThrownBy(() -> service.performSingleCourseSync(1L)).isInstanceOf(EntityNotFoundException.class).hasMessageContaining("CampusOnlineConfiguration for Course");
     }
 
     @Test

@@ -144,7 +144,7 @@ public class AdminCampusOnlineResource {
      * Skips entries with duplicate external IDs (both within the import and against existing data).
      *
      * @param importDTOs the list of org units to import
-     * @return list of all org units after import
+     * @return list of newly created org units (duplicates are skipped)
      */
     @PostMapping("org-units/import")
     public ResponseEntity<List<CampusOnlineOrgUnitDTO>> importOrgUnits(@RequestBody @Valid List<CampusOnlineOrgUnitImportDTO> importDTOs) {
@@ -229,6 +229,9 @@ public class AdminCampusOnlineResource {
         validateOrgUnitId(orgUnitId);
         validateDateParam(from, "from");
         validateDateParam(until, "until");
+        if (LocalDate.parse(from).isAfter(LocalDate.parse(until))) {
+            throw new BadRequestAlertException("'from' date must not be after 'until' date", "campusOnline", "invalidDateRange");
+        }
         List<CampusOnlineCourseDTO> courses = courseImportService.searchCourses(orgUnitId, from, until);
         return ResponseEntity.ok(courses);
     }

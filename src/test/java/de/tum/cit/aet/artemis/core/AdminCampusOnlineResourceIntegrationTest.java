@@ -599,9 +599,9 @@ class AdminCampusOnlineResourceIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void syncSingleCourse_returnsBadGateway_whenNoCampusOnlineConfig() throws Exception {
-        // testCourse has no CAMPUSOnline configuration — CampusOnlineApiException maps to 502
-        request.postWithResponseBody(BASE_URL + "courses/" + testCourse.getId() + "/sync", null, CampusOnlineSyncResultDTO.class, HttpStatus.BAD_GATEWAY);
+    void syncSingleCourse_returnsNotFound_whenNoCampusOnlineConfig() throws Exception {
+        // testCourse has no CAMPUSOnline configuration — EntityNotFoundException maps to 404
+        request.postWithResponseBody(BASE_URL + "courses/" + testCourse.getId() + "/sync", null, CampusOnlineSyncResultDTO.class, HttpStatus.NOT_FOUND);
     }
 
     @Test
