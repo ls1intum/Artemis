@@ -47,7 +47,7 @@ class HyperionProblemStatementRefinementServiceTest {
     }
 
     @Test
-    void refineProblemStatement_returnsRefinedStatement() throws Exception {
+    void refineProblemStatement_returnsRefinedStatement() {
         String originalStatement = "Original problem statement";
         String refinedStatement = "Refined problem statement with improvements";
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(refinedStatement)))));
@@ -61,7 +61,7 @@ class HyperionProblemStatementRefinementServiceTest {
     }
 
     @Test
-    void refineProblemStatement_throwsExceptionOnAIFailure() throws Exception {
+    void refineProblemStatement_throwsExceptionOnAIFailure() {
         String originalStatement = "Original problem statement";
         when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("AI service unavailable"));
 
@@ -75,7 +75,7 @@ class HyperionProblemStatementRefinementServiceTest {
     }
 
     @Test
-    void refineProblemStatement_throwsExceptionOnExcessivelyLongResponse() throws Exception {
+    void refineProblemStatement_throwsExceptionOnExcessivelyLongResponse() {
         String originalStatement = "Original problem statement";
         // Generate a string longer than MAX_PROBLEM_STATEMENT_LENGTH (50,000 characters)
         String excessivelyLongRefinement = "a".repeat(50_001);
@@ -103,7 +103,7 @@ class HyperionProblemStatementRefinementServiceTest {
     }
 
     @Test
-    void refineProblemStatement_handlesNullCourseFields() throws Exception {
+    void refineProblemStatement_handlesNullCourseFields() {
         String originalStatement = "Original problem statement";
         String refinedStatement = "Refined with default course info";
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(refinedStatement)))));
@@ -118,7 +118,7 @@ class HyperionProblemStatementRefinementServiceTest {
     }
 
     @Test
-    void refineProblemStatement_acceptsMaximumLengthResponse() throws Exception {
+    void refineProblemStatement_acceptsMaximumLengthResponse() {
         String originalStatement = "Original problem statement";
         // Generate a string exactly at MAX_PROBLEM_STATEMENT_LENGTH (50,000 characters)
         String maxLengthRefinement = "a".repeat(50_000);
@@ -168,7 +168,7 @@ class HyperionProblemStatementRefinementServiceTest {
     }
 
     @Test
-    void refineProblemStatement_throwsExceptionWhenResponseIsNull() throws Exception {
+    void refineProblemStatement_throwsExceptionWhenResponseIsNull() {
         String originalStatement = "Original problem statement";
         // AI returns null content
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(null)))));
@@ -183,7 +183,7 @@ class HyperionProblemStatementRefinementServiceTest {
     }
 
     @Test
-    void refineProblemStatement_throwsExceptionWhenResponseIsBlank() throws Exception {
+    void refineProblemStatement_throwsExceptionWhenResponseIsBlank() {
         String originalStatement = "Original problem statement";
         // AI returns blank content
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage("   ")))));
@@ -198,7 +198,7 @@ class HyperionProblemStatementRefinementServiceTest {
     }
 
     @Test
-    void refineProblemStatement_throwsExceptionWhenRefinementUnchanged() throws Exception {
+    void refineProblemStatement_throwsExceptionWhenRefinementUnchanged() {
         String originalStatement = "Original problem statement";
         // AI returns the exact same content
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(originalStatement)))));

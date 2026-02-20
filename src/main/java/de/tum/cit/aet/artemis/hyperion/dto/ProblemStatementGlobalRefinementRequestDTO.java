@@ -17,7 +17,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "Request to refine a problem statement globally using a user prompt")
 public record ProblemStatementGlobalRefinementRequestDTO(
-        @NotBlank @Size(max = 50000) @Schema(description = "Original problem statement text to be refined (max 50,000 chars)") String problemStatementText,
+        @NotBlank @Size(min = 1, max = 50000) @Schema(description = "Original problem statement text to be refined (max 50,000 chars)") String problemStatementText,
 
-        @NotBlank @Size(max = 1000) @Schema(description = "User prompt for global refinement") String userPrompt) {
+        @NotBlank @Size(min = 1, max = 1000) @Schema(description = "User prompt for global refinement") String userPrompt) {
 }

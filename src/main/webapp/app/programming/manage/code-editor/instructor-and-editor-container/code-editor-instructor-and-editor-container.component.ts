@@ -184,6 +184,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private activeJobId?: string;
     private statusSubscription?: Subscription;
     private restoreRequestId = 0;
+    private refinementRequestId = 0;
 
     override loadExercise(exerciseId: number): Observable<ProgrammingExercise> {
         return super.loadExercise(exerciseId).pipe(
@@ -615,10 +616,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 next: (result) => {
                     if (result.success && result.content) {
                         const expectedContent = result.content;
+                        const requestId = ++this.refinementRequestId;
                         this.showDiff.set(true);
                         afterNextRender(
                             () => {
-                                if (this.isGeneratingOrRefining() || this.showDiff()) {
+                                if (requestId === this.refinementRequestId && this.showDiff()) {
                                     this.editableInstructions()?.applyRefinedContent(expectedContent);
                                 }
                             },

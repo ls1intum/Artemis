@@ -781,7 +781,7 @@ components:
       description: Request to refine a problem statement globally using a user prompt
       properties:
         problemStatementText: {type: string, description: 'Original problem statement
-            text to be refined (max 50,000 chars)', maxLength: 50000, minLength: 0}
+            text to be refined (max 50,000 chars)', maxLength: 50000, minLength: 1}
         userPrompt: {type: string, description: User prompt for global refinement,
-          maxLength: 1000, minLength: 0}
+          maxLength: 1000, minLength: 1}
       required: [problemStatementText, userPrompt]

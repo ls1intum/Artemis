@@ -66,6 +66,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     isGeneratingOrRefining = signal(false);
     protected readonly isPromptNearLimit = computed(() => (this.userPrompt()?.length ?? 0) >= MAX_USER_PROMPT_LENGTH * PROMPT_LENGTH_WARNING_THRESHOLD);
     private currentAiOperationSubscription: Subscription | undefined = undefined;
+    private refinementRequestId = 0;
     private profileService = inject(ProfileService);
     hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
 
@@ -213,10 +214,11 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                         this.showDiff.set(true);
                         this.userPrompt.set('');
                         const expectedContent = result.content;
+                        const requestId = ++this.refinementRequestId;
                         afterNextRender(
                             () => {
                                 // Staleness guard: only apply if this is still the active operation
-                                if (this.isGeneratingOrRefining() || this.showDiff()) {
+                                if (requestId === this.refinementRequestId && this.showDiff()) {
                                     this.editableInstructions()?.applyRefinedContent(expectedContent);
                                 }
                             },
@@ -292,8 +294,11 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
 
     onInstructionChange(problemStatement: string) {
         const exercise = this.programmingExercise();
+        const previousContent = this.currentProblemStatement();
         this.currentProblemStatement.set(problemStatement);
-        this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
+        if (problemStatement !== previousContent) {
+            this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
+        }
         if (exercise) {
             exercise.problemStatement = problemStatement;
             this.programmingExerciseChange.emit(exercise);

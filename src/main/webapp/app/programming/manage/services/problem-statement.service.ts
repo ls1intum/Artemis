@@ -46,7 +46,7 @@ export class ProblemStatementService {
     generateProblemStatement(exercise: ProgrammingExercise | undefined, prompt: string, setLoading: (loading: boolean) => void): Observable<OperationResult> {
         const courseId = getCourseId(exercise);
         if (!courseId || !prompt?.trim()) {
-            return of({ success: false });
+            return of({ success: false, errorHandled: true });
         }
         setLoading(true);
         return this.hyperionApiService
@@ -70,7 +70,7 @@ export class ProblemStatementService {
             if (emptyContent) {
                 this.alertService.error('artemisApp.programmingExercise.problemStatement.cannotRefineEmpty');
             }
-            return of({ success: false, errorHandled: emptyContent });
+            return of({ success: false, errorHandled: true });
         }
         if (currentContent.length > MAX_PROBLEM_STATEMENT_LENGTH) {
             this.alertService.error('artemisApp.programmingExercise.problemStatement.problemStatementTooLong');
