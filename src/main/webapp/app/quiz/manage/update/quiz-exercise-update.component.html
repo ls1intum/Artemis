@@ -1,17 +1,4 @@
 @if (quizExercise) {
-    @if (!quizExercise.isEditable) {
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <div class="alert alert-warning mt-3">
-                    @if (quizExercise.quizEnded) {
-                        <span jhiTranslate="artemisApp.quizExercise.edit.editNotPossibleAfterEnd"></span>
-                    } @else {
-                        <span jhiTranslate="artemisApp.quizExercise.edit.editNotPossibleDuringQuiz"></span>
-                    }
-                </div>
-            </div>
-        </div>
-    }
     <div class="row">
         <div class="col-lg-12">
             <div class="title">
