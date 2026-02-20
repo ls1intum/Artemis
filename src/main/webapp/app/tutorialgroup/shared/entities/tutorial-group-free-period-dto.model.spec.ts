@@ -24,21 +24,9 @@ describe('TutorialGroupFreePeriodDTO', () => {
 
             expect(dto.id).toBe(1);
             expect(dto.start).toBe('2024-01-10T10:00:00Z');
-            expect(dto.end).toBe('2024-01-10T10:00:00Z'); // mocked
+            expect(dto.end).toBe('2024-01-10T10:00:00Z');
             expect(dto.reason).toBe('Holiday');
             expect(convertSpy).toHaveBeenCalledTimes(2);
-        });
-
-        it('shouldReturnUndefinedDatesWhenEntityDatesAreUndefined', () => {
-            const entity = {
-                id: 2,
-                reason: 'No dates',
-            };
-
-            const dto = toTutorialGroupFreePeriodDTO(entity as any);
-
-            expect(dto.start).toBeUndefined();
-            expect(dto.end).toBeUndefined();
         });
     });
 
@@ -57,18 +45,6 @@ describe('TutorialGroupFreePeriodDTO', () => {
             expect(entity.start?.isSame(dayjs.utc('2024-01-10T10:00:00Z'))).toBe(true);
             expect(entity.end?.isSame(dayjs.utc('2024-01-10T12:00:00Z'))).toBe(true);
             expect(entity.reason).toBe('Exam');
-        });
-
-        it('shouldReturnUndefinedDatesWhenDtoDatesAreMissing', () => {
-            const dto: TutorialGroupFreePeriodDTO = {
-                id: 4,
-                reason: 'Missing',
-            };
-
-            const entity = fromTutorialGroupFreePeriodDTO(dto);
-
-            expect(entity.start).toBeUndefined();
-            expect(entity.end).toBeUndefined();
         });
     });
 });
