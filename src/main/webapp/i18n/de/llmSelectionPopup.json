@@ -9,6 +9,7 @@
             "noAI": "Keine KI",
             "recommended": "Empfohlen",
             "experimental": "Experimentell",
+            "currentSelection": "Aktuell",
             "descriptionCloud": "Schnelle, hochwertige KI basierend auf modernsten Cloud-Modellen",
             "descriptionLocal": "Ideal für höchsten Datenschutz, aber mit einigen Einschränkungen",
             "descriptionNo": "Du kannst Artemis weiterhin nutzen, jedoch ohne KI-Unterstützung",
