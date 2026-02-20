@@ -120,6 +120,10 @@
                 "passkey": {
                     "name": "Passkey Authentication",
                     "description": "Enables passwordless authentication using FIDO2/WebAuthn passkeys for enhanced security."
+                },
+                "videoUpload": {
+                    "name": "Video Upload",
+                    "description": "Enables direct video file uploads for lecture units. When disabled, only embeddable video URLs (YouTube, TUM Live, etc.) are supported."
                 }
             },
             "toggles": {

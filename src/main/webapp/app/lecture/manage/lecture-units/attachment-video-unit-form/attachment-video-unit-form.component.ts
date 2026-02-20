@@ -1,11 +1,12 @@
-import { Component, ElementRef, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, ViewChild, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import dayjs from 'dayjs/esm';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import urlParser from 'js-video-url-parser';
-import { faArrowLeft, faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faCheck, faExclamationTriangle, faFile, faLink, faQuestionCircle, faTimes, faTrash, faVideo } from '@fortawesome/free-solid-svg-icons';
 import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
-import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
+import { MAX_FILE_SIZE, MAX_VIDEO_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -13,10 +14,14 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_VIDEO_UPLOAD } from 'app/app.constants';
 
 export interface AttachmentVideoUnitFormData {
     formProperties: FormProperties;
     fileProperties: FileProperties;
+    videoFileProperties?: VideoFileProperties;
+    uploadProgressCallback?: (progress: number, status: string) => void;
 }
 
 // matches structure of the reactive form
@@ -35,6 +40,12 @@ export interface FormProperties {
 export interface FileProperties {
     file?: File;
     fileName?: string;
+}
+
+// video file input is also a special case
+export interface VideoFileProperties {
+    videoFile?: File;
+    videoFileName?: string;
 }
 
 function isTumLiveUrl(url: URL): boolean {
@@ -85,16 +96,41 @@ function videoSourceUrlValidator(control: AbstractControl): ValidationErrors | u
 @Component({
     selector: 'jhi-attachment-video-unit-form',
     templateUrl: './attachment-video-unit-form.component.html',
-    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FaIconComponent, NgbTooltip, FormDateTimePickerComponent, CompetencySelectionComponent, ArtemisTranslatePipe],
+    styleUrl: './attachment-video-unit-form.component.scss',
+    imports: [
+        NgTemplateOutlet,
+        FormsModule,
+        ReactiveFormsModule,
+        TranslateDirective,
+        FaIconComponent,
+        NgbTooltip,
+        FormDateTimePickerComponent,
+        CompetencySelectionComponent,
+        ArtemisTranslatePipe,
+    ],
 })
-export class AttachmentVideoUnitFormComponent {
+export class AttachmentVideoUnitFormComponent implements OnDestroy {
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faTimes = faTimes;
     protected readonly faArrowLeft = faArrowLeft;
+    protected readonly faCheck = faCheck;
+    protected readonly faFile = faFile;
+    protected readonly faVideo = faVideo;
+    protected readonly faTrash = faTrash;
+    protected readonly faLink = faLink;
+    protected readonly faExclamationTriangle = faExclamationTriangle;
 
     protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
     protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
 
+    // Stores original video file path when editing (to preserve if no new video uploaded)
+    private existingVideoPath?: string;
+
+    // Upload progress tracking
+    isUploading = signal(false);
+    uploadProgress = signal(0);
+    uploadStatus = signal('');
+    private uploadResetTimeoutId?: number;
     formData = input<AttachmentVideoUnitFormData>();
     isEditMode = input<boolean>(false);
 
@@ -113,10 +149,24 @@ export class AttachmentVideoUnitFormComponent {
     fileName = signal<string | undefined>(undefined);
     isFileTooBig = signal<boolean>(false);
 
+    // video file input handling
+    @ViewChild('videoFileInput', { static: false })
+    videoFileInput: ElementRef;
+    videoFile: File;
+    videoFileInputTouched = false;
+
+    videoFileName = signal<string | undefined>(undefined);
+    isVideoFileTooBig = signal<boolean>(false);
+
+    // Video source type: 'upload' for video file upload, 'url' for embeddable link
+    videoSourceType = signal<'upload' | 'url'>('url');
+
     videoSourceUrlValidator = videoSourceUrlValidator;
     videoSourceTransformUrlValidator = videoSourceTransformUrlValidator;
 
     private readonly formBuilder = inject(FormBuilder);
+    private readonly profileService = inject(ProfileService);
+    readonly isVideoUploadEnabled = computed(() => this.profileService.isModuleFeatureActive(MODULE_FEATURE_VIDEO_UPLOAD));
 
     constructor() {
         effect(() => {
@@ -125,6 +175,12 @@ export class AttachmentVideoUnitFormComponent {
                 this.setFormValues(formData);
             }
         });
+    }
+
+    ngOnDestroy(): void {
+        if (this.uploadResetTimeoutId) {
+            clearTimeout(this.uploadResetTimeoutId);
+        }
     }
 
     form: FormGroup = this.formBuilder.group({
@@ -142,7 +198,20 @@ export class AttachmentVideoUnitFormComponent {
     readonly videoSourceSignal = toSignal(this.videoSourceControl!.valueChanges, { initialValue: this.videoSourceControl!.value });
 
     isFormValid = computed(() => {
-        return this.statusChanges() === 'VALID' && !this.isFileTooBig() && this.datePickerComponent()?.isValid() && (!!this.fileName() || !!this.videoSourceSignal());
+        const hasValidFile = !!this.fileName();
+        const hasValidVideoFile = !!this.videoFileName();
+        const hasVideoSource = !!this.videoSourceSignal();
+
+        // If video upload is disabled and user tries to upload a NEW video file, form is invalid
+        // Allow pre-populated data (from edit mode) without invalidating the form
+        if (this.videoFileInputTouched && hasValidVideoFile && !this.isVideoUploadEnabled()) {
+            return false;
+        }
+
+        // Must have at least one of: PDF file, video file, or video source URL
+        const hasContent = hasValidFile || hasValidVideoFile || hasVideoSource;
+
+        return this.statusChanges() === 'VALID' && !this.isFileTooBig() && !this.isVideoFileTooBig() && this.datePickerComponent()?.isValid() && hasContent;
     });
 
     onFileChange(event: Event): void {
@@ -150,18 +219,85 @@ export class AttachmentVideoUnitFormComponent {
         if (!input.files?.length) {
             return;
         }
+
+        this.fileInputTouched = true;
         this.file = input.files[0];
         this.fileName.set(this.file.name);
-        // automatically set the name in case it is not yet specified
+
+        // Validate file size for PDF files
+        this.isFileTooBig.set(this.file.size > MAX_FILE_SIZE);
+
+        // Automatically set the name if not yet specified
         if (this.form && (this.nameControl?.value == undefined || this.nameControl?.value == '')) {
             this.form.patchValue({
-                // without extension
                 name: this.file.name.replace(/\.[^/.]+$/, ''),
             });
         }
-        this.isFileTooBig.set(this.file.size > MAX_FILE_SIZE);
     }
 
+    onVideoFileChange(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        if (!input.files?.length) {
+            return;
+        }
+
+        this.videoFileInputTouched = true;
+        this.videoFile = input.files[0];
+        this.videoFileName.set(this.videoFile.name);
+
+        // Validate file size for video files
+        this.isVideoFileTooBig.set(this.videoFile.size > MAX_VIDEO_FILE_SIZE);
+
+        // Automatically set the name if not yet specified
+        if (this.form && (this.nameControl?.value == undefined || this.nameControl?.value == '')) {
+            this.form.patchValue({
+                name: this.videoFile.name.replace(/\.[^/.]+$/, ''),
+            });
+        }
+    }
+
+    onVideoSourceTypeChange(type: 'upload' | 'url'): void {
+        this.videoSourceType.set(type);
+
+        // Clear the other option when switching modes (mutually exclusive)
+        if (type === 'upload') {
+            // Clear embeddable URL fields
+            this.videoSourceControl?.setValue(undefined);
+            this.urlHelperControl?.setValue(undefined);
+        } else {
+            // Clear video file upload and any existing video path
+            this.videoFile = undefined!;
+            this.videoFileName.set(undefined);
+            this.existingVideoPath = undefined;
+            this.videoFileInputTouched = false;
+            this.isVideoFileTooBig.set(false);
+            if (this.videoFileInput) {
+                this.videoFileInput.nativeElement.value = '';
+            }
+        }
+    }
+
+    removeFile(): void {
+        this.file = undefined!;
+        this.fileName.set(undefined);
+        this.fileInputTouched = false;
+        this.isFileTooBig.set(false);
+        const fileInputEl = this.fileInput();
+        if (fileInputEl) {
+            fileInputEl.nativeElement.value = '';
+        }
+    }
+
+    removeVideoFile(): void {
+        this.videoFile = undefined!;
+        this.videoFileName.set(undefined);
+        this.existingVideoPath = undefined;
+        this.videoFileInputTouched = false;
+        this.isVideoFileTooBig.set(false);
+        if (this.videoFileInput) {
+            this.videoFileInput.nativeElement.value = '';
+        }
+    }
     get nameControl() {
         return this.form.get('name');
     }
@@ -193,26 +329,78 @@ export class AttachmentVideoUnitFormComponent {
     submitForm() {
         const formValue = this.form.value;
         const formProperties: FormProperties = { ...formValue };
+
+        // Preserve existing video path if no new video file was uploaded
+        if (this.existingVideoPath && !this.videoFile) {
+            formProperties.videoSource = this.existingVideoPath;
+        }
+
         const fileProperties: FileProperties = {
             file: this.file,
             fileName: this.fileName(),
         };
 
+        // Create upload progress callback
+        const uploadProgressCallback = (progress: number, status: string) => {
+            this.isUploading.set(true);
+            this.uploadProgress.set(progress);
+            this.uploadStatus.set(status);
+
+            if (progress === 100) {
+                if (this.uploadResetTimeoutId) {
+                    clearTimeout(this.uploadResetTimeoutId);
+                }
+                // Reset upload state after completion
+                this.uploadResetTimeoutId = window.setTimeout(() => {
+                    this.isUploading.set(false);
+                    this.uploadProgress.set(0);
+                    this.uploadStatus.set('');
+                    this.uploadResetTimeoutId = undefined;
+                }, 1000);
+            }
+        };
+
+        const videoFileProperties: VideoFileProperties = {
+            videoFile: this.videoFile,
+            videoFileName: this.videoFileName(),
+        };
+
         this.formSubmitted.emit({
             formProperties,
             fileProperties,
+            videoFileProperties,
+            uploadProgressCallback,
         });
     }
 
     private setFormValues(formData: AttachmentVideoUnitFormData) {
         if (formData?.formProperties) {
-            this.form.patchValue(formData.formProperties);
+            const { videoSource, ...otherProps } = formData.formProperties;
+            this.form.patchValue(otherProps);
+
+            // Handle videoSource separately - detect if it's a file path or embeddable URL
+            if (videoSource) {
+                const isExternalUrl = videoSource.startsWith('http');
+                if (!isExternalUrl) {
+                    // It's an uploaded video file path - store it and extract filename
+                    this.existingVideoPath = videoSource;
+                    this.videoFileName.set(videoSource.split('/').pop());
+                    this.videoSourceType.set('upload');
+                } else {
+                    // It's an embeddable URL - set in form control
+                    this.form.patchValue({ videoSource });
+                    this.videoSourceType.set('url');
+                }
+            }
         }
         if (formData?.fileProperties?.file) {
             this.file = formData?.fileProperties?.file;
         }
         if (formData?.fileProperties?.fileName) {
             this.fileName.set(formData?.fileProperties?.fileName);
+        }
+        if (formData?.videoFileProperties?.videoFile) {
+            this.videoFile = formData?.videoFileProperties?.videoFile;
         }
     }
 

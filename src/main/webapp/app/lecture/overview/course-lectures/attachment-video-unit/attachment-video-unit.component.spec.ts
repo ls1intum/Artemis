@@ -154,11 +154,10 @@ describe('AttachmentVideoUnitComponent', () => {
         ['odf', faFilePen],
         ['exotic', faFile],
     ])('should use correct icon for extension %s', async (extension: string, icon: IconDefinition) => {
-        const getAttachmentIconSpy = vi.spyOn(component, 'getAttachmentIcon');
         component.lectureUnit().attachment!.link = `/path/to/file/test.${extension}`;
         fixture.detectChanges();
 
-        expect(getAttachmentIconSpy).toHaveReturnedWith(icon);
+        expect(component.attachmentIcon()).toBe(icon);
     });
 
     it('should download attachment when clicked', () => {
@@ -413,5 +412,166 @@ describe('AttachmentVideoUnitComponent', () => {
 
         expect(component.hasAttachment()).toBe(false);
         expect(component.getFileName()).toBe('');
+    });
+
+    describe('Video Upload Feature', () => {
+        it('should detect uploaded video file', () => {
+            const videoUnit: AttachmentVideoUnit = {
+                id: 1,
+                description: 'Video unit',
+                videoSource: 'attachments/attachment-unit/1/test-video.mp4',
+                attachment: {
+                    id: 1,
+                    version: 1,
+                    attachmentType: AttachmentType.FILE,
+                    name: 'test-video',
+                    link: '/path/to/file/test-video.mp4',
+                },
+            };
+
+            fixture.componentRef.setInput('lectureUnit', videoUnit);
+            fixture.detectChanges();
+
+            expect(component.isUploadedVideoFile()).toBe(true);
+        });
+
+        it('should not detect non-video file as video', () => {
+            const pdfUnit: AttachmentVideoUnit = {
+                id: 1,
+                description: 'PDF unit',
+                attachment: {
+                    id: 1,
+                    version: 1,
+                    attachmentType: AttachmentType.FILE,
+                    name: 'test-pdf',
+                    link: '/path/to/file/test.pdf',
+                },
+            };
+
+            fixture.componentRef.setInput('lectureUnit', pdfUnit);
+            fixture.detectChanges();
+
+            expect(component.isUploadedVideoFile()).toBe(false);
+        });
+
+        it('should compute video URL for uploaded video file', () => {
+            const videoUnit: AttachmentVideoUnit = {
+                id: 1,
+                description: 'Video unit',
+                videoSource: 'attachments/attachment-unit/1/test-video.webm',
+                attachment: {
+                    id: 1,
+                    version: 1,
+                    attachmentType: AttachmentType.FILE,
+                    name: 'test-video',
+                    link: '/api/files/attachments/lecture/123/test-video.webm',
+                },
+            };
+
+            fixture.componentRef.setInput('lectureUnit', videoUnit);
+            fixture.detectChanges();
+
+            // Uploaded video files use the API endpoint format
+            const videoUrl = component.videoUrl();
+            expect(videoUrl).toBeDefined();
+            expect(videoUrl).toContain('attachment-video-units/1/video');
+        });
+
+        it('should show video icon for uploaded video files', () => {
+            const videoUnit: AttachmentVideoUnit = {
+                id: 1,
+                description: 'Video unit',
+                videoSource: 'attachments/attachment-unit/1/test-video.mp4',
+                attachment: {
+                    id: 1,
+                    version: 1,
+                    attachmentType: AttachmentType.FILE,
+                    name: 'test-video',
+                    link: '/path/to/file/test-video.mp4',
+                },
+            };
+
+            fixture.componentRef.setInput('lectureUnit', videoUnit);
+            fixture.detectChanges();
+
+            const icon = component.attachmentIcon();
+            expect(icon.iconName).toBe('file-video');
+        });
+
+        it('should detect various video formats', () => {
+            const videoFormats = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv', 'flv', 'wmv', 'm4v'];
+
+            videoFormats.forEach((format) => {
+                const videoUnit: AttachmentVideoUnit = {
+                    id: 1,
+                    description: 'Video unit',
+                    videoSource: `attachments/attachment-unit/1/test-video.${format}`,
+                    attachment: {
+                        id: 1,
+                        version: 1,
+                        attachmentType: AttachmentType.FILE,
+                        name: `test-video.${format}`,
+                        link: `/path/to/file/test-video.${format}`,
+                    },
+                };
+
+                fixture.componentRef.setInput('lectureUnit', videoUnit);
+                fixture.detectChanges();
+
+                expect(component.isUploadedVideoFile()).toBe(true);
+            });
+        });
+
+        it('should use uploaded video file path instead of external URL', () => {
+            const videoUnit: AttachmentVideoUnit = {
+                id: 1,
+                description: 'Video unit with uploaded file',
+                videoSource: 'attachments/attachment-unit/1/test-video.mp4',
+                attachment: {
+                    id: 1,
+                    version: 1,
+                    attachmentType: AttachmentType.FILE,
+                    name: 'test-video',
+                    link: '/path/to/file/test-video.mp4',
+                },
+            };
+
+            fixture.componentRef.setInput('lectureUnit', videoUnit);
+            fixture.detectChanges();
+
+            // Uploaded video file uses the API endpoint
+            const videoUrl = component.videoUrl();
+            expect(videoUrl).toBeDefined();
+            expect(videoUrl).toContain('attachment-video-units');
+            expect(videoUrl).not.toContain('youtube');
+        });
+
+        it('should fall back to embedded source when no video file', () => {
+            // Mock urlParser to recognize the YouTube URL
+            vi.spyOn(urlParser, 'parse').mockReturnValue({
+                provider: 'youtube',
+                id: 'test',
+                mediaType: 'video',
+            } as any);
+
+            const videoUnit: AttachmentVideoUnit = {
+                id: 1,
+                description: 'Embedded video',
+                videoSource: 'https://www.youtube.com/watch?v=test',
+                attachment: {
+                    id: 1,
+                    version: 1,
+                    attachmentType: AttachmentType.FILE,
+                    name: 'test-pdf',
+                    link: '/path/to/file/test.pdf',
+                },
+            };
+
+            fixture.componentRef.setInput('lectureUnit', videoUnit);
+            fixture.detectChanges();
+
+            const videoUrl = component.videoUrl();
+            expect(videoUrl).toContain('youtube');
+        });
     });
 });

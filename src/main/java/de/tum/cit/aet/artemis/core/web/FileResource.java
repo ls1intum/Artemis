@@ -530,6 +530,40 @@ public class FileResource {
     }
 
     /**
+     * GET files/attachment-video-units/:attachmentVideoUnitId/video : Get the video file for an attachment video unit
+     * This endpoint serves uploaded video files for attachment video units.
+     * Uses attachment unit visibility (release date) to authorize access.
+     *
+     * @param attachmentVideoUnitId ID of the attachment video unit
+     * @return The requested video file, 403 if the user is not authorized, or 404 if the file doesn't exist
+     */
+    @GetMapping("files/attachment-video-units/{attachmentVideoUnitId}/video")
+    @EnforceAtLeastStudent
+    public ResponseEntity<byte[]> getAttachmentVideoUnitVideoFile(@PathVariable Long attachmentVideoUnitId) {
+        log.debug("REST request to get video file for attachment video unit {}", attachmentVideoUnitId);
+        LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
+
+        AttachmentVideoUnit attachmentVideoUnit = api.findAttachmentVideoUnitByIdElseThrow(attachmentVideoUnitId);
+        Course course = attachmentVideoUnit.getLecture().getCourse();
+
+        // Check authorization based on attachment unit visibility (release date)
+        if (attachmentVideoUnit.isVisibleToStudents()) {
+            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        }
+        else {
+            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
+        }
+
+        // Get the video source path from the attachment video unit
+        String videoSource = attachmentVideoUnit.getVideoSource();
+        if (videoSource == null || videoSource.isBlank()) {
+            throw new EntityNotFoundException("No video file found for attachment video unit " + attachmentVideoUnitId);
+        }
+
+        return buildFileResponse(getActualPathFromPublicPathString(videoSource, FilePathType.ATTACHMENT_UNIT), Optional.empty());
+    }
+
+    /**
      * GET files/courses/{courseId}/attachment-units/{attachmentVideoUnitId} : Returns the file associated with the
      * given attachmentVideoUnit ID as a downloadable resource
      *

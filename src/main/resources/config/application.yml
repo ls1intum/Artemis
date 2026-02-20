@@ -139,6 +139,11 @@ artemis:
         enabled: false
         url: # Set this in production environment (e.g., https://nebula.example.com)
         secret-token: # Set this in production environment
+        
+    # Lecture video upload configuration
+    lecture:
+        video-upload:
+            enabled: false
 
     # Iris / Pyris configuration for AI-powered features
     iris:
@@ -294,8 +299,8 @@ spring: #disabled by default, you must enable it
             enabled: always
     servlet:
         multipart:
-            max-file-size: 20MB # this should match the value in /webapp/app/shared/constants/input.constants.ts MAX_FILE_SIZE
-            max-request-size: 20MB
+            max-file-size: 200MB # this should match the value in /webapp/app/shared/constants/input.constants.ts MAX_VIDEO_FILE_SIZE
+            max-request-size: 200MB
     lifecycle:
         timeout-per-shutdown-phase: 10
     websocket:

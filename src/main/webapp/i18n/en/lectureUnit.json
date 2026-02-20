@@ -166,9 +166,21 @@
                 "version": "Version",
                 "fileRequiredValidationError": "You must select a file to upload.",
                 "chooseFile": "Choose File",
-                "fileTooBig": "File is too big! The maximum file size is 20 MB.",
+                "changeFile": "Change File",
+                "uploading": "Uploading...",
+                "noFileSelected": "No file selected",
+                "fileTooBig": "File is too big! The maximum file size is 20 MB for documents.",
                 "fileLimitation": "(max. size 20 MB)",
+                "videoSupported": "Videos supported: MP4, WebM, OGG, MOV, AVI, MKV (max. 200 MB)",
+                "fileSelected": "Selected: {{ filename }}",
                 "fileLimitationTooltip": "Supported types: {{ extensions }}",
+                "videoSource": "Video Source",
+                "uploadVideo": "Upload Video",
+                "embeddableLink": "Embeddable Link",
+                "chooseVideoFile": "Choose Video File",
+                "changeVideoFile": "Change Video File",
+                "noVideoFileSelected": "No video file selected",
+                "videoFileTooBig": "Video file is too big! The maximum file size is 200 MB for videos.",
                 "source": "Embeddable Video URL",
                 "sourcePlaceHolder": "Enter an URL to an embeddable video",
                 "sourceRequiredValidationError": "Video URL is required",
@@ -216,7 +228,8 @@
                 "nextResult": "Next result",
                 "noResults": "No results",
                 "noMatchingTranscript": "No matching transcript found",
-                "loading": "Loading..."
+                "loading": "Loading...",
+                "notSupported": "Your browser does not support the video tag."
             }
         },
         "exerciseUnit": {

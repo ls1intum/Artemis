@@ -166,9 +166,21 @@
                 "version": "Version",
                 "fileRequiredValidationError": "Du musst eine Datei zum Uploaden auswählen.",
                 "chooseFile": "Datei auswählen",
-                "fileTooBig": "Die Datei ist zu groß! Die maximale Dateigröße beträgt 20 MB.",
+                "changeFile": "Datei ändern",
+                "uploading": "Hochladen...",
+                "noFileSelected": "Keine Datei ausgewählt",
+                "fileTooBig": "Die Datei ist zu groß! Die maximale Dateigröße beträgt 20 MB für Dokumente.",
                 "fileLimitation": "(max. Größe 20 MB)",
+                "videoSupported": "Videos unterstützt: MP4, WebM, OGG, MOV, AVI, MKV (max. 200 MB)",
+                "fileSelected": "Ausgewählt: {{ filename }}",
                 "fileLimitationTooltip": "Unterstützte Formate: {{ extensions }}",
+                "videoSource": "Videoquelle",
+                "uploadVideo": "Video hochladen",
+                "embeddableLink": "Einbettbarer Link",
+                "chooseVideoFile": "Videodatei auswählen",
+                "changeVideoFile": "Videodatei ändern",
+                "noVideoFileSelected": "Keine Videodatei ausgewählt",
+                "videoFileTooBig": "Die Videodatei ist zu groß! Die maximale Dateigröße beträgt 200 MB für Videos.",
                 "source": "Einbettbares Video URL",
                 "sourcePlaceHolder": "Gib eine URL zu einem einbettbarem Video ein.",
                 "sourceRequiredValidationError": "Video URL ist ein Pflichtfeld",
@@ -216,7 +228,8 @@
                 "nextResult": "Nächstes Ergebnis",
                 "noResults": "Keine Ergebnisse",
                 "noMatchingTranscript": "Kein passendes Transkript gefunden",
-                "loading": "Lädt..."
+                "loading": "Lädt...",
+                "notSupported": "Dein Browser unterstützt das Video-Tag nicht."
             }
         },
         "exerciseUnit": {

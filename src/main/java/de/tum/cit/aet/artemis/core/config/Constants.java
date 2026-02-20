@@ -113,6 +113,12 @@ public final class Constants {
     public static final long MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR = 10;
 
     // Note: The values in input.constants.ts (client) need to be the same
+    public static final long MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
+
+    // Note: The values in input.constants.ts (client) need to be the same
+    public static final long MAX_VIDEO_FILE_SIZE = 200 * 1024 * 1024; // 200 MB
+
+    // Note: The values in input.constants.ts (client) need to be the same
     public static final long MAX_FILE_SIZE_COMMUNICATION = 5 * 1024 * 1024; // 5 MB
 
     // Note: The values in input.constants.ts (client) need to be the same
@@ -439,6 +445,11 @@ public final class Constants {
     public static final String MODULE_FEATURE_NEBULA = "nebula";
 
     /**
+     * The name of the module feature used for video upload functionality.
+     */
+    public static final String MODULE_FEATURE_VIDEO_UPLOAD = "videoUpload";
+
+    /**
      * The name of the module feature used for Sharing functionality.
      */
     public static final String MODULE_FEATURE_SHARING = "sharing";
@@ -517,6 +528,16 @@ public final class Constants {
      * The name of the property used to enable or disable nebula functionalities.
      */
     public static final String NEBULA_ENABLED_PROPERTY_NAME = "artemis.nebula.enabled";
+
+    /**
+     * The name of the property used to enable or disable video upload functionality for lecture units.
+     */
+    public static final String VIDEO_UPLOAD_ENABLED_PROPERTY_NAME = "artemis.lecture.video-upload.enabled";
+
+    /**
+     * The name of the property used to set the maximum video file size for lecture unit uploads.
+     */
+    public static final String VIDEO_UPLOAD_MAX_FILE_SIZE_PROPERTY_NAME = "artemis.lecture.video-upload.max-file-size";
 
     /**
      * The name of the property used to enable or disable LTI functionality.

@@ -25,6 +25,7 @@ import {
     MODULE_FEATURE_SHARING,
     MODULE_FEATURE_TEXT,
     MODULE_FEATURE_TUTORIALGROUP,
+    MODULE_FEATURE_VIDEO_UPLOAD,
     ModuleFeature,
     PROFILE_AEOLUS,
     PROFILE_APOLLON,
@@ -115,6 +116,7 @@ export class AdminFeatureToggleComponent implements OnInit {
         MODULE_FEATURE_SHARING,
         MODULE_FEATURE_LTI,
         MODULE_FEATURE_PASSKEY,
+        MODULE_FEATURE_VIDEO_UPLOAD,
     ];
 
     /** Documentation links for runtime feature toggles */

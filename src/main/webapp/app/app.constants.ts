@@ -61,6 +61,8 @@ export const MODULE_FEATURE_NEBULA = 'nebula';
 
 export const MODULE_FEATURE_SHARING = 'sharing';
 
+export const MODULE_FEATURE_VIDEO_UPLOAD = 'videoUpload';
+
 export const MODULE_FEATURE_LTI = 'lti';
 
 export type ModuleFeature =
@@ -78,6 +80,7 @@ export type ModuleFeature =
     | typeof MODULE_FEATURE_TUTORIALGROUP
     | typeof MODULE_FEATURE_NEBULA
     | typeof MODULE_FEATURE_SHARING
+    | typeof MODULE_FEATURE_VIDEO_UPLOAD
     | typeof MODULE_FEATURE_LTI;
 
 export const PROFILE_LOCALCI = 'localci';

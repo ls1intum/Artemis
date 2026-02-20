@@ -56,13 +56,14 @@ export class CreateAttachmentVideoUnitComponent implements OnInit {
     createAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData): void {
         const { name, videoSource, description, releaseDate, competencyLinks } = attachmentVideoUnitFormData?.formProperties || {};
         const { file, fileName } = attachmentVideoUnitFormData?.fileProperties || {};
+        const { videoFile, videoFileName } = attachmentVideoUnitFormData?.videoFileProperties ?? {};
 
         const lectureId = this.lectureId();
-        if (!name || (!(file && fileName) && !videoSource) || lectureId === undefined) {
+        if (!name || lectureId === undefined || (!(file && fileName) && !(videoFile && videoFileName) && !videoSource)) {
             return;
         }
 
-        // === Setting attachment ===
+        // === Setting attachment (PDF only) ===
         this.attachmentToCreate.name = name;
         this.attachmentToCreate.releaseDate = releaseDate;
         this.attachmentToCreate.attachmentType = AttachmentType.FILE;
@@ -80,10 +81,17 @@ export class CreateAttachmentVideoUnitComponent implements OnInit {
 
         const formData = new FormData();
 
+        // Add PDF file if provided
         if (!!file && !!fileName) {
             formData.append('file', file, fileName);
             formData.append('attachment', objectToJsonBlob(this.attachmentToCreate));
         }
+
+        // Add video file if provided
+        if (!!videoFile && !!videoFileName) {
+            formData.append('videoFile', videoFile, videoFileName);
+        }
+
         formData.append('attachmentVideoUnit', objectToJsonBlob(this.attachmentVideoUnitToCreate));
 
         this.attachmentVideoUnitService

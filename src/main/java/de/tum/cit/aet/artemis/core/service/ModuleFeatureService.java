@@ -116,6 +116,24 @@ public class ModuleFeatureService {
     }
 
     /**
+     * Check if the video upload feature for lecture units is enabled.
+     *
+     * @return true if video upload is enabled, false otherwise
+     */
+    public boolean isVideoUploadEnabled() {
+        return artemisConfigHelper.isVideoUploadEnabled(environment);
+    }
+
+    /**
+     * Get the maximum video file size for lecture unit uploads.
+     *
+     * @return the maximum video file size in bytes
+     */
+    public long getVideoUploadMaxFileSize() {
+        return artemisConfigHelper.getVideoUploadMaxFileSize(environment);
+    }
+
+    /**
      * Check if the LTI module is enabled.
      *
      * @return true if the LTI module is enabled, false otherwise

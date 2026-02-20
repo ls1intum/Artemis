@@ -164,6 +164,30 @@ public class ArtemisConfigHelper {
     }
 
     /**
+     * Check if the video upload feature for lecture units is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if video upload is enabled, false otherwise
+     */
+    public boolean isVideoUploadEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(Constants.VIDEO_UPLOAD_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Get the maximum video file size for lecture unit uploads.
+     *
+     * @param environment the Spring environment
+     * @return the maximum video file size in bytes
+     */
+    public long getVideoUploadMaxFileSize(Environment environment) {
+        Integer maxFileSizeMB = environment.getProperty(Constants.VIDEO_UPLOAD_MAX_FILE_SIZE_PROPERTY_NAME, Integer.class);
+        if (maxFileSizeMB == null) {
+            maxFileSizeMB = 200; // Default: 200 MB
+        }
+        return maxFileSizeMB * 1024L * 1024L; // Convert MB to bytes
+    }
+
+    /**
      * Check if the LTI module is enabled.
      *
      * @param environment the Spring environment
@@ -238,6 +262,10 @@ public class ArtemisConfigHelper {
         }
         if (isLtiEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_LTI);
+        }
+
+        if (isVideoUploadEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_VIDEO_UPLOAD);
         }
 
         return enabledFeatures;
