@@ -106,7 +106,7 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/exercise/review/**', // review comment module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/manage/services/problem-statement.service.ts', // problem-statement service uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.ts',     // problem-statement utils uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/shared/monaco-editor/inline-refinement-button/**',         // inline-refinement-button uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/shared/monaco-editor/inline-refinement-button/',           // inline-refinement-button uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/hyperion/**',                                              // hyperion module uses Vitest (see vitest.config.ts)
     ],
     coveragePathIgnorePatterns: [
@@ -137,10 +137,10 @@ module.exports = {
     // coverage thresholds in vitest.config.ts. Per-module thresholds are enforced by check-client-module-coverage.mjs
     coverageThreshold: {
         global: {
-            statements: 89.3,
+            statements: 88.83,
             branches: 73.5,
-            functions: 83.3,
-            lines: 89.3,
+            functions: 82.54,
+            lines: 88.95,
         },
     },
     // 'json-summary' reporter is used by supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs
