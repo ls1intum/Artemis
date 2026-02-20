@@ -98,7 +98,9 @@ public class SystemNotificationService {
         log.info("Sending maintenance emails to {} instructor(s)", recipients.size());
 
         var templateVars = new HashMap<String, Object>();
-        templateVars.put("notificationTitle", notification.getTitle());
+        if (notification.getTitle() != null) {
+            templateVars.put("notificationTitle", notification.getTitle());
+        }
         templateVars.put("notificationDate", notification.getNotificationDate());
         templateVars.put("expireDate", notification.getExpireDate());
         if (notification.getText() != null) {
