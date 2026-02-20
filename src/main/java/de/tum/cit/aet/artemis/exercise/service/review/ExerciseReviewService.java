@@ -108,16 +108,6 @@ public class ExerciseReviewService {
     }
 
     /**
-     * Retrieve all comment threads for an exercise.
-     *
-     * @param exerciseId the exercise id
-     * @return list of comment threads
-     */
-    public List<CommentThread> findThreadsByExerciseId(long exerciseId) {
-        return commentThreadRepository.findByExerciseId(exerciseId);
-    }
-
-    /**
      * Retrieve all comment threads for an exercise with their comments loaded.
      *
      * @param exerciseId the exercise id
@@ -125,18 +115,6 @@ public class ExerciseReviewService {
      */
     public Set<CommentThread> findThreadsWithCommentsByExerciseId(long exerciseId) {
         return commentThreadRepository.findWithCommentsByExerciseId(exerciseId);
-    }
-
-    /**
-     * Retrieve all comments for a thread, ordered by creation date.
-     *
-     * @param threadId the thread id
-     * @return list of comments
-     * @throws EntityNotFoundException if the thread does not exist
-     */
-    public List<Comment> findCommentsByThreadId(long threadId) {
-        findThreadByIdElseThrow(threadId);
-        return commentRepository.findByThreadIdOrderByCreatedDateAsc(threadId);
     }
 
     /**

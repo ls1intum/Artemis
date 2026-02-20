@@ -106,20 +106,6 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void shouldReturnThreadsWhenInstructorRequestsByExerciseId() {
-        CommentThread thread = persistThread(programmingExercise);
-        Course otherCourse = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
-        ProgrammingExercise otherExercise = ExerciseUtilService.getFirstExerciseWithType(otherCourse, ProgrammingExercise.class);
-        persistThread(otherExercise);
-
-        List<CommentThread> threads = exerciseReviewService.findThreadsByExerciseId(programmingExercise.getId());
-
-        assertThat(threads).hasSize(1);
-        assertThat(threads.getFirst().getId()).isEqualTo(thread.getId());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldReturnThreadsWithCommentsWhenRequested() {
         CommentThread thread = persistThread(programmingExercise);
         Comment comment = buildUserCommentEntity("First");
@@ -131,26 +117,6 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         assertThat(threads).hasSize(1);
         CommentThread loaded = threads.iterator().next();
         assertThat(loaded.getComments()).hasSize(1);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void shouldReturnCommentsOrderedByCreatedDate() {
-        CommentThread thread = persistThread(programmingExercise);
-
-        Comment first = buildUserCommentEntity("First");
-        first.setThread(thread);
-        first.setCreatedDate(Instant.now().minusSeconds(10));
-        Comment second = buildUserCommentEntity("Second");
-        second.setThread(thread);
-        second.setCreatedDate(Instant.now());
-        commentRepository.save(first);
-        commentRepository.save(second);
-
-        List<Comment> comments = exerciseReviewService.findCommentsByThreadId(thread.getId());
-
-        assertThat(comments).hasSize(2);
-        assertThat(comments.getFirst().getContent()).isEqualTo(first.getContent());
     }
 
     @Test
