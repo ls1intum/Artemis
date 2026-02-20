@@ -44,6 +44,7 @@ export default defineConfig({
             'src/main/webapp/app/programming/manage/shared/problem-statement.utils.spec.ts',
             'src/main/webapp/app/shared/monaco-editor/inline-refinement-button/*.spec.ts', // include inline refinement button tests
             'src/main/webapp/app/exercise/review/**/*.spec.ts', // include review module tests
+            'src/main/webapp/app/hyperion/**/*.spec.ts', // include hyperion module tests
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
@@ -78,6 +79,7 @@ export default defineConfig({
                 'src/main/webapp/app/programming/manage/shared/problem-statement.utils.ts',
                 'src/main/webapp/app/shared/monaco-editor/inline-refinement-button/*.ts', // include inline refinement button for code coverage
                 'src/main/webapp/app/exercise/review/**/*.ts', // include review module for code coverage
+                'src/main/webapp/app/hyperion/**/*.ts', // include hyperion module for code coverage
             ],
             exclude: [
                 '**/node_modules/**',   // exclude node_modules with third-party code

@@ -107,6 +107,7 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/programming/manage/services/problem-statement.service.ts', // problem-statement service uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.ts',     // problem-statement utils uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared/monaco-editor/inline-refinement-button/**',         // inline-refinement-button uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/hyperion/**',                                              // hyperion module uses Vitest (see vitest.config.ts)
     ],
     coveragePathIgnorePatterns: [
         '<rootDir>/src/main/webapp/app/core/config/prod.config.ts',
@@ -130,6 +131,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.ts',
         '<rootDir>/src/main/webapp/app/shared/monaco-editor/inline-refinement-button/',
         '<rootDir>/src/main/webapp/app/exercise/review/', // review comment module uses Vitest
+        '<rootDir>/src/main/webapp/app/hyperion/',         // hyperion module uses Vitest
     ],
     // Global coverage thresholds for Jest. Modules using Vitest (e.g., fileupload) have their own
     // coverage thresholds in vitest.config.ts. Per-module thresholds are enforced by check-client-module-coverage.mjs
@@ -180,6 +182,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.spec.ts',
         '<rootDir>/src/main/webapp/app/shared/monaco-editor/inline-refinement-button/',
         '<rootDir>/src/main/webapp/app/exercise/review/', // review comment module
+        '<rootDir>/src/main/webapp/app/hyperion/',         // hyperion module
     ],
     testTimeout: 3000,
     testMatch: [
