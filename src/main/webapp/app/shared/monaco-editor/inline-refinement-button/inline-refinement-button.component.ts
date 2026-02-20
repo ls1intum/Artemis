@@ -19,6 +19,7 @@ import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faPaperPlane, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
+import { ButtonDirective } from 'primeng/button';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
 
@@ -29,7 +30,7 @@ import { facArtemisIntelligence } from 'app/shared/icons/icons';
 @Component({
     selector: 'jhi-inline-refinement-button',
     standalone: true,
-    imports: [FormsModule, FaIconComponent, ArtemisTranslatePipe],
+    imports: [FormsModule, FaIconComponent, ArtemisTranslatePipe, ButtonDirective],
     templateUrl: './inline-refinement-button.component.html',
     styleUrls: ['./inline-refinement-button.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,

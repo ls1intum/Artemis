@@ -1,6 +1,6 @@
 .inline-refinement-container {
     position: absolute;
-    z-index: 1070; // Bootstrap $zindex-popover level
+    z-index: 1070;
 }
 
 .refinement-input {
@@ -8,11 +8,11 @@
     max-width: 32rem;
     border: none;
     background: transparent;
-    color: var(--bs-body-color);
+    color: var(--p-text-color);
     outline: none;
 
     &::placeholder {
-        color: var(--bs-secondary);
+        color: var(--p-text-muted-color);
     }
 
     &:disabled {
@@ -30,6 +30,6 @@
     height: 1.5rem;
 
     &:hover {
-        color: var(--bs-body-color);
+        color: var(--p-text-color);
     }
 }

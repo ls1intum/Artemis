@@ -2,8 +2,12 @@
     @if (!isExpanded()) {
         <!-- Collapsed: Trigger button with text label -->
         <button
+            pButton
             type="button"
-            class="btn btn-primary btn-sm rounded-pill d-flex align-items-center gap-1 shadow-sm fw-medium"
+            severity="primary"
+            size="small"
+            rounded
+            class="d-flex align-items-center gap-1 shadow-sm fw-medium"
             (click)="expand()"
             [attr.aria-label]="'artemisApp.programmingExercise.problemStatement.inlineRefinement.triggerButton' | artemisTranslate"
         >
@@ -26,8 +30,12 @@
             />
             <span class="text-secondary text-nowrap px-1 fs-x-small">{{ instruction().length }}/500</span>
             <button
+                pButton
                 type="button"
-                class="refinement-submit-btn btn btn-primary btn-sm rounded-circle d-flex align-items-center justify-content-center p-0"
+                severity="primary"
+                size="small"
+                rounded
+                class="refinement-submit-btn d-flex align-items-center justify-content-center p-0"
                 (click)="submit()"
                 [disabled]="!instruction() || isLoading()"
                 [attr.title]="'artemisApp.programmingExercise.problemStatement.inlineRefinement.submitTooltip' | artemisTranslate"
@@ -35,8 +43,13 @@
                 <fa-icon [icon]="faPaperPlane" />
             </button>
             <button
+                pButton
                 type="button"
-                class="refinement-close-btn btn btn-sm text-secondary rounded-circle d-flex align-items-center justify-content-center p-0"
+                severity="secondary"
+                text
+                size="small"
+                rounded
+                class="refinement-close-btn d-flex align-items-center justify-content-center p-0"
                 (click)="handleClose()"
             >
                 <fa-icon [icon]="faTimes" />
