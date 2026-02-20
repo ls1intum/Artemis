@@ -100,14 +100,9 @@ public class HyperionProblemStatementRewriteService {
             log.warn("Failed to obtain or parse AI response for {} - returning original text", resourcePath, e);
             return new ProblemStatementRewriteResponseDTO(problemStatementText.trim(), false);
         }
-        try {
-            Long userId = HyperionPromptSanitizer.resolveCurrentUserId(userRepository);
-            llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, REWRITE_PIPELINE_ID,
-                    builder -> builder.withCourse(course.getId()).withUser(userId));
-        }
-        catch (Exception e) {
-            log.error("Failed to track token usage for problem statement rewrite in course [{}]: {}", course.getId(), e.getMessage(), e);
-        }
+        Long userId = HyperionPromptSanitizer.resolveCurrentUserId(userRepository);
+        llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, REWRITE_PIPELINE_ID,
+                builder -> builder.withCourse(course.getId()).withUser(userId));
 
         if (responseContent == null) {
             log.warn("AI returned null response for {} - returning original text", resourcePath);

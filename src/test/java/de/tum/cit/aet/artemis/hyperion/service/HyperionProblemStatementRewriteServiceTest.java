@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.hyperion.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
@@ -21,6 +23,7 @@ import org.springframework.ai.chat.prompt.Prompt;
 
 import de.tum.cit.aet.artemis.core.config.LLMModelCostConfiguration;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteResponseDTO;
@@ -62,6 +65,7 @@ class HyperionProblemStatementRewriteServiceTest {
         assertThat(resp).isNotNull();
         assertThat(resp.improved()).isTrue();
         assertThat(resp.rewrittenText()).isEqualTo(rewritten);
+        verify(llmTokenUsageService).trackChatResponseTokenUsage(any(ChatResponse.class), eq(LLMServiceType.HYPERION), eq("HYPERION_PROBLEM_REWRITE"), any());
     }
 
     private static LLMModelCostConfiguration createTestConfiguration() {

@@ -142,14 +142,9 @@ public class HyperionProblemStatementRefinementService {
                     e.getMessage(), e);
             throw new InternalServerErrorAlertException("Failed to refine problem statement", "ProblemStatement", "ProblemStatementRefinement.problemStatementRefinementFailed");
         }
-        try {
-            Long userId = HyperionPromptSanitizer.resolveCurrentUserId(userRepository);
-            llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, GLOBAL_REFINEMENT_PIPELINE_ID,
-                    builder -> builder.withCourse(course.getId()).withUser(userId));
-        }
-        catch (Exception e) {
-            log.error("Failed to track token usage for problem statement global refinement in course [{}]: {}", course.getId(), e.getMessage(), e);
-        }
+        Long userId = HyperionPromptSanitizer.resolveCurrentUserId(userRepository);
+        llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, GLOBAL_REFINEMENT_PIPELINE_ID,
+                builder -> builder.withCourse(course.getId()).withUser(userId));
 
         if (refinedProblemStatementText == null || refinedProblemStatementText.isBlank()) {
             throw new InternalServerErrorAlertException("Refined problem statement is null or empty", "ProblemStatement",
@@ -220,14 +215,9 @@ public class HyperionProblemStatementRefinementService {
                     e.getMessage(), e);
             throw new InternalServerErrorAlertException("Failed to refine problem statement", "ProblemStatement", "ProblemStatementRefinement.problemStatementRefinementFailed");
         }
-        try {
-            Long userId = HyperionPromptSanitizer.resolveCurrentUserId(userRepository);
-            llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, TARGETED_REFINEMENT_PIPELINE_ID,
-                    builder -> builder.withCourse(course.getId()).withUser(userId));
-        }
-        catch (Exception e) {
-            log.error("Failed to track token usage for problem statement targeted refinement in course [{}]: {}", course.getId(), e.getMessage(), e);
-        }
+        Long userId = HyperionPromptSanitizer.resolveCurrentUserId(userRepository);
+        llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, TARGETED_REFINEMENT_PIPELINE_ID,
+                builder -> builder.withCourse(course.getId()).withUser(userId));
 
         if (refinedProblemStatementText == null || refinedProblemStatementText.isBlank()) {
             throw new InternalServerErrorAlertException("Refined problem statement is null or empty", "ProblemStatement",
