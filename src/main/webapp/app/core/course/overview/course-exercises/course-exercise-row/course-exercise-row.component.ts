@@ -62,18 +62,20 @@ export class CourseExerciseRowComponent implements OnInit {
     getIconTooltip = getIconTooltip;
 
     // Signal-based state
+    private readonly _enrichedExercise = signal<Exercise | undefined>(undefined);
     private readonly _exerciseCategories = signal<ExerciseCategory[]>([]);
     private readonly _isAfterAssessmentDueDate = signal(false);
     private readonly _dueDate = signal<dayjs.Dayjs | undefined>(undefined);
     private readonly _gradedStudentParticipation = signal<StudentParticipation | undefined>(undefined);
     private readonly _studentParticipations = signal<StudentParticipation[]>([]);
 
-    // Public computed accessors
-    readonly exerciseCategories = computed(() => this._exerciseCategories());
-    readonly isAfterAssessmentDueDate = computed(() => this._isAfterAssessmentDueDate());
-    readonly dueDate = computed(() => this._dueDate());
-    readonly gradedStudentParticipation = computed(() => this._gradedStudentParticipation());
-    readonly studentParticipations = computed(() => this._studentParticipations());
+    // Public read-only accessors - enrichedExercise provides the exercise with role checks applied
+    readonly enrichedExercise = computed(() => this._enrichedExercise() ?? this.exercise());
+    readonly exerciseCategories = this._exerciseCategories.asReadonly();
+    readonly isAfterAssessmentDueDate = this._isAfterAssessmentDueDate.asReadonly();
+    readonly dueDate = this._dueDate.asReadonly();
+    readonly gradedStudentParticipation = this._gradedStudentParticipation.asReadonly();
+    readonly studentParticipations = this._studentParticipations.asReadonly();
 
     readonly routerLink = computed(() => {
         const course = this.course();
@@ -127,23 +129,27 @@ export class CourseExerciseRowComponent implements OnInit {
         }
         this._dueDate.set(getExerciseDueDate(exercise, this._gradedStudentParticipation()));
 
-        // Restore role checks that downstream components depend on
+        // Enrich the exercise with role checks and course reference via a spread copy
+        // to avoid mutating the input signal's underlying object
         const courseForRoleCheck = course || exercise.exerciseGroup?.exam?.course;
-        exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(courseForRoleCheck);
-        exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(courseForRoleCheck);
-        exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(courseForRoleCheck);
+        const enrichedExercise = {
+            ...exercise,
+            isAtLeastTutor: this.accountService.isAtLeastTutorInCourse(courseForRoleCheck),
+            isAtLeastEditor: this.accountService.isAtLeastEditorInCourse(courseForRoleCheck),
+            isAtLeastInstructor: this.accountService.isAtLeastInstructorInCourse(courseForRoleCheck),
+            course,
+        } as Exercise;
 
-        this._isAfterAssessmentDueDate.set(!exercise.assessmentDueDate || dayjs().isAfter(exercise.assessmentDueDate));
-
-        // Restore quiz-specific setup
-        if (exercise.type === ExerciseType.QUIZ) {
-            const quizExercise = exercise as QuizExercise;
+        // Quiz-specific enrichment
+        if (enrichedExercise.type === ExerciseType.QUIZ) {
+            const quizExercise = enrichedExercise as QuizExercise;
             quizExercise.isActiveQuiz = this.exerciseService.isActiveQuiz(quizExercise);
             quizExercise.isPracticeModeAvailable = quizExercise.quizEnded;
         }
 
+        this._enrichedExercise.set(enrichedExercise);
+        this._isAfterAssessmentDueDate.set(!exercise.assessmentDueDate || dayjs().isAfter(exercise.assessmentDueDate));
         this._exerciseCategories.set(exercise.categories || []);
-        exercise.course = course;
     }
 
     getUrgentClass(date?: dayjs.Dayjs) {

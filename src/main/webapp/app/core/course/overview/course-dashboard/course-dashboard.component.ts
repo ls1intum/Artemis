@@ -1,4 +1,4 @@
-import { Component, DestroyRef, ElementRef, OnDestroy, computed, inject, signal, viewChild, viewChildren } from '@angular/core';
+import { Component, DestroyRef, ElementRef, OnDestroy, inject, signal, viewChild, viewChildren } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { Subscription, switchMap, tap } from 'rxjs';
@@ -67,24 +67,21 @@ export class CourseDashboardComponent implements OnDestroy {
     private readonly _course = signal<Course | undefined>(undefined);
     private readonly _isCollapsed = signal(false);
 
-    readonly courseId = computed(() => this._courseId());
-    readonly points = computed(() => this._points());
-    readonly maxPoints = computed(() => this._maxPoints());
-    readonly progress = computed(() => this._progress());
-    readonly isLoading = computed(() => this._isLoading());
-    readonly hasExercises = computed(() => this._hasExercises());
-    readonly hasCompetencies = computed(() => this._hasCompetencies());
-    readonly exerciseLateness = computed(() => this._exerciseLateness());
-    readonly exercisePerformance = computed(() => this._exercisePerformance());
-    readonly atlasEnabled = computed(() => this._atlasEnabled());
-    readonly studentMetrics = computed(() => this._studentMetrics());
-    readonly competencies = computed(() => this._competencies());
-    readonly openedAccordionIndex = computed(() => this._openedAccordionIndex());
-    readonly course = computed(() => this._course());
-    // isCollapsed is exposed as a getter for compatibility with CourseOverviewComponent
-    get isCollapsed(): boolean {
-        return this._isCollapsed();
-    }
+    readonly courseId = this._courseId.asReadonly();
+    readonly points = this._points.asReadonly();
+    readonly maxPoints = this._maxPoints.asReadonly();
+    readonly progress = this._progress.asReadonly();
+    readonly isLoading = this._isLoading.asReadonly();
+    readonly hasExercises = this._hasExercises.asReadonly();
+    readonly hasCompetencies = this._hasCompetencies.asReadonly();
+    readonly exerciseLateness = this._exerciseLateness.asReadonly();
+    readonly exercisePerformance = this._exercisePerformance.asReadonly();
+    readonly atlasEnabled = this._atlasEnabled.asReadonly();
+    readonly studentMetrics = this._studentMetrics.asReadonly();
+    readonly competencies = this._competencies.asReadonly();
+    readonly openedAccordionIndex = this._openedAccordionIndex.asReadonly();
+    readonly course = this._course.asReadonly();
+    readonly isCollapsed = this._isCollapsed.asReadonly();
 
     private metricsSubscription?: Subscription;
 

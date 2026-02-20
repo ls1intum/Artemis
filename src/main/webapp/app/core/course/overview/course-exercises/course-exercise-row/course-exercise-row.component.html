@@ -22,7 +22,7 @@
                 <h5 class="exercise-title">{{ exercise().title }}</h5>
             </div>
             @if (!isPresentationMode()) {
-                <jhi-submission-result-status [exercise]="exercise()" [studentParticipation]="gradedStudentParticipation()" [triggerLastGraded]="false" class="result" />
+                <jhi-submission-result-status [exercise]="enrichedExercise()" [studentParticipation]="gradedStudentParticipation()" [triggerLastGraded]="false" class="result" />
             }
         </div>
         <div class="row" style="justify-content: space-between">
@@ -32,12 +32,12 @@
                     [courseId]="course().id!"
                     [smallColumns]="true"
                     [equalColumns]="false"
-                    [exercise]="exercise()"
+                    [exercise]="enrichedExercise()"
                     [ngClass]="'mt-2 mb-2 raised-actions'"
                 />
             }
             <jhi-exercise-categories
-                [exercise]="exercise()"
+                [exercise]="enrichedExercise()"
                 [showTags]="{ difficulty: true, includedInScore: true, notReleased: true, quizLive: !isPresentationMode() }"
                 class="exercise-tags col-auto col-sm justify-content-center d-none d-md-flex"
             />

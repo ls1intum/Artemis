@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { Component, effect, inject, input, signal, untracked } from '@angular/core';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
@@ -32,9 +32,9 @@ export class OpenCodeEditorButtonComponent {
     private readonly _activeParticipation = signal<ProgrammingExerciseStudentParticipation | undefined>(undefined);
     private readonly _isPracticeMode = signal(true);
 
-    readonly courseAndExerciseNavigationUrl = computed(() => this._courseAndExerciseNavigationUrl());
-    readonly activeParticipation = computed(() => this._activeParticipation());
-    readonly isPracticeMode = computed(() => this._isPracticeMode());
+    readonly courseAndExerciseNavigationUrl = this._courseAndExerciseNavigationUrl.asReadonly();
+    readonly activeParticipation = this._activeParticipation.asReadonly();
+    readonly isPracticeMode = this._isPracticeMode.asReadonly();
 
     // Icons
     faFolderOpen = faFolderOpen;

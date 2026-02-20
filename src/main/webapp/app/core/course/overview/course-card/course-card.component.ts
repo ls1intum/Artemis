@@ -1,5 +1,5 @@
-import { Component, DestroyRef, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, effect, inject, input, signal, untracked } from '@angular/core';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { Color, NgxChartsModule, PieChartModule, ScaleType } from '@swimlane/ngx-charts';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
@@ -16,7 +16,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ScoresStorageService } from 'app/core/course/manage/course-scores/scores-storage.service';
 import { CourseScores } from 'app/core/course/manage/course-scores/course-scores';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
-import { Subscription } from 'rxjs';
+import { filter, switchMap } from 'rxjs';
 
 @Component({
     selector: 'jhi-overview-course-card',
@@ -33,8 +33,6 @@ export class CourseCardComponent {
 
     protected readonly faArrowRight = faArrowRight;
 
-    private notificationSubscription?: Subscription;
-
     constructor() {
         effect(() => {
             const course = this.course();
@@ -43,9 +41,19 @@ export class CourseCardComponent {
                     return;
                 }
                 this.processCourseData(course);
-                this.subscribeToNotificationCount(course);
             });
         });
+
+        // Use toObservable + switchMap to automatically cancel previous subscriptions
+        toObservable(this.course)
+            .pipe(
+                filter((course): course is Course => !!course?.id),
+                switchMap((course) => this.courseNotificationService.getNotificationCountForCourse$(course.id!)),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe((count) => {
+                this._courseNotificationCount.set(count);
+            });
     }
 
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
@@ -62,13 +70,13 @@ export class CourseCardComponent {
         { name: 'missingPointsLabel', value: 0 },
     ]);
 
-    readonly nextRelevantExercise = computed(() => this._nextRelevantExercise());
-    readonly exerciseCount = computed(() => this._exerciseCount());
-    readonly totalRelativeScore = computed(() => this._totalRelativeScore());
-    readonly totalReachableScore = computed(() => this._totalReachableScore());
-    readonly totalAbsoluteScore = computed(() => this._totalAbsoluteScore());
-    readonly courseNotificationCount = computed(() => this._courseNotificationCount());
-    readonly ngxDoughnutData = computed(() => this._ngxDoughnutData());
+    readonly nextRelevantExercise = this._nextRelevantExercise.asReadonly();
+    readonly exerciseCount = this._exerciseCount.asReadonly();
+    readonly totalRelativeScore = this._totalRelativeScore.asReadonly();
+    readonly totalReachableScore = this._totalReachableScore.asReadonly();
+    readonly totalAbsoluteScore = this._totalAbsoluteScore.asReadonly();
+    readonly courseNotificationCount = this._courseNotificationCount.asReadonly();
+    readonly ngxDoughnutData = this._ngxDoughnutData.asReadonly();
 
     ngxColor = {
         name: 'vivid',
@@ -76,20 +84,6 @@ export class CourseCardComponent {
         group: ScaleType.Ordinal,
         domain: [GraphColors.GREEN, GraphColors.RED],
     } as Color;
-
-    private subscribeToNotificationCount(course: Course): void {
-        // Unsubscribe from previous subscription if course changes
-        this.notificationSubscription?.unsubscribe();
-
-        if (course.id) {
-            this.notificationSubscription = this.courseNotificationService
-                .getNotificationCountForCourse$(course.id!)
-                .pipe(takeUntilDestroyed(this.destroyRef))
-                .subscribe((count) => {
-                    this._courseNotificationCount.set(count);
-                });
-        }
-    }
 
     private processCourseData(course: Course): void {
         if (course.exercises && course.exercises.length > 0) {
