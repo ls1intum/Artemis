@@ -52,6 +52,9 @@ public record ProblemStatementTargetedRefinementRequestDTO(
         // Trim instruction early so downstream code always sees normalised whitespace.
         if (instruction != null) {
             instruction = instruction.trim();
+            if (instruction.isEmpty()) {
+                throw new BadRequestAlertException("instruction must not be empty after trimming", "ProblemStatement", "ProblemStatementRefinement.instructionEmpty");
+            }
         }
     }
 
