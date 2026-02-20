@@ -13,11 +13,11 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.domain.notification.SystemNotification;
+import de.tum.cit.aet.artemis.communication.repository.MaintenanceEmailRecipientRepository;
 import de.tum.cit.aet.artemis.communication.repository.SystemNotificationRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 
 @Profile(PROFILE_CORE)
@@ -33,15 +33,15 @@ public class SystemNotificationService {
 
     private final SystemNotificationRepository systemNotificationRepository;
 
-    private final UserRepository userRepository;
+    private final MaintenanceEmailRecipientRepository maintenanceEmailRecipientRepository;
 
     private final MailSendingService mailSendingService;
 
-    public SystemNotificationService(WebsocketMessagingService websocketMessagingService, SystemNotificationRepository systemNotificationRepository, UserRepository userRepository,
-            MailSendingService mailSendingService) {
+    public SystemNotificationService(WebsocketMessagingService websocketMessagingService, SystemNotificationRepository systemNotificationRepository,
+            MaintenanceEmailRecipientRepository maintenanceEmailRecipientRepository, MailSendingService mailSendingService) {
         this.websocketMessagingService = websocketMessagingService;
         this.systemNotificationRepository = systemNotificationRepository;
-        this.userRepository = userRepository;
+        this.maintenanceEmailRecipientRepository = maintenanceEmailRecipientRepository;
         this.mailSendingService = mailSendingService;
     }
 
@@ -84,7 +84,7 @@ public class SystemNotificationService {
      * @return the count of eligible recipients
      */
     public long countMaintenanceEmailRecipients() {
-        return userRepository.countInstructorRecipientsForMaintenanceEmail(ZonedDateTime.now());
+        return maintenanceEmailRecipientRepository.countInstructorRecipientsForMaintenanceEmail(ZonedDateTime.now());
     }
 
     /**
@@ -94,7 +94,7 @@ public class SystemNotificationService {
      * @param notification the system notification containing maintenance details
      */
     public void sendMaintenanceEmails(SystemNotification notification) {
-        var recipients = userRepository.findInstructorRecipientsForMaintenanceEmail(ZonedDateTime.now());
+        var recipients = maintenanceEmailRecipientRepository.findInstructorRecipientsForMaintenanceEmail(ZonedDateTime.now());
         log.info("Sending maintenance emails to {} instructor(s)", recipients.size());
 
         var templateVars = new HashMap<String, Object>();

@@ -29,6 +29,7 @@ import com.icegreen.greenmail.util.ServerSetupTest;
 import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationSetting;
 import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationType;
 import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSettingRepository;
+import de.tum.cit.aet.artemis.communication.repository.MaintenanceEmailRecipientRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -56,6 +57,9 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
 
     @Autowired
     private GlobalNotificationSettingRepository globalNotificationSettingRepository;
+
+    @Autowired
+    private MaintenanceEmailRecipientRepository maintenanceEmailRecipientRepository;
 
     private MailSendingService testMailService;
 
@@ -168,7 +172,7 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
                 TEST_PREFIX + "editor", TEST_PREFIX + "instructor");
         courseRepository.save(ongoingCourse);
 
-        var recipients = userTestRepository.findInstructorRecipientsForMaintenanceEmail(now);
+        var recipients = maintenanceEmailRecipientRepository.findInstructorRecipientsForMaintenanceEmail(now);
         assertThat(recipients).isNotEmpty();
         assertThat(recipients).allMatch(r -> r.email() != null);
     }
@@ -189,7 +193,7 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
                 uniqueInstructorGroup);
         courseRepository.save(expiredCourse);
 
-        var recipients = userTestRepository.findInstructorRecipientsForMaintenanceEmail(now);
+        var recipients = maintenanceEmailRecipientRepository.findInstructorRecipientsForMaintenanceEmail(now);
         var recipientIds = recipients.stream().map(r -> r.id()).toList();
         assertThat(recipientIds).doesNotContain(expiredOnlyInstructor.getId());
     }
@@ -209,7 +213,7 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         setting.setEnabled(false);
         globalNotificationSettingRepository.save(setting);
 
-        var recipients = userTestRepository.findInstructorRecipientsForMaintenanceEmail(now);
+        var recipients = maintenanceEmailRecipientRepository.findInstructorRecipientsForMaintenanceEmail(now);
         assertThat(recipients).noneMatch(r -> r.id().equals(instructorUser.getId()));
     }
 
@@ -220,8 +224,8 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
                 TEST_PREFIX + "editor", TEST_PREFIX + "instructor");
         courseRepository.save(ongoingCourse);
 
-        var recipients = userTestRepository.findInstructorRecipientsForMaintenanceEmail(now);
-        long count = userTestRepository.countInstructorRecipientsForMaintenanceEmail(now);
+        var recipients = maintenanceEmailRecipientRepository.findInstructorRecipientsForMaintenanceEmail(now);
+        long count = maintenanceEmailRecipientRepository.countInstructorRecipientsForMaintenanceEmail(now);
         assertThat(count).isEqualTo(recipients.size());
     }
 
@@ -233,7 +237,7 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
                 TEST_PREFIX + "instructor");
         courseRepository.save(openCourse);
 
-        var recipients = userTestRepository.findInstructorRecipientsForMaintenanceEmail(now);
+        var recipients = maintenanceEmailRecipientRepository.findInstructorRecipientsForMaintenanceEmail(now);
         assertThat(recipients).isNotEmpty();
     }
 
@@ -249,7 +253,7 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         instructor.setEmail(null);
         userTestRepository.save(instructor);
 
-        var recipients = userTestRepository.findInstructorRecipientsForMaintenanceEmail(now);
+        var recipients = maintenanceEmailRecipientRepository.findInstructorRecipientsForMaintenanceEmail(now);
         assertThat(recipients).noneMatch(r -> r.id().equals(instructor.getId()));
     }
 
