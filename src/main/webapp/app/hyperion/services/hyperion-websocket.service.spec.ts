@@ -1,4 +1,6 @@
 import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { Observable, Subject } from 'rxjs';
 import { HyperionEvent, HyperionWebsocketService } from 'app/hyperion/services/hyperion-websocket.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
@@ -26,6 +28,8 @@ class MockWebsocketService {
 }
 
 describe('HyperionWebsocketService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: HyperionWebsocketService;
     let mockWs: MockWebsocketService;
 
@@ -114,7 +118,7 @@ describe('HyperionWebsocketService', () => {
         const subj = mockWs.subjects.get(ch)!;
 
         subj.complete();
-        expect(completed).toBeTrue();
+        expect(completed).toBeTruthy();
 
         // Resubscribe should create a new subject and subscribe call
         service.subscribeToJob(jobId);
@@ -158,8 +162,8 @@ describe('HyperionWebsocketService', () => {
 
         service.ngOnDestroy();
 
-        expect(completeA).toBeTrue();
-        expect(completeB).toBeTrue();
+        expect(completeA).toBeTruthy();
+        expect(completeB).toBeTruthy();
         expect(mockWs.unsubscribeCalls).toEqual(expect.arrayContaining([chA, chB]));
     });
 });
