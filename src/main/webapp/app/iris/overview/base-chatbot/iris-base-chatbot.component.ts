@@ -651,6 +651,10 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     onDeleteSession(session: IrisSessionDTO) {
+        const confirmMessage = this.translateService.instant('artemisApp.iris.chatHistory.deleteSessionQuestion');
+        if (!confirm(confirmMessage)) {
+            return;
+        }
         this.chatService
             .deleteSession(session.id)
             .pipe(takeUntilDestroyed(this.destroyRef))

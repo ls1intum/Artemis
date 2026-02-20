@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Signal, computed, inject, input, output, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Signal, computed, inject, input, output, viewChild } from '@angular/core';
 import { DatePipe, NgClass } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
@@ -40,7 +40,6 @@ export class ChatHistoryItemComponent {
     deleteSession = output<IrisSessionDTO>();
 
     readonly contextMenu = viewChild<Menu>('menu');
-    readonly menuVisible = signal(false);
 
     readonly menuItems: MenuItem[] = [
         {
