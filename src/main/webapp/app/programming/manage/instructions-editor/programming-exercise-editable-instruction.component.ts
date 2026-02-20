@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChild, ViewEncapsulation, computed, effect, inject, input, output, signal } from '@angular/core';
+import { AfterViewInit, Component, HostListener, OnDestroy, ViewChild, ViewEncapsulation, computed, effect, inject, input, output, signal } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { EMPTY, Observable, Subject, Subscription, of, throwError } from 'rxjs';
 import { catchError, finalize, map, switchMap, tap } from 'rxjs/operators';
@@ -34,6 +34,7 @@ import { Annotation } from 'app/programming/shared/code-editor/monaco/code-edito
 import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { ProblemStatementSyncService, ProblemStatementSyncState } from 'app/programming/manage/services/problem-statement-sync.service';
+import { INLINE_REFINEMENT_PROMPT_WIDTH_PX } from 'app/programming/manage/shared/problem-statement.utils';
 import { editor } from 'monaco-editor';
 import { InlineRefinementButtonComponent } from 'app/shared/monaco-editor/inline-refinement-button/inline-refinement-button.component';
 
@@ -62,7 +63,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     private profileService = inject(ProfileService);
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
     private problemStatementSyncService = inject(ProblemStatementSyncService);
-    private elementRef = inject(ElementRef);
 
     /**
      * Legacy manual diff state used inside the `effect()` below.
@@ -426,12 +426,13 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     ): void {
         // Show/hide inline refinement button based on selection
         if (selection && selection.selectedText && selection.selectedText.trim().length > 0 && this.hyperionEnabled && !this.isAiApplying()) {
-            // Convert viewport-relative coordinates to container-relative coordinates
-            // since the button uses position: absolute within the relatively-positioned container
-            const containerRect = this.elementRef.nativeElement.getBoundingClientRect();
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            const clampedLeft = Math.max(8, Math.min(selection.screenPosition.left, viewportWidth - INLINE_REFINEMENT_PROMPT_WIDTH_PX - 8));
+            const clampedTop = Math.min(selection.screenPosition.top, viewportHeight - 60);
             this.inlineRefinementPosition.set({
-                top: selection.screenPosition.top - containerRect.top,
-                left: selection.screenPosition.left - containerRect.left,
+                top: clampedTop,
+                left: clampedLeft,
             });
             this.selectedTextForRefinement.set(selection.selectedText);
             this.selectionPositionInfo.set({

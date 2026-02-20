@@ -14,6 +14,9 @@ export const MAX_PROBLEM_STATEMENT_LENGTH = 50_000;
 /** Fraction of MAX_USER_PROMPT_LENGTH at which the character counter shows a warning. */
 export const PROMPT_LENGTH_WARNING_THRESHOLD = 0.9;
 
+/** Approximate pixel width of the expanded inline refinement prompt (≈ min-width 20rem + padding/buttons). */
+export const INLINE_REFINEMENT_PROMPT_WIDTH_PX = 370;
+
 /** Matches `\r\n` (Windows) and standalone `\r` (old Mac) line endings in a single pass. */
 const CARRIAGE_RETURN_PATTERN = /\r\n?/g;
 

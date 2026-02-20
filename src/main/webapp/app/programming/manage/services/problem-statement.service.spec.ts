@@ -83,14 +83,14 @@ describe('ProblemStatementService', () => {
             const loadingSignal = signal(false);
             let result: any;
             service.generateProblemStatement(undefined, 'prompt', loadingSignal).subscribe((r) => (result = r));
-            expect(result).toEqual({ success: false, errorHandled: true });
+            expect(result).toEqual({ success: false });
         });
 
         it('should return failure when prompt is empty', fakeAsync(() => {
             const loadingSignal = signal(false);
             let result: any;
             service.generateProblemStatement(exerciseWithCourse, '   ', loadingSignal).subscribe((r) => (result = r));
-            expect(result).toEqual({ success: false, errorHandled: true });
+            expect(result).toEqual({ success: false });
         });
 
         it('should generate successfully', fakeAsync(() => {
@@ -154,14 +154,14 @@ describe('ProblemStatementService', () => {
             const loadingSignal = signal(false);
             let result: any;
             service.refineGlobally(exerciseWithCourse, 'content', '', loadingSignal).subscribe((r) => (result = r));
-            expect(result).toEqual({ success: false, errorHandled: true });
+            expect(result).toEqual({ success: false, errorHandled: false });
         });
 
         it('should return failure when exercise has no course', fakeAsync(() => {
             const loadingSignal = signal(false);
             let result: any;
             service.refineGlobally({} as ProgrammingExercise, 'content', 'prompt', loadingSignal).subscribe((r) => (result = r));
-            expect(result).toEqual({ success: false, errorHandled: true });
+            expect(result).toEqual({ success: false, errorHandled: false });
         });
 
         it('should refine globally successfully', fakeAsync(() => {
@@ -191,7 +191,7 @@ describe('ProblemStatementService', () => {
             const loadingSignal = signal(false);
             let result: any;
             service.refineTargeted({} as ProgrammingExercise, 'content', event, (v: boolean) => loadingSignal.set(v)).subscribe((r) => (result = r));
-            expect(result).toEqual({ success: false });
+            expect(result).toEqual({ success: false, errorHandled: true });
             expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
         }));
 
@@ -199,7 +199,7 @@ describe('ProblemStatementService', () => {
             const loadingSignal = signal(false);
             let result: any;
             service.refineTargeted(exerciseWithCourse, '', event, (v: boolean) => loadingSignal.set(v)).subscribe((r) => (result = r));
-            expect(result).toEqual({ success: false });
+            expect(result).toEqual({ success: false, errorHandled: true });
             expect(alertServiceMock.error).toHaveBeenCalled();
         }));
 
