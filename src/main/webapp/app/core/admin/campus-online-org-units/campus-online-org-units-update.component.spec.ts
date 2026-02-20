@@ -48,6 +48,8 @@ describe('CampusOnlineOrgUnitsUpdateComponent', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+        // Reset route data to ensure test isolation
+        mockActivatedRoute.parent.data = of({});
     });
 
     it('should initialize with empty org unit for new', () => {

@@ -56,6 +56,9 @@ export class CampusOnlineService {
     }
 
     updateOrgUnit(orgUnit: CampusOnlineOrgUnit & { id: number }): Observable<HttpResponse<CampusOnlineOrgUnit>> {
+        if (!orgUnit.id) {
+            throw new Error('Cannot update org unit without an ID');
+        }
         return this.http.put<CampusOnlineOrgUnit>(`${this.resourceUrl}/org-units/${orgUnit.id}`, orgUnit, { observe: 'response' });
     }
 

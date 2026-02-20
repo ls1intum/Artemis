@@ -157,6 +157,7 @@ public class CampusOnlineClientService {
         }
 
         RestClientException lastException = null;
+        boolean receivedNullResponse = false;
         for (String token : tokens) {
             try {
                 // Append the token as a query parameter for authentication
@@ -167,6 +168,7 @@ public class CampusOnlineClientService {
                 }
                 // Null response (e.g. HTTP 204) — treat as token issue and try next
                 log.warn("CAMPUSOnline API returned null response, trying next token");
+                receivedNullResponse = true;
             }
             catch (HttpClientErrorException e) {
                 if (e.getStatusCode().value() == 401 || e.getStatusCode().value() == 403) {
@@ -186,6 +188,9 @@ public class CampusOnlineClientService {
             }
         }
         // Do not include the original exception as cause to avoid leaking API tokens (which are embedded in the request URL)
+        if (receivedNullResponse && lastException == null) {
+            throw new CampusOnlineApiException("CAMPUSOnline API returned null/empty response for all configured tokens");
+        }
         throw new CampusOnlineApiException("All CAMPUSOnline API tokens failed");
     }
 
