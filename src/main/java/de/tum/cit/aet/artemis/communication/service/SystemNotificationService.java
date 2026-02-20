@@ -3,15 +3,21 @@ package de.tum.cit.aet.artemis.communication.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.domain.notification.SystemNotification;
 import de.tum.cit.aet.artemis.communication.repository.SystemNotificationRepository;
+import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 
 @Profile(PROFILE_CORE)
@@ -19,15 +25,24 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 @Service
 public class SystemNotificationService {
 
+    private static final Logger log = LoggerFactory.getLogger(SystemNotificationService.class);
+
     private static final String ENTITY_NAME = "systemNotification";
 
     private final WebsocketMessagingService websocketMessagingService;
 
     private final SystemNotificationRepository systemNotificationRepository;
 
-    public SystemNotificationService(WebsocketMessagingService websocketMessagingService, SystemNotificationRepository systemNotificationRepository) {
+    private final UserRepository userRepository;
+
+    private final MailSendingService mailSendingService;
+
+    public SystemNotificationService(WebsocketMessagingService websocketMessagingService, SystemNotificationRepository systemNotificationRepository, UserRepository userRepository,
+            MailSendingService mailSendingService) {
         this.websocketMessagingService = websocketMessagingService;
         this.systemNotificationRepository = systemNotificationRepository;
+        this.userRepository = userRepository;
+        this.mailSendingService = mailSendingService;
     }
 
     /**
@@ -60,6 +75,50 @@ public class SystemNotificationService {
         }
         if (!systemNotification.getNotificationDate().isBefore(systemNotification.getExpireDate())) {
             throw new BadRequestAlertException("The notification date must be before the expiration date.", ENTITY_NAME, "systemNotificationNeedsNotificationBeforeExpiration");
+        }
+    }
+
+    /**
+     * Returns the number of instructors who would receive a maintenance email for ongoing courses.
+     *
+     * @return the count of eligible recipients
+     */
+    public long countMaintenanceEmailRecipients() {
+        return userRepository.countInstructorRecipientsForMaintenanceEmail(ZonedDateTime.now());
+    }
+
+    /**
+     * Sends maintenance email notifications to all instructors of ongoing courses
+     * who have not opted out of maintenance notifications.
+     *
+     * @param notification the system notification containing maintenance details
+     */
+    public void sendMaintenanceEmails(SystemNotification notification) {
+        var recipients = userRepository.findInstructorRecipientsForMaintenanceEmail(ZonedDateTime.now());
+        log.info("Sending maintenance emails to {} instructor(s)", recipients.size());
+
+        var templateVars = new HashMap<String, Object>();
+        templateVars.put("notificationTitle", notification.getTitle());
+        templateVars.put("notificationDate", notification.getNotificationDate());
+        templateVars.put("expireDate", notification.getExpireDate());
+        if (notification.getText() != null) {
+            templateVars.put("notificationText", notification.getText());
+        }
+
+        for (var recipient : recipients) {
+            try {
+                var user = new User();
+                user.setId(recipient.id());
+                user.setEmail(recipient.email());
+                user.setLangKey(recipient.langKey());
+                user.setFirstName(recipient.firstName());
+                user.setLastName(recipient.lastName());
+
+                mailSendingService.buildAndSendAsync(user, "email.notification.maintenance.title", "mail/notification/maintenanceEmail", templateVars);
+            }
+            catch (Exception e) {
+                log.error("Failed to queue maintenance email for user {}: {}", recipient.id(), e.getMessage());
+            }
         }
     }
 }
