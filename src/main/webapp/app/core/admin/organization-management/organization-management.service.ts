@@ -4,6 +4,7 @@ import { Observable, map, tap } from 'rxjs';
 
 import { Organization } from 'app/core/shared/entities/organization.model';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
+import { SearchTermPageableSearch } from 'app/shared/table/pageable-table';
 
 export interface PagedResponse<T> {
     data: T[];
@@ -25,31 +26,14 @@ export class OrganizationManagementService {
         return this.http.get<Organization[]>(this.adminResourceUrl).pipe(tap((orgs) => orgs?.forEach(this.sendTitlesToEntityTitleService.bind(this))));
     }
 
-    getOrganizations(params: {
-        page?: number;
-        pageSize?: number;
-        sortedColumn?: string;
-        sortingOrder?: 'ASCENDING' | 'DESCENDING';
-        searchTerm?: string;
-    }): Observable<PagedResponse<Organization>> {
-        return this.http
-            .get<Organization[]>(this.adminResourceUrl, {
-                params: {
-                    page: params.page ?? 0,
-                    pageSize: params.pageSize ?? 20,
-                    sortedColumn: params.sortedColumn ?? 'id',
-                    sortingOrder: params.sortingOrder ?? 'ASCENDING',
-                    ...(params.searchTerm ? { searchTerm: params.searchTerm } : {}),
-                },
-                observe: 'response',
-            })
-            .pipe(
-                tap((res) => res.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
-                map((res) => ({
-                    data: res.body ?? [],
-                    total: Number(res.headers.get('X-Total-Count') ?? 0),
-                })),
-            );
+    getOrganizations(params: SearchTermPageableSearch): Observable<PagedResponse<Organization>> {
+        return this.http.get<Organization[]>(this.adminResourceUrl, { params: { ...params }, observe: 'response' }).pipe(
+            tap((res) => res.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
+            map((res) => ({
+                data: res.body ?? [],
+                total: Number(res.headers.get('X-Total-Count') ?? 0),
+            })),
+        );
     }
 
     /**

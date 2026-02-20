@@ -1,39 +1,3 @@
-<!-- <div class="card">
-    <p-table
-        [columns]="columns()"
-        [value]="values()"
-        [scrollable]="true"
-        scrollHeight="400px"
-        [rows]="100"
-        [virtualScroll]="true"
-        [virtualScrollItemSize]="46"
-        [lazy]="true"
-        (onLazyLoad)="onLazyLoad.emit($event)"
-    >
-        <ng-template #header let-columns>
-            <tr>
-                @for (col of columns(); track col; let i = $index) {
-                <th>{{ col.header }}</th>
-                }
-            </tr>
-        </ng-template>
-        <ng-template #body let-rowData let-columns="columns">
-            <tr>
-                @for (col of columns(); track col; let i = $index) {
-                <td>{{ rowData[col.field] }}</td>
-                }
-            </tr>
-        </ng-template>
-    </p-table>
-</div> -->
-
-<!--
-currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
-[lazy]="true"
-(onLazyLoad)="onLazyLoad.emit($event)"
--->
-
-<!-- <div class="card"> -->
 <div class="p-inputgroup">
     <input type="text" pInputText pSize="small" placeholder="Search..." [(ngModel)]="globalSearch" (input)="onGlobalSearchInput($event)" />
 </div>
@@ -46,43 +10,49 @@ currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
     [totalRecords]="totalRows()"
     [tableStyle]="{ 'min-width': '50rem' }"
     [paginator]="true"
-    [rows]="2"
+    [rows]="pageSize()"
     [showCurrentPageReport]="true"
-    [rowsPerPageOptions]="[1, 2, 5, 10]"
+    [rowsPerPageOptions]="pageSizeOptions()"
     [paginator]="true"
+    [loading]="loading()"
+    selectionMode="single"
+    [(selection)]="selectedRow"
+    dataKey="id"
+    (onRowSelect)="onRowSelect.emit($event.data)"
     [lazy]="true"
     (onLazyLoad)="onLazyLoad.emit($event)"
 >
     <ng-template #header let-columns>
         <tr>
             @for (col of columns; track col) {
-                <th [pSortableColumn]="col.sort ? col.field : undefined" [style]="{ 'min-width': col.width ?? 'auto' }">
+                <th [pSortableColumn]="col?.sort ? col.field : undefined" [style]="{ 'min-width': col.width ?? 'auto' }">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <span>{{ col?.header ?? '' }}</span>
+                            @if (col?.headerKey) {
+                                <span [jhiTranslate]="col.headerKey"></span>
+                            } @else {
+                                <span>{{ col?.header ?? '' }}</span>
+                            }
                             @if (col.sort) {
                                 <p-sortIcon [field]="col.field" />
                             }
                         </div>
-                        @if (col.filter) {
+                        @if (col?.filterType) {
                             <p-columnFilter [type]="col.filterType" [field]="col.field" display="menu" class="ml-auto" />
                         }
                     </div>
                 </th>
             }
-
-            <th>
-                <div class="flex items-center gap-2"></div>
-            </th>
+            <th></th>
         </tr>
     </ng-template>
 
     <ng-template #body let-rowData let-columns="columns" let-rowIndex="rowIndex">
-        <tr>
+        <tr [pSelectableRow]="rowData">
             @for (col of columns; track col) {
                 <td>
                     @if (col.cellRenderer) {
-                        <ng-container *ngComponentOutlet="col.cellRenderer; inputs: { params: { value: rowData, rowIndex: rowIndex } }" />
+                        <ng-container *ngComponentOutlet="col.cellRenderer; inputs: { params: buildRendererParams(rowData, col, rowIndex) }" />
                     } @else {
                         {{ rowData[col.field] }}
                     }
@@ -95,6 +65,12 @@ currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
             }
         </tr>
     </ng-template>
-</p-table>
 
-<!-- </div> -->
+    <ng-template #emptymessage>
+        <tr>
+            <td [colSpan]="cols().length + (rowActions() ? 1 : 0)" class="text-center text-secondary">
+                <span [jhiTranslate]="emptyMessageTranslation()"></span>
+            </td>
+        </tr>
+    </ng-template>
+</p-table>

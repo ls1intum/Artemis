@@ -3,81 +3,70 @@ import { Component, TemplateRef, Type, input, output, viewChild } from '@angular
 import { FormsModule } from '@angular/forms';
 import { Table, TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 export interface ColumnDef<T> {
     field: keyof T | string;
-    header: string;
-
-    // existing capabilities your HTML already expects
+    header?: string;
+    headerKey?: string;
     width?: string;
     sort?: boolean;
     filter?: boolean;
     filterType?: string;
-
-    // AG Grid-like renderer
     cellRenderer?: Type<unknown>;
-
-    // optional extra params merged into renderer params
-    cellRendererParams?: (row: T) => Record<string, unknown>;
 }
 
 export interface CellRendererParams<T> {
-    row: T;
+    data: T;
     col: ColumnDef<T>;
-    value: T;
+    value: any;
     rowIndex: number;
-
-    // allow extra keys via cellRendererParams()
-    [key: string]: unknown;
 }
 
 @Component({
     selector: 'jhi-table-view',
-    imports: [CommonModule, FormsModule, InputTextModule, TableModule],
+    imports: [CommonModule, FormsModule, InputTextModule, TableModule, TranslateDirective],
     templateUrl: './table-view.html',
     styleUrl: './table-view.scss',
 })
 export class TableView<T extends Record<string, any>> {
-    dt = viewChild.required<Table>('dt');
-
-    globalSearch = '';
-
-    private debounceTimer: any;
-
-    onGlobalSearchInput(e: Event) {
-        const value = (e.target as HTMLInputElement).value;
-
-        clearTimeout(this.debounceTimer);
-        this.debounceTimer = setTimeout(() => {
-            // reset to first page when searching
-            this.dt().first = 0;
-
-            // Important: this will emit onLazyLoad with filters updated
-            this.dt().filterGlobal(value, 'contains');
-        }, 300);
-    }
+    private static readonly SEARCH_DEBOUNCE_MS = 300;
 
     cols = input.required<ColumnDef<T>[]>();
     vals = input.required<T[]>();
     totalRows = input.required<number>();
-    onLazyLoad = output<any>();
-
-    // keep your existing template-based row actions
+    pageSize = input<number>(50);
+    pageSizeOptions = input<number[]>([10, 50, 100]);
     rowActions = input<TemplateRef<{ $implicit: T }> | null>(null);
+    loading = input(false);
+    emptyMessageTranslation = input<string>('artemisApp.dataTable.search.noResults');
+    selectedRow: T | undefined;
 
-    getValue(row: T): T {
-        return row;
+    onLazyLoad = output<any>();
+    onRowSelect = output<any>();
+
+    dt = viewChild.required<Table>('dt');
+
+    globalSearch = '';
+    private debounceTimer: ReturnType<typeof setTimeout> | undefined;
+
+    onGlobalSearchInput(event: Event): void {
+        const value = (event.target as HTMLInputElement).value;
+
+        clearTimeout(this.debounceTimer);
+        this.debounceTimer = setTimeout(() => {
+            this.dt().first = 0;
+            this.dt().filterGlobal(value, 'contains');
+        }, TableView.SEARCH_DEBOUNCE_MS);
     }
 
-    buildRendererParams(row: T, col: ColumnDef<T>, rowIndex: number): CellRendererParams<T> {
-        const base: CellRendererParams<T> = {
-            row,
+    buildRendererParams(data: T, col: ColumnDef<T>, rowIndex: number): CellRendererParams<T> {
+        const params: CellRendererParams<T> = {
+            data,
             col,
-            value: this.getValue(row),
+            value: data?.[col.field],
             rowIndex,
         };
-
-        const extra = (col.cellRendererParams?.(row) ?? {}) as Record<string, unknown>;
-        return { ...base, ...extra };
+        return params;
     }
 }

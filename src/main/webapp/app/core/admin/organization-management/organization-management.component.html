@@ -1,10 +1,26 @@
-<ng-template #orgActions let-organization>
-    <div class="btn-group flex-btn-group-container">
-        <button type="submit" [routerLink]="['./', organization.id]" class="btn btn-info btn-sm">
-            <fa-icon [icon]="faEye" />
-            <span class="d-none d-md-inline" jhiTranslate="entity.action.view"></span>
+<div>
+    <h5 *adminTitleBarTitle id="organization-management-page-heading" class="mb-0" jhiTranslate="artemisApp.organizationManagement.title"></h5>
+    <div *adminTitleBarActions>
+        <button class="btn btn-primary btn-sm jh-create-entity" [routerLink]="['./new']">
+            <fa-icon [icon]="faPlus" /> <span jhiTranslate="artemisApp.organizationManagement.addLabel"></span>
         </button>
-        <button type="submit" [routerLink]="['./', organization.id, 'edit']" queryParamsHandling="merge" class="btn btn-warning btn-sm">
+    </div>
+    <div>
+        <jhi-table-view
+            [cols]="columns"
+            [vals]="organizations()"
+            [totalRows]="totalCount()"
+            (onLazyLoad)="loadOrganizations($event)"
+            [rowActions]="organizationActions"
+            [loading]="isLoading()"
+            (onRowSelect)="onOrganizationSelect($event)"
+        />
+    </div>
+</div>
+
+<ng-template #organizationActions let-organization>
+    <div class="btn-group flex-btn-group-container">
+        <button type="submit" [routerLink]="['./', organization.id, 'edit']" queryParamsHandling="merge" class="btn btn-warning btn-sm" (click)="$event.stopPropagation()">
             <fa-icon [icon]="faWrench" />
             <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
         </button>
@@ -14,85 +30,9 @@
             deleteQuestion="artemisApp.organizationManagement.delete.question"
             (delete)="deleteOrganization(organization.id!)"
             [dialogError]="dialogError$"
+            (click)="$event.stopPropagation()"
         >
             <fa-icon [icon]="faTimes" />
         </button>
     </div>
 </ng-template>
-<!-- <ng-template #orgActions let-organization>
-    <div class="flex justify-center flex-wrap gap-4">
-        <p-button [rounded]="true" [outlined]="true" type="submit" size="small" [routerLink]="['./', organization.id, 'edit']" queryParamsHandling="merge" styleClass="circle-btn">
-            <fa-icon [icon]="faPenToSquare" />
-        </p-button>
-        <p-button [rounded]="true" severity="danger" [outlined]="true" size="small" styleClass="circle-btn">
-            <fa-icon [icon]="faTrashCan" />
-        </p-button>
-    </div>
-</ng-template> -->
-
-<div>
-    <h5 *adminTitleBarTitle id="organization-management-page-heading" class="mb-0" jhiTranslate="artemisApp.organizationManagement.title"></h5>
-    <div *adminTitleBarActions>
-        <button class="btn btn-primary btn-sm jh-create-entity" [routerLink]="['./new']">
-            <fa-icon [icon]="faPlus" /> <span jhiTranslate="artemisApp.organizationManagement.addLabel"></span>
-        </button>
-    </div>
-    <div>
-        <jhi-table-view [cols]="columns()" [vals]="organizations()" [totalRows]="totalRows()" (onLazyLoad)="loadOrganizations($event)" [rowActions]="orgActions" />
-        <!-- <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th><span jhiTranslate="global.field.id"></span></th>
-                    <th><span jhiTranslate="artemisApp.organizationManagement.name"></span></th>
-                    <th><span jhiTranslate="artemisApp.organizationManagement.shortName"></span></th>
-                    <th><span jhiTranslate="artemisApp.organizationManagement.url"></span></th>
-                    <th><span jhiTranslate="artemisApp.organizationManagement.description"></span></th>
-                    <th><span jhiTranslate="artemisApp.organizationManagement.users"></span></th>
-                    <th><span jhiTranslate="artemisApp.organizationManagement.courses"></span></th>
-                    <th><span jhiTranslate="artemisApp.organizationManagement.emailPattern"></span></th>
-                </tr>
-            </thead>
-            <tbody>
-                @for (organization of organizations(); track trackIdentity($index, organization)) {
-                    <tr>
-                        <td>
-                            <span>{{ organization.id }}</span>
-                        </td>
-                        <td>
-                            <span>{{ organization.name }}</span>
-                        </td>
-                        <td>
-                            <span>{{ organization.shortName }}</span>
-                        </td>
-                        <td>{{ organization.url }}</td>
-                        <td>{{ organization.description }}</td>
-                        <td>{{ organization.numberOfUsers }}</td>
-                        <td>{{ organization.numberOfCourses }}</td>
-                        <td>{{ organization.emailPattern }}</td>
-                        <td class="text-end">
-                            <div class="btn-group flex-btn-group-container">
-                                <button type="submit" [routerLink]="['./', organization.id]" class="btn btn-info btn-sm">
-                                    <fa-icon [icon]="faEye" />
-                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.view"></span>
-                                </button>
-                                <button type="submit" [routerLink]="['./', organization.id, 'edit']" queryParamsHandling="merge" class="btn btn-warning btn-sm">
-                                    <fa-icon [icon]="faWrench" />
-                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
-                                </button>
-                                <button
-                                    jhiDeleteButton
-                                    [entityTitle]="organization.name!"
-                                    deleteQuestion="artemisApp.organizationManagement.delete.question"
-                                    (delete)="deleteOrganization(organization.id!)"
-                                    [dialogError]="dialogError$"
-                                >
-                                    <fa-icon [icon]="faTimes" />
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table> -->
-    </div>
-</div>
