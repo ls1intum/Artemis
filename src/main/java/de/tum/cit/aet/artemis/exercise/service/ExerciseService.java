@@ -537,7 +537,7 @@ public class ExerciseService {
      * Sets the transient attribute "studentAssignedTeamId" that contains the id of the team to which the user is assigned
      *
      * @param exercise the exercise for which to set the attribute
-     * @param user     the user for which to check to which team (or no team) he belongs to
+     * @param user     the user for which to check to which team (or no team) they belong to
      */
     private void setAssignedTeamIdForExerciseAndUser(Exercise exercise, User user) {
         // if the exercise is not team-based, there is nothing to do here
