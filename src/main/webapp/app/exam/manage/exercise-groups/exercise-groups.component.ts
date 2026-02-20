@@ -296,7 +296,7 @@ export class ExerciseGroupsComponent implements OnInit {
     /**
      * sets up {@link exerciseGroupToExerciseTypesDict} that maps the exercise group id to whether the said exercise group contains a specific exercise type.
      * Used to show the correct modal for deleting exercises and to show only relevant information in the exercise tables.
-     * E.g. in case programming exercises are present, the user must decide whether (s)he wants to delete the build plans.
+     * E.g. in case programming exercises are present, the user must decide whether they want to delete the build plans.
      */
     setupExerciseGroupToExerciseTypesDict() {
         this.exerciseGroupToExerciseTypesDict = new Map<number, ExerciseType[]>();
