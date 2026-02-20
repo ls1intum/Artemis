@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.exercise.repository.review;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Lazy;
@@ -21,14 +20,6 @@ import de.tum.cit.aet.artemis.exercise.domain.review.Comment;
 @Lazy
 @Repository
 public interface CommentRepository extends ArtemisJpaRepository<Comment, Long>, CommentRepositoryCustom {
-
-    /**
-     * Find all comments for a thread ordered by creation date ascending.
-     *
-     * @param threadId the thread id
-     * @return ordered list of comments
-     */
-    List<Comment> findByThreadIdOrderByCreatedDateAsc(long threadId);
 
     /**
      * Find a comment by id with its thread and exercise loaded.

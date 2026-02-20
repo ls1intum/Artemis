@@ -157,7 +157,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
         request.delete(reviewCommentPath(exercise.getId(), initialComment.id()), HttpStatus.NO_CONTENT);
 
-        assertThat(commentRepository.findByThreadIdOrderByCreatedDateAsc(createdThread.id())).isEmpty();
+        assertThat(commentRepository.findById(initialComment.id())).isEmpty();
         assertThat(commentThreadRepository.findById(createdThread.id())).isEmpty();
     }
 
@@ -304,7 +304,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
         request.getList(reviewThreadsPath(exercise.getId()), HttpStatus.FORBIDDEN, CommentThreadDTO.class);
 
-        assertThat(commentThreadRepository.findByExerciseId(exercise.getId())).isEmpty();
+        assertThat(commentThreadRepository.findWithCommentsByExerciseId(exercise.getId())).isEmpty();
     }
 
     @Test
@@ -358,7 +358,8 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
         request.delete(reviewCommentPath(exercise.getId(), reply.id()), HttpStatus.NO_CONTENT);
 
-        assertThat(commentRepository.findByThreadIdOrderByCreatedDateAsc(createdThread.id())).hasSize(1);
+        assertThat(commentRepository.findById(createdThread.comments().getFirst().id())).isPresent();
+        assertThat(commentRepository.findById(reply.id())).isEmpty();
         assertThat(commentThreadRepository.findById(createdThread.id())).isPresent();
     }
 

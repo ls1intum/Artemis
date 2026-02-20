@@ -183,7 +183,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         exerciseReviewService.deleteComment(programmingExercise.getId(), first.getId());
 
         assertThat(commentThreadRepository.findById(thread.getId())).isPresent();
-        assertThat(commentRepository.findByThreadIdOrderByCreatedDateAsc(thread.getId())).hasSize(2);
+        assertThat(commentThreadRepository.findWithCommentsById(thread.getId()).orElseThrow().getComments()).hasSize(2);
     }
 
     @Test
@@ -193,7 +193,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         exerciseReviewService.createUserComment(programmingExercise.getId(), thread.getId(), buildUserCommentContent("First"));
         exerciseReviewService.createUserComment(programmingExercise.getId(), thread.getId(), buildUserCommentContent("Second"));
 
-        long count = commentRepository.findByThreadIdOrderByCreatedDateAsc(thread.getId()).size();
+        long count = commentThreadRepository.findWithCommentsById(thread.getId()).orElseThrow().getComments().size();
 
         assertThat(count).isEqualTo(3);
     }
@@ -799,7 +799,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
 
         exerciseReviewService.updateThreadsForVersionChange(previous, current);
 
-        assertThat(commentThreadRepository.findByExerciseId(programmingExercise.getId())).isEmpty();
+        assertThat(commentThreadRepository.findWithCommentsByExerciseId(programmingExercise.getId())).isEmpty();
     }
 
     private CommentThread buildThreadEntity() {
