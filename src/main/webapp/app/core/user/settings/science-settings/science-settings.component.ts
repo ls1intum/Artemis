@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
-import { faInfoCircle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Subscription } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -28,11 +28,10 @@ export class ScienceSettingsComponent extends UserSettingsDirective implements O
     private scienceSettingsService = inject(ScienceSettingsService);
     private featureToggleService = inject(FeatureToggleService);
 
-    // Icons
-    faSave = faSave;
     faInfoCircle = faInfoCircle;
 
     private featureToggleActiveSubscription: Subscription;
+    private saveSubscription?: Subscription;
     featureToggleActive = false;
 
     declare userSettings: UserSettingsStructure<ScienceSetting>;
@@ -54,30 +53,44 @@ export class ScienceSettingsComponent extends UserSettingsDirective implements O
         }
 
         // subscribe to feature toggle changes
-        this.featureToggleService.getFeatureToggleActive(FeatureToggle.Science).subscribe((active) => {
+        this.featureToggleActiveSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.Science).subscribe((active) => {
             this.featureToggleActive = active;
         });
     }
 
     ngOnDestroy(): void {
-        if (this.featureToggleActiveSubscription) {
-            this.featureToggleActiveSubscription.unsubscribe();
-        }
+        this.featureToggleActiveSubscription?.unsubscribe();
+        this.saveSubscription?.unsubscribe();
     }
 
     /**
      * Catches the toggle event from a user click
-     * Toggles the respective setting and mark it as changed (only changed settings will be send to the server for saving)
+     * Toggles the respective setting and saves it immediately
      */
     toggleSetting(event: any) {
-        this.settingsChanged = true;
         const settingId = event.currentTarget.id;
         const settingToUpdate = this.settings.find((setting) => setting.settingId === settingId);
         if (!settingToUpdate) {
             return;
         }
-        // toggle/inverts previous setting
+        const previousValue = settingToUpdate.active;
         settingToUpdate.active = !settingToUpdate.active;
         settingToUpdate.changed = true;
+
+        // Cancel any in-flight save to prevent race conditions on rapid toggles
+        this.saveSubscription?.unsubscribe();
+        this.saveSubscription = this.userSettingsService.saveSettings(this.settings, this.userSettingsCategory).subscribe({
+            next: (res) => {
+                this.userSettings = this.userSettingsService.saveSettingsSuccess(this.userSettings, res.body!);
+                this.settings = this.userSettingsService.extractIndividualSettingsFromSettingsStructure(this.userSettings);
+                this.finishSaving();
+            },
+            error: (res) => {
+                // Revert the toggle on save failure
+                settingToUpdate.active = previousValue;
+                settingToUpdate.changed = false;
+                this.onError(res);
+            },
+        });
     }
 }
