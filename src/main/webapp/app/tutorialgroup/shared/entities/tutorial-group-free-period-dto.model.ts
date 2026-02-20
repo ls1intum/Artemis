@@ -4,16 +4,16 @@ import dayjs from 'dayjs/esm';
 
 export class TutorialGroupFreePeriodDTO {
     public id?: number;
-    public start?: string;
-    public end?: string;
+    public start: string;
+    public end: string;
     public reason?: string;
 }
 
 export function toTutorialGroupFreePeriodDTO(tutorialGroupFreePeriod: TutorialGroupFreePeriod): TutorialGroupFreePeriodDTO {
     return {
         id: tutorialGroupFreePeriod.id,
-        start: convertDateFromClient(tutorialGroupFreePeriod.start),
-        end: convertDateFromClient(tutorialGroupFreePeriod.end),
+        start: convertDateFromClient(tutorialGroupFreePeriod.start)!,
+        end: convertDateFromClient(tutorialGroupFreePeriod.end)!,
         reason: tutorialGroupFreePeriod.reason,
     };
 }
@@ -21,8 +21,8 @@ export function toTutorialGroupFreePeriodDTO(tutorialGroupFreePeriod: TutorialGr
 export function fromTutorialGroupFreePeriodDTO(dto: TutorialGroupFreePeriodDTO): TutorialGroupFreePeriod {
     return {
         id: dto.id,
-        start: dto.start ? dayjs.utc(dto.start) : undefined,
-        end: dto.end ? dayjs.utc(dto.end) : undefined,
+        start: dayjs.utc(dto.start),
+        end: dayjs.utc(dto.end),
         reason: dto.reason,
     };
 }

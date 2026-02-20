@@ -6,6 +6,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
@@ -44,10 +45,10 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
  * @param tutorialGroupFreePeriods       optional set of free periods during the tutorial period
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TutorialGroupConfigurationDTO(Long id, @NotNull String tutorialPeriodStartInclusive, @NotNull String tutorialPeriodEndInclusive,
+public record TutorialGroupConfigurationDTO(Long id, @NotBlank String tutorialPeriodStartInclusive, @NotBlank String tutorialPeriodEndInclusive,
         @NotNull Boolean useTutorialGroupChannels, @NotNull Boolean usePublicTutorialGroupChannels, Set<TutorialGroupFreePeriodDTO> tutorialGroupFreePeriods) {
 
-    private static final String ENTITY_NAME = "tutorialGroupsConfiguration";
+    private static final String TUTORIAL_FREE_PERIOD_ENTITY_NAME = "tutorialGroupFreePeriod";
 
     /**
      * If the field is omitted during JSON deserialization, it is replaced
@@ -66,19 +67,25 @@ public record TutorialGroupConfigurationDTO(Long id, @NotNull String tutorialPer
      * @param reason optional reason for the free period
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record TutorialGroupFreePeriodDTO(Long id, String start, String end, String reason) {
+    public record TutorialGroupFreePeriodDTO(Long id, @NotNull String start, @NotNull String end, String reason) {
 
         /**
          * Creates a DTO from the given {@link TutorialGroupFreePeriod} entity.
          *
          * @param freePeriod the entity to convert
          * @return a DTO representation of the entity
+         * @throws BadRequestAlertException if the entity contains invalid date values
          */
         public static TutorialGroupFreePeriodDTO of(TutorialGroupFreePeriod freePeriod) {
             Objects.requireNonNull(freePeriod, "tutorialGroupFreePeriod must exist");
 
-            return new TutorialGroupFreePeriodDTO(freePeriod.getId(), freePeriod.getStart() != null ? freePeriod.getStart().toString() : null,
-                    freePeriod.getEnd() != null ? freePeriod.getEnd().toString() : null, freePeriod.getReason());
+            if (freePeriod.getStart() == null) {
+                throw new BadRequestAlertException("Tutorial group free period start date must be set.", TUTORIAL_FREE_PERIOD_ENTITY_NAME, "tutorialFreePeriodStartDateMissing");
+            }
+            if (freePeriod.getEnd() == null) {
+                throw new BadRequestAlertException("Tutorial group free period end date must be set.", TUTORIAL_FREE_PERIOD_ENTITY_NAME, "tutorialFreePeriodEndDateMissing");
+            }
+            return new TutorialGroupFreePeriodDTO(freePeriod.getId(), freePeriod.getStart().toString(), freePeriod.getEnd().toString(), freePeriod.getReason());
         }
 
         /**
@@ -86,19 +93,22 @@ public record TutorialGroupConfigurationDTO(Long id, @NotNull String tutorialPer
          *
          * @param dto the DTO to convert
          * @return a new entity populated with the values from the DTO
+         * @throws BadRequestAlertException if the DTO contains invalid date values
          */
         public static TutorialGroupFreePeriod from(TutorialGroupFreePeriodDTO dto) {
             Objects.requireNonNull(dto, "tutorialGroupFreePeriodDTO must exist");
 
             TutorialGroupFreePeriod freePeriod = new TutorialGroupFreePeriod();
             try {
-                freePeriod.setStart(dto.start() != null ? ZonedDateTime.parse(dto.start()) : null);
-                freePeriod.setEnd(dto.end() != null ? ZonedDateTime.parse(dto.end()) : null);
+                ZonedDateTime start = ZonedDateTime.parse(dto.start());
+                ZonedDateTime end = ZonedDateTime.parse(dto.end());
+                freePeriod.setStart(start);
+                freePeriod.setEnd(end);
             }
             catch (DateTimeParseException ex) {
-                throw new BadRequestAlertException("Tutorial period start date and end date must be valid ISO 8601 date strings.", ENTITY_NAME, "tutorialPeriodInvalidFormat");
+                throw new BadRequestAlertException("Tutorial group free period start date and end date must be valid ISO 8601 date strings.", TUTORIAL_FREE_PERIOD_ENTITY_NAME,
+                        "tutorialFreePeriodInvalidFormat");
             }
-
             freePeriod.setReason(dto.reason());
             return freePeriod;
         }

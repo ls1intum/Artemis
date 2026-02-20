@@ -227,11 +227,15 @@
             "idNull": "Eine Tutoriengruppen-Konfiguration kann nicht ohne ID aktualisiert werden.",
 
             "tutorialPeriodMissing": "Das Startdatum und das Enddatum des Tutorienzeitraums müssen gesetzt sein.",
-            "tutorialPeriodInvalidFormat": "Das Startdatum und das Enddatum des Tutorienzeitraums müssen gültige ISO-8601-Datumsangaben sein.",
             "tutorialPeriodInvalidOrder": "Das Startdatum des Tutorienzeitraums muss vor dem Enddatum liegen.",
 
             "courseIdMismatch": "Die Kurs-ID im Pfad stimmt nicht mit dem Kurs der Tutoriengruppen-Konfiguration überein.",
             "tutorialGroupConfigurationIdMismatch": "Die ID der Tutoriengruppen-Konfiguration im Pfad stimmt nicht mit der zu aktualisierenden Konfiguration überein."
+        },
+        "tutorialGroupFreePeriod": {
+            "tutorialFreePeriodStartDateMissing": "Das Startdatum der Tutoriums-Freiphase muss angegeben werden.",
+            "tutorialFreePeriodEndDateMissing": "Das Enddatum der Tutoriums-Freiphase muss angegeben werden.",
+            "tutorialFreePeriodInvalidFormat": "Das Startdatum und das Enddatum der Tutoriums-Freiphase müssen gültige ISO-8601-Datumsangaben sein."
         }
     }
 }

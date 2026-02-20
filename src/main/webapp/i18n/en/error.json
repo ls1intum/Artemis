@@ -225,13 +225,15 @@
             "alreadyExists": "A tutorial group configuration already exists for this course.",
             "courseHasNoTimeZone": "The course has no configured time zone.",
             "idNull": "A tutorial group configuration cannot be updated without an id.",
-
             "tutorialPeriodMissing": "Tutorial period start date and end date must be set.",
-            "tutorialPeriodInvalidFormat": "Tutorial period start date and end date must be valid ISO 8601 date strings.",
             "tutorialPeriodInvalidOrder": "Tutorial period start date must be before tutorial period end date.",
-
             "courseIdMismatch": "The course id in the path does not match the course of the tutorial group configuration.",
             "tutorialGroupConfigurationIdMismatch": "The tutorial group configuration id in the path does not match the configuration to be updated."
+        },
+        "tutorialGroupFreePeriod": {
+            "tutorialFreePeriodStartDateMissing": "Tutorial group free period start date must be set.",
+            "tutorialFreePeriodEndDateMissing": "Tutorial group free period end date must be set.",
+            "tutorialFreePeriodInvalidFormat": "Tutorial group free period start date and end date must be valid ISO 8601 date strings."
         }
     }
 }

@@ -135,7 +135,7 @@ public class TutorialGroupsConfigurationResource {
             throw new BadRequestAlertException("A tutorial group cannot be updated without an id", ENTITY_NAME, "idNull");
         }
 
-        var configurationFromDatabase = this.tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(updatedTutorialGroupConfigurationDto.id());
+        var configurationFromDatabase = this.tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(tutorialGroupsConfigurationId);
         var course = configurationFromDatabase.getCourse();
         checkCourseTimeZone(course);
 

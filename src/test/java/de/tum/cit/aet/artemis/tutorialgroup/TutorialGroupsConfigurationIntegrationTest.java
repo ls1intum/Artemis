@@ -213,7 +213,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
 
         var dto = TutorialGroupConfigurationDTO.of(configuration);
 
-        request.putWithResponseBody(getTutorialGroupsConfigurationPath(courseId, configuration.getId() + 5), dto, TutorialGroupConfigurationDTO.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody(getTutorialGroupsConfigurationPath(courseId, configuration.getId() + 5), dto, TutorialGroupConfigurationDTO.class, HttpStatus.NOT_FOUND);
     }
 
     /**
