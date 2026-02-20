@@ -354,9 +354,9 @@ public final class Constants {
     public static final String PROFILE_CORE_AND_SCHEDULING = PROFILE_CORE + " & " + PROFILE_SCHEDULING;
 
     /**
-     * The name of the Spring profile used for Theia as an external online IDE.
+     * The name of the module feature used for Theia as an external online IDE.
      */
-    public static final String PROFILE_THEIA = "theia";
+    public static final String MODULE_FEATURE_THEIA = "theia";
 
     /**
      * The name of the profile for integration independent tests
@@ -522,6 +522,11 @@ public final class Constants {
      * The name of the property used to enable or disable LTI functionality.
      */
     public static final String LTI_ENABLED_PROPERTY_NAME = "artemis.lti.enabled";
+
+    /**
+     * The name of the property used to enable or disable Theia functionality.
+     */
+    public static final String THEIA_ENABLED_PROPERTY_NAME = "artemis.theia.enabled";
 
     /**
      * The name of the property used to enable or disable Weaviate integration.
