@@ -677,9 +677,9 @@ export class IrisChatService implements OnDestroy {
                     this.close();
                     if (currentSessions.length > 0) {
                         this.switchToSession(currentSessions[0]);
-                    } else {
-                        this.clearChat();
                     }
+                    // When no sessions remain, just stay in the closed state.
+                    // The user can start a new session manually via the "New chat" button.
                 }
             }),
             map(() => undefined),

@@ -1,6 +1,6 @@
-import { ChangeDetectionStrategy, Component, Signal, computed, inject, input, output, viewChild } from '@angular/core';
-import { DatePipe, NgClass } from '@angular/common';
+import { ChangeDetectionStrategy, Component, Signal, computed, effect, inject, input, output, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { DatePipe, NgClass } from '@angular/common';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChalkboardUser, faEllipsisVertical, faKeyboard, faPlus } from '@fortawesome/free-solid-svg-icons';
@@ -23,6 +23,7 @@ import { MenuItem } from 'primeng/api';
 export class ChatHistoryItemComponent {
     private readonly translateService = inject(TranslateService);
     private readonly newChatTitle = toSignal(this.translateService.stream('artemisApp.iris.chatHistory.newChat'), { initialValue: '' });
+    private readonly deleteLabel = toSignal(this.translateService.stream('artemisApp.iris.chatHistory.deleteSession'), { initialValue: '' });
 
     session = input.required<IrisSessionDTO>();
     active = input<boolean>(false);
@@ -41,7 +42,7 @@ export class ChatHistoryItemComponent {
 
     readonly contextMenu = viewChild<Menu>('menu');
 
-    readonly menuItems: MenuItem[] = [
+    menuItems: MenuItem[] = [
         {
             label: this.translateService.instant('artemisApp.iris.chatHistory.deleteSession'),
             icon: 'pi pi-trash',
@@ -49,6 +50,21 @@ export class ChatHistoryItemComponent {
             command: () => this.onDeleteClick(),
         },
     ];
+
+    constructor() {
+        // Update menu item label reactively when language changes
+        effect(() => {
+            const label = this.deleteLabel();
+            this.menuItems = [
+                {
+                    label,
+                    icon: 'pi pi-trash',
+                    styleClass: 'danger',
+                    command: () => this.onDeleteClick(),
+                },
+            ];
+        });
+    }
 
     onItemClick(): void {
         this.sessionClicked.emit(this.session());

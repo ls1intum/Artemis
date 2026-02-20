@@ -8,6 +8,7 @@ import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -142,11 +143,13 @@ public class IrisChatSessionResource {
     /**
      * DELETE /api/iris/chat-history/sessions : Delete all Iris chat sessions for the current user.
      * Messages and their content are removed via cascade.
+     * Transactional to ensure count queries and delete are atomic for accurate audit logging.
      *
      * @return the {@link ResponseEntity} with status {@code 204 (No Content)}
      */
     @DeleteMapping("sessions")
     @EnforceAtLeastStudent
+    @Transactional // ok because count + delete must be atomic for accurate audit data
     public ResponseEntity<Void> deleteAllSessionsForCurrentUser() {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         long sessionCount = irisChatSessionRepository.countByUserId(user.getId());
@@ -170,11 +173,13 @@ public class IrisChatSessionResource {
     public ResponseEntity<Void> deleteSession(@PathVariable Long sessionId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         IrisChatSession session = irisChatSessionRepository.findById(sessionId).orElseThrow(() -> new EntityNotFoundException("Iris chat session", sessionId));
-        if (session.getUserId() != user.getId()) {
+        if (user.getId() == null || session.getUserId() != user.getId()) {
             throw new AccessForbiddenAlertException("You do not have access to this Iris chat session.", "iris", "iris.forbidden");
         }
         log.info("REST request to delete Iris chat session {} for user id {}", sessionId, user.getId());
         irisChatSessionRepository.deleteById(sessionId);
+        var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_IRIS_SESSION, "sessionId=" + sessionId);
+        auditEventRepository.add(auditEvent);
         return ResponseEntity.noContent().build();
     }
 }

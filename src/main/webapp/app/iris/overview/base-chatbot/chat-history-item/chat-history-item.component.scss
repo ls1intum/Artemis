@@ -82,7 +82,9 @@
     }
 }
 
-:host ::ng-deep .p-menu .danger {
+// Scoped to .chat-history-item-menu to avoid leaking to other PrimeNG menus.
+// ::ng-deep is needed because the popup is portaled to <body> via appendTo="body".
+:host ::ng-deep .chat-history-item-menu .danger {
     .p-menuitem-link {
         color: var(--bs-danger);
 

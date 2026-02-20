@@ -169,6 +169,8 @@ public final class Constants {
 
     public static final String DELETE_ALL_IRIS_SESSIONS = "DELETE_ALL_IRIS_SESSIONS";
 
+    public static final String DELETE_IRIS_SESSION = "DELETE_IRIS_SESSION";
+
     public static final String CLEANUP_EXAM = "CLEANUP_EXAM";
 
     public static final String DELETE_EXERCISE = "DELETE_EXERCISE";
