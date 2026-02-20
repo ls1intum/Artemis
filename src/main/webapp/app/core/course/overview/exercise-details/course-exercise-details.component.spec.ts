@@ -315,7 +315,7 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.studentParticipations?.[0].exercise?.id).toBe(exercise.id);
         expect(comp.exercise!.id).toBe(exercise.id);
         expect(comp.studentParticipations[0].submissions![0].results![0]).toStrictEqual(changedResult);
-        expect(comp.plagiarismCaseInfo).toEqual(plagiarismCaseInfo);
+        expect(comp.plagiarismCaseInfo()).toEqual(plagiarismCaseInfo);
         expect(comp.hasMoreResults).toBe(false);
         expect(comp.exerciseRatedBadge(result)).toBe('bg-info');
     });
@@ -331,30 +331,30 @@ describe('CourseExerciseDetailsComponent', () => {
 
         const artemisMarkdown = TestBed.inject(ArtemisMarkdownService);
 
-        expect(comp.exampleSolutionInfo).toBeUndefined();
+        expect(comp.exampleSolutionInfo()).toBeUndefined();
         const newExercise = { ...textExercise };
         comp.showIfExampleSolutionPresent(newExercise);
-        expect(comp.exampleSolutionInfo).toBe(exampleSolutionInfo);
+        expect(comp.exampleSolutionInfo()).toBe(exampleSolutionInfo);
         expect(exerciseServiceSpy).toHaveBeenCalledOnce();
         expect(exerciseServiceSpy).toHaveBeenCalledWith(newExercise, artemisMarkdown);
     });
 
     it('should collapse example solution for tutors', () => {
-        expect(comp.exampleSolutionCollapsed).toBeUndefined();
+        expect(comp.exampleSolutionCollapsed()).toBeUndefined();
         comp.showIfExampleSolutionPresent({ ...textExercise, isAtLeastTutor: true });
-        expect(comp.exampleSolutionCollapsed).toBe(true);
+        expect(comp.exampleSolutionCollapsed()).toBe(true);
 
         comp.showIfExampleSolutionPresent({ ...textExercise, isAtLeastTutor: false });
-        expect(comp.exampleSolutionCollapsed).toBe(false);
+        expect(comp.exampleSolutionCollapsed()).toBe(false);
     });
 
     it('should collapse/expand example solution when clicked', () => {
-        expect(comp.exampleSolutionCollapsed).toBeUndefined();
+        expect(comp.exampleSolutionCollapsed()).toBeUndefined();
         comp.changeExampleSolution();
-        expect(comp.exampleSolutionCollapsed).toBe(true);
+        expect(comp.exampleSolutionCollapsed()).toBe(true);
 
         comp.changeExampleSolution();
-        expect(comp.exampleSolutionCollapsed).toBe(false);
+        expect(comp.exampleSolutionCollapsed()).toBe(false);
     });
 
     it('should sort results by completion date in ascending order', () => {
@@ -403,9 +403,9 @@ describe('CourseExerciseDetailsComponent', () => {
         comp.courseId = courseId;
 
         comp.handleNewExercise({ exercise: programmingExercise });
-        expect(comp.baseResource).toBe(`/course-management/${courseId}/${programmingExercise.type}-exercises/${programmingExercise.id}/`);
-        expect(comp.allowComplaintsForAutomaticAssessments).toBe(true);
-        expect(comp.submissionPolicy).toEqual(submissionPolicy);
+        expect(comp.baseResource()).toBe(`/course-management/${courseId}/${programmingExercise.type}-exercises/${programmingExercise.id}/`);
+        expect(comp.allowComplaintsForAutomaticAssessments()).toBe(true);
+        expect(comp.submissionPolicy()).toEqual(submissionPolicy);
     });
 
     it('should handle error when getting latest rated result', async () => {
@@ -488,13 +488,13 @@ describe('CourseExerciseDetailsComponent', () => {
         if (activeModuleFeatures.includes(MODULE_FEATURE_IRIS)) {
             // Should have called getCourseSettings if 'iris' is active
             expect(getCourseSettingsSpy).toHaveBeenCalledWith(1);
-            expect(comp.irisEnabled).toBe(true);
-            expect(comp.irisChatEnabled).toBe(true);
+            expect(comp.irisEnabled()).toBe(true);
+            expect(comp.irisChatEnabled()).toBe(true);
         } else {
             // Should not have called getCourseSettings if 'iris' is not active
             expect(getCourseSettingsSpy).not.toHaveBeenCalled();
-            expect(comp.irisEnabled).toBe(false);
-            expect(comp.irisChatEnabled).toBe(false);
+            expect(comp.irisEnabled()).toBe(false);
+            expect(comp.irisChatEnabled()).toBe(false);
         }
     });
 

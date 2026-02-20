@@ -132,7 +132,7 @@ export class CourseExerciseRowComponent implements OnInit {
         // Enrich the exercise with role checks and course reference via a spread copy
         // to avoid mutating the input signal's underlying object
         const courseForRoleCheck = course || exercise.exerciseGroup?.exam?.course;
-        const enrichedExercise = {
+        let enrichedExercise: Exercise = {
             ...exercise,
             isAtLeastTutor: this.accountService.isAtLeastTutorInCourse(courseForRoleCheck),
             isAtLeastEditor: this.accountService.isAtLeastEditorInCourse(courseForRoleCheck),
@@ -140,11 +140,14 @@ export class CourseExerciseRowComponent implements OnInit {
             course,
         } as Exercise;
 
-        // Quiz-specific enrichment
+        // Quiz-specific enrichment via spread to avoid mutating the object after creation
         if (enrichedExercise.type === ExerciseType.QUIZ) {
             const quizExercise = enrichedExercise as QuizExercise;
-            quizExercise.isActiveQuiz = this.exerciseService.isActiveQuiz(quizExercise);
-            quizExercise.isPracticeModeAvailable = quizExercise.quizEnded;
+            enrichedExercise = {
+                ...quizExercise,
+                isActiveQuiz: this.exerciseService.isActiveQuiz(quizExercise),
+                isPracticeModeAvailable: quizExercise.quizEnded,
+            } as QuizExercise;
         }
 
         this._enrichedExercise.set(enrichedExercise);

@@ -172,134 +172,54 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this._sortedHistoryResults.set(value);
     }
 
-    // Other reactive state as signals
+    // Read-only signal accessors for state only modified internally
     private readonly _resultWithComplaint = signal<Result | undefined>(undefined);
-    get resultWithComplaint(): Result | undefined {
-        return this._resultWithComplaint();
-    }
-    set resultWithComplaint(value: Result | undefined) {
-        this._resultWithComplaint.set(value);
-    }
+    readonly resultWithComplaint = this._resultWithComplaint.asReadonly();
 
     private readonly _latestRatedResult = signal<Result | undefined>(undefined);
-    get latestRatedResult(): Result | undefined {
-        return this._latestRatedResult();
-    }
-    set latestRatedResult(value: Result | undefined) {
-        this._latestRatedResult.set(value);
-    }
+    readonly latestRatedResult = this._latestRatedResult.asReadonly();
 
     private readonly _complaint = signal<Complaint | undefined>(undefined);
-    get complaint(): Complaint | undefined {
-        return this._complaint();
-    }
-    set complaint(value: Complaint | undefined) {
-        this._complaint.set(value);
-    }
+    readonly complaint = this._complaint.asReadonly();
 
     private readonly _showMoreResults = signal(false);
-    get showMoreResults(): boolean {
-        return this._showMoreResults();
-    }
-    set showMoreResults(value: boolean) {
-        this._showMoreResults.set(value);
-    }
+    readonly showMoreResults = this._showMoreResults.asReadonly();
 
     private readonly _resultsOfGradedStudentParticipation = signal<(Result | undefined)[]>([]);
-    get resultsOfGradedStudentParticipation(): (Result | undefined)[] {
-        return this._resultsOfGradedStudentParticipation();
-    }
-    set resultsOfGradedStudentParticipation(value: (Result | undefined)[]) {
-        this._resultsOfGradedStudentParticipation.set(value);
-    }
+    readonly resultsOfGradedStudentParticipation = this._resultsOfGradedStudentParticipation.asReadonly();
 
     private readonly _isAfterAssessmentDueDate = signal(false);
-    get isAfterAssessmentDueDate(): boolean {
-        return this._isAfterAssessmentDueDate();
-    }
-    set isAfterAssessmentDueDate(value: boolean) {
-        this._isAfterAssessmentDueDate.set(value);
-    }
+    readonly isAfterAssessmentDueDate = this._isAfterAssessmentDueDate.asReadonly();
 
     private readonly _allowComplaintsForAutomaticAssessments = signal(false);
-    get allowComplaintsForAutomaticAssessments(): boolean {
-        return this._allowComplaintsForAutomaticAssessments();
-    }
-    set allowComplaintsForAutomaticAssessments(value: boolean) {
-        this._allowComplaintsForAutomaticAssessments.set(value);
-    }
+    readonly allowComplaintsForAutomaticAssessments = this._allowComplaintsForAutomaticAssessments.asReadonly();
 
     private readonly _baseResource = signal('');
-    get baseResource(): string {
-        return this._baseResource();
-    }
-    set baseResource(value: string) {
-        this._baseResource.set(value);
-    }
+    readonly baseResource = this._baseResource.asReadonly();
 
     private readonly _submissionPolicy = signal<SubmissionPolicy | undefined>(undefined);
-    get submissionPolicy(): SubmissionPolicy | undefined {
-        return this._submissionPolicy();
-    }
-    set submissionPolicy(value: SubmissionPolicy | undefined) {
-        this._submissionPolicy.set(value);
-    }
+    readonly submissionPolicy = this._submissionPolicy.asReadonly();
 
     private readonly _exampleSolutionCollapsed = signal<boolean | undefined>(undefined);
-    get exampleSolutionCollapsed(): boolean | undefined {
-        return this._exampleSolutionCollapsed();
-    }
-    set exampleSolutionCollapsed(value: boolean | undefined) {
-        this._exampleSolutionCollapsed.set(value);
-    }
+    readonly exampleSolutionCollapsed = this._exampleSolutionCollapsed.asReadonly();
 
     private readonly _plagiarismCaseInfo = signal<PlagiarismCaseInfo | undefined>(undefined);
-    get plagiarismCaseInfo(): PlagiarismCaseInfo | undefined {
-        return this._plagiarismCaseInfo();
-    }
-    set plagiarismCaseInfo(value: PlagiarismCaseInfo | undefined) {
-        this._plagiarismCaseInfo.set(value);
-    }
+    readonly plagiarismCaseInfo = this._plagiarismCaseInfo.asReadonly();
 
     private readonly _irisEnabled = signal(false);
-    get irisEnabled(): boolean {
-        return this._irisEnabled();
-    }
-    set irisEnabled(value: boolean) {
-        this._irisEnabled.set(value);
-    }
+    readonly irisEnabled = this._irisEnabled.asReadonly();
 
     private readonly _irisChatEnabled = signal(false);
-    get irisChatEnabled(): boolean {
-        return this._irisChatEnabled();
-    }
-    set irisChatEnabled(value: boolean) {
-        this._irisChatEnabled.set(value);
-    }
+    readonly irisChatEnabled = this._irisChatEnabled.asReadonly();
 
     private readonly _instructorActionItems = signal<InstructorActionItem[]>([]);
-    get instructorActionItems(): InstructorActionItem[] {
-        return this._instructorActionItems();
-    }
-    set instructorActionItems(value: InstructorActionItem[]) {
-        this._instructorActionItems.set(value);
-    }
+    readonly instructorActionItems = this._instructorActionItems.asReadonly();
 
     private readonly _exerciseIcon = signal<IconProp | undefined>(undefined);
-    get exerciseIcon(): IconProp | undefined {
-        return this._exerciseIcon();
-    }
-    set exerciseIcon(value: IconProp | undefined) {
-        this._exerciseIcon.set(value);
-    }
+    readonly exerciseIcon = this._exerciseIcon.asReadonly();
 
     private readonly _exampleSolutionInfo = signal<ExampleSolutionInfo | undefined>(undefined);
-    get exampleSolutionInfo(): ExampleSolutionInfo | undefined {
-        return this._exampleSolutionInfo();
-    }
-    set exampleSolutionInfo(value: ExampleSolutionInfo | undefined) {
-        this._exampleSolutionInfo.set(value);
-    }
+    readonly exampleSolutionInfo = this._exampleSolutionInfo.asReadonly();
 
     // Subscription tracking for methods called on each exercise load
     private participationUpdateListener?: Subscription;
@@ -369,7 +289,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this._submissionPolicy.set(programmingExercise.submissionPolicy);
 
             this._irisEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS));
-            if (this.irisEnabled && !this.exercise.exerciseGroup && this.courseId) {
+            if (this.irisEnabled() && !this.exercise.exerciseGroup && this.courseId) {
                 this.irisSettingsService
                     .getCourseSettingsWithRateLimit(this.courseId)
                     .pipe(takeUntilDestroyed(this.destroyRef))
@@ -589,6 +509,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.alertService.error(error);
     }
 
+    toggleShowMoreResults() {
+        this._showMoreResults.update((v) => !v);
+    }
+
     /**
      * Used to change the boolean value for the example solution dropdown menu
      */
@@ -624,12 +548,12 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     getDefaultItems(): InstructorActionItem[] {
         return [
             {
-                routerLink: `${this.baseResource}`,
+                routerLink: `${this.baseResource()}`,
                 icon: faEye,
                 translation: 'entity.action.view',
             },
             {
-                routerLink: `${this.baseResource}scores`,
+                routerLink: `${this.baseResource()}scores`,
                 icon: faTable,
                 translation: 'entity.action.scores',
             },
@@ -639,12 +563,12 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     getQuizItems(): InstructorActionItem[] {
         return [
             {
-                routerLink: `${this.baseResource}preview`,
+                routerLink: `${this.baseResource()}preview`,
                 icon: faEye,
                 translation: 'artemisApp.quizExercise.preview',
             },
             {
-                routerLink: `${this.baseResource}solution`,
+                routerLink: `${this.baseResource()}solution`,
                 icon: faEye,
                 translation: 'artemisApp.quizExercise.solution',
             },
@@ -653,7 +577,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     getParticipationItem(): InstructorActionItem {
         return {
-            routerLink: `${this.baseResource}participations`,
+            routerLink: `${this.baseResource()}participations`,
             icon: faListAlt,
             translation: 'artemisApp.exercise.participations',
         };
@@ -676,7 +600,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     getStatisticItem(routerLink: string): InstructorActionItem {
         return {
-            routerLink: `${this.baseResource}${routerLink}`,
+            routerLink: `${this.baseResource()}${routerLink}`,
             icon: faSignal,
             translation: 'artemisApp.courseOverview.exerciseDetails.instructorActions.statistics',
         };
@@ -684,7 +608,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     getGradingItem(): InstructorActionItem {
         return {
-            routerLink: `${this.baseResource}grading/test-cases`,
+            routerLink: `${this.baseResource()}grading/test-cases`,
             icon: faFileSignature,
             translation: 'artemisApp.programmingExercise.configureGrading.shortTitle',
         };
@@ -692,7 +616,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     getQuizEditItem(): InstructorActionItem {
         return {
-            routerLink: `${this.baseResource}edit`,
+            routerLink: `${this.baseResource()}edit`,
             icon: faWrench,
             translation: 'entity.action.edit',
         };
@@ -700,7 +624,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     getReEvaluateItem(): InstructorActionItem {
         return {
-            routerLink: `${this.baseResource}re-evaluate`,
+            routerLink: `${this.baseResource()}re-evaluate`,
             icon: faWrench,
             translation: 'entity.action.re-evaluate',
         };
