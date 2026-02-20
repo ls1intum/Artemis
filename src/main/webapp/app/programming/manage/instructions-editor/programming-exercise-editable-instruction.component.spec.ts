@@ -465,9 +465,13 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         fixture = TestBed.createComponent(ProgrammingExerciseEditableInstructionComponent);
         comp = fixture.componentInstance;
 
+        // Mock container bounding rect to verify viewport-to-container coordinate conversion
+        jest.spyOn(fixture.nativeElement, 'getBoundingClientRect').mockReturnValue({ top: 30, left: 50 } as DOMRect);
+
         comp.onEditorSelectionChange(selection);
 
-        expect(comp.inlineRefinementPosition()).toEqual({ top: 100, left: 200 });
+        // Position should be converted from viewport-relative to container-relative
+        expect(comp.inlineRefinementPosition()).toEqual({ top: 70, left: 150 });
         expect(comp.selectedTextForRefinement()).toBe('Some selected text');
         expect(comp.selectionPositionInfo()).toEqual({
             startLine: 1,

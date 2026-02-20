@@ -26,16 +26,18 @@
                 (ngModelChange)="instruction.set($event)"
                 (keydown)="onKeydown($event)"
                 [disabled]="isLoading()"
-                maxlength="500"
+                [attr.maxlength]="MAX_INSTRUCTION_LENGTH"
             />
-            <span class="text-secondary text-nowrap px-1 fs-x-small">{{ instruction().length }}/500</span>
+            <span class="text-nowrap px-1 fs-x-small" [class.text-danger]="isNearLimit()" [class.text-muted]="!isNearLimit()">
+                {{ instruction().length }}/{{ MAX_INSTRUCTION_LENGTH }}
+            </span>
             <button
                 pButton
                 type="button"
                 severity="primary"
                 size="small"
                 rounded
-                class="refinement-submit-btn d-flex align-items-center justify-content-center p-0"
+                class="refinement-submit-btn flex-shrink-0 d-flex align-items-center justify-content-center"
                 (click)="submit()"
                 [disabled]="!instruction() || isLoading()"
                 [attr.title]="'artemisApp.programmingExercise.problemStatement.inlineRefinement.submitTooltip' | artemisTranslate"
@@ -49,7 +51,7 @@
                 text
                 size="small"
                 rounded
-                class="refinement-close-btn d-flex align-items-center justify-content-center p-0"
+                class="refinement-close-btn flex-shrink-0 d-flex align-items-center justify-content-center p-0"
                 (click)="handleClose()"
             >
                 <fa-icon [icon]="faTimes" />

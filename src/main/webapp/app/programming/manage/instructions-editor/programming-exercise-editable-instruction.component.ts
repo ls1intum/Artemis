@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, HostListener, OnDestroy, ViewChild, ViewEncapsulation, computed, effect, inject, input, output, signal } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChild, ViewEncapsulation, computed, effect, inject, input, output, signal } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { EMPTY, Observable, Subject, Subscription, of, throwError } from 'rxjs';
 import { catchError, finalize, map, switchMap, tap } from 'rxjs/operators';
@@ -62,6 +62,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     private profileService = inject(ProfileService);
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
     private problemStatementSyncService = inject(ProblemStatementSyncService);
+    private elementRef = inject(ElementRef);
 
     /**
      * Legacy manual diff state used inside the `effect()` below.
@@ -425,7 +426,13 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     ): void {
         // Show/hide inline refinement button based on selection
         if (selection && selection.selectedText && selection.selectedText.trim().length > 0 && this.hyperionEnabled && !this.isAiApplying()) {
-            this.inlineRefinementPosition.set(selection.screenPosition);
+            // Convert viewport-relative coordinates to container-relative coordinates
+            // since the button uses position: absolute within the relatively-positioned container
+            const containerRect = this.elementRef.nativeElement.getBoundingClientRect();
+            this.inlineRefinementPosition.set({
+                top: selection.screenPosition.top - containerRect.top,
+                left: selection.screenPosition.left - containerRect.left,
+            });
             this.selectedTextForRefinement.set(selection.selectedText);
             this.selectionPositionInfo.set({
                 startLine: selection.startLine,

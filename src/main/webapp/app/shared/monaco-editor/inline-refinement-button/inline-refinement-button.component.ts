@@ -7,6 +7,7 @@ import {
     Injector,
     OnInit,
     afterNextRender,
+    computed,
     inject,
     input,
     model,
@@ -22,6 +23,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ButtonDirective } from 'primeng/button';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
+import { PROMPT_LENGTH_WARNING_THRESHOLD } from 'app/programming/manage/shared/problem-statement.utils';
 
 /**
  * Floating refinement button component that appears near text selection.
@@ -76,6 +78,12 @@ export class InlineRefinementButtonComponent implements OnInit {
     readonly facArtemisIntelligence = facArtemisIntelligence;
     readonly faPaperPlane = faPaperPlane;
     readonly faTimes = faTimes;
+
+    /** Maximum instruction length for inline refinement. Must match HyperionPromptSanitizer.MAX_INSTRUCTION_LENGTH. */
+    readonly MAX_INSTRUCTION_LENGTH = 500;
+
+    /** Whether the instruction is near the character limit. */
+    readonly isNearLimit = computed(() => this.instruction().length >= this.MAX_INSTRUCTION_LENGTH * PROMPT_LENGTH_WARNING_THRESHOLD);
 
     // Reference to input element for focus
     inputElement = viewChild<ElementRef<HTMLInputElement>>('instructionInput');

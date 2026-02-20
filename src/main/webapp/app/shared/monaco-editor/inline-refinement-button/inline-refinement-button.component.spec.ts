@@ -140,7 +140,20 @@ describe('InlineRefinementButtonComponent', () => {
         expect(closeSpy).toHaveBeenCalled();
     });
 
-    it('should trigger change detection on language change', fakeAsync(() => {
+    it('should detect when instruction is near character limit', () => {
+        expect(comp.isNearLimit()).toBeFalsy();
+
+        // 90% of 500 = 450 chars
+        comp.instruction.set('a'.repeat(450));
+        expect(comp.isNearLimit()).toBeTruthy();
+    });
+
+    it('should not flag as near limit below threshold', () => {
+        comp.instruction.set('a'.repeat(449));
+        expect(comp.isNearLimit()).toBeFalsy();
+    });
+
+    it('should trigger change detection on language change', async () => {
         const langChangeSubject = new Subject<any>();
         (translateService as any).onLangChange = langChangeSubject.asObservable();
 
