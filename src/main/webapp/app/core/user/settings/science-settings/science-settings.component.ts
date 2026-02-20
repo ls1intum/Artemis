@@ -30,7 +30,7 @@ export class ScienceSettingsComponent extends UserSettingsDirective implements O
 
     faInfoCircle = faInfoCircle;
 
-    private featureToggleActiveSubscription: Subscription;
+    private featureToggleActiveSubscription?: Subscription;
     private saveSubscription?: Subscription;
     featureToggleActive = false;
 
@@ -67,8 +67,8 @@ export class ScienceSettingsComponent extends UserSettingsDirective implements O
      * Catches the toggle event from a user click
      * Toggles the respective setting and saves it immediately
      */
-    toggleSetting(event: any) {
-        const settingId = event.currentTarget.id;
+    toggleSetting(event: MouseEvent) {
+        const settingId = (event.currentTarget as HTMLElement)?.id;
         const settingToUpdate = this.settings.find((setting) => setting.settingId === settingId);
         if (!settingToUpdate) {
             return;
@@ -81,8 +81,10 @@ export class ScienceSettingsComponent extends UserSettingsDirective implements O
         this.saveSubscription?.unsubscribe();
         this.saveSubscription = this.userSettingsService.saveSettings(this.settings, this.userSettingsCategory).subscribe({
             next: (res) => {
-                this.userSettings = this.userSettingsService.saveSettingsSuccess(this.userSettings, res.body!);
-                this.settings = this.userSettingsService.extractIndividualSettingsFromSettingsStructure(this.userSettings);
+                if (res.body) {
+                    this.userSettings = this.userSettingsService.saveSettingsSuccess(this.userSettings, res.body);
+                    this.settings = this.userSettingsService.extractIndividualSettingsFromSettingsStructure(this.userSettings);
+                }
                 this.finishSaving();
             },
             error: (res) => {
