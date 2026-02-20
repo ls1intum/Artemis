@@ -545,21 +545,30 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * Calls the Hyperion API with the selected text and instruction, then shows diff.
      */
     onInlineRefinement(event: InlineRefinementEvent): void {
-        if (!this.exercise?.problemStatement?.trim()) {
+        const currentContent = this.editableInstructions()?.getCurrentContent() ?? this.exercise?.problemStatement;
+        if (!currentContent?.trim()) {
             this.alertService.error('artemisApp.programmingExercise.problemStatement.inlineRefinement.emptyStatementError');
             return;
         }
 
         this.currentAiOperationSubscription?.unsubscribe();
+        const requestId = ++this.refinementRequestId;
         this.currentAiOperationSubscription = this.problemStatementService
-            .refineTargeted(this.exercise, this.exercise.problemStatement, event, (v) => this.isGeneratingOrRefining.set(v))
+            .refineTargeted(this.exercise, currentContent, event, (v) => this.isGeneratingOrRefining.set(v))
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (result) => {
                     if (result.success && result.content) {
                         this.showDiff.set(true);
                         const refinedContent = result.content;
-                        afterNextRender(() => this.editableInstructions()?.applyRefinedContent(refinedContent), { injector: this.injector });
+                        afterNextRender(
+                            () => {
+                                if (requestId === this.refinementRequestId && this.showDiff()) {
+                                    this.editableInstructions()?.applyRefinedContent(refinedContent);
+                                }
+                            },
+                            { injector: this.injector },
+                        );
                     } else if (!result.errorHandled) {
                         this.alertService.error('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
                     }

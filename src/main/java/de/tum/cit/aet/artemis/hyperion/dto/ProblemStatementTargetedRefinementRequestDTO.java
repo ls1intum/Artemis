@@ -36,6 +36,12 @@ public record ProblemStatementTargetedRefinementRequestDTO(
      * These checks run during Jackson deserialization (before {@code @Valid}), which is intentional:
      * Spring's exception handler catches {@link BadRequestAlertException} regardless of where it is thrown,
      * and these cross-field rules cannot be expressed as single-field Bean Validation annotations.
+     * <p>
+     * <b>Limitation:</b> because Jackson invokes the compact constructor directly, a
+     * {@link BadRequestAlertException} thrown here bypasses {@code @Valid} and won't
+     * produce a {@code MethodArgumentNotValidException}. This is fine for Artemis
+     * (whose global handler already maps {@code BadRequestAlertException} to 400), but
+     * would need adjustment if this DTO were used in a non-MVC context.
      */
     public ProblemStatementTargetedRefinementRequestDTO {
         if (startLine != null && endLine != null && startLine > endLine) {

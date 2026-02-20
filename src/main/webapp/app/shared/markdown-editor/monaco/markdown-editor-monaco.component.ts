@@ -544,8 +544,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         if (this.useDefaultMarkdownEditorOptions) {
             this.monacoEditor.applyOptionPreset(DEFAULT_MARKDOWN_EDITOR_OPTIONS);
         }
-        this.renderEditorWidgets();
-
         // Set up selection change listener for inline comments/refinement
         this.selectionChangeDisposable = this.monacoEditor.onSelectionChange((selection) => {
             if (selection) {
@@ -560,7 +558,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                 }
 
                 // Calculate screen position for floating button
-                let screenPosition = { top: 0, left: 0 };
                 const endPosition = { lineNumber: selection.endLineNumber, column: selection.endColumn };
                 const coords = this.monacoEditor.getScrolledVisiblePosition(endPosition);
                 const editorDom = this.monacoEditor.getDomNode();
@@ -571,7 +568,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                 }
 
                 const editorRect = editorDom.getBoundingClientRect();
-                screenPosition = {
+                const screenPosition = {
                     top: editorRect.top + coords.top + coords.height + 5,
                     left: editorRect.left + coords.left,
                 };

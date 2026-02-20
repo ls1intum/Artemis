@@ -97,7 +97,7 @@ public class HyperionProblemStatementRefinementService {
      * @throws BadRequestAlertException          if the input is invalid (empty problem statement)
      * @throws InternalServerErrorAlertException if the AI chat client is not configured or refinement fails
      */
-    @Observed(name = "hyperion.refine", contextualName = "problem statement refinement", lowCardinalityKeyValues = { "ai.span", "true" })
+    @Observed(name = "hyperion.refine_global", contextualName = "problem statement refinement", lowCardinalityKeyValues = { "ai.span", "true" })
     public ProblemStatementRefinementResponseDTO refineProblemStatement(Course course, String originalProblemStatementText, String userPrompt) {
         log.debug("Refining problem statement for course [{}]", course.getId());
 
@@ -147,7 +147,7 @@ public class HyperionProblemStatementRefinementService {
      * @throws BadRequestAlertException          if the input is invalid (empty problem statement)
      * @throws InternalServerErrorAlertException if the AI chat client is not configured or refinement fails
      */
-    @Observed(name = "hyperion.refine.targeted", contextualName = "problem statement targeted refinement", lowCardinalityKeyValues = { "ai.span", "true" })
+    @Observed(name = "hyperion.refine_targeted", contextualName = "problem statement targeted refinement", lowCardinalityKeyValues = { "ai.span", "true" })
     public ProblemStatementRefinementResponseDTO refineProblemStatementTargeted(Course course, ProblemStatementTargetedRefinementRequestDTO request) {
         log.debug("Refining problem statement with targeted instruction for course [{}]", course.getId());
 
@@ -336,6 +336,11 @@ public class HyperionProblemStatementRefinementService {
      * Both inputs are trimmed before comparison to avoid false positives from
      * whitespace-only differences (e.g. targeted refinement uses line-preserving
      * sanitization which intentionally skips trimming).
+     * <p>
+     * Note: the returned {@code refinedProblemStatement} is always trimmed, even when
+     * the original was sanitized with {@code sanitizeInputPreserveLines}. This is
+     * acceptable because leading/trailing blank lines carry no semantic meaning in
+     * a problem statement.
      */
     private ProblemStatementRefinementResponseDTO validateAndReturnResponse(String originalProblemStatementText, String refinedProblemStatementText) {
         String trimmedRefined = refinedProblemStatementText.trim();

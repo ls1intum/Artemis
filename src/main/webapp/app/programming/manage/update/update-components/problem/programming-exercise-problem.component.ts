@@ -300,6 +300,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
         }
 
         this.currentAiOperationSubscription?.unsubscribe();
+        const requestId = ++this.refinementRequestId;
         this.currentAiOperationSubscription = this.problemStatementService
             .refineTargeted(exercise, currentContent, event, (v) => this.isGeneratingOrRefining.set(v))
             .subscribe({
@@ -309,7 +310,9 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                         const refinedContent = result.content;
                         afterNextRender(
                             () => {
-                                this.editableInstructions()?.applyRefinedContent(refinedContent);
+                                if (requestId === this.refinementRequestId && this.showDiff()) {
+                                    this.editableInstructions()?.applyRefinedContent(refinedContent);
+                                }
                             },
                             { injector: this.injector },
                         );
