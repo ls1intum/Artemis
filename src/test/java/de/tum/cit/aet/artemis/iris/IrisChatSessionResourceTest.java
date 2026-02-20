@@ -264,6 +264,47 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void deleteIndividualSession() throws Exception {
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+
+        var session1 = IrisChatSessionFactory.createCourseSessionForUserWithMessages(course, user);
+        var session2 = IrisChatSessionFactory.createLectureSessionForUserWithMessages(lecture, user);
+        saveChatSessionWithMessages(session1);
+        saveChatSessionWithMessages(session2);
+
+        // Verify both sessions exist
+        List<IrisChatSessionDTO> sessionsBefore = request.getList("/api/iris/chat-history/" + course.getId() + "/sessions", HttpStatus.OK, IrisChatSessionDTO.class);
+        assertThat(sessionsBefore).hasSize(2);
+
+        // Delete individual session
+        request.delete("/api/iris/chat-history/sessions/" + session1.getId(), HttpStatus.NO_CONTENT);
+
+        // Verify only one session remains
+        List<IrisChatSessionDTO> sessionsAfter = request.getList("/api/iris/chat-history/" + course.getId() + "/sessions", HttpStatus.OK, IrisChatSessionDTO.class);
+        assertThat(sessionsAfter).hasSize(1);
+        assertThat(sessionsAfter.getFirst().id()).isEqualTo(session2.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void deleteIndividualSession_forbiddenForOtherUser() throws Exception {
+        User user1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+
+        var session = IrisChatSessionFactory.createCourseSessionForUserWithMessages(course, user1);
+        saveChatSessionWithMessages(session);
+
+        // Student2 tries to delete student1's session
+        request.delete("/api/iris/chat-history/sessions/" + session.getId(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void deleteIndividualSession_notFound() throws Exception {
+        request.delete("/api/iris/chat-history/sessions/999999", HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getSessionForSessionId_returns403WhenIrisDisabledForCourse() throws Exception {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 

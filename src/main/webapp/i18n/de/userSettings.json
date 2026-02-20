@@ -259,7 +259,8 @@
                 "noData": "Du hast noch keine KI-Interaktionen.",
                 "deleteQuestion": "Bist du sicher, dass du alle deine KI-Interaktionen löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.",
                 "deleteSuccess": "Alle KI-Interaktionen wurden erfolgreich gelöscht.",
-                "deleteFailure": "KI-Interaktionen konnten nicht gelöscht werden. Bitte versuche es erneut."
+                "deleteFailure": "KI-Interaktionen konnten nicht gelöscht werden. Bitte versuche es erneut.",
+                "typeDeleteAllToConfirm": "Zum Bestätigen bitte eingeben"
             },
             "quizTrainingSettings": {
                 "quizTraining": "Quiz Training",

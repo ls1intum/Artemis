@@ -184,7 +184,10 @@
                 "relatedEntityTooltip": {
                     "programmingExercise": "Diese Konversation bezieht sich auf eine Programmieraufgabe.",
                     "lecture": "Diese Konversation bezieht sich auf eine Vorlesung."
-                }
+                },
+                "deleteSession": "Löschen",
+                "deleteSessionSuccess": "Chat-Sitzung gelöscht.",
+                "deleteSessionError": "Chat-Sitzung konnte nicht gelöscht werden."
             },
             "memories": {
                 "title": "Erinnerungen",

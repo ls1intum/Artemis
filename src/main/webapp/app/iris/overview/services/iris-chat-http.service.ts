@@ -130,4 +130,13 @@ export class IrisChatHttpService {
     deleteAllSessions(): Observable<HttpResponse<void>> {
         return this.httpClient.delete<void>(`${this.apiPrefix}/chat-history/sessions`, { observe: 'response' });
     }
+
+    /**
+     * Deletes a single Iris chat session by its ID.
+     * @param sessionId the ID of the session to delete
+     * @return Observable of the HTTP response
+     */
+    deleteSession(sessionId: number): Observable<HttpResponse<void>> {
+        return this.httpClient.delete<void>(`${this.apiPrefix}/chat-history/sessions/${sessionId}`, { observe: 'response' });
+    }
 }

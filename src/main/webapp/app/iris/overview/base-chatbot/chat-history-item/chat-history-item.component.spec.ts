@@ -170,6 +170,42 @@ describe('ChatHistoryItemComponent', () => {
         expect(component.isNewChat()).toBe(false);
     });
 
+    it('should render menu trigger button for non-new-chat sessions', async () => {
+        const session: IrisSessionDTO = {
+            id: 10,
+            title: 'Some chat',
+            creationDate: new Date(),
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 1,
+            entityName: 'Course 1',
+        };
+
+        fixture.componentRef.setInput('session', session);
+        await fixture.whenStable();
+
+        const menuTrigger = fixture.debugElement.query(By.css('.menu-trigger'));
+        expect(menuTrigger).toBeTruthy();
+    });
+
+    it('should emit deleteSession when delete is clicked via onDeleteClick', async () => {
+        const session: IrisSessionDTO = {
+            id: 11,
+            title: 'Chat to delete',
+            creationDate: new Date(),
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 1,
+            entityName: 'Course 1',
+        };
+
+        fixture.componentRef.setInput('session', session);
+        await fixture.whenStable();
+
+        vi.spyOn(component.deleteSession, 'emit');
+        component.onDeleteClick();
+
+        expect(component.deleteSession.emit).toHaveBeenCalledWith(session);
+    });
+
     it('should not render an icon and entity name for course session', async () => {
         const session: IrisSessionDTO = {
             id: 3,

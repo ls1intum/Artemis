@@ -259,7 +259,8 @@
                 "noData": "You don't have any AI interactions yet.",
                 "deleteQuestion": "Are you sure you want to delete all your AI interactions? This action cannot be undone.",
                 "deleteSuccess": "All AI interactions have been successfully deleted.",
-                "deleteFailure": "Failed to delete AI interactions. Please try again."
+                "deleteFailure": "Failed to delete AI interactions. Please try again.",
+                "typeDeleteAllToConfirm": "To confirm, please type"
             },
             "quizTrainingSettings": {
                 "quizTraining": "Quiz Training",

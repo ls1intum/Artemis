@@ -68,6 +68,8 @@
             jhiDeleteButton
             [actionType]="ActionType.Cleanup"
             [deleteQuestion]="'artemisApp.userSettings.aiExperienceSettingsPage.deleteQuestion'"
+            [entityTitle]="'delete all'"
+            [deleteConfirmationText]="'artemisApp.userSettings.aiExperienceSettingsPage.typeDeleteAllToConfirm'"
             (delete)="deleteAllIrisInteractions()"
             [dialogError]="dialogError$"
         ></button>

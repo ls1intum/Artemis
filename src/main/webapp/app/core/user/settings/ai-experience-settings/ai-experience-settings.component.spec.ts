@@ -3,6 +3,7 @@ import { AiExperienceSettingsComponent } from './ai-experience-settings.componen
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { MockDirective, MockProvider } from 'ng-mocks';
+import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AccountService } from 'app/core/auth/account.service';
@@ -118,6 +119,14 @@ describe('AiExperienceSettingsComponent', () => {
         expect(openSpy).toHaveBeenCalled();
         expect(updateConsentSpy).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
         expect(setDecisionSpy).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
+    });
+
+    it('should render delete button when sessions exist', () => {
+        jest.spyOn(irisChatHttpService, 'getSessionAndMessageCount').mockReturnValue(of({ sessions: 3, messages: 10 }));
+        fixture.detectChanges();
+
+        const deleteButton = fixture.debugElement.query(By.directive(DeleteButtonDirective));
+        expect(deleteButton).toBeTruthy();
     });
 
     it('should not update when modal is dismissed', async () => {

@@ -14,6 +14,7 @@ import {
     faThumbsUp,
     faXmark,
 } from '@fortawesome/free-solid-svg-icons';
+import { AlertService } from 'app/shared/service/alert.service';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
@@ -87,6 +88,7 @@ const COPY_FEEDBACK_DURATION_MS = 1500;
 export class IrisBaseChatbotComponent implements AfterViewInit {
     protected accountService = inject(AccountService);
     protected translateService = inject(TranslateService);
+    private readonly alertService = inject(AlertService);
 
     // Reactive signal for the localized "new chat" title
     private readonly newChatTitle = toSignal(this.translateService.stream('artemisApp.iris.chatHistory.newChat'), { initialValue: '' });
@@ -646,6 +648,20 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             return;
         }
         this.chatService.switchToSession(session);
+    }
+
+    onDeleteSession(session: IrisSessionDTO) {
+        this.chatService
+            .deleteSession(session.id)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: () => {
+                    this.alertService.success('artemisApp.iris.chatHistory.deleteSessionSuccess');
+                },
+                error: () => {
+                    this.alertService.error('artemisApp.iris.chatHistory.deleteSessionError');
+                },
+            });
     }
 
     setChatHistoryVisibility(isOpen: boolean) {
