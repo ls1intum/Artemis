@@ -11,6 +11,7 @@ import java.util.Set;
 
 import jakarta.mail.internet.MimeMessage;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -89,6 +90,13 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         recipient.setLastName("Instructor");
 
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 2);
+    }
+
+    @AfterEach
+    void tearDown() {
+        // Clean up entities created during tests to ensure isolation
+        globalNotificationSettingRepository.deleteAll();
+        courseRepository.findAll().stream().filter(c -> c.getInstructorGroupName() != null && c.getInstructorGroupName().startsWith(TEST_PREFIX)).forEach(courseRepository::delete);
     }
 
     // ---- Template rendering tests ----
