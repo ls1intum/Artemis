@@ -1,11 +1,9 @@
 package de.tum.cit.aet.artemis.programming.web.theia;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_THEIA;
-
 import java.util.Map;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,8 +13,9 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.config.TheiaConfiguration;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.theia.TheiaEnabled;
 
-@Profile(PROFILE_THEIA)
+@Conditional(TheiaEnabled.class)
 @Lazy
 @RestController
 @RequestMapping("api/programming/theia/")

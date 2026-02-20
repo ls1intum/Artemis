@@ -9,6 +9,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.LTI_ENABLED_PROPERTY_
 import static de.tum.cit.aet.artemis.core.config.Constants.NEBULA_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.PASSKEY_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.SHARING_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.THEIA_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.WEAVIATE_ENABLED_PROPERTY_NAME;
 
 import java.util.ArrayList;
@@ -175,6 +176,16 @@ public class ArtemisConfigHelper {
     }
 
     /**
+     * Check if the Theia module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the Theia module is enabled, false otherwise
+     */
+    public boolean isTheiaEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(THEIA_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
      * Check if the CAMPUSOnline module is enabled.
      * Defaults to false if not configured.
      *
@@ -243,6 +254,9 @@ public class ArtemisConfigHelper {
         }
         if (isLtiEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_LTI);
+        }
+        if (isTheiaEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_THEIA);
         }
         if (isCampusOnlineEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_CAMPUS_ONLINE);
