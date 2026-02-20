@@ -36,6 +36,7 @@ const sidebars: SidebarsConfig = {
         'telemetry',
         'cleanup-service',
         'extensions-setup',
+        'campus-online-setup',
     ],
 };
 

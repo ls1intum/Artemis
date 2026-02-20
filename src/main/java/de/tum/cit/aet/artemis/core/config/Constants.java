@@ -449,6 +449,11 @@ public final class Constants {
     public static final String MODULE_FEATURE_LTI = "lti";
 
     /**
+     * The name of the module feature used for CAMPUSOnline functionality.
+     */
+    public static final String MODULE_FEATURE_CAMPUS_ONLINE = "campusonline";
+
+    /**
      * The name of the property used to enable or disable Atlas functionality.
      */
     public static final String ATLAS_ENABLED_PROPERTY_NAME = "artemis.atlas.enabled";
@@ -527,6 +532,11 @@ public final class Constants {
      * The name of the property used to enable or disable Theia functionality.
      */
     public static final String THEIA_ENABLED_PROPERTY_NAME = "artemis.theia.enabled";
+
+    /**
+     * The name of the property used to enable or disable CAMPUSOnline integration.
+     */
+    public static final String CAMPUS_ONLINE_ENABLED_PROPERTY_NAME = "artemis.campus-online.enabled";
 
     /**
      * The name of the property used to enable or disable Weaviate integration.

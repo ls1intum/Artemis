@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20260217120000-create-campus-online-configuration" author="krusche">
+        <createTable tableName="campus_online_configuration">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="campus_online_course_id" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="responsible_instructor" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="department" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="study_program" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="20260217120000-add-unique-constraint-campus-online-course-id" author="krusche">
+        <addUniqueConstraint tableName="campus_online_configuration"
+                             columnNames="campus_online_course_id"
+                             constraintName="uk_campus_online_course_id"/>
+    </changeSet>
+
+    <changeSet id="20260217120000-add-campus-online-config-to-course" author="krusche">
+        <addColumn tableName="course">
+            <column name="campus_online_configuration_id" type="BIGINT">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        <addForeignKeyConstraint baseTableName="course"
+                                 baseColumnNames="campus_online_configuration_id"
+                                 constraintName="fk_course_campus_online_configuration"
+                                 referencedTableName="campus_online_configuration"
+                                 referencedColumnNames="id"
+                                 onDelete="SET NULL"/>
+    </changeSet>
+
+</databaseChangeLog>

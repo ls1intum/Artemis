@@ -162,7 +162,8 @@
                     "privacy": "Privacy",
                     "notifications": "Notifications",
                     "examRooms": "Exam Rooms",
-                    "dependencies": "Dependencies"
+                    "dependencies": "Dependencies",
+                    "campusOnlineOrgUnits": "CAMPUSOnline"
                 },
                 "collapseMenu": "Collapse Menu (Ctrl + M)",
                 "expandMenu": "Expand Menu (Ctrl + M)",

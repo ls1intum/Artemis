@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.ATLAS_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.CAMPUS_ONLINE_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.HYPERION_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.IRIS_ENABLED_PROPERTY_NAME;
@@ -185,12 +186,16 @@ public class ArtemisConfigHelper {
     }
 
     /**
-     * Check if the Weaviate integration is enabled.
-     * Defaults to false if not configured, as this is a development feature.
+     * Check if the CAMPUSOnline module is enabled.
+     * Defaults to false if not configured.
      *
      * @param environment the Spring environment
-     * @return true if the Weaviate integration is enabled, false otherwise
+     * @return true if the CAMPUSOnline module is enabled, false otherwise
      */
+    public boolean isCampusOnlineEnabled(Environment environment) {
+        return environment.getProperty(CAMPUS_ONLINE_ENABLED_PROPERTY_NAME, Boolean.class, false);
+    }
+
     public boolean isWeaviateEnabled(Environment environment) {
         // For now this is a development feature only, so we default to false instead of throwing an error if the property is missing
         return environment.getProperty(WEAVIATE_ENABLED_PROPERTY_NAME, Boolean.class, false);
@@ -252,6 +257,9 @@ public class ArtemisConfigHelper {
         }
         if (isTheiaEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_THEIA);
+        }
+        if (isCampusOnlineEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_CAMPUS_ONLINE);
         }
 
         return enabledFeatures;

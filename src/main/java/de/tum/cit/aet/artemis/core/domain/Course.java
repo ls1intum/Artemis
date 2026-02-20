@@ -115,11 +115,14 @@ public class Course extends DomainObject {
     @JoinColumn(name = "online_course_configuration_id")
     private OnlineCourseConfiguration onlineCourseConfiguration;
 
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "campus_online_configuration_id")
+    private CampusOnlineConfiguration campusOnlineConfiguration;
+
     @Enumerated(EnumType.ORDINAL)
     @Column(name = "info_sharing_config", nullable = false)
     private CourseInformationSharingConfiguration courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING; // default value
 
-    // TODO: move this into a separate entity to avoid it is loaded whenever the course is loaded
     @Column(name = "info_sharing_messaging_code_of_conduct")
     private String courseInformationSharingMessagingCodeOfConduct;
 
@@ -174,9 +177,7 @@ public class Course extends DomainObject {
     @Column(name = "restricted_athena_modules_access", nullable = false)
     private boolean restrictedAthenaModulesAccess = false; // default is false
 
-    /**
-     * Note: Currently just used in the scope of the tutorial groups feature
-     */
+    /** Note: Currently just used in the scope of the tutorial groups feature. */
     @Column(name = "time_zone")
     private String timeZone;
 
@@ -478,6 +479,14 @@ public class Course extends DomainObject {
 
     public void setOnlineCourseConfiguration(OnlineCourseConfiguration onlineCourseConfiguration) {
         this.onlineCourseConfiguration = onlineCourseConfiguration;
+    }
+
+    public CampusOnlineConfiguration getCampusOnlineConfiguration() {
+        return Hibernate.isInitialized(campusOnlineConfiguration) ? campusOnlineConfiguration : null;
+    }
+
+    public void setCampusOnlineConfiguration(CampusOnlineConfiguration campusOnlineConfiguration) {
+        this.campusOnlineConfiguration = campusOnlineConfiguration;
     }
 
     public Integer getMaxComplaints() {
@@ -822,7 +831,6 @@ public class Course extends DomainObject {
      * Validates that the short name of the course follows SHORT_NAME_PATTERN
      */
     public void validateShortName() {
-        // Check if the course shortname matches regex
         Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(getShortName());
         if (!shortNameMatcher.matches()) {
             throw new BadRequestAlertException("The shortname is invalid", ENTITY_NAME, "shortnameInvalid", true);
@@ -834,11 +842,9 @@ public class Course extends DomainObject {
      */
     public void validateComplaintsAndRequestMoreFeedbackConfig() {
         if (getMaxComplaints() == null) {
-            // set the default value to prevent null pointer exceptions
             setMaxComplaints(3);
         }
         if (getMaxTeamComplaints() == null) {
-            // set the default value to prevent null pointer exceptions
             setMaxTeamComplaints(3);
         }
         if (getMaxComplaints() < 0) {
@@ -912,13 +918,10 @@ public class Course extends DomainObject {
         if (!getEnrollmentStartDate().isBefore(getEnrollmentEndDate())) {
             throw new BadRequestAlertException("Enrollment start date must be before the end date.", ENTITY_NAME, errorKey, true);
         }
-
         if (getStartDate() == null || getEndDate() == null) {
             throw new BadRequestAlertException("Enrollment can not be set if the course has no assigned start and end date.", ENTITY_NAME, errorKey, true);
         }
-
         validateStartAndEndDate();
-
         if (getEnrollmentEndDate().isAfter(getEndDate())) {
             throw new BadRequestAlertException("Enrollment end can not be after the end date of the course.", ENTITY_NAME, errorKey, true);
         }
@@ -940,19 +943,14 @@ public class Course extends DomainObject {
         if (getUnenrollmentEndDate() == null) {
             return;
         }
-
         validateEnrollmentStartAndEndDate();
-
         final String errorKey = "unenrollmentEndDateInvalid";
-
         if (getEnrollmentStartDate() == null || getEnrollmentEndDate() == null) {
             throw new BadRequestAlertException("Unenrollment end date requires a configured enrollment period.", ENTITY_NAME, errorKey, true);
         }
-
         if (!getEnrollmentEndDate().isBefore(getUnenrollmentEndDate())) {
             throw new BadRequestAlertException("End date for enrollment must be before the end date to unenroll.", ENTITY_NAME, errorKey, true);
         }
-
         if (getUnenrollmentEndDate().isAfter(getEndDate())) {
             throw new BadRequestAlertException("End date for enrollment can not be after the end date of the course.", ENTITY_NAME, errorKey, true);
         }

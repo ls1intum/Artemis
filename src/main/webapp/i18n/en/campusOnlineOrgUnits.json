@@ -1,0 +1,20 @@
+{
+    "artemisApp": {
+        "campusOnlineOrgUnits": {
+            "title": "CAMPUSOnline Organizational Units",
+            "addLabel": "Add Organizational Unit",
+            "addOrEditLabel": "Add or Edit Organizational Unit",
+            "importCsv": "Import CSV",
+            "externalId": "External ID",
+            "externalIdHelp": "The CAMPUSOnline organizational unit number (pOrgNr), e.g. '51897'",
+            "name": "Name",
+            "noOrgUnits": "No organizational units configured yet.",
+            "importNoValidRows": "No valid rows found. CSV must have columns for external ID and name.",
+            "importSuccess": "{{ created }} organizational unit(s) imported successfully. {{ skipped }} skipped (already exist).",
+            "importParseFailed": "Failed to parse CSV: {{ message }}",
+            "delete": {
+                "question": "Are you sure you want to delete the organizational unit <strong>{{ name }}</strong>?"
+            }
+        }
+    }
+}

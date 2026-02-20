@@ -398,7 +398,22 @@
                 "title": "Crop your image",
                 "uploadTitle": "Add an icon"
             },
-            "overview": "Overview"
+            "overview": "Overview",
+            "campusOnline": {
+                "title": "CAMPUSOnline",
+                "search": "Search CAMPUSOnline courses...",
+                "linked": "Linked to CAMPUSOnline",
+                "notLinked": "Not linked to CAMPUSOnline",
+                "courseId": "CAMPUSOnline Course ID",
+                "responsibleInstructor": "Responsible Instructor",
+                "department": "Department / Chair",
+                "studyProgram": "Study Program",
+                "unlink": "Unlink",
+                "syncEnrollment": "Sync Enrollment",
+                "syncSuccess": "Enrollment sync completed: {{ added }} users added, {{ notFound }} not found",
+                "noResults": "No matching courses found in CAMPUSOnline",
+                "selectOrgUnit": "Select organizational unit..."
+            }
         },
         "courseStatistics": {
             "statistics": "Statistics",

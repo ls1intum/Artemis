@@ -1,0 +1,180 @@
+---
+id: campus-online-setup
+title: CAMPUSOnline Integration Setup
+sidebar_label: CAMPUSOnline Integration
+---
+
+# CAMPUSOnline Integration Setup
+
+This guide explains how to configure the **CAMPUSOnline integration** in Artemis. When enabled, this module allows administrators to:
+
+- **Search** for courses in a connected CAMPUSOnline instance
+- **Link** an Artemis course to a CAMPUSOnline course
+- **Import** a new Artemis course directly from CAMPUSOnline metadata
+- **Automatically sync enrollments** so that students registered in CAMPUSOnline are added to the corresponding Artemis course
+
+---
+
+## Prerequisites
+
+Before enabling the integration, ensure you have:
+
+1. Access to a **CAMPUSOnline instance** with API endpoints enabled (the `xcal` and `cdm` XML APIs).
+2. One or more **API tokens** issued by your CAMPUSOnline administrator. Artemis supports multiple tokens with automatic fallback if one fails.
+3. The **organizational unit IDs** of your departments or faculties in CAMPUSOnline (managed via the admin API).
+
+---
+
+## Configuration
+
+Add or modify the following section in your `application-artemis.yml` (or the corresponding environment-specific configuration file):
+
+```yaml
+artemis:
+  campus-online:
+    enabled: true
+    base-url: "https://campus.tum.de/tumonline"  # Your CAMPUSOnline instance URL
+    tokens:
+      - "your-primary-api-token"
+      - "your-backup-api-token"                   # Optional: fallback token
+```
+
+Organizational units are managed dynamically via the admin API (see below) and stored in the database, so no YAML configuration is needed for them.
+
+### Configuration Properties
+
+| Property | Required | Default | Description |
+|---|---|---|---|
+| `artemis.campus-online.enabled` | Yes | `false` | Enables or disables the entire CAMPUSOnline module. When `false`, all CAMPUSOnline beans, REST endpoints, and scheduled tasks are deactivated. |
+| `artemis.campus-online.base-url` | Yes | `""` | The base URL of your CAMPUSOnline instance (without trailing slash). Example: `https://campus.tum.de/tumonline` |
+| `artemis.campus-online.tokens` | Yes | `[]` | A list of API tokens for authenticating with the CAMPUSOnline API. Artemis tries each token in order and falls back to the next one if a request fails. At least one token is required. |
+
+### Enrollment Sync Schedule
+
+The automatic enrollment sync runs on a configurable cron schedule:
+
+```yaml
+artemis:
+  scheduling:
+    campus-online-enrollment-sync-time: "0 0 */6 * * *"  # Every 6 hours (default)
+```
+
+| Property | Default | Description |
+|---|---|---|
+| `artemis.scheduling.campus-online-enrollment-sync-time` | `0 0 */6 * * *` | Cron expression for the enrollment sync schedule. The default runs every 6 hours. |
+
+The scheduled sync only runs when:
+- The scheduling profile is active
+- The application is **not** running in development mode
+
+---
+
+## API Token Setup
+
+CAMPUSOnline API tokens are typically issued by your university's IT department or CAMPUSOnline administrator. The tokens grant read access to:
+
+- **Course listings** for an organizational unit (`/xcal/organization/courses/xml`)
+- **Student enrollment lists** for a specific course (`/cdm/course/students/xml`)
+- **Course metadata** for a specific course (`/cdm/course/xml`)
+
+Artemis supports **multiple tokens** for resilience. If a request fails with one token (e.g., due to expiration or rate limiting), Artemis automatically retries with the next token in the list. Configure tokens in order of preference.
+
+---
+
+## How It Works
+
+### 1. Linking a Course
+
+After enabling the module, administrators can link an Artemis course to a CAMPUSOnline course in two ways:
+
+**Option A: Link an existing Artemis course**
+1. Navigate to Course Management and edit an existing course
+2. Scroll to the "CAMPUSOnline" section (visible only to administrators)
+3. Select the organizational unit from the dropdown
+4. Type the course name in the search field (minimum 3 characters)
+5. Select the correct course from the dropdown (shows instructor, department, and semester for disambiguation)
+6. Save the course
+
+**Option B: Import a new course from CAMPUSOnline**
+1. Use the admin API endpoint `POST /api/core/admin/campus-online/courses/import`
+2. Provide the CAMPUSOnline course ID and a short name for group naming
+3. Artemis creates a new course with the title, semester, and group names derived from the short name
+
+### 2. Enrollment Synchronization
+
+Once a course is linked, Artemis periodically fetches the student list from CAMPUSOnline and adds enrolled students to the Artemis course:
+
+1. Artemis calls the CAMPUSOnline student list API for each linked course
+2. Only students with **confirmed attendance** (`confirmed="J"`) are processed
+3. For each confirmed student, Artemis looks up the user by **registration number** or **email address**
+4. If the user exists in Artemis, they are added to the course's student group
+5. If the user is not found, they are logged as "not found" (they need to register in Artemis first)
+
+Administrators can also trigger a manual sync at any time:
+- **Sync all courses**: `POST /api/core/admin/campus-online/sync`
+- **Sync a single course**: `POST /api/core/admin/campus-online/courses/{courseId}/sync`
+
+### 3. Unlinking a Course
+
+To stop enrollment sync for a course:
+1. Edit the course in Course Management
+2. Click "Unlink" in the CAMPUSOnline section
+3. Save the course
+
+Existing student enrollments are **not removed** when unlinking.
+
+---
+
+## Admin REST API Reference
+
+All endpoints require the `ADMIN` role.
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/core/admin/campus-online/org-units` | Get all organizational units |
+| `POST` | `/api/core/admin/campus-online/org-units` | Create a new organizational unit |
+| `PUT` | `/api/core/admin/campus-online/org-units/{orgUnitId}` | Update an organizational unit |
+| `DELETE` | `/api/core/admin/campus-online/org-units/{orgUnitId}` | Delete an organizational unit |
+| `POST` | `/api/core/admin/campus-online/org-units/import` | Bulk-import organizational units from CSV |
+| `GET` | `/api/core/admin/campus-online/courses?orgUnitId={id}&from={date}&until={date}` | Search courses by organizational unit and date range |
+| `GET` | `/api/core/admin/campus-online/courses/search?query={name}&orgUnitId={id}&semester={sem}` | Search courses by name (typeahead) |
+| `PUT` | `/api/core/admin/campus-online/courses/{courseId}/link` | Link an Artemis course to a CAMPUSOnline course |
+| `DELETE` | `/api/core/admin/campus-online/courses/{courseId}/link` | Unlink a CAMPUSOnline course from an Artemis course |
+| `POST` | `/api/core/admin/campus-online/courses/import` | Import a new Artemis course from CAMPUSOnline |
+| `POST` | `/api/core/admin/campus-online/sync` | Trigger enrollment sync for all linked courses |
+| `POST` | `/api/core/admin/campus-online/courses/{courseId}/sync` | Trigger enrollment sync for a single course |
+
+---
+
+## Feature Toggle
+
+The CAMPUSOnline module is registered as a **module feature** in Artemis. Administrators can verify its status on the Admin > Features page, where it appears as `campusonline`.
+
+When the feature is disabled (`enabled: false`), all CAMPUSOnline-related Spring beans are not created, REST endpoints return 404, and no scheduled sync tasks run.
+
+---
+
+## Troubleshooting
+
+### Module not appearing in admin features page
+- Verify `artemis.campus-online.enabled: true` in your configuration
+- Restart the application after changing the configuration (the `@Conditional` annotation is evaluated at startup)
+
+### API calls failing with all tokens
+- Check the application logs for `CAMPUSOnline API call failed with token` warnings
+- Verify your tokens are valid and not expired
+- Ensure the `base-url` is correct and accessible from the Artemis server
+- Test the API manually: `curl "https://your-campus.example.com/cdm/course/xml?courseID=12345&token=your-token"`
+
+### Students not being synced
+- Verify the student has **confirmed attendance** in CAMPUSOnline (only `confirmed="J"` students are processed)
+- Verify the student exists in Artemis with a matching **registration number** or **email address**
+- Check logs for `Could not find user with registration number ... or email ... for course ...`
+- Trigger a manual sync and check the result: `POST /api/core/admin/campus-online/courses/{courseId}/sync`
+
+### Course search returning empty results
+- Verify that at least one organizational unit has been created via the admin API
+- Ensure you have selected the correct organizational unit from the dropdown
+- Check that the date range covers the semester you are searching for
+- Winter semester: October 1 to March 31 of the following year
+- Summer semester: April 1 to September 30

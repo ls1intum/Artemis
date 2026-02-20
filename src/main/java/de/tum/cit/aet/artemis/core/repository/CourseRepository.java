@@ -46,6 +46,25 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
 
     @Query("""
+            SELECT DISTINCT c
+            FROM Course c
+                JOIN FETCH c.campusOnlineConfiguration co
+            WHERE co IS NOT NULL
+            """)
+    Set<Course> findAllWithCampusOnlineConfiguration();
+
+    @Query("""
+            SELECT COUNT(c) > 0
+            FROM Course c
+                JOIN c.campusOnlineConfiguration co
+            WHERE co.campusOnlineCourseId = :campusOnlineCourseId
+            """)
+    boolean existsByCampusOnlineCourseId(@Param("campusOnlineCourseId") String campusOnlineCourseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "campusOnlineConfiguration" })
+    Optional<Course> findWithEagerCampusOnlineConfigurationById(long courseId);
+
+    @Query("""
             SELECT DISTINCT course.instructorGroupName
             FROM Course course
             """)

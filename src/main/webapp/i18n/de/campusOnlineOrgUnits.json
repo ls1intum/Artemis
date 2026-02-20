@@ -1,0 +1,20 @@
+{
+    "artemisApp": {
+        "campusOnlineOrgUnits": {
+            "title": "CAMPUSOnline Organisationseinheiten",
+            "addLabel": "Organisationseinheit hinzufügen",
+            "addOrEditLabel": "Organisationseinheit hinzufügen oder bearbeiten",
+            "importCsv": "CSV importieren",
+            "externalId": "Externe ID",
+            "externalIdHelp": "Die CAMPUSOnline-Organisationsnummer (pOrgNr), z.B. '51897'",
+            "name": "Name",
+            "noOrgUnits": "Noch keine Organisationseinheiten konfiguriert.",
+            "importNoValidRows": "Keine gültigen Zeilen gefunden. Die CSV-Datei muss Spalten für externe ID und Name enthalten.",
+            "importSuccess": "{{ created }} Organisationseinheit(en) erfolgreich importiert. {{ skipped }} übersprungen (existieren bereits).",
+            "importParseFailed": "CSV konnte nicht geparst werden: {{ message }}",
+            "delete": {
+                "question": "Bist du sicher, dass du die Organisationseinheit <strong>{{ name }}</strong> löschen möchtest?"
+            }
+        }
+    }
+}

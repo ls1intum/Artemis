@@ -120,6 +120,10 @@
                 "passkey": {
                     "name": "Passkey Authentication",
                     "description": "Enables passwordless authentication using FIDO2/WebAuthn passkeys for enhanced security."
+                },
+                "campusonline": {
+                    "name": "CAMPUSOnline Integration",
+                    "description": "Enables linking courses to CAMPUSOnline for automatic enrollment synchronization."
                 }
             },
             "toggles": {

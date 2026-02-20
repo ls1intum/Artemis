@@ -3,6 +3,7 @@ import { userManagementRoute } from 'app/core/admin/user-management/user-managem
 import { systemNotificationManagementRoute } from 'app/core/admin/system-notification-management/system-notification-management.route';
 
 import { organizationMgmtRoute } from 'app/core/admin/organization-management/organization-management.route';
+import { campusOnlineOrgUnitsRoute } from 'app/core/admin/campus-online-org-units/campus-online-org-units.route';
 import { adminDataExportsRoute } from 'app/core/admin/admin-data-exports/admin-data-exports.route';
 import { adminSbomRoute } from 'app/core/admin/admin-sbom/admin-sbom.route';
 
@@ -189,6 +190,7 @@ const childRoutes: Routes = [
         },
     },
     ...organizationMgmtRoute,
+    ...campusOnlineOrgUnitsRoute,
     ...userManagementRoute,
     ...systemNotificationManagementRoute,
     ...ltiConfigurationRoute,

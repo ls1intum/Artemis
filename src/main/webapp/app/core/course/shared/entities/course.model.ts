@@ -9,6 +9,7 @@ import { Organization } from 'app/core/shared/entities/organization.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { OnlineCourseConfiguration } from 'app/lti/shared/entities/online-course-configuration.model';
+import { CampusOnlineConfiguration } from 'app/core/course/shared/entities/campus-online-configuration.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { LearningPath } from 'app/atlas/shared/entities/learning-path.model';
@@ -123,6 +124,7 @@ export class Course implements BaseEntity {
     public organizations?: Organization[];
     public tutorialGroups?: TutorialGroup[];
     public onlineCourseConfiguration?: OnlineCourseConfiguration;
+    public campusOnlineConfiguration?: CampusOnlineConfiguration;
     public courseInformationSharingConfiguration?: CourseInformationSharingConfiguration;
     public courseInformationSharingMessagingCodeOfConduct?: string;
 

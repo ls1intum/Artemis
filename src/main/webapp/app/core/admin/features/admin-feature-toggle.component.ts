@@ -12,6 +12,7 @@ import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import {
     MODULE_FEATURE_ATLAS,
+    MODULE_FEATURE_CAMPUS_ONLINE,
     MODULE_FEATURE_EXAM,
     MODULE_FEATURE_FILEUPLOAD,
     MODULE_FEATURE_HYPERION,
@@ -115,6 +116,7 @@ export class AdminFeatureToggleComponent implements OnInit {
         MODULE_FEATURE_LTI,
         MODULE_FEATURE_PASSKEY,
         MODULE_FEATURE_THEIA,
+        MODULE_FEATURE_CAMPUS_ONLINE,
     ];
 
     /** Documentation links for runtime feature toggles */
