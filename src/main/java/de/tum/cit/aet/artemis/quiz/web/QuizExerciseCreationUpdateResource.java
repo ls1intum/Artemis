@@ -189,9 +189,6 @@ public class QuizExerciseCreationUpdateResource {
 
         QuizExercise originalQuiz = quizExerciseService.copyFieldsForUpdate(quizBase);
 
-        // Check editability before mutating the entity to avoid leaving it in a dirty state
-        quizExerciseService.checkQuizEditable(quizBase);
-
         quizExerciseService.mergeDTOIntoDomainObject(quizBase, quizExerciseFromEditorDTO, course);
 
         QuizExercise result = quizExerciseService.performUpdate(originalQuiz, quizBase, files, notificationText);

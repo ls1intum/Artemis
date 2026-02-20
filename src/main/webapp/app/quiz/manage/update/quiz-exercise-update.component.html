@@ -1,4 +1,17 @@
-@if (quizExercise && quizExercise.isEditable) {
+@if (quizExercise) {
+    @if (!quizExercise.isEditable) {
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="alert alert-warning mt-3">
+                    @if (quizExercise.quizEnded) {
+                        <span jhiTranslate="artemisApp.quizExercise.edit.editNotPossibleAfterEnd"></span>
+                    } @else {
+                        <span jhiTranslate="artemisApp.quizExercise.edit.editNotPossibleDuringQuiz"></span>
+                    }
+                </div>
+            </div>
+        </div>
+    }
     <div class="row">
         <div class="col-lg-12">
             <div class="title">
@@ -322,32 +335,19 @@
                             (click)="validateItemLimit()"
                             [disabled]="isSaveDisabled()"
                             jhiTranslate="entity.action.save"
-                            [ngbTooltip]="quizIsValid ? '' : tooltipTranslate"
+                            [ngbTooltip]="!quizExercise.isEditable ? saveButtonTooltip : !quizIsValid ? tooltipTranslate : ''"
                             tooltip-placement="top-right auto"
                             tooltip-class="invalid-reasons-tooltip"
                         ></button>
+                        @if (!quizExercise.isEditable && quizExercise.quizEnded && quizExercise.isAtLeastInstructor) {
+                            <a [routerLink]="reEvaluateUrl" class="btn btn-warning me-2">
+                                <fa-icon [icon]="faWrench" />
+                                <span jhiTranslate="entity.action.re-evaluate"></span>
+                            </a>
+                        }
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-} @else if (quizExercise && !quizExercise.isEditable) {
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="alert alert-warning mt-3">
-                @if (quizExercise.quizEnded) {
-                    <span jhiTranslate="artemisApp.quizExercise.edit.editNotPossibleAfterEnd"></span>
-                } @else {
-                    <span jhiTranslate="artemisApp.quizExercise.edit.editNotPossibleDuringQuiz"></span>
-                }
-            </div>
-            @if (quizExercise.quizEnded && quizExercise.isAtLeastInstructor) {
-                <a [routerLink]="reEvaluateUrl" class="btn btn-warning me-2">
-                    <fa-icon [icon]="faWrench" />
-                    <span jhiTranslate="entity.action.re-evaluate"></span>
-                </a>
-            }
-            <button class="btn btn-secondary" (click)="previousState()" jhiTranslate="entity.action.back"></button>
         </div>
     </div>
 }
