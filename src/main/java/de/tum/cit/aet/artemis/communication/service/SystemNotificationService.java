@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,15 +98,16 @@ public class SystemNotificationService {
         var recipients = maintenanceEmailRecipientRepository.findInstructorRecipientsForMaintenanceEmail(ZonedDateTime.now());
         log.info("Sending maintenance emails to {} instructor(s)", recipients.size());
 
-        var templateVars = new HashMap<String, Object>();
+        var mutableVars = new HashMap<String, Object>();
         if (notification.getTitle() != null) {
-            templateVars.put("notificationTitle", notification.getTitle());
+            mutableVars.put("notificationTitle", notification.getTitle());
         }
-        templateVars.put("notificationDate", notification.getNotificationDate());
-        templateVars.put("expireDate", notification.getExpireDate());
+        mutableVars.put("notificationDate", notification.getNotificationDate());
+        mutableVars.put("expireDate", notification.getExpireDate());
         if (notification.getText() != null) {
-            templateVars.put("notificationText", notification.getText());
+            mutableVars.put("notificationText", notification.getText());
         }
+        var templateVars = Map.copyOf(mutableVars);
 
         for (var recipient : recipients) {
             try {
