@@ -24,7 +24,7 @@ import { ParticipationWebsocketService } from 'app/core/course/shared/services/p
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { UserService } from 'app/core/user/shared/user.service';
-import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import dayjs from 'dayjs/esm';
@@ -45,7 +45,7 @@ describe('RequestFeedbackButtonComponent', () => {
     let llmModalService: LLMSelectionModalService;
 
     const mockLLMModalService = {
-        open: vi.fn().mockResolvedValue('none'),
+        open: vi.fn().mockResolvedValue(LLM_MODAL_DISMISSED),
     } as any;
 
     const mockUserService = {

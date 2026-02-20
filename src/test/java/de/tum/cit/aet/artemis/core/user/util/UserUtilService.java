@@ -211,7 +211,7 @@ public class UserUtilService {
     }
 
     /**
-     * Deletes all tokens and saves the calendarSubscriptionToken in his calendarSubscriptionTokenStore of the user.
+     * Deletes all tokens and saves the calendarSubscriptionToken in their calendarSubscriptionTokenStore of the user.
      *
      * @param user                      The User to update
      * @param calendarSubscriptionToken The calendarSubscriptionToken to set
