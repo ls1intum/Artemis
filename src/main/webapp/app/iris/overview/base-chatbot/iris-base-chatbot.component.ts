@@ -16,6 +16,8 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from 'app/shared/service/alert.service';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ConfirmationService } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { Clipboard } from '@angular/cdk/clipboard';
@@ -82,13 +84,16 @@ const COPY_FEEDBACK_DURATION_MS = 1500;
         ChatHistoryItemComponent,
         NgClass,
         SearchFilterComponent,
+        ConfirmDialogModule,
     ],
+    providers: [ConfirmationService],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisBaseChatbotComponent implements AfterViewInit {
     protected accountService = inject(AccountService);
     protected translateService = inject(TranslateService);
     private readonly alertService = inject(AlertService);
+    private readonly confirmationService = inject(ConfirmationService);
 
     // Reactive signal for the localized "new chat" title
     private readonly newChatTitle = toSignal(this.translateService.stream('artemisApp.iris.chatHistory.newChat'), { initialValue: '' });
@@ -651,21 +656,22 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     onDeleteSession(session: IrisSessionDTO) {
-        const confirmMessage = this.translateService.instant('artemisApp.iris.chatHistory.deleteSessionQuestion');
-        if (!confirm(confirmMessage)) {
-            return;
-        }
-        this.chatService
-            .deleteSession(session.id)
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({
-                next: () => {
-                    this.alertService.success('artemisApp.iris.chatHistory.deleteSessionSuccess');
-                },
-                error: () => {
-                    this.alertService.error('artemisApp.iris.chatHistory.deleteSessionError');
-                },
-            });
+        this.confirmationService.confirm({
+            message: this.translateService.instant('artemisApp.iris.chatHistory.deleteSessionQuestion'),
+            accept: () => {
+                this.chatService
+                    .deleteSession(session.id)
+                    .pipe(takeUntilDestroyed(this.destroyRef))
+                    .subscribe({
+                        next: () => {
+                            this.alertService.success('artemisApp.iris.chatHistory.deleteSessionSuccess');
+                        },
+                        error: () => {
+                            this.alertService.error('artemisApp.iris.chatHistory.deleteSessionError');
+                        },
+                    });
+            },
+        });
     }
 
     setChatHistoryVisibility(isOpen: boolean) {

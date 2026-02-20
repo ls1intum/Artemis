@@ -31,7 +31,6 @@ describe('AiExperienceSettingsComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [AiExperienceSettingsComponent],
-            declarations: [MockDirective(TranslateDirective), MockDirective(DeleteButtonDirective)],
             providers: [
                 MockProvider(IrisChatHttpService),
                 MockProvider(IrisChatService),
@@ -43,7 +42,12 @@ describe('AiExperienceSettingsComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(AiExperienceSettingsComponent, {
+                remove: { imports: [TranslateDirective, DeleteButtonDirective] },
+                add: { imports: [MockDirective(TranslateDirective), MockDirective(DeleteButtonDirective)] },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(AiExperienceSettingsComponent);
         component = fixture.componentInstance;

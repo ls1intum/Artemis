@@ -23,7 +23,7 @@
             </div>
         }
         @if (!isNewChat()) {
-            <button type="button" class="menu-trigger" (click)="onMenuToggle($event)" [attr.aria-label]="'artemisApp.iris.chatHistory.deleteSession' | artemisTranslate">
+            <button type="button" class="menu-trigger" (click)="onMenuToggle($event)" [attr.aria-label]="'artemisApp.iris.chatHistory.sessionMenuAriaLabel' | artemisTranslate">
                 <fa-icon [icon]="faEllipsisVertical" />
             </button>
         }

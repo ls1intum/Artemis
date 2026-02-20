@@ -188,7 +188,8 @@
                 "deleteSession": "Delete",
                 "deleteSessionQuestion": "Are you sure you want to delete this chat session? This action cannot be undone.",
                 "deleteSessionSuccess": "Chat session deleted.",
-                "deleteSessionError": "Failed to delete chat session."
+                "deleteSessionError": "Failed to delete chat session.",
+                "sessionMenuAriaLabel": "Chat session actions"
             },
             "memories": {
                 "title": "Memories",
