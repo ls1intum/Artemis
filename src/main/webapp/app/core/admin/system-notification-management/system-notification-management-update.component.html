@@ -4,16 +4,16 @@
         <form name="editForm" role="form" (ngSubmit)="save()" #editForm="ngForm" [formGroup]="form">
             <div>
                 <div class="mb-3">
-                    <label for="title" class="font-bold mb-2" jhiTranslate="artemisApp.systemNotification.title"></label>
-                    <input id="title" type="text" pInputText class="w-full" name="title" formControlName="title" />
+                    <label for="title" class="d-block font-bold mb-2" jhiTranslate="artemisApp.systemNotification.title"></label>
+                    <input id="title" type="text" pInputText class="w-100" name="title" formControlName="title" />
                 </div>
                 <div class="mb-3">
-                    <label for="text" class="font-bold mb-2" jhiTranslate="artemisApp.systemNotification.text"></label>
-                    <input id="text" type="text" pInputText class="w-full" name="text" formControlName="text" />
+                    <label for="text" class="d-block font-bold mb-2" jhiTranslate="artemisApp.systemNotification.text"></label>
+                    <input id="text" type="text" pInputText class="w-100" name="text" formControlName="text" />
                 </div>
                 <div class="mb-3">
-                    <label for="type" class="font-bold mb-2" jhiTranslate="artemisApp.systemNotification.type"></label>
-                    <p-select inputId="type" [options]="systemNotificationTypes" optionLabel="name" optionValue="value" formControlName="type" styleClass="w-full" />
+                    <label for="type" class="d-block font-bold mb-2" jhiTranslate="artemisApp.systemNotification.type"></label>
+                    <p-select inputId="type" [options]="systemNotificationTypes" optionLabel="name" optionValue="value" formControlName="type" styleClass="w-100" />
                 </div>
                 <div class="mb-3">
                     <jhi-date-time-picker

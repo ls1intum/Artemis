@@ -13,6 +13,8 @@
 <div id="message-body">
     <th:block th:replace="~{mail/notification/fragments :: greetingsFullName}" />
 
+    <p th:text="#{email.notification.maintenance.reason}">You received this email because you are an instructor of an ongoing course in Artemis.</p>
+
     <p th:text="#{email.notification.maintenance.text}">Artemis will be undergoing planned maintenance.</p>
 
     <div class="bordered-content">
