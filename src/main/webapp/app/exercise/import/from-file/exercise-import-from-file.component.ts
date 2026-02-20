@@ -1,5 +1,5 @@
 import { Component, Input, OnInit, inject } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
@@ -9,6 +9,8 @@ import { ProgrammingExercise, copyBuildConfigFromExerciseJson } from 'app/progra
 import JSZip from 'jszip';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { ExerciseImportDialogData } from '../exercise-import.component';
 
 @Component({
     selector: 'jhi-exercise-import-from-file',
@@ -16,7 +18,8 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
     imports: [ButtonComponent, HelpIconComponent],
 })
 export class ExerciseImportFromFileComponent implements OnInit {
-    private activeModal = inject(NgbActiveModal);
+    private dialogRef = inject(DynamicDialogRef, { optional: true });
+    private dialogConfig = inject(DynamicDialogConfig, { optional: true });
     private alertService = inject(AlertService);
 
     @Input() exerciseType: ExerciseType;
@@ -28,6 +31,12 @@ export class ExerciseImportFromFileComponent implements OnInit {
     faUpload = faUpload;
 
     ngOnInit(): void {
+        // Get data from DynamicDialogConfig if available (when opened via DialogService)
+        const dialogData = this.dialogConfig?.data as ExerciseImportDialogData | undefined;
+        if (dialogData?.exerciseType) {
+            this.exerciseType = dialogData.exerciseType;
+        }
+
         this.titleKey =
             this.exerciseType === ExerciseType.FILE_UPLOAD ? `artemisApp.fileUploadExercise.importFromFile.title` : `artemisApp.${this.exerciseType}Exercise.importFromFile.title`;
     }
@@ -54,13 +63,21 @@ export class ExerciseImportFromFileComponent implements OnInit {
                 const progEx = this.exercise as ProgrammingExercise;
                 // This is needed to make sure that old exported programming exercises can be imported
                 if (!progEx.buildConfig) {
-                    progEx.buildConfig = copyBuildConfigFromExerciseJson(exerciseJson as ProgrammingExerciseBuildConfig);
+                    const buildConfig = new ProgrammingExerciseBuildConfig();
+                    const raw = exerciseJson as unknown as Partial<ProgrammingExerciseBuildConfig>;
+                    Object.assign(buildConfig, raw);
+                    progEx.buildConfig = copyBuildConfigFromExerciseJson(buildConfig);
                 }
                 if (progEx.auxiliaryRepositories) {
                     progEx.auxiliaryRepositories!.forEach((repo, index) => {
                         progEx.auxiliaryRepositories![index].id = undefined;
                     });
                 }
+
+                // This ensures each entry is converted into a proper ExerciseCategory instance
+                // so that category badges render correctly in the UI.
+                ExerciseService.parseExerciseCategories(progEx);
+
                 this.exercise = progEx;
                 break;
             default:
@@ -97,6 +114,6 @@ export class ExerciseImportFromFileComponent implements OnInit {
     }
 
     openImport(exercise: Exercise) {
-        this.activeModal.close(exercise);
+        this.dialogRef?.close(exercise);
     }
 }

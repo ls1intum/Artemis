@@ -3,13 +3,11 @@ package de.tum.cit.aet.artemis.core.config;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_APOLLON;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 
 import java.util.ArrayList;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
@@ -24,6 +22,7 @@ import org.springframework.http.converter.xml.MappingJackson2XmlHttpMessageConve
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.athena.config.AthenaAuthorizationInterceptor;
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.config.PyrisAuthorizationInterceptor;
 import de.tum.cit.aet.artemis.nebula.config.NebulaEnabled;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsAuthorizationInterceptor;
@@ -89,7 +88,7 @@ public class RestTemplateConfiguration {
     }
 
     @Bean
-    @Profile(PROFILE_IRIS)
+    @Conditional(IrisEnabled.class)
     public RestTemplate pyrisRestTemplate(PyrisAuthorizationInterceptor pyrisAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(pyrisAuthorizationInterceptor, createRestTemplate());
     }
@@ -129,7 +128,7 @@ public class RestTemplateConfiguration {
     }
 
     @Bean
-    @Profile(PROFILE_IRIS)
+    @Conditional(IrisEnabled.class)
     public RestTemplate shortTimeoutPyrisRestTemplate(PyrisAuthorizationInterceptor pyrisAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(pyrisAuthorizationInterceptor, createShortTimeoutRestTemplate());
     }
@@ -151,7 +150,7 @@ public class RestTemplateConfiguration {
         return createShortTimeoutRestTemplate();
     }
 
-    @NotNull
+    @NonNull
     private RestTemplate initializeRestTemplateWithInterceptors(ClientHttpRequestInterceptor interceptor, RestTemplate restTemplate) {
         var interceptors = restTemplate.getInterceptors();
         if (interceptors.isEmpty()) {

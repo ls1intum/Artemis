@@ -3,7 +3,8 @@ package de.tum.cit.aet.artemis.lti.domain;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotNull;
+
+import org.jspecify.annotations.NonNull;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -17,21 +18,21 @@ import de.tum.cit.aet.artemis.lti.dto.Lti13LaunchRequest;
 @Table(name = "lti_resource_launch")
 public class LtiResourceLaunch extends DomainObject {
 
-    @NotNull
+    @NonNull
     private String iss;
 
-    @NotNull
+    @NonNull
     private String sub;
 
-    @NotNull
+    @NonNull
     private String deploymentId;
 
-    @NotNull
+    @NonNull
     private String resourceLinkId;
 
     private String scoreLineItemUrl;
 
-    @NotNull
+    @NonNull
     @ManyToOne
     private User user;
 

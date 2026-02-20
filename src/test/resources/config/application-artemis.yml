@@ -12,15 +12,12 @@ artemis:
     file-upload-path: ./local/server-integration-test/uploads
     submission-export-path: ./local/server-integration-test/exports
     checked-out-repos-path: ./local/server-integration-test/checked-out-repos
+    version-control.local-vcs-repo-path: ./local/server-integration-test/local-vcs-repos
+    version-control.ssh-private-key-folder-path: ./local/server-integration-test/ssh-keys
     temp-path: ./local/server-integration-test/temp
     bcrypt-salt-rounds: 4  # We don't need secure passwords for testing. Lower rounds will speed up tests. 4 ist the lowest allowed round count.
     user-management:
-        use-external: true
-        external:
-            url: https://user-management.fake.fake
-            user: fake-username-um
-            password: fake-password
-            admin-group-name: admins
+        use-external: true # enables ldap authentication
         ldap:
             url: https://ldap.fake.fake
             user-dn: fake-username-ldap
@@ -37,7 +34,6 @@ artemis:
         course-registration:
             allowed-username-pattern: .*
         password-reset:
-            credential-provider: <provider>
             links:
                 en: '<link>'
                 de: '<link>'
@@ -74,6 +70,10 @@ artemis:
         enabled: true
         base-url: https://fake.fake
         auth-token: fake-token
+    iris:
+        enabled: true
+        url: http://iris.fake
+        secret-token: secret-token
     apollon:
         conversion-service-url: http://localhost:8080
     telemetry:
@@ -92,3 +92,28 @@ info:
     operatorAdminName: Some Universities Admin # Can be set to be shown in the about us page, and to be sent to the telemetry service
     contact: admin@uni.de # The admins contact email address, shown in the about us page, and sent to the telemetry service
 
+spring:
+  ai:
+    model:
+      chat: openai
+    chat:
+      client:
+        enabled: ${artemis.hyperion.enabled}
+      memory:
+        max-messages: 20
+    openai:
+      base-url: http://localhost:1234
+      api-key: dummy-key      # most local servers ignore it
+      chat:
+        completions-path: /v1/chat/completions
+        options:
+          model: openai/gpt-oss-20b    # or whatever name your local server expects
+          temperature: 0.7
+    azure:
+      openai:
+        api-key: my-api-key-for-azure-openai
+        endpoint: https://endpoint.openai.azure.com
+        chat:
+          options:
+            deployment-name: gpt-5-mini
+            temperature: 1.0

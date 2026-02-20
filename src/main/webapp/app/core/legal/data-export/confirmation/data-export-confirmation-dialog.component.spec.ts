@@ -7,11 +7,23 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { DebugElement, EventEmitter } from '@angular/core';
+import { DebugElement, OutputEmitterRef } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { Observable, Subject } from 'rxjs';
 import { ConfirmEntityNameComponent } from 'app/shared/confirm-entity-name/confirm-entity-name.component';
+
+// Helper to create a mock OutputEmitterRef
+function createMockOutputEmitterRef<T>(): OutputEmitterRef<T> & { emit: jest.Mock } {
+    const emitMock = jest.fn();
+    return {
+        emit: emitMock,
+        subscribe: jest.fn(),
+        destroyed: false,
+        listeners: new Set(),
+        errorHandler: undefined,
+    } as unknown as OutputEmitterRef<T> & { emit: jest.Mock };
+}
 
 describe('DataExportConfirmationDialogComponent', () => {
     let comp: DataExportConfirmationDialogComponent;
@@ -33,11 +45,11 @@ describe('DataExportConfirmationDialogComponent', () => {
 
     it('should initialize dialog correctly', () => {
         const closeSpy = jest.spyOn(ngbActiveModal, 'close');
-        comp.adminDialog = true;
-        comp.expectedLogin = 'login';
-        comp.expectedLoginOfOtherUser = 'other login';
+        comp.adminDialog.set(true);
+        comp.expectedLogin.set('login');
+        comp.expectedLoginOfOtherUser.set('other login');
         comp.dialogError = new Observable<string>();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const cancelButton = debugElement.query(By.css('.btn.btn-secondary'));
         const closeButton = debugElement.query(By.css('.btn-close'));
         expect(closeButton).not.toBeNull();
@@ -53,51 +65,51 @@ describe('DataExportConfirmationDialogComponent', () => {
 
     it('should correctly enable and disable request button', fakeAsync(async () => {
         // Form can't be submitted if the expected login doesn't match the entered login
-        comp.expectedLogin = 'login';
-        comp.enteredLogin = '';
+        comp.expectedLogin.set('login');
+        comp.enteredLogin.set('');
         comp.dialogError = new Observable<string>();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
-        fixture.detectChanges();
-        expect(comp.dataExportConfirmationForm.invalid).toBeTrue();
+        fixture.changeDetectorRef.detectChanges();
+        expect(comp.dataExportConfirmationForm().invalid).toBeTrue();
         expect(fixture.nativeElement.querySelector('button[type="submit"]').disabled).toBeTrue();
 
         // User entered incorrect login --> button is disabled
-        comp.enteredLogin = 'my login';
-        fixture.detectChanges();
+        comp.enteredLogin.set('my login');
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
-        fixture.detectChanges();
-        expect(comp.dataExportConfirmationForm.invalid).toBeTrue();
+        fixture.changeDetectorRef.detectChanges();
+        expect(comp.dataExportConfirmationForm().invalid).toBeTrue();
         expect(fixture.nativeElement.querySelector('button[type="submit"]').disabled).toBeTrue();
 
         // User entered correct login --> button is enabled
-        comp.enteredLogin = 'login';
-        fixture.detectChanges();
+        comp.enteredLogin.set('login');
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
-        fixture.detectChanges();
-        expect(comp.dataExportConfirmationForm.invalid).toBeFalse();
+        fixture.changeDetectorRef.detectChanges();
+        expect(comp.dataExportConfirmationForm().invalid).toBeFalse();
         expect(fixture.nativeElement.querySelector('button[type="submit"]').disabled).toBeFalse();
     }));
 
     it('should handle dialog error events correctly', () => {
-        comp.enteredLogin = 'login';
-        comp.expectedLogin = 'login';
+        comp.enteredLogin.set('login');
+        comp.expectedLogin.set('login');
         const dialogErrorSource = new Subject<string>();
         comp.dialogError = dialogErrorSource.asObservable();
-        comp.dataExportRequest = new EventEmitter<void>();
-        fixture.detectChanges();
+        comp.dataExportRequest = createMockOutputEmitterRef<void>();
+        fixture.changeDetectorRef.detectChanges();
         let confirmButton = debugElement.query(By.css('.btn.btn-primary'));
         expect(confirmButton.nativeElement.disabled).toBeFalse();
 
         // external component request method was executed
         comp.confirmDataExportRequest();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         confirmButton = debugElement.query(By.css('.btn.btn-primary'));
         expect(confirmButton.nativeElement.disabled).toBeTrue();
 
         // external component emits error to the dialog
         dialogErrorSource.next('example error');
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         confirmButton = debugElement.query(By.css('.btn.btn-primary'));
         expect(confirmButton.nativeElement.disabled).toBeFalse();
 
@@ -109,41 +121,41 @@ describe('DataExportConfirmationDialogComponent', () => {
     });
 
     it.each([true, false])('should set the correct translation strings and values on checkbox change', (checkboxChecked: boolean) => {
-        comp.expectedLogin = 'login';
-        comp.expectedLoginOfOtherUser = 'other login';
+        comp.expectedLogin.set('login');
+        comp.expectedLoginOfOtherUser.set('other login');
         if (checkboxChecked) {
             comp.ownLogin = '';
-            comp.onRequestDataExportForOtherUserChanged({ target: { checked: checkboxChecked } });
+            comp.onRequestDataExportForOtherUserChanged({ target: { checked: checkboxChecked } } as unknown as Event);
 
-            expect(comp.expectedLogin).toBe('other login');
+            expect(comp.expectedLogin()).toBe('other login');
             expect(comp.ownLogin).toBe('login');
-            expect(comp.confirmationTextHint).toBe('artemisApp.dataExport.typeUserLoginToConfirm');
-            expect(comp.enteredLogin).toBe('');
+            expect(comp.confirmationTextHint()).toBe('artemisApp.dataExport.typeUserLoginToConfirm');
+            expect(comp.enteredLogin()).toBe('');
         } else {
             comp.ownLogin = 'login';
-            comp.onRequestDataExportForOtherUserChanged({ target: { checked: checkboxChecked } });
-            expect(comp.enteredLogin).toBe('');
-            expect(comp.confirmationTextHint).toBe('artemisApp.dataExport.typeLoginToConfirm');
-            expect(comp.expectedLogin).toBe('login');
-            expect(comp.expectedLoginOfOtherUser).toBe('');
+            comp.onRequestDataExportForOtherUserChanged({ target: { checked: checkboxChecked } } as unknown as Event);
+            expect(comp.enteredLogin()).toBe('');
+            expect(comp.confirmationTextHint()).toBe('artemisApp.dataExport.typeLoginToConfirm');
+            expect(comp.expectedLogin()).toBe('login');
+            expect(comp.expectedLoginOfOtherUser()).toBe('');
         }
     });
 
     it('should emit correct even when clicking confirm button', () => {
-        comp.expectedLogin = 'login';
-        comp.dataExportRequestForAnotherUser = new EventEmitter<string>();
-        const dataExportRequestForAnotherUserEmitSpy = jest.spyOn(comp.dataExportRequestForAnotherUser, 'emit');
-        comp.requestForAnotherUser = true;
+        comp.expectedLogin.set('login');
+        const mockDataExportRequestForAnotherUser = createMockOutputEmitterRef<string>();
+        comp.dataExportRequestForAnotherUser = mockDataExportRequestForAnotherUser;
+        comp.requestForAnotherUser.set(true);
         comp.confirmDataExportRequest();
-        expect(dataExportRequestForAnotherUserEmitSpy).toHaveBeenCalledOnce();
-        expect(dataExportRequestForAnotherUserEmitSpy).toHaveBeenCalledWith('login');
-        expect(comp.dataExportRequest).not.toHaveBeenCalledOnce();
-        dataExportRequestForAnotherUserEmitSpy.mockReset();
-        comp.dataExportRequest = new EventEmitter<void>();
-        const dataExportRequestEmitSpy = jest.spyOn(comp.dataExportRequest, 'emit');
-        comp.requestForAnotherUser = false;
+        expect(mockDataExportRequestForAnotherUser.emit).toHaveBeenCalledOnce();
+        expect(mockDataExportRequestForAnotherUser.emit).toHaveBeenCalledWith('login');
+        mockDataExportRequestForAnotherUser.emit.mockReset();
+
+        const mockDataExportRequest = createMockOutputEmitterRef<void>();
+        comp.dataExportRequest = mockDataExportRequest;
+        comp.requestForAnotherUser.set(false);
         comp.confirmDataExportRequest();
-        expect(dataExportRequestEmitSpy).toHaveBeenCalledOnce();
-        expect(dataExportRequestForAnotherUserEmitSpy).not.toHaveBeenCalledOnce();
+        expect(mockDataExportRequest.emit).toHaveBeenCalledOnce();
+        expect(mockDataExportRequestForAnotherUser.emit).not.toHaveBeenCalled();
     });
 });

@@ -10,7 +10,5 @@ public class StartupDelayConfig {
 
     public static final long ATHENA_SCHEDULE_DELAY_SEC = 30;
 
-    public static final long EMAIL_SUMMARY_SCHEDULE_DELAY_SEC = 35;
-
     public static final long PARTICIPATION_SCORES_SCHEDULE_DELAY_SEC = 35;
 }

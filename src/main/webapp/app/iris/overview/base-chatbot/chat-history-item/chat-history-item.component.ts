@@ -1,10 +1,12 @@
-import { Component, Signal, computed, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Signal, computed, inject, input, output } from '@angular/core';
 import { DatePipe, NgClass } from '@angular/common';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faChalkboardUser, faKeyboard } from '@fortawesome/free-solid-svg-icons';
+import { faChalkboardUser, faKeyboard, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 
@@ -14,13 +16,23 @@ import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
     styleUrls: ['./chat-history-item.component.scss'],
     standalone: true,
     imports: [DatePipe, NgClass, FaIconComponent, NgbTooltipModule, ArtemisTranslatePipe],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChatHistoryItemComponent {
+    private readonly translateService = inject(TranslateService);
+    private readonly newChatTitle = toSignal(this.translateService.stream('artemisApp.iris.chatHistory.newChat'), { initialValue: '' });
+
     session = input.required<IrisSessionDTO>();
     active = input<boolean>(false);
     icon: Signal<IconProp | undefined> = computed(() => this.computeIcon(this.session()));
     tooltipKey: Signal<string | undefined> = computed(() => this.computeTooltipKey(this.session()));
     relatedEntityName: Signal<string | undefined> = computed(() => this.session().entityName);
+    readonly isNewChat = computed(() => {
+        const title = this.session().title?.trim().toLowerCase();
+        const translatedNewChat = this.newChatTitle()?.trim().toLowerCase();
+        return !!title && !!translatedNewChat && title === translatedNewChat;
+    });
+    readonly faPlus = faPlus;
     sessionClicked = output<IrisSessionDTO>();
 
     onItemClick(): void {

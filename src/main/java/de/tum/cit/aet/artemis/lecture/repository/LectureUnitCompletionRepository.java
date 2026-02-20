@@ -1,23 +1,22 @@
 package de.tum.cit.aet.artemis.lecture.repository;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
 
-@Profile(PROFILE_CORE)
+@Conditional(LectureEnabled.class)
 @Lazy
 @Repository
 public interface LectureUnitCompletionRepository extends ArtemisJpaRepository<LectureUnitCompletion, Long> {
@@ -39,7 +38,7 @@ public interface LectureUnitCompletionRepository extends ArtemisJpaRepository<Le
             WHERE lectureUnitCompletion.lectureUnit IN :lectureUnits
                 AND lectureUnitCompletion.user.id = :userId
             """)
-    Set<LectureUnitCompletion> findByLectureUnitsAndUserId(@Param("lectureUnits") Collection<? extends LectureUnit> lectureUnits, @Param("userId") Long userId);
+    <T extends LectureUnit> Set<LectureUnitCompletion> findByLectureUnitsAndUserId(@Param("lectureUnits") Collection<T> lectureUnits, @Param("userId") Long userId);
 
     @Query("""
             SELECT user

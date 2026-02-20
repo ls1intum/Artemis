@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.commons.collections4.ListUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,7 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.common.collect.Lists;
 
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceType;
 import de.tum.cit.aet.artemis.communication.repository.PushNotificationDeviceConfigurationRepository;
@@ -44,8 +44,7 @@ public class FirebasePushNotificationService extends PushNotificationService {
     @Override
     void sendNotificationRequestsToEndpoint(List<RelayNotificationRequest> requests, String relayBaseUrl) {
         // The relay server accepts at most 500 messages per batch
-        List<List<RelayNotificationRequest>> batches = Lists.partition(requests, 500);
-        var futures = batches.stream().map(batch -> CompletableFuture.runAsync(() -> sendSpecificNotificationRequestsToEndpoint(batch, relayBaseUrl))).toList()
+        var futures = ListUtils.partition(requests, 500).stream().map(batch -> CompletableFuture.runAsync(() -> sendSpecificNotificationRequestsToEndpoint(batch, relayBaseUrl)))
                 .toArray(CompletableFuture[]::new);
 
         CompletableFuture.allOf(futures);

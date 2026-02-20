@@ -49,17 +49,6 @@ export class AttachmentService {
     }
 
     /**
-     * Search for attachments
-     * @param req optional request parameters
-     */
-    query(req?: any): Observable<EntityArrayResponseType> {
-        const options = createRequestOption(req);
-        return this.http
-            .get<Attachment[]>(this.resourceUrl, { params: options, observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.convertAttachmentArrayResponseDatesFromServer(res)));
-    }
-
-    /**
      * Return all attachments for the given lecture
      * @param lectureId the id of the lecture to find attachments for
      */
@@ -74,7 +63,7 @@ export class AttachmentService {
      * @param attachmentId the id of the attachment to delete
      */
     delete(attachmentId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<any>(`${this.resourceUrl}/${attachmentId}`, { observe: 'response' });
+        return this.http.delete<void>(`${this.resourceUrl}/${attachmentId}`, { observe: 'response' });
     }
 
     convertAttachmentDatesFromClient(attachment: Attachment): Attachment {

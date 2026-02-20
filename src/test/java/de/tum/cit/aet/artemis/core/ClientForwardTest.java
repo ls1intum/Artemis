@@ -72,7 +72,7 @@ class ClientForwardTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    void getWebsocketFallbackEndpoint() throws Exception {
+    void getWebsocketFallback() throws Exception {
         request.performMvcRequest(get("/websocket/308/sessionId/xhr_streaming")).andExpect(status().isNotFound());
     }
 }

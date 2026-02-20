@@ -6,7 +6,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.PostLoad;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
-import jakarta.validation.constraints.NotNull;
+
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -25,13 +26,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class IrisJsonMessageContent extends IrisMessageContent {
 
-    @NotNull
+    @NonNull
     @Column(name = "json_content")
-    @JsonRawValue
-    @JsonProperty(value = "attributes", required = true)
     private String jsonContent = "{}";
 
-    @NotNull
+    @NonNull
     @Transient
     @JsonIgnore
     private JsonNode jsonNode = new ObjectMapper().createObjectNode();
@@ -40,9 +39,20 @@ public class IrisJsonMessageContent extends IrisMessageContent {
     public IrisJsonMessageContent() {
     }
 
-    public IrisJsonMessageContent(@NotNull JsonNode jsonNode) {
+    public IrisJsonMessageContent(@NonNull JsonNode jsonNode) {
         this.jsonNode = jsonNode;
         this.jsonContent = jsonNode.toPrettyString();
+    }
+
+    @JsonProperty(value = "attributes", required = true)
+    @JsonRawValue
+    public String getAttributes() {
+        return jsonContent;
+    }
+
+    @JsonProperty(value = "attributes", required = true)
+    public void setAttributes(JsonNode attributes) {
+        setJsonNode(attributes);
     }
 
     @Override
@@ -56,7 +66,7 @@ public class IrisJsonMessageContent extends IrisMessageContent {
      *
      * @param jsonContent The JSON string to set as content
      */
-    public void setJsonContent(@NotNull String jsonContent) {
+    public void setJsonContent(@NonNull String jsonContent) {
         try {
             this.jsonNode = new ObjectMapper().readTree(jsonContent);
             this.jsonContent = jsonContent;
@@ -66,7 +76,7 @@ public class IrisJsonMessageContent extends IrisMessageContent {
         }
     }
 
-    @NotNull
+    @NonNull
     public JsonNode getJsonNode() {
         return jsonNode;
     }
@@ -77,7 +87,7 @@ public class IrisJsonMessageContent extends IrisMessageContent {
      *
      * @param jsonNode The JsonNode to set as content
      */
-    public void setJsonNode(@NotNull JsonNode jsonNode) {
+    public void setJsonNode(@NonNull JsonNode jsonNode) {
         this.jsonNode = jsonNode;
         this.jsonContent = jsonNode.toPrettyString();
     }

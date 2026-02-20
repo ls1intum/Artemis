@@ -50,6 +50,10 @@
                     all: unset;
                     cursor: pointer;
                     color: var(--secondary);
+
+                    &:hover {
+                        color: var(--primary);
+                    }
                 }
 
                 .spacer {

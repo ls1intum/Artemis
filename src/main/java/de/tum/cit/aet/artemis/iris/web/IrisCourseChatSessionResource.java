@@ -1,13 +1,11 @@
 package de.tum.cit.aet.artemis.iris.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,8 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.repository.IrisCourseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
@@ -30,7 +28,7 @@ import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 /**
  * REST controller for managing {@link IrisCourseChatSession}.
  */
-@Profile(PROFILE_IRIS)
+@Conditional(IrisEnabled.class)
 @Lazy
 @RestController
 @RequestMapping("api/iris/course-chat/")
@@ -76,9 +74,9 @@ public class IrisCourseChatSessionResource {
     public ResponseEntity<IrisCourseChatSession> getCurrentSessionOrCreateIfNotExists(@PathVariable Long courseId) throws URISyntaxException {
         var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        user.hasAcceptedExternalLLMUsageElseThrow();
+        user.hasOptedIntoLLMUsageElseThrow();
 
-        var session = irisCourseChatSessionService.getCurrentSessionOrCreateIfNotExists(course, user, true);
+        var session = irisCourseChatSessionService.getCurrentSessionOrCreateIfNotExists(course, user);
         return ResponseEntity.ok(session);
     }
 
@@ -93,9 +91,9 @@ public class IrisCourseChatSessionResource {
     public ResponseEntity<List<IrisCourseChatSession>> getAllSessions(@PathVariable Long courseId) {
         var course = courseRepository.findByIdElseThrow(courseId);
 
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.COURSE_CHAT, course);
+        irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        user.hasAcceptedExternalLLMUsageElseThrow();
+        user.hasOptedIntoLLMUsageElseThrow();
 
         var sessions = irisCourseChatSessionRepository.findByExerciseIdAndUserIdElseThrow(course.getId(), user.getId());
         sessions.forEach(s -> irisSessionService.checkHasAccessToIrisSession(s, user));
@@ -115,9 +113,9 @@ public class IrisCourseChatSessionResource {
     public ResponseEntity<IrisCourseChatSession> createSessionForCourse(@PathVariable Long courseId) throws URISyntaxException {
         var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        user.hasAcceptedExternalLLMUsageElseThrow();
+        user.hasOptedIntoLLMUsageElseThrow();
 
-        var session = irisCourseChatSessionService.createSession(course, user, false);
+        var session = irisCourseChatSessionService.createSession(course, user);
         var uriString = "/api/iris/sessions/" + session.getId();
         return ResponseEntity.created(new URI(uriString)).body(session);
     }

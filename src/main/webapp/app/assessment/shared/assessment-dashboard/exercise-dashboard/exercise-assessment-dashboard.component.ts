@@ -147,7 +147,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     exerciseId: number;
     numberOfTutorAssessments = 0;
     numberOfSubmissions = new DueDateStat();
-    totalNumberOfAssessments = new DueDateStat();
+    totalNumberOfAssessments = 0;
     numberOfAutomaticAssistedAssessments = new DueDateStat();
     numberOfAssessmentsOfCorrectionRounds = [new DueDateStat()];
     numberOfLockedAssessmentByOtherTutorsOfCorrectionRound = [new DueDateStat()];
@@ -285,11 +285,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             this.assessments = [
                 {
                     name: numberOfUnassessedSubmissionLabel,
-                    value: this.numberOfSubmissions.total - this.totalNumberOfAssessments.total,
+                    value: this.numberOfSubmissions.total - this.totalNumberOfAssessments,
                 },
                 {
                     name: numberOfManualAssessedSubmissionsLabel,
-                    value: this.totalNumberOfAssessments.total - this.numberOfAutomaticAssistedAssessments.total,
+                    value: this.totalNumberOfAssessments - this.numberOfAutomaticAssistedAssessments.total,
                 },
                 {
                     name: numberOfAutomaticAssistedSubmissionsLabel,

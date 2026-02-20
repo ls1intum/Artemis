@@ -48,14 +48,14 @@
                     placement="right auto"
                     container="body"
                     (shown)="isPopoverOpen.set(true)"
-                    (hidden)="activeButtonPage.set(null); isPopoverOpen.set(false)"
+                    (hidden)="activeButtonPage.set(undefined); isPopoverOpen.set(false)"
                 >
                     <fa-icon [icon]="hiddenPages()[page.slideId] ? faEye : faEyeSlash" />
                 </button>
 
                 <ng-template #hidePageBox>
                     <jhi-pdf-preview-date-box-component
-                        [course]="course()"
+                        [courseId]="courseId()"
                         [selectedPages]="[activeButtonPage()!]"
                         (hiddenPagesOutput)="onHiddenPagesReceived($event); popover.close()"
                         (selectionCancelledOutput)="popover.close()"
@@ -90,7 +90,7 @@
                                 <span jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.showPageConfirmation"></span>
                             </p>
                             <div class="submit-container mt-3 d-flex justify-content-between">
-                                <button class="btn btn-secondary" (click)="activeButtonPage.set(null); popover.close()">
+                                <button class="btn btn-secondary" (click)="activeButtonPage.set(undefined); popover.close()">
                                     <span jhiTranslate="entity.action.cancel"></span>
                                 </button>
                                 <button class="btn btn-primary" (click)="showPage(activeButtonPage()?.slideId!); popover.close()">

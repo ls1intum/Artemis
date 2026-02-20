@@ -10,8 +10,7 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import jakarta.annotation.Nullable;
-
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -46,9 +45,10 @@ import de.tum.cit.aet.artemis.exercise.dto.SubmissionPatchPayload;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionSyncPayload;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.modeling.api.ModelingSubmissionApi;
+import de.tum.cit.aet.artemis.modeling.config.ModelingApiNotPresentException;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
-import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
 import de.tum.cit.aet.artemis.programming.dto.OnlineTeamStudentDTO;
 import de.tum.cit.aet.artemis.text.api.TextSubmissionApi;
 import de.tum.cit.aet.artemis.text.config.TextApiNotPresentException;
@@ -74,7 +74,7 @@ public class ParticipationTeamWebsocketService {
 
     private final Optional<TextSubmissionApi> textSubmissionApi;
 
-    private final ModelingSubmissionService modelingSubmissionService;
+    private final Optional<ModelingSubmissionApi> modelingSubmissionApi;
 
     private final HazelcastInstance hazelcastInstance;
 
@@ -94,14 +94,14 @@ public class ParticipationTeamWebsocketService {
 
     public ParticipationTeamWebsocketService(WebsocketMessagingService websocketMessagingService, SimpUserRegistry simpUserRegistry, UserRepository userRepository,
             StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, Optional<TextSubmissionApi> textSubmissionApi,
-            ModelingSubmissionService modelingSubmissionService, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
+            Optional<ModelingSubmissionApi> modelingSubmissionApi, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
         this.websocketMessagingService = websocketMessagingService;
         this.simpUserRegistry = simpUserRegistry;
         this.userRepository = userRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.exerciseRepository = exerciseRepository;
         this.textSubmissionApi = textSubmissionApi;
-        this.modelingSubmissionService = modelingSubmissionService;
+        this.modelingSubmissionApi = modelingSubmissionApi;
         this.hazelcastInstance = hazelcastInstance;
     }
 
@@ -176,7 +176,7 @@ public class ParticipationTeamWebsocketService {
     }
 
     /**
-     * Called by a user once he starts to type or edit the content of a submission
+     * Called by a user once they start to type or edit the content of a submission
      * Updates the user's last typing date using websockets and broadcasts the list of online team members
      *
      * @param participationId id of participation which is being worked on
@@ -254,8 +254,9 @@ public class ParticipationTeamWebsocketService {
         final Exercise exercise = exerciseRepository.findByIdElseThrow(participation.getExercise().getId());
 
         if (submission instanceof ModelingSubmission modelingSubmission && exercise instanceof ModelingExercise modelingExercise) {
-            submission = modelingSubmissionService.handleModelingSubmission(modelingSubmission, modelingExercise, user);
-            modelingSubmissionService.hideDetails(submission, user);
+            ModelingSubmissionApi api = modelingSubmissionApi.orElseThrow(() -> new ModelingApiNotPresentException(ModelingSubmissionApi.class));
+            submission = api.handleModelingSubmission(modelingSubmission, modelingExercise, user);
+            api.hideDetails(submission, user);
         }
         else if (submission instanceof TextSubmission textSubmission && exercise instanceof TextExercise textExercise) {
             submission = textSubmissionApi.orElseThrow(() -> new TextApiNotPresentException(TextSubmissionApi.class)).handleTextSubmission(textSubmission, textExercise, user);
@@ -322,7 +323,7 @@ public class ParticipationTeamWebsocketService {
     }
 
     /**
-     * Called when a user unsubscribes (e.g. when he navigates to a different part of the app, is normally called in ngOnDestroy on the client side).
+     * Called when a user unsubscribes (e.g. when they navigate to a different part of the app, is normally called in ngOnDestroy on the client side).
      *
      * @param event session unsubscribe event
      */
@@ -332,7 +333,7 @@ public class ParticipationTeamWebsocketService {
     }
 
     /**
-     * Called when a user disconnects (e.g. when he goes offline or to a different website).
+     * Called when a user disconnects (e.g. when they go offline or to a different website).
      *
      * @param event session disconnect event
      */

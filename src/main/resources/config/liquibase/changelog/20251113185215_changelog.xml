@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20251113185215-lecture-unit-constraints" author="krusche">
+        <!-- 0a) Delete attachments that reference orphan lecture units (lecture_id IS NULL) -->
+        <delete tableName="attachment">
+            <where>attachment_unit_id IN (
+                SELECT id FROM lecture_unit WHERE lecture_id IS NULL
+                )</where>
+        </delete>
+
+        <!-- 0b) Delete competency relations for orphan lecture units (lecture_id IS NULL) -->
+        <delete tableName="competency_lecture_unit">
+            <where>lecture_unit_id IN (
+                SELECT id FROM lecture_unit WHERE lecture_id IS NULL
+                )</where>
+        </delete>
+
+        <!-- 1) Delete orphan lecture units without a lecture_id -->
+        <delete tableName="lecture_unit">
+            <where>lecture_id IS NULL</where>
+        </delete>
+
+        <!--
+            2a) PostgreSQL: fill ONLY NULL lecture_unit_order values, keeping all existing non-null orders.
+
+            For each lecture_id:
+              - We find all lecture_unit rows whose lecture_unit_order is NULL ("missing").
+              - We assign them new order values, either:
+                  * continuing after the current maximum order for that lecture, or
+                  * starting at 0 if no non-null orders exist yet.
+
+            Steps:
+              1) missing:
+                   - Selects only rows where lecture_id IS NOT NULL AND lecture_unit_order IS NULL.
+                   - Uses row_number() OVER (PARTITION BY lecture_id ORDER BY id) - 1 to assign
+                     a 0-based index rn for the missing units of each lecture, ordered by id.
+
+              2) max_orders:
+                   - For each lecture_id, computes max(lecture_unit_order) among non-null orders.
+                   - Lectures that currently have only NULL orders do not appear here.
+
+              3) calc:
+                   - LEFT JOINs missing with max_orders by lecture_id.
+                   - Computes new_order as COALESCE(max_order + 1, 0) + rn:
+                        * If there are existing non-null orders:
+                             max_order is not null → we start at max_order + 1 and increment by rn.
+                        * If there are no existing orders:
+                             max_order is null → COALESCE(..., 0) yields 0 and we assign 0,1,2,... by rn.
+
+              4) UPDATE:
+                   - Updates lecture_unit.lecture_unit_order only for those ids that appear in calc
+                     (i.e., those that originally had a NULL order).
+
+            This guarantees:
+              - No existing manual ordering is changed.
+              - All previously NULL lecture_unit_order values are filled with unique integers
+                per lecture_id, without introducing NULLs.
+        -->
+        <sql dbms="postgresql">
+            WITH missing AS (
+                SELECT id, lecture_id, row_number() OVER (PARTITION BY lecture_id ORDER BY id) - 1 AS rn
+                FROM lecture_unit
+                WHERE lecture_id IS NOT NULL
+                    AND lecture_unit_order IS NULL
+            ),
+                 max_orders AS (
+                     SELECT lecture_id, max(lecture_unit_order) AS max_order
+                     FROM lecture_unit
+                     WHERE lecture_id IS NOT NULL
+                         AND lecture_unit_order IS NOT NULL
+                     GROUP BY lecture_id
+                 ),
+                 calc AS (
+                     SELECT m.id, COALESCE(mo.max_order + 1, 0) + m.rn AS new_order
+                     FROM missing m
+                         LEFT JOIN max_orders mo ON mo.lecture_id = m.lecture_id
+                 )
+            UPDATE lecture_unit lu
+            SET lecture_unit_order = c.new_order
+                FROM calc c
+            WHERE lu.id = c.id;
+        </sql>
+
+        <!--
+            2b) MySQL 8+: fill ONLY NULL lecture_unit_order values, keeping all existing non-null orders.
+
+            Purpose:
+              - We must guarantee that lecture_unit_order is never NULL.
+              - However, we must NOT overwrite any existing non-null values, because they may have been
+                manually adjusted by instructors or the system.
+              - This script therefore assigns orders only to those rows where lecture_unit_order IS NULL.
+
+            MySQL 8 supports window functions, so the logic mirrors the PostgreSQL version.
+
+            Step-by-step explanation:
+
+              1) missing:
+                 - Selects rows where lecture_unit_order IS NULL (the ones we need to fix).
+                 - For each lecture_id, assigns a 0-based incremental index rn using:
+                      row_number() OVER (PARTITION BY lecture_id ORDER BY id) - 1
+                 - rn determines the relative ordering *among the missing rows*, ordered by id.
+
+              2) max_orders:
+                 - Computes the current maximum lecture_unit_order for each lecture_id.
+                 - If a lecture has *no* existing non-null orders, it will NOT appear in this CTE.
+
+              3) calc:
+                 - LEFT JOINs missing with max_orders based on lecture_id.
+                 - Computes new_order as:
+                        COALESCE(max_order + 1, 0) + rn
+                   Meaning:
+                     * If at least one order already exists:
+                            max_order is not null → new orders start at (max_order + 1)
+                            and continue incrementally based on rn.
+                     * If no existing orders:
+                            max_order is null → COALESCE(..., 0) starts at 0 → assigns 0,1,2,...
+
+                   Example:
+                     Existing orders:      0, 2, 5
+                     Missing rows rn:      0, 1
+                     max_order = 5 → new orders: 6, 7
+
+                     No existing orders:
+                     Missing rows rn:      0, 1, 2 → new orders: 0, 1, 2
+
+              4) UPDATE:
+                 - Uses the MySQL syntax:
+                       UPDATE ... JOIN calc ...
+                 - Only rows that appear in calc (i.e., originally NULL) get updated.
+                 - Rows with existing non-null lecture_unit_order remain unchanged.
+
+            Result:
+              - Every lecture_unit row ends with a unique, non-null order value.
+              - No manual ordering is modified.
+        -->
+        <sql dbms="mysql">
+            WITH missing AS (
+                SELECT id, lecture_id, row_number() OVER (PARTITION BY lecture_id ORDER BY id) - 1 AS rn
+                FROM lecture_unit
+                WHERE lecture_id IS NOT NULL
+                    AND lecture_unit_order IS NULL
+            ),
+                 max_orders AS (
+                     SELECT lecture_id, max(lecture_unit_order) AS max_order
+                     FROM lecture_unit
+                     WHERE lecture_id IS NOT NULL
+                         AND lecture_unit_order IS NOT NULL
+                     GROUP BY lecture_id
+                 ),
+                 calc AS (
+                     SELECT m.id, COALESCE(mo.max_order + 1, 0) + m.rn AS new_order
+                     FROM missing m
+                         LEFT JOIN max_orders mo ON mo.lecture_id = m.lecture_id
+                 )
+            UPDATE lecture_unit lu
+                JOIN calc c ON lu.id = c.id
+                SET lu.lecture_unit_order = c.new_order;
+        </sql>
+
+        <!-- 3a) Prevent null values in lecture_unit_order -->
+        <addNotNullConstraint tableName="lecture_unit" columnName="lecture_unit_order" columnDataType="int"/>
+
+        <!-- 3b) Prevent null values in lecture_id -->
+        <addNotNullConstraint tableName="lecture_unit" columnName="lecture_id" columnDataType="bigint"/>
+    </changeSet>
+</databaseChangeLog>

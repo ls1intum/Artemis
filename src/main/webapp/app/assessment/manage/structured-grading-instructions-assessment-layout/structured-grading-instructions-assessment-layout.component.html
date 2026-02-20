@@ -1,4 +1,4 @@
-@if (criteria) {
+@if (criteria()) {
     <div class="mb-2">
         <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="button" (click)="expandAll()">
             <fa-icon [icon]="faExpand" /> <span jhiTranslate="artemisApp.assessmentInstructions.expandAll"></span>
@@ -14,7 +14,7 @@
         <span jhiTranslate="artemisApp.exercise.dragDropInstruction"></span>
     </div>
 }
-@for (criterion of criteria; track criterion; let criterionIndex = $index) {
+@for (criterion of criteria(); track criterion; let criterionIndex = $index) {
     <div>
         <jhi-expandable-section [hasTranslation]="false" [headerKey]="criterion.title" [isSubHeader]="true">
             @for (instruction of criterion!.structuredGradingInstructions; track instruction; let instructionIndex = $index) {

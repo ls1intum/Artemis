@@ -8,7 +8,6 @@ import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { PostTagSelectorComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-tag-selector/post-tag-selector.component';
 import { PageType } from 'app/communication/metis.util';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -38,7 +37,6 @@ describe('PostCreateEditModalComponent', () => {
                 MockComponent(PostingMarkdownEditorComponent),
                 MockComponent(PostingButtonComponent),
                 MockComponent(HelpIconComponent),
-                MockComponent(PostTagSelectorComponent),
             ],
             providers: [
                 provideHttpClient(),
@@ -81,7 +79,6 @@ describe('PostCreateEditModalComponent', () => {
         expect(component.similarPosts).toHaveLength(0);
         // currently the default selection when opening the model in the overview for creating a new post is the course-wide context TECH_SUPPORT
         expect(component.currentContextSelectorOption).toEqual({});
-        expect(component.tags).toEqual([]);
     });
 
     it('should reset context selection on changes', () => {
@@ -92,7 +89,6 @@ describe('PostCreateEditModalComponent', () => {
         component.ngOnChanges();
         // change to Organization as course-wide topic should be reset to Tech Support
         expect(component.currentContextSelectorOption).toEqual({ conversation: metisPostTechSupport.conversation });
-        expect(component.tags).toEqual([]);
     });
 
     it('should invoke metis service with created post in overview', fakeAsync(() => {

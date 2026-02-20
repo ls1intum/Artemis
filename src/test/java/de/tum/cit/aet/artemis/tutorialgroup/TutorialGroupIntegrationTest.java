@@ -18,9 +18,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -31,8 +31,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.util.UriComponentsBuilder;
-
-import com.google.common.collect.ImmutableSet;
 
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.CourseNotification;
@@ -133,7 +131,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     }
 
     void testJustForInstructorEndpoints() throws Exception {
-        request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), buildTutorialGroupWithoutSchedule("tutor1"), TutorialGroup.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), buildTutorialGroupDTOWithoutSchedule("tutor1"), TutorialGroup.class, HttpStatus.FORBIDDEN);
         request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId),
                 new TutorialGroupResource.TutorialGroupUpdateDTO(
                         tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow(), "Lorem Ipsum", true),
@@ -185,7 +183,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @ValueSource(booleans = { true, false })
     void getAllForCourse_asStudent_shouldHidePrivateInformation(boolean loadFromService) throws Exception {
         var tutorialGroupsOfCourse = getTutorialGroupsOfExampleCourse(false, loadFromService, TEST_PREFIX + "student1");
-        assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(ImmutableSet.toImmutableSet())).contains(exampleOneTutorialGroupId, exampleTwoTutorialGroupId);
+        assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(Collectors.toSet())).contains(exampleOneTutorialGroupId, exampleTwoTutorialGroupId);
         for (var tutorialGroup : tutorialGroupsOfCourse) { // private information hidden
             verifyPrivateInformationIsHidden(tutorialGroup);
         }
@@ -196,7 +194,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @ValueSource(booleans = { true, false })
     void getAllForCourse_asEditor_shouldHidePrivateInformation(boolean loadFromService) throws Exception {
         var tutorialGroupsOfCourse = getTutorialGroupsOfExampleCourse(false, loadFromService, TEST_PREFIX + "editor1");
-        assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(ImmutableSet.toImmutableSet())).contains(exampleOneTutorialGroupId, exampleTwoTutorialGroupId);
+        assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(Collectors.toSet())).contains(exampleOneTutorialGroupId, exampleTwoTutorialGroupId);
         for (var tutorialGroup : tutorialGroupsOfCourse) { // private information hidden
             verifyPrivateInformationIsHidden(tutorialGroup);
         }
@@ -207,7 +205,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getAllForCourse_asTutorOfOneGroup_shouldShowPrivateInformationForOwnGroup(boolean loadFromService) throws Exception {
         var tutorialGroupsOfCourse = getTutorialGroupsOfExampleCourse(false, loadFromService, TEST_PREFIX + "tutor1");
-        assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(ImmutableSet.toImmutableSet())).contains(exampleOneTutorialGroupId, exampleTwoTutorialGroupId);
+        assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(Collectors.toSet())).contains(exampleOneTutorialGroupId, exampleTwoTutorialGroupId);
         var groupWhereTutor = tutorialGroupsOfCourse.stream().filter(tutorialGroup -> tutorialGroup.getId().equals(exampleOneTutorialGroupId)).findFirst().orElseThrow();
         verifyPrivateInformationIsShown(groupWhereTutor);
 
@@ -221,7 +219,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     void getAllForCourse_asInstructorOfCourse_shouldShowPrivateInformation(boolean loadFromService) throws Exception {
         var tutorialGroupsOfCourse = getTutorialGroupsOfExampleCourse(true, loadFromService, TEST_PREFIX + "instructor1");
         assertThat(tutorialGroupsOfCourse).hasSize(2);
-        assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(ImmutableSet.toImmutableSet())).containsExactlyInAnyOrder(exampleOneTutorialGroupId,
+        assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(Collectors.toSet())).containsExactlyInAnyOrder(exampleOneTutorialGroupId,
                 exampleTwoTutorialGroupId);
         var group1 = tutorialGroupsOfCourse.stream().filter(tutorialGroup -> tutorialGroup.getId().equals(exampleOneTutorialGroupId)).findFirst().orElseThrow();
         verifyPrivateInformationIsShown(group1);
@@ -384,7 +382,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void create_asInstructor_shouldCreateTutorialGroup() throws Exception {
         // when
-        var persistedTutorialGroup = request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), buildTutorialGroupWithoutSchedule("tutor1"), TutorialGroup.class,
+        var persistedTutorialGroup = request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), buildTutorialGroupDTOWithoutSchedule("tutor1"), TutorialGroup.class,
                 HttpStatus.CREATED);
         // then
         assertThat(persistedTutorialGroup.getId()).isNotNull();
@@ -398,11 +396,10 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void create_WithIdInBody_shouldReturnBadRequest() throws Exception {
         // given
-        var tutorialGroup = buildTutorialGroupWithoutSchedule("tutor1");
-        tutorialGroup.setId(22L);
+        var tutorialGroupDTO = buildTutorialGroupDTOWithId(22L, "tutor1");
         var numberOfTutorialGroups = tutorialGroupTestRepository.findAllByCourseId(exampleCourseId).size();
         // when
-        request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), tutorialGroup, TutorialGroup.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), tutorialGroupDTO, TutorialGroup.class, HttpStatus.BAD_REQUEST);
         // then
         assertThat(tutorialGroupTestRepository.findAllByCourseId(exampleCourseId)).hasSize(numberOfTutorialGroups);
     }
@@ -412,12 +409,11 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     void create_tutorialGroupWithTitleAlreadyExists_shouldReturnBadRequest() throws Exception {
         var existingTitle = tutorialGroupTestRepository.findById(exampleOneTutorialGroupId).orElseThrow().getTitle();
         // given
-        var tutorialGroup = buildTutorialGroupWithoutSchedule("tutor1");
-        tutorialGroup.setTitle(existingTitle);
+        var tutorialGroupDTO = buildTutorialGroupDTOWithTitle(existingTitle, "tutor1");
 
         var numberOfTutorialGroups = tutorialGroupTestRepository.findAllByCourseId(exampleCourseId).size();
         // when
-        request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), tutorialGroup, TutorialGroup.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), tutorialGroupDTO, TutorialGroup.class, HttpStatus.BAD_REQUEST);
         // then
         assertThat(tutorialGroupTestRepository.findAllByCourseId(exampleCourseId)).hasSize(numberOfTutorialGroups);
     }
@@ -428,7 +424,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         courseUtilService.enableMessagingForCourse(courseRepository.findByIdElseThrow(exampleCourseId));
 
         // given
-        var persistedTutorialGroup = request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), buildTutorialGroupWithoutSchedule("tutor1"), TutorialGroup.class,
+        var persistedTutorialGroup = request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), buildTutorialGroupDTOWithoutSchedule("tutor1"), TutorialGroup.class,
                 HttpStatus.CREATED);
         assertThat(persistedTutorialGroup.getId()).isNotNull();
         var channel = asserTutorialGroupChannelIsCorrectlyConfigured(persistedTutorialGroup);
@@ -671,8 +667,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         // then
         assertThat(importResult).hasSize(4);
         var regBlankExpected = new TutorialGroupRegistrationImportDTO(freshTitleTwo, new StudentDTO(null, null, null, null, null), null, null, null, null, null);
-        var studentPropertiesNullExpected = new TutorialGroupRegistrationImportDTO(freshTitleOne, new StudentDTO(null, null, null, null, null), null, null, null, null, null);
-        assertThat(importResult.stream()).containsExactlyInAnyOrder(regNullStudent, regBlankExpected, regExistingTutorialGroup, studentPropertiesNullExpected);
+        assertThat(importResult.stream()).containsExactlyInAnyOrder(regNullStudent, regBlankExpected, regExistingTutorialGroup, regStudentPropertiesNull);
 
         assertImportedTutorialGroupWithTitleInDB(freshTitleOne, new HashSet<>(), instructor1);
         assertImportedTutorialGroupWithTitleInDB(freshTitleTwo, new HashSet<>(), instructor1);
@@ -854,6 +849,46 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         assertThat(tutorialGroupTestRepository.getTutorialGroupChannel(exampleTwoTutorialGroupId)).isEmpty();
         assertThat(tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(exampleCourseId)).isEmpty();
         assertThat(postRepository.findById(post.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testDeleteCourseWithTutorialGroupsAndSessions() throws Exception {
+        // Create a tutorial group with sessions via schedule
+        var tutorialGroupWithSessions = setUpTutorialGroupWithSchedule(exampleCourseId, "tutor1");
+        var tutorialGroupId = tutorialGroupWithSessions.getId();
+
+        // Verify sessions exist before deletion
+        var sessionsBeforeDeletion = tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroupId);
+        assertThat(sessionsBeforeDeletion).isNotEmpty();
+
+        // Delete the course
+        request.delete("/api/core/admin/courses/" + exampleCourseId, HttpStatus.OK);
+
+        // Verify everything is deleted
+        assertThat(courseRepository.findById(exampleCourseId)).isEmpty();
+        assertThat(tutorialGroupTestRepository.findAllByCourseId(exampleCourseId)).isEmpty();
+        assertThat(tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroupId)).isEmpty();
+        assertThat(tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(exampleCourseId)).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteTutorialGroupWithSessions() throws Exception {
+        // Create a tutorial group with sessions via schedule
+        var tutorialGroupWithSessions = setUpTutorialGroupWithSchedule(exampleCourseId, "tutor1");
+        var tutorialGroupId = tutorialGroupWithSessions.getId();
+
+        // Verify sessions exist before deletion
+        var sessionsBeforeDeletion = tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroupId);
+        assertThat(sessionsBeforeDeletion).isNotEmpty();
+
+        // Delete the tutorial group
+        request.delete(getTutorialGroupsPath(exampleCourseId, tutorialGroupId), HttpStatus.NO_CONTENT);
+
+        // Verify tutorial group and sessions are deleted
+        assertThat(tutorialGroupTestRepository.findById(tutorialGroupId)).isEmpty();
+        assertThat(tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroupId)).isEmpty();
     }
 
     @Test
@@ -1214,7 +1249,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         });
     }
 
-    private @NotNull TutorialGroup copyTutorialGroup(TutorialGroup tutorialGroup, User tutor1) {
+    private @NonNull TutorialGroup copyTutorialGroup(TutorialGroup tutorialGroup, User tutor1) {
         TutorialGroup updatedTutorialGroup = new TutorialGroup();
         updatedTutorialGroup.setId(tutorialGroup.getId());
         updatedTutorialGroup.setTitle(tutorialGroup.getTitle());

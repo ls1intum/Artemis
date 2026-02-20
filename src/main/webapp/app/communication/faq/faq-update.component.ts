@@ -7,14 +7,14 @@ import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { faBan, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
-import { Faq, FaqState } from 'app/communication/shared/entities/faq.model';
+import { CreateFaqDTO, Faq, FaqState, UpdateFaqDTO } from 'app/communication/shared/entities/faq.model';
 import { FaqService } from 'app/communication/faq/faq.service';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
 import { loadCourseFaqCategories } from 'app/communication/faq/faq.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { PROFILE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -59,10 +59,15 @@ export class FaqUpdateComponent implements OnInit {
 
     showConsistencyCheck = computed(() => !!this.renderedConsistencyCheckResultMarkdown().result);
 
-    irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
-    artemisIntelligenceActions = computed(() =>
-        this.irisEnabled ? [new RewriteAction(this.artemisIntelligenceService, RewritingVariant.FAQ, this.courseId, this.renderedConsistencyCheckResultMarkdown)] : [],
-    );
+    hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+    artemisIntelligenceActions = computed(() => {
+        const actions = [];
+        if (this.hyperionEnabled) {
+            actions.push(new RewriteAction(this.artemisIntelligenceService, RewritingVariant.FAQ, this.courseId, this.renderedConsistencyCheckResultMarkdown));
+        }
+        return actions;
+    });
+
     // Icons
     readonly faQuestionCircle = faQuestionCircle;
     readonly faSave = faSave;
@@ -103,9 +108,9 @@ export class FaqUpdateComponent implements OnInit {
         this.isSaving = true;
         this.faq.faqState = this.isAtLeastInstructor ? FaqState.ACCEPTED : FaqState.PROPOSED;
         if (this.faq.id !== undefined) {
-            this.subscribeToSaveResponse(this.faqService.update(this.courseId, this.faq));
+            this.subscribeToSaveResponse(this.faqService.update(this.courseId, UpdateFaqDTO.toUpdateDto(this.faq)));
         } else {
-            this.subscribeToSaveResponse(this.faqService.create(this.courseId, this.faq));
+            this.subscribeToSaveResponse(this.faqService.create(this.courseId, CreateFaqDTO.toCreateFaqDto(this.faq)));
         }
     }
 

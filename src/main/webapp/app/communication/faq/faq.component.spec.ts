@@ -2,7 +2,7 @@ import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/com
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -10,7 +10,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { FaqService } from 'app/communication/faq/faq.service';
 import { Faq, FaqState } from 'app/communication/shared/entities/faq.model';
 
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FaqComponent } from 'app/communication/faq/faq.component';
 import { AlertService } from 'app/shared/service/alert.service';
 import { SortService } from 'app/shared/service/sort.service';
@@ -18,8 +17,8 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { AccountService } from 'app/core/auth/account.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { PROFILE_IRIS } from 'app/app.constants';
-import { IrisCourseSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
+import { MODULE_FEATURE_IRIS } from 'app/app.constants';
+import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
@@ -65,7 +64,6 @@ describe('FaqComponent', () => {
         } as unknown as ProfileInfo;
 
         TestBed.configureTestingModule({
-            imports: [MockModule(BrowserAnimationsModule)],
             declarations: [FaqComponent, MockRouterLinkDirective, MockComponent(CustomExerciseCategoryBadgeComponent)],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -94,7 +92,7 @@ describe('FaqComponent', () => {
                         );
                     },
                     delete: () => {
-                        return of(new HttpResponse({ status: 200 }));
+                        return of(new HttpResponse<void>({ status: 200 }));
                     },
                     findAllCategoriesByCourseId: () => {
                         return of(
@@ -211,7 +209,16 @@ describe('FaqComponent', () => {
         jest.spyOn(faqService, 'update').mockReturnValue(of(new HttpResponse({ body: faq1 })));
         faqComponentFixture.detectChanges();
         faqComponent.rejectFaq(courseId, faq1);
-        expect(faqService.update).toHaveBeenCalledExactlyOnceWith(courseId, faq1);
+        expect(faqService.update).toHaveBeenCalledExactlyOnceWith(
+            courseId,
+            expect.objectContaining({
+                id: faq1.id,
+                faqState: FaqState.REJECTED,
+                questionTitle: faq1.questionTitle,
+                questionAnswer: faq1.questionAnswer,
+                categories: faq1.categories,
+            }),
+        );
         expect(faq1.faqState).toEqual(FaqState.REJECTED);
     });
 
@@ -220,7 +227,10 @@ describe('FaqComponent', () => {
         jest.spyOn(faqService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
         faqComponentFixture.detectChanges();
         faqComponent.rejectFaq(courseId, faq1);
-        expect(faqService.update).toHaveBeenCalledExactlyOnceWith(courseId, faq1);
+        expect(faqService.update).toHaveBeenCalledExactlyOnceWith(
+            courseId,
+            expect.objectContaining({ id: faq1.id, faqState: FaqState.REJECTED, questionTitle: faq1.questionTitle }),
+        );
         expect(faq1.faqState).toEqual(FaqState.PROPOSED);
     });
 
@@ -228,7 +238,16 @@ describe('FaqComponent', () => {
         jest.spyOn(faqService, 'update').mockReturnValue(of(new HttpResponse({ body: faq1 })));
         faqComponentFixture.detectChanges();
         faqComponent.acceptProposedFaq(courseId, faq1);
-        expect(faqService.update).toHaveBeenCalledExactlyOnceWith(courseId, faq1);
+        expect(faqService.update).toHaveBeenCalledExactlyOnceWith(
+            courseId,
+            expect.objectContaining({
+                id: faq1.id,
+                faqState: FaqState.ACCEPTED,
+                questionTitle: faq1.questionTitle,
+                questionAnswer: faq1.questionAnswer,
+                categories: faq1.categories,
+            }),
+        );
         expect(faq1.faqState).toEqual(FaqState.ACCEPTED);
     });
 
@@ -237,7 +256,10 @@ describe('FaqComponent', () => {
         jest.spyOn(faqService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
         faqComponentFixture.detectChanges();
         faqComponent.acceptProposedFaq(courseId, faq1);
-        expect(faqService.update).toHaveBeenCalledExactlyOnceWith(courseId, faq1);
+        expect(faqService.update).toHaveBeenCalledExactlyOnceWith(
+            courseId,
+            expect.objectContaining({ id: faq1.id, faqState: FaqState.ACCEPTED, questionTitle: faq1.questionTitle }),
+        );
         expect(faq1.faqState).toEqual(FaqState.PROPOSED);
     });
 
@@ -257,21 +279,28 @@ describe('FaqComponent', () => {
         expect(alertServiceStub).toHaveBeenCalledOnce();
     });
 
-    it('should set faqIngestionEnabled based on service response', () => {
+    it('should set irisEnabled based on service response', () => {
         faqComponent.faqs = [faq1];
         const profileInfoResponse = {
-            activeProfiles: [PROFILE_IRIS],
+            activeModuleFeatures: [MODULE_FEATURE_IRIS],
         } as ProfileInfo;
         const irisSettingsResponse = {
-            irisFaqIngestionSettings: {
+            courseId: faqComponent.courseId,
+            settings: {
                 enabled: true,
+                customInstructions: '',
+                variant: 'default',
+                rateLimit: { requests: 100, timeframeHours: 24 },
             },
-        } as IrisCourseSettings;
+            effectiveRateLimit: { requests: 100, timeframeHours: 24 },
+            applicationRateLimitDefaults: { requests: 50, timeframeHours: 12 },
+        } as IrisCourseSettingsWithRateLimitDTO;
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoResponse);
-        jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockImplementation(() => of(irisSettingsResponse));
+        jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
+        jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockImplementation(() => of(irisSettingsResponse));
         faqComponent.ngOnInit();
-        expect(irisSettingsService.getCombinedCourseSettings).toHaveBeenCalledWith(faqComponent.courseId);
-        expect(faqComponent.faqIngestionEnabled).toBeTrue();
+        expect(irisSettingsService.getCourseSettingsWithRateLimit).toHaveBeenCalledWith(faqComponent.courseId);
+        expect(faqComponent.irisEnabled).toBeTrue();
     });
 
     it('should call faq service to enable faq', () => {

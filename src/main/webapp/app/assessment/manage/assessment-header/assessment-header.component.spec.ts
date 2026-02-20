@@ -1,406 +1,309 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
-import { AlertService } from 'app/shared/service/alert.service';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import dayjs from 'dayjs/esm';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { AssessmentHeaderComponent } from 'app/assessment/manage/assessment-header/assessment-header.component';
-import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
 import { AssessmentWarningComponent } from 'app/assessment/manage/assessment-warning/assessment-warning.component';
-import { MockProvider } from 'ng-mocks';
-import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
-import { TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
-import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
-import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
-import { of } from 'rxjs';
-import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
-import '@angular/localize/init';
-import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MockQueryParamsDirective, MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
+import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
 import { ActivatedRoute } from '@angular/router';
-import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { Result } from '../../../exercise/shared/entities/result/result.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 describe('AssessmentHeaderComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: AssessmentHeaderComponent;
     let fixture: ComponentFixture<AssessmentHeaderComponent>;
 
-    const gradeStep1: GradeStep = {
-        isPassingGrade: false,
-        lowerBoundInclusive: true,
-        lowerBoundPercentage: 0,
-        upperBoundInclusive: false,
-        upperBoundPercentage: 40,
-        gradeName: 'D',
-    };
-    const gradeStep2: GradeStep = {
-        isPassingGrade: true,
-        lowerBoundInclusive: true,
-        lowerBoundPercentage: 40,
-        upperBoundInclusive: false,
-        upperBoundPercentage: 60,
-        gradeName: 'C',
-    };
-
     beforeEach(() => {
-        TestBed.configureTestingModule({
-            providers: [
-                {
-                    provide: AlertService,
-                    useClass: AlertService, // use the real one
-                },
-                { provide: TranslateService, useClass: MockTranslateService },
-                MockProvider(GradingSystemService, {
-                    findGradingScaleForExam: () => {
-                        return of(
-                            new HttpResponse({
-                                body: new GradingScale(),
-                                status: 200,
-                            }),
-                        );
-                    },
-                    findMatchingGradeStep: () => {
-                        return gradeStep1;
-                    },
-                    sortGradeSteps: () => {
-                        return [gradeStep1, gradeStep2];
-                    },
-                }),
-                { provide: AccountService, useClass: MockAccountService },
-                { provide: ProfileService, useClass: MockProfileService },
-                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
-                provideHttpClient(),
+        return TestBed.configureTestingModule({
+            imports: [
+                MockModule(NgbTooltipModule),
+                AssessmentHeaderComponent,
+                MockComponent(AssessmentWarningComponent),
+                MockDirective(TranslateDirective),
+                MockRouterLinkDirective,
+                MockQueryParamsDirective,
+                FaIconComponent,
             ],
-        }).compileComponents();
-    });
-
-    beforeEach(() => {
-        fixture = TestBed.createComponent(AssessmentHeaderComponent);
-        component = fixture.componentInstance;
-        fixture.detectChanges();
+            providers: [
+                MockProvider(TextAssessmentAnalytics),
+                MockProvider(ArtemisTranslatePipe),
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(AssessmentHeaderComponent);
+                component = fixture.componentInstance;
+                // Set required inputs
+                fixture.componentRef.setInput('isLoading', false);
+                fixture.componentRef.setInput('saveBusy', false);
+                fixture.componentRef.setInput('submitBusy', false);
+                fixture.componentRef.setInput('cancelBusy', false);
+                fixture.componentRef.setInput('nextSubmissionBusy', false);
+                fixture.componentRef.setInput('isTeamMode', false);
+                fixture.componentRef.setInput('isAssessor', true);
+                fixture.componentRef.setInput('exerciseDashboardLink', []);
+                fixture.componentRef.setInput('canOverride', false);
+                fixture.componentRef.setInput('assessmentsAreValid', true);
+                fixture.componentRef.setInput('hasAssessmentDueDatePassed', true);
+                fixture.detectChanges();
+            });
     });
 
     it('should create', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should display warning when assessment due date has not passed', () => {
-        component.exercise = {
-            id: 16,
-            dueDate: dayjs().subtract(2, 'days'),
-        } as Exercise;
-        component.result = undefined;
+    it('should have correct overrideVisible when result has completionDate and canOverride is true', () => {
+        const mockResult = new Result();
+        mockResult.completionDate = dayjs();
+        fixture.componentRef.setInput('result', mockResult);
+        fixture.componentRef.setInput('canOverride', true);
         fixture.detectChanges();
-        const warningComponent = fixture.debugElement.query(By.directive(AssessmentWarningComponent));
-        expect(warningComponent).toBeTruthy();
+
+        expect(component.overrideVisible).toBe(true);
     });
 
-    it('should display alert when assessment due date has passed', () => {
-        component.hasAssessmentDueDatePassed = true;
-        component.result = undefined;
+    it('should have overrideVisible false when result has no completionDate', () => {
+        const mockResult = new Result();
+        fixture.componentRef.setInput('result', mockResult);
+        fixture.componentRef.setInput('canOverride', true);
         fixture.detectChanges();
 
-        const alertComponent = fixture.debugElement.query(By.css('ngb-alert'));
-        expect(alertComponent).toBeDefined();
-        expect(alertComponent.nativeElement.getAttribute('jhiTranslate')).toBe('artemisApp.assessment.assessmentDueDateIsOver');
+        expect(component.overrideVisible).toBeFalsy();
     });
 
-    it('should hide right side row-container if loading', () => {
-        component.isLoading = false;
+    it('should have assessNextVisible true under correct conditions', () => {
+        const mockResult = new Result();
+        mockResult.completionDate = dayjs();
+        fixture.componentRef.setInput('result', mockResult);
+        fixture.componentRef.setInput('isAssessor', true);
+        fixture.componentRef.setInput('hasComplaint', false);
+        fixture.componentRef.setInput('isTeamMode', false);
+        fixture.componentRef.setInput('isTestRun', false);
         fixture.detectChanges();
-        let container = fixture.debugElement.query(By.css('.row-container:nth-of-type(2)'));
-        expect(container).toBeTruthy();
 
-        component.isLoading = true;
-        fixture.detectChanges();
-        container = fixture.debugElement.query(By.css('.row-container:nth-of-type(2)'));
-        expect(container).toBeFalsy();
+        expect(component.assessNextVisible).toBe(true);
     });
 
-    it('should show if submission is locked by other user', () => {
-        component.isLoading = false;
-        component.isAssessor = true;
+    it('should emit save event on Ctrl+S', () => {
+        const saveSpy = vi.spyOn(component.save, 'emit');
+        fixture.componentRef.setInput('isAssessor', true);
+        fixture.componentRef.setInput('assessmentsAreValid', true);
         fixture.detectChanges();
 
-        let assessmentLocked = fixture.debugElement.query(By.css('[jhiTranslate$=assessmentLocked]'));
-        expect(assessmentLocked).toBeFalsy();
+        const event = new KeyboardEvent('keydown', { ctrlKey: true, key: 's' });
+        Object.defineProperty(event, 'preventDefault', { value: vi.fn() });
+        component.saveOnControlAndS(event);
 
-        let assessmentLockedCurrentUser = fixture.debugElement.query(By.css('[jhiTranslate$=assessmentLockedCurrentUser]'));
-        expect(assessmentLockedCurrentUser).toBeTruthy();
-
-        component.isAssessor = false;
-        fixture.detectChanges();
-
-        assessmentLocked = fixture.debugElement.query(By.css('[jhiTranslate$=assessmentLocked]'));
-        expect(assessmentLocked).toBeTruthy();
-
-        assessmentLockedCurrentUser = fixture.debugElement.query(By.css('[jhiTranslate$=assessmentLockedCurrentUser]'));
-        expect(assessmentLockedCurrentUser).toBeFalsy();
+        expect(saveSpy).toHaveBeenCalled();
     });
 
-    it('should show save/submit buttons when no result present', () => {
-        component.isLoading = false;
-        fixture.detectChanges();
-
-        const saveButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=save]'));
-        expect(saveButtonSpan).toBeTruthy();
-        const submitButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=submit]'));
-        expect(submitButtonSpan).toBeTruthy();
-
-        const overrideAssessmentButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=overrideAssessment]'));
-        expect(overrideAssessmentButtonSpan).toBeFalsy();
-
-        jest.spyOn(component.save, 'emit');
-        saveButtonSpan.nativeElement.click();
-        expect(component.save.emit).toHaveBeenCalledOnce();
-
-        jest.spyOn(component.onSubmit, 'emit');
-        submitButtonSpan.nativeElement.click();
-        expect(component.onSubmit.emit).toHaveBeenCalledOnce();
-
-        const cancelButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=cancel]'));
-        jest.spyOn(component.onCancel, 'emit');
-        cancelButtonSpan.nativeElement.click();
-        expect(component.onCancel.emit).toHaveBeenCalledOnce();
-    });
-
-    it('should show override button when result is present', () => {
-        component.isLoading = false;
-        component.result = new Result();
-        component.result.completionDate = dayjs();
-        fixture.detectChanges();
-
-        const saveButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=save]'));
-        expect(saveButtonSpan).toBeFalsy();
-        const submitButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=submit]'));
-        expect(submitButtonSpan).toBeFalsy();
-
-        let overrideAssessmentButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=overrideAssessment]'));
-        expect(overrideAssessmentButtonSpan).toBeFalsy();
-
-        component.canOverride = true;
-        fixture.detectChanges();
-
-        overrideAssessmentButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=overrideAssessment]'));
-        expect(overrideAssessmentButtonSpan).toBeTruthy();
-
-        jest.spyOn(component.onSubmit, 'emit');
-        overrideAssessmentButtonSpan.nativeElement.click();
-        expect(component.onSubmit.emit).toHaveBeenCalledOnce();
-    });
-
-    it('should show next submission if assessor or instructor, result is present and no complaint', () => {
-        jest.spyOn(component.nextSubmission, 'emit');
-        component.isLoading = false;
-        component.isAssessor = false;
-        component.hasComplaint = false;
-        component.exercise = {
-            id: 1,
-        } as Exercise;
-        fixture.detectChanges();
-
-        let nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
-        expect(nextSubmissionButtonSpan).toBeFalsy();
-
-        component.result = new Result();
-        component.result.completionDate = dayjs();
-        fixture.detectChanges();
-        nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
-        expect(nextSubmissionButtonSpan).toBeFalsy();
-
-        component.exercise.isAtLeastInstructor = true;
-        fixture.detectChanges();
-        nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
-        expect(nextSubmissionButtonSpan).toBeTruthy();
-
-        component.isAssessor = true;
-        fixture.detectChanges();
-        nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
-        expect(nextSubmissionButtonSpan).toBeTruthy();
-
-        component.exercise.isAtLeastInstructor = false;
-        fixture.detectChanges();
-        nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
-        expect(nextSubmissionButtonSpan).toBeTruthy();
-
-        component.hasComplaint = true;
-        fixture.detectChanges();
-        nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
-        expect(nextSubmissionButtonSpan).toBeFalsy();
-
-        component.hasComplaint = false;
-        component.nextSubmissionBusy = true;
-        fixture.detectChanges();
-        nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
-        expect(nextSubmissionButtonSpan).toBeTruthy();
-        const nextSubmissionButton = nextSubmissionButtonSpan.parent;
-        expect(nextSubmissionButton).toBeTruthy();
-        expect(nextSubmissionButton!.nativeElement.disabled).toBeTruthy();
-
-        component.nextSubmissionBusy = false;
-        fixture.detectChanges();
-        nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
-        nextSubmissionButtonSpan.nativeElement.click();
-        expect(component.nextSubmission.emit).toHaveBeenCalledOnce();
-    });
-    it('should not show assess next button if is test run mode', () => {
-        component.isTestRun = true;
-        component.isLoading = false;
-        fixture.detectChanges();
-        const nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
-        expect(nextSubmissionButtonSpan).toBeFalsy();
-    });
-
-    it('should set highlightDifferences to true', () => {
-        component.highlightDifferences = false;
-        jest.spyOn(component.highlightDifferencesChange, 'emit');
-
+    it('should toggle highlightDifferences', () => {
+        expect(component.highlightDifferences()).toBe(false);
         component.toggleHighlightDifferences();
-
-        expect(component.highlightDifferencesChange.emit).toHaveBeenCalledTimes(2);
-        expect(component.highlightDifferences).toBeTrue();
-    });
-
-    it('should set highlightDifferences to false', () => {
-        component.highlightDifferences = true;
-        jest.spyOn(component.highlightDifferencesChange, 'emit');
-
+        expect(component.highlightDifferences()).toBe(true);
         component.toggleHighlightDifferences();
-
-        expect(component.highlightDifferencesChange.emit).toHaveBeenCalledTimes(2);
-        expect(component.highlightDifferences).toBeFalse();
+        expect(component.highlightDifferences()).toBe(false);
     });
 
-    it('should send assessment event on assess next button click when exercise set to Text', () => {
-        component.exercise = {
-            type: ExerciseType.TEXT,
-        } as Exercise;
-        const sendAssessmentEvent = jest.spyOn<any, any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
-        component.sendAssessNextEventToAnalytics();
-        fixture.detectChanges();
-        expect(sendAssessmentEvent).toHaveBeenCalledWith(TextAssessmentEventType.ASSESS_NEXT_SUBMISSION);
+    describe('saveDisabled', () => {
+        it('should return true when result has completionDate', () => {
+            const mockResult = new Result();
+            mockResult.completionDate = dayjs();
+            fixture.componentRef.setInput('result', mockResult);
+            fixture.detectChanges();
+
+            expect(component.saveDisabled).toBe(true);
+        });
+
+        it('should use saveDisabledWithAssessmentNotePresent when result has assessment note', () => {
+            const mockResult = new Result();
+            mockResult.assessmentNote = { note: 'test note' } as any;
+            fixture.componentRef.setInput('result', mockResult);
+            fixture.componentRef.setInput('isAssessor', true);
+            fixture.detectChanges();
+
+            expect(component.saveDisabled).toBe(false);
+        });
+
+        it('should use saveDisabledWithoutAssessmentNotePresent when no assessment note', () => {
+            fixture.componentRef.setInput('assessmentsAreValid', false);
+            fixture.detectChanges();
+
+            expect(component.saveDisabled).toBe(true);
+        });
     });
 
-    it('should not send assessment event on assess next button click when exercise is not Text', () => {
-        component.exercise = {
-            type: ExerciseType.FILE_UPLOAD,
-        } as Exercise;
-        const sendAssessmentEvent = jest.spyOn<any, any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
-        component.sendAssessNextEventToAnalytics();
-        fixture.detectChanges();
-        expect(sendAssessmentEvent).not.toHaveBeenCalled();
+    describe('submitDisabled', () => {
+        it('should return true when assessments are not valid', () => {
+            fixture.componentRef.setInput('assessmentsAreValid', false);
+            fixture.detectChanges();
+
+            expect(component.submitDisabled).toBe(true);
+        });
+
+        it('should return true when not assessor', () => {
+            fixture.componentRef.setInput('isAssessor', false);
+            fixture.detectChanges();
+
+            expect(component.submitDisabled).toBe(true);
+        });
+
+        it('should return false when all conditions are met', () => {
+            fixture.componentRef.setInput('assessmentsAreValid', true);
+            fixture.componentRef.setInput('isAssessor', true);
+            fixture.componentRef.setInput('saveBusy', false);
+            fixture.componentRef.setInput('submitBusy', false);
+            fixture.componentRef.setInput('cancelBusy', false);
+            fixture.detectChanges();
+
+            expect(component.submitDisabled).toBe(false);
+        });
     });
 
-    it('should send assessment event on submit button click when exercise set to Text', () => {
-        component.exercise = {
-            type: ExerciseType.TEXT,
-        } as Exercise;
-        const sendAssessmentEvent = jest.spyOn<any, any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
-        component.sendSubmitAssessmentEventToAnalytics();
-        fixture.detectChanges();
-        expect(sendAssessmentEvent).toHaveBeenCalledWith(TextAssessmentEventType.SUBMIT_ASSESSMENT);
+    describe('overrideDisabled', () => {
+        it('should return true when overrideVisible is false', () => {
+            fixture.componentRef.setInput('canOverride', false);
+            fixture.detectChanges();
+
+            expect(component.overrideDisabled).toBe(true);
+        });
+
+        it('should return false when overrideVisible and assessments are valid', () => {
+            const mockResult = new Result();
+            mockResult.completionDate = dayjs();
+            fixture.componentRef.setInput('result', mockResult);
+            fixture.componentRef.setInput('canOverride', true);
+            fixture.componentRef.setInput('assessmentsAreValid', true);
+            fixture.componentRef.setInput('submitBusy', false);
+            fixture.detectChanges();
+
+            expect(component.overrideDisabled).toBe(false);
+        });
     });
 
-    it('should not send assessment event on submit button click when exercise is not Text', () => {
-        component.exercise = {
-            type: ExerciseType.FILE_UPLOAD,
-        } as Exercise;
-        const sendAssessmentEvent = jest.spyOn<any, any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
-        component.sendSubmitAssessmentEventToAnalytics();
-        fixture.detectChanges();
-        expect(sendAssessmentEvent).not.toHaveBeenCalled();
+    describe('assessNextDisabled', () => {
+        it('should return true when assessNextVisible is false', () => {
+            fixture.componentRef.setInput('isTestRun', true);
+            fixture.detectChanges();
+
+            expect(component.assessNextDisabled).toBe(true);
+        });
+
+        it('should return false when assessNextVisible and not busy', () => {
+            const mockResult = new Result();
+            mockResult.completionDate = dayjs();
+            fixture.componentRef.setInput('result', mockResult);
+            fixture.componentRef.setInput('isAssessor', true);
+            fixture.componentRef.setInput('hasComplaint', false);
+            fixture.componentRef.setInput('isTeamMode', false);
+            fixture.componentRef.setInput('isTestRun', false);
+            fixture.componentRef.setInput('nextSubmissionBusy', false);
+            fixture.componentRef.setInput('submitBusy', false);
+            fixture.detectChanges();
+
+            expect(component.assessNextDisabled).toBe(false);
+        });
     });
 
-    it('should save assessment on control and s', () => {
-        component.isLoading = false;
-        component.assessmentsAreValid = true;
-        component.isAssessor = true;
-        component.saveBusy = false;
-        component.submitBusy = false;
-        component.cancelBusy = false;
-        fixture.detectChanges();
+    describe('submitOnControlAndEnter', () => {
+        it('should emit onSubmit when override is not disabled', () => {
+            const submitSpy = vi.spyOn(component.onSubmit, 'emit');
+            const mockResult = new Result();
+            mockResult.completionDate = dayjs();
+            fixture.componentRef.setInput('result', mockResult);
+            fixture.componentRef.setInput('canOverride', true);
+            fixture.componentRef.setInput('assessmentsAreValid', true);
+            fixture.componentRef.setInput('submitBusy', false);
+            fixture.detectChanges();
 
-        const eventMock = new KeyboardEvent('keydown', { ctrlKey: true, key: 's' });
-        const spyOnControlAndS = jest.spyOn(component, 'saveOnControlAndS');
-        const saveSpy = jest.spyOn(component.save, 'emit');
-        document.dispatchEvent(eventMock);
+            const event = new KeyboardEvent('keydown', { ctrlKey: true, key: 'Enter' });
+            Object.defineProperty(event, 'preventDefault', { value: vi.fn() });
+            component.submitOnControlAndEnter(event);
 
-        expect(spyOnControlAndS).toHaveBeenCalledOnce();
-        expect(saveSpy).toHaveBeenCalledOnce();
+            expect(submitSpy).toHaveBeenCalled();
+        });
+
+        it('should emit onSubmit and send analytics when submit is not disabled', () => {
+            const submitSpy = vi.spyOn(component.onSubmit, 'emit');
+            const analyticsSpy = vi.spyOn(component, 'sendSubmitAssessmentEventToAnalytics');
+            fixture.componentRef.setInput('assessmentsAreValid', true);
+            fixture.componentRef.setInput('isAssessor', true);
+            fixture.detectChanges();
+
+            const event = new KeyboardEvent('keydown', { ctrlKey: true, key: 'Enter' });
+            Object.defineProperty(event, 'preventDefault', { value: vi.fn() });
+            component.submitOnControlAndEnter(event);
+
+            expect(submitSpy).toHaveBeenCalled();
+            expect(analyticsSpy).toHaveBeenCalled();
+        });
     });
 
-    it('should submit assessment on control and enter', () => {
-        component.isLoading = false;
-        component.assessmentsAreValid = true;
-        component.isAssessor = true;
-        component.saveBusy = false;
-        component.submitBusy = false;
-        component.cancelBusy = false;
-        fixture.detectChanges();
+    describe('assessNextOnControlShiftAndArrowRight', () => {
+        it('should emit nextSubmission when assessNextDisabled is false', () => {
+            const nextSpy = vi.spyOn(component.nextSubmission, 'emit');
+            const analyticsSpy = vi.spyOn(component, 'sendAssessNextEventToAnalytics');
+            const mockResult = new Result();
+            mockResult.completionDate = dayjs();
+            fixture.componentRef.setInput('result', mockResult);
+            fixture.componentRef.setInput('isAssessor', true);
+            fixture.componentRef.setInput('hasComplaint', false);
+            fixture.componentRef.setInput('isTeamMode', false);
+            fixture.componentRef.setInput('isTestRun', false);
+            fixture.componentRef.setInput('nextSubmissionBusy', false);
+            fixture.componentRef.setInput('submitBusy', false);
+            fixture.detectChanges();
 
-        const eventMock = new KeyboardEvent('keydown', { ctrlKey: true, key: 'Enter' });
-        const spyOnControlAndEnter = jest.spyOn(component, 'submitOnControlAndEnter');
-        const submitSpy = jest.spyOn(component.onSubmit, 'emit');
-        document.dispatchEvent(eventMock);
+            const event = new KeyboardEvent('keydown', { ctrlKey: true, shiftKey: true, key: 'ArrowRight' });
+            Object.defineProperty(event, 'preventDefault', { value: vi.fn() });
+            component.assessNextOnControlShiftAndArrowRight(event);
 
-        expect(spyOnControlAndEnter).toHaveBeenCalledOnce();
-        expect(submitSpy).toHaveBeenCalledOnce();
+            expect(nextSpy).toHaveBeenCalled();
+            expect(analyticsSpy).toHaveBeenCalled();
+        });
+
+        it('should not emit when assessNextDisabled is true', () => {
+            const nextSpy = vi.spyOn(component.nextSubmission, 'emit');
+            fixture.componentRef.setInput('isTestRun', true);
+            fixture.detectChanges();
+
+            const event = new KeyboardEvent('keydown', { ctrlKey: true, shiftKey: true, key: 'ArrowRight' });
+            Object.defineProperty(event, 'preventDefault', { value: vi.fn() });
+            component.assessNextOnControlShiftAndArrowRight(event);
+
+            expect(nextSpy).not.toHaveBeenCalled();
+        });
     });
 
-    it('should override assessment on control and enter', () => {
-        component.result = new Result();
-        component.result.completionDate = dayjs();
-        component.canOverride = true;
-        component.assessmentsAreValid = true;
-        component.submitBusy = false;
-        fixture.detectChanges();
+    describe('onUseAsExampleSolutionClicked', () => {
+        it('should emit useAsExampleSubmission when user confirms', () => {
+            const useAsExampleSpy = vi.spyOn(component.useAsExampleSubmission, 'emit');
+            vi.spyOn(window, 'confirm').mockReturnValue(true);
 
-        const eventMock = new KeyboardEvent('keydown', { ctrlKey: true, key: 'Enter' });
-        const spyOnControlAndEnter = jest.spyOn(component, 'submitOnControlAndEnter');
-        const submitSpy = jest.spyOn(component.onSubmit, 'emit');
-        document.dispatchEvent(eventMock);
+            component.onUseAsExampleSolutionClicked();
 
-        expect(spyOnControlAndEnter).toHaveBeenCalledOnce();
-        expect(submitSpy).toHaveBeenCalledOnce();
-    });
+            expect(useAsExampleSpy).toHaveBeenCalled();
+        });
 
-    it('should assess next submission on control, shift and arrow right', () => {
-        component.isAssessor = true;
-        component.result = new Result();
-        component.result.completionDate = dayjs();
-        component.isTeamMode = false;
-        component.isTestRun = false;
-        fixture.detectChanges();
+        it('should not emit when user cancels', () => {
+            const useAsExampleSpy = vi.spyOn(component.useAsExampleSubmission, 'emit');
+            vi.spyOn(window, 'confirm').mockReturnValue(false);
 
-        const eventMock = new KeyboardEvent('keydown', { ctrlKey: true, shiftKey: true, key: 'ArrowRight' });
-        const spyOnControlShiftAndArrowRight = jest.spyOn(component, 'assessNextOnControlShiftAndArrowRight');
-        const nextSpy = jest.spyOn(component.nextSubmission, 'emit');
-        document.dispatchEvent(eventMock);
+            component.onUseAsExampleSolutionClicked();
 
-        expect(spyOnControlShiftAndArrowRight).toHaveBeenCalledOnce();
-        expect(nextSpy).toHaveBeenCalledOnce();
-    });
-
-    it('should enable saving after entering an internal assessment note', () => {
-        expect(component.saveDisabled).toBeTrue();
-        component.isAssessor = true;
-        component.result = new Result();
-        component.result.assessmentNote = new AssessmentNote();
-        expect(component.saveDisabled).toBeTrue();
-        component.result.assessmentNote.note = 'some input';
-        // ToDo: refactor the assessment header component in such a way that the booleans are never undefined
-        expect(component.saveDisabled).toBeOneOf([false, undefined]);
-    });
-
-    it('should not enable submitting after entering an internal assessment note', () => {
-        expect(component.submitDisabled).toBeTrue();
-        component.isAssessor = true;
-        component.result = new Result();
-        component.result.assessmentNote = new AssessmentNote();
-        component.result.assessmentNote.note = 'some input';
-        expect(component.submitDisabled).toBeTrue();
+            expect(useAsExampleSpy).not.toHaveBeenCalled();
+        });
     });
 });

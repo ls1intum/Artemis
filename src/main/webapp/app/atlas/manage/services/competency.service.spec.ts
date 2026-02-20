@@ -1,6 +1,7 @@
+import { vi } from 'vitest';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { MockProvider } from 'ng-mocks';
 import { take } from 'rxjs/operators';
@@ -26,8 +27,11 @@ import dayjs from 'dayjs/esm';
 import { Dayjs } from 'dayjs/esm/index';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MockExerciseService } from 'test/helpers/mocks/service/mock-exercise.service';
+import { mapCompetencyLinks, toCompetencyExerciseLinkDTO } from 'app/atlas/shared/dto/competency-exercise-link-dto';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CompetencyService', () => {
+    setupTestBed({ zoneless: true });
     let competencyService: CompetencyService;
     let httpTestingController: HttpTestingController;
     let defaultCompetencies: Competency[];
@@ -75,7 +79,7 @@ describe('CompetencyService', () => {
         httpTestingController.verify();
     });
 
-    it('should find a competency', fakeAsync(() => {
+    it('should find a competency', () => {
         const returnedFromService = [...defaultCompetencies];
         competencyService
             .findById(1, 1)
@@ -84,23 +88,21 @@ describe('CompetencyService', () => {
 
         const req = httpTestingController.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        tick();
 
         expect(expectedResultCompetency.body).toEqual(defaultCompetencies);
-    }));
+    });
 
-    it('should find all competencies', fakeAsync(() => {
+    it('should find all competencies', () => {
         const returnedFromService = [...defaultCompetencies];
         competencyService.getAllForCourse(1).subscribe((resp) => (expectedResultCompetency = resp));
 
         const req = httpTestingController.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        tick();
 
         expect(expectedResultCompetency.body).toEqual(defaultCompetencies);
-    }));
+    });
 
-    it('should get individual progress for a competency', fakeAsync(() => {
+    it('should get individual progress for a competency', () => {
         const returnedFromService = { ...defaultCompetencyProgress };
         competencyService
             .getProgress(1, 1)
@@ -109,12 +111,11 @@ describe('CompetencyService', () => {
 
         const req = httpTestingController.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        tick();
 
         expect(expectedResultCompetencyProgress.body).toEqual(defaultCompetencyProgress);
-    }));
+    });
 
-    it('should get course progress for a competency', fakeAsync(() => {
+    it('should get course progress for a competency', () => {
         const returnedFromService = { ...defaultCompetencyCourseProgress };
         competencyService
             .getCourseProgress(1, 1)
@@ -123,12 +124,11 @@ describe('CompetencyService', () => {
 
         const req = httpTestingController.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        tick();
 
         expect(expectedResultCompetencyCourseProgress.body).toEqual(defaultCompetencyCourseProgress);
-    }));
+    });
 
-    it('should create a Competency', fakeAsync(() => {
+    it('should create a Competency', () => {
         const returnedFromService = { ...defaultCompetencies.first(), id: 0 };
         const expected = { ...returnedFromService };
         competencyService
@@ -138,12 +138,11 @@ describe('CompetencyService', () => {
 
         const req = httpTestingController.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
-        tick();
 
         expect(expectedResultCompetency.body).toEqual(expected);
-    }));
+    });
 
-    it('should update a Competency', fakeAsync(() => {
+    it('should update a Competency', () => {
         const returnedFromService = { ...defaultCompetencies.first(), title: 'Test' };
         const expected = { ...returnedFromService };
         competencyService
@@ -153,22 +152,20 @@ describe('CompetencyService', () => {
 
         const req = httpTestingController.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);
-        tick();
 
         expect(expectedResultCompetency.body).toEqual(expected);
-    }));
+    });
 
-    it('should delete a Competency', fakeAsync(() => {
+    it('should delete a Competency', () => {
         let result: any;
         competencyService.delete(1, 1).subscribe((resp) => (result = resp.ok));
         const req = httpTestingController.expectOne({ method: 'DELETE' });
         req.flush({ status: 200 });
-        tick();
 
-        expect(result).toBeTrue();
-    }));
+        expect(result).toBeTruthy();
+    });
 
-    it('should add a Competency relation', fakeAsync(() => {
+    it('should add a Competency relation', () => {
         const returnedFromService: CompetencyRelation = { tailCompetency: { id: 1 }, headCompetency: { id: 2 }, type: CompetencyRelationType.ASSUMES };
         const expected: CompetencyRelation = { ...returnedFromService };
         let result: any;
@@ -179,22 +176,20 @@ describe('CompetencyService', () => {
 
         const req = httpTestingController.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
-        tick();
 
         expect(result.body).toEqual(expected);
-    }));
+    });
 
-    it('should remove a Competency relation', fakeAsync(() => {
+    it('should remove a Competency relation', () => {
         let result: any;
         competencyService.removeCompetencyRelation(1, 1).subscribe((resp) => (result = resp.ok));
         const req = httpTestingController.expectOne({ method: 'DELETE' });
         req.flush({ status: 200 });
-        tick();
 
-        expect(result).toBeTrue();
-    }));
+        expect(result).toBeTruthy();
+    });
 
-    it('should parse a list of competencies from a course description', fakeAsync(() => {
+    it('should parse a list of competencies from a course description', () => {
         const description = 'Lorem ipsum dolor sit amet';
         const returnedFromService = defaultCompetencies;
         const expected = defaultCompetencies;
@@ -203,12 +198,11 @@ describe('CompetencyService', () => {
         competencyService.generateCompetenciesFromCourseDescription(1, description, []).subscribe((resp) => (response = resp));
         const req = httpTestingController.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
-        tick();
 
         expect(response.body).toEqual(expected);
-    }));
+    });
 
-    it('should bulk create competencies', fakeAsync(() => {
+    it('should bulk create competencies', () => {
         const returnedFromService = defaultCompetencies;
         const expected = defaultCompetencies;
         let response: any;
@@ -216,12 +210,11 @@ describe('CompetencyService', () => {
         competencyService.createBulk(defaultCompetencies, 1).subscribe((resp) => (response = resp));
         const req = httpTestingController.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
-        tick();
 
         expect(response.body).toEqual(expected);
-    }));
+    });
 
-    it('should import all competencies of a course', fakeAsync(() => {
+    it('should import all competencies of a course', () => {
         const competencyDTO = new CompetencyWithTailRelationDTO();
         competencyDTO.competency = { ...defaultCompetencies.first(), id: 1 };
         competencyDTO.tailRelations = [];
@@ -235,12 +228,11 @@ describe('CompetencyService', () => {
 
         const req = httpTestingController.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
-        tick();
 
         expect(resultImportAll.body).toEqual(expected);
-    }));
+    });
 
-    it('should bulk import competencies', fakeAsync(() => {
+    it('should bulk import competencies', () => {
         const competencyDTO = new CompetencyWithTailRelationDTO();
         competencyDTO.competency = { ...defaultCompetencies.first(), id: 1 };
         competencyDTO.tailRelations = [];
@@ -254,12 +246,11 @@ describe('CompetencyService', () => {
 
         const req = httpTestingController.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
-        tick();
 
         expect(resultImportBulk.body).toEqual(expected);
-    }));
+    });
 
-    it('should import standardized competencies', fakeAsync(() => {
+    it('should import standardized competencies', () => {
         const returnedFromService: CompetencyImportResponseDTO[] = [
             { id: 1, title: 'standardizedCompetency1' },
             { id: 2, title: 'standardizedCompetency2' },
@@ -273,12 +264,11 @@ describe('CompetencyService', () => {
 
         const req = httpTestingController.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
-        tick();
 
         expect(resultImportStandardized.body).toEqual(expected);
-    }));
+    });
 
-    it('should import competency', fakeAsync(() => {
+    it('should import competency', () => {
         const returnedFromService = defaultCompetencies[0];
         const expected = { ...returnedFromService };
 
@@ -289,12 +279,11 @@ describe('CompetencyService', () => {
 
         const req = httpTestingController.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
-        tick();
 
         expect(resultImport.body).toEqual(expected);
-    }));
+    });
 
-    it('should get competency relations', fakeAsync(() => {
+    it('should get competency relations', () => {
         const relation: CompetencyRelation = {
             id: 1,
             type: CompetencyRelationType.ASSUMES,
@@ -309,12 +298,11 @@ describe('CompetencyService', () => {
 
         const req = httpTestingController.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        tick();
 
         expect(resultGetRelations.body).toEqual(expected);
-    }));
+    });
 
-    it('should get competencies for import', fakeAsync(() => {
+    it('should get competencies for import', () => {
         const returnedFromService: SearchResult<Competency> = {
             resultsOnPage: defaultCompetencies,
             numberOfPages: 1,
@@ -338,12 +326,11 @@ describe('CompetencyService', () => {
 
         const req = httpTestingController.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        tick();
 
         expect(resultGetForImport).toEqual(expected);
-    }));
+    });
 
-    it('should get courseCompetency titles', fakeAsync(() => {
+    it('should get courseCompetency titles', () => {
         let result: HttpResponse<string[]> = new HttpResponse();
         const returnedFromService = ['title1', 'title2'];
         const expected = [...returnedFromService];
@@ -355,21 +342,20 @@ describe('CompetencyService', () => {
 
         const req = httpTestingController.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        tick();
 
         expect(result.body).toEqual(expected);
-    }));
+    });
 
     it('should convert response from server', () => {
         const lectureUnitService = TestBed.inject(LectureUnitService);
         const accountService = TestBed.inject(AccountService);
 
-        const convertDateSpy = jest.spyOn(dateUtils, 'convertDateFromServer');
-        const convertLectureUnitSpy = jest.spyOn(lectureUnitService, 'convertLectureUnitDateFromServer');
-        const setAccessRightsCourseSpy = jest.spyOn(accountService, 'setAccessRightsForCourse');
-        const setAccessRightsExerciseSpy = jest.spyOn(accountService, 'setAccessRightsForExercise');
-        const convertExerciseSpy = jest.spyOn(ExerciseService, 'convertExerciseDatesFromServer');
-        const parseCategoriesSpy = jest.spyOn(ExerciseService, 'parseExerciseCategories');
+        const convertDateSpy = vi.spyOn(dateUtils, 'convertDateFromServer');
+        const convertLectureUnitSpy = vi.spyOn(lectureUnitService, 'convertLectureUnitDateFromServer');
+        const setAccessRightsCourseSpy = vi.spyOn(accountService, 'setAccessRightsForCourse');
+        const setAccessRightsExerciseSpy = vi.spyOn(accountService, 'setAccessRightsForExercise');
+        const convertExerciseSpy = vi.spyOn(ExerciseService, 'convertExerciseDatesFromServer');
+        const parseCategoriesSpy = vi.spyOn(ExerciseService, 'parseExerciseCategories');
 
         const exercise: Exercise = {
             numberOfAssessmentsOfCorrectionRounds: [],
@@ -399,5 +385,27 @@ describe('CompetencyService', () => {
         expect(convertExerciseSpy).toHaveBeenCalledTimes(2);
         expect(parseCategoriesSpy).toHaveBeenCalledTimes(2);
         expect(setAccessRightsExerciseSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it('should throw if competency is missing', () => {
+        const link: any = { weight: 1 };
+        expect(() => toCompetencyExerciseLinkDTO(link)).toThrow('missing competency.');
+    });
+
+    it('should map competency link with undefined courseId', () => {
+        const link = {
+            competency: { id: 5, title: 'competency', course: undefined },
+            weight: 2,
+        } as any;
+
+        const dto = toCompetencyExerciseLinkDTO(link);
+
+        expect(dto.courseId).toBeUndefined();
+        expect(dto.weight).toBe(2);
+    });
+
+    it('should return empty array when links is empty array', () => {
+        const dto = mapCompetencyLinks([]);
+        expect(dto).toEqual([]);
     });
 });

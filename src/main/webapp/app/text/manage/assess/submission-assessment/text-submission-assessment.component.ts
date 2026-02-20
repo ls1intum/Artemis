@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -12,7 +12,8 @@ import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
-import { notUndefined, onError } from 'app/shared/util/global.utils';
+import { notUndefined } from 'app/shared/util/string-pure.utils';
+import { onError } from 'app/shared/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
 import { NEW_ASSESSMENT_PATH } from 'app/text/manage/assess/text-submission-assessment.route';
 import { assessmentNavigateBack } from 'app/shared/util/navigate-back.util';
@@ -83,7 +84,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     complaint?: Complaint;
     totalScore: number;
     isTestRun = false;
-    isLoading: boolean;
+    isLoading = signal(true);
     saveBusy: boolean;
     submitBusy: boolean;
     cancelBusy: boolean;
@@ -146,7 +147,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.complaint = undefined;
         this.totalScore = 0;
 
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.saveBusy = false;
         this.submitBusy = false;
         this.cancelBusy = false;
@@ -219,7 +220,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
         this.checkPermissions(this.result);
         this.totalScore = this.computeTotalScore(this.assessments);
-        this.isLoading = false;
+        this.isLoading.set(false);
 
         this.loadFeedbackSuggestions();
 
@@ -495,16 +496,17 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             return;
         }
 
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.complaintService.findBySubmissionId(this.submission.id!).subscribe({
             next: (res) => {
                 if (!res.body) {
                     return;
                 }
                 this.complaint = res.body;
-                this.isLoading = false;
+                this.isLoading.set(false);
             },
             error: (err: HttpErrorResponse) => {
+                this.isLoading.set(false);
                 this.handleError(err.error);
             },
         });

@@ -14,7 +14,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import jakarta.annotation.Nullable;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -26,13 +25,15 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderColumn;
+import jakarta.persistence.PostLoad;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -99,6 +100,18 @@ public class Result extends DomainObject implements Comparable<Result> {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<Feedback> feedbacks = new ArrayList<>();
 
+    /**
+     * Removes null entries from the feedbacks list after loading from the database.
+     * Hibernate's @OrderColumn can leave null gaps when feedback entries are deleted without reindexing.
+     * Only cleans already-initialized collections to avoid triggering lazy loading.
+     */
+    @PostLoad
+    private void removeNullFeedbacks() {
+        if (feedbacks != null && Hibernate.isInitialized(feedbacks)) {
+            feedbacks.removeIf(Objects::isNull);
+        }
+    }
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn()
     private User assessor;
@@ -133,6 +146,9 @@ public class Result extends DomainObject implements Comparable<Result> {
     @Column(name = "last_modified_date")
     @JsonIgnore
     private Instant lastModifiedDate;
+
+    @Column(name = "exercise_id", nullable = false)
+    private long exerciseId;
 
     public ZonedDateTime getCompletionDate() {
         return completionDate;
@@ -169,8 +185,21 @@ public class Result extends DomainObject implements Comparable<Result> {
         return this;
     }
 
+    public Result exerciseId(long exerciseId) {
+        this.exerciseId = exerciseId;
+        return this;
+    }
+
     public Instant getLastModifiedDate() {
         return lastModifiedDate;
+    }
+
+    public long getExerciseId() {
+        return exerciseId;
+    }
+
+    public void setExerciseId(long exerciseId) {
+        this.exerciseId = exerciseId;
     }
 
     /**
@@ -230,7 +259,7 @@ public class Result extends DomainObject implements Comparable<Result> {
         this.rated = rated;
     }
 
-    private void setRatedIfNotAfterDueDate(@NotNull Participation participation, @NotNull ZonedDateTime submissionDate) {
+    private void setRatedIfNotAfterDueDate(@NonNull Participation participation, @NonNull ZonedDateTime submissionDate) {
         var optionalDueDate = ExerciseDateService.getDueDate(participation);
         if (optionalDueDate.isEmpty()) {
             this.rated = true;
@@ -355,7 +384,8 @@ public class Result extends DomainObject implements Comparable<Result> {
         if (this.feedbacks == null || this.feedbacks.isEmpty()) {
             return false;
         }
-        return this.feedbacks.stream().filter(existingFeedback -> existingFeedback.getReference() != null && existingFeedback.getReference().equals(feedback.getReference()))
+        return this.feedbacks.stream().filter(Objects::nonNull)
+                .filter(existingFeedback -> existingFeedback.getReference() != null && existingFeedback.getReference().equals(feedback.getReference()))
                 .anyMatch(sameFeedback -> !sameFeedback.getCredits().equals(feedback.getCredits()) || feedbackTextHasChanged(sameFeedback.getText(), feedback.getText()));
     }
 
@@ -390,9 +420,13 @@ public class Result extends DomainObject implements Comparable<Result> {
         this.assessmentType = assessmentType;
     }
 
+    /**
+     * Determines the assessment type based on the feedback types. Sets the type to SEMI_AUTOMATIC if any feedback is automatic or automatically adapted.
+     */
     public void determineAssessmentType() {
         setAssessmentType(AssessmentType.MANUAL);
-        if (feedbacks.stream().anyMatch(feedback -> feedback.getType() == FeedbackType.AUTOMATIC || feedback.getType() == FeedbackType.AUTOMATIC_ADAPTED)) {
+        if (feedbacks.stream().filter(Objects::nonNull)
+                .anyMatch(feedback -> feedback.getType() == FeedbackType.AUTOMATIC || feedback.getType() == FeedbackType.AUTOMATIC_ADAPTED)) {
             setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         }
     }
@@ -485,7 +519,7 @@ public class Result extends DomainObject implements Comparable<Result> {
      *
      * @param quizExercise the quiz exercise for which the submission should be evaluated, must contain access to the course to calculate the score correctly
      */
-    public void evaluateQuizSubmission(@NotNull QuizExercise quizExercise) {
+    public void evaluateQuizSubmission(@NonNull QuizExercise quizExercise) {
         if (submission instanceof QuizSubmission quizSubmission) {
             // update score
             setScore(quizExercise.getScoreForSubmission(quizSubmission), quizExercise.getCourseViaExerciseGroupOrCourseMember());
@@ -533,7 +567,7 @@ public class Result extends DomainObject implements Comparable<Result> {
      * Updates the testCaseCount and passedTestCaseCount attributes after filtering the feedback.
      */
     private void updateTestCaseCount() {
-        var testCaseFeedback = feedbacks.stream().filter(Feedback::isTestFeedback).toList();
+        var testCaseFeedback = feedbacks.stream().filter(Objects::nonNull).filter(Feedback::isTestFeedback).toList();
 
         // TODO: this is not good code!
         setTestCaseCount(testCaseFeedback.size());
@@ -552,8 +586,8 @@ public class Result extends DomainObject implements Comparable<Result> {
      * @return the new filtered list
      */
     public List<Feedback> createFilteredFeedbacks(boolean removeHiddenFeedback, Exercise exercise) {
-        var filteredFeedback = feedbacks.stream().filter(feedback -> !feedback.isInvisible()).filter(feedback -> !removeHiddenFeedback || !feedback.isAfterDueDate())
-                .collect(Collectors.toCollection(ArrayList::new));
+        var filteredFeedback = feedbacks.stream().filter(Objects::nonNull).filter(feedback -> !feedback.isInvisible())
+                .filter(feedback -> !removeHiddenFeedback || !feedback.isAfterDueDate()).collect(Collectors.toCollection(ArrayList::new));
 
         if (exercise instanceof ProgrammingExercise programmingExercise && !Boolean.TRUE.equals(programmingExercise.getShowTestNamesToStudents())) {
             filteredFeedback.stream().filter(Feedback::isTestFeedback).forEach(feedback -> {

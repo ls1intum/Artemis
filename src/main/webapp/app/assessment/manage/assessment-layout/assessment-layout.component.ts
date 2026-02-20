@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostBinding, Input, Output } from '@angular/core';
+import { Component, HostBinding, effect, input, model, output } from '@angular/core';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -25,51 +25,56 @@ import { ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-fo
 export class AssessmentLayoutComponent {
     @HostBinding('class.assessment-container') readonly assessmentContainerClass = true;
 
-    @Output() navigateBack = new EventEmitter<void>();
     MORE_FEEDBACK = ComplaintType.MORE_FEEDBACK;
-    @Input() isLoading: boolean;
-    @Input() saveBusy: boolean;
-    @Input() submitBusy: boolean;
-    @Input() cancelBusy: boolean;
-    @Input() nextSubmissionBusy: boolean;
-    @Input() correctionRound: number;
+    readonly isLoading = input.required<boolean>();
+    readonly saveBusy = input<boolean>(false);
+    readonly submitBusy = input<boolean>(false);
+    readonly cancelBusy = input<boolean>(false);
+    readonly nextSubmissionBusy = input<boolean>(false);
+    readonly correctionRound = input<number>(0);
 
-    @Input() isTeamMode: boolean;
-    @Input() isAssessor: boolean;
-    @Input() canOverride: boolean;
-    @Input() isTestRun = false;
-    @Input() exerciseDashboardLink: string[];
+    readonly isTeamMode = input.required<boolean>();
+    readonly isAssessor = input.required<boolean>();
+    readonly canOverride = input.required<boolean>();
+    readonly isTestRun = input(false);
+    readonly exerciseDashboardLink = input.required<string[]>();
 
-    @Input() result?: Result;
-    @Input() assessmentsAreValid: boolean;
-    @Input() complaint?: Complaint;
-    @Input() exercise?: Exercise;
-    @Input() submission?: Submission;
-    @Input() hasAssessmentDueDatePassed: boolean;
-    @Input() isProgrammingExercise: boolean; // remove once diff view activated for programming exercises
+    readonly result = input<Result>();
+    readonly assessmentsAreValid = input<boolean>(false);
+    readonly complaint = input<Complaint>();
+    readonly exercise = input<Exercise>();
+    readonly submission = input<Submission>();
+    readonly hasAssessmentDueDatePassed = input.required<boolean>();
+    readonly isProgrammingExercise = input<boolean>(false); // remove once diff view activated for programming exercises
+    readonly highlightDifferences = model(false);
 
-    private _highlightDifferences: boolean;
+    readonly navigateBack = output();
+    readonly save = output();
+    readonly onSubmit = output();
+    readonly onCancel = output();
+    readonly nextSubmission = output();
+    readonly updateAssessmentAfterComplaint = output<AssessmentAfterComplaint>();
+    readonly highlightDifferencesChange = output<boolean>();
+    readonly useAsExampleSubmission = output();
 
-    @Input() set highlightDifferences(highlightDifferences: boolean) {
-        this._highlightDifferences = highlightDifferences;
-        this.highlightDifferencesChange.emit(this.highlightDifferences);
-    }
+    private highlightDifferencesEffectInitialized = false;
 
-    get highlightDifferences() {
-        return this._highlightDifferences;
+    constructor() {
+        // Emit highlightDifferencesChange when the model changes (skip initial emission)
+        effect(() => {
+            const value = this.highlightDifferences();
+            if (!this.highlightDifferencesEffectInitialized) {
+                this.highlightDifferencesEffectInitialized = true;
+                return;
+            }
+            this.highlightDifferencesChange.emit(value);
+        });
     }
 
     setAssessmentNoteForResult(assessmentNote: AssessmentNote) {
-        if (this.result) {
-            this.result.assessmentNote = assessmentNote;
+        const result = this.result();
+        if (result) {
+            result.assessmentNote = assessmentNote;
         }
     }
-
-    @Output() save = new EventEmitter<void>();
-    @Output() onSubmit = new EventEmitter<void>();
-    @Output() onCancel = new EventEmitter<void>();
-    @Output() nextSubmission = new EventEmitter<void>();
-    @Output() updateAssessmentAfterComplaint = new EventEmitter<AssessmentAfterComplaint>();
-    @Output() highlightDifferencesChange = new EventEmitter<boolean>();
-    @Output() useAsExampleSubmission = new EventEmitter<void>();
 }

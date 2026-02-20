@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
@@ -58,15 +59,18 @@ public class ProgrammingExercisePartialUpdateResource {
 
     private final UserRepository userRepository;
 
+    private final ExerciseVersionService exerciseVersionService;
+
     public ProgrammingExercisePartialUpdateResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, ExerciseService exerciseService, ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService,
-            ProgrammingExerciseTaskService programmingExerciseTaskService) {
+            ProgrammingExerciseTaskService programmingExerciseTaskService, ExerciseVersionService exerciseVersionService) {
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.exerciseService = exerciseService;
+        this.exerciseVersionService = exerciseVersionService;
     }
 
     /**
@@ -88,6 +92,7 @@ public class ProgrammingExercisePartialUpdateResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, existingProgrammingExercise, user);
         updatedProgrammingExercise = programmingExerciseCreationUpdateService.updateTimeline(updatedProgrammingExercise, notificationText);
         exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        exerciseVersionService.createExerciseVersion(updatedProgrammingExercise, user);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle()))
                 .body(updatedProgrammingExercise);
     }
@@ -112,6 +117,7 @@ public class ProgrammingExercisePartialUpdateResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
         var updatedProgrammingExercise = programmingExerciseCreationUpdateService.updateProblemStatement(programmingExercise, updatedProblemStatement, notificationText);
         exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        exerciseVersionService.createExerciseVersion(updatedProgrammingExercise, user);
         // we saved a problem statement with test ids instead of test names. For easier editing we send a problem statement with test names to the client:
         programmingExerciseTaskService.replaceTestIdsWithNames(updatedProgrammingExercise);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle()))

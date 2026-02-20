@@ -1,6 +1,6 @@
 MAIN_CLASS = "notFound" // default value, will be replaced in Build stage
 OUT_DIR = "target/surefire-reports"
-javaFlags = "-Djdk.console=java.base"
+javaFlags = ""
 mavenFlags = "-B"
 
 testfiles_base_path = "./testsuite/testfiles"
@@ -45,9 +45,9 @@ private void setup() {
      * This may for example be useful when caching dependencies either in container volumes
      * or an external cache to enforce the appropriate access restrictions. You can find
      * more information on that in the documentation at
-     * https://docs.artemis.cit.tum.de/admin/setup/programming-exercises.html#caching-with-docker-volumes
+     * https://docs.artemis.tum.de/admin/production-setup/programming-exercise-adjustments#caching-docker-volumes
      * and
-     * https://docs.artemis.cit.tum.de/admin/setup/programming-exercises.html#caching-maven-dependencies-with-sonatype-nexus
+     * https://docs.artemis.tum.de/admin/production-setup/programming-exercise-adjustments#caching-sonatype-nexus
      */
     if ("${env.JOB_NAME}" ==~ /.+-SOLUTION$/) {
         // processing sample solution in this run

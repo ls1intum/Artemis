@@ -15,11 +15,11 @@ import jakarta.persistence.Persistence;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -45,7 +45,7 @@ public class TutorialGroup extends DomainObject {
 
     @Column(name = "title")
     @Size(min = 1, max = 19)
-    @NotNull
+    @NonNull
     private String title;
 
     @Column(name = "additional_information")
@@ -56,7 +56,7 @@ public class TutorialGroup extends DomainObject {
     private Integer capacity;
 
     @Column(name = "is_online")
-    @NotNull
+    @NonNull
     private Boolean isOnline = false;
 
     @Column(name = "campus")

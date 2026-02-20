@@ -27,7 +27,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
@@ -36,7 +38,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.lecture.PyrisLectureChatStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.util.IrisMessageFactory;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -72,7 +74,12 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
 
     @BeforeEach
     void initTestCase() {
-        userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
+        List<User> users = userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
+        for (User user : users) {
+            user.setSelectedLLMUsageTimestamp(ZonedDateTime.parse("2025-12-11T00:00:00Z"));
+            user.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
+            userTestRepository.save(user);
+        }
 
         Course course = courseUtilService.createCourse();
         lecture = lectureUtilService.createLecture(course, ZonedDateTime.now());
@@ -110,9 +117,9 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void sendOneMessageWithCustomInstructions() throws Exception {
         String testCustomInstructions = "Please focus on grammar.";
-        var courseSettings = irisSettingsService.getRawIrisSettingsFor(lecture.getCourse());
-        courseSettings.getIrisLectureChatSettings().setCustomInstructions(testCustomInstructions);
-        irisSettingsService.saveIrisSettings(courseSettings);
+        var course = lecture.getCourse();
+        var currentSettings = irisSettingsService.getSettingsForCourse(course);
+        configureCourseSettings(course, testCustomInstructions, currentSettings.variant());
 
         // Prepare session and message
         var irisSession = createSessionForUser("student1");
@@ -286,10 +293,8 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
             pipelineDone.set(true);
         });
 
-        var globalSettings = irisSettingsService.getGlobalSettings();
-        globalSettings.getIrisProgrammingExerciseChatSettings().setRateLimit(1);
-        globalSettings.getIrisProgrammingExerciseChatSettings().setRateLimitTimeframeHours(10);
-        irisSettingsService.saveIrisSettings(globalSettings);
+        var course = lecture.getCourse();
+        configureCourseRateLimit(course, 1, 10);
 
         try {
             request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend1, HttpStatus.CREATED);
@@ -304,9 +309,7 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
         }
         finally {
             // Reset to not interfere with other tests
-            globalSettings.getIrisProgrammingExerciseChatSettings().setRateLimit(null);
-            globalSettings.getIrisProgrammingExerciseChatSettings().setRateLimitTimeframeHours(null);
-            irisSettingsService.saveIrisSettings(globalSettings);
+            configureCourseRateLimit(course, null, null);
         }
     }
 
@@ -334,7 +337,7 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
 
     private void sendStatus(String jobId, String result, List<PyrisStageDTO> stages, String sessionTitle) throws Exception {
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
-        request.postWithoutResponseBody("/api/iris/internal/pipelines/lecture-chat/runs/" + jobId + "/status", new PyrisLectureChatStatusUpdateDTO(result, stages, sessionTitle),
-                HttpStatus.OK, headers);
+        request.postWithoutResponseBody("/api/iris/internal/pipelines/lecture-chat/runs/" + jobId + "/status",
+                new PyrisChatStatusUpdateDTO(result, stages, sessionTitle, null, null, null, null), HttpStatus.OK, headers);
     }
 }

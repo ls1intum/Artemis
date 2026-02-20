@@ -1,11 +1,9 @@
 package de.tum.cit.aet.artemis.iris.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
-
 import java.util.List;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,13 +17,9 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
@@ -36,7 +30,7 @@ import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 /**
  * REST controller for managing {@link IrisChatSession}.
  */
-@Profile(PROFILE_IRIS)
+@Conditional(IrisEnabled.class)
 @Lazy
 @RestController
 @RequestMapping("api/iris/chat-history/")
@@ -86,13 +80,7 @@ public class IrisChatSessionResource {
 
         irisSessionService.checkHasAccessToIrisSession(irisSession, null);
 
-        boolean enabled = switch (irisSession) {
-            case IrisCourseChatSession ignored -> irisSettingsService.isEnabledForCourse(IrisSubSettingsType.COURSE_CHAT, courseId);
-            case IrisLectureChatSession ignored -> irisSettingsService.isEnabledForCourse(IrisSubSettingsType.LECTURE_CHAT, courseId);
-            case IrisTextExerciseChatSession ignored -> irisSettingsService.isEnabledForCourse(IrisSubSettingsType.TEXT_EXERCISE_CHAT, courseId);
-            case IrisProgrammingExerciseChatSession ignored -> irisSettingsService.isEnabledForCourse(IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT, courseId);
-            default -> false;
-        };
+        boolean enabled = irisSettingsService.isEnabledForCourse(courseId);
 
         if (enabled) {
             return ResponseEntity.ok((IrisChatSession) irisSession);
@@ -111,7 +99,7 @@ public class IrisChatSessionResource {
     public ResponseEntity<List<IrisChatSessionDTO>> getAllSessionsForCourse(@PathVariable Long courseId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findById(courseId).orElseThrow();
-        if (user.hasAcceptedExternalLLMUsage()) {
+        if (user.hasOptedIntoLLMUsage()) {
             List<IrisChatSessionDTO> irisSessionDTOs = irisSessionService.getIrisSessionsByCourseAndUserId(course, user.getId());
             return ResponseEntity.ok(irisSessionDTOs);
         }

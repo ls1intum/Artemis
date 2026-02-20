@@ -1,24 +1,22 @@
-@if (!chatOpen) {
+@if (!chatOpen()) {
     <div
         #chatBubble
         class="message-bubble"
         (click)="handleButtonClick()"
-        [ngClass]="{ 'content-overflow': this.isOverflowing }"
-        [@expandAnimation]="newIrisMessage ? 'visible' : 'hidden'"
+        [ngClass]="{ 'content-overflow': isOverflowing(), 'bubble-visible': newIrisMessage(), 'bubble-hidden': !newIrisMessage() }"
     >
-        @if (newIrisMessage) {
-            <span [innerHTML]="newIrisMessage | htmlForMarkdown"></span>
-            @if (this.isOverflowing) {
+        @if (newIrisMessage()) {
+            <div class="bubble-text" [innerHTML]="newIrisMessage() | htmlForMarkdown: [] : undefined : undefined : true"></div>
+            @if (isOverflowing()) {
                 <div class="read-more">
-                    <span jhiTranslate="artemisApp.iris.chatBubble.seeFull"></span>
-                    <fa-icon [icon]="faAngleDoubleDown" class="read-more-icon" />
+                    <fa-icon [icon]="faArrowRight" class="read-more-icon" />
                 </div>
             }
         }
     </div>
     <div class="chatbot-button">
         <jhi-iris-logo [size]="IrisLogoSize.MEDIUM" [look]="IrisLogoLookDirection.LEFT" (click)="handleButtonClick()" />
-        @if (hasNewMessages) {
+        @if (hasNewMessages()) {
             <fa-icon [icon]="faCircle" size="xl" class="unread-indicator" />
         }
     </div>

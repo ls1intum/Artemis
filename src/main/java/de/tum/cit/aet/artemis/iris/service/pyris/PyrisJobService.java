@@ -1,20 +1,18 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
-
 import java.security.SecureRandom;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 
@@ -24,12 +22,13 @@ import com.hazelcast.map.IMap;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ExerciseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.TranscriptionIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
 
 /**
@@ -40,7 +39,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
  */
 @Lazy
 @Service
-@Profile(PROFILE_IRIS)
+@Conditional(IrisEnabled.class)
 public class PyrisJobService {
 
     private final HazelcastInstance hazelcastInstance;
@@ -130,6 +129,13 @@ public class PyrisJobService {
         return token;
     }
 
+    public String addLectureChatJob(Long courseId, Long lectureId, Long sessionId, Long userMessageId) {
+        var token = generateJobIdToken();
+        var job = new LectureChatJob(token, courseId, lectureId, sessionId, null, userMessageId, null);
+        getPyrisJobMap().put(token, job);
+        return token;
+    }
+
     /**
      * Adds a new lecture ingestion webhook job to the job map with a timeout.
      *
@@ -155,21 +161,6 @@ public class PyrisJobService {
     public String addFaqIngestionWebhookJob(long courseId, long faqId) {
         var token = generateJobIdToken();
         var job = new FaqIngestionWebhookJob(token, courseId, faqId);
-        getPyrisJobMap().put(token, job, ingestionJobTimeout, TimeUnit.SECONDS);
-        return token;
-    }
-
-    /**
-     * Adds a new transcription ingestion webhook job to the job map with a timeout.
-     *
-     * @param courseId      the ID of the course associated with the webhook job
-     * @param lectureId     the ID of the lecture associated with the webhook job
-     * @param lectureUnitId the ID of the lecture Unit associated with the webhook job
-     * @return a unique token identifying the created webhook job
-     */
-    public String addTranscriptionIngestionWebhookJob(long courseId, long lectureId, long lectureUnitId) {
-        var token = generateJobIdToken();
-        var job = new TranscriptionIngestionWebhookJob(token, courseId, lectureId, lectureUnitId);
         getPyrisJobMap().put(token, job, ingestionJobTimeout, TimeUnit.SECONDS);
         return token;
     }

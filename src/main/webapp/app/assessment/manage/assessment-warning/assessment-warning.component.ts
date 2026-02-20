@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, effect, input } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
@@ -13,26 +13,12 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
  */
 @Component({
     selector: 'jhi-assessment-warning',
-    template: `
-        <h6>
-            @if (showWarning) {
-                <div class="card-header">
-                    <fa-icon [icon]="faExclamationTriangle" size="2x" class="text-warning" placement="bottom auto" />
-                    @if (isBeforeExerciseDueDate) {
-                        <span jhiTranslate="artemisApp.assessment.dashboard.warning"></span>
-                    }
-                    @if (!isBeforeExerciseDueDate) {
-                        <span jhiTranslate="artemisApp.assessment.dashboard.warningIndividual"></span>
-                    }
-                </div>
-            }
-        </h6>
-    `,
+    templateUrl: './assessment-warning.component.html',
     imports: [FaIconComponent, TranslateDirective],
 })
-export class AssessmentWarningComponent implements OnChanges {
-    @Input() exercise: Exercise;
-    @Input() submissions: Submission[] = [];
+export class AssessmentWarningComponent {
+    readonly exercise = input.required<Exercise>();
+    readonly submissions = input<Submission[]>([]);
 
     isBeforeExerciseDueDate = false;
     showWarning = false;
@@ -40,20 +26,25 @@ export class AssessmentWarningComponent implements OnChanges {
     // Icons
     faExclamationTriangle = faExclamationTriangle;
 
-    /**
-     * Checks if the due date of the exercise is over
-     */
-    ngOnChanges() {
-        if (this.exercise.dueDate) {
-            const now = dayjs();
-            this.isBeforeExerciseDueDate = now.isBefore(this.exercise.dueDate);
-            this.showWarning = now.isBefore(this.getLatestDueDate()) && !this.exercise.allowFeedbackRequests;
-        }
+    constructor() {
+        effect(() => {
+            const exercise = this.exercise();
+            // Read submissions to register it as a dependency
+            this.submissions();
+            if (exercise.dueDate) {
+                const now = dayjs();
+                this.isBeforeExerciseDueDate = now.isBefore(exercise.dueDate);
+                this.showWarning = now.isBefore(this.getLatestDueDate()) && !exercise.allowFeedbackRequests;
+            } else {
+                this.isBeforeExerciseDueDate = false;
+                this.showWarning = false;
+            }
+        });
     }
 
     private getLatestDueDate(): dayjs.Dayjs | undefined {
-        return this.submissions
+        return this.submissions()
             .map((submission) => submission.participation?.individualDueDate)
-            .reduce((latest, next) => (next && next.isAfter(latest) ? next : latest), this.exercise.dueDate);
+            .reduce((latest, next) => (next && next.isAfter(latest) ? next : latest), this.exercise().dueDate);
     }
 }

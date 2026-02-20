@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.athena.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 import static de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils.hashSha256;
 
+import java.io.IOException;
 import java.security.MessageDigest;
 import java.util.List;
 import java.util.Optional;
@@ -31,7 +32,6 @@ import de.tum.cit.aet.artemis.athena.dto.ProgrammingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.TextFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.service.AthenaFeedbackSuggestionsService;
 import de.tum.cit.aet.artemis.athena.service.AthenaModuleService;
-import de.tum.cit.aet.artemis.athena.service.AthenaRepositoryExportService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
@@ -47,8 +47,9 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
-import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
-import de.tum.cit.aet.artemis.modeling.repository.ModelingSubmissionRepository;
+import de.tum.cit.aet.artemis.modeling.api.ModelingRepositoryApi;
+import de.tum.cit.aet.artemis.modeling.api.ModelingSubmissionApi;
+import de.tum.cit.aet.artemis.modeling.config.ModelingApiNotPresentException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.text.api.TextApi;
@@ -77,17 +78,15 @@ public class AthenaResource {
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
-    private final ModelingExerciseRepository modelingExerciseRepository;
+    private final Optional<ModelingRepositoryApi> modelingRepositoryApi;
 
-    private final ModelingSubmissionRepository modelingSubmissionRepository;
+    private final Optional<ModelingSubmissionApi> modelingSubmissionApi;
 
     private final AuthorizationCheckService authCheckService;
 
     private final AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService;
 
     private final AthenaModuleService athenaModuleService;
-
-    private final AthenaRepositoryExportService athenaRepositoryExportService;
 
     private final byte[] athenaSecretHash;
 
@@ -96,20 +95,18 @@ public class AthenaResource {
      */
     public AthenaResource(CourseRepository courseRepository, Optional<TextRepositoryApi> textRepositoryApi, Optional<TextSubmissionApi> textSubmissionApi,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            ModelingExerciseRepository modelingExerciseRepository, ModelingSubmissionRepository modelingSubmissionRepository, AuthorizationCheckService authCheckService,
-            AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService, AthenaModuleService athenaModuleService, AthenaRepositoryExportService athenaRepositoryExportService,
-            @Value("${artemis.athena.secret}") String athenaSecret) {
+            Optional<ModelingRepositoryApi> modelingRepositoryApi, Optional<ModelingSubmissionApi> modelingSubmissionApi, AuthorizationCheckService authCheckService,
+            AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService, AthenaModuleService athenaModuleService, @Value("${artemis.athena.secret}") String athenaSecret) {
         this.courseRepository = courseRepository;
         this.textRepositoryApi = textRepositoryApi;
         this.textSubmissionApi = textSubmissionApi;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
-        this.modelingExerciseRepository = modelingExerciseRepository;
-        this.modelingSubmissionRepository = modelingSubmissionRepository;
+        this.modelingRepositoryApi = modelingRepositoryApi;
+        this.modelingSubmissionApi = modelingSubmissionApi;
         this.authCheckService = authCheckService;
         this.athenaFeedbackSuggestionsService = athenaFeedbackSuggestionsService;
         this.athenaModuleService = athenaModuleService;
-        this.athenaRepositoryExportService = athenaRepositoryExportService;
         this.athenaSecretHash = hashSha256(athenaSecret);
     }
 
@@ -202,7 +199,10 @@ public class AthenaResource {
     @GetMapping("modeling-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<ModelingFeedbackDTO>> getModelingFeedbackSuggestions(@PathVariable long exerciseId, @PathVariable long submissionId) {
-        return getFeedbackSuggestions(exerciseId, submissionId, modelingExerciseRepository::findByIdElseThrow, modelingSubmissionRepository::findByIdElseThrow,
+        var exerciseApi = modelingRepositoryApi.orElseThrow(() -> new ModelingApiNotPresentException(ModelingRepositoryApi.class));
+        var submissionApi = modelingSubmissionApi.orElseThrow(() -> new ModelingApiNotPresentException(ModelingSubmissionApi.class));
+
+        return getFeedbackSuggestions(exerciseId, submissionId, exerciseApi::findByIdElseThrow, submissionApi::findByIdElseThrow,
                 athenaFeedbackSuggestionsService::getModelingFeedbackSuggestions);
     }
 
@@ -282,7 +282,7 @@ public class AthenaResource {
     @EnforceNothing // We check the Athena secret and validation here
     @ManualConfig
     public void getRepository(@PathVariable long exerciseId, @PathVariable long submissionId, @RequestHeader(HttpHeaders.AUTHORIZATION) String auth, HttpServletRequest request,
-            HttpServletResponse response) throws ServletException, java.io.IOException {
+            HttpServletResponse response) throws ServletException, IOException {
         log.debug("REST call to deprecated endpoint, forwarding to internal endpoint for exercise {}, submission {}", exerciseId, submissionId);
         checkAthenaSecret(auth);
         validateAthenaEnabled(exerciseId);
@@ -304,7 +304,7 @@ public class AthenaResource {
     @EnforceNothing // We check the Athena secret and validation here
     @ManualConfig
     public void getTemplateRepository(@PathVariable long exerciseId, @RequestHeader(HttpHeaders.AUTHORIZATION) String auth, HttpServletRequest request,
-            HttpServletResponse response) throws ServletException, java.io.IOException {
+            HttpServletResponse response) throws ServletException, IOException {
         log.debug("REST call to deprecated endpoint, forwarding to internal endpoint for exercise {}", exerciseId);
         checkAthenaSecret(auth);
         validateAthenaEnabled(exerciseId);
@@ -326,7 +326,7 @@ public class AthenaResource {
     @EnforceNothing // We check the Athena secret and validation here
     @ManualConfig
     public void getSolutionRepository(@PathVariable long exerciseId, @RequestHeader(HttpHeaders.AUTHORIZATION) String auth, HttpServletRequest request,
-            HttpServletResponse response) throws ServletException, java.io.IOException {
+            HttpServletResponse response) throws ServletException, IOException {
         log.debug("REST call to deprecated endpoint, forwarding to internal endpoint for exercise {}", exerciseId);
         checkAthenaSecret(auth);
         validateAthenaEnabled(exerciseId);
@@ -348,7 +348,7 @@ public class AthenaResource {
     @EnforceNothing // We check the Athena secret and validation here
     @ManualConfig
     public void getTestRepository(@PathVariable long exerciseId, @RequestHeader(HttpHeaders.AUTHORIZATION) String auth, HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, java.io.IOException {
+            throws ServletException, IOException {
         log.debug("REST call to deprecated endpoint, forwarding to internal endpoint for exercise {}", exerciseId);
         checkAthenaSecret(auth);
         validateAthenaEnabled(exerciseId);

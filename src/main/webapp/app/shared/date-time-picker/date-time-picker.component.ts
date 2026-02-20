@@ -6,7 +6,7 @@ import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fo
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
-import { TranslateDirective } from '../language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
 
 export enum DateTimePickerType {

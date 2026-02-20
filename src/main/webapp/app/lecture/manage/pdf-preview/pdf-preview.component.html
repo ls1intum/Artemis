@@ -83,7 +83,7 @@
                     </ng-template>
                     <ng-template #hidePageBox>
                         <jhi-pdf-preview-date-box-component
-                            [course]="course()"
+                            [courseId]="courseId"
                             [selectedPages]="Array.from(selectedPages())"
                             (hiddenPagesOutput)="hidePages($event); hidePopover.close()"
                             (selectionCancelledOutput)="hidePopover.close()"
@@ -123,7 +123,7 @@
             </div>
         } @else if (currentPdfUrl()) {
             <jhi-pdf-preview-thumbnail-grid-component
-                [course]="course()"
+                [courseId]="courseId"
                 [currentPdfUrl]="currentPdfUrl()"
                 [isAppendingFile]="isAppendingFile()"
                 [hiddenPages]="hiddenPages()"

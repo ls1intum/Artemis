@@ -65,17 +65,19 @@
         <ng-container #createEditAnswerPostContainer />
     </div>
     @if (!isDeleted) {
-        <div class="post-content-padding post-reactions-bar" [ngClass]="{ 'is-saved': posting.isSaved && isConsecutive() }" @fade>
-            <jhi-posting-reactions-bar
-                [isReadOnlyMode]="isReadOnlyMode()"
-                [posting]="posting"
-                [isLastAnswer]="isLastAnswer()"
-                [isThreadSidebar]="isThreadSidebar"
-                (openPostingCreateEditModal)="createAnswerPostModal.open()"
-                (reactionsUpdated)="onReactionsUpdated($event)"
-                [isEmojiCount]="true"
-                (onBookmarkClicked)="toggleSavePost()"
-            />
+        <div animate.enter="reactions-entering" animate.leave="reactions-leaving">
+            <div class="post-content-padding post-reactions-bar" [ngClass]="{ 'is-saved': posting.isSaved && isConsecutive() }">
+                <jhi-posting-reactions-bar
+                    [isReadOnlyMode]="isReadOnlyMode()"
+                    [posting]="posting"
+                    [isLastAnswer]="isLastAnswer()"
+                    [isThreadSidebar]="isThreadSidebar"
+                    (openPostingCreateEditModal)="createAnswerPostModal.open()"
+                    (reactionsUpdated)="onReactionsUpdated($event)"
+                    [isEmojiCount]="true"
+                    (onBookmarkClicked)="toggleSavePost()"
+                />
+            </div>
         </div>
     }
 </div>

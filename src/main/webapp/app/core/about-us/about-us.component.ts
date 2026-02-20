@@ -1,4 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { VERSION } from 'app/app.constants';
 import { StaticContentService } from 'app/shared/service/static-content.service';
@@ -11,7 +12,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     selector: 'jhi-about-us',
     templateUrl: './about-us.component.html',
     styleUrls: ['./about-us.component.scss'],
-    imports: [TranslateDirective, ArtemisTranslatePipe],
+    imports: [TranslateDirective, ArtemisTranslatePipe, RouterLink],
 })
 export class AboutUsComponent implements OnInit {
     private profileService = inject(ProfileService);
@@ -32,28 +33,28 @@ export class AboutUsComponent implements OnInit {
 
     // Array of tuple containing translation keys and translation values
     readonly SECTIONS: [string, { [key: string]: string }][] = [
-        ['exercises.programming', { programmingUrl: 'https://docs.artemis.cit.tum.de/user/exercises/programming/' }],
-        ['exercises.quiz', { quizUrl: 'https://docs.artemis.cit.tum.de/user/exercises/quiz/' }],
-        ['exercises.modeling', { modelingUrl: 'https://docs.artemis.cit.tum.de/user/exercises/modeling/', apollonUrl: 'https://apollon.ase.in.tum.de/' }],
-        ['exercises.text', { textUrl: 'https://docs.artemis.cit.tum.de/user/exercises/textual/', athenaUrl: 'https://github.com/ls1intum/edutelligence/tree/main/athena' }],
-        ['exercises.fileUpload', { fileUploadUrl: 'https://docs.artemis.cit.tum.de/user/exercises/file-upload/' }],
-        ['exam', { examModeUrl: 'https://docs.artemis.cit.tum.de/user/exam_mode/', studentFeatureUrl: '/features/students', instructorFeatureUrl: '/features/instructors' }],
-        ['grading', { gradingUrl: 'https://docs.artemis.cit.tum.de/user/grading/' }],
-        ['assessment', { assessmentUrl: 'https://docs.artemis.cit.tum.de/user/exercises/assessment/' }],
-        ['communication', { communicationUrl: 'https://docs.artemis.cit.tum.de/user/communication/' }],
-        ['notifications', { notificationsURL: 'https://docs.artemis.cit.tum.de/user/notifications' }],
-        ['teamExercises', { teamExercisesUrl: 'https://docs.artemis.cit.tum.de/user/exercises/team-exercises/' }],
-        ['lectures', { lecturesUrl: 'https://docs.artemis.cit.tum.de/user/lectures/' }],
-        ['integratedMarkdownEditor', { markdownEditorUrl: 'https://docs.artemis.cit.tum.de/user/markdown-support/' }],
-        ['plagiarismChecks', { jPlagUrl: 'https://github.com/jplag/JPlag/', plagiarismChecksUrl: 'https://docs.artemis.cit.tum.de/user/plagiarism-check/' }],
-        ['learningAnalytics', { learningAnalyticsUrl: 'https://docs.artemis.cit.tum.de/user/learning-analytics/' }],
-        ['adaptiveLearning', { adaptiveLearningUrl: 'https://docs.artemis.cit.tum.de/user/adaptive-learning/' }],
-        ['tutorialGroups', { tutorialGroupsUrl: 'https://docs.artemis.cit.tum.de/user/tutorialgroups/' }],
+        ['exercises.programming', { programmingUrl: 'https://docs.artemis.tum.de/instructor/exercises/programming-exercise' }],
+        ['exercises.quiz', { quizUrl: 'https://docs.artemis.tum.de/instructor/exercises/quiz-exercise' }],
+        ['exercises.modeling', { modelingUrl: 'https://docs.artemis.tum.de/instructor/exercises/modeling-exercise', apollonUrl: 'https://apollon.ase.in.tum.de/' }],
+        ['exercises.text', { textUrl: 'https://docs.artemis.tum.de/instructor/exercises/text-exercise', athenaUrl: 'https://github.com/ls1intum/edutelligence/tree/main/athena' }],
+        ['exercises.fileUpload', { fileUploadUrl: 'https://docs.artemis.tum.de/instructor/exercises/file-upload-exercise' }],
+        ['exam', { examModeUrl: 'https://docs.artemis.tum.de/instructor/exams/intro', studentFeatureUrl: '/features/students', instructorFeatureUrl: '/features/instructors' }],
+        ['grading', { gradingUrl: 'https://docs.artemis.tum.de/instructor/grading' }],
+        ['assessment', { assessmentUrl: 'https://docs.artemis.tum.de/instructor/assessment' }],
+        ['communication', { communicationUrl: 'https://docs.artemis.tum.de/student/communication' }],
+        ['notifications', { notificationsURL: 'https://docs.artemis.tum.de/student/notifications' }],
+        ['teamExercises', { teamExercisesUrl: 'https://docs.artemis.tum.de/instructor/exercises/team-exercise' }],
+        ['lectures', { lecturesUrl: 'https://docs.artemis.tum.de/instructor/lectures' }],
+        ['integratedMarkdownEditor', { markdownEditorUrl: 'https://docs.artemis.tum.de/student/markdown-support' }],
+        ['plagiarismChecks', { jPlagUrl: 'https://github.com/jplag/JPlag/', plagiarismChecksUrl: 'https://docs.artemis.tum.de/instructor/plagiarism-check' }],
+        ['learningAnalytics', { learningAnalyticsUrl: 'https://docs.artemis.tum.de/instructor/learning-analytics' }],
+        ['adaptiveLearning', { adaptiveLearningUrl: 'https://docs.artemis.tum.de/instructor/adaptive-learning' }],
+        ['tutorialGroups', { tutorialGroupsUrl: 'https://docs.artemis.tum.de/instructor/tutorial-groups' }],
         ['iris', { irisUrl: 'https://artemis.tum.de/about-iris' }],
-        ['scalable', { scalingUrl: 'https://docs.artemis.cit.tum.de/user/scaling/' }],
-        ['highUserSatisfaction', { userExperienceUrl: 'https://docs.artemis.cit.tum.de/user/user-experience/' }],
-        ['customizable', { customizableUrl: 'https://docs.artemis.cit.tum.de/user/courses/customizable' }],
-        ['openSource', { openSourceUrl: 'https://docs.artemis.cit.tum.de/dev/open-source/' }],
+        ['scalable', { scalingUrl: 'https://docs.artemis.tum.de/admin/scaling' }],
+        ['highUserSatisfaction', { userExperienceUrl: 'https://docs.artemis.tum.de/student/user-experience' }],
+        ['customizable', { customizableUrl: 'https://docs.artemis.tum.de/instructor/courses' }],
+        ['openSource', { openSourceUrl: 'https://docs.artemis.tum.de/developer/open-source' }],
     ];
 
     /**

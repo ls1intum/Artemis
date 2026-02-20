@@ -1,0 +1,67 @@
+@import '../../../../content/scss/artemis-mixins';
+
+.edit-mc-question {
+    .question-card-header {
+        width: 100%;
+        padding: 15px 5px 5px;
+
+        .row {
+            width: 100%;
+        }
+
+        .question-collapse {
+            width: 3.25rem;
+        }
+    }
+
+    .question-card-header-reevaluation {
+        width: 100%;
+        padding: 0;
+
+        .row {
+            width: 100%;
+        }
+
+        .question-collapse {
+            width: 3.25rem;
+        }
+    }
+
+    .card-body {
+        .question-options-reevaluation {
+            .form-group {
+                display: flex;
+                align-items: center;
+                margin: 0 5px 15px;
+            }
+
+            .form-control:disabled {
+                background-color: var(--gray-200);
+            }
+
+            .form-group > * {
+                margin: 0 4px;
+            }
+
+            .form-check {
+                display: block;
+                align-items: center;
+                padding-left: 0;
+            }
+        }
+
+        .invalid-button {
+            width: 100%;
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
+
+        .delete-button {
+            cursor: pointer;
+        }
+
+        .delete-button:hover {
+            color: var(--red);
+        }
+    }
+}

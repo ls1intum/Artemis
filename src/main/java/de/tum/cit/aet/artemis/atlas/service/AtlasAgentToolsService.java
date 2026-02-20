@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
-import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -10,25 +10,34 @@ import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.web.context.annotation.RequestScope;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
-import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
-import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
+import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentExerciseDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 
 /**
- * Service providing tools for the Atlas Agent using Spring AI's @Tool annotation.
- * Request-scoped to track tool calls per HTTP request.
+ * Service providing LLM-callable tools for the Atlas Agent using Spring AI's function calling API.
+ * Methods annotated with {@link Tool} are automatically exposed as AI functions that can be invoked
+ * by large language models during conversations. When the LLM determines it needs data or wants to
+ * perform an action, it calls these methods, receives structured JSON responses, and uses that
+ * information to generate natural language answers.
+ *
+ * Rationale: This service allows the Atlas Agent to autonomously retrieve course information and create
+ * competencies based on user conversations, enabling an interactive AI assistant for instructors.
+ *
+ * Main Responsibilities:
+ * - Expose course-related data (competencies, exercises, descriptions) as AI-callable tools
+ * - Create new competencies based on LLM-generated suggestions
+ * - Track whether competencies were changed during a single AI interaction
+ *
+ * @see <a href="https://docs.spring.io/spring-ai/reference/api/tools.html">Spring AI Function Calling</a>
  */
-@RequestScope
 @Lazy
 @Service
 @Conditional(AtlasEnabled.class)
@@ -36,106 +45,21 @@ public class AtlasAgentToolsService {
 
     private final ObjectMapper objectMapper;
 
-    private final CompetencyRepository competencyRepository;
-
     private final CourseRepository courseRepository;
 
     private final ExerciseRepository exerciseRepository;
 
-    // Track which modification tools were called during this request
-    private boolean competencyCreated = false;
-
-    public AtlasAgentToolsService(ObjectMapper objectMapper, CompetencyRepository competencyRepository, CourseRepository courseRepository, ExerciseRepository exerciseRepository) {
+    public AtlasAgentToolsService(ObjectMapper objectMapper, CourseRepository courseRepository, ExerciseRepository exerciseRepository) {
         this.objectMapper = objectMapper;
-        this.competencyRepository = competencyRepository;
         this.courseRepository = courseRepository;
         this.exerciseRepository = exerciseRepository;
     }
 
     /**
-     * Tool for getting course competencies.
-     *
-     * @param courseId the course ID
-     * @return JSON representation of competencies
-     */
-    @Tool(description = "Get all competencies for a course")
-    public String getCourseCompetencies(@ToolParam(description = "the ID of the course") Long courseId) {
-        Optional<Course> courseOptional = courseRepository.findById(courseId);
-        if (courseOptional.isEmpty()) {
-            return toJson(Map.of("error", "Course not found with ID: " + courseId));
-        }
-
-        Set<Competency> competencies = competencyRepository.findAllByCourseId(courseId);
-
-        var competencyList = competencies.stream().map(competency -> {
-            Map<String, Object> competencyData = new LinkedHashMap<>();
-            competencyData.put("id", competency.getId());
-            competencyData.put("title", competency.getTitle());
-            competencyData.put("description", competency.getDescription());
-            competencyData.put("taxonomy", competency.getTaxonomy() != null ? competency.getTaxonomy().toString() : "");
-            return competencyData;
-        }).toList();
-
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("courseId", courseId);
-        response.put("competencies", competencyList);
-
-        return toJson(response);
-    }
-
-    /**
-     * Tool for creating a new competency in a course.
-     *
-     * @param courseId      the course ID
-     * @param title         the competency title
-     * @param description   the competency description
-     * @param taxonomyLevel the taxonomy level (REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE)
-     * @return JSON response indicating success or error
-     */
-    @Tool(description = "Create a new competency for a course")
-    public String createCompetency(@ToolParam(description = "the ID of the course") Long courseId, @ToolParam(description = "the title of the competency") String title,
-            @ToolParam(description = "the description of the competency") String description,
-            @ToolParam(description = "the taxonomy level (REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE)") CompetencyTaxonomy taxonomyLevel) {
-        try {
-
-            Optional<Course> courseOptional = courseRepository.findById(courseId);
-            if (courseOptional.isEmpty()) {
-                return toJson(Map.of("error", "Course not found with ID: " + courseId));
-            }
-
-            Course course = courseOptional.get();
-            Competency competency = new Competency();
-            competency.setTitle(title);
-            competency.setDescription(description);
-            competency.setCourse(course);
-            competency.setTaxonomy(taxonomyLevel);
-
-            Competency savedCompetency = competencyRepository.save(competency);
-
-            this.competencyCreated = true;
-            Map<String, Object> competencyData = new LinkedHashMap<>();
-            competencyData.put("id", savedCompetency.getId());
-            competencyData.put("title", savedCompetency.getTitle());
-            competencyData.put("description", savedCompetency.getDescription());
-            competencyData.put("taxonomy", savedCompetency.getTaxonomy() != null ? savedCompetency.getTaxonomy().toString() : "");
-            competencyData.put("courseId", courseId);
-
-            Map<String, Object> response = new LinkedHashMap<>();
-            response.put("success", true);
-            response.put("competency", competencyData);
-
-            return toJson(response);
-        }
-        catch (Exception e) {
-            return toJson(Map.of("error", "Failed to create competency: " + e.getMessage()));
-        }
-    }
-
-    /**
      * Tool for getting course description.
      *
-     * @param courseId the course ID
-     * @return the course description or empty string if not found
+     * @param courseId ID of the course
+     * @return course description or empty string if not found
      */
     @Tool(description = "Get the description of a course")
     public String getCourseDescription(@ToolParam(description = "the ID of the course") Long courseId) {
@@ -143,10 +67,11 @@ public class AtlasAgentToolsService {
     }
 
     /**
-     * Tool for getting exercises for a course.
+     * Lists all exercises for a given course.
+     * The LLM can use this to reason about course structure and existing learning material.
      *
-     * @param courseId the course ID
-     * @return JSON representation of exercises
+     * @param courseId ID of the course
+     * @return JSON containing exercises or an error message if course not found
      */
     @Tool(description = "List exercises for a course")
     public String getExercisesListed(@ToolParam(description = "the ID of the course") Long courseId) {
@@ -156,32 +81,14 @@ public class AtlasAgentToolsService {
         }
 
         Set<Exercise> exercises = exerciseRepository.findByCourseIds(Set.of(courseId));
+        List<AtlasAgentExerciseDTO> exerciseList = exercises.stream()
+                .map(exercise -> new AtlasAgentExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getType(), exercise.getMaxPoints(),
+                        exercise.getReleaseDate() != null ? exercise.getReleaseDate().toString() : null, exercise.getDueDate() != null ? exercise.getDueDate().toString() : null))
+                .toList();
 
-        var exerciseList = exercises.stream().map(exercise -> {
-            Map<String, Object> exerciseData = new LinkedHashMap<>();
-            exerciseData.put("id", exercise.getId());
-            exerciseData.put("title", exercise.getTitle());
-            exerciseData.put("type", exercise.getClass().getSimpleName());
-            exerciseData.put("maxPoints", exercise.getMaxPoints() != null ? exercise.getMaxPoints() : 0);
-            exerciseData.put("releaseDate", exercise.getReleaseDate() != null ? exercise.getReleaseDate().toString() : "");
-            exerciseData.put("dueDate", exercise.getDueDate() != null ? exercise.getDueDate().toString() : "");
-            return exerciseData;
-        }).toList();
-
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("courseId", courseId);
-        response.put("exercises", exerciseList);
-
-        return toJson(response);
-    }
-
-    /**
-     * Check if any competency was created during this request.
-     *
-     * @return true if createCompetency was called during this request
-     */
-    public boolean wasCompetencyCreated() {
-        return this.competencyCreated;
+        record Response(Long courseId, List<AtlasAgentExerciseDTO> exercises) {
+        }
+        return toJson(new Response(courseId, exerciseList));
     }
 
     /**

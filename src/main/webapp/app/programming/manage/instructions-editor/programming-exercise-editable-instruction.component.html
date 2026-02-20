@@ -1,28 +1,54 @@
 <div class="editable-instruction-container">
     <!-- The position of the markdown-editor in the html should not be changed, as it is used for resizing!-->
-    @if (exercise) {
+    @if (exercise()) {
+        <!-- showPreview controls whether the preview tab is available in the markdown editor.
+             Set to false when using an external preview component (e.g., in the code editor view). -->
         <jhi-markdown-editor-monaco
             class="overflow-hidden flex-grow-1"
             [domainActions]="domainActions"
             [artemisIntelligenceActions]="artemisIntelligenceActions()"
-            [initialEditorHeight]="initialEditorHeight"
+            [initialEditorHeight]="initialEditorHeight()"
+            [externalHeight]="externalHeight()"
             [useDefaultMarkdownEditorOptions]="false"
-            [enableResize]="enableResize"
-            [markdown]="exercise.problemStatement"
+            [enableResize]="enableResize()"
+            [markdown]="exercise().problemStatement"
             [showDefaultPreview]="false"
-            [showPreviewButton]="false"
-            [showVisualButton]="false"
-            [showEditButton]="false"
+            [showPreviewButton]="showPreview()"
+            [showEditButton]="showPreview()"
+            [consistencyIssues]="consistencyIssues()"
+            [enableExerciseReviewComments]="enableExerciseReviewComments()"
+            [showLocationWarning]="unsavedChangesValue"
             (markdownChange)="updateProblemStatement($event)"
-        />
+        >
+            <!-- Custom preview using ProgrammingExerciseInstructionComponent for proper rendering
+                 of programming-specific syntax (task markers, PlantUML, test case status, etc.).
+                 Uses templateParticipation if available (code editor context), otherwise falls back to participation.
+                 The div wrapper with id="previewMonaco" is projected into the markdown editor's preview slot.
+                 Only renders when showPreview is true AND we have a valid participation to display results. -->
+            <div id="previewMonaco" class="instructions-preview-wrapper">
+                @if (showPreview() && (participation() ?? exercise().templateParticipation)) {
+                    <jhi-programming-exercise-instructions
+                        class="instructions-preview"
+                        [exercise]="exercise()"
+                        [participation]="(participation() ?? exercise().templateParticipation)!"
+                        [personalParticipation]="false"
+                        [generateHtmlEvents]="generateHtmlSubject.asObservable()"
+                    />
+                }
+            </div>
+        </jhi-markdown-editor-monaco>
     }
-    @if (editMode) {
+    @if (editMode()) {
         <button
             id="save-instructions-button"
             [disabled]="savingInstructions || !unsavedChangesValue"
             (click)="saveInstructions($event)"
             class="btn editable-instruction-container__save"
-            [ngClass]="savingInstructions || !unsavedChangesValue ? 'btn-light' : 'btn-primary'"
+            [ngClass]="{
+                'btn-light': savingInstructions || !unsavedChangesValue,
+                'btn-primary': !(savingInstructions || !unsavedChangesValue),
+                'btn-sm': externalHeight(),
+            }"
         >
             @if (!savingInstructions) {
                 <fa-icon [icon]="faSave" class="me-2" />
@@ -33,7 +59,7 @@
             <span jhiTranslate="entity.action.save"></span>
         </button>
     }
-    @if (showStatus) {
+    @if (showStatus()) {
         <div class="card-footer text-nowrap editable-instruction-container__status">
             <div class="instructions-status">
                 @if (!unsavedChangesValue && !savingInstructions) {
@@ -59,22 +85,15 @@
                     </div>
                 }
             </div>
-            @if (exercise?.id) {
+            @if (exercise()?.id) {
                 <jhi-programming-exercise-instruction-instructor-analysis
                     [exerciseTestCases]="exerciseTestCases"
-                    [problemStatement]="exercise.problemStatement || ''"
+                    [problemStatement]="exercise().problemStatement || ''"
                     [taskRegex]="taskRegex"
                     (problemStatementAnalysis)="onAnalysisUpdate($event)"
                     class="editable-instruction-container__status__testcase"
                 />
             }
-        </div>
-    }
-    @if (showConsistencyCheck()) {
-        <div class="alert alert-warning alert-dismissible text-start fade show mt-4" role="alert">
-            <button type="button" class="btn-close" (click)="dismissConsistencyCheck()" aria-label="Close"></button>
-            <h4 class="alert-heading" jhiTranslate="artemisApp.programmingExercise.artemisIntelligence.consistencyCheckAlert.title"></h4>
-            <div [innerHtml]="renderedConsistencyCheckResultMarkdown()"></div>
         </div>
     }
 </div>

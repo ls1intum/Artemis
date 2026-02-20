@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.programming.service.sharing;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -18,22 +17,16 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.NotFoundException;
-
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.client.utils.URIBuilder;
 import org.codeability.sharing.plugins.api.ShoppingBasket;
 import org.slf4j.Logger;
@@ -42,18 +35,13 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
-import org.springframework.util.FileCopyUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -149,87 +137,29 @@ public class ExerciseSharingService {
     }
 
     /**
-     * Retrieves one basket item as a ZIP stream (downloaded and cached on first access).
+     * Retrieves one basket item as a ZIP stream
      *
-     * @param sharingInfo  basket reference and API endpoint info
-     * @param itemPosition index of the item inside the basket
+     * @param sharingInfo basket reference and API endpoint info
      * @return a handle to the ZIP content ({@link SharingMultipartZipFile}); caller must close the stream
-     * @throws SharingException if the item cannot be downloaded or cached
-     */
-    public SharingMultipartZipFile getBasketItem(SharingInfoDTO sharingInfo, int itemPosition) throws SharingException {
-        try {
-            Path cachedZipFile = repositoryCache.get(Pair.of(sharingInfo, itemPosition));
-            // Ensure proper resource management - SharingMultipartZipFile should handle stream closing
-            return new SharingMultipartZipFile(getBasketFileName(sharingInfo.basketToken(), itemPosition), Files.newInputStream(cachedZipFile));
-        }
-        catch (IOException | ExecutionException wae) {
-            log.warn("Exception during shared exercise retrieval", wae);
-            throw new SharingException("Could not retrieve basket item", wae);
-        }
-    }
-
-    /**
-     * In-memory cache of downloaded basket ZIPs (evicted after 1 hour of inactivity).
-     * <p>
-     * On eviction, the temporary file is deleted.
-     * </p>
-     */
-    private final LoadingCache<@NotNull Pair<SharingInfoDTO, Integer>, @NotNull Path> repositoryCache = CacheBuilder.newBuilder().maximumSize(100)
-            .expireAfterAccess(1, TimeUnit.HOURS).removalListener(notification -> {
-                Path outdatedBasketZipfile = (Path) notification.getValue();
-                try {
-                    Files.deleteIfExists(outdatedBasketZipfile);
-                }
-                catch (IOException e) {
-                    log.info("Cannot delete {}", outdatedBasketZipfile, e);
-                }
-            }).build(new CacheLoader<>() {
-
-                @Override
-                public Path load(Pair<SharingInfoDTO, Integer> sharingInfoAndPos) throws SharingException {
-                    SharingInfoDTO sharingInfo = sharingInfoAndPos.getLeft();
-                    int itemPosition = sharingInfoAndPos.getRight();
-                    try {
-                        String exercisesZipUrl = sharingInfo.apiBaseURL() + "/basket/{basketToken}/repository/" + itemPosition + "?format={format}";
-                        Resource zipInputResource = restTemplate.getForObject(exercisesZipUrl, Resource.class,
-                                Map.of("basketToken", sharingInfo.basketToken(), "format", "artemis"));
-                        if (zipInputResource == null) {
-                            throw new SharingException("Could not retrieve basket item resource");
-                        }
-                        Path basketFilePath = Files.createTempFile("basketStore", ".zip");
-                        try (InputStream zipInput = zipInputResource.getInputStream(); OutputStream outputStream = Files.newOutputStream(basketFilePath)) {
-                            FileCopyUtils.copy(zipInput, outputStream);
-                        }
-
-                        return basketFilePath;
-                    }
-                    catch (IOException e) {
-                        log.warn("Cannot load sharing info for basket {} item {} from {}.", sharingInfo.basketToken(), itemPosition, sharingInfo.apiBaseURL(), e);
-                        throw new SharingException("Cannot load sharing Info", e);
-                    }
-
-                }
-            });
-
-    /**
-     * Exposes the repository cache (tests only).
-     *
-     * @return the cache of basket ZIP file paths
-     */
-    LoadingCache<@NotNull Pair<SharingInfoDTO, Integer>, @NotNull Path> getRepositoryCache() {
-        return repositoryCache;
-    }
-
-    /**
-     * Convenience wrapper for {@link #getBasketItem(SharingInfoDTO, int)} using {@code sharingInfo.exercisePosition()}.
-     *
-     * @param sharingInfo basket reference
-     * @return the cached basket item ZIP
      * @throws SharingException if retrieval fails
      */
     public SharingMultipartZipFile getCachedBasketItem(SharingInfoDTO sharingInfo) throws SharingException {
         int itemPosition = sharingInfo.exercisePosition();
-        return getBasketItem(sharingInfo, itemPosition);
+        try {
+            String url = sharingInfo.apiBaseURL() + "/basket/{basketToken}/repository/" + itemPosition + "?format={format}";
+            var resource = restTemplate.getForObject(url, org.springframework.core.io.Resource.class, Map.of("basketToken", sharingInfo.basketToken(), "format", "artemis"));
+            if (resource == null) {
+                throw new SharingException("Could not retrieve basket item resource");
+            }
+
+            // Do NOT close here; caller closes via SharingMultipartZipFile
+            InputStream in = resource.getInputStream();
+            return new SharingMultipartZipFile(getBasketFileName(sharingInfo.basketToken(), itemPosition), in);
+        }
+        catch (Exception e) {
+            log.warn("Exception during shared exercise retrieval", e);
+            throw new SharingException("Could not retrieve basket item", e);
+        }
     }
 
     /**
@@ -240,21 +170,21 @@ public class ExerciseSharingService {
      *
      * @param sharingInfo basket reference
      * @return the parsed exercise details
-     * @throws jakarta.ws.rs.NotFoundException if the details entry is missing or cannot be parsed
+     * @throws EntityNotFoundException if the details entry is missing or cannot be parsed
      */
     public ProgrammingExercise getExerciseDetailsFromBasket(SharingInfoDTO sharingInfo) {
         Pattern pattern = Pattern.compile("^Exercise-Details", Pattern.CASE_INSENSITIVE);
 
         try {
             String exerciseDetailString = getEntryFromBasket(pattern, sharingInfo)
-                    .orElseThrow(() -> new NotFoundException("Could not retrieve exercise details from imported exercise"));
+                    .orElseThrow(() -> new EntityNotFoundException("Could not retrieve exercise details from imported exercise"));
             ProgrammingExercise exerciseDetails = objectMapper.readValue(exerciseDetailString, ProgrammingExercise.class);
             exerciseDetails.setId(null);
             return exerciseDetails;
         }
         catch (Exception e) {
             String errorMessage = e.getMessage();
-            throw new NotFoundException("Could not retrieve exercise details from imported exercise: " + errorMessage, e);
+            throw new EntityNotFoundException("Could not retrieve exercise details from imported exercise: " + errorMessage);
         }
     }
 
@@ -273,13 +203,13 @@ public class ExerciseSharingService {
             while ((entry = zippedRepositoryStream.getNextEntry()) != null) {
                 Matcher matcher = matchingPattern.matcher(entry.getName());
                 if (matcher.find()) {
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                     byte[] buffer = new byte[COPY_BUFFER_SIZE];
                     int bytesRead;
                     while ((bytesRead = zippedRepositoryStream.read(buffer)) != -1) {
-                        baos.write(buffer, 0, bytesRead);
+                        outputStream.write(buffer, 0, bytesRead);
                     }
-                    String entryContent = baos.toString(StandardCharsets.UTF_8);
+                    String entryContent = outputStream.toString(StandardCharsets.UTF_8);
                     zippedRepositoryStream.closeEntry();
                     return Optional.of(entryContent);
                 }

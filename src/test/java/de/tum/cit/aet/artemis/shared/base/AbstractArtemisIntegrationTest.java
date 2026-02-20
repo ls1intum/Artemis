@@ -8,11 +8,16 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 
 import jakarta.mail.internet.MimeMessage;
 
+import org.eclipse.jgit.storage.file.FileBasedConfig;
+import org.eclipse.jgit.util.FS;
+import org.eclipse.jgit.util.SystemReader;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -69,6 +74,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseScheduleSer
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.util.MockDelegate;
+import de.tum.cit.aet.artemis.shared.JacksonDeserializerInitializationConfig;
 import de.tum.cit.aet.artemis.shared.TestRepositoryConfiguration;
 import de.tum.cit.aet.artemis.text.service.TextBlockService;
 import de.tum.cit.aet.artemis.text.service.TextSubmissionService;
@@ -81,7 +87,7 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 @AutoConfigureMockMvc
 @ExtendWith(SpringExtension.class)
 @Execution(ExecutionMode.CONCURRENT)
-@Import(TestRepositoryConfiguration.class)
+@Import({ TestRepositoryConfiguration.class, JacksonDeserializerInitializationConfig.class })
 @AutoConfigureEmbeddedDatabase
 public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
@@ -95,8 +101,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @MockitoSpyBean
     protected Lti13Service lti13Service;
 
-    // TODO: in the future, we should not mock gitService anymore
-    @MockitoSpyBean
+    @Autowired
     protected GitService gitService;
 
     @MockitoSpyBean
@@ -195,13 +200,115 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @Autowired
     protected CourseTestRepository courseRepository;
 
-    private static final Path rootPath = Path.of("local", "upload");
+    @Value("${artemis.file-upload-path}")
+    private Path fileUploadPath;
+
+    private static volatile boolean fileUploadPathInitialized = false;
 
     @BeforeAll
     static void setup() {
-        // Set the static file upload path for all tests
-        // This makes it a simple unit test that doesn't require a server start.
-        FilePathConverter.setFileUploadPath(rootPath);
+        // Configure JGit to skip reading system-level git config files.
+        // This prevents "File is too large" errors when system gitconfig files (e.g., /opt/homebrew/etc/gitconfig)
+        // exceed JGit's default 5MB file size limit.
+        configureJGitSystemReader();
+    }
+
+    @BeforeEach
+    void initFileUploadPath() {
+        // Set the file upload path from configuration (only once across all tests)
+        if (!fileUploadPathInitialized) {
+            FilePathConverter.setFileUploadPath(fileUploadPath);
+            fileUploadPathInitialized = true;
+        }
+    }
+
+    /**
+     * Configures JGit to use a custom SystemReader that skips system-level git config files.
+     * This is necessary because system gitconfig files can exceed JGit's default file size limit,
+     * causing test failures on some machines.
+     */
+    private static void configureJGitSystemReader() {
+        final var defaultReader = getSystemReader();
+
+        SystemReader.setInstance(new SystemReader() {
+
+            @Override
+            public String getHostname() {
+                return defaultReader.getHostname();
+            }
+
+            @Override
+            public String getenv(String variable) {
+                return defaultReader.getenv(variable);
+            }
+
+            @Override
+            public String getProperty(String key) {
+                return defaultReader.getProperty(key);
+            }
+
+            @Override
+            public FileBasedConfig openUserConfig(org.eclipse.jgit.lib.Config parent, FS fs) {
+                return defaultReader.openUserConfig(parent, fs);
+            }
+
+            @Override
+            public FileBasedConfig openSystemConfig(org.eclipse.jgit.lib.Config parent, FS fs) {
+                // Return an empty config instead of reading the potentially large system gitconfig
+                return new FileBasedConfig(parent, null, fs) {
+
+                    @Override
+                    public void load() {
+                        // Don't load anything - skip system config
+                    }
+
+                    @Override
+                    public boolean isOutdated() {
+                        return false;
+                    }
+                };
+            }
+
+            @Override
+            public FileBasedConfig openJGitConfig(org.eclipse.jgit.lib.Config parent, FS fs) {
+                return defaultReader.openJGitConfig(parent, fs);
+            }
+
+            @Override
+            public Instant now() {
+                return defaultReader.now();
+            }
+
+            @Override
+            public ZoneOffset getTimeZoneAt(Instant when) {
+                return defaultReader.getTimeZoneAt(when);
+            }
+
+            @SuppressWarnings("deprecation")
+            @Override
+            public long getCurrentTime() {
+                return defaultReader.getCurrentTime();
+            }
+
+            @SuppressWarnings("deprecation")
+            @Override
+            public int getTimezone(long when) {
+                return defaultReader.getTimezone(when);
+            }
+        });
+    }
+
+    private static @NonNull SystemReader getSystemReader() {
+        SystemReader defaultReader = SystemReader.getInstance();
+
+        // Force initialization of static platform detection fields before calling setInstance().
+        // This prevents a race condition where setInstance() -> init() -> setPlatformChecker()
+        // accesses static fields (isMacOS, isWindows) that haven't been initialized yet
+        // during parallel test execution, causing NullPointerException.
+        defaultReader.isMacOS();
+        defaultReader.isWindows();
+        defaultReader.isLinux();
+        return defaultReader;
     }
 
     @BeforeEach
@@ -213,7 +320,8 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @BeforeEach
     void resetParticipantScoreScheduler() {
         // Prevents the ParticipantScoreScheduleService from scheduling tasks related to prior results
-        ReflectionTestUtils.setField(participantScoreScheduleService, "lastScheduledRun", Optional.of(Instant.now()));
+        // Subtract a small safety margin to ensure new results created immediately after the reset are picked up by the scheduler
+        ReflectionTestUtils.setField(participantScoreScheduleService, "lastScheduledRun", Optional.of(Instant.now().minusSeconds(1)));
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 100;
         participantScoreScheduleService.activate();
     }
@@ -229,7 +337,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     }
 
     protected void resetSpyBeans() {
-        Mockito.reset(gitService, groupNotificationService, singleUserNotificationService, websocketMessagingService, examAccessService, mailService, instanceMessageSendService,
+        Mockito.reset(groupNotificationService, singleUserNotificationService, websocketMessagingService, examAccessService, mailService, instanceMessageSendService,
                 programmingExerciseScheduleService, programmingExerciseParticipationService, uriService, scheduleService, participantScoreScheduleService, javaMailSender,
                 programmingTriggerService, zipFileService);
     }

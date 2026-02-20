@@ -300,6 +300,7 @@ public class TextExerciseUtilService {
             result.setCompletionDate(ZonedDateTime.now());
         }
         result.setSubmission(submission);
+        result.setExerciseId(exercise.getId());
         result = resultRepo.save(result);
         submission.setParticipation(participation);
         submission.addResult(result);
@@ -339,6 +340,7 @@ public class TextExerciseUtilService {
         }
 
         result.setSubmission(submission);
+        result.setExerciseId(exercise.getId());
         result = resultRepo.save(result);
         submission.setParticipation(participation);
         submission.addResult(result);

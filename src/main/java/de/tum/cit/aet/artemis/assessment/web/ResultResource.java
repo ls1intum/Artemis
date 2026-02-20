@@ -19,7 +19,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -40,7 +39,9 @@ import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
@@ -64,6 +65,9 @@ import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 
 /**
@@ -73,7 +77,6 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 @Lazy
 @RestController
 @RequestMapping("api/assessment/")
-// TODO: verify unused endpoints in client
 public class ResultResource {
 
     private static final Logger log = LoggerFactory.getLogger(ResultResource.class);
@@ -103,9 +106,12 @@ public class ResultResource {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
     public ResultResource(ResultRepository resultRepository, ParticipationService participationService, ResultService resultService, Optional<ExamDateApi> examDateApi,
             ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, ParticipationAuthorizationCheckService participationAuthCheckService,
-            UserRepository userRepository, ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository) {
+            UserRepository userRepository, ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository) {
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.resultService = resultService;
@@ -116,6 +122,7 @@ public class ResultResource {
         this.userRepository = userRepository;
         this.participationRepository = participationRepository;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     /**
@@ -142,23 +149,6 @@ public class ResultResource {
                 .toList();
 
         return ResponseEntity.ok().body(resultsWithPoints);
-    }
-
-    /**
-     * GET /participations/:participationId/results/:resultId : get the "id" result.
-     *
-     * @param participationId the id of the participation to the result
-     * @param resultId        the id of the result to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
-     */
-    @GetMapping("participations/{participationId}/results/{resultId}")
-    @EnforceAtLeastTutor
-    public ResponseEntity<Result> getResult(@PathVariable Long participationId, @PathVariable Long resultId) {
-        // TODO: verify unused endpoints in client
-
-        log.debug("REST request to get Result : {}", resultId);
-        Result result = resultService.getResultForParticipationAndCheckAccess(participationId, resultId, Role.TEACHING_ASSISTANT);
-        return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
     /**
@@ -189,7 +179,8 @@ public class ResultResource {
     }
 
     /**
-     * GET /participations/:participationId/results/build-job-ids : Get the build job ids for the results of a participation if the respective build logs are available (else null)
+     * GET /participations/:participationId/results/build-job-ids : Get the build job ids for the results of a programming exercise participation if the respective build logs are
+     * available (else null)
      *
      * @param participationId the id of the participation to the results
      * @return the ResponseEntity with status 200 (OK) and with body the map of resultId and build job id, status 404 (Not Found) if the participation does not exist or 403
@@ -199,27 +190,44 @@ public class ResultResource {
     @EnforceAtLeastTutor
     public ResponseEntity<Map<Long, String>> getBuildJobIdsForResultsOfParticipation(@PathVariable long participationId) {
         log.debug("REST request to get build job ids for results of participation : {}", participationId);
-        participationAuthCheckService.checkCanAccessParticipationElseThrow(participationId);
+        var participation = participationRepository.findByIdElseThrow(participationId);
+        checkCanAccessParticipationElseThrow(participation);
         Map<Long, String> resultBuildJobMap = resultService.getLogsAvailabilityForResults(participationId);
         return new ResponseEntity<>(resultBuildJobMap, HttpStatus.OK);
     }
 
     /**
-     * DELETE /participations/:participationId/results/:resultId : delete the "id" result.
+     * Verifies that the currently authenticated user is allowed to access the given participation.
+     * <p>
+     * For {@link StudentParticipation} instances, this requires that the user has at least the {@link Role#TEACHING_ASSISTANT} role for the participation's exercise.
+     * For {@link ProgrammingExerciseParticipation} instances, the corresponding {@link ProgrammingExercise} is first resolved from the database and the same role check is applied.
+     * </p>
+     * <p>
+     * If the programming exercise for a {@link ProgrammingExerciseParticipation} cannot be found,
+     * an {@link EntityNotFoundException} is thrown. If the user does not have sufficient permissions, will throw an appropriate access exception.
+     * </p>
      *
-     * @param participationId the id of the participation to the result
-     * @param resultId        the id of the result to delete
-     * @return the ResponseEntity with status 200 (OK)
+     * @param participation the participation for which access permissions should be validated; must be a {@link StudentParticipation} or {@link ProgrammingExerciseParticipation}
+     * @throws EntityNotFoundException  if a programming participation has no associated programming exercise
+     * @throws AccessForbiddenException if the user does not have the required role
      */
-    @DeleteMapping("participations/{participationId}/results/{resultId}")
-    @EnforceAtLeastTutor
-    public ResponseEntity<Void> deleteResult(@PathVariable Long participationId, @PathVariable Long resultId) {
-        // TODO: verify unused endpoints in client
-
-        log.debug("REST request to delete Result : {}", resultId);
-        Result result = resultService.getResultForParticipationAndCheckAccess(participationId, resultId, Role.TEACHING_ASSISTANT);
-        resultService.deleteResult(result, true);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, resultId.toString())).build();
+    private void checkCanAccessParticipationElseThrow(Participation participation) {
+        if (participation instanceof StudentParticipation studentParticipation) {
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, studentParticipation.getExercise(), null);
+        }
+        else if (participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation) {
+            final ProgrammingExercise programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(programmingExerciseParticipation);
+            if (programmingExercise == null) {
+                log.error("canAccessParticipation: could not find programming exercise of participation id {}", participation.getId());
+                // Cannot access a programming participation that has no programming exercise associated with it
+                throw new EntityNotFoundException("ProgrammingExercise from participation", participation.getId());
+            }
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
+        }
+        else {
+            throw new BadRequestAlertException("Participation with id " + participation.getId() + " is not a StudentParticipation or ProgrammingExerciseParticipation!",
+                    "Participation", "participation.type.not.known");
+        }
     }
 
     /**
@@ -266,7 +274,6 @@ public class ResultResource {
         }
 
         Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
         if (student.isEmpty() || !authCheckService.isAtLeastStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), student.get())) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "studentNotFound", "The student could not be found in this course.")).build();

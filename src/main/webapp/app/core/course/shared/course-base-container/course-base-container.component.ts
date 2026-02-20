@@ -26,7 +26,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { LtiService } from 'app/shared/service/lti.service';
 import { sortCourses } from 'app/shared/util/course.util';
 import { SidebarItem } from 'app/core/course/shared/course-sidebar/course-sidebar.component';
-import { MODULE_FEATURE_ATLAS, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_IRIS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI, PROFILE_LOCALCI } from 'app/app.constants';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
@@ -73,6 +73,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     communicationRouteLoaded = signal<boolean>(false);
 
     atlasEnabled: boolean = false;
+    lectureEnabled: boolean = false;
     irisEnabled: boolean = false;
     ltiEnabled: boolean = false;
     localCIActive: boolean = false;
@@ -140,8 +141,9 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
         this.isProduction = this.profileService.isProduction();
         this.isTestServer = this.profileService.isTestServer();
         this.atlasEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
-        this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
-        this.ltiEnabled = this.profileService.isProfileActive(PROFILE_LTI);
+        this.lectureEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_LECTURE);
+        this.irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
+        this.ltiEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_LTI);
         this.localCIActive = this.profileService.isProfileActive(PROFILE_LOCALCI);
 
         this.getCollapseStateFromStorage();
@@ -318,7 +320,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     }
 
     @HostListener('window:keydown.Control.Shift.b', ['$event'])
-    onKeyDownControlShiftB(event: KeyboardEvent) {
+    onKeyDownControlShiftB(event: Event) {
         event.preventDefault();
         this.toggleSidebar();
     }
@@ -343,7 +345,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     }
 
     @HostListener('window:keydown.Control.m', ['$event'])
-    onKeyDownControlM(event: KeyboardEvent) {
+    onKeyDownControlM(event: Event) {
         event.preventDefault();
         this.toggleCollapseState();
     }

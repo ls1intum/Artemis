@@ -4,8 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -77,19 +76,6 @@ public class ParticipationAuthorizationCheckService {
      * <p>
      * Throws an {@link AccessForbiddenException} if not.
      *
-     * @param participationId the id of the participation to check access for.
-     */
-    public void checkCanAccessParticipationElseThrow(long participationId) {
-        if (!canAccessParticipation(participationId)) {
-            throw new AccessForbiddenException("participation", participationId);
-        }
-    }
-
-    /**
-     * Checks if the current user is allowed to access the given participation.
-     * <p>
-     * Throws an {@link AccessForbiddenException} if not.
-     *
      * @param participation Some participation.
      */
     public void checkCanAccessParticipationElseThrow(final ParticipationInterface participation) {
@@ -102,23 +88,24 @@ public class ParticipationAuthorizationCheckService {
     }
 
     /**
-     * Checks if the current user is allowed to access the participation
-     * 1. Either the user owns the participations or 2. is at least a teaching assistant in the course of the participation.
+     * Checks if the current user is allowed to access the student participation
+     * NOTE: this does not work for template or solution participations of programming exercises!
+     * 1. Either the user owns the participation (as student) or 2. is at least a teaching assistant in the course of the participation.
      *
-     * @param participationId The id of the participation to check access for.
+     * @param studentParticipationId The id of the student participation to check access for.
      * @return True, if the current user is allowed to access the participation; false otherwise.
      */
-    public boolean canAccessParticipation(long participationId) {
+    public boolean canAccessStudentParticipation(long studentParticipationId) {
         String userLogin = userRepository.getCurrentUserLogin();
         // 1. Check if the user owns the participation
         // 1a. StudentParticipation: the user is the owner of the participation
         // 1b. TeamParticipation: the user is a member of the team
-        boolean isOwner = studentParticipationRepository.isOwnerOfStudentParticipation(userLogin, participationId);
+        boolean isOwner = studentParticipationRepository.isOwnerOfStudentParticipation(userLogin, studentParticipationId);
         if (isOwner) {
             return true;
         }
         // 2. Check if the user is at least a teaching assistant of the course
-        return userRepository.isAtLeastTeachingAssistantInParticipation(userLogin, participationId);
+        return userRepository.isAtLeastTeachingAssistantInParticipation(userLogin, studentParticipationId);
     }
 
     /**
@@ -127,7 +114,7 @@ public class ParticipationAuthorizationCheckService {
      * @param participation Some participation.
      * @return True, if the current user is allowed to access the participation; false otherwise.
      */
-    public boolean canAccessParticipation(@NotNull final ParticipationInterface participation) {
+    public boolean canAccessParticipation(@NonNull final ParticipationInterface participation) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         return canAccessParticipation(participation, user);
     }
@@ -139,7 +126,7 @@ public class ParticipationAuthorizationCheckService {
      * @param user          The user that wants to access the participation.
      * @return True, if the user is allowed to access the participation; false otherwise.
      */
-    public boolean canAccessParticipation(@NotNull final ParticipationInterface participation, final User user) {
+    public boolean canAccessParticipation(@NonNull final ParticipationInterface participation, final User user) {
         if (participation instanceof StudentParticipation studentParticipation && studentParticipation.getParticipant() instanceof Team team) {
             // eager load the team with students so their information can be used for the access check below
             studentParticipation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));

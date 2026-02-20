@@ -1,26 +1,25 @@
 package de.tum.cit.aet.artemis.fileupload.repository;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.fileupload.config.FileUploadEnabled;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 
 /**
  * Spring Data JPA repository for the FileUploadSubmission entity.
  */
-@Profile(PROFILE_CORE)
+@Conditional(FileUploadEnabled.class)
 @Lazy
 @Repository
 public interface FileUploadSubmissionRepository extends ArtemisJpaRepository<FileUploadSubmission, Long> {
@@ -69,7 +68,7 @@ public interface FileUploadSubmissionRepository extends ArtemisJpaRepository<Fil
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the file upload submission with the given id
      */
-    @NotNull
+    @NonNull
     default FileUploadSubmission findByIdWithEagerResultAndAssessorAndFeedbackElseThrow(long submissionId) {
         return getValueElseThrow(findByIdWithEagerResultAndAssessorAndFeedback(submissionId), submissionId);
     }
@@ -82,7 +81,7 @@ public interface FileUploadSubmissionRepository extends ArtemisJpaRepository<Fil
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the file upload submission with the given id
      */
-    @NotNull
+    @NonNull
     default FileUploadSubmission findByIdWithEagerResultAndFeedbackAndAssessorAndAssessmentNoteAndParticipationResultsElseThrow(long submissionId) {
         return getValueElseThrow(findWithResultsFeedbacksAssessorAssessmentNoteAndParticipationResultsById(submissionId), submissionId);
     }
@@ -95,7 +94,7 @@ public interface FileUploadSubmissionRepository extends ArtemisJpaRepository<Fil
      * @param exerciseId   the id of the exercise that should be loaded from the database
      * @return the file upload submission with the given id
      */
-    @NotNull
+    @NonNull
     default FileUploadSubmission findWithTeamStudentsAndParticipationAndExerciseByIdAndExerciseIdElseThrow(long submissionId, long exerciseId) {
         return getValueElseThrow(findWithTeamStudentsAndParticipationAndExerciseByIdAndExerciseId(submissionId, exerciseId), submissionId);
     }

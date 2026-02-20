@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Input, Output, inject } from '@angular/core';
+import { Component, HostListener, effect, inject, input, model, output } from '@angular/core';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
@@ -32,37 +32,37 @@ export class AssessmentHeaderComponent {
     protected route = inject(ActivatedRoute);
     private translateService = inject(TranslateService);
 
-    @Input() isLoading: boolean;
-    @Input() saveBusy: boolean;
-    @Input() submitBusy: boolean;
-    @Input() cancelBusy: boolean;
-    @Input() nextSubmissionBusy: boolean;
-    @Input() correctionRound = 0; // correctionRound defaults to 0
+    readonly isLoading = input.required<boolean>();
+    readonly saveBusy = input.required<boolean>();
+    readonly submitBusy = input.required<boolean>();
+    readonly cancelBusy = input.required<boolean>();
+    readonly nextSubmissionBusy = input.required<boolean>();
+    readonly correctionRound = input(0); // correctionRound defaults to 0
 
-    @Input() isTeamMode: boolean;
-    @Input() isAssessor: boolean;
-    @Input() isTestRun = false;
-    @Input() exerciseDashboardLink: string[];
-    @Input() canOverride: boolean;
+    readonly isTeamMode = input.required<boolean>();
+    readonly isAssessor = input.required<boolean>();
+    readonly isTestRun = input(false);
+    readonly exerciseDashboardLink = input.required<string[]>();
+    readonly canOverride = input.required<boolean>();
 
-    @Input() exercise?: Exercise;
-    @Input() result?: Result;
-    @Input() hasComplaint = false;
-    @Input() hasMoreFeedbackRequest = false;
-    @Input() complaintHandled = false;
-    @Input() complaintType?: ComplaintType;
-    @Input() assessmentsAreValid: boolean;
-    @Input() hasAssessmentDueDatePassed: boolean;
-    @Input() isProgrammingExercise = false; // remove once diff view activated for programming exercises
+    readonly exercise = input<Exercise>();
+    readonly result = input<Result>();
+    readonly hasComplaint = input(false);
+    readonly hasMoreFeedbackRequest = input(false);
+    readonly complaintHandled = input(false);
+    readonly complaintType = input<ComplaintType>();
+    readonly assessmentsAreValid = input.required<boolean>();
+    readonly hasAssessmentDueDatePassed = model.required<boolean>();
+    readonly isProgrammingExercise = input(false); // remove once diff view activated for programming exercises
+    readonly highlightDifferences = model(false);
 
-    @Output() save = new EventEmitter<void>();
-    @Output() onSubmit = new EventEmitter<void>();
-    @Output() onCancel = new EventEmitter<void>();
-    @Output() nextSubmission = new EventEmitter<void>();
-    @Output() highlightDifferencesChange = new EventEmitter<boolean>();
-    @Output() useAsExampleSubmission = new EventEmitter<void>();
+    readonly save = output();
+    readonly onSubmit = output();
+    readonly onCancel = output();
+    readonly nextSubmission = output();
+    readonly highlightDifferencesChange = output<boolean>();
+    readonly useAsExampleSubmission = output();
 
-    private _highlightDifferences: boolean;
     readonly ExerciseType = ExerciseType;
     readonly ComplaintType = ComplaintType;
     readonly AssessmentType = AssessmentType;
@@ -72,32 +72,36 @@ export class AssessmentHeaderComponent {
     faSave = faSave;
     faSquareCaretRight = faSquareCaretRight;
 
-    @Input() set highlightDifferences(highlightDifferences: boolean) {
-        this._highlightDifferences = highlightDifferences;
-        this.highlightDifferencesChange.emit(this.highlightDifferences);
-    }
+    private highlightDifferencesEffectInitialized = false;
 
     constructor() {
         this.textAssessmentAnalytics.setComponentRoute(this.route);
-    }
 
-    get highlightDifferences() {
-        return this._highlightDifferences;
+        // Emit highlightDifferencesChange when the model changes (skip initial emission)
+        effect(() => {
+            const value = this.highlightDifferences();
+            if (!this.highlightDifferencesEffectInitialized) {
+                this.highlightDifferencesEffectInitialized = true;
+                return;
+            }
+            this.highlightDifferencesChange.emit(value);
+        });
     }
 
     get overrideVisible() {
-        return this.result?.completionDate && this.canOverride;
+        return this.result()?.completionDate && this.canOverride();
     }
 
     get assessNextVisible() {
-        return this.result?.completionDate && (this.isAssessor || this.exercise?.isAtLeastInstructor) && !this.hasComplaint && !this.isTeamMode && !this.isTestRun;
+        return this.result()?.completionDate && (this.isAssessor() || this.exercise()?.isAtLeastInstructor) && !this.hasComplaint() && !this.isTeamMode() && !this.isTestRun();
     }
 
     get saveDisabled() {
         // if there is no 'save' button
-        if (this.result?.completionDate) {
+        const result = this.result();
+        if (result?.completionDate) {
             return true;
-        } else if (Result.hasNonEmptyAssessmentNote(this.result)) {
+        } else if (Result.hasNonEmptyAssessmentNote(result)) {
             return this.saveDisabledWithAssessmentNotePresent;
         } else {
             return this.saveDisabledWithoutAssessmentNotePresent;
@@ -107,20 +111,20 @@ export class AssessmentHeaderComponent {
     get saveDisabledWithAssessmentNotePresent() {
         // this is almost identical to submitDisabled, but without the assessmentsAreValid check
         // otherwise, we wouldn't be able to save the assessment note without making prior changes to the feedback
-        return !this.isAssessor || this.saveBusy || this.submitBusy || this.cancelBusy;
+        return !this.isAssessor() || this.saveBusy() || this.submitBusy() || this.cancelBusy();
     }
 
     get saveDisabledWithoutAssessmentNotePresent() {
-        return !this.assessmentsAreValid || this.saveDisabledWithAssessmentNotePresent;
+        return !this.assessmentsAreValid() || this.saveDisabledWithAssessmentNotePresent;
     }
 
     get submitDisabled() {
-        return !this.assessmentsAreValid || !this.isAssessor || this.saveBusy || this.submitBusy || this.cancelBusy;
+        return !this.assessmentsAreValid() || !this.isAssessor() || this.saveBusy() || this.submitBusy() || this.cancelBusy();
     }
 
     get overrideDisabled() {
         if (this.overrideVisible) {
-            return !this.assessmentsAreValid || this.submitBusy;
+            return !this.assessmentsAreValid() || this.submitBusy();
         } else {
             return true;
         }
@@ -128,14 +132,14 @@ export class AssessmentHeaderComponent {
 
     get assessNextDisabled() {
         if (this.assessNextVisible) {
-            return this.nextSubmissionBusy || this.submitBusy;
+            return this.nextSubmissionBusy() || this.submitBusy();
         } else {
             return true;
         }
     }
 
     @HostListener('document:keydown.control.s', ['$event'])
-    saveOnControlAndS(event: KeyboardEvent) {
+    saveOnControlAndS(event: Event) {
         event.preventDefault();
         if (!this.saveDisabled) {
             this.save.emit();
@@ -143,7 +147,7 @@ export class AssessmentHeaderComponent {
     }
 
     @HostListener('document:keydown.control.enter', ['$event'])
-    submitOnControlAndEnter(event: KeyboardEvent) {
+    submitOnControlAndEnter(event: Event) {
         event.preventDefault();
         if (!this.overrideDisabled) {
             this.onSubmit.emit();
@@ -154,7 +158,7 @@ export class AssessmentHeaderComponent {
     }
 
     @HostListener('document:keydown.control.shift.arrowRight', ['$event'])
-    assessNextOnControlShiftAndArrowRight(event: KeyboardEvent) {
+    assessNextOnControlShiftAndArrowRight(event: Event) {
         event.preventDefault();
         if (!this.assessNextDisabled) {
             this.nextSubmission.emit();
@@ -167,15 +171,14 @@ export class AssessmentHeaderComponent {
      * Highlight the difference between the first and second correction round
      */
     public toggleHighlightDifferences() {
-        this.highlightDifferences = !this.highlightDifferences;
-        this.highlightDifferencesChange.emit(this.highlightDifferences);
+        this.highlightDifferences.update((value) => !value);
     }
 
     /**
      * Sends and assessment event for the submit button using the analytics service in case the exercise type is TEXT
      */
     sendSubmitAssessmentEventToAnalytics() {
-        if (this.exercise?.type === ExerciseType.TEXT) {
+        if (this.exercise()?.type === ExerciseType.TEXT) {
             this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.SUBMIT_ASSESSMENT);
         }
     }
@@ -184,7 +187,7 @@ export class AssessmentHeaderComponent {
      * Sends and assessment event for the assess next button using the analytics service in case the exercise type is TEXT
      */
     sendAssessNextEventToAnalytics() {
-        if (this.exercise?.type === ExerciseType.TEXT) {
+        if (this.exercise()?.type === ExerciseType.TEXT) {
             this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.ASSESS_NEXT_SUBMISSION);
         }
     }

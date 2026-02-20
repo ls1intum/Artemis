@@ -1,12 +1,12 @@
 <div class="row mt-3 g-3">
     <div class="col-12 col-md-6 col-lg-7 mt-0">
-        @if (isExamMode) {
+        @if (isExamMode()) {
             <span style="font-size: 16px" jhiTranslate="artemisApp.assessmentDashboard.exerciseTable.examInformation"></span>
         } @else {
             <span style="font-size: 16px" jhiTranslate="artemisApp.assessmentDashboard.exerciseTable.courseInformation"></span>
         }
         <!-- chart -->
-        @if (numberOfSubmissions.total !== 0) {
+        @if (numberOfSubmissions().total !== 0) {
             <div class="pie-chart pb-2" style="margin-top: -10px">
                 <ngx-charts-pie-chart
                     [customColors]="customColors"
@@ -17,7 +17,7 @@
                     [legendPosition]="legendPosition"
                     [animations]="false"
                 >
-                    <ng-template #tooltipTemplate let-model="model"> {{ ((model.value * 100) / this.numberOfSubmissions.total).toFixed(2) }}% </ng-template>
+                    <ng-template #tooltipTemplate let-model="model"> {{ ((model.value * 100) / this.numberOfSubmissions().total).toFixed(2) }}% </ng-template>
                 </ngx-charts-pie-chart>
             </div>
         }
@@ -29,62 +29,62 @@
             [panelHeader]="'artemisApp.assessmentDashboard.assessmentInformation' | artemisTranslate"
             [panelDescriptionHeader]="'artemisApp.exerciseAssessmentDashboard.totalYours' | artemisTranslate"
         >
-            @if (!isExamMode) {
+            @if (!isExamMode()) {
                 <div>
                     <div class="row g-0 mb-1">
                         <div class="col-7" jhiTranslate="artemisApp.assessmentDashboard.assessments"></div>
                         <div class="col-5">
-                            {{ totalNumberOfAssessments.total }} / {{ numberOfSubmissions.total }} ({{ totalAssessmentPercentage }}%) | {{ numberOfTutorAssessments }}
+                            {{ totalNumberOfAssessments() }} / {{ numberOfSubmissions().total }} ({{ totalAssessmentPercentage() }}%) | {{ numberOfTutorAssessments() }}
                         </div>
                     </div>
-                    @if (complaintsEnabled) {
+                    @if (complaintsEnabled()) {
                         <div class="row g-0 mb-1">
                             <div class="col-7" jhiTranslate="artemisApp.assessmentDashboard.complaints"></div>
                             <div class="col-5">
-                                @if (course?.isAtLeastInstructor) {
+                                @if (course()?.isAtLeastInstructor) {
                                     <div>
                                         <a id="open-complaints" [routerLink]="complaintsLink">
-                                            {{ complaints.done }} / {{ complaints.total }} ({{ complaints.doneToTotalPercentage }})
+                                            {{ complaints().done }} / {{ complaints().total }} ({{ complaints().doneToTotalPercentage }})
                                         </a>
                                         |
-                                        <a [routerLink]="complaintsLink" [queryParams]="{ tutorId: tutorId }">
-                                            {{ complaints.tutor }}
+                                        <a [routerLink]="complaintsLink" [queryParams]="{ tutorId: tutorId() }">
+                                            {{ complaints().tutor }}
                                         </a>
                                     </div>
                                 }
-                                @if (course && !course.isAtLeastInstructor) {
+                                @if (course() && !course().isAtLeastInstructor) {
                                     <div>
-                                        {{ complaints.done }} / {{ complaints.total }} ({{ complaints.doneToTotalPercentage }}) |
-                                        <a [routerLink]="complaintsLink" [queryParams]="{ tutorId: tutorId }">
-                                            {{ complaints.tutor }}
+                                        {{ complaints().done }} / {{ complaints().total }} ({{ complaints().doneToTotalPercentage }}) |
+                                        <a [routerLink]="complaintsLink" [queryParams]="{ tutorId: tutorId() }">
+                                            {{ complaints().tutor }}
                                         </a>
                                     </div>
                                 }
                             </div>
                         </div>
                     }
-                    @if (feedbackRequestEnabled) {
+                    @if (feedbackRequestEnabled()) {
                         <div class="row g-0 mb-1">
                             <div class="col-7" jhiTranslate="artemisApp.assessmentDashboard.moreFeedbackRequests"></div>
                             <div class="col-5">
-                                @if (course?.isAtLeastInstructor) {
+                                @if (course()?.isAtLeastInstructor) {
                                     <div>
-                                        @if (course?.isAtLeastInstructor) {
+                                        @if (course()?.isAtLeastInstructor) {
                                             <a [routerLink]="moreFeedbackRequestsLink">
-                                                {{ moreFeedbackRequests.done }} / {{ moreFeedbackRequests.total }} ({{ moreFeedbackRequests.doneToTotalPercentage }})
+                                                {{ moreFeedbackRequests().done }} / {{ moreFeedbackRequests().total }} ({{ moreFeedbackRequests().doneToTotalPercentage }})
                                             </a>
                                         }
                                         |
-                                        <a [routerLink]="moreFeedbackRequestsLink" [queryParams]="{ tutorId: tutorId }">
-                                            {{ moreFeedbackRequests.tutor }}
+                                        <a [routerLink]="moreFeedbackRequestsLink" [queryParams]="{ tutorId: tutorId() }">
+                                            {{ moreFeedbackRequests().tutor }}
                                         </a>
                                     </div>
                                 }
-                                @if (course && !course.isAtLeastInstructor) {
+                                @if (course() && !course().isAtLeastInstructor) {
                                     <div>
-                                        {{ moreFeedbackRequests.done }} / {{ moreFeedbackRequests.total }} ({{ moreFeedbackRequests.doneToTotalPercentage }}) |
-                                        <a [routerLink]="moreFeedbackRequestsLink" [queryParams]="{ tutorId: tutorId }">
-                                            {{ moreFeedbackRequests.tutor }}
+                                        {{ moreFeedbackRequests().done }} / {{ moreFeedbackRequests().total }} ({{ moreFeedbackRequests().doneToTotalPercentage }}) |
+                                        <a [routerLink]="moreFeedbackRequestsLink" [queryParams]="{ tutorId: tutorId() }">
+                                            {{ moreFeedbackRequests().tutor }}
                                         </a>
                                     </div>
                                 }
@@ -94,70 +94,70 @@
                     <div class="row g-0 mb-1">
                         <div class="col-7" jhiTranslate="artemisApp.assessmentDashboard.assessmentLocks"></div>
                         <div class="col-5">
-                            {{ assessmentLocks.tutor }} |
-                            <a [routerLink]="assessmentLocksLink" [queryParams]="{ tutorId: tutorId }">
-                                {{ assessmentLocks.tutor }}
+                            {{ assessmentLocks().tutor }} |
+                            <a [routerLink]="assessmentLocksLink" [queryParams]="{ tutorId: tutorId() }">
+                                {{ assessmentLocks().tutor }}
                             </a>
                         </div>
                     </div>
                     <div class="row g-0 mb-1">
                         <div class="col-7" jhiTranslate="artemisApp.exerciseAssessmentDashboard.ratings"></div>
                         <div class="col-5">
-                            @if (course?.isAtLeastInstructor) {
-                                <a [routerLink]="ratingsLink"> {{ ratings.total }} </a>
+                            @if (course()?.isAtLeastInstructor) {
+                                <a [routerLink]="ratingsLink"> {{ ratings().total }} </a>
                             }
-                            @if (course && !course.isAtLeastInstructor) {
-                                <span> {{ ratings.total }} </span>
+                            @if (course() && !course().isAtLeastInstructor) {
+                                <span> {{ ratings().total }} </span>
                             }
                             |
-                            {{ ratings.tutor }}
+                            {{ ratings().tutor }}
                         </div>
                     </div>
                 </div>
             }
-            @if (isExamMode) {
+            @if (isExamMode()) {
                 <div>
                     <div class="row g-0 mb-1">
                         <div class="col-7" jhiTranslate="artemisApp.assessmentDashboard.assessments"></div>
                         <div class="col-5">
-                            ({{ totalNumberOfAssessments.total }} / {{ numberOfSubmissions.total * numberOfCorrectionRounds }}) ({{ totalAssessmentPercentage }}%) |
-                            {{ numberOfTutorAssessments }}
+                            ({{ totalNumberOfAssessments() }} / {{ numberOfSubmissions().total * numberOfCorrectionRounds() }}) ({{ totalAssessmentPercentage() }}%) |
+                            {{ numberOfTutorAssessments() }}
                         </div>
                     </div>
                     <div class="row g-0 mb-1">
                         <div class="col-7" jhiTranslate="artemisApp.assessmentDashboard.complaints"></div>
                         <div class="col-5">
-                            @if (course?.isAtLeastInstructor) {
+                            @if (course()?.isAtLeastInstructor) {
                                 <div>
-                                    <a [routerLink]="complaintsLink" [queryParams]="{ correctionRound: numberOfCorrectionRounds - 1 }">
-                                        {{ complaints.done }} / {{ complaints.total }} ({{ complaints.doneToTotalPercentage }})
+                                    <a [routerLink]="complaintsLink" [queryParams]="{ correctionRound: numberOfCorrectionRounds() - 1 }">
+                                        {{ complaints().done }} / {{ complaints().total }} ({{ complaints().doneToTotalPercentage }})
                                     </a>
-                                    | {{ complaints.tutor }}
+                                    | {{ complaints().tutor }}
                                 </div>
                             }
                             <!-- TODO: make those links work (REST calls to fetch for individual students do not exist yet) -->
                             <!-- this value is not yet available for exam mode. As soon as the leaderboards exist add it again. {{ complaints.tutor }} -->
-                            @if (course && !course.isAtLeastInstructor) {
-                                <div>{{ complaints.done }} / {{ complaints.total }} ({{ complaints.doneToTotalPercentage }}) | -</div>
+                            @if (course() && !course().isAtLeastInstructor) {
+                                <div>{{ complaints().done }} / {{ complaints().total }} ({{ complaints().doneToTotalPercentage }}) | -</div>
                             }
                         </div>
                     </div>
                     <div class="row g-0 mb-1">
                         <div class="col-7" jhiTranslate="artemisApp.assessmentDashboard.assessmentLocks"></div>
                         <div class="col-5">
-                            {{ assessmentLocks.total }}
+                            {{ assessmentLocks().total }}
                             |
-                            <a [routerLink]="assessmentLocksLink" [queryParams]="{ tutorId: tutorId }">
-                                {{ assessmentLocks.tutor }}
+                            <a [routerLink]="assessmentLocksLink" [queryParams]="{ tutorId: tutorId() }">
+                                {{ assessmentLocks().tutor }}
                             </a>
                         </div>
                     </div>
                     <div class="row g-0 mb-1">
                         <div class="col-7" jhiTranslate="artemisApp.assessmentDashboard.totalAssessmentsForCorrectionrounds"></div>
                         <div class="col-5">
-                            {{ numberOfAssessmentsOfCorrectionRounds[0].inTime }}
-                            @if (numberOfAssessmentsOfCorrectionRounds[1]) {
-                                <span> - {{ numberOfAssessmentsOfCorrectionRounds[1].inTime }}</span>
+                            {{ numberOfAssessmentsOfCorrectionRounds()[0].inTime }}
+                            @if (numberOfAssessmentsOfCorrectionRounds()[1]) {
+                                <span> - {{ numberOfAssessmentsOfCorrectionRounds()[1].inTime }}</span>
                             }
                         </div>
                     </div>

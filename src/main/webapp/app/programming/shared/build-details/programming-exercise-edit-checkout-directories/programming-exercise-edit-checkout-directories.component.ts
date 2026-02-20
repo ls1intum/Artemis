@@ -99,8 +99,8 @@ export class ProgrammingExerciseEditCheckoutDirectoriesComponent {
     calculateFormValid(): void {
         const isFormValid = Boolean(
             (!this.field_assignmentRepositoryCheckoutPath() || this.field_assignmentRepositoryCheckoutPath()?.valid) &&
-                (!this.field_testRepositoryCheckoutPath() || this.field_testRepositoryCheckoutPath()?.valid) &&
-                (!this.field_solutionRepositoryCheckoutPath() || this.field_solutionRepositoryCheckoutPath()?.valid),
+            (!this.field_testRepositoryCheckoutPath() || this.field_testRepositoryCheckoutPath()?.valid) &&
+            (!this.field_solutionRepositoryCheckoutPath() || this.field_solutionRepositoryCheckoutPath()?.valid),
         );
         this.formValid = isFormValid && this.areValuesUnique([this.assignmentCheckoutPath, this.testCheckoutPath, this.solutionCheckoutPath]);
         this.formValidChanges.next(this.formValid);

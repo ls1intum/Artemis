@@ -1,20 +1,18 @@
 package de.tum.cit.aet.artemis.modeling.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -51,6 +49,7 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.web.AbstractSubmissionResource;
+import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
@@ -60,7 +59,7 @@ import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
 /**
  * REST controller for managing ModelingSubmission.
  */
-@Profile(PROFILE_CORE)
+@Conditional(ModelingEnabled.class)
 @Lazy
 @RestController
 @RequestMapping("api/modeling/")
@@ -99,7 +98,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     }
 
     /**
-     * POST /exercises/{exerciseId}/modeling-submissions : Create a new modeling submission. This is called when a student saves his model the first time after
+     * POST /exercises/{exerciseId}/modeling-submissions : Create a new modeling submission. This is called when a student saves their model the first time after
      * starting the exercise or starting a retry.
      *
      * @param exerciseId         the id of the exercise for which to init a participation
@@ -135,7 +134,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         return handleModelingSubmission(exerciseId, modelingSubmission);
     }
 
-    @NotNull
+    @NonNull
     private ResponseEntity<ModelingSubmission> handleModelingSubmission(Long exerciseId, ModelingSubmission modelingSubmission) {
         long start = System.currentTimeMillis();
         final var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -395,7 +394,8 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         // do not send the result to the client if the assessment is not finished
         Result latestResult = modelingSubmission.getLatestResult();
-        if (latestResult != null && (latestResult.getCompletionDate() == null || latestResult.getAssessor() == null)) {
+        if (latestResult != null && latestResult.getAssessmentType() != AssessmentType.AUTOMATIC_ATHENA
+                && (latestResult.getCompletionDate() == null || latestResult.getAssessor() == null)) {
             modelingSubmission.setResults(List.of());
         }
 

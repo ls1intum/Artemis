@@ -1,33 +1,41 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Organization } from 'app/core/shared/entities/organization.model';
-import { TranslateDirective } from '../language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { RouterLink } from '@angular/router';
+import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
+
+export interface OrganizationSelectorDialogData {
+    organizations?: Organization[];
+}
 
 @Component({
     selector: 'jhi-organization-selector',
     templateUrl: './organization-selector.component.html',
-    imports: [TranslateDirective],
+    imports: [TranslateDirective, RouterLink, HasAnyAuthorityDirective],
 })
 export class OrganizationSelectorComponent implements OnInit {
-    private activeModal = inject(NgbActiveModal);
-    private organizationService = inject(OrganizationManagementService);
+    private readonly dialogRef = inject(DynamicDialogRef);
+    private readonly config = inject(DynamicDialogConfig<OrganizationSelectorDialogData>);
+    private readonly organizationService = inject(OrganizationManagementService);
 
-    organizations: Organization[];
+    readonly organizations = signal<Organization[] | undefined>(this.config.data?.organizations);
     availableOrganizations: Organization[];
 
     ngOnInit(): void {
         this.organizationService.getOrganizations().subscribe((data) => {
             this.availableOrganizations = data;
-            if (this.organizations !== undefined) {
+            const currentOrganizations = this.organizations();
+            if (currentOrganizations !== undefined) {
                 this.availableOrganizations = this.availableOrganizations.filter((organization) => {
-                    return !this.organizations.some((currentOrganization) => currentOrganization.id === organization.id);
+                    return !currentOrganizations.some((currentOrganization) => currentOrganization.id === organization.id);
                 });
             }
         });
     }
 
     closeModal(organization: Organization | undefined) {
-        this.activeModal.close(organization);
+        this.dialogRef.close(organization);
     }
 }

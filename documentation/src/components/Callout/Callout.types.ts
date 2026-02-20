@@ -35,6 +35,6 @@ export const CALLOUT_STYLE_CONFIG: Record<CalloutVariant, {
     danger: {
         backgroundColor: 'var(--ifm-color-danger-contrast-background)',
         borderColor: 'var(--ifm-color-danger-dark)',
-        icon: '🚫',
+        icon: '❗',
     },
 };

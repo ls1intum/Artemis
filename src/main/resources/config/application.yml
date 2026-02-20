@@ -15,6 +15,8 @@
 # ===================================================================
 
 logging:
+    pattern:
+        correlation: ""
     level:
         ROOT: INFO
         de.tum.cit.aet.artemis: INFO
@@ -32,6 +34,8 @@ logging:
 artemis:
     version: #project.version#
     file-upload-path: uploads
+    feedback:
+        max-feedback-length: 20000  # Maximum length for feedback text before truncation
     submission-export-path: exports
     temp-path: ./tmp                                # a folder in which temporary files are stored, e.g. for the programming exercise import from file
     bcrypt-salt-rounds: 11 #default value, see application-artemis.yml for more information how to override and customize this value
@@ -69,7 +73,7 @@ artemis:
                 java:
                     # possible overrides: maven, gradle
                     default: "ls1tum/artemis-maven-template:java17-25"
-                    maven_blackbox: "ghcr.io/uni-passau-artemis/artemis-dejagnu:22"
+                    maven_blackbox: "ghcr.io/uni-passau-artemis/artemis-dejagnu:25"
                 kotlin:
                     # possible overrides: maven, gradle
                     default: "ls1tum/artemis-maven-template:java17-25"
@@ -136,7 +140,38 @@ artemis:
         url: # Set this in production environment (e.g., https://nebula.example.com)
         secret-token: # Set this in production environment
 
-    # Default security configuration for internal endpoints accessed by other Artemis components 
+    # Theia configuration for online IDE functionality
+    theia:
+        enabled: false
+        portal-url: https://your-theia-instance.com
+
+        # Theia IDE images available for the different programming languages
+        images:
+            # Upper level key is the language category (must match the language key in the programming-exercise configuration)
+          java:
+            # Lower level key can be multiple flavors of the image, e.g. version, tag, or additional dependencies
+            java17: "my-kubernetes-appdefinition"
+            # Add more flavors here (e.g. Java-11, Java-8, etc.)
+            # Add more languages here (e.g. c, python, etc.)
+            c:
+              C: "my-kubernetes-appdefinition"
+
+
+    # Iris / Pyris configuration for AI-powered features
+    iris:
+        enabled: false # Set this to true in prod if you want to use Iris
+        url: # Set this in production environment (e.g., https://pyris.example.com)
+        secret-token: # Set this in production environment
+        ratelimit:
+            # Use -1 for both values to indicate unlimited (no rate limiting)
+            # Otherwise: default-limit >= 0 (0 = no requests allowed), default-timeframe-hours >= 1
+            default-limit: -1
+            default-timeframe-hours: -1
+
+    weaviate:
+        enabled: false
+
+    # Default security configuration for internal endpoints accessed by other Artemis components
     # Currently set to allow all IPs. Adjust as necessary for your deployment.
     security:
         internal:
@@ -195,7 +230,15 @@ management:
                 requests:
                     name: http.server.requests
 
-spring:
+spring: #disabled by default, you must enable it
+    ai:
+        model:
+            chat: none # possible values: openai, azure-openai, none
+            audio.speech: none
+            audio.transcription: none
+            embedding: none
+            image: none
+            moderation:  none
     application:
         name: Artemis
     jmx:
@@ -315,22 +358,31 @@ server:
     shutdown: graceful
     forward-headers-strategy: native
 
+# The below configuration is given so the Sentry Logback appender is configured properly
+# If these are set through Java code, the Logback appender fails to pick up the desired settings
+# Errors are still reported if the appender fails, but traces are missing
 sentry:
+    dsn: https://e52d0b9b6b61769f50b088634b4bc781@sentry.aet.cit.tum.de/2 # Leave empty to disable Sentry, must be a valid URI
     logging:
         enabled: true
         minimum-breadcrumb-level: error
         minimum-event-level: error
     sample-rate: 1
-    traces-sample-rate: 0.2
+    release: ${artemis.version}
+    send-default-pii: true
+    # This is a placeholder value overwritten in both application-prod.yml and application-dev.yml.
+    # It is only provided to prevent the SDK from choosing the default value 'production', which might lead to confusion
+    environment: test
 
 # Properties to be exposed on the /info management endpoint
 info:
     sentry:
-        dsn: https://e52d0b9b6b61769f50b088634b4bc781@sentry.ase.in.tum.de/2 # Leave empty to disable Sentry, must be a valid URI
+        dsn: ${sentry.dsn}
     # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
     # default value set to false
     textAssessmentAnalyticsEnabled: false
     studentExamStoreSessionData: true
+    localLLMDeploymentEnabled: false # Defines whether local on-premise LLMs are available or not
 
 # ===================================================================
 # JHipster specific properties
@@ -355,15 +407,29 @@ jhipster:
         password: AN-ADMIN-PASSWORD-THAT-MUST-BE-CHANGED (FROM REGISTRY CONFIG)
     http:
         cache: # Used by the CachingHttpHeadersFilter
-            timeToLiveInDays: 1461
+            # 7 days balances caching benefits with allowing bug fixes to propagate within a reasonable timeframe.
+            # Longer durations (e.g., years) make it difficult to push fixes to users who have cached broken responses.
+            timeToLiveInDays: 7
     cache: # Cache configuration
         hazelcast: # Hazelcast distributed cache
             time-to-live-seconds: 3600
             backup-count: 1
 
-# Eureka configuration
+# =======================================================================================
+# EUREKA CONFIGURATION (Service Discovery via JHipster Registry)
+# =======================================================================================
+# Eureka is used for service discovery, allowing Artemis nodes (core servers and build agents)
+# to find each other dynamically. The JHipster Registry acts as the Eureka server.
+#
+# Key use cases:
+# - Build agents discover core nodes to establish Hazelcast client connections
+# - Core nodes discover other core nodes for Hazelcast cluster formation
+# - Load balancers can use Eureka to find healthy instances
+# =======================================================================================
 eureka:
     client:
+        region: default
+        shouldEnforceRegistrationAtInit: false
         enabled: false
         service-url:
             defaultZone: http://admin:${jhipster.registry.password}@localhost:8761/eureka/
@@ -371,14 +437,41 @@ eureka:
             enabled: false
         fetch-registry: true
         register-with-eureka: true
-        instance-info-replication-interval-seconds: 10
-        registry-fetch-interval-seconds: 10
+        instance-info-replication-interval-seconds: 15
+        registry-fetch-interval-seconds: 15
+        use-dns-for-fetching-service-urls: false
     instance:
         prefer-ip-address: true
         appname: Artemis
         instanceId: Artemis:1
-        lease-renewal-interval-in-seconds: 5
-        lease-expiration-duration-in-seconds: 10
+        # -----------------------------------------------------------------------------------
+        # EUREKA LEASE/HEARTBEAT CONFIGURATION
+        # -----------------------------------------------------------------------------------
+        # These settings control how quickly the Eureka server (JHipster Registry) detects
+        # that an Artemis instance (core node or build agent) has gone offline.
+        #
+        # How it works:
+        # - Each instance sends a heartbeat to Eureka every 'lease-renewal-interval-in-seconds'
+        # - If Eureka doesn't receive a heartbeat within 'lease-expiration-duration-in-seconds',
+        #   the instance is marked as DOWN and eventually evicted from the registry
+        #
+        # Values chosen (10s interval, 30s expiration):
+        # - Balanced between fast detection and tolerance for brief network issues
+        # - Allows for 3 missed heartbeats before declaring an instance as DOWN
+        # - More conservative than Hazelcast (5s/15s) because Eureka handles service discovery
+        #   across potentially less reliable networks, and false-positive deregistrations
+        #   can cause unnecessary service disruption
+        # - Still fast enough to remove crashed instances within ~30-45 seconds
+        #
+        # Note: The actual eviction time also depends on the Eureka server's eviction interval
+        # (configured on the JHipster Registry side, typically runs every 60 seconds by default)
+        #
+        # Comparison with Hazelcast timeouts:
+        # - Hazelcast client heartbeat: 5s interval, 15s timeout (for real-time build agent status)
+        # - Eureka lease: 10s interval, 30s timeout (for service discovery, more tolerant)
+        # -----------------------------------------------------------------------------------
+        lease-renewal-interval-in-seconds: 10
+        lease-expiration-duration-in-seconds: 30
         status-page-url-path: ${management.endpoints.web.base-path}/info
         health-check-url-path: ${management.endpoints.web.base-path}/health
         metadata-map:

@@ -1,6 +1,5 @@
 import { Component, OnChanges, effect, inject, input, output } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { TranslateService } from '@ngx-translate/core';
 import { CompetencyTaxonomy, CourseCompetency, CourseCompetencyValidators, DEFAULT_MASTERY_THRESHOLD } from 'app/atlas/shared/entities/competency.model';
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -37,7 +36,6 @@ export class CommonCourseCompetencyFormComponent implements OnChanges {
     isEditMode = input<boolean>(false);
     isInConnectMode = input<boolean>(false);
     isInSingleLectureMode = input<boolean>(false);
-    lecturesOfCourseWithLectureUnits = input<Lecture[]>([]);
     averageStudentScore = input<number>();
     form = input.required<FormGroup>();
     courseCompetency = input.required<CourseCompetency>();

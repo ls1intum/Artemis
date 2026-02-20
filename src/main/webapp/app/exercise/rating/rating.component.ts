@@ -48,7 +48,7 @@ export class RatingComponent implements OnInit, OnChanges {
      * Update/Create new Rating for the result
      * @param event - starRating component that holds new rating value
      */
-    onRate(event: { oldValue: number; newValue: number; starRating: StarRatingComponent }) {
+    onRate(event: { oldValue: number; newValue: number }) {
         // block rating to prevent double sending of post request
         if (this.disableRating || !this.result) {
             return;

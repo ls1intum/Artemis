@@ -1,17 +1,15 @@
 package de.tum.cit.aet.artemis.fileupload.repository;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.hibernate.NonUniqueResultException;
+import org.jspecify.annotations.NonNull;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -20,12 +18,13 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.fileupload.config.FileUploadEnabled;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 
 /**
  * Spring Data JPA repository for the FileUploadExercise entity.
  */
-@Profile(PROFILE_CORE)
+@Conditional(FileUploadEnabled.class)
 @Lazy
 @Repository
 public interface FileUploadExerciseRepository extends ArtemisJpaRepository<FileUploadExercise, Long>, JpaSpecificationExecutor<FileUploadExercise> {
@@ -44,6 +43,22 @@ public interface FileUploadExerciseRepository extends ArtemisJpaRepository<FileU
     Optional<FileUploadExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(Long exerciseId);
 
     @Query("""
+            SELECT DISTINCT fileUploadExercise
+            FROM FileUploadExercise fileUploadExercise
+                LEFT JOIN FETCH fileUploadExercise.exampleSubmissions exampleSubmissions
+                LEFT JOIN FETCH exampleSubmissions.submission submission
+                LEFT JOIN FETCH submission.results results
+                LEFT JOIN FETCH results.feedbacks
+                LEFT JOIN FETCH results.assessor
+                LEFT JOIN FETCH fileUploadExercise.teamAssignmentConfig
+                LEFT JOIN FETCH fileUploadExercise.gradingCriteria
+                LEFT JOIN FETCH fileUploadExercise.competencyLinks cl
+                LEFT JOIN FETCH cl.competency
+            WHERE fileUploadExercise.id = :exerciseId
+            """)
+    Optional<FileUploadExercise> findByIdWithExampleSubmissionsAndResultsAndCompetenciesAndGradingCriteria(@Param("exerciseId") Long exerciseId);
+
+    @Query("""
             SELECT f
             FROM FileUploadExercise f
                 LEFT JOIN FETCH f.competencyLinks
@@ -51,6 +66,17 @@ public interface FileUploadExerciseRepository extends ArtemisJpaRepository<FileU
                 AND f.course.id = :courseId
             """)
     Set<FileUploadExercise> findAllWithCompetenciesByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId) throws NonUniqueResultException;
+
+    /**
+     * Finds a FileUploadExercise with minimal data necessary for exercise versioning.
+     * Only includes core configuration data, NOT submissions, results, or example submissions.
+     * Basic FileUploadExercise fields (exampleSolution, filePattern) are already included in the entity.
+     *
+     * @param exerciseId the id of the exercise to find
+     * @return the exercise with minimal data necessary for exercise versioning
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "competencyLinks", "categories", "teamAssignmentConfig", "gradingCriteria", "plagiarismDetectionConfig" })
+    Optional<FileUploadExercise> findForVersioningById(long exerciseId);
 
     /**
      * Finds a file upload exercise by its title and course id and throws a NoUniqueQueryException if multiple exercises are found.
@@ -68,7 +94,7 @@ public interface FileUploadExerciseRepository extends ArtemisJpaRepository<FileU
         return allExercises.stream().findFirst();
     }
 
-    @NotNull
+    @NonNull
     default FileUploadExercise findWithEagerCompetenciesByIdElseThrow(Long exerciseId) {
         return getValueElseThrow(findWithEagerCompetenciesById(exerciseId), exerciseId);
     }
@@ -76,7 +102,7 @@ public interface FileUploadExerciseRepository extends ArtemisJpaRepository<FileU
     @EntityGraph(type = LOAD, attributePaths = { "gradingCriteria" })
     Optional<FileUploadExercise> findWithGradingCriteriaById(Long exerciseId);
 
-    @NotNull
+    @NonNull
     default FileUploadExercise findWithGradingCriteriaByIdElseThrow(Long exerciseId) {
         return getValueElseThrow(findWithGradingCriteriaById(exerciseId), exerciseId);
     }

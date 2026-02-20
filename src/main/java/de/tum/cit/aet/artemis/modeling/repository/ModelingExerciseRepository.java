@@ -1,17 +1,14 @@
 package de.tum.cit.aet.artemis.modeling.repository;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -20,12 +17,13 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 
 /**
  * Spring Data JPA repository for the ModelingExercise entity.
  */
-@Profile(PROFILE_CORE)
+@Conditional(ModelingEnabled.class)
 @Lazy
 @Repository
 public interface ModelingExerciseRepository extends ArtemisJpaRepository<ModelingExercise, Long>, JpaSpecificationExecutor<ModelingExercise> {
@@ -59,38 +57,22 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
             """)
     Optional<ModelingExercise> findByIdWithExampleSubmissionsAndResultsAndGradingCriteria(@Param("exerciseId") Long exerciseId);
 
-    /**
-     * Get all modeling exercises that need to be scheduled: Those must satisfy one of the following requirements:
-     * <ol>
-     * <li>Automatic assessment is enabled and the due date is in the future</li>
-     * </ol>
-     *
-     * @param now the current time
-     * @return List of the exercises that should be scheduled
-     */
     @Query("""
-            SELECT DISTINCT exercise
-            FROM ModelingExercise exercise
-            WHERE exercise.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC
-                AND exercise.dueDate > :now
+            SELECT DISTINCT modelingExercise
+            FROM ModelingExercise modelingExercise
+                LEFT JOIN FETCH modelingExercise.exampleSubmissions exampleSubmissions
+                LEFT JOIN FETCH exampleSubmissions.submission submission
+                LEFT JOIN FETCH submission.results results
+                LEFT JOIN FETCH results.feedbacks
+                LEFT JOIN FETCH results.assessor
+                LEFT JOIN FETCH modelingExercise.teamAssignmentConfig
+                LEFT JOIN FETCH modelingExercise.gradingCriteria
+                LEFT JOIN FETCH modelingExercise.competencyLinks cl
+                LEFT JOIN FETCH cl.competency
+                LEFT JOIN FETCH modelingExercise.plagiarismDetectionConfig
+            WHERE modelingExercise.id = :exerciseId
             """)
-    List<ModelingExercise> findAllToBeScheduled(@Param("now") ZonedDateTime now);
-
-    /**
-     * Returns the modeling exercises that are part of an exam with an end date after than the provided date.
-     * This method also fetches the exercise group and exam.
-     *
-     * @param dateTime ZonedDatetime object.
-     * @return List<ModelingExercise> (can be empty)
-     */
-    @Query("""
-            SELECT me
-            FROM ModelingExercise me
-                LEFT JOIN FETCH me.exerciseGroup eg
-                LEFT JOIN FETCH eg.exam e
-            WHERE e.endDate > :dateTime
-            """)
-    List<ModelingExercise> findAllWithEagerExamByExamEndDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
+    Optional<ModelingExercise> findByIdWithExampleSubmissionsAndResultsAndCompetenciesAndGradingCriteria(@Param("exerciseId") Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.submissions", "studentParticipations.submissions.results" })
     Optional<ModelingExercise> findWithStudentParticipationsSubmissionsResultsById(Long exerciseId);
@@ -104,6 +86,17 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
                 AND m.course.id = :courseId
             """)
     Set<ModelingExercise> findAllWithCompetenciesByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId);
+
+    /**
+     * Finds a ModelingExercise with minimal data necessary for exercise versioning.
+     * Only includes core configuration data, NOT submissions, results, or example submissions.
+     * Basic ModelingExercise fields (exampleSolutionModel, exampleSolutionExplanation, diagramType) are already included in the entity.
+     *
+     * @param exerciseId the id of the exercise to fetch
+     * @return {@link ModelingExercise}
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "competencyLinks", "categories", "teamAssignmentConfig", "gradingCriteria", "plagiarismDetectionConfig" })
+    Optional<ModelingExercise> findForVersioningById(long exerciseId);
 
     /**
      * Finds a modeling exercise by its title and course id and throws a NoUniqueQueryException if multiple exercises are found.
@@ -121,23 +114,28 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
         return allExercises.stream().findFirst();
     }
 
-    @NotNull
+    @NonNull
     default ModelingExercise findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(long exerciseId) {
         return getValueElseThrow(findWithEagerExampleSubmissionsAndCompetenciesById(exerciseId), exerciseId);
     }
 
-    @NotNull
+    @NonNull
     default ModelingExercise findByIdWithExampleSubmissionsAndResultsElseThrow(long exerciseId) {
         return getValueElseThrow(findByIdWithExampleSubmissionsAndResultsAndGradingCriteria(exerciseId), exerciseId);
     }
 
-    @NotNull
+    @NonNull
     default ModelingExercise findByIdWithStudentParticipationsSubmissionsResultsElseThrow(long exerciseId) {
         return getValueElseThrow(findWithStudentParticipationsSubmissionsResultsById(exerciseId), exerciseId);
     }
 
-    @NotNull
+    @NonNull
     default ModelingExercise findWithEagerCompetenciesByIdElseThrow(long exerciseId) {
         return getValueElseThrow(findWithEagerCompetenciesById(exerciseId), exerciseId);
+    }
+
+    @NonNull
+    default ModelingExercise findByIdWithExampleSubmissionsResultsCompetenciesAndGradingCriteriaElseThrow(long exerciseId) {
+        return getValueElseThrow(findByIdWithExampleSubmissionsAndResultsAndCompetenciesAndGradingCriteria(exerciseId), exerciseId);
     }
 }

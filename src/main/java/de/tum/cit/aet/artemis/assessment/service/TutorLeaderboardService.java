@@ -3,12 +3,12 @@ package de.tum.cit.aet.artemis.assessment.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -24,7 +24,6 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.TutorLeaderboardDTO;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 @Profile(PROFILE_CORE)
@@ -75,15 +74,15 @@ public class TutorLeaderboardService {
     /**
      * Returns tutor leaderboards for the specified course.
      *
-     * @param course - course for which leaderboard is fetched
-     * @param exam   - the exam for which the leaderboard will be fetched
+     * @param course      - course for which leaderboard is fetched
+     * @param exerciseIds - the exercise ids for which the leaderboard will be fetched
      * @return list of tutor leaderboard objects
      */
-    public List<TutorLeaderboardDTO> getExamLeaderboard(Course course, Exam exam) {
+    public List<TutorLeaderboardDTO> getExamLeaderboard(Course course, Collection<Long> exerciseIds) {
         var tutors = userRepository.getTutors(course);
-        var tutorLeaderboardAssessments = resultRepository.findTutorLeaderboardAssessmentByExamId(exam.getId());
-        var tutorLeaderboardComplaints = complaintRepository.findTutorLeaderboardComplaintsByExamId(exam.getId());
-        var tutorLeaderboardComplaintResponses = complaintRepository.findTutorLeaderboardComplaintResponsesByExamId(exam.getId());
+        var tutorLeaderboardAssessments = resultRepository.findTutorLeaderboardAssessmentByExerciseIds(exerciseIds);
+        var tutorLeaderboardComplaints = complaintRepository.findTutorLeaderboardComplaintsByExerciseIds(exerciseIds);
+        var tutorLeaderboardComplaintResponses = complaintRepository.findTutorLeaderboardComplaintResponsesByExerciseIds(exerciseIds);
         return aggregateTutorLeaderboardData(tutors, tutorLeaderboardAssessments, tutorLeaderboardComplaints, new ArrayList<>(), tutorLeaderboardComplaintResponses,
                 new ArrayList<>(), true);
     }
@@ -105,7 +104,7 @@ public class TutorLeaderboardService {
                 tutorLeaderboardComplaintResponses, tutorLeaderboardAnsweredMoreFeedbackRequests, exercise.isExamExercise());
     }
 
-    @NotNull
+    @NonNull
     private List<TutorLeaderboardDTO> aggregateTutorLeaderboardData(Set<User> tutors, List<TutorLeaderboardAssessmentsDTO> assessments,
             List<TutorLeaderboardComplaintsDTO> complaints, List<TutorLeaderboardMoreFeedbackRequestsDTO> feedbackRequests,
             List<TutorLeaderboardComplaintResponsesDTO> complaintResponses, List<TutorLeaderboardAnsweredMoreFeedbackRequestsDTO> answeredFeedbackRequests, boolean isExam) {

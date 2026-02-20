@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, OnInit, Renderer2, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, NgZone, OnDestroy, OnInit, Renderer2, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { MonacoTextEditorAdapter } from 'app/shared/monaco-editor/model/actions/adapter/monaco-text-editor.adapter';
 import { Disposable, EditorPosition, EditorRange, MonacoEditorTextModel } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
@@ -47,6 +47,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     lineHighlights: MonacoEditorLineHighlight[] = [];
     actions: TextEditorAction[] = [];
     lineDecorationsHoverButton?: MonacoEditorLineDecorationsHoverButton;
+    private lineDecorationsFoldingBeforeHoverButton?: boolean;
+    private lineDecorationsWidthBeforeHoverButton?: string | number;
 
     /*
      * Inputs and outputs.
@@ -66,6 +68,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private contentHeightListener?: Disposable;
     private textChangedListener?: Disposable;
     private blurEditorWidgetListener?: Disposable;
+    private focusEditorTextListener?: Disposable;
     private textChangedEmitTimeouts = new Map<string, NodeJS.Timeout>();
     private customBackspaceCommandId: string | undefined;
 
@@ -76,6 +79,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private readonly translateService = inject(TranslateService);
     private readonly elementRef = inject(ElementRef);
     private readonly monacoEditorService = inject(MonacoEditorService);
+    private readonly ngZone = inject(NgZone);
 
     constructor() {
         /*
@@ -134,6 +138,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         return this._editor.getModel();
     }
 
+    public getEditor() {
+        return this._editor;
+    }
+
     public getLineContent(lineNumber: number): string {
         const model = this._editor.getModel();
         return model ? model.getLineContent(lineNumber) : '';
@@ -145,27 +153,29 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         });
         resizeObserver.observe(this.monacoEditorContainerElement);
 
-        this.textChangedListener = this._editor.onDidChangeModelContent(() => {
-            this.emitTextChangeEvent();
-        }, this);
+        this.ngZone.runOutsideAngular(() => {
+            this.textChangedListener = this._editor.onDidChangeModelContent(() => {
+                this.ngZone.run(() => this.emitTextChangeEvent());
+            }, this);
 
-        this.contentHeightListener = this._editor.onDidContentSizeChange((event) => {
-            if (event.contentHeightChanged) {
-                this.contentHeightChanged.emit(event.contentHeight + this._editor.getOption(monaco.editor.EditorOption.lineHeight));
-            }
-        });
+            this.contentHeightListener = this._editor.onDidContentSizeChange((event) => {
+                if (event.contentHeightChanged) {
+                    this.ngZone.run(() => this.contentHeightChanged.emit(event.contentHeight + this._editor.getOption(monaco.editor.EditorOption.lineHeight)));
+                }
+            });
 
-        this.blurEditorWidgetListener = this._editor.onDidBlurEditorWidget(() => {
-            // On iOS, the editor does not lose focus when clicking outside of it. This listener ensures that the editor loses focus when the editor widget loses focus.
-            // See https://github.com/microsoft/monaco-editor/issues/307
-            if (getOS() === 'iOS' && document.activeElement && 'blur' in document.activeElement && typeof document.activeElement.blur === 'function') {
-                document.activeElement.blur();
-            }
-            this.onBlurEditor.emit();
-        });
+            this.blurEditorWidgetListener = this._editor.onDidBlurEditorWidget(() => {
+                // On iOS, the editor does not lose focus when clicking outside of it. This listener ensures that the editor loses focus when the editor widget loses focus.
+                // See https://github.com/microsoft/monaco-editor/issues/307
+                if (getOS() === 'iOS' && document.activeElement && 'blur' in document.activeElement && typeof document.activeElement.blur === 'function') {
+                    (document.activeElement as HTMLElement).blur();
+                }
+                this.ngZone.run(() => this.onBlurEditor.emit());
+            });
 
-        this._editor.onDidFocusEditorText(() => {
-            this.registerCustomBackspaceAction(this._editor);
+            this.focusEditorTextListener = this._editor.onDidFocusEditorText(() => {
+                this.ngZone.run(() => this.registerCustomBackspaceAction(this._editor));
+            });
         });
 
         this.registerCustomBackspaceAction(this._editor);
@@ -177,6 +187,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.textChangedListener?.dispose();
         this.contentHeightListener?.dispose();
         this.blurEditorWidgetListener?.dispose();
+        this.focusEditorTextListener?.dispose();
 
         // Clean up all per-model debounce timeouts
         this.textChangedEmitTimeouts.forEach((timeout) => clearTimeout(timeout));
@@ -198,10 +209,14 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         if (existing) {
             clearTimeout(existing);
         }
-        const timeoutId = setTimeout(() => {
-            this.textChanged.emit({ text: newValue, fileName: fullFilePath });
-            this.textChangedEmitTimeouts.delete(modelKey);
-        }, delay);
+        const timeoutId = this.ngZone.runOutsideAngular(() =>
+            setTimeout(() => {
+                this.ngZone.run(() => {
+                    this.textChanged.emit({ text: newValue, fileName: fullFilePath });
+                    this.textChangedEmitTimeouts.delete(modelKey);
+                });
+            }, delay),
+        );
         this.textChangedEmitTimeouts.set(modelKey, timeoutId);
     }
 
@@ -221,6 +236,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
     getPosition(): EditorPosition {
         return this._editor.getPosition() ?? { column: 0, lineNumber: 0 };
+    }
+
+    revealLine(lineNumber: number, scrollType: monaco.editor.ScrollType): void {
+        this._editor.revealLineNearTop(lineNumber, scrollType);
     }
 
     setPosition(position: EditorPosition) {
@@ -352,6 +371,22 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.lineWidgets = [];
     }
 
+    /**
+     * Dispose all line widgets whose IDs start with the given prefix.
+     * This allows selective widget updates without clearing unrelated widgets.
+     */
+    disposeWidgetsByPrefix(prefix: string): void {
+        const remaining: MonacoEditorLineWidget[] = [];
+        for (const widget of this.lineWidgets) {
+            if (widget.getId().startsWith(prefix)) {
+                widget.dispose();
+            } else {
+                remaining.push(widget);
+            }
+        }
+        this.lineWidgets = remaining;
+    }
+
     disposeAnnotations() {
         this.buildAnnotations.forEach((o) => {
             o.dispose();
@@ -429,6 +464,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * @param clickCallback The callback to invoke when the button is clicked. The line number is passed as an argument.
      */
     setLineDecorationsHoverButton(className: string, clickCallback: (lineNumber: number) => void): void {
+        if (!this.lineDecorationsHoverButton) {
+            this.lineDecorationsFoldingBeforeHoverButton = this._editor.getOption(monaco.editor.EditorOption.folding);
+            this.lineDecorationsWidthBeforeHoverButton = this._editor.getOption(monaco.editor.EditorOption.lineDecorationsWidth) as string | number;
+        }
         this.lineDecorationsHoverButton?.dispose();
         this.lineDecorationsHoverButton = new MonacoEditorLineDecorationsHoverButton(
             this._editor,
@@ -441,6 +480,32 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             folding: false,
             lineDecorationsWidth: MonacoEditorComponent.DEFAULT_LINE_DECORATION_BUTTON_WIDTH,
         });
+    }
+
+    /**
+     * Removes the line decorations hover button and restores the editor options from before the button was added.
+     */
+    clearLineDecorationsHoverButton(): void {
+        const hadHoverButton = !!this.lineDecorationsHoverButton;
+        this.lineDecorationsHoverButton?.dispose();
+        this.lineDecorationsHoverButton = undefined;
+        if (!hadHoverButton) {
+            return;
+        }
+
+        const optionsToRestore: monaco.editor.IEditorOptions = {};
+        if (this.lineDecorationsFoldingBeforeHoverButton !== undefined) {
+            optionsToRestore.folding = this.lineDecorationsFoldingBeforeHoverButton;
+        }
+        if (this.lineDecorationsWidthBeforeHoverButton !== undefined) {
+            optionsToRestore.lineDecorationsWidth = this.lineDecorationsWidthBeforeHoverButton;
+        }
+        if (Object.keys(optionsToRestore).length > 0) {
+            this._editor.updateOptions(optionsToRestore);
+        }
+
+        this.lineDecorationsFoldingBeforeHoverButton = undefined;
+        this.lineDecorationsWidthBeforeHoverButton = undefined;
     }
 
     /**
@@ -499,6 +564,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
     /**
      * Registers a custom backspace command that deletes the last grapheme cluster when pressing backspace.
+     * Uses a targeted delete range (only the grapheme) instead of replacing the entire line,
+     * so that collaborative editing (y-monaco) sees a minimal edit and cursor positions stay correct.
      * @param editor The editor to register the command for.
      */
     private registerCustomBackspaceAction(editor: monaco.editor.IStandaloneCodeEditor) {
@@ -530,23 +597,18 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
                     const lastGrapheme = graphemes.pop();
                     const deletedLength = lastGrapheme?.length ?? 1;
-                    const newTextBeforeCursor = graphemes.join('');
-                    const textAfterCursor = lineContent.substring(column - 1);
-
-                    const newLineContent = newTextBeforeCursor + textAfterCursor;
+                    const deleteStartColumn = column - deletedLength;
 
                     model.pushEditOperations(
                         [],
                         [
                             {
-                                range: new monaco.Range(lineNumber, 1, lineNumber, lineContent.length + 1),
-                                text: newLineContent,
+                                range: new monaco.Range(lineNumber, deleteStartColumn, lineNumber, column),
+                                text: '',
                             },
                         ],
-                        () => null,
+                        () => [new monaco.Selection(lineNumber, deleteStartColumn, lineNumber, deleteStartColumn)],
                     );
-                    const newCursorPosition = column - deletedLength;
-                    editor.setSelection(new monaco.Range(lineNumber, newCursorPosition, lineNumber, newCursorPosition));
                 },
                 'editorTextFocus && !findWidgetVisible',
             ) || undefined;

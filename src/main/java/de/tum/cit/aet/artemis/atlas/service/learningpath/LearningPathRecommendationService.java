@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.atlas.service.learningpath;
 
-import static de.tum.cit.aet.artemis.atlas.domain.profile.PreferenceScale.HIGH;
-import static de.tum.cit.aet.artemis.atlas.domain.profile.PreferenceScale.MEDIUM_HIGH;
 import static de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore.INCLUDED_AS_BONUS;
 import static de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore.INCLUDED_COMPLETELY;
 
@@ -18,15 +16,12 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-
-import com.google.common.util.concurrent.AtomicDouble;
 
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreService;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
@@ -39,6 +34,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
 import de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile;
+import de.tum.cit.aet.artemis.atlas.domain.profile.PreferenceScale;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationObjectDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
@@ -666,7 +662,7 @@ public class LearningPathRecommendationService {
         }
         final var recommendedExerciseDistribution = getRecommendedExercisePointDistribution(numberOfRequiredExercisePointsToMaster, weightedConfidence);
 
-        scheduleExercisesByDistribution(recommendedOrder, recommendedExerciseDistribution, difficultyLevelMap, courseLearnerProfile);
+        distributeExercisesByDistribution(recommendedOrder, recommendedExerciseDistribution, difficultyLevelMap, courseLearnerProfile);
         return recommendedOrder;
     }
 
@@ -689,7 +685,7 @@ public class LearningPathRecommendationService {
      * @param recommendedExercisePointDistribution an array containing the number of exercise points that should be scheduled per difficulty (easy to hard)
      * @param difficultyMap                        a map from difficulty level to a set of corresponding exercises
      */
-    private void scheduleExercisesByDistribution(List<LearningObject> recommendedOrder, double[] recommendedExercisePointDistribution,
+    private void distributeExercisesByDistribution(List<LearningObject> recommendedOrder, double[] recommendedExercisePointDistribution,
             Map<DifficultyLevel, List<Exercise>> difficultyMap, CourseLearnerProfile courseLearnerProfile) {
         final var easyExercises = new ArrayList<Exercise>();
         final var mediumExercises = new ArrayList<Exercise>();
@@ -722,27 +718,78 @@ public class LearningPathRecommendationService {
     }
 
     /**
-     * Selects a given number of exercises of specified difficulty.
+     * Selects exercises of a given difficulty until the target points are met.
+     * If the target cannot be met, it returns the remaining (positive) points.
+     * If we overshoot, it returns a negative remainder.
      * <p>
-     * If there are not sufficiently exercises available, the method returns the number of exercises that could not be selected with the particular difficulty.
-     *
-     * @param difficultyMap  a map from difficulty level to a set of corresponding exercises
-     * @param difficulty     the difficulty level that should be chosen
-     * @param exercisePoints the amount of exercise points that should be selected
-     * @param exercises      the set to store the selected exercises
-     * @return amount of points that are missing, if negative the amount of points that are selected too much
+     * Selection stops at the first exercise that is neither needed to reach the target
+     * nor allowed by the learner's preference (HIGH/MEDIUM_HIGH "bonus" rules).
+     * <p>
+     * Side effects:
+     * - Appends selected exercises to {@code selectedExercises}
+     * - Removes the same exercises from {@code exercisesByDifficulty[difficulty]}
      */
-    private static double selectExercisesWithDifficulty(Map<DifficultyLevel, List<Exercise>> difficultyMap, DifficultyLevel difficulty, double exercisePoints,
-            List<Exercise> exercises, CourseLearnerProfile courseLearnerProfile) {
-        var remainingExercisePoints = new AtomicDouble(exercisePoints);
+    private static double selectExercisesWithDifficulty(Map<DifficultyLevel, List<Exercise>> exercisesByDifficulty, DifficultyLevel difficulty,
+            double targetPointsForThisDifficulty, List<Exercise> selectedExercises, CourseLearnerProfile learnerProfile) {
 
-        Predicate<Exercise> exercisePredicate = getExerciseSelectionPredicate(courseLearnerProfile.getAimForGradeOrBonus(), remainingExercisePoints);
+        // Always operate on the list for the requested difficulty (may be empty).
+        final List<Exercise> availableAtThisDifficulty = exercisesByDifficulty.getOrDefault(difficulty, List.of());
 
-        var selectedExercises = difficultyMap.get(difficulty).stream().takeWhile(exercisePredicate).toList();
+        // Convert stored int to enum (falls back to MEDIUM if an unknown value appears).
+        final PreferenceScale preference = toPreferenceScale(learnerProfile.getAimForGradeOrBonus());
 
-        exercises.addAll(selectedExercises);
-        difficultyMap.get(difficulty).removeAll(selectedExercises);
-        return remainingExercisePoints.get();
+        // Running remainder of points we still aim to schedule for this difficulty.
+        double remainingPointsToSchedule = targetPointsForThisDifficulty;
+
+        // We accumulate here, and only mutate the source list after selection completes.
+        final List<Exercise> picked = new ArrayList<>();
+
+        for (Exercise exercise : availableAtThisDifficulty) {
+            final double pointsBeforeThisExercise = remainingPointsToSchedule;
+            remainingPointsToSchedule -= exercise.getMaxPoints();
+
+            final boolean neededToReachTarget = pointsBeforeThisExercise >= 0;
+            final boolean allowedByPreference = isEligibleByPreference(preference, exercise);
+
+            if (neededToReachTarget || allowedByPreference) {
+                picked.add(exercise);
+            }
+            else {
+                // stop at the first "not needed and not allowed".
+                break;
+            }
+        }
+
+        // Apply side effects in a single step (avoids concurrent modification).
+        selectedExercises.addAll(picked);
+        // Remove from the *original* modifiable list if present.
+        exercisesByDifficulty.getOrDefault(difficulty, new ArrayList<>()).removeAll(picked);
+
+        return remainingPointsToSchedule; // positive = missing, negative = overshoot
+    }
+
+    /** Maps an int value from the profile to the enum, defaulting to MEDIUM if unknown. */
+    private static PreferenceScale toPreferenceScale(int value) {
+        for (PreferenceScale scale : PreferenceScale.values()) {
+            if (scale.getValue() == value) {
+                return scale;
+            }
+        }
+        return PreferenceScale.MEDIUM;
+    }
+
+    /**
+     * Preference-based "bonus acceptance" rule:
+     * - HIGH: accept COMPLETELY and BONUS exercises even when the target is already exceeded
+     * - MEDIUM_HIGH: accept COMPLETELY exercises even when the target is already exceeded
+     * - Others: no extra acceptance (only accept while still needed)
+     */
+    private static boolean isEligibleByPreference(PreferenceScale preference, Exercise exercise) {
+        return switch (preference) {
+            case HIGH -> exercise.getIncludedInOverallScore() == INCLUDED_COMPLETELY || exercise.getIncludedInOverallScore() == INCLUDED_AS_BONUS;
+            case MEDIUM_HIGH -> exercise.getIncludedInOverallScore() == INCLUDED_COMPLETELY;
+            default -> false;
+        };
     }
 
     private static int getIncludeInOverallScoreWeight(IncludedInOverallScore includedInOverallScore) {
@@ -767,26 +814,6 @@ public class LearningPathRecommendationService {
 
         exerciseComparator = exerciseComparator.thenComparing(exerciseLink -> exerciseLink.getExercise().getTitle());
         return exerciseComparator;
-    }
-
-    /**
-     * Creates a predicate that selects exercises based on the aim for grade or bonus and the remaining exercise points.
-     *
-     * @param aimForGradeOrBonus      the aim for grade or bonus
-     * @param remainingExercisePoints the remaining exercise points that should be scheduled
-     * @return the predicate until when exercises should be selected based on the preference
-     */
-    private static Predicate<Exercise> getExerciseSelectionPredicate(int aimForGradeOrBonus, AtomicDouble remainingExercisePoints) {
-        Predicate<Exercise> exercisePredicate = exercise -> remainingExercisePoints.getAndAdd(-exercise.getMaxPoints()) >= 0;
-        if (aimForGradeOrBonus == HIGH.getValue()) {
-            exercisePredicate = exercisePredicate
-                    .or(exercise -> exercise.getIncludedInOverallScore() == INCLUDED_COMPLETELY || exercise.getIncludedInOverallScore() == INCLUDED_AS_BONUS);
-        }
-        else if (aimForGradeOrBonus == MEDIUM_HIGH.getValue()) {
-            exercisePredicate = exercisePredicate.or(exercise -> exercise.getIncludedInOverallScore() == INCLUDED_COMPLETELY);
-        }
-
-        return exercisePredicate;
     }
 
     /**

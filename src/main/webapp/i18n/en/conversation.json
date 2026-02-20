@@ -3,11 +3,6 @@
         "errors": {
             "channelNameDuplicate": "Channel with name {{ channelName }} already exists"
         },
-        "messageWarning": {
-            "headerText": "Confidential Information Warning",
-            "mainParagraph": "Do not share confidential information like passwords, credit card numbers, or personal identification numbers in the chat. This information is sensitive and could potentially be used for identity theft or fraud if it falls into the wrong hands.",
-            "lastParagraph": "Keep your personal information safe by keeping it to yourself and not sharing it online."
-        },
         "conversationsLayout": {
             "tabTitle": "Course Messages",
             "breadCrumbLabel": "Messages",

@@ -1,22 +1,23 @@
 package de.tum.cit.aet.artemis.lecture.repository;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 
 /**
  * Spring Data JPA repository for the Transcription of a lecture video entity.
  */
-@Profile(PROFILE_CORE)
+@Conditional(LectureEnabled.class)
 @Lazy
 @Repository
 public interface LectureTranscriptionRepository extends ArtemisJpaRepository<LectureTranscription, Long> {
@@ -26,4 +27,17 @@ public interface LectureTranscriptionRepository extends ArtemisJpaRepository<Lec
     List<LectureTranscription> findByTranscriptionStatusAndJobIdIsNotNull(TranscriptionStatus status);
 
     Optional<LectureTranscription> findByJobId(String jobId);
+
+    /**
+     * Find all transcriptions for a lecture.
+     *
+     * @param lectureId the ID of the lecture
+     * @return list of transcriptions for all units in the lecture
+     */
+    @Query("""
+            SELECT t FROM LectureTranscription t
+            JOIN FETCH t.lectureUnit lu
+            WHERE lu.lecture.id = :lectureId
+            """)
+    List<LectureTranscription> findByLectureId(@Param("lectureId") Long lectureId);
 }

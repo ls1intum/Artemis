@@ -75,10 +75,9 @@ public class SharingPlatformMockProvider {
      * This method sends a request to the Artemis sharing configuration endpoint with
      * predefined test parameters and validates the response.
      *
-     * @return The SharingPluginConfig received from the Artemis endpoint
      * @throws Exception If the request fails or the response is invalid
      */
-    public SharingPluginConfig connectRequestFromSharingPlatform() throws Exception {
+    public void connectRequestFromSharingPlatform() throws Exception {
         sharingConnectorService.setSharingApiKey(sharingApiKey);
         MvcResult result = requestUtilService
                 .performMvcRequest(get("/api/core/sharing/config").queryParam("apiBaseUrl", SHARING_BASEURL_PLUGIN).queryParam("installationName", TEST_INSTALLATION_NAME)
@@ -91,8 +90,6 @@ public class SharingPlatformMockProvider {
         MockRestServiceServer.MockRestServiceServerBuilder builder = MockRestServiceServer.bindTo(restTemplate);
         builder.ignoreExpectOrder(true);
         mockSharingServer = builder.build();
-
-        return sharingPluginConfig;
     }
 
     /**

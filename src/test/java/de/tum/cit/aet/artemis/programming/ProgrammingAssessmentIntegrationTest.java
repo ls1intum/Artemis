@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.isA;
 import static org.mockito.Mockito.never;
@@ -17,12 +16,10 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.assertj.core.data.Offset;
-import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.ArgumentMatchers;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -58,8 +55,6 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "programmingassessment";
-
-    private final String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
 
     private final Double offsetByTenThousandth = 0.0001;
 
@@ -105,8 +100,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         manualResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         manualResult.rated(true);
         manualResult.setSubmission(programmingSubmission);
+        manualResult.setExerciseId(programmingExercise.getId());
 
-        doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(ArgumentMatchers.any());
     }
 
     @Test
@@ -565,6 +560,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         manualLongFeedback.setDetailText(longText);
         var result = new Result().feedbacks(List.of(manualLongFeedback)).score(0.0);
         result.setRated(true);
+        result.setExerciseId(programmingExercise.getId());
         result = resultRepository.save(result);
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -585,6 +581,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         var longText = "abc".repeat(5000);
         manualLongFeedback.setDetailText(longText);
         var result = new Result().feedbacks(List.of(manualLongFeedback)).score(0.0).rated(true);
+        result.setExerciseId(programmingExercise.getId());
         result = resultRepository.save(result);
 
         var newLongText = "def".repeat(5000);
@@ -762,8 +759,9 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         participationUtilService.addResultToSubmission(firstSubmission, AssessmentType.AUTOMATIC, null);
         final var secondSubmission = programmingExerciseUtilService.createProgrammingSubmission(studentParticipation, false, "2");
         participationUtilService.addResultToSubmission(secondSubmission, AssessmentType.AUTOMATIC, null);
-        // The commit hash must be the same as the one used for initializing the tests because this test calls gitService.getLastCommitHash
-        final var thirdSubmission = programmingExerciseUtilService.createProgrammingSubmission(studentParticipation, false, dummyHash);
+        var latestCommitHash = gitService.getLastCommitHash(studentParticipation.getVcsRepositoryUri());
+        // Ensure the existing submission matches the repository HEAD returned during locking
+        final var thirdSubmission = programmingExerciseUtilService.createProgrammingSubmission(studentParticipation, false, latestCommitHash);
         participationUtilService.addResultToSubmission(thirdSubmission, AssessmentType.AUTOMATIC, null);
 
         var submissionsOfParticipation = submissionRepository.findAllWithResultsAndAssessorByParticipationId(studentParticipation.getId());
@@ -824,7 +822,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(assessedSubmissionList.getFirst().getResultForCorrectionRound(0)).isEqualTo(firstSubmittedManualResult);
 
         // change the user here, so that for the next query the result will show up again.
-        // set to true, if a tutor is only able to assess a submission if he has not assessed it any prior correction rounds
+        // set to true, if a tutor is only able to assess a submission if they have not assessed it any prior correction rounds
         firstSubmittedManualResult.setAssessor(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
         resultRepository.save(firstSubmittedManualResult);
         assertThat(firstSubmittedManualResult.getAssessor().getLogin()).isEqualTo(TEST_PREFIX + "instructor1");
@@ -948,6 +946,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         initialResult.setAssessor(tutor1);
         initialResult.setHasComplaint(true);
         initialResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        initialResult.setExerciseId(programmingExercise.getId());
         initialResult = resultRepository.save(initialResult);
 
         programmingSubmission.addResult(initialResult);

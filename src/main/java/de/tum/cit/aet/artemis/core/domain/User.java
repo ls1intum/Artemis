@@ -10,12 +10,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
-import jakarta.annotation.Nullable;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
@@ -25,7 +26,6 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
@@ -33,6 +33,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.web.webauthn.api.Bytes;
 
@@ -62,7 +64,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class User extends AbstractAuditingEntity implements Participant {
 
-    @NotNull
+    @NonNull
     @Pattern(regexp = Constants.LOGIN_REGEX)
     @Size(min = USERNAME_MIN_LENGTH, max = USERNAME_MAX_LENGTH)
     @Column(length = USERNAME_MAX_LENGTH, unique = true, nullable = false)
@@ -95,11 +97,11 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(length = 100)
     private String email;
 
-    @NotNull
+    @NonNull
     @Column(nullable = false)
     private boolean activated = false;
 
-    @NotNull
+    @NonNull
     @Column(name = "is_deleted", nullable = false)
     private boolean deleted = false; // default value
 
@@ -165,7 +167,7 @@ public class User extends AbstractAuditingEntity implements Participant {
     @JoinTable(name = "user_organization", joinColumns = { @JoinColumn(name = "user_id", referencedColumnName = "id") }, inverseJoinColumns = {
             @JoinColumn(name = "organization_id", referencedColumnName = "id") })
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIgnoreProperties("user")
+    @JsonIgnoreProperties(value = "user", allowSetters = true)
     private Set<Organization> organizations = new HashSet<>();
 
     @OneToMany(mappedBy = "student", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
@@ -195,15 +197,20 @@ public class User extends AbstractAuditingEntity implements Participant {
     private Set<PushNotificationDeviceConfiguration> pushNotificationDeviceConfigurations = new HashSet<>();
 
     @Nullable
-    @Column(name = "external_llm_usage_accepted")
-    private ZonedDateTime externalLLMUsageAccepted = null;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "ai_selection_decision")
+    private AiSelectionDecision aiSelectionDecision = null;
 
-    @NotNull
+    @Nullable
+    @Column(name = "ai_selection_decision_date")
+    private ZonedDateTime aiSelectionDecisionDate = null;
+
+    @NonNull
     @Column(name = "memiris_enabled", nullable = false)
     private boolean memirisEnabled = false;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnoreProperties("user")
+    @JsonIgnoreProperties(value = "user", allowSetters = true)
     @JoinColumn(name = "learner_profile_id")
     private LearnerProfile learnerProfile;
 
@@ -488,25 +495,33 @@ public class User extends AbstractAuditingEntity implements Participant {
     }
 
     @Nullable
-    public ZonedDateTime getExternalLLMUsageAcceptedTimestamp() {
-        return externalLLMUsageAccepted;
+    public ZonedDateTime getSelectedLLMUsageTimestamp() {
+        return aiSelectionDecisionDate;
     }
 
-    public void setExternalLLMUsageAcceptedTimestamp(@Nullable ZonedDateTime externalLLMUsageAccepted) {
-        this.externalLLMUsageAccepted = externalLLMUsageAccepted;
+    public void setSelectedLLMUsageTimestamp(@Nullable ZonedDateTime aiSelectionDecisionDate) {
+        this.aiSelectionDecisionDate = aiSelectionDecisionDate;
     }
 
-    public boolean hasAcceptedExternalLLMUsage() {
-        return externalLLMUsageAccepted != null;
+    public boolean hasOptedIntoLLMUsage() {
+        return aiSelectionDecision != null && aiSelectionDecision != AiSelectionDecision.NO_AI;
+    }
+
+    public AiSelectionDecision getSelectedLLMUsage() {
+        return aiSelectionDecision;
+    }
+
+    public void setSelectedLLMUsage(@Nullable AiSelectionDecision aiSelectionDecision) {
+        this.aiSelectionDecision = aiSelectionDecision;
     }
 
     /**
-     * Checks if the user has accepted the external LLM privacy policy.
+     * Checks if the user has selected to use AI.
      * If not, an {@link AccessForbiddenException} is thrown.
      */
-    public void hasAcceptedExternalLLMUsageElseThrow() {
-        if (externalLLMUsageAccepted == null) {
-            throw new AccessForbiddenException("The user has not accepted the external LLM privacy policy yet.");
+    public void hasOptedIntoLLMUsageElseThrow() {
+        if (!hasOptedIntoLLMUsage()) {
+            throw new AccessForbiddenException("The user has not selected to use AI.");
         }
     }
 

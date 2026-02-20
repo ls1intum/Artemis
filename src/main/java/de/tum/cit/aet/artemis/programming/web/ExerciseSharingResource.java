@@ -9,12 +9,12 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.core.UriBuilder;
 
 import org.codeability.sharing.plugins.api.ShoppingBasket;
 import org.codeability.sharing.plugins.api.util.SecretChecksumCalculator;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -39,7 +39,7 @@ import de.tum.cit.aet.artemis.programming.service.sharing.ProgrammingExerciseImp
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingConnectorService;
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingEnabled;
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingException;
-import de.tum.cit.aet.artemis.programming.service.sharing.SharingSetupInfo;
+import de.tum.cit.aet.artemis.programming.service.sharing.SharingSetupInfoDTO;
 import tech.jhipster.web.util.ResponseUtil;
 
 /**
@@ -56,6 +56,8 @@ import tech.jhipster.web.util.ResponseUtil;
 @Lazy
 public class ExerciseSharingResource {
 
+    private static final Logger log = LoggerFactory.getLogger(ExerciseSharingResource.class);
+
     /**
      * FileInputStream wrapper that deletes the underlying temporary file on close.
      * <p>
@@ -66,7 +68,7 @@ public class ExerciseSharingResource {
 
         private final Path path;
 
-        private AutoDeletingFileInputStream(@NotNull Path path) throws IOException {
+        private AutoDeletingFileInputStream(@NonNull Path path) throws IOException {
             super(Files.newInputStream(path));
             this.path = path;
         }
@@ -88,8 +90,6 @@ public class ExerciseSharingResource {
     }
 
     public static final String SHARING_EXPORT_RESOURCE_PATH = "export";
-
-    private static final Logger log = LoggerFactory.getLogger(ExerciseSharingResource.class);
 
     private final ExerciseSharingService exerciseSharingService;
 
@@ -140,7 +140,7 @@ public class ExerciseSharingResource {
      * POST {@code api/programming/sharing/setup-import}
      * <p>
      * Creates and persists a {@link ProgrammingExercise} in Artemis based on the provided
-     * {@link SharingSetupInfo} received from the Sharing Platform.
+     * {@link SharingSetupInfoDTO} received from the Sharing Platform.
      * </p>
      *
      * @param sharingSetupInfo details required to import (exercise metadata, templates, etc.)
@@ -149,7 +149,7 @@ public class ExerciseSharingResource {
      */
     @PostMapping("setup-import")
     @EnforceAtLeastEditor
-    public ResponseEntity<ProgrammingExercise> setUpFromSharingImport(@RequestBody SharingSetupInfo sharingSetupInfo) {
+    public ResponseEntity<ProgrammingExercise> setUpFromSharingImport(@RequestBody SharingSetupInfoDTO sharingSetupInfo) {
         try {
             ProgrammingExercise exercise = programmingExerciseImportFromSharingService.importProgrammingExerciseFromSharing(sharingSetupInfo);
             return ResponseEntity.ok().body(exercise);
@@ -171,6 +171,7 @@ public class ExerciseSharingResource {
      * @return {@code 200 OK} with the {@link ProgrammingExercise} details; {@code 400 Bad Request}
      *         on checksum failure; {@code 404 Not Found} if the exercise cannot be resolved
      */
+    // TODO: we should NOT use a POST request for a GET Operation
     @PostMapping("import/basket/exercise-details")
     @EnforceAtLeastEditor
     public ResponseEntity<ProgrammingExercise> getExerciseDetails(@RequestBody SharingInfoDTO sharingInfo) {

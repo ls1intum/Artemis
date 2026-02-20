@@ -4,11 +4,11 @@ import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PRE
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.ByteArrayOutputStream;
 import java.net.URI;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -21,6 +21,7 @@ import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
@@ -29,6 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.testcontainers.shaded.org.apache.commons.io.FileUtils;
@@ -37,7 +39,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
+import de.tum.cit.aet.artemis.core.connector.IrisRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
@@ -86,9 +90,24 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private IrisRequestMockProvider irisRequestMockProvider;
+
+    @Autowired
+    private TempFileUtilService tempFileUtilService;
+
     @BeforeEach
     void initTestCase() {
+        irisRequestMockProvider.enableMockingOfRequests();
+        irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
+        }, ExpectedCount.manyTimes());
+
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        irisRequestMockProvider.reset();
     }
 
     @Test
@@ -96,7 +115,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testUploadExamUserSignature() throws Exception {
         var course = courseUtilService.addEmptyCourse();
         var exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course, 1);
-        var user = new ExamUserDTO(TEST_PREFIX + "student1", null, null, null, null, null, "", "", true, true, true, true, null);
+        var user = new ExamUserDTO(TEST_PREFIX + "student1", null, null, null, null, null, "", "", true, true, true, true, null, null, null, null, null, null, null, null);
         var file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
 
         ExamUser updateExamUserResponse = request.postWithMultipartFile("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/exam-users", user, "examUserDTO", file,
@@ -133,7 +152,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         lecture.setStartDate(ZonedDateTime.now().minusHours(1));
 
         // create unreleased attachment video unit
-        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(true);
+        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(lecture, true);
         attachmentVideoUnit.setLecture(lecture);
         attachmentVideoUnit.setReleaseDate(ZonedDateTime.now().plusDays(1));
 
@@ -244,9 +263,11 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Lecture lecture = createLectureWithLectureUnits();
 
         // Change order of units
-        LectureUnit unit3 = lecture.getLectureUnits().get(2);
-        lecture.getLectureUnits().remove(unit3);
-        lecture.getLectureUnits().addFirst(unit3);
+        List<Long> lectureUnitIds = lecture.getLectureUnits().stream().map(LectureUnit::getId).collect(Collectors.toCollection(ArrayList::new));
+        // move unit at index 2 to the beginning
+        Long unitId = lectureUnitIds.remove(2);
+        lectureUnitIds.addFirst(unitId);
+        lecture.reorderLectureUnits(lectureUnitIds);
         lectureRepo.save(lecture);
 
         userUtilService.changeUser(TEST_PREFIX + "student1");
@@ -292,12 +313,12 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             doc1.addPage(new PDPage());
             doc1.save(outputStream);
             MockMultipartFile file1 = new MockMultipartFile("file", "file.pdf", "application/json", outputStream.toByteArray());
-            lecture.getLectureUnits().add(uploadAttachmentVideoUnit(lecture, file1, expectedStatus));
+            lecture.addLectureUnit(uploadAttachmentVideoUnit(lecture, file1, expectedStatus));
         }
 
         // create image file
         MockMultipartFile file2 = new MockMultipartFile("file", "filename2.png", "application/json", "some text".getBytes());
-        lecture.getLectureUnits().add(uploadAttachmentVideoUnit(lecture, file2, expectedStatus));
+        lecture.addLectureUnit(uploadAttachmentVideoUnit(lecture, file2, expectedStatus));
 
         // create pdf file 3
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument doc2 = new PDDocument()) {
@@ -308,7 +329,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             doc2.addPage(new PDPage());
             doc2.save(outputStream);
             MockMultipartFile file3 = new MockMultipartFile("file", "filename3.pdf", "application/json", outputStream.toByteArray());
-            lecture.getLectureUnits().add(uploadAttachmentVideoUnit(lecture, file3, expectedStatus));
+            lecture.addLectureUnit(uploadAttachmentVideoUnit(lecture, file3, expectedStatus));
         }
 
         // Collect units freshly from the database to prevent issues when persisting the lecture again
@@ -352,7 +373,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testGetAttachmentVideoUnitFileAsEditor() throws Exception {
         Lecture lecture = lectureUtilService.createCourseWithLecture(true);
 
-        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(true);
+        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(lecture, true);
         attachmentVideoUnit.setLecture(lecture);
         Attachment attachment = attachmentVideoUnit.getAttachment();
 
@@ -387,7 +408,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private void testGetAttachmentVideoUnit(boolean isTutor) throws Exception {
-        Path tempFile = Files.createTempFile(tempPath, "dummy", ".pdf");
+        Path tempFile = tempFileUtilService.createTempFile("dummy", ".pdf");
         byte[] dummyContent = "dummy pdf content".getBytes();
         FileUtils.writeByteArrayToFile(tempFile.toFile(), dummyContent);
         tempFile.toFile().deleteOnExit();
@@ -395,7 +416,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Lecture lecture = lectureUtilService.createCourseWithLecture(true);
         lectureRepo.save(lecture);
 
-        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(true);
+        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(lecture, true);
         attachmentVideoUnit.setLecture(lecture);
 
         String unsanitizedName = "test–file"; // contains en-dash
@@ -440,6 +461,35 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         byte[] retrievedContent = request.get(responsePath, HttpStatus.OK, byte[].class);
         assertThat(retrievedContent).isEqualTo(file.getBytes());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testMarkdownFileCacheHeaders() throws Exception {
+        // Upload a markdown file
+        MockMultipartFile file = new MockMultipartFile("file", "test-image.png", "image/png", "test image content".getBytes());
+        JsonNode response = request.postWithMultipartFile("/api/core/markdown-file-upload?keepFileName=false", file.getOriginalFilename(), "file", file, JsonNode.class,
+                HttpStatus.CREATED);
+        String responsePath = response.get("path").asText();
+
+        // Verify cache headers (30 days = 2592000 seconds)
+        mockMvc.perform(get(responsePath)).andExpect(status().isOk()).andExpect(header().string("Cache-Control", "max-age=2592000, public"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExamUserSignatureCacheHeaders() throws Exception {
+        var course = courseUtilService.addEmptyCourse();
+        var exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course, 1);
+        var user = new ExamUserDTO(TEST_PREFIX + "student1", null, null, null, null, null, "", "", true, true, true, true, null, null, null, null, null, null, null, null);
+        var file = new MockMultipartFile("file", "signature.png", "image/png", "signature data".getBytes());
+
+        ExamUser examUser = request.postWithMultipartFile("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/exam-users", user, "examUserDTO", file,
+                ExamUser.class, HttpStatus.OK);
+        String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, examUser.getSigningImagePath());
+
+        // Verify cache headers (30 days = 2592000 seconds)
+        mockMvc.perform(get(requestUrl)).andExpect(status().isOk()).andExpect(header().string("Cache-Control", "max-age=2592000, public"));
     }
 
 }

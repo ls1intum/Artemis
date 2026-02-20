@@ -8,6 +8,7 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
@@ -62,11 +63,24 @@ import { ProblemStatementComponent } from 'app/core/course/overview/exercise-det
 import { ExerciseInfoComponent } from 'app/exercise/exercise-info/exercise-info.component';
 import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
+import { Component, input } from '@angular/core';
+import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
+import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
 import { ScienceService } from 'app/shared/science/science.service';
+
+// Simple mock to avoid ng-mocks issues with signal-based viewChild
+@Component({
+    selector: 'jhi-exercise-chatbot-button',
+    template: '',
+    standalone: true,
+})
+class MockIrisExerciseChatbotButtonComponent {
+    readonly mode = input<ChatServiceMode>();
+}
+import { mockCourseSettings } from 'test/helpers/mocks/iris/mock-settings';
 import { MockScienceService } from 'test/helpers/mocks/service/mock-science-service';
 import { ScienceEventType } from 'app/shared/science/science.model';
-import { PROFILE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
 import { provideHttpClient } from '@angular/common/http';
 import { ElementRef, signal } from '@angular/core';
@@ -186,6 +200,10 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockProvider(IrisSettingsService),
             ],
         })
+            .overrideComponent(CourseExerciseDetailsComponent, {
+                remove: { imports: [IrisExerciseChatbotButtonComponent] },
+                add: { imports: [MockIrisExerciseChatbotButtonComponent] },
+            })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(CourseExerciseDetailsComponent);
@@ -394,8 +412,8 @@ describe('CourseExerciseDetailsComponent', () => {
 
     it('should handle participation update', fakeAsync(() => {
         const submissionId = 55;
-        const submission = { id: submissionId };
-        const participation = { submissions: [submission] };
+        const submission: Submission = { id: submissionId } satisfies Submission;
+        const participation: Participation = { submissions: [submission] } satisfies Participation;
         comp.gradedStudentParticipation = participation;
         comp.sortedHistoryResults = [{ id: 2 }];
         comp.exercise = { ...programmingExercise };
@@ -405,43 +423,51 @@ describe('CourseExerciseDetailsComponent', () => {
         comp.handleNewExercise({ exercise: programmingExercise });
         tick();
 
-        const newParticipation = { ...participation, submissions: [submission, { id: submissionId + 1 }] };
+        const newParticipation = { ...participation, submissions: [submission, { id: submissionId + 1 } satisfies Submission] } satisfies Participation;
 
         mergeStudentParticipationMock.mockReturnValue([newParticipation]);
 
         participationWebsocketBehaviorSubject.next({ ...newParticipation, exercise: programmingExercise });
     }));
 
-    it.each<[string[]]>([[[]], [[PROFILE_IRIS]]])(
-        'should load iris settings only if profile iris is active',
-        fakeAsync((activeProfiles: string[]) => {
+    it.each<[string[]]>([[[]], [[MODULE_FEATURE_IRIS]]])(
+        'should load iris settings only if module feature iris is active',
+        fakeAsync((activeModuleFeatures: string[]) => {
             // Setup
             const submissionPolicy = new LockRepositoryPolicy();
             const programmingExercise = {
                 id: 42,
                 type: ExerciseType.PROGRAMMING,
                 studentParticipations: [],
-                course: {},
+                course: { id: 1 },
                 submissionPolicy: submissionPolicy,
             } as unknown as ProgrammingExercise;
 
-            const fakeSettings = {} as any as IrisSettings;
+            const fakeSettings = mockCourseSettings(1, true);
 
-            getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: programmingExercise, irisSettings: fakeSettings } }));
+            getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: programmingExercise } }));
 
             const profileService = TestBed.inject(ProfileService);
-            jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles } as any as ProfileInfo);
+            jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeModuleFeatures } as any as ProfileInfo);
+            jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(activeModuleFeatures.includes(MODULE_FEATURE_IRIS));
+
+            const irisSettingsService = TestBed.inject(IrisSettingsService);
+            const getCourseSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(fakeSettings));
 
             // Act
             comp.ngOnInit();
             tick();
 
-            if (activeProfiles.includes(PROFILE_IRIS)) {
-                // Should have called getCombinedProgrammingExerciseSettings if 'iris' is active
-                expect(comp.irisSettings).toBe(fakeSettings);
+            if (activeModuleFeatures.includes(MODULE_FEATURE_IRIS)) {
+                // Should have called getCourseSettings if 'iris' is active
+                expect(getCourseSettingsSpy).toHaveBeenCalledWith(1);
+                expect(comp.irisEnabled).toBeTrue();
+                expect(comp.irisChatEnabled).toBeTrue();
             } else {
-                // Should not have called getCombinedProgrammingExerciseSettings if 'iris' is not active
-                expect(comp.irisSettings).toBeUndefined();
+                // Should not have called getCourseSettings if 'iris' is not active
+                expect(getCourseSettingsSpy).not.toHaveBeenCalled();
+                expect(comp.irisEnabled).toBeFalse();
+                expect(comp.irisChatEnabled).toBeFalse();
             }
         }),
     );

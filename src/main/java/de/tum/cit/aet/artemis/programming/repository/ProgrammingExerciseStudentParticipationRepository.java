@@ -110,9 +110,6 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             """)
     Optional<ProgrammingExerciseStudentParticipation> findTeamParticipationByExerciseIdAndStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "submissions", "team.students" })
-    List<ProgrammingExerciseStudentParticipation> findWithSubmissionsById(long participationId);
-
     @EntityGraph(type = LOAD, attributePaths = { "submissions.results" })
     List<ProgrammingExerciseStudentParticipation> findWithSubmissionsAndResultsByExerciseId(long exerciseId);
 
@@ -147,18 +144,25 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             @Param("participationIds") Collection<Long> participationIds);
 
     @Query("""
-            SELECT participation.repositoryUri
-            FROM ProgrammingExerciseStudentParticipation participation
-                JOIN TREAT (participation.exercise AS ProgrammingExercise) pe
+            SELECT pa.repositoryUri
+            FROM ProgrammingExercise pe
+                LEFT JOIN TREAT (pe.studentParticipations AS ProgrammingExerciseStudentParticipation) pa
+            WHERE pa.repositoryUri IS NOT NULL
+                AND pe.dueDate BETWEEN :earliestDate AND :latestDate
+            """)
+    Page<String> findRepositoryUrisByCourseExerciseDueDateBetween(@Param("earliestDate") ZonedDateTime earliestDate, @Param("latestDate") ZonedDateTime latestDate,
+            Pageable pageable);
+
+    @Query("""
+            SELECT pa.repositoryUri
+            FROM ProgrammingExercise pe
                 LEFT JOIN pe.exerciseGroup eg
                 LEFT JOIN eg.exam exam
-            WHERE participation.repositoryUri IS NOT NULL
-                AND (
-                    (pe.dueDate IS NOT NULL AND pe.dueDate BETWEEN :earliestDate AND :latestDate)
-                    OR (eg IS NOT NULL AND exam IS NOT NULL AND exam.endDate BETWEEN :earliestDate AND :latestDate)
-                )
+                LEFT JOIN TREAT (pe.studentParticipations AS ProgrammingExerciseStudentParticipation) pa
+            WHERE pa.repositoryUri IS NOT NULL
+                AND exam.endDate BETWEEN :earliestDate AND :latestDate
             """)
-    Page<String> findRepositoryUrisByRecentDueDateOrRecentExamEndDate(@Param("earliestDate") ZonedDateTime earliestDate, @Param("latestDate") ZonedDateTime latestDate,
+    Page<String> findRepositoryUrisByExamExercisesEndDateBetween(@Param("earliestDate") ZonedDateTime earliestDate, @Param("latestDate") ZonedDateTime latestDate,
             Pageable pageable);
 
     @Query("""
@@ -212,4 +216,41 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             """)
     void unsetBuildPlanIdForExercise(@Param("exerciseId") Long exerciseId);
 
+    @Query("""
+            SELECT p.id
+            FROM ProgrammingExerciseStudentParticipation p
+            WHERE p.exercise.id = :exerciseId
+                AND p.student.login IN :participantIdentifierList
+            """)
+    Set<Long> findIdsByExerciseIdAndParticipantIdentifier(@Param("exerciseId") long exerciseId, @Param("participantIdentifierList") Set<String> participantIdentifierList);
+
+    @Query("""
+            SELECT p
+            FROM ProgrammingExerciseStudentParticipation p
+            WHERE p.exercise.id = :exerciseId
+            """)
+    Set<ProgrammingExerciseStudentParticipation> findByExerciseId(@Param("exerciseId") long exerciseId);
+
+    @Query("""
+            SELECT p
+            FROM ProgrammingExerciseStudentParticipation p
+                LEFT JOIN FETCH p.submissions s
+            WHERE p.exercise.id = :exerciseId
+            """)
+    Set<ProgrammingExerciseStudentParticipation> findByExerciseIdWithEagerSubmissions(@Param("exerciseId") long exerciseId);
+
+    @Query("""
+            SELECT p
+            FROM ProgrammingExerciseStudentParticipation p
+            WHERE p.id IN :participationIds
+            """)
+    Set<ProgrammingExerciseStudentParticipation> findByIds(@Param("participationIds") Collection<Long> participationIds);
+
+    @Query("""
+            SELECT p
+            FROM ProgrammingExerciseStudentParticipation p
+                LEFT JOIN FETCH p.submissions s
+            WHERE p.id IN :participationIds
+            """)
+    Set<ProgrammingExerciseStudentParticipation> findByIdsWithEagerSubmissions(@Param("participationIds") Collection<Long> participationIds);
 }

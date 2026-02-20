@@ -5,11 +5,19 @@ artemis:
             enabled: false
     hyperion:
         enabled: false
+    iris:
+        enabled: false
     exam:
         enabled: true
     plagiarism:
         enabled: true
     text:
+        enabled: true
+    modeling:
+        enabled: true
+    fileupload:
+        enabled: true
+    lecture:
         enabled: true
     sharing:
         enabled: false
@@ -23,9 +31,12 @@ artemis:
 
     tutorialgroup:
         enabled: true
+    lti:
+        enabled: false
     user-management:
         passkey:
             enabled: false # used by Constants.PASSKEY_ENABLED_PROPERTY_NAME
+            require-for-administrator-features: false # if true, administrators must authenticate with passkey to access admin features
             ask-users-to-setup: true # if true, users who have not set up a passkey will be asked to do so
             token-validity-in-seconds-for-passkey: 15552000 # jwtToken is valid for 180 days when using passkey authentication
 spring:
@@ -52,7 +63,7 @@ management:
     endpoint:
         health:
             show-details: when_authorized
-            roles: 'ROLE_ADMIN'
+            roles: 'ROLE_ADMIN,ROLE_SUPER_ADMIN'
             probes:
                 enabled: true
         jhimetrics:

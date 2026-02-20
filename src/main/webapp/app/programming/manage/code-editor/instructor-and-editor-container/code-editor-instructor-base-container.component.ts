@@ -21,6 +21,7 @@ import { CourseExerciseService } from 'app/exercise/course-exercises/course-exer
 import { isExamExercise } from 'app/shared/util/utils';
 import { Subject } from 'rxjs';
 import { debounceTime, shareReplay } from 'rxjs/operators';
+import { TranslateService } from '@ngx-translate/core';
 /**
  * Enumeration specifying the loading state
  */
@@ -45,9 +46,10 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     private location = inject(Location);
     private participationService = inject(ParticipationService);
     private route = inject(ActivatedRoute);
-    private alertService = inject(AlertService);
     /** Raw markdown changes from the center editor for debounce logic */
     private problemStatementChanges$ = new Subject<string>();
+    protected alertService = inject(AlertService);
+    protected translateService = inject(TranslateService);
 
     ButtonSize = ButtonSize;
     LOADING_STATE = LOADING_STATE;
@@ -66,6 +68,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     selectedParticipation?: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation | ProgrammingExerciseStudentParticipation;
     // Stores which repository is selected atm.
     // Needs to be set additionally to selectedParticipation as the test repository does not have a participation
+    // I am not sure if I can default initialize it like this, but I need to, to correctly show issues
     selectedRepository: RepositoryType;
     selectedRepositoryId: number;
     selectedAuxiliaryRepositoryName?: string;
@@ -158,6 +161,9 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     }
     /** Called by the center editor on every markdown change */
     onInstructionChanged(markdown: string) {
+        if (this.exercise) {
+            this.exercise.problemStatement = markdown;
+        }
         this.problemStatementChanges$.next(markdown);
     }
 
@@ -296,21 +302,21 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
      * Select the template participation repository and navigate to it
      */
     selectTemplateParticipation() {
-        this.router.navigate(['../..', RepositoryType.TEMPLATE, this.exercise.templateParticipation!.id], { relativeTo: this.route });
+        return this.router.navigate(['../..', RepositoryType.TEMPLATE, this.exercise.templateParticipation!.id], { relativeTo: this.route });
     }
 
     /**
      * Select the solution participation repository and navigate to it
      */
     selectSolutionParticipation() {
-        this.router.navigate(['../..', RepositoryType.SOLUTION, this.exercise.solutionParticipation!.id], { relativeTo: this.route });
+        return this.router.navigate(['../..', RepositoryType.SOLUTION, this.exercise.solutionParticipation!.id], { relativeTo: this.route });
     }
 
     /**
      * Select the assignment participation repository and navigate to it
      */
     selectAssignmentParticipation() {
-        this.router.navigate(['../..', RepositoryType.USER, this.exercise.studentParticipations![0].id], { relativeTo: this.route });
+        return this.router.navigate(['../..', RepositoryType.USER, this.exercise.studentParticipations![0].id], { relativeTo: this.route });
     }
 
     /**
@@ -318,14 +324,14 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
      */
     selectTestRepository() {
         // as test repositories do not have any participation nor repository Id associated, we use a 'test' placeholder
-        this.router.navigate(['../..', RepositoryType.TESTS, 'test'], { relativeTo: this.route });
+        return this.router.navigate(['../..', RepositoryType.TESTS, 'test'], { relativeTo: this.route });
     }
 
     /**
      * Select the auxiliary repository and navigate to it
      */
     selectAuxiliaryRepository(repositoryId: number) {
-        this.router.navigate(['../..', RepositoryType.AUXILIARY, repositoryId], { relativeTo: this.route });
+        return this.router.navigate(['../..', RepositoryType.AUXILIARY, repositoryId], { relativeTo: this.route });
     }
 
     /**

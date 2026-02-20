@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.iris.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -9,8 +7,8 @@ import java.util.Objects;
 
 import jakarta.ws.rs.BadRequestException;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,9 +22,13 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
+import de.tum.cit.aet.artemis.iris.dto.IrisMessageContentDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisMessageRequestDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
@@ -35,7 +37,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 /**
  * REST controller for managing {@link IrisMessage}.
  */
-@Profile(PROFILE_IRIS)
+@Conditional(IrisEnabled.class)
 @Lazy
 @RestController
 @RequestMapping("api/iris/")
@@ -80,26 +82,33 @@ public class IrisMessageResource {
     /**
      * POST sessions/{sessionId}/messages: Send a new message from the user to the LLM
      *
-     * @param sessionId of the session
-     * @param message   to send
+     * @param sessionId  of the session
+     * @param requestDTO containing message content and optional uncommitted files
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the created message, or with status
      *         {@code 404 (Not Found)} if the session could not be found.
      */
     @PostMapping("sessions/{sessionId}/messages")
     @EnforceAtLeastStudent
-    public ResponseEntity<IrisMessage> createMessage(@PathVariable Long sessionId, @RequestBody IrisMessage message) throws URISyntaxException {
+    public ResponseEntity<IrisMessage> createMessage(@PathVariable Long sessionId, @RequestBody IrisMessageRequestDTO requestDTO) throws URISyntaxException {
         var session = irisSessionRepository.findByIdElseThrow(sessionId);
         irisSessionService.checkIsIrisActivated(session);
         var user = userRepository.getUser();
         irisSessionService.checkHasAccessToIrisSession(session, user);
         irisSessionService.checkRateLimit(session, user);
 
-        var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
+        IrisMessage message = new IrisMessage();
+        var contentList = requestDTO.content() != null ? requestDTO.content() : List.<IrisMessageContentDTO>of();
+        List<IrisMessageContent> contentEntities = contentList.stream().map(IrisMessageContentDTO::toEntity).toList();
+        message.setContent(contentEntities);
+        message.setMessageDifferentiator(requestDTO.messageDifferentiator());
+
+        IrisMessage savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
         savedMessage.setMessageDifferentiator(message.getMessageDifferentiator());
         irisSessionService.sendOverWebsocket(savedMessage, session);
-        irisSessionService.requestMessageFromIris(session);
+        var uncommittedFiles = requestDTO.uncommittedFiles() != null ? requestDTO.uncommittedFiles() : java.util.Map.<String, String>of();
+        irisSessionService.requestMessageFromIris(session, uncommittedFiles);
 
-        var uriString = "/api/iris/sessions/" + session.getId() + "/messages/" + savedMessage.getId();
+        String uriString = "/api/iris/sessions/" + session.getId() + "/messages/" + savedMessage.getId();
         return ResponseEntity.created(new URI(uriString)).body(savedMessage);
     }
 

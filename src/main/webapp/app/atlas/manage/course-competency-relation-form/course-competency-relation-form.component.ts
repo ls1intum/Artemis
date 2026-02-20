@@ -90,7 +90,7 @@ export class CourseCompetencyRelationFormComponent {
     }
 
     protected getUiRelationTypeKey(s: SuggestedRelationDTO): keyof typeof CompetencyRelationType {
-        // Map backend "REQUIRES" to frontend enum key "ASSUMES"
+        // Map server "REQUIRES" to client enum key "ASSUMES"
         const key = s.relation_type === 'REQUIRES' ? 'ASSUMES' : s.relation_type;
         // Fallback safety
         if (key in CompetencyRelationType) {

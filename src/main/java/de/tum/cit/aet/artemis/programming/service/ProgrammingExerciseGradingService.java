@@ -16,11 +16,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Precision;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
@@ -147,7 +146,7 @@ public class ProgrammingExerciseGradingService {
      * @return result after compilation (can only be null in case an error occurs)
      */
     @Nullable
-    public Result processNewProgrammingExerciseResult(@NotNull ProgrammingExerciseParticipation participation, @NotNull Object requestBody) {
+    public Result processNewProgrammingExerciseResult(@NonNull ProgrammingExerciseParticipation participation, @NonNull Object requestBody) {
         log.debug("Received new build result (NEW) for participation {}", participation.getId());
 
         try {
@@ -190,6 +189,7 @@ public class ProgrammingExerciseGradingService {
 
             // Note: we only set one side of the relationship because we don't know yet whether the result will actually be saved
             newResult.setSubmission(latestSubmission);
+            newResult.setExerciseId(participation.getExercise().getId());
             newResult.setRatedIfNotAfterDueDate();
             // NOTE: the result is not saved yet, but is connected to the submission, the submission is not completely saved yet
             return processNewProgrammingExerciseResult(participation, newResult);
@@ -257,7 +257,7 @@ public class ProgrammingExerciseGradingService {
         }).max(Comparator.naturalOrder());
     }
 
-    @NotNull
+    @NonNull
     protected ProgrammingSubmission createAndSaveFallbackSubmission(ProgrammingExerciseParticipation participation, BuildResultNotification buildResult) {
         final var commitHash = buildResult.commitHash(SubmissionType.MANUAL);
         if (ObjectUtils.isEmpty(commitHash)) {
@@ -599,7 +599,7 @@ public class ProgrammingExerciseGradingService {
      * @param applySubmissionPolicy true, if submission policies should be taken into account when updating the score.
      * @return The updated result
      */
-    private Result calculateScoreForResult(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> relevantTestCases, @NotNull Result result,
+    private Result calculateScoreForResult(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> relevantTestCases, @NonNull Result result,
             ProgrammingExercise exercise, boolean applySubmissionPolicy) {
         List<Feedback> automaticFeedbacks = result.getFeedbacks().stream().filter(feedback -> FeedbackType.AUTOMATIC.equals(feedback.getType())).toList();
         List<Feedback> staticCodeAnalysisFeedback = new ArrayList<>();

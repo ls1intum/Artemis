@@ -22,10 +22,10 @@ const config: Config = {
     },
 
     // Set the production url of your site here
-    url: 'https://ls1intum.github.io/',
+    url: 'https://docs.artemis.tum.de',
     // Set the /<baseUrl>/ pathname under which your site is served
-    // For GitHub pages deployment, it is often '/<projectName>/'
-    baseUrl: '/Artemis/',
+    // For custom domains, use '/'
+    baseUrl: '/',
 
     // GitHub pages deployment config.
     // If you aren't using GitHub pages, you don't need these.
@@ -33,6 +33,7 @@ const config: Config = {
     projectName: 'Artemis', // Usually your repo name.
 
     onBrokenLinks: 'throw',
+    onBrokenAnchors: 'throw',
 
     // Even if you don't use internationalization, you can use this field to set
     // useful metadata like html lang. For example, if your site is Chinese, you
@@ -62,7 +63,7 @@ const config: Config = {
                 hashed: true,
                 language: ['en'],
                 indexDocs: true,
-                docsRouteBasePath: ['student', 'instructor', 'staff', 'admin'],
+                docsRouteBasePath: ['student', 'instructor', 'developer', 'admin'],
                 searchContextByPaths: [
                     {
                         label: 'Student Guide',
@@ -73,11 +74,11 @@ const config: Config = {
                         path: 'instructor'
                     },
                     {
-                        label: 'Staff',
-                        path: 'staff'
+                        label: 'Developer Guide',
+                        path: 'developer'
                     },
                     {
-                        label: 'Admin',
+                        label: 'Admin Guide',
                         path: 'admin'
                     }
                 ],
@@ -92,7 +93,7 @@ const config: Config = {
             {
                 path: 'docs/student',
                 routeBasePath: 'student',
-                sidebarPath: './sidebars.ts',
+                sidebarPath: './sidebar-students.ts',
                 editUrl: EDIT_URL,
                 exclude: ['**/README.md'],
             },
@@ -103,7 +104,7 @@ const config: Config = {
                 id: 'instructor',
                 path: 'docs/instructor',
                 routeBasePath: 'instructor',
-                sidebarPath: './sidebars.ts',
+                sidebarPath: './sidebar-instructors.ts',
                 editUrl: EDIT_URL,
                 exclude: ['**/README.md'],
             },
@@ -111,10 +112,10 @@ const config: Config = {
         [
             '@docusaurus/plugin-content-docs',
             {
-                id: 'staff',
-                path: 'docs/staff',
-                routeBasePath: 'staff',
-                sidebarPath: './sidebars.ts',
+                id: 'developer',
+                path: 'docs/developer',
+                routeBasePath: 'developer',
+                sidebarPath: './sidebar-developer.ts',
                 editUrl: EDIT_URL,
                 exclude: ['**/README.md'],
             },
@@ -125,7 +126,7 @@ const config: Config = {
                 id: 'admin',
                 path: 'docs/admin',
                 routeBasePath: 'admin',
-                sidebarPath: './sidebars.ts',
+                sidebarPath: './sidebar-admin.ts',
                 editUrl: EDIT_URL,
                 exclude: ['**/README.md'],
             },
@@ -160,15 +161,15 @@ const config: Config = {
                     items: [
                         {
                             label: 'AET Website',
-                            href: 'https://aet.cit.tum.de/',
+                            href: 'https://aet.cit.tum.de',
                         },
                         {
                             label: 'AET LinkedIn',
-                            href: 'https://www.linkedin.com/company/tumaet/posts/?feedView=all',
+                            href: 'https://www.linkedin.com/company/tumaet',
                         },
                         {
                             label: 'AET Instagram',
-                            href: 'https://www.instagram.com/tum.aet/',
+                            href: 'https://www.instagram.com/tum.aet',
                         },
                     ],
                 },
@@ -199,7 +200,7 @@ const config: Config = {
                     ],
                 },
             ],
-            copyright: `© 2025 Technische Universität München – Built with ❤️ by the Artemis Team at Applied Education Technologies (AET)`,
+            copyright: `© 2026 Technical University of Munich – Built with ❤️ by the Artemis Team at Applied Education Technologies (AET)`,
         },
         prism: {
             theme: prismThemes.github,

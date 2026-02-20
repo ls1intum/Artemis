@@ -8,7 +8,7 @@ on:
     - 'CONTRIBUTING.md'
     - 'LICENSE'
     - 'SECURITY.md'
-    - 'docs/**'
+    - 'documentation/**'
     - '.github/**'
     - '!.github/workflows/test.yml'
     - '.husky/**'
@@ -32,7 +32,7 @@ on:
     - 'CONTRIBUTING.md'
     - 'LICENSE'
     - 'SECURITY.md'
-    - 'docs/**'
+    - 'documentation/**'
     - '.github/**'
     - '!.github/workflows/test.yml'
     - '.husky/**'
@@ -70,7 +70,7 @@ jobs:
     timeout-minutes: 80
 
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - name: Setup Java
       uses: actions/setup-java@v5
       with:
@@ -114,7 +114,7 @@ jobs:
         ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
     - name: Upload JUnit Test Results
       if: success() || failure()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: JUnit Test Results
         path: build/test-results/test/*.xml
@@ -146,7 +146,7 @@ jobs:
       run: bash supporting_scripts/extract_number_of_server_starts.sh
     - name: Upload Server Test Coverage Report
       if: success() || failure()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: Coverage Report Server Tests
         path: build/reports/jacoco/aggregated/html
@@ -161,7 +161,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - name: Setup Java
       uses: actions/setup-java@v5
       with:
@@ -188,51 +188,63 @@ jobs:
     runs-on: aet-large-ubuntu
     timeout-minutes: 30
     steps:
-        - uses: actions/checkout@v5
+        - uses: actions/checkout@v6
         # It seems like there is some memory issue with these tests with the project-wide default node option
         # `--max-old-space-size` set in the .npmrc, therefore we delete it for this test as a workaround
         - name: remove project-wide node options set in .npmrc just for this test
           run: rm .npmrc || true
         - name: Setup Node.js
-          uses: actions/setup-node@v5
+          uses: actions/setup-node@v6
           with:
               node-version: '${{ env.node }}'
               cache: 'npm'
         - name: Install Dependencies
           run: npm install
         - name: Compile TypeScript Test Files With Typechecking
-          run: npm run compile:ts:tests
+          run: npm run compile:tests
         - name: TypeScript Test Without Typechecking
           run: npm run test:ci
         - name: Upload Client Test Coverage Report
           if: success() || failure()
-          uses: actions/upload-artifact@v4
+          uses: actions/upload-artifact@v6
           with:
               name: Coverage Report Client Tests
               path: build/test-results/lcov-report/
+        - name: Upload Vitest Coverage Report
+          if: success() || failure()
+          uses: actions/upload-artifact@v6
+          with:
+              name: Vitest Coverage Report
+              path: build/test-results/vitest/coverage/
         - name: Upload JUnit Test Results
           if: success() || failure()
-          uses: actions/upload-artifact@v4
+          uses: actions/upload-artifact@v6
           with:
             name: Client JUnit Test Results
             path: junit.xml
+        - name: Upload Vitest JUnit Test Results
+          if: success() || failure()
+          uses: actions/upload-artifact@v6
+          with:
+            name: Vitest JUnit Test Results
+            path: build/test-results/vitest/junit.xml
 
   client-tests-selected:
       runs-on: ubuntu-latest
       timeout-minutes: 30
       steps:
-          - uses: actions/checkout@v5
+          - uses: actions/checkout@v6
             with:
                 fetch-depth: 0
           - name: Setup Node.js
-            uses: actions/setup-node@v5
+            uses: actions/setup-node@v6
             with:
                 node-version: '${{ env.node }}'
                 cache: 'npm'
           - name: Install Dependencies
             run: npm install
           - name: Compile TypeScript Test Files With Typechecking
-            run: npm run compile:ts:tests
+            run: npm run compile:tests
           - name: TypeScript Test (Selection) Without Typechecking
             run: npm run test-diff:ci
 
@@ -240,9 +252,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - name: Setup Node.js
-      uses: actions/setup-node@v5
+      uses: actions/setup-node@v6
       with:
         node-version: '${{ env.node }}'
         cache: 'npm'
@@ -258,14 +270,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - name: Setup Node.js
-      uses: actions/setup-node@v5
+      uses: actions/setup-node@v6
       with:
         node-version: '${{ env.node }}'
         cache: 'npm'
     - name: Install Dependencies
       run: npm install
     - name: Compile TypeScript Files With Typechecking
-      run: npm run compile:ts
+      run: npm run compile
 

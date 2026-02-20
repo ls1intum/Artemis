@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.nebula.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Optional;
@@ -13,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -24,7 +21,6 @@ import de.tum.cit.aet.artemis.nebula.config.NebulaEnabled;
 @Conditional(NebulaEnabled.class)
 @Service
 @Lazy
-@Profile(PROFILE_CORE)
 public class TumLiveService {
 
     private static final Logger log = LoggerFactory.getLogger(TumLiveService.class);
@@ -67,7 +63,7 @@ public class TumLiveService {
         try {
             TumLivePlaylistDTO response = restClient.get().uri("/streams/{courseSlug}/{streamId}", info.courseSlug(), info.streamId()).retrieve().body(TumLivePlaylistDTO.class);
 
-            if (response.stream() != null && response.stream().playlistUrl() != null) {
+            if (response != null && response.stream() != null && response.stream().playlistUrl() != null) {
                 return Optional.of(response.stream().playlistUrl());
             }
             else {

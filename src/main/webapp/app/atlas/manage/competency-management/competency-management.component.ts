@@ -2,13 +2,14 @@ import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, effect
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CompetencyWithTailRelationDTO, CourseCompetency, CourseCompetencyType, getIcon } from 'app/atlas/shared/entities/competency.model';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { Subscription, firstValueFrom, map } from 'rxjs';
 import { faCircleQuestion, faEdit, faFileImport, faPencilAlt, faPlus, faRobot, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { PROFILE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import {
     ImportAllCourseCompetenciesModalComponent,
@@ -26,8 +27,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { CourseTitleBarTitleComponent } from 'app/core/course/shared/course-title-bar-title/course-title-bar-title.component';
 import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
 import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { Authority } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_INSTRUCTOR } from 'app/shared/constants/authority.constants';
 import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
@@ -65,7 +65,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     private readonly profileService = inject(ProfileService);
     private readonly irisSettingsService = inject(IrisSettingsService);
     private readonly featureToggleService = inject(FeatureToggleService);
-    private readonly sessionStorageService = inject(SessionStorageService);
+    private readonly localStorageService = inject(LocalStorageService);
     private readonly accountService = inject(AccountService);
 
     readonly courseId = toSignal(this.activatedRoute.parent!.params.pipe(map((params) => Number(params.courseId))), { requireSync: true });
@@ -75,7 +75,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     competencies = computed(() => this.courseCompetencies().filter((cc) => cc.type === CourseCompetencyType.COMPETENCY));
     prerequisites = computed(() => this.courseCompetencies().filter((cc) => cc.type === CourseCompetencyType.PREREQUISITE));
 
-    irisCompetencyGenerationEnabled = signal<boolean>(false);
+    irisEnabled = signal<boolean>(false);
     standardizedCompetenciesEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies), { requireSync: true });
     agentChatEnabled = signal<boolean>(false);
 
@@ -87,7 +87,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             untracked(async () => await this.loadCourseCompetencies(courseId));
         });
         effect(() => {
-            const irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
+            const irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
             untracked(async () => {
                 if (irisEnabled) {
                     await this.loadIrisEnabled();
@@ -97,14 +97,14 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
-        const lastVisit = this.sessionStorageService.retrieve('alreadyVisitedCompetencyManagement');
+        const lastVisit = this.localStorageService.retrieve('alreadyVisitedCompetencyManagement');
         if (!lastVisit) {
             this.openCourseCompetencyExplanation();
         }
-        this.sessionStorageService.store('alreadyVisitedCompetencyManagement', true);
+        this.localStorageService.store('alreadyVisitedCompetencyManagement', true);
 
         this.agentChatSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.AtlasAgent).subscribe((isFeatureEnabled) => {
-            const hasAuthority = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
+            const hasAuthority = this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_INSTRUCTOR);
             this.agentChatEnabled.set(hasAuthority && isFeatureEnabled);
         });
     }
@@ -115,8 +115,8 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
 
     private async loadIrisEnabled() {
         try {
-            const combinedCourseSettings = await firstValueFrom(this.irisSettingsService.getCombinedCourseSettings(this.courseId()));
-            this.irisCompetencyGenerationEnabled.set(combinedCourseSettings?.irisCompetencyGenerationSettings?.enabled ?? false);
+            const courseSettings = await firstValueFrom(this.irisSettingsService.getCourseSettingsWithRateLimit(this.courseId()));
+            this.irisEnabled.set(courseSettings?.settings?.enabled ?? false);
         } catch (error) {
             this.alertService.error(error);
         }
@@ -217,7 +217,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             size: 'lg',
             backdrop: true,
         });
-        modalRef.componentInstance.courseId = this.courseId();
+        modalRef.componentInstance.courseId.set(this.courseId());
 
         modalRef.componentInstance.competencyChanged.subscribe(() => {
             this.loadCourseCompetencies(this.courseId());

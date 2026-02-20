@@ -6,8 +6,13 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.function.TriConsumer;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripperByArea;
@@ -24,14 +29,21 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.ImageDTO;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
+import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 import de.tum.cit.aet.artemis.exam.dto.ExamUsersNotFoundDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExportExamUserDTO;
+import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
+import de.tum.cit.aet.artemis.exam.repository.ExamRoomRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 
 /**
@@ -44,16 +56,25 @@ public class ExamUserService {
 
     private static final Logger log = LoggerFactory.getLogger(ExamUserService.class);
 
+    private static final String ENTITY_NAME = "examUserService";
+
     private final ExamUserRepository examUserRepository;
 
     private final UserRepository userRepository;
 
     private final FileService fileService;
 
-    public ExamUserService(FileService fileService, UserRepository userRepository, ExamUserRepository examUserRepository) {
+    private final ExamRoomRepository examRoomRepository;
+
+    private final ExamRoomService examRoomService;
+
+    public ExamUserService(FileService fileService, UserRepository userRepository, ExamUserRepository examUserRepository, ExamRoomRepository examRoomRepository,
+            ExamRoomService examRoomService) {
         this.examUserRepository = examUserRepository;
         this.userRepository = userRepository;
         this.fileService = fileService;
+        this.examRoomRepository = examRoomRepository;
+        this.examRoomService = examRoomService;
     }
 
     /**
@@ -168,5 +189,91 @@ public class ExamUserService {
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record ExamUserWithImageDTO(String studentRegistrationNumber, ImageDTO image) {
+    }
+
+    /**
+     * Sets the transient room and seat fields for all {@link ExamUser}s.
+     * The exam users must all belong to the same exam.
+     *
+     * @param examUsers                  All exam users for which the transient fields should be set.
+     * @param roomGetter                 The getter function to get the room string from the exam user.
+     * @param seatGetter                 The getter function to get the seat string from the exam user.
+     * @param transientRoomAndSeatSetter The setter function to set the transient room and seat fields of the exam user.
+     */
+    private void setRoomAndSeatTransientForExamUsers(Set<ExamUser> examUsers, Function<ExamUser, String> roomGetter, Function<ExamUser, String> seatGetter,
+            TriConsumer<ExamUser, ExamRoom, ExamSeatDTO> transientRoomAndSeatSetter) {
+        List<Exam> usedExams = examUsers.stream().map(ExamUser::getExam).distinct().toList();
+        if (usedExams.size() != 1) {
+            throw new BadRequestAlertException("All exam users must belong to the same exam", ENTITY_NAME, "examUserService.multipleExams", Map.of("foundExams", usedExams.size()));
+        }
+        long examId = usedExams.getFirst().getId();
+        Set<ExamRoom> examRoomsUsedInExam = examRoomRepository.findAllByExamId(examId);
+
+        if (examRoomsUsedInExam.isEmpty()) {
+            // pure legacy distribution
+            return;
+        }
+
+        for (ExamUser examUser : examUsers) {
+            final String roomNumber = roomGetter.apply(examUser);
+            final String seatName = seatGetter.apply(examUser);
+
+            if (!StringUtils.hasText(roomNumber) || !StringUtils.hasText(seatName)) {
+                // examUser does not have this location data
+                continue;
+            }
+
+            Optional<ExamRoom> matchingRoomEntity = examRoomsUsedInExam.stream().filter(room -> room.getRoomNumber().equalsIgnoreCase(roomNumber)).findFirst();
+            if (matchingRoomEntity.isEmpty()) {
+                // we can't just return here in order to not break exams where a mix of the modern and legacy system was used.
+                // while this is discouraged, it would be naive to not account for that possibility.
+                // if we were to return here, a single legacy-inserted student could steal the modern mode from modern-inserted ones.
+                continue;
+            }
+
+            Optional<ExamSeatDTO> matchingSeatEntity = matchingRoomEntity.get().getSeats().stream().filter(seat -> seat.name().equalsIgnoreCase(seatName)).findFirst();
+            if (matchingSeatEntity.isEmpty()) {
+                // reasoning analogue to the empty matching room case
+                continue;
+            }
+
+            transientRoomAndSeatSetter.accept(examUser, matchingRoomEntity.get(), matchingSeatEntity.get());
+        }
+    }
+
+    /**
+     * @param examUsers All exam users for which the transient fields should be set.
+     * @see #setRoomAndSeatTransientForExamUsers
+     */
+    public void setPlannedRoomAndSeatTransientForExamUsers(Set<ExamUser> examUsers) {
+        setRoomAndSeatTransientForExamUsers(examUsers, ExamUser::getPlannedRoom, ExamUser::getPlannedSeat, ExamUser::setTransientPlannedRoomAndSeat);
+    }
+
+    /**
+     * @param examUsers All exam users for which the transient fields should be set.
+     * @see #setRoomAndSeatTransientForExamUsers
+     */
+    public void setActualRoomAndSeatTransientForExamUsers(Set<ExamUser> examUsers) {
+        setRoomAndSeatTransientForExamUsers(examUsers, ExamUser::getActualRoom, ExamUser::getActualSeat, ExamUser::setTransientActualRoomAndSeat);
+    }
+
+    public void checkExamUserExistsAndBelongsToExamElseThrow(long examUserId, long examId) {
+        examUserRepository.findWithExamById(examUserId).filter(examUser -> examUser.getExam().getId() == examId)
+                .orElseThrow(() -> new EntityNotFoundException("Exam user with id: " + examUserId + " does not exist in exam with id: " + examId));
+    }
+
+    /**
+     * Gathers information about students for exporting
+     *
+     * @param examId the exam id
+     * @return all exam users with their most important data for exporting
+     */
+    public List<ExportExamUserDTO> exportStudents(long examId) {
+        List<ExamUser> studentsInExam = examUserRepository.findAllByExamId(examId);
+        Set<ExamRoom> roomsUsedInExam = examRoomRepository.findAllByExamId(examId);
+        Map<String, String> roomNumbersToHumanReadable = roomsUsedInExam.stream().collect(Collectors.toMap(ExamRoom::getRoomNumber, examRoomService::humanReadableFormat));
+
+        return studentsInExam.stream()
+                .map(examUser -> new ExportExamUserDTO(examUser, roomNumbersToHumanReadable.getOrDefault(examUser.getPlannedRoom(), examUser.getPlannedRoom()))).toList();
     }
 }

@@ -1,16 +1,13 @@
 package de.tum.cit.aet.artemis.fileupload.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.util.HashMap;
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
@@ -21,10 +18,11 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseImportService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.fileupload.config.FileUploadEnabled;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 
-@Profile(PROFILE_CORE)
+@Conditional(FileUploadEnabled.class)
 @Lazy
 @Service
 public class FileUploadExerciseImportService extends ExerciseImportService {
@@ -58,7 +56,7 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
      * @param importedExercise The new exercise already containing values which should not get copied, i.e. overwritten
      * @return The newly created exercise
      */
-    @NotNull
+    @NonNull
     public FileUploadExercise importFileUploadExercise(final FileUploadExercise templateExercise, FileUploadExercise importedExercise) {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
         FileUploadExercise newExercise = copyFileUploadExerciseBasis(importedExercise);
@@ -79,7 +77,7 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
      * @param importedExercise The exercise from which to copy the basis
      * @return the cloned TextExercise basis
      */
-    @NotNull
+    @NonNull
     private FileUploadExercise copyFileUploadExerciseBasis(FileUploadExercise importedExercise) {
         log.debug("Copying the exercise basis from {}", importedExercise);
         FileUploadExercise newExercise = new FileUploadExercise();

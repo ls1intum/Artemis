@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -13,13 +15,16 @@ import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
+    setupTestBed({ zoneless: true });
     let comp: StructuredGradingInstructionsAssessmentLayoutComponent;
     let fixture: ComponentFixture<StructuredGradingInstructionsAssessmentLayoutComponent>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockDirective(NgbTooltip), MockDirective(NgbCollapse), FaIconComponent],
-            declarations: [
+            imports: [
+                MockDirective(NgbTooltip),
+                MockDirective(NgbCollapse),
+                FaIconComponent,
                 StructuredGradingInstructionsAssessmentLayoutComponent,
                 MockComponent(HelpIconComponent),
                 ExpandableSectionComponent,
@@ -32,14 +37,17 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(StructuredGradingInstructionsAssessmentLayoutComponent);
                 comp = fixture.componentInstance;
+                fixture.componentRef.setInput('readonly', undefined);
+                fixture.componentRef.setInput('criteria', undefined);
             });
     });
 
     it('should initialize', () => {
-        comp.readonly = true;
+        fixture.componentRef.setInput('readonly', true);
+
         comp.ngOnInit();
-        expect(comp.allowDrop).toBeFalse();
-        expect(comp.disableDrag()).toBeFalse();
+        expect(comp.allowDrop).toBe(false);
+        expect(comp.disableDrag()).toBe(false);
     });
 
     it('should set display elements', () => {
@@ -56,7 +64,7 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
         expect(comp.setInstrColour(gradingInstruction)).toBe('var(--sgi-assessment-layout-negative-background)');
     });
 
-    it('should expand and collapse all criteria', fakeAsync(() => {
+    it('should expand and collapse all criteria', () => {
         const gradingCriterionOne = {
             id: 1,
             title: 'title',
@@ -67,20 +75,20 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
             title: 'title',
             structuredGradingInstructions: [{ id: 2, feedback: 'feedback', credits: 1 } as GradingInstruction],
         } as GradingCriterion;
-        comp.criteria = [gradingCriterionOne, gradingCriterionTwo];
+        fixture.componentRef.setInput('criteria', [gradingCriterionOne, gradingCriterionTwo]);
         fixture.detectChanges();
-        tick();
-        expect(comp.expandableSections).toHaveLength(2);
-        comp.expandableSections.forEach((section) => {
-            expect(section.isCollapsed).toBeFalse();
+
+        expect(comp.expandableSections()).toHaveLength(2);
+        comp.expandableSections().forEach((section) => {
+            expect(section.isCollapsed).toBe(false);
         });
         comp.collapseAll();
-        comp.expandableSections.forEach((section) => {
-            expect(section.isCollapsed).toBeTrue();
+        comp.expandableSections().forEach((section) => {
+            expect(section.isCollapsed).toBe(true);
         });
         comp.expandAll();
-        comp.expandableSections.forEach((section) => {
-            expect(section.isCollapsed).toBeFalse();
+        comp.expandableSections().forEach((section) => {
+            expect(section.isCollapsed).toBe(false);
         });
-    }));
+    });
 });

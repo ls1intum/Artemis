@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 import static java.time.ZonedDateTime.now;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -12,15 +13,15 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.apache.commons.lang3.Strings;
 import org.hibernate.Hibernate;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
@@ -405,8 +406,21 @@ public class ExerciseService {
      */
     @Async
     public void updatePointsInRelatedParticipantScores(Exercise originalExercise, Exercise updatedExercise) {
-        if (originalExercise.getMaxPoints().equals(updatedExercise.getMaxPoints()) && originalExercise.getBonusPoints().equals(updatedExercise.getBonusPoints())) {
-            return; // nothing to do since points are still correct
+        updatePointsInRelatedParticipantScores(originalExercise.getMaxPoints(), originalExercise.getBonusPoints(), updatedExercise);
+    }
+
+    /**
+     * Updates the points of related exercises if the points of exercises have changed
+     *
+     * @param originalMaxPoints   the original max points
+     * @param originalBonusPoints the original bonus points
+     * @param updatedExercise     the updatedExercise
+     */
+    @Async
+    public void updatePointsInRelatedParticipantScores(Double originalMaxPoints, Double originalBonusPoints, Exercise updatedExercise) {
+        boolean arePointsStillCorrect = Objects.equals(originalMaxPoints, updatedExercise.getMaxPoints()) && Objects.equals(originalBonusPoints, updatedExercise.getBonusPoints());
+        if (arePointsStillCorrect) {
+            return;
         }
 
         List<ParticipantScore> participantScoreList = participantScoreRepository.findAllByExercise(updatedExercise);
@@ -523,7 +537,7 @@ public class ExerciseService {
      * Sets the transient attribute "studentAssignedTeamId" that contains the id of the team to which the user is assigned
      *
      * @param exercise the exercise for which to set the attribute
-     * @param user     the user for which to check to which team (or no team) he belongs to
+     * @param user     the user for which to check to which team (or no team) they belong to
      */
     private void setAssignedTeamIdForExerciseAndUser(Exercise exercise, User user) {
         // if the exercise is not team-based, there is nothing to do here
@@ -614,7 +628,8 @@ public class ExerciseService {
                 exerciseStatisticsDTO.setParticipationRateInPercent(teams == null || teams == 0 ? 0.0 : Math.round(participations * 1000.0 / teams) / 10.0);
             }
             else {
-                Long studentParticipations = exerciseRepository.getStudentParticipationCountById(exercise.getId());
+                Long studentParticipations = exerciseRepository.getStudentParticipationCountById(exercise.getId(),
+                        exercise.getCourseViaExerciseGroupOrCourseMember().getStudentGroupName());
                 var participations = studentParticipations == null ? 0 : Math.toIntExact(studentParticipations);
                 exerciseStatisticsDTO.setNoOfParticipatingStudentsOrTeams(participations);
 
@@ -696,7 +711,7 @@ public class ExerciseService {
         // update the grading criteria to re-calculate the results considering the updated usage limits
         gradingCriterionRepository.saveAll(exercise.getGradingCriteria());
 
-        List<Result> results = resultRepository.findWithEagerSubmissionAndFeedbackBySubmissionParticipationExerciseId(exercise.getId());
+        List<Result> results = resultRepository.findWithEagerSubmissionAndFeedbackByExerciseId(exercise.getId());
 
         // add example submission results that belong exercise
         if (!exercise.getExampleSubmissions().isEmpty()) {
@@ -760,7 +775,7 @@ public class ExerciseService {
      * @param exerciseLinks set of exercise links
      * @param competency    competency to remove
      */
-    public void removeCompetency(@NotNull Set<CompetencyExerciseLink> exerciseLinks, @NotNull CourseCompetency competency) {
+    public void removeCompetency(@NonNull Set<CompetencyExerciseLink> exerciseLinks, @NonNull CourseCompetency competency) {
         competencyRelationApi.ifPresent(api -> api.deleteAllExerciseLinks(exerciseLinks));
         competency.getExerciseLinks().removeAll(exerciseLinks);
     }
@@ -774,12 +789,38 @@ public class ExerciseService {
      * @param notificationText custom notification text
      */
     public void notifyAboutExerciseChanges(Exercise originalExercise, Exercise updatedExercise, String notificationText) {
-        if (originalExercise.isCourseExercise()) {
-            groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(originalExercise, updatedExercise, notificationText);
+        notifyAboutExerciseChanges(originalExercise.getReleaseDate(), originalExercise.getAssessmentDueDate(), originalExercise.getProblemStatement(), updatedExercise,
+                notificationText);
+    }
+
+    /**
+     * Notifies students about exercise changes.
+     * <p>
+     * For <b>course exercises</b>, this uses scheduled group notifications and relies on
+     * {@code originalReleaseDate} and {@code originalAssessmentDueDate} to decide which
+     * notifications to send.
+     * </p>
+     * <p>
+     * For <b>exam exercises</b>, {@code originalReleaseDate} and {@code originalAssessmentDueDate}
+     * are ignored. Instead, a live event is sent shortly before the exam start if – and only if –
+     * the problem statement has changed.
+     * </p>
+     *
+     * @param originalReleaseDate       the original release date of the course exercise
+     * @param originalAssessmentDueDate the original assessment due date of the course exercise
+     * @param originalProblemStatement  the original problem statement (used for both course and exam exercises)
+     * @param updatedExercise           the updated exercise
+     * @param notificationText          custom notification text shown to students
+     */
+    public void notifyAboutExerciseChanges(ZonedDateTime originalReleaseDate, ZonedDateTime originalAssessmentDueDate, String originalProblemStatement, Exercise updatedExercise,
+            String notificationText) {
+        if (updatedExercise.isCourseExercise()) {
+            groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(originalReleaseDate, originalAssessmentDueDate, updatedExercise,
+                    notificationText);
         }
         // start sending problem statement updates within the last 5 minutes before the exam starts
-        else if (now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isAfter(originalExercise.getExam().getStartDate()) && originalExercise.isExamExercise()
-                && !Strings.CS.equals(originalExercise.getProblemStatement(), updatedExercise.getProblemStatement())) {
+        else if (now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isAfter(updatedExercise.getExam().getStartDate()) && updatedExercise.isExamExercise()
+                && !Strings.CS.equals(originalProblemStatement, updatedExercise.getProblemStatement())) {
             ExamLiveEventsApi api = examLiveEventsApi.orElseThrow(() -> new ExamApiNotPresentException(ExamLiveEventsApi.class));
             api.createAndSendProblemStatementUpdateEvent(updatedExercise, notificationText);
         }

@@ -17,9 +17,10 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.dto.AcceptExternalLLMUsageDTO;
 import de.tum.cit.aet.artemis.core.dto.PasswordChangeDTO;
+import de.tum.cit.aet.artemis.core.dto.SelectedLLMUsageDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.KeyAndPasswordVM;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
@@ -210,7 +211,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     void activateAccountNoUser() throws Exception {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("key", "");
-        request.get("/api/core/public/activate", HttpStatus.INTERNAL_SERVER_ERROR, String.class, params);
+        request.get("/api/core/public/activate", HttpStatus.BAD_REQUEST, String.class, params);
     }
 
     @Test
@@ -233,6 +234,8 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         UserDTO account = request.get("/api/core/public/account", HttpStatus.OK, UserDTO.class);
         assertThat(account).isNotNull();
         assertThat(account.getAskToSetupPasskey()).isTrue();
+        assertThat(account.isLoggedInWithPasskey()).isFalse();
+        assertThat(account.isPasskeySuperAdminApproved()).isFalse();
     }
 
     @Test
@@ -297,13 +300,33 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
     @Test
     @WithMockUser(username = AUTHENTICATEDUSER)
-    void saveAccountRegistrationDisabled() throws Throwable {
+    void saveAccountRegistrationDisabledExternalUser() throws Throwable {
         testWithRegistrationDisabled(() -> {
+            // Create an external user (non-internal users should be forbidden)
             User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+            user.setInternal(false);
+            userTestRepository.save(user);
             String updatedFirstName = "UpdatedFirstName";
             user.setFirstName(updatedFirstName);
 
             request.put("/api/core/account", new UserDTO(user), HttpStatus.FORBIDDEN);
+        });
+    }
+
+    @Test
+    @WithMockUser(username = AUTHENTICATEDUSER)
+    void saveAccountRegistrationDisabledInternalUser() throws Throwable {
+        testWithRegistrationDisabled(() -> {
+            // Internal users should be allowed to save even when registration is disabled
+            User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+            String updatedFirstName = "UpdatedFirstName";
+            user.setFirstName(updatedFirstName);
+
+            request.put("/api/core/account", new UserDTO(user), HttpStatus.OK);
+
+            Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
+            assertThat(updatedUser).isPresent();
+            assertThat(updatedUser.get().getFirstName()).isEqualTo(updatedFirstName);
         });
     }
 
@@ -322,7 +345,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     @WithMockUser(username = AUTHENTICATEDUSER)
     void changePassword() throws Exception {
         String updatedPassword = "12345678";
-        User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER, passwordService.hashPassword(UserFactory.USER_PASSWORD));
+        userUtilService.createAndSaveUser(AUTHENTICATEDUSER, passwordService.hashPassword(UserFactory.USER_PASSWORD));
 
         PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, updatedPassword);
         request.postWithoutLocation("/api/core/account/change-password", pwChange, HttpStatus.OK, null);
@@ -494,30 +517,30 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     @WithMockUser(username = AUTHENTICATEDUSER)
     void acceptExternalLLMUsageSuccessful() throws Exception {
         User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
-        user.setExternalLLMUsageAcceptedTimestamp(null);
+        user.setSelectedLLMUsageTimestamp(null);
         userTestRepository.save(user);
 
-        AcceptExternalLLMUsageDTO acceptExternalLLMUsageDTO = new AcceptExternalLLMUsageDTO(true);
-        request.put("/api/core/users/accept-external-llm-usage", acceptExternalLLMUsageDTO, HttpStatus.OK);
+        SelectedLLMUsageDTO selectedLLMUsageDTO = new SelectedLLMUsageDTO(AiSelectionDecision.CLOUD_AI);
+        request.put("/api/core/users/select-llm-usage", selectedLLMUsageDTO, HttpStatus.OK);
 
         Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
         assertThat(updatedUser).isPresent();
-        assertThat(updatedUser.get().getExternalLLMUsageAcceptedTimestamp()).isNotNull();
+        assertThat(updatedUser.get().getSelectedLLMUsageTimestamp()).isNotNull();
     }
 
     @Test
     @WithMockUser(username = AUTHENTICATEDUSER)
-    void declineExternalLLMUsageSuccessful() throws Exception {
+    void selectNoAIUsageSuccessful() throws Exception {
         User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
-        user.setExternalLLMUsageAcceptedTimestamp(null);
+        user.setSelectedLLMUsageTimestamp(null);
         userTestRepository.save(user);
 
-        AcceptExternalLLMUsageDTO acceptExternalLLMUsageDTO = new AcceptExternalLLMUsageDTO(false);
-        request.put("/api/core/users/accept-external-llm-usage", acceptExternalLLMUsageDTO, HttpStatus.OK);
+        SelectedLLMUsageDTO selectedLLMUsageDTO = new SelectedLLMUsageDTO(AiSelectionDecision.NO_AI);
+        request.put("/api/core/users/select-llm-usage", selectedLLMUsageDTO, HttpStatus.OK);
 
         Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
         assertThat(updatedUser).isPresent();
-        assertThat(updatedUser.get().getExternalLLMUsageAcceptedTimestamp()).isNull();
+        assertThat(updatedUser.get().getSelectedLLMUsageTimestamp()).isNotNull();
     }
 
     @Test
@@ -526,16 +549,16 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         // Create user in repo with existing timestamp
         User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
         ZonedDateTime originalTimestamp = ZonedDateTime.now().truncatedTo(ChronoUnit.MILLIS);
-        user.setExternalLLMUsageAcceptedTimestamp(originalTimestamp);
+        user.setSelectedLLMUsageTimestamp(originalTimestamp);
         userTestRepository.save(user);
 
-        request.put("/api/core/users/accept-external-llm-usage", null, HttpStatus.BAD_REQUEST);
+        request.put("/api/core/users/select-llm-usage", null, HttpStatus.BAD_REQUEST);
 
         // Verify timestamp wasn't changed
         Optional<User> unchangedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
         assertThat(unchangedUser).isPresent();
 
-        ZonedDateTime actualTimestamp = unchangedUser.get().getExternalLLMUsageAcceptedTimestamp();
+        ZonedDateTime actualTimestamp = unchangedUser.get().getSelectedLLMUsageTimestamp();
         assertThat(actualTimestamp).isNotNull();
         assertThat(actualTimestamp.truncatedTo(ChronoUnit.MILLIS)).isEqualTo(originalTimestamp);
     }

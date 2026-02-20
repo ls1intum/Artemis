@@ -37,6 +37,12 @@ public class StatisticsEntry {
         this.username = username;
     }
 
+    public StatisticsEntry(int year, int month, int day, String username) {
+        this.date = String.format("%04d-%02d-%02d", year, month, day);
+        this.amount = 1L;
+        this.username = username;
+    }
+
     // empty constructor
     public StatisticsEntry() {
         this.amount = 0L;

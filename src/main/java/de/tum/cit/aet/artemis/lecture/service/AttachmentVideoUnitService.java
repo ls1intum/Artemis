@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.net.URI;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -12,8 +10,8 @@ import java.util.Set;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,16 +21,15 @@ import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
-import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
+import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
-import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.dto.HiddenPageInfoDTO;
 import de.tum.cit.aet.artemis.lecture.dto.SlideOrderDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 
-@Profile(PROFILE_CORE)
+@Conditional(LectureEnabled.class)
 @Service
 @Lazy
 public class AttachmentVideoUnitService {
@@ -45,22 +42,22 @@ public class AttachmentVideoUnitService {
 
     private final SlideSplitterService slideSplitterService;
 
-    private final Optional<IrisLectureApi> irisLectureApi;
-
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     private final LectureUnitService lectureUnitService;
 
+    private final Optional<LectureContentProcessingService> contentProcessingService;
+
     public AttachmentVideoUnitService(SlideSplitterService slideSplitterService, AttachmentVideoUnitRepository attachmentVideoUnitRepository,
-            AttachmentRepository attachmentRepository, FileService fileService, Optional<IrisLectureApi> irisLectureApi, Optional<CompetencyProgressApi> competencyProgressApi,
-            LectureUnitService lectureUnitService) {
+            AttachmentRepository attachmentRepository, FileService fileService, Optional<CompetencyProgressApi> competencyProgressApi, LectureUnitService lectureUnitService,
+            Optional<LectureContentProcessingService> contentProcessingService) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
         this.slideSplitterService = slideSplitterService;
-        this.irisLectureApi = irisLectureApi;
         this.competencyProgressApi = competencyProgressApi;
         this.lectureUnitService = lectureUnitService;
+        this.contentProcessingService = contentProcessingService;
     }
 
     /**
@@ -68,25 +65,20 @@ public class AttachmentVideoUnitService {
      *
      * @param attachmentVideoUnit The attachmentVideoUnit to create
      * @param attachment          The attachment to create the attachmentVideoUnit for
-     * @param lecture             The lecture linked to the attachmentVideoUnit
      * @param file                The file to upload
      * @param keepFilename        Whether to keep the original filename or not.
      * @return The created attachment video unit
      */
-    public AttachmentVideoUnit createAttachmentVideoUnit(AttachmentVideoUnit attachmentVideoUnit, Attachment attachment, Lecture lecture, MultipartFile file,
-            boolean keepFilename) {
-        // persist lecture unit before lecture to prevent "null index column for collection" error
-        attachmentVideoUnit.setLecture(null);
-
+    public AttachmentVideoUnit saveAttachmentVideoUnit(AttachmentVideoUnit attachmentVideoUnit, Attachment attachment, MultipartFile file, boolean keepFilename) {
+        // TODO: switch to the new mechanism of lectureUnitService.updateCompetencyLinks
         AttachmentVideoUnit savedAttachmentVideoUnit = lectureUnitService.saveWithCompetencyLinks(attachmentVideoUnit, attachmentVideoUnitRepository::saveAndFlush);
-
-        attachmentVideoUnit.setLecture(lecture);
-        lecture.addLectureUnit(savedAttachmentVideoUnit);
 
         if (attachment != null && file != null) {
             createAttachment(attachment, savedAttachmentVideoUnit, file, keepFilename);
-            irisLectureApi.ifPresent(api -> api.autoUpdateAttachmentVideoUnitsInPyris(List.of(savedAttachmentVideoUnit)));
         }
+
+        // Trigger automated content processing (transcription and ingestion)
+        contentProcessingService.ifPresent(api -> api.triggerProcessing(savedAttachmentVideoUnit));
 
         return savedAttachmentVideoUnit;
     }
@@ -114,11 +106,14 @@ public class AttachmentVideoUnitService {
         existingAttachmentVideoUnit.setVideoSource(updateUnit.getVideoSource());
 
         Attachment existingAttachment = existingAttachmentVideoUnit.getAttachment();
+        boolean createdNewAttachment = false;
 
         if (existingAttachment == null && updateAttachment != null) {
             createAttachment(updateAttachment, existingAttachmentVideoUnit, updateFile, keepFilename);
+            createdNewAttachment = true;
         }
 
+        // TODO: switch to the new mechanism of lectureUnitService.updateCompetencyLinks
         AttachmentVideoUnit savedAttachmentVideoUnit = lectureUnitService.saveWithCompetencyLinks(existingAttachmentVideoUnit, attachmentVideoUnitRepository::saveAndFlush);
 
         // Set the original competencies back to the attachment video unit so that the competencyProgressService can determine which competencies changed
@@ -126,11 +121,21 @@ public class AttachmentVideoUnitService {
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(existingAttachmentVideoUnit, Optional.of(updateUnit)));
 
         if (updateAttachment == null) {
+            // Trigger processing for video-only updates (video source change detection is done inside the service)
+            contentProcessingService.ifPresent(api -> api.triggerProcessing(savedAttachmentVideoUnit));
             prepareAttachmentVideoUnitForClient(existingAttachmentVideoUnit);
             return existingAttachmentVideoUnit;
         }
 
-        if (existingAttachment != null) {
+        if (createdNewAttachment) {
+            // Split the new file into single slides if it is a PDF
+            if (updateFile != null && "pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
+                slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
+            }
+            // Trigger processing for newly added attachment
+            contentProcessingService.ifPresent(api -> api.triggerProcessing(savedAttachmentVideoUnit));
+        }
+        else if (existingAttachment != null) {
             updateAttachment(existingAttachment, updateAttachment, savedAttachmentVideoUnit, hiddenPages);
             handleFile(updateFile, existingAttachment, keepFilename, savedAttachmentVideoUnit.getId());
             final int revision = existingAttachment.getVersion() == null ? 1 : existingAttachment.getVersion() + 1;
@@ -151,7 +156,8 @@ public class AttachmentVideoUnitService {
                 }
             }
 
-            irisLectureApi.ifPresent(api -> api.autoUpdateAttachmentVideoUnitsInPyris(List.of(savedAttachmentVideoUnit)));
+            // Trigger automated content processing (transcription and ingestion)
+            contentProcessingService.ifPresent(api -> api.triggerProcessing(savedAttachmentVideoUnit));
         }
 
         prepareAttachmentVideoUnitForClient(savedAttachmentVideoUnit);
@@ -240,8 +246,8 @@ public class AttachmentVideoUnitService {
      */
     private void evictCache(MultipartFile file, AttachmentVideoUnit attachmentVideoUnit) {
         if (file != null && !file.isEmpty()) {
-            this.fileService
-                    .evictCacheForPath(FilePathConverter.fileSystemPathForExternalUri(URI.create(attachmentVideoUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT));
+            var attachmentUri = URI.create(attachmentVideoUnit.getAttachment().getLink());
+            this.fileService.evictCacheForPath(FilePathConverter.fileSystemPathForExternalUri(attachmentUri, FilePathType.ATTACHMENT_UNIT));
         }
     }
 
@@ -250,8 +256,14 @@ public class AttachmentVideoUnitService {
      *
      * @param attachmentVideoUnit The attachment video unit to clean.
      */
+    // TODO: use a DTO for sending data to the client instead of manipulating entity objects
     public void prepareAttachmentVideoUnitForClient(AttachmentVideoUnit attachmentVideoUnit) {
-        attachmentVideoUnit.getLecture().setLectureUnits(null);
-        attachmentVideoUnit.getLecture().setAttachments(null);
+        var lecture = attachmentVideoUnit.getLecture();
+        var lectureUnits = lecture.getLectureUnits();
+        if (lectureUnits != null && !lectureUnits.isEmpty()) {
+            lecture.setLectureUnits(null);
+        }
+        lecture.setAttachments(null);
+        lectureUnitService.disconnectCompetencyLectureUnitLinks(attachmentVideoUnit);
     }
 }

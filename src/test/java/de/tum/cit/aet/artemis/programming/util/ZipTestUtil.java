@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Set;
@@ -109,6 +110,29 @@ public final class ZipTestUtil {
             default -> {
                 /* No specific git entry type found */ }
         }
+    }
+
+    /**
+     * Extracts the content of the first JSON file found within a given ZIP archive.
+     * <p>
+     * This method is primarily used in integration tests to verify exported exercise data.
+     * For example, it reads the "Exercise-Details-XXX.json" file from an instructor export of
+     * a programming exercise and returns its contents as a UTF-8 string for further validation.
+     *
+     * @param zipBytes the ZIP file content as a byte array, typically received from an export REST endpoint
+     * @return the content of the first JSON file found within the ZIP as a UTF-8 string
+     * @throws IOException if no JSON file is found inside the ZIP or if an I/O error occurs while reading
+     */
+    public static String extractExerciseJsonFromZip(byte[] zipBytes) throws IOException {
+        try (var zis = new ZipInputStream(new ByteArrayInputStream(zipBytes))) {
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                if (entry.getName().endsWith(".json")) {
+                    return new String(zis.readAllBytes(), StandardCharsets.UTF_8);
+                }
+            }
+        }
+        throw new IOException("No JSON file found inside exported ZIP");
     }
 
     private static class GitVerificationResult {

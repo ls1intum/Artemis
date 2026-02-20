@@ -6,6 +6,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.exercise.web.ParticipationTeamWebsocketService.getParticipationIdFromDestination;
 import static de.tum.cit.aet.artemis.exercise.web.ParticipationTeamWebsocketService.isParticipationTeamDestination;
 import static de.tum.cit.aet.artemis.programming.service.localci.LocalCIWebsocketMessagingService.isBuildAgentDestination;
+import static de.tum.cit.aet.artemis.programming.service.localci.LocalCIWebsocketMessagingService.isBuildJobAdminDestination;
+import static de.tum.cit.aet.artemis.programming.service.localci.LocalCIWebsocketMessagingService.isBuildJobCourseDestination;
 import static de.tum.cit.aet.artemis.programming.service.localci.LocalCIWebsocketMessagingService.isBuildQueueAdminDestination;
 import static de.tum.cit.aet.artemis.programming.service.localci.LocalCIWebsocketMessagingService.isBuildQueueCourseDestination;
 
@@ -16,11 +18,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
-import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -46,17 +49,18 @@ import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.tcp.TcpOperations;
 import org.springframework.messaging.tcp.reactor.ReactorNettyTcpClient;
 import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.DelegatingWebSocketMessageBrokerConfiguration;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
+import org.springframework.web.socket.config.annotation.WebSocketTransportRegistration;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 import org.springframework.web.socket.sockjs.transport.handler.WebSocketTransportHandler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Iterators;
 
 import de.tum.cit.aet.artemis.core.config.InetSocketAddressValidator;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -81,6 +85,8 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     private static final Logger log = LoggerFactory.getLogger(WebsocketConfiguration.class);
 
     private static final Pattern EXAM_TOPIC_PATTERN = Pattern.compile("^/topic/exams/(\\d+)/.+$");
+
+    private static final Pattern EXERCISE_SYNCHRONIZATION_TOPIC_PATTERN = Pattern.compile("^/topic/exercises/(\\d+)/synchronization$");
 
     public static final String IP_ADDRESS = "IP_ADDRESS";
 
@@ -121,16 +127,16 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     }
 
     @Override
-    protected void configureMessageBroker(@NotNull MessageBrokerRegistry config) {
+    protected void configureMessageBroker(@NonNull MessageBrokerRegistry config) {
         // Try to create a TCP client that will connect to the message broker (or the message brokers if multiple exists).
         // If tcpClient is null, there is no valid address specified in the config. This could be due to a development setup or a mistake in the config.
-        TcpOperations<byte[]> tcpClient = createTcpClient();
+        TcpOperations<byte[]> tcpClient = websocketBrokerTcpClientSupplier().get();
         if (tcpClient != null) {
             log.debug("Enabling StompBrokerRelay for WebSocket messages using {}", String.join(", ", brokerAddresses));
             config
                     // Enable the relay for "/topic"
                     .enableStompBrokerRelay("/topic")
-                    // Messages that could not be sent to a user (as he is not connected to this server) will be forwarded to "/topic/unresolved-user"
+                    // Messages that could not be sent to a user (as they are not connected to this server) will be forwarded to "/topic/unresolved-user"
                     .setUserDestinationBroadcast("/topic/unresolved-user")
                     // Information about connected users will be sent to "/topic/user-registry"
                     .setUserRegistryBroadcast("/topic/user-registry")
@@ -143,7 +149,9 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                     // Set the same heartbeat as in the client (websocket-service.ts) to detect broken connections
                     .setSystemHeartbeatSendInterval(10_000)
                     // Set the TCP client to the one generated above
-                    .setTcpClient(tcpClient);
+                    .setTcpClient(tcpClient)
+                    // Use the custom task scheduler for the heartbeat messages
+                    .setTaskScheduler(messageBrokerTaskScheduler);
         }
         else {
             log.info("Did NOT enable StompBrokerRelay for WebSocket messages. Use simple integrated broker instead.");
@@ -174,17 +182,34 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
      *
      * @return a TCP client with a round-robin use
      */
-    private ReactorNettyTcpClient<byte[]> createTcpClient() {
-        final List<InetSocketAddress> brokerAddressList = brokerAddresses.stream().map(InetSocketAddressValidator::getValidAddress).filter(Optional::isPresent).map(Optional::get)
-                .toList();
+    private TcpOperations<byte[]> createTcpClient() {
+        final List<InetSocketAddress> brokerAddressList = brokerAddresses.stream().map(InetSocketAddressValidator::getValidAddress).flatMap(Optional::stream).toList();
 
         // Return null if no valid addresses can be found. This is e.g. due to an invalid config or a development setup without a broker.
-        if (!brokerAddressList.isEmpty()) {
-            // This provides a round-robin use of brokers, we only want to use the fallback broker if the primary broker fails, so we have the same order of brokers in all nodes
-            var addressIterator = Iterators.cycle(brokerAddressList);
-            return new ReactorNettyTcpClient<>(client -> client.remoteAddress(addressIterator::next), new StompReactorNettyCodec());
+        if (brokerAddressList.isEmpty()) {
+            return null;
         }
-        return null;
+
+        // === Single broker: always connect to this one ===
+        if (brokerAddressList.size() == 1) {
+            final InetSocketAddress addr = brokerAddressList.getFirst();
+            return new ReactorNettyTcpClient<>(addr.getHostString(), addr.getPort(), new StompReactorNettyCodec());
+        }
+
+        // === Multiple brokers: thread-safe round robin ===
+        AtomicInteger index = new AtomicInteger(0);
+
+        return new ReactorNettyTcpClient<>(client -> client.remoteAddress(() -> {
+            int i = Math.floorMod(index.getAndIncrement(), brokerAddressList.size());
+            InetSocketAddress addr = brokerAddressList.get(i);
+            log.debug("STOMP relay connecting to broker[{}] {}:{}", i, addr.getHostString(), addr.getPort());
+            return addr;
+        }), new StompReactorNettyCodec());
+    }
+
+    @Bean(name = "websocketBrokerTcpClientSupplier")
+    public Supplier<TcpOperations<byte[]>> websocketBrokerTcpClientSupplier() {
+        return this::createTcpClient;
     }
 
     @Override
@@ -206,9 +231,41 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
         registration.interceptors(new TopicSubscriptionInterceptor());
+        registration.taskExecutor(createExecutor("ws-inbound-"));
     }
 
-    @NotNull
+    @Override
+    protected void configureClientOutboundChannel(ChannelRegistration registration) {
+        int cores = Runtime.getRuntime().availableProcessors();
+        registration.taskExecutor(createExecutor("ws-outbound-"));
+    }
+
+    /**
+     * Creates and configures a thread pool executor for websocket message handling.
+     *
+     * @param threadNamePrefix the prefix to use for the executor thread names, distinguishing inbound and outbound channels
+     * @return a configured {@link ThreadPoolTaskExecutor} ready for websocket channel registration
+     */
+    public ThreadPoolTaskExecutor createExecutor(String threadNamePrefix) {
+        int cores = Runtime.getRuntime().availableProcessors();
+        ThreadPoolTaskExecutor exec = new ThreadPoolTaskExecutor();
+        exec.setCorePoolSize(cores * 2);
+        exec.setMaxPoolSize(cores * 4); // allow short bursts with more threads
+        exec.setQueueCapacity(10_000);
+        exec.setKeepAliveSeconds(60);
+        exec.setThreadNamePrefix(threadNamePrefix);
+        exec.initialize();
+        return exec;
+    }
+
+    @Override
+    public void configureWebSocketTransport(WebSocketTransportRegistration registration) {
+        registration.setSendTimeLimit(15_000)           // ms – disconnect if we can’t send within 15s
+                .setSendBufferSizeLimit(512 * 1024) // bytes – per-session buffer limit
+                .setTimeToFirstMessage(20_000);     // give clients 20s to send first frame
+    }
+
+    @NonNull
     @Override
     protected MappingJackson2MessageConverter createJacksonConverter() {
         return new GzipMessageConverter(objectMapper);
@@ -222,8 +279,8 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         return new HandshakeInterceptor() {
 
             @Override
-            public boolean beforeHandshake(@NotNull ServerHttpRequest request, @NotNull ServerHttpResponse response, @NotNull WebSocketHandler wsHandler,
-                    @NotNull Map<String, Object> attributes) {
+            public boolean beforeHandshake(@NonNull ServerHttpRequest request, @NonNull ServerHttpResponse response, @NonNull WebSocketHandler wsHandler,
+                    @NonNull Map<String, Object> attributes) {
                 log.debug("beforeHandshake: {}, {}, {}", request, response, wsHandler);
                 if (request instanceof ServletServerHttpRequest servletRequest) {
                     try {
@@ -241,7 +298,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             }
 
             @Override
-            public void afterHandshake(@NotNull ServerHttpRequest request, @NotNull ServerHttpResponse response, @NotNull WebSocketHandler wsHandler, Exception exception) {
+            public void afterHandshake(@NonNull ServerHttpRequest request, @NonNull ServerHttpResponse response, @NonNull WebSocketHandler wsHandler, Exception exception) {
                 log.debug("afterHandshake: {}, {}, {}", request, response, wsHandler);
                 if (exception != null) {
                     log.warn("Exception occurred in WS.afterHandshake", exception);
@@ -254,7 +311,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         return new DefaultHandshakeHandler() {
 
             @Override
-            protected Principal determineUser(@NotNull ServerHttpRequest request, @NotNull WebSocketHandler wsHandler, @NotNull Map<String, Object> attributes) {
+            protected Principal determineUser(@NonNull ServerHttpRequest request, @NonNull WebSocketHandler wsHandler, @NonNull Map<String, Object> attributes) {
                 Principal principal = request.getPrincipal();
                 log.debug("determineUser: {}", principal);
                 if (principal == null) {
@@ -277,7 +334,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
          * @return message that gets sent along further
          */
         @Override
-        public Message<?> preSend(@NotNull Message<?> message, @NotNull MessageChannel channel) {
+        public Message<?> preSend(@NonNull Message<?> message, @NonNull MessageChannel channel) {
             log.debug("preSend: {}, channel: {}", message, channel);
             StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(message);
             Principal principal = headerAccessor.getUser();
@@ -291,7 +348,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                     }
                 }
                 catch (EntityNotFoundException e) {
-                    // If the user is not found (e.g. because he is not logged in), he should not be able to subscribe to these topics
+                    // If the user is not found (e.g. because they are not logged in), they should not be able to subscribe to these topics
                     log.warn("An error occurred while subscribing user {} to destination {}: {}", principal != null ? principal.getName() : "null", destination, e.getMessage());
                     return null;
                 }
@@ -325,13 +382,18 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
             final var login = principal.getName();
 
-            if (isBuildQueueAdminDestination(destination) || isBuildAgentDestination(destination)) {
+            if (isBuildQueueAdminDestination(destination) || isBuildAgentDestination(destination) || isBuildJobAdminDestination(destination)) {
                 return authorizationCheckService.isAdmin(login);
             }
 
             Optional<Long> courseId = isBuildQueueCourseDestination(destination);
             if (courseId.isPresent()) {
                 return authorizationCheckService.isAtLeastInstructorInCourse(login, courseId.get());
+            }
+
+            Optional<Long> buildJobCourseId = isBuildJobCourseDestination(destination);
+            if (buildJobCourseId.isPresent()) {
+                return authorizationCheckService.isAtLeastInstructorInCourse(login, buildJobCourseId.get());
             }
 
             if (isParticipationTeamDestination(destination)) {
@@ -356,6 +418,12 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 var exam = api.findByIdElseThrow(examId.get());
                 return authorizationCheckService.isAtLeastInstructorInCourse(login, exam.getCourse().getId());
             }
+
+            var synchronizationExerciseId = getExerciseIdFromSynchronizationDestination(destination);
+            if (synchronizationExerciseId.isPresent()) {
+                return authorizationCheckService.isAtLeastTeachingAssistantInExercise(login, synchronizationExerciseId.get());
+            }
+
             return true;
         }
 
@@ -383,6 +451,20 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
      */
     public static Optional<Long> getExamIdFromExamRootDestination(String destination) {
         var matcher = EXAM_TOPIC_PATTERN.matcher(destination);
+        if (matcher.matches()) {
+            return Optional.of(Long.valueOf(matcher.group(1)));
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Returns the exercise id if the given destination belongs to the exercise synchronization topic.
+     *
+     * @param destination websocket destination topic to inspect
+     * @return an optional containing the exercise id for synchronization topics; empty otherwise
+     */
+    public static Optional<Long> getExerciseIdFromSynchronizationDestination(String destination) {
+        var matcher = EXERCISE_SYNCHRONIZATION_TOPIC_PATTERN.matcher(destination);
         if (matcher.matches()) {
             return Optional.of(Long.valueOf(matcher.group(1)));
         }

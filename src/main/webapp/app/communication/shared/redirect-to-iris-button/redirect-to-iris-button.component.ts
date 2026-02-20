@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
-import { IrisCourseSettings, IrisExerciseSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
+import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { Subscription, catchError, distinctUntilKeyChanged, filter, of } from 'rxjs';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Router } from '@angular/router';
@@ -12,7 +12,7 @@ import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iri
 import { MetisService } from 'app/communication/service/metis.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { PROFILE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-redirect-to-iris-button',
@@ -34,8 +34,7 @@ export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
 
     private conversationServiceSubscription: Subscription;
     private settingsSubscription: Subscription | undefined;
-    private irisCombinedExerciseSettings: IrisExerciseSettings | undefined;
-    private irisCombinedCourseSettings: IrisCourseSettings | undefined;
+    private irisCourseSettings: IrisCourseSettingsWithRateLimitDTO | undefined;
     channelSubTypeReferenceRouterLink = '';
     irisEnabled = signal<boolean>(false);
 
@@ -44,7 +43,7 @@ export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
     TEXT = IrisLogoSize.TEXT;
 
     ngOnInit(): void {
-        const isIrisActive = this.profileService.isProfileActive(PROFILE_IRIS);
+        const isIrisActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
         this.irisEnabled.set(isIrisActive);
         if (!isIrisActive) {
             return;
@@ -109,44 +108,17 @@ export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
             return this.setIrisStatus();
         }
         switch (channelDTO.subType) {
-            case ChannelSubType.GENERAL: {
-                const course = this.course();
-                if (course?.id) {
-                    this.updateIrisStatus<IrisCourseSettings>(
-                        this.irisCombinedCourseSettings,
-                        () => this.irisSettingsService.getCombinedCourseSettings(course.id!),
-                        (settings) => settings.irisCourseChatSettings?.enabled,
-                        channelDTO,
-                        (settings) => (this.irisCombinedCourseSettings = settings),
-                    );
-                } else {
-                    this.setIrisStatus();
-                }
-                break;
-            }
-            case ChannelSubType.LECTURE: {
-                const course = this.course();
-                if (course?.id) {
-                    this.updateIrisStatus<IrisCourseSettings>(
-                        this.irisCombinedCourseSettings,
-                        () => this.irisSettingsService.getCombinedCourseSettings(course.id!),
-                        (settings) => settings.irisLectureChatSettings?.enabled,
-                        channelDTO,
-                        (settings) => (this.irisCombinedCourseSettings = settings),
-                    );
-                } else {
-                    this.setIrisStatus();
-                }
-                break;
-            }
+            case ChannelSubType.GENERAL:
+            case ChannelSubType.LECTURE:
             case ChannelSubType.EXERCISE: {
-                if (channelDTO.subTypeReferenceId) {
-                    this.updateIrisStatus<IrisExerciseSettings>(
-                        this.irisCombinedExerciseSettings,
-                        () => this.irisSettingsService.getCombinedExerciseSettings(channelDTO.subTypeReferenceId!),
-                        (settings) => settings.irisProgrammingExerciseChatSettings?.enabled,
+                const course = this.course();
+                if (course?.id) {
+                    this.updateIrisStatus<IrisCourseSettingsWithRateLimitDTO>(
+                        this.irisCourseSettings,
+                        () => this.irisSettingsService.getCourseSettingsWithRateLimit(course.id!),
+                        (settings) => settings.settings?.enabled,
                         channelDTO,
-                        (settings) => (this.irisCombinedExerciseSettings = settings),
+                        (settings) => (this.irisCourseSettings = settings),
                     );
                 } else {
                     this.setIrisStatus();

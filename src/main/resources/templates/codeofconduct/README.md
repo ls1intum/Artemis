@@ -27,6 +27,12 @@ We pledge to act and interact in ways that contribute to an open, welcoming, div
 
 This Code of Conduct applies within all messages channels.
 
+## Confidential Information Warning
+
+Do not share confidential information like passwords, credit card numbers, or personal identification numbers in the chat. This information is sensitive and could potentially be used for identity theft or fraud if it falls into the wrong hands.
+
+Keep your personal information safe by keeping it to yourself and not sharing it online.
+
 ## Reporting
 
 Each course is represented by instructors. If you see inappropriate behavior or content, please report it.

@@ -3,20 +3,21 @@ package de.tum.cit.aet.artemis.core.exception;
 import java.io.IOException;
 import java.util.List;
 
-import jakarta.annotation.Nullable;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAllowedException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -60,7 +61,7 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
      * Post-process the Problem payload to add the message key for the front-end if needed.
      */
     @Override
-    public ResponseEntity<Problem> process(@Nullable ResponseEntity<Problem> entity, @NotNull NativeWebRequest request) {
+    public ResponseEntity<Problem> process(@Nullable ResponseEntity<Problem> entity, @NonNull NativeWebRequest request) {
         if (entity == null) {
             return null;
         }
@@ -85,7 +86,7 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
     }
 
     @Override
-    public ResponseEntity<Problem> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, @NotNull NativeWebRequest request) {
+    public ResponseEntity<Problem> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, @NonNull NativeWebRequest request) {
         BindingResult result = ex.getBindingResult();
         List<FieldErrorVM> fieldErrors = result.getFieldErrors().stream().map(f -> new FieldErrorVM(f.getObjectName().replaceFirst("DTO$", ""), f.getField(), f.getCode()))
                 .toList();
@@ -171,6 +172,37 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<Problem> handleResourceNotFoundException(NoResourceFoundException ex, NativeWebRequest request) {
         final var problem = Problem.builder().withStatus(Status.NOT_FOUND).withDetail(ex.getMessage()).build();
+        return create(ex, problem, request);
+    }
+
+    /**
+     * Handles {@link RateLimitExceededException} exceptions that occur when a client
+     * exceeds the configured rate limit for API requests.
+     *
+     * <p>
+     * This method constructs an HTTP response with status code {@code 429 (Too Many Requests)}.
+     * If the thrown exception specifies a retry delay, the response will include a
+     * {@code Retry-After} header indicating the number of seconds the client should wait
+     * before retrying the request.
+     * </p>
+     *
+     * @param ex the {@link RateLimitExceededException} thrown when the request rate limit is exceeded
+     * @return a {@link ResponseEntity} containing a descriptive message ("Too Many Requests"),
+     *         optional {@code Retry-After} header, and HTTP status {@code 429 (Too Many Requests)}
+     */
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<String> handle(RateLimitExceededException ex) {
+        HttpHeaders headers = new HttpHeaders();
+        if (ex.getRetryAfterSeconds() > 0) {
+            headers.add("Retry-After", String.valueOf(ex.getRetryAfterSeconds()));
+        }
+        return new ResponseEntity<>("Too Many Requests", headers, HttpStatus.TOO_MANY_REQUESTS);
+    }
+
+    @ExceptionHandler(PasskeyAuthenticationException.class)
+    public ResponseEntity<Problem> handlePasskeyAuthenticationException(PasskeyAuthenticationException ex, NativeWebRequest request) {
+        Problem problem = Problem.builder().withStatus(Status.FORBIDDEN).withTitle("Forbidden").withDetail(ex.getMessage()).with(MESSAGE_KEY, ex.getErrorKey())
+                .with("reason", ex.getReason().name()).build();
         return create(ex, problem, request);
     }
 }

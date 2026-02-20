@@ -8,8 +8,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
@@ -83,7 +82,7 @@ public interface GradingScaleRepository extends ArtemisJpaRepository<GradingScal
      * @param courseId the course to which the grading scale belongs
      * @return the found grading scale
      */
-    @NotNull
+    @NonNull
     default GradingScale findByCourseIdOrElseThrow(long courseId) {
         try {
             return getValueElseThrow(findByCourseId(courseId));
@@ -110,7 +109,7 @@ public interface GradingScaleRepository extends ArtemisJpaRepository<GradingScal
      * @param examId the exam to which the grading scale belongs
      * @return the found grading scale
      */
-    @NotNull
+    @NonNull
     default GradingScale findByExamIdOrElseThrow(long examId) {
         try {
             return getValueElseThrow(findByExamId(examId));
@@ -171,19 +170,6 @@ public interface GradingScaleRepository extends ArtemisJpaRepository<GradingScal
                 AND (gs.course.title LIKE %:partialTitle% OR gs.exam.title LIKE %:partialTitle%)
             """)
     Page<GradingScale> findWithBonusGradeTypeByTitleInCourseOrExamForAdmin(@Param("partialTitle") String partialTitle, Pageable pageable);
-
-    /**
-     * Find grading scales for courses
-     *
-     * @param courseIds the courses to which the grading scales belong
-     * @return a set of grading scales for the courses
-     */
-    @Query("""
-            SELECT gs
-            FROM GradingScale gs
-            WHERE gs.course.id IN :courseIds
-            """)
-    Set<GradingScale> findAllByCourseIds(@Param("courseIds") Set<Long> courseIds);
 
     @EntityGraph(type = LOAD, attributePaths = "bonusFrom")
     Optional<GradingScale> findWithEagerBonusFromByBonusFromId(long bonusId);

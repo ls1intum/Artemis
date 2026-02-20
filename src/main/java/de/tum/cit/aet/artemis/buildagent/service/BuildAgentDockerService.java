@@ -9,6 +9,7 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -39,20 +40,49 @@ import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.api.model.PullResponseItem;
 
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
-import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 
 /**
- * Service for Docker related operations in local CI
+ * Service for Docker-related operations in the local CI build agent.
+ * <p>
+ * This service manages Docker image lifecycle and container cleanup for the build agent, including:
+ * <ul>
+ * <li><b>Image Management:</b> Pulling Docker images for build jobs with proper architecture handling</li>
+ * <li><b>Container Cleanup:</b> Removing dangling or stuck build containers</li>
+ * <li><b>Disk Space Management:</b> Automatic cleanup of old images when disk space is low</li>
+ * </ul>
+ * <p>
+ * <b>Architecture Support:</b>
+ * The service supports both AMD64 and ARM64 architectures. On macOS ARM systems, it can
+ * automatically fall back to AMD64 images via Rosetta 2 emulation when ARM images are unavailable.
+ * <p>
+ * <b>Scheduled Tasks:</b>
+ * <ul>
+ * <li>Container cleanup runs periodically (default: every 60 minutes) to remove stuck containers</li>
+ * <li>Image cleanup runs daily (default: 3:00 AM) to remove unused images older than the expiry threshold</li>
+ * <li>Disk space check runs periodically to trigger cleanup when space falls below threshold</li>
+ * </ul>
+ * <p>
+ * <b>Concurrency:</b>
+ * Docker image pulls are protected by a {@link ReentrantLock} to prevent multiple concurrent pulls
+ * of the same image, which could waste bandwidth and disk space.
+ *
+ * @see BuildAgentConfiguration
+ * @see BuildJobContainerService
  */
 @Lazy(false)
 @Service
 @Profile(PROFILE_BUILDAGENT)
 public class BuildAgentDockerService {
 
+    /**
+     * Lock to serialize Docker image pull operations.
+     * Prevents multiple concurrent pulls of the same image.
+     */
     private final ReentrantLock lock = new ReentrantLock();
 
     private static final Logger log = LoggerFactory.getLogger(BuildAgentDockerService.class);
@@ -91,6 +121,13 @@ public class BuildAgentDockerService {
     // amd64 is the default value, as this is the architecture of Intel and AMD CPUs, which most systems still use
     @Value("${artemis.continuous-integration.image-architecture:amd64}")
     private String imageArchitecture;
+
+    @Value("${artemis.continuous-integration.build-agent.short-name}")
+    private String buildAgentShortName;
+
+    private static final String AMD64_ARCHITECTURE = "amd64";
+
+    private static final String ARM64_ARCHITECTURE = "arm64";
 
     public BuildAgentDockerService(BuildAgentConfiguration buildAgentConfiguration, DistributedDataAccessService distributedDataAccessService,
             BuildJobContainerService buildJobContainerService, @Qualifier("taskScheduler") TaskScheduler taskScheduler) {
@@ -139,15 +176,15 @@ public class BuildAgentDockerService {
             // Cleanup all dangling build containers after the application has started
             try {
                 danglingBuildContainers = dockerClient.listContainersCmd().withShowAll(true).exec().stream()
-                        .filter(container -> container.getNames()[0].startsWith("/" + buildContainerPrefix)).toList();
+                        .filter(container -> container.getNames() != null && container.getNames().length > 0 && container.getNames()[0].startsWith("/" + buildContainerPrefix))
+                        .toList();
             }
             catch (Exception ex) {
                 if (DockerUtil.isDockerNotAvailable(ex)) {
-                    log.error("Cannot connect to Docker Host. Make sure Docker is running and configured properly! Error while listing containers for cleanup: {}",
-                            ex.getMessage());
+                    log.debug("Docker is not available. Skipping container cleanup: {}", ex.getMessage());
                     return;
                 }
-                log.error("Make sure Docker is running and configured properly! Error while listing containers for cleanup: {}", ex.getMessage(), ex);
+                log.error("Error while listing containers for cleanup: {}", ex.getMessage(), ex);
                 return;
             }
             finally {
@@ -164,11 +201,15 @@ public class BuildAgentDockerService {
 
             try {
                 danglingBuildContainers = dockerClient.listContainersCmd().withShowAll(true).exec().stream()
-                        .filter(container -> container.getNames()[0].startsWith("/" + buildContainerPrefix)).filter(container -> (now - container.getCreated()) > ageThreshold)
-                        .toList();
+                        .filter(container -> container.getNames() != null && container.getNames().length > 0 && container.getNames()[0].startsWith("/" + buildContainerPrefix))
+                        .filter(container -> (now - container.getCreated()) > ageThreshold).toList();
             }
             catch (Exception ex) {
-                log.error("Make sure Docker is running! Error while listing containers for cleanup: {}", ex.getMessage(), ex);
+                if (DockerUtil.isDockerNotAvailable(ex)) {
+                    log.debug("Docker is not available. Skipping container cleanup: {}", ex.getMessage());
+                    return;
+                }
+                log.error("Error while listing containers for cleanup: {}", ex.getMessage(), ex);
                 return;
             }
         }
@@ -221,8 +262,11 @@ public class BuildAgentDockerService {
      * @throws LocalCIException if the image pull is interrupted or fails due to other exceptions.
      */
     public void pullDockerImage(BuildJobQueueItem buildJob, BuildLogsMap buildLogsMap) {
-        DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
         final String imageName = buildJob.buildConfig().dockerImage();
+        if (dockerClientNotAvailable("Cannot pull Docker image.")) {
+            throw new LocalCIException("Docker is not available. Cannot pull image " + imageName);
+        }
+        DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
         try (var inspectImageCommand = dockerClient.inspectImageCmd(imageName)) {
             // First check if the image is already available
             String msg = "~~~~~~~~~~~~~~~~~~~~ Inspecting docker image " + imageName + " ~~~~~~~~~~~~~~~~~~~~";
@@ -264,7 +308,31 @@ public class BuildAgentDockerService {
                     throw new LocalCIException("Interrupted while pulling docker image " + imageName, ie);
                 }
                 catch (Exception ex) {
-                    throw new LocalCIException("Error while pulling docker image " + imageName, ex);
+                    // On macOS ARM, if the ARM image is not available, fall back to amd64 (Rosetta emulation)
+                    if (isMacOS() && ARM64_ARCHITECTURE.equals(imageArchitecture) && isNoMatchingManifestError(ex)) {
+                        String fallbackMsg = "~~~~~~~~~~~~~~~~~~~~ No ARM image available for " + imageName + ", falling back to amd64 (Rosetta emulation) ~~~~~~~~~~~~~~~~~~~~";
+                        log.warn(fallbackMsg);
+                        buildLogsMap.appendBuildLogEntry(buildJob.id(), fallbackMsg);
+
+                        try {
+                            var fallbackCommand = dockerClient.pullImageCmd(imageName).withPlatform(AMD64_ARCHITECTURE);
+                            var fallbackExec = fallbackCommand.exec(new MyPullImageResultCallback());
+                            fallbackExec.awaitCompletion();
+
+                            // Verify the fallback image was pulled successfully
+                            var inspectImageResponse = dockerClient.inspectImageCmd(imageName).exec();
+                            checkImageArchitecture(imageName, inspectImageResponse, buildJob, buildLogsMap);
+                        }
+                        catch (InterruptedException ie) {
+                            throw new LocalCIException("Interrupted while pulling docker image " + imageName + " with amd64 fallback", ie);
+                        }
+                        catch (Exception fallbackEx) {
+                            throw new LocalCIException("Error while pulling docker image " + imageName + " with amd64 fallback", fallbackEx);
+                        }
+                    }
+                    else {
+                        throw new LocalCIException("Error while pulling docker image " + imageName, ex);
+                    }
                 }
                 String msg2 = "~~~~~~~~~~~~~~~~~~~~ Pulling docker image " + imageName + " done after " + TimeLogUtil.formatDurationFrom(start) + " ~~~~~~~~~~~~~~~~~~~~";
                 log.info(msg2);
@@ -272,10 +340,10 @@ public class BuildAgentDockerService {
             }
             catch (Exception ex) {
                 if (DockerUtil.isDockerNotAvailable(ex)) {
-                    log.error("Cannot connect to Docker Host. Make sure Docker is running and configured properly! Error while inspecting image: {}", ex.getMessage());
+                    log.warn("Docker is not available. Error while inspecting image {}: {}", imageName, ex.getMessage());
+                    throw new LocalCIException("Docker is not available. Cannot pull image " + imageName, ex);
                 }
-                throw new LocalCIException("Cannot connect to Docker Host. Make sure Docker is running and configured properly!", ex);
-                // Do not proceed if Docker is not running
+                throw new LocalCIException("Error while inspecting image " + imageName, ex);
             }
             finally {
                 lock.unlock();
@@ -285,6 +353,7 @@ public class BuildAgentDockerService {
 
     /**
      * Checks if the architecture of the Docker image is compatible with the current system.
+     * On macOS ARM, amd64 images are allowed as they can run via Rosetta 2 emulation.
      *
      * @param imageName            the name of the Docker image
      * @param inspectImageResponse the response from the inspect image command
@@ -292,9 +361,22 @@ public class BuildAgentDockerService {
      * @param buildLogsMap         a map for appending log entries related to the build process
      */
     private void checkImageArchitecture(String imageName, InspectImageResponse inspectImageResponse, BuildJobQueueItem buildJob, BuildLogsMap buildLogsMap) {
-        if (!imageArchitecture.equals(inspectImageResponse.getArch())) {
-            var msg = "Docker image " + imageName + " is not compatible with the current architecture. Needed 'linux/" + imageArchitecture + "', but got '"
-                    + inspectImageResponse.getArch() + "'";
+        String actualArch = inspectImageResponse.getArch();
+        // Skip check if the image doesn't report its architecture (empty or null)
+        // This can happen with some multi-arch images or when architecture metadata is missing
+        if (actualArch == null || actualArch.isEmpty()) {
+            log.warn("Docker image {} does not report its architecture, skipping architecture check", imageName);
+            return;
+        }
+
+        // Allow amd64 images on macOS ARM via Rosetta 2 emulation
+        if (isMacOS() && ARM64_ARCHITECTURE.equals(imageArchitecture) && AMD64_ARCHITECTURE.equals(actualArch)) {
+            log.info("Docker image {} is amd64, running on macOS ARM via Rosetta 2 emulation", imageName);
+            return;
+        }
+
+        if (!imageArchitecture.equals(actualArch)) {
+            var msg = "Docker image " + imageName + " is not compatible with the current architecture. Needed 'linux/" + imageArchitecture + "', but got '" + actualArch + "'";
             log.error(msg);
             buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
             throw new LocalCIException(msg);
@@ -321,6 +403,10 @@ public class BuildAgentDockerService {
     public void deleteOldDockerImages() {
         if (!imageCleanupEnabled) {
             log.info("Docker image cleanup is disabled");
+            return;
+        }
+
+        if (dockerClientNotAvailable("Cannot delete old Docker images.")) {
             return;
         }
 
@@ -402,7 +488,7 @@ public class BuildAgentDockerService {
                     }
                 }
                 mutableSortedImagesByLastBuildDate.remove(oldestImage);
-                oldestImage = mutableSortedImagesByLastBuildDate.getFirst();
+                oldestImage = mutableSortedImagesByLastBuildDate.isEmpty() ? null : mutableSortedImagesByLastBuildDate.getFirst();
                 totalAttempts--;
             }
         }
@@ -417,10 +503,8 @@ public class BuildAgentDockerService {
      * @return a set of image names that are not associated with any running containers.
      */
     private Set<String> getUnusedDockerImages() {
+        // Callers (deleteOldDockerImages, checkUsableDiskSpaceThenCleanUp) already check dockerClientNotAvailable()
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
-        if (dockerClientNotAvailable("Cannot get unused Docker images")) {
-            return Set.of();
-        }
 
         // Get list of all running containers
         List<Container> containers = dockerClient.listContainersCmd().exec();
@@ -452,13 +536,48 @@ public class BuildAgentDockerService {
     private boolean dockerClientNotAvailable(String additionalLogInfo) {
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
         if (dockerClient == null) {
-            BuildAgentInformation.BuildAgentStatus status = distributedDataAccessService.getLocalBuildAgentStatus();
-            if ((status == BuildAgentInformation.BuildAgentStatus.PAUSED || status == BuildAgentInformation.BuildAgentStatus.SELF_PAUSED)) {
+            BuildAgentStatus status = distributedDataAccessService.getBuildAgentStatus(buildAgentShortName);
+            if ((status == BuildAgentStatus.PAUSED || status == BuildAgentStatus.SELF_PAUSED)) {
                 log.info("Docker client is not available because the build agent is paused. {} This is expected behavior.", additionalLogInfo);
                 return true;
             }
             log.error("Docker client is not available. {}", additionalLogInfo);
             return true;
+        }
+        if (!buildAgentConfiguration.isDockerAvailable()) {
+            log.debug("Docker is not available. {}", additionalLogInfo);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Checks if the current operating system is macOS.
+     * macOS can run amd64 Docker images on ARM hardware via Rosetta 2 emulation.
+     *
+     * @return true if running on macOS, false otherwise
+     */
+    private boolean isMacOS() {
+        String osName = System.getProperty("os.name");
+        return osName != null && osName.toLowerCase().contains("mac");
+    }
+
+    /**
+     * Checks if the exception indicates that no matching manifest was found for the requested platform.
+     * This typically occurs when trying to pull an ARM image that only has an AMD64 variant available.
+     *
+     * @param ex the exception to check
+     * @return true if the exception indicates a missing platform manifest, false otherwise
+     */
+    private boolean isNoMatchingManifestError(Exception ex) {
+        Set<Throwable> visited = Collections.newSetFromMap(new IdentityHashMap<>());
+        Throwable cause = ex;
+        while (cause != null && visited.add(cause)) {
+            String message = cause.getMessage();
+            if (message != null && message.contains("no matching manifest")) {
+                return true;
+            }
+            cause = cause.getCause();
         }
         return false;
     }

@@ -1,4 +1,19 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, inject, input } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    Input,
+    NgZone,
+    OnChanges,
+    OnDestroy,
+    OnInit,
+    Output,
+    SimpleChanges,
+    inject,
+    input,
+    output,
+} from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, switchMap, tap } from 'rxjs/operators';
@@ -26,6 +41,7 @@ import { CodeEditorResolveConflictModalComponent } from 'app/programming/shared/
 @Component({
     selector: 'jhi-code-editor-actions',
     templateUrl: './code-editor-actions.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [RequestFeedbackButtonComponent, FeatureToggleDirective, NgbTooltip, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, RouterLink],
 })
 export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges {
@@ -36,6 +52,8 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
     private submissionService = inject(CodeEditorSubmissionService);
     private route = inject(ActivatedRoute);
     private router = inject(Router);
+    private changeDetectorRef = inject(ChangeDetectorRef);
+    private ngZone = inject(NgZone);
 
     CommitState = CommitState;
     EditorState = EditorState;
@@ -58,9 +76,10 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
     @Output() isBuildingChange = new EventEmitter<boolean>();
     @Output() onSavedFiles = new EventEmitter<{ [fileName: string]: string | undefined }>();
     @Output() onRefreshFiles = new EventEmitter();
+    readonly onCommit = output<void>();
     @Output() onError = new EventEmitter<string>();
 
-    isBuilding: boolean;
+    private _isBuilding: boolean;
     editorStateValue: EditorState;
     commitStateValue: CommitState;
     isResolvingConflict = false;
@@ -68,8 +87,18 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
     repositoryLink: string[];
     isInCourseManagement = false;
 
+    get isBuilding(): boolean {
+        return this._isBuilding;
+    }
+
+    set isBuilding(value: boolean) {
+        this._isBuilding = value;
+        this.changeDetectorRef.markForCheck();
+    }
+
     conflictStateSubscription: Subscription;
     submissionSubscription: Subscription;
+    routeParamsSubscription: Subscription;
 
     // autoTimerInterval in seconds
     autoSaveTimer = 0;
@@ -85,15 +114,17 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
     set commitState(commitState: CommitState) {
         this.commitStateValue = commitState;
         this.commitStateChange.emit(commitState);
+        this.changeDetectorRef.markForCheck();
     }
 
     set editorState(editorState: EditorState) {
         this.editorStateValue = editorState;
         this.editorStateChange.emit(editorState);
+        this.changeDetectorRef.markForCheck();
     }
 
     ngOnInit(): void {
-        this.route.params.subscribe((params) => {
+        this.routeParamsSubscription = this.route.params.subscribe((params) => {
             const repositoryType = params['repositoryType'] ?? 'USER';
             const courseId = Number(params['courseId']);
             const repositoryId = Number(params['repositoryId']);
@@ -101,33 +132,47 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
             const examId = Number(params['examId']);
             const exerciseGroupId = Number(params['exerciseGroupId']);
             this.repositoryLink = getLocalRepositoryLink(courseId, exerciseId, repositoryType, repositoryId, examId, exerciseGroupId);
+            this.changeDetectorRef.markForCheck();
         });
         this.isInCourseManagement = this.router.url.includes('course-management');
 
         this.conflictStateSubscription = this.conflictService.subscribeConflictState().subscribe((gitConflictState: GitConflictState) => {
             // When the conflict is encountered when opening the code-editor, setting the commitState here could cause an uncheckedException.
-            // This is why a timeout of 0 is set to make sure the template is rendered before setting the commitState.
+            // Schedule the state change for the next tick to ensure template is rendered.
             if (this.commitState === CommitState.CONFLICT && gitConflictState === GitConflictState.OK) {
                 // Case a: Conflict was resolved.
-                setTimeout(() => (this.commitState = CommitState.UNDEFINED), 0);
+                setTimeout(() => {
+                    this.commitState = CommitState.UNDEFINED;
+                }, 0);
             } else if (this.commitState !== CommitState.CONFLICT && gitConflictState === GitConflictState.CHECKOUT_CONFLICT) {
                 // Case b: Conflict has occurred.
-                setTimeout(() => (this.commitState = CommitState.CONFLICT), 0);
+                setTimeout(() => {
+                    this.commitState = CommitState.CONFLICT;
+                }, 0);
             }
         });
         this.submissionSubscription = this.submissionService
             .getBuildingState()
-            .pipe(tap((isBuilding: boolean) => (this.isBuilding = isBuilding)))
+            .pipe(
+                tap((isBuilding: boolean) => {
+                    this.isBuilding = isBuilding;
+                    // markForCheck is called in the setter
+                }),
+            )
             .subscribe();
 
         if (!this.disableAutoSave) {
-            this.autoSaveInterval = window.setInterval(() => {
-                this.autoSaveTimer++;
-                if (this.autoSaveTimer >= AUTOSAVE_EXERCISE_INTERVAL) {
-                    this.autoSaveTimer = 0;
-                    this.onSave();
-                }
-            }, AUTOSAVE_CHECK_INTERVAL);
+            // Run interval outside Angular zone to prevent unnecessary change detection cycles
+            this.ngZone.runOutsideAngular(() => {
+                this.autoSaveInterval = window.setInterval(() => {
+                    this.autoSaveTimer++;
+                    if (this.autoSaveTimer >= AUTOSAVE_EXERCISE_INTERVAL) {
+                        this.autoSaveTimer = 0;
+                        // Re-enter Angular zone only when we need to save
+                        this.ngZone.run(() => this.onSave());
+                    }
+                }, AUTOSAVE_CHECK_INTERVAL);
+            });
         }
     }
 
@@ -145,8 +190,9 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
                 } else {
                     this.commitState = CommitState.UNCOMMITTED_CHANGES;
                 }
+                // markForCheck is called in the setter
             }
-        });
+        }, 0);
     }
 
     ngOnDestroy(): void {
@@ -155,6 +201,12 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
 
         if (this.conflictStateSubscription) {
             this.conflictStateSubscription.unsubscribe();
+        }
+        if (this.submissionSubscription) {
+            this.submissionSubscription.unsubscribe();
+        }
+        if (this.routeParamsSubscription) {
+            this.routeParamsSubscription.unsubscribe();
         }
     }
 
@@ -249,6 +301,9 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
                         // Note: this is not 100% clean, but not setting it here would complicate the state model.
                         this.isBuilding = true;
                     }
+                }),
+                tap(() => {
+                    this.onCommit.emit();
                 }),
             )
             .subscribe({

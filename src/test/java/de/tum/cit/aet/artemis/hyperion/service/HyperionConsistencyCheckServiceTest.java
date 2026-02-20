@@ -7,20 +7,27 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.Map;
 
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.metadata.ChatResponseMetadata;
+import org.springframework.ai.chat.metadata.DefaultUsage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.config.LLMModelCostConfiguration;
+import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageRequestTestRepository;
+import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.hyperion.domain.ConsistencyIssueCategory;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
-import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueCategory;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
@@ -28,6 +35,7 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
+import io.micrometer.observation.ObservationRegistry;
 
 class HyperionConsistencyCheckServiceTest {
 
@@ -40,6 +48,15 @@ class HyperionConsistencyCheckServiceTest {
     @Mock
     private ChatModel chatModel;
 
+    @Mock
+    private LLMTokenUsageTraceTestRepository llmTokenUsageTraceRepository;
+
+    @Mock
+    private LLMTokenUsageRequestTestRepository llmTokenUsageRequestRepository;
+
+    @Mock
+    private UserTestRepository userRepository;
+
     private HyperionConsistencyCheckService hyperionConsistencyCheckService;
 
     @BeforeEach
@@ -50,11 +67,87 @@ class HyperionConsistencyCheckServiceTest {
         // Wire minimal renderer with mocked dependencies
         HyperionProgrammingExerciseContextRendererService exerciseContextRenderer = new HyperionProgrammingExerciseContextRendererService(repositoryService,
                 new HyperionProgrammingLanguageContextFilterService());
-        this.hyperionConsistencyCheckService = new HyperionConsistencyCheckService(programmingExerciseRepository, chatClient, templateService, exerciseContextRenderer);
+
+        // Create configuration with test model costs
+        var costConfiguration = createTestConfiguration();
+        var llmTokenUsageService = new LLMTokenUsageService(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository, costConfiguration);
+        var observationRegistry = ObservationRegistry.create();
+        this.hyperionConsistencyCheckService = new HyperionConsistencyCheckService(programmingExerciseRepository, chatClient, templateService, exerciseContextRenderer,
+                observationRegistry, llmTokenUsageService, userRepository);
     }
 
     @Test
     void checkConsistency_mapsStructuredIssues() throws Exception {
+        final var exercise = getProgrammingExercise();
+
+        when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(42L)).thenReturn(exercise);
+        when(repositoryService.getFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class)))
+                .thenReturn(Map.of("src/main/java/App.java", "class App { int sum(int a,int b){return a+b;} }"));
+
+        String json = "{\n  \"issues\": [\n    {\n      \"severity\": \"HIGH\",\n      \"category\": \"METHOD_PARAMETER_MISMATCH\",\n      \"description\": \"Parameters differ\",\n      \"suggestedFix\": \"Align parameter names\",\n      \"relatedLocations\": [{\"type\": \"TEMPLATE_REPOSITORY\", \"filePath\": \"src/main/java/App.java\", \"startLine\": 1, \"endLine\": 1}]\n    }\n  ]\n}";
+
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> {
+            AssistantMessage msg = new AssistantMessage(json);
+            return new ChatResponse(List.of(new Generation(msg)));
+        });
+
+        ConsistencyCheckResponseDTO resp = hyperionConsistencyCheckService.checkConsistency(exercise);
+
+        assertThat(resp).isNotNull();
+        assertThat(resp.issues()).isNotEmpty();
+        assertThat(resp.issues().getFirst().category()).isEqualTo(ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH);
+    }
+
+    @Test
+    void checkConsistency_tracksTokenUsageAndCosts() throws Exception {
+        final var exercise = getProgrammingExercise();
+
+        when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(42L)).thenReturn(exercise);
+        when(repositoryService.getFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class)))
+                .thenReturn(Map.of("src/main/java/App.java", "class App { int sum(int a,int b){return a+b;} }"));
+
+        String json = "{ \"issues\": [] }";
+
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> {
+            AssistantMessage msg = new AssistantMessage(json);
+            var usage = new DefaultUsage(100, 50, 150);
+            var metadata = ChatResponseMetadata.builder().model("gpt-5-mini-2024-07-18").usage(usage).build();
+            return new ChatResponse(List.of(new Generation(msg)), metadata);
+        });
+
+        ConsistencyCheckResponseDTO resp = hyperionConsistencyCheckService.checkConsistency(exercise);
+
+        assertThat(resp).isNotNull();
+        assertThat(resp.timestamp()).isNotNull();
+        assertThat(resp.timing()).isNotNull();
+        assertThat(resp.timing().durationS()).isGreaterThanOrEqualTo(0);
+
+        // Two parallel checks, each with 100 prompt and 50 completion tokens
+        assertThat(resp.tokens()).isNotNull();
+        assertThat(resp.tokens().prompt()).isEqualTo(200L);
+        assertThat(resp.tokens().completion()).isEqualTo(100L);
+        assertThat(resp.tokens().total()).isEqualTo(300L);
+
+        assertThat(resp.costs()).isNotNull();
+        // Costs should be calculated based on configured rates (EUR)
+        assertThat(resp.costs().totalEur()).isGreaterThan(0);
+    }
+
+    private static LLMModelCostConfiguration createTestConfiguration() {
+        var config = new LLMModelCostConfiguration();
+        var modelCosts = Map.of("gpt-5-mini", createModelCostProperties(0.23f, 1.84f));
+        config.setModelCosts(new java.util.HashMap<>(modelCosts));
+        return config;
+    }
+
+    private static LLMModelCostConfiguration.ModelCostProperties createModelCostProperties(float inputEur, float outputEur) {
+        var props = new LLMModelCostConfiguration.ModelCostProperties();
+        props.setInputCostPerMillionEur(inputEur);
+        props.setOutputCostPerMillionEur(outputEur);
+        return props;
+    }
+
+    private static @NonNull ProgrammingExercise getProgrammingExercise() {
         var exercise = new ProgrammingExercise();
         exercise.setId(42L);
         exercise.setProblemStatement("Compute sum");
@@ -69,24 +162,6 @@ class HyperionConsistencyCheckServiceTest {
         solution.setRepositoryUri("file://solution");
         solution.setProgrammingExercise(exercise);
         exercise.setSolutionParticipation(solution);
-
-        when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(42L)).thenReturn(exercise);
-        when(repositoryService.getFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class)))
-                .thenReturn(Map.of("src/main/java/App.java", "class App { int sum(int a,int b){return a+b;} }"));
-
-        String json = "{\n  \"issues\": [\n    {\n      \"severity\": \"HIGH\",\n      \"category\": \"METHOD_PARAMETER_MISMATCH\",\n      \"description\": \"Parameters differ\",\n      \"suggestedFix\": \"Align parameter names\",\n      \"relatedLocations\": [{\"type\": \"TEMPLATE_REPOSITORY\", \"filePath\": \"src/main/java/App.java\", \"startLine\": 1, \"endLine\": 1}]\n    }\n  ]\n}";
-
-        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> {
-            AssistantMessage msg = new AssistantMessage(json);
-            return new ChatResponse(List.of(new Generation(msg)));
-        });
-
-        var user = new User();
-        user.setLogin("instructor");
-        ConsistencyCheckResponseDTO resp = hyperionConsistencyCheckService.checkConsistency(exercise);
-
-        assertThat(resp).isNotNull();
-        assertThat(resp.issues()).isNotEmpty();
-        assertThat(resp.issues().getFirst().category()).isEqualTo(ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH);
+        return exercise;
     }
 }

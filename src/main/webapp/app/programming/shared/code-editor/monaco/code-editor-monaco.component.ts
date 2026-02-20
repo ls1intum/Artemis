@@ -2,9 +2,11 @@ import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
+    NgZone,
     OnChanges,
     OnDestroy,
     SimpleChanges,
+    ViewContainerRef,
     ViewEncapsulation,
     computed,
     effect,
@@ -32,8 +34,15 @@ import { EditorPosition } from 'app/shared/monaco-editor/model/actions/monaco-ed
 import { CodeEditorHeaderComponent } from 'app/programming/manage/code-editor/header/code-editor-header.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CodeEditorRepositoryFileService, ConnectionError } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
-import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChange, FileType, RenameFileChange } from '../model/code-editor.model';
+import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChange, FileType, RenameFileChange, RepositoryType } from '../model/code-editor.model';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
+import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
+import { addCommentBoxes } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
+import { TranslateService } from '@ngx-translate/core';
+import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-widget-manager';
+import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { isReviewCommentsSupportedRepository, mapRepositoryToThreadLocationType, matchesSelectedRepository } from 'app/exercise/review/review-comment-utils';
 
 type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; scrollTop: number; loadingError: boolean } };
 type FeedbackWithLineAndReference = Feedback & { line: number; reference: string };
@@ -56,6 +65,7 @@ export type Annotation = { fileName: string; row: number; column: number; text: 
 export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     static readonly CLASS_DIFF_LINE_HIGHLIGHT = 'monaco-diff-line-highlight';
     static readonly CLASS_FEEDBACK_HOVER_BUTTON = 'monaco-add-feedback-button';
+    static readonly CLASS_REVIEW_COMMENT_HOVER_BUTTON = 'monaco-add-review-comment-button';
     static readonly FILE_TIMEOUT = 10000;
 
     protected readonly Feedback = Feedback;
@@ -66,6 +76,10 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     private readonly localStorageService = inject(LocalStorageService);
     private readonly changeDetectorRef = inject(ChangeDetectorRef);
     private readonly fileTypeService = inject(FileTypeService);
+    private readonly translateService = inject(TranslateService);
+    private readonly ngZone = inject(NgZone);
+    private readonly viewContainerRef = inject(ViewContainerRef);
+    private readonly exerciseReviewCommentService = inject(ExerciseReviewCommentService);
 
     readonly editor = viewChild.required<MonacoEditorComponent>('editor');
     readonly inlineFeedbackComponents = viewChildren(CodeEditorTutorAssessmentInlineFeedbackComponent);
@@ -80,8 +94,12 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     readonly isTutorAssessment = input<boolean>(false);
     readonly disableActions = input<boolean>(false);
     readonly selectedFile = input<string>();
+    readonly selectedRepository = input<RepositoryType>();
     readonly sessionId = input.required<number | string>();
     readonly buildAnnotations = input<Annotation[]>([]);
+    readonly consistencyIssues = input<ConsistencyIssue[]>([]);
+    readonly enableExerciseReviewComments = input<boolean>(false);
+    readonly selectedAuxiliaryRepositoryId = input<number | undefined>();
 
     readonly onError = output<string>();
     readonly onFileContentChange = output<{ fileName: string; text: string }>();
@@ -90,6 +108,8 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     readonly onAcceptSuggestion = output<Feedback>();
     readonly onDiscardSuggestion = output<Feedback>();
     readonly onHighlightLines = output<MonacoEditorLineHighlight[]>();
+    readonly onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
+    readonly onEditorLoaded = output<void>();
 
     readonly loadingCount = signal<number>(0);
     readonly newFeedbackLines = signal<number[]>([]);
@@ -106,6 +126,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
 
     readonly feedbackInternal = signal<Feedback[]>([]);
     readonly feedbackSuggestionsInternal = signal<Feedback[]>([]);
+    private reviewCommentManager?: ReviewCommentWidgetManager;
 
     readonly feedbackForSelectedFile = computed<FeedbackWithLineAndReference[]>(() =>
         this.filterFeedbackForSelectedFile(this.feedbackInternal()).map((f) => this.attachLineAndReferenceToFeedback(f)),
@@ -125,6 +146,11 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
 
     annotationsArray: Array<Annotation> = [];
     private addFeedbackKeydownListener?: Disposable;
+    private renderScheduled = false;
+    private renderFocusLine?: number;
+    private renderAnimationFrameId?: number;
+    private reviewRenderScheduled = false;
+    private reviewRenderAnimationFrameId?: number;
 
     constructor() {
         effect(() => {
@@ -139,6 +165,33 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
             const annotations = this.buildAnnotations();
             untracked(() => this.setBuildAnnotations(annotations));
         });
+
+        effect(() => {
+            this.renderFeedbackWidgets();
+        });
+
+        effect(() => {
+            const reviewCommentsEnabled = this.enableExerciseReviewComments() && isReviewCommentsSupportedRepository(this.selectedRepository());
+            // Intentionally read both signals so this effect re-runs when threads or auxiliary repository selection changes.
+            this.exerciseReviewCommentService.threads();
+            this.selectedAuxiliaryRepositoryId();
+            if (reviewCommentsEnabled) {
+                this.renderReviewCommentWidgets();
+            } else {
+                this.reviewCommentManager?.disposeAll();
+            }
+        });
+
+        effect(() => {
+            this.updateEditorInteractionMode();
+        });
+
+        effect(() => {
+            this.commitState();
+            this.reviewCommentManager?.updateDraftInputs();
+            const threads = this.exerciseReviewCommentService.threads();
+            this.reviewCommentManager?.tryUpdateThreadInputs(threads);
+        });
     }
 
     async ngOnChanges(changes: SimpleChanges): Promise<void> {
@@ -148,8 +201,9 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
         if (editorWasRefreshed || editorWasReset) {
             this.fileSession.set({});
             this.editor().reset();
+            this.onEditorLoaded.emit();
         }
-        if ((changes.selectedFile && this.selectedFile()) || editorWasRefreshed) {
+        if ((changes.selectedFile && this.selectedFile()) || (editorWasRefreshed && this.selectedFile())) {
             const previousFileName: string | undefined = changes.selectedFile?.previousValue;
             // we save the old scrollTop before switching to another file
             if (previousFileName && this.fileSession()[previousFileName]) {
@@ -159,12 +213,9 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
             this.setBuildAnnotations(this.annotationsArray);
             this.newFeedbackLines.set([]);
             this.renderFeedbackWidgets();
-            if (this.isTutorAssessment() && !this.readOnlyManualFeedback()) {
-                this.setupAddFeedbackButton();
-                this.setupAddFeedbackShortcut();
-            } else {
-                this.disposeAddFeedbackShortcut();
-            }
+            this.renderReviewCommentWidgets();
+            // changeModel() disposes line-decoration hover buttons; re-apply for the active mode.
+            this.updateEditorInteractionMode();
             this.onFileLoad.emit(this.selectedFile()!);
         }
 
@@ -178,6 +229,13 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
 
     ngOnDestroy(): void {
         this.disposeAddFeedbackShortcut();
+        this.reviewCommentManager?.disposeAll();
+        if (this.renderAnimationFrameId !== undefined) {
+            window.cancelAnimationFrame(this.renderAnimationFrameId);
+        }
+        if (this.reviewRenderAnimationFrameId !== undefined) {
+            window.cancelAnimationFrame(this.reviewRenderAnimationFrameId);
+        }
     }
 
     async selectFileInEditor(fileName: string | undefined): Promise<void> {
@@ -186,35 +244,39 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
             return;
         }
         this.loadingCount.set(this.loadingCount() + 1);
-        if (!this.fileSession()[fileName] || this.fileSession()[fileName].loadingError) {
-            let fileContent = '';
-            let loadingError = false;
-            try {
-                fileContent = await firstValueFrom(this.repositoryFileService.getFile(fileName).pipe(timeout(CodeEditorMonacoComponent.FILE_TIMEOUT))).then(
-                    (fileObj) => fileObj.fileContent,
-                );
-            } catch (error) {
-                loadingError = true;
-                if (error.message === ConnectionError.message) {
-                    this.onError.emit('loadingFailed' + error.message);
-                } else {
-                    this.onError.emit('loadingFailed');
+        try {
+            if (!this.fileSession()[fileName] || this.fileSession()[fileName].loadingError) {
+                let fileContent = '';
+                let loadingError = false;
+                try {
+                    fileContent = await firstValueFrom(this.repositoryFileService.getFile(fileName).pipe(timeout(CodeEditorMonacoComponent.FILE_TIMEOUT))).then(
+                        (fileObj) => fileObj.fileContent,
+                    );
+                } catch (error) {
+                    loadingError = true;
+                    if (error.message === ConnectionError.message) {
+                        this.onError.emit('loadingFailed' + error.message);
+                    } else {
+                        this.onError.emit('loadingFailed');
+                    }
                 }
+                this.fileSession.set({
+                    ...this.fileSession(),
+                    [fileName]: { code: fileContent, loadingError: loadingError, scrollTop: 0, cursor: { column: 0, lineNumber: 0 } },
+                });
             }
-            this.fileSession.set({
-                ...this.fileSession(),
-                [fileName]: { code: fileContent, loadingError: loadingError, scrollTop: 0, cursor: { column: 0, lineNumber: 0 } },
-            });
-        }
 
-        const code = this.fileSession()[fileName].code;
-        this.binaryFileSelected.set(this.fileTypeService.isBinaryContent(code));
+            const code = this.fileSession()[fileName].code;
+            this.binaryFileSelected.set(this.fileTypeService.isBinaryContent(code));
 
-        // Since fetching the file may take some time, we need to check if the file is still selected.
-        if (!this.binaryFileSelected() && this.selectedFile() === fileName) {
-            this.switchToSelectedFile(fileName, code);
+            // Since fetching the file may take some time, we need to check if the file is still selected.
+            if (!this.binaryFileSelected() && this.selectedFile() === fileName) {
+                this.switchToSelectedFile(fileName, code);
+            }
+        } finally {
+            // Always decrement loading count, even if an error occurs, to prevent stale loading state
+            this.loadingCount.set(this.loadingCount() - 1);
         }
-        this.loadingCount.set(this.loadingCount() - 1);
     }
 
     switchToSelectedFile(selectedFileName: string, code: string): void {
@@ -261,6 +323,36 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
 
     setupAddFeedbackButton(): void {
         this.editor().setLineDecorationsHoverButton(CodeEditorMonacoComponent.CLASS_FEEDBACK_HOVER_BUTTON, (lineNumber) => this.addNewFeedback(lineNumber));
+    }
+
+    setupAddReviewCommentButton(): void {
+        this.getReviewCommentManager().updateHoverButton();
+    }
+
+    /**
+     * Applies editor hover-button and shortcut behavior for the currently active mode.
+     * Needs to be re-applied after model changes because Monaco disposes editor decorations/widgets.
+     */
+    private updateEditorInteractionMode(): void {
+        const isTutorFeedbackMode = this.isTutorAssessment() && !this.readOnlyManualFeedback();
+        const reviewCommentsEnabled = this.enableExerciseReviewComments() && isReviewCommentsSupportedRepository(this.selectedRepository());
+        const selectedFile = this.selectedFile();
+
+        if (!selectedFile) {
+            this.disposeAddFeedbackShortcut();
+            return;
+        }
+
+        if (isTutorFeedbackMode) {
+            this.setupAddFeedbackButton();
+            this.setupAddFeedbackShortcut();
+        } else if (reviewCommentsEnabled) {
+            this.setupAddReviewCommentButton();
+            this.disposeAddFeedbackShortcut();
+        } else {
+            this.editor().clearLineDecorationsHoverButton();
+            this.disposeAddFeedbackShortcut();
+        }
     }
 
     /**
@@ -377,25 +469,105 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
      * @protected
      */
     protected renderFeedbackWidgets(lineOfWidgetToFocus?: number) {
-        // Since the feedback widgets rely on the DOM nodes of each feedback item, Angular needs to re-render each node, hence the timeout.
-        this.changeDetectorRef.detectChanges();
-        setTimeout(() => {
-            this.editor().disposeWidgets();
-            for (const feedback of this.filterFeedbackForSelectedFile([...this.feedbackInternal(), ...this.feedbackSuggestionsInternal()])) {
-                this.addLineWidgetWithFeedback(feedback);
-            }
+        if (lineOfWidgetToFocus !== undefined) {
+            this.renderFocusLine = lineOfWidgetToFocus;
+        }
+        if (this.renderScheduled) {
+            return;
+        }
+        this.renderScheduled = true;
+        this.renderAnimationFrameId = this.ngZone.runOutsideAngular(() =>
+            requestAnimationFrame(() => {
+                this.renderScheduled = false;
+                this.ngZone.run(() => {
+                    this.changeDetectorRef.detectChanges();
+                    const issues = this.consistencyIssues();
+                    this.editor().disposeWidgetsByPrefix('feedback-');
+                    this.editor().disposeWidgetsByPrefix('comment-');
+                    for (const feedback of this.filterFeedbackForSelectedFile([...this.feedbackInternal(), ...this.feedbackSuggestionsInternal()])) {
+                        this.addLineWidgetWithFeedback(feedback);
+                    }
 
-            // New, unsaved feedback has no associated object yet.
-            for (const line of this.newFeedbackLines()) {
-                const feedbackNode = this.getInlineFeedbackNodeOrElseThrow(line);
-                this.editor().addLineWidget(line + 1, 'feedback-new-' + line, feedbackNode);
-            }
+                    // New, unsaved feedback has no associated object yet.
+                    for (const line of this.newFeedbackLines()) {
+                        const feedbackNode = this.getInlineFeedbackNodeOrElseThrow(line);
+                        this.editor().addLineWidget(line + 1, 'feedback-new-' + line, feedbackNode);
+                    }
 
-            // Focus the text area of the widget on the specified line if available.
-            if (lineOfWidgetToFocus !== undefined) {
-                this.getInlineFeedbackNode(lineOfWidgetToFocus)?.querySelector<HTMLTextAreaElement>('#feedback-textarea')?.focus();
-            }
-        }, 0);
+                    const focusLine = this.renderFocusLine;
+                    this.renderFocusLine = undefined;
+                    if (focusLine !== undefined) {
+                        this.getInlineFeedbackNode(focusLine)?.querySelector<HTMLTextAreaElement>('#feedback-textarea')?.focus();
+                    }
+
+                    // Readd inconsistency issue comments, because all widgets got removed
+                    addCommentBoxes(this.editor(), issues, this.selectedFile(), this.selectedRepository(), this.translateService);
+                });
+            }),
+        );
+    }
+
+    private renderReviewCommentWidgets(): void {
+        if (!this.enableExerciseReviewComments() || !this.selectedFile() || !isReviewCommentsSupportedRepository(this.selectedRepository())) {
+            return;
+        }
+        if (this.reviewRenderScheduled) {
+            return;
+        }
+        this.reviewRenderScheduled = true;
+        this.reviewRenderAnimationFrameId = this.ngZone.runOutsideAngular(() =>
+            requestAnimationFrame(() => {
+                this.reviewRenderScheduled = false;
+                this.ngZone.run(() => {
+                    this.getReviewCommentManager().renderWidgets();
+                });
+            }),
+        );
+    }
+
+    private getReviewCommentManager(): ReviewCommentWidgetManager {
+        if (!this.reviewCommentManager) {
+            this.reviewCommentManager = new ReviewCommentWidgetManager(this.editor(), this.viewContainerRef, {
+                hoverButtonClass: CodeEditorMonacoComponent.CLASS_REVIEW_COMMENT_HOVER_BUTTON,
+                shouldShowHoverButton: () => this.enableExerciseReviewComments() && isReviewCommentsSupportedRepository(this.selectedRepository()),
+                canSubmit: () => this.commitState() !== CommitState.UNCOMMITTED_CHANGES,
+                getDraftFileName: () => this.selectedFile(),
+                getDraftContext: (payload) => {
+                    const repositoryType = this.selectedRepository();
+                    if (!repositoryType) {
+                        return undefined;
+                    }
+                    const targetType = mapRepositoryToThreadLocationType(repositoryType);
+                    if (!targetType) {
+                        return undefined;
+                    }
+                    return {
+                        targetType,
+                        filePath: payload.fileName,
+                        auxiliaryRepositoryId: repositoryType === RepositoryType.AUXILIARY ? this.selectedAuxiliaryRepositoryId() : undefined,
+                    };
+                },
+                getThreads: () => this.exerciseReviewCommentService.threads(),
+                filterThread: (thread) =>
+                    this.getThreadFilePath(thread) === this.selectedFile() && matchesSelectedRepository(thread, this.selectedRepository(), this.selectedAuxiliaryRepositoryId()),
+                getThreadLine: (thread) => this.getReviewThreadLine(thread),
+                onAdd: (payload) => this.onAddReviewComment.emit(payload),
+                showLocationWarning: () => this.commitState() === CommitState.UNCOMMITTED_CHANGES,
+            });
+        }
+        return this.reviewCommentManager;
+    }
+
+    private getThreadFilePath(thread: CommentThread): string | undefined {
+        return thread.filePath ?? thread.initialFilePath;
+    }
+
+    private getReviewThreadLine(thread: CommentThread): number {
+        return (thread.lineNumber ?? thread.initialLineNumber ?? 1) - 1;
+    }
+
+    clearReviewCommentDrafts(): void {
+        this.reviewCommentManager?.clearDrafts();
     }
 
     /**

@@ -62,7 +62,7 @@ jobs:
             }
 
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Append Feature Proposal Template to Issue Description
         uses: actions/github-script@v8
@@ -150,7 +150,7 @@ jobs:
               }
             }
 
-            const commentBody = `Hello ${assignees},\n\nThank you for taking on this issue.\n\nTo ensure the Feature Proposal is accurately filled out, we kindly ask you to follow the structure provided.\n\n**For detailed instructions and best practices**, please refer to our **[Development Process Guidelines](https://docs.artemis.cit.tum.de/dev/development-process.html)**.\n\n${instructionCommentMarker}`;
+            const commentBody = `Hello ${assignees},\n\nThank you for taking on this issue.\n\nTo ensure the Feature Proposal is accurately filled out, we kindly ask you to follow the structure provided.\n\n**For detailed instructions and best practices**, please refer to our **[Development Process Guidelines](https://docs.artemis.tum.de/developer/development-process)**.\n\n${instructionCommentMarker}`;
 
             if (instructionCommentId) {
               await github.rest.issues.updateComment({

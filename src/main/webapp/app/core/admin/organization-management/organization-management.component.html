@@ -1,10 +1,10 @@
-<div class="module-bg p-3">
-    <h2>
-        <span id="organization-management-page-heading" jhiTranslate="artemisApp.organizationManagement.title"></span>
-        <button class="btn btn-primary float-end jh-create-entity" [routerLink]="['./new']">
+<div>
+    <h5 *adminTitleBarTitle id="organization-management-page-heading" class="mb-0" jhiTranslate="artemisApp.organizationManagement.title"></h5>
+    <div *adminTitleBarActions>
+        <button class="btn btn-primary btn-sm jh-create-entity" [routerLink]="['./new']">
             <fa-icon [icon]="faPlus" /> <span jhiTranslate="artemisApp.organizationManagement.addLabel"></span>
         </button>
-    </h2>
+    </div>
     <div class="table-responsive">
         <table class="table table-striped">
             <thead>
@@ -20,7 +20,7 @@
                 </tr>
             </thead>
             <tbody>
-                @for (organization of organizations; track trackIdentity($index, organization)) {
+                @for (organization of organizations(); track trackIdentity($index, organization)) {
                     <tr>
                         <td>
                             <span>{{ organization.id }}</span>

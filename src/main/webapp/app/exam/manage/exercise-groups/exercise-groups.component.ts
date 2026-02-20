@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, Type, inject } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subject, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -8,7 +8,8 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
+import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
@@ -29,10 +30,11 @@ import {
     faTrash,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
-import { ExerciseImportWrapperComponent } from 'app/exercise/import/exercise-import-wrapper/exercise-import-wrapper.component';
+import { ExamImportComponent, ExamImportDialogData } from 'app/exam/manage/exams/exam-import/exam-import.component';
+import { ExerciseImportComponent, ExerciseImportDialogData } from 'app/exercise/import/exercise-import.component';
+import { ExerciseImportTabsComponent } from 'app/exercise/import/exercise-import-tabs/exercise-import-tabs.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_TEXT, PROFILE_LOCALCI } from 'app/app.constants';
+import { MODULE_FEATURE_FILEUPLOAD, MODULE_FEATURE_MODELING, MODULE_FEATURE_TEXT, PROFILE_LOCALCI } from 'app/app.constants';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
@@ -73,7 +75,8 @@ export class ExerciseGroupsComponent implements OnInit {
     private examManagementService = inject(ExamManagementService);
     private eventManager = inject(EventManager);
     private alertService = inject(AlertService);
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
+    private translateService = inject(TranslateService);
     private router = inject(Router);
     private profileService = inject(ProfileService);
 
@@ -90,6 +93,8 @@ export class ExerciseGroupsComponent implements OnInit {
 
     localCIEnabled = true;
     textExerciseEnabled = false;
+    modelingExerciseEnabled = false;
+    fileUploadExerciseEnabled = false;
     disabledExerciseTypes: string[] = [];
 
     // Icons
@@ -125,8 +130,16 @@ export class ExerciseGroupsComponent implements OnInit {
         });
         this.localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
         this.textExerciseEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_TEXT);
+        this.modelingExerciseEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_MODELING);
+        this.fileUploadExerciseEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_FILEUPLOAD);
         if (!this.textExerciseEnabled) {
             this.disabledExerciseTypes.push(ExerciseType.TEXT);
+        }
+        if (!this.modelingExerciseEnabled) {
+            this.disabledExerciseTypes.push(ExerciseType.MODELING);
+        }
+        if (!this.fileUploadExerciseEnabled) {
+            this.disabledExerciseTypes.push(ExerciseType.FILE_UPLOAD);
         }
     }
 
@@ -214,24 +227,39 @@ export class ExerciseGroupsComponent implements OnInit {
      */
     openImportModal(exerciseGroup: ExerciseGroup, exerciseType: ExerciseType) {
         const importBaseRoute = ['/course-management', this.courseId, 'exams', this.examId, 'exercise-groups', exerciseGroup.id, `${exerciseType}-exercises`];
+        const dialogData: ExerciseImportDialogData = { exerciseType };
 
-        const importModalRef = this.modalService.open(ExerciseImportWrapperComponent, {
-            size: 'lg',
-            backdrop: 'static',
+        // Determine the header key based on exercise type
+        const headerKey = exerciseType === ExerciseType.FILE_UPLOAD ? 'artemisApp.fileUploadExercise.home.importLabel' : `artemisApp.${exerciseType}Exercise.home.importLabel`;
+
+        // For programming exercises, use tabs component (allows import from file), otherwise use direct import
+        const componentToOpen: Type<any> = exerciseType === ExerciseType.PROGRAMMING ? ExerciseImportTabsComponent : ExerciseImportComponent;
+
+        const dialogRef = this.dialogService.open(componentToOpen, {
+            header: this.translateService.instant(headerKey),
+            width: '50rem',
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            draggable: false,
+            data: dialogData,
         });
-        importModalRef.componentInstance.exerciseType = exerciseType;
-        importModalRef.result.then((result: Exercise) => {
-            if (result.id) {
-                importBaseRoute.push('import', result.id);
-                this.router.navigate(importBaseRoute);
-            } else {
-                // we know it must be a programming exercise, because only programming exercises can be imported from a file
-                importBaseRoute.push('import-from-file');
-                this.router.navigate(importBaseRoute, {
-                    state: {
-                        programmingExerciseForImportFromFile: result,
-                    },
-                });
+
+        dialogRef?.onClose.subscribe((result: Exercise | undefined) => {
+            if (result) {
+                if (result.id) {
+                    importBaseRoute.push('import', result.id);
+                    this.router.navigate(importBaseRoute);
+                } else {
+                    // we know it must be a programming exercise, because only programming exercises can be imported from a file
+                    importBaseRoute.push('import-from-file');
+                    this.router.navigate(importBaseRoute, {
+                        state: {
+                            programmingExerciseForImportFromFile: result,
+                        },
+                    });
+                }
             }
         });
     }
@@ -268,7 +296,7 @@ export class ExerciseGroupsComponent implements OnInit {
     /**
      * sets up {@link exerciseGroupToExerciseTypesDict} that maps the exercise group id to whether the said exercise group contains a specific exercise type.
      * Used to show the correct modal for deleting exercises and to show only relevant information in the exercise tables.
-     * E.g. in case programming exercises are present, the user must decide whether (s)he wants to delete the build plans.
+     * E.g. in case programming exercises are present, the user must decide whether they want to delete the build plans.
      */
     setupExerciseGroupToExerciseTypesDict() {
         this.exerciseGroupToExerciseTypesDict = new Map<number, ExerciseType[]>();
@@ -290,16 +318,24 @@ export class ExerciseGroupsComponent implements OnInit {
      * Opens the import module for an exam import
      */
     openExerciseGroupImportModal() {
-        const examImportModalRef = this.modalService.open(ExamImportComponent, {
-            size: 'xl',
-            backdrop: 'static',
-        });
-        // The Exercise Group selection is performed within the exam-update.component afterwards
-        examImportModalRef.componentInstance.subsequentExerciseGroupSelection.set(true);
-        examImportModalRef.componentInstance.targetCourseId.set(this.courseId);
-        examImportModalRef.componentInstance.targetExamId.set(this.examId);
+        const dialogData: ExamImportDialogData = {
+            subsequentExerciseGroupSelection: true,
+            targetCourseId: this.courseId,
+            targetExamId: this.examId,
+        };
 
-        examImportModalRef.result.then((exerciseGroups: ExerciseGroup[]) => {
+        const dialogRef = this.dialogService.open(ExamImportComponent, {
+            header: this.translateService.instant('artemisApp.examManagement.importExam'),
+            width: '70rem',
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            draggable: false,
+            data: dialogData,
+        });
+
+        dialogRef?.onClose.subscribe((exerciseGroups: ExerciseGroup[] | undefined) => {
             if (exerciseGroups) {
                 this.exerciseGroups = exerciseGroups;
                 this.alertService.success('artemisApp.examManagement.exerciseGroup.importSuccessful');

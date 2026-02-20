@@ -10,6 +10,7 @@ import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import jakarta.annotation.PostConstruct;
 
@@ -26,8 +27,11 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 
+import com.hazelcast.spring.HazelcastObjectExtractionConfiguration;
+
 import de.tum.cit.aet.artemis.core.PrintStartupBeansEvent;
 import de.tum.cit.aet.artemis.core.config.ArtemisCompatibleVersionsConfiguration;
+import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
 import de.tum.cit.aet.artemis.core.config.DeferredEagerBeanInitializer;
 import de.tum.cit.aet.artemis.core.config.LicenseConfiguration;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
@@ -37,7 +41,9 @@ import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import tech.jhipster.config.DefaultProfileUtil;
 import tech.jhipster.config.JHipsterConstants;
 
-@SpringBootApplication
+// Exclude HazelcastObjectExtractionConfiguration due to incompatibility with custom Hazelcast configuration
+// See: https://github.com/hazelcast/hazelcast/issues/26553
+@SpringBootApplication(exclude = HazelcastObjectExtractionConfiguration.class)
 @EnableConfigurationProperties({ LiquibaseProperties.class, ProgrammingLanguageConfiguration.class, TheiaConfiguration.class, LicenseConfiguration.class,
         ArtemisCompatibleVersionsConfiguration.class })
 public class ArtemisApp {
@@ -132,6 +138,8 @@ public class ArtemisApp {
         catch (UnknownHostException e) {
             log.warn("The host name could not be determined, using `localhost` as fallback");
         }
+        List<String> activeFeatures = getActiveFeatures(env);
+        activeFeatures.sort(String::compareTo);
         log.info("""
 
                 ----------------------------------------------------------
@@ -139,6 +147,7 @@ public class ArtemisApp {
                 \tLocal:        {}://localhost:{}{}
                 \tExternal:     {}://{}:{}{}
                 \tProfiles:     {}
+                \tFeatures:     {}
                 \tVersion:      {}
                 \tGit Commit:   {}
                 \tGit Branch:   {}
@@ -146,7 +155,17 @@ public class ArtemisApp {
                 ----------------------------------------------------------
 
                 """, env.getProperty("spring.application.name"), protocol, serverPort, contextPath, protocol, hostAddress, serverPort, contextPath,
-                env.getActiveProfiles().length == 0 ? env.getDefaultProfiles() : env.getActiveProfiles(), version, gitCommitId, gitBranch,
+                env.getActiveProfiles().length == 0 ? env.getDefaultProfiles() : env.getActiveProfiles(), activeFeatures, version, gitCommitId, gitBranch,
                 TimeLogUtil.formatDurationFrom(appStart));
+    }
+
+    /**
+     * Gets the list of active module features based on configuration.
+     *
+     * @param env the Spring environment
+     * @return list of active feature names
+     */
+    private static List<String> getActiveFeatures(Environment env) {
+        return new ArtemisConfigHelper().getEnabledFeatures(env);
     }
 }

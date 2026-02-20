@@ -52,12 +52,13 @@ class SlideUnhideServiceTest extends AbstractSpringIntegrationIndependentTest {
     void initTestCase() {
         // Initialize mocks
         MockitoAnnotations.openMocks(this);
+        var lecture = lectureUtilService.createCourseWithLecture(true);
 
         // Create the service with mocks
         slideUnhideService = new SlideUnhideService(instanceMessageSendService, slideUnhideExecutionService);
 
         // AttachmentVideoUnit with hidden slides
-        AttachmentVideoUnit testAttachmentVideoUnit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(5, true);
+        AttachmentVideoUnit testAttachmentVideoUnit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture, 5, true);
         testSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
 
         // Make slides 2 and 4 hidden

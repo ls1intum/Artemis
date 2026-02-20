@@ -18,7 +18,7 @@
             },
             "noInconsistencies": "Keine Inkonsistenzen gefunden",
             "inconsistenciesFound": "Es wurden folgende Inkonsistenzen gefunden",
-            "inconsistenciesFoundAlert": "Es wurden Inkonsistenzen in der Programmieraufgabe gefunden. Bitte öffne die Konsistenzprüfung für Details."
+            "inconsistenciesFoundAlert": "Inkonsistenzen in der Aufgabenkonfiguration erkannt. Bitte überprüfe die Konsistenzeinstellungen."
         }
     }
 }

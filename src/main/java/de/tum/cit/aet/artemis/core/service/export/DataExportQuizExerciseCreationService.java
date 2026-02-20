@@ -14,9 +14,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.apache.commons.io.FileUtils;
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -159,7 +158,7 @@ public class DataExportQuizExerciseCreationService {
      * @param exportErrors          a list of errors that occurred during the export
      * @param archivalReportEntries a list of report entries to report failed/successful exports
      */
-    public void exportStudentSubmissionsForArchival(QuizExercise quizExercise, Path exerciseDir, @NotNull List<String> exportErrors,
+    public void exportStudentSubmissionsForArchival(QuizExercise quizExercise, Path exerciseDir, @NonNull List<String> exportErrors,
             List<ArchivalReportEntry> archivalReportEntries) {
         var participations = studentParticipationRepository.findByExerciseIdWithEagerSubmissions(quizExercise.getId());
         int participationsWithoutSubmission = 0;
@@ -178,7 +177,7 @@ public class DataExportQuizExerciseCreationService {
                         + quizExercise.getId() + ". Won't export this participation.");
                 continue;
             }
-            boolean successful = createQuizAnswersExport(quizExercise, participation, outputDir, true, Optional.ofNullable(exportErrors));
+            boolean successful = createQuizAnswersExport(quizExercise, participation, outputDir, true, Optional.of(exportErrors));
             if (successful) {
                 successfulExports++;
             }

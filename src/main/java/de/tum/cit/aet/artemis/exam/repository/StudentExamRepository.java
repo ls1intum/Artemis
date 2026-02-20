@@ -10,8 +10,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -86,14 +85,6 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
     Set<StudentExam> findByExamId(@Param("examId") long examId);
 
     @Query("""
-            SELECT COUNT(DISTINCT se)
-            FROM StudentExam se
-            WHERE se.exam.id = :examId
-                AND se.testRun = FALSE
-            """)
-    long countByExamId(@Param("examId") long examId);
-
-    @Query("""
             SELECT se
             FROM StudentExam se
                 LEFT JOIN FETCH se.examSessions
@@ -163,26 +154,22 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
     long countStudentExamsSubmittedByExamIdIgnoreTestRuns(@Param("examId") long examId);
 
     /**
+     * Finds all student exams for a user with basic exercise data.
+     * This is a simplified query that only fetches the student exam structure needed for grouping and iteration.
      * It might happen that multiple test exams exist for a combination of userId/examId, that's why we return a set here.
      *
      * @param userId the id of the user
-     * @return all student exams for the given user
+     * @return all student exams for the given user with exercises
      */
     @Query("""
             SELECT DISTINCT se
             FROM StudentExam se
                 LEFT JOIN FETCH se.exam exam
-                LEFT JOIN FETCH se.exercises e
-                LEFT JOIN FETCH e.submissionPolicy spo
-                LEFT JOIN FETCH e.studentParticipations sp
-                LEFT JOIN FETCH sp.submissions s
-                LEFT JOIN FETCH s.results r
-                LEFT JOIN FETCH r.feedbacks f
-                LEFT JOIN FETCH f.testCase
-            WHERE se.user.id = sp.student.id
-                  AND se.user.id = :userId
+                LEFT JOIN FETCH exam.course
+                LEFT JOIN FETCH se.exercises
+            WHERE se.user.id = :userId
             """)
-    Set<StudentExam> findAllWithExercisesSubmissionPolicyParticipationsSubmissionsResultsAndFeedbacksByUserId(@Param("userId") long userId);
+    Set<StudentExam> findAllWithExercisesByUserId(@Param("userId") long userId);
 
     @Query("""
             SELECT DISTINCT se
@@ -381,6 +368,18 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
     void startStudentExam(@Param("studentExamId") Long studentExamId, @Param("startedDate") ZonedDateTime startedDate);
 
     /**
+     * Deletes all student exams for a given exam (excluding test runs).
+     * Used during exam reset to remove all student participation data.
+     * Note: This operation cascades to related entities through JPA cascade rules.
+     *
+     * @param examId the ID of the exam whose student exams should be deleted
+     */
+    @Modifying
+    @Transactional // ok because of delete
+    @Query("DELETE FROM StudentExam se WHERE se.exam.id = :examId AND se.testRun = FALSE")
+    void deleteAllByExamId(@Param("examId") long examId);
+
+    /**
      * Return the StudentExam of the participation's user, if possible
      *
      * @param exercise      that is possibly part of an exam
@@ -401,12 +400,12 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
      * @param studentExamId the id of the student exam
      * @return the student exam with exercises
      */
-    @NotNull
+    @NonNull
     default StudentExam findByIdWithExercisesElseThrow(Long studentExamId) {
         return getValueElseThrow(findWithExercisesById(studentExamId), studentExamId);
     }
 
-    @NotNull
+    @NonNull
     default StudentExam findByIdWithExercisesAndStudentParticipationsElseThrow(Long studentExamId) {
         return getValueElseThrow(findWithExercisesAndStudentParticipationsById(studentExamId));
     }
@@ -417,7 +416,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
      * @param studentExamId the id of the student exam
      * @return the student exam with exercises, sessions and student participations
      */
-    @NotNull
+    @NonNull
     default StudentExam findByIdWithExercisesAndSessionsAndStudentParticipationsElseThrow(Long studentExamId) {
         return getValueElseThrow(findWithExercisesSubmissionPolicySessionsAndStudentParticipationsById(studentExamId), studentExamId);
     }

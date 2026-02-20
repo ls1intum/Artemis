@@ -1,10 +1,12 @@
 package de.tum.cit.aet.artemis.core.web.open;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.security.jwt.JWTFilter.extractValidJwt;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -36,13 +38,17 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.exception.LoginAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.exception.PasswordViolatesRequirementsException;
 import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
+import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
+import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
+import de.tum.cit.aet.artemis.core.security.jwt.JwtWithSource;
+import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.service.AccountService;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
 
@@ -76,13 +82,16 @@ public class PublicAccountResource {
 
     private final Optional<PasskeyCredentialsRepository> passkeyCredentialsRepository;
 
+    private final TokenProvider tokenProvider;
+
     public PublicAccountResource(AccountService accountService, UserService userService, MailService mailService, UserRepository userRepository,
-            Optional<PasskeyCredentialsRepository> passkeyCredentialsRepository) {
+            Optional<PasskeyCredentialsRepository> passkeyCredentialsRepository, TokenProvider tokenProvider) {
         this.accountService = accountService;
         this.userService = userService;
         this.mailService = mailService;
         this.userRepository = userRepository;
         this.passkeyCredentialsRepository = passkeyCredentialsRepository;
+        this.tokenProvider = tokenProvider;
     }
 
     /**
@@ -96,6 +105,7 @@ public class PublicAccountResource {
      */
     @PostMapping("register")
     @EnforceNothing
+    @LimitRequestsPerMinute(type = RateLimitType.ACCOUNT_MANAGEMENT)
     public ResponseEntity<Void> registerAccount(@Valid @RequestBody ManagedUserVM managedUserVM) throws URISyntaxException {
 
         if (accountService.isRegistrationDisabled()) {
@@ -124,7 +134,7 @@ public class PublicAccountResource {
      *
      * @param key the activation key.
      * @return ResponseEntity with status 200 (OK)
-     * @throws RuntimeException {@code 500 (Internal Server Error)} if the user couldn't be activated.
+     * @throws BadRequestAlertException {@code 400 (Bad Request)} if the activation key is invalid or expired.
      */
     @GetMapping("activate")
     @EnforceNothing
@@ -134,7 +144,7 @@ public class PublicAccountResource {
         }
         Optional<User> user = userService.activateRegistration(key);
         if (user.isEmpty()) {
-            throw new InternalServerErrorException("No user was found for this activation key");
+            throw new BadRequestAlertException("The activation key is invalid", "user", "invalidActivationKey");
         }
         return ResponseEntity.ok().build();
     }
@@ -155,19 +165,20 @@ public class PublicAccountResource {
     /**
      * {@code GET /account} : get the current user.
      *
+     * @param request the HTTP request
      * @return the ResponseEntity with status 200 (OK) and with body the current user, empty if not logged in.
      * @throws EntityNotFoundException {@code 404 (User not found)} if the user couldn't be returned.
      */
     @GetMapping("account")
     @EnforceNothing
-    public ResponseEntity<UserDTO> getAccount() {
+    public ResponseEntity<UserDTO> getAccount(HttpServletRequest request) {
         long start = System.currentTimeMillis();
 
         Optional<User> userOptional = Optional.empty();
 
         Optional<String> loginOptional = SecurityUtils.getCurrentUserLogin();
         if (loginOptional.isPresent()) {
-            userOptional = userRepository.findOneWithGroupsAndAuthoritiesAndExternalLLMUsageAcceptedTimestampByLogin(loginOptional.get());
+            userOptional = userRepository.findOneWithGroupsAndAuthoritiesByLogin(loginOptional.get());
         }
 
         if (userOptional.isEmpty()) {
@@ -179,14 +190,32 @@ public class PublicAccountResource {
         if (askUsersToSetupPasskey && passkeyEnabled && passkeyCredentialsRepository.isPresent()) {
             shouldPromptUserToSetupPasskey = !this.passkeyCredentialsRepository.orElseThrow().existsByUserId(user.getId());
         }
+
+        boolean isLoggedInWithPasskey = false;
+        boolean isPasskeySuperAdminApproved = false;
+        if (passkeyEnabled) {
+            JwtWithSource jwtWithSource = extractValidJwt(request, this.tokenProvider);
+            if (jwtWithSource != null) {
+                isLoggedInWithPasskey = Objects.equals(this.tokenProvider.getAuthenticationMethod(jwtWithSource.jwt()), AuthenticationMethod.PASSKEY);
+                isPasskeySuperAdminApproved = this.tokenProvider.isPasskeySuperAdminApproved(jwtWithSource.jwt());
+            }
+        }
+
         user.setVisibleRegistrationNumber();
+        UserDTO userDTO = getUserDTO(user, shouldPromptUserToSetupPasskey, isLoggedInWithPasskey, isPasskeySuperAdminApproved);
+        log.debug("GET /account {} took {}ms", user.getLogin(), System.currentTimeMillis() - start);
+        return ResponseEntity.ok(userDTO);
+    }
+
+    private static UserDTO getUserDTO(User user, boolean shouldPromptUserToSetupPasskey, boolean isLoggedInWithPasskey, boolean isPasskeySuperAdminApproved) {
         UserDTO userDTO = new UserDTO(user);
         // we set this value on purpose here: the user can only fetch their own information, make the token available for constructing the token-based clone-URL
         userDTO.setVcsAccessToken(user.getVcsAccessToken());
         userDTO.setVcsAccessTokenExpiryDate(user.getVcsAccessTokenExpiryDate());
         userDTO.setAskToSetupPasskey(shouldPromptUserToSetupPasskey);
-        log.debug("GET /account {} took {}ms", user.getLogin(), System.currentTimeMillis() - start);
-        return ResponseEntity.ok(userDTO);
+        userDTO.setLoggedInWithPasskey(isLoggedInWithPasskey);
+        userDTO.setPasskeySuperAdminApproved(isPasskeySuperAdminApproved);
+        return userDTO;
     }
 
     /**
@@ -216,6 +245,7 @@ public class PublicAccountResource {
      */
     @PostMapping("account/reset-password/init")
     @EnforceNothing
+    @LimitRequestsPerMinute(type = RateLimitType.ACCOUNT_MANAGEMENT)
     public ResponseEntity<Void> requestPasswordReset(@RequestBody String mailUsername) {
         List<User> users = userRepository.findAllByEmailOrUsernameIgnoreCase(mailUsername);
         if (!users.isEmpty()) {
@@ -249,6 +279,7 @@ public class PublicAccountResource {
      */
     @PostMapping("account/reset-password/finish")
     @EnforceNothing
+    @LimitRequestsPerMinute(type = RateLimitType.ACCOUNT_MANAGEMENT)
     public ResponseEntity<Void> finishPasswordReset(@RequestBody KeyAndPasswordVM keyAndPassword) {
         if (accountService.isPasswordLengthInvalid(keyAndPassword.getNewPassword())) {
             throw new PasswordViolatesRequirementsException();

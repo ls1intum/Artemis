@@ -2,13 +2,13 @@ package de.tum.cit.aet.artemis.programming.icl;
 
 import static de.tum.cit.aet.artemis.core.user.util.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.Optional;
@@ -26,13 +26,17 @@ import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
+import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 
 /**
  * This class contains integration tests for edge cases pertaining to the local VC system.
@@ -40,6 +44,12 @@ import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
     private static final String TEST_PREFIX = "localvcint";
+
+    @Autowired
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
+    @Autowired
+    private TempFileUtilService tempFileUtilService;
 
     private LocalRepository assignmentRepository;
 
@@ -50,18 +60,15 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     private LocalRepository testsRepository;
 
     @BeforeEach
-    void initRepositories() throws GitAPIException, IOException, URISyntaxException {
+    void initRepositories() throws Exception {
         // Create assignment repository
         assignmentRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, assignmentRepositorySlug);
 
-        // Create template repository
-        templateRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, projectKey1.toLowerCase() + "-exercise");
-
-        // Create solution repository
-        solutionRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, projectKey1.toLowerCase() + "-solution");
-
-        // Create tests repository
-        testsRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, projectKey1.toLowerCase() + "-tests");
+        // Create and wire base repositories using the shared helper
+        var baseRepositories = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, programmingExercise);
+        templateRepository = baseRepositories.templateRepository();
+        solutionRepository = baseRepositories.solutionRepository();
+        testsRepository = baseRepositories.testsRepository();
     }
 
     @Override
@@ -87,9 +94,9 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         // Delete the remote repository.
         someRepository.remoteBareGitRepo.close();
         try {
-            FileUtils.deleteDirectory(someRepository.remoteBareGitRepoFile);
+            RepositoryExportTestUtil.safeDeleteDirectory(someRepository.remoteBareGitRepoFile.toPath());
         }
-        catch (IOException exception) {
+        catch (Exception exception) {
             // JGit creates a lock file in each repository that could cause deletion problems.
             if (exception.getMessage().contains("gc.log.lock")) {
                 return;
@@ -287,7 +294,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
             throws Exception {
 
         // Create a second local repository and push a file from there
-        Path tempDirectory = Files.createTempDirectory(tempPath, "tempDirectory");
+        Path tempDirectory = tempFileUtilService.createTempDirectory(tempPath, "tempDirectory");
         Git secondLocalGit = Git.cloneRepository().setURI(repositoryUri).setDirectory(tempDirectory.toFile()).call();
         localVCLocalCITestService.commitFile(tempDirectory, secondLocalGit);
         localVCLocalCITestService.testPushSuccessful(secondLocalGit, login, projectKey, repositorySlug);
@@ -306,14 +313,14 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         // Cleanup
         secondLocalGit.close();
-        FileUtils.deleteDirectory(tempDirectory.toFile());
+        RepositoryExportTestUtil.safeDeleteDirectory(tempDirectory);
 
         return remoteRefUpdate;
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testUserCreatesNewBranch() throws Exception {
+    void testUserCreatesNewBranchBranchingDisallowed() throws Exception {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         // Users cannot create new branches.
@@ -328,9 +335,54 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         assertThat(remoteRefUpdate.getMessage()).isEqualTo("You cannot push to a branch other than the default branch.");
     }
 
+    void customBranchTestHelper(boolean allowBranching, String regex, boolean shouldSucceed) throws Exception {
+        var buildConfig = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        buildConfig.setAllowBranching(allowBranching);
+        buildConfig.setBranchRegex(regex);
+        programmingExerciseBuildConfigRepository.save(buildConfig);
+
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        await().until(() -> programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(programmingExercise.getId(), student1Login).isPresent());
+        await().until(() -> assignmentRepository.remoteBareGitRepoFile.exists());
+        await().until(() -> assignmentRepository.workingCopyGitRepoFile.exists());
+
+        assignmentRepository.workingCopyGitRepo.branchCreate().setName("new-branch").setStartPoint("refs/heads/" + defaultBranch).call();
+        String repositoryUri = localVCLocalCITestService.buildLocalVCUri(student1Login, projectKey1, assignmentRepositorySlug);
+
+        // Push the new branch.
+        PushResult pushResult = assignmentRepository.workingCopyGitRepo.push().setRemote(repositoryUri).setRefSpecs(new RefSpec("refs/heads/new-branch:refs/heads/new-branch"))
+                .call().iterator().next();
+        RemoteRefUpdate remoteRefUpdate = pushResult.getRemoteUpdates().iterator().next();
+
+        if (shouldSucceed) {
+            assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.OK);
+        }
+        else {
+            assertThat(remoteRefUpdate.getStatus()).isNotEqualTo(RemoteRefUpdate.Status.OK);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUserCreatesCustomBranchAllowedMatchesRegex() throws Exception {
+        customBranchTestHelper(true, "^new-branch$", true);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUserCreatesCustomBranchDisallowedDoesntMatchRegex() throws Exception {
+        customBranchTestHelper(true, "^old-branch$", false);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUserCreatesCustomBranchDisallowedBranchingDisabled() throws Exception {
+        customBranchTestHelper(false, ".*", false);
+    }
+
     @Test
     void testRepositoryFolderName() {
-
         // we specifically choose logins containing "git" to test it does not accidentally get replaced
         String login1 = "ab123git";
         String login2 = "git123ab";

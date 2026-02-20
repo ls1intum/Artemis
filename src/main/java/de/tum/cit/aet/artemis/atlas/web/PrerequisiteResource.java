@@ -5,8 +5,7 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,7 +39,6 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
@@ -133,7 +131,7 @@ public class PrerequisiteResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/prerequisites")
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<Prerequisite> createPrerequisite(@PathVariable long courseId, @RequestBody Prerequisite prerequisite) throws URISyntaxException {
         log.debug("REST request to create Prerequisite : {}", prerequisite);
         checkPrerequisitesAttributesForCreation(prerequisite);
@@ -154,7 +152,7 @@ public class PrerequisiteResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/prerequisites/bulk")
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<List<Prerequisite>> createPrerequisite(@PathVariable Long courseId, @RequestBody List<Prerequisite> prerequisites) throws URISyntaxException {
         log.debug("REST request to create Prerequisites : {}", prerequisites);
         for (Prerequisite prerequisite : prerequisites) {
@@ -176,7 +174,7 @@ public class PrerequisiteResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/prerequisites/import")
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<Prerequisite> importPrerequisite(@PathVariable long courseId, @RequestBody CompetencyImportOptionsDTO importOptions) throws URISyntaxException {
         log.info("REST request to import a prerequisite: {}", importOptions.competencyIds());
 
@@ -243,7 +241,7 @@ public class PrerequisiteResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/prerequisites/import-all")
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<Set<CompetencyWithTailRelationDTO>> importAllPrerequisitesFromCourse(@PathVariable long courseId, @RequestBody CompetencyImportOptionsDTO importOptions)
             throws URISyntaxException {
         log.info("REST request to all prerequisites from course {} into course {}", importOptions.sourceCourseId(), courseId);
@@ -293,7 +291,7 @@ public class PrerequisiteResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated prerequisite
      */
     @PutMapping("courses/{courseId}/prerequisites")
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<Prerequisite> updatePrerequisite(@PathVariable long courseId, @RequestBody Prerequisite prerequisite) {
         log.debug("REST request to update Prerequisite : {}", prerequisite);
         checkPrerequisitesAttributesForUpdate(prerequisite);
@@ -315,7 +313,7 @@ public class PrerequisiteResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("courses/{courseId}/prerequisites/{prerequisiteId}")
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<Void> deletePrerequisite(@PathVariable long prerequisiteId, @PathVariable long courseId) {
         log.info("REST request to delete a Prerequisite : {}", prerequisiteId);
 
@@ -354,7 +352,7 @@ public class PrerequisiteResource {
      * @param course       The course for which to check the authorization role for
      * @param prerequisite The prerequisite to be accessed by the user
      */
-    private void checkCourseForPrerequisite(@NotNull Course course, @NotNull CourseCompetency prerequisite) {
+    private void checkCourseForPrerequisite(@NonNull Course course, @NonNull CourseCompetency prerequisite) {
         if (prerequisite.getCourse() == null) {
             throw new BadRequestAlertException("A prerequisite must belong to a course", ENTITY_NAME, "prerequisiteNoCourse");
         }

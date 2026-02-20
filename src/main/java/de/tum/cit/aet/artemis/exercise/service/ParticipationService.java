@@ -135,7 +135,12 @@ public class ParticipationService {
 
         // All other cases, i.e. normal exercises, and regular exam exercises
         else {
-            optionalStudentParticipation = findOneByExerciseAndParticipantAnyState(exercise, participant);
+            if (exercise instanceof QuizExercise) {
+                optionalStudentParticipation = findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, participant, false);
+            }
+            else {
+                optionalStudentParticipation = findOneByExerciseAndParticipantAnyState(exercise, participant);
+            }
             if (optionalStudentParticipation.isPresent() && optionalStudentParticipation.get().isPracticeMode() && exercise.isCourseExercise()) {
                 // In case there is already a practice participation, set it to inactive
                 optionalStudentParticipation.get().setInitializationState(InitializationState.INACTIVE);
@@ -164,7 +169,7 @@ public class ParticipationService {
             if (participation.getInitializationState() == null || participation.getInitializationState() == InitializationState.UNINITIALIZED
                     || participation.getInitializationState() == InitializationState.FINISHED && !(exercise instanceof QuizExercise)) {
                 // in case the participation was finished before, we set it to initialized again so that the user sees the correct button "Open modeling editor" on the client side.
-                // Only for quiz exercises, the participation status FINISHED should not be overwritten since the user must not change his submission once submitted
+                // Only for quiz exercises, the participation status FINISHED should not be overwritten since the user must not change their submission once submitted
                 participation.setInitializationState(InitializationState.INITIALIZED);
             }
             // TODO: load submission with exercise for exam edge case:
@@ -268,21 +273,23 @@ public class ParticipationService {
     }
 
     /**
-     * This method is triggered when a student starts the practice mode of a programming exercise. It creates a Participation which connects the corresponding student and exercise.
-     * Additionally, it configures repository / build plan related stuff.
+     * This method is triggered when a student starts the practice mode of an exercise. It creates or reuses a separate StudentParticipation (marked as practiceMode=true)
+     * connecting the corresponding participant and exercise. For programming exercises, it additionally configures a new repository and build plan (copied from template or
+     * graded).
+     * For quiz exercises, it performs simple initialization without VCS or build setup, allowing multiple submissions (no state lock to FINISHED).
+     * Note: This method finishes any provided graded participation and sets a fixed attempt=1 for practice.
      *
-     * @param exercise                           the exercise which is started, a programming exercise needs to have the template and solution participation eagerly loaded
-     * @param participant                        the user or team who starts the exercise
-     * @param optionalGradedStudentParticipation the optional graded participation before the due date
-     * @param useGradedParticipation             flag if the graded student participation should be used as baseline for the new repository
-     * @return the participation connecting the given exercise and user
+     * @param exercise                           the exercise to start in practice mode; for programming, template and solution participations should be eagerly loaded
+     * @param participant                        the user or team starting practice
+     * @param optionalGradedStudentParticipation the optional graded (live) participation to finish before starting practice
+     * @param useGradedParticipation             flag if the graded participation's repository should be used as baseline (programming only)
+     * @return the practice participation connecting the given exercise and participant
      */
     public StudentParticipation startPracticeMode(Exercise exercise, Participant participant, Optional<StudentParticipation> optionalGradedStudentParticipation,
             boolean useGradedParticipation) {
-        if (!(exercise instanceof ProgrammingExercise)) {
-            throw new IllegalStateException("Only programming exercises support the practice mode at the moment");
+        if (!(exercise instanceof ProgrammingExercise || exercise instanceof QuizExercise)) {
+            throw new IllegalStateException("Only programming and quiz exercises support the practice mode at the moment");
         }
-
         optionalGradedStudentParticipation.ifPresent(participation -> {
             participation.setInitializationState(InitializationState.FINISHED);
             participationRepository.save(participation);
@@ -291,13 +298,18 @@ public class ParticipationService {
         StudentParticipation participation;
         if (optionalStudentParticipation.isEmpty()) {
             // create a new participation only if no participation can be found
-            participation = new ProgrammingExerciseStudentParticipation(defaultBranch);
+            if (exercise instanceof ProgrammingExercise) {
+                participation = new ProgrammingExerciseStudentParticipation(defaultBranch);
+            }
+            else {
+                participation = new StudentParticipation();
+            }
             participation.setInitializationState(InitializationState.UNINITIALIZED);
             participation.setExercise(exercise);
             participation.setParticipant(participant);
             participation.setPracticeMode(true);
             participation = studentParticipationRepository.saveAndFlush(participation);
-            if (participant instanceof User user) {
+            if (participant instanceof User user && exercise instanceof ProgrammingExercise) {
                 participationVCSAccessTokenService.createParticipationVCSAccessToken(user, participation);
             }
         }
@@ -307,8 +319,20 @@ public class ParticipationService {
             participation.setExercise(exercise);
         }
 
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-        participation = startPracticeMode(programmingExercise, (ProgrammingExerciseStudentParticipation) participation, optionalGradedStudentParticipation, useGradedParticipation);
+        if (exercise instanceof ProgrammingExercise) {
+            ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
+            participation = startPracticeMode(programmingExercise, (ProgrammingExerciseStudentParticipation) participation, optionalGradedStudentParticipation,
+                    useGradedParticipation);
+        }
+        else {
+            if (participation.getInitializationState() != InitializationState.INITIALIZED) {
+                participation.setInitializationState(InitializationState.INITIALIZED);
+            }
+            participation.setAttempt(1);
+            if (participation.getInitializationDate() == null) {
+                participation.setInitializationDate(ZonedDateTime.now());
+            }
+        }
 
         return studentParticipationRepository.saveAndFlush(participation);
     }
@@ -352,7 +376,7 @@ public class ParticipationService {
             ProgrammingExerciseStudentParticipation programmingParticipation = (ProgrammingExerciseStudentParticipation) participation;
             // Note: we make sure to use the correct programming exercises here to avoid org.hibernate.LazyInitializationException later
             programmingParticipation.setProgrammingExercise(programmingExercise);
-            // Note: we need a repository, otherwise the student would not be possible to click resume (in case he wants to further participate after the due date)
+            // Note: we need a repository, otherwise the student would not be possible to click resume (in case they want to further participate after the due date)
             programmingParticipation = copyRepository(programmingExercise, programmingExercise.getVcsTemplateRepositoryUri(), programmingParticipation);
             programmingParticipation = configureRepository(programmingParticipation);
             participation = programmingParticipation;

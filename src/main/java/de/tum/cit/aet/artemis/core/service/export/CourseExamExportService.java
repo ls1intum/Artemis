@@ -33,20 +33,23 @@ import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseExamExportErrorCause;
 import de.tum.cit.aet.artemis.core.domain.CourseExamExportState;
+import de.tum.cit.aet.artemis.core.domain.CourseOperationType;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
+import de.tum.cit.aet.artemis.core.service.course.CourseOperationProgressService;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 import de.tum.cit.aet.artemis.fileupload.api.FileSubmissionExportApi;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.modeling.api.ModelingSubmissionExportApi;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
-import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseWithSubmissionsExportService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -75,7 +78,7 @@ public class CourseExamExportService {
 
     private final Optional<FileSubmissionExportApi> fileSubmissionExportApi;
 
-    private final ModelingExerciseWithSubmissionsExportService modelingExerciseWithSubmissionsExportService;
+    private final Optional<ModelingSubmissionExportApi> modelingSubmissionExportApi;
 
     private final QuizExerciseWithSubmissionsExportService quizExerciseWithSubmissionsExportService;
 
@@ -85,35 +88,50 @@ public class CourseExamExportService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
+    private final CourseStudentDataExportService courseStudentDataExportService;
+
+    private final CourseOperationProgressService progressService;
+
     public CourseExamExportService(ProgrammingExerciseExportService programmingExerciseExportService, ZipFileService zipFileService, FileService fileService,
             Optional<TextSubmissionExportApi> textSubmissionExportApi, Optional<FileSubmissionExportApi> fileSubmissionExportApi,
-            ModelingExerciseWithSubmissionsExportService modelingExerciseWithSubmissionsExportService,
-            QuizExerciseWithSubmissionsExportService quizExerciseWithSubmissionsExportService, WebsocketMessagingService websocketMessagingService,
-            Optional<ExamRepositoryApi> examRepositoryApi) {
+            Optional<ModelingSubmissionExportApi> modelingSubmissionExportApi, QuizExerciseWithSubmissionsExportService quizExerciseWithSubmissionsExportService,
+            WebsocketMessagingService websocketMessagingService, Optional<ExamRepositoryApi> examRepositoryApi, CourseStudentDataExportService courseStudentDataExportService,
+            CourseOperationProgressService progressService) {
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.zipFileService = zipFileService;
         this.fileSubmissionExportApi = fileSubmissionExportApi;
         this.fileService = fileService;
         this.textSubmissionExportApi = textSubmissionExportApi;
-        this.modelingExerciseWithSubmissionsExportService = modelingExerciseWithSubmissionsExportService;
+        this.modelingSubmissionExportApi = modelingSubmissionExportApi;
         this.quizExerciseWithSubmissionsExportService = quizExerciseWithSubmissionsExportService;
         this.websocketMessagingService = websocketMessagingService;
         this.examRepositoryApi = examRepositoryApi;
+        this.courseStudentDataExportService = courseStudentDataExportService;
+        this.progressService = progressService;
     }
 
+    private static final int TOTAL_ARCHIVE_STEPS = 4;
+
     /**
-     * Exports the entire course into a single zip file that is saved in the directory specified
-     * by outputDir.
+     * Exports the entire course into a single zip file that is saved in the directory specified by outputDir.
+     * This is used to export all exercises and exams of a course along with student submissions for the course archive
      *
-     * @param course       The course to export
-     * @param outputDir    The directory where the exported course is saved
-     * @param exportErrors List of failures that occurred during the export
+     * @param course         The course to export
+     * @param outputDir      The directory where the exported course is saved
+     * @param exportErrors   List of failures that occurred during the export
+     * @param examScoresData Map of exam ID to ExamScoresDTO containing comprehensive exam score data
      * @return Path to the zip file
      */
-    public Optional<Path> exportCourse(Course course, Path outputDir, List<String> exportErrors) {
+    public Optional<Path> exportCourseForArchive(Course course, Path outputDir, List<String> exportErrors, Map<Long, ExamScoresDTO> examScoresData) {
+        ZonedDateTime startedAt = ZonedDateTime.now();
+        int stepsCompleted = 0;
+
         // Used for sending export progress notifications to instructors
         var notificationTopic = "/topic/courses/" + course.getId() + "/export-course";
         notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Creating temporary directories..."), null);
+
+        // Start progress tracking
+        progressService.startOperation(course.getId(), CourseOperationType.ARCHIVE, "Creating directories", TOTAL_ARCHIVE_STEPS);
 
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
         var courseDirName = course.getShortName() + "-" + course.getTitle() + "-" + timestamp;
@@ -129,33 +147,86 @@ public class CourseExamExportService {
             String message = "Failed to export course " + course.getId() + " because the temporary directory: " + tmpCourseDir + " cannot be created.";
             notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.COMPLETED_WITH_ERRORS, List.of(message),
                     CourseExamExportErrorCause.DIR_NOT_CREATED.toString());
+            progressService.failOperation(course.getId(), CourseOperationType.ARCHIVE, "Creating directories", stepsCompleted, TOTAL_ARCHIVE_STEPS, 0, startedAt, message,
+                    calculateArchiveProgress(stepsCompleted));
             logMessageAndAppendToList(message, exportErrors, e);
             return Optional.empty();
         }
 
-        // Export course exercises and exams
-        List<Path> exportedFiles = exportCourseAndExamExercises(notificationTopic, course, tmpCourseDir.toString(), exportErrors, reportData);
-        if (exportedFiles.isEmpty()) {
-            String message = "Did not export course " + course.getId() + " because there are no exercises/exams to export.";
-            exportErrors.add(message);
-            notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.COMPLETED_WITH_ERRORS, List.of(message),
-                    CourseExamExportErrorCause.NOTHING_TO_EXPORT.toString());
-            return Optional.empty();
-        }
-
-        // Write report and error file
         try {
-            exportedFiles.add(writeReport(reportData, tmpCourseDir));
-            exportedFiles.add(writeFile(exportErrors, tmpCourseDir, "exportErrors.txt"));
-        }
-        catch (IOException ex) {
-            log.error("Could not write report file for course {} due to the exception ", course.getId(), ex);
-        }
+            // Step 1: Export course exercises and exams
+            progressService.updateProgress(course.getId(), CourseOperationType.ARCHIVE, "Exporting exercises", stepsCompleted, TOTAL_ARCHIVE_STEPS, 0, 0, 0, startedAt,
+                    calculateArchiveProgress(stepsCompleted));
+            List<Path> exportedFiles = exportCourseAndExamExercises(notificationTopic, course, tmpCourseDir.toString(), exportErrors, reportData);
+            stepsCompleted++;
 
-        Optional<Path> exportedCourse = zipExportedExercises(outputDir, exportErrors, notificationTopic, tmpCourseDir);
+            if (exportedFiles.isEmpty()) {
+                String message = "Did not export course " + course.getId() + " because there are no exercises/exams to export.";
+                exportErrors.add(message);
+                notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.COMPLETED_WITH_ERRORS, List.of(message),
+                        CourseExamExportErrorCause.NOTHING_TO_EXPORT.toString());
+                progressService.failOperation(course.getId(), CourseOperationType.ARCHIVE, "Exporting exercises", stepsCompleted, TOTAL_ARCHIVE_STEPS, 0, startedAt, message,
+                        calculateArchiveProgress(stepsCompleted));
+                return Optional.empty();
+            }
 
-        log.info("Successfully exported course {}. The zip file is located at: {}", course.getId(), exportedCourse.orElse(null));
-        return exportedCourse;
+            // Step 2: Export student data
+            progressService.updateProgress(course.getId(), CourseOperationType.ARCHIVE, "Exporting student data", stepsCompleted, TOTAL_ARCHIVE_STEPS, 0, 0, 0, startedAt,
+                    calculateArchiveProgress(stepsCompleted));
+            notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Exporting student data..."), null);
+            List<Path> studentDataFiles = courseStudentDataExportService.exportAllStudentData(course.getId(), tmpCourseDir, exportErrors);
+            exportedFiles.addAll(studentDataFiles);
+
+            // Export exam scores from the pre-fetched data (passed in to avoid circular dependencies)
+            if (examScoresData != null && !examScoresData.isEmpty()) {
+                Path studentDataDir = tmpCourseDir.resolve("student-data");
+                for (ExamScoresDTO examScores : examScoresData.values()) {
+                    List<Path> examScoreFiles = courseStudentDataExportService.exportExamScoresFromData(examScores, studentDataDir, exportErrors, course);
+                    exportedFiles.addAll(examScoreFiles);
+                }
+            }
+            stepsCompleted++;
+
+            // Step 3: Write report and error file
+            progressService.updateProgress(course.getId(), CourseOperationType.ARCHIVE, "Writing reports", stepsCompleted, TOTAL_ARCHIVE_STEPS, 0, 0, 0, startedAt,
+                    calculateArchiveProgress(stepsCompleted));
+            try {
+                exportedFiles.add(writeReport(reportData, tmpCourseDir));
+                exportedFiles.add(writeFile(exportErrors, tmpCourseDir, "exportErrors.txt"));
+            }
+            catch (IOException ex) {
+                log.error("Could not write report file for course {} due to the exception ", course.getId(), ex);
+            }
+            stepsCompleted++;
+
+            // Step 4: Create zip file
+            progressService.updateProgress(course.getId(), CourseOperationType.ARCHIVE, "Creating archive", stepsCompleted, TOTAL_ARCHIVE_STEPS, 0, 0, 0, startedAt,
+                    calculateArchiveProgress(stepsCompleted));
+            Optional<Path> exportedCourse = zipExportedExercises(outputDir, exportErrors, notificationTopic, tmpCourseDir);
+            stepsCompleted++;
+
+            progressService.completeOperation(course.getId(), CourseOperationType.ARCHIVE, TOTAL_ARCHIVE_STEPS, exportErrors.size(), startedAt);
+            log.info("Successfully exported course {}. The zip file is located at: {}", course.getId(), exportedCourse.orElse(null));
+            return exportedCourse;
+        }
+        catch (Exception e) {
+            log.error("Failed to archive course {}", course.getId(), e);
+            progressService.failOperation(course.getId(), CourseOperationType.ARCHIVE, "Archive failed", stepsCompleted, TOTAL_ARCHIVE_STEPS, 0, startedAt, e.getMessage(),
+                    calculateArchiveProgress(stepsCompleted));
+            throw e;
+        }
+    }
+
+    /**
+     * Calculates the progress percentage for archive operations based on completed steps.
+     * Archive operations use simple step-based progress since they don't have the same
+     * complexity-based weighting as delete/reset operations.
+     *
+     * @param stepsCompleted the number of steps completed
+     * @return the progress percentage (0-100)
+     */
+    private double calculateArchiveProgress(int stepsCompleted) {
+        return (double) stepsCompleted / TOTAL_ARCHIVE_STEPS * 100.0;
     }
 
     private Optional<Path> zipExportedExercises(Path outputDir, List<String> exportErrors, String notificationTopic, Path tmpDir) {
@@ -421,8 +492,7 @@ public class CourseExamExportService {
             }
 
             // Export options
-            var submissionsExportOptions = new SubmissionExportOptionsDTO();
-            submissionsExportOptions.setExportAllParticipants(true);
+            var submissionsExportOptions = SubmissionExportOptionsDTO.exportAll();
             try {
                 // Export programming exercise
                 switch (exercise) {
@@ -434,8 +504,8 @@ public class CourseExamExportService {
                             .add(api.exportFileUploadExerciseWithSubmissions(fileUploadExercise, submissionsExportOptions, exerciseExportDir, exportErrors, reportData)));
                     case TextExercise textExercise -> textSubmissionExportApi.ifPresent(api -> exportedExercises
                             .add(api.exportTextExerciseWithSubmissions(textExercise, submissionsExportOptions, exerciseExportDir, exportErrors, reportData)));
-                    case ModelingExercise modelingExercise -> exportedExercises.add(modelingExerciseWithSubmissionsExportService
-                            .exportModelingExerciseWithSubmissions(modelingExercise, submissionsExportOptions, exerciseExportDir, exportErrors, reportData));
+                    case ModelingExercise modelingExercise -> modelingSubmissionExportApi.ifPresent(api -> exportedExercises
+                            .add(api.exportModelingExerciseWithSubmissions(modelingExercise, submissionsExportOptions, exerciseExportDir, exportErrors, reportData)));
                     case QuizExercise quizExercise ->
                         exportedExercises.add(quizExerciseWithSubmissionsExportService.exportExerciseWithSubmissions(quizExercise, exerciseExportDir, exportErrors, reportData));
                     default -> logMessageAndAppendToList(

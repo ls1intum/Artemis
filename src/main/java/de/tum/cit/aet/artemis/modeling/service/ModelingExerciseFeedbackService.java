@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.modeling.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -10,8 +9,8 @@ import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -31,10 +30,11 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
+import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 
-@Profile(PROFILE_CORE)
+@Conditional(ModelingEnabled.class)
 @Lazy
 @Service
 public class ModelingExerciseFeedbackService {
@@ -107,7 +107,7 @@ public class ModelingExerciseFeedbackService {
     public void generateAutomaticNonGradedFeedback(ModelingSubmission modelingSubmission, StudentParticipation participation, ModelingExercise modelingExercise) {
         log.debug("Using athena to generate (modeling exercise) feedback request: {}", modelingExercise.getId());
 
-        Result automaticResult = createInitialResult(participation, modelingSubmission);
+        Result automaticResult = createInitialResult(modelingSubmission);
 
         try {
             this.resultWebsocketService.broadcastNewResult(participation, automaticResult);
@@ -139,12 +139,14 @@ public class ModelingExerciseFeedbackService {
     /**
      * Creates an initial Result object for the automatic feedback.
      *
-     * @param participation the student participation
-     * @param submission    the submission to which the result is associated
+     * @param submission the submission to which the result is associated
      * @return the initial Result object
      */
-    private Result createInitialResult(StudentParticipation participation, Submission submission) {
+    private Result createInitialResult(Submission submission) {
         Result result = new Result();
+        if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
+            result.setExerciseId(submission.getParticipation().getExercise().getId());
+        }
         result.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
         result.setRated(true);
         result.setScore(0.0);

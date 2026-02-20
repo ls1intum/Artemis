@@ -5,8 +5,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.util.List;
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -47,7 +46,7 @@ public interface ExerciseGroupRepository extends ArtemisJpaRepository<ExerciseGr
      * @param exerciseGroupId the id of the entity
      * @return the exercise group with all exercise
      */
-    @NotNull
+    @NonNull
     default ExerciseGroup findByIdWithExercisesElseThrow(long exerciseGroupId) {
         return getValueElseThrow(findWithExercisesById(exerciseGroupId), exerciseGroupId);
     }

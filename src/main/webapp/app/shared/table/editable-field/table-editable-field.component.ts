@@ -1,6 +1,6 @@
 import { Component, Input, ViewChild } from '@angular/core';
 import { FormsModule, NgModel } from '@angular/forms';
-import { TranslateDirective } from '../../language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { KeyValuePipe } from '@angular/common';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 

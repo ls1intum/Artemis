@@ -46,9 +46,6 @@
                             <td>{{ quizExercise.title }}</td>
                         }
                         <td>
-                            @if (quizExercise.status === QuizStatus.CLOSED) {
-                                <span jhiTranslate="artemisApp.quizExercise.quizStatus.closed"></span>
-                            }
                             @if (quizExercise.status === QuizStatus.INVISIBLE) {
                                 <span jhiTranslate="artemisApp.quizExercise.quizStatus.invisible"></span>
                             }
@@ -63,7 +60,13 @@
                             }
                         </td>
                         <td>{{ quizExercise.releaseDate ? (quizExercise.releaseDate | artemisDate: 'long' : true) : '-' }}</td>
-                        <td>{{ quizExercise.quizBatches?.[0]?.startTime ? (quizExercise.quizBatches![0]!.startTime | artemisDate: 'long' : true) : '-' }}</td>
+                        <td>
+                            {{
+                                quizExercise.startDate || quizExercise.quizBatches?.[0]?.startTime
+                                    ? (quizExercise.startDate || quizExercise.quizBatches?.[0]?.startTime | artemisDate: 'long' : true)
+                                    : '-'
+                            }}
+                        </td>
                         <td>{{ quizExercise.dueDate ? (quizExercise.dueDate | artemisDate: 'long' : true) : '-' }}</td>
                         <td>
                             {{ fullMinutesForSeconds(quizExercise.duration!) }}

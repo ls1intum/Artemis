@@ -506,8 +506,8 @@ $exercise-group-header-background: $neutral-dark-l-5;
 $exercise-group-header-badge-color: $warning;
 
 // Grading system
-$base-grading-system-input-color: white;
-$base-grading-system-input-background: $form-control-focus-background;
+$base-grading-input-color: white;
+$base-grading-input-background: $form-control-focus-background;
 
 // Exam students
 $exam-students-dropdown-item-active: $success;
@@ -630,19 +630,14 @@ $competency-rings-blue: $blue;
 $competency-rings-blue-bg: transparentize($competency-rings-blue, 0.8);
 
 // Iris Chatbot
-$iris-chat-widget-background: var(--neutral-dark-l-5);
-$iris-chat-bubble-fade: $black;
-$iris-chat-history-background: var(--neutral-dark-l-5);
-$iris-chat-history-label-color: var(--gray-600);
-$iris-client-chat-background: var(--neutral-dark-l-10);
-$iris-client-chat-input: var(--neutral-dark-l-5);
-$iris-my-chat-background: #008462;
-$iris-btn-circle: var(--teal);
-$iris-btn-circle-hover: var(--success);
-$iris-tool-background: var(--neutral-dark-l-10);
-$iris-rate-background: var(--neutral-dark-l-15);
-$iris-chat-header-button-background: var(--neutral-dark-l-15);
-
+// Iris Theme Variables
+$iris-primary-background: $neutral-dark;
+$iris-secondary-background: $neutral-dark-l-5;
+$iris-tertiary-background: $neutral-dark-l-10;
+$iris-accent-background: $neutral-dark-l-15;
+$iris-label-color: $gray-500;
+$iris-accent-border-color: $gray-500;
+$iris-table-header-background: $neutral-dark-l-5;
 // Iris Communication
 $tutor-suggestion-background: $gray-700;
 
@@ -662,6 +657,10 @@ $pastel-blue: lighten($blue, 5%);
 $pastel-purple: lighten($purple, 20%);
 $pastel-teal: lighten($teal, 15%);
 $calendar-loading-overlay-background: transparentize($module-bg, 0.5);
+
+// Video Player
+$transcript-active-bg: darken($primary, 20%);
+$transcript-active-text: $white;
 $calendar-day-badge-selected: $gray-700;
 
 // Quiz Training
@@ -672,3 +671,17 @@ $league-badge-diamond-color: hsl(195, 60%, 60%);
 $league-badge-master-color: hsl(270, 60%, 60%);
 $league-badge-star-color: #ffd700;
 $progress-bar-background: $gray-700;
+
+// LLM Selection Popup
+$ai-modal-card-bg: $neutral-dark-l-10;
+$ai-modal-cloud-bg: linear-gradient(135deg, #5a6986 0%, #667189 100%);
+$ai-modal-cloud-bg-hover: linear-gradient(135deg, #5e6989 0%, #7483b5 100%);
+$ai-modal-local-bg: linear-gradient(135deg, #46536b 0%, #5c667c 100%);
+$ai-modal-local-bg-hover: linear-gradient(135deg, #5c667c 0%, #6a7494 100%);
+$ai-modal-no-ai-bg: linear-gradient(135deg, #425265 0%, #4d5669 100%);
+$ai-modal-no-ai-bg-hover: linear-gradient(135deg, #4d5669 0%, #4b5269 100%);
+$ai-modal-icons-bg: rgba(255, 255, 255, 0.05);
+$ai-modal-description-color: $gray-300;
+$ai-modal-bg: rgba(0, 0, 0, 0.85);
+$ai-modal-subtitle: $white;
+$ai-modal-shadow-hover: rgba(0, 0, 0, 0.4);

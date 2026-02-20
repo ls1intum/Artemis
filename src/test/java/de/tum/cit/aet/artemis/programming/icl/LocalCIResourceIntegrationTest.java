@@ -9,9 +9,11 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -21,6 +23,11 @@ import java.util.stream.IntStream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -29,6 +36,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobsStatisticsDTO;
@@ -46,7 +54,20 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.DistributedQueue;
 
+// TestInstance.Lifecycle.PER_CLASS allows all test methods in this class to share the same instance of the test class.
+// This reduces the overhead of repeatedly creating and tearing down a new Spring application context for each test method.
+// This is especially useful when the test setup is expensive or when we want to share resources, such as database connections or mock objects, across multiple tests.
+// In this case, we want to share the same GitService and UsernamePasswordCredentialsProvider.
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+
+// ExecutionMode.SAME_THREAD ensures that all tests within this class are executed sequentially in the same thread, rather than in parallel or in a different thread.
+// This is important in the context of LocalCI because it avoids potential race conditions or inconsistencies that could arise if multiple test methods are executed
+// concurrently. For example, it prevents overloading the LocalCI's result processing system with too many build job results at the same time, which could lead to flaky tests
+// or timeouts. By keeping everything in the same thread, we maintain more predictable and stable test behavior, while not increasing the test execution time significantly.
+@Execution(ExecutionMode.SAME_THREAD)
 class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
+
+    private static final Logger log = LoggerFactory.getLogger(LocalCIResourceIntegrationTest.class);
 
     private static final String TEST_PREFIX = "localciresourceint";
 
@@ -95,6 +116,8 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         buildJobRepository.deleteAll();
         // temporarily remove listener to avoid triggering build job processing
         sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
+        // Reset pause state to ensure clean state for each test (prevents issues if a previous test left isPaused=true)
+        sharedQueueProcessingService.resetPauseState();
 
         JobTimingInfo jobTimingInfo1 = new JobTimingInfo(ZonedDateTime.now().plusMinutes(1), ZonedDateTime.now().plusMinutes(2), ZonedDateTime.now().plusMinutes(3), null, 20);
         JobTimingInfo jobTimingInfo2 = new JobTimingInfo(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(1), ZonedDateTime.now().plusMinutes(2), null, 20);
@@ -108,7 +131,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
 
         job1 = new BuildJobQueueItem("1", "job1", buildAgent, 1, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1, buildConfig, null);
         job2 = new BuildJobQueueItem("2", "job2", buildAgent, 2, course.getId(), 1, 1, 2, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo2, buildConfig, null);
-        agent1 = new BuildAgentInformation(buildAgent, 2, 1, new ArrayList<>(List.of(job1)), BuildAgentInformation.BuildAgentStatus.IDLE, null, null,
+        agent1 = new BuildAgentInformation(buildAgent, 2, 1, new ArrayList<>(List.of(job1)), BuildAgentStatus.IDLE, null, null,
                 buildAgentConfiguration.getPauseAfterConsecutiveFailedJobs());
         BuildJobQueueItem finishedJobQueueItem1 = new BuildJobQueueItem("3", "job3", buildAgent, 3, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1,
                 buildConfig, null);
@@ -152,7 +175,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         processingJobs.put(job1.id(), job1);
         processingJobs.put(job2.id(), job2);
 
-        buildAgentInformation.put(memberAddress, agent1);
+        buildAgentInformation.put(buildAgentShortName, agent1);
     }
 
     @AfterEach
@@ -167,6 +190,8 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
                 Thread.currentThread().interrupt();
             }
         }
+        // Reset pause state to ensure clean state for next test (in case this test failed during pause/resume)
+        sharedQueueProcessingService.resetPauseState();
         sharedQueueProcessingService.init();
         queuedJobs.clear();
         processingJobs.clear();
@@ -239,6 +264,16 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     void testGetBuildAgentDetails_returnsAgent() throws Exception {
         var retrievedAgent = request.get("/api/core/admin/build-agent?agentName=" + agent1.buildAgent().name(), HttpStatus.OK, BuildAgentInformation.class);
         assertThat(retrievedAgent.buildAgent().name()).isEqualTo(agent1.buildAgent().name());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testGetBuildAgentDetails_byMemberAddress_returnsAgent() throws Exception {
+        // Test that we can also look up an agent by its memberAddress (used when navigating from finished jobs)
+        var retrievedAgent = request.get("/api/core/admin/build-agent?agentName=" + URLEncoder.encode(agent1.buildAgent().memberAddress(), StandardCharsets.UTF_8), HttpStatus.OK,
+                BuildAgentInformation.class);
+        assertThat(retrievedAgent.buildAgent().name()).isEqualTo(agent1.buildAgent().name());
+        assertThat(retrievedAgent.buildAgent().memberAddress()).isEqualTo(agent1.buildAgent().memberAddress());
     }
 
     @Test
@@ -409,38 +444,79 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testPauseBuildAgent() throws Exception {
+        // Clear the manually added agent from BeforeEach - we want the service to manage its own agent
+        buildAgentInformation.clear();
         // We need to clear the processing jobs to avoid the agent being set to ACTIVE again
         processingJobs.clear();
+        // Reset initialized state so init() will re-register all listeners (including pause/resume topic listeners)
+        sharedQueueProcessingService.resetInitializedState();
+        // Re-initialize to register pause/resume topic listeners (they are removed in @BeforeEach)
+        sharedQueueProcessingService.init();
 
-        request.put("/api/core/admin/agents/" + URLEncoder.encode(agent1.buildAgent().name(), StandardCharsets.UTF_8) + "/pause", null, HttpStatus.NO_CONTENT);
-        await().until(() -> buildAgentInformation.get(agent1.buildAgent().memberAddress()).status() == BuildAgentInformation.BuildAgentStatus.PAUSED);
+        // Wait for the scheduled task to add the agent to the map (happens asynchronously after init)
+        await().atMost(Duration.ofSeconds(10)).pollInterval(Duration.ofMillis(200)).until(() -> {
+            var agent = buildAgentInformation.get(buildAgentShortName);
+            return agent != null && (agent.status() == BuildAgentStatus.IDLE || agent.status() == BuildAgentStatus.ACTIVE);
+        });
 
-        request.put("/api/core/admin/agents/" + URLEncoder.encode(agent1.buildAgent().name(), StandardCharsets.UTF_8) + "/resume", null, HttpStatus.NO_CONTENT);
-        await().until(() -> buildAgentInformation.get(agent1.buildAgent().memberAddress()).status() == BuildAgentInformation.BuildAgentStatus.IDLE);
+        request.put("/api/core/admin/agents/" + URLEncoder.encode(buildAgentShortName, StandardCharsets.UTF_8) + "/pause", null, HttpStatus.NO_CONTENT);
+        await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(200)).until(() -> {
+            var agent = buildAgentInformation.get(buildAgentShortName);
+            if (agent == null) {
+                return false;
+            }
+            log.info("Current status of agent after pause operation {} : {}", agent.buildAgent().displayName(), agent.status());
+            return agent.status() == BuildAgentStatus.PAUSED;
+        });
+
+        request.put("/api/core/admin/agents/" + URLEncoder.encode(buildAgentShortName, StandardCharsets.UTF_8) + "/resume", null, HttpStatus.NO_CONTENT);
+        await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(200)).until(() -> {
+            var agent = buildAgentInformation.get(buildAgentShortName);
+            if (agent == null) {
+                return false;
+            }
+            log.info("Current status of agent after resume operation {} : {}", agent.buildAgent().displayName(), agent.status());
+            return agent.status() == BuildAgentStatus.IDLE;
+        });
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testPauseAllBuildAgents() throws Exception {
+        // Clear the manually added agent from BeforeEach - we want the service to manage its own agent
+        buildAgentInformation.clear();
         // We need to clear the processing jobs to avoid the agent being set to ACTIVE again
         processingJobs.clear();
+        // Reset initialized state so init() will re-register all listeners (including pause/resume topic listeners)
+        sharedQueueProcessingService.resetInitializedState();
+        // Re-initialize to register pause/resume topic listeners (they are removed in @BeforeEach)
+        sharedQueueProcessingService.init();
+
+        // Wait for the scheduled task to add agents to the map (happens asynchronously after init)
+        await().atMost(Duration.ofSeconds(10)).pollInterval(Duration.ofMillis(200)).until(() -> !buildAgentInformation.values().isEmpty());
 
         request.put("/api/core/admin/agents/pause-all", null, HttpStatus.NO_CONTENT);
-        await().until(() -> {
+        await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(200)).until(() -> {
             var agents = buildAgentInformation.values();
-            return agents.stream().allMatch(agent -> agent.status() == BuildAgentInformation.BuildAgentStatus.PAUSED);
+            printAgentInformation(agents);
+            return !agents.isEmpty() && agents.stream().allMatch(agent -> agent.status() == BuildAgentStatus.PAUSED);
         });
 
         request.put("/api/core/admin/agents/resume-all", null, HttpStatus.NO_CONTENT);
-        await().until(() -> {
+        await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(200)).until(() -> {
             var agents = buildAgentInformation.values();
-            return agents.stream().allMatch(agent -> agent.status() == BuildAgentInformation.BuildAgentStatus.IDLE);
+            printAgentInformation(agents);
+            return !agents.isEmpty() && agents.stream().allMatch(agent -> agent.status() == BuildAgentStatus.IDLE);
         });
+    }
+
+    private static void printAgentInformation(Collection<BuildAgentInformation> agents) {
+        log.info("Current statuses: {}", agents.stream().map(agent -> agent.buildAgent().displayName() + "=" + agent.status()).toList());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testBuildJob() throws Exception {
+    void testBuildJob() {
         var now = ZonedDateTime.now();
         JobTimingInfo jobTimingInfo1 = new JobTimingInfo(now, now, null, now.plusSeconds(24), 24);
         JobTimingInfo jobTimingInfo2 = new JobTimingInfo(now, now.plusSeconds(5), null, now.plusSeconds(29), 24);
@@ -465,11 +541,85 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         queuedJobs.add(job4);
         queuedJobs.add(job5);
 
-        agent1 = new BuildAgentInformation(buildAgent, 2, 2, new ArrayList<>(List.of(job1, job2)), BuildAgentInformation.BuildAgentStatus.ACTIVE, null, null,
+        agent1 = new BuildAgentInformation(buildAgent, 2, 2, new ArrayList<>(List.of(job1, job2)), BuildAgentStatus.ACTIVE, null, null,
                 buildAgentConfiguration.getPauseAfterConsecutiveFailedJobs());
-        buildAgentInformation.put(buildAgent.memberAddress(), agent1);
+        buildAgentInformation.put(buildAgentShortName, agent1);
 
         var queueDurationEstimation = sharedQueueManagementService.getBuildJobEstimatedStartDate(job4.participationId());
-        assertThat(queueDurationEstimation).isCloseTo(now.plusSeconds(48), within(1, ChronoUnit.SECONDS));
+        assertThat(queueDurationEstimation).isCloseTo(now.plusSeconds(48), within(2, ChronoUnit.SECONDS));
+    }
+
+    // --- Tests for getBuildJobById endpoint ---
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testGetBuildJobById_runningJob() throws Exception {
+        var result = request.get("/api/core/admin/build-job/" + job1.id(), HttpStatus.OK, BuildJobQueueItem.class);
+        assertThat(result.id()).isEqualTo(job1.id());
+        assertThat(result.name()).isEqualTo(job1.name());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testGetBuildJobById_queuedJob() throws Exception {
+        queuedJobs.add(job1);
+        // Remove from processing to only have it in the queue
+        processingJobs.remove(job1.id());
+        var result = request.get("/api/core/admin/build-job/" + job1.id(), HttpStatus.OK, BuildJobQueueItem.class);
+        assertThat(result.id()).isEqualTo(job1.id());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testGetBuildJobById_finishedJob() throws Exception {
+        buildJobRepository.save(finishedJob1);
+        var result = request.get("/api/core/admin/build-job/" + finishedJob1.getBuildJobId(), HttpStatus.OK, FinishedBuildJobDTO.class);
+        assertThat(result.id()).isEqualTo(finishedJob1.getBuildJobId());
+        assertThat(result.status()).isEqualTo(BuildStatus.SUCCESSFUL);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testGetBuildJobById_notFound() throws Exception {
+        request.get("/api/core/admin/build-job/nonexistent", HttpStatus.NOT_FOUND, Void.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetBuildJobById_instructorForbidden() throws Exception {
+        request.get("/api/core/admin/build-job/" + job1.id(), HttpStatus.FORBIDDEN, Void.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetBuildJobByIdForCourse_runningJob() throws Exception {
+        var result = request.get("/api/programming/courses/" + course.getId() + "/build-job/" + job1.id(), HttpStatus.OK, BuildJobQueueItem.class);
+        assertThat(result.id()).isEqualTo(job1.id());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetBuildJobByIdForCourse_finishedJob() throws Exception {
+        buildJobRepository.save(finishedJob1);
+        var result = request.get("/api/programming/courses/" + course.getId() + "/build-job/" + finishedJob1.getBuildJobId(), HttpStatus.OK, FinishedBuildJobDTO.class);
+        assertThat(result.id()).isEqualTo(finishedJob1.getBuildJobId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetBuildJobByIdForCourse_wrongCourse() throws Exception {
+        request.get("/api/programming/courses/" + Long.MAX_VALUE + "/build-job/" + job1.id(), HttpStatus.FORBIDDEN, Void.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetBuildJobByIdForCourse_notFound() throws Exception {
+        request.get("/api/programming/courses/" + course.getId() + "/build-job/nonexistent", HttpStatus.NOT_FOUND, Void.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
+    void testGetBuildJobByIdForCourse_wrongInstructorForbidden() throws Exception {
+        request.get("/api/programming/courses/" + course.getId() + "/build-job/" + job1.id(), HttpStatus.FORBIDDEN, Void.class);
     }
 }

@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, computed, effect, inject, input, model } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
@@ -33,56 +33,69 @@ import { SecureLinkDirective } from 'app/assessment/manage/secure-link.directive
 export class AssessmentInstructionsComponent {
     private markdownService = inject(ArtemisMarkdownService);
 
-    exercise: Exercise;
-    programmingExercise?: ProgrammingExercise;
-    problemStatement: SafeHtml;
-    gradingInstructions?: SafeHtml;
-    sampleSolutionExplanation?: SafeHtml;
-    sampleSolutionModel?: UMLModel;
-    sampleSolutionDiagramType?: UMLDiagramType;
+    readonly exercise = input.required<Exercise>();
 
-    @Input() isAssessmentTraining = false;
-    @Input() showAssessmentInstructions = true;
-
-    @Input() readOnly: boolean;
+    readonly isAssessmentTraining = input(false);
+    readonly showAssessmentInstructions = input(true);
+    readonly readOnly = input<boolean>();
     // For programming exercises we hand over the participation or use the template participation
-    @Input() programmingParticipation?: ProgrammingExerciseStudentParticipation;
-    @Input() gradingCriteria?: GradingCriterion[];
+    readonly programmingParticipation = input<ProgrammingExerciseStudentParticipation>();
+    readonly gradingCriteria = model<GradingCriterion[]>();
 
     readonly ExerciseType = ExerciseType;
 
-    // eslint-disable-next-line @angular-eslint/no-input-rename
-    @Input('exercise') set exerciseInput(exercise: Exercise) {
-        this.exercise = exercise;
-        this.problemStatement = this.markdownService.safeHtmlForMarkdown(exercise.problemStatement);
-        if (exercise.gradingInstructions) {
-            this.gradingInstructions = this.markdownService.safeHtmlForMarkdown(exercise.gradingInstructions);
-        }
-        this.gradingCriteria = exercise.gradingCriteria;
+    readonly problemStatement = computed(() => this.markdownService.safeHtmlForMarkdown(this.exercise().problemStatement));
 
+    readonly gradingInstructions = computed(() => {
+        const exercise = this.exercise();
+        return exercise.gradingInstructions ? this.markdownService.safeHtmlForMarkdown(exercise.gradingInstructions) : undefined;
+    });
+
+    readonly programmingExercise = computed(() => {
+        const exercise = this.exercise();
+        return exercise.type === ExerciseType.PROGRAMMING ? (exercise as ProgrammingExercise) : undefined;
+    });
+
+    readonly sampleSolutionModel = computed<UMLModel | undefined>(() => {
+        const exercise = this.exercise();
+        if (exercise.type === ExerciseType.MODELING) {
+            const modelingExercise = exercise as ModelingExercise;
+            return modelingExercise.exampleSolutionModel ? JSON.parse(modelingExercise.exampleSolutionModel) : undefined;
+        }
+        return undefined;
+    });
+
+    readonly sampleSolutionDiagramType = computed<UMLDiagramType | undefined>(() => {
+        const exercise = this.exercise();
+        if (exercise.type === ExerciseType.MODELING) {
+            return (exercise as ModelingExercise).diagramType;
+        }
+        return undefined;
+    });
+
+    readonly sampleSolutionExplanation = computed<SafeHtml | undefined>(() => {
+        const exercise = this.exercise();
         let sampleSolutionMarkdown: string | undefined;
+
         switch (exercise.type) {
             case ExerciseType.MODELING:
-                const modelingExercise = exercise as ModelingExercise;
-                sampleSolutionMarkdown = modelingExercise.exampleSolutionExplanation;
-                if (modelingExercise.exampleSolutionModel) {
-                    this.sampleSolutionModel = JSON.parse(modelingExercise.exampleSolutionModel);
-                }
-                this.sampleSolutionDiagramType = modelingExercise.diagramType;
+                sampleSolutionMarkdown = (exercise as ModelingExercise).exampleSolutionExplanation;
                 break;
             case ExerciseType.TEXT:
-                const textExercise = exercise as TextExercise;
-                sampleSolutionMarkdown = textExercise.exampleSolution;
+                sampleSolutionMarkdown = (exercise as TextExercise).exampleSolution;
                 break;
             case ExerciseType.FILE_UPLOAD:
-                const fileUploadExercise = exercise as FileUploadExercise;
-                sampleSolutionMarkdown = fileUploadExercise.exampleSolution;
+                sampleSolutionMarkdown = (exercise as FileUploadExercise).exampleSolution;
                 break;
-            case ExerciseType.PROGRAMMING:
-                this.programmingExercise = exercise as ProgrammingExercise;
         }
-        if (sampleSolutionMarkdown) {
-            this.sampleSolutionExplanation = this.markdownService.safeHtmlForMarkdown(sampleSolutionMarkdown);
-        }
+
+        return sampleSolutionMarkdown ? this.markdownService.safeHtmlForMarkdown(sampleSolutionMarkdown) : undefined;
+    });
+
+    constructor() {
+        effect(() => {
+            const exercise = this.exercise();
+            this.gradingCriteria.set(exercise.gradingCriteria);
+        });
     }
 }

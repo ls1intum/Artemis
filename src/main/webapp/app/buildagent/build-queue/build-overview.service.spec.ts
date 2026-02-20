@@ -1,4 +1,6 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { BuildOverviewService } from 'app/buildagent/build-queue/build-overview.service';
 import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -16,8 +18,11 @@ import { BuildConfig } from 'app/buildagent/shared/entities/build-config.model';
 import { FinishedBuildJobFilter } from 'app/buildagent/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
 import { provideHttpClient } from '@angular/common/http';
 import { BuildLogEntry } from 'app/buildagent/shared/entities/build-log.model';
+import { firstValueFrom } from 'rxjs';
 
 describe('BuildOverviewService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: BuildOverviewService;
     let httpMock: HttpTestingController;
     let elem1: BuildJob;
@@ -242,7 +247,7 @@ describe('BuildOverviewService', () => {
         req.flush({}); // Flush an empty response to indicate success
     });
 
-    it('should handle errors when cancelling a specific build job', fakeAsync(() => {
+    it('should handle errors when cancelling a specific build job', () => {
         const buildJobId = '1';
 
         let errorOccurred = false;
@@ -269,13 +274,11 @@ describe('BuildOverviewService', () => {
         // Simulate an error response from the server
         req.flush(null, { status: 500, statusText: 'Internal Server Error' });
 
-        tick();
-
         // Verify that an error occurred during the subscription
         expect(errorOccurred).toBeTruthy();
-    }));
+    });
 
-    it('should handle errors when cancelling a specific build job in a course', fakeAsync(() => {
+    it('should handle errors when cancelling a specific build job in a course', () => {
         const courseId = 1;
         const buildJobId = '1';
 
@@ -307,13 +310,11 @@ describe('BuildOverviewService', () => {
         // Simulate an error response from the server
         req.flush(null, { status: 500, statusText: 'Internal Server Error' });
 
-        tick();
-
         // Verify that an error occurred during the subscription
         expect(errorOccurred).toBeTruthy();
-    }));
+    });
 
-    it('should handle errors when cancelling all running build jobs', fakeAsync(() => {
+    it('should handle errors when cancelling all running build jobs', () => {
         let errorOccurred = false;
 
         service.cancelAllRunningBuildJobs().subscribe({
@@ -332,13 +333,11 @@ describe('BuildOverviewService', () => {
         // Simulate an error response from the server
         req.flush(null, { status: 500, statusText: 'Internal Server Error' });
 
-        tick();
-
         // Verify that an error occurred during the subscription
         expect(errorOccurred).toBeTruthy();
-    }));
+    });
 
-    it('should handle errors when cancelling all running build jobs in a course', fakeAsync(() => {
+    it('should handle errors when cancelling all running build jobs in a course', () => {
         const courseId = 1;
 
         let errorOccurred = false;
@@ -365,13 +364,11 @@ describe('BuildOverviewService', () => {
         // Simulate an error response from the server
         req.flush(null, { status: 500, statusText: 'Internal Server Error' });
 
-        tick();
-
         // Verify that an error occurred during the subscription
         expect(errorOccurred).toBeTruthy();
-    }));
+    });
 
-    it('should handle errors when cancelling all queued build jobs', fakeAsync(() => {
+    it('should handle errors when cancelling all queued build jobs', () => {
         let errorOccurred = false;
 
         service.cancelAllQueuedBuildJobs().subscribe({
@@ -390,13 +387,11 @@ describe('BuildOverviewService', () => {
         // Simulate an error response from the server
         req.flush(null, { status: 500, statusText: 'Internal Server Error' });
 
-        tick();
-
         // Verify that an error occurred during the subscription
         expect(errorOccurred).toBeTruthy();
-    }));
+    });
 
-    it('should handle errors when cancelling all queued build jobs in a course', fakeAsync(() => {
+    it('should handle errors when cancelling all queued build jobs in a course', () => {
         const courseId = 1;
 
         let errorOccurred = false;
@@ -423,13 +418,11 @@ describe('BuildOverviewService', () => {
         // Simulate an error response from the server
         req.flush(null, { status: 500, statusText: 'Internal Server Error' });
 
-        tick();
-
         // Verify that an error occurred during the subscription
         expect(errorOccurred).toBeTruthy();
-    }));
+    });
 
-    it('should handle errors when cancelling all running build jobs for a specific agent', fakeAsync(() => {
+    it('should handle errors when cancelling all running build jobs for a specific agent', () => {
         const agentName = 'agent1';
 
         let errorOccurred = false;
@@ -456,38 +449,38 @@ describe('BuildOverviewService', () => {
         // Simulate an error response from the server
         req.flush(null, { status: 500, statusText: 'Internal Server Error' });
 
-        tick();
-
         // Verify that an error occurred during the subscription
         expect(errorOccurred).toBeTruthy();
-    }));
+    });
 
-    it('should return all finished build jobs', () => {
+    it('should return all finished build jobs', async () => {
         const expectedResponse = [elem1];
 
-        service.getFinishedBuildJobs().subscribe((data) => {
-            expect(data).toEqual(expectedResponse);
-        });
+        const resultPromise = firstValueFrom(service.getFinishedBuildJobs());
 
         const req = httpMock.expectOne(`${service.adminResourceUrl}/finished-jobs`);
         expect(req.request.method).toBe('GET');
         req.flush(expectedResponse);
+
+        const result = await resultPromise;
+        expect(result.body).toEqual(expectedResponse);
     });
 
-    it('should return filtered finished build jobs', () => {
+    it('should return filtered finished build jobs', async () => {
         const expectedResponse = [elem1];
 
-        service.getFinishedBuildJobs(undefined, filterOptions).subscribe((data) => {
-            expect(data).toEqual(expectedResponse);
-        });
+        const resultPromise = firstValueFrom(service.getFinishedBuildJobs(undefined, filterOptions));
 
         const req = httpMock.expectOne((r) => r.url === `${service.adminResourceUrl}/finished-jobs`);
         expect(req.request.method).toBe('GET');
         expectFilterParams(req, filterOptions);
         req.flush(expectedResponse);
+
+        const result = await resultPromise;
+        expect(result.body).toEqual(expectedResponse);
     });
 
-    it('should handle errors when getting all finished build jobs', fakeAsync(() => {
+    it('should handle errors when getting all finished build jobs', () => {
         let errorOccurred = false;
 
         service.getFinishedBuildJobs().subscribe({
@@ -504,39 +497,39 @@ describe('BuildOverviewService', () => {
 
         req.flush(null, { status: 500, statusText: 'Internal Server Error' });
 
-        tick();
-
         expect(errorOccurred).toBeTruthy();
-    }));
+    });
 
-    it('should return all finished build jobs for a specific course', () => {
+    it('should return all finished build jobs for a specific course', async () => {
         const courseId = 1;
         const expectedResponse = [elem1];
 
-        service.getFinishedBuildJobsByCourseId(courseId).subscribe((data) => {
-            expect(data).toEqual(expectedResponse);
-        });
+        const resultPromise = firstValueFrom(service.getFinishedBuildJobsByCourseId(courseId));
 
         const req = httpMock.expectOne(`${service.resourceUrl}/courses/${courseId}/finished-jobs`);
         expect(req.request.method).toBe('GET');
         req.flush(expectedResponse);
+
+        const result = await resultPromise;
+        expect(result.body).toEqual(expectedResponse);
     });
 
-    it('should return filtered finished build jobs for a specific course', () => {
+    it('should return filtered finished build jobs for a specific course', async () => {
         const courseId = 1;
         const expectedResponse = [elem1];
 
-        service.getFinishedBuildJobsByCourseId(courseId, undefined, filterOptions).subscribe((data) => {
-            expect(data).toEqual(expectedResponse);
-        });
+        const resultPromise = firstValueFrom(service.getFinishedBuildJobsByCourseId(courseId, undefined, filterOptions));
 
         const req = httpMock.expectOne((r) => r.url === `${service.resourceUrl}/courses/${courseId}/finished-jobs`);
         expect(req.request.method).toBe('GET');
         expectFilterParams(req, filterOptions);
         req.flush(expectedResponse);
+
+        const result = await resultPromise;
+        expect(result.body).toEqual(expectedResponse);
     });
 
-    it('should return build job statistics', fakeAsync(() => {
+    it('should return build job statistics', () => {
         const expectedResponse: BuildJobStatistics = { totalBuilds: 1, successfulBuilds: 1, failedBuilds: 0, cancelledBuilds: 0, timeOutBuilds: 0, missingBuilds: 0 };
 
         service.getBuildJobStatistics(SpanType.WEEK).subscribe((data) => {
@@ -546,9 +539,9 @@ describe('BuildOverviewService', () => {
         const req = httpMock.expectOne(`${service.adminResourceUrl}/build-job-statistics?span=7`);
         expect(req.request.method).toBe('GET');
         req.flush(expectedResponse);
-    }));
+    });
 
-    it('should handle errors when getting build job statistics', fakeAsync(() => {
+    it('should handle errors when getting build job statistics', () => {
         let errorOccurred = false;
 
         service.getBuildJobStatistics(SpanType.MONTH).subscribe({
@@ -565,12 +558,10 @@ describe('BuildOverviewService', () => {
 
         req.flush(null, { status: 500, statusText: 'Internal Server Error' });
 
-        tick();
-
         expect(errorOccurred).toBeTruthy();
-    }));
+    });
 
-    it('should handle errors when getting all finished build jobs for a specific course', fakeAsync(() => {
+    it('should handle errors when getting all finished build jobs for a specific course', () => {
         const courseId = 1;
 
         let errorOccurred = false;
@@ -595,25 +586,25 @@ describe('BuildOverviewService', () => {
 
         req.flush(null, { status: 500, statusText: 'Internal Server Error' });
 
-        tick();
-
         expect(errorOccurred).toBeTruthy();
-    }));
+    });
 
-    it('should return build log entries for a specific build job', () => {
+    it('should return build log entries for a specific build job', async () => {
         const buildJobId = '1';
-        const expectedResponse = buildLogEntries;
+        // The service returns a text response (JSON string)
+        const expectedResponseText = JSON.stringify(buildLogEntries);
 
-        service.getBuildJobLogs(buildJobId).subscribe((data) => {
-            expect(data).toEqual(expectedResponse);
-        });
+        const resultPromise = firstValueFrom(service.getBuildJobLogs(buildJobId));
 
         const req = httpMock.expectOne(`${service.resourceUrl}/build-log/${buildJobId}`);
         expect(req.request.method).toBe('GET');
-        req.flush(expectedResponse);
+        req.flush(expectedResponseText);
+
+        const result = await resultPromise;
+        expect(result).toEqual(expectedResponseText);
     });
 
-    it('should handle errors when getting build log entries for a specific build job', fakeAsync(() => {
+    it('should handle errors when getting build log entries for a specific build job', () => {
         const buildJobId = '1';
 
         let errorOccurred = false;
@@ -630,10 +621,37 @@ describe('BuildOverviewService', () => {
 
         req.flush(null, { status: 500, statusText: 'Internal Server Error' });
 
-        tick();
-
         expect(errorOccurred).toBeTruthy();
-    }));
+    });
+
+    it('should get build job by id (admin)', async () => {
+        const buildJobId = 'test-123';
+        const expectedResponse = { id: buildJobId, name: 'Test Job' };
+
+        const resultPromise = firstValueFrom(service.getBuildJobById(buildJobId));
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/build-job/${buildJobId}`);
+        expect(req.request.method).toBe('GET');
+        req.flush(expectedResponse);
+
+        const result = await resultPromise;
+        expect(result).toEqual(expectedResponse);
+    });
+
+    it('should get build job by id for course', async () => {
+        const courseId = 1;
+        const buildJobId = 'test-123';
+        const expectedResponse = { id: buildJobId, name: 'Test Job' };
+
+        const resultPromise = firstValueFrom(service.getBuildJobByIdForCourse(courseId, buildJobId));
+
+        const req = httpMock.expectOne(`${service.resourceUrl}/courses/${courseId}/build-job/${buildJobId}`);
+        expect(req.request.method).toBe('GET');
+        req.flush(expectedResponse);
+
+        const result = await resultPromise;
+        expect(result).toEqual(expectedResponse);
+    });
 
     afterEach(() => {
         httpMock.verify(); // Verify that there are no outstanding requests.

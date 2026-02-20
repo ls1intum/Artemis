@@ -1,0 +1,23 @@
+export interface RoomForDistributionDTO {
+    id: number;
+    roomNumber: string;
+    alternativeRoomNumber?: string;
+    name: string;
+    alternativeName?: string;
+    building: string;
+}
+
+export interface ExamDistributionCapacityDTO {
+    combinedDefaultCapacity: number;
+    combinedMaximumCapacity: number;
+}
+
+export interface CapacityDisplayDTO {
+    totalStudents: number;
+    usableCapacity: number;
+    percentage: number;
+}
+
+export interface SeatsOfExamRoomDTO {
+    seats: string[];
+}

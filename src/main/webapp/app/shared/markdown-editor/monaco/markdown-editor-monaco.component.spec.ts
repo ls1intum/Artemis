@@ -24,6 +24,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploaderService } from 'app/shared/service/file-uploader.service';
+import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 
 describe('MarkdownEditorMonacoComponent', () => {
     let fixture: ComponentFixture<MarkdownEditorMonacoComponent>;
@@ -53,7 +54,7 @@ describe('MarkdownEditorMonacoComponent', () => {
         });
         fixture = TestBed.createComponent(MarkdownEditorMonacoComponent);
         comp = fixture.componentInstance;
-        comp.initialEditorHeight = 'external';
+        comp.externalHeight = true;
         comp.domainActions = [new FormulaAction(), new TaskAction(), new TestCaseAction()];
         fileUploaderService = TestBed.inject(FileUploaderService);
     });
@@ -113,6 +114,87 @@ describe('MarkdownEditorMonacoComponent', () => {
             preventDefault: jest.fn(),
         });
         expect(emitSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should not create a review comment manager when review comments are disabled', () => {
+        fixture.detectChanges();
+        const getReviewCommentManagerSpy = jest.spyOn(comp as any, 'getReviewCommentManager');
+        (comp as any).reviewCommentManager = undefined;
+        fixture.componentRef.setInput('enableExerciseReviewComments', false);
+
+        (comp as any).updateReviewCommentButton();
+
+        expect(getReviewCommentManagerSpy).not.toHaveBeenCalled();
+    });
+
+    it('should use initial line number as fallback for problem statement threads', () => {
+        const thread = { initialLineNumber: 8 } as any;
+        expect((comp as any).getProblemStatementThreadLine(thread)).toBe(7);
+    });
+
+    it('should prefer current line number over initial line number for problem statement threads', () => {
+        const thread = { lineNumber: 5, initialLineNumber: 8 } as any;
+        expect((comp as any).getProblemStatementThreadLine(thread)).toBe(4);
+    });
+
+    it('should expose review comment manager callbacks for problem statement context', () => {
+        fixture.detectChanges();
+        (comp.monacoEditor as any).getEditor = jest.fn().mockReturnValue({
+            onDidScrollChange: jest.fn().mockReturnValue({ dispose: jest.fn() }),
+        });
+
+        fixture.componentRef.setInput('enableExerciseReviewComments', true);
+        fixture.componentRef.setInput('showLocationWarning', false);
+        fixture.changeDetectorRef.detectChanges();
+
+        const manager = (comp as any).getReviewCommentManager();
+        const config = (manager as any).config;
+
+        expect(config.shouldShowHoverButton()).toBeTrue();
+        expect(config.canSubmit()).toBeTrue();
+        expect(config.getDraftFileName()).toBe('problem_statement.md');
+        expect(config.getDraftContext({ lineNumber: 3, fileName: 'ignored.md' })).toEqual({
+            targetType: CommentThreadLocationType.PROBLEM_STATEMENT,
+        });
+
+        const thread = { id: 1, targetType: CommentThreadLocationType.PROBLEM_STATEMENT, initialLineNumber: 2, lineNumber: 6 } as any;
+        (comp as any).exerciseReviewCommentService.threads.set([thread]);
+
+        expect(config.getThreads()).toEqual([thread]);
+        expect(config.filterThread(thread)).toBeTrue();
+        expect(config.filterThread({ ...thread, targetType: CommentThreadLocationType.TEMPLATE_REPO })).toBeFalse();
+        expect(config.getThreadLine(thread)).toBe(5);
+
+        const onAddSpy = jest.spyOn(comp.onAddReviewComment, 'emit');
+        config.onAdd({ lineNumber: 7, fileName: 'problem_statement.md' });
+        expect(onAddSpy).toHaveBeenCalledExactlyOnceWith({ lineNumber: 7, fileName: 'problem_statement.md' });
+
+        expect(config.showLocationWarning()).toBeFalse();
+        fixture.componentRef.setInput('showLocationWarning', true);
+        fixture.changeDetectorRef.detectChanges();
+        expect(config.showLocationWarning()).toBeTrue();
+        expect(config.canSubmit()).toBeFalse();
+
+        comp.inEditMode = false;
+        expect(config.shouldShowHoverButton()).toBeFalse();
+    });
+
+    it('should still update review comment button when a manager already exists', () => {
+        const updateHoverButton = jest.fn();
+        (comp as any).reviewCommentManager = {
+            updateHoverButton,
+            updateDraftInputs: jest.fn(),
+            tryUpdateThreadInputs: jest.fn(),
+            clearDrafts: jest.fn(),
+            disposeAll: jest.fn(),
+            renderWidgets: jest.fn(),
+        };
+        fixture.componentRef.setInput('enableExerciseReviewComments', false);
+        fixture.changeDetectorRef.detectChanges();
+
+        (comp as any).updateReviewCommentButton();
+
+        expect(updateHoverButton).toHaveBeenCalled();
     });
 
     it.each([
@@ -261,14 +343,15 @@ describe('MarkdownEditorMonacoComponent', () => {
     });
 
     it('should pass the entire element to the fullscreen action for external height', () => {
-        comp.initialEditorHeight = 'external';
+        comp.externalHeight = true;
         const fullscreenAction = new FullscreenAction();
         comp.metaActions = [fullscreenAction];
         fixture.detectChanges();
         expect(fullscreenAction.element).toBe(comp.fullElement.nativeElement);
     });
 
-    it('should pass the wrapper element to the fullscreen action for a set initial height', () => {
+    it('should pass the wrapper element to the fullscreen action when height is managed internally', () => {
+        comp.externalHeight = false;
         comp.initialEditorHeight = MarkdownEditorHeight.MEDIUM;
         const fullscreenAction = new FullscreenAction();
         comp.metaActions = [fullscreenAction];
@@ -282,6 +365,7 @@ describe('MarkdownEditorMonacoComponent', () => {
     });
 
     it('should not react to content height changes if the height is not liked to the editor size', () => {
+        comp.externalHeight = false;
         comp.linkEditorHeightToContentHeight = false;
         comp.initialEditorHeight = MarkdownEditorHeight.MEDIUM;
         fixture.detectChanges();
@@ -291,6 +375,7 @@ describe('MarkdownEditorMonacoComponent', () => {
     });
 
     it('should not react to content height changes if file upload is enabled but the footer has not loaded', () => {
+        comp.externalHeight = false;
         comp.initialEditorHeight = MarkdownEditorHeight.SMALL;
         jest.spyOn(comp, 'getElementClientHeight').mockReturnValue(0);
         comp.enableFileUpload = true;
@@ -304,6 +389,7 @@ describe('MarkdownEditorMonacoComponent', () => {
     });
 
     it('should react to content height changes if the height is linked to the editor', () => {
+        comp.externalHeight = false;
         jest.spyOn(comp, 'getElementClientHeight').mockReturnValue(20);
         comp.linkEditorHeightToContentHeight = true;
         comp.resizableMaxHeight = MarkdownEditorHeight.LARGE;
@@ -316,6 +402,7 @@ describe('MarkdownEditorMonacoComponent', () => {
     });
 
     it('should adjust the wrapper height when resized manually', () => {
+        comp.externalHeight = false;
         const cdkDragMove = { source: { reset: jest.fn() }, pointerPosition: { y: 300 } } as unknown as CdkDragMove;
         const wrapperTop = 100;
         const dragElemHeight = 20;

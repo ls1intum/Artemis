@@ -2,10 +2,6 @@ package de.tum.cit.aet.artemis.programming.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
@@ -64,8 +60,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildCon
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
-import de.tum.cit.aet.artemis.programming.service.GitRepositoryExportService;
-import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTaskTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
@@ -88,7 +82,7 @@ public class ProgrammingExerciseUtilService {
     protected String defaultBranch;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
-    private Path localVCRepoPath;
+    private Path localVCBasePath;
 
     @Autowired
     private TemplateProgrammingExerciseParticipationTestRepository templateProgrammingExerciseParticipationTestRepo;
@@ -149,12 +143,6 @@ public class ProgrammingExerciseUtilService {
 
     @Autowired
     private UserUtilService userUtilService;
-
-    @Autowired
-    private GitService gitService;
-
-    @Autowired
-    private GitRepositoryExportService gitRepositoryExportService;
 
     @Autowired
     private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
@@ -713,6 +701,7 @@ public class ProgrammingExerciseUtilService {
         submission.setParticipation(participation);
         submission.addResult(result);
         result.setSubmission(submission);
+        result.setExerciseId(exercise.getId());
         programmingSubmissionRepo.save(submission);
         resultRepo.save(result);
         studentParticipationRepo.save(participation);
@@ -732,6 +721,7 @@ public class ProgrammingExerciseUtilService {
         submission = submissionRepository.save(submission);
         // TODO check if it needs to be persisted like before
         Result result = new Result();
+        result.setExerciseId(programmingExercise.getId());
         templateParticipation.addSubmission(submission);
         submission.setParticipation(templateParticipation);
         submission.addResult(result);
@@ -754,11 +744,13 @@ public class ProgrammingExerciseUtilService {
         ProgrammingSubmission submission = new ProgrammingSubmission();
         submission = submissionRepository.save(submission);
         Result result = new Result();
+        result.setExerciseId(programmingExercise.getId());
         templateParticipation.addSubmission(submission);
         submission.setParticipation(templateParticipation);
         submission.addResult(result);
         submission = submissionRepository.save(submission);
         result.setSubmission(submission);
+
         result = resultRepo.save(result);
         solutionProgrammingExerciseParticipationRepository.save(templateParticipation);
         return result;
@@ -792,6 +784,7 @@ public class ProgrammingExerciseUtilService {
         submission.setParticipation(participation);
 
         result.setSubmission(submission);
+        result.setExerciseId(exercise.getId());
         result = resultRepo.save(result);
         submission.addResult(result);
         // Manual results are always rated
@@ -815,6 +808,7 @@ public class ProgrammingExerciseUtilService {
         submission.addResult(result);
         submission.setCommitHash(commitHash);
         result.setSubmission(submission);
+        result.setExerciseId(participation.getExercise().getId());
         resultRepo.save(result);
         participation.addSubmission(submission);
         studentParticipationRepo.save(participation);
@@ -864,7 +858,7 @@ public class ProgrammingExerciseUtilService {
     public void createGitRepository() throws Exception {
         // Create repository
         var testRepo = new LocalRepository(defaultBranch);
-        testRepo.configureRepos(localVCRepoPath, "testLocalRepo", "testOriginRepo");
+        testRepo.configureRepos(localVCBasePath, "testLocalRepo", "testOriginRepo");
         // Add test file to the repository folder
         Path filePath = Path.of(testRepo.workingCopyGitRepoFile + "/Test.java");
         var file = Files.createFile(filePath).toFile();
@@ -873,10 +867,5 @@ public class ProgrammingExerciseUtilService {
         var mockRepository = mock(Repository.class);
         doReturn(true).when(mockRepository).isValidFile(any());
         doReturn(testRepo.workingCopyGitRepoFile.toPath()).when(mockRepository).getLocalPath();
-        // Mock Git service operations
-        doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), any(), any(), anyBoolean(), anyString(), anyBoolean());
-        doNothing().when(gitService).resetToOriginHead(any());
-        doReturn(Path.of("repo.zip")).when(gitRepositoryExportService).getRepositoryWithParticipation(any(), anyString(), anyBoolean(), eq(true));
-        doReturn(Path.of("repo")).when(gitRepositoryExportService).getRepositoryWithParticipation(any(), anyString(), anyBoolean(), eq(false));
     }
 }

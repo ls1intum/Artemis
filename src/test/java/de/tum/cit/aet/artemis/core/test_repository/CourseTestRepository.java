@@ -4,8 +4,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -23,7 +22,7 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 @Primary
 public interface CourseTestRepository extends CourseRepository {
 
-    @Transactional
+    @Transactional // ok because of modifying query
     @Modifying
     @Query("UPDATE Course c SET c.semester = NULL WHERE c.semester IS NOT NULL")
     void clearSemester();
@@ -34,7 +33,7 @@ public interface CourseTestRepository extends CourseRepository {
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "lectures.attachments", "competencies", "prerequisites" })
     Optional<Course> findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesById(long courseId);
 
-    @NotNull
+    @NonNull
     default Course findWithEagerLearningPathsByIdElseThrow(long courseId) {
         return getValueElseThrow(findWithEagerLearningPathsById(courseId), courseId);
     }
@@ -42,13 +41,21 @@ public interface CourseTestRepository extends CourseRepository {
     @EntityGraph(type = LOAD, attributePaths = { "competencies", "prerequisites", "learningPaths" })
     Optional<Course> findWithEagerCompetenciesAndPrerequisitesAndLearningPathsById(@Param("courseId") long courseId);
 
-    @NotNull
+    @NonNull
     default Course findWithEagerCompetenciesAndPrerequisitesAndLearningPathsByIdElseThrow(long courseId) {
         return getValueElseThrow(findWithEagerCompetenciesAndPrerequisitesAndLearningPathsById(courseId), courseId);
     }
 
-    @NotNull
+    @NonNull
     default Course findByIdWithExercisesAndLecturesAndLectureUnitsAndCompetenciesElseThrow(long courseId) {
         return getValueElseThrow(findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesById(courseId), courseId);
+    }
+
+    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.lectureUnits", "lectures.attachments" })
+    Optional<Course> findWithLecturesAndLectureUnitsAndAttachmentsById(long courseId);
+
+    @NonNull
+    default Course findWithLecturesAndLectureUnitsAndAttachmentsByIdElseThrow(long courseId) {
+        return getValueElseThrow(findWithLecturesAndLectureUnitsAndAttachmentsById(courseId), courseId);
     }
 }

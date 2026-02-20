@@ -1,25 +1,24 @@
 package de.tum.cit.aet.artemis.lti.repository;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 
 /**
  * Repository for managing LtiPlatformConfiguration entities.
  */
-@Profile(PROFILE_LTI)
+@Conditional(LtiEnabled.class)
 @Lazy
 @Repository
 public interface LtiPlatformConfigurationRepository extends ArtemisJpaRepository<LtiPlatformConfiguration, Long> {
@@ -39,7 +38,7 @@ public interface LtiPlatformConfigurationRepository extends ArtemisJpaRepository
      * @return {@link LtiPlatformConfiguration} with eager-loaded courses, or {@code null} if not found.
      * @throws EntityNotFoundException if no entity with the given ID is found.
      */
-    @NotNull
+    @NonNull
     default LtiPlatformConfiguration findLtiPlatformConfigurationWithEagerLoadedCoursesByIdElseThrow(long id) throws EntityNotFoundException {
         return getValueElseThrow(Optional.ofNullable(findWithEagerOnlineCourseConfigurationsById(id)), id);
     }

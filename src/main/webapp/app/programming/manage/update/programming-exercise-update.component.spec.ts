@@ -1,9 +1,10 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, UrlSegment, convertToParamMap } from '@angular/router';
+import { ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { WindFile } from 'app/programming/shared/entities/wind.file';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { Subject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
@@ -27,7 +28,7 @@ import * as Utils from 'app/exercise/course-exercises/course-utils';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { PROFILE_THEIA } from 'app/app.constants';
+import { MODULE_FEATURE_THEIA } from 'app/app.constants';
 import { APP_NAME_PATTERN_FOR_SWIFT, PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN } from 'app/shared/constants/input.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
@@ -44,6 +45,7 @@ import { ProfileInfo, ProgrammingLanguageFeature } from 'app/core/layouts/profil
 import { signal } from '@angular/core';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
@@ -70,7 +72,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [BrowserAnimationsModule, FaIconComponent, OwlNativeDateTimeModule],
+            imports: [FaIconComponent, OwlNativeDateTimeModule],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },
@@ -79,6 +81,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 SessionStorageService,
                 { provide: ProfileService, useClass: MockProfileService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 MockProvider(CalendarService),
@@ -285,22 +288,22 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             it('should set valid project type in simple mode if default project type (gradle) is not supported', () => {
                 comp.isSimpleMode.set(true);
                 comp.projectTypes = [ProjectType.PLAIN_MAVEN];
-                fixture.detectChanges();
+                fixture.changeDetectorRef.detectChanges();
 
                 comp.save();
 
-                fixture.detectChanges();
+                fixture.changeDetectorRef.detectChanges();
                 expect(comp.programmingExercise.projectType).toBe(ProjectType.PLAIN_MAVEN);
             });
 
             it('should keep gradle if gradle is supported', fakeAsync(() => {
                 comp.isSimpleMode.set(true);
                 comp.projectTypes = [ProjectType.PLAIN_MAVEN, ProjectType.PLAIN_GRADLE];
-                fixture.detectChanges();
+                fixture.changeDetectorRef.detectChanges();
 
                 comp.save();
 
-                fixture.detectChanges();
+                fixture.changeDetectorRef.detectChanges();
                 expect(comp.programmingExercise.projectType).toBe(ProjectType.PLAIN_GRADLE);
             }));
 
@@ -308,11 +311,11 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 comp.isSimpleMode.set(true);
                 comp.isCreate = false;
                 comp.projectTypes = [ProjectType.PLAIN_MAVEN];
-                fixture.detectChanges();
+                fixture.changeDetectorRef.detectChanges();
 
                 comp.save();
 
-                fixture.detectChanges();
+                fixture.changeDetectorRef.detectChanges();
                 expect(comp.programmingExercise.projectType).toBe(ProjectType.PLAIN_GRADLE);
             }));
         });
@@ -445,6 +448,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             // Switch to another programming language not supporting sca
             comp.onProgrammingLanguageChange(ProgrammingLanguage.HASKELL);
+            fixture.changeDetectorRef.detectChanges();
             tick();
 
             expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBeFalse();
@@ -559,7 +563,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
             getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
             comp.ngOnInit();
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             tick();
             expect(comp.isImportFromFile).toBeFalse();
             expect(comp.isImportFromExistingExercise).toBeTrue();
@@ -596,15 +600,18 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                     // Needed to trigger setting of update template since we can't use UI components.
                     comp.programmingExercise.staticCodeAnalysisEnabled = !scaActivatedOriginal;
                     comp.onStaticCodeAnalysisChanged();
+                    fixture.changeDetectorRef.detectChanges();
 
                     expect(comp.importOptions.updateTemplate).toBeTrue();
 
                     comp.programmingExercise.staticCodeAnalysisEnabled = !scaActivatedOriginal;
                     comp.onStaticCodeAnalysisChanged();
+                    fixture.changeDetectorRef.detectChanges();
                 }
 
                 comp.programmingExercise.staticCodeAnalysisEnabled = !scaActivatedOriginal;
                 comp.onStaticCodeAnalysisChanged();
+                fixture.changeDetectorRef.detectChanges();
 
                 if (!scaActivatedOriginal) {
                     comp.programmingExercise.maxStaticCodeAnalysisPenalty = newMaxPenalty;
@@ -635,6 +642,59 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             expect(loadExerciseCategoriesSpy).toHaveBeenCalledOnce();
         });
+
+        // Ensures that exerciseCategories are synchronized in course-mode imports
+        it('should sync exerciseCategories from programmingExercise during import', fakeAsync(() => {
+            // GIVEN
+            const categories = [new ExerciseCategory(undefined, undefined)];
+            const programmingExercise = getProgrammingExerciseForImport();
+            (programmingExercise as any).categories = categories;
+            route.data = of({ programmingExercise });
+
+            const findSpy = jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+            jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
+
+            // WHEN
+            comp.ngOnInit();
+            tick();
+
+            // THEN
+            expect(findSpy).toHaveBeenCalledWith(course.id);
+            expect(comp.isExamMode).toBeFalse();
+            expect(comp.exerciseCategories).toBe(categories);
+        }));
+
+        // Ensures that exerciseCategories remain empty in exam-mode imports.
+        it('should NOT sync exerciseCategories from programmingExercise when importing into an exam', fakeAsync(() => {
+            // GIVEN
+            const examId = 1;
+            const exerciseGroupId = 42;
+            const exerciseGroup = new ExerciseGroup();
+            exerciseGroup.id = exerciseGroupId;
+            exerciseGroup.exam = { id: examId, course };
+
+            const categories = [new ExerciseCategory(undefined, undefined)];
+            const programmingExercise = getProgrammingExerciseForImport();
+            (programmingExercise as any).categories = categories;
+
+            route.params = of({ courseId, examId, exerciseGroupId });
+            route.data = of({ programmingExercise });
+            route.url = of([{ path: 'import' } as UrlSegment]);
+
+            // mock exerciseGroupService
+            const findSpy = jest.spyOn(exerciseGroupService, 'find').mockReturnValue(of(new HttpResponse({ body: exerciseGroup })));
+            jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
+
+            // WHEN
+            comp.ngOnInit();
+            tick();
+
+            // THEN
+            expect(findSpy).toHaveBeenCalledWith(courseId, examId, exerciseGroupId);
+            expect(comp.isExamMode).toBeTrue();
+
+            expect(comp.exerciseCategories).toEqual([]);
+        }));
     });
 
     describe('import from file', () => {
@@ -654,7 +714,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
             getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
             comp.ngOnInit();
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             tick();
             expect(comp.isImportFromFile).toBeTrue();
             expect(comp.isImportFromExistingExercise).toBeFalse();
@@ -719,7 +779,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             sharingServiceStub.mockReturnValue(of(programmingExercise));
             comp.ngOnInit();
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             tick();
             expect(comp.isImportFromFile).toBeFalse();
             expect(comp.isImportFromSharing).toBeTrue();
@@ -745,7 +805,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             sharingServiceStub.mockReturnValue(of(programmingExercise));
             comp.ngOnInit();
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             tick();
             expect(comp.isImportFromFile).toBeFalse();
             expect(comp.isImportFromSharing).toBeTrue();
@@ -782,7 +842,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             tick(); // simulate async
 
             // THEN
-            expect(programmingExerciseSharingService.setUpFromSharingImport).toHaveBeenCalledWith(comp.programmingExercise, course, comp['sharingInfo']);
+            expect(programmingExerciseSharingService.setUpFromSharingImport).toHaveBeenCalledWith(comp.programmingExercise, course.id!, comp['sharingInfo']);
         }));
 
         it('should call create service on save for new sharing entity, but save failed', fakeAsync(() => {
@@ -804,7 +864,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             tick(); // simulate async
 
             // THEN
-            expect(programmingExerciseSharingService.setUpFromSharingImport).toHaveBeenCalledWith(comp.programmingExercise, course, comp['sharingInfo']);
+            expect(programmingExerciseSharingService.setUpFromSharingImport).toHaveBeenCalledWith(comp.programmingExercise, course.id!, comp['sharingInfo']);
         }));
 
         it('should import without buildConfig and reset dates, id, project key and store zipFile', fakeAsync(() => {
@@ -818,7 +878,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             sharingServiceStub.mockReturnValue(of(programmingExercise));
             comp.ngOnInit();
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             tick();
             expect(comp.isImportFromFile).toBeFalse();
             expect(comp.isImportFromSharing).toBeTrue();
@@ -1035,7 +1095,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             [
                 'find validation errors for invalid ide selection',
                 {
-                    activeProfiles: [PROFILE_THEIA],
+                    activeModuleFeatures: [MODULE_FEATURE_THEIA],
                 },
                 {
                     translateKey: 'artemisApp.programmingExercise.allowOnlineEditor.alert',
@@ -1043,19 +1103,23 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 },
             ],
             [
-                'find validation errors for invalid ide selection without theia profile',
+                'find validation errors for invalid ide selection without theia module feature',
                 {
-                    activeProfiles: [],
+                    activeModuleFeatures: [],
                 },
                 {
                     translateKey: 'artemisApp.programmingExercise.allowOnlineEditor.alertNoTheia',
                     translateValues: {},
                 },
             ],
-        ])('%s', (description, profileInfo, expectedException) => {
+        ])('%s', (description: string, profileInfo: Partial<ProfileInfo>, expectedException: ValidationReason) => {
             const newProfileInfo = new ProfileInfo();
-            newProfileInfo.activeProfiles = profileInfo.activeProfiles;
+            newProfileInfo.activeProfiles = profileInfo.activeProfiles ?? [];
+            newProfileInfo.activeModuleFeatures = profileInfo.activeModuleFeatures ?? [];
             jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(newProfileInfo);
+            jest.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => {
+                return newProfileInfo.activeModuleFeatures?.includes(feature) ?? false;
+            });
 
             const route = TestBed.inject(ActivatedRoute);
             route.params = of({ courseId });
@@ -1068,7 +1132,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.programmingExercise.allowOfflineIde = false;
             comp.programmingExercise.allowOnlineIde = false;
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(comp.getInvalidReasons()).toContainEqual(expectedException);
         });
@@ -1290,7 +1354,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         expect(problemStepInputs).not.toBeNull();
     }));
 
-    it('stores withdependenices when changed', fakeAsync(() => {
+    it('stores with dependencies when changed', fakeAsync(() => {
         const route = TestBed.inject(ActivatedRoute);
         route.params = of({ courseId });
         route.url = of([{ path: 'new' } as UrlSegment]);

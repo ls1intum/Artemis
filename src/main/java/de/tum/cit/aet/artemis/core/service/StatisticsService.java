@@ -22,8 +22,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.annotation.Nullable;
-
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -214,7 +213,7 @@ public class StatisticsService {
             numberOfStudentsOrTeams = teamRepository.getNumberOfTeamsForExercise(exercise.getId());
         }
         else {
-            Long studentParticipations = exerciseRepository.getStudentParticipationCountById(exercise.getId());
+            Long studentParticipations = exerciseRepository.getStudentParticipationCountById(exercise.getId(), course.getStudentGroupName());
             numberOfParticipationsOfStudentsOrTeams = studentParticipations == null ? 0L : studentParticipations;
 
             numberOfStudentsOrTeams = userRepository.countUserInGroup(course.getStudentGroupName());

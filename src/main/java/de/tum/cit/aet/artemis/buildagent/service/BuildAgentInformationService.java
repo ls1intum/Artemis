@@ -7,17 +7,21 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 
+import jakarta.annotation.PreDestroy;
+
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.info.GitProperties;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDetailsDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
@@ -32,6 +36,14 @@ public class BuildAgentInformationService {
     private static final int DEFAULT_CONSECUTIVE_FAILURES = 0;
 
     private final BuildAgentConfiguration buildAgentConfiguration;
+
+    /**
+     * The Docker version running on this build agent.
+     * Updated periodically by {@link #updateDockerVersion()} and included in build agent details.
+     * Marked as volatile to ensure visibility across threads since it's updated by the scheduler
+     * and read by request handling threads.
+     */
+    private volatile String dockerVersion;
 
     private final BuildAgentSshKeyService buildAgentSSHKeyService;
 
@@ -53,6 +65,81 @@ public class BuildAgentInformationService {
         this.distributedDataAccessService = distributedDataAccessService;
     }
 
+    /**
+     * Periodically checks Docker availability and retrieves the Docker version from the Docker daemon.
+     * <p>
+     * This method is scheduled to run:
+     * <ul>
+     * <li>10 seconds after application startup (to avoid blocking startup)</li>
+     * <li>Every 60 seconds thereafter (using fixedDelay to prevent overlap if Docker daemon is slow)</li>
+     * </ul>
+     * <p>
+     * On success, the method marks Docker as available via {@link BuildAgentConfiguration#setDockerAvailable(boolean)}
+     * and updates the version if it changed. On failure, Docker is marked as unavailable. State transitions
+     * (available → unavailable and vice versa) are logged at WARN/INFO level; repeated failures log at DEBUG.
+     */
+    @Scheduled(initialDelayString = "10000", fixedDelayString = "60000")
+    public void updateDockerVersion() {
+        var dockerClient = buildAgentConfiguration.getDockerClient();
+        if (dockerClient == null) {
+            return;
+        }
+        boolean wasAvailable = buildAgentConfiguration.isDockerAvailable();
+        try {
+            String newVersion = dockerClient.versionCmd().exec().getVersion();
+            boolean stateChanged = !wasAvailable;
+            boolean versionChanged = !Objects.equals(newVersion, dockerVersion);
+            if (stateChanged) {
+                log.info("Docker is now available (version: {})", newVersion);
+                buildAgentConfiguration.setDockerAvailable(true);
+            }
+            if (versionChanged) {
+                log.info("Docker version: {}", newVersion);
+                dockerVersion = newVersion;
+            }
+            if (stateChanged || versionChanged) {
+                updateLocalBuildAgentInformation(false);
+            }
+        }
+        catch (Exception e) {
+            if (wasAvailable) {
+                log.warn("Docker is no longer available: {}", e.getMessage());
+            }
+            else {
+                log.debug("Docker is not available: {}", e.getMessage());
+            }
+            buildAgentConfiguration.setDockerAvailable(false);
+        }
+    }
+
+    /**
+     * Returns the cached Docker version.
+     * This version is periodically updated by {@link #updateDockerVersion()}.
+     *
+     * @return the Docker version string, or null if not yet retrieved or retrieval failed
+     */
+    public String getDockerVersion() {
+        return dockerVersion;
+    }
+
+    /**
+     * Removes the build agent from the distributed map when the service is being destroyed.
+     * This ensures proper cleanup when the build agent shuts down gracefully.
+     */
+    @PreDestroy
+    public void removeLocalBuildAgentInformationOnShutdown() {
+        try {
+            if (distributedDataAccessService.isInstanceRunning()) {
+                log.info("Build agent '{}' is shutting down. Removing from distributed build agent information map.", buildAgentShortName);
+                distributedDataAccessService.getDistributedBuildAgentInformation().remove(buildAgentShortName);
+                log.info("Successfully removed build agent '{}' from distributed map.", buildAgentShortName);
+            }
+        }
+        catch (Exception e) {
+            log.warn("Error while removing build agent information for '{}' during shutdown: {}", buildAgentShortName, e.getMessage());
+        }
+    }
+
     public void updateLocalBuildAgentInformation(boolean isPaused) {
         updateLocalBuildAgentInformationWithRecentJob(null, isPaused, false, DEFAULT_CONSECUTIVE_FAILURES);
     }
@@ -63,6 +150,8 @@ public class BuildAgentInformationService {
 
     /**
      * Updates the local build agent information with the most recent build job.
+     * Uses the build agent's short name as the map key for stable identification,
+     * since the Hazelcast member address may change after initial client connection.
      *
      * @param recentBuildJob        the most recent build job
      * @param isPaused              whether the build agent is paused
@@ -70,42 +159,66 @@ public class BuildAgentInformationService {
      * @param consecutiveFailures   number of consecutive build failures on the build agent
      */
     public void updateLocalBuildAgentInformationWithRecentJob(BuildJobQueueItem recentBuildJob, boolean isPaused, boolean isPausedDueToFailures, int consecutiveFailures) {
-        String memberAddress = distributedDataAccessService.getLocalMemberAddress();
-        try {
-            distributedDataAccessService.getDistributedBuildAgentInformation().lock(memberAddress);
-            // Add/update
-            BuildAgentInformation info = getUpdatedLocalBuildAgentInformation(recentBuildJob, isPaused, isPausedDueToFailures, consecutiveFailures);
+        // Skip if not connected to cluster (happens when build agent starts before core nodes)
+        if (!distributedDataAccessService.isConnectedToCluster()) {
+            log.debug("Not connected to Hazelcast cluster yet. Skipping build agent information update.");
+            return;
+        }
 
+        // Guard against missing/blank buildAgentShortName to prevent key collisions or exceptions
+        if (buildAgentShortName == null || buildAgentShortName.isBlank()) {
+            log.error("Build agent short name is not configured. Cannot update build agent information.");
+            return;
+        }
+
+        // Use buildAgentShortName as the stable key - memberAddress can change after Hazelcast client connects
+        String agentKey = buildAgentShortName;
+        try {
+            // Acquire lock before inner try block to ensure unlock() in finally only runs if lock() succeeded
+            distributedDataAccessService.getDistributedBuildAgentInformation().lock(agentKey);
             try {
-                distributedDataAccessService.getDistributedBuildAgentInformation().put(info.buildAgent().memberAddress(), info);
+                // Add/update
+                BuildAgentInformation info = getUpdatedLocalBuildAgentInformation(recentBuildJob, isPaused, isPausedDueToFailures, consecutiveFailures);
+
+                log.debug("Updating build agent info: key='{}', name='{}', memberAddress='{}', displayName='{}'", agentKey, info.buildAgent().name(),
+                        info.buildAgent().memberAddress(), info.buildAgent().displayName());
+
+                // Use the agent's short name as key for stable identification
+                distributedDataAccessService.getDistributedBuildAgentInformation().put(agentKey, info);
+                log.debug("Successfully stored build agent info with key '{}'. Current map size: {}", agentKey,
+                        distributedDataAccessService.getDistributedBuildAgentInformation().size());
             }
             catch (Exception e) {
-                log.error("Error while updating build agent information for agent {} with address {}", info.buildAgent().name(), info.buildAgent().memberAddress(), e);
+                log.error("Error while updating build agent information for agent {}", agentKey, e);
+            }
+            finally {
+                distributedDataAccessService.getDistributedBuildAgentInformation().unlock(agentKey);
             }
         }
         catch (Exception e) {
-            log.error("Error while updating build agent information for agent with address {}", memberAddress, e);
-        }
-        finally {
-            distributedDataAccessService.getDistributedBuildAgentInformation().unlock(memberAddress);
+            // Lock acquisition failed (e.g., cluster disconnected) - log and continue
+            log.error("Failed to acquire lock for build agent information update for agent {}", agentKey, e);
         }
     }
 
     private BuildAgentInformation getUpdatedLocalBuildAgentInformation(BuildJobQueueItem recentBuildJob, boolean isPaused, boolean isPausedDueToFailures, int consecutiveFailures) {
         String memberAddress = distributedDataAccessService.getLocalMemberAddress();
-        List<BuildJobQueueItem> processingJobsOfMember = getProcessingJobsOfNode(memberAddress);
+        // Use buildAgentShortName for filtering instead of memberAddress, because Hazelcast client connections
+        // use ephemeral ports that can change, causing memberAddress filtering to fail
+        List<BuildJobQueueItem> processingJobsOfMember = getProcessingJobsOfNode(buildAgentShortName);
         int numberOfCurrentBuildJobs = processingJobsOfMember.size();
         int maxNumberOfConcurrentBuilds = buildAgentConfiguration.getBuildExecutor() != null ? buildAgentConfiguration.getBuildExecutor().getMaximumPoolSize()
                 : buildAgentConfiguration.getThreadPoolSize();
         boolean hasJobs = numberOfCurrentBuildJobs > 0;
-        BuildAgentInformation.BuildAgentStatus status;
-        BuildAgentInformation agent = distributedDataAccessService.getDistributedBuildAgentInformation().get(memberAddress);
+        BuildAgentStatus status;
+        // Use buildAgentShortName as key since that's what we use to store the agent info
+        BuildAgentInformation agent = distributedDataAccessService.getDistributedBuildAgentInformation().get(buildAgentShortName);
         if (isPaused) {
-            boolean isAlreadySelfPaused = agent != null && agent.status() == BuildAgentInformation.BuildAgentStatus.SELF_PAUSED;
-            status = (isPausedDueToFailures || isAlreadySelfPaused) ? BuildAgentInformation.BuildAgentStatus.SELF_PAUSED : BuildAgentInformation.BuildAgentStatus.PAUSED;
+            boolean isAlreadySelfPaused = agent != null && agent.status() == BuildAgentStatus.SELF_PAUSED;
+            status = (isPausedDueToFailures || isAlreadySelfPaused) ? BuildAgentStatus.SELF_PAUSED : BuildAgentStatus.PAUSED;
         }
         else {
-            status = hasJobs ? BuildAgentInformation.BuildAgentStatus.ACTIVE : BuildAgentInformation.BuildAgentStatus.IDLE;
+            status = hasJobs ? BuildAgentStatus.ACTIVE : BuildAgentStatus.IDLE;
         }
         String publicSshKey = buildAgentSSHKeyService.getPublicKeyAsString();
 
@@ -131,7 +244,7 @@ public class BuildAgentInformationService {
         var timedOutBuilds = getTimedOutBuilds(agent, recentBuildJob);
 
         return new BuildAgentDetailsDTO(averageBuildDuration, successfulBuilds, failedBuilds, cancelledBuilds, timedOutBuilds, totalsBuilds, lastBuildDate, startDate, gitRevision,
-                consecutiveFailures);
+                consecutiveFailures, dockerVersion);
     }
 
     private ZonedDateTime getLastBuildDate(BuildAgentInformation agent, BuildJobQueueItem recentBuildJob) {
@@ -181,7 +294,15 @@ public class BuildAgentInformationService {
                 + (recentBuildJob != null && recentBuildJob.status() == BuildStatus.TIMEOUT ? 1 : 0);
     }
 
-    private List<BuildJobQueueItem> getProcessingJobsOfNode(String memberAddress) {
-        return distributedDataAccessService.getProcessingJobs().stream().filter(job -> Objects.equals(job.buildAgent().memberAddress(), memberAddress)).toList();
+    /**
+     * Gets the processing jobs assigned to a specific build agent by its name.
+     * Uses the agent's name (short-name) for filtering instead of memberAddress,
+     * because Hazelcast client connections use ephemeral ports that can change.
+     *
+     * @param agentName the build agent's short name (stable identifier)
+     * @return list of build jobs currently being processed by this agent
+     */
+    private List<BuildJobQueueItem> getProcessingJobsOfNode(String agentName) {
+        return distributedDataAccessService.getProcessingJobs().stream().filter(job -> job.buildAgent() != null && Objects.equals(job.buildAgent().name(), agentName)).toList();
     }
 }

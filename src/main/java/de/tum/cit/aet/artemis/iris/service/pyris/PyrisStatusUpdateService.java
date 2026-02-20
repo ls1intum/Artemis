@@ -1,23 +1,20 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
-
 import java.util.List;
+import java.util.Optional;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService;
-import de.tum.cit.aet.artemis.iris.service.IrisRewritingService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.TutorSuggestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.lecture.PyrisLectureChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisTextExerciseChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.rewriting.PyrisRewritingStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
@@ -27,7 +24,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.RewritingJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TextExerciseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TrackedSessionBasedPyrisJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
@@ -36,10 +32,11 @@ import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionServic
 import de.tum.cit.aet.artemis.iris.service.session.IrisLectureChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTextExerciseChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTutorSuggestionSessionService;
+import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
 
 @Lazy
 @Service
-@Profile(PROFILE_IRIS)
+@Conditional(IrisEnabled.class)
 public class PyrisStatusUpdateService {
 
     private final PyrisJobService pyrisJobService;
@@ -52,24 +49,24 @@ public class PyrisStatusUpdateService {
 
     private final IrisCompetencyGenerationService competencyGenerationService;
 
-    private final IrisRewritingService rewritingService;
-
     private final IrisLectureChatSessionService irisLectureChatSessionService;
 
     private final IrisTutorSuggestionSessionService irisTutorSuggestionSessionService;
 
+    private final Optional<ProcessingStateCallbackApi> processingStateCallbackApi;
+
     public PyrisStatusUpdateService(PyrisJobService pyrisJobService, IrisExerciseChatSessionService irisExerciseChatSessionService,
             IrisTextExerciseChatSessionService irisTextExerciseChatSessionService, IrisCourseChatSessionService courseChatSessionService,
-            IrisCompetencyGenerationService competencyGenerationService, IrisLectureChatSessionService irisLectureChatSessionService, IrisRewritingService rewritingService,
-            IrisTutorSuggestionSessionService irisTutorSuggestionSessionService) {
+            IrisCompetencyGenerationService competencyGenerationService, IrisLectureChatSessionService irisLectureChatSessionService,
+            IrisTutorSuggestionSessionService irisTutorSuggestionSessionService, Optional<ProcessingStateCallbackApi> processingStateCallbackApi) {
         this.pyrisJobService = pyrisJobService;
         this.irisExerciseChatSessionService = irisExerciseChatSessionService;
         this.irisTextExerciseChatSessionService = irisTextExerciseChatSessionService;
         this.courseChatSessionService = courseChatSessionService;
         this.competencyGenerationService = competencyGenerationService;
         this.irisLectureChatSessionService = irisLectureChatSessionService;
-        this.rewritingService = rewritingService;
         this.irisTutorSuggestionSessionService = irisTutorSuggestionSessionService;
+        this.processingStateCallbackApi = processingStateCallbackApi;
     }
 
     /**
@@ -125,18 +122,6 @@ public class PyrisStatusUpdateService {
     }
 
     /**
-     * Handles the status update of a rewriting job and forwards it to
-     * {@link IrisRewritingService#handleStatusUpdate(RewritingJob, PyrisRewritingStatusUpdateDTO)}
-     *
-     * @param job          the job that is updated
-     * @param statusUpdate the status update
-     */
-    public void handleStatusUpdate(RewritingJob job, PyrisRewritingStatusUpdateDTO statusUpdate) {
-        var updatedJob = rewritingService.handleStatusUpdate(job, statusUpdate);
-        removeJobIfTerminatedElseUpdate(statusUpdate.stages(), updatedJob);
-    }
-
-    /**
      * Removes the job from the job service if the status update indicates that the job is terminated; updates it to distribute changes otherwise.
      * A job is terminated if all stages are in a terminal state.
      * <p>
@@ -158,12 +143,24 @@ public class PyrisStatusUpdateService {
 
     /**
      * Handles the status update of a lecture ingestion job.
+     * Also notifies the lecture content processing service when ingestion completes.
      *
      * @param job          the job that is updated
      * @param statusUpdate the status update
      */
     public void handleStatusUpdate(LectureIngestionWebhookJob job, PyrisLectureIngestionStatusUpdateDTO statusUpdate) {
-        removeJobIfTerminatedElseUpdate(statusUpdate.stages(), job);
+        var isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state).allMatch(PyrisStageState::isTerminal);
+
+        if (isDone) {
+            pyrisJobService.removeJob(job);
+
+            // Notify the lecture content processing service with token for validation
+            boolean success = statusUpdate.stages().stream().map(PyrisStageDTO::state).noneMatch(state -> state == PyrisStageState.ERROR);
+            processingStateCallbackApi.ifPresent(api -> api.handleIngestionComplete(job.lectureUnitId(), job.jobId(), success));
+        }
+        else {
+            pyrisJobService.updateJob(job);
+        }
     }
 
     /**
@@ -172,7 +169,7 @@ public class PyrisStatusUpdateService {
      * @param job          the job that is updated
      * @param statusUpdate the status update
      */
-    public void handleStatusUpdate(LectureChatJob job, PyrisLectureChatStatusUpdateDTO statusUpdate) {
+    public void handleStatusUpdate(LectureChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
         var updatedJob = irisLectureChatSessionService.handleStatusUpdate(job, statusUpdate);
 
         removeJobIfTerminatedElseUpdate(statusUpdate.stages(), updatedJob);

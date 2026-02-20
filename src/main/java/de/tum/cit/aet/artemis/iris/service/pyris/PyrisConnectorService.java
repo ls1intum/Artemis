@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
-
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -12,8 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
@@ -24,7 +22,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.dto.IngestionState;
 import de.tum.cit.aet.artemis.iris.dto.IngestionStateResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.MemirisLearningDTO;
@@ -34,7 +32,6 @@ import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryWithRelationsDTO;
 import de.tum.cit.aet.artemis.iris.exception.IrisException;
 import de.tum.cit.aet.artemis.iris.exception.IrisForbiddenException;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisVariantDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqDeletionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqIngestionExecutionDTO;
@@ -44,7 +41,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisLearningDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisMemoryConnectionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisMemoryDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisMemoryWithRelationsDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.web.internal.PyrisInternalStatusUpdateResource;
 
 /**
@@ -54,7 +50,7 @@ import de.tum.cit.aet.artemis.iris.web.internal.PyrisInternalStatusUpdateResourc
  */
 @Lazy
 @Service
-@Profile(PROFILE_IRIS)
+@Conditional(IrisEnabled.class)
 public class PyrisConnectorService {
 
     private static final Logger log = LoggerFactory.getLogger(PyrisConnectorService.class);
@@ -167,26 +163,6 @@ public class PyrisConnectorService {
     }
 
     /**
-     * Requests all available variants from Pyris for a feature
-     *
-     * @param feature The feature to get the variants for
-     * @return A list of available Models as IrisVariantDTO
-     */
-    public List<PyrisVariantDTO> getAvailableVariants(IrisSubSettingsType feature) throws PyrisConnectorException {
-        try {
-            var response = restTemplate.getForEntity(pyrisUrl + "/api/v1/pipelines/" + feature.name() + "/variants", PyrisVariantDTO[].class);
-            if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody()) {
-                throw new PyrisConnectorException("Could not fetch offered variants");
-            }
-            return Arrays.asList(response.getBody());
-        }
-        catch (HttpStatusCodeException e) {
-            log.error("Failed to fetch offered variants from Pyris", e);
-            throw new PyrisConnectorException("Could not fetch offered variants");
-        }
-    }
-
-    /**
      * Executes a pipeline with the given feature and variant
      *
      * @param feature      The feature name of the pipeline to execute
@@ -226,35 +202,6 @@ public class PyrisConnectorService {
         catch (RestClientException | IllegalArgumentException e) {
             log.error("Failed to send lecture unit {} to Pyris: {}", executionDTO.pyrisLectureUnit().lectureUnitId(), e.getMessage());
             throw new PyrisConnectorException("Could not fetch response from Pyris");
-        }
-    }
-
-    /**
-     * Retrieves the ingestion state of the lecture unit specified by retrieving the ingestion state from the vector database in Pyris.
-     *
-     * @param courseId      id of the course
-     * @param lectureId     id of the lecture
-     * @param lectureUnitId id of the lectureUnit to check in the Pyris vector database
-     * @return The ingestion state of the lecture Unit
-     *
-     */
-    IngestionState getLectureUnitIngestionState(long courseId, long lectureId, long lectureUnitId) {
-        try {
-            String encodedBaseUrl = URLEncoder.encode(artemisBaseUrl, StandardCharsets.UTF_8);
-            String url = pyrisUrl + "/api/v1/courses/" + courseId + "/lectures/" + lectureId + "/lectureUnits/" + lectureUnitId + "/ingestion-state?base_url=" + encodedBaseUrl;
-            IngestionStateResponseDTO response = restTemplate.getForObject(url, IngestionStateResponseDTO.class);
-            IngestionState state = response.state();
-            if (state != IngestionState.DONE) {
-                if (pyrisJobService.currentJobs().stream().filter(job -> job instanceof LectureIngestionWebhookJob).map(job -> (LectureIngestionWebhookJob) job)
-                        .anyMatch(ingestionJob -> ingestionJob.courseId() == courseId && ingestionJob.lectureId() == lectureId && ingestionJob.lectureUnitId() == lectureUnitId)) {
-                    return IngestionState.IN_PROGRESS;
-                }
-            }
-            return state;
-        }
-        catch (RestClientException | IllegalArgumentException e) {
-            log.error("Error fetching ingestion state for lecture {}, lecture unit {}", lectureId, lectureUnitId, e);
-            throw new PyrisConnectorException("Error fetching ingestion state for lecture unit" + lectureUnitId);
         }
     }
 

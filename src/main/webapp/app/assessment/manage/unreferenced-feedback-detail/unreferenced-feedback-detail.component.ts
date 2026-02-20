@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, InputSignal, OnInit, Output, inject, input } from '@angular/core';
+import { Component, OnInit, inject, input, model, output } from '@angular/core';
 import { faCheck, faExclamation, faExclamationTriangle, faQuestionCircle, faTrash, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
@@ -39,17 +39,17 @@ import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback
 export class UnreferencedFeedbackDetailComponent implements OnInit {
     structuredGradingCriterionService = inject(StructuredGradingCriterionService);
 
-    @Input() public feedback: Feedback;
-    resultId: InputSignal<number> = input.required<number>();
-    @Input() isSuggestion: boolean;
-    @Input() public readOnly: boolean;
-    @Input() highlightDifferences: boolean;
-    @Input() useDefaultFeedbackSuggestionBadgeText: boolean;
+    public readonly feedback = model.required<Feedback>();
+    readonly resultId = input.required<number>();
+    readonly isSuggestion = input<boolean>();
+    public readonly readOnly = input.required<boolean>();
+    readonly highlightDifferences = input<boolean>(false);
+    readonly useDefaultFeedbackSuggestionBadgeText = input.required<boolean>();
 
-    @Output() public onFeedbackChange = new EventEmitter<Feedback>();
-    @Output() public onFeedbackDelete = new EventEmitter<Feedback>();
-    @Output() onAcceptSuggestion = new EventEmitter<Feedback>();
-    @Output() onDiscardSuggestion = new EventEmitter<Feedback>();
+    public readonly onFeedbackChange = output<Feedback>();
+    public readonly onFeedbackDelete = output<Feedback>();
+    readonly onAcceptSuggestion = output<Feedback>();
+    readonly onDiscardSuggestion = output<Feedback>();
     private feedbackService = inject(FeedbackService);
 
     // Icons
@@ -75,9 +75,11 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
      * Call this method to load long feedback if needed
      */
     public async loadLongFeedback() {
-        if (this.feedback.id && this.feedback.hasLongFeedbackText) {
-            this.feedback.detailText = await this.feedbackService.getLongFeedbackText(this.feedback.id);
-            this.onFeedbackChange.emit(this.feedback);
+        const feedback = this.feedback();
+        if (feedback.id && feedback.hasLongFeedbackText) {
+            feedback.detailText = await this.feedbackService.getLongFeedbackText(feedback.id);
+            this.feedback.set(feedback);
+            this.onFeedbackChange.emit(feedback);
         }
     }
 
@@ -85,24 +87,28 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
      * Emits assessment changes to parent component
      */
     public emitChanges(): void {
-        if (this.feedback.type === FeedbackType.AUTOMATIC) {
-            this.feedback.type = FeedbackType.AUTOMATIC_ADAPTED;
+        const feedback = this.feedback();
+        if (feedback.type === FeedbackType.AUTOMATIC) {
+            feedback.type = FeedbackType.AUTOMATIC_ADAPTED;
         }
-        Feedback.updateFeedbackTypeOnChange(this.feedback);
-        this.onFeedbackChange.emit(this.feedback);
+        Feedback.updateFeedbackTypeOnChange(feedback);
+        this.feedback.set(feedback);
+        this.onFeedbackChange.emit(feedback);
     }
 
     /**
      * Emits the deletion of a feedback
      */
     public delete() {
-        this.onFeedbackDelete.emit(this.feedback);
+        this.onFeedbackDelete.emit(this.feedback());
         this.dialogErrorSource.next('');
     }
 
     updateFeedbackOnDrop(event: Event) {
         event.stopPropagation();
-        this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(this.feedback, event);
-        this.onFeedbackChange.emit(this.feedback);
+        const feedback = this.feedback();
+        this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(feedback, event);
+        this.feedback.set(feedback);
+        this.onFeedbackChange.emit(feedback);
     }
 }

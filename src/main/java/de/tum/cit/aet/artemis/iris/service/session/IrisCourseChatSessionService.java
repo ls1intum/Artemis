@@ -1,15 +1,13 @@
 package de.tum.cit.aet.artemis.iris.service.session;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
-
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 import org.springframework.context.MessageSource;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -23,10 +21,9 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
-import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
 import de.tum.cit.aet.artemis.iris.repository.IrisCourseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
@@ -42,7 +39,7 @@ import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
  */
 @Lazy
 @Service
-@Profile(PROFILE_IRIS)
+@Conditional(IrisEnabled.class)
 public class IrisCourseChatSessionService extends AbstractIrisChatSessionService<IrisCourseChatSession> {
 
     private final IrisSettingsService irisSettingsService;
@@ -88,7 +85,7 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
      */
     @Override
     public void checkHasAccessTo(User user, IrisCourseChatSession session) {
-        user.hasAcceptedExternalLLMUsageElseThrow();
+        user.hasOptedIntoLLMUsageElseThrow();
         var course = courseRepository.findByIdElseThrow(session.getCourseId());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         if (!Objects.equals(session.getUserId(), user.getId())) {
@@ -102,9 +99,9 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
      * @param session The session to check
      */
     @Override
-    public void checkIsFeatureActivatedFor(IrisCourseChatSession session) {
+    public void checkIrisEnabledFor(IrisCourseChatSession session) {
         var course = courseRepository.findByIdElseThrow(session.getCourseId());
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.COURSE_CHAT, course);
+        irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
     }
 
     @Override
@@ -113,8 +110,8 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
     }
 
     @Override
-    public void checkRateLimit(User user) {
-        rateLimitService.checkRateLimitElseThrow(user);
+    public void checkRateLimit(User user, IrisCourseChatSession session) {
+        rateLimitService.checkRateLimitElseThrow(session, user);
     }
 
     /**
@@ -126,11 +123,11 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
     @Override
     public void requestAndHandleResponse(IrisCourseChatSession session) {
         var course = courseRepository.findByIdElseThrow(session.getCourseId());
-        var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisCourseChatSettings();
+        var settings = irisSettingsService.getSettingsForCourse(course);
         if (!settings.enabled()) {
             throw new ConflictException("Iris is not enabled for this course", "Iris", "irisDisabled");
         }
-        requestAndHandleResponse(session, settings.selectedVariant(), settings.customInstructions(), null);
+        requestAndHandleResponse(session, settings.variant().jsonValue(), settings.customInstructions(), null);
     }
 
     private void requestAndHandleResponse(IrisCourseChatSession session, String variant, String customInstructions, Object object) {
@@ -154,19 +151,19 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
         var course = competencyJol.getCompetency().getCourse();
         var user = competencyJol.getUser();
 
-        if (!user.hasAcceptedExternalLLMUsage()) {
+        if (!user.hasOptedIntoLLMUsage()) {
             return;
         }
 
-        var combinedSettings = irisSettingsService.getCombinedIrisSettingsFor(course, false);
-        var settings = combinedSettings.irisCourseChatSettings();
-        if (!settings.enabled() || !IrisSettingsService.isEventEnabledInSettings(combinedSettings, IrisEventType.JOL)) {
+        var settings = irisSettingsService.getSettingsForCourse(course);
+        if (!settings.enabled()) {
             return;
         }
 
-        var session = getCurrentSessionOrCreateIfNotExistsInternal(course, user, false);
+        var session = getCurrentSessionOrCreateIfNotExistsInternal(course, user);
+        rateLimitService.checkRateLimitElseThrow(session, user);
 
-        var variant = settings.selectedVariant();
+        var variant = settings.variant().jsonValue();
         var customInstructions = settings.customInstructions();
 
         CompletableFuture.runAsync(() -> requestAndHandleResponse(session, variant, customInstructions, competencyJol));
@@ -176,18 +173,17 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
      * Gets the current Iris session for the course and user.
      * If no session exists or if the last session is from a different day, a new one is created.
      *
-     * @param course                      The course to get the session for
-     * @param user                        The user to get the session for
-     * @param sendInitialMessageIfCreated Whether to send an initial message from Iris if a new session is created
+     * @param course The course to get the session for
+     * @param user   The user to get the session for
      * @return The current Iris session
      */
-    public IrisCourseChatSession getCurrentSessionOrCreateIfNotExists(Course course, User user, boolean sendInitialMessageIfCreated) {
-        user.hasAcceptedExternalLLMUsageElseThrow();
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.COURSE_CHAT, course);
-        return getCurrentSessionOrCreateIfNotExistsInternal(course, user, sendInitialMessageIfCreated);
+    public IrisCourseChatSession getCurrentSessionOrCreateIfNotExists(Course course, User user) {
+        user.hasOptedIntoLLMUsageElseThrow();
+        irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
+        return getCurrentSessionOrCreateIfNotExistsInternal(course, user);
     }
 
-    private IrisCourseChatSession getCurrentSessionOrCreateIfNotExistsInternal(Course course, User user, boolean sendInitialMessageIfCreated) {
+    private IrisCourseChatSession getCurrentSessionOrCreateIfNotExistsInternal(Course course, User user) {
         var sessionOptional = irisCourseChatSessionRepository.findLatestByCourseIdAndUserIdWithMessages(course.getId(), user.getId(), Pageable.ofSize(1)).stream().findFirst();
         if (sessionOptional.isPresent()) {
             var session = sessionOptional.get();
@@ -199,34 +195,25 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
             }
         }
 
-        // create a new session with an initial message from Iris
-        return createSessionInternal(course, user, sendInitialMessageIfCreated);
+        return createSessionInternal(course, user);
     }
 
     /**
      * Creates a new Iris session for the course and user.
      *
-     * @param course             The course to create the session for
-     * @param user               The user to create the session for
-     * @param sendInitialMessage Whether to send an initial message from Iris
+     * @param course The course to create the session for
+     * @param user   The user to create the session for
      * @return The created Iris session
      */
-    public IrisCourseChatSession createSession(Course course, User user, boolean sendInitialMessage) {
-        user.hasAcceptedExternalLLMUsageElseThrow();
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.COURSE_CHAT, course);
-        return createSessionInternal(course, user, sendInitialMessage);
+    public IrisCourseChatSession createSession(Course course, User user) {
+        user.hasOptedIntoLLMUsageElseThrow();
+        irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
+        return createSessionInternal(course, user);
     }
 
-    private IrisCourseChatSession createSessionInternal(Course course, User user, boolean sendInitialMessage) {
+    private IrisCourseChatSession createSessionInternal(Course course, User user) {
         var courseChat = new IrisCourseChatSession(course, user);
         courseChat.setTitle(AbstractIrisChatSessionService.getLocalizedNewChatTitle(user.getLangKey(), messageSource));
-        var session = irisCourseChatSessionRepository.save(courseChat);
-
-        if (sendInitialMessage) {
-            // Run async to allow the session to be returned immediately
-            CompletableFuture.runAsync(() -> requestAndHandleResponse(session));
-        }
-
-        return session;
+        return irisCourseChatSessionRepository.save(courseChat);
     }
 }

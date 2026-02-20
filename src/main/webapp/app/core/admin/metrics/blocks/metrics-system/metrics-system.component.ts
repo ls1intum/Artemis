@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { ProcessMetrics } from 'app/core/admin/metrics/metrics.model';
 import { NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { DatePipe, DecimalPipe } from '@angular/common';
@@ -6,7 +6,6 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 @Component({
     selector: 'jhi-metrics-system',
     templateUrl: './metrics-system.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [NgbProgressbar, DecimalPipe, DatePipe],
 })
 export class MetricsSystemComponent {

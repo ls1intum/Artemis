@@ -12,10 +12,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -47,7 +46,7 @@ public class GradingScaleUtilService {
      * @param valid        whether the second grade step is valid (i.e. the upper bound of the second grade step is equal to the lower bound of the third grade step)
      * @return a set of grade steps
      */
-    @NotNull
+    @NonNull
     public Set<GradeStep> generateGradeStepSet(GradingScale gradingScale, boolean valid) {
         GradeStep gradeStep1 = new GradeStep();
         GradeStep gradeStep2 = new GradeStep();
@@ -164,7 +163,7 @@ public class GradingScaleUtilService {
      */
     public GradingScale generateGradingScaleWithStickyStep(double[] intervalSizes, Optional<String[]> gradeNames, boolean lowerBoundInclusivity, int firstPassingIndex) {
         // This method has a different signature from the one above to define intervals from sizes to be consistent with
-        // the instructor UI at interval-grading-system.component.ts and client tests at bonus.service.spec.ts.
+        // the instructor UI at interval-grading.component.ts and client tests at bonus.service.spec.ts.
 
         int gradeStepCount = intervalSizes.length;
         if (firstPassingIndex >= gradeStepCount || firstPassingIndex < 0) {

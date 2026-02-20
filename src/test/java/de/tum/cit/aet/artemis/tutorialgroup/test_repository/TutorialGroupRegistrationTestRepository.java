@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.tutorialgroup.test_repository;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.Modifying;
@@ -21,9 +20,9 @@ public interface TutorialGroupRegistrationTestRepository extends TutorialGroupRe
     @Modifying
     void deleteAllByStudent(User student);
 
-    @Transactional  // ok because of delete
+    @Transactional // ok because of delete
     @Modifying
-    void deleteById(@NotNull Long tutorialGroupRegistrationId);
+    void deleteById(@NonNull Long tutorialGroupRegistrationId);
 
     boolean existsByTutorialGroupTitleAndStudentAndType(String title, User student, TutorialGroupRegistrationType type);
 

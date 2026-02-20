@@ -7,9 +7,9 @@ import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageRequest;
@@ -22,6 +22,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.dto.ParticipationCommitHashDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionIdAndSubmissionDateDTO;
 
 /**
@@ -153,12 +154,12 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the programming submission with the given id
      */
-    @NotNull
+    @NonNull
     default ProgrammingSubmission findByIdWithResultsFeedbacksAssessorTestCases(long submissionId) {
         return getValueElseThrow(findWithEagerResultsFeedbacksTestCasesAssessorById(submissionId), submissionId);
     }
 
-    @NotNull
+    @NonNull
     default ProgrammingSubmission findByResultIdElseThrow(long resultId) {
         return getValueElseThrow(findByResultId(resultId));
     }
@@ -191,4 +192,19 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
             """)
     Slice<ProgrammingSubmission> findLatestProgrammingSubmissionsWithoutResultsInTimeRange(@Param("startTime") ZonedDateTime startTime, @Param("endTime") ZonedDateTime endTime,
             Pageable pageable);
+
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.programming.dto.ParticipationCommitHashDTO(s.participation.id, s.commitHash)
+            FROM ProgrammingSubmission s
+            WHERE s.participation.id IN :loadedParticipationIds
+                AND s.submissionDate = (
+                    SELECT MAX(s2.submissionDate)
+                    FROM ProgrammingSubmission s2
+                    WHERE s2.participation.id = s.participation.id
+                        AND (COALESCE(:filterLateSubmissionsIndividualDueDate, s2.participation.individualDueDate, :exerciseDueDate) IS NULL
+                             OR s2.submissionDate <= COALESCE(:filterLateSubmissionsIndividualDueDate, s2.participation.individualDueDate, :exerciseDueDate))
+                )
+            """)
+    Set<ParticipationCommitHashDTO> findLatestValidCommitHashForParticipations(@Param("loadedParticipationIds") Set<Long> loadedParticipationIds,
+            @Param("filterLateSubmissionsIndividualDueDate") ZonedDateTime filterLateSubmissionsIndividualDueDate, @Param("exerciseDueDate") ZonedDateTime exerciseDueDate);
 }

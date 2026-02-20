@@ -3,13 +3,14 @@ package de.tum.cit.aet.artemis.exercise.participation.util;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,8 +22,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -72,6 +73,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.icl.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.programming.service.UriService;
@@ -81,6 +83,8 @@ import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
+import de.tum.cit.aet.artemis.programming.util.LocalRepository;
+import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -105,6 +109,9 @@ public class ParticipationUtilService {
 
     @Autowired
     private ParticipationVcsAccessTokenService participationVCSAccessTokenService;
+
+    @Autowired
+    private ObjectProvider<LocalVCLocalCITestService> localVCLocalCITestService;
 
     @Autowired
     private ExerciseTestRepository exerciseRepository;
@@ -157,6 +164,9 @@ public class ParticipationUtilService {
     @Value("${artemis.version-control.url}")
     protected URI localVCBaseUri;
 
+    @Value("${artemis.version-control.local-vcs-repo-path}")
+    private Path localVCBasePath;
+
     @Autowired
     private ResultTestRepository resultRepository;
 
@@ -183,6 +193,7 @@ public class ParticipationUtilService {
             participation.setInitializationState(InitializationState.INITIALIZED);
             var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, exercise.getProjectKey(), repoName);
             participation.setRepositoryUri(localVcRepoUri.toString());
+            ensureLocalVcRepositoryExists(localVcRepoUri);
             programmingExerciseStudentParticipationRepo.save(participation);
             storedParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
             assertThat(storedParticipation).isPresent();
@@ -235,6 +246,7 @@ public class ParticipationUtilService {
 
         Result result = ParticipationFactory.generateResult(rated, scoreAwarded);
         result.setSubmission(submission);
+        result.setExerciseId(exercise.getId());
         result.completionDate(ZonedDateTime.now());
         submission.addResult(result);
         resultRepository.save(result);
@@ -242,7 +254,7 @@ public class ParticipationUtilService {
         return result;
     }
 
-    @NotNull
+    @NonNull
     private static Submission getSubmission(StudentParticipation studentParticipation, Exercise exercise) {
         Submission submission = switch (exercise) {
             case ProgrammingExercise ignored -> new ProgrammingSubmission();
@@ -339,10 +351,11 @@ public class ParticipationUtilService {
         ProgrammingExerciseStudentParticipation participation = ParticipationFactory.generateIndividualProgrammingExerciseStudentParticipation(exercise,
                 userUtilService.getUserByLogin(login));
         final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
-        var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, exercise.getProjectKey().toLowerCase(), repoName);
+        var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, exercise.getProjectKey(), repoName);
         participation.setRepositoryUri(localVcRepoUri.toString());
         participation = programmingExerciseStudentParticipationRepo.save(participation);
         participationVCSAccessTokenService.createParticipationVCSAccessToken(userUtilService.getUserByLogin(login), participation);
+        ensureLocalVcRepositoryExists(localVcRepoUri);
         return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(participation.getId()).orElseThrow();
     }
 
@@ -364,6 +377,7 @@ public class ParticipationUtilService {
         final var repoName = (exercise.getProjectKey() + "-" + team.getShortName()).toLowerCase();
         var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, exercise.getProjectKey(), repoName);
         participation.setRepositoryUri(localVcRepoUri.toString());
+        ensureLocalVcRepositoryExists(localVcRepoUri);
         participation = programmingExerciseStudentParticipationRepo.save(participation);
 
         return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(participation.getId()).orElseThrow();
@@ -388,6 +402,7 @@ public class ParticipationUtilService {
                 userUtilService.getUserByLogin(login));
         final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
         participation.setRepositoryUri(localRepoPath.toString());
+        ensureLocalVcRepositoryExists(localRepoPath);
         participation = programmingExerciseStudentParticipationRepo.save(participation);
 
         return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(participation.getId()).orElseThrow();
@@ -406,6 +421,7 @@ public class ParticipationUtilService {
      */
     public Result addResultToSubmission(AssessmentType type, ZonedDateTime completionDate, Submission submission, boolean successful, boolean rated, double score) {
         Result result = new Result().submission(submission).successful(successful).rated(rated).score(score).assessmentType(type).completionDate(completionDate);
+        result.setExerciseId(submission.getParticipation().getExercise().getId());
         return resultRepo.save(result);
     }
 
@@ -419,6 +435,7 @@ public class ParticipationUtilService {
      */
     public Result addResultToSubmission(AssessmentType assessmentType, ZonedDateTime completionDate, Submission submission) {
         Result result = new Result().submission(submission).successful(true).rated(true).score(100D).assessmentType(assessmentType).completionDate(completionDate);
+        result.setExerciseId(submission.getParticipation().getExercise().getId());
         submission.addResult(result);
         result = resultRepo.save(result);
         submissionRepository.save(submission);
@@ -438,6 +455,7 @@ public class ParticipationUtilService {
     public Result addResultToSubmission(AssessmentType assessmentType, ZonedDateTime completionDate, Submission submission, String assessorLogin, List<Feedback> feedbacks) {
         Result result = new Result().submission(submission).assessmentType(assessmentType).completionDate(completionDate).feedbacks(feedbacks);
         result.setAssessor(userUtilService.getUserByLogin(assessorLogin));
+        result.setExerciseId(submission.getParticipation().getExercise().getId());
         return resultRepo.save(result);
     }
 
@@ -450,6 +468,7 @@ public class ParticipationUtilService {
     public Result addResultToSubmission(Participation participation, Submission submission) {
         Result result = new Result().submission(submission).successful(true).score(100D).rated(true).completionDate(ZonedDateTime.now());
         result.setSubmission(submission);
+        result.setExerciseId(participation.getExercise().getId());
         result = resultRepo.save(result);
         submission.addResult(result);
         submission.setParticipation(participation);
@@ -509,8 +528,7 @@ public class ParticipationUtilService {
         ));
 
         result.addFeedbacks(feedbacks);
-        resultRepo.save(result);
-        return result;
+        return resultRepo.save(result);
     }
     // @formatter:on
 
@@ -553,9 +571,15 @@ public class ParticipationUtilService {
      * @return The updated Submission with eagerly loaded results and assessor
      */
     public Submission addResultToSubmission(final Submission submission, AssessmentType assessmentType, User user, Double score, boolean rated, ZonedDateTime completionDate) {
+        return addResultToSubmission(submission, assessmentType, user, score, rated, completionDate, submission.getParticipation().getExercise().getId());
+    }
+
+    public Submission addResultToSubmission(final Submission submission, AssessmentType assessmentType, User user, Double score, boolean rated, ZonedDateTime completionDate,
+            long exerciseId) {
         Result result = new Result().submission(submission).assessmentType(assessmentType).score(score).rated(rated).completionDate(completionDate);
         result.setAssessor(user);
         result.setSubmission(submission);
+        result.setExerciseId(exerciseId);
         result = resultRepo.save(result);
         submission.addResult(result);
         var savedSubmission = submissionRepository.save(submission);
@@ -571,6 +595,10 @@ public class ParticipationUtilService {
      */
     public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType) {
         return addResultToSubmission(submission, assessmentType, null, 100D, true, null);
+    }
+
+    public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType, long exerciseId) {
+        return addResultToSubmission(submission, assessmentType, null, 100D, true, null, exerciseId);
     }
 
     /**
@@ -650,6 +678,7 @@ public class ParticipationUtilService {
     public Result generateResult(Submission submission, User assessor) {
         Result result = new Result();
         result.setSubmission(submission);
+        result.setExerciseId(submission.getParticipation().getExercise().getId());
         result.completionDate(pastTimestamp);
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         result.setAssessor(assessor);
@@ -754,6 +783,7 @@ public class ParticipationUtilService {
         result.setAssessor(userUtilService.getUserByLogin(assessorLogin));
         result.setCompletionDate(ZonedDateTime.now());
         result.setSubmission(submission);
+        result.setExerciseId(participation.getExercise().getId());
         submission.setParticipation(participation);
         submission.addResult(result);
         submission = saveSubmissionToRepo(submission);
@@ -907,6 +937,7 @@ public class ParticipationUtilService {
         }
         Submission submissionWithParticipation = addSubmission(studentParticipation, submission);
         Result result = addResultToSubmission(studentParticipation, submissionWithParticipation);
+        result.setExerciseId(exercise.getId());
         resultRepo.save(result);
 
         assertThat(exercise.getGradingCriteria()).isNotNull();
@@ -928,7 +959,7 @@ public class ParticipationUtilService {
      * @return A List of Results with eagerly loaded submissions and feedbacks
      */
     public List<Result> getResultsForExercise(Exercise exercise) {
-        return resultRepo.findWithEagerSubmissionAndFeedbackBySubmissionParticipationExerciseId(exercise.getId());
+        return resultRepo.findWithEagerSubmissionAndFeedbackByExerciseId(exercise.getId());
     }
 
     public void mockCreationOfExerciseParticipation(boolean useGradedParticipationOfResult, Result gradedResult, ProgrammingExercise programmingExercise, UriService uriService,
@@ -948,15 +979,12 @@ public class ParticipationUtilService {
      * Mocks methods in VC and CI system needed for the creation of a StudentParticipation given the ProgrammingExercise. The StudentParticipation's repositoryUri is set to a fake
      * URL.
      *
-     * @param templateRepoName             The expected sourceRepositoryName when calling the copyRepository method of the mocked VersionControlService
-     * @param versionControlService        The mocked VersionControlService
+     * @param templateRepoName             The expected sourceRepositoryName when calling the LocalVC service
+     * @param versionControlService        The VersionControlService (real LocalVC service)
      * @param continuousIntegrationService The mocked ContinuousIntegrationService
      */
     public void mockCreationOfExerciseParticipation(String templateRepoName, VersionControlService versionControlService,
             ContinuousIntegrationService continuousIntegrationService) {
-        var someURL = new LocalVCRepositoryUri("http://vcs.fake.fake/git/abc/abcRepoSlug.git");
-        doReturn(someURL).when(versionControlService).copyRepositoryWithoutHistory(any(String.class), eq(templateRepoName), any(String.class), any(String.class), any(String.class),
-                any(Integer.class));
         mockCreationOfExerciseParticipationInternal(continuousIntegrationService);
     }
 
@@ -964,13 +992,10 @@ public class ParticipationUtilService {
      * Mocks methods in VC and CI system needed for the creation of a StudentParticipation given the ProgrammingExercise. The StudentParticipation's repositoryUri is set to a fake
      * URL.
      *
-     * @param versionControlService        The mocked VersionControlService
+     * @param versionControlService        The VersionControlService (real LocalVC service)
      * @param continuousIntegrationService The mocked ContinuousIntegrationService
      */
     public void mockCreationOfExerciseParticipation(VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService) {
-        var someURL = new LocalVCRepositoryUri("http://vcs.fake.fake/git/abc/abcRepoSlug.git");
-        doReturn(someURL).when(versionControlService).copyRepositoryWithoutHistory(any(String.class), any(), any(String.class), any(String.class), any(String.class),
-                any(Integer.class));
         mockCreationOfExerciseParticipationInternal(continuousIntegrationService);
     }
 
@@ -1029,5 +1054,43 @@ public class ParticipationUtilService {
         // Verify submission has both results: one completed, one draft
         assertThat(submission.getResults()).hasSize(2);
 
+    }
+
+    private void ensureLocalVcRepositoryExists(LocalVCRepositoryUri repositoryUri) {
+        if (repositoryUri == null || localVCBasePath == null) {
+            return;
+        }
+        Path repoPath = repositoryUri.getLocalRepositoryPath(localVCBasePath);
+        if (Files.exists(repoPath)) {
+            return;
+        }
+        var relativePath = repositoryUri.getRelativeRepositoryPath();
+        String slugWithGit = relativePath.getFileName().toString();
+        String repositorySlug = slugWithGit.endsWith(".git") ? slugWithGit.substring(0, slugWithGit.length() - 4) : slugWithGit;
+        try {
+            LocalVCLocalCITestService helper = localVCLocalCITestService != null ? localVCLocalCITestService.getIfAvailable() : null;
+            if (helper != null) {
+                RepositoryExportTestUtil.trackRepository(helper.createAndConfigureLocalRepository(repositoryUri.getProjectKey(), repositorySlug));
+            }
+            else {
+                Files.createDirectories(repoPath.getParent());
+                LocalRepository.initialize(repoPath, defaultBranch, true).close();
+            }
+        }
+        catch (Exception e) {
+            throw new IllegalStateException("Failed to create LocalVC repository for " + repositoryUri.getURI(), e);
+        }
+    }
+
+    private void ensureLocalVcRepositoryExists(URI repositoryUri) {
+        if (repositoryUri == null) {
+            return;
+        }
+        try {
+            ensureLocalVcRepositoryExists(new LocalVCRepositoryUri(repositoryUri.toString()));
+        }
+        catch (RuntimeException ignored) {
+            // ignore non-LocalVC URIs
+        }
     }
 }

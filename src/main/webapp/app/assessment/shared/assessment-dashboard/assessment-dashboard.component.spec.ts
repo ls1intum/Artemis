@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
@@ -34,21 +36,21 @@ import { AssessmentDashboardComponent } from 'app/assessment/shared/assessment-d
 import { TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreChecker } from 'app/assessment/shared/assessment-dashboard/tutor-issue';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
-describe('AssessmentDashboardInformationComponent', () => {
+describe('AssessmentDashboardComponent', () => {
+    setupTestBed({ zoneless: true });
     let comp: AssessmentDashboardComponent;
     let fixture: ComponentFixture<AssessmentDashboardComponent>;
 
     let examManagementService: ExamManagementService;
-    let getExamWithInterestingExercisesForAssessmentDashboardStub: jest.SpyInstance;
-    let getStatsForExamAssessmentDashboardStub: jest.SpyInstance;
+    let getExamWithInterestingExercisesForAssessmentDashboardStub: MockInstance;
+    let getStatsForExamAssessmentDashboardStub: MockInstance;
 
     let courseManagementService: CourseManagementService;
-    let getCourseWithInterestingExercisesForTutorsStub: jest.SpyInstance;
-    let getStatsForTutorsStub: jest.SpyInstance;
+    let getCourseWithInterestingExercisesForTutorsStub: MockInstance;
+    let getStatsForTutorsStub: MockInstance;
 
     let exerciseService: ExerciseService;
 
-    let accountService: AccountService;
     let sortService: SortService;
 
     const programmingExercise = {
@@ -70,10 +72,7 @@ describe('AssessmentDashboardInformationComponent', () => {
             inTime: 1234,
             late: 0,
         },
-        totalNumberOfAssessments: {
-            inTime: 12,
-            late: 0,
-        },
+        totalNumberOfAssessments: 12,
     } as ProgrammingExercise;
     const modelingExercise = {
         id: 17,
@@ -94,7 +93,7 @@ describe('AssessmentDashboardInformationComponent', () => {
         secondCorrectionEnabled: false,
         numberOfSubmissions: { inTime: 5, late: 0 },
         numberOfAssessmentsOfCorrectionRounds: [{ inTime: 5, late: 0 }],
-        totalNumberOfAssessments: { inTime: 5, late: 0 },
+        totalNumberOfAssessments: 5,
         numberOfOpenComplaints: 0,
         numberOfOpenMoreFeedbackRequests: 0,
         includedInOverallScore: IncludedInOverallScore.INCLUDED_AS_BONUS,
@@ -110,7 +109,7 @@ describe('AssessmentDashboardInformationComponent', () => {
     const tutorLeaderboardEntries = [] as TutorLeaderboardElement[];
     const courseTutorStats = {
         numberOfSubmissions: { inTime: 5, late: 0 } as DueDateStat,
-        totalNumberOfAssessments: { inTime: 3, late: 0 } as DueDateStat,
+        totalNumberOfAssessments: 3,
         numberOfAssessmentsOfCorrectionRounds,
         numberOfComplaints: 0,
         numberOfMoreFeedbackRequests: 0,
@@ -154,49 +153,42 @@ describe('AssessmentDashboardInformationComponent', () => {
                 exerciseService = TestBed.inject(ExerciseService);
                 sortService = TestBed.inject(SortService);
 
-                getExamWithInterestingExercisesForAssessmentDashboardStub = jest
+                getExamWithInterestingExercisesForAssessmentDashboardStub = vi
                     .spyOn(examManagementService, 'getExamWithInterestingExercisesForAssessmentDashboard')
                     .mockReturnValue(of({ body: exam }) as Observable<HttpResponse<Exam>>);
-                getStatsForExamAssessmentDashboardStub = jest
+                getStatsForExamAssessmentDashboardStub = vi
                     .spyOn(examManagementService, 'getStatsForExamAssessmentDashboard')
                     .mockReturnValue(of({ body: courseTutorStats }) as Observable<HttpResponse<StatsForDashboard>>);
 
-                getCourseWithInterestingExercisesForTutorsStub = jest
+                getCourseWithInterestingExercisesForTutorsStub = vi
                     .spyOn(courseManagementService, 'getCourseWithInterestingExercisesForTutors')
                     .mockReturnValue(of({ body: course }) as Observable<HttpResponse<Course>>);
-                getStatsForTutorsStub = jest
+                getStatsForTutorsStub = vi
                     .spyOn(courseManagementService, 'getStatsForTutors')
                     .mockReturnValue(of({ body: courseTutorStats }) as Observable<HttpResponse<StatsForDashboard>>);
-
-                getCourseWithInterestingExercisesForTutorsStub = jest.spyOn(courseManagementService, 'getCourseWithInterestingExercisesForTutors');
-                getStatsForTutorsStub = jest.spyOn(courseManagementService, 'getStatsForTutors');
-
-                accountService = TestBed.inject(AccountService);
-                jest.spyOn(accountService, 'isAtLeastInstructorInCourse');
             });
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
-    it('should init component correctly for exam', fakeAsync(() => {
+    it('should init component correctly for exam', () => {
         comp.ngOnInit();
-        tick();
 
-        expect(comp.isExamMode).toBeTrue();
+        expect(comp.isExamMode).toBe(true);
         expect(comp.courseId).toBe(10);
         expect(comp.examId).toBe(20);
-        expect(comp.isTestRun).toBeFalse();
-        expect(getExamWithInterestingExercisesForAssessmentDashboardStub).toHaveBeenCalledOnce();
-        expect(getStatsForExamAssessmentDashboardStub).toHaveBeenCalledOnce();
+        expect(comp.isTestRun).toBe(false);
+        expect(getExamWithInterestingExercisesForAssessmentDashboardStub).toHaveBeenCalledTimes(1);
+        expect(getStatsForExamAssessmentDashboardStub).toHaveBeenCalledTimes(1);
         expect(comp.exam).toEqual(exam);
-        expect(comp.hideFinishedExercises).toBeFalse();
+        expect(comp.hideFinishedExercises).toBe(false);
         expect(comp.allExercises).toHaveLength(4);
         expect(comp.currentlyShownExercises).toHaveLength(4);
-    }));
+    });
 
-    it('should init component correctly for course', fakeAsync(() => {
+    it('should init component correctly for course', () => {
         const newRoute = {
             snapshot: {
                 paramMap: convertToParamMap({ courseId: course.id }),
@@ -207,27 +199,26 @@ describe('AssessmentDashboardInformationComponent', () => {
         activatedRoute.snapshot = newRoute.snapshot;
 
         comp.ngOnInit();
-        tick();
 
-        expect(comp.isExamMode).toBeFalse();
+        expect(comp.isExamMode).toBe(false);
         expect(comp.courseId).toBe(10);
         expect(comp.examId).toBe(0);
-        expect(getCourseWithInterestingExercisesForTutorsStub).toHaveBeenCalledOnce();
-        expect(getStatsForTutorsStub).toHaveBeenCalledOnce();
+        expect(getCourseWithInterestingExercisesForTutorsStub).toHaveBeenCalledTimes(1);
+        expect(getStatsForTutorsStub).toHaveBeenCalledTimes(1);
         expect(comp.course).toEqual(Course.from(course));
         expect(comp.allExercises).toHaveLength(5);
         expect(comp.currentlyShownExercises).toHaveLength(4);
-    }));
+    });
 
     it('should toggle correctionRound for exercises', () => {
         comp.currentlyShownExercises = exercises;
-        const toggleSecondCorrectionStub = jest.spyOn(exerciseService, 'toggleSecondCorrection');
+        const toggleSecondCorrectionStub = vi.spyOn(exerciseService, 'toggleSecondCorrection');
         toggleSecondCorrectionStub.mockReturnValue(of(true));
         comp.toggleSecondCorrection(fileUploadExercise.id!);
-        expect(comp.currentlyShownExercises.find((exercise) => exercise.id === fileUploadExercise.id!)!.secondCorrectionEnabled).toBeTrue();
+        expect(comp.currentlyShownExercises.find((exercise) => exercise.id === fileUploadExercise.id!)!.secondCorrectionEnabled).toBe(true);
         toggleSecondCorrectionStub.mockReturnValue(of(false));
         comp.toggleSecondCorrection(fileUploadExercise.id!);
-        expect(comp.currentlyShownExercises.find((exercise) => exercise.id === fileUploadExercise.id!)!.secondCorrectionEnabled).toBeFalse();
+        expect(comp.currentlyShownExercises.find((exercise) => exercise.id === fileUploadExercise.id!)!.secondCorrectionEnabled).toBe(false);
     });
 
     it('should update exercises when finished exercises are filtered', () => {
@@ -249,14 +240,14 @@ describe('AssessmentDashboardInformationComponent', () => {
     });
 
     it('should sort rows', () => {
-        const sortServiceSpy = jest.spyOn(sortService, 'sortByProperty');
+        const sortServiceSpy = vi.spyOn(sortService, 'sortByProperty');
         comp.currentlyShownExercises = [textExercise];
         comp.exercisesSortingPredicate = 'assessmentDueDate';
         comp.exercisesReverseOrder = false;
 
         comp.sortRows();
 
-        expect(sortServiceSpy).toHaveBeenCalledOnce();
+        expect(sortServiceSpy).toHaveBeenCalledTimes(1);
         expect(sortServiceSpy).toHaveBeenCalledWith([textExercise], 'assessmentDueDate', false);
     });
 
@@ -342,9 +333,9 @@ describe('AssessmentDashboardInformationComponent', () => {
 
                 // then
                 expect(comp.tutorIssues).toHaveLength(4);
-                expect(comp.stats.tutorLeaderboardEntries[0].hasIssuesWithPerformance).toBeTrue(); // rating
-                expect(comp.stats.tutorLeaderboardEntries[1].hasIssuesWithPerformance).toBeTrue(); // complaints, score
-                expect(comp.stats.tutorLeaderboardEntries[2].hasIssuesWithPerformance).toBeTrue(); // score
+                expect(comp.stats.tutorLeaderboardEntries[0].hasIssuesWithPerformance).toBe(true); // rating
+                expect(comp.stats.tutorLeaderboardEntries[1].hasIssuesWithPerformance).toBe(true); // complaints, score
+                expect(comp.stats.tutorLeaderboardEntries[2].hasIssuesWithPerformance).toBe(true); // score
             });
         });
 
@@ -358,16 +349,16 @@ describe('AssessmentDashboardInformationComponent', () => {
                     const tutorAverageValue = 2.25;
                     const courseAverageValue = 4;
                     const ratingChecker = new TutorIssueRatingChecker(ratingsCount, tutorAverageValue, courseAverageValue, tutorName, tutorId);
-                    expect(ratingChecker.isPerformanceIssue).toBeTrue();
+                    expect(ratingChecker.isPerformanceIssue).toBe(true);
                 });
 
                 it('tutors value is within allowed range', () => {
                     const ratingCheckerA = new TutorIssueRatingChecker(1, 3, 0, tutorName, tutorId);
                     const ratingCheckerB = new TutorIssueRatingChecker(1, 3.2, 4, tutorName, tutorId);
                     const ratingCheckerC = new TutorIssueRatingChecker(1, 5, 3, tutorName, tutorId);
-                    expect(ratingCheckerA.isPerformanceIssue).toBeFalse();
-                    expect(ratingCheckerB.isPerformanceIssue).toBeFalse();
-                    expect(ratingCheckerC.isPerformanceIssue).toBeFalse();
+                    expect(ratingCheckerA.isPerformanceIssue).toBe(false);
+                    expect(ratingCheckerB.isPerformanceIssue).toBe(false);
+                    expect(ratingCheckerC.isPerformanceIssue).toBe(false);
                 });
             });
 
@@ -377,7 +368,7 @@ describe('AssessmentDashboardInformationComponent', () => {
                     const tutorAverageValue = 40;
                     const courseAverageValue = 80;
                     const ratingChecker = new TutorIssueScoreChecker(submissionsCount, tutorAverageValue, courseAverageValue, tutorName, tutorId);
-                    expect(ratingChecker.isPerformanceIssue).toBeTrue();
+                    expect(ratingChecker.isPerformanceIssue).toBe(true);
                 });
 
                 it('tutors value is within allowed range', () => {
@@ -385,10 +376,10 @@ describe('AssessmentDashboardInformationComponent', () => {
                     const ratingCheckerB = new TutorIssueScoreChecker(1, 66, 80, tutorName, tutorId);
                     const ratingCheckerC = new TutorIssueScoreChecker(1, 90, 80, tutorName, tutorId);
                     const ratingCheckerD = new TutorIssueScoreChecker(1, 96.009, 80, tutorName, tutorId);
-                    expect(ratingCheckerA.isPerformanceIssue).toBeFalse();
-                    expect(ratingCheckerB.isPerformanceIssue).toBeFalse();
-                    expect(ratingCheckerC.isPerformanceIssue).toBeFalse();
-                    expect(ratingCheckerD.isPerformanceIssue).toBeFalse();
+                    expect(ratingCheckerA.isPerformanceIssue).toBe(false);
+                    expect(ratingCheckerB.isPerformanceIssue).toBe(false);
+                    expect(ratingCheckerC.isPerformanceIssue).toBe(false);
+                    expect(ratingCheckerD.isPerformanceIssue).toBe(false);
                 });
             });
 
@@ -398,7 +389,7 @@ describe('AssessmentDashboardInformationComponent', () => {
                     const tutorAverageValue = 14;
                     const courseAverageValue = 10;
                     const ratingChecker = new TutorIssueComplaintsChecker(submissionsCount, tutorAverageValue, courseAverageValue, tutorName, tutorId);
-                    expect(ratingChecker.isPerformanceIssue).toBeTrue();
+                    expect(ratingChecker.isPerformanceIssue).toBe(true);
                 });
 
                 it('tutors value is within allowed range', () => {
@@ -406,10 +397,10 @@ describe('AssessmentDashboardInformationComponent', () => {
                     const ratingCheckerB = new TutorIssueComplaintsChecker(1, 8, 10, tutorName, tutorId);
                     const ratingCheckerC = new TutorIssueComplaintsChecker(1, 0, 10, tutorName, tutorId);
                     const ratingCheckerD = new TutorIssueComplaintsChecker(1, 12.001, 10, tutorName, tutorId);
-                    expect(ratingCheckerA.isPerformanceIssue).toBeFalse();
-                    expect(ratingCheckerB.isPerformanceIssue).toBeFalse();
-                    expect(ratingCheckerC.isPerformanceIssue).toBeFalse();
-                    expect(ratingCheckerD.isPerformanceIssue).toBeFalse();
+                    expect(ratingCheckerA.isPerformanceIssue).toBe(false);
+                    expect(ratingCheckerB.isPerformanceIssue).toBe(false);
+                    expect(ratingCheckerC.isPerformanceIssue).toBe(false);
+                    expect(ratingCheckerD.isPerformanceIssue).toBe(false);
                 });
             });
         });

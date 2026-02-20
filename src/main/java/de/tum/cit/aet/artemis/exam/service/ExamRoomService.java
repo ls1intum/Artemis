@@ -13,6 +13,8 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import jakarta.validation.constraints.NotBlank;
+
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 import de.tum.cit.aet.artemis.exam.domain.room.LayoutStrategy;
@@ -73,7 +76,7 @@ public class ExamRoomService {
 
     /**
      * Looks through all JSON files contained in a given zip file (recursive search).
-     * Then it adds all exam rooms it could parse to the database, ignoring duplicates of the same room.
+     * Adds all exam rooms it could parse to the database.
      * The exam rooms' primary room numbers are the filenames of the JSON files containing their data.
      *
      * @param zipFile A zip file containing JSON files of exam room data.
@@ -82,10 +85,8 @@ public class ExamRoomService {
     public ExamRoomUploadInformationDTO parseAndStoreExamRoomDataFromZipFile(MultipartFile zipFile) {
         // We want to discard any duplicate rooms. Having duplicate rooms is only possible if you also nest the same
         // .json file in one or more subfolders. Doing this is either a (malicious) mistake, or perhaps a backup file,
-        // and will thus be ignored. In this equality we only consider the room number, the name, and the building,
-        // as it would be a mistake to store the same room twice and risk a potential creation date collision later on.
-        // All 3 fields are explicitly not nullable.
-        Set<ExamRoom> examRooms = new TreeSet<>(Comparator.comparing(ExamRoom::getRoomNumber).thenComparing(ExamRoom::getName).thenComparing(ExamRoom::getBuilding));
+        // and will thus raise an error, indicating the ambiguity.
+        Set<ExamRoom> examRooms = new TreeSet<>(Comparator.comparing(ExamRoom::getRoomNumber, String.CASE_INSENSITIVE_ORDER));
 
         try (ZipInputStream zis = new ZipInputStream(zipFile.getInputStream())) {
             ZipEntry entry;
@@ -102,7 +103,7 @@ public class ExamRoomService {
                 // Math.max(0, entryName.lastIndexOf('/') + 1); === entryName.lastIndexOf('/') + 1;
                 int roomNumberStartIndex = entryName.lastIndexOf('/') + 1;
                 int roomNumberEndIndex = entryName.lastIndexOf(".json");
-                String roomNumber = entryName.substring(roomNumberStartIndex, roomNumberEndIndex);
+                String roomNumber = FileUtil.sanitizeFilename(entryName.substring(roomNumberStartIndex, roomNumberEndIndex));
                 if (roomNumber.isBlank()) {
                     throw new BadRequestAlertException("Invalid room file name: missing room number", ENTITY_NAME, "room.missingRoomNumber");
                 }
@@ -111,6 +112,10 @@ public class ExamRoomService {
                     ExamRoomInput examRoomInput = objectMapper.readValue(zis.readAllBytes(), ExamRoomInput.class);
 
                     ExamRoom examRoom = convertRoomNumberAndExamRoomInputToExamRoom(roomNumber, examRoomInput);
+                    if (examRooms.contains(examRoom)) {
+                        throw new BadRequestAlertException("Duplicate room number", ENTITY_NAME, "room.duplicateRooms", Map.of("roomNumber", roomNumber));
+                    }
+
                     examRooms.add(examRoom);
                 }
                 finally {
@@ -120,7 +125,7 @@ public class ExamRoomService {
 
         }
         catch (IOException e) {
-            throw new BadRequestAlertException(e.getMessage(), ENTITY_NAME, "room.parseIoException", Map.of("errorMessage", e.getMessage()));
+            throw new BadRequestAlertException(e.getMessage(), ENTITY_NAME, "room.parseIoException");
         }
 
         examRoomRepository.saveAll(examRooms);
@@ -152,7 +157,7 @@ public class ExamRoomService {
 
     private static ExamRoom extractSimpleExamRoomFields(String roomNumber, ExamRoomInput examRoomInput) {
         ExamRoom room = new ExamRoom();
-        room.setRoomNumber(roomNumber.replaceAll("\u0000", ""));
+        room.setRoomNumber(roomNumber);
         final String alternativeRoomNumber = examRoomInput.alternativeNumber;
         if (!room.getRoomNumber().equals(alternativeRoomNumber)) {
             room.setAlternativeRoomNumber(alternativeRoomNumber);
@@ -308,12 +313,11 @@ public class ExamRoomService {
         final int numberOfStoredExamSeats = examRooms.stream().mapToInt(er -> er.getSeats().size()).sum();
         final int numberOfStoredLayoutStrategies = examRooms.stream().mapToInt(er -> er.getLayoutStrategies().size()).sum();
 
-        Map<String, ExamRoom> newestRoomByRoomNumberAndName = examRooms.stream().collect(Collectors.toMap(
-                // Use null character as a separator, as it is not allowed in room numbers or names
-                examRoom -> examRoom.getRoomNumber() + "\u0000" + examRoom.getName(), Function.identity(), BinaryOperator.maxBy(Comparator.comparing(ExamRoom::getCreatedDate))));
+        Map<String, ExamRoom> newestRoomByRoomNumber = examRooms.stream()
+                .collect(Collectors.toMap(ExamRoom::getRoomNumber, Function.identity(), BinaryOperator.maxBy(Comparator.comparing(ExamRoom::getCreatedDate))));
 
-        final Set<ExamRoomDTO> examRoomDTOS = newestRoomByRoomNumberAndName.values().stream()
-                .map(examRoom -> new ExamRoomDTO(examRoom.getId(), examRoom.getRoomNumber(), examRoom.getName(), examRoom.getBuilding(), examRoom.getSeats().size(),
+        final Set<ExamRoomDTO> examRoomDTOS = newestRoomByRoomNumber.values().stream()
+                .map(examRoom -> new ExamRoomDTO(examRoom.getRoomNumber(), examRoom.getName(), examRoom.getBuilding(), examRoom.getSeats().size(),
                         examRoom.getLayoutStrategies().stream().map(ls -> new ExamRoomLayoutStrategyDTO(ls.getName(), ls.getType(), ls.getCapacity())).collect(Collectors.toSet())))
                 .collect(Collectors.toSet());
 
@@ -323,7 +327,7 @@ public class ExamRoomService {
     /**
      * Deletes all outdated and unused exam rooms.
      * <p/>
-     * An exam room is outdated if another exam room with the same room-number and room-name exists, and that exam
+     * An exam room is outdated if another exam room with the same room-number exists, and that exam
      * room's creation date is before the other's. An exam room is unused if there is no existing mapping to an exam.
      *
      * @return A summary containing some information about the deletion process.
@@ -350,12 +354,13 @@ public class ExamRoomService {
     /**
      * Calculates the exam seats that are usable for an exam, according to the default layout
      *
-     * @param examRoom The exam room, containing seats and default layout
+     * @param examRoom      The exam room, containing seats and default layout
+     * @param reserveFactor Percentage of seats that should not be included. Defaults to 0%
      * @return All seats that can be used for the exam, in ascending order
      */
-    public List<ExamSeatDTO> getDefaultUsableSeats(ExamRoom examRoom) {
+    public List<ExamSeatDTO> getDefaultUsableSeats(ExamRoom examRoom, double reserveFactor) {
         LayoutStrategy defaultLayoutStrategy = getDefaultLayoutStrategyOrElseThrow(examRoom);
-        return getUsableSeatsForLayout(examRoom, defaultLayoutStrategy);
+        return getUsableSeatsForLayout(examRoom, defaultLayoutStrategy, reserveFactor);
     }
 
     /**
@@ -363,19 +368,45 @@ public class ExamRoomService {
      *
      * @param examRoom       The exam room, containing seats and default layout
      * @param layoutStrategy The layout strategy we want to apply. Must be a layout strategy of the given exam room
-     *
+     * @param reserveFactor  Percentage of seats that should not be included
      * @return All seats that can be used for the exam, in ascending order
      */
-    public List<ExamSeatDTO> getUsableSeatsForLayout(ExamRoom examRoom, LayoutStrategy layoutStrategy) {
+    public List<ExamSeatDTO> getUsableSeatsForLayout(ExamRoom examRoom, LayoutStrategy layoutStrategy, double reserveFactor) {
         if (!examRoom.getLayoutStrategies().contains(layoutStrategy)) {
             throw new BadRequestAlertException("Could not find specified layout", ENTITY_NAME, "room.missingSpecifiedLayout",
                     Map.of("roomNumber", examRoom.getRoomNumber(), "layoutName", layoutStrategy.getName()));
         }
 
-        return switch (layoutStrategy.getType()) {
+        List<ExamSeatDTO> pickedSeats = switch (layoutStrategy.getType()) {
             case FIXED_SELECTION -> getUsableSeatsFixedSelection(examRoom, layoutStrategy);
             case RELATIVE_DISTANCE -> getUsableSeatsRelativeDistance(examRoom, layoutStrategy);
         };
+
+        return applyReserveFactorToList(pickedSeats, reserveFactor);
+    }
+
+    /**
+     * Calculates the size after applying a reserve factor
+     *
+     * @param originalSize  The original size
+     * @param reserveFactor The reserve factor in range [0,1]
+     * @return The size after applying the reserve factor
+     */
+    public int getSizeAfterApplyingReserveFactor(int originalSize, double reserveFactor) {
+        if (originalSize < 0) {
+            throw new IllegalArgumentException("originalSize must be non-negative");
+        }
+        if (!Double.isFinite(reserveFactor) || reserveFactor < 0.0 || reserveFactor > 1.0) {
+            throw new IllegalArgumentException("reserveFactor must be in [0,1]");
+        }
+
+        int result = (int) Math.floor(originalSize * (1.0 - reserveFactor));
+        return Math.max(0, result);
+    }
+
+    private <T> List<T> applyReserveFactorToList(List<T> list, double reserveFactor) {
+        int numberOfIncludedElements = getSizeAfterApplyingReserveFactor(list.size(), reserveFactor);
+        return list.subList(0, numberOfIncludedElements);
     }
 
     private record FixedSelectionSeatInput(@JsonProperty("row_index") int rowIndex, @JsonProperty("seat_index") int seatIndex,
@@ -414,7 +445,7 @@ public class ExamRoomService {
      *                            {@link SeatCondition#USABLE}, if false no filtering is performed
      * @return List of rows (sorted) of seats (sorted)
      */
-    private static List<List<ExamSeatDTO>> getSortedRowsWithSortedSeats(ExamRoom examRoom, boolean onlyUsableSeats) {
+    public static List<List<ExamSeatDTO>> getSortedRowsWithSortedSeats(ExamRoom examRoom, boolean onlyUsableSeats) {
         List<ExamSeatDTO> examSeats = examRoom.getSeats();
         if (onlyUsableSeats) {
             examSeats = examSeats.stream().filter(examSeatDTO -> examSeatDTO.seatCondition() == SeatCondition.USABLE).toList();
@@ -541,4 +572,33 @@ public class ExamRoomService {
         return examRoomRepository.findAllIdsOfCurrentExamRooms().containsAll(examRoomIds);
     }
 
+    /**
+     * Check whether the given room is persisted and connected to the given exam
+     *
+     * @param roomNumber The room number
+     * @param examId     The exam id
+     * @return {@code true} iff the room is persisted and connected to the exam
+     */
+    public boolean isRoomPersistedAndConnectedToExam(@NotBlank String roomNumber, long examId) {
+        return examRoomRepository.existsByRoomNumberAndIsConnectedToExam(roomNumber, examId);
+    }
+
+    /**
+     * Formats the metadata of an exam room into a human-readable format
+     *
+     * @param room The exam room
+     */
+    protected String humanReadableFormat(ExamRoom room) {
+        String namePart = room.getName();
+        if (room.getAlternativeName() != null) {
+            namePart += " (" + room.getAlternativeName() + ")";
+        }
+
+        String numberPart = room.getRoomNumber();
+        if (room.getAlternativeRoomNumber() != null) {
+            numberPart += " (" + room.getAlternativeRoomNumber() + ")";
+        }
+
+        return namePart + " - " + numberPart + " - [" + room.getBuilding() + "]";
+    }
 }

@@ -12,8 +12,9 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import jakarta.annotation.PostConstruct;
-import jakarta.validation.constraints.NotNull;
 
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,8 +29,8 @@ import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.transport.DockerHttpClient;
 import com.github.dockerjava.zerodep.ZerodepDockerHttpClient;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
+import de.tum.cit.aet.artemis.buildagent.service.DockerUtil;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 
@@ -49,6 +50,8 @@ public class BuildAgentConfiguration {
     private int threadPoolSize = 0;
 
     private DockerClient dockerClient;
+
+    private volatile boolean dockerAvailable = false;
 
     private static final Logger log = LoggerFactory.getLogger(BuildAgentConfiguration.class);
 
@@ -77,6 +80,7 @@ public class BuildAgentConfiguration {
     public void onApplicationReady() {
         buildExecutor = createBuildExecutor();
         dockerClient = createDockerClient();
+        probeDockerAvailability();
     }
 
     public ThreadPoolExecutor getBuildExecutor() {
@@ -95,13 +99,21 @@ public class BuildAgentConfiguration {
         return pauseAfterConsecutiveFailedJobs;
     }
 
+    public boolean isDockerAvailable() {
+        return dockerAvailable;
+    }
+
+    public void setDockerAvailable(boolean dockerAvailable) {
+        this.dockerAvailable = dockerAvailable;
+    }
+
     /**
      * Creates a HostConfig object that is used to configure the Docker container for build jobs.
      * The configuration is based on the default Docker flags for build jobs as specified in artemis.continuous-integration.build.
      *
      * @return The HostConfig bean.
      */
-    @NotNull
+    @NonNull
     public HostConfig hostConfig() {
         long cpuCount = 0;
         long cpuPeriod = 100000L;
@@ -169,8 +181,8 @@ public class BuildAgentConfiguration {
         }
         this.threadPoolSize = threadPoolSize;
 
-        ThreadFactory customThreadFactory = new ThreadFactoryBuilder().setNameFormat("local-ci-build-%d")
-                .setUncaughtExceptionHandler((thread, exception) -> log.error("Uncaught exception in thread {}", thread.getName(), exception)).build();
+        ThreadFactory customThreadFactory = BasicThreadFactory.builder().namingPattern("local-ci-build-%d")
+                .uncaughtExceptionHandler((t, e) -> log.error("Uncaught exception in thread {}", t.getName(), e)).build();
 
         RejectedExecutionHandler customRejectedExecutionHandler = (runnable, executor) -> {
             throw new RejectedExecutionException("Task " + runnable.toString() + " rejected from " + executor.toString());
@@ -182,13 +194,19 @@ public class BuildAgentConfiguration {
 
     /**
      * Creates a Docker client that is used to communicate with the Docker daemon.
+     * Configures connection and response timeouts to prevent hanging on unresponsive Docker daemons.
+     * <p>
+     * The response timeout (45s) applies to each chunk of data received, not the total operation time.
+     * For streaming operations like image pulls, Docker sends progress updates regularly, so this
+     * timeout only fires if the daemon becomes completely unresponsive.
      *
      * @return The DockerClient.
      */
     public DockerClient createDockerClient() {
         log.debug("Create bean dockerClient");
         DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().withDockerHost(dockerConnectionUri).build();
-        DockerHttpClient httpClient = new ZerodepDockerHttpClient.Builder().dockerHost(config.getDockerHost()).sslConfig(config.getSSLConfig()).build();
+        DockerHttpClient httpClient = new ZerodepDockerHttpClient.Builder().dockerHost(config.getDockerHost()).sslConfig(config.getSSLConfig())
+                .connectionTimeout(java.time.Duration.ofSeconds(10)).responseTimeout(java.time.Duration.ofSeconds(45)).build();
         DockerClient dockerClient = DockerClientImpl.getInstance(config, httpClient);
 
         log.debug("Docker client created with connection URI: {}", dockerConnectionUri);
@@ -240,6 +258,7 @@ public class BuildAgentConfiguration {
     }
 
     public void closeBuildAgentServices() {
+        dockerAvailable = false;
         shutdownBuildExecutor();
         closeDockerClient();
     }
@@ -247,5 +266,26 @@ public class BuildAgentConfiguration {
     public void openBuildAgentServices() {
         this.buildExecutor = createBuildExecutor();
         this.dockerClient = createDockerClient();
+        probeDockerAvailability();
+    }
+
+    /**
+     * Synchronously probes Docker availability by executing a lightweight version command.
+     * Sets {@link #dockerAvailable} based on whether Docker responds successfully.
+     */
+    private void probeDockerAvailability() {
+        try {
+            dockerClient.versionCmd().exec();
+            dockerAvailable = true;
+        }
+        catch (Exception e) {
+            dockerAvailable = false;
+            if (DockerUtil.isDockerNotAvailable(e)) {
+                log.warn("Docker is not available: {}", e.getMessage());
+            }
+            else {
+                log.warn("Failed to probe Docker availability", e);
+            }
+        }
     }
 }

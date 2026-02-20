@@ -17,6 +17,7 @@ import { SubmissionProcessingDTO } from 'app/programming/shared/entities/submiss
 import dayjs from 'dayjs/esm';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_LOCALCI } from 'app/app.constants';
+import { deepClone } from 'app/shared/util/deep-clone.util';
 
 export enum ProgrammingSubmissionState {
     // The last submission of participation has a result.
@@ -85,8 +86,10 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     private resultSubscriptions: { [participationId: number]: Subscription } = {};
     // participationId -> topic
     private submissionTopicsSubscribed = new Map<number, string>();
+    private submissionTopicSubscriptions = new Map<string, Subscription>();
     // participationId -> topic
     private submissionProcessingTopicsSubscribed = new Map<number, string>();
+    private submissionProcessingTopicSubscriptions = new Map<string, Subscription>();
 
     // participationId -> exerciseId
     private participationIdToExerciseId = new Map<number, number>();
@@ -117,8 +120,8 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         Object.values(this.resultSubscriptions).forEach((sub) => sub.unsubscribe());
         Object.values(this.resultTimerSubscriptions).forEach((sub) => sub.unsubscribe());
         Object.values(this.queueEstimateTimerSubscriptions).forEach((sub) => sub.unsubscribe());
-        this.submissionTopicsSubscribed.forEach((topic) => this.websocketService.unsubscribe(topic));
-        this.submissionProcessingTopicsSubscribed.forEach((topic) => this.websocketService.unsubscribe(topic));
+        this.submissionTopicSubscriptions.forEach((subscription) => subscription.unsubscribe());
+        this.submissionProcessingTopicSubscriptions.forEach((subscription) => subscription.unsubscribe());
     }
 
     get exerciseBuildState() {
@@ -248,10 +251,9 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             this.participationIdToExerciseId.set(participationId, exerciseId);
 
             // Only subscribe if not subscription to same topic exists (e.g. from different participation)
-            if (!Array.from(this.submissionTopicsSubscribed.values()).includes(newSubmissionTopic)) {
-                this.websocketService.subscribe(newSubmissionTopic);
-                this.websocketService
-                    .receive(newSubmissionTopic)
+            if (!this.submissionTopicSubscriptions.has(newSubmissionTopic)) {
+                const subscription = this.websocketService
+                    .subscribe<ProgrammingSubmission | ProgrammingSubmissionError>(newSubmissionTopic)
                     .pipe(
                         tap((submission: ProgrammingSubmission | ProgrammingSubmissionError) => {
                             if (checkIfSubmissionIsError(submission)) {
@@ -278,6 +280,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                         }),
                     )
                     .subscribe();
+                this.submissionTopicSubscriptions.set(newSubmissionTopic, subscription);
             }
             this.submissionTopicsSubscribed.set(participationId, newSubmissionTopic);
         }
@@ -311,11 +314,9 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             }
 
             // Only subscribe if not subscription to same topic exists (e.g. from different participation)
-            const subscriptionOnSameTopicExists = Array.from(this.submissionProcessingTopicsSubscribed.values()).includes(newSubmissionTopic);
-            if (!subscriptionOnSameTopicExists) {
-                this.websocketService.subscribe(newSubmissionTopic);
-                this.websocketService
-                    .receive(newSubmissionTopic)
+            if (!this.submissionProcessingTopicSubscriptions.has(newSubmissionTopic)) {
+                const subscription = this.websocketService
+                    .subscribe<SubmissionProcessingDTO>(newSubmissionTopic)
                     .pipe(
                         tap((submissionProcessing: SubmissionProcessingDTO) => {
                             const submissionParticipationId = submissionProcessing.participationId!;
@@ -350,6 +351,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                         }),
                     )
                     .subscribe();
+                this.submissionProcessingTopicSubscriptions.set(newSubmissionTopic, subscription);
             }
             this.submissionProcessingTopicsSubscribed.set(participationId, newSubmissionTopic);
         }
@@ -442,7 +444,12 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     }
 
     private emitBuildingSubmission(participationId: number, exerciseId: number, submission: ProgrammingSubmission, buildTimingInfo?: BuildTimingInfo) {
-        const newSubmissionState = { participationId, submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission, buildTimingInfo };
+        const newSubmissionState = {
+            participationId,
+            submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION,
+            submission,
+            buildTimingInfo,
+        };
         this.notifySubscribers(participationId, exerciseId, newSubmissionState);
     }
 
@@ -475,7 +482,11 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             submissionSubject.next(newSubmissionState);
         }
         // Inform exercise subscribers.
-        this.exerciseBuildState = { ...this.exerciseBuildState, [exerciseId]: { ...(this.exerciseBuildState[exerciseId] || {}), [participationId]: newSubmissionState } };
+        const updatedBuildState = deepClone(this.exerciseBuildState);
+        const updatedExerciseState = deepClone(updatedBuildState[exerciseId] ?? {});
+        updatedExerciseState[participationId] = newSubmissionState;
+        updatedBuildState[exerciseId] = updatedExerciseState;
+        this.exerciseBuildState = updatedBuildState;
         const exerciseBuildStateSubject = this.exerciseBuildStateSubjects.get(exerciseId);
         if (exerciseBuildStateSubject) {
             exerciseBuildStateSubject.next(this.exerciseBuildState[exerciseId]);
@@ -533,8 +544,14 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 const latestSubmission = participation.submissions!.reduce((current, next) => (current.id! > next.id! ? current : next)) as ProgrammingSubmission;
                 const latestResult = findLatestResult(getAllResultsOfAllSubmissions(participation.submissions));
                 const isPendingSubmission = !!latestSubmission && (!latestResult || (latestResult.submission && latestResult.submission.id !== latestSubmission.id));
-                // This needs to be done to clear the cache if exists and to prepare the subject for the later notification of the subscribers.
-                this.submissionSubjects[participation.id!] = new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined);
+
+                const participationId = participation.id!;
+                // The following needs to be done to clear the cache if exists and to prepare the subject for the later notification of the subscribers.
+                // Previously, the subject was recreated here to clear its cached value.
+                // This caused existing subscribers to never receive further updates.
+                // We now keep the same BehaviorSubject instance and "clear" it by emitting `undefined`,
+                // ensuring all subscribers stay subscribed.
+                this.setOrResetSubmissionSubject(participationId);
                 this.processPendingSubmission(isPendingSubmission ? latestSubmission : undefined, participation.id!, exercise.id!, true).subscribe();
             });
     }
@@ -716,11 +733,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                         if (queueRemainingTime > 0) {
                             this.emitQueuedSubmission(participationId, exerciseId, submission);
                             this.startQueueEstimateTimer(participationId, exerciseId, submission, queueRemainingTime);
-                            return {
-                                participationId,
-                                submission: submissionToBeProcessed,
-                                submissionState: ProgrammingSubmissionState.IS_QUEUED,
-                            };
+                            return { participationId, submission: submissionToBeProcessed, submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION };
                         }
                     } else {
                         let buildTimingInfo: BuildTimingInfo | undefined = {
@@ -756,12 +769,12 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         return submissions.map(([participationId, submission]) => [parseInt(participationId, 10), submission]);
     }
 
-    private mapToExerciseBuildState(acc: ExerciseSubmissionState, val: ProgrammingSubmissionStateObj) {
-        if (!Object.keys(val).length) {
+    private mapToExerciseBuildState(exerciseSubmissionState: ExerciseSubmissionState, programmingSubmissionState: ProgrammingSubmissionStateObj) {
+        if (!Object.keys(programmingSubmissionState).length) {
             return {};
         }
-        const { participationId, submission, submissionState } = val;
-        return { ...acc, [participationId]: { participationId, submissionState, submission } };
+        const { participationId, submission, submissionState } = programmingSubmissionState;
+        return { ...exerciseSubmissionState, [participationId]: { participationId, submissionState, submission } };
     }
 
     private didSubmissionStartProcessing(commitHash: string): boolean {
@@ -845,6 +858,22 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     }
 
     /**
+     * Creates the BehaviorSubject for the given participation or resets its cached value.
+     * Clearing the cache by creating a new Subject leaves older subscribers hanging. They will never receive an update anymore.
+     * A better approach is to keep the old subject and just emit the new value once processed and "clear" the cache by emitting undefined first.
+     * @param participationId id of the observable participation
+     */
+    private setOrResetSubmissionSubject(participationId: number): void {
+        if (!this.submissionSubjects[participationId]) {
+            // First-time initialization: create the subject
+            this.submissionSubjects[participationId] = new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined);
+        } else {
+            // Reset cached value without breaking existing subscribers
+            this.submissionSubjects[participationId].next(undefined);
+        }
+    }
+
+    /**
      * unsubscribe from all websocket topics so that these are not kept after leaving a page who has subscribed before
      * @param exercise
      */
@@ -856,10 +885,12 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         this.resultTimerSubscriptions = {};
         Object.values(this.queueEstimateTimerSubscriptions).forEach((sub) => sub.unsubscribe());
         this.queueEstimateTimerSubscriptions = {};
-        this.submissionTopicsSubscribed.forEach((topic) => this.websocketService.unsubscribe(topic));
+        this.submissionTopicSubscriptions.forEach((subscription) => subscription.unsubscribe());
+        this.submissionTopicSubscriptions.clear();
         this.submissionTopicsSubscribed.forEach((_, participationId) => this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participationId, exercise));
         this.submissionTopicsSubscribed.clear();
-        this.submissionProcessingTopicsSubscribed.forEach((topic) => this.websocketService.unsubscribe(topic));
+        this.submissionProcessingTopicSubscriptions.forEach((subscription) => subscription.unsubscribe());
+        this.submissionProcessingTopicSubscriptions.clear();
         this.submissionProcessingTopicsSubscribed.clear();
         this.submissionSubjects = {};
         this.exerciseBuildStateSubjects.delete(exercise.id!);
@@ -879,7 +910,8 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             const openSubscriptionsForTopic = [...this.submissionTopicsSubscribed.values()].filter((topic: string) => topic === submissionTopic).length;
             // Only unsubscribe if no other participations are using this topic
             if (openSubscriptionsForTopic === 0) {
-                this.websocketService.unsubscribe(submissionTopic);
+                this.submissionTopicSubscriptions.get(submissionTopic)?.unsubscribe();
+                this.submissionTopicSubscriptions.delete(submissionTopic);
             }
         }
         const submissionProcessingTopic = this.submissionProcessingTopicsSubscribed.get(participationId);
@@ -890,7 +922,8 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             // Only unsubscribe if no other participations are using this topic
             const isParcitipationUsingTopic = openSubscriptionsForTopic !== 0;
             if (!isParcitipationUsingTopic) {
-                this.websocketService.unsubscribe(submissionProcessingTopic);
+                this.submissionProcessingTopicSubscriptions.get(submissionProcessingTopic)?.unsubscribe();
+                this.submissionProcessingTopicSubscriptions.delete(submissionProcessingTopic);
             }
         }
     }

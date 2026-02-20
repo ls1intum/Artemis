@@ -73,7 +73,8 @@ public class TutorialGroupChannelManagementService {
      */
     public void removeTutorialGroupChannelsForCourse(Course course) {
         log.debug("Remove tutorial group channels for course with id {}", course.getId());
-        tutorialGroupRepository.findAllByCourseIdWithChannel(course.getId()).forEach(this::deleteTutorialGroupChannel);
+        Set<TutorialGroup> tutorialGroups = tutorialGroupRepository.findAllByCourseIdWithChannel(course.getId());
+        tutorialGroups.forEach(tutorialGroup -> deleteTutorialGroupChannel(tutorialGroup.getId()));
     }
 
     /**
@@ -81,7 +82,7 @@ public class TutorialGroupChannelManagementService {
      * <p>
      * - Create channel if it does not exist
      * - Add all students of tutorial group to channel
-     * - Add teaching assistant to channel and make him/her moderator
+     * - Add teaching assistant to channel and make them moderator
      *
      * @param tutorialGroupToSetUp the tutorial group for which the channel should be set up
      * @return the created or existing channel
@@ -110,18 +111,18 @@ public class TutorialGroupChannelManagementService {
     /**
      * Delete the tutorial group channel of the given tutorial group.
      *
-     * @param tutorialGroup the tutorial group of the channel to be deleted
+     * @param tutorialGroupId the id of the tutorial group of the channel to be deleted
      */
-    public void deleteTutorialGroupChannel(TutorialGroup tutorialGroup) {
-        tutorialGroupRepository.getTutorialGroupWithChannel(tutorialGroup.getId()).ifPresentOrElse(tgroup -> {
+    public void deleteTutorialGroupChannel(Long tutorialGroupId) {
+        tutorialGroupRepository.getTutorialGroupWithChannel(tutorialGroupId).ifPresentOrElse(tgroup -> {
             if (tgroup.getTutorialGroupChannel() != null) {
                 var channel = tgroup.getTutorialGroupChannel();
                 tgroup.setTutorialGroupChannel(null);
                 tutorialGroupRepository.save(tgroup);
                 conversationService.deleteConversation(channel.getId());
             }
-            log.debug("Tutorial group with id {} does not have a channel, cannot delete channel", tutorialGroup.getId());
-        }, () -> log.debug("Tutorial with id {} does not exist, cannot delete channel", tutorialGroup.getId()));
+            log.debug("Tutorial group with id {} does not have a channel, cannot delete channel", tutorialGroupId);
+        }, () -> log.debug("Tutorial with id {} does not exist, cannot delete channel", tutorialGroupId));
     }
 
     /**

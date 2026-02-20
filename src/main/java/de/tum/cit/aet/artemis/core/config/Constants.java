@@ -16,6 +16,8 @@ public final class Constants {
 
     public static final int PASSWORD_MAX_LENGTH = 100;
 
+    public static final String SET_UP_TEMPLATE_FOR_EXERCISE = "Set up template for exercise";
+
     public static int COMPLAINT_LOCK_DURATION_IN_MINUTES = 24 * 60; // 24h; Same as in artemisApp.locks.acquired
 
     // Regex for acceptable logins
@@ -138,12 +140,6 @@ public final class Constants {
      */
     public static final int FEEDBACK_PREVIEW_TEXT_MAX_LENGTH = 300;
 
-    /**
-     * Arbitrary limit that is unlikely to be reached by real feedback in practice.
-     * Avoids filling the DB with huge text blobs, e.g. in case an infinite loop in a test case outputs a lot of text.
-     */
-    public static final int LONG_FEEDBACK_MAX_LENGTH = 10_000_000;
-
     // This value limits the amount of characters allowed for a complaint response text.
     // Set to 65535 as the db-column has type TEXT which can hold up to 65535 characters.
     // Also, the value on the client side must match this value.
@@ -156,6 +152,12 @@ public final class Constants {
 
     // This value limits the amount of characters allowed for custom instructions in Iris sub-settings.
     public static final int IRIS_CUSTOM_INSTRUCTIONS_MAX_LENGTH = 2048;
+
+    /**
+     * Maximum number of retry attempts for lecture content processing
+     * (transcription and ingestion) before marking as failed.
+     */
+    public static final int MAX_PROCESSING_RETRIES = 5;
 
     public static final String SETUP_COMMIT_MESSAGE = "Setup";
 
@@ -172,6 +174,8 @@ public final class Constants {
     public static final String EDIT_EXERCISE = "EDIT_EXERCISE";
 
     public static final String DELETE_COURSE = "DELETE_COURSE";
+
+    public static final String RESET_COURSE = "RESET_COURSE";
 
     public static final String DELETE_EXAM = "DELETE_EXAM";
 
@@ -252,6 +256,8 @@ public final class Constants {
 
     public static final String INSTRUCTOR_BUILD_TIMEOUT_DEFAULT_OPTION = "buildTimeoutDefault";
 
+    public static final String DOCKER_FLAG_ALLOWED_CUSTOM_NETWORKS = "allowedCustomDockerNetworks";
+
     public static final String DOCKER_FLAG_CPUS = "defaultContainerCpuCount";
 
     public static final String DOCKER_FLAG_MEMORY_MB = "defaultContainerMemoryLimitInMB";
@@ -267,6 +273,8 @@ public final class Constants {
     public static final String VOTE_EMOJI_ID = "heavy_plus_sign";
 
     public static final String EXAM_EXERCISE_START_STATUS = "exam-exercise-start-status";
+
+    public static final String COURSE_OPERATION_PROGRESS_STATUS = "course-operation-progress-status";
 
     public static final String PUSH_NOTIFICATION_ENCRYPTION_ALGORITHM = "AES/CBC/PKCS5Padding";
 
@@ -303,11 +311,6 @@ public final class Constants {
     public static final String PROFILE_CORE = "core";
 
     /**
-     * The name of the Spring profile used for Iris / Pyris functionality.
-     */
-    public static final String PROFILE_IRIS = "iris";
-
-    /**
      * The name of the Spring profile used for Athena functionality.
      */
     public static final String PROFILE_ATHENA = "athena";
@@ -327,11 +330,6 @@ public final class Constants {
      * Use this profile if you want to synchronize users with an external LDAP system, but you want to route the authentication through another system
      */
     public static final String PROFILE_LDAP = "ldap";
-
-    /**
-     * The name of the Spring profile used for activating LTI in Artemis, see {@link de.tum.cit.aet.artemis.lti.web.LtiResource}.
-     */
-    public static final String PROFILE_LTI = "lti";
 
     /**
      * The name of the Spring profile used for activating SAML2 in Artemis, see {@link de.tum.cit.aet.artemis.core.service.connectors.SAML2Service}.
@@ -356,19 +354,9 @@ public final class Constants {
     public static final String PROFILE_CORE_AND_SCHEDULING = PROFILE_CORE + " & " + PROFILE_SCHEDULING;
 
     /**
-     * Profile combination for one primary node (in multi node setups, we typically call this node1), where scheduling, core AND iris is active
+     * The name of the module feature used for Theia as an external online IDE.
      */
-    public static final String PROFILE_CORE_AND_SCHEDULING_AND_IRIS = PROFILE_CORE + " & " + PROFILE_SCHEDULING + " & " + PROFILE_IRIS;
-
-    /**
-     * Profile combination for one primary node, where LTI AND scheduling is active
-     */
-    public static final String PROFILE_LTI_AND_SCHEDULING = PROFILE_LTI + " & " + PROFILE_SCHEDULING;
-
-    /**
-     * The name of the Spring profile used for Theia as an external online IDE.
-     */
-    public static final String PROFILE_THEIA = "theia";
+    public static final String MODULE_FEATURE_THEIA = "theia";
 
     /**
      * The name of the profile for integration independent tests
@@ -391,6 +379,11 @@ public final class Constants {
     public static final String FEATURE_PASSKEY = "passkey";
 
     /**
+     * The name of the module feature indicating passkey is required for administrator features.
+     */
+    public static final String FEATURE_PASSKEY_REQUIRE_ADMIN = "passkey-admin";
+
+    /**
      * The name of the module feature used for Atlas functionality.
      */
     public static final String MODULE_FEATURE_ATLAS = "atlas";
@@ -404,6 +397,11 @@ public final class Constants {
      * The name of the module feature used for Hyperion functionality.
      */
     public static final String MODULE_FEATURE_HYPERION = "hyperion";
+
+    /**
+     * The name of the module feature used for Iris / Pyris functionality.
+     */
+    public static final String MODULE_FEATURE_IRIS = "iris";
 
     /**
      * The name of the module feature used for Exam functionality.
@@ -421,6 +419,21 @@ public final class Constants {
     public static final String MODULE_FEATURE_TEXT = "text";
 
     /**
+     * The name of the module feature used for Modeling Exercise functionality.
+     */
+    public static final String MODULE_FEATURE_MODELING = "modeling";
+
+    /**
+     * The name of the module feature used for File Upload Exercise functionality.
+     */
+    public static final String MODULE_FEATURE_FILEUPLOAD = "fileupload";
+
+    /**
+     * The name of the module feature used for Lecture functionality.
+     */
+    public static final String MODULE_FEATURE_LECTURE = "lecture";
+
+    /**
      * The name of the module feature used for Atlas functionality.
      */
     public static final String MODULE_FEATURE_TUTORIALGROUP = "tutorialgroup";
@@ -429,6 +442,16 @@ public final class Constants {
      * The name of the module feature used for nebula functionality.
      */
     public static final String MODULE_FEATURE_NEBULA = "nebula";
+
+    /**
+     * The name of the module feature used for Sharing functionality.
+     */
+    public static final String MODULE_FEATURE_SHARING = "sharing";
+
+    /**
+     * The name of the module feature used for LTI functionality.
+     */
+    public static final String MODULE_FEATURE_LTI = "lti";
 
     /**
      * The name of the property used to enable or disable Atlas functionality.
@@ -446,6 +469,11 @@ public final class Constants {
     public static final String HYPERION_ENABLED_PROPERTY_NAME = "artemis.hyperion.enabled";
 
     /**
+     * The name of the property used to enable or disable Iris / Pyris functionality.
+     */
+    public static final String IRIS_ENABLED_PROPERTY_NAME = "artemis.iris.enabled";
+
+    /**
      * The name of the property used to enable or disable exam functionality.
      */
     public static final String EXAM_ENABLED_PROPERTY_NAME = "artemis.exam.enabled";
@@ -461,6 +489,21 @@ public final class Constants {
     public static final String TEXT_ENABLED_PROPERTY_NAME = "artemis.text.enabled";
 
     /**
+     * The name of the property used to enable or disable modeling exercise functionality.
+     */
+    public static final String MODELING_ENABLED_PROPERTY_NAME = "artemis.modeling.enabled";
+
+    /**
+     * The name of the property used to enable or disable file upload exercise functionality.
+     */
+    public static final String FILEUPLOAD_ENABLED_PROPERTY_NAME = "artemis.fileupload.enabled";
+
+    /**
+     * The name of the property used to enable or disable lecture functionality.
+     */
+    public static final String LECTURE_ENABLED_PROPERTY_NAME = "artemis.lecture.enabled";
+
+    /**
      * The name of the property used to enable or disable tutorial group functionality.
      */
     public static final String TUTORIAL_GROUP_ENABLED_PROPERTY_NAME = "artemis.tutorialgroup.enabled";
@@ -471,6 +514,11 @@ public final class Constants {
     public static final String PASSKEY_ENABLED_PROPERTY_NAME = "artemis.user-management.passkey.enabled";
 
     /**
+     * The name of the property used to require passkey authentication for access to administrator features.
+     */
+    public static final String PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME = "artemis.user-management.passkey.require-for-administrator-features";
+
+    /**
      * The name of the property used to enable or disable the sharing functionality.
      */
     public static final String SHARING_ENABLED_PROPERTY_NAME = "artemis.sharing.enabled";
@@ -479,6 +527,21 @@ public final class Constants {
      * The name of the property used to enable or disable nebula functionalities.
      */
     public static final String NEBULA_ENABLED_PROPERTY_NAME = "artemis.nebula.enabled";
+
+    /**
+     * The name of the property used to enable or disable LTI functionality.
+     */
+    public static final String LTI_ENABLED_PROPERTY_NAME = "artemis.lti.enabled";
+
+    /**
+     * The name of the property used to enable or disable Theia functionality.
+     */
+    public static final String THEIA_ENABLED_PROPERTY_NAME = "artemis.theia.enabled";
+
+    /**
+     * The name of the property used to enable or disable Weaviate integration.
+     */
+    public static final String WEAVIATE_ENABLED_PROPERTY_NAME = "artemis.weaviate.enabled";
 
     /**
      * The name of the property used to define the directories for file uploads.
@@ -541,6 +604,8 @@ public final class Constants {
     public static final String REDIS = "Redis";
 
     public static final String LOCAL = "Local";
+
+    public static final String AI_SELECTION_DECISION = "AI_SELECTION_DECISION";
 
     private Constants() {
     }

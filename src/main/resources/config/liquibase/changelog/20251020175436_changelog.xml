@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20251020175436" author="MoritzSpengler">
+        <addColumn tableName="quiz_question_progress">
+            <column name="due_date" type="datetime(3)">
+            </column>
+        </addColumn>
+
+        <comment>
+            Migrate dueDate from progress_json to due_date column.
+        </comment>
+        <sql dbms="postgresql">
+            UPDATE quiz_question_progress
+            SET "due_date" =
+                    CASE
+                        WHEN progress_json->>'dueDate' IS NOT NULL THEN TO_TIMESTAMP((progress_json->>'dueDate') :: DOUBLE PRECISION)
+                ELSE NOW()
+            END;
+        </sql>
+
+        <sql dbms="mysql">
+            UPDATE quiz_question_progress
+            SET due_date =
+                    CASE
+                        WHEN JSON_EXTRACT(progress_json, '$.dueDate') IS NOT NULL THEN CONVERT(FROM_UNIXTIME(JSON_UNQUOTE(JSON_EXTRACT(progress_json, '$.dueDate'))), DATETIME)
+                        ELSE NOW()
+                        END;
+        </sql>
+
+        <addNotNullConstraint tableName="quiz_question_progress" columnName="due_date" columnDataType="datetime(3)"/>
+
+        <createIndex tableName="quiz_question_progress" indexName="idx_quiz_training_user_course_due">
+            <column name="user_id"/>
+            <column name="course_id"/>
+            <column name="due_date"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

@@ -5,17 +5,22 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 
-import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Utility class for time-related operations.
  * It provides methods to calculate relative time, convert between ZonedDateTime and Instant, and get the current time.
  * It also allows setting a custom Clock for testing purposes.
+ * <p>
+ * The clock is thread-local to ensure proper isolation when tests run in parallel.
+ * Each thread can set its own clock without affecting other threads.
  */
 public class TimeUtil {
 
-    private static volatile Clock clock = Clock.systemDefaultZone();
+    private static final Clock DEFAULT_CLOCK = Clock.systemDefaultZone();
+
+    private static final ThreadLocal<Clock> threadLocalClock = new ThreadLocal<>();
 
     /**
      * Private constructor to prevent instantiation.
@@ -34,7 +39,7 @@ public class TimeUtil {
      * @param target the target ZonedDateTime object
      * @return the relative time of the target ZonedDateTime object compared to the origin and unit ZonedDateTime objects
      */
-    public static double toRelativeTime(@NotNull ZonedDateTime origin, @NotNull ZonedDateTime unit, @NotNull ZonedDateTime target) {
+    public static double toRelativeTime(@NonNull ZonedDateTime origin, @NonNull ZonedDateTime unit, @NonNull ZonedDateTime target) {
         return toRelativeTime(origin.toEpochSecond(), unit.toEpochSecond(), target.toEpochSecond());
     }
 
@@ -48,11 +53,11 @@ public class TimeUtil {
      * @param target the target ZonedDateTime object
      * @return the relative time of the target ZonedDateTime object compared to the origin and unit ZonedDateTime objects
      */
-    public static double toRelativeTime(@NotNull Instant origin, @NotNull Instant unit, @NotNull Instant target) {
+    public static double toRelativeTime(@NonNull Instant origin, @NonNull Instant unit, @NonNull Instant target) {
         return toRelativeTime(origin.getEpochSecond(), unit.getEpochSecond(), target.getEpochSecond());
     }
 
-    private static double toRelativeTime(@NotNull long originEpochSecond, @NotNull long unitEpochSecond, @NotNull long targetEpochSecond) {
+    private static double toRelativeTime(@NonNull long originEpochSecond, @NonNull long unitEpochSecond, @NonNull long targetEpochSecond) {
         if (originEpochSecond == unitEpochSecond) {
             return 1;
         }
@@ -77,26 +82,35 @@ public class TimeUtil {
      * Calculates the current ZonedDateTime based on the current clock.
      * In production, this is the system default clock.
      * In tests, the clock can be set to a fixed time for consistent results.
+     * <p>
+     * The clock is thread-local to ensure proper isolation when tests run in parallel.
      *
      * @return the current ZonedDateTime
      */
     public static ZonedDateTime now() {
-        return ZonedDateTime.now(clock);
+        Clock clock = threadLocalClock.get();
+        return ZonedDateTime.now(clock != null ? clock : DEFAULT_CLOCK);
     }
 
     /**
-     * Sets a new Clock instance.
+     * Sets a new Clock instance for the current thread.
      * This is used for testing purposes to control the current time.
-     * When no longer needed, the clock should be reset to the system default using {@link #resetClock()}.
+     * When no longer needed, the clock should be reset using {@link #resetClock()}.
+     * <p>
+     * The clock is thread-local to ensure proper isolation when tests run in parallel.
      *
      * @param newClock the new Clock instance to set
      */
-    public static void setClock(@NotNull Clock newClock) {
-        clock = Objects.requireNonNull(newClock, "Clock must not be null");
-
+    public static void setClock(@NonNull Clock newClock) {
+        threadLocalClock.set(Objects.requireNonNull(newClock, "Clock must not be null"));
     }
 
+    /**
+     * Resets the clock for the current thread to use the system default clock.
+     * This removes the thread-local clock value, allowing subsequent calls to {@link #now()}
+     * to use the default system clock.
+     */
     public static void resetClock() {
-        clock = Clock.systemDefaultZone();
+        threadLocalClock.remove();
     }
 }

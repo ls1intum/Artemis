@@ -7,7 +7,7 @@ import { take } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { Faq, FaqState } from 'app/communication/shared/entities/faq.model';
+import { CreateFaqDTO, Faq, FaqState, UpdateFaqDTO } from 'app/communication/shared/entities/faq.model';
 import { FaqService } from 'app/communication/faq/faq.service';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
 import { EMPTY, of } from 'rxjs';
@@ -18,6 +18,8 @@ describe('Faq Service', () => {
     let expectedResult: any;
     let elemDefault: Faq;
     let courseId: number;
+    let createFaqDTODefault: CreateFaqDTO;
+    let updateFaqDTODefault: UpdateFaqDTO;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -33,7 +35,11 @@ describe('Faq Service', () => {
         elemDefault.questionAnswer = 'Answer';
         elemDefault.id = 1;
         elemDefault.faqState = FaqState.ACCEPTED;
+        elemDefault.categories = [new FaqCategory('category1', '#6ae8ac')];
         courseId = 1;
+
+        createFaqDTODefault = CreateFaqDTO.toCreateFaqDto(elemDefault);
+        updateFaqDTODefault = UpdateFaqDTO.toUpdateDto(elemDefault);
     });
 
     afterEach(() => {
@@ -45,7 +51,7 @@ describe('Faq Service', () => {
             const returnedFromService = { ...elemDefault };
             const expected = { ...returnedFromService };
             service
-                .create(courseId, elemDefault)
+                .create(courseId, createFaqDTODefault)
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
@@ -61,7 +67,7 @@ describe('Faq Service', () => {
             const expected = { ...returnedFromService };
             const faqId = elemDefault.id!;
             service
-                .update(courseId, elemDefault)
+                .update(courseId, updateFaqDTODefault)
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
@@ -229,17 +235,10 @@ describe('Faq Service', () => {
             expect(filteredFaq).toIncludeAllMembers([faq1, faq11]);
         });
 
-        it('should convert String into FAQ categories   correctly', async () => {
+        it('should convert stringified categories from server into FaqCategory objects', () => {
             const convertedCategory = service.convertFaqCategoriesAsStringFromServer(['{"category":"category1", "color":"red"}']);
             expect(convertedCategory[0].category).toBe('category1');
             expect(convertedCategory[0].color).toBe('red');
-        });
-
-        it('should convert FAQ categories into strings', () => {
-            const faq2 = new Faq();
-            faq2.categories = [new FaqCategory('testing', 'red')];
-            const convertedCategory = FaqService.stringifyFaqCategories(faq2);
-            expect(convertedCategory).toEqual(['{"color":"red","category":"testing"}']);
         });
 
         it('should return if all tokens exist in FAQ title or answer', () => {
@@ -270,5 +269,56 @@ describe('Faq Service', () => {
     it('should make PUT request to enable FAQ', () => {
         service.enable(1).subscribe((resp) => expect(resp).toEqual(of(EMPTY)));
         httpMock.expectOne({ method: 'PUT', url: `api/communication/courses/1/faqs/enable` });
+    });
+
+    it('should stringify categories without mutating the original createFaqDTO', () => {
+        const original = createFaqDTODefault;
+        const originalRef = original.categories;
+
+        const copy = FaqService.convertCreateFaqFromClient(original);
+
+        expect(original.categories).toBe(originalRef);
+        expect((original.categories?.[0] as any).category).toBe('category1');
+        expect(typeof (copy.categories?.[0] as unknown as string)).toBe('string');
+        const parsed = JSON.parse(copy.categories?.[0] as unknown as string);
+        expect(parsed).toEqual({ category: 'category1', color: '#6ae8ac' });
+    });
+
+    it('should stringify categories without mutating the original updateFaqDTO', () => {
+        const original = updateFaqDTODefault;
+        const originalRef = original.categories;
+
+        const copy = FaqService.convertUpdateFaqFromClient(original);
+
+        expect(original.categories).toBe(originalRef);
+        expect(typeof (copy.categories?.[0] as unknown as string)).toBe('string');
+        expect(JSON.parse(copy.categories?.[0] as unknown as string)).toEqual({ category: 'category1', color: '#6ae8ac' });
+        expect((original.categories?.[0] as any).category).toBe('category1');
+    });
+
+    it('should return undefined when DTO has no categories', () => {
+        const noCats = new CreateFaqDTO(createFaqDTODefault.faqState, createFaqDTODefault.questionTitle, courseId, undefined, createFaqDTODefault.questionAnswer);
+        const res = FaqService.stringifyFaqCategories(noCats);
+        expect(res).toBeUndefined();
+    });
+
+    it('should throw if faqState is missing when converting to CreateFaqDto', () => {
+        const f = new Faq();
+        f.questionTitle = 'Title';
+        expect(() => CreateFaqDTO.toCreateFaqDto(f)).toThrow('The state should be present to create FAQ');
+    });
+
+    it('should throw if id is missing when converting to UpdateFaqDTO', () => {
+        const f = new Faq();
+        f.faqState = FaqState.ACCEPTED;
+        f.questionTitle = 'Title';
+        expect(() => UpdateFaqDTO.toUpdateDto(f)).toThrow('The id should be present to update FAQ');
+    });
+
+    it('should throw if faqState is missing when converting to UpdateFaqDTO', () => {
+        const f = new Faq();
+        f.id = 99;
+        f.questionTitle = 'Title';
+        expect(() => UpdateFaqDTO.toUpdateDto(f)).toThrow('The state should be present to update FAQ');
     });
 });

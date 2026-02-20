@@ -54,7 +54,7 @@ public class CompetencyService extends CourseCompetencyService {
             Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, StandardizedCompetencyRepository standardizedCompetencyRepository,
             CourseCompetencyRepository courseCompetencyRepository, ExerciseService exerciseService, LearningObjectImportService learningObjectImportService,
             CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository, CourseRepository courseRepository,
-            CompetencyExerciseLinkRepository competencyExerciseLinkRepository, @Lazy AtlasMLService atlasMLService) {
+            CompetencyExerciseLinkRepository competencyExerciseLinkRepository, AtlasMLService atlasMLService) {
         super(competencyProgressRepository, courseCompetencyRepository, competencyRelationRepository, competencyProgressService, exerciseService, learningPathService,
                 authCheckService, standardizedCompetencyRepository, lectureUnitRepositoryApi, learningObjectImportService, courseRepository, competencyLectureUnitLinkRepository,
                 atlasMLService);
@@ -157,5 +157,18 @@ public class CompetencyService extends CourseCompetencyService {
             });
             exerciseUnit.setCompetencyLinks(competencyLectureUnitLinks);
         });
+    }
+
+    /**
+     * Loads and returns the competency with the given id.
+     * <p>
+     * Uses a regular repository lookup to ensure the competency is fully initialized
+     * and can be safely accessed outside the persistence context.
+     *
+     * @param competencyId the id of the competency
+     * @return the loaded competency entity
+     */
+    public Competency loadCompetency(Long competencyId) {
+        return competencyRepository.findByIdElseThrow(competencyId);
     }
 }

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
-import { expectedProfileInfo } from 'app/core/layouts/profiles/shared/profile.service.spec';
+import { expectedProfileInfo } from 'test/helpers/sample/profile-info-sample-data';
 import { MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RouterModule } from '@angular/router';
@@ -50,7 +50,7 @@ describe('FooterComponent', () => {
         it('should display git information if not in production or on a test server', () => {
             component.isProduction = false;
             component.isTestServer = true;
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             const gitInfoElement = fixture.debugElement.nativeElement.querySelector('.footer-git');
             expect(gitInfoElement).not.toBeNull();
@@ -60,7 +60,7 @@ describe('FooterComponent', () => {
     it('should not display git information if in production and not a test server', () => {
         component.isProduction = true;
         component.isTestServer = false;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const gitInfoElement = fixture.debugElement.nativeElement.querySelector('.footer-git-wrapper');
         expect(gitInfoElement).toBeNull();
@@ -74,7 +74,7 @@ describe('FooterComponent', () => {
             component.gitCommitUser = 'user123';
             component.isProduction = false;
             component.isTestServer = false;
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
         });
 
         it('should display all git information', () => {

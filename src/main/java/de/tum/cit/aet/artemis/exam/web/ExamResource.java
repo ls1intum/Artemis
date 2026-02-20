@@ -19,9 +19,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.BadRequestException;
 
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -88,6 +88,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.domain.SuspiciousSessionsAnalysisOptions;
+import de.tum.cit.aet.artemis.exam.dto.ActiveExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamInformationDTO;
@@ -250,6 +251,7 @@ public class ExamResource {
      */
     @PutMapping("courses/{courseId}/exams")
     @EnforceAtLeastInstructor
+    // TODO: use a DTO here
     public ResponseEntity<Exam> updateExam(@PathVariable Long courseId, @RequestBody Exam updatedExam) throws URISyntaxException {
         log.debug("REST request to update an exam : {}", updatedExam);
 
@@ -274,6 +276,7 @@ public class ExamResource {
         updatedExam.setExerciseGroups(originalExam.getExerciseGroups());
         updatedExam.setStudentExams(originalExam.getStudentExams());
         updatedExam.setExamUsers(originalExam.getExamUsers());
+        updatedExam.setExamRoomAssignments(originalExam.getExamRoomAssignments());
 
         Channel updatedChannel = channelService.updateExamChannel(originalExam, updatedExam);
 
@@ -296,8 +299,8 @@ public class ExamResource {
         }
 
         // NOTE: if the end date was changed, we need to update student exams and re-schedule exercises
-        if (comparator.compare(originalExam.getEndDate(), savedExam.getEndDate()) != 0) {
-            int workingTimeChange = savedExam.getDuration() - originalExamDuration;
+        int workingTimeChange = savedExam.getDuration() - originalExamDuration;
+        if (workingTimeChange != 0) {
             Exam examWithStudentExams = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(savedExam.getId());
             examService.updateStudentExamsAndRescheduleExercises(examWithStudentExams, originalExamDuration, workingTimeChange);
         }
@@ -408,6 +411,7 @@ public class ExamResource {
     private void checkForExamConflictsElseThrow(Long courseId, Exam exam) {
         checkExamCourseIdElseThrow(courseId, exam);
         checkExamForDatesConflictsElseThrow(exam);
+        checkExamNumericFieldLimitsElseThrow(exam);
         checkExamForWorkingTimeConflictsElseThrow(exam);
         checkExamPointsAndCorrectionRoundsElseThrow(exam);
 
@@ -427,6 +431,40 @@ public class ExamResource {
 
         if (!exam.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("The course id does not match the id of the course connected to the exam.", ENTITY_NAME, "wrongCourseId");
+        }
+    }
+
+    /**
+     * Validates numeric field limits for exam configuration.
+     * Maximum values:
+     * - Working time: 2592000 seconds (30 days)
+     * - Grace period: 3600 seconds (1 hour)
+     * - Exam max points: 9999
+     * - Number of exercises: 100
+     *
+     * @param exam the exam to be checked
+     */
+    private void checkExamNumericFieldLimitsElseThrow(Exam exam) {
+        // Max working time: 30 days = 2592000 seconds
+        final int maxWorkingTimeSeconds = 2_592_000;
+        final int workingTimeToCheck = exam.isTestExam() ? exam.getWorkingTime() : exam.getDuration();
+        if (workingTimeToCheck > maxWorkingTimeSeconds) {
+            throw new BadRequestAlertException("The working time is too long. Maximum allowed is 30 days (43200 minutes).", ENTITY_NAME, "examWorkingTimeTooHigh");
+        }
+
+        // Grace period: max 1 hour = 3600 seconds
+        if (exam.getGracePeriod() != null && exam.getGracePeriod() > 3600) {
+            throw new BadRequestAlertException("The grace period is too long. Maximum allowed is 3600 seconds.", ENTITY_NAME, "examGracePeriodTooHigh");
+        }
+
+        // Max points: max 9999
+        if (exam.getExamMaxPoints() > 9999) {
+            throw new BadRequestAlertException("The maximum points value is too high. Maximum allowed is 9999.", ENTITY_NAME, "examMaxPointsTooHigh");
+        }
+
+        // Number of exercises: max 100
+        if (exam.getNumberOfExercisesInExam() != null && exam.getNumberOfExercisesInExam() > 100) {
+            throw new BadRequestAlertException("The number of exercises is too high. Maximum allowed is 100.", ENTITY_NAME, "examNumberOfExercisesTooHigh");
         }
     }
 
@@ -512,17 +550,34 @@ public class ExamResource {
     }
 
     /**
-     * GET /exams/active : Find all active exams the user is allowed to access.
-     * Exams that are active have visibilityDate for the previous and upcoming seven days.
+     * GET /exams/active : Returns all currently active exams the user is allowed to access.
      *
-     * @param pageable pageable parameters
-     * @return the ResponseEntity with status 200 (OK) and a list of exams. The list can be empty
+     * <p>
+     * <b>Usage:</b> This endpoint is exclusively used by the exam attendance check app
+     * (mobile/tablet). It is not used by the Artemis web client.
+     * </p>
+     *
+     * <p>
+     * <b>Visibility rules:</b> An exam is considered <i>active</i> if its {@code visibleDate}
+     * lies within a specific time window relative to the current time. The window depends
+     * on the user’s role <b>in the corresponding course</b>:
+     * <ul>
+     * <li><b>Instructors</b> see exams visible from <i>now − 7 days</i> to <i>now + 7 days</i>.</li>
+     * <li><b>Editors and tutors</b> see exams visible from <i>now</i> to <i>now + 7 days</i>.</li>
+     * </ul>
+     * These role-dependent windows ensure that instructors retain broader operational visibility,
+     * while tutors and editors see only upcoming exams.
+     * </p>
+     *
+     * @param pageable pagination parameters supplied by the client (page number, size, sort)
+     * @return a {@link ResponseEntity} with status 200 (OK) and the list of visible active exams;
+     *         the list may be empty if no active exams exist
      */
     @GetMapping("exams/active")
-    @EnforceAtLeastInstructor
-    public ResponseEntity<List<Exam>> getAllActiveExams(Pageable pageable) {
+    @EnforceAtLeastTutor
+    public ResponseEntity<List<ActiveExamDTO>> getAllActiveExams(Pageable pageable) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
-        Page<Exam> page = examService.getAllActiveExams(pageable, user);
+        Page<ActiveExamDTO> page = examService.getAllActiveExams(pageable, user);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
@@ -908,7 +963,7 @@ public class ExamResource {
         return ResponseEntity.ok().body(studentExams);
     }
 
-    @NotNull
+    @NonNull
     private Exam checkAccessForStudentExamGenerationAndLogAuditEvent(Long courseId, Long examId, String auditEventAction) {
         final Exam exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId);
 

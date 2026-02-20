@@ -5,6 +5,7 @@
             "null": "",
             "undefined": "",
             "AUTOMATIC": "automatisch",
+            "AUTOMATIC_ATHENA": "automatisch (Athena)",
             "SEMI_AUTOMATIC": "halbautomatisch",
             "MANUAL": "manuell",
             "forExerciseHeader": {
@@ -15,6 +16,7 @@
                 "null": "Es steht kein Bewertungsmodus fest.",
                 "undefined": "Es steht kein Bewertungsmodus fest.",
                 "AUTOMATIC": "Von Lehrenden erstellte Testfälle korrigieren automatisch deine Abgabe für diese Aufgabe und geben sofortiges Feedback.",
+                "AUTOMATIC_ATHENA": "Diese Aufgabe wird automatisch von Athena bewertet, einem KI-gestützten Bewertungssystem.",
                 "SEMI_AUTOMATIC": "Diese Aufgabe wird manuell bewertet, jedoch helfen von Lehrenden erstellte Testfälle bei der Bewertung und geben sofortiges Feedback.",
                 "MANUAL": "Diese Aufgabe wird manuell bewertet."
             }

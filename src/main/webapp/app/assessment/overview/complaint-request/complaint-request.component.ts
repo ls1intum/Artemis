@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -14,7 +14,7 @@ import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
     imports: [NgbTooltip, TranslateDirective, FormsModule, ArtemisTranslatePipe, ArtemisDatePipe, ArtemisTimeAgoPipe],
 })
 export class ComplaintRequestComponent {
-    @Input() complaint: Complaint;
-    @Input() maxComplaintTextLimit: number;
+    readonly complaint = input.required<Complaint>();
+    readonly maxComplaintTextLimit = input.required<number>();
     readonly ComplaintType = ComplaintType;
 }

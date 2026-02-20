@@ -23,6 +23,9 @@ export enum ProgrammingExerciseInputField {
     SEQUENTIAL_TEST_RUNS = 'sequentialTestRuns',
     CUSTOMIZE_BUILD_SCRIPT = 'customizeBuildScript',
 
+    // Version Control section
+    ALLOW_BRANCHING = 'allowBranching',
+
     // Problem section
     PROBLEM_STATEMENT = 'problemStatement',
     LINKED_COMPETENCIES = 'linkedCompetencies',
@@ -72,6 +75,8 @@ export const IS_DISPLAYED_IN_SIMPLE_MODE: InputFieldEditModeMapping = {
     enableStaticCodeAnalysis: false,
     sequentialTestRuns: false,
     customizeBuildScript: false,
+    // Version Control section
+    allowBranching: false,
     // Problem section
     problemStatement: true,
     linkedCompetencies: false,

@@ -22,6 +22,7 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExamWideAnnouncementEvent } from 'app/exam/overview/services/exam-participation-live-events.service';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { ExamDeletionSummaryDTO } from 'app/exam/shared/entities/exam-deletion-summary.model';
+import { ExportExamUserDTO } from 'app/exam/manage/students/export-users/students-export.model';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
@@ -221,8 +222,8 @@ export class ExamManagementService {
      * @param courseId The course id.
      * @param examId The id of the exam to delete.
      */
-    delete(courseId: number, examId: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}/${courseId}/exams/${examId}`, { observe: 'response' });
+    delete(courseId: number, examId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${courseId}/exams/${examId}`, { observe: 'response' });
     }
 
     /**
@@ -294,9 +295,9 @@ export class ExamManagementService {
      * @param studentLogin Login of the student
      * @param withParticipationsAndSubmission
      */
-    removeStudentFromExam(courseId: number, examId: number, studentLogin: string, withParticipationsAndSubmission = false): Observable<HttpResponse<any>> {
+    removeStudentFromExam(courseId: number, examId: number, studentLogin: string, withParticipationsAndSubmission = false): Observable<HttpResponse<void>> {
         const options = createRequestOption({ withParticipationsAndSubmission });
-        return this.http.delete<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/students/${studentLogin}`, {
+        return this.http.delete<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/students/${studentLogin}`, {
             params: options,
             observe: 'response',
         });
@@ -310,7 +311,7 @@ export class ExamManagementService {
      */
     removeAllStudentsFromExam(courseId: number, examId: number, withParticipationsAndSubmission = false) {
         const options = createRequestOption({ withParticipationsAndSubmission });
-        return this.http.delete<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/students`, {
+        return this.http.delete<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/students`, {
             params: options,
             observe: 'response',
         });
@@ -497,8 +498,8 @@ export class ExamManagementService {
      * @param courseId the id of the course of the exam
      * @param examId The id of the exam to archive
      */
-    archiveExam(courseId: number, examId: number): Observable<HttpResponse<any>> {
-        return this.http.put(`${this.resourceUrl}/${courseId}/exams/${examId}/archive`, {}, { observe: 'response' });
+    archiveExam(courseId: number, examId: number): Observable<HttpResponse<void>> {
+        return this.http.put<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/archive`, {}, { observe: 'response' });
     }
 
     cleanupExam(courseId: number, examId: number): Observable<HttpResponse<void>> {
@@ -511,5 +512,9 @@ export class ExamManagementService {
 
     getExercisesWithPotentialPlagiarismForExam(courseId: number, examId: number): Observable<Exercise[]> {
         return this.http.get<Exercise[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/exercises-with-potential-plagiarism`);
+    }
+
+    exportExamUsers(courseId: number, examId: number): Observable<ExportExamUserDTO[]> {
+        return this.http.get<ExportExamUserDTO[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/export-students`);
     }
 }

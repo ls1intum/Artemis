@@ -232,8 +232,8 @@
                                     'artemisApp.examStatus.correction.complaintsCount'
                                         | artemisTranslate
                                             : {
-                                                  done: examChecklist.numberOfAllComplaintsDone!,
-                                                  total: examChecklist.numberOfAllComplaints!,
+                                                  done: examChecklist.numberOfAllComplaintsDone ?? 0,
+                                                  total: examChecklist.numberOfAllComplaints ?? 0,
                                               }
                                 }}
                             </span>

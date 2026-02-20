@@ -7,7 +7,7 @@
             "sshSettings": "SSH",
             "vcsAccessTokenSettings": "VCS Token",
             "passkeys": "Passkeys",
-            "externalLLMUsage": "External LLM Usage",
+            "LLMUsage": "LLM Usage",
             "accountInformation": "Account Information",
             "learnerProfile": "Learner Profile",
             "notificationSettings": "Notifications",
@@ -18,11 +18,15 @@
             "idePreferencesPage": {
                 "description": "Choose the IDEs you want to use for opening programming exercises.",
                 "default": "Default",
-                "jetbrainsHelp": "To use JetBrains IDEs, please install the JetBrains Toolbox."
+                "jetbrainsHelp": "To use JetBrains IDEs, please install the JetBrains Toolbox.",
+                "addNewLanguage": "Add new language specific preferences"
             },
-            "externalLLMUsageSettingsPage": {
-                "accepted": "You have accepted the usage of external LLMs on {{acceptedDate}}.",
-                "declined": "You have not accepted the usage of external LLMs."
+            "LLMUsageSettingsPage": {
+                "cloudAccepted": "You have selected Cloud AI on {{acceptedDate}}.",
+                "onPremiseAccepted": "You have selected On-premise AI on {{acceptedDate}}.",
+                "AIDeclined": "You have explicitly declined AI usage on {{acceptedDate}}.",
+                "noAISelected": "You haven't made a decision on the usage of LLMs.",
+                "chooseAI": "Change Selection"
             },
             "sshSettingsPage": {
                 "sshSettingsInfoText": "Here you can set a public SSH key to clone git repositories via SSH. For more details see the documentation.",
@@ -39,7 +43,7 @@
                 "cancelSavingSshKey": "Cancel",
                 "editExistingSshKey": "Edit",
                 "viewExistingSshKey": "View",
-                "addNewSshKey": "Add SSH key",
+                "addNewSshKey": "Add new SSH key",
                 "sshKeyDetails": "SSH key details",
                 "deleteSshKey": "Delete",
                 "sshKeyDisplayedInformation": "This is your currently configured SSH key:",
@@ -96,11 +100,13 @@
                 "noneRegistered": "You have not registered any passkeys with Artemis yet.",
                 "deletePasskeyQuestion": "Do you really want to delete your passkey for passwordless authentication with Artemis?",
                 "noPasskeyRegistered": "You have not registered any passkeys with Artemis yet.",
-                "addNewPasskey": "Add a passkey",
+                "addNewPasskey": "Add new passkey",
                 "yourPasskeys": "Your passkeys",
                 "created": "Created on",
                 "lastUsed": "Last used on",
                 "label": "label",
+                "approved": "Approved",
+                "notApproved": "Not Approved",
                 "validation": {
                     "labelLength": "The label must not exceed {{maxLabelLength}} characters."
                 },
@@ -109,7 +115,8 @@
                 },
                 "error": {
                     "invalidCredential": "An invalid passkey was provided. Please try again with a different authenticator (e.g. Apple Keychain, Windows Hello, Google Password Manager, etc.).",
-                    "login": "Login with Passkey failed. Please check you registered a passkey with Artemis.",
+                    "login": "Login with Passkey failed. Please check that you registered a passkey with Artemis. If you registered a passkey reload the page and try to log in again.",
+                    "loginDeactivated": "Login with Passkey failed, please reload the page and try again. If that does not help, your account was most likely deactivated.",
                     "passkeyAlreadyRegistered": "You have already registered a passkey with the selected authenticator, choose a different authenticator if you want to register another passkey.",
                     "registration": "The passkey could not be registered. Please try again.",
                     "save": "The passkey could not be saved. Please try again.",
@@ -134,10 +141,11 @@
                 "joinedArtemis": "Joined Artemis on",
                 "profilePicture": "Profile Picture",
                 "addProfilePicture": "Add a profile picture",
-                "sshKey": "Public SSH Key"
+                "sshKey": "Public SSH Key",
+                "editAccountSettings": "Edit Account Settings"
             },
             "categories": {
-                "externalLLMUsage": "External LLM Usage Settings",
+                "LLMUsage": "LLM Usage Settings",
                 "NOTIFICATION_SETTINGS": "Notification Settings",
                 "SCIENCE_SETTINGS": "Science Settings",
                 "SSH_SETTINGS": "SSH Settings",
@@ -231,9 +239,8 @@
             "quizTrainingSettings": {
                 "quizTraining": "Quiz Training",
                 "leaderboardSettings": "Leaderboard Settings",
-                "leaderboardVisibility": "Show name in leaderboard",
                 "leaderboardVisibilityTooltip": "Determines if your name and results are shown in the Quiz Training leaderboard",
-                "leaderboardVisibilityInfo": "When enabled, your name will appear in the Quiz Training leaderboard. Disable this option if you don't want to appear in the leaderboard.",
+                "leaderboardVisibilityInfo": "When enabled, your name will appear in the Quiz Training leaderboard across all courses. Disable this option if you don't want to appear in the leaderboard.",
                 "visitQuizTrainingFirst": "Please visit the Quiz Training mode first to enable leaderboard settings.",
                 "updateSuccess": "Leaderboard settings updated successfully."
             }

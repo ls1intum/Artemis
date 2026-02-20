@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -68,28 +70,29 @@ import { LanguageTableCellComponent } from 'app/assessment/shared/assessment-das
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('ExerciseAssessmentDashboardComponent', () => {
+    setupTestBed({ zoneless: true });
     let comp: ExerciseAssessmentDashboardComponent;
     let fixture: ComponentFixture<ExerciseAssessmentDashboardComponent>;
 
     let modelingSubmissionService: ModelingSubmissionService;
-    let modelingSubmissionStubWithAssessment: jest.SpyInstance;
-    let modelingSubmissionStubWithoutAssessment: jest.SpyInstance;
+    let modelingSubmissionStubWithAssessment: MockInstance;
+    let modelingSubmissionStubWithoutAssessment: MockInstance;
 
     let textSubmissionService: TextSubmissionService;
-    let textSubmissionStubWithAssessment: jest.SpyInstance;
-    let textSubmissionStubWithoutAssessment: jest.SpyInstance;
+    let textSubmissionStubWithAssessment: MockInstance;
+    let textSubmissionStubWithoutAssessment: MockInstance;
 
     let fileUploadSubmissionService: FileUploadSubmissionService;
-    let fileUploadSubmissionStubWithAssessment: jest.SpyInstance;
-    let fileUploadSubmissionStubWithoutAssessment: jest.SpyInstance;
+    let fileUploadSubmissionStubWithAssessment: MockInstance;
+    let fileUploadSubmissionStubWithoutAssessment: MockInstance;
 
     let programmingSubmissionService: ProgrammingSubmissionService;
-    let programmingSubmissionStubWithAssessment: jest.SpyInstance;
-    let programmingSubmissionStubWithoutAssessment: jest.SpyInstance;
+    let programmingSubmissionStubWithAssessment: MockInstance;
+    let programmingSubmissionStubWithoutAssessment: MockInstance;
 
     let exerciseService: ExerciseService;
-    let exerciseServiceGetForTutorsStub: jest.SpyInstance;
-    let exerciseServiceGetStatsForTutorsStub: jest.SpyInstance;
+    let exerciseServiceGetForTutorsStub: MockInstance;
+    let exerciseServiceGetStatsForTutorsStub: MockInstance;
 
     let tutorParticipationService: TutorParticipationService;
 
@@ -181,7 +184,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     ];
     const stats = {
         numberOfSubmissions: { inTime: 12, late: 5 },
-        totalNumberOfAssessments: { inTime: 9, late: 1 },
+        totalNumberOfAssessments: 9,
         numberOfAssessmentsOfCorrectionRounds,
         numberOfLockedAssessmentByOtherTutorsOfCorrectionRound,
     } as StatsForDashboard;
@@ -197,7 +200,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     } as SubmissionWithComplaintDTO;
     const lockLimitErrorResponse = new HttpErrorResponse({ error: { errorKey: 'lockedSubmissionsLimitReached' } });
 
-    let navigateSpy: jest.SpyInstance;
+    let navigateSpy: MockInstance;
     const route = {
         snapshot: {
             paramMap: convertToParamMap({
@@ -207,9 +210,10 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             }),
         },
     } as any as ActivatedRoute;
-    const imports = [RouterModule.forRoot([]), ExerciseAssessmentDashboardComponent, FaIconComponent];
-
-    const declarations = [
+    const imports = [
+        RouterModule.forRoot([]),
+        ExerciseAssessmentDashboardComponent,
+        FaIconComponent,
         MockComponent(TutorLeaderboardComponent),
         MockComponent(TutorParticipationGraphComponent),
         MockComponent(HeaderExercisePageWithDetailsComponent),
@@ -253,9 +257,13 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports,
-            declarations,
             providers,
-        }).compileComponents();
+        })
+            .overrideComponent(ExerciseAssessmentDashboardComponent, {
+                remove: { imports: [TutorLeaderboardComponent] },
+                add: { imports: [MockComponent(TutorLeaderboardComponent)] },
+            })
+            .compileComponents();
         fixture = TestBed.createComponent(ExerciseAssessmentDashboardComponent);
         comp = fixture.componentInstance;
         modelingSubmissionService = TestBed.inject(ModelingSubmissionService);
@@ -264,28 +272,28 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         exerciseService = TestBed.inject(ExerciseService);
         programmingSubmissionService = TestBed.inject(ProgrammingSubmissionService);
         submissionService = TestBed.inject(SubmissionService);
-        jest.spyOn(submissionService, 'getSubmissionsWithComplaintsForTutor').mockReturnValue(of(new HttpResponse({ body: [] })));
+        vi.spyOn(submissionService, 'getSubmissionsWithComplaintsForTutor').mockReturnValue(of(new HttpResponse({ body: [] })));
         const router = fixture.debugElement.injector.get(Router);
-        navigateSpy = jest.spyOn(router, 'navigate').mockImplementation();
+        navigateSpy = vi.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
         tutorParticipationService = TestBed.inject(TutorParticipationService);
-        exerciseServiceGetForTutorsStub = jest.spyOn(exerciseService, 'getForTutors');
-        exerciseServiceGetStatsForTutorsStub = jest.spyOn(exerciseService, 'getStatsForTutors');
+        exerciseServiceGetForTutorsStub = vi.spyOn(exerciseService, 'getForTutors');
+        exerciseServiceGetStatsForTutorsStub = vi.spyOn(exerciseService, 'getStatsForTutors');
         exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: modelingExercise, headers: new HttpHeaders() })));
         exerciseServiceGetStatsForTutorsStub.mockReturnValue(of(new HttpResponse({ body: stats, headers: new HttpHeaders() })));
         comp.exerciseId = modelingExercise.id!;
-        modelingSubmissionStubWithoutAssessment = jest.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment');
-        modelingSubmissionStubWithAssessment = jest.spyOn(modelingSubmissionService, 'getSubmissions');
-        textSubmissionStubWithoutAssessment = jest.spyOn(textSubmissionService, 'getSubmissionWithoutAssessment');
-        textSubmissionStubWithAssessment = jest.spyOn(textSubmissionService, 'getSubmissions');
-        fileUploadSubmissionStubWithoutAssessment = jest.spyOn(fileUploadSubmissionService, 'getSubmissionWithoutAssessment');
-        fileUploadSubmissionStubWithAssessment = jest.spyOn(fileUploadSubmissionService, 'getSubmissions');
-        programmingSubmissionStubWithoutAssessment = jest.spyOn(programmingSubmissionService, 'getSubmissionWithoutAssessment');
-        programmingSubmissionStubWithAssessment = jest.spyOn(programmingSubmissionService, 'getSubmissions');
+        modelingSubmissionStubWithoutAssessment = vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment');
+        modelingSubmissionStubWithAssessment = vi.spyOn(modelingSubmissionService, 'getSubmissions');
+        textSubmissionStubWithoutAssessment = vi.spyOn(textSubmissionService, 'getSubmissionWithoutAssessment');
+        textSubmissionStubWithAssessment = vi.spyOn(textSubmissionService, 'getSubmissions');
+        fileUploadSubmissionStubWithoutAssessment = vi.spyOn(fileUploadSubmissionService, 'getSubmissionWithoutAssessment');
+        fileUploadSubmissionStubWithAssessment = vi.spyOn(fileUploadSubmissionService, 'getSubmissions');
+        programmingSubmissionStubWithoutAssessment = vi.spyOn(programmingSubmissionService, 'getSubmissionWithoutAssessment');
+        programmingSubmissionStubWithAssessment = vi.spyOn(programmingSubmissionService, 'getSubmissions');
         textSubmissionStubWithoutAssessment.mockReturnValue(of(textSubmission));
-        textSubmissionStubWithAssessment.mockReturnValue(of(textSubmissionAssessed));
-        fileUploadSubmissionStubWithAssessment.mockReturnValue(of(fileUploadSubmissionAssessed));
+        textSubmissionStubWithAssessment.mockReturnValue(of(new HttpResponse({ body: [textSubmissionAssessed], headers: new HttpHeaders() })));
+        fileUploadSubmissionStubWithAssessment.mockReturnValue(of(new HttpResponse({ body: [fileUploadSubmissionAssessed], headers: new HttpHeaders() })));
         fileUploadSubmissionStubWithoutAssessment.mockReturnValue(of(fileUploadSubmission));
-        programmingSubmissionStubWithAssessment.mockReturnValue(of(programmingSubmissionAssessed));
+        programmingSubmissionStubWithAssessment.mockReturnValue(of(new HttpResponse({ body: [programmingSubmissionAssessed], headers: new HttpHeaders() })));
         programmingSubmissionStubWithoutAssessment.mockReturnValue(of(programmingSubmission));
         modelingSubmissionStubWithAssessment.mockReturnValue(of(new HttpResponse({ body: [modelingSubmissionAssessed], headers: new HttpHeaders() })));
         modelingSubmissionStubWithoutAssessment.mockReturnValue(of(modelingSubmission));
@@ -295,10 +303,10 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
-    it('should initialize', fakeAsync(() => {
+    it('should initialize', () => {
         const user = { id: 10, login: 'tutor1' } as User;
         accountService.userIdentity.set(user);
         fixture.detectChanges();
@@ -307,15 +315,13 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.examId).toBe(2);
         expect(comp.exerciseId).toBe(modelingExercise.id);
 
-        tick();
-
         expect(comp.tutor).toEqual(user);
 
-        const setupGraphSpy = jest.spyOn(comp, 'setupGraph');
+        const setupGraphSpy = vi.spyOn(comp, 'setupGraph');
 
         translateService.use('en'); // Change language.
-        expect(setupGraphSpy).toHaveBeenCalledOnce();
-    }));
+        expect(setupGraphSpy).toHaveBeenCalledTimes(1);
+    });
 
     it('should initialize with tutor leaderboard entry', () => {
         const tutor = { id: 10, login: 'tutor1' } as User;
@@ -342,10 +348,10 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.moreFeedbackRequestsDashboardInfo.tutor).toBe(tutorLeaderBoardEntry.numberOfTutorMoreFeedbackRequests);
         expect(comp.ratingsDashboardInfo.tutor).toBe(tutorLeaderBoardEntry.numberOfTutorRatings);
 
-        const setupGraphSpy = jest.spyOn(comp, 'setupGraph');
+        const setupGraphSpy = vi.spyOn(comp, 'setupGraph');
 
         translateService.use('en'); // Change language.
-        expect(setupGraphSpy).toHaveBeenCalledOnce();
+        expect(setupGraphSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should set unassessedSubmission if lock limit is not reached', () => {
@@ -359,7 +365,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         expect(comp.unassessedSubmissionByRound?.get(0)).toEqual(modelingSubmission);
         expect(comp.unassessedSubmissionByRound?.get(0)?.latestResult).toBeUndefined();
-        expect(comp.submissionLockLimitReached).toBeFalse();
+        expect(comp.submissionLockLimitReached).toBe(false);
         expect(comp.assessedSubmissionsByRound?.get(0)).toHaveLength(0);
     });
 
@@ -374,7 +380,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(2, modelingExercise.id, undefined, 1);
 
         expect(comp.unassessedSubmissionByRound?.get(1)).toBeUndefined();
-        expect(comp.submissionLockLimitReached).toBeTrue();
+        expect(comp.submissionLockLimitReached).toBe(true);
         expect(comp.assessedSubmissionsByRound?.get(1)).toHaveLength(0);
     });
 
@@ -397,7 +403,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         const errorResponse = new HttpErrorResponse({ error });
 
         const alertService = TestBed.inject(AlertService);
-        const alertServiceSpy = jest.spyOn(alertService, 'error');
+        const alertServiceSpy = vi.spyOn(alertService, 'error');
 
         modelingSubmissionStubWithoutAssessment.mockReturnValue(throwError(() => errorResponse));
         modelingSubmissionStubWithAssessment.mockReturnValue(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
@@ -445,16 +451,16 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
     it('should calculateStatus DRAFT', () => {
         expect(modelingSubmission.latestResult).toBeUndefined();
-        expect(comp.calculateSubmissionStatusIsDraft(modelingSubmission)).toBeTrue();
+        expect(comp.calculateSubmissionStatusIsDraft(modelingSubmission)).toBe(true);
     });
 
     it('should call hasBeenCompletedByTutor', () => {
         comp.exampleSubmissionsCompletedByTutor = [{ id: 1 }, { id: 2 }];
-        expect(comp.hasBeenCompletedByTutor(1)).toBeTrue();
+        expect(comp.hasBeenCompletedByTutor(1)).toBe(true);
     });
 
     it('should call readInstruction', () => {
-        const tutorParticipationServiceCreateStub = jest.spyOn(tutorParticipationService, 'create');
+        const tutorParticipationServiceCreateStub = vi.spyOn(tutorParticipationService, 'create');
         const dto: TutorParticipationDTO = {
             id: 1,
             exerciseId: comp.exerciseId,
@@ -463,19 +469,19 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         };
 
         tutorParticipationServiceCreateStub.mockImplementation(() => {
-            expect(comp.isLoading).toBeTrue();
+            expect(comp.isLoading).toBe(true);
             return of(new HttpResponse({ body: dto, headers: new HttpHeaders() }));
         });
 
         expect(comp.tutorParticipation).toBeUndefined();
-        expect(comp.isLoading).toBeFalse();
+        expect(comp.isLoading).toBe(false);
 
         comp.readInstruction();
 
-        expect(tutorParticipationServiceCreateStub).toHaveBeenCalledOnce();
+        expect(tutorParticipationServiceCreateStub).toHaveBeenCalledTimes(1);
         expect(tutorParticipationServiceCreateStub).toHaveBeenCalledWith(comp.exerciseId);
 
-        expect(comp.isLoading).toBeFalse();
+        expect(comp.isLoading).toBe(false);
 
         expect(comp.tutorParticipation).toEqual(dto);
         expect(comp.tutorParticipationStatus).toEqual(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
@@ -527,7 +533,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
             exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: programmingExerciseWithAutomaticAssessment, headers: new HttpHeaders() })));
 
-            const translateServiceSpy = jest.spyOn(translateService, 'instant');
+            const translateServiceSpy = vi.spyOn(translateService, 'instant');
 
             comp.loadAll();
 
@@ -717,7 +723,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         comp.exercise.type = ExerciseType.TEXT;
 
         const secondCorrectionEnabled = true;
-        jest.spyOn(exerciseService, 'toggleSecondCorrection').mockImplementation((exerciseId) => {
+        vi.spyOn(exerciseService, 'toggleSecondCorrection').mockImplementation((exerciseId) => {
             expect(comp.togglingSecondCorrectionButton).toBe(secondCorrectionEnabled);
 
             expect(exerciseId).toBe(comp.exerciseId);
@@ -726,7 +732,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         comp.toggleSecondCorrection();
 
-        expect(comp.togglingSecondCorrectionButton).toBeFalse();
+        expect(comp.togglingSecondCorrectionButton).toBe(false);
         expect(comp.secondCorrectionEnabled).toBe(secondCorrectionEnabled);
         expect(comp.numberOfCorrectionRoundsEnabled).toBe(2);
     });
@@ -734,7 +740,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     it('should check if complaint locked', () => {
         comp.exercise = exercise;
         const complaintService = TestBed.inject(ComplaintService);
-        const complaintServiceSpy = jest.spyOn(complaintService, 'isComplaintLockedForLoggedInUser');
+        const complaintServiceSpy = vi.spyOn(complaintService, 'isComplaintLockedForLoggedInUser');
 
         const complaint: Complaint = { id: 20 };
         comp.isComplaintLocked(complaint);
@@ -743,14 +749,14 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     it('should get submissions with more feedback requests for tutor', () => {
-        const submissionServiceSpy = jest.spyOn(submissionService, 'getSubmissionsWithMoreFeedbackRequestsForTutor');
+        const submissionServiceSpy = vi.spyOn(submissionService, 'getSubmissionsWithMoreFeedbackRequestsForTutor');
         submissionServiceSpy.mockReturnValue(of(new HttpResponse({ body: [] })));
 
-        const sortMoreFeedbackRowsSpy = jest.spyOn(comp, 'sortMoreFeedbackRows');
+        const sortMoreFeedbackRowsSpy = vi.spyOn(comp, 'sortMoreFeedbackRows');
 
         fixture.detectChanges();
 
-        expect(sortMoreFeedbackRowsSpy).toHaveBeenCalledOnce();
+        expect(sortMoreFeedbackRowsSpy).toHaveBeenCalledTimes(1);
 
         submissionServiceSpy.mockReturnValue(throwError(() => errorResponse));
 
@@ -758,17 +764,17 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         const errorResponse = new HttpErrorResponse({ status: errorStatus });
 
         const alertService = TestBed.inject(AlertService);
-        const alertServiceSpy = jest.spyOn(alertService, 'error');
+        const alertServiceSpy = vi.spyOn(alertService, 'error');
 
         comp.loadAll();
 
-        expect(alertServiceSpy).toHaveBeenCalledOnce();
+        expect(alertServiceSpy).toHaveBeenCalledTimes(1);
         expect(alertServiceSpy).toHaveBeenCalledWith('error.http.400');
     });
 
     it('should sort more feedback rows', () => {
         const sortService = TestBed.inject(SortService);
-        const sortServicePropertySpy = jest.spyOn(sortService, 'sortByProperty');
+        const sortServicePropertySpy = vi.spyOn(sortService, 'sortByProperty');
 
         comp.sortMoreFeedbackRows();
 
@@ -777,7 +783,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(sortServicePropertySpy).toHaveBeenNthCalledWith(2, comp.submissionsWithMoreFeedbackRequests, 'complaint.accepted', false);
 
         comp.sortPredicates[2] = 'responseTime';
-        const sortServiceFunctionSpy = jest.spyOn(sortService, 'sortByFunction');
+        const sortServiceFunctionSpy = vi.spyOn(sortService, 'sortByFunction');
 
         comp.sortMoreFeedbackRows();
 

@@ -20,8 +20,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -40,11 +39,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecipientSummary;
+import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
+import de.tum.cit.aet.artemis.core.dto.StudentGroupCountDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.UserRoleDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.UserPageableSearchDTO;
@@ -155,6 +156,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             SELECT new de.tum.cit.aet.artemis.core.dto.UserRoleDTO(user.id, user.login,
                    CASE
                        WHEN :#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities THEN 'INSTRUCTOR'
+                       WHEN :#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities THEN 'INSTRUCTOR'
                        WHEN course.instructorGroupName MEMBER OF user.groups THEN 'INSTRUCTOR'
                        WHEN course.editorGroupName MEMBER OF user.groups THEN 'TUTOR'
                        WHEN course.teachingAssistantGroupName MEMBER OF user.groups THEN 'TUTOR'
@@ -172,9 +174,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "organizations" })
     Optional<User> findOneWithGroupsAndAuthoritiesAndOrganizationsByLogin(String userLogin);
-
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "externalLLMUsageAccepted" })
-    Optional<User> findOneWithGroupsAndAuthoritiesAndExternalLLMUsageAcceptedTimestampByLogin(String login);
 
     Long countByDeletedIsFalseAndGroupsContains(String groupName);
 
@@ -734,13 +733,14 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             @Param("vcsAccessTokenExpiryDate") ZonedDateTime vcsAccessTokenExpiryDate);
 
     @Modifying
-    @Transactional // ok because of modifying query
+    @Transactional
     @Query("""
             UPDATE User user
-            SET user.externalLLMUsageAccepted = :acceptDatetime
+            SET user.aiSelectionDecision = :decision,
+                user.aiSelectionDecisionDate = :timestamp
             WHERE user.id = :userId
             """)
-    void updateExternalLLMUsageAcceptedToDate(@Param("userId") long userId, @Param("acceptDatetime") ZonedDateTime acceptDatetime);
+    void updateSelectedLLMUsage(@Param("userId") long userId, @Param("decision") AiSelectionDecision decision, @Param("timestamp") ZonedDateTime timestamp);
 
     @Modifying
     @Transactional // ok because of modifying query
@@ -772,6 +772,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             FROM User user
             WHERE user.groups IS EMPTY AND NOT user.deleted
                 AND NOT :#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
+                AND NOT :#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
             ORDER BY user.login
             """)
     List<String> findAllNotEnrolledUsers();
@@ -834,7 +835,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     /**
      * @return existing user object by current user login
      */
-    @NotNull
+    @NonNull
     default User getUser() {
         String currentUserLogin = getCurrentUserLogin();
         return getValueElseThrow(findOneByLogin(currentUserLogin));
@@ -869,7 +870,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param login the login of the user to search
      * @return the user entity if it exists
      */
-    @NotNull
+    @NonNull
     default User getUserByLoginElseThrow(String login) {
         return getValueElseThrow(findOneByLogin(login));
     }
@@ -880,7 +881,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param email the email of the user to search
      * @return the user entity if it exists
      */
-    @NotNull
+    @NonNull
     default User getUserByEmailElseThrow(String email) {
         return getValueElseThrow(findOneByEmailIgnoreCase(email));
     }
@@ -890,7 +891,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      *
      * @return currently logged-in user
      */
-    @NotNull
+    @NonNull
     default User getUserWithGroupsAndAuthorities() {
         String currentUserLogin = getCurrentUserLogin();
         return getValueElseThrow(findOneWithGroupsAndAuthoritiesByLogin(currentUserLogin));
@@ -902,7 +903,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param courseId the id of the course for which to load the user and the course learner profile
      * @return currently logged-in user
      */
-    @NotNull
+    @NonNull
     default User getUserWithGroupsAndAuthoritiesAndLearnerProfile(long courseId) {
         String currentUserLogin = getCurrentUserLogin();
         return getValueElseThrow(findOneWithGroupsAndAuthoritiesAndLearnerProfileByLogin(currentUserLogin, courseId));
@@ -913,7 +914,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      *
      * @return currently logged-in user
      */
-    @NotNull
+    @NonNull
     default User getUserWithGroupsAndAuthoritiesAndOrganizations() {
         String currentUserLogin = getCurrentUserLogin();
         return getValueElseThrow(findOneWithGroupsAndAuthoritiesAndOrganizationsByLogin(currentUserLogin));
@@ -940,8 +941,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param username the username of the user who should be retrieved from the database
      * @return the user that belongs to the given principal with eagerly loaded groups and authorities
      */
-    @NotNull
-    default User getUserWithGroupsAndAuthorities(@NotNull String username) {
+    @NonNull
+    default User getUserWithGroupsAndAuthorities(@NonNull String username) {
         return getValueElseThrow(findOneWithGroupsAndAuthoritiesByLogin(username));
     }
 
@@ -984,7 +985,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         return findOneWithGroupsAndAuthoritiesByEmail(email);
     }
 
-    @NotNull
+    @NonNull
     default User findByIdWithGroupsAndAuthoritiesElseThrow(long userId) {
         return getValueElseThrow(findOneWithGroupsAndAuthoritiesById(userId), userId);
     }
@@ -995,7 +996,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param userId the id of the user to find
      * @return the user with groups, authorities and organizations if it exists, else throw exception
      */
-    @NotNull
+    @NonNull
     default User findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(long userId) {
         return getValueElseThrow(findOneWithGroupsAndAuthoritiesAndOrganizationsById(userId), userId);
     }
@@ -1119,7 +1120,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @Query("""
             SELECT user.login
             FROM User user
-            WHERE :#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
+            WHERE (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
+                OR :#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
                 AND user.activated = TRUE
                 AND user.deleted = FALSE
             """)
@@ -1129,9 +1131,18 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             SELECT COUNT(user) > 0
             FROM User user
             WHERE user.login = :login
-                AND :#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
+                AND (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
+                    OR :#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
     boolean isAdmin(@Param("login") String login);
+
+    @Query("""
+            SELECT COUNT(user) > 0
+            FROM User user
+            WHERE user.login = :login
+                AND :#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
+            """)
+    boolean isSuperAdmin(@Param("login") String login);
 
     @Query("""
             SELECT COUNT(user) > 0
@@ -1142,6 +1153,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 OR (course.editorGroupName MEMBER OF user.groups)
                 OR (course.instructorGroupName MEMBER OF user.groups)
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+                OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
     boolean isAtLeastStudentInCourse(@Param("login") String login, @Param("courseId") long courseId);
 
@@ -1153,6 +1165,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 OR (course.editorGroupName MEMBER OF user.groups)
                 OR (course.instructorGroupName MEMBER OF user.groups)
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+                OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
     boolean isAtLeastTeachingAssistantInCourse(@Param("login") String login, @Param("courseId") long courseId);
 
@@ -1163,6 +1176,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             WHERE (course.editorGroupName MEMBER OF user.groups)
                 OR (course.instructorGroupName MEMBER OF user.groups)
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+                OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
     boolean isAtLeastEditorInCourse(@Param("login") String login, @Param("courseId") long courseId);
 
@@ -1172,6 +1186,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 INNER JOIN Course course ON user.login = :login AND course.id = :courseId
             WHERE (course.instructorGroupName MEMBER OF user.groups)
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+                OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
     boolean isAtLeastInstructorInCourse(@Param("login") String login, @Param("courseId") long courseId);
 
@@ -1190,6 +1205,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 OR (examCourse.editorGroupName MEMBER OF user.groups)
                 OR (examCourse.instructorGroupName MEMBER OF user.groups)
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+                OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
     boolean isAtLeastStudentInExercise(@Param("login") String login, @Param("exerciseId") long exerciseId);
 
@@ -1206,6 +1222,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 OR (examCourse.editorGroupName MEMBER OF user.groups)
                 OR (examCourse.instructorGroupName MEMBER OF user.groups)
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+                OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
     boolean isAtLeastTeachingAssistantInExercise(@Param("login") String login, @Param("exerciseId") long exerciseId);
 
@@ -1220,6 +1237,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 OR (examCourse.editorGroupName MEMBER OF user.groups)
                 OR (examCourse.instructorGroupName MEMBER OF user.groups)
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+                OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
     boolean isAtLeastEditorInExercise(@Param("login") String login, @Param("exerciseId") long exerciseId);
 
@@ -1232,6 +1250,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             WHERE (course.instructorGroupName MEMBER OF user.groups)
                 OR (examCourse.instructorGroupName MEMBER OF user.groups)
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+                OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
     boolean isAtLeastInstructorInExercise(@Param("login") String login, @Param("exerciseId") long exerciseId);
 
@@ -1251,6 +1270,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 OR (examCourse.editorGroupName MEMBER OF user.groups)
                 OR (examCourse.instructorGroupName MEMBER OF user.groups)
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+                OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
     boolean isAtLeastStudentInParticipation(@Param("login") String login, @Param("participationId") long participationId);
 
@@ -1268,6 +1288,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 OR (examCourse.editorGroupName MEMBER OF user.groups)
                 OR (examCourse.instructorGroupName MEMBER OF user.groups)
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+                OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
     boolean isAtLeastTeachingAssistantInParticipation(@Param("login") String login, @Param("participationId") long participationId);
 
@@ -1283,6 +1304,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 OR (examCourse.editorGroupName MEMBER OF user.groups)
                 OR (examCourse.instructorGroupName MEMBER OF user.groups)
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+                OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
     boolean isAtLeastEditorInParticipation(@Param("login") String login, @Param("participationId") long participationId);
 
@@ -1296,6 +1318,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             WHERE (course.instructorGroupName MEMBER OF user.groups)
                 OR (examCourse.instructorGroupName MEMBER OF user.groups)
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+                OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
     boolean isAtLeastInstructorInParticipation(@Param("login") String login, @Param("participationId") long participationId);
 
@@ -1309,6 +1332,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 OR (course.editorGroupName MEMBER OF user.groups)
                 OR (course.instructorGroupName MEMBER OF user.groups)
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+                OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
     boolean isAtLeastStudentInLectureUnit(@Param("login") String login, @Param("lectureUnitId") long lectureUnitId);
 
@@ -1321,6 +1345,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 OR (course.editorGroupName MEMBER OF user.groups)
                 OR (course.instructorGroupName MEMBER OF user.groups)
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+                OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
     boolean isAtLeastTeachingAssistantInLectureUnit(@Param("login") String login, @Param("lectureUnitId") long lectureUnitId);
 
@@ -1332,6 +1357,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             WHERE (course.editorGroupName MEMBER OF user.groups)
                 OR (course.instructorGroupName MEMBER OF user.groups)
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+                OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
     boolean isAtLeastEditorInLectureUnit(@Param("login") String login, @Param("lectureUnitId") long lectureUnitId);
 
@@ -1342,6 +1368,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 LEFT JOIN lectureUnit.lecture.course course
             WHERE (course.instructorGroupName MEMBER OF user.groups)
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+                OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
     boolean isAtLeastInstructorInLectureUnit(@Param("login") String login, @Param("lectureUnitId") long lectureUnitId);
 
@@ -1355,6 +1382,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 OR (course.editorGroupName MEMBER OF user.groups)
                 OR (course.instructorGroupName MEMBER OF user.groups)
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+                OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
     boolean isAtLeastStudentInLecture(@Param("login") String login, @Param("lectureId") long lectureId);
 
@@ -1367,6 +1395,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 OR (course.editorGroupName MEMBER OF user.groups)
                 OR (course.instructorGroupName MEMBER OF user.groups)
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+                OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
     boolean isAtLeastTeachingAssistantInLecture(@Param("login") String login, @Param("lectureId") long lectureId);
 
@@ -1378,6 +1407,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             WHERE (course.editorGroupName MEMBER OF user.groups)
                 OR (course.instructorGroupName MEMBER OF user.groups)
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+                OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
     boolean isAtLeastEditorInLecture(@Param("login") String login, @Param("lectureId") long lectureId);
 
@@ -1388,6 +1418,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 LEFT JOIN lecture.course course
             WHERE (course.instructorGroupName MEMBER OF user.groups)
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+                OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
     boolean isAtLeastInstructorInLecture(@Param("login") String login, @Param("lectureId") long lectureId);
 
@@ -1400,4 +1431,80 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             WHERE store.token = :token
             """)
     Optional<User> findOneWithGroupsAndAuthoritiesByCalendarSubscriptionToken(@Param("token") String token);
+
+    /**
+     * Finds logins of all non-deleted users who belong to the specified group.
+     * This is useful for cache eviction when performing bulk group removal.
+     *
+     * @param groupName the name of the group
+     * @return set of user logins in the group
+     */
+    @Query("""
+            SELECT u.login
+            FROM User u
+            WHERE u.deleted = FALSE
+                AND :groupName MEMBER OF u.groups
+            """)
+    Set<String> findLoginsByGroupName(@Param("groupName") String groupName);
+
+    /**
+     * Removes the specified group from all users in a single database operation.
+     * This is more efficient than loading each user, modifying, and saving individually.
+     * <p>
+     * Note: This bypasses JPA entity management, so cache eviction must be handled separately.
+     *
+     * @param groupName the name of the group to remove from all users
+     * @return the number of rows deleted
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query(value = """
+            DELETE FROM user_groups ug
+            WHERE ug.user_groups = :groupName
+            """, nativeQuery = true)
+    int removeGroupFromAllUsers(@Param("groupName") String groupName);
+
+    /**
+     * Get the IDs of users who have submitted at least one submission since the given date.
+     * Excludes users with 'test' in their login (case-insensitive).
+     * <p>
+     * This is used as the first step in the optimized active students count:
+     * 1. Get active user IDs (this query)
+     * 2. Count users by group, filtering to only active user IDs
+     *
+     * @param activeSince the date after which a submission counts as active
+     * @return a set of user IDs who have submitted since activeSince
+     */
+    @Query("""
+            SELECT DISTINCT p.student.id
+            FROM StudentParticipation p
+                JOIN p.submissions s
+                JOIN p.student u
+            WHERE s.submissionDate >= :activeSince
+                AND LOWER(u.login) NOT LIKE '%test%'
+            """)
+    Set<Long> findActiveUserIdsSince(@Param("activeSince") ZonedDateTime activeSince);
+
+    /**
+     * Count users per student group name, filtering to only the specified user IDs.
+     * <p>
+     * This is used as the second step in the optimized active students count,
+     * after getting active user IDs via {@link #findActiveUserIdsSince}.
+     *
+     * @param studentGroupNames the set of student group names to check
+     * @param userIds           the set of user IDs to count (typically active users)
+     * @return a list of StudentGroupCountDTO with group name and count of users
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.core.dto.StudentGroupCountDTO(
+                g,
+                COUNT(DISTINCT user.id)
+            )
+            FROM User user
+                JOIN user.groups g
+            WHERE g IN :studentGroupNames
+                AND user.id IN :userIds
+            GROUP BY g
+            """)
+    List<StudentGroupCountDTO> countUsersByStudentGroupNamesAndUserIds(@Param("studentGroupNames") Set<String> studentGroupNames, @Param("userIds") Set<Long> userIds);
 }

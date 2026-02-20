@@ -1,8 +1,8 @@
 import { Routes } from '@angular/router';
 
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { Authority, IS_AT_LEAST_TUTOR } from 'app/shared/constants/authority.constants';
-import { ExternalDataGuard } from 'app/core/user/settings/external-data.guard';
+import { IS_AT_LEAST_STUDENT, IS_AT_LEAST_TUTOR } from 'app/shared/constants/authority.constants';
+import { DataGuard } from 'app/core/user/settings/data-guard.service';
 
 export const routes: Routes = [
     {
@@ -10,7 +10,8 @@ export const routes: Routes = [
         loadComponent: () => import('app/core/user/settings/user-settings-container/user-settings-container.component').then((m) => m.UserSettingsContainerComponent),
         canActivate: [UserRouteAccessService],
         data: {
-            authorities: [Authority.USER],
+            authorities: IS_AT_LEAST_STUDENT,
+            usesModuleBackground: true,
         },
         children: [
             {
@@ -27,13 +28,12 @@ export const routes: Routes = [
                 },
             },
             {
-                path: 'external-data',
-                loadComponent: () =>
-                    import('app/core/user/settings/external-llm-usage-settings/external-llm-usage-settings.component').then((m) => m.ExternalLlmUsageSettingsComponent),
+                path: 'llm-usage',
+                loadComponent: () => import('app/core/user/settings/llm-usage-settings/llm-usage-settings.component').then((m) => m.LlmUsageSettingsComponent),
                 data: {
-                    pageTitle: 'artemisApp.userSettings.categories.externalLLMUsage',
+                    pageTitle: 'artemisApp.userSettings.categories.LLMUsage',
                 },
-                canActivate: [ExternalDataGuard],
+                canActivate: [DataGuard],
             },
             {
                 path: 'profile',

@@ -12,8 +12,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -276,7 +275,7 @@ public abstract class PostingService {
      * @param postingContent content of the posting
      * @return set of mentioned users
      */
-    protected Set<User> parseUserMentions(@NotNull Course course, String postingContent) {
+    protected Set<User> parseUserMentions(@NonNull Course course, String postingContent) {
         // Define a regular expression to match text enclosed in [user]...[/user] tags, along with login inside parentheses () within those tags.
         // It makes use of the possessive quantifier "*+" to avoid backtracking and increase performance.
         // Explanation:

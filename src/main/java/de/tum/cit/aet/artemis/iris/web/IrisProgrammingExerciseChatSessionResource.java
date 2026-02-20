@@ -1,13 +1,11 @@
 package de.tum.cit.aet.artemis.iris.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,8 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.repository.IrisExerciseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
@@ -32,7 +30,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 /**
  * REST controller for managing {@link IrisProgrammingExerciseChatSession}.
  */
-@Profile(PROFILE_IRIS)
+@Conditional(IrisEnabled.class)
 @Lazy
 @RestController
 @RequestMapping("api/iris/programming-exercise-chat/")
@@ -79,10 +77,10 @@ public class IrisProgrammingExerciseChatSessionResource {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         ProgrammingExercise programmingExercise = validateExercise(exercise);
 
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT, exercise);
+        irisSettingsService.ensureEnabledForCourseOrElseThrow(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
-        var session = irisExerciseChatSessionService.getCurrentSessionOrCreateIfNotExists(programmingExercise, user, false);
+        var session = irisExerciseChatSessionService.getCurrentSessionOrCreateIfNotExists(programmingExercise, user);
         return ResponseEntity.ok(session);
     }
 
@@ -98,7 +96,7 @@ public class IrisProgrammingExerciseChatSessionResource {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         ProgrammingExercise programmingExercise = validateExercise(exercise);
 
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT, programmingExercise);
+        irisSettingsService.ensureEnabledForCourseOrElseThrow(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
         var sessions = irisExerciseChatSessionRepository.findByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId());
@@ -120,10 +118,10 @@ public class IrisProgrammingExerciseChatSessionResource {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         ProgrammingExercise programmingExercise = validateExercise(exercise);
 
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT, programmingExercise);
+        irisSettingsService.ensureEnabledForCourseOrElseThrow(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
-        var session = irisExerciseChatSessionService.createSession(programmingExercise, user, false);
+        var session = irisExerciseChatSessionService.createSession(programmingExercise, user);
         var uriString = "/api/iris/sessions/" + session.getId();
 
         return ResponseEntity.created(new URI(uriString)).body(session);

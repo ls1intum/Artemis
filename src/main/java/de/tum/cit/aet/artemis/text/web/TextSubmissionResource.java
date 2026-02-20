@@ -5,8 +5,8 @@ import java.util.Optional;
 import java.util.Set;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -105,7 +105,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
     }
 
     /**
-     * POST /exercises/{exerciseId}/text-submissions : Create a new textSubmission. This is called when a student saves his/her answer
+     * POST /exercises/{exerciseId}/text-submissions : Create a new textSubmission. This is called when a student saves their answer
      *
      * @param exerciseId     the id of the exercise for which to init a participation
      * @param textSubmission the textSubmission to create
@@ -141,7 +141,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         return handleTextSubmission(exerciseId, textSubmission);
     }
 
-    @NotNull
+    @NonNull
     private ResponseEntity<TextSubmission> handleTextSubmission(long exerciseId, TextSubmission textSubmission) {
         long start = System.currentTimeMillis();
         final var user = userRepository.getUserWithGroupsAndAuthorities();

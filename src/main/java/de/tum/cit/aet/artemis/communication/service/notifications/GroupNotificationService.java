@@ -95,7 +95,7 @@ public class GroupNotificationService {
         var recipients = userRepository.getStudents(course);
 
         var exerciseOpenForPracticeNotification = new ExerciseOpenForPracticeNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
-                exercise.getSanitizedExerciseTitle());
+                exercise.getExerciseNotificationTitle());
 
         courseNotificationService.sendCourseNotification(exerciseOpenForPracticeNotification, recipients.stream().toList());
     }
@@ -110,7 +110,7 @@ public class GroupNotificationService {
         var recipients = userRepository.getStudents(course);
 
         var quizExerciseStartedNotification = new QuizExerciseStartedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), quizExercise.getId(),
-                quizExercise.getSanitizedExerciseTitle());
+                quizExercise.getExerciseNotificationTitle());
 
         courseNotificationService.sendCourseNotification(quizExerciseStartedNotification, recipients.stream().toList());
     }
@@ -133,7 +133,7 @@ public class GroupNotificationService {
                 Set.of(course.getEditorGroupName(), course.getInstructorGroupName(), course.getStudentGroupName()));
 
         var exerciseUpdatedNotification = new ExerciseUpdatedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
-                exercise.getSanitizedExerciseTitle());
+                exercise.getExerciseNotificationTitle());
 
         courseNotificationService.sendCourseNotification(exerciseUpdatedNotification, recipients.stream().toList());
     }
@@ -148,8 +148,8 @@ public class GroupNotificationService {
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         var recipients = userRepository.getUsersInCourse(course);
 
-        var newExerciseNotification = new NewExerciseNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(), exercise.getSanitizedExerciseTitle(),
-                exercise.getDifficulty() == null ? null : exercise.getDifficulty().toString(),
+        var newExerciseNotification = new NewExerciseNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
+                exercise.getExerciseNotificationTitle(), exercise.getDifficulty() == null ? null : exercise.getDifficulty().toString(),
                 exercise.getReleaseDate() == null ? null : exercise.getReleaseDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")),
                 exercise.getDueDate() == null ? null : exercise.getDueDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")), exercise.getMaxPoints().longValue());
 
@@ -166,7 +166,7 @@ public class GroupNotificationService {
         var recipients = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(Set.of(course.getEditorGroupName(), course.getInstructorGroupName()));
 
         var exerciseUpdatedNotification = new ExerciseUpdatedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
-                exercise.getSanitizedExerciseTitle());
+                exercise.getExerciseNotificationTitle());
 
         courseNotificationService.sendCourseNotification(exerciseUpdatedNotification, recipients.stream().toList());
     }
@@ -181,7 +181,7 @@ public class GroupNotificationService {
         var recipients = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(Set.of(course.getEditorGroupName(), course.getInstructorGroupName()));
 
         var programmingTestCasesChangedNotification = new ProgrammingTestCasesChangedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
-                exercise.getSanitizedExerciseTitle());
+                exercise.getExerciseNotificationTitle());
 
         courseNotificationService.sendCourseNotification(programmingTestCasesChangedNotification, recipients.stream().toList());
     }
@@ -196,7 +196,7 @@ public class GroupNotificationService {
         var recipients = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(Set.of(course.getEditorGroupName(), course.getInstructorGroupName()));
 
         var programmingBuildRunUpdateNotification = new ProgrammingBuildRunUpdateNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
-                exercise.getSanitizedExerciseTitle());
+                exercise.getExerciseNotificationTitle());
 
         courseNotificationService.sendCourseNotification(programmingBuildRunUpdateNotification, recipients.stream().toList());
     }
@@ -213,7 +213,7 @@ public class GroupNotificationService {
         var formattedDueDate = exercise.getDueDate() != null ? exercise.getDueDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")) : "-";
 
         var duplicateTestCaseNotification = new DuplicateTestCaseNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
-                exercise.getSanitizedExerciseTitle(), formattedReleaseDate, formattedDueDate);
+                exercise.getExerciseNotificationTitle(), formattedReleaseDate, formattedDueDate);
 
         courseNotificationService.sendCourseNotification(duplicateTestCaseNotification, recipients.stream().toList());
     }
@@ -228,7 +228,7 @@ public class GroupNotificationService {
         var recipients = userRepository.getTutors(course);
 
         var manualFeedbackRequestNotification = new NewManualFeedbackRequestNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
-                exercise.getSanitizedExerciseTitle());
+                exercise.getExerciseNotificationTitle());
 
         courseNotificationService.sendCourseNotification(manualFeedbackRequestNotification, recipients.stream().toList());
     }

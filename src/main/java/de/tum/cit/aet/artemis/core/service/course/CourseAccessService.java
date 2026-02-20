@@ -10,8 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
@@ -32,6 +31,7 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.EnrollmentService;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
 
 /**
@@ -47,6 +47,8 @@ public class CourseAccessService {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final EnrollmentService enrollmentService;
+
     private final CourseRepository courseRepository;
 
     private final UserService userService;
@@ -59,9 +61,10 @@ public class CourseAccessService {
 
     private final UserRepository userRepository;
 
-    public CourseAccessService(AuthorizationCheckService authCheckService, CourseRepository courseRepository, UserService userService,
+    public CourseAccessService(AuthorizationCheckService authCheckService, EnrollmentService enrollmentService, CourseRepository courseRepository, UserService userService,
             Optional<LearnerProfileApi> learnerProfileApi, AuditEventRepository auditEventRepository, Optional<LearningPathApi> learningPathApi, UserRepository userRepository) {
         this.authCheckService = authCheckService;
+        this.enrollmentService = enrollmentService;
         this.courseRepository = courseRepository;
         this.userService = userService;
         this.learnerProfileApi = learnerProfileApi;
@@ -88,7 +91,7 @@ public class CourseAccessService {
      * @param course The course from which the user should be removed from
      */
     public void unenrollUserForCourseOrThrow(User user, Course course) {
-        authCheckService.checkUserAllowedToUnenrollFromCourseElseThrow(course);
+        enrollmentService.checkUserAllowedToUnenrollFromCourseElseThrow(course);
         userService.removeUserFromGroup(user, course.getStudentGroupName());
         learnerProfileApi.ifPresent(api -> api.deleteCourseLearnerProfile(course, user));
         final var auditEvent = new AuditEvent(user.getLogin(), Constants.UNENROLL_FROM_COURSE, "course=" + course.getTitle());
@@ -103,7 +106,7 @@ public class CourseAccessService {
      * @param course The course to which the user should get added to
      */
     public void enrollUserForCourseOrThrow(User user, Course course) {
-        authCheckService.checkUserAllowedToEnrollInCourseElseThrow(user, course);
+        enrollmentService.checkUserAllowedToEnrollInCourseElseThrow(user, course);
         userService.addUserToGroup(user, course.getStudentGroupName());
         if (course.getLearningPathsEnabled()) {
             learnerProfileApi.ifPresent(api -> api.createCourseLearnerProfile(course, user));
@@ -156,7 +159,7 @@ public class CourseAccessService {
      * @param groupName the name of the group
      * @return list of users
      */
-    @NotNull
+    @NonNull
     public ResponseEntity<Set<User>> getAllUsersInGroup(Course course, String groupName) {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         var usersInGroup = userRepository.findAllByDeletedIsFalseAndGroupsContains(groupName);

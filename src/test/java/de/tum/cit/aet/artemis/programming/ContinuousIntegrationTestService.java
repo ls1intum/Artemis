@@ -1,10 +1,6 @@
 package de.tum.cit.aet.artemis.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.reset;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.File;
@@ -47,7 +43,7 @@ public class ContinuousIntegrationTestService {
     private String defaultBranch;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
-    private Path localVCRepoPath;
+    private Path localVCBasePath;
 
     private final LocalRepository localRepo = new LocalRepository(defaultBranch);
 
@@ -87,7 +83,7 @@ public class ContinuousIntegrationTestService {
         String currentLocalFileContent = "testContent";
         String currentLocalFolderName = "currentFolderName";
         String login = testPrefix + "student1";
-        localRepo.configureRepos(localVCRepoPath, "testLocalRepo-" + login, "testOriginRepo-" + login);
+        localRepo.configureRepos(localVCBasePath, "testLocalRepo-" + login, "testOriginRepo-" + login);
         // add file to the repository folder
         Path filePath = Path.of(localRepo.workingCopyGitRepoFile + "/" + currentLocalFileName);
         File file = Files.createFile(filePath).toFile();
@@ -97,21 +93,14 @@ public class ContinuousIntegrationTestService {
         filePath = Path.of(localRepo.workingCopyGitRepoFile + "/" + currentLocalFolderName);
         Files.createDirectory(filePath);
 
-        var localRepoUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.workingCopyGitRepoFile, localVCRepoPath));
+        var localRepoUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.workingCopyGitRepoFile, localVCBasePath));
         // create a participation
 
         participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, login, localRepoUri.getURI());
         assertThat(programmingExercise).as("Exercise was correctly set").isEqualTo(participation.getProgrammingExercise());
-
-        // mock return of git path
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(eq(participation.getVcsRepositoryUri()), eq(true), anyBoolean());
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(eq(participation.getVcsRepositoryUri()), eq(false), anyBoolean());
     }
 
     public void tearDown() throws IOException {
-        reset(gitService);
         localRepo.resetLocalRepo();
     }
 

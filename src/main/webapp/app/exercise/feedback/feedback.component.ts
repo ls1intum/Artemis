@@ -236,8 +236,10 @@ export class FeedbackComponent implements OnInit, OnChanges {
                         }
                     }
 
+                    // prefer the potentially newer result.submission when available (so that buildFailed is up-to-date)
+                    const submission = (this.result.submission ?? getLatestSubmission(this.participation)) as ProgrammingSubmission;
                     // If the submission is marked with buildFailed, fetch the build logs.
-                    const buildFailed = (getLatestSubmission(this.participation) as ProgrammingSubmission)?.buildFailed;
+                    const buildFailed = submission?.buildFailed;
 
                     if (this.result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA && this.exerciseType === ExerciseType.PROGRAMMING && buildFailed) {
                         return this.fetchAndSetBuildLogs(this.participation.id!, this.result.id);

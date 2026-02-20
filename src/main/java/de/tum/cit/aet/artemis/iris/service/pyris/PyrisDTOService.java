@@ -1,9 +1,9 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import static de.tum.cit.aet.artemis.core.util.TimeUtil.toInstant;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -11,10 +11,11 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisBuildLogEntryDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisFeedbackDTO;
@@ -30,7 +31,7 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 @Lazy
 @Service
-@Profile(PROFILE_IRIS)
+@Conditional(IrisEnabled.class)
 public class PyrisDTOService {
 
     private static final Logger log = LoggerFactory.getLogger(PyrisDTOService.class);
@@ -66,10 +67,23 @@ public class PyrisDTOService {
      * @return the converted PyrisSubmissionDTO
      */
     public PyrisSubmissionDTO toPyrisSubmissionDTO(ProgrammingSubmission submission) {
+        return toPyrisSubmissionDTO(submission, Map.of());
+    }
+
+    /**
+     * Uncommitted files override the committed files if they have the same path.
+     *
+     * @param submission       the student's submission
+     * @param uncommittedFiles the uncommitted files from the client
+     * @return the converted PyrisSubmissionDTO
+     */
+    public PyrisSubmissionDTO toPyrisSubmissionDTO(ProgrammingSubmission submission, Map<String, String> uncommittedFiles) {
         var buildLogEntries = submission.getBuildLogEntries().stream().map(buildLogEntry -> new PyrisBuildLogEntryDTO(toInstant(buildLogEntry.getTime()), buildLogEntry.getLog()))
                 .toList();
-        var studentRepositoryContents = getFilteredRepositoryContents((ProgrammingExerciseParticipation) submission.getParticipation());
-        return new PyrisSubmissionDTO(submission.getId(), toInstant(submission.getSubmissionDate()), studentRepositoryContents, submission.getParticipation().isPracticeMode(),
+        Map<String, String> committedFiles = getFilteredRepositoryContents((ProgrammingExerciseParticipation) submission.getParticipation());
+        Map<String, String> mergedRepository = new HashMap<>(committedFiles);
+        mergedRepository.putAll(uncommittedFiles); // This overwrites any files with same path
+        return new PyrisSubmissionDTO(submission.getId(), toInstant(submission.getSubmissionDate()), mergedRepository, submission.getParticipation().isPracticeMode(),
                 submission.isBuildFailed(), buildLogEntries, getLatestResult(submission));
     }
 

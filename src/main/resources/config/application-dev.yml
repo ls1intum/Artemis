@@ -95,7 +95,7 @@ jhipster:
             port: 5000
             ring-buffer-size: 512
     audit-events:
-        retention-period: 120 # Number of days before audit events are deleted.
+        retention-period: 365 # Number of days before audit events are deleted.
 
 # Properties to be exposed on the /info management endpoint
 info:
@@ -105,6 +105,7 @@ info:
     operatorName: Some Artemis Operator # Must be set before starting the application in production. Shown in the about us page and sent to the telemetry service (e.g. the name of the university "Technische Universität München")
     operatorAdminName: Admin # Can be set to be shown in the about us page, and to be sent to the telemetry service
     contact: admin@uni.de # The admins contact email address, shown in the about us page, and sent to the telemetry service
+    localLLMDeploymentEnabled: false # Defines whether local on-premise LLMs are available or not
 
 # Eureka configuration
 eureka:
@@ -136,11 +137,25 @@ artemis:
         destination: https://telemetry.artemis.cit.tum.de
     version-control:
         local-vcs-repo-path: ./local-vcs-repos
+    continuous-integration:
+        build-job:
+          retention-period: 365 # Number of days before build job entries are deleted
     security:
         internal:
             allowed-cidrs:
                 - ::/0
                 - 0.0.0.0/0
+    weaviate:
+        enabled: false                    # Disabled by default; set to true to enable Weaviate integration
+        http-host: localhost              # Weaviate server HTTP hostname
+        http-port: 8001                   # Weaviate HTTP port (avoid conflicts with main app)
+        grpc-port: 50051                  # Weaviate gRPC port for better performance
+        scheme: http                      # http scheme for development (https should be used in production environments)
+
+# Needs to be provided so Sentry's LogbackAppender picks up a sensible configuration
+sentry:
+  traces-sample-rate: 0.0
+  environment: local
 
 helios:
   status:
@@ -150,4 +165,3 @@ atlas:
     atlasml:
         base-url: http://127.0.0.1:8000 # Address of local testing server
         auth-token: local-secret # The default secret used to authenticate Artemis against a local testing server
-

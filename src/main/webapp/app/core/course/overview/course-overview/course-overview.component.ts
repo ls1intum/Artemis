@@ -38,6 +38,8 @@ import { CourseNotificationSettingService } from 'app/communication/course-notif
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
 import { CourseNotificationPresetPickerComponent } from 'app/communication/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { CourseIrisComponent } from 'app/iris/overview/course-iris/course-iris.component';
+import { CourseDashboardComponent } from 'app/core/course/overview/course-dashboard/course-dashboard.component';
 
 @Component({
     selector: 'jhi-course-overview',
@@ -76,6 +78,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private toggleSidebarEventSubscription: Subscription;
     private teamAssignmentUpdateListener: Subscription;
     private quizExercisesChannel: string;
+    private quizExercisesSubscription?: Subscription;
     private examStartedSubscription: Subscription;
     manageViewLink = signal<string[]>(['']);
 
@@ -88,7 +91,14 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     canUnenroll = signal<boolean>(false);
     showRefreshButton = signal<boolean>(false);
     activatedComponentReference = signal<
-        CourseExercisesComponent | CourseLecturesComponent | CourseExamsComponent | CourseTutorialGroupsComponent | CourseConversationsComponent | undefined
+        | CourseExercisesComponent
+        | CourseLecturesComponent
+        | CourseExamsComponent
+        | CourseTutorialGroupsComponent
+        | CourseConversationsComponent
+        | CourseIrisComponent
+        | CourseDashboardComponent
+        | undefined
     >(undefined);
 
     // Icons
@@ -248,7 +258,9 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         // This enables just calling this method to refresh the course, without subscribing to it:
         this.loadCourseSubscription?.unsubscribe();
         if (refresh) {
-            this.loadCourseSubscription = observable.subscribe();
+            this.loadCourseSubscription = observable.subscribe({
+                next: () => this.sidebarItems.set(this.getSidebarItems()),
+            });
             this.calendarService.reloadEvents();
         }
         return observable;
@@ -264,7 +276,9 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             componentRef instanceof CourseLecturesComponent ||
             componentRef instanceof CourseTutorialGroupsComponent ||
             componentRef instanceof CourseExamsComponent ||
-            componentRef instanceof CourseConversationsComponent
+            componentRef instanceof CourseConversationsComponent ||
+            componentRef instanceof CourseIrisComponent ||
+            componentRef instanceof CourseDashboardComponent
         ) {
             this.activatedComponentReference.set(componentRef);
         }
@@ -291,13 +305,16 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         const currentCourse = this.course();
 
         // Use the service to get sidebar items
-        const defaultItems = this.sidebarItemService.getStudentDefaultItems(
-            currentCourse?.studentCourseAnalyticsDashboardEnabled || currentCourse?.irisCourseChatEnabled,
-            currentCourse?.trainingEnabled,
-        );
+        const defaultItems = this.sidebarItemService.getStudentDefaultItems(currentCourse?.studentCourseAnalyticsDashboardEnabled, currentCourse?.trainingEnabled);
+        if (currentCourse?.irisEnabledInCourse) {
+            const irisItem = this.sidebarItemService.getIrisItem();
+            const dashboardIndex = defaultItems.findIndex((item) => item.routerLink === 'dashboard');
+            const insertIndex = dashboardIndex >= 0 ? dashboardIndex + 1 : 0;
+            defaultItems.splice(insertIndex, 0, irisItem);
+        }
         sidebarItems.push(...defaultItems);
 
-        if (currentCourse?.lectures) {
+        if (this.lectureEnabled && currentCourse?.lectures) {
             const lecturesItem = this.sidebarItemService.getLecturesItem();
             sidebarItems.splice(-2, 0, lecturesItem);
         }
@@ -391,7 +408,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     }
 
     redirectToCourseRegistrationPage() {
-        this.router.navigate(['courses', this.courseId(), 'register']);
+        void this.router.navigate(['courses', this.courseId(), 'register']);
     }
 
     redirectToCourseRegistrationPageIfCanRegisterOrElseThrow(error: Error): void {
@@ -455,8 +472,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             this.quizExercisesChannel = '/topic/courses/' + this.courseId() + '/quizExercises';
 
             // quizExercise channel => react to changes made to quizExercise (e.g. start date)
-            this.websocketService.subscribe(this.quizExercisesChannel);
-            this.websocketService.receive(this.quizExercisesChannel)?.subscribe((quizExercise: QuizExercise) => {
+            this.quizExercisesSubscription = this.websocketService.subscribe<QuizExercise>(this.quizExercisesChannel).subscribe((quizExercise: QuizExercise) => {
                 quizExercise = this.courseExerciseService.convertExerciseDatesFromServer(quizExercise);
                 // the quiz was set to visible or started, we should add it to the exercise list and display it at the top
                 const currentCourse = this.course();
@@ -473,7 +489,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     switchCourse(course: Course) {
         const url = ['courses', course.id, 'dashboard'];
         this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
-            this.router.navigate(url);
+            void this.router.navigate(url);
         });
     }
 
@@ -482,9 +498,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         if (this.teamAssignmentUpdateListener) {
             this.teamAssignmentUpdateListener.unsubscribe();
         }
-        if (this.quizExercisesChannel) {
-            this.websocketService.unsubscribe(this.quizExercisesChannel);
-        }
+        this.quizExercisesSubscription?.unsubscribe();
         this.examStartedSubscription?.unsubscribe();
         this.toggleSidebarEventSubscription?.unsubscribe();
     }

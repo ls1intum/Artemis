@@ -7,17 +7,24 @@ import 'jest-extended';
 import failOnConsole from 'jest-fail-on-console';
 import { TextDecoder, TextEncoder } from 'util';
 import { MockClipboardItem } from './helpers/mocks/service/mock-clipboard-item';
-import { Text } from '@ls1intum/apollon/lib/es6/utils/svg/text';
 
 /*
- * In the Jest configuration, we only import the basic features of monaco (editor.api.js) instead
- * of the full module (editor.main.js) because of a ReferenceError in the language features of Monaco.
- * The following import imports the core features of the monaco editor, but leaves out the language
- * features. It contains an unchecked call to queryCommandSupported, so the function has to be set
- * on the document.
+ * Monaco-editor 0.55+ uses the CSS Typed Object Model API (CSS.supports(), CSS.escape(), etc.)
+ * which is not available in jsdom. This polyfill provides the necessary methods.
+ */
+if (typeof CSS === 'undefined') {
+    (global as any).CSS = {
+        supports: () => false,
+        escape: (value: string) => value.replace(/([^\w-])/g, '\\$1'),
+    };
+}
+
+/*
+ * Monaco-editor is mocked via moduleNameMapper in jest.config.js (pointing to mock-monaco-editor.ts)
+ * to avoid loading the heavy real module (~50MB) which causes SIGSEGV crashes in Jest workers.
+ * The queryCommandSupported stub is kept for any remaining code that may call it.
  */
 document.queryCommandSupported = () => false;
-import 'monaco-editor/esm/vs/editor/edcore.main'; // Do not move this import.
 
 failOnConsole({
     shouldFailOnWarn: true,
@@ -70,6 +77,17 @@ Object.defineProperty(window, 'matchMedia', {
     })),
 });
 
+// PrimeNG UIX motion relies on matchMedia; mock it globally to avoid setup in individual specs.
+jest.mock('@primeuix/motion', () => ({
+    __esModule: true,
+    createMotion: jest.fn(() => ({
+        enter: jest.fn(() => Promise.resolve()),
+        leave: jest.fn(() => Promise.resolve()),
+        cancel: jest.fn(),
+        update: jest.fn(),
+    })),
+}));
+
 // Prevents errors with the monaco editor tests
 Object.assign(global, { TextDecoder, TextEncoder });
 // Custom language definitions load clipboardService.js, which depends on ClipboardItem. This must be mocked for the tests.
@@ -102,6 +120,13 @@ jest.mock('pdfjs-dist', () => {
 });
 
 // has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements
-Text.size = () => {
+const TextAny: any = (globalThis as any).Text || {};
+TextAny.size = () => {
     return { width: 0, height: 0 };
 };
+(globalThis as any).Text = TextAny;
+
+// jsdom does not implement getBBox for SVG elements; provide a harmless stub.
+if (!(SVGElement.prototype as any).getBBox) {
+    (SVGElement.prototype as any).getBBox = () => ({ x: 0, y: 0, width: 0, height: 0 });
+}

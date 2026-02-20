@@ -2,12 +2,14 @@ package de.tum.cit.aet.artemis.atlas.config;
 
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 
 import de.tum.cit.aet.artemis.atlas.service.AtlasAgentToolsService;
+import de.tum.cit.aet.artemis.atlas.service.CompetencyExpertToolsService;
 
 @Lazy
 @Configuration
@@ -15,15 +17,30 @@ import de.tum.cit.aet.artemis.atlas.service.AtlasAgentToolsService;
 public class AtlasAgentToolConfig {
 
     /**
-     * Registers the tools found on the AtlasAgentToolsService bean.
-     * MethodToolCallbackProvider discovers @Tool-annotated methods on the provided instances
-     * and makes them available for Spring AI's tool calling system.
+     * Registers the tools for the Main Agent (Requirements Engineer/Orchestrator).
+     * This agent has access to information retrieval tools only.
      *
-     * @param toolsService the service containing @Tool-annotated methods
-     * @return ToolCallbackProvider that exposes the tools to Spring AI
+     * @param toolsService the service containing @Tool-annotated methods for the Main Agent
+     * @return ToolCallbackProvider that exposes the Main Agent tools to Spring AI
      */
     @Bean
-    public ToolCallbackProvider atlasToolCallbackProvider(AtlasAgentToolsService toolsService) {
+    @Lazy
+    @Qualifier("mainAgentToolCallbackProvider")
+    public ToolCallbackProvider mainAgentToolCallbackProvider(AtlasAgentToolsService toolsService) {
         return MethodToolCallbackProvider.builder().toolObjects(toolsService).build();
+    }
+
+    /**
+     * Registers the tools for the Competency Expert Sub-Agent.
+     * This agent has access to both previewCompetency and create/update Competency tools.
+     *
+     * @param expertToolsService the service containing @Tool-annotated methods for the Competency Expert Sub-Agent
+     * @return ToolCallbackProvider that exposes the Competency Expert Sub-Agent tools to Spring AI
+     */
+    @Bean
+    @Lazy
+    @Qualifier("competencyExpertToolCallbackProvider")
+    public ToolCallbackProvider competencyExpertToolCallbackProvider(CompetencyExpertToolsService expertToolsService) {
+        return MethodToolCallbackProvider.builder().toolObjects(expertToolsService).build();
     }
 }

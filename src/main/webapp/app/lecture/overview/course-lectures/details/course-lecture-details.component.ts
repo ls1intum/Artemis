@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { PROFILE_IRIS, addPublicFilePrefix } from 'app/app.constants';
+import { MODULE_FEATURE_IRIS, addPublicFilePrefix } from 'app/app.constants';
 import { downloadStream } from 'app/shared/util/download.util';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
@@ -19,7 +19,7 @@ import { ScienceEventType } from 'app/shared/science/science.model';
 import { Subscription } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
-import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
+import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { UpperCasePipe } from '@angular/common';
@@ -27,7 +27,6 @@ import { ExerciseUnitComponent } from '../exercise-unit/exercise-unit.component'
 import { AttachmentVideoUnitComponent } from '../attachment-video-unit/attachment-video-unit.component';
 import { TextUnitComponent } from '../text-unit/text-unit.component';
 import { OnlineUnitComponent } from '../online-unit/online-unit.component';
-import { CompetenciesPopoverComponent } from 'app/atlas/shared/competencies-popover/competencies-popover.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -53,7 +52,6 @@ export interface LectureUnitCompletionEvent {
         AttachmentVideoUnitComponent,
         TextUnitComponent,
         OnlineUnitComponent,
-        CompetenciesPopoverComponent,
         FaIconComponent,
         DiscussionSectionComponent,
         UpperCasePipe,
@@ -90,14 +88,14 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     isDownloadingLink?: string;
     lectureUnits: LectureUnit[] = [];
     hasPdfLectureUnit: boolean;
-    irisSettings?: IrisSettings;
+    irisSettings?: IrisCourseSettingsWithRateLimitDTO;
     paramsSubscription: Subscription;
     courseParamsSubscription: Subscription;
     irisEnabled = false;
     informationBoxData: InformationBox[] = [];
 
     ngOnInit(): void {
-        this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
+        this.irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
 
         // As defined in courses.route.ts, the courseId is in the grand parent route of the lectureId route.
         const grandParentRoute = this.activatedRoute.parent?.parent;
@@ -145,8 +143,8 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                                 ).length > 0;
                         }
                         if (this.irisEnabled && this.lecture?.course?.id) {
-                            this.irisSettingsService.getCombinedCourseSettings(this.lecture.course.id).subscribe((irisSettings) => {
-                                this.irisSettings = irisSettings;
+                            this.irisSettingsService.getCourseSettingsWithRateLimit(this.lecture.course.id).subscribe((response) => {
+                                this.irisSettings = response;
                             });
                         }
                         this.informationBoxData = [];

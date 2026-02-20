@@ -38,7 +38,7 @@ import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/su
 import { ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
-import { MODULE_FEATURE_PLAGIARISM, PROFILE_AEOLUS, PROFILE_LOCALCI, PROFILE_THEIA } from 'app/app.constants';
+import { MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_THEIA, PROFILE_AEOLUS, PROFILE_LOCALCI } from 'app/app.constants';
 import { AeolusService } from 'app/programming/shared/services/aeolus.service';
 import { SharingInfo } from 'app/sharing/sharing.model';
 import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/update/update-components/information/programming-exercise-information.component';
@@ -52,6 +52,7 @@ import { FormsModule } from '@angular/forms';
 import { ProgrammingExerciseProblemComponent } from 'app/programming/manage/update/update-components/problem/programming-exercise-problem.component';
 import { loadCourseExerciseCategories } from 'app/exercise/course-exercises/course-utils';
 import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
+import { ProgrammingExerciseVersionControlComponent } from 'app/programming/manage/update/update-components/version-control/programming-exercise-version-control.component';
 import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
 import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.component';
 import { FileService } from 'app/shared/service/file.service';
@@ -74,6 +75,7 @@ export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
         ProgrammingExerciseModeComponent,
         ProgrammingExerciseLanguageComponent,
         ProgrammingExerciseProblemComponent,
+        ProgrammingExerciseVersionControlComponent,
         ProgrammingExerciseGradingComponent,
         ExerciseUpdatePlagiarismComponent,
         FormFooterComponent,
@@ -543,7 +545,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.customBuildPlansSupported = PROFILE_AEOLUS;
         }
 
-        this.theiaEnabled = this.profileService.isProfileActive(PROFILE_THEIA);
+        this.theiaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA);
         this.plagiarismEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM);
         this.defineSupportedProgrammingLanguages();
     }
@@ -584,7 +586,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle',
                 valid: Boolean(
                     this.exerciseGradingComponent?.formValid &&
-                        (this.isExamMode || !this.isEditFieldDisplayedRecord().plagiarismControl || this.exercisePlagiarismComponent()?.isFormValid()),
+                    (this.isExamMode || !this.isEditFieldDisplayedRecord().plagiarismControl || this.exercisePlagiarismComponent()?.isFormValid()),
                 ),
                 empty: this.exerciseGradingComponent?.formEmpty,
             },
@@ -669,6 +671,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 this.programmingExercise.exerciseGroup = undefined;
             });
             this.isExamMode = false;
+
+            // Sync categories
+            this.exerciseCategories = this.programmingExercise.categories ?? [];
         }
         this.loadCourseExerciseCategories(courseId);
         resetProgrammingForImport(this.programmingExercise);
@@ -778,15 +783,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         if (this.isImportFromFile) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importFromFile(this.programmingExercise, this.courseId));
         } else if (this.isImportFromSharing) {
-            this.courseService.find(this.courseId).subscribe({
-                next: (res) => {
-                    this.programmingExerciseSharingService.setUpFromSharingImport(this.programmingExercise, res.body!, this.sharingInfo).subscribe({
-                        next: (response: HttpResponse<ProgrammingExercise>) => {
-                            this.alertService.success('artemisApp.programmingExercise.created', { param: this.programmingExercise.title });
-                            this.onSaveSuccess(response.body!);
-                        },
-                        error: (err) => this.onSaveError(err),
-                    });
+            this.programmingExerciseSharingService.setUpFromSharingImport(this.programmingExercise, this.courseId, this.sharingInfo).subscribe({
+                next: (response: HttpResponse<ProgrammingExercise>) => {
+                    this.alertService.success('artemisApp.programmingExercise.created', { param: this.programmingExercise.title });
+                    this.onSaveSuccess(response.body!);
                 },
                 error: (err) => this.onSaveError(err),
             });
@@ -989,7 +989,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     isEventInsideTextArea(event: Event): boolean {
         if (event.target instanceof Element) {
-            return event.target.tagName === 'TEXTAREA';
+            return event.target.tagName === 'TEXTAREA' || event.target.className === 'native-edit-context';
         }
         return false;
     }

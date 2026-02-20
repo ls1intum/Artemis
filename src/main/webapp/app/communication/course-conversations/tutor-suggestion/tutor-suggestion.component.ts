@@ -4,7 +4,7 @@ import { Subscription, of } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, shareReplay, skip, switchMap, take, tap } from 'rxjs/operators';
 import { AsPipe } from 'app/shared/pipes/as.pipe';
 import { IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
-import { PROFILE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
@@ -83,7 +83,7 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
     ngOnInit(): void {
         this.featureToggleSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.TutorSuggestions).subscribe((active) => {
             if (active) {
-                if (!this.profileService.isProfileActive(PROFILE_IRIS)) {
+                if (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS)) {
                     return;
                 }
                 const course = this.course();
@@ -93,8 +93,8 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
                     return;
                 }
                 if (course?.id && post) {
-                    this.irisSettingsSubscription = this.irisSettingsService.getCombinedCourseSettings(course.id).subscribe((settings) => {
-                        this.irisEnabled = !!settings?.irisTutorSuggestionSettings?.enabled;
+                    this.irisSettingsSubscription = this.irisSettingsService.getCourseSettingsWithRateLimit(course.id).subscribe((response) => {
+                        this.irisEnabled = !!response?.settings?.enabled;
                         if (this.irisEnabled) {
                             this.chatService.switchTo(ChatServiceMode.TUTOR_SUGGESTION, post.id);
                             this.subscribeToIrisActivation();

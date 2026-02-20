@@ -7,9 +7,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.hibernate.Hibernate;
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -129,7 +128,7 @@ public interface ProgrammingExerciseTestRepository extends ProgrammingExerciseRe
      * @return The programming exercise related to the given id
      * @throws EntityNotFoundException the programming exercise could not be found.
      */
-    @NotNull
+    @NonNull
     default ProgrammingExercise findByIdWithBuildConfigElseThrow(long programmingExerciseId) throws EntityNotFoundException {
         return getValueElseThrow(findWithBuildConfigById(programmingExerciseId), programmingExerciseId);
     }

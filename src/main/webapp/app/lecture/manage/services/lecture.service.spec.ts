@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -10,9 +12,10 @@ import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import dayjs from 'dayjs/esm';
-import { IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 
 describe('Lecture Service', () => {
+    setupTestBed({ zoneless: true });
+
     let httpMock: HttpTestingController;
     let service: LectureService;
     const resourceUrl = 'api/lecture/lectures';
@@ -30,9 +33,11 @@ describe('Lecture Service', () => {
         elemDefault = new Lecture();
         elemDefault.startDate = dayjs();
         elemDefault.course = new Course();
+        elemDefault.course.id = 42;
         elemDefault.description = 'new service test Lecture';
         elemDefault.endDate = dayjs();
         elemDefault.id = 1;
+        elemDefault.title = 'Test Lecture';
         elemDefault.isAtLeastEditor = false;
         elemDefault.isAtLeastInstructor = false;
         elemDefault.channelName = 'lecture-default';
@@ -54,6 +59,26 @@ describe('Lecture Service', () => {
                 url: resourceUrl,
                 method: 'POST',
             });
+
+            // Verify the request body contains the correct SimpleLectureDTO format
+            const requestBody = req.request.body;
+            expect(requestBody.title).toBe('Test Lecture');
+            expect(requestBody.description).toBe('new service test Lecture');
+            expect(requestBody.channelName).toBe('lecture-default');
+            expect(requestBody.isTutorialLecture).toBe(false);
+            // Verify course only contains id (not full course object)
+            expect(requestBody.course).toEqual({ id: 42 });
+            // Verify dates are converted to ISO strings
+            expect(typeof requestBody.startDate).toBe('string');
+            expect(typeof requestBody.endDate).toBe('string');
+            // Verify unnecessary fields are NOT sent (SimpleLectureDTO format)
+            expect(requestBody.attachments).toBeUndefined();
+            expect(requestBody.lectureUnits).toBeUndefined();
+            expect(requestBody.posts).toBeUndefined();
+            expect(requestBody.isAtLeastEditor).toBeUndefined();
+            expect(requestBody.isAtLeastInstructor).toBeUndefined();
+            expect(requestBody.visibleDate).toBeUndefined();
+
             req.flush(returnedFromService);
             expect(expectedResult.body).toEqual(expected);
         });
@@ -69,6 +94,27 @@ describe('Lecture Service', () => {
                 url: resourceUrl,
                 method: 'PUT',
             });
+
+            // Verify the request body contains the correct SimpleLectureDTO format
+            const requestBody = req.request.body;
+            expect(requestBody.id).toBe(1);
+            expect(requestBody.title).toBe('Test Lecture');
+            expect(requestBody.description).toBe('new service test Lecture');
+            expect(requestBody.channelName).toBe('lecture-default');
+            expect(requestBody.isTutorialLecture).toBe(false);
+            // Verify course only contains id (not full course object)
+            expect(requestBody.course).toEqual({ id: 42 });
+            // Verify dates are converted to ISO strings
+            expect(typeof requestBody.startDate).toBe('string');
+            expect(typeof requestBody.endDate).toBe('string');
+            // Verify unnecessary fields are NOT sent (SimpleLectureDTO format)
+            expect(requestBody.attachments).toBeUndefined();
+            expect(requestBody.lectureUnits).toBeUndefined();
+            expect(requestBody.posts).toBeUndefined();
+            expect(requestBody.isAtLeastEditor).toBeUndefined();
+            expect(requestBody.isAtLeastInstructor).toBeUndefined();
+            expect(requestBody.visibleDate).toBeUndefined();
+
             req.flush(returnedFromService);
             expect(expectedResult.body).toEqual(expected);
         });
@@ -105,22 +151,8 @@ describe('Lecture Service', () => {
             expect(expectedResult.body).toEqual(expected);
         });
 
-        it('should invoke query', async () => {
-            const returnedFromService = [elemDefault];
-            const expected = returnedFromService;
-            service
-                .query({})
-                .pipe(take(1))
-                .subscribe((resp) => (expectedResult = resp));
-            const req = httpMock.expectOne({
-                url: resourceUrl,
-                method: 'GET',
-            });
-            req.flush(returnedFromService);
-            expect(expectedResult.body).toEqual(expected);
-        });
-
         it('should get all lectures by courseId', async () => {
+            elemDefault.isTutorialLecture = false;
             const returnedFromService = [elemDefault];
             const expected = returnedFromService;
             const courseId = 1;
@@ -129,7 +161,24 @@ describe('Lecture Service', () => {
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
-                url: `api/lecture/courses/${courseId}/lectures?withLectureUnits=0`,
+                url: `api/lecture/courses/${courseId}/lectures`,
+                method: 'GET',
+            });
+            req.flush(returnedFromService);
+            expect(expectedResult.body).toEqual(expected);
+        });
+
+        it('should get all tutorial lectures by courseId', async () => {
+            elemDefault.isTutorialLecture = true;
+            const returnedFromService = [elemDefault];
+            const expected = returnedFromService;
+            const courseId = 1;
+            service
+                .findAllTutorialLecturesByCourseId(courseId)
+                .pipe(take(1))
+                .subscribe((resp) => (expectedResult = resp));
+            const req = httpMock.expectOne({
+                url: `api/lecture/courses/${courseId}/tutorial-lectures`,
                 method: 'GET',
             });
             req.flush(returnedFromService);
@@ -188,41 +237,6 @@ describe('Lecture Service', () => {
         it('should convert Dates from server', async () => {
             const results = service.convertLectureArrayDatesFromServer([elemDefault, elemDefault]);
             expect(results).toEqual([elemDefault, elemDefault]);
-        });
-
-        it('should fetch ingestion state for a course', () => {
-            const courseId = 123;
-            const expectedUrl = `api/iris/courses/${courseId}/lectures/ingestion-state`;
-            const expectedResponse = { 1: IngestionState.DONE, 2: IngestionState.NOT_STARTED };
-
-            service.getIngestionState(courseId).subscribe((resp) => {
-                expect(resp.body).toEqual(expectedResponse);
-            });
-
-            const req = httpMock.expectOne({
-                url: expectedUrl,
-                method: 'GET',
-            });
-
-            req.flush(expectedResponse);
-            expect(req.request.method).toBe('GET');
-        });
-
-        it('should send a POST request to ingest lectures and return an OK response', () => {
-            const courseId = 123;
-            const lectureId = 456;
-            const expectedUrl = `api/lecture/courses/123/ingest?lectureId=456`;
-            const expectedStatus = 200;
-
-            service.ingestLecturesInPyris(courseId, lectureId).subscribe((response) => {
-                expect(response.status).toBe(expectedStatus);
-            });
-
-            const req = httpMock.expectOne({
-                url: expectedUrl,
-                method: 'POST',
-            });
-            expect(req.request.method).toBe('POST');
         });
     });
 });

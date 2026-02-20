@@ -9,9 +9,8 @@ import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.apache.commons.io.FileUtils;
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -28,9 +27,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
-import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
@@ -227,29 +224,13 @@ public class QuizExerciseUtilService {
     }
 
     /**
-     * Sets up a team quiz exercise by creating the team assignment config with the passed values and setting it to the quiz.
-     *
-     * @param quiz        The quiz which should be a team exercise.
-     * @param minTeamSize The minimum number of members the team is allowed to have.
-     * @param maxTeamSize The maximum number of members the team is allowed to have.
-     */
-    public void setupTeamQuizExercise(QuizExercise quiz, int minTeamSize, int maxTeamSize) {
-        var teamAssignmentConfig = new TeamAssignmentConfig();
-        teamAssignmentConfig.setExercise(quiz);
-        teamAssignmentConfig.setMinTeamSize(minTeamSize);
-        teamAssignmentConfig.setMaxTeamSize(maxTeamSize);
-        quiz.setMode(ExerciseMode.TEAM);
-        quiz.setTeamAssignmentConfig(teamAssignmentConfig);
-    }
-
-    /**
      * Creates and saves a course and an exam. An exam quiz exercise is created and saved.
      *
      * @param startDate The start date of the exam, also used to set the start date of the course the exam is in.
      * @param endDate   The end date of the exam, also used to set the end date of the course the exam is in.
      * @return The created exam quiz exercise.
      */
-    @NotNull
+    @NonNull
     public QuizExercise createAndSaveExamQuiz(ZonedDateTime startDate, ZonedDateTime endDate) {
         Course course = createAndSaveCourse(null, startDate.minusDays(1), endDate.plusDays(1), new HashSet<>());
 
@@ -324,7 +305,7 @@ public class QuizExerciseUtilService {
         submittedAnswerMC.setQuizQuestion(multipleChoiceQuestion);
         var submittedAnswerSC = new MultipleChoiceSubmittedAnswer();
         MultipleChoiceQuestion singleChoiceQuestion = (MultipleChoiceQuestion) (quizExercise.getQuizQuestions().get(3));
-        submittedAnswerSC.setSelectedOptions(Set.of(multipleChoiceQuestion.getAnswerOptions().getFirst()));
+        submittedAnswerSC.setSelectedOptions(Set.of(singleChoiceQuestion.getAnswerOptions().getFirst()));
         submittedAnswerSC.setQuizQuestion(singleChoiceQuestion);
         var submittedShortAnswer = new ShortAnswerSubmittedAnswer();
         ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) (quizExercise.getQuizQuestions().get(2));
@@ -387,6 +368,8 @@ public class QuizExerciseUtilService {
         dragAndDropMapping.setQuestion(dragAndDropQuestion);
         incorrectDragAndDropMapping.setQuestion(dragAndDropQuestion);
         mappingWithImage.setQuestion(dragAndDropQuestion);
+        quizQuestionRepository.saveAndFlush(multipleChoiceQuestion);
+        quizQuestionRepository.saveAndFlush(singleChoiceQuestion);
         quizQuestionRepository.save(dragAndDropQuestion);
         submittedAnswerRepository.save(submittedAnswerMC);
         submittedAnswerRepository.save(submittedAnswerSC);

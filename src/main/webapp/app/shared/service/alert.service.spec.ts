@@ -31,7 +31,7 @@ describe('Alert Service Test', () => {
             ],
         });
         const translateService = TestBed.inject(TranslateService);
-        translateService.setDefaultLang('en');
+        translateService.setFallbackLang('en');
         translateService.setTranslation('en', {
             'Hello Jhipster': 'Hello Jhipster',
             'Hello Jhipster success': 'Hello Jhipster success',

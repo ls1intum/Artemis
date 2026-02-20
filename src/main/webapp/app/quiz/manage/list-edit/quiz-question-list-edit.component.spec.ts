@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -10,8 +12,12 @@ import { QuizQuestionListEditExistingComponent } from 'app/quiz/manage/list-edit
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { provideHttpClient } from '@angular/common/http';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('QuizQuestionListEditComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<QuizQuestionListEditComponent>;
     let component: QuizQuestionListEditComponent;
 
@@ -24,50 +30,52 @@ describe('QuizQuestionListEditComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [CommonModule],
-            declarations: [
+            imports: [
+                CommonModule,
                 QuizQuestionListEditComponent,
                 MockComponent(QuizQuestionListEditExistingComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(TranslateDirective),
             ],
-            providers: [provideHttpClient(), provideHttpClientTesting()],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting()],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(QuizQuestionListEditComponent);
                 component = fixture.componentInstance;
+                // Set required input before detectChanges
+                fixture.componentRef.setInput('courseId', 1);
                 fixture.detectChanges();
             });
     });
 
     it('should add multiple choice question to quizQuestions and emit onQuestionAdded Output', () => {
-        const onQuestionAddedEmit = jest.spyOn(component.onQuestionAdded, 'emit');
+        const onQuestionAddedEmit = vi.spyOn(component.onQuestionAdded, 'emit');
         component.addMultipleChoiceQuestion();
-        expect(component.quizQuestions()).toBeArrayOfSize(1);
+        expect(component.quizQuestions()).toHaveLength(1);
         expect(onQuestionAddedEmit).toHaveBeenCalledOnce();
     });
 
     it('should add drag and drop question to quizQuestions and emit onQuestionAdded Output', () => {
-        const onQuestionAddedEmit = jest.spyOn(component.onQuestionAdded, 'emit');
+        const onQuestionAddedEmit = vi.spyOn(component.onQuestionAdded, 'emit');
         component.addDragAndDropQuestion();
-        expect(component.quizQuestions()).toBeArrayOfSize(1);
+        expect(component.quizQuestions()).toHaveLength(1);
         expect(onQuestionAddedEmit).toHaveBeenCalledOnce();
     });
 
     it('should add short answer question to quizQuestions and emit onQuestionAdded Output', () => {
-        const onQuestionAddedEmit = jest.spyOn(component.onQuestionAdded, 'emit');
+        const onQuestionAddedEmit = vi.spyOn(component.onQuestionAdded, 'emit');
         component.addShortAnswerQuestion();
-        expect(component.quizQuestions()).toBeArrayOfSize(1);
+        expect(component.quizQuestions()).toHaveLength(1);
         expect(onQuestionAddedEmit).toHaveBeenCalledOnce();
     });
 
     it('should toggle show hide existing questions flag', () => {
         component.showHideExistingQuestions();
-        expect(component.showExistingQuestions).toBeTrue();
+        expect(component.showExistingQuestions).toBe(true);
         component.showHideExistingQuestions();
-        expect(component.showExistingQuestions).toBeFalse();
+        expect(component.showExistingQuestions).toBe(false);
     });
 
     it('should add existing quiz questions to quizQuestions and toggle show hide existing questions flag', () => {
@@ -75,14 +83,14 @@ describe('QuizQuestionListEditComponent', () => {
         const question1 = new ShortAnswerQuestion();
         component.showExistingQuestions = true;
         component.handleExistingQuestionsAdded([question0, question1]);
-        expect(component.showExistingQuestions).toBeFalse();
-        expect(component.quizQuestions()).toBeArrayOfSize(2);
+        expect(component.showExistingQuestions).toBe(false);
+        expect(component.quizQuestions()).toHaveLength(2);
         expect(component.quizQuestions()[0]).toEqual(question0);
         expect(component.quizQuestions()[1]).toEqual(question1);
     });
 
     it('should emit onQuestionUpdated Output', () => {
-        const onQuestionUpdatedEmit = jest.spyOn(component.onQuestionUpdated, 'emit');
+        const onQuestionUpdatedEmit = vi.spyOn(component.onQuestionUpdated, 'emit');
         component.handleQuestionUpdated();
         expect(onQuestionUpdatedEmit).toHaveBeenCalledOnce();
     });
@@ -91,10 +99,10 @@ describe('QuizQuestionListEditComponent', () => {
         const question0 = new MultipleChoiceQuestion();
         const question1 = new ShortAnswerQuestion();
         fixture.componentRef.setInput('quizQuestions', [question0, question1]);
-        const onQuestionDeletedEmit = jest.spyOn(component.onQuestionDeleted, 'emit');
+        const onQuestionDeletedEmit = vi.spyOn(component.onQuestionDeleted, 'emit');
         component.handleQuestionDeleted(0);
         expect(onQuestionDeletedEmit).toHaveBeenCalledOnce();
-        expect(component.quizQuestions()).toBeArrayOfSize(1);
+        expect(component.quizQuestions()).toHaveLength(1);
         expect(component.quizQuestions()[0]).toEqual(question1);
     });
 

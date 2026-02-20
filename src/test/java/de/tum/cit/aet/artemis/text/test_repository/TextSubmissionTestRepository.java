@@ -4,8 +4,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -28,7 +27,7 @@ public interface TextSubmissionTestRepository extends TextSubmissionRepository {
     @EntityGraph(type = LOAD, attributePaths = { "blocks" })
     Set<TextSubmission> findByParticipation_ExerciseIdAndSubmittedIsTrue(long exerciseId);
 
-    @NotNull
+    @NonNull
     default TextSubmission findByIdWithParticipationExerciseResultAssessorElseThrow(long submissionId) {
         return getValueElseThrow(findWithEagerParticipationExerciseResultAssessorById(submissionId), submissionId);
     }

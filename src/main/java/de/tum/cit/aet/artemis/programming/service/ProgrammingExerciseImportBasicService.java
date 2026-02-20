@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,6 +13,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -46,6 +50,8 @@ import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 @Service
 public class ProgrammingExerciseImportBasicService {
 
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseImportBasicService.class);
+
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
 
@@ -73,6 +79,10 @@ public class ProgrammingExerciseImportBasicService {
 
     private final ProgrammingExerciseTaskService programmingExerciseTaskService;
 
+    private final ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
+
+    private final UriService uriService;
+
     private final ChannelService channelService;
 
     private final ExerciseService exerciseService;
@@ -82,7 +92,8 @@ public class ProgrammingExerciseImportBasicService {
             StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService, StaticCodeAnalysisService staticCodeAnalysisService,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyRepository submissionPolicyRepository,
-            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseTaskService programmingExerciseTaskService, ChannelService channelService,
+            ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
+            ProgrammingExerciseTaskService programmingExerciseTaskService, UriService uriService, ChannelService channelService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, ExerciseService exerciseService) {
         this.versionControlService = versionControlService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
@@ -95,14 +106,18 @@ public class ProgrammingExerciseImportBasicService {
         this.submissionPolicyRepository = submissionPolicyRepository;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
+        this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
+        this.uriService = uriService;
         this.channelService = channelService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.exerciseService = exerciseService;
     }
 
     /**
-     * Imports a programming exercise creating a new entity, copying all basic values and saving it in the database.
-     * All basic include everything except for repositories, or build plans on a remote version control server, or
+     * Imports a programming exercise creating a new entity, copying all basic
+     * values and saving it in the database.
+     * All basic include everything except for repositories, or build plans on a
+     * remote version control server, or
      * continuous integration server. <br>
      * There are however, a couple of things that will never get copied:
      * <ul>
@@ -114,12 +129,16 @@ public class ProgrammingExerciseImportBasicService {
      * <li>The example submissions</li>
      * </ul>
      *
-     * @param originalProgrammingExercise The template exercise which should get imported
-     * @param newProgrammingExercise      The new exercise already containing values which should not get copied, i.e. overwritten
+     * @param originalProgrammingExercise The template exercise which should get
+     *                                        imported
+     * @param newProgrammingExercise      The new exercise already containing values
+     *                                        which should not get copied, i.e.
+     *                                        overwritten
      * @return The newly created exercise
      */
     @Transactional // TODO: NOT OK --> apply the transaction on a smaller scope
-    // IMPORTANT: the transactional context only works if you invoke this method from another class
+    // IMPORTANT: the transactional context only works if you invoke this method
+    // from another class
     public ProgrammingExercise importProgrammingExerciseBasis(final ProgrammingExercise originalProgrammingExercise, final ProgrammingExercise newProgrammingExercise) {
         prepareBasicExerciseInformation(originalProgrammingExercise, newProgrammingExercise);
 
@@ -131,7 +150,8 @@ public class ProgrammingExerciseImportBasicService {
 
         newProgrammingExercise.getBuildConfig().setBranch(defaultBranch);
         if (newProgrammingExercise.getBuildConfig().getBuildPlanConfiguration() == null) {
-            // this means the user did not override the build plan config when importing the exercise and want to reuse it from the existing exercise
+            // this means the user did not override the build plan config when importing the
+            // exercise and want to reuse it from the existing exercise
             newProgrammingExercise.getBuildConfig().setBuildPlanConfiguration(originalProgrammingExercise.getBuildConfig().getBuildPlanConfiguration());
         }
 
@@ -143,7 +163,7 @@ public class ProgrammingExerciseImportBasicService {
             for (GradingCriterion oldCriterion : oldCriteria) {
                 // 1) Create and copy a new GradingCriterion
                 GradingCriterion copyCriterion = new GradingCriterion();
-                copyCriterion.setId(null);  // ensure Hibernate treats it as new
+                copyCriterion.setId(null); // ensure Hibernate treats it as new
                 copyCriterion.setTitle(oldCriterion.getTitle());
                 copyCriterion.setExercise(newProgrammingExercise);
 
@@ -172,11 +192,13 @@ public class ProgrammingExerciseImportBasicService {
         final Map<Long, Long> newTestCaseIdByOldId = importTestCases(originalProgrammingExercise, importedExercise);
         importTasks(originalProgrammingExercise, importedExercise, newTestCaseIdByOldId);
 
-        // Set up new exercise submission policy before the solution entries are imported
+        // Set up new exercise submission policy before the solution entries are
+        // imported
         importSubmissionPolicy(importedExercise);
         // Having the submission policy in place prevents errors
 
-        // Use the template problem statement (with ids) as a new basis (You cannot edit the problem statement while importing)
+        // Use the template problem statement (with ids) as a new basis (You cannot edit
+        // the problem statement while importing)
         // Then replace the old test ids by the newly created ones.
         importedExercise.setProblemStatement(originalProgrammingExercise.getProblemStatement());
         programmingExerciseTaskService.updateTestIds(importedExercise, newTestCaseIdByOldId);
@@ -214,9 +236,11 @@ public class ProgrammingExerciseImportBasicService {
     /**
      * Prepares information directly stored in the exercise for the copy process.
      * <p>
-     * Replaces attributes in the new exercise that should not be copied from the previous one.
+     * Replaces attributes in the new exercise that should not be copied from the
+     * previous one.
      *
-     * @param originalProgrammingExercise Some exercise the information is copied from.
+     * @param originalProgrammingExercise Some exercise the information is copied
+     *                                        from.
      * @param newProgrammingExercise      The exercise that is prepared.
      */
     private void prepareBasicExerciseInformation(final ProgrammingExercise originalProgrammingExercise, final ProgrammingExercise newProgrammingExercise) {
@@ -230,7 +254,8 @@ public class ProgrammingExerciseImportBasicService {
     }
 
     /**
-     * Sets up the test repository for a new exercise by setting the repository URI. This does not create the actual
+     * Sets up the test repository for a new exercise by setting the repository URI.
+     * This does not create the actual
      * repository on the version control server!
      *
      * @param newExercise the new exercises that should be created during import
@@ -257,7 +282,8 @@ public class ProgrammingExerciseImportBasicService {
     }
 
     /**
-     * Persists the submission policy of the new exercise. We ensure that the submission policy does not
+     * Persists the submission policy of the new exercise. We ensure that the
+     * submission policy does not
      * have any id or programming exercise set.
      *
      * @param newExercise containing the submission policy to persist
@@ -272,12 +298,16 @@ public class ProgrammingExerciseImportBasicService {
     }
 
     /**
-     * Copied test cases from one exercise to another. The test cases will get new IDs, thus being saved as a new entity.
+     * Copied test cases from one exercise to another. The test cases will get new
+     * IDs, thus being saved as a new entity.
      * The remaining contents stay the same, especially the weights.
      *
-     * @param templateExercise The template exercise which test cases should get copied
-     * @param targetExercise   The new exercise to which all test cases should get copied to
-     * @return A map with the old test case id as a key and the new test case id as value
+     * @param templateExercise The template exercise which test cases should get
+     *                             copied
+     * @param targetExercise   The new exercise to which all test cases should get
+     *                             copied to
+     * @return A map with the old test case id as a key and the new test case id as
+     *         value
      */
     private Map<Long, Long> importTestCases(final ProgrammingExercise templateExercise, final ProgrammingExercise targetExercise) {
         Map<Long, Long> newIdByOldId = new HashMap<>();
@@ -302,12 +332,15 @@ public class ProgrammingExerciseImportBasicService {
     }
 
     /**
-     * Imports tasks from a template exercise to a new exercise. The tasks will get new IDs, thus being saved as a new entity.
+     * Imports tasks from a template exercise to a new exercise. The tasks will get
+     * new IDs, thus being saved as a new entity.
      * The remaining contents stay the same, especially the test cases.
      *
      * @param sourceExercise    The template exercise which tasks should get copied
-     * @param targetExercise    The new exercise to which all tasks should get copied to
-     * @param testCaseIdMapping A map with the old test case id as a key and the new test case id as a value
+     * @param targetExercise    The new exercise to which all tasks should get
+     *                              copied to
+     * @param testCaseIdMapping A map with the old test case id as a key and the new
+     *                              test case id as a value
      */
     private void importTasks(final ProgrammingExercise sourceExercise, final ProgrammingExercise targetExercise, Map<Long, Long> testCaseIdMapping) {
         // Map the tasks from the template exercise to new tasks in the target exercise
@@ -318,12 +351,14 @@ public class ProgrammingExerciseImportBasicService {
     }
 
     /**
-     * Creates a copy of a task from a template exercise and links it to the target exercise. The test cases of the task
+     * Creates a copy of a task from a template exercise and links it to the target
+     * exercise. The test cases of the task
      * are also copied and linked to the new task.
      *
      * @param sourceTask        The template task which should be copied
      * @param targetExercise    The new exercise to which the task should be linked
-     * @param testCaseIdMapping A map with the old test case id as a key and the new test case id as a value
+     * @param testCaseIdMapping A map with the old test case id as a key and the new
+     *                              test case id as a value
      * @return The new task
      */
     private ProgrammingExerciseTask createTaskCopy(ProgrammingExerciseTask sourceTask, ProgrammingExercise targetExercise, Map<Long, Long> testCaseIdMapping) {
@@ -346,11 +381,14 @@ public class ProgrammingExerciseImportBasicService {
     }
 
     /**
-     * Finds a test case in the target exercise that corresponds to a test case in the template exercise.
+     * Finds a test case in the target exercise that corresponds to a test case in
+     * the template exercise.
      *
      * @param existingTestCase  The test case from the template exercise
-     * @param targetExercise    The new exercise to which the test case should be linked
-     * @param testCaseIdMapping A map with the old test case id as a key and the new test case id as a value
+     * @param targetExercise    The new exercise to which the test case should be
+     *                              linked
+     * @param testCaseIdMapping A map with the old test case id as a key and the new
+     *                              test case id as a value
      * @return The test case in the target exercise
      */
     private ProgrammingExerciseTestCase findMappedTestCase(ProgrammingExerciseTestCase existingTestCase, ProgrammingExercise targetExercise, Map<Long, Long> testCaseIdMapping) {
@@ -361,11 +399,14 @@ public class ProgrammingExerciseImportBasicService {
     }
 
     /**
-     * Copies static code analysis categories from one exercise to another by creating new entities and copying the
+     * Copies static code analysis categories from one exercise to another by
+     * creating new entities and copying the
      * appropriate fields.
      *
-     * @param templateExercise with static code analysis categories which should get copied
-     * @param targetExercise   for which static code analysis categories will be copied
+     * @param templateExercise with static code analysis categories which should get
+     *                             copied
+     * @param targetExercise   for which static code analysis categories will be
+     *                             copied
      */
     private void importStaticCodeAnalysisCategories(final ProgrammingExercise templateExercise, final ProgrammingExercise targetExercise) {
         if (targetExercise.getStaticCodeAnalysisCategories() == null) {
@@ -386,8 +427,10 @@ public class ProgrammingExerciseImportBasicService {
     }
 
     /**
-     * Sets up a new exercise for importing it by setting all values, that should either never get imported, or
-     * for which we should create new entities (e.g. test cases) to null. This ensures that we do not copy
+     * Sets up a new exercise for importing it by setting all values, that should
+     * either never get imported, or
+     * for which we should create new entities (e.g. test cases) to null. This
+     * ensures that we do not copy
      * anything by accident.
      *
      * @param newExercise the new exercises that should be created during import
@@ -403,7 +446,8 @@ public class ProgrammingExerciseImportBasicService {
 
         newExercise.disconnectRelatedEntities();
 
-        // copy the grading instructions to avoid issues with references to the original exercise
+        // copy the grading instructions to avoid issues with references to the original
+        // exercise
         newExercise.setGradingCriteria(newExercise.copyGradingCriteria(new HashMap<>()));
 
         // only copy the config for team programming exercise in courses
@@ -425,6 +469,55 @@ public class ProgrammingExerciseImportBasicService {
         }
         else {
             newExercise.setPlagiarismDetectionConfig(null);
+        }
+    }
+
+    /**
+     * Import all base repositories from one exercise. These include the template,
+     * the solution and the test
+     * repository. Participation repositories from students or tutors will not get
+     * copied!
+     *
+     * @param templateExercise The template exercise having a reference to all base
+     *                             repositories
+     * @param newExercise      The new exercise without any repositories
+     */
+    public void importRepositories(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
+        final var targetProjectKey = newExercise.getProjectKey();
+        final var sourceProjectKey = templateExercise.getProjectKey();
+
+        // First, create a new project for our imported exercise
+        VersionControlService versionControl = versionControlService.orElseThrow();
+        versionControl.createProjectForExercise(newExercise);
+        // Copy all repositories
+        String templateRepoName = uriService.getRepositorySlugFromRepositoryUriString(templateExercise.getTemplateRepositoryUri());
+        String testRepoName = uriService.getRepositorySlugFromRepositoryUriString(templateExercise.getTestRepositoryUri());
+        String solutionRepoName = uriService.getRepositorySlugFromRepositoryUriString(templateExercise.getSolutionRepositoryUri());
+
+        String sourceBranch = programmingExerciseRepository.findBranchByExerciseId(templateExercise.getId());
+
+        // TODO: in case one of those operations fail, we should do error handling and
+        // revert all previous operations
+        versionControl.copyRepositoryWithHistory(sourceProjectKey, templateRepoName, sourceBranch, targetProjectKey, RepositoryType.TEMPLATE.getName(), null);
+        versionControl.copyRepositoryWithHistory(sourceProjectKey, solutionRepoName, sourceBranch, targetProjectKey, RepositoryType.SOLUTION.getName(), null);
+        versionControl.copyRepositoryWithHistory(sourceProjectKey, testRepoName, sourceBranch, targetProjectKey, RepositoryType.TESTS.getName(), null);
+
+        List<AuxiliaryRepository> auxRepos = templateExercise.getAuxiliaryRepositories();
+        for (int i = 0; i < auxRepos.size(); i++) {
+            AuxiliaryRepository auxRepo = auxRepos.get(i);
+            var repoUri = versionControl.copyRepositoryWithHistory(sourceProjectKey, auxRepo.getRepositoryName(), sourceBranch, targetProjectKey, auxRepo.getName(), null)
+                    .toString();
+            AuxiliaryRepository newAuxRepo = newExercise.getAuxiliaryRepositories().get(i);
+            newAuxRepo.setRepositoryUri(repoUri);
+            auxiliaryRepositoryRepository.save(newAuxRepo);
+        }
+
+        try {
+            // Adjust placeholders that were replaced during creation of template exercise
+            programmingExerciseRepositoryService.adjustProjectNames(templateExercise.getTitle(), newExercise);
+        }
+        catch (GitAPIException | IOException e) {
+            log.error("Error during adjustment of placeholders of ProgrammingExercise {}", newExercise.getTitle(), e);
         }
     }
 }

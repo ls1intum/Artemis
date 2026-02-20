@@ -12,7 +12,7 @@ import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grad
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
-import { CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
+import { CompetencyExerciseLink, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { ExerciseInfo } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
@@ -111,7 +111,7 @@ export abstract class Exercise implements BaseEntity {
 
     // transient objects which might not be set
     public numberOfSubmissions?: DueDateStat;
-    public totalNumberOfAssessments?: DueDateStat;
+    public totalNumberOfAssessments?: number;
     public numberOfAssessmentsOfCorrectionRounds = [new DueDateStat()]; // Array with number of assessments for each correction round
     public numberOfComplaints?: number;
     public numberOfOpenComplaints?: number;
@@ -183,7 +183,7 @@ export function getIcon(exerciseType?: ExerciseType): IconProp {
         return faQuestion as IconProp;
     }
 
-    const icons = {
+    const icons: Record<string, IconProp> = {
         [ExerciseType.PROGRAMMING]: faKeyboard,
         [ExerciseType.MODELING]: faProjectDiagram,
         [ExerciseType.QUIZ]: faCheckDouble,
@@ -191,7 +191,7 @@ export function getIcon(exerciseType?: ExerciseType): IconProp {
         [ExerciseType.FILE_UPLOAD]: faFileUpload,
     };
 
-    return icons[exerciseType] as IconProp;
+    return icons[exerciseType] ?? (faQuestion as IconProp);
 }
 
 export function getIconTooltip(exerciseType?: ExerciseType): string {
@@ -282,4 +282,25 @@ export function resetForImport(exercise: Exercise) {
     exercise.allowFeedbackRequests = false;
 
     exercise.competencyLinks = [];
+}
+
+/**
+ * Checks if the due date of the given exercise is in the past.
+ * @param exercise the exercise to check
+ * @return true if the due date is in the past, false otherwise (including if no due date is set)
+ */
+export function hasDueDatePassed(exercise: Exercise): boolean {
+    if (!exercise.dueDate) {
+        return false;
+    }
+    return exercise.dueDate.isBefore(dayjs());
+}
+
+/**
+ * Extracts the competencies from an exercise's competency links.
+ * @param exercise the exercise to extract competencies from
+ * @return array of competencies linked to the exercise, empty array if none
+ */
+export function getExerciseCompetencies(exercise: Exercise): CourseCompetency[] {
+    return exercise.competencyLinks?.map((link) => link.competency).filter((competency): competency is CourseCompetency => competency != null) ?? [];
 }

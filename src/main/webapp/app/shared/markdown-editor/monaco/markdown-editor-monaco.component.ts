@@ -10,11 +10,14 @@ import {
     Output,
     Signal,
     ViewChild,
+    ViewContainerRef,
     computed,
+    effect,
     inject,
     input,
     output,
     signal,
+    untracked,
 } from '@angular/core';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import {
@@ -52,7 +55,7 @@ import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector
 import { CdkDrag, CdkDragMove, Point } from '@angular/cdk/drag-drop';
 import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action.model';
 import { TextEditorDomainActionWithOptions } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action-with-options.model';
-import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
+import { LectureAttachmentReferenceAction, LectureWithDetails } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
 import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { PostingEditType, ReferenceType } from 'app/communication/metis.util';
 import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
@@ -76,6 +79,12 @@ import { RedirectToIrisButtonComponent } from 'app/communication/shared/redirect
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { FileUploadResponse, FileUploaderService } from 'app/shared/service/file-uploader.service';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
+import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
+import { addCommentBoxes } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
+import { TranslateService } from '@ngx-translate/core';
+import { CommentThread, CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-widget-manager';
+import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 
 export enum MarkdownEditorHeight {
     INLINE = 125,
@@ -102,8 +111,6 @@ interface MarkdownActionsByGroup {
 
 export type TextWithDomainAction = { text: string; action?: TextEditorDomainAction };
 
-const EXTERNAL_HEIGHT = 'external';
-
 /**
  * The offset (in px) that is subtracted from the editor's width to prevent it from obscuring the border.
  * This consists of the width of the borders on each side (1px each) and one extra pixel to prevent the editor
@@ -111,6 +118,8 @@ const EXTERNAL_HEIGHT = 'external';
  */
 const BORDER_WIDTH_OFFSET = 3;
 const BORDER_HEIGHT_OFFSET = 2;
+const PROBLEM_STATEMENT_FILE_PATH = 'problem_statement.md';
+const REVIEW_COMMENT_HOVER_BUTTON_CLASS = 'monaco-add-review-comment-button';
 
 @Component({
     selector: 'jhi-markdown-editor-monaco',
@@ -150,12 +159,16 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     private readonly metisService = inject(MetisService, { optional: true });
     private readonly fileUploaderService = inject(FileUploaderService);
     private readonly artemisMarkdown = inject(ArtemisMarkdownService);
+    private readonly translateService = inject(TranslateService);
     protected readonly artemisIntelligenceService = inject(ArtemisIntelligenceService); // used in template
+    private readonly viewContainerRef = inject(ViewContainerRef);
+    private readonly exerciseReviewCommentService = inject(ExerciseReviewCommentService);
 
     @ViewChild(MonacoEditorComponent, { static: false }) monacoEditor: MonacoEditorComponent;
     @ViewChild('fullElement', { static: true }) fullElement: ElementRef<HTMLDivElement>;
     @ViewChild('wrapper', { static: true }) wrapper: ElementRef<HTMLDivElement>;
     @ViewChild('fileUploadFooter', { static: false }) fileUploadFooter?: ElementRef<HTMLDivElement>;
+    @ViewChild('fileUploadInput', { static: false }) fileUploadInput?: ElementRef<HTMLInputElement>;
     @ViewChild('resizePlaceholder', { static: false }) resizePlaceholder?: ElementRef<HTMLDivElement>;
     @ViewChild('actionPalette', { static: false }) actionPalette?: ElementRef<HTMLElement>;
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
@@ -197,10 +210,18 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     linkEditorHeightToContentHeight = false;
 
     /**
-     * The initial height the editor should have. If set to 'external', the editor will try to grow to the available space.
+     * The initial height the editor should have.
      */
     @Input()
-    initialEditorHeight: MarkdownEditorHeight | 'external' = MarkdownEditorHeight.SMALL;
+    initialEditorHeight: MarkdownEditorHeight = MarkdownEditorHeight.SMALL;
+
+    /**
+     * If true, the editor height is managed externally by the parent container.
+     * The editor will try to grow to fill the available space rather than managing its own height.
+     * Use this when embedding the editor in a container that controls layout (e.g., code editor view).
+     */
+    @Input()
+    externalHeight = false;
 
     @Input()
     resizableMaxHeight = MarkdownEditorHeight.LARGE;
@@ -245,9 +266,14 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     @Input()
     metaActions: TextEditorAction[] = [new FullscreenAction()];
 
+    readonly consistencyIssues = input<ConsistencyIssue[]>([]);
+    readonly enableExerciseReviewComments = input<boolean>(false);
+    readonly showLocationWarning = input<boolean>(false);
+
     isButtonLoading = input<boolean>(false);
     isFormGroupValid = input<boolean>(false);
     isInCommunication = input<boolean>(false);
+    showMarkdownInfoText = input<boolean>(true);
     editType = input<PostingEditType>();
     course = input<Course>();
 
@@ -278,6 +304,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     @Output()
     onLeaveVisualTab = new EventEmitter<void>();
 
+    readonly onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
     defaultPreviewHtml: SafeHtml | undefined;
     inPreviewMode = false;
     inVisualMode = false;
@@ -334,14 +361,52 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     protected readonly TAB_VISUAL = MarkdownEditorMonacoComponent.TAB_VISUAL;
 
     readonly EditType = PostingEditType;
+    private reviewCommentManager?: ReviewCommentWidgetManager;
 
     constructor() {
         this.uniqueMarkdownEditorId = 'markdown-editor-' + window.crypto.randomUUID().toString();
+
+        effect(() => {
+            this.enableExerciseReviewComments();
+            this.exerciseReviewCommentService.threads();
+            this.renderEditorWidgets();
+            this.updateReviewCommentButton();
+        });
+
+        effect(() => {
+            this.showLocationWarning();
+            const threads = this.exerciseReviewCommentService.threads();
+            this.reviewCommentManager?.updateDraftInputs();
+            this.reviewCommentManager?.tryUpdateThreadInputs(threads);
+        });
+    }
+
+    /**
+     * Renders consistency issues inside the editor.
+     */
+    protected renderEditorWidgets() {
+        const issues = this.consistencyIssues();
+
+        // Bail out until the editor is ready
+        if (!this.monacoEditor) {
+            return;
+        }
+
+        // Keep review comment widgets stable while refreshing consistency issue widgets.
+        this.monacoEditor.disposeWidgetsByPrefix('comment-');
+        addCommentBoxes(this.monacoEditor, issues, PROBLEM_STATEMENT_FILE_PATH, CommentThreadLocationType.PROBLEM_STATEMENT, this.translateService);
+        if (this.enableExerciseReviewComments()) {
+            // Avoid tracking UI-only signals (e.g. showLocationWarning) as rerender dependencies.
+            untracked(() => this.getReviewCommentManager()?.renderWidgets());
+        } else {
+            this.reviewCommentManager?.disposeAll();
+            this.monacoEditor.clearLineDecorationsHoverButton();
+        }
     }
 
     ngAfterContentInit(): void {
         // Affects the template - done in this method to avoid ExpressionChangedAfterItHasBeenCheckedErrors.
-        this.targetWrapperHeight = this.initialEditorHeight !== EXTERNAL_HEIGHT ? this.initialEditorHeight.valueOf() : undefined;
+        this.targetWrapperHeight = !this.externalHeight ? this.initialEditorHeight.valueOf() : undefined;
         this.minWrapperHeight = this.resizableMinHeight.valueOf();
         this.constrainDragPositionFn = this.constrainDragPosition.bind(this);
         this.displayedActions = {
@@ -414,9 +479,10 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             .forEach((action) => {
                 if (action instanceof FullscreenAction) {
                     // We include the full element if the initial height is set to 'external' so the editor is resized to fill the screen.
-                    action.element = this.isInitialHeightExternal() ? this.fullElement.nativeElement : this.wrapper.nativeElement;
+                    action.element = this.isHeightManagedExternally() ? this.fullElement.nativeElement : this.wrapper.nativeElement;
                 } else if (this.enableFileUpload && action instanceof AttachmentAction) {
                     action.setUploadCallback(this.embedFiles.bind(this));
+                    action.setOpenFileDialogCallback(this.openFilePicker.bind(this));
                 }
                 this.monacoEditor.registerAction(action);
             });
@@ -424,6 +490,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         if (this.useDefaultMarkdownEditorOptions) {
             this.monacoEditor.applyOptionPreset(DEFAULT_MARKDOWN_EDITOR_OPTIONS);
         }
+        this.renderEditorWidgets();
+        this.updateReviewCommentButton();
     }
 
     /**
@@ -443,6 +511,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     ngOnDestroy(): void {
         this.resizeObserver?.disconnect();
+        this.reviewCommentManager?.disposeAll();
+        this.monacoEditor?.clearLineDecorationsHoverButton();
     }
 
     onTextChanged(event: { text: string; fileName: string }): void {
@@ -479,10 +549,11 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * The height of the editor is the height of the wrapper (or the full element, if the height is external) minus the height of the file upload footer and the action palette.
      */
     getEditorHeight(): number {
-        const elementHeight = this.getElementClientHeight(this.isInitialHeightExternal() ? this.fullElement : this.wrapper);
+        // We always use the wrapper height, as it is correctly sized by the flexbox layout in all cases (external or internal height).
+        const elementHeight = this.getElementClientHeight(this.wrapper);
         const fileUploadFooterHeight = this.getElementClientHeight(this.fileUploadFooter);
         const actionPaletteHeight = this.getElementClientHeight(this.actionPalette);
-        return elementHeight - fileUploadFooterHeight - actionPaletteHeight - BORDER_HEIGHT_OFFSET;
+        return Math.max(0, elementHeight - fileUploadFooterHeight - actionPaletteHeight - BORDER_HEIGHT_OFFSET);
     }
 
     /**
@@ -526,6 +597,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         } else if (this.inPreviewMode) {
             this.onPreviewSelect.emit();
         }
+        this.updateReviewCommentButton();
 
         // Some components need to know when the user leaves the visual tab, as it might make changes to the underlying data.
         if (event.activeId === this.TAB_VISUAL) {
@@ -556,6 +628,13 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         if (event.target.files.length >= 1) {
             this.embedFiles(Array.from(event.target.files), event.target);
         }
+    }
+
+    /**
+     * Opens the file picker dialog to allow the user to select files for upload.
+     */
+    openFilePicker(): void {
+        this.fileUploadInput?.nativeElement.click();
     }
 
     /**
@@ -648,11 +727,11 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     }
 
     /**
-     * Check if the initial height is set to 'external'. This is used to determine if the editor should grow to the available space, rather than managing its own height.
+     * Check if the editor height is managed externally. This determines if the editor should grow to fill available space, rather than managing its own height.
      * @private
      */
-    private isInitialHeightExternal(): boolean {
-        return this.initialEditorHeight === EXTERNAL_HEIGHT;
+    private isHeightManagedExternally(): boolean {
+        return this.externalHeight;
     }
 
     /**
@@ -675,5 +754,60 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      */
     onCloseButtonClick(): void {
         this.closeEditor.emit();
+    }
+
+    private updateReviewCommentButton(): void {
+        if (!this.enableExerciseReviewComments() && !this.reviewCommentManager) {
+            return;
+        }
+        this.getReviewCommentManager()?.updateHoverButton();
+    }
+
+    clearReviewCommentDrafts(): void {
+        this.reviewCommentManager?.clearDrafts();
+    }
+
+    private getReviewCommentManager(): ReviewCommentWidgetManager | undefined {
+        if (!this.monacoEditor) {
+            return undefined;
+        }
+        if (!this.reviewCommentManager) {
+            this.reviewCommentManager = new ReviewCommentWidgetManager(this.monacoEditor, this.viewContainerRef, {
+                hoverButtonClass: REVIEW_COMMENT_HOVER_BUTTON_CLASS,
+                shouldShowHoverButton: () => this.enableExerciseReviewComments() && this.inEditMode,
+                canSubmit: () => this.inEditMode && !this.showLocationWarning(),
+                getDraftFileName: () => PROBLEM_STATEMENT_FILE_PATH,
+                getDraftContext: () => ({
+                    targetType: CommentThreadLocationType.PROBLEM_STATEMENT,
+                }),
+                getThreads: () => this.exerciseReviewCommentService.threads(),
+                filterThread: (thread) => this.isProblemStatementThread(thread),
+                getThreadLine: (thread) => this.getProblemStatementThreadLine(thread),
+                onAdd: (payload) => this.onAddReviewComment.emit(payload),
+                showLocationWarning: () => this.showLocationWarning(),
+            });
+        }
+        return this.reviewCommentManager;
+    }
+
+    private isProblemStatementThread(thread: CommentThread): boolean {
+        return thread.targetType === CommentThreadLocationType.PROBLEM_STATEMENT;
+    }
+
+    private getProblemStatementThreadLine(thread: CommentThread): number {
+        return (thread.lineNumber ?? thread.initialLineNumber ?? 1) - 1;
+    }
+
+    /**
+     * Checks whether the given lecture has any content/attachments that can explicitly be linked
+     * @param lecture The lecture to check
+     */
+    hasReferencableAttachments(lecture: LectureWithDetails): boolean {
+        const hasAttachments = !!lecture.attachments?.length;
+        const hasReferencableAttachmentVideoUnits =
+            lecture.attachmentVideoUnits?.some((unit) => {
+                return unit.attachment && unit.attachment.link;
+            }) === true;
+        return hasAttachments || hasReferencableAttachmentVideoUnits;
     }
 }

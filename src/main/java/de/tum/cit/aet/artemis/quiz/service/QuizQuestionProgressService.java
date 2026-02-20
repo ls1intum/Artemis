@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -14,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.quiz.api.QuizQuestionApi;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgress;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgressData;
@@ -21,7 +21,6 @@ import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionTrainingDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionWithSolutionDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionProgressRepository;
-import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -30,15 +29,15 @@ public class QuizQuestionProgressService {
 
     private final QuizQuestionProgressRepository quizQuestionProgressRepository;
 
-    private final QuizQuestionRepository quizQuestionRepository;
-
     private final QuizTrainingLeaderboardService quizTrainingLeaderboardService;
 
-    public QuizQuestionProgressService(QuizQuestionProgressRepository quizQuestionProgressRepository, QuizQuestionRepository quizQuestionRepository,
-            QuizTrainingLeaderboardService quizTrainingLeaderboardService) {
+    private final QuizQuestionApi quizQuestionApi;
+
+    public QuizQuestionProgressService(QuizQuestionProgressRepository quizQuestionProgressRepository, QuizTrainingLeaderboardService quizTrainingLeaderboardService,
+            QuizQuestionApi quizQuestionApi) {
         this.quizQuestionProgressRepository = quizQuestionProgressRepository;
-        this.quizQuestionRepository = quizQuestionRepository;
         this.quizTrainingLeaderboardService = quizTrainingLeaderboardService;
+        this.quizQuestionApi = quizQuestionApi;
     }
 
     /**
@@ -85,9 +84,11 @@ public class QuizQuestionProgressService {
         data.setSessionCount(sessionCount);
         int interval = calculateInterval(easinessFactor, prevInterval, repetition);
         data.setInterval(interval);
-        data.setDueDate(answeredAt.plusDays(interval));
         data.setBox(calculateBox(interval));
         data.setPriority(calculatePriority(sessionCount, interval, score));
+        if (existingProgress != null) {
+            existingProgress.setDueDate(answeredAt.plusDays(interval));
+        }
     }
 
     /**
@@ -103,12 +104,7 @@ public class QuizQuestionProgressService {
     public Slice<QuizQuestionTrainingDTO> getQuestionsForSession(long courseId, long userId, Pageable pageable, Set<Long> questionIds, boolean isNewSession) {
         ZonedDateTime now = ZonedDateTime.now();
         if (isNewSession) {
-            Set<QuizQuestionProgress> allProgress = quizQuestionProgressRepository.findAllByUserIdAndCourseId(userId, courseId);
-
-            questionIds = allProgress.stream().filter(progress -> {
-                QuizQuestionProgressData data = progress.getProgressJson();
-                return data != null && data.getDueDate() != null && data.getDueDate().isAfter(now);
-            }).map(QuizQuestionProgress::getQuizQuestionId).collect(Collectors.toSet());
+            questionIds = quizQuestionProgressRepository.findNotDueQuizQuestions(userId, courseId, now);
             isNewSession = false;
         }
 
@@ -121,13 +117,13 @@ public class QuizQuestionProgressService {
     }
 
     private boolean areQuestionsDue(Long courseId, int notDueCount) {
-        long totalQuestionsCount = quizQuestionRepository.countAllPracticeQuizQuestionsByCourseId(courseId);
+        long totalQuestionsCount = quizQuestionApi.countAllQuizQuestionsByCourseIdAvailableForPractice(courseId);
 
         return notDueCount < totalQuestionsCount;
     }
 
     private Slice<QuizQuestionTrainingDTO> loadDueQuestions(Set<Long> questionIds, Long courseId, Pageable pageable, boolean isNewSession) {
-        Slice<QuizQuestion> questionPage = quizQuestionRepository.findAllDueQuestions(questionIds, courseId, pageable);
+        Slice<QuizQuestion> questionPage = quizQuestionApi.findAllQuizQuestionsByCourseIdAvailableForPracticeNotIn(questionIds, courseId, pageable);
 
         return questionPage.map(question -> {
             QuizQuestionWithSolutionDTO dto = QuizQuestionWithSolutionDTO.of(question);
@@ -136,7 +132,7 @@ public class QuizQuestionProgressService {
     }
 
     private Slice<QuizQuestionTrainingDTO> loadAllPracticeQuestions(Long courseId, Pageable pageable, boolean isNewSession) {
-        Slice<QuizQuestion> questionPage = quizQuestionRepository.findAllPracticeQuizQuestionsByCourseId(courseId, pageable);
+        Slice<QuizQuestion> questionPage = quizQuestionApi.findAllQuizQuestionsByCourseIdAvailableForPractice(courseId, pageable);
 
         return questionPage.map(question -> {
             QuizQuestionWithSolutionDTO dto = QuizQuestionWithSolutionDTO.of(question);
@@ -258,7 +254,7 @@ public class QuizQuestionProgressService {
      * @return true if there are questions availble for training, false otherwise
      */
     public boolean questionsAvailableForTraining(Long courseId) {
-        return quizQuestionRepository.areQuizQuestionsAvailableForPractice(courseId);
+        return quizQuestionApi.areQuizExercisesInCourseAvailableForPractice(courseId);
     }
 
     /**
@@ -275,7 +271,7 @@ public class QuizQuestionProgressService {
         QuizQuestionProgress existingProgress = quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, question.getId()).orElse(new QuizQuestionProgress());
         QuizQuestionProgressData data = existingProgress.getProgressJson() != null ? existingProgress.getProgressJson() : new QuizQuestionProgressData();
 
-        ZonedDateTime dueDate = data.getDueDate();
+        ZonedDateTime dueDate = existingProgress.getDueDate();
         if (dueDate == null || !dueDate.isAfter(answeredAt)) {
             existingProgress.setQuizQuestionId(question.getId());
             existingProgress.setUserId(userId);
@@ -311,11 +307,11 @@ public class QuizQuestionProgressService {
                     .orElseThrow(() -> new IllegalStateException("Progress entry should exist but was not found."));
             progress.setLastAnsweredAt(answeredAt);
             progress.setProgressJson(data);
+            progress.setDueDate(answeredAt.plusDays(data.getInterval()));
             quizQuestionProgressRepository.save(progress);
         }
         catch (DataIntegrityViolationException e) {
             throw new IllegalStateException("Error when trying to update existing progress", e);
         }
     }
-
 }

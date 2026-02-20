@@ -1,23 +1,23 @@
 package de.tum.cit.aet.artemis.iris.repository;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
-
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.dao.IrisChatSessionDAO;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 
 @Lazy
 @Repository
-@Profile(PROFILE_IRIS)
+@Conditional(IrisEnabled.class)
 public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChatSession, Long> {
 
     /**
@@ -25,7 +25,6 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
      *
      * @param courseId The ID of the course.
      * @param userId   The ID of the user.
-     * @param types    A collection of chat session types to filter by.
      * @return A list of chat sessions sorted by creation date in descending order.
      */
     @Query("""
@@ -44,13 +43,51 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
                     LEFT JOIN Exercise e2 ON e2.id = pecs.exerciseId
                     LEFT JOIN s.messages m
                     LEFT JOIN m.content c
-                WHERE s.userId = :userId AND TYPE(s) IN (:types)
+                WHERE s.userId = :userId AND TYPE(s) IN (
+                        de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession,
+                        de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession,
+                        de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession,
+                        de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession
+                    )
                     AND (ccs.courseId = :courseId OR l.course.id = :courseId OR e1.course.id = :courseId OR e2.course.id = :courseId)
                     AND m.sender = de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender.USER
                 GROUP BY s, ccs.courseId, e1.id, e2.id, l.id
                 HAVING COUNT(m) > 0
                 ORDER BY s.creationDate DESC
             """)
-    List<IrisChatSessionDAO> findByCourseIdAndUserId(@Param("courseId") long courseId, @Param("userId") long userId,
-            @Param("types") Collection<Class<? extends IrisChatSession>> types);
+    List<IrisChatSessionDAO> findByCourseIdAndUserId(@Param("courseId") long courseId, @Param("userId") long userId);
+
+    /**
+     * Finds all chat session IDs for a user, ordered by creation date.
+     * Used internally to fetch sessions in a two-step process to avoid PostgreSQL
+     * JSON equality comparison issues with DISTINCT.
+     *
+     * @param userId the ID of the user
+     * @return a set of session IDs for the user
+     */
+    @Query("""
+            SELECT s.id
+            FROM IrisChatSession s
+            WHERE s.userId = :userId
+            """)
+    Set<Long> findSessionIdsByUserId(@Param("userId") long userId);
+
+    /**
+     * Finds all chat sessions by their IDs with messages and content eagerly loaded.
+     * Used internally as the second step of a two-query approach to load sessions
+     * with their messages while avoiding PostgreSQL JSON equality comparison issues.
+     * Note: This query intentionally does not use DISTINCT because PostgreSQL cannot
+     * compare JSON columns for equality. Deduplication must be done in the service layer.
+     *
+     * @param sessionIds the IDs of the sessions to fetch
+     * @return a set of chat sessions with messages (may contain duplicates due to LEFT JOIN FETCH)
+     */
+    @Query("""
+            SELECT s
+            FROM IrisChatSession s
+                LEFT JOIN FETCH s.messages m
+                LEFT JOIN FETCH m.content
+            WHERE s.id IN :sessionIds
+            """)
+    Set<IrisChatSession> findAllWithMessagesByIds(@Param("sessionIds") Collection<Long> sessionIds);
 }

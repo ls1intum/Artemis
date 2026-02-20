@@ -20,13 +20,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
+import org.jspecify.annotations.NonNull;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +35,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -44,6 +45,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
+import de.tum.cit.aet.artemis.core.connector.IrisRequestMockProvider;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -82,6 +84,9 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     @Autowired
     private CompetencyUtilService competencyUtilService;
 
+    @Autowired
+    private IrisRequestMockProvider irisRequestMockProvider;
+
     private Lecture lecture1;
 
     private Attachment attachment;
@@ -95,6 +100,12 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
 
     @BeforeEach
     void initTestCase() {
+        irisRequestMockProvider.enableMockingOfRequests();
+        irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
+        }, ExpectedCount.manyTimes());
+        irisRequestMockProvider.mockDeletionWebhookRunResponse(dto -> {
+        }, ExpectedCount.manyTimes());
+
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         this.attachment = LectureFactory.generateAttachment(null);
         this.attachment.setName("          LoremIpsum              ");
@@ -112,17 +123,22 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         competency = competencyUtilService.createCompetency(lecture1.getCourse());
     }
 
+    @AfterEach
+    void tearDown() throws Exception {
+        irisRequestMockProvider.reset();
+    }
+
     private void testAllPreAuthorize() throws Exception {
         request.performMvcRequest(buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isForbidden());
         request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isForbidden());
         request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/42", HttpStatus.FORBIDDEN, AttachmentVideoUnit.class);
     }
 
-    private MockHttpServletRequestBuilder buildUpdateAttachmentVideoUnit(@NotNull AttachmentVideoUnit attachmentVideoUnit, @NotNull Attachment attachment) throws Exception {
+    private MockHttpServletRequestBuilder buildUpdateAttachmentVideoUnit(@NonNull AttachmentVideoUnit attachmentVideoUnit, @NonNull Attachment attachment) throws Exception {
         return buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachment, null, true);
     }
 
-    private MockHttpServletRequestBuilder buildUpdateAttachmentVideoUnit(@NotNull AttachmentVideoUnit attachmentVideoUnit, @NotNull Attachment attachment, String fileContent,
+    private MockHttpServletRequestBuilder buildUpdateAttachmentVideoUnit(@NonNull AttachmentVideoUnit attachmentVideoUnit, @NonNull Attachment attachment, String fileContent,
             boolean contentType) throws Exception {
         MockMultipartHttpServletRequestBuilder builder = buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachment, fileContent);
         if (contentType) {
@@ -131,7 +147,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         return builder;
     }
 
-    private MockMultipartHttpServletRequestBuilder buildUpdateAttachmentVideoUnit(@NotNull AttachmentVideoUnit attachmentVideoUnit, @NotNull Attachment attachment,
+    private MockMultipartHttpServletRequestBuilder buildUpdateAttachmentVideoUnit(@NonNull AttachmentVideoUnit attachmentVideoUnit, @NonNull Attachment attachment,
             String fileContent) throws Exception {
         var attachmentVideoUnitPart = new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachmentVideoUnit).getBytes());
         var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachment).getBytes());
@@ -145,7 +161,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         return builder.file(attachmentVideoUnitPart).file(attachmentPart);
     }
 
-    private MockHttpServletRequestBuilder buildCreateAttachmentVideoUnit(@NotNull AttachmentVideoUnit attachmentVideoUnit, @NotNull Attachment attachment) throws Exception {
+    private MockHttpServletRequestBuilder buildCreateAttachmentVideoUnit(@NonNull AttachmentVideoUnit attachmentVideoUnit, @NonNull Attachment attachment) throws Exception {
         var attachmentVideoUnitPart = new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachmentVideoUnit).getBytes());
         var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachment).getBytes());
         var filePart = createAttachmentVideoUnitPdf();
@@ -212,7 +228,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateLectureAttachmentVideoUnitWithSameFileName() throws Exception {
-        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(true);
+        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(lecture1, true);
         lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(attachmentVideoUnit));
 
         String fileName = Path.of(attachmentVideoUnit.getAttachment().getLink()).getFileName().toString();
@@ -316,7 +332,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         persistAttachmentVideoUnitWithLecture();
 
         // Add a second lecture unit
-        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(false);
+        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(lecture1, false);
         lecture1.addLectureUnit(attachmentVideoUnit);
         lecture1 = lectureRepository.save(lecture1);
 
@@ -331,7 +347,6 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     }
 
     private void persistAttachmentVideoUnitWithLecture() {
-        this.attachmentVideoUnit = attachmentVideoUnitRepository.saveAndFlush(this.attachmentVideoUnit);
         lecture1 = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow();
         lecture1.addLectureUnit(this.attachmentVideoUnit);
         lecture1 = lectureRepository.saveAndFlush(lecture1);

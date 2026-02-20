@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service.localvc;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
+import static de.tum.cit.aet.artemis.core.util.HttpRequestUtils.getIpStringFromRequest;
 import static de.tum.cit.aet.artemis.programming.service.localvc.LocalVCPersonalAccessTokenManagementService.TOKEN_PREFIX;
 import static de.tum.cit.aet.artemis.programming.service.localvc.LocalVCPersonalAccessTokenManagementService.VCS_ACCESS_TOKEN_LENGTH;
 
@@ -14,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -38,21 +41,23 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 
-import com.google.errorprone.annotations.MustBeClosed;
-
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCAuthException;
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.RateLimitService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.Commit;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -73,6 +78,8 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.SshConstants;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
+import inet.ipaddr.IPAddress;
+import inet.ipaddr.IPAddressString;
 
 /**
  * This service is responsible for authenticating and authorizing git requests as well as for retrieving the requested Git repositories from disk.
@@ -111,6 +118,10 @@ public class LocalVCServletService {
 
     private final ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
 
+    private final RateLimitService rateLimitService;
+
+    private final ExerciseVersionService exerciseVersionService;
+
     @Value("${artemis.version-control.url}")
     private URI localVCBaseUri;
 
@@ -129,7 +140,8 @@ public class LocalVCServletService {
             RepositoryAccessService repositoryAccessService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             AuxiliaryRepositoryService auxiliaryRepositoryService, ContinuousIntegrationTriggerService ciTriggerService, ProgrammingSubmissionService programmingSubmissionService,
             ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService,
-            ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository, Optional<VcsAccessLogService> vcsAccessLogService) {
+            ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository, Optional<VcsAccessLogService> vcsAccessLogService, RateLimitService rateLimitService,
+            ExerciseVersionService exerciseVersionService) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -142,6 +154,8 @@ public class LocalVCServletService {
         this.programmingExerciseTestCaseChangedService = programmingExerciseTestCaseChangedService;
         this.participationVCSAccessTokenRepository = participationVCSAccessTokenRepository;
         this.vcsAccessLogService = vcsAccessLogService;
+        this.rateLimitService = rateLimitService;
+        this.exerciseVersionService = exerciseVersionService;
     }
 
     /**
@@ -156,7 +170,6 @@ public class LocalVCServletService {
      * @return the opened repository instance.
      * @throws RepositoryNotFoundException if the repository could not be found.
      */
-    @MustBeClosed
     public Repository resolveRepository(String repositoryPath) throws RepositoryNotFoundException {
 
         long timeNanoStart = System.nanoTime();
@@ -222,6 +235,10 @@ public class LocalVCServletService {
         if (!request.getRequestURI().endsWith("/info/refs")) {
             return;
         }
+
+        String ipString = getIpStringFromRequest(request);
+        final IPAddress ipAddress = new IPAddressString(ipString).getAddress();
+        rateLimitService.enforcePerMinute(ipAddress, RateLimitType.AUTHENTICATION);
 
         LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(request);
         log.debug("Parsed repository URI from request: {}", localVCRepositoryUri);
@@ -377,7 +394,6 @@ public class LocalVCServletService {
      * @param authorizationHeader  the authorization header containing authentication credentials
      * @param exercise             the programming exercise the user is attempting to access
      * @param localVCRepositoryUri the URI of the local version control repository the user is attempting to access
-     *
      * @return the authenticated {@link User} if authentication is successful
      * @throws LocalVCAuthException    if an error occurs during authentication with the local version control system
      * @throws AuthenticationException if the authentication credentials are invalid or authentication fails
@@ -478,6 +494,52 @@ public class LocalVCServletService {
         return repositoryAccessService.checkHasAccessToForcePush(exercise, user, repositoryTypeOrUserName);
     }
 
+    /**
+     * Checks if branching is allowed for the exercise to which the given repository belongs.
+     *
+     * @param repository The repository for which we check if branching is allowed.
+     * @return True if branching is allowed, false otherwise.
+     */
+    public boolean isBranchingAllowedForRepository(Repository repository) {
+        LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(repository.getDirectory().toPath());
+        String projectKey = localVCRepositoryUri.getProjectKey();
+
+        ProgrammingExercise exercise = getProgrammingExerciseOrThrow(projectKey, true);
+        return exercise.getBuildConfig().isAllowBranching();
+    }
+
+    public static enum BranchingStatus {
+        BRANCHING_DISABLED, NAME_DOES_NOT_MATCH_REGEX, BRANCH_ALLOWED
+    }
+
+    /**
+     * Checks if branching is allowed for the exercise to which the given repository belongs.
+     *
+     * @param repository The repository for which we check if branching is allowed.
+     * @param branchName The branch name for which to check if it matches the regex.
+     * @return Whether branching is allowed or why it is not.
+     */
+    public BranchingStatus isBranchNameAllowedForRepository(Repository repository, String branchName) {
+        LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(repository.getDirectory().toPath());
+        String projectKey = localVCRepositoryUri.getProjectKey();
+
+        ProgrammingExercise exercise = getProgrammingExerciseOrThrow(projectKey, true);
+
+        if (!exercise.getBuildConfig().isAllowBranching() || exercise.getBuildConfig().getBranchRegex() == null) {
+            return BranchingStatus.BRANCHING_DISABLED;
+        }
+
+        Pattern pattern;
+        try {
+            pattern = Pattern.compile(exercise.getBuildConfig().getBranchRegex());
+        }
+        catch (PatternSyntaxException e) {
+            return BranchingStatus.NAME_DOES_NOT_MATCH_REGEX;
+        }
+
+        return pattern.matcher(branchName).matches() ? BranchingStatus.BRANCH_ALLOWED : BranchingStatus.NAME_DOES_NOT_MATCH_REGEX;
+    }
+
     public LocalVCRepositoryUri parseRepositoryUri(HttpServletRequest request) {
         String path = request.getRequestURI();
         String normalizedPath = path.replaceFirst("/(info/refs|git-(upload|receive)-pack)$", "");
@@ -488,13 +550,17 @@ public class LocalVCServletService {
         return new LocalVCRepositoryUri(localVCBaseUri, repositoryPath);
     }
 
-    private ProgrammingExercise getProgrammingExerciseOrThrow(String projectKey) {
+    private ProgrammingExercise getProgrammingExerciseOrThrow(String projectKey, boolean withBuildConfig) {
         try {
-            return programmingExerciseRepository.findOneByProjectKeyOrThrow(projectKey, true);
+            return programmingExerciseRepository.findOneByProjectKeyOrThrow(projectKey, true, withBuildConfig);
         }
         catch (EntityNotFoundException e) {
             throw new LocalVCInternalException("Could not find single programming exercise with project key " + projectKey, e);
         }
+    }
+
+    private ProgrammingExercise getProgrammingExerciseOrThrow(String projectKey) {
+        return getProgrammingExerciseOrThrow(projectKey, false);
     }
 
     /**
@@ -702,15 +768,20 @@ public class LocalVCServletService {
      * @return The HTTP status code.
      */
     public int getHttpStatusForException(Exception exception, String repositoryUri) {
-        if (exception instanceof LocalVCAuthException) {
-            return HttpStatus.UNAUTHORIZED.value();
-        }
-        else if (exception instanceof LocalVCForbiddenException) {
-            return HttpStatus.FORBIDDEN.value();
-        }
-        else {
-            log.error("Internal server error while trying to access repository {}: {}", repositoryUri, exception.getMessage());
-            return HttpStatus.INTERNAL_SERVER_ERROR.value();
+        switch (exception) {
+            case LocalVCAuthException _ -> {
+                return HttpStatus.UNAUTHORIZED.value();
+            }
+            case LocalVCForbiddenException _ -> {
+                return HttpStatus.FORBIDDEN.value();
+            }
+            case RateLimitExceededException _ -> {
+                return HttpStatus.TOO_MANY_REQUESTS.value();
+            }
+            default -> {
+                log.error("Internal server error while trying to access repository {}: {}", repositoryUri, exception.getMessage(), exception);
+                return HttpStatus.INTERNAL_SERVER_ERROR.value();
+            }
         }
     }
 
@@ -756,6 +827,10 @@ public class LocalVCServletService {
         }
 
         try {
+            if (exerciseVersionService.isRepositoryTypeVersionable(repositoryType)) {
+                exerciseVersionService.createExerciseVersion(exercise, user);
+            }
+
             if (repositoryType.equals(RepositoryType.TESTS)) {
                 processNewPushToTestOrAuxRepository(exercise, commitHash, (SolutionProgrammingExerciseParticipation) participation, repositoryType);
                 return;

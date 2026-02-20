@@ -3,14 +3,14 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 
-import { Authority } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_EDITOR, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'app/shared/constants/authority.constants';
 
 export const quizManagementRoute: Routes = [
     {
         path: 'quiz-exercises/new',
         loadComponent: () => import('./update/quiz-exercise-update.component').then((m) => m.QuizExerciseUpdateComponent),
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -20,7 +20,7 @@ export const quizManagementRoute: Routes = [
         path: 'quiz-exercises/export',
         loadComponent: () => import('./export/quiz-exercise-export.component').then((m) => m.QuizExerciseExportComponent),
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -33,7 +33,7 @@ export const quizManagementRoute: Routes = [
         path: 'quiz-exercises/:exerciseId/re-evaluate',
         loadComponent: () => import('app/quiz/manage/re-evaluate/quiz-re-evaluate.component').then((m) => m.QuizReEvaluateComponent),
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -42,7 +42,7 @@ export const quizManagementRoute: Routes = [
         path: 'quiz-exercises/:exerciseId/edit',
         loadComponent: () => import('./update/quiz-exercise-update.component').then((m) => m.QuizExerciseUpdateComponent),
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -52,7 +52,7 @@ export const quizManagementRoute: Routes = [
         path: 'quiz-exercises/:exerciseId/import',
         loadComponent: () => import('./update/quiz-exercise-update.component').then((m) => m.QuizExerciseUpdateComponent),
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.quizExercise.home.importLabel',
         },
         canActivate: [UserRouteAccessService],
@@ -62,7 +62,7 @@ export const quizManagementRoute: Routes = [
         path: 'quiz-exercises/:exerciseId/preview',
         loadComponent: () => import('app/quiz/overview/participation/quiz-participation.component').then((m) => m.QuizParticipationComponent),
         data: {
-            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'artemisApp.quizExercise.home.title',
             mode: 'preview',
         },
@@ -72,7 +72,7 @@ export const quizManagementRoute: Routes = [
         path: 'quiz-exercises/:exerciseId/solution',
         loadComponent: () => import('app/quiz/overview/participation/quiz-participation.component').then((m) => m.QuizParticipationComponent),
         data: {
-            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'artemisApp.quizExercise.home.title',
             mode: 'solution',
         },

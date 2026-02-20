@@ -1,8 +1,6 @@
 package de.tum.cit.aet.artemis.assessment;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.mockito.Mockito.doReturn;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -13,14 +11,12 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -38,7 +34,6 @@ import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -57,7 +52,7 @@ import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseFactory;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
-import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
+import de.tum.cit.aet.artemis.modeling.test_repository.ModelingExerciseTestRepository;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseFactory;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -92,7 +87,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseRepository;
 
     @Autowired
-    private ModelingExerciseRepository modelingExerciseRepository;
+    private ModelingExerciseTestRepository modelingExerciseRepository;
 
     @Autowired
     private QuizExerciseTestRepository quizExerciseRepository;
@@ -188,8 +183,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         result2.setFeedbacks(feedbacks2);
         result2.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
 
-        String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
-        doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(ArgumentMatchers.any());
     }
 
     @Test
@@ -456,22 +449,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void getResult() throws Exception {
-        Result result = participationUtilService.addResultToSubmission(null, null, studentParticipation.findLatestSubmission().orElseThrow());
-        result = participationUtilService.addSampleFeedbackToResults(result);
-        Result returnedResult = request.get("/api/assessment/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.OK, Result.class);
-        assertThat(returnedResult).isNotNull().isEqualTo(result);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getResult_asStudent() throws Exception {
-        Result result = participationUtilService.addResultToSubmission(null, null, studentParticipation.findLatestSubmission().orElseThrow());
-        request.get("/api/assessment/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.FORBIDDEN, Result.class);
-    }
-
-    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetResultsWithPointsForExamExercise() throws Exception {
         List<Result> results = setupExamModelingExerciseWithResults();
@@ -531,46 +508,9 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void deleteResult() throws Exception {
-        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> resultRepository.findWithSubmissionAndFeedbackAndTeamStudentsByIdElseThrow(Long.MAX_VALUE));
-
-        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> resultRepository.findByIdElseThrow(Long.MAX_VALUE));
-
-        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> resultRepository.findByIdWithEagerFeedbacksElseThrow(Long.MAX_VALUE));
-
-        assertThatExceptionOfType(EntityNotFoundException.class)
-                .isThrownBy(() -> resultRepository.findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDescElseThrow(Long.MAX_VALUE));
-
-        Result result = participationUtilService.addResultToSubmission(null, null, studentParticipation.findLatestSubmission().orElseThrow());
-        result = participationUtilService.addSampleFeedbackToResults(result);
-        request.delete("/api/assessment/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.OK);
-        assertThat(resultRepository.existsById(result.getId())).isFalse();
-        request.delete("/api/assessment/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.NOT_FOUND);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void deleteResult_wrongParticipationId() throws Exception {
-        Result result = participationUtilService.addResultToSubmission(null, null, studentParticipation.findLatestSubmission().orElseThrow());
-        result = participationUtilService.addSampleFeedbackToResults(result);
-        long randomId = 1653;
-        request.delete("/api/assessment/participations/" + randomId + "/results/" + result.getId(), HttpStatus.BAD_REQUEST);
-        assertThat(resultRepository.existsById(result.getId())).isTrue();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void deleteResultStudent() throws Exception {
-        Result result = participationUtilService.addResultToSubmission(null, null, studentParticipation.findLatestSubmission().orElseThrow());
-        result = participationUtilService.addSampleFeedbackToResults(result);
-        request.delete("/api/assessment/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.FORBIDDEN);
-    }
-
-    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createResultForExternalSubmission() throws Exception {
-        Result result = new Result().rated(false);
+        Result result = new Result().rated(false).exerciseId(modelingExercise.getId());
         var createdResult = request.postWithResponseBody(
                 "/api/assessment/exercises/" + modelingExercise.getId() + "/external-submission-results?studentLogin=" + TEST_PREFIX + "student1", result, Result.class,
                 HttpStatus.CREATED);
@@ -582,7 +522,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createResultForExternalSubmission_wrongExerciseId() throws Exception {
-        Result result = new Result().rated(false);
+        Result result = new Result().rated(false).exerciseId(modelingExercise.getId());
         long randomId = 2145;
         var createdResult = request.postWithResponseBody("/api/assessment/exercises/" + randomId + "/external-submission-results", result, Result.class, HttpStatus.BAD_REQUEST);
         assertThat(createdResult).isNull();
@@ -594,7 +534,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         var studentLogin = TEST_PREFIX + "student1";
         User user = userTestRepository.findOneByLogin(studentLogin).orElseThrow();
         mockConnectorRequestsForStartParticipation(programmingExercise, user.getParticipantIdentifier(), Set.of(user), true);
-        Result result = new Result().rated(false);
+        Result result = new Result().rated(false).exerciseId(programmingExercise.getId());
         programmingExercise.setDueDate(ZonedDateTime.now().minusMinutes(5));
         programmingExerciseRepository.save(programmingExercise);
         var createdResult = request.postWithResponseBody(externalResultPath(programmingExercise.getId(), studentLogin), result, Result.class, HttpStatus.CREATED);
@@ -611,21 +551,21 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         var quizExercise = QuizExerciseFactory.generateQuizExercise(now.minusDays(1), now.minusHours(2), quizMode, course);
         course.addExercises(quizExercise);
         quizExerciseRepository.save(quizExercise);
-        Result result = new Result().rated(false);
+        Result result = new Result().rated(false).exerciseId(quizExercise.getId());
         request.postWithResponseBody(externalResultPath(quizExercise.getId(), TEST_PREFIX + "student1"), result, Result.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createResultForExternalSubmission_studentNotInTheCourse() throws Exception {
-        Result result = new Result().rated(false);
+        Result result = new Result().rated(false).exerciseId(modelingExercise.getId());
         request.postWithResponseBody(externalResultPath(modelingExercise.getId(), TEST_PREFIX + "student11"), result, Result.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createResultForExternalSubmissionExam() throws Exception {
-        Result result = new Result().rated(false);
+        Result result = new Result().rated(false).exerciseId(this.examModelingExercise.getId());
         request.postWithResponseBody("/api/assessment/exercises/" + this.examModelingExercise.getId() + "/external-submission-results?studentLogin=student1", result, Result.class,
                 HttpStatus.BAD_REQUEST);
     }
@@ -639,7 +579,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     void createResultForExternalSubmission_dueDateNotPassed() throws Exception {
         modelingExercise.setDueDate(ZonedDateTime.now().plusHours(1));
         modelingExerciseRepository.save(modelingExercise);
-        Result result = new Result().rated(false);
+        Result result = new Result().rated(false).exerciseId(modelingExercise.getId());
         request.postWithResponseBody(externalResultPath(modelingExercise.getId(), TEST_PREFIX + "student1"), result, Result.class, HttpStatus.BAD_REQUEST);
     }
 
@@ -752,7 +692,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         Submission submission = participationUtilService.addSubmission(programmingExerciseStudentParticipation, new ProgrammingSubmission());
         Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission);
         ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
-        testCase.setId(1L);
         Feedback feedback = new Feedback();
         feedback.setPositive(false);
         feedback.setDetailText("Some feedback");
@@ -783,7 +722,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         Submission submission2 = participationUtilService.addSubmission(programmingExerciseStudentParticipation2, new ProgrammingSubmission());
         Result result2 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission2);
         ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
-        testCase.setId(1L);
 
         Feedback feedback1 = new Feedback();
         feedback1.setPositive(false);
@@ -839,7 +777,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         Submission submission2 = participationUtilService.addSubmission(programmingExerciseStudentParticipation2, new ProgrammingSubmission());
         Result result2 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission2);
         ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
-        testCase.setId(1L);
 
         Feedback feedback1 = new Feedback();
         feedback1.setPositive(false);
@@ -881,7 +818,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission);
 
         ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
-        testCase.setId(1L);
         Feedback feedback = new Feedback();
         feedback.setPositive(false);
         feedback.setDetailText("Some feedback");
@@ -901,7 +837,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         Submission submission2 = participationUtilService.addSubmission(programmingExerciseStudentParticipation2, new ProgrammingSubmission());
         Result result2 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission2);
         ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
-        testCase.setId(1L);
 
         Feedback feedback1 = new Feedback();
         feedback1.setPositive(false);
@@ -926,7 +861,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         Submission submission = participationUtilService.addSubmission(programmingExerciseStudentParticipation, new ProgrammingSubmission());
         Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission);
         ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
-        testCase.setId(1L);
 
         Feedback feedback = new Feedback();
         feedback.setPositive(false);

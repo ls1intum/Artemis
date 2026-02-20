@@ -8,9 +8,4 @@ class NebulaCodeStyleArchitectureTest extends AbstractModuleCodeStyleTest {
     public String getModulePackage() {
         return ARTEMIS_PACKAGE + ".nebula";
     }
-
-    @Override
-    protected int dtoNameEndingThreshold() {
-        return 0;
-    }
 }

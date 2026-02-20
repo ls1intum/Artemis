@@ -6,6 +6,7 @@
                 [courseId]="course()?.id"
                 (onSearch)="onSearch($event)"
                 (onSelectionChange)="onSelectionChange($event)"
+                (onClearSearch)="onClearSearchAndRestorePrevious()"
             />
         </div>
 

@@ -6,7 +6,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
@@ -14,9 +13,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.apache.commons.io.FileUtils;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,18 +41,18 @@ public class ResourceLoaderService {
     @Value("${artemis.template-path:#{null}}")
     private Optional<Path> templateFileSystemPath;
 
-    private final Path tempPath;
-
     private final ResourcePatternResolver resourceLoader;
+
+    private final TempFileUtilService tempFileUtilService;
 
     /**
      * Files that start with a prefix that is included in this list can be overwritten from the file system
      */
     private static final List<Path> ALLOWED_OVERRIDE_PREFIXES = List.of(Path.of("templates"));
 
-    public ResourceLoaderService(ResourceLoader resourceLoader, @Value("${artemis.temp-path}") Path tempPath) {
+    public ResourceLoaderService(ResourceLoader resourceLoader, TempFileUtilService tempFileUtilService) {
         this.resourceLoader = ResourcePatternUtils.getResourcePatternResolver(resourceLoader);
-        this.tempPath = tempPath;
+        this.tempFileUtilService = tempFileUtilService;
     }
 
     /**
@@ -93,7 +91,7 @@ public class ResourceLoaderService {
      * @param basePath A relative path pattern to a resource.
      * @return The resources located by the specified pathPattern.
      */
-    @NotNull
+    @NonNull
     public Resource[] getFileResources(final Path basePath) {
         return getFileResources(basePath, ALL_PATHS_ANT_PATTERN);
     }
@@ -109,7 +107,7 @@ public class ResourceLoaderService {
      * @param pattern  A pattern that limits which files in the directory of the base path are matched.
      * @return The resources located by the specified pathPattern.
      */
-    @NotNull
+    @NonNull
     public Resource[] getFileResources(final Path basePath, final String pattern) {
         checkValidPathElseThrow(basePath);
 
@@ -223,7 +221,7 @@ public class ResourceLoaderService {
         }
         else if ("jar".equals(resourceUrl.getProtocol())) {
             // Resource is in a jar file.
-            Path resourcePath = Files.createTempFile(tempPath, UUID.randomUUID().toString(), "");
+            Path resourcePath = tempFileUtilService.createTempFile(UUID.randomUUID().toString(), "");
             File file = resourcePath.toFile();
             file.deleteOnExit();
             FileUtils.copyInputStreamToFile(resource.getInputStream(), file);

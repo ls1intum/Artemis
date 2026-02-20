@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import '@angular/localize/init';
 import { CompetencyManagementTableComponent } from 'app/atlas/manage/competency-management/competency-management-table.component';
@@ -19,6 +20,9 @@ import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-acti
 import { ActivatedRoute } from '@angular/router';
 import { Component as NgComponent } from '@angular/core';
 import { By } from '@angular/platform-browser';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 @NgComponent({
     template: `
@@ -46,6 +50,7 @@ class WrappedComponent {
 }
 
 describe('CompetencyManagementTableComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<WrappedComponent>;
     let component: WrappedComponent;
     let competencyManagementTableComponent: CompetencyManagementTableComponent;
@@ -62,6 +67,7 @@ describe('CompetencyManagementTableComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: DialogService, useClass: MockDialogService },
                 MockProvider(AlertService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -82,16 +88,16 @@ describe('CompetencyManagementTableComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize values', () => {
         component.competencyType = CourseCompetencyType.COMPETENCY;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(competencyManagementTableComponent.service).toEqual(competencyService);
 
         component.competencyType = CourseCompetencyType.PREREQUISITE;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(competencyManagementTableComponent.service).toEqual(prerequisiteService);
     });
 
@@ -106,13 +112,13 @@ describe('CompetencyManagementTableComponent', () => {
     });
 
     it('should handle delete competency', () => {
-        const deleteSpy = jest.spyOn(competencyService, 'delete').mockReturnValue(of(new HttpResponse<object>({ status: 200 })));
-        const competencyDeletedSpy = jest.spyOn(component, 'competencyDeleted');
+        const deleteSpy = vi.spyOn(competencyService, 'delete').mockReturnValue(of(new HttpResponse<object>({ status: 200 })));
+        const competencyDeletedSpy = vi.spyOn(component, 'competencyDeleted');
         const competency1 = { id: 1, type: CourseCompetencyType.COMPETENCY } as CourseCompetency;
         const competency2 = { id: 2, type: CourseCompetencyType.COMPETENCY } as CourseCompetency;
         competencyManagementTableComponent.service = competencyService;
         component.courseCompetencies = [competency1, competency2];
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         competencyManagementTableComponent.deleteCompetency(1);
         expect(deleteSpy).toHaveBeenCalledOnce();

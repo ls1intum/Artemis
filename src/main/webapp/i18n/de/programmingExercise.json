@@ -16,11 +16,20 @@
             "updated": "Programmieraufgabe aktualisiert mit Titel {{ param }}",
             "deleted": "Programmieraufgabe gelöscht mit Titel {{ param }}",
             "delete": {
-                "question": "Soll die Programmieraufgabe <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden?",
-                "questionLocalVC": {
-                    "single": "Soll die Programmieraufgabe <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden?<br>Alle Studierenden-, Template-, Lösungs- und Test-Repositories sowie Build-Pläne werden gelöscht.<br>Achtung: Dies kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!<br>Es wird empfohlen die Repositories und Build-Pläne erst zu sichern!",
-                    "multiple": "Sollen die ausgewählten Aufgaben wirklich dauerhaft gelöscht werden?<br>Alle Studierenden-, Template-, Lösungs- und Test-Repositories sowie Build-Pläne werden gelöscht.<br>Achtung: Dies kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!.<br>Es wird empfohlen die Repositories und Build-Pläne erst zu sichern!"
+                "summary": {
+                    "title": "Programmieraufgaben-Zusammenfassung",
+                    "numberOfStudentParticipations": "Anzahl der Studierendenteilnahmen",
+                    "numberOfBuilds": "Anzahl der Builds",
+                    "numberOfCommunicationPosts": "Anzahl der Kommunikationsbeiträge",
+                    "numberOfAnswerPosts": "Anzahl der Antworten"
                 },
+                "question": "Soll die Programmieraufgabe <strong>{{ title }}</strong> des <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong> wirklich dauerhaft gelöscht werden?",
+                "questionLocalVC": {
+                    "single": "Soll die Programmieraufgabe <strong>{{ title }}</strong> des <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong> wirklich dauerhaft gelöscht werden?<br>Alle Studierenden-, Template-, Lösungs- und Test-Repositories sowie Build-Pläne werden gelöscht.<br>Achtung: Dies kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!<br>Es wird empfohlen die Repositories und Build-Pläne erst zu sichern!",
+                    "multiple": "Sollen die ausgewählten Aufgaben des <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong> wirklich dauerhaft gelöscht werden?<br>Alle Studierenden-, Template-, Lösungs- und Test-Repositories sowie Build-Pläne werden gelöscht.<br>Achtung: Dies kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!<br>Es wird empfohlen die Repositories und Build-Pläne erst zu sichern!"
+                },
+                "testCourse": "Testkurses",
+                "realCourse": "echten Kurses",
                 "studentRepos": "Alle Studierenden-Repositories löschen (Achtung: Dies kann NICHT rückgängig gemacht werden! Es wird empfohlen, die Übung zuerst zu archivieren!",
                 "studentReposBuildPlans": "Alle Studierenden-Repositories und Studierenden-Build-Pläne löschen (Achtung: Dies kann NICHT rückgängig gemacht werden! Es wird empfohlen, die Übung zuerst zu archivieren!",
                 "baseReposBuildPlans": "Alle Template-, Lösungs- und Test-Repositories sowie Build-Pläne löschen (Achtung: Dies kann NICHT rückgängig gemacht werden! Es wird empfohlen die Repositories und Build-Pläne erst zu sichern!"
@@ -63,6 +72,9 @@
                     "difficultyStepMessage": "Konfiguration der Einstellungen bezüglich der Bearbeitung und Kollaboration der Aufgabe",
                     "languageStepTitle": "Sprache",
                     "languageStepMessage": "Wähle die gewünschte Programmiersprache aus und konfiguriere zusätzliche Funktionen bezüglich der Build Umgebung",
+                    "versionControlTitle": "Versionskontrolle",
+                    "versionControlMessage": "Lege fest, welche Features für die Versionskontrolle erlaubt sein sollen.",
+                    "versionControlDocumentationLink": "Für weitere Informationen, lese bitte die <a target=\"_blank\" href=\"https://docs.artemis.tum.de/instructor/exercises/programming-exercise#generate-programming-exercise\">Dokumentation</a> zur Aufgabenerstellung.",
                     "problemStepTitle": "Aufgabe",
                     "problemStepMessage": "Erstelle eine detaillierte Aufgabenstellung für die Übung mit klaren Schritten und Erwartungen an die Studierenden",
                     "gradingStepTitle": "Bewertung",
@@ -149,6 +161,14 @@
                 "alertNoTheia": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
             },
             "onlineIde": "Online IDE",
+            "allowBranching": {
+                "title": "Eigene Branches erlauben",
+                "description": "Erlaubt Studierenden, andere Branches als den default Branch zu pushen. Achtung! Diese Branches werden nicht in der Benutzeroberfläche angezeigt, und diese stellt auch keinen Merge-Support bereit. Studierende müssen ihre Branches lokal verwalten. Nur aktivieren, falls zusätzliche Branches wirklich benötigt werden."
+            },
+            "branchRegex": {
+                "title": "Regex für den Branchnamen",
+                "description": "Namens für andere Branches als der default Branch müssen im Namen dem Regex entsprechen."
+            },
             "showTestNamesToStudents": "Zeige die Testnamen den Studierenden",
             "showTestNamesToStudentsTooltip": "Durch Aktivierung dieser Option werden die Namen der automatischen Tests den Studierenden angezeigt. Lasse die Option deaktiviert, um keine visuelle Unterscheidung zwischen manuellem und automatischem Feedback für die Studierenden vorzunehmen.",
             "participationMode": "Teilnahmemodus",
@@ -218,7 +238,29 @@
                 "title": "Aufgabenstellung",
                 "taskCommand": "Aufgabe",
                 "testCaseCommand": "Testfall einfügen",
-                "tasksOfExercise": "Teilaufgaben:"
+                "tasksOfExercise": "Teilaufgaben:",
+                "generationAssistance": "Entwurf der Problemstellung erstellen",
+                "generateDraftDescription": "Verwende dieses Feld, um die Aufgabenbeschreibung zu entwerfen oder die aktuelle Formulierung zu verfeinern. Deine Eingaben steuern sowohl die Problemstellung als auch die Lernziele. Sei konkret zu Anforderungen, Konzepten und Randbedingungen.",
+                "yourRequirements": "Deine Anforderungen",
+                "examplePlaceholder": "Beispiel: Erstelle eine Java-Übung zur Implementierung eines binären Suchbaums mit Insert-, Delete- und Search-Operationen. Studierende sollen Verständnis für Baumtraversal und rekursive Algorithmen demonstrieren.",
+                "generationSuccess": "Aufgabenstellung wurde erfolgreich generiert.",
+                "generationError": "Fehler beim Generieren der Aufgabenstellung. Bitte versuche es erneut."
+            },
+            "codeGeneration": {
+                "creationAssistance": "Erstellungsassistenz",
+                "generateCode": "Code generieren",
+                "generating": "Generiere...",
+                "runningTitle": "Code-Generierung läuft",
+                "runningText": "Die Code-Generierung läuft aktuell für diese Übung durch einen anderen Benutzer. Bitte versuchen Sie es später erneut.",
+                "description": "Generiere Lösung, Template und Test-Code mit KI",
+                "tooltip": "KI Code-Generierung - Generiere Lösung, Template und Test-Code",
+                "confirmTitle": "Code-Generierung bestätigen",
+                "confirmText": "Diese Aktion nutzt ein LLM, kann Zeit benötigen und Credits kosten. Möchten Sie fortfahren?",
+                "success": "{{repositoryType}} Code-Generierung erfolgreich abgeschlossen!",
+                "partialSuccess": "{{repositoryType}} Code-Generierung mit einigen Problemen abgeschlossen. Bitte überprüfen Sie den generierten Code.",
+                "error": "{{repositoryType}} Code-Generierung fehlgeschlagen. Bitte versuchen Sie es später erneut.",
+                "unsupportedRepository": "Code-Generierung wird nur für Template-, Lösung- und Test-Repositories unterstützt.",
+                "attempts": "Versuche: {{attempts}}"
             },
             "status": {
                 "solutionFailsTest": "Das Solution-Repository erfüllt einen oder mehrere Testfälle nicht. Das könnte auf ein Problem mit dem Solution-Repository oder den Testfällen hinweisen.",
@@ -508,6 +550,7 @@
                 "complaintOnAutomaticAssessment": "Beschwerden auf automatische Bewertung",
                 "complaintOnAutomaticAssessmentTooltip": "Die Studierenden dürfen eine Beschwerde nach einer automatischen Bewertung einlegen, die ein Tutor danach bewerten kann.",
                 "exampleSolutionPublicationDateTooltip": "Das Datum, an dem das Lösungsrepository für Studierende zum Herunterladen verfügbar wird. Zum Deaktivieren leer lassen.",
+                "exampleSolutionPublicationDateTooltipOnImport": "Das Datum, an dem das Lösungsrepository für Studierende zum Herunterladen verfügbar wird. Kann beim Import nicht gesetzt werden.",
                 "releaseTestsWithExampleSolution": "Tests zusammen mit Lösungsvorschlag veröffentlichen",
                 "releaseTestsWithExampleSolutionTooltip": "Die automatischen Tests können zusätzlich zu dem Lösungsvorschlag nach der Einreichungsfrist zum Download bereit gestellt werden.",
                 "setTestCaseVisibilityToAfterReleaseDateOfResults": "Testergebnisse erst nach Veröffentlichung der Ergebnisse sichtbar machen",
@@ -651,7 +694,6 @@
                 "lineStatBetweenSubmissionsCurrentSubmissionLabel": "Zeilen, die zwischen der aktuellen Abgabe mit Commit-Hash <span class=\"font-italic text-info\"> {{ currentCommitHash }} </span>",
                 "lineStatBetweenSubmissionsPreviousSubmissionLabel": "und der vorherigen Abgabe mit Commit-Hash <span class=\"font-italic text-info\"> {{ previousCommitHash }} </span> hinzugefügt/entfernt wurden",
                 "lineStatBetweenSubmissionsTemplateLabel": "und der Vorlage hinzugefügt/entfernt wurden",
-
                 "lineStatTooltipDetailPage": "Ungefilterte Zeilen, die beim Vergleich der Template- und Lösungs-Repositories hinzugefügt und entfernt wurden",
                 "lineStatTooltipExamTimeline": "Ungefilterte Zeilen, die beim Vergleich der aktuellen und der vorherigen Abgabe hinzugefügt und entfernt wurden",
                 "lineStatTooltipFullReportExamTimeline": "Ungefilterte Zeilen, die beim Vergleich der aktuellen und der vorherigen Abgabe hinzugefügt und entfernt wurden.",
@@ -701,10 +743,12 @@
                 "pushTest": "Lade den Test-Code in das entsprechende Repository. Es wird in <code>{{checkoutDirectory}}</code> ausgecheckt."
             },
             "dockerFlags": {
-                "disableNetworkAccess": {
-                    "title": "Deaktiviere den Internetzugang beim beim Ausführen der Studierendeneinreichung",
-                    "description": "Aktiviere diese Option, um den Netzwerkzugang für Container zu deaktivieren. Das Netzwerk wird beim Ausführen der Studierendeneinreichung deaktiviert.",
-                    "warning": "Wenn der Internetzugang deaktiviert ist, müssen alle Abhängigkeiten im Docker-Image enthalten oder darin zwischengespeichert sein. Andernfalls schlägt der Build fehl."
+                "useCustomNetwork": {
+                    "title": "Eigenes Dockernetzwerk verwenden",
+                    "description": "Aktiviere diese Option, wenn du ein eigenes Docker Netzwerk oder gar keines verwenden willst.",
+                    "defaultOption": "Default (Bridge)",
+                    "noneOption": "None (kein Netzwerk)",
+                    "disableNetworkAccessWarning": "Wenn der Internetzugang deaktiviert ist, müssen alle Abhängigkeiten im Docker-Image enthalten oder darin zwischengespeichert sein. Andernfalls schlägt der Build fehl."
                 },
                 "envVars": {
                     "title": "Umgebungsvariablen",
@@ -726,6 +770,7 @@
                 }
             },
             "artemisIntelligence": {
+                "title": "Artemis Intelligenz",
                 "consistencyCheckAlert": {
                     "title": "Resultat der Konsistenzprüfung",
                     "improvement": "Verbesserungsempfehlung",

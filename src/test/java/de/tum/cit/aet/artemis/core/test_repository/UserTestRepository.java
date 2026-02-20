@@ -6,8 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.Page;
@@ -15,6 +14,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -73,7 +73,7 @@ public interface UserTestRepository extends UserRepository {
      * @param userId the id of the user to find
      * @return the user with learning paths if it exists, else throw exception
      */
-    @NotNull
+    @NonNull
     default User findWithLearningPathsByIdElseThrow(long userId) {
         return getValueElseThrow(findWithLearningPathsById(userId), userId);
     }
@@ -84,4 +84,12 @@ public interface UserTestRepository extends UserRepository {
             WHERE user.login LIKE CONCAT(:userPrefix, '%')
             """)
     Set<User> findAllByUserPrefix(String userPrefix);
+
+    @Query("""
+            SELECT user
+            FROM User user
+                LEFT JOIN FETCH user.examUsers
+            WHERE user.login = :login
+            """)
+    Optional<User> findOneWithExamUsersByLogin(@Param("login") String login);
 }

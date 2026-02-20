@@ -5,11 +5,10 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_APOLLON;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ARTEMIS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_INDEPENDENT;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
@@ -18,11 +17,14 @@ import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -39,6 +41,10 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.service.ArtemisVersionService;
+import de.tum.cit.aet.artemis.core.service.PasskeyAuthenticationService;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.core.service.VulnerabilityService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
 import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
@@ -51,13 +57,15 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 /**
  * This SpringBootTest is used for tests that only require a minimal set of Active Spring Profiles.
  */
+@Tag("BucketIndependent")
 @ResourceLock("AbstractSpringIntegrationIndependentTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 // TODO: PROFILE_AEOLUS is bound to PROGRAMMING and LOCAL_VC and should not be active in an independent test context.
-@ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_TEST_INDEPENDENT, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_ATHENA, PROFILE_APOLLON, PROFILE_IRIS, PROFILE_AEOLUS,
-        PROFILE_LTI, "local" })
+@ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_TEST_INDEPENDENT, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_ATHENA, PROFILE_APOLLON, PROFILE_AEOLUS })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false", "artemis.sharing.enabled=true", "artemis.user-management.passkey.enabled=true",
-        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_independent" })
+        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_independent", "artemis.nebula.enabled=true", "artemis.iris.enabled=true", "artemis.lti.enabled=true",
+        // Property moved here to avoid creating a separate Spring context in AutomaticBuildJobCleanupServiceIntegrationTest
+        "artemis.continuous-integration.build-job.retention-period=30" })
 public abstract class AbstractSpringIntegrationIndependentTest extends AbstractArtemisIntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractSpringIntegrationIndependentTest.class);
@@ -88,6 +96,12 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     @MockitoBean
     protected ChatClient chatClient;
 
+    @MockitoBean
+    protected ChatMemory chatMemory;
+
+    @MockitoBean
+    protected ChatMemoryRepository chatMemoryRepository;
+
     // Spy for lecture transcription tests to allow real method execution in service integration tests
     @MockitoSpyBean
     protected LectureTranscriptionService lectureTranscriptionService;
@@ -101,17 +115,36 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     @MockitoBean(name = "nebulaRestTemplate")
     protected RestTemplate nebulaRestTemplate;
 
+    // Mock PasskeyAuthenticationService to allow super admin operations in tests
+    // The @EnforceSuperAdmin annotation requires passkey authentication to be mocked
+    @MockitoSpyBean
+    protected PasskeyAuthenticationService passkeyAuthenticationService;
+
+    // Spy beans moved here to avoid creating separate Spring contexts in AdminSbomResourceIntegrationTest and VulnerabilityScanScheduleServiceTest
+    @MockitoSpyBean
+    protected ArtemisVersionService artemisVersionService;
+
+    @MockitoSpyBean
+    protected VulnerabilityService vulnerabilityService;
+
+    @MockitoSpyBean
+    protected ProfileService profileService;
+
     @BeforeEach
     protected void setupSpringAIMocks() {
         if (chatModel != null) {
             when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Mocked AI response for testing")))));
         }
+        // Mock passkey authentication to always return true for super admin operations in tests
+        // Use doReturn instead of when().thenReturn() because the method throws an exception
+        doReturn(true).when(passkeyAuthenticationService).isAuthenticatedWithSuperAdminApprovedPasskey();
     }
 
     @AfterEach
     @Override
     protected void resetSpyBeans() {
         Mockito.reset(oAuth2JWKSService, ltiPlatformConfigurationRepository, competencyProgressService, competencyProgressApi);
+        Mockito.reset(artemisVersionService, vulnerabilityService, profileService);
         if (chatModel != null) {
             Mockito.reset(chatModel);
         }
@@ -123,6 +156,12 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
         }
         if (tumLiveService != null) {
             Mockito.reset(tumLiveService);
+        }
+        if (chatMemoryRepository != null) {
+            Mockito.reset(chatMemoryRepository);
+        }
+        if (chatMemory != null) {
+            Mockito.reset(chatMemory);
         }
         super.resetSpyBeans();
     }

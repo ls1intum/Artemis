@@ -12,17 +12,11 @@ artemis:
   bcrypt-salt-rounds: 11  # The number of salt rounds for the bcrypt password hashing. Lower numbers make it faster but more unsecure and vice versa.
   # Please use the bcrypt benchmark tool to determine the best number of rounds for your system. https://github.com/ls1intum/bcrypt-Benchmark
   user-management:
-    use-external: true
+    use-external: true # enables ldap authentication
     password-reset:
-      credential-provider: <provider> # The credential provider which users can log in though (e.g. TUMonline)
       links: # The password reset links for different languages
         en: '<link>'
         de: '<link>'
-    external:
-      url: https://jira.ase.in.tum.de
-      user: <username>        # e.g. ga12abc
-      password: <password>
-      admin-group-name: tumuser
     ldap: # the whole section is optional: whether user details (such as the registration number) can be obtained from a LDAP service
       url: <url>
       user-dn: <user-dn>
@@ -78,9 +72,15 @@ artemis:
     build-log:
       file-expiry-days: 30 # The amount of days until build log files can be deleted
       cleanup-schedule: 0 0 3 * * ? # Cron expression for schedule to delete old build log files
+    build-job:
+      retention-period: 365 # Number of days before build job entries are deleted
   git:
     name: Artemis
     email: artemis@xcit.tum.de
+  rate-limiting:
+    enabled: false
+    account-management-requests-per-minute: 5
+    authentication-requests-per-minute: 30
   athena:
     url: http://localhost:5100
     secret: abcdef12345
@@ -89,12 +89,20 @@ artemis:
     conversion-service-url: http://localhost:8080
   hyperion:
     enabled: false  # Set this to true to enable the hyperion service on startup, requires Spring AI to be configured below.
-
+  llm:  # Shared LLM configuration for Spring AI-based services (Hyperion, Atlas)
+    model-costs:  # Token costs for usage tracking (EUR per million tokens)
+      gpt-5-mini:
+        input-cost-per-million-eur: 0.23
+        output-cost-per-million-eur: 1.84
+  atlas:
+    chat-model: gpt-4o
+    temperature: 0.2
   scheduling: # these values are cron expressions. To generate one, you can use e.g. https://www.freeformatter.com/cron-expression-generator-quartz.html
     programming-exercises-cleanup-time: 0 0 3 * * * # every day at 3am
     data-export-creation-time: 0 0 4 * * * # every day at 4am
     programming-exercises-retrigger-submission-without-result-time: 0 0 2 * * * # every day at 2am
     continuous-plagiarism-control-trigger-time: 0 0 5 * * * # every day at 5am
+    vulnerability-scan-time: 0 0 8 * * MON # every Monday at 8am
 
   data-export:
     days-between-data-exports: 14
@@ -111,24 +119,65 @@ artemis:
     url: <your-nebula-url>
     secret-token: <your-secret>
 
+  iris: # The iris module is used for AI-powered features via Pyris
+    enabled: false
+    url: <your-pyris-url>
+    secret-token: <your-secret>
+
+  weaviate:
+    enabled: false
+
 # Configure Spring AI, if you want to use Hyperion or Atlas
 spring:
   ai:
+    model:
+      chat: azure-openai # use openai or none as alternatives
     chat:
       client:
         enabled: #{${artemis.hyperion.enabled} or ${artemis.atlas.enabled}}
+      memory:
+        max-messages: 20 # Maximum number of messages to retain in conversation history per session
+    openai:
+      # These are the "global" settings; chat-specific ones override them if set
+      base-url: http://localhost:1234
+      api-key: dummy-key      # most local servers ignore it
+      chat:
+        # If your server uses /v1/chat/completions (Ollama-like proxies):
+        completions-path: /v1/chat/completions
+        # OR if it uses this:
+        # completions-path: /api/v0/chat/completions
+        options:
+          model: openai/gpt-oss-20b    # or whatever name your local server expects
+          temperature: 0.7
+    ## Alternative configuration for Azure OpenAI
+    # Use Azure OpenAI chat model auto-config
+#    model:
+#      chat: azure-openai
     # https://docs.spring.io/spring-ai/reference/api/chat/azure-openai-chat.html
     azure:
       openai:
-        api-key: <azure_openai_key>
+        api-key: my-api-key-for-azure-openai
         # open-ai-api-key: <openai_key> # Fallback OpenAI key if needed, sets endpoint automatically
-        endpoint: <azure_openai_endpoint>
+        endpoint: https://endpoint.openai.azure.com
         # deployment-name should match the Azure OpenAI deployment
         chat:
           options:
-            deployment-name: <azure_openai_deployment_name or openai_model_name>
+            deployment-name: gpt-5-mini
             # Some Azure/OpenAI deployments (e.g., gpt-5-mini) only support the default temperature (1.0)
             temperature: 1.0
+        client:
+          connect-timeout: 30s
+          read-timeout: 5m
+    # Retry/response handling tuning for AI providers
+    retry:
+      # Treat HTTP 429 as transient to allow auto-retry by Spring AI
+      on-http-codes: [429]
+      # Conservative defaults; adjust if needed
+      max-attempts: 5
+      backoff:
+        initial-interval: 1000ms
+        multiplier: 2.0
+        max-interval: 30000ms
   # data:
     # Redis configuration, in case `artemis.continuous-integration.data-store` is set to `Redis`
     # redis:
@@ -138,3 +187,31 @@ spring:
       # password: # password
       # client-name *must* be unique for each Artemis instance and *must* start with `artemis`
       # client-name: # artemis-...
+
+management:
+  # Set true to display contextual name in @Observed on Langfuse
+  observations:
+    annotations:
+      enabled: true
+
+  # Configuration for exporting LLM traces to Langfuse (set to true to enable Artemis' custom exporter)
+#  langfuse:
+#    enabled: true
+  tracing:
+    sampling:
+      probability: 1.0
+  otlp:
+    tracing:
+      # LangFuse accepts OTLP over HTTP at the traces path only
+      # (example: https://langfuse.aet.cit.tum.de/api/public/otel/v1/traces)
+#     endpoint: https://example.com
+#     transport: http
+#     headers:
+        # Provide "Basic <base64(public_key:secret_key)>" via env var to avoid committing secrets
+#        Authorization: "Basic <base64(public_key:secret_key)>"
+
+     # Important: Set export.enabled: false to disable the *default* OTLP exporter.
+     # Hyperion uses its own custom exporter to send LLM traces to Langfuse,
+     # so disabling the default exporter will NOT stop LLM trace export.
+     export:
+       enabled: false

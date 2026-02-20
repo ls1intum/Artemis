@@ -1,14 +1,18 @@
 import { TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockTranslateService } from '../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { lastValueFrom } from 'rxjs';
 import { BuildAgentInformation } from 'app/buildagent/shared/entities/build-agent-information.model';
 import { BuildAgentsService } from 'app/buildagent/build-agents.service';
 
 describe('BuildAgentsService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: BuildAgentsService;
     let httpMock: HttpTestingController;
     let element: BuildAgentInformation;
@@ -63,7 +67,7 @@ describe('BuildAgentsService', () => {
             await observable;
             throw new Error('expected an error, but got a success');
         } catch (error) {
-            expect(error.message).toContain(errorMessage);
+            expect((error as Error).message).toContain(errorMessage);
         }
     });
 
@@ -112,7 +116,7 @@ describe('BuildAgentsService', () => {
             await observable;
             throw new Error('expected an error, but got a success');
         } catch (error) {
-            expect(error.message).toContain(errorMessage);
+            expect((error as Error).message).toContain(errorMessage);
         }
     });
 
@@ -130,7 +134,7 @@ describe('BuildAgentsService', () => {
             await observable;
             throw new Error('expected an error, but got a success');
         } catch (error) {
-            expect(error.message).toContain(errorMessage);
+            expect((error as Error).message).toContain(errorMessage);
         }
     });
 
@@ -147,7 +151,7 @@ describe('BuildAgentsService', () => {
             await observable;
             throw new Error('expected an error, but got a success');
         } catch (error) {
-            expect(error.message).toContain(errorMessage);
+            expect((error as Error).message).toContain(errorMessage);
         }
     });
 
@@ -165,7 +169,7 @@ describe('BuildAgentsService', () => {
             await observable;
             throw new Error('expected an error, but got a success');
         } catch (error) {
-            expect(error.message).toContain(errorMessage);
+            expect((error as Error).message).toContain(errorMessage);
         }
     });
 
@@ -191,7 +195,7 @@ describe('BuildAgentsService', () => {
             await observable;
             throw new Error('expected an error, but got a success');
         } catch (error) {
-            expect(error.message).toContain(errorMessage);
+            expect((error as Error).message).toContain(errorMessage);
         }
     });
 

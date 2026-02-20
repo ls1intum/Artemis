@@ -13,8 +13,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.annotation.Nullable;
-
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -275,7 +274,11 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private String getLastCommitHashForParticipation(ProgrammingExerciseParticipation participation) throws IllegalStateException {
         try {
-            return gitService.getLastCommitHash(participation.getVcsRepositoryUri()).getName();
+            String commitHash = gitService.getLastCommitHash(participation.getVcsRepositoryUri());
+            if (commitHash == null) {
+                throw new IllegalStateException("Last commit hash for participation " + participation.getId() + " is null");
+            }
+            return commitHash;
         }
         catch (EntityNotFoundException ex) {
             var message = "Last commit hash for participation " + participation.getId() + " could not be retrieved due to exception: " + ex.getMessage();
@@ -300,7 +303,11 @@ public class ProgrammingSubmissionService extends SubmissionService {
         if (commitHash == null) {
             ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExerciseId);
             try {
-                commitHash = gitService.getLastCommitHash(programmingExercise.getVcsTestRepositoryUri()).getName();
+                commitHash = gitService.getLastCommitHash(programmingExercise.getVcsTestRepositoryUri());
+                if (commitHash == null) {
+                    throw new IllegalStateException(
+                            "Last commit hash for test repository of programming exercise with id " + programmingExercise.getId() + " could not be retrieved");
+                }
             }
             catch (EntityNotFoundException ex) {
                 throw new IllegalStateException("Last commit hash for test repository of programming exercise with id " + programmingExercise.getId() + " could not be retrieved");
@@ -542,7 +549,12 @@ public class ProgrammingSubmissionService extends SubmissionService {
     private void createInitialSubmission(ProgrammingExercise programmingExercise, AbstractBaseProgrammingExerciseParticipation participation) {
         ProgrammingSubmission submission = (ProgrammingSubmission) submissionRepository.initializeSubmission(participation, programmingExercise, SubmissionType.INSTRUCTOR);
         var latestHash = gitService.getLastCommitHash(participation.getVcsRepositoryUri());
-        submission.setCommitHash(latestHash.getName());
+        if (latestHash == null) {
+            log.warn("Could not create initial submission for participation {} of programming exercise {} because no commit hash could be found.", participation.getId(),
+                    programmingExercise.getId());
+            return;
+        }
+        submission.setCommitHash(latestHash);
         submission.setSubmissionDate(ZonedDateTime.now());
         submissionRepository.save(submission);
     }

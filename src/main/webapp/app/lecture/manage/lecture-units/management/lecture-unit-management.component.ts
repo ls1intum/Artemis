@@ -1,35 +1,34 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
-import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/router';
+import { Component, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { debounceTime, filter, finalize, map } from 'rxjs/operators';
+import { concatMap, finalize, map } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
-import { Subject, Subscription } from 'rxjs';
-import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
+import { Subject, from } from 'rxjs';
+import { LectureUnitCombinedStatus, LectureUnitProcessingStatus, LectureUnitService, ProcessingPhase } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { AttachmentVideoUnit, IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentVideoUnit, TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
-import { IconDefinition, faCheckCircle, faEye, faFileExport, faPencilAlt, faRepeat, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faClock, faExclamationTriangle, faEye, faFileLines, faPencilAlt, faRepeat, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
 import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
-import { PROFILE_IRIS } from 'app/app.constants';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { UnitCreationCardComponent } from '../unit-creation-card/unit-creation-card.component';
 import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
 import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online-unit/online-unit.component';
 import { CompetenciesPopoverComponent } from 'app/atlas/shared/competencies-popover/competencies-popover.component';
-import { NgClass } from '@angular/common';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { PdfDropZoneComponent } from '../../pdf-drop-zone/pdf-drop-zone.component';
 
 @Component({
     selector: 'jhi-lecture-unit-management',
@@ -45,151 +44,137 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         TextUnitComponent,
         OnlineUnitComponent,
         CompetenciesPopoverComponent,
-        NgClass,
         NgbTooltip,
         FaIconComponent,
         RouterLink,
         DeleteButtonDirective,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
+        PdfDropZoneComponent,
     ],
 })
 export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     protected readonly faTrash = faTrash;
     protected readonly faPencilAlt = faPencilAlt;
     protected readonly faEye = faEye;
-    protected readonly faFileExport = faFileExport;
-    protected readonly faRepeat = faRepeat;
-    protected readonly faCheckCircle = faCheckCircle;
     protected readonly faSpinner = faSpinner;
+    protected readonly faFileLines = faFileLines;
+    protected readonly faExclamationTriangle = faExclamationTriangle;
+    protected readonly faRepeat = faRepeat;
+    protected readonly faClock = faClock;
 
     protected readonly LectureUnitType = LectureUnitType;
     protected readonly ActionType = ActionType;
+    protected readonly ProcessingPhase = ProcessingPhase;
 
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly router = inject(Router);
     private readonly lectureService = inject(LectureService);
     private readonly alertService = inject(AlertService);
-    private readonly profileService = inject(ProfileService);
-    private readonly irisSettingsService = inject(IrisSettingsService);
     protected readonly lectureUnitService = inject(LectureUnitService);
+    private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
 
-    @Input() showCreationCard = true;
-    @Input() showCompetencies = true;
-    @Input() emitEditEvents = false;
+    showCreationCard = input<boolean>(true);
+    showCompetencies = input<boolean>(true);
+    showDropZone = input<boolean>(true);
+    emitEditEvents = input<boolean>(false);
+    lectureId = input<number | undefined>(undefined);
 
-    @Input() lectureId: number | undefined;
+    onEditLectureUnitClicked = output<LectureUnit>();
 
-    @Output()
-    onEditLectureUnitClicked: EventEmitter<LectureUnit> = new EventEmitter<LectureUnit>();
-
-    lectureUnits: LectureUnit[] = [];
-    lecture: Lecture;
-    isLoading = false;
-    updateOrderSubject: Subject<any>;
-    viewButtonAvailable: Record<number, boolean> = {};
-
-    private updateOrderSubjectSubscription: Subscription;
-    private navigationEndSubscription: Subscription;
-    private activatedRouteSubscription?: Subscription;
-    private profileInfoSubscription: Subscription;
+    lectureUnits = signal<LectureUnit[]>([]);
+    lecture = signal<Lecture | undefined>(undefined);
+    isLoading = signal(false);
+    isStatusLoading = signal(true);
+    viewButtonAvailable = signal<Record<number, boolean>>({});
+    transcriptionStatus = signal<Record<number, TranscriptionStatus>>({});
+    processingStatus = signal<Record<number, LectureUnitProcessingStatus>>({});
+    isRetryingProcessing = signal<Record<number, boolean>>({});
+    isUploadingPdfs = signal<boolean>(false);
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
-    irisEnabled = false;
-    lectureIngestionEnabled = false;
     routerEditLinksBase: { [key: string]: string } = {
         [LectureUnitType.ATTACHMENT_VIDEO]: 'attachment-video-units',
         [LectureUnitType.TEXT]: 'text-units',
         [LectureUnitType.ONLINE]: 'online-units',
     };
 
+    private resolvedLectureId: number | undefined;
+    private retryProcessingTimeouts = new Map<number, ReturnType<typeof setTimeout>>();
+
     ngOnInit(): void {
-        this.navigationEndSubscription = this.router.events.pipe(filter((value) => value instanceof NavigationEnd)).subscribe(() => {
+        this.resolvedLectureId = this.lectureId() ?? Number(this.activatedRoute?.parent?.snapshot.paramMap.get('lectureId'));
+        if (this.resolvedLectureId) {
+            // TODO: the lecture (without units) is already available through the lecture.route.ts resolver, it's not really good that we load it twice
+            // ideally the router could load the details directly
             this.loadData();
-        });
-
-        this.updateOrderSubject = new Subject();
-        this.activatedRouteSubscription = this.activatedRoute?.parent?.params.subscribe((params) => {
-            this.lectureId ??= +params['lectureId'];
-            if (this.lectureId) {
-                // TODO: the lecture (without units) is already available through the lecture.route.ts resolver, it's not really good that we load it twice
-                this.loadData();
-            }
-        });
-
-        // debounceTime limits the amount of put requests sent for updating the lecture unit order
-        this.updateOrderSubjectSubscription = this.updateOrderSubject.pipe(debounceTime(1000)).subscribe(() => {
-            this.updateOrder();
-        });
+        }
     }
 
     ngOnDestroy(): void {
-        this.updateOrder();
-        this.updateOrderSubjectSubscription.unsubscribe();
+        for (const timeoutId of this.retryProcessingTimeouts.values()) {
+            clearTimeout(timeoutId);
+        }
+        this.retryProcessingTimeouts.clear();
         this.dialogErrorSource.unsubscribe();
-        this.navigationEndSubscription.unsubscribe();
-        this.profileInfoSubscription?.unsubscribe();
-        this.activatedRouteSubscription?.unsubscribe();
     }
 
     loadData() {
-        this.isLoading = true;
+        this.isLoading.set(true);
+        this.isStatusLoading.set(true);
         // TODO: we actually would like to have the lecture with all units! Posts and competencies are not required here
         // we could also simply load all units for the lecture (as the lecture is already available through the route, see TODO above)
         this.lectureService
-            .findWithDetails(this.lectureId!)
+            .findWithDetails(this.resolvedLectureId!)
             .pipe(
                 map((response: HttpResponse<Lecture>) => response.body!),
                 finalize(() => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 }),
             )
             .subscribe({
                 next: (lecture) => {
-                    this.lecture = lecture;
+                    this.lecture.set(lecture);
                     if (lecture?.lectureUnits) {
-                        this.lectureUnits = lecture?.lectureUnits;
-                        this.lectureUnits.forEach((lectureUnit) => {
-                            this.viewButtonAvailable[lectureUnit.id!] = this.isViewButtonAvailable(lectureUnit);
+                        this.lectureUnits.set(lecture.lectureUnits);
+                        const viewAvailable: Record<number, boolean> = {};
+                        lecture.lectureUnits.forEach((lectureUnit) => {
+                            viewAvailable[lectureUnit.id!] = this.isViewButtonAvailable(lectureUnit);
                         });
-                        this.initializeProfileInfo();
-                        if (this.lectureIngestionEnabled) {
-                            this.updateIngestionStates();
-                        }
+                        this.viewButtonAvailable.set(viewAvailable);
+                        // Load all statuses in a single bulk request
+                        this.loadAllStatuses();
                     } else {
-                        this.lectureUnits = [];
+                        this.lectureUnits.set([]);
+                        this.isStatusLoading.set(false);
                     }
                 },
-                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+                error: (errorResponse: HttpErrorResponse) => {
+                    onError(this.alertService, errorResponse);
+                    this.isStatusLoading.set(false);
+                },
             });
     }
 
     updateOrder() {
-        if (this.lectureId === undefined || isNaN(this.lectureId)) {
+        if (this.resolvedLectureId === undefined || isNaN(this.resolvedLectureId)) {
             return;
         }
 
         this.lectureUnitService
-            .updateOrder(this.lectureId!, this.lectureUnits)
+            .updateOrder(this.resolvedLectureId, this.lectureUnits())
             .pipe(map((response: HttpResponse<LectureUnit[]>) => response.body!))
             .subscribe({
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
     }
 
-    initializeProfileInfo() {
-        this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
-        if (this.irisEnabled && this.lecture.course && this.lecture.course.id) {
-            this.irisSettingsService.getCombinedCourseSettings(this.lecture.course.id).subscribe((settings) => {
-                this.lectureIngestionEnabled = settings?.irisLectureIngestionSettings?.enabled || false;
-            });
-        }
-    }
-
     drop(event: CdkDragDrop<LectureUnit[]>) {
-        moveItemInArray(this.lectureUnits, event.previousIndex, event.currentIndex);
-        this.updateOrderSubject.next('');
+        const units = [...this.lectureUnits()];
+        moveItemInArray(units, event.previousIndex, event.currentIndex);
+        this.lectureUnits.set(units);
+        this.updateOrder();
     }
 
     identify(index: number, lectureUnit: LectureUnit) {
@@ -235,7 +220,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     }
 
     deleteLectureUnit(lectureUnitId: number) {
-        this.lectureUnitService.delete(lectureUnitId, this.lectureId!).subscribe({
+        this.lectureUnitService.delete(lectureUnitId, this.resolvedLectureId!).subscribe({
             next: () => {
                 this.dialogErrorSource.next('');
                 this.loadData();
@@ -292,66 +277,250 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         return !!lectureUnit.attachment;
     }
 
+    protected readonly AttachmentVideoUnit = AttachmentVideoUnit;
+
     /**
-     * Fetches the ingestion state for each lecture unit asynchronously and updates the lecture unit object.
+     * Load all processing and transcription statuses for attachment video units in a single bulk request.
+     * This reduces the number of HTTP requests from 2N to 1 when loading the lecture unit management view.
      */
-    updateIngestionStates() {
-        this.lectureUnitService.getIngestionState(this.lecture.course!.id!, this.lecture.id!).subscribe({
-            next: (res: HttpResponse<Record<number, IngestionState>>) => {
-                if (res.body) {
-                    const ingestionStatesMap = res.body;
-                    this.lectureUnits.forEach((lectureUnit) => {
-                        if (lectureUnit.id) {
-                            const ingestionState = ingestionStatesMap[lectureUnit.id];
-                            if (ingestionState !== undefined) {
-                                (<AttachmentVideoUnit>lectureUnit).pyrisIngestionState = ingestionState;
-                            }
-                        }
-                    });
+    private loadAllStatuses(): void {
+        if (!this.resolvedLectureId) {
+            this.isStatusLoading.set(false);
+            return;
+        }
+
+        this.lectureUnitService.getUnitStatuses(this.resolvedLectureId).subscribe({
+            next: (statuses: LectureUnitCombinedStatus[]) => {
+                const processingMap: Record<number, LectureUnitProcessingStatus> = {};
+                const transcriptionMap: Record<number, TranscriptionStatus> = {};
+
+                for (const status of statuses) {
+                    processingMap[status.lectureUnitId] = {
+                        lectureUnitId: status.lectureUnitId,
+                        phase: status.processingPhase,
+                        retryCount: status.retryCount,
+                        startedAt: status.startedAt,
+                        errorKey: status.processingErrorKey,
+                    };
+                    if (status.transcriptionStatus) {
+                        transcriptionMap[status.lectureUnitId] = status.transcriptionStatus;
+                    }
                 }
+
+                this.processingStatus.set(processingMap);
+                this.transcriptionStatus.set(transcriptionMap);
+                this.isStatusLoading.set(false);
             },
             error: () => {
-                this.alertService.error('artemisApp.iris.ingestionAlert.pyrisError');
+                this.isStatusLoading.set(false);
             },
         });
     }
 
-    onIngestButtonClicked(lectureUnitId: number) {
-        //TODO: ingest transcription as well
-        const unitIndex: number = this.lectureUnits.findIndex((unit) => unit.id === lectureUnitId);
-        if (unitIndex > -1) {
-            const unit: AttachmentVideoUnit = this.lectureUnits[unitIndex];
-            unit.pyrisIngestionState = IngestionState.IN_PROGRESS;
-            this.lectureUnits[unitIndex] = unit;
+    hasTranscription(lectureUnit: AttachmentVideoUnit): boolean {
+        return this.transcriptionStatus()[lectureUnit.id!] === TranscriptionStatus.COMPLETED;
+    }
+
+    isTranscriptionPending(lectureUnit: AttachmentVideoUnit): boolean {
+        const status = this.transcriptionStatus()[lectureUnit.id!];
+        return status === TranscriptionStatus.PENDING;
+    }
+
+    isTranscriptionFailed(lectureUnit: AttachmentVideoUnit): boolean {
+        return this.transcriptionStatus()[lectureUnit.id!] === TranscriptionStatus.FAILED;
+    }
+
+    hasTranscriptionBadge(lectureUnit: AttachmentVideoUnit): boolean {
+        // Hidden when transcribing to avoid redundancy with "Transcribing" processing badge
+        if (this.isProcessingTranscribing(lectureUnit)) {
+            return false;
         }
-        this.lectureUnitService.ingestLectureUnitInPyris(lectureUnitId, this.lecture.id!).subscribe({
-            next: () => this.alertService.success('artemisApp.iris.ingestionAlert.lectureUnitSuccess'),
-            error: (error) => {
-                if (error.status === 400) {
-                    this.alertService.error('artemisApp.iris.ingestionAlert.lectureUnitError');
-                } else if (error.status === 503) {
-                    this.alertService.error('artemisApp.iris.ingestionAlert.pyrisUnavailable');
-                } else {
-                    this.alertService.error('artemisApp.iris.ingestionAlert.pyrisError');
-                }
+        return this.isTranscriptionPending(lectureUnit) || this.isTranscriptionFailed(lectureUnit) || this.hasTranscription(lectureUnit);
+    }
+
+    // Processing status helper methods (for ProcessingPhase)
+    isProcessingIdle(lectureUnit: AttachmentVideoUnit): boolean {
+        return this.processingStatus()[lectureUnit.id!]?.phase === ProcessingPhase.IDLE;
+    }
+
+    isProcessingTranscribing(lectureUnit: AttachmentVideoUnit): boolean {
+        return this.processingStatus()[lectureUnit.id!]?.phase === ProcessingPhase.TRANSCRIBING;
+    }
+
+    isProcessingIngesting(lectureUnit: AttachmentVideoUnit): boolean {
+        return this.processingStatus()[lectureUnit.id!]?.phase === ProcessingPhase.INGESTING;
+    }
+
+    isProcessingDone(lectureUnit: AttachmentVideoUnit): boolean {
+        return this.processingStatus()[lectureUnit.id!]?.phase === ProcessingPhase.DONE;
+    }
+
+    isProcessingFailed(lectureUnit: AttachmentVideoUnit): boolean {
+        return this.processingStatus()[lectureUnit.id!]?.phase === ProcessingPhase.FAILED;
+    }
+
+    isProcessingInProgress(lectureUnit: AttachmentVideoUnit): boolean {
+        const phase = this.processingStatus()[lectureUnit.id!]?.phase;
+        return phase === ProcessingPhase.TRANSCRIBING || phase === ProcessingPhase.INGESTING;
+    }
+
+    getProcessingErrorKey(lectureUnit: AttachmentVideoUnit): string | undefined {
+        return this.processingStatus()[lectureUnit.id!]?.errorKey;
+    }
+
+    hasProcessingBadge(lectureUnit: AttachmentVideoUnit): boolean {
+        return this.isProcessingInProgress(lectureUnit) || this.isProcessingFailed(lectureUnit) || this.isProcessingDone(lectureUnit) || this.isAwaitingProcessing(lectureUnit);
+    }
+
+    /**
+     * Check if the course is currently active (within start and end dates).
+     * A course is active if: startDate <= now <= endDate (null dates are treated as no restriction)
+     */
+    isCourseActive(): boolean {
+        const course = this.lecture()?.course;
+        if (!course) {
+            return false;
+        }
+        const now = dayjs();
+        const startOk = !course.startDate || dayjs(course.startDate).isBefore(now) || dayjs(course.startDate).isSame(now);
+        const endOk = !course.endDate || dayjs(course.endDate).isAfter(now) || dayjs(course.endDate).isSame(now);
+        return startOk && endOk;
+    }
+
+    /**
+     * Check if a lecture unit is awaiting processing (IDLE state and course is active so it will be processed).
+     */
+    isAwaitingProcessing(lectureUnit: AttachmentVideoUnit): boolean {
+        // Don't show "awaiting" while status is still loading to prevent flash
+        if (this.isStatusLoading()) {
+            return false;
+        }
+        const phase = this.processingStatus()[lectureUnit.id!]?.phase;
+        // If processing is in progress or done, it's not awaiting
+        if (phase !== undefined && phase !== ProcessingPhase.IDLE) {
+            return false;
+        }
+        // IDLE or no status yet - show "awaiting" only if the course is active (backfill scheduler only processes active courses)
+        return this.isCourseActive();
+    }
+
+    getBadgeTopOffset(lectureUnit: LectureUnit) {
+        // Row 1: Release date badge (always)
+        // Row 2: Transcription + Processing badges side by side (for attachment video units)
+        if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
+            const hasSecondRow = this.hasTranscriptionBadge(<AttachmentVideoUnit>lectureUnit) || this.hasProcessingBadge(<AttachmentVideoUnit>lectureUnit);
+            return hasSecondRow ? '-40px' : '-18px';
+        }
+        return '-18px';
+    }
+
+    /**
+     * Calculate the margin-top needed for a lecture unit container to accommodate its badges.
+     */
+    getContainerMarginTop(lectureUnit: LectureUnit): string | null {
+        if (lectureUnit.type !== LectureUnitType.ATTACHMENT_VIDEO) {
+            return null;
+        }
+        const hasSecondRow = this.hasTranscriptionBadge(<AttachmentVideoUnit>lectureUnit) || this.hasProcessingBadge(<AttachmentVideoUnit>lectureUnit);
+        return hasSecondRow ? '67px' : '45px';
+    }
+
+    /**
+     * Retry processing for a failed lecture unit.
+     * @param lectureUnit the lecture unit to retry processing for
+     */
+    retryProcessing(lectureUnit: AttachmentVideoUnit) {
+        if (!this.resolvedLectureId || !lectureUnit.id) {
+            return;
+        }
+
+        this.isRetryingProcessing.update((current) => ({ ...current, [lectureUnit.id!]: true }));
+        this.lectureUnitService.retryProcessing(this.resolvedLectureId, lectureUnit.id).subscribe({
+            next: (status) => {
+                this.alertService.success('artemisApp.lectureUnit.processingRetryStarted');
+                // Update status from the returned value
+                this.processingStatus.update((current) => ({
+                    ...current,
+                    [status.lectureUnitId]: {
+                        lectureUnitId: status.lectureUnitId,
+                        phase: status.processingPhase,
+                        retryCount: status.retryCount,
+                        startedAt: status.startedAt,
+                        errorKey: status.processingErrorKey,
+                    },
+                }));
+                // Update transcription status - clear old entry if null (e.g., transcription deleted during retry)
+                this.transcriptionStatus.update((current) => {
+                    const updated = { ...current };
+                    if (status.transcriptionStatus) {
+                        updated[status.lectureUnitId] = status.transcriptionStatus;
+                    } else {
+                        delete updated[status.lectureUnitId];
+                    }
+                    return updated;
+                });
+                this.isRetryingProcessing.update((current) => ({ ...current, [lectureUnit.id!]: false }));
+            },
+            error: (errorResponse: HttpErrorResponse) => {
+                onError(this.alertService, errorResponse);
+                this.isRetryingProcessing.update((current) => ({ ...current, [lectureUnit.id!]: false }));
             },
         });
     }
 
-    getIcon(attachmentVideoUnit: AttachmentVideoUnit): IconDefinition {
-        switch (attachmentVideoUnit.pyrisIngestionState) {
-            case IngestionState.NOT_STARTED:
-                return this.faFileExport;
-            case IngestionState.IN_PROGRESS:
-                return this.faSpinner;
-            case IngestionState.DONE:
-                return this.faCheckCircle;
-            case IngestionState.ERROR:
-                return this.faRepeat;
-            default:
-                return this.faFileExport;
+    /**
+     * Handles PDF files dropped on the drop zone
+     * Creates attachment units for each file with name from filename and release date 15 min in future
+     * Navigates to edit page for the last created unit
+     */
+    onPdfFilesDropped(files: File[]): void {
+        if (files.length === 0 || !this.resolvedLectureId) {
+            return;
         }
+
+        this.isUploadingPdfs.set(true);
+        let lastCreatedUnit: AttachmentVideoUnit | undefined;
+
+        from(files)
+            .pipe(
+                concatMap((file) => this.createAttachmentUnitFromFile(file)),
+                map((response) => response.body as AttachmentVideoUnit),
+            )
+            .subscribe({
+                next: (unit) => {
+                    lastCreatedUnit = unit;
+                },
+                error: (error: HttpErrorResponse) => {
+                    this.isUploadingPdfs.set(false);
+                    onError(this.alertService, error);
+                },
+                complete: () => {
+                    this.isUploadingPdfs.set(false);
+                    this.alertService.success('artemisApp.lecture.pdfUpload.success');
+                    // Navigate to edit page for the last created unit
+                    const lectureValue = this.lecture();
+                    if (lastCreatedUnit?.id && lectureValue?.course?.id) {
+                        this.router.navigate([
+                            '/course-management',
+                            lectureValue.course.id,
+                            'lectures',
+                            this.resolvedLectureId,
+                            'unit-management',
+                            'attachment-video-units',
+                            lastCreatedUnit.id,
+                            'edit',
+                        ]);
+                    } else {
+                        this.loadData();
+                    }
+                },
+            });
     }
 
-    protected readonly AttachmentVideoUnit = AttachmentVideoUnit;
+    /**
+     * Creates a single attachment unit from a file
+     */
+    private createAttachmentUnitFromFile(file: File) {
+        return this.attachmentVideoUnitService.createAttachmentVideoUnitFromFile(this.resolvedLectureId!, file);
+    }
 }

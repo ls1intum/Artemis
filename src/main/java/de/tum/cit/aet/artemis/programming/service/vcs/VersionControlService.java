@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service.vcs;
 
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;

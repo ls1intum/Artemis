@@ -112,8 +112,7 @@ describe('TutorParticipationGraphComponent', () => {
             comp.tutorParticipationStatus = TutorParticipationStatus.TRAINED;
             comp.numberOfSubmissions = new DueDateStat();
             comp.numberOfSubmissions.inTime = 4;
-            comp.totalNumberOfAssessments = new DueDateStat();
-            comp.totalNumberOfAssessments.inTime = 5;
+            comp.totalNumberOfAssessments = 5;
             comp.numberOfOpenComplaints = 1;
             comp.numberOfOpenMoreFeedbackRequests = 2;
 
@@ -127,10 +126,11 @@ describe('TutorParticipationGraphComponent', () => {
             comp.numberOfSubmissions = new DueDateStat();
             comp.numberOfSubmissions.inTime = 4;
             comp.numberOfSubmissions.late = 2;
-            comp.totalNumberOfAssessments = new DueDateStat();
-            comp.numberOfAssessmentsOfCorrectionRounds = [comp.totalNumberOfAssessments];
-            comp.totalNumberOfAssessments.inTime = 3;
-            comp.totalNumberOfAssessments.late = 1;
+            comp.totalNumberOfAssessments = 3;
+            const firstCorrectionDueDateStat = new DueDateStat();
+            firstCorrectionDueDateStat.inTime = comp.totalNumberOfAssessments;
+            firstCorrectionDueDateStat.late = 1;
+            comp.numberOfAssessmentsOfCorrectionRounds = [firstCorrectionDueDateStat];
             comp.numberOfOpenComplaints = 1;
             comp.numberOfOpenMoreFeedbackRequests = 2;
 
@@ -142,7 +142,7 @@ describe('TutorParticipationGraphComponent', () => {
             const secondCorrectionDueDateStat = new DueDateStat();
             secondCorrectionDueDateStat.inTime = 2;
             secondCorrectionDueDateStat.late = 1;
-            comp.numberOfAssessmentsOfCorrectionRounds = [comp.totalNumberOfAssessments, secondCorrectionDueDateStat];
+            comp.numberOfAssessmentsOfCorrectionRounds = [firstCorrectionDueDateStat, secondCorrectionDueDateStat];
 
             comp.calculatePercentageAssessmentProgress();
             expect(comp.percentageInTimeAssessmentProgressOfCorrectionRound[0]).toBe(75);

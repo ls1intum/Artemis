@@ -1,6 +1,6 @@
 import { BreakpointObserver, BreakpointState, Breakpoints } from '@angular/cdk/layout';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
-import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { Conversation, ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
@@ -45,6 +45,10 @@ import {
 } from 'app/communication/course-conversations-components/dialogs/channels-overview-dialog/channels-overview-dialog.component';
 import { ConversationGlobalSearchComponent } from 'app/communication/shared/conversation-global-search/conversation-global-search.component';
 import { AlertService } from 'app/shared/service/alert.service';
+import { FaqService } from 'app/communication/faq/faq.service';
+import { TranslateModule } from '@ngx-translate/core';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 const examples: (ConversationDTO | undefined)[] = [
     undefined,
@@ -137,8 +141,11 @@ examples.forEach((activeConversation) => {
                     MockProvider(SidebarEventService),
                     MockProvider(ProfileService),
                     MockProvider(AlertService),
+                    MockProvider(FaqService),
+                    provideHttpClient(),
+                    provideHttpClientTesting(),
                 ],
-                imports: [FormsModule, ReactiveFormsModule, FontAwesomeModule, NgbModule],
+                imports: [FormsModule, ReactiveFormsModule, FontAwesomeModule, NgbModule, TranslateModule.forRoot()],
             }).compileComponents();
 
             const metisService = new MockMetisService();
@@ -167,6 +174,8 @@ examples.forEach((activeConversation) => {
             metisConversationService.acceptCodeOfConduct = jest.fn();
             metisConversationService.createGroupChat = jest.fn().mockReturnValue(EMPTY);
             metisConversationService.createOneToOneChat = jest.fn().mockReturnValue(EMPTY);
+            metisConversationService.createChannel = jest.fn().mockReturnValue(EMPTY);
+            metisConversationService.markAllChannelsAsRead = jest.fn().mockReturnValue(of());
 
             fixture = TestBed.createComponent(CourseConversationsComponent);
             component = fixture.componentInstance;
@@ -265,6 +274,7 @@ examples.forEach((activeConversation) => {
             }));
 
             it('should open the create channel dialog when onCreateChannelPressed is called', fakeAsync(() => {
+                fixture.detectChanges();
                 mockModalRef.result = Promise.resolve(expectedResults);
                 const spy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
 
@@ -280,7 +290,7 @@ examples.forEach((activeConversation) => {
         it('should update thread in post', fakeAsync(() => {
             fixture.detectChanges();
             component.postInThread = { id: 1, content: 'loremIpsum' } as Post;
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             const updatedPost = { id: 1, content: 'updatedContent' } as Post;
             postsSubject.next([updatedPost]);
             tick();
@@ -290,7 +300,7 @@ examples.forEach((activeConversation) => {
         it('should set active conversation depending on the query param', fakeAsync(() => {
             queryParamsSubject.next({ conversationId: '12' });
             // mock setActiveConversationById method
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             tick();
             expect(setActiveConversationSpy).toHaveBeenCalledWith(12);
         }));
@@ -298,7 +308,7 @@ examples.forEach((activeConversation) => {
         it('should call sidebar collapse if conversation changes', fakeAsync(() => {
             const closeSidebarOnMobileSpy = jest.spyOn(component, 'closeSidebarOnMobile');
             queryParamsSubject.next({ conversationId: '12' });
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             tick();
             expect(closeSidebarOnMobileSpy).toHaveBeenCalled();
         }));
@@ -306,7 +316,7 @@ examples.forEach((activeConversation) => {
         it('should call sidebar collapse if thread opens', fakeAsync(() => {
             const closeSidebarOnMobileSpy = jest.spyOn(component, 'closeSidebarOnMobile');
             queryParamsSubject.next({ messageId: '12' });
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             tick();
             expect(closeSidebarOnMobileSpy).toHaveBeenCalled();
         }));
@@ -336,7 +346,7 @@ examples.forEach((activeConversation) => {
                 selectedAuthors: [],
                 selectedConversations: [],
             });
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             expect(component.courseWideSearchConfig.searchTerm).toBe('test');
         });
 
@@ -358,6 +368,15 @@ examples.forEach((activeConversation) => {
 
             courseSidebarService.toggleSidebar();
             expect(component.isCollapsed).toBeTrue();
+        });
+
+        it('should reload sidebar when reloadSidebar$ event is emitted', () => {
+            const prepareSidebarDataSpy = jest.spyOn(component, 'prepareSidebarData');
+            fixture.detectChanges(); // ngOnInit is called here
+
+            courseSidebarService.reloadSidebar();
+
+            expect(prepareSidebarDataSpy).toHaveBeenCalled();
         });
 
         it('should switch to mobile if breakpoint returns true and open sidebar', () => {
@@ -391,6 +410,7 @@ examples.forEach((activeConversation) => {
                 matches: true,
                 breakpoints: { [Breakpoints.Handset]: true },
             });
+            fixture.changeDetectorRef.detectChanges();
             component.onSearch({
                 searchTerm: '',
                 selectedAuthors: [],
@@ -408,11 +428,11 @@ examples.forEach((activeConversation) => {
 
         it('should toggle sidebar visibility based on isCollapsed property', () => {
             component.isCollapsed = false;
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             expect(fixture.nativeElement.querySelector('.sidebar-collapsed')).toBeNull();
 
             component.isCollapsed = true;
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             expect(fixture.nativeElement.querySelector('.sidebar-collapsed')).not.toBeNull();
         });
 
@@ -640,8 +660,10 @@ examples.forEach((activeConversation) => {
         });
 
         it('should mark all channels as read', () => {
+            fixture.detectChanges();
             const markAllChannelsAsRead = jest.spyOn(metisConversationService, 'markAllChannelsAsRead').mockReturnValue(of());
             const forceRefresh = jest.spyOn(metisConversationService, 'forceRefresh');
+            forceRefresh.mockClear();
             component.markAllChannelAsRead();
             expect(markAllChannelsAsRead).toHaveBeenCalledOnce();
             expect(forceRefresh).toHaveBeenCalledTimes(2);
@@ -649,12 +671,14 @@ examples.forEach((activeConversation) => {
 
         describe('conversation selection', () => {
             it('should handle numeric conversationId', () => {
+                fixture.detectChanges();
                 component.onConversationSelected(123);
                 expect(component.selectedSavedPostStatus).toBeUndefined();
                 expect(setActiveConversationSpy).toHaveBeenCalledWith(123);
             });
 
             it('should handle valid string conversationId as SavedPostStatus', () => {
+                fixture.detectChanges();
                 const validStatus = SavedPostStatus.ARCHIVED.toString().toLowerCase();
                 component.onConversationSelected(validStatus);
                 expect(component.selectedSavedPostStatus).toBe(SavedPostStatus.ARCHIVED);
@@ -663,12 +687,16 @@ examples.forEach((activeConversation) => {
                 expect(component.activeConversation).toBeUndefined();
             });
 
-            it('should ignore invalid string conversationId', () => {
+            it('should ignore invalid string conversationId', fakeAsync(() => {
+                fixture.detectChanges();
                 const invalidStatus = 'invalidStatus';
+                setActiveConversationSpy.mockClear();
                 component.onConversationSelected(invalidStatus);
+                tick();
                 expect(component.selectedSavedPostStatus).toBeUndefined();
-                expect(metisConversationService.setActiveConversation).not.toHaveBeenCalled();
-            });
+                expect(setActiveConversationSpy).not.toHaveBeenCalled();
+                discardPeriodicTasks();
+            }));
 
             it('should toggle the value of showOnlyPinned', () => {
                 expect(component.showOnlyPinned).toBeFalse();
@@ -781,6 +809,138 @@ examples.forEach((activeConversation) => {
                 expect(component.focusPostId).toBe(10);
                 expect(component.openThreadOnFocus).toBeFalse();
                 expect(setActiveConversationSpy).toHaveBeenCalledWith(444);
+            });
+        });
+
+        describe('Search Clear and Conversation Restoration', () => {
+            beforeEach(() => {
+                fixture.detectChanges();
+            });
+
+            it('should clear search config and restore previous conversation when X is clicked', () => {
+                const previousConversation = { id: 42, type: 'channel' } as ConversationDTO;
+                component.activeConversation = previousConversation;
+                component.lastKnownConversationId = 42;
+
+                component.courseWideSearchConfig.searchTerm = 'test search';
+                component.courseWideSearchConfig.selectedConversations = [previousConversation];
+                component.courseWideSearchConfig.selectedAuthors = [{ id: 1 } as any];
+
+                component.onSelectionChange({
+                    searchTerm: '',
+                    selectedConversations: [previousConversation],
+                    selectedAuthors: [],
+                });
+
+                expect(component.previousConversationBeforeSearch).toEqual(previousConversation);
+
+                component.onClearSearchAndRestorePrevious();
+
+                expect(component.courseWideSearchConfig.searchTerm).toBe('');
+                expect(component.courseWideSearchConfig.selectedConversations).toEqual([]);
+                expect(component.courseWideSearchConfig.selectedAuthors).toEqual([]);
+
+                expect(setActiveConversationSpy).toHaveBeenCalledWith(42);
+                expect(component.previousConversationBeforeSearch).toBeUndefined();
+            });
+
+            it('should restore last known conversation when no previous conversation before search', () => {
+                component.previousConversationBeforeSearch = undefined;
+                component.lastKnownConversationId = 99;
+
+                component.courseWideSearchConfig.searchTerm = 'test';
+                component.courseWideSearchConfig.selectedConversations = [{ id: 1 } as ConversationDTO];
+
+                component.onClearSearchAndRestorePrevious();
+
+                expect(component.courseWideSearchConfig.searchTerm).toBe('');
+                expect(component.courseWideSearchConfig.selectedConversations).toEqual([]);
+                expect(component.courseWideSearchConfig.selectedAuthors).toEqual([]);
+
+                expect(setActiveConversationSpy).toHaveBeenCalledWith(99);
+            });
+
+            it('should trigger All messages search when no conversation to restore', () => {
+                component.previousConversationBeforeSearch = undefined;
+                component.lastKnownConversationId = undefined;
+                const updateQueryParamsSpy = jest.spyOn(component, 'updateQueryParameters');
+                const courseWideSearchMock = { onSearch: jest.fn() };
+                jest.spyOn(component, 'courseWideSearch').mockReturnValue(courseWideSearchMock as any);
+
+                component.courseWideSearchConfig.searchTerm = 'test search';
+                component.courseWideSearchConfig.selectedConversations = [{ id: 1 } as ConversationDTO];
+
+                component.onClearSearchAndRestorePrevious();
+
+                expect(component.courseWideSearchConfig.searchTerm).toBe('');
+                expect(component.courseWideSearchConfig.selectedConversations).toEqual([]);
+                expect(component.courseWideSearchConfig.selectedAuthors).toEqual([]);
+
+                expect(setActiveConversationSpy).toHaveBeenCalledWith(undefined);
+                expect(component.activeConversation).toBeUndefined();
+                expect(component.selectedSavedPostStatus).toBeUndefined();
+                expect(updateQueryParamsSpy).toHaveBeenCalled();
+                expect(courseWideSearchMock.onSearch).toHaveBeenCalled();
+            });
+
+            it('should track last known conversation ID when active conversation changes', fakeAsync(() => {
+                const newConversation = { id: 123, type: 'channel' } as ConversationDTO;
+                jest.spyOn(metisConversationService, 'activeConversation$', 'get').mockReturnValue(of(newConversation));
+
+                component.ngOnInit();
+                tick();
+
+                expect(component.lastKnownConversationId).toBe(123);
+            }));
+
+            it('should save active conversation only once when search starts', () => {
+                const conversation = { id: 50, type: 'channel' } as ConversationDTO;
+                component.activeConversation = conversation;
+                component.previousConversationBeforeSearch = undefined;
+
+                // First selection - should save
+                component.onSelectionChange({
+                    searchTerm: '',
+                    selectedConversations: [conversation],
+                    selectedAuthors: [],
+                });
+
+                expect(component.previousConversationBeforeSearch).toEqual(conversation);
+
+                // Second selection - should NOT overwrite
+                const anotherConversation = { id: 60, type: 'channel' } as ConversationDTO;
+                component.activeConversation = anotherConversation;
+
+                component.onSelectionChange({
+                    searchTerm: '',
+                    selectedConversations: [anotherConversation],
+                    selectedAuthors: [],
+                });
+
+                expect(component.previousConversationBeforeSearch).toEqual(conversation); // Still the first one
+            });
+
+            it('should not save conversation when no filters are active', () => {
+                const conversation = { id: 70, type: 'channel' } as ConversationDTO;
+                component.activeConversation = conversation;
+                component.previousConversationBeforeSearch = undefined;
+
+                component.onSelectionChange({
+                    searchTerm: '',
+                    selectedConversations: [],
+                    selectedAuthors: [],
+                });
+
+                expect(component.previousConversationBeforeSearch).toBeUndefined();
+            });
+
+            it('should call closeSidebarOnMobile when clearing search', () => {
+                const closeSidebarSpy = jest.spyOn(component, 'closeSidebarOnMobile');
+                component.lastKnownConversationId = 1;
+
+                component.onClearSearchAndRestorePrevious();
+
+                expect(closeSidebarSpy).toHaveBeenCalled();
             });
         });
     });

@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -12,6 +14,8 @@ import { AttachmentService } from 'app/lecture/manage/services/attachment.servic
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 
 describe('Attachment Service', () => {
+    setupTestBed({ zoneless: true });
+
     let httpMock: HttpTestingController;
     let service: AttachmentService;
     const resourceUrl = 'api/lecture/attachments';
@@ -67,21 +71,6 @@ describe('Attachment Service', () => {
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
                 url: `${resourceUrl}/${id}`,
-                method: 'GET',
-            });
-            req.flush(returnedFromService);
-            expect(expectedResult.body).toEqual(expected);
-        });
-
-        it('should invoke query', async () => {
-            const returnedFromService = [elemDefault];
-            const expected = returnedFromService;
-            service
-                .query({})
-                .pipe(take(1))
-                .subscribe((resp) => (expectedResult = resp));
-            const req = httpMock.expectOne({
-                url: resourceUrl,
                 method: 'GET',
             });
             req.flush(returnedFromService);

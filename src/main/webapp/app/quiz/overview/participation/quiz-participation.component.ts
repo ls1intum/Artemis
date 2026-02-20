@@ -34,7 +34,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { debounce } from 'lodash-es';
 import { captureException } from '@sentry/angular';
-import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { getCourseFromExercise, hasDueDatePassed } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
@@ -151,6 +151,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     quizExerciseChannel: string;
     quizBatchChannel: string;
     websocketSubscription?: Subscription;
+    private participationSubscription?: Subscription;
+    private quizExerciseSubscription?: Subscription;
+    private quizBatchSubscription?: Subscription;
 
     /**
      * debounced function to reset 'justSubmitted', so that time since last submission is displayed again when no submission has been made for at least 2 seconds
@@ -214,12 +217,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             clearTimeout(timeout);
         });
 
-        if (this.participationChannel) {
-            this.websocketService.unsubscribe(this.participationChannel);
-        }
-        if (this.quizExerciseChannel) {
-            this.websocketService.unsubscribe(this.quizExerciseChannel);
-        }
+        this.participationSubscription?.unsubscribe();
+        this.quizExerciseSubscription?.unsubscribe();
+        this.quizBatchSubscription?.unsubscribe();
         this.websocketSubscription?.unsubscribe();
         this.routeAndDataSubscription?.unsubscribe();
     }
@@ -262,7 +262,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     initPracticeMode() {
         this.quizExerciseService.findForStudent(this.quizId).subscribe({
             next: (res: HttpResponse<QuizExercise>) => {
-                if (res.body && res.body.isOpenForPractice) {
+                if (res.body && hasDueDatePassed(res.body)) {
                     this.startQuizPreviewOrPractice(res.body);
                 } else {
                     alert('Error: This quiz is not open for practice!');
@@ -354,25 +354,25 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             this.participationChannel = '/user/topic/exercise/' + this.quizId + '/participation';
             // TODO: subscribe for new results instead if this is what we are actually interested in
             // participation channel => react to new results
-            this.websocketService.subscribe(this.participationChannel);
-            this.websocketService.receive(this.participationChannel).subscribe((changedParticipation: StudentParticipation) => {
-                if (changedParticipation && this.quizExercise && changedParticipation.exercise!.id === this.quizExercise.id) {
-                    if (this.waitingForQuizStart) {
-                        // only apply completely if quiz hasn't started to prevent jumping ui during participation
-                        this.updateParticipationFromServer(changedParticipation);
-                    } else {
-                        // update quizExercise and results / submission
-                        this.showQuizResultAfterQuizEnd(changedParticipation);
+            this.participationSubscription = this.websocketService
+                .subscribe<StudentParticipation>(this.participationChannel)
+                .subscribe((changedParticipation: StudentParticipation) => {
+                    if (changedParticipation && this.quizExercise && changedParticipation.exercise!.id === this.quizExercise.id) {
+                        if (this.waitingForQuizStart) {
+                            // only apply completely if quiz hasn't started to prevent jumping ui during participation
+                            this.updateParticipationFromServer(changedParticipation);
+                        } else {
+                            // update quizExercise and results / submission
+                            this.showQuizResultAfterQuizEnd(changedParticipation);
+                        }
                     }
-                }
-            });
+                });
         }
 
         if (!this.quizExerciseChannel) {
             this.quizExerciseChannel = '/topic/courses/' + this.courseId + '/quizExercises';
             // quizExercise channel => react to changes made to quizExercise (e.g. start date)
-            this.websocketService.subscribe(this.quizExerciseChannel);
-            this.websocketService.receive(this.quizExerciseChannel).subscribe((quiz) => {
+            this.quizExerciseSubscription = this.websocketService.subscribe<QuizExercise>(this.quizExerciseChannel).subscribe((quiz: QuizExercise) => {
                 if (this.waitingForQuizStart && this.quizId === quiz.id) {
                     this.applyQuizFull(quiz);
                 }
@@ -383,8 +383,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             const batchChannel = this.quizExerciseChannel + '/' + this.quizBatch.id;
             if (this.quizBatchChannel !== batchChannel) {
                 this.quizBatchChannel = batchChannel;
-                this.websocketService.subscribe(this.quizBatchChannel);
-                this.websocketService.receive(this.quizBatchChannel).subscribe((quiz) => {
+                this.quizBatchSubscription = this.websocketService.subscribe<QuizExercise>(this.quizBatchChannel).subscribe((quiz: QuizExercise) => {
                     this.applyQuizFull(quiz);
                 });
             }
@@ -472,6 +471,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             if (!this.submission.submitted) {
                 this.stopAutoSave();
                 this.triggerSave();
+                if (this.hasAnyAnswer() && this.quizExercise.quizMode !== QuizMode.SYNCHRONIZED) {
+                    this.alertService.success('artemisApp.quizExercise.submitSuccess');
+                }
             }
         }
         this.previousRunning = running;
@@ -663,9 +665,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             // quiz hasn't started yet
             this.waitingForQuizStart = true;
 
-            // enable automatic websocket reconnect
-            this.websocketService.enableReconnect();
-
             if (this.quizBatch && this.quizBatch.startTime) {
                 // synchronize time with server
                 this.startDate = dayjs(this.quizBatch.startTime ?? this.serverDateService.now());
@@ -680,9 +679,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
 
             // check if quiz hasn't ended
             if (!this.quizBatch.ended) {
-                // enable automatic websocket reconnect
-                this.websocketService.enableReconnect();
-
                 // apply randomized order where necessary
                 this.quizService.randomizeOrder(this.quizExercise.quizQuestions, this.quizExercise.randomizeQuestionOrder);
             }
@@ -1046,5 +1042,43 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 });
             },
         });
+    }
+
+    /**
+     * Checks whether the current quiz submission contains any user-provided answers.
+     *
+     * This method inspects all supported answer types (multiple choice,
+     * drag-and-drop, and short answer) and returns `true` as soon as at least
+     * one answer entry is present.
+     *
+     * @returns `true` if at least one answer exists in the current submission;
+     *          `false` otherwise.
+     */
+    hasAnyAnswer(): boolean {
+        return (
+            Array.from(this.selectedAnswerOptions.values()).some((v) => v?.length) ||
+            Array.from(this.dragAndDropMappings.values()).some((v) => v?.length) ||
+            Array.from(this.shortAnswerSubmittedTexts.values()).some((v) => v?.length)
+        );
+    }
+
+    /**
+     * Indicates whether the submission should be treated as "effectively submitted"
+     * for UI purposes, even if it has not been finalized on the server yet.
+     *
+     * This is the case if either:
+     * <ul>
+     *   <li>the submission has already been marked as submitted by the server, or</li>
+     *   <li>the quiz working time has expired and the submission shows evidence of user interaction
+     *       (e.g. at least one answer was given, or the submission has already been saved or created)</li>
+     * </ul>
+     *
+     * @returns `true` if the submission should be considered submitted in the UI;
+     *          `false` otherwise.
+     */
+
+    get shouldTreatAsSubmittedForUi(): boolean {
+        const hasSavedOrAnswered = this.hasAnyAnswer() || !!this.submission?.submissionDate || !!this.submission?.id;
+        return this.submission.submitted || (this.remainingTimeSeconds < 0 && hasSavedOrAnswered);
     }
 }

@@ -318,6 +318,14 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
     @Query("""
             SELECT c
             FROM CourseCompetency c
+                LEFT JOIN c.exerciseLinks el
+            WHERE el.exercise.id = :exerciseId
+            """)
+    List<CourseCompetency> findAllByExerciseId(@Param("exerciseId") long exerciseId);
+
+    @Query("""
+            SELECT c
+            FROM CourseCompetency c
                 LEFT JOIN FETCH c.lectureUnitLinks lul
             WHERE lul.lectureUnit.id = :lectureUnitId
             """)

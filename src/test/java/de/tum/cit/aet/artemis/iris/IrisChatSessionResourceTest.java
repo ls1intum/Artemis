@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
@@ -71,6 +72,11 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
     @BeforeEach
     void initTestCase() throws Exception {
         List<User> users = userUtilService.addUsers(TEST_PREFIX, 3, 1, 0, 1);
+        for (User user : users) {
+            user.setSelectedLLMUsageTimestamp(ZonedDateTime.parse("2025-12-11T00:00:00Z"));
+            user.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
+            userTestRepository.save(user);
+        }
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, 1);
         course = courses.getFirst();
         textExercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now(), ZonedDateTime.of(2040, 9, 9, 12, 12, 0, 0, ZoneId.of("Europe/Berlin")),
@@ -189,5 +195,38 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
 
         IrisChatSessionDTO untitledDto = irisChatSessions.stream().filter(session -> session.entityId() == lecture.getId()).findFirst().orElse(null);
         assertThat(untitledDto.title()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getAllSessionsForCourse_returnsEmptyWhenIrisDisabledForCourse() throws Exception {
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+
+        // Create sessions with messages (which would normally be returned)
+        saveChatSessionWithMessages(IrisChatSessionFactory.createCourseSessionForUserWithMessages(course, user));
+        saveChatSessionWithMessages(IrisChatSessionFactory.createLectureSessionForUserWithMessages(lecture, user));
+
+        // Disable Iris for the course
+        disableIrisFor(course);
+
+        // Should return empty list when Iris is disabled at course level
+        List<IrisChatSessionDTO> irisChatSessions = request.getList("/api/iris/chat-history/" + course.getId() + "/sessions", HttpStatus.OK, IrisChatSessionDTO.class);
+        assertThat(irisChatSessions).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getSessionForSessionId_returns403WhenIrisDisabledForCourse() throws Exception {
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+
+        // Create and save a valid session
+        IrisCourseChatSession courseSession = IrisChatSessionFactory.createCourseChatSessionForUser(course, user);
+        irisSessionRepository.save(courseSession);
+
+        // Disable Iris for the course
+        disableIrisFor(course);
+
+        // Should return 403 Forbidden when Iris is disabled at course level
+        request.get("/api/iris/chat-history/" + course.getId() + "/session/" + courseSession.getId(), HttpStatus.FORBIDDEN, IrisSession.class);
     }
 }

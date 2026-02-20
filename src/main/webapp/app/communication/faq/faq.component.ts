@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { Faq, FaqState } from 'app/communication/shared/entities/faq.model';
+import { Faq, FaqState, UpdateFaqDTO } from 'app/communication/shared/entities/faq.model';
 import { faCancel, faCheck, faEdit, faFileExport, faFilter, faPencilAlt, faPlus, faQuestion, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { debounceTime, map } from 'rxjs/operators';
@@ -14,7 +14,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { PROFILE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
@@ -58,7 +58,6 @@ export class FaqComponent implements OnInit, OnDestroy {
     courseId: number;
     hasCategories = false;
     isAtLeastInstructor = false;
-    faqIngestionEnabled = false;
     irisEnabled = false;
 
     private dialogErrorSource = new Subject<string>();
@@ -111,10 +110,10 @@ export class FaqComponent implements OnInit, OnDestroy {
                 this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
             }
         });
-        this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
-        if (this.irisEnabled) {
-            this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
-                this.faqIngestionEnabled = settings?.irisFaqIngestionSettings?.enabled || false;
+        const irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
+        if (irisEnabled) {
+            this.irisSettingsService.getCourseSettingsWithRateLimit(this.courseId).subscribe((response) => {
+                this.irisEnabled = response?.settings?.enabled || false;
             });
         }
     }
@@ -202,7 +201,7 @@ export class FaqComponent implements OnInit, OnDestroy {
         const previousState = faq.faqState;
         faq.faqState = newState;
         faq.course = this.course;
-        this.faqService.update(courseId, faq).subscribe({
+        this.faqService.update(courseId, UpdateFaqDTO.toUpdateDto(faq)).subscribe({
             next: () => this.alertService.success(successMessageKey, { title: faq.questionTitle }),
             error: (error: HttpErrorResponse) => {
                 this.dialogErrorSource.next(error.message);

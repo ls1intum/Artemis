@@ -4,6 +4,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { Authority } from 'app/shared/constants/authority.constants';
 import { AdminUserService } from 'app/core/user/shared/admin-user.service';
 import { provideHttpClient } from '@angular/common/http';
+import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 
 describe('User Service', () => {
     let service: UserService;
@@ -27,11 +28,11 @@ describe('User Service', () => {
     describe('Service methods', () => {
         it('should return Authorities', () => {
             adminService.authorities().subscribe((_authorities) => {
-                expect(_authorities).toEqual([Authority.USER, Authority.ADMIN]);
+                expect(_authorities).toEqual([Authority.STUDENT, Authority.ADMIN]);
             });
             const req = httpMock.expectOne({ method: 'GET' });
 
-            req.flush([Authority.USER, Authority.ADMIN]);
+            req.flush([Authority.STUDENT, Authority.ADMIN]);
         });
 
         it('should call correct URL to initialize LTI user', () => {
@@ -42,9 +43,9 @@ describe('User Service', () => {
         });
 
         it('should call correct URL to accept external LLM', () => {
-            service.updateExternalLLMUsageConsent(true).subscribe();
+            service.updateLLMSelectionDecision(LLMSelectionDecision.CLOUD_AI).subscribe();
             const req = httpMock.expectOne({ method: 'PUT' });
-            const resourceUrl = 'api/core/users/accept-external-llm-usage';
+            const resourceUrl = 'api/core/users/select-llm-usage';
             expect(req.request.url).toBe(`${resourceUrl}`);
         });
     });

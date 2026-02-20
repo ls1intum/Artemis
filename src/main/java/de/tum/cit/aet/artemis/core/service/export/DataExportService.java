@@ -8,8 +8,7 @@ import java.nio.file.Path;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -144,13 +143,14 @@ public class DataExportService {
      * @param dataExport the data export for which the next request date should be calculated
      * @return the next date when the user can request a data export
      */
-    @NotNull
+    @NonNull
     private ZonedDateTime retrieveNextRequestDate(DataExport dataExport) {
         return dataExport.getCreatedDate().atZone(ZoneId.systemDefault()).plusDays(DAYS_BETWEEN_DATA_EXPORTS);
     }
 
     /**
      * Deletes the given data export and sets the state to DELETED or DOWNLOADED_DELETED depending on whether the export has been downloaded or not.
+     * Also sets the filePath to null so that the UI knows the file is no longer available.
      *
      * @param dataExport the data export to delete
      */
@@ -165,13 +165,14 @@ public class DataExportService {
         else {
             dataExport.setDataExportState(DataExportState.DELETED);
         }
+        dataExport.setFilePath(null);
         dataExportRepository.save(dataExport);
     }
 
     /**
      * Checks if the data export can be downloaded.
      * <p>
-     * The data export can be downloaded if its state is either EMAIL_SENT or DOWNLOADED.
+     * The data export can be downloaded if its state is either EMAIL_SENT, EMAIL_FAILED, or DOWNLOADED.
      *
      * @param dataExport the data export to check
      * @throws AccessForbiddenException if the data export is not in a downloadable state

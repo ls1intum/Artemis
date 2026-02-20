@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ScienceService } from 'app/shared/science/science.service';
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
@@ -15,12 +17,14 @@ import { of } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 describe('TextUnitComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let scienceService: ScienceService;
 
     let component: TextUnitComponent;
     let fixture: ComponentFixture<TextUnitComponent>;
 
-    let openStub: jest.SpyInstance;
+    let openStub: ReturnType<typeof vi.spyOn>;
 
     const textUnit: TextUnit = {
         id: 1,
@@ -50,12 +54,12 @@ describe('TextUnitComponent', () => {
                 created.push(el);
                 return el;
             },
-            addEventListener: jest.fn(), // not used when readyState === 'complete'
+            addEventListener: vi.fn(), // not used when readyState === 'complete'
         };
 
         return {
             document: doc as unknown as Document,
-            focus: jest.fn(),
+            focus: vi.fn(),
             __created: created, // for assertions if needed
         } as unknown as Window;
     }
@@ -76,11 +80,11 @@ describe('TextUnitComponent', () => {
         }).compileComponents();
 
         const competencyService = TestBed.inject(CourseCompetencyService);
-        jest.spyOn(competencyService, 'getCompetencyContributionsForLectureUnit').mockReturnValue(of({} as HttpResponse<CompetencyContributionCardDTO[]>));
+        vi.spyOn(competencyService, 'getCompetencyContributionsForLectureUnit').mockReturnValue(of({} as HttpResponse<CompetencyContributionCardDTO[]>));
 
         scienceService = TestBed.inject(ScienceService);
 
-        openStub = jest.spyOn(window, 'open').mockReturnValue(window);
+        openStub = vi.spyOn(window, 'open').mockReturnValue(window);
 
         fixture = TestBed.createComponent(TextUnitComponent);
         component = fixture.componentInstance;
@@ -90,7 +94,7 @@ describe('TextUnitComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -111,7 +115,7 @@ describe('TextUnitComponent', () => {
 
     it('should display html in a new window on isolated view click', () => {
         const fakeWin = makeStubWindow();
-        openStub = jest.spyOn(window, 'open').mockReturnValue(fakeWin);
+        openStub = vi.spyOn(window, 'open').mockReturnValue(fakeWin);
 
         fixture.detectChanges();
 
@@ -119,8 +123,8 @@ describe('TextUnitComponent', () => {
         isolatedViewButton.nativeElement.click();
 
         // assertions against the stub window (not the real document)
-        expect(openStub).toHaveBeenCalledOnce();
-        expect((fakeWin as any).focus).toHaveBeenCalledOnce();
+        expect(openStub).toHaveBeenCalledWith('', '_blank');
+        expect((fakeWin as any).focus).toHaveBeenCalledTimes(1);
         expect(fakeWin.document.title).toBe(textUnit.name);
         expect(fakeWin.document.body.className).toBe('markdown-body');
         expect(fakeWin.document.body.innerHTML).toBe(exampleHtml);
@@ -133,13 +137,13 @@ describe('TextUnitComponent', () => {
     });
 
     it('should log event on isolated view', () => {
-        const logEventSpy = jest.spyOn(scienceService, 'logEvent');
+        const logEventSpy = vi.spyOn(scienceService, 'logEvent');
         // use a fresh stub window so handleIsolatedView() can run without touching real window
         const fakeWin = makeStubWindow();
-        jest.spyOn(window, 'open').mockReturnValue(fakeWin);
+        vi.spyOn(window, 'open').mockReturnValue(fakeWin);
 
         component.handleIsolatedView();
 
-        expect(logEventSpy).toHaveBeenCalledOnce();
+        expect(logEventSpy).toHaveBeenCalledTimes(1);
     });
 });

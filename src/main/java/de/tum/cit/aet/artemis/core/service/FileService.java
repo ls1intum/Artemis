@@ -12,9 +12,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import jakarta.annotation.Nullable;
-
 import org.apache.commons.io.FileUtils;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -65,7 +64,7 @@ public class FileService implements DisposableBean {
      */
     @CacheEvict(value = "files", key = "#path")
     public void evictCacheForPath(Path path) {
-        log.info("Invalidate files cache for {}", path);
+        log.debug("Invalidate files cache for {}", path);
         // Intentionally blank
     }
 

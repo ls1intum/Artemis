@@ -1,7 +1,7 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { TranslateDirective } from '../../language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
@@ -13,7 +13,7 @@ import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
     imports: [TranslateDirective, NgbTooltip, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class NotReleasedTagComponent {
-    @Input() public exercise: Exercise;
-    @Input() public noMargin = true;
+    exercise = input.required<Exercise>();
+    noMargin = input(true);
     readonly dayjs = dayjs;
 }

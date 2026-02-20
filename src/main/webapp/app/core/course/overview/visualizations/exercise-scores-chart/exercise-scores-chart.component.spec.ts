@@ -1,7 +1,8 @@
+import { Component, NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/shared/service/alert.service';
-import { MockModule, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { ChartNode, ExerciseScoresChartComponent } from 'app/core/course/overview/visualizations/exercise-scores-chart/exercise-scores-chart.component';
 import { of } from 'rxjs';
 import { ActivatedRoute, provideRouter } from '@angular/router';
@@ -9,10 +10,15 @@ import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/core/course/o
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { HttpResponse } from '@angular/common/http';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
+import { provideNoopAnimationsForTests } from 'test/helpers/animations';
+import { LineChartModule } from '@swimlane/ngx-charts';
+
+// Mock the ngx-charts line chart component to avoid SIGSEGV crashes from heavy SVG/d3 rendering in jsdom
+@Component({ selector: 'ngx-charts-line-chart', template: '' })
+class MockLineChartComponent {}
 
 class MockActivatedRoute {
     parent: any;
@@ -38,7 +44,6 @@ describe('ExerciseScoresChartComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(BrowserAnimationsModule)],
             providers: [
                 provideRouter([]),
                 MockProvider(AlertService),
@@ -50,8 +55,13 @@ describe('ExerciseScoresChartComponent', () => {
                     provide: ActivatedRoute,
                     useValue: mockActivatedRoute,
                 },
+                provideNoopAnimationsForTests(),
             ],
         })
+            .overrideComponent(ExerciseScoresChartComponent, {
+                remove: { imports: [LineChartModule] },
+                add: { imports: [MockLineChartComponent], schemas: [NO_ERRORS_SCHEMA] },
+            })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ExerciseScoresChartComponent);

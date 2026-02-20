@@ -181,7 +181,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         this.inputFieldSubscriptions.push(this.updateTemplateFilesField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.programmingExerciseEditCheckoutDirectories?.formValidChanges.subscribe(() => this.calculateFormValid()));
         this.tableEditableFields?.changes.subscribe((fields: QueryList<TableEditableFieldComponent>) => {
-            fields.toArray().forEach((field) => this.inputFieldSubscriptions.push(field.editingInput.valueChanges?.subscribe(() => this.calculateFormValid())));
+            fields.toArray().forEach((field) => this.inputFieldSubscriptions.push(field.editingInput?.valueChanges?.subscribe(() => this.calculateFormValid())));
         });
 
         this.exerciseTitleChannelComponent()
@@ -209,12 +209,12 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         const areCheckoutPathsValid = this.areCheckoutPathsValid();
         this.formValid = Boolean(
             this.exerciseTitleChannelComponent().titleChannelNameComponent().isValid() &&
-                this.getIsShortNameFieldValid() &&
-                isCheckoutSolutionRepositoryValid &&
-                isRecreateBuildPlansValid &&
-                isUpdateTemplateFilesValid &&
-                areAuxiliaryRepositoriesValid &&
-                areCheckoutPathsValid,
+            this.getIsShortNameFieldValid() &&
+            isCheckoutSolutionRepositoryValid &&
+            isRecreateBuildPlansValid &&
+            isUpdateTemplateFilesValid &&
+            areAuxiliaryRepositoriesValid &&
+            areCheckoutPathsValid,
         );
         this.formValidChanges.next(this.formValid);
     }
@@ -222,7 +222,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     areAuxiliaryRepositoriesValid(): boolean {
         const areAuxiliaryRepositoriesValid =
             (every(
-                this.tableEditableFields?.map((field) => field.editingInput.valid),
+                this.tableEditableFields?.map((field) => field.editingInput?.valid),
                 Boolean,
             ) &&
                 !this.programmingExerciseCreationConfig.auxiliaryRepositoryDuplicateDirectories &&
@@ -254,21 +254,21 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     isCheckoutSolutionRepositoryValid(): boolean {
         return Boolean(
             this.checkoutSolutionRepositoryField?.valid ||
-                this.programmingExercise().id ||
-                !this.programmingExercise().programmingLanguage ||
-                !this.programmingExerciseCreationConfig.checkoutSolutionRepositoryAllowed,
+            this.programmingExercise().id ||
+            !this.programmingExercise().programmingLanguage ||
+            !this.programmingExerciseCreationConfig.checkoutSolutionRepositoryAllowed,
         );
     }
 
     areCheckoutPathsValid(): boolean {
         return Boolean(
             !this.programmingExerciseEditCheckoutDirectories ||
-                (this.programmingExerciseEditCheckoutDirectories.formValid &&
-                    this.programmingExerciseEditCheckoutDirectories.areValuesUnique([
-                        this.programmingExercise().buildConfig?.assignmentCheckoutPath,
-                        this.programmingExercise().buildConfig?.testCheckoutPath,
-                        this.programmingExercise().buildConfig?.solutionCheckoutPath,
-                    ])),
+            (this.programmingExerciseEditCheckoutDirectories.formValid &&
+                this.programmingExerciseEditCheckoutDirectories.areValuesUnique([
+                    this.programmingExercise().buildConfig?.assignmentCheckoutPath,
+                    this.programmingExercise().buildConfig?.testCheckoutPath,
+                    this.programmingExercise().buildConfig?.solutionCheckoutPath,
+                ])),
         );
     }
 
@@ -283,19 +283,19 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     onAssigmentRepositoryCheckoutPathChange(event: string) {
         this.programmingExercise().buildConfig!.assignmentCheckoutPath = event;
         // We need to create a new object to trigger the change detection
-        this.programmingExercise().buildConfig = { ...this.programmingExercise().buildConfig };
+        this.programmingExercise().buildConfig = { ...this.programmingExercise().buildConfig! };
     }
 
     onTestRepositoryCheckoutPathChange(event: string) {
         this.programmingExercise().buildConfig!.testCheckoutPath = event;
         // We need to create a new object to trigger the change detection
-        this.programmingExercise().buildConfig = { ...this.programmingExercise().buildConfig };
+        this.programmingExercise().buildConfig = { ...this.programmingExercise().buildConfig! };
     }
 
     onSolutionRepositoryCheckoutPathChange(event: string) {
         this.programmingExercise().buildConfig!.solutionCheckoutPath = event;
         // We need to create a new object to trigger the change detection
-        this.programmingExercise().buildConfig = { ...this.programmingExercise().buildConfig };
+        this.programmingExercise().buildConfig = { ...this.programmingExercise().buildConfig! };
     }
 
     private registerInputFieldsWhenChildComponentsAreReady() {

@@ -1,16 +1,36 @@
+import { Component, input, output } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
-import { StarRatingComponent } from 'app/assessment/manage/rating/star-rating/star-rating.component';
+import { StarRatingChangeEvent, StarRatingComponent } from 'app/assessment/manage/rating/star-rating/star-rating.component';
 import { RatingService } from 'app/assessment/shared/services/rating.service';
 import { MockRatingService } from 'test/helpers/mocks/service/mock-rating.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { of } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { MockComponent } from 'ng-mocks';
+import { MockDirective } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+
+/**
+ * Stub component for StarRatingComponent.
+ * ng-mocks MockComponent cannot properly handle viewChild.required() signals in Angular 21.
+ */
+@Component({
+    selector: 'star-rating',
+    template: '',
+})
+class StarRatingComponentStub {
+    readonly checkedColor = input<string | undefined>(undefined);
+    readonly uncheckedColor = input<string | undefined>(undefined);
+    readonly value = input<number>(0);
+    readonly size = input<string>('24px');
+    readonly readOnly = input<boolean>(false);
+    readonly totalStars = input<number>(5);
+    readonly rate = output<StarRatingChangeEvent>();
+}
 
 describe('RatingComponent', () => {
     let ratingComponent: RatingComponent;
@@ -18,14 +38,17 @@ describe('RatingComponent', () => {
     let ratingService: RatingService;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({
-            declarations: [RatingComponent, MockComponent(StarRatingComponent)],
+        return TestBed.configureTestingModule({
             providers: [
                 { provide: RatingService, useClass: MockRatingService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
+            .overrideComponent(RatingComponent, {
+                remove: { imports: [TranslateDirective, StarRatingComponent] },
+                add: { imports: [MockDirective(TranslateDirective), StarRatingComponentStub] },
+            })
             .compileComponents()
             .then(() => {
                 ratingComponentFixture = TestBed.createComponent(RatingComponent);
@@ -120,7 +143,6 @@ describe('RatingComponent', () => {
             ratingComponent.onRate({
                 oldValue: 0,
                 newValue: 2,
-                starRating: new StarRatingComponent(),
             });
             expect(ratingService.createRating).not.toHaveBeenCalled();
             expect(ratingService.updateRating).not.toHaveBeenCalled();
@@ -130,7 +152,6 @@ describe('RatingComponent', () => {
             ratingComponent.onRate({
                 oldValue: 0,
                 newValue: 2,
-                starRating: new StarRatingComponent(),
             });
             expect(ratingService.createRating).toHaveBeenCalledOnce();
             expect(ratingService.updateRating).not.toHaveBeenCalled();
@@ -142,7 +163,6 @@ describe('RatingComponent', () => {
             ratingComponent.onRate({
                 oldValue: 1,
                 newValue: 2,
-                starRating: new StarRatingComponent(),
             });
             expect(ratingService.updateRating).toHaveBeenCalledOnce();
             expect(ratingService.createRating).not.toHaveBeenCalled();

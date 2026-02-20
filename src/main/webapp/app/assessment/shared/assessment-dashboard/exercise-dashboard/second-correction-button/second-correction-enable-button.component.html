@@ -1,18 +1,18 @@
 <div class="btn-group">
     <!-- Enable second correction with this button -->
-    @if (!secondCorrectionEnabled) {
+    @if (!secondCorrectionEnabled()) {
         <button (click)="triggerSecondCorrectionButton()" class="btn btn-success float-end btn-sm">
             <fa-icon [icon]="faToggleOn" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.exerciseAssessmentDashboard.toggleSecondCorrectionOn' | artemisTranslate }}
-            @if (togglingSecondCorrectionButton) {
+            @if (togglingSecondCorrectionButton()) {
                 <fa-icon [icon]="faSpinner" animation="spin" />
             }
         </button>
     }
     <!-- Disable second correction with this button -->
-    @if (secondCorrectionEnabled) {
+    @if (secondCorrectionEnabled()) {
         <button (click)="triggerSecondCorrectionButton()" class="btn btn-danger float-end btn-sm">
             <fa-icon [icon]="faToggleOff" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.exerciseAssessmentDashboard.toggleSecondCorrectionOff' | artemisTranslate }}
-            @if (togglingSecondCorrectionButton) {
+            @if (togglingSecondCorrectionButton()) {
                 <fa-icon [icon]="faSpinner" animation="spin" />
             }
         </button>

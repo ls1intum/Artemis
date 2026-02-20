@@ -5,11 +5,13 @@ import static de.tum.cit.aet.artemis.core.config.StartupDelayConfig.PROGRAMMING_
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import jakarta.annotation.PostConstruct;
-import jakarta.validation.constraints.NotNull;
 
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -101,7 +103,17 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             }
             SecurityUtils.setAuthorizationObject();
 
-            List<ProgrammingExercise> exercisesToBeScheduled = programmingExerciseRepository.findAllToBeScheduled(ZonedDateTime.now());
+            // Use optimized queries to find exercises to be scheduled without eagerly loading all participations
+            ZonedDateTime now = ZonedDateTime.now();
+            Set<Long> exerciseIdsByDates = programmingExerciseRepository.findAllExerciseIdsToBeScheduledByExerciseDates(now);
+            Set<Long> exerciseIdsWithIndividualDueDates = programmingExerciseRepository.findAllExerciseIdsWithIndividualDueDatesAfter(now);
+
+            // Combine all exercise IDs
+            Set<Long> allExerciseIds = new HashSet<>(exerciseIdsByDates);
+            allExerciseIds.addAll(exerciseIdsWithIndividualDueDates);
+
+            // Load exercises without participations (participations will be loaded on-demand during scheduling)
+            List<ProgrammingExercise> exercisesToBeScheduled = allExerciseIds.isEmpty() ? List.of() : programmingExerciseRepository.findAllByIdIn(allExerciseIds);
             exercisesToBeScheduled.forEach(this::scheduleExercise);
 
             List<ProgrammingExercise> programmingExercisesWithTestsAfterDueDateButNoRebuild = programmingExerciseRepository
@@ -360,7 +372,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         log.debug("Scheduled Exam Programming Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
     }
 
-    @NotNull
+    @NonNull
     private Runnable buildAndTestRunnableForExercise(ProgrammingExercise exercise) {
         return () -> {
             SecurityUtils.setAuthorizationObject();
@@ -390,7 +402,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @param exercise for which the results should be updated.
      * @return a Runnable that will update all results for the given exercise.
      */
-    @NotNull
+    @NonNull
     public Runnable updateStudentScoresRegularDueDate(final ProgrammingExercise exercise) {
         return () -> {
             SecurityUtils.setAuthorizationObject();

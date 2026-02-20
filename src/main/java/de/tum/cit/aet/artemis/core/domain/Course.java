@@ -36,7 +36,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
-import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -120,6 +119,7 @@ public class Course extends DomainObject {
     @Column(name = "info_sharing_config", nullable = false)
     private CourseInformationSharingConfiguration courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING; // default value
 
+    // TODO: move this into a separate entity to avoid it is loaded whenever the course is loaded
     @Column(name = "info_sharing_messaging_code_of_conduct")
     private String courseInformationSharingMessagingCodeOfConduct;
 
@@ -230,10 +230,6 @@ public class Course extends DomainObject {
     @JoinColumn(name = "tutorial_groups_configuration_id")
     @JsonIgnoreProperties("course")
     private TutorialGroupsConfiguration tutorialGroupsConfiguration;
-
-    @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnoreProperties(value = "course", allowSetters = true)
-    private Set<Faq> faqs = new HashSet<>();
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
@@ -1001,18 +997,5 @@ public class Course extends DomainObject {
 
     public void setCourseInformationSharingMessagingCodeOfConduct(String courseInformationSharingMessagingCodeOfConduct) {
         this.courseInformationSharingMessagingCodeOfConduct = courseInformationSharingMessagingCodeOfConduct;
-    }
-
-    public Set<Faq> getFaqs() {
-        return faqs;
-    }
-
-    public void setFaqs(Set<Faq> faqs) {
-        this.faqs = faqs;
-    }
-
-    public void addFaq(Faq faq) {
-        this.faqs.add(faq);
-        faq.setCourse(this);
     }
 }

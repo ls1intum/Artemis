@@ -1,25 +1,26 @@
 package de.tum.cit.aet.artemis.iris.repository;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
 
 /**
@@ -27,7 +28,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
  */
 @Lazy
 @Repository
-@Profile(PROFILE_IRIS)
+@Conditional(IrisEnabled.class)
 public interface IrisCourseChatSessionRepository extends ArtemisJpaRepository<IrisCourseChatSession, Long> {
 
     /**
@@ -88,7 +89,7 @@ public interface IrisCourseChatSessionRepository extends ArtemisJpaRepository<Ir
      * @return A list of chat sessions.
      * @throws EntityNotFoundException if no sessions are found.
      */
-    @NotNull
+    @NonNull
     default List<IrisCourseChatSession> findByExerciseIdAndUserIdElseThrow(long courseId, long userId) throws EntityNotFoundException {
         var result = findByCourseIdAndUserId(courseId, userId);
         if (result.isEmpty()) {
@@ -96,4 +97,36 @@ public interface IrisCourseChatSessionRepository extends ArtemisJpaRepository<Ir
         }
         return result;
     }
+
+    /**
+     * Deletes all chat sessions for a given course.
+     *
+     * @param courseId The ID of the course.
+     */
+    @Modifying
+    @Transactional // ok because of delete
+    void deleteAllByCourseId(long courseId);
+
+    /**
+     * Count the number of chat sessions for a given course.
+     *
+     * @param courseId the id of the course
+     * @return the number of chat sessions in the course
+     */
+    long countByCourseId(long courseId);
+
+    /**
+     * Find all chat sessions with messages for a given course, ordered by creation date.
+     *
+     * @param courseId the id of the course
+     * @return list of chat sessions with their messages
+     */
+    @Query("""
+            SELECT DISTINCT s
+            FROM IrisCourseChatSession s
+            LEFT JOIN FETCH s.messages
+            WHERE s.courseId = :courseId
+            ORDER BY s.creationDate ASC
+            """)
+    List<IrisCourseChatSession> findAllWithMessagesByCourseId(@Param("courseId") long courseId);
 }

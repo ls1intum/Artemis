@@ -1,44 +1,13 @@
 @if (!isLoading()) {
     <div>
-        <p-dialog [(visible)]="showDialog" [modal]="true" [closable]="false" [style]="{ width: '900px', height: 'auto' }" [appendTo]="'body'" [draggable]="false">
-            <ng-template pTemplate="header">
-                <h5 jhiTranslate="artemisApp.quizTraining.theQuizTraining"></h5>
-            </ng-template>
-
-            <div class="training-description mb-3">
-                <p-accordion value="0">
-                    <p-accordion-panel value="0">
-                        <p-accordion-header jhiTranslate="artemisApp.quizTraining.howItWorks.title" />
-                        <p-accordion-content>
-                            <p jhiTranslate="artemisApp.quizTraining.howItWorks.content"></p>
-                        </p-accordion-content>
-                    </p-accordion-panel>
-
-                    <p-accordion-panel value="1">
-                        <p-accordion-header jhiTranslate="artemisApp.quizTraining.leagues.title" />
-                        <p-accordion-content>
-                            <p jhiTranslate="artemisApp.quizTraining.leagues.content"></p>
-                        </p-accordion-content>
-                    </p-accordion-panel>
-
-                    <p-accordion-panel value="2">
-                        <p-accordion-header jhiTranslate="artemisApp.quizTraining.scoring.title" />
-                        <p-accordion-content>
-                            <p jhiTranslate="artemisApp.quizTraining.scoring.content"></p>
-                        </p-accordion-content>
-                    </p-accordion-panel>
-                </p-accordion>
-            </div>
-
-            <div class="leaderboard-toggle mb-3 d-flex align-items-center">
-                <p-toggleswitch [(ngModel)]="showInLeaderboard" />
-                <span class="ms-2" jhiTranslate="artemisApp.quizTraining.showInLeaderboard"></span>
-            </div>
-
-            <ng-template pTemplate="footer">
-                <jhi-button [title]="'artemisApp.quizTraining.save'" (click)="onSaveDialog()" />
-            </ng-template>
-        </p-dialog>
+        <jhi-quiz-training-dialog
+            [(visible)]="showDialog"
+            [(showInLeaderboard)]="showInLeaderboard"
+            [closable]="false"
+            [showLeaderboardSettings]="true"
+            [disableSaveValidation]="true"
+            (save)="onSaveDialog()"
+        />
 
         @if (!isFirstVisit() && isDataLoaded()) {
             <div class="header-section d-flex">
@@ -94,17 +63,14 @@
                         <p-button (click)="showInfoDialog()" severity="secondary">
                             <span jhiTranslate="artemisApp.quizTraining.infoButton"></span>
                         </p-button>
-                        <p-dialog [(visible)]="displayInfoDialog" [modal]="true" [style]="{ width: '600px', height: 'auto' }" appendTo="body">
-                            <ng-template pTemplate="header">
-                                <h5 jhiTranslate="artemisApp.quizTraining.theQuizTraining"></h5>
-                            </ng-template>
-                            <h6 jhiTranslate="artemisApp.quizTraining.howItWorks.title"></h6>
-                            <p jhiTranslate="artemisApp.quizTraining.howItWorks.content"></p>
-                            <h6 jhiTranslate="artemisApp.quizTraining.leagues.title"></h6>
-                            <p jhiTranslate="artemisApp.quizTraining.leagues.content"></p>
-                            <h6 jhiTranslate="artemisApp.quizTraining.scoring.title"></h6>
-                            <p jhiTranslate="artemisApp.quizTraining.scoring.content"></p>
-                        </p-dialog>
+                        <jhi-quiz-training-dialog
+                            [(visible)]="displayInfoDialog"
+                            [(showInLeaderboard)]="showInLeaderboard"
+                            [closable]="true"
+                            [showLeaderboardSettings]="true"
+                            [initialShowInLeaderboard]="initialShowInLeaderboard()"
+                            (save)="onSaveInfoDialog()"
+                        />
                     </div>
                 </div>
                 <div class="leaderboard-section">

@@ -183,12 +183,15 @@ data-exports/
 # Docker
 ######################
 /docker/.env
+/docker/playwright-local-override.yml
 /docker/.docker-data/artemis-data/*
 !/docker/.docker-data/artemis-data/.gitkeep
 /docker/.docker-data/artemis-mysql-data/*
 !/docker/.docker-data/artemis-mysql-data/.gitkeep
 /docker/.docker-data/artemis-postgres-data/*
 !/docker/.docker-data/artemis-postgres-data/.gitkeep
+/docker/.docker-data/weaviate-data/*
+!/docker/.docker-data/weaviate-data/.gitkeep
 
 ######################
 # Playwright
@@ -202,6 +205,12 @@ data-exports/
 #################################
 /src/main/webapp/app/core/environments/environment.*.ts
 /src/main/webapp/i18n/*.json
+
+######################
+# TypeScript output (should go to build/, but gitignore as safeguard)
+######################
+/src/main/webapp/**/*.js
+/src/main/webapp/**/*.js.map
 
 ######################
 # Artemis resources
@@ -227,3 +236,15 @@ data-exports/
 startupBeans.dot
 deferredEagerBeanInstantiationViolations.dot
 /junit.xml
+
+######################
+# Claude Code
+######################
+.claude
+
+
+######################
+# Others
+######################
+/src/test/playwright/monocart-report
+/venv/

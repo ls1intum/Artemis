@@ -7,9 +7,9 @@ import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-additional-feedback',

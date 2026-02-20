@@ -18,11 +18,10 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import jakarta.validation.constraints.NotNull;
-
-import org.eclipse.jgit.lib.ObjectId;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -51,15 +50,20 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.icl.DockerClientTestService;
 import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 
+@Tag("BucketSmall")
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
 @Execution(ExecutionMode.CONCURRENT)
-@ResourceLock("AbstractArtemisBuildAgentTest")
+@ResourceLock("BucketSmall")
 // NOTE: Do not use SPRING_PROFILE_TEST as it will cause the test to fail due to missing beans. This is because SPRING_PROFILE_TEST will cause some
 // test services, which dependencies are not provided since we are not running the full application context, to be created.
-@ActiveProfiles({ PROFILE_TEST_BUILDAGENT, PROFILE_BUILDAGENT, "local" })
+@ActiveProfiles({ PROFILE_BUILDAGENT, PROFILE_TEST_BUILDAGENT })
 @TestPropertySource(properties = { "artemis.continuous-integration.specify-concurrent-builds=true", "artemis.continuous-integration.concurrent-build-size=2",
-        "artemis.continuous-integration.pause-grace-period-seconds=2", "artemis.continuous-integration.pause-after-consecutive-failed-jobs=5" })
+        "artemis.continuous-integration.pause-grace-period-seconds=2", "artemis.continuous-integration.pause-after-consecutive-failed-jobs=5",
+        // Use Local data store for tests to ensure isConnectedToCluster() always returns true
+        "artemis.continuous-integration.data-store=Local",
+        // Build agents should not have Spring AI enabled - override 'local' profile which enables hyperion
+        "artemis.hyperion.enabled=false", "artemis.atlas.enabled=false" })
 public abstract class AbstractArtemisBuildAgentTest {
 
     @Autowired
@@ -104,14 +108,25 @@ public abstract class AbstractArtemisBuildAgentTest {
             return null;
         }).when(startContainerCmd).exec();
 
-        when(buildAgentConfiguration.getDockerClient()).thenReturn(dockerClientMock);
+        doReturn(dockerClientMock).when(buildAgentConfiguration).getDockerClient();
         dockerClient = dockerClientMock;
+
+        // Mark Docker as available for tests. This must be set via spy (doReturn) rather than
+        // setDockerAvailable() because openBuildAgentServices() — called both here and during
+        // resume in integration tests — probes the real Docker daemon which is not available in CI.
+        // Using doReturn ensures the spy always returns true regardless of probe results.
+        doReturn(true).when(buildAgentConfiguration).isDockerAvailable();
+
+        // Ensure build executor is initialized before each test to prevent flaky tests
+        // caused by previous tests calling closeBuildAgentServices() (e.g., during pause/resume).
+        buildAgentConfiguration.openBuildAgentServices();
+
+        // Re-apply the mock Docker client after openBuildAgentServices() creates a new real one
+        doReturn(dockerClientMock).when(buildAgentConfiguration).getDockerClient();
     }
 
     protected void mockBuildJobGitService() {
-        var objectId = mock(ObjectId.class);
-        doReturn("dummy-commit-hash").when(objectId).getName();
-        doReturn(objectId).when(buildJobGitService).getLastCommitHash(any());
+        doReturn("dummy-commit-hash").when(buildJobGitService).getLastCommitHash(any());
 
         var repository = mock(Repository.class);
         doNothing().when(repository).closeBeforeDelete();
@@ -202,8 +217,8 @@ public abstract class AbstractArtemisBuildAgentTest {
         return new BuildJobQueueItem("dummy-id-" + randomString, "dummy-name", null, 1, 1, 1, 0, 0, null, repositoryInfo, jobTimingInfo, buildConfig, null);
     }
 
-    private static @NotNull BuildConfig getBuildConfig() {
-        DockerRunConfig dockerRunConfig = new DockerRunConfig(true, List.of("dummy-env", "dummy-env-value"), 0, 0, 0);
+    private static @NonNull BuildConfig getBuildConfig() {
+        DockerRunConfig dockerRunConfig = new DockerRunConfig(List.of("dummy-env", "dummy-env-value"), "none", 0, 0, 0);
         return new BuildConfig("dummy-build-script", "dummy-docker-image", "dummy-commit-hash", "assignment-commit-hash", "test-commit-hash", "main", ProgrammingLanguage.JAVA,
                 ProjectType.MAVEN_MAVEN, false, false, List.of("dummy-result-path"), 1, "dummy-assignment-checkout-path", "dummy-test-checkout-path",
                 "dummy-solution-checkout-path", dockerRunConfig);

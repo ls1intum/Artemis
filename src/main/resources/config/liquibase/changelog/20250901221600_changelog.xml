@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20250901221600" author="tobias-lippert">
+        <addColumn tableName="result">
+            <column name="exercise_id" type="BIGINT">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Backfill exercise_id using result->submission->participation->exercise relationship -->
+        <sql>
+            UPDATE result r
+            SET exercise_id = (
+                SELECT p.exercise_id
+                FROM submission s
+                         JOIN participation p ON s.participation_id = p.id
+                WHERE s.id = r.submission_id
+            )
+            WHERE r.exercise_id IS NULL;
+        </sql>
+
+        <!-- Clear all entries blocking deletion due to foreign key constraints-->
+        <sql dbms="postgresql" splitStatements="true" endDelimiter=";">
+            UPDATE participant_score ps
+            SET last_result_id = NULL
+                FROM result r
+            WHERE r.id = ps.last_result_id
+              AND r.exercise_id IS NULL;
+
+            UPDATE participant_score ps
+            SET last_rated_result_id = NULL
+                FROM result r
+            WHERE r.id = ps.last_rated_result_id
+              AND r.exercise_id IS NULL;
+
+            DELETE FROM long_feedback_text lft
+                USING feedback f
+            JOIN result r ON r.id = f.result_id
+            WHERE lft.feedback_id = f.id
+              AND r.exercise_id IS NULL;
+
+            DELETE FROM feedback f
+                USING result r
+            WHERE r.id = f.result_id
+              AND r.exercise_id IS NULL;
+
+            DELETE FROM assessment_note a
+                USING result r
+            WHERE r.id = a.result_id
+              AND r.exercise_id IS NULL;
+
+            DELETE FROM result_rating rr
+                USING result r
+            WHERE r.id = rr.result_id
+              AND r.exercise_id IS NULL;
+
+            DELETE FROM complaint c
+                USING result r
+            WHERE r.id = c.result_id
+              AND r.exercise_id IS NULL;
+        </sql>
+
+        <sql dbms="mysql" splitStatements="true" endDelimiter=";">
+            UPDATE participant_score ps
+                JOIN result r ON r.id = ps.last_result_id
+                SET ps.last_result_id = NULL
+            WHERE r.exercise_id IS NULL;
+            UPDATE participant_score ps
+                JOIN result r ON r.id = ps.last_rated_result_id
+                SET ps.last_rated_result_id = NULL
+            WHERE r.exercise_id IS NULL;
+            DELETE lft
+            FROM long_feedback_text lft
+            JOIN feedback f   ON f.id = lft.feedback_id
+            JOIN result r     ON r.id = f.result_id
+            WHERE r.exercise_id IS NULL;
+
+            DELETE f
+            FROM feedback f
+            JOIN result r ON r.id = f.result_id
+            WHERE r.exercise_id IS NULL;
+
+            DELETE a
+            FROM assessment_note a
+            JOIN result r ON r.id = a.result_id
+            WHERE r.exercise_id IS NULL;
+
+            DELETE rr
+            FROM result_rating rr
+            JOIN result r ON r.id = rr.result_id
+            WHERE r.exercise_id IS NULL;
+
+            DELETE c
+            FROM complaint c
+            JOIN result r ON r.id = c.result_id
+            WHERE r.exercise_id IS NULL;
+        </sql>
+
+
+        <!-- Delete results that still have no exercise_id after backfill because the relationship mentioned above is non-existent-->
+        <sql>
+            DELETE FROM result
+            WHERE exercise_id IS NULL;
+        </sql>
+
+        <addNotNullConstraint tableName="result"
+                              columnName="exercise_id"
+                              columnDataType="BIGINT"/>
+
+        <createIndex tableName="result" indexName="idx_result_exercise_id">
+            <column name="exercise_id"/>
+        </createIndex>
+
+        <addForeignKeyConstraint
+                baseTableName="result"
+                baseColumnNames="exercise_id"
+                referencedTableName="exercise"
+                referencedColumnNames="id"
+                constraintName="fk_result_exercise_id"/>
+
+            <rollback>
+                <dropForeignKeyConstraint baseTableName="result"
+                                          constraintName="fk_result_exercise_id"/>
+
+                <dropIndex tableName="result"
+                           indexName="idx_result_exercise_id"/>
+
+                <dropNotNullConstraint tableName="result"
+                                       columnName="exercise_id"
+                                       columnDataType="BIGINT"/>
+
+                <dropColumn tableName="result"
+                            columnName="exercise_id"/>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

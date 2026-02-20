@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.config;
 import java.util.Optional;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +13,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
 import io.sentry.Sentry;
+import io.sentry.SentryOptions;
 import tech.jhipster.config.JHipsterConstants;
 
 @Configuration
@@ -30,6 +32,12 @@ public class SentryConfiguration {
     @Value("${info.testServer}")
     private Optional<Boolean> isTestServer;
 
+    @Value("${sentry.environment}")
+    private Optional<String> environment;
+
+    @Value("${sentry.send-default-pii:false}")
+    private boolean sendDefaultPii;
+
     /**
      * init sentry with the correct package name and Artemis version
      * EventListener cannot be used here, as the bean is lazy
@@ -46,12 +54,59 @@ public class SentryConfiguration {
             final String dsn = sentryDsn.get() + "?stacktrace.app.packages=de.tum.cit.aet.artemis";
             log.info("Sentry DSN: {}", dsn);
 
+            // For more fine-grained control over what we want to sample, we define a custom traces sampler.
+            // By default, it uses getTracesSampleRate() as the sampling rate; tracesSampler overrides tracesSampleRate.
+            // This filters out noise to enable us to focus on the transactions that actually impact Artemis functionality.
+            SentryOptions.TracesSamplerCallback tracesSampler = samplingContext -> {
+                Object customSamplingRequest = samplingContext.getCustomSamplingContext().get("request");
+                double defaultSampleRate = getTracesSampleRate();
+                Boolean parentSampled = samplingContext.getTransactionContext().getParentSampled();
+
+                // Guard against other types of request; we want these to use defaultSampleRate
+                if (!(customSamplingRequest instanceof HttpServletRequest)) {
+                    if (parentSampled != null) {
+                        return parentSampled ? 1.0 : 0.0;
+                    }
+                    return defaultSampleRate;
+                }
+                HttpServletRequest request = (HttpServletRequest) customSamplingRequest;
+                String url = request.getRequestURI();
+                String method = request.getMethod();
+                if ("HEAD".equals(method)) {
+                    // We're not interested in HEAD requests, so we just drop them (113 transactions per minute)
+                    return 0.0;
+                }
+                if (url.equals("/time")) {
+                    // Defensive: /time is normally handled by PublicTimeValve before reaching Spring,
+                    // but we keep this filter in case the valve is removed or bypassed.
+                    return 0.0;
+                }
+                if (url.equals("/api/iris/status")) {
+                    // Iris status is called often enough to warrant downsampling
+                    return 0.001;
+                }
+                if (url.equals("/management/prometheus") || url.equals("/management/info")) {
+                    // Management endpoints are not that important for Artemis to function, so we don't sample that often.
+                    // Since it's semi-common, we sample less often, but more often than for time
+                    return 0.001;
+                }
+
+                // If the transactions isn't filtered above and has a parent transaction, we inherit the parent sampling decision.
+                if (parentSampled != null) {
+                    return parentSampled ? 1.0 : 0.0;
+                }
+
+                // If the transaction did not have a parent, default to tracesSampleRate
+                return defaultSampleRate;
+            };
+
             Sentry.init(options -> {
                 options.setDsn(dsn);
-                options.setSendDefaultPii(true);
+                options.setSendDefaultPii(sendDefaultPii);
                 options.setEnvironment(getEnvironment());
                 options.setRelease(artemisVersion);
-                options.setTracesSampleRate(getTracesSampleRate());
+                options.setTracesSampleRate(getTracesSampleRate()); // configured as a fallback
+                options.setTracesSampler(tracesSampler);
             });
         }
         catch (Exception ex) {
@@ -61,6 +116,9 @@ public class SentryConfiguration {
     }
 
     private String getEnvironment() {
+        if (environment.isPresent() && !environment.get().isBlank()) {
+            return environment.get().trim().toLowerCase();
+        }
         if (isTestServer.isPresent()) {
             if (isTestServer.get()) {
                 return "test";
@@ -77,12 +135,18 @@ public class SentryConfiguration {
     /**
      * Get the traces sample rate based on the environment.
      *
-     * @return 0% for local, 100% for test, 20% for production environments
+     * @return 0% for local, 100% for test and staging, 5% for production environments
      */
     private double getTracesSampleRate() {
-        return switch (getEnvironment()) {
-            case "test" -> 1.0;
-            case "prod" -> 0.2;
+        String env = getEnvironment();
+        // All test/staging environments get 1.0 sample rate
+        if (env.contains("test") || env.contains("staging")) {
+            return 1.0;
+        }
+
+        // Only "prod" get 0.05, all others (like local) are disabled
+        return switch (env) {
+            case "prod" -> 0.05;
             default -> 0.0;
         };
     }

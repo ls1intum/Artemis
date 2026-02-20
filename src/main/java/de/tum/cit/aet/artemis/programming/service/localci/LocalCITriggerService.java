@@ -5,10 +5,10 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 import org.hibernate.Hibernate;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -49,6 +49,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseBuildConfig
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 /**
  * Service for triggering builds on the local CI system.
@@ -183,18 +184,25 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         String testCommitHash;
 
         if (triggeredByPushTo == null || triggeredByPushTo.equals(RepositoryType.AUXILIARY)) {
-            assignmentCommitHash = gitService.getLastCommitHash(participation.getVcsRepositoryUri()).getName();
-            testCommitHash = gitService.getLastCommitHash(participation.getProgrammingExercise().getVcsTestRepositoryUri()).getName();
+            assignmentCommitHash = getCommitHashOrNull(participation.getVcsRepositoryUri(), "assignment repository");
+            testCommitHash = getCommitHashOrNull(participation.getProgrammingExercise().getVcsTestRepositoryUri(), "test repository");
         }
         else if (triggeredByPushTo.equals(RepositoryType.TESTS)) {
-            assignmentCommitHash = gitService.getLastCommitHash(participation.getVcsRepositoryUri()).getName();
-            commitHashToBuild = Objects.requireNonNullElseGet(commitHashToBuild,
-                    () -> gitService.getLastCommitHash(participation.getProgrammingExercise().getVcsTestRepositoryUri()).getName());
+            assignmentCommitHash = getCommitHashOrNull(participation.getVcsRepositoryUri(), "assignment repository");
+            if (commitHashToBuild == null) {
+                commitHashToBuild = getCommitHashOrNull(participation.getProgrammingExercise().getVcsTestRepositoryUri(), "test repository");
+            }
             testCommitHash = commitHashToBuild;
         }
         else {
             assignmentCommitHash = commitHashToBuild;
-            testCommitHash = gitService.getLastCommitHash(participation.getProgrammingExercise().getVcsTestRepositoryUri()).getName();
+            testCommitHash = getCommitHashOrNull(participation.getProgrammingExercise().getVcsTestRepositoryUri(), "test repository");
+        }
+
+        // If we couldn't retrieve commit hashes, skip the build - there's nothing to build yet
+        if (assignmentCommitHash == null || testCommitHash == null) {
+            log.info("Skipping build for participation {} - commit hashes not available yet", participation.getId());
+            return;
         }
 
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
@@ -324,6 +332,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         }
         catch (NullPointerException e) {
             log.warn("Could not retrieve windfile for programming exercise {}. Using default windfile instead.", programmingExercise.getId());
+            programmingExercise.setBuildConfig(buildConfig); // getDefaultWindfileFor could fail to lazy load build config
             windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);
             dockerImage = programmingLanguageConfiguration.getImage(programmingExercise.getProgrammingLanguage(), Optional.ofNullable(programmingExercise.getProjectType()));
         }
@@ -333,7 +342,6 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         List<String> resultPaths = getTestResultPaths(windfile);
         resultPaths = buildScriptProviderService.replaceResultPathsPlaceholders(resultPaths, buildConfig);
 
-        // Todo: If build agent does not have access to filesystem, we need to send the build script to the build agent and execute it there.
         programmingExercise.setBuildConfig(buildConfig);
         String buildScript = localCIBuildConfigurationService.createBuildScript(programmingExercise);
 
@@ -394,5 +402,22 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             return priority + TESTCOURSE_PRIORITY_PENALTY;
         }
         return priority;
+    }
+
+    /**
+     * Gets the commit hash from the repository or returns null if it cannot be retrieved.
+     *
+     * @param repositoryUri   the URI of the repository
+     * @param repositoryLabel a human-readable label for the repository (used in log messages)
+     * @return the commit hash as a string, or null if not available
+     */
+    @Nullable
+    private String getCommitHashOrNull(LocalVCRepositoryUri repositoryUri, String repositoryLabel) {
+        var commitHash = gitService.getLastCommitHash(repositoryUri);
+        if (commitHash == null) {
+            log.warn("Could not retrieve commit hash for {} - the repository may not have any commits yet", repositoryLabel);
+            return null;
+        }
+        return commitHash;
     }
 }

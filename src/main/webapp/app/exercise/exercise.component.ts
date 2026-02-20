@@ -9,7 +9,7 @@ import { ExerciseFilter } from 'app/exercise/shared/entities/exercise/exercise-f
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 interface DeletionServiceInterface {
-    delete: (id: number) => Observable<HttpResponse<any>>;
+    delete: (id: number) => Observable<HttpResponse<void>>;
 }
 
 @Component({
@@ -45,9 +45,9 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
      */
     ngOnInit(): void {
         this.showHeading = this.embedded;
+        this.filter = new ExerciseFilter();
         this.load();
         this.registerChangeInExercises();
-        this.filter = new ExerciseFilter();
     }
 
     /**

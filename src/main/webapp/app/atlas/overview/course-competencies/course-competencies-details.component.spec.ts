@@ -1,4 +1,5 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseCompetenciesDetailsComponent } from 'app/atlas/overview/course-competencies/course-competencies-details.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
@@ -37,15 +38,17 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { FireworksComponent } from 'app/atlas/overview/fireworks/fireworks.component';
 import { ScienceService } from 'app/shared/science/science.service';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CourseCompetenciesDetails', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<CourseCompetenciesDetailsComponent>;
     let component: CourseCompetenciesDetailsComponent;
 
     let courseCompetencyService: CourseCompetencyService;
 
-    let setCompletionSpy: jest.SpyInstance;
-    let getProgressSpy: jest.SpyInstance;
+    let setCompletionSpy: ReturnType<typeof vi.spyOn>;
+    let getProgressSpy: ReturnType<typeof vi.spyOn>;
 
     const parentParams = { courseId: 1 };
     const parentRoute = { parent: { params: of(parentParams) } } as any as ActivatedRoute;
@@ -54,8 +57,9 @@ describe('CourseCompetenciesDetails', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(NgbTooltipModule), FaIconComponent],
-            declarations: [
+            imports: [
+                MockModule(NgbTooltipModule),
+                FaIconComponent,
                 CourseCompetenciesDetailsComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(MockHasAnyAuthorityDirective),
@@ -87,6 +91,10 @@ describe('CourseCompetenciesDetails', () => {
                 MockProvider(ScienceService),
             ],
         })
+            .overrideComponent(CourseCompetenciesDetailsComponent, {
+                remove: { imports: [ArtemisTimeAgoPipe] },
+                add: { imports: [MockPipe(ArtemisTimeAgoPipe)] },
+            })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(CourseCompetenciesDetailsComponent);
@@ -94,14 +102,14 @@ describe('CourseCompetenciesDetails', () => {
                 courseCompetencyService = TestBed.inject(CourseCompetencyService);
                 const lectureUnitService = TestBed.inject(LectureUnitService);
                 const featureToggleService = TestBed.inject(FeatureToggleService);
-                jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
-                setCompletionSpy = jest.spyOn(lectureUnitService, 'setCompletion');
-                getProgressSpy = jest.spyOn(courseCompetencyService, 'getProgress');
+                vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
+                setCompletionSpy = vi.spyOn(lectureUnitService, 'setCompletion');
+                getProgressSpy = vi.spyOn(courseCompetencyService, 'getProgress');
             });
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -115,7 +123,7 @@ describe('CourseCompetenciesDetails', () => {
             lectureUnitLinks: [new CompetencyLectureUnitLink(this, new TextUnit(), 1)],
             exerciseLinks: [new CompetencyExerciseLink(this, { id: 5 } as TextExercise, 1)],
         } as Competency;
-        const findByIdSpy = jest.spyOn(courseCompetencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
+        const findByIdSpy = vi.spyOn(courseCompetencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
 
         fixture.detectChanges();
 
@@ -134,7 +142,7 @@ describe('CourseCompetenciesDetails', () => {
             exerciseLinks: [new CompetencyExerciseLink(this, { id: 5 } as ModelingExercise, 1)],
         } as Competency;
 
-        const findByIdSpy = jest.spyOn(courseCompetencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
+        const findByIdSpy = vi.spyOn(courseCompetencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
 
         fixture.detectChanges();
 
@@ -145,7 +153,7 @@ describe('CourseCompetenciesDetails', () => {
         expect(exerciseUnit).not.toBeNull();
     });
 
-    it('should show fireworks when competency was mastered', fakeAsync(() => {
+    it('should show fireworks when competency was mastered', () => {
         const competency = {
             id: 1,
             userProgress: [
@@ -155,29 +163,34 @@ describe('CourseCompetenciesDetails', () => {
                 } as CompetencyProgress,
             ],
         } as Competency;
-        const findByIdSpy = jest.spyOn(courseCompetencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
+        const findByIdSpy = vi.spyOn(courseCompetencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
 
         fixture.detectChanges();
         expect(findByIdSpy).toHaveBeenCalledOnce();
-        expect(component.isMastered).toBeTrue();
+        expect(component.isMastered).toBeTruthy();
 
-        component.showFireworksIfMastered();
+        vi.useFakeTimers();
+        try {
+            component.showFireworksIfMastered();
 
-        tick(1000);
-        expect(component.showFireworks).toBeTrue();
+            vi.advanceTimersByTime(1000);
+            expect(component.showFireworks).toBeTruthy();
 
-        tick(5000);
-        expect(component.showFireworks).toBeFalse();
-    }));
+            vi.advanceTimersByTime(5000);
+            expect(component.showFireworks).toBeFalsy();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
 
     it('should detect if due date is passed', () => {
         component.competency = { softDueDate: dayjs().add(1, 'days') } as Competency;
-        fixture.detectChanges();
-        expect(component.softDueDatePassed).toBeFalse();
+        fixture.changeDetectorRef.detectChanges();
+        expect(component.softDueDatePassed).toBeFalsy();
 
         component.competency = { softDueDate: dayjs().subtract(1, 'days') } as Competency;
-        fixture.detectChanges();
-        expect(component.softDueDatePassed).toBeTrue();
+        fixture.changeDetectorRef.detectChanges();
+        expect(component.softDueDatePassed).toBeTruthy();
     });
 
     it.each([
@@ -185,7 +198,7 @@ describe('CourseCompetenciesDetails', () => {
         { competency: { softDueDate: dayjs().subtract(1, 'days') } as Competency, expectedBadge: 'danger' },
     ])('should have [ngClass] resolve to correct date badge', ({ competency, expectedBadge }) => {
         component.competency = competency;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const badge = fixture.debugElement.query(By.css('#date-badge')).nativeElement;
         expect(badge.classList).toContain('bg-' + expectedBadge);
     });

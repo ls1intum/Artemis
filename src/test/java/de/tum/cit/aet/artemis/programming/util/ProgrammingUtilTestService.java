@@ -1,12 +1,5 @@
 package de.tum.cit.aet.artemis.programming.util;
 
-import static de.tum.cit.aet.artemis.programming.service.AbstractGitService.linkRepositoryForExistingGit;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.File;
@@ -29,7 +22,6 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
@@ -81,7 +73,7 @@ public class ProgrammingUtilTestService {
     private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
-    private Path localVCRepoPath;
+    private Path localVCBasePath;
 
     /**
      * Sets up the template repository of a programming exercise with specified files
@@ -91,7 +83,7 @@ public class ProgrammingUtilTestService {
      * @param templateRepo The repository
      */
     public void setupTemplate(Map<String, String> files, ProgrammingExercise exercise, LocalRepository templateRepo) throws Exception {
-        templateRepo.configureRepos(localVCRepoPath, "templateLocalRepo", "templateOriginRepo");
+        templateRepo.configureRepos(localVCBasePath, "templateLocalRepo", "templateOriginRepo");
 
         for (Map.Entry<String, String> entry : files.entrySet()) {
             String fileName = entry.getKey();
@@ -104,18 +96,8 @@ public class ProgrammingUtilTestService {
             FileUtils.write(solutionFile, content, Charset.defaultCharset());
         }
 
-        var templateRepoUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(templateRepo.workingCopyGitRepoFile, localVCRepoPath));
+        var templateRepoUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(templateRepo.workingCopyGitRepoFile, localVCBasePath));
         exercise.setTemplateRepositoryUri(templateRepoUri.toString());
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(eq(templateRepoUri), eq(true), anyBoolean());
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(eq(templateRepoUri), eq(false), anyBoolean());
-
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(eq(templateRepoUri), eq(true), anyString(), anyBoolean());
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(eq(templateRepoUri), eq(false), anyString(), anyBoolean());
-        doNothing().when(gitService).pullIgnoreConflicts(any(Repository.class));
         exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         var savedExercise = exerciseRepository.save(exercise);
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(savedExercise);
@@ -137,7 +119,7 @@ public class ProgrammingUtilTestService {
      * @param solutionRepo The repository
      */
     public void setupSolution(Map<String, String> files, ProgrammingExercise exercise, LocalRepository solutionRepo) throws Exception {
-        solutionRepo.configureRepos(localVCRepoPath, "solutionLocalRepo", "solutionOriginRepo");
+        solutionRepo.configureRepos(localVCBasePath, "solutionLocalRepo", "solutionOriginRepo");
 
         for (Map.Entry<String, String> entry : files.entrySet()) {
             String fileName = entry.getKey();
@@ -150,18 +132,8 @@ public class ProgrammingUtilTestService {
             FileUtils.write(solutionFile, content, Charset.defaultCharset());
         }
 
-        var solutionRepoUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(solutionRepo.workingCopyGitRepoFile, localVCRepoPath));
+        var solutionRepoUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(solutionRepo.workingCopyGitRepoFile, localVCBasePath));
         exercise.setSolutionRepositoryUri(solutionRepoUri.toString());
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(solutionRepoUri, true, true);
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(solutionRepoUri, false, true);
-
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(eq(solutionRepoUri), eq(true), anyString(), anyBoolean());
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(eq(solutionRepoUri), eq(false), anyString(), anyBoolean());
-
         var buildConfig = programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig());
         exercise.setBuildConfig(buildConfig);
         var savedExercise = exerciseRepository.save(exercise);
@@ -192,22 +164,11 @@ public class ProgrammingUtilTestService {
         var commits = participationRepo.workingCopyGitRepo.log().call();
         var commitsList = StreamSupport.stream(commits.spliterator(), false).toList();
 
-        var participationRepoUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(participationRepo.workingCopyGitRepoFile, localVCRepoPath));
+        var participationRepoUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(participationRepo.workingCopyGitRepoFile, localVCBasePath));
 
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(participationRepoUri, true, true);
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(participationRepoUri, false, true);
-
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(eq(participationRepoUri), eq(true), anyString(), anyBoolean());
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(eq(participationRepoUri), eq(false), anyString(), anyBoolean());
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(any(),
-                anyBoolean(), anyBoolean());
-
+        // GitService is autowired and uses real LocalVC-backed repositories in tests.
+        // There's no need to stub getOrCheckoutRepository here — use the real implementation.
         var participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(exercise, login, participationRepo.workingCopyGitRepoFile.toURI());
-        doReturn(linkRepositoryForExistingGit(participationRepo.remoteBareGitRepoFile.toPath(), null, "main", true, true)).when(gitService).getBareRepository(any(), anyBoolean());
         var submission = ParticipationFactory.generateProgrammingSubmission(true, commitsList.getFirst().getId().getName(), SubmissionType.MANUAL);
         participation = programmingExerciseStudentParticipationRepository
                 .findWithSubmissionsByExerciseIdAndParticipationIds(exercise.getId(), Collections.singletonList(participation.getId())).getFirst();

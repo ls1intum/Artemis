@@ -18,11 +18,11 @@ import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import dayjs from 'dayjs/esm';
 import { of } from 'rxjs';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideNoopAnimationsForTests } from 'test/helpers/animations';
 
 describe('CourseStatisticsComponent', () => {
     let comp: CourseStatisticsComponent;
@@ -64,7 +64,7 @@ describe('CourseStatisticsComponent', () => {
             ],
             diagramType: 'ClassDiagram',
             numberOfSubmissions: new DueDateStat(),
-            totalNumberOfAssessments: new DueDateStat(),
+            totalNumberOfAssessments: 0,
             numberOfComplaints: 0,
             presentationScoreEnabled: true,
         },
@@ -93,7 +93,7 @@ describe('CourseStatisticsComponent', () => {
             ],
             diagramType: 'ClassDiagram',
             numberOfSubmissions: new DueDateStat(),
-            totalNumberOfAssessments: new DueDateStat(),
+            totalNumberOfAssessments: 0,
             numberOfComplaints: 0,
         },
         {
@@ -106,7 +106,7 @@ describe('CourseStatisticsComponent', () => {
             studentParticipations: [],
             diagramType: 'ClassDiagram',
             numberOfSubmissions: new DueDateStat(),
-            totalNumberOfAssessments: new DueDateStat(),
+            totalNumberOfAssessments: 0,
             numberOfComplaints: 0,
         },
         {
@@ -145,7 +145,7 @@ describe('CourseStatisticsComponent', () => {
             ],
             diagramType: 'ClassDiagram',
             numberOfSubmissions: new DueDateStat(),
-            totalNumberOfAssessments: new DueDateStat(),
+            totalNumberOfAssessments: 0,
             numberOfComplaints: 0,
         },
         {
@@ -184,7 +184,7 @@ describe('CourseStatisticsComponent', () => {
             ],
             diagramType: 'ClassDiagram',
             numberOfSubmissions: new DueDateStat(),
-            totalNumberOfAssessments: new DueDateStat(),
+            totalNumberOfAssessments: 0,
             numberOfComplaints: 0,
         },
     ] as ModelingExercise[];
@@ -229,7 +229,7 @@ describe('CourseStatisticsComponent', () => {
             },
         ],
         numberOfSubmissions: new DueDateStat(),
-        totalNumberOfAssessments: new DueDateStat(),
+        totalNumberOfAssessments: 0,
         numberOfComplaints: 0,
     } as FileUploadExercise;
 
@@ -271,7 +271,7 @@ describe('CourseStatisticsComponent', () => {
             },
         ],
         numberOfSubmissions: new DueDateStat(),
-        totalNumberOfAssessments: new DueDateStat(),
+        totalNumberOfAssessments: 0,
         numberOfComplaints: 0,
     } as QuizExercise;
 
@@ -315,7 +315,7 @@ describe('CourseStatisticsComponent', () => {
             },
         ],
         numberOfSubmissions: new DueDateStat(),
-        totalNumberOfAssessments: new DueDateStat(),
+        totalNumberOfAssessments: 0,
         numberOfComplaints: 0,
     } as ProgrammingExercise;
 
@@ -334,7 +334,6 @@ describe('CourseStatisticsComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [NoopAnimationsModule],
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -343,6 +342,7 @@ describe('CourseStatisticsComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                provideNoopAnimationsForTests(),
             ],
         })
             .compileComponents()
@@ -372,7 +372,7 @@ describe('CourseStatisticsComponent', () => {
         comp.ngOnInit();
         // Include all exercises
         comp.toggleNotIncludedInScoreExercises();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(comp.ngxExerciseGroups.size).toBe(4);
         const modelingWrapper = fixture.debugElement.query(By.css('#modeling-wrapper'));
         expect(modelingWrapper.query(By.css('h4')).nativeElement.textContent).toBe('artemisApp.courseOverview.statistics.exerciseCount');
@@ -434,7 +434,7 @@ describe('CourseStatisticsComponent', () => {
         jest.spyOn(scoresStorageService, 'getStoredScoresPerExerciseType').mockReturnValue(mockScoresPerExerciseType);
         fixture.detectChanges();
         comp.ngOnInit();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(comp.ngxExerciseGroups.size).toBe(1);
         const exercise: NgxExercise = comp.ngxExerciseGroups.get(ExerciseType.MODELING)![0];
         expect(exercise.absoluteScore).toBe(20);
@@ -454,7 +454,7 @@ describe('CourseStatisticsComponent', () => {
         comp.courseId = course.id!;
         fixture.detectChanges();
         comp.ngOnInit();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // Should not have found a course yet.
         expect(comp.course).toBeUndefined();

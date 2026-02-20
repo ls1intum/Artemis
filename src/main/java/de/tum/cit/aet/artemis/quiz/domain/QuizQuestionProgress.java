@@ -29,6 +29,9 @@ public class QuizQuestionProgress extends DomainObject {
     @Column(name = "last_modified")
     private ZonedDateTime lastModified;
 
+    @Column(name = "due_date")
+    private ZonedDateTime dueDate;
+
     public long getUserId() {
         return userId;
     }
@@ -69,4 +72,11 @@ public class QuizQuestionProgress extends DomainObject {
         this.lastModified = lastAnsweredAt;
     }
 
+    public ZonedDateTime getDueDate() {
+        return dueDate;
+    }
+
+    public void setDueDate(ZonedDateTime dueDate) {
+        this.dueDate = dueDate;
+    }
 }

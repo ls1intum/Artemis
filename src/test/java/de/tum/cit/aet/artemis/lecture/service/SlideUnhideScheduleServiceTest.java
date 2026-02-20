@@ -50,11 +50,13 @@ class SlideUnhideScheduleServiceTest extends AbstractSpringIntegrationIndependen
         // Initialize mocks
         MockitoAnnotations.openMocks(this);
 
+        var lecture = lectureUtilService.createCourseWithLecture(true);
+
         // Create the service with SlideTestRepository instead of mocked SlideRepository
         slideUnhideScheduleService = new SlideUnhideScheduleService(slideRepository, slideUnhideExecutionService, scheduleService);
 
         // AttachmentVideoUnit with hidden slides
-        AttachmentVideoUnit testAttachmentVideoUnit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(5, true);
+        AttachmentVideoUnit testAttachmentVideoUnit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture, 5, true);
         testSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
 
         // Make slides have different hidden timestamps

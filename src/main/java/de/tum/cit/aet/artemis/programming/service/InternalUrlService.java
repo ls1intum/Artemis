@@ -6,8 +6,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Optional;
 
-import jakarta.annotation.Nullable;
-
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
