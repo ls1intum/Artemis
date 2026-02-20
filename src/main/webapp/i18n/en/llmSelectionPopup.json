@@ -9,6 +9,7 @@
             "noAI": "No AI",
             "recommended": "Recommended",
             "experimental": "Experimental",
+            "currentSelection": "Current",
             "descriptionCloud": "Fast, high-quality AI powered by cutting-edge cloud models",
             "descriptionLocal": "Ideal for highest privacy, but with some limitations",
             "descriptionNo": "You can still use Artemis, but without AI assistance",
