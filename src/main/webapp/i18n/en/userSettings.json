@@ -22,10 +22,8 @@
                 "addNewLanguage": "Add new language specific preferences"
             },
             "LLMUsageSettingsPage": {
-                "externalAccepted": "You have accepted the usage of external LLMs on {{acceptedDate}}.",
-                "externalDeclined": "You have not accepted the usage of external LLMs.",
-                "internalAccepted": "You have accepted the usage of internal LLMs on {{acceptedDate}}.",
-                "internalDeclined": "You have not accepted the usage of internal LLMs.",
+                "cloudAccepted": "You have selected Cloud AI on {{acceptedDate}}.",
+                "onPremiseAccepted": "You have selected On-premise AI on {{acceptedDate}}.",
                 "AIDeclined": "You have explicitly declined AI usage on {{acceptedDate}}.",
                 "noAISelected": "You haven't made a decision on the usage of LLMs.",
                 "chooseAI": "Change Selection"
