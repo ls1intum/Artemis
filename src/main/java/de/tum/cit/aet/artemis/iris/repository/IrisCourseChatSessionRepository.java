@@ -144,6 +144,7 @@ public interface IrisCourseChatSessionRepository extends ArtemisJpaRepository<Ir
      * @return list of chat sessions with their messages, sorted by creation date ascending
      */
     default List<IrisCourseChatSession> findAllWithMessagesByCourseIdSortedByCreationDate(long courseId) {
-        return findAllWithMessagesByCourseId(courseId).stream().sorted(Comparator.comparing(IrisCourseChatSession::getCreationDate)).toList();
+        return findAllWithMessagesByCourseId(courseId).stream()
+                .sorted(Comparator.comparing(IrisCourseChatSession::getCreationDate, Comparator.nullsLast(Comparator.naturalOrder()))).toList();
     }
 }
