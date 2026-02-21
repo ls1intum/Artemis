@@ -263,29 +263,17 @@
                             </div>
                         }
                     </div>
-                }
-            </div>
-        }
-        @if (!messages()?.length && !isEmbeddedChat()) {
-            <div class="empty-chat-message">
-                @if (showIconAndHelpOffer()) {
-                    <jhi-iris-logo [size]="IrisLogoSize.SMALL" />
-                    <h3 jhiTranslate="artemisApp.iris.chat.helpOffer"></h3>
-                }
-                @if (showContextSelection()) {
-                    <jhi-context-selection [courseId]="courseId()" (showIconAndHelpOffer)="showIconAndHelpOffer.set($event)" />
-                }
-            </div>
-        }
-        <jhi-chat-status-bar [stages]="stages()" />
-        <div class="scroll-to-bottom" [hidden]="isScrolledToBottom()" (click)="scrollToBottom('smooth')" #scrollArrow>
-            <fa-icon [icon]="faArrowDown" />
                 </div>
             }
             @if (!messages()?.length && !isEmbeddedChat()) {
                 <div class="empty-chat-message">
-                    <jhi-iris-logo [size]="IrisLogoSize.SMALL" />
-                    <h3 jhiTranslate="artemisApp.iris.chat.helpOffer"></h3>
+                    @if (showIconAndHelpOffer()) {
+                        <jhi-iris-logo [size]="IrisLogoSize.SMALL" />
+                        <h3 jhiTranslate="artemisApp.iris.chat.helpOffer"></h3>
+                    }
+                    @if (showContextSelection()) {
+                        <jhi-context-selection [courseId]="courseId()" (showIconAndHelpOffer)="showIconAndHelpOffer.set($event)" />
+                    }
                 </div>
             }
             <jhi-chat-status-bar [stages]="stages()" />
