@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
@@ -135,9 +136,16 @@ public class HyperionProblemStatementResource {
      */
     @EnforceAtLeastEditorInCourse
     @PostMapping("courses/{courseId}/checklist-analysis")
-    public ResponseEntity<ChecklistAnalysisResponseDTO> analyzeChecklist(@PathVariable long courseId, @RequestBody ChecklistAnalysisRequestDTO request) {
+    public ResponseEntity<ChecklistAnalysisResponseDTO> analyzeChecklist(@PathVariable long courseId, @Valid @RequestBody ChecklistAnalysisRequestDTO request) {
         log.debug("REST request to Hyperion checklist analysis for course [{}]", courseId);
         courseRepository.findByIdElseThrow(courseId);
+        if (request.exerciseId() != null) {
+            ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(request.exerciseId());
+            Course exerciseCourse = exercise.getCourseViaExerciseGroupOrCourseMember();
+            if (exerciseCourse == null || !exerciseCourse.getId().equals(courseId)) {
+                throw new BadRequestAlertException("Exercise does not belong to the specified course", "exercise", "exerciseCourseMismatch");
+            }
+        }
         var result = checklistService.analyzeChecklist(request);
         return ResponseEntity.ok(result);
     }

@@ -181,6 +181,10 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
     /**
      * Updates the CompetencySelectionComponent's available list, selection state, and checkbox states
      * so that newly linked or created competencies are immediately visible.
+     *
+     * TODO: This method directly accesses CompetencySelectionComponent internals (competencyLinks,
+     * checkboxStates, writeValue). Ideally, expose a public refresh() method on
+     * CompetencySelectionComponent or use input bindings to trigger the update declaratively.
      */
     private refreshCompetencySelection(competencyLinks: CompetencyExerciseLink[] | CompetencyLearningObjectLink[]): void {
         const selection = this.competencySelectionComponent();

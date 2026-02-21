@@ -818,7 +818,11 @@
                     "vsDeclared": "vs. Angegeben:",
                     "match": "Übereinstimmung:",
                     "tasks": "Aufgaben:",
-                    "tests": "Tests:"
+                    "tests": "Tests:",
+                    "harderThanDeclared": "Schwerer als angegeben",
+                    "easierThanDeclared": "Leichter als angegeben",
+                    "matchesDeclared": "Entspricht der Angabe",
+                    "unknown": "Unbekannt"
                 },
                 "quality": {
                     "title": "Qualitätsbewertung",

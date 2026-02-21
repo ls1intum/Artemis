@@ -58,7 +58,7 @@ public class HyperionChecklistService {
 
     private static final String LF_SPAN_NAME_KEY = "lf.span.name";
 
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
     private final ChatClient chatClient;
 
@@ -71,12 +71,13 @@ public class HyperionChecklistService {
     private final ProgrammingExerciseTaskRepository taskRepository;
 
     public HyperionChecklistService(ChatClient chatClient, HyperionPromptTemplateService templates, ObservationRegistry observationRegistry,
-            Optional<StandardizedCompetencyApi> standardizedCompetencyApi, ProgrammingExerciseTaskRepository taskRepository) {
+            Optional<StandardizedCompetencyApi> standardizedCompetencyApi, ProgrammingExerciseTaskRepository taskRepository, ObjectMapper objectMapper) {
         this.chatClient = chatClient;
         this.templates = templates;
         this.observationRegistry = observationRegistry;
         this.standardizedCompetencyApi = standardizedCompetencyApi;
         this.taskRepository = taskRepository;
+        this.objectMapper = objectMapper;
     }
 
     /**

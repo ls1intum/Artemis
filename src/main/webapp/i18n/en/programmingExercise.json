@@ -818,7 +818,11 @@
                     "vsDeclared": "vs. Declared:",
                     "match": "Match:",
                     "tasks": "Tasks:",
-                    "tests": "Tests:"
+                    "tests": "Tests:",
+                    "harderThanDeclared": "Harder than declared",
+                    "easierThanDeclared": "Easier than declared",
+                    "matchesDeclared": "Matches declared",
+                    "unknown": "Unknown"
                 },
                 "quality": {
                     "title": "Quality Assessment",

@@ -56,7 +56,8 @@ class HyperionChecklistServiceTest {
         when(taskRepository.findByExerciseIdWithTestCases(any())).thenReturn(java.util.Set.of());
 
         var templateService = new HyperionPromptTemplateService();
-        this.hyperionChecklistService = new HyperionChecklistService(chatClient, templateService, observationRegistry, Optional.of(standardizedCompetencyApi), taskRepository);
+        this.hyperionChecklistService = new HyperionChecklistService(chatClient, templateService, observationRegistry, Optional.of(standardizedCompetencyApi), taskRepository,
+                new com.fasterxml.jackson.databind.ObjectMapper());
     }
 
     @Test

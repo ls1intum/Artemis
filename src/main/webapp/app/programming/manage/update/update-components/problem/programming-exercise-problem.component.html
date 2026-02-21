@@ -73,14 +73,16 @@
             }
         </div>
 
-        <jhi-checklist-panel
-            [exercise]="programmingExercise()!"
-            [courseId]="programmingExercise()?.course?.id ?? programmingExercise()?.exerciseGroup?.exam?.course?.id ?? 0"
-            [problemStatement]="programmingExercise()?.problemStatement || ''"
-            (problemStatementChange)="onInstructionChange($event)"
-            (competencyLinksChange)="onCompetencyLinksChange($event)"
-            (difficultyChange)="onDifficultyChange($event)"
-        />
+        @if (hyperionEnabled) {
+            <jhi-checklist-panel
+                [exercise]="programmingExercise()!"
+                [courseId]="programmingExercise()?.course?.id ?? programmingExercise()?.exerciseGroup?.exam?.course?.id ?? 0"
+                [problemStatement]="programmingExercise()?.problemStatement || ''"
+                (problemStatementChange)="onInstructionChange($event)"
+                (competencyLinksChange)="onCompetencyLinksChange($event)"
+                (difficultyChange)="onDifficultyChange($event)"
+            />
+        }
     }
     @if (isEditFieldDisplayedRecord()?.linkedCompetencies && !programmingExerciseCreationConfig().isExamMode) {
         <div class="form-group">

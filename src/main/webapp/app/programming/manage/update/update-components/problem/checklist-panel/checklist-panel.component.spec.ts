@@ -292,7 +292,7 @@ describe('ChecklistPanelComponent', () => {
             expect(component.isLinkingCompetencies()).toBeFalsy();
         });
 
-        it('should create and link new competencies', () => {
+        it('should create and link new competencies', async () => {
             component.analysisResult.set(mockResponseWithCompetencies);
             // Only 'Loops' exists, so 'Recursion' should be created
             vi.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [mockCourseCompetency] })) as any);
@@ -304,6 +304,9 @@ describe('ChecklistPanelComponent', () => {
             const successSpy = vi.spyOn(alertService, 'success');
 
             component.createAndLinkCompetencies();
+
+            // Flush microtasks from Promise.all().then()
+            await new Promise<void>((resolve) => setTimeout(resolve));
 
             expect(competencyService.create).toHaveBeenCalledWith(expect.objectContaining({ title: 'Recursion' }), courseId);
             expect(emitSpy).toHaveBeenCalled();
@@ -327,13 +330,16 @@ describe('ChecklistPanelComponent', () => {
             expect(component.isCreatingCompetencies()).toBeFalsy();
         });
 
-        it('should handle error when creating competencies', () => {
+        it('should handle error when creating competencies', async () => {
             component.analysisResult.set(mockResponseWithCompetencies);
             vi.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [] })) as any);
             vi.spyOn(competencyService, 'create').mockReturnValue(throwError(() => new Error('Failed')) as any);
             const errorSpy = vi.spyOn(alertService, 'error');
 
             component.createAndLinkCompetencies();
+
+            // Flush microtasks from Promise.all().catch()
+            await new Promise<void>((resolve) => setTimeout(resolve));
 
             expect(errorSpy).toHaveBeenCalled();
             expect(component.isCreatingCompetencies()).toBeFalsy();

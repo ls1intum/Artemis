@@ -259,7 +259,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         String body = "{\"problemStatementMarkdown\":\"Problem\", \"declaredDifficulty\":\"EASY\", \"exerciseId\":" + persistedExerciseId + "}";
 
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/checklist-analysis", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.inferredLearningGoals").isArray()).andExpect(jsonPath("$.qualityIssues").isArray());
+                .andExpect(status().isOk()).andExpect(jsonPath("$.inferredCompetencies").isArray()).andExpect(jsonPath("$.qualityIssues").isArray());
     }
 
     @Test
