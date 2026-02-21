@@ -67,7 +67,6 @@
                     [editMode]="!!programmingExercise()?.id"
                     (hasUnsavedChanges)="programmingExerciseCreationConfig().hasUnsavedChanges = $event"
                     (instructionChange)="onInstructionChange($event)"
-                    (exerciseChange)="programmingExerciseChange.emit($event)"
                     [forceRender]="programmingExerciseCreationConfig().rerenderSubject"
                     class="form__editable-instructions"
                 />
