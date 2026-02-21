@@ -659,6 +659,7 @@ describe('MonacoEditorComponent', () => {
             setValue: setValueSpy,
             onDidChangeModelContent: jest.fn(),
             onDidFocusEditorText: jest.fn(),
+            updateOptions: jest.fn(),
             dispose: jest.fn(),
             addCommand: jest.fn(),
         };
