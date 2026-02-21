@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -65,12 +66,12 @@ public class HyperionChecklistService {
 
     private final ObservationRegistry observationRegistry;
 
-    private final StandardizedCompetencyApi standardizedCompetencyApi;
+    private final Optional<StandardizedCompetencyApi> standardizedCompetencyApi;
 
     private final ProgrammingExerciseTaskRepository taskRepository;
 
     public HyperionChecklistService(ChatClient chatClient, HyperionPromptTemplateService templates, ObservationRegistry observationRegistry,
-            StandardizedCompetencyApi standardizedCompetencyApi, ProgrammingExerciseTaskRepository taskRepository) {
+            Optional<StandardizedCompetencyApi> standardizedCompetencyApi, ProgrammingExerciseTaskRepository taskRepository) {
         this.chatClient = chatClient;
         this.templates = templates;
         this.observationRegistry = observationRegistry;
@@ -198,12 +199,16 @@ public class HyperionChecklistService {
                 String taskCount = ctx.getOrDefault("taskCount", "unknown");
                 String testCount = ctx.getOrDefault("testCount", "unknown");
                 yield "Adapt the problem statement difficulty from " + currentDifficulty + " to " + targetDifficulty + ".\n" + "Current structural metrics: " + taskCount
-                        + " tasks, " + testCount + " tests.\n"
-                        + "Reference ranges: EASY (1-6 tasks, 3-15 tests), MEDIUM (4-15 tasks, 8-20 tests), HARD (8-25 tasks, 12-30 tests).\n"
-                        + (reasoning.isEmpty() ? "" : "Context: " + reasoning + "\n")
-                        + "For EASIER: simplify requirements, reduce edge cases, consolidate tasks, add more hints and structure.\n"
-                        + "For HARDER: add complexity, edge cases, split tasks into finer steps, require deeper analysis.\n"
-                        + "Preserve all Artemis task markers and test references.";
+                        + " tasks, " + testCount + " tests.\n" + "Target ranges: EASY (1-6 tasks, 3-15 tests), MEDIUM (4-15 tasks, 8-20 tests), HARD (8-25 tasks, 12-30 tests).\n"
+                        + (reasoning.isEmpty() ? "" : "Context: " + reasoning + "\n") + "\nCRITICAL INSTRUCTIONS:\n"
+                        + "You MUST adjust the NUMBER of tasks and tests to fall within the target range.\n"
+                        + "- Artemis tasks use this exact format: [task][Task Name](testCaseName1,testCaseName2)\n"
+                        + "- Each [task] block counts as one task. The names inside (...) count as tests.\n"
+                        + "- For EASIER: MERGE or REMOVE [task] blocks to reduce task count. Remove test references from the parentheses.\n"
+                        + "- For HARDER: SPLIT existing [task] blocks into multiple smaller ones or ADD new [task] blocks. Add new test references inside the parentheses.\n"
+                        + "- Invent reasonable new test case names following the existing naming convention (e.g., testMethodName).\n" + "\nContent changes:\n"
+                        + "- For EASIER: simplify requirements, reduce edge cases, add more hints and structure.\n"
+                        + "- For HARDER: add complexity, edge cases, require deeper analysis.\n" + "\nPreserve the overall Artemis markdown structure and formatting style.";
             }
             case SHIFT_TAXONOMY -> {
                 String targetTaxonomy = ctx.getOrDefault("targetTaxonomy", "APPLY");
@@ -237,8 +242,12 @@ public class HyperionChecklistService {
      * the prompt.
      */
     private String serializeCompetencyCatalog() {
+        if (standardizedCompetencyApi.isEmpty()) {
+            log.warn("StandardizedCompetencyApi is not available (Atlas module disabled). Using empty catalog.");
+            return "[]";
+        }
         try {
-            List<KnowledgeArea> knowledgeAreas = standardizedCompetencyApi.getAllForTreeView();
+            List<KnowledgeArea> knowledgeAreas = standardizedCompetencyApi.get().getAllForTreeView();
             List<Map<String, Object>> catalog = new ArrayList<>();
 
             for (KnowledgeArea ka : knowledgeAreas) {

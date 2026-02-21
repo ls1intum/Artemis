@@ -9,12 +9,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * DTO for artifact location information.
- *
- * @param type      Type of artifact
- * @param filePath  Path to file, empty or problem_statement.md for problem
- *                      statement
- * @param startLine Start line number (1-based)
- * @param endLine   End line number (1-based)
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "Location information for artifacts")

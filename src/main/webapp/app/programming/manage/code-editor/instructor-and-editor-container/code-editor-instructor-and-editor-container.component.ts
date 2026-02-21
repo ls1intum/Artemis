@@ -89,11 +89,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly MarkdownEditorHeight = MarkdownEditorHeight;
     readonly consistencyIssues = signal<ConsistencyIssue[]>([]);
-    readonly sortedIssues = computed(() =>
-        [...this.consistencyIssues()].sort(
-            (a, b) => SEVERITY_ORDER[a.severity || ConsistencyIssue.SeverityEnum.Low] - SEVERITY_ORDER[b.severity || ConsistencyIssue.SeverityEnum.Low],
-        ),
-    );
+    readonly sortedIssues = computed(() => [...this.consistencyIssues()].sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]));
 
     private consistencyCheckService = inject(ConsistencyCheckService);
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
@@ -453,7 +449,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @returns
      *          A FontAwesome icon representing high, medium, or low severity.
      */
-    getSeverityIcon(severity?: ConsistencyIssue.SeverityEnum) {
+    getSeverityIcon(severity: ConsistencyIssue.SeverityEnum) {
         switch (severity) {
             case 'HIGH':
                 return this.faCircleExclamation;
@@ -475,7 +471,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @returns
      *          A text color class (`text-danger`, `text-warning`, `text-info`, or `text-secondary`).
      */
-    getSeverityColor(severity?: ConsistencyIssue.SeverityEnum) {
+    getSeverityColor(severity: ConsistencyIssue.SeverityEnum) {
         switch (severity) {
             case 'HIGH':
                 return 'text-danger';

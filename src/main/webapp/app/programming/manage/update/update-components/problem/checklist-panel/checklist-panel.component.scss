@@ -1,84 +1,105 @@
 .checklist-panel {
-    .quality-radar-chart svg {
-        display: block;
+    border: 1px solid var(--surface-border);
+    border-radius: var(--border-radius);
+    background: var(--surface-ground);
+
+    .checklist-panel-header,
+    .section-header {
+        background: var(--surface-100);
     }
 
-    .quality-radar-chart .radar-label {
-        font-family: var(--bs-font-sans-serif);
+    .section-card {
+        overflow: hidden;
+
+        &.stale {
+            border-color: var(--warning) !important;
+        }
+    }
+
+    .stale-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        color: var(--warning);
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .reanalyze-btn {
+        font-size: 0.75rem;
+    }
+
+    .expand-details-btn {
+        font-size: 0.75rem;
+    }
+
+    .quality-radar-chart {
+        svg {
+            display: block;
+        }
+
+        .radar-label {
+            font-family: var(--font-family);
+        }
     }
 
     .quality-dot {
-        width: 0.625rem;
-        height: 0.625rem;
+        width: 0.5rem;
+        height: 0.5rem;
         border-radius: 50%;
         display: inline-block;
         flex-shrink: 0;
     }
 
-    /* Category badges using Bootstrap contextual colors */
     .category-clarity {
-        background-color: var(--bs-primary);
-        color: var(--bs-white);
+        background-color: var(--primary);
+        color: var(--white);
     }
 
     .category-coherence {
-        background-color: var(--bs-info);
-        color: var(--bs-white);
+        background-color: var(--info);
+        color: var(--white);
     }
 
     .category-completeness {
-        background-color: var(--bs-success);
-        color: var(--bs-white);
+        background-color: var(--success);
+        color: var(--white);
     }
 
     .category-default {
-        background-color: var(--bs-secondary);
-        color: var(--bs-white);
+        background-color: var(--surface-500);
+        color: var(--primary-color-text);
     }
 
-    /* List containers */
     .quality-issues-list,
     .competency-list {
-        border-top: 1px solid var(--bs-border-color);
+        border-top: 1px solid var(--surface-border);
     }
 
     .quality-issue-item,
     .competency-item {
         padding: 0.75rem 1rem;
-        border-bottom: 1px solid var(--bs-border-color);
+        border-bottom: 1px solid var(--surface-border);
 
         &:last-child {
             border-bottom: none;
         }
     }
 
-    /* Taxonomy shift chips */
-    .taxonomy-chip {
-        border-radius: var(--bs-border-radius-pill);
-        font-size: 0.75rem;
-        padding: 0.2rem 0.6rem;
-        opacity: 0.85;
-
-        &:hover:not(:disabled) {
-            opacity: 1;
-        }
-    }
-
     .evidence-section {
-        background-color: rgba(var(--bs-primary-rgb), 0.06);
+        background-color: color-mix(in srgb, var(--primary) 6%, transparent);
         padding: 0.5rem 0.75rem;
-        border-radius: var(--bs-border-radius);
-        border-left: 3px solid var(--bs-primary);
+        border-radius: var(--border-radius);
+        border-left: 0.25rem solid var(--primary);
 
         ul {
-            padding-left: 1.125rem;
+            padding-left: 1rem;
             margin-bottom: 0;
         }
     }
 
-    /* Difficulty buttons styled as Bootstrap pill buttons */
     .difficulty-chip {
-        border-radius: var(--bs-border-radius-pill);
+        border-radius: 1rem;
         opacity: 0.75;
 
         &:hover:not(:disabled) {
@@ -89,8 +110,8 @@
             opacity: 1;
             cursor: default;
             box-shadow:
-                0 0 0 2px var(--bs-body-bg),
-                0 0 0 4px currentColor;
+                0 0 0 0.125rem var(--surface-ground),
+                0 0 0 0.25rem currentColor;
         }
 
         &--suggested {

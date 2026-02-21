@@ -1,9 +1,11 @@
-import { Component, OnDestroy, inject, input, output } from '@angular/core';
+import { Component, OnDestroy, inject, input, output, viewChild } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
+import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
+import { CompetencyExerciseLink, CompetencyLearningObjectLink, MEDIUM_COMPETENCY_LINK_WEIGHT } from 'app/atlas/shared/entities/competency.model';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
@@ -66,6 +68,9 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
     private currentGenerationSubscription: Subscription | undefined = undefined;
     private profileService = inject(ProfileService);
     hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+
+    // Child component reference for refreshing competency selection
+    private competencySelectionComponent = viewChild(CompetencySelectionComponent);
 
     // icons
     facArtemisIntelligence = facArtemisIntelligence;
@@ -160,12 +165,60 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
     }
 
     /**
-     * Handles changes to competency links
+     * Handles changes to competency links from either the checklist panel or the competency selection.
+     * Also refreshes the CompetencySelectionComponent to reflect changes (e.g., newly created/linked competencies).
      */
-    onCompetencyLinksChange(competencyLinks: any): void {
+    onCompetencyLinksChange(competencyLinks: CompetencyExerciseLink[] | CompetencyLearningObjectLink[] | undefined): void {
+        if (!competencyLinks) return;
         const exercise = this.programmingExercise();
         if (exercise) {
-            exercise.competencyLinks = competencyLinks;
+            exercise.competencyLinks = competencyLinks as CompetencyExerciseLink[];
+            this.programmingExerciseChange.emit(exercise);
+        }
+        this.refreshCompetencySelection(competencyLinks);
+    }
+
+    /**
+     * Updates the CompetencySelectionComponent's available list, selection state, and checkbox states
+     * so that newly linked or created competencies are immediately visible.
+     */
+    private refreshCompetencySelection(competencyLinks: CompetencyExerciseLink[] | CompetencyLearningObjectLink[]): void {
+        const selection = this.competencySelectionComponent();
+        if (!selection || !competencyLinks) return;
+
+        // Add any new competencies to the available list that aren't there yet
+        if (selection.competencyLinks) {
+            const availableIds = new Set(selection.competencyLinks.map((l) => l.competency?.id).filter(Boolean));
+            for (const link of competencyLinks) {
+                if (link.competency?.id && !availableIds.has(link.competency.id)) {
+                    selection.competencyLinks.push(new CompetencyLearningObjectLink(link.competency, link.weight ?? MEDIUM_COMPETENCY_LINK_WEIGHT));
+                }
+            }
+        }
+
+        // Update selection state via writeValue
+        selection.writeValue(competencyLinks);
+
+        // Update checkbox states to match the current selection
+        if (selection.competencyLinks) {
+            const selectedIds = new Set(competencyLinks.map((l) => l.competency?.id).filter(Boolean));
+            selection.checkboxStates = selection.competencyLinks.reduce(
+                (states, cl) => {
+                    if (cl.competency?.id) {
+                        states[cl.competency.id] = selectedIds.has(cl.competency.id);
+                    }
+                    return states;
+                },
+                {} as Record<number, boolean>,
+            );
+        }
+    }
+
+    onDifficultyChange(difficulty: string): void {
+        const exercise = this.programmingExercise();
+        if (exercise) {
+            exercise.difficulty = DifficultyLevel[difficulty as keyof typeof DifficultyLevel];
+            this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
             this.programmingExerciseChange.emit(exercise);
         }
     }

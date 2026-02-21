@@ -2,6 +2,9 @@ import { Component, computed, inject, input, output, signal } from '@angular/cor
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { Tag } from 'primeng/tag';
+import { ButtonDirective } from 'primeng/button';
+import { Badge } from 'primeng/badge';
 import {
     faArrowDown,
     faArrowUp,
@@ -10,8 +13,11 @@ import {
     faChevronDown,
     faChevronRight,
     faEquals,
+    faExclamationTriangle,
     faInfoCircle,
+    faLink,
     faMagic,
+    faPlus,
     faQuestion,
     faSpinner,
     faSync,
@@ -22,7 +28,12 @@ import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProb
 import { ChecklistAnalysisResponse } from 'app/openapi/model/checklistAnalysisResponse';
 import { ChecklistActionRequest } from 'app/openapi/model/checklistActionRequest';
 import { QualityIssue } from 'app/openapi/model/qualityIssue';
+import { InferredCompetency } from 'app/openapi/model/inferredCompetency';
 import { AlertService } from 'app/shared/service/alert.service';
+import { CompetencyService } from 'app/atlas/manage/services/competency.service';
+import { Competency, CompetencyExerciseLink, CompetencyTaxonomy, CourseCompetency, MEDIUM_COMPETENCY_LINK_WEIGHT } from 'app/atlas/shared/entities/competency.model';
+import { forkJoin } from 'rxjs';
+import { taskRegex } from 'app/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
 
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -32,25 +43,51 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     templateUrl: './checklist-panel.component.html',
     styleUrls: ['./checklist-panel.component.scss'],
     standalone: true,
-    imports: [CommonModule, TranslateModule, FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective],
+    imports: [CommonModule, TranslateModule, FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective, Tag, ButtonDirective, Badge],
 })
 export class ChecklistPanelComponent {
     private hyperionApiService = inject(HyperionProblemStatementApiService);
     private alertService = inject(AlertService);
+    private competencyService = inject(CompetencyService);
 
     exercise = input.required<ProgrammingExercise>();
     courseId = input.required<number>();
     problemStatement = input.required<string>();
 
     problemStatementChange = output<string>();
+    competencyLinksChange = output<CompetencyExerciseLink[]>();
+    difficultyChange = output<string>();
 
     analysisResult = signal<ChecklistAnalysisResponse | undefined>(undefined);
     isLoading = signal<boolean>(false);
     isApplyingAction = signal<boolean>(false);
     actionLoadingKey = signal<string | undefined>(undefined);
 
+    // Competency linking state
+    courseCompetencies = signal<CourseCompetency[]>([]);
+    linkedCompetencyTitles = signal<Set<string>>(new Set());
+    createdCompetencyTitles = signal<Set<string>>(new Set());
+    isLinkingCompetencies = signal<boolean>(false);
+    isCreatingCompetencies = signal<boolean>(false);
+
     // Expanded state for competency evidence
     expandedCompetencies = signal<Set<number>>(new Set());
+
+    // Stale tracking: sections that may be outdated after an AI action modified the problem statement
+    staleSections = signal<Set<string>>(new Set());
+    sectionLoading = signal<string | undefined>(undefined);
+
+    // Track the latest problem statement (may be updated by AI actions before the input signal refreshes)
+    private latestProblemStatement = signal<string | undefined>(undefined);
+
+    /**
+     * Locally computed task and test counts from the problem statement.
+     * Parses [task][TaskName](test1,test2) markers without relying on AI, saving tokens.
+     */
+    localTaskTestCounts = computed(() => {
+        const ps = this.latestProblemStatement() ?? this.problemStatement();
+        return this.countTasksAndTests(ps);
+    });
 
     sections = {
         competencies: true,
@@ -59,7 +96,6 @@ export class ChecklistPanelComponent {
     };
 
     readonly difficultyLevels = ['EASY', 'MEDIUM', 'HARD'] as const;
-    readonly taxonomyLevels = ['REMEMBER', 'UNDERSTAND', 'APPLY', 'ANALYZE', 'EVALUATE', 'CREATE'] as const;
 
     // Icons
     faCheckCircle = faCheckCircle;
@@ -75,6 +111,9 @@ export class ChecklistPanelComponent {
     faWrench = faWrench;
     faBolt = faBolt;
     faSync = faSync;
+    faLink = faLink;
+    faPlus = faPlus;
+    faExclamationTriangle = faExclamationTriangle;
 
     analyze() {
         const cId = this.courseId();
@@ -95,6 +134,7 @@ export class ChecklistPanelComponent {
             next: (res: ChecklistAnalysisResponse) => {
                 this.analysisResult.set(res);
                 this.isLoading.set(false);
+                this.staleSections.set(new Set());
             },
             error: () => {
                 this.alertService.error('artemisApp.programmingExercise.instructorChecklist.actions.error');
@@ -137,15 +177,15 @@ export class ChecklistPanelComponent {
         }
     }
 
-    getSeverityBadgeClass(severity: string | undefined): string {
+    getSeverityTagSeverity(severity: string | undefined): 'danger' | 'warn' | 'info' {
         switch (severity?.toUpperCase()) {
             case 'HIGH':
-                return 'bg-danger';
+                return 'danger';
             case 'MEDIUM':
-                return 'bg-warning text-dark';
+                return 'warn';
             case 'LOW':
             default:
-                return 'bg-info';
+                return 'info';
         }
     }
 
@@ -159,6 +199,19 @@ export class ChecklistPanelComponent {
                 return 'category-completeness';
             default:
                 return 'category-default';
+        }
+    }
+
+    getDifficultySeverity(level: string | undefined): 'success' | 'warn' | 'danger' {
+        switch (level?.toUpperCase()) {
+            case 'EASY':
+                return 'success';
+            case 'MEDIUM':
+                return 'warn';
+            case 'HARD':
+                return 'danger';
+            default:
+                return 'warn';
         }
     }
 
@@ -205,9 +258,9 @@ export class ChecklistPanelComponent {
     private readonly QUALITY_RADAR_RADIUS = 80;
     private readonly QUALITY_CATEGORIES = ['CLARITY', 'COHERENCE', 'COMPLETENESS'] as const;
     private readonly QUALITY_COLORS: Record<string, string> = {
-        CLARITY: 'var(--bs-primary)',
-        COHERENCE: 'var(--bs-info)',
-        COMPLETENESS: 'var(--bs-success)',
+        CLARITY: 'var(--primary)',
+        COHERENCE: 'var(--info)',
+        COMPLETENESS: 'var(--success)',
     };
 
     qualityScores = computed(() => {
@@ -270,7 +323,7 @@ export class ChecklistPanelComponent {
 
     // ===== AI Action Methods =====
 
-    private applyAction(request: ChecklistActionRequest, loadingKey: string, onApplied?: () => void) {
+    private applyAction(request: ChecklistActionRequest, loadingKey: string, staleMark: string[], onApplied?: () => void) {
         const cId = this.courseId();
         if (!cId || this.isApplyingAction()) return;
 
@@ -280,11 +333,13 @@ export class ChecklistPanelComponent {
         this.hyperionApiService.applyChecklistAction(cId, request).subscribe({
             next: (res) => {
                 if (res.applied) {
-                    this.problemStatementChange.emit(res.updatedProblemStatement ?? '');
+                    const newProblemStatement = res.updatedProblemStatement ?? '';
+                    this.latestProblemStatement.set(newProblemStatement);
+                    this.problemStatementChange.emit(newProblemStatement);
                     this.alertService.success('artemisApp.programmingExercise.instructorChecklist.actions.success');
                     onApplied?.();
-                    // Re-analyze after successful rewrite
-                    this.analyze();
+                    // Mark other sections as stale instead of re-analyzing
+                    this.markSectionsStale(staleMark);
                 } else {
                     this.alertService.warning('artemisApp.programmingExercise.instructorChecklist.actions.noChanges');
                 }
@@ -295,6 +350,68 @@ export class ChecklistPanelComponent {
                 this.alertService.error('artemisApp.programmingExercise.instructorChecklist.actions.error');
                 this.isApplyingAction.set(false);
                 this.actionLoadingKey.set(undefined);
+            },
+        });
+    }
+
+    private markSectionsStale(sections: string[]) {
+        const current = new Set(this.staleSections());
+        for (const s of sections) {
+            current.add(s);
+        }
+        this.staleSections.set(current);
+    }
+
+    isSectionStale(section: string): boolean {
+        return this.staleSections().has(section);
+    }
+
+    isSectionLoading(section: string): boolean {
+        return this.sectionLoading() === section;
+    }
+
+    /**
+     * Re-analyzes a single section by calling the full analysis endpoint
+     * but only updating the specified section of the result.
+     */
+    reanalyzeSection(section: string) {
+        const cId = this.courseId();
+        if (!cId || this.sectionLoading()) return;
+
+        this.sectionLoading.set(section);
+        const ex = this.exercise();
+        const request = {
+            problemStatementMarkdown: this.latestProblemStatement() ?? this.problemStatement(),
+            declaredDifficulty: ex.difficulty,
+            language: ex.programmingLanguage,
+            exerciseId: ex.id,
+        };
+
+        this.hyperionApiService.analyzeChecklist(cId, request).subscribe({
+            next: (res: ChecklistAnalysisResponse) => {
+                const current = this.analysisResult();
+                if (current) {
+                    const updated = { ...current };
+                    if (section === 'quality') {
+                        updated.qualityIssues = res.qualityIssues;
+                    } else if (section === 'competencies') {
+                        updated.inferredCompetencies = res.inferredCompetencies;
+                    } else if (section === 'difficulty') {
+                        updated.difficultyAssessment = res.difficultyAssessment;
+                    }
+                    this.analysisResult.set(updated);
+                } else {
+                    this.analysisResult.set(res);
+                }
+                // Remove stale mark for this section
+                const stale = new Set(this.staleSections());
+                stale.delete(section);
+                this.staleSections.set(stale);
+                this.sectionLoading.set(undefined);
+            },
+            error: () => {
+                this.alertService.error('artemisApp.programmingExercise.instructorChecklist.actions.error');
+                this.sectionLoading.set(undefined);
             },
         });
     }
@@ -310,7 +427,7 @@ export class ChecklistPanelComponent {
         this.applyAction(
             {
                 actionType: ChecklistActionRequest.ActionTypeEnum.FixQualityIssue,
-                problemStatementMarkdown: this.problemStatement(),
+                problemStatementMarkdown: this.latestProblemStatement() ?? this.problemStatement(),
                 context: {
                     issueDescription: issue.description || '',
                     suggestedFix: issue.suggestedFix || '',
@@ -318,6 +435,7 @@ export class ChecklistPanelComponent {
                 },
             },
             `fix-issue-${index}`,
+            ['competencies', 'difficulty'],
             () => this.updateAnalysisOptimistically((r) => ({ ...r, qualityIssues: (r.qualityIssues ?? []).filter((_, i) => i !== index) })),
         );
     }
@@ -329,10 +447,11 @@ export class ChecklistPanelComponent {
         this.applyAction(
             {
                 actionType: ChecklistActionRequest.ActionTypeEnum.FixAllQualityIssues,
-                problemStatementMarkdown: this.problemStatement(),
+                problemStatementMarkdown: this.latestProblemStatement() ?? this.problemStatement(),
                 context: { allIssues },
             },
             'fix-all',
+            ['competencies', 'difficulty'],
             () => this.updateAnalysisOptimistically((r) => ({ ...r, qualityIssues: [] })),
         );
     }
@@ -345,7 +464,7 @@ export class ChecklistPanelComponent {
         this.applyAction(
             {
                 actionType: ChecklistActionRequest.ActionTypeEnum.AdaptDifficulty,
-                problemStatementMarkdown: this.problemStatement(),
+                problemStatementMarkdown: this.latestProblemStatement() ?? this.problemStatement(),
                 context: {
                     targetDifficulty,
                     currentDifficulty: current,
@@ -355,7 +474,8 @@ export class ChecklistPanelComponent {
                 },
             },
             `adapt-${targetDifficulty}`,
-            () =>
+            ['quality', 'competencies'],
+            () => {
                 this.updateAnalysisOptimistically((r) => ({
                     ...r,
                     difficultyAssessment: {
@@ -364,28 +484,353 @@ export class ChecklistPanelComponent {
                         delta: 'MATCH',
                         reasoning: `Adapted to ${targetDifficulty}. Re-analyze for an updated assessment.`,
                     },
-                })),
-        );
-    }
-
-    shiftTaxonomy(targetTaxonomy: string) {
-        const competencies = this.analysisResult()?.inferredCompetencies ?? [];
-        const summary = competencies.map((c) => `${c.competencyTitle}: ${c.taxonomyLevel}`).join(', ');
-
-        this.applyAction(
-            {
-                actionType: ChecklistActionRequest.ActionTypeEnum.ShiftTaxonomy,
-                problemStatementMarkdown: this.problemStatement(),
-                context: {
-                    targetTaxonomy,
-                    currentTaxonomySummary: summary,
-                },
+                }));
+                this.difficultyChange.emit(targetDifficulty);
             },
-            `shift-${targetTaxonomy}`,
         );
     }
 
     isActionLoading(key: string): boolean {
         return this.actionLoadingKey() === key;
+    }
+
+    // ===== Competency Linking Methods =====
+
+    /**
+     * Maps an inferred taxonomy level string to CompetencyTaxonomy enum
+     */
+    private mapTaxonomy(level: string | undefined): CompetencyTaxonomy | undefined {
+        if (!level) return undefined;
+        const upper = level.toUpperCase();
+        if (Object.values(CompetencyTaxonomy).includes(upper as CompetencyTaxonomy)) {
+            return upper as CompetencyTaxonomy;
+        }
+        return undefined;
+    }
+
+    /**
+     * Finds a matching course competency using fuzzy word-overlap matching.
+     * Handles cases where the AI-inferred title differs slightly from the course competency
+     * title (e.g., "Algorithm Analysis" vs "Algorithm Design and Analysis").
+     */
+    private findMatchingCompetency(inferred: InferredCompetency): CourseCompetency | undefined {
+        const inferredTitle = inferred.competencyTitle?.toLowerCase().trim();
+        if (!inferredTitle) return undefined;
+
+        let bestMatch: CourseCompetency | undefined;
+        let bestScore = 0;
+
+        for (const cc of this.courseCompetencies()) {
+            const courseTitle = cc.title?.toLowerCase().trim();
+            if (!courseTitle) continue;
+
+            const score = this.titleSimilarity(inferredTitle, courseTitle);
+            if (score > bestScore) {
+                bestScore = score;
+                bestMatch = cc;
+            }
+        }
+
+        // Require at least 50% word overlap to consider it a match
+        return bestScore >= 0.5 ? bestMatch : undefined;
+    }
+
+    /**
+     * Lightweight suffix-stripping stemmer for competency title matching.
+     * Reduces common English morphological variants to a shared root
+     * (e.g., "algorithms" → "algorithm", "sorting" → "sort", "implementation" → "implement").
+     */
+    private stemWord(word: string): string {
+        if (word.length <= 3) return word;
+
+        // Order matters: try longest suffixes first
+        const suffixes = [
+            'isation',
+            'ization',
+            'ation',
+            'tion',
+            'sion',
+            'ment',
+            'ness',
+            'ence',
+            'ance',
+            'ible',
+            'able',
+            'ity',
+            'ing',
+            'ies',
+            'ous',
+            'ive',
+            'ed',
+            'ly',
+            'er',
+            'es',
+            's',
+        ];
+
+        for (const suffix of suffixes) {
+            if (word.endsWith(suffix) && word.length - suffix.length >= 3) {
+                return word.slice(0, -suffix.length);
+            }
+        }
+        return word;
+    }
+
+    /**
+     * Tokenizes and stems a title string into a sorted array of normalized word roots.
+     * Filters out common stop words that do not contribute to semantic matching.
+     */
+    private tokenizeAndStem(title: string): string[] {
+        const stopWords = new Set(['a', 'an', 'the', 'and', 'or', 'of', 'in', 'on', 'for', 'to', 'with', 'by', 'is', 'are', 'as', 'at', 'its']);
+        return title
+            .split(/\s+/)
+            .filter(Boolean)
+            .filter((w) => !stopWords.has(w))
+            .map((w) => this.stemWord(w))
+            .sort();
+    }
+
+    /**
+     * Computes the Damerau-Levenshtein distance between two strings.
+     * Accounts for insertions, deletions, substitutions, and transpositions of adjacent characters.
+     */
+    private damerauLevenshtein(a: string, b: string): number {
+        const lenA = a.length;
+        const lenB = b.length;
+
+        if (lenA === 0) return lenB;
+        if (lenB === 0) return lenA;
+
+        // Create distance matrix (lenA+1) x (lenB+1)
+        const d: number[][] = Array.from({ length: lenA + 1 }, () => new Array<number>(lenB + 1).fill(0));
+
+        for (let i = 0; i <= lenA; i++) d[i][0] = i;
+        for (let j = 0; j <= lenB; j++) d[0][j] = j;
+
+        for (let i = 1; i <= lenA; i++) {
+            for (let j = 1; j <= lenB; j++) {
+                const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+                d[i][j] = Math.min(
+                    d[i - 1][j] + 1, // deletion
+                    d[i][j - 1] + 1, // insertion
+                    d[i - 1][j - 1] + cost, // substitution
+                );
+                // transposition
+                if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+                    d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + cost);
+                }
+            }
+        }
+
+        return d[lenA][lenB];
+    }
+
+    /**
+     * Computes a similarity score between two competency titles.
+     * Returns a value between 0.0 (no overlap) and 1.0 (identical).
+     *
+     * Uses Damerau-Levenshtein distance on stemmed, stop-word-filtered,
+     * sorted token strings. This handles typos, word reordering, morphological
+     * variants, and stop-word differences in a single unified metric.
+     */
+    private titleSimilarity(a: string, b: string): number {
+        if (a === b) return 1.0;
+
+        // One completely contains the other → high match
+        if (a.includes(b) || b.includes(a)) return 0.85;
+
+        // Normalize: stem, remove stop words, sort to be order-independent
+        const normA = this.tokenizeAndStem(a).join(' ');
+        const normB = this.tokenizeAndStem(b).join(' ');
+
+        if (normA.length === 0 || normB.length === 0) return 0;
+        if (normA === normB) return 1.0;
+
+        const dist = this.damerauLevenshtein(normA, normB);
+        const maxLen = Math.max(normA.length, normB.length);
+
+        return 1 - dist / maxLen;
+    }
+
+    /**
+     * Link inferred competencies to matching existing course competencies.
+     * Matches by title similarity and adds them to the exercise's competencyLinks.
+     */
+    linkMatchingCompetencies(): void {
+        if (this.isLinkingCompetencies()) return;
+
+        this.isLinkingCompetencies.set(true);
+        const inferred = this.analysisResult()?.inferredCompetencies ?? [];
+        const exercise = this.exercise();
+
+        // Ensure we have course competencies loaded
+        this.competencyService.getAllForCourse(this.courseId()).subscribe({
+            next: (res) => {
+                this.courseCompetencies.set(res.body ?? []);
+                const existingLinks = exercise?.competencyLinks ?? [];
+                const existingIds = new Set(existingLinks.map((link) => link.competency?.id).filter(Boolean));
+                const newLinks: CompetencyExerciseLink[] = [...existingLinks];
+                const newlyLinked = new Set<string>();
+
+                for (const comp of inferred) {
+                    const match = this.findMatchingCompetency(comp);
+                    if (match?.id && !existingIds.has(match.id)) {
+                        newLinks.push(new CompetencyExerciseLink(match, exercise, MEDIUM_COMPETENCY_LINK_WEIGHT));
+                        existingIds.add(match.id);
+                        newlyLinked.add(comp.competencyTitle ?? '');
+                    }
+                }
+
+                if (newlyLinked.size > 0) {
+                    this.competencyLinksChange.emit(newLinks);
+                    this.linkedCompetencyTitles.set(new Set([...this.linkedCompetencyTitles(), ...newlyLinked]));
+                    this.alertService.success('artemisApp.programmingExercise.instructorChecklist.competencies.linkSuccess');
+                } else {
+                    this.alertService.warning('artemisApp.programmingExercise.instructorChecklist.competencies.noMatches');
+                }
+                this.isLinkingCompetencies.set(false);
+            },
+            error: () => {
+                this.alertService.error('artemisApp.programmingExercise.instructorChecklist.competencies.linkError');
+                this.isLinkingCompetencies.set(false);
+            },
+        });
+    }
+
+    /**
+     * Creates new competencies from inferred competencies that don't match any existing
+     * course competency, then links them to the exercise.
+     */
+    createAndLinkCompetencies(): void {
+        if (this.isCreatingCompetencies()) return;
+
+        this.isCreatingCompetencies.set(true);
+        const inferred = this.analysisResult()?.inferredCompetencies ?? [];
+        const exercise = this.exercise();
+        const courseId = this.courseId();
+
+        // First ensure course competencies are loaded
+        this.competencyService.getAllForCourse(courseId).subscribe({
+            next: (res) => {
+                this.courseCompetencies.set(res.body ?? []);
+                const existingLinks = exercise?.competencyLinks ?? [];
+                const existingIds = new Set(existingLinks.map((link) => link.competency?.id).filter(Boolean));
+                const existingTitles = new Set(
+                    this.courseCompetencies()
+                        .map((c) => c.title?.toLowerCase().trim())
+                        .filter(Boolean),
+                );
+
+                // Find inferred competencies that don't match existing ones
+                const toCreate: Competency[] = [];
+                for (const comp of inferred) {
+                    const title = comp.competencyTitle?.trim();
+                    if (!title) continue;
+                    if (existingTitles.has(title.toLowerCase())) continue;
+                    if (this.createdCompetencyTitles().has(title)) continue;
+
+                    const newComp = new Competency();
+                    newComp.title = title;
+                    newComp.description = comp.whyThisMatches ?? `Inferred from problem statement analysis. Evidence: ${(comp.evidence ?? []).join('; ')}`;
+                    newComp.taxonomy = this.mapTaxonomy(comp.taxonomyLevel);
+                    toCreate.push(newComp);
+                }
+
+                if (toCreate.length === 0) {
+                    this.alertService.warning('artemisApp.programmingExercise.instructorChecklist.competencies.allExist');
+                    this.isCreatingCompetencies.set(false);
+                    return;
+                }
+
+                // Create all new competencies in parallel
+                const createObservables = toCreate.map((comp) => this.competencyService.create(comp, courseId));
+                forkJoin(createObservables).subscribe({
+                    next: (responses) => {
+                        const newLinks: CompetencyExerciseLink[] = [...existingLinks];
+                        const newlyCreated = new Set<string>();
+
+                        for (const response of responses) {
+                            const created = response.body;
+                            if (created?.id && !existingIds.has(created.id)) {
+                                newLinks.push(new CompetencyExerciseLink(created, exercise, MEDIUM_COMPETENCY_LINK_WEIGHT));
+                                existingIds.add(created.id);
+                                newlyCreated.add(created.title ?? '');
+                                // Update local cache
+                                this.courseCompetencies.update((current) => [...current, created]);
+                            }
+                        }
+
+                        if (newlyCreated.size > 0) {
+                            this.competencyLinksChange.emit(newLinks);
+                            this.createdCompetencyTitles.set(new Set([...this.createdCompetencyTitles(), ...newlyCreated]));
+                            this.alertService.success('artemisApp.programmingExercise.instructorChecklist.competencies.createSuccess');
+                        }
+                        this.isCreatingCompetencies.set(false);
+                    },
+                    error: () => {
+                        this.alertService.error('artemisApp.programmingExercise.instructorChecklist.competencies.createError');
+                        this.isCreatingCompetencies.set(false);
+                    },
+                });
+            },
+            error: () => {
+                this.alertService.error('artemisApp.programmingExercise.instructorChecklist.competencies.createError');
+                this.isCreatingCompetencies.set(false);
+            },
+        });
+    }
+
+    /**
+     * Checks if an inferred competency has been linked to the exercise
+     */
+    isCompetencyLinked(comp: InferredCompetency): boolean {
+        return this.linkedCompetencyTitles().has(comp.competencyTitle ?? '');
+    }
+
+    /**
+     * Checks if an inferred competency was created as a new course competency
+     */
+    isCompetencyCreated(comp: InferredCompetency): boolean {
+        return this.createdCompetencyTitles().has(comp.competencyTitle ?? '');
+    }
+
+    /**
+     * Gets the count of inferred competencies that match existing course competencies
+     */
+    get matchingCount(): number {
+        const inferred = this.analysisResult()?.inferredCompetencies ?? [];
+        return inferred.filter((c) => this.findMatchingCompetency(c) !== undefined).length;
+    }
+
+    /**
+     * Gets the count of inferred competencies that don't match any existing course competency
+     */
+    get unmatchedCount(): number {
+        const inferred = this.analysisResult()?.inferredCompetencies ?? [];
+        return inferred.filter((c) => this.findMatchingCompetency(c) === undefined).length;
+    }
+
+    /**
+     * Counts tasks and unique test cases from the problem statement by parsing [task] markers.
+     * This avoids relying on AI for counting, saving tokens.
+     */
+    private countTasksAndTests(problemStatement: string): { tasks: number; tests: number } {
+        const matches = [...problemStatement.matchAll(taskRegex)];
+        let taskCount = 0;
+        const testNames = new Set<string>();
+
+        for (const match of matches) {
+            taskCount++;
+            const testList = match[2]?.trim();
+            if (testList) {
+                testList
+                    .split(',')
+                    .map((t) => t.trim())
+                    .filter(Boolean)
+                    .forEach((t) => testNames.add(t));
+            }
+        }
+
+        return { tasks: taskCount, tests: testNames.size };
     }
 }

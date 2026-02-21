@@ -795,7 +795,17 @@
                     "primary": "Primary",
                     "evidence": "Evidence:",
                     "relatedTasks": "Related tasks:",
-                    "shiftFocus": "Shift focus to:"
+                    "linked": "Linked",
+                    "created": "Created",
+                    "linkMatching": "Link Matching",
+                    "createAndLink": "Create & Link New",
+                    "actionsHint": "Link matches existing course competencies. Create adds new competencies to the course and links them.",
+                    "linkSuccess": "Matching competencies linked to the exercise.",
+                    "noMatches": "No matching course competencies found.",
+                    "linkError": "Failed to link competencies. Please try again.",
+                    "createSuccess": "New competencies created and linked to the exercise.",
+                    "allExist": "All inferred competencies already exist in the course.",
+                    "createError": "Failed to create competencies. Please try again."
                 },
                 "bloomRadar": {
                     "title": "Bloom's Taxonomy Distribution"
