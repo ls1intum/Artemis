@@ -157,7 +157,7 @@ public class PlagiarismResource {
      * A student should not have sensitive information (e.g. the userLogin of the other student)
      *
      * @param comparison to anonymize.
-     * @param userLogin  of the student asking to see his plagiarism comparison.
+     * @param userLogin  of the student asking to see their plagiarism comparison.
      */
     private void checkStudentAccess(PlagiarismComparison comparison, String userLogin) {
         if (comparison.getSubmissionA().getStudentLogin().equals(userLogin)) {
