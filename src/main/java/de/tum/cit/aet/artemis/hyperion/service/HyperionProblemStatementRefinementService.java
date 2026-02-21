@@ -142,7 +142,7 @@ public class HyperionProblemStatementRefinementService {
                     e.getMessage(), e);
             throw new InternalServerErrorAlertException("Failed to refine problem statement", "ProblemStatement", "ProblemStatementRefinement.problemStatementRefinementFailed");
         }
-        Long userId = HyperionPromptSanitizer.resolveCurrentUserId(userRepository);
+        Long userId = HyperionUtils.resolveCurrentUserId(userRepository);
         llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, GLOBAL_REFINEMENT_PIPELINE_ID,
                 builder -> builder.withCourse(course.getId()).withUser(userId));
 
@@ -215,7 +215,7 @@ public class HyperionProblemStatementRefinementService {
                     e.getMessage(), e);
             throw new InternalServerErrorAlertException("Failed to refine problem statement", "ProblemStatement", "ProblemStatementRefinement.problemStatementRefinementFailed");
         }
-        Long userId = HyperionPromptSanitizer.resolveCurrentUserId(userRepository);
+        Long userId = HyperionUtils.resolveCurrentUserId(userRepository);
         llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, TARGETED_REFINEMENT_PIPELINE_ID,
                 builder -> builder.withCourse(course.getId()).withUser(userId));
 

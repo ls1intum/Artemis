@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
@@ -54,7 +55,7 @@ public class HyperionProblemStatementRewriteService {
      * @param llmTokenUsageService service for tracking LLM token usage
      * @param userRepository       repository for resolving current user
      */
-    public HyperionProblemStatementRewriteService(ChatClient chatClient, HyperionPromptTemplateService templateService, ObservationRegistry observationRegistry,
+    public HyperionProblemStatementRewriteService(@Nullable ChatClient chatClient, HyperionPromptTemplateService templateService, ObservationRegistry observationRegistry,
             LLMTokenUsageService llmTokenUsageService, UserRepository userRepository) {
         this.chatClient = chatClient;
         this.templateService = templateService;
@@ -100,7 +101,7 @@ public class HyperionProblemStatementRewriteService {
             log.warn("Failed to obtain or parse AI response for {} - returning original text", resourcePath, e);
             return new ProblemStatementRewriteResponseDTO(problemStatementText.trim(), false);
         }
-        Long userId = HyperionPromptSanitizer.resolveCurrentUserId(userRepository);
+        Long userId = HyperionUtils.resolveCurrentUserId(userRepository);
         llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, REWRITE_PIPELINE_ID,
                 builder -> builder.withCourse(course.getId()).withUser(userId));
 

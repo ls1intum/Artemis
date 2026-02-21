@@ -136,7 +136,7 @@ public class HyperionConsistencyCheckService {
             Long courseId = exerciseWithParticipations.getCourseViaExerciseGroupOrCourseMember() != null
                     ? exerciseWithParticipations.getCourseViaExerciseGroupOrCourseMember().getId()
                     : null;
-            Long userId = HyperionPromptSanitizer.resolveCurrentUserId(userRepository);
+            Long userId = HyperionUtils.resolveCurrentUserId(userRepository);
             llmTokenUsageService.saveLLMTokenUsage(validRequests, LLMServiceType.HYPERION,
                     builder -> builder.withCourse(courseId).withExercise(exerciseWithParticipations.getId()).withUser(userId));
         }

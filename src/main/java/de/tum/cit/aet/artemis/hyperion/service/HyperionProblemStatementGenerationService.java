@@ -131,7 +131,7 @@ public class HyperionProblemStatementGenerationService {
             log.error("Error generating problem statement for course [{}]: {}", course.getId(), e.getMessage(), e);
             throw new InternalServerErrorAlertException("Failed to generate problem statement", "ProblemStatement", "ProblemStatementGeneration.problemStatementGenerationFailed");
         }
-        Long userId = HyperionPromptSanitizer.resolveCurrentUserId(userRepository);
+        Long userId = HyperionUtils.resolveCurrentUserId(userRepository);
         llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, GENERATION_PIPELINE_ID,
                 builder -> builder.withCourse(course.getId()).withUser(userId));
 
