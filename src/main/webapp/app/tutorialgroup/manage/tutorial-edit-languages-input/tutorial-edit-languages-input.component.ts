@@ -1,7 +1,7 @@
 import { Component, ElementRef, TemplateRef, ViewContainerRef, computed, inject, input, model, signal, viewChild } from '@angular/core';
 import { Overlay, OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
-import { TutorialCreateOrEditValidation, TutorialCreateOrEditValidationStatus } from 'app/tutorialgroup/manage/tutorial-create-or-edit/tutorial-create-or-edit.component';
+import { Validation, ValidationStatus } from 'app/tutorialgroup/manage/tutorial-create-or-edit/tutorial-create-or-edit.component';
 import { InputGroupModule } from 'primeng/inputgroup';
 import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
 import { InputTextModule } from 'primeng/inputtext';
@@ -17,7 +17,7 @@ import { ScrollingModule } from '@angular/cdk/scrolling';
     styleUrl: './tutorial-edit-languages-input.component.scss',
 })
 export class TutorialEditLanguagesInputComponent {
-    protected readonly TutorialEditValidationStatus = TutorialCreateOrEditValidationStatus;
+    protected readonly TutorialEditValidationStatus = ValidationStatus;
     private overlay = inject(Overlay);
     private overlayRef: OverlayRef | undefined = undefined;
     private viewContainerRef = inject(ViewContainerRef);
@@ -28,7 +28,7 @@ export class TutorialEditLanguagesInputComponent {
     alreadyUsedLanguages = input.required<string[]>();
     language = model<string>('');
     languageInputTouched = signal(false);
-    languageValidationResult = computed<TutorialCreateOrEditValidation>(() => this.computeLanguageValidation());
+    languageValidationResult = computed<Validation>(() => this.computeLanguageValidation());
     suggestionHighlightIndex = signal<number | undefined>(undefined);
 
     openPanel(): void {
@@ -143,21 +143,21 @@ export class TutorialEditLanguagesInputComponent {
         }
     }
 
-    private computeLanguageValidation(): TutorialCreateOrEditValidation {
-        if (!this.languageInputTouched()) return { status: TutorialCreateOrEditValidationStatus.VALID };
+    private computeLanguageValidation(): Validation {
+        if (!this.languageInputTouched()) return { status: ValidationStatus.VALID };
         const trimmedLanguage = this.language().trim();
         if (!trimmedLanguage) {
             return {
-                status: TutorialCreateOrEditValidationStatus.INVALID,
+                status: ValidationStatus.INVALID,
                 message: 'Please choose a language. The system automatically removes leading/trailing whitespaces.',
             };
         }
         if (trimmedLanguage && trimmedLanguage.length > 255) {
             return {
-                status: TutorialCreateOrEditValidationStatus.INVALID,
+                status: ValidationStatus.INVALID,
                 message: 'Language must contain at most 255 characters. The system automatically removes leading/trailing whitespaces.',
             };
         }
-        return { status: TutorialCreateOrEditValidationStatus.VALID };
+        return { status: ValidationStatus.VALID };
     }
 }

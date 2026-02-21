@@ -6,8 +6,10 @@
             [tutorialGroup]="groupToPass"
             [course]="courseToPass"
             [allowManagementActions]="true"
-            (deleteSession)="deleteSession($event)"
-            (deleteGroup)="deleteGroup($event)"
+            (onDeleteSession)="deleteSession($event)"
+            (onDeleteGroup)="deleteGroup($event)"
+            (onCancelSession)="cancelSession($event)"
+            (onActivateSession)="activateSession($event)"
         />
     }
     @if (isLoading()) {

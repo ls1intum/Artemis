@@ -20,12 +20,12 @@ type Mode = {
     name: string;
 };
 
-export enum TutorialCreateOrEditValidationStatus {
+export enum ValidationStatus {
     VALID = 'VALID',
     INVALID = 'INVALID',
 }
 
-export type TutorialCreateOrEditValidation = { status: TutorialCreateOrEditValidationStatus.INVALID; message: string } | { status: TutorialCreateOrEditValidationStatus.VALID };
+export type Validation = { status: ValidationStatus.INVALID; message: string } | { status: ValidationStatus.VALID };
 
 export interface CreateTutorialGroupEvent {
     courseId: number;
@@ -65,7 +65,7 @@ export interface UpdateTutorialGroupEvent {
 })
 export class TutorialCreateOrEditComponent {
     private readonly titleRegex = /^[A-Za-z0-9][A-Za-z0-9: -]*$/;
-    protected readonly TutorialEditValidationStatus = TutorialCreateOrEditValidationStatus;
+    protected readonly ValidationStatus = ValidationStatus;
     private confirmationService = inject(ConfirmationService);
 
     courseId = input.required<number>();
@@ -75,33 +75,33 @@ export class TutorialCreateOrEditComponent {
     schedule = input<TutorialGroupScheduleDTO>();
 
     title = signal('');
-    titleValidationResult = computed<TutorialCreateOrEditValidation>(() => this.computeTitleValidation());
+    titleValidationResult = computed<Validation>(() => this.computeTitleValidation());
     titleInputTouched = signal(false);
     selectedTutorId = signal<number | undefined>(undefined);
-    tutorValidationResult = computed<TutorialCreateOrEditValidation>(() => this.computeTutorValidation());
+    tutorValidationResult = computed<Validation>(() => this.computeTutorValidation());
     tutorInputTouched = signal(false);
     language = signal<string>('');
     modes: Mode[] = [{ name: 'Online' }, { name: 'Offline' }];
     selectedMode = signal<Mode>({ name: 'Online' });
     campus = signal('');
-    campusValidationResult = computed<TutorialCreateOrEditValidation>(() => this.computeCampusValidation());
+    campusValidationResult = computed<Validation>(() => this.computeCampusValidation());
     capacity = signal<number | undefined>(undefined);
     additionalInformation = signal('');
 
     configureSessionPlan = signal(true);
     firstSessionStart = signal<Date | undefined>(undefined);
     firstSessionStartInputTouched = signal(false);
-    firstSessionStartValidationResult = computed<TutorialCreateOrEditValidation>(() => this.computeFirstSessionStartValidation());
+    firstSessionStartValidationResult = computed<Validation>(() => this.computeFirstSessionStartValidation());
     firstSessionEnd = signal<Date | undefined>(undefined);
     firstSessionEndInputTouched = signal(false);
-    firstSessionEndValidationResult = computed<TutorialCreateOrEditValidation>(() => this.computeFirstSessionEndValidation());
+    firstSessionEndValidationResult = computed<Validation>(() => this.computeFirstSessionEndValidation());
     repetitionFrequency = signal<number>(1);
     tutorialPeriodEnd = signal<Date | undefined>(undefined);
     tutorialPeriodEndInputTouched = signal(false);
-    tutorialPeriodEndValidationResult = computed<TutorialCreateOrEditValidation>(() => this.computeTeachingPeriodEndValidation());
+    tutorialPeriodEndValidationResult = computed<Validation>(() => this.computeTeachingPeriodEndValidation());
     location = signal('');
     locationInputTouched = signal(false);
-    locationValidationResult = computed<TutorialCreateOrEditValidation>(() => this.computeLocationValidation());
+    locationValidationResult = computed<Validation>(() => this.computeLocationValidation());
     scheduleChangeOverwritesSessions = computed<boolean>(() => this.computeIfScheduleChangeOverwritesSessions());
 
     onUpdate = output<UpdateTutorialGroupEvent>();
@@ -191,58 +191,58 @@ export class TutorialCreateOrEditComponent {
         };
     }
 
-    private computeTitleValidation(): TutorialCreateOrEditValidation {
+    private computeTitleValidation(): Validation {
         const title = this.title();
         if (!title.match(this.titleRegex)) {
             return {
-                status: TutorialCreateOrEditValidationStatus.INVALID,
+                status: ValidationStatus.INVALID,
                 message: 'Title must start with a letter or digit, and can otherwise only contain letters, digits, colons, spaces and dashes.',
             };
         }
         const trimmedTitle = title.trim();
         if (trimmedTitle.length > 19) {
             return {
-                status: TutorialCreateOrEditValidationStatus.INVALID,
+                status: ValidationStatus.INVALID,
                 message: 'Title must contain at most 19 characters. The system automatically removes leading/trailing whitespaces.',
             };
         }
         return {
-            status: TutorialCreateOrEditValidationStatus.VALID,
+            status: ValidationStatus.VALID,
         };
     }
 
-    private computeCampusValidation(): TutorialCreateOrEditValidation {
+    private computeCampusValidation(): Validation {
         const trimmedCampus = this.campus().trim();
         if (trimmedCampus && trimmedCampus.length > 255) {
             return {
-                status: TutorialCreateOrEditValidationStatus.INVALID,
+                status: ValidationStatus.INVALID,
                 message: 'Campus must contain at most 255 characters. The system automatically removes leading/trailing whitespaces.',
             };
         }
-        return { status: TutorialCreateOrEditValidationStatus.VALID };
+        return { status: ValidationStatus.VALID };
     }
 
-    private computeFirstSessionStartValidation(): TutorialCreateOrEditValidation {
+    private computeFirstSessionStartValidation(): Validation {
         return this.firstSessionStart()
-            ? { status: TutorialCreateOrEditValidationStatus.VALID }
+            ? { status: ValidationStatus.VALID }
             : {
-                  status: TutorialCreateOrEditValidationStatus.INVALID,
+                  status: ValidationStatus.INVALID,
                   message: 'Please choose a date.',
               };
     }
 
-    private computeFirstSessionEndValidation(): TutorialCreateOrEditValidation {
+    private computeFirstSessionEndValidation(): Validation {
         const firstSessionEnd = this.firstSessionEnd();
         if (!firstSessionEnd) {
             return {
-                status: TutorialCreateOrEditValidationStatus.INVALID,
+                status: ValidationStatus.INVALID,
                 message: 'Please choose a date.',
             };
         }
         const firstSessionStart = this.firstSessionStart();
         if (firstSessionStart && firstSessionEnd <= firstSessionStart) {
             return {
-                status: TutorialCreateOrEditValidationStatus.INVALID,
+                status: ValidationStatus.INVALID,
                 message: 'The end of the first session must be after its start.',
             };
         }
@@ -253,56 +253,56 @@ export class TutorialCreateOrEditComponent {
                 firstSessionStart.getDate() !== firstSessionEnd.getDate())
         ) {
             return {
-                status: TutorialCreateOrEditValidationStatus.INVALID,
+                status: ValidationStatus.INVALID,
                 message: 'The end of the first session must be on the same day as its start.',
             };
         }
-        return { status: TutorialCreateOrEditValidationStatus.VALID };
+        return { status: ValidationStatus.VALID };
     }
 
-    private computeTeachingPeriodEndValidation(): TutorialCreateOrEditValidation {
+    private computeTeachingPeriodEndValidation(): Validation {
         const teachingPeriodEnd = this.tutorialPeriodEnd();
         if (!teachingPeriodEnd) {
             return {
-                status: TutorialCreateOrEditValidationStatus.INVALID,
+                status: ValidationStatus.INVALID,
                 message: 'Please choose a date.',
             };
         }
         const firstSessionStart = this.firstSessionStart();
         if (firstSessionStart && teachingPeriodEnd <= firstSessionStart) {
             return {
-                status: TutorialCreateOrEditValidationStatus.INVALID,
+                status: ValidationStatus.INVALID,
                 message: "The end of the teaching period must be after the first session's start.",
             };
         }
         const firstSessionEnd = this.firstSessionEnd();
         if (firstSessionEnd && teachingPeriodEnd <= firstSessionEnd) {
             return {
-                status: TutorialCreateOrEditValidationStatus.INVALID,
+                status: ValidationStatus.INVALID,
                 message: "The end of the teaching period must be after the first session's end.",
             };
         }
-        return { status: TutorialCreateOrEditValidationStatus.VALID };
+        return { status: ValidationStatus.VALID };
     }
 
-    private computeTutorValidation(): TutorialCreateOrEditValidation {
+    private computeTutorValidation(): Validation {
         const selectedTutorId = this.selectedTutorId();
-        if (selectedTutorId) return { status: TutorialCreateOrEditValidationStatus.VALID };
+        if (selectedTutorId) return { status: ValidationStatus.VALID };
         return {
-            status: TutorialCreateOrEditValidationStatus.INVALID,
+            status: ValidationStatus.INVALID,
             message: 'Please choose a tutor.',
         };
     }
 
-    private computeLocationValidation(): TutorialCreateOrEditValidation {
+    private computeLocationValidation(): Validation {
         const location = this.location();
         if (!location) {
             return {
-                status: TutorialCreateOrEditValidationStatus.INVALID,
+                status: ValidationStatus.INVALID,
                 message: 'Please choose a location.',
             };
         }
-        return { status: TutorialCreateOrEditValidationStatus.VALID };
+        return { status: ValidationStatus.VALID };
     }
 
     private computeIfScheduleChangeOverwritesSessions(): boolean {
@@ -321,14 +321,14 @@ export class TutorialCreateOrEditComponent {
     }
 
     private computeIfSaveButtonDisabled(): boolean {
-        const titleInvalid = this.titleValidationResult().status === TutorialCreateOrEditValidationStatus.INVALID;
-        const tutorInvalid = this.tutorValidationResult().status === TutorialCreateOrEditValidationStatus.INVALID;
+        const titleInvalid = this.titleValidationResult().status === ValidationStatus.INVALID;
+        const tutorInvalid = this.tutorValidationResult().status === ValidationStatus.INVALID;
         const generalInformationInvalid = titleInvalid || tutorInvalid;
 
-        const firstSessionStartInvalid = this.firstSessionStartValidationResult().status === TutorialCreateOrEditValidationStatus.INVALID;
-        const firstSessionEndInvalid = this.firstSessionEndValidationResult().status === TutorialCreateOrEditValidationStatus.INVALID;
-        const tutorialPeriodEndInvalid = this.tutorialPeriodEndValidationResult().status === TutorialCreateOrEditValidationStatus.INVALID;
-        const locationInvalid = this.locationValidationResult().status === TutorialCreateOrEditValidationStatus.INVALID;
+        const firstSessionStartInvalid = this.firstSessionStartValidationResult().status === ValidationStatus.INVALID;
+        const firstSessionEndInvalid = this.firstSessionEndValidationResult().status === ValidationStatus.INVALID;
+        const tutorialPeriodEndInvalid = this.tutorialPeriodEndValidationResult().status === ValidationStatus.INVALID;
+        const locationInvalid = this.locationValidationResult().status === ValidationStatus.INVALID;
         const scheduleInvalid = firstSessionStartInvalid || firstSessionEndInvalid || tutorialPeriodEndInvalid || locationInvalid;
 
         return generalInformationInvalid || (this.configureSessionPlan() && scheduleInvalid);

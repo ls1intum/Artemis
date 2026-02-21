@@ -243,10 +243,21 @@
                         @if (allowManagementActions()) {
                             <td>
                                 <div class="session-actions">
-                                    <button (click)="openSessionModal(session.id)">
-                                        <fa-icon [icon]="faPenToSquare" aria-hidden="true" />
-                                    </button>
-                                    <button class="danger" (click)="confirmSessionDeletion($event, session.id)">
+                                    @if (!session.isCancelled) {
+                                        <button pTooltip="Edit" tooltipPosition="left" (click)="openSessionModal(session.id)">
+                                            <fa-icon [icon]="faPenToSquare" aria-hidden="true" />
+                                        </button>
+                                    }
+                                    @if (session.isCancelled) {
+                                        <button pTooltip="Undo Cancellation" tooltipPosition="left" (click)="activateTutorialGroupSession(session.id)">
+                                            <fa-icon [icon]="faCirclePlay" aria-hidden="true" />
+                                        </button>
+                                    } @else {
+                                        <button pTooltip="Cancel" tooltipPosition="left" (click)="cancelTutorialGroupSession(session.id)">
+                                            <fa-icon [icon]="faBan" aria-hidden="true" />
+                                        </button>
+                                    }
+                                    <button class="danger" pTooltip="Delete" tooltipPosition="left" (click)="confirmSessionDeletion($event, session.id)">
                                         <fa-icon [icon]="faTrash" aria-hidden="true" />
                                     </button>
                                 </div>

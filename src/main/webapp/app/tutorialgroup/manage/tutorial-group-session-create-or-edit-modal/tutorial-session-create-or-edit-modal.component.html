@@ -1,32 +1,82 @@
 <p-dialog header="Edit Session" [modal]="true" [(visible)]="isOpen" focusOnShow="false">
     <div class="frame">
         <div class="label-and-input">
+            @let dateValidation = dateValidationResult();
             <label>Date</label>
             <p-inputgroup>
-                <p-datepicker placeholder="Date" appendTo="body" [(ngModel)]="date" />
+                <p-datepicker
+                    placeholder="Date"
+                    appendTo="body"
+                    [(ngModel)]="date"
+                    (onBlur)="dateInputTouched.set(true)"
+                    [invalid]="dateValidation.status === ValidationStatus.INVALID && dateInputTouched()"
+                />
+                @if (dateValidation.status === ValidationStatus.INVALID && dateInputTouched()) {
+                    <p-inputgroup-addon [pTooltip]="dateValidation.message" tooltipPosition="left">
+                        <i class="pi pi-info-circle danger"></i>
+                    </p-inputgroup-addon>
+                }
             </p-inputgroup>
         </div>
         <div class="label-and-input">
+            @let startTimeValidation = startTimeValidationResult();
             <label>Start Time</label>
             <p-inputgroup>
-                <p-datepicker placeholder="Start Time" appendTo="body" [(ngModel)]="startTime" [timeOnly]="true" />
+                <p-datepicker
+                    placeholder="Start Time"
+                    appendTo="body"
+                    [(ngModel)]="startTime"
+                    [timeOnly]="true"
+                    (onBlur)="startTimeInputTouched.set(true)"
+                    [invalid]="startTimeValidation.status === ValidationStatus.INVALID && startTimeInputTouched()"
+                />
+                @if (startTimeValidation.status === ValidationStatus.INVALID && startTimeInputTouched()) {
+                    <p-inputgroup-addon [pTooltip]="startTimeValidation.message" tooltipPosition="left">
+                        <i class="pi pi-info-circle danger"></i>
+                    </p-inputgroup-addon>
+                }
             </p-inputgroup>
         </div>
         <div class="label-and-input">
+            @let endTimeValidation = endTimeValidationResult();
             <label>End Time</label>
             <p-inputgroup>
-                <p-datepicker placeholder="End Time" appendTo="body" [(ngModel)]="endTime" [timeOnly]="true" />
+                <p-datepicker
+                    placeholder="End Time"
+                    appendTo="body"
+                    [(ngModel)]="endTime"
+                    [timeOnly]="true"
+                    (onBlur)="endTimeInputTouched.set(true)"
+                    [invalid]="endTimeValidation.status === ValidationStatus.INVALID && endTimeInputTouched()"
+                />
+                @if (endTimeValidation.status === ValidationStatus.INVALID && endTimeInputTouched()) {
+                    <p-inputgroup-addon [pTooltip]="endTimeValidation.message" tooltipPosition="left">
+                        <i class="pi pi-info-circle danger"></i>
+                    </p-inputgroup-addon>
+                }
             </p-inputgroup>
         </div>
         <div class="label-and-input">
+            @let locationValidation = locationValidationResult();
             <label>Location</label>
             <p-inputgroup>
-                <input pInputText [(ngModel)]="location" placeholder="Location" />
+                <input
+                    pInputText
+                    [(ngModel)]="location"
+                    placeholder="Location"
+                    (blur)="locationInputTouched.set(true)"
+                    [invalid]="locationValidation.status === ValidationStatus.INVALID && locationInputTouched()"
+                />
+                @if (locationValidation.status === ValidationStatus.INVALID && locationInputTouched()) {
+                    <p-inputgroup-addon [pTooltip]="locationValidation.message" tooltipPosition="left">
+                        <i class="pi pi-info-circle danger"></i>
+                    </p-inputgroup-addon>
+                }
             </p-inputgroup>
         </div>
         <div class="controls-footer">
-            <button pButton class="p-button-secondary p-button-sm" data-testid="save-button" (click)="isOpen.set(false)">Cancel</button>
-            <button pButton class="p-button-primary p-button-sm" data-testid="save-button">Save</button>
+            <button pButton class="p-button-secondary p-button-sm" (click)="close()">Cancel</button>
+            <button pButton class="p-button-primary p-button-sm" [disabled]="saveButtonDisabled()">Save</button>
         </div>
     </div>
 </p-dialog>

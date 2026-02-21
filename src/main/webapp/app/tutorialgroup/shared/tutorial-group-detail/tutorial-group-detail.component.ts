@@ -7,10 +7,12 @@ import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-pict
 import { addPublicFilePrefix } from 'app/app.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
+    faBan,
     faBuildingColumns,
     faCalendar,
     faCheck,
     faCircleExclamation,
+    faCirclePlay,
     faClock,
     faFlag,
     faMapPin,
@@ -40,6 +42,7 @@ import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { TutorialSessionCreateOrEditModalComponent } from 'app/tutorialgroup/manage/tutorial-group-session-create-or-edit-modal/tutorial-session-create-or-edit-modal.component';
+import { TooltipModule } from 'primeng/tooltip';
 
 interface TutorialGroupDetailSession {
     id: number;
@@ -53,10 +56,10 @@ interface TutorialGroupDetailSession {
     attendance?: string;
 }
 
-export interface DeleteTutorialGroupDetailSessionEvent {
+export interface ModifyTutorialGroupSessionEvent {
     courseId: number;
     tutorialGroupId: number;
-    sessionId: number;
+    tutorialGroupSessionId: number;
 }
 
 export interface DeleteTutorialGroupEvent {
@@ -82,6 +85,7 @@ type ListOption = 'all-sessions' | 'future-sessions';
         ButtonModule,
         ConfirmDialogModule,
         TutorialSessionCreateOrEditModalComponent,
+        TooltipModule,
     ],
     providers: [ConfirmationService],
     templateUrl: './tutorial-group-detail.component.html',
@@ -100,6 +104,8 @@ export class TutorialGroupDetailComponent {
     protected readonly faCheck = faCheck;
     protected readonly faPenToSquare = faPenToSquare;
     protected readonly faTrash = faTrash;
+    protected readonly faBan = faBan;
+    protected readonly faCirclePlay = faCirclePlay;
     protected readonly currentTutorialLectureId = inject(LectureService).currentTutorialLectureId;
 
     private translateService = inject(TranslateService);
@@ -133,8 +139,10 @@ export class TutorialGroupDetailComponent {
     tutorChatLink = computed(() => this.computeTutorChatLink());
     groupChannelLink = computed(() => this.computeGroupChannelLink());
     userIsNotTutor = computed(() => this.accountService.userIdentity()?.login !== this.tutorialGroup().tutorLogin);
-    deleteSession = output<DeleteTutorialGroupDetailSessionEvent>();
-    deleteGroup = output<DeleteTutorialGroupEvent>();
+    onDeleteSession = output<ModifyTutorialGroupSessionEvent>();
+    onCancelSession = output<ModifyTutorialGroupSessionEvent>();
+    onActivateSession = output<ModifyTutorialGroupSessionEvent>();
+    onDeleteGroup = output<DeleteTutorialGroupEvent>();
 
     constructor() {
         effect(() => {
@@ -214,23 +222,44 @@ export class TutorialGroupDetailComponent {
         }
     }
 
+    cancelTutorialGroupSession(sessionId: number) {
+        const courseId = this.course().id;
+        if (!courseId) return;
+        const tutorialGroupId = this.tutorialGroup().id;
+        this.onCancelSession.emit({
+            courseId: courseId,
+            tutorialGroupId: tutorialGroupId,
+            tutorialGroupSessionId: sessionId,
+        });
+    }
+
+    activateTutorialGroupSession(sessionId: number) {
+        const courseId = this.course().id;
+        if (!courseId) return;
+        const tutorialGroupId = this.tutorialGroup().id;
+        this.onActivateSession.emit({
+            courseId: courseId,
+            tutorialGroupId: tutorialGroupId,
+            tutorialGroupSessionId: sessionId,
+        });
+    }
+
     private deleteTutorialGroupSession(sessionId: number) {
         const courseId = this.course().id;
+        if (!courseId) return;
         const tutorialGroupId = this.tutorialGroup().id;
-        if (courseId && tutorialGroupId) {
-            this.deleteSession.emit({
-                courseId,
-                tutorialGroupId,
-                sessionId,
-            });
-        }
+        this.onDeleteSession.emit({
+            courseId: courseId,
+            tutorialGroupId: tutorialGroupId,
+            tutorialGroupSessionId: sessionId,
+        });
     }
 
     private deleteTutorialGroup() {
         const courseId = this.course().id;
         const tutorialGroupId = this.tutorialGroup().id;
         if (courseId) {
-            this.deleteGroup.emit({
+            this.onDeleteGroup.emit({
                 courseId,
                 tutorialGroupId,
             });

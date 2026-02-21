@@ -10,6 +10,10 @@
         flex-direction: column;
         align-items: start;
         gap: 0.5rem;
+
+        .danger {
+            color: var(--danger);
+        }
     }
 
     .controls-footer {
