@@ -58,7 +58,7 @@ describe('MonacoEditorComponent', () => {
             dispose: jest.fn(),
             addCommand: jest.fn(),
         }),
-        getOriginalEditor: jest.fn().mockReturnValue({ getValue: jest.fn() }),
+        getOriginalEditor: jest.fn().mockReturnValue({ getValue: jest.fn(), updateOptions: jest.fn() }),
         setModel: jest.fn(),
         onDidUpdateDiff: jest.fn().mockReturnValue({ dispose: jest.fn() }),
         getLineChanges: jest.fn(),
