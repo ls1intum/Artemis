@@ -3,7 +3,7 @@ import { ProgrammingExercise, ProjectType } from 'app/programming/shared/entitie
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
-import { PROFILE_THEIA } from 'app/app.constants';
+import { MODULE_FEATURE_THEIA } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -46,6 +46,6 @@ export class ProgrammingExerciseModeComponent implements OnInit {
     theiaEnabled = false;
 
     ngOnInit(): void {
-        this.theiaEnabled = this.profileService.isProfileActive(PROFILE_THEIA);
+        this.theiaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA);
     }
 }
