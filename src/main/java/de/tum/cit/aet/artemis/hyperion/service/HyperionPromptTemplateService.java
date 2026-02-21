@@ -54,7 +54,7 @@ public class HyperionPromptTemplateService {
      * @return the rendered string
      */
     public String render(String resourcePath, Map<String, String> variables) {
-        return renderObject(resourcePath, Map.copyOf(variables));
+        return renderObject(resourcePath, variables);
     }
 
     /**
@@ -66,7 +66,7 @@ public class HyperionPromptTemplateService {
      * @param variables    map of variables used during rendering
      * @return the rendered string
      */
-    public String renderObject(String resourcePath, Map<String, Object> variables) {
+    public String renderObject(String resourcePath, Map<String, ?> variables) {
         String template = loadTemplate(resourcePath);
         return replacePlaceholders(template, variables, resourcePath);
     }
@@ -84,7 +84,7 @@ public class HyperionPromptTemplateService {
         });
     }
 
-    private static String replacePlaceholders(String template, Map<String, Object> variables, String resourcePath) {
+    private static String replacePlaceholders(String template, Map<String, ?> variables, String resourcePath) {
         Matcher matcher = PLACEHOLDER_PATTERN.matcher(template);
         StringBuilder result = new StringBuilder();
         while (matcher.find()) {

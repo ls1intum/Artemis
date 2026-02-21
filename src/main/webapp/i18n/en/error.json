@@ -232,6 +232,10 @@
             "instructionEmpty": "The refinement instruction cannot be empty.",
             "instructionTooLong": "The refinement instruction is too long. Please shorten it and try again."
         },
+        "ProblemStatementRewrite": {
+            "chatClientNotConfigured": "AI rewrite is currently unavailable. Please contact your administrator.",
+            "chatClientNotConfigured_detail": "AI chat client is not configured."
+        },
         "noCourse": "An exam must belong to a course.",
         "wrongCourseId": "The course ID does not match the course connected to the exam.",
         "examTimes": "Invalid exam times: Please check that visible date is before start date, start date is before end date, and example solution publication date (if set) is after end date.",
