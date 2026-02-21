@@ -297,6 +297,12 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         const width = `${rect.width}px`;
         const height = `${rect.height}px`;
 
+        // Make the container visible and sized before creating/updating the diff editor,
+        // so Monaco can measure layout width correctly for word wrapping.
+        this.renderer.setStyle(this.diffEditorContainerElement, 'width', width);
+        this.renderer.setStyle(this.diffEditorContainerElement, 'height', height);
+        this.setContainersVisibility('diff');
+
         if (!this._diffEditor) {
             this._diffEditor = this.monacoEditorService.createStandaloneDiffEditor(this.diffEditorContainerElement, this.readOnly());
             this._diffEditor.updateOptions({
@@ -305,13 +311,17 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             });
         }
 
-        this.renderer.setStyle(this.diffEditorContainerElement, 'width', width);
-        this.renderer.setStyle(this.diffEditorContainerElement, 'height', height);
-        this.setContainersVisibility('diff');
-
         if (prevMode !== 'diff') {
             this.ensureDiffModelWired();
+        } else {
+            this._diffEditor.layout();
         }
+
+        // Apply word wrap to both inner editors after the model is wired and the
+        // container is visible, so Monaco can compute wrapping correctly.
+        this._diffEditor.getOriginalEditor().updateOptions({ wordWrap: 'on' });
+        this._diffEditor.getModifiedEditor().updateOptions({ wordWrap: 'on' });
+
         this.setActiveEditorContext();
     }
 
@@ -915,9 +925,14 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     setWordWrap(value: boolean): void {
-        this.getActiveEditor().updateOptions({
-            wordWrap: value ? 'on' : 'off',
-        });
+        const wordWrap = value ? 'on' : 'off';
+
+        if (this.isDiffMode()) {
+            this._diffEditor!.getOriginalEditor().updateOptions({ wordWrap });
+            this._diffEditor!.getModifiedEditor().updateOptions({ wordWrap });
+        } else {
+            this._editor.updateOptions({ wordWrap });
+        }
     }
 
     /**

@@ -470,8 +470,8 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         comp.onEditorSelectionChange(selection);
 
-        // Position should be converted from viewport-relative to container-relative
-        expect(comp.inlineRefinementPosition()).toEqual({ top: 70, left: 150 });
+        // Position uses viewport-relative coordinates with clamping
+        expect(comp.inlineRefinementPosition()).toEqual({ top: 100, left: 200 });
         expect(comp.selectedTextForRefinement()).toBe('Some selected text');
         expect(comp.selectionPositionInfo()).toEqual({
             startLine: 1,
