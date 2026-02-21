@@ -32,7 +32,7 @@ import { InferredCompetency } from 'app/openapi/model/inferredCompetency';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { Competency, CompetencyExerciseLink, CompetencyTaxonomy, CourseCompetency, MEDIUM_COMPETENCY_LINK_WEIGHT } from 'app/atlas/shared/entities/competency.model';
-import { forkJoin } from 'rxjs';
+import { lastValueFrom } from 'rxjs';
 import { taskRegex } from 'app/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
 
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -743,9 +743,9 @@ export class ChecklistPanelComponent {
                 }
 
                 // Create all new competencies in parallel
-                const createObservables = toCreate.map((comp) => this.competencyService.create(comp, courseId));
-                forkJoin([...createObservables]).subscribe({
-                    next: (responses) => {
+                const promises = toCreate.map((comp) => lastValueFrom(this.competencyService.create(comp, courseId)));
+                Promise.all(promises)
+                    .then((responses) => {
                         const newLinks: CompetencyExerciseLink[] = [...existingLinks];
                         const newlyCreated = new Set<string>();
 
@@ -766,12 +766,11 @@ export class ChecklistPanelComponent {
                             this.alertService.success('artemisApp.programmingExercise.instructorChecklist.competencies.createSuccess');
                         }
                         this.isCreatingCompetencies.set(false);
-                    },
-                    error: () => {
+                    })
+                    .catch(() => {
                         this.alertService.error('artemisApp.programmingExercise.instructorChecklist.competencies.createError');
                         this.isCreatingCompetencies.set(false);
-                    },
-                });
+                    });
             },
             error: () => {
                 this.alertService.error('artemisApp.programmingExercise.instructorChecklist.competencies.createError');

@@ -171,6 +171,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/core/course/manage/', // core course manage module
         '<rootDir>/src/main/webapp/app/shared/components/buttons/', // shared/buttons components
         '<rootDir>/src/main/webapp/app/exercise/review/', // review comment module
+        '<rootDir>/src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/', // checklist-panel (vitest)
     ],
     testTimeout: 3000,
     testMatch: [
@@ -188,7 +189,6 @@ module.exports = {
         '^lodash-es$': 'lodash',
         '\\.css$': '<rootDir>/src/test/javascript/spec/stub.js',
         '^monaco-editor$': '<rootDir>/node_modules/monaco-editor/esm/vs/editor/editor.api.js',
-        'monaco-editor/esm/vs/editor/edcore.main': '<rootDir>/src/test/javascript/spec/helpers/mocks/mock-monaco-editor.ts',
         '^@ls1intum/apollon$': '<rootDir>/node_modules/@ls1intum/apollon/lib/es6/index.js', // adjust if the package.json "exports" points elsewhere
         '^@ls1intum/apollon/lib/es6/(.*)': '<rootDir>/node_modules/@ls1intum/apollon/lib/es6/$1',
     },

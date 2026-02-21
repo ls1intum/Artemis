@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.atlas.api.StandardizedCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.KnowledgeArea;
 import de.tum.cit.aet.artemis.hyperion.dto.ChecklistAnalysisRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ChecklistAnalysisResponseDTO;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTaskTestRepository;
 import io.micrometer.observation.ObservationRegistry;
 
 class HyperionChecklistServiceTest {
@@ -37,7 +37,7 @@ class HyperionChecklistServiceTest {
     private StandardizedCompetencyApi standardizedCompetencyApi;
 
     @Mock
-    private ProgrammingExerciseTaskRepository taskRepository;
+    private ProgrammingExerciseTaskTestRepository taskRepository;
 
     private HyperionChecklistService hyperionChecklistService;
 
