@@ -9,6 +9,7 @@ import {
     DeleteTutorialGroupEvent,
     ModifyTutorialGroupSessionEvent,
     TutorialGroupDetailComponent,
+    UpdateTutorialGroupSessionEvent,
 } from 'app/tutorialgroup/shared/tutorial-group-detail/tutorial-group-detail.component';
 import { TutorialGroupSessionApiService } from 'app/openapi/api/tutorialGroupSessionApi.service';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
@@ -108,6 +109,27 @@ export class ManagementTutorialGroupDetailContainerComponent {
                 },
                 error: () => {
                     this.alertService.addErrorAlert('Something went wrong while undoing the cancellation. Please try again.');
+                    this.isLoading.set(false);
+                },
+            });
+    }
+
+    updateSession(updateEvent: UpdateTutorialGroupSessionEvent) {
+        this.isLoading.set(true);
+        const courseId = updateEvent.courseId;
+        const tutorialGroupId = updateEvent.tutorialGroupId;
+        const tutorialGroupSessionId = updateEvent.tutorialGroupSessionId;
+        const updateTutorialGroupSessionDTO = updateEvent.updateTutorialGroupSessionDTO;
+        this.tutorialGroupSessionService
+            .update(courseId, tutorialGroupId, tutorialGroupSessionId, updateTutorialGroupSessionDTO)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: () => {
+                    this.tutorialGroupService.fetchTutorialGroupDTO(courseId, tutorialGroupId); // TODO: rather update without fetch?
+                    this.isLoading.set(false);
+                },
+                error: () => {
+                    this.alertService.addErrorAlert('Something went wrong while updating the session. Please try again.');
                     this.isLoading.set(false);
                 },
             });

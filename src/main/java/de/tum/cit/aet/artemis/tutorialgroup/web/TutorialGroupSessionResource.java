@@ -18,6 +18,7 @@ import jakarta.validation.constraints.Size;
 import jakarta.ws.rs.BadRequestException;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -136,7 +137,7 @@ public class TutorialGroupSessionResource {
      */
     @PutMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}")
     @EnforceAtLeastTutor
-    public ResponseEntity<TutorialGroupSession> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
+    public ResponseEntity<Void> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
             @RequestBody @Valid TutorialGroupSessionRequestDTO tutorialGroupSessionDTO) {
         log.debug("REST request to update session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         tutorialGroupSessionDTO.validityCheck();
@@ -153,9 +154,11 @@ public class TutorialGroupSessionResource {
         sessionToUpdate.setStart(updatedSession.getStart());
         sessionToUpdate.setEnd(updatedSession.getEnd());
         sessionToUpdate.setLocation(updatedSession.getLocation());
+        sessionToUpdate.setAttendanceCount(updatedSession.getAttendanceCount());
 
         isValidTutorialGroupSession(sessionToUpdate, ZoneId.of(configuration.getCourse().getTimeZone()));
 
+        // TODO: check if still applies
         // if the session belongs to a schedule we have to cut the connection to mark that it does not follow the schedule anymore
         if (sessionToUpdate.getTutorialGroupSchedule() != null) {
             var schedule = tutorialGroupScheduleRepository.findByIdWithSessionsElseThrow(sessionToUpdate.getTutorialGroupSchedule().getId());
@@ -168,9 +171,9 @@ public class TutorialGroupSessionResource {
                 .findFirstOverlappingInSameCourse(sessionToUpdate.getTutorialGroup().getCourse(), sessionToUpdate.getStart(), sessionToUpdate.getEnd());
         updateTutorialGroupSession(sessionToUpdate, overlappingPeriodOptional);
 
-        TutorialGroupSession result = tutorialGroupSessionRepository.save(sessionToUpdate);
+        tutorialGroupSessionRepository.save(sessionToUpdate);
 
-        return ResponseEntity.ok(TutorialGroupSession.preventCircularJsonConversion(result));
+        return ResponseEntity.noContent().build();
     }
 
     private Pair<User, Boolean> getUserAndCheckWhetherTheyAreAdminOrInstructor(long courseId) {
@@ -376,7 +379,8 @@ public class TutorialGroupSessionResource {
      * DTO used because we want to interpret the dates in the time zone of the tutorial groups configuration
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record TutorialGroupSessionRequestDTO(@NonNull LocalDate date, @NonNull LocalTime startTime, @NonNull LocalTime endTime, @Size(min = 1, max = 2000) String location) {
+    public record TutorialGroupSessionRequestDTO(@NonNull LocalDate date, @NonNull LocalTime startTime, @NonNull LocalTime endTime, @Size(min = 1, max = 2000) String location,
+            @Nullable Integer attendance) {
 
         public void validityCheck() {
             if (startTime.isAfter(endTime)) {
@@ -395,6 +399,7 @@ public class TutorialGroupSessionResource {
             tutorialGroupSession.setStart(interpretInTimeZone(date, startTime, tutorialGroupsConfiguration.getCourse().getTimeZone()));
             tutorialGroupSession.setEnd(interpretInTimeZone(date, endTime, tutorialGroupsConfiguration.getCourse().getTimeZone()));
             tutorialGroupSession.setLocation(location);
+            tutorialGroupSession.setAttendanceCount(attendance);
             return tutorialGroupSession;
         }
 

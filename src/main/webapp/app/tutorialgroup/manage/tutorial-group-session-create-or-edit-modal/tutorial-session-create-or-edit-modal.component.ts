@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, output, signal } from '@angular/core';
 import { DialogModule } from 'primeng/dialog';
 import { FormsModule } from '@angular/forms';
 import { DatePickerModule } from 'primeng/datepicker';
@@ -9,6 +9,13 @@ import { TutorialGroupSessionDTO } from 'app/tutorialgroup/shared/entities/tutor
 import { Validation, ValidationStatus } from 'app/tutorialgroup/manage/tutorial-create-or-edit/tutorial-create-or-edit.component';
 import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
 import { TooltipModule } from 'primeng/tooltip';
+import { UpdateTutorialGroupSessionDTO } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
+import dayjs from 'dayjs/esm';
+
+export interface UpdateTutorialGroupSessionData {
+    tutorialGroupSessionId: number;
+    updateTutorialGroupSessionDTO: UpdateTutorialGroupSessionDTO;
+}
 
 @Component({
     selector: 'jhi-tutorial-session-create-or-edit-modal',
@@ -42,6 +49,8 @@ export class TutorialSessionCreateOrEditModalComponent {
     inputsInvalid = computed(() => this.computeIfInputsInvalid());
     saveButtonDisabled = computed<boolean>(() => this.computeIfSaveButtonDisabled());
 
+    onUpdate = output<UpdateTutorialGroupSessionData>();
+
     open(session?: TutorialGroupSessionDTO) {
         if (session) {
             this.session.set(session);
@@ -53,7 +62,42 @@ export class TutorialSessionCreateOrEditModalComponent {
         this.isOpen.set(true);
     }
 
-    close() {
+    save() {
+        const session = this.session();
+        if (session) {
+            this.updateSession(session);
+        } else {
+            // TODO: implement create
+        }
+        this.clearData();
+        this.isOpen.set(false);
+    }
+
+    cancel() {
+        this.clearData();
+        this.isOpen.set(false);
+    }
+
+    private updateSession(session: TutorialGroupSessionDTO) {
+        const tutorialGroupSessionId = session.id;
+        const date = dayjs(this.date()).format('YYYY-MM-DD');
+        const startTime = dayjs(this.startTime()).format('HH:mm');
+        const endTime = dayjs(this.endTime()).format('HH:mm');
+        const location = this.location();
+        const updateTutorialGroupSessionDTO: UpdateTutorialGroupSessionDTO = {
+            date: date,
+            startTime: startTime,
+            endTime: endTime,
+            location: location,
+        };
+        const updateTutorialGroupSessionData: UpdateTutorialGroupSessionData = {
+            tutorialGroupSessionId: tutorialGroupSessionId,
+            updateTutorialGroupSessionDTO: updateTutorialGroupSessionDTO,
+        };
+        this.onUpdate.emit(updateTutorialGroupSessionData);
+    }
+
+    private clearData() {
         this.session.set(undefined);
         this.date.set(undefined);
         this.dateInputTouched.set(false);
@@ -63,7 +107,6 @@ export class TutorialSessionCreateOrEditModalComponent {
         this.endTimeInputTouched.set(false);
         this.location.set('');
         this.locationInputTouched.set(false);
-        this.isOpen.set(false);
     }
 
     private computeIfSaveButtonDisabled(): boolean {
@@ -107,11 +150,12 @@ export class TutorialSessionCreateOrEditModalComponent {
             };
         }
         const startTime = this.startTime();
-        if (startTime && endTime.getTime() <= startTime.getTime()) {
-            return {
-                status: ValidationStatus.INVALID,
-                message: 'End time must be after the start time.',
-            };
+        if (startTime) {
+            const startMinutes = startTime.getHours() * 60 + startTime.getMinutes();
+            const endMinutes = endTime.getHours() * 60 + endTime.getMinutes();
+            if (endMinutes <= startMinutes) {
+                return { status: ValidationStatus.INVALID, message: 'End time must be after the start time.' };
+            }
         }
         return { status: ValidationStatus.VALID };
     }
@@ -142,15 +186,12 @@ export class TutorialSessionCreateOrEditModalComponent {
         const location = this.location().trim();
         if (!date || !startTime || !endTime) return false;
 
-        const combinedStart = new Date(date);
-        combinedStart.setHours(startTime.getHours(), startTime.getMinutes(), 0, 0);
-        const combinedEnd = new Date(date);
-        combinedEnd.setHours(endTime.getHours(), endTime.getMinutes(), 0, 0);
-
-        const originalStart = session.start.toDate();
-        const originalEnd = session.end.toDate();
-        const originalLocation = session.location;
-
-        return combinedStart.getTime() !== originalStart.getTime() || combinedEnd.getTime() !== originalEnd.getTime() || location !== originalLocation;
+        const originalStart = session.start;
+        const originalEnd = session.end;
+        const dateChanged = date.getFullYear() !== originalStart.year() || date.getMonth() !== originalStart.month() || date.getDate() !== originalStart.date();
+        const startTimeChanged = startTime.getHours() !== originalStart.hour() || startTime.getMinutes() !== originalStart.minute();
+        const endTimeChanged = endTime.getHours() !== originalEnd.hour() || endTime.getMinutes() !== originalEnd.minute();
+        const locationChanged = location !== session.location;
+        return dateChanged || startTimeChanged || endTimeChanged || locationChanged;
     }
 }

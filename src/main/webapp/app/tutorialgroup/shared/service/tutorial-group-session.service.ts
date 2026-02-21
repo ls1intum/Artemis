@@ -16,6 +16,14 @@ export class TutorialGroupSessionDTO {
     public location?: string;
 }
 
+export interface UpdateTutorialGroupSessionDTO {
+    date: string;
+    startTime: string;
+    endTime: string;
+    location: string;
+    attendance?: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class TutorialGroupSessionService {
     private httpClient = inject(HttpClient);
@@ -30,11 +38,8 @@ export class TutorialGroupSessionService {
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupSessionResponseDatesFromServer(res)));
     }
 
-    update(courseId: number, tutorialGroupId: number, sessionId: number, session: TutorialGroupSessionDTO): Observable<EntityResponseType> {
-        const copy = this.convertTutorialGroupSessionDatesFromClient(session);
-        return this.httpClient
-            .put<TutorialGroupSession>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}`, copy, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertTutorialGroupSessionResponseDatesFromServer(res)));
+    update(courseId: number, tutorialGroupId: number, sessionId: number, updateTutorialGroupSessionDTO: UpdateTutorialGroupSessionDTO): Observable<void> {
+        return this.httpClient.put<void>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}`, updateTutorialGroupSessionDTO);
     }
 
     updateAttendanceCount(courseId: number, tutorialGroupId: number, sessionId: number, attendanceCount: number | undefined): Observable<EntityResponseType> {

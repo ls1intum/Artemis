@@ -41,8 +41,12 @@ import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { TutorialSessionCreateOrEditModalComponent } from 'app/tutorialgroup/manage/tutorial-group-session-create-or-edit-modal/tutorial-session-create-or-edit-modal.component';
+import {
+    TutorialSessionCreateOrEditModalComponent,
+    UpdateTutorialGroupSessionData,
+} from 'app/tutorialgroup/manage/tutorial-group-session-create-or-edit-modal/tutorial-session-create-or-edit-modal.component';
 import { TooltipModule } from 'primeng/tooltip';
+import { UpdateTutorialGroupSessionDTO } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
 
 interface TutorialGroupDetailSession {
     id: number;
@@ -60,6 +64,13 @@ export interface ModifyTutorialGroupSessionEvent {
     courseId: number;
     tutorialGroupId: number;
     tutorialGroupSessionId: number;
+}
+
+export interface UpdateTutorialGroupSessionEvent {
+    courseId: number;
+    tutorialGroupId: number;
+    tutorialGroupSessionId: number;
+    updateTutorialGroupSessionDTO: UpdateTutorialGroupSessionDTO;
 }
 
 export interface DeleteTutorialGroupEvent {
@@ -141,6 +152,7 @@ export class TutorialGroupDetailComponent {
     userIsNotTutor = computed(() => this.accountService.userIdentity()?.login !== this.tutorialGroup().tutorLogin);
     onDeleteSession = output<ModifyTutorialGroupSessionEvent>();
     onCancelSession = output<ModifyTutorialGroupSessionEvent>();
+    onUpdateSession = output<UpdateTutorialGroupSessionEvent>();
     onActivateSession = output<ModifyTutorialGroupSessionEvent>();
     onDeleteGroup = output<DeleteTutorialGroupEvent>();
 
@@ -242,6 +254,19 @@ export class TutorialGroupDetailComponent {
             tutorialGroupId: tutorialGroupId,
             tutorialGroupSessionId: sessionId,
         });
+    }
+
+    updateTutorialGroupSession(updateTutorialGroupSessionData: UpdateTutorialGroupSessionData) {
+        const courseId = this.course().id;
+        if (!courseId) return;
+        const tutorialGroupId = this.tutorialGroup().id;
+        const updateTutorialGroupSessionEvent: UpdateTutorialGroupSessionEvent = {
+            courseId: courseId,
+            tutorialGroupId: tutorialGroupId,
+            tutorialGroupSessionId: updateTutorialGroupSessionData.tutorialGroupSessionId,
+            updateTutorialGroupSessionDTO: updateTutorialGroupSessionData.updateTutorialGroupSessionDTO,
+        };
+        this.onUpdateSession.emit(updateTutorialGroupSessionEvent);
     }
 
     private deleteTutorialGroupSession(sessionId: number) {

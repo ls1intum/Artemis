@@ -75,8 +75,8 @@
             </p-inputgroup>
         </div>
         <div class="controls-footer">
-            <button pButton class="p-button-secondary p-button-sm" (click)="close()">Cancel</button>
-            <button pButton class="p-button-primary p-button-sm" [disabled]="saveButtonDisabled()">Save</button>
+            <button pButton class="p-button-secondary p-button-sm" (click)="cancel()">Cancel</button>
+            <button pButton class="p-button-primary p-button-sm" [disabled]="saveButtonDisabled()" (click)="save()">Save</button>
         </div>
     </div>
 </p-dialog>
