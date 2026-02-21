@@ -20,13 +20,13 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ExerciseActionButtonComponent } from 'app/shared/components/buttons/exercise-action-button/exercise-action-button.component';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
+import { MODULE_FEATURE_THEIA } from 'app/app.constants';
 import { ProgrammingExerciseTheiaConfig } from 'app/programming/shared/entities/programming-exercise-theia.config';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { SshUserSettingsService } from 'app/core/user/settings/ssh-settings/ssh-user-settings.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { PROFILE_THEIA } from 'app/app.constants';
 import { expectedProfileInfo } from 'test/helpers/sample/profile-info-sample-data';
 
 describe('CodeButtonComponent', () => {
@@ -385,9 +385,9 @@ describe('CodeButtonComponent', () => {
 
     it.each([
         [
-            'start theia button should be visible when profile is active and theia is configured',
+            'start theia button should be visible when module feature is active and theia is configured',
             {
-                activeProfiles: [PROFILE_THEIA],
+                activeModuleFeatures: [MODULE_FEATURE_THEIA],
                 theiaPortalURL: 'https://theia.test',
             },
             {
@@ -399,9 +399,9 @@ describe('CodeButtonComponent', () => {
             true,
         ],
         [
-            'start theia button should not be visible when profile is active but theia is ill-configured',
+            'start theia button should not be visible when module feature is active but theia is ill-configured',
             {
-                activeProfiles: [PROFILE_THEIA],
+                activeModuleFeatures: [MODULE_FEATURE_THEIA],
                 theiaPortalURL: 'https://theia.test',
             },
             {
@@ -413,9 +413,9 @@ describe('CodeButtonComponent', () => {
             false,
         ],
         [
-            'start theia button should not be visible when profile is active but onlineIde is not activated',
+            'start theia button should not be visible when module feature is active but onlineIde is not activated',
             {
-                activeProfiles: [PROFILE_THEIA],
+                activeModuleFeatures: [MODULE_FEATURE_THEIA],
                 theiaPortalURL: 'https://theia.test',
             },
             {
@@ -427,9 +427,9 @@ describe('CodeButtonComponent', () => {
             false,
         ],
         [
-            'start theia button should not be visible when profile is active but url is not set',
+            'start theia button should not be visible when module feature is active but url is not set',
             {
-                activeProfiles: [PROFILE_THEIA],
+                activeModuleFeatures: [MODULE_FEATURE_THEIA],
             },
             {
                 allowOnlineIde: true,
@@ -440,7 +440,7 @@ describe('CodeButtonComponent', () => {
             false,
         ],
         [
-            'start theia button should not be visible when profile is not active but url is set',
+            'start theia button should not be visible when module feature is not active but url is set',
             {
                 theiaPortalURL: 'https://theia.test',
             },
