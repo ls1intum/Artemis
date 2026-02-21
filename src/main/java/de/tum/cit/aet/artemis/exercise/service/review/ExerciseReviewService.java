@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -123,55 +122,6 @@ public class ExerciseReviewService {
     }
 
     /**
-     * Replaces previously generated consistency-check comment threads with the provided issues.
-     * Existing consistency-check threads are identified by checking whether their first comment has type {@link CommentType#CONSISTENCY_CHECK}.
-     * For each consistency issue, one thread group is created and all related locations are persisted as threads within that group.
-     *
-     * @param exerciseId the programming exercise id that owns the review comments
-     * @param issues     the latest consistency issues to persist as review comments
-     */
-    public void replaceConsistencyCheckComments(long exerciseId, List<ConsistencyIssueDTO> issues) {
-        authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.EDITOR, exerciseId);
-        Exercise exercise = exerciseRepository.findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
-
-        Set<CommentThread> existingThreads = commentThreadRepository.findWithCommentsByExerciseId(exerciseId);
-        List<CommentThread> existingConsistencyThreads = existingThreads.stream().filter(this::startsWithConsistencyCheckComment).toList();
-        if (!existingConsistencyThreads.isEmpty()) {
-            List<Long> potentiallyEmptyGroupIds = existingConsistencyThreads.stream().map(CommentThread::getGroup).filter(Objects::nonNull).map(CommentThreadGroup::getId)
-                    .filter(Objects::nonNull).distinct().toList();
-
-            commentThreadRepository.deleteAll(existingConsistencyThreads);
-            commentThreadRepository.flush();
-
-            for (Long groupId : potentiallyEmptyGroupIds) {
-                if (commentThreadRepository.countByGroupId(groupId) == 0) {
-                    commentThreadGroupRepository.deleteById(groupId);
-                }
-            }
-        }
-
-        if (issues == null || issues.isEmpty()) {
-            return;
-        }
-
-        for (ConsistencyIssueDTO issue : issues) {
-            if (issue == null) {
-                continue;
-            }
-            List<ConsistencyThreadLocation> locations = mapConsistencyIssueLocations(issue);
-            CommentThreadGroup group = createConsistencyCheckGroup(exercise);
-
-            for (ConsistencyThreadLocation location : locations) {
-                CommentThread thread = buildConsistencyCheckThread(exercise, location);
-                thread.setGroup(group);
-                Comment comment = buildConsistencyCheckComment(thread, issue);
-                thread.getComments().add(comment);
-                commentThreadRepository.save(thread);
-            }
-        }
-    }
-
-    /**
      * Create a new comment thread for an exercise.
      *
      * @param exerciseId the exercise id
@@ -196,6 +146,38 @@ public class ExerciseReviewService {
         thread.getComments().add(comment);
         thread = commentThreadRepository.save(thread);
         return new ThreadCreationResult(thread, comment);
+    }
+
+    /**
+     * Persists newly detected consistency-check issues as review comment threads.
+     * Existing consistency-check threads are kept untouched.
+     * For each consistency issue, one thread group is created and all related locations are persisted as threads within that group.
+     *
+     * @param exerciseId the programming exercise id that owns the review comments
+     * @param issues     the newly detected consistency issues to persist as review comments
+     */
+    public void createConsistencyCheckThreads(long exerciseId, List<ConsistencyIssueDTO> issues) {
+        Exercise exercise = exerciseRepository.findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
+
+        if (issues == null || issues.isEmpty()) {
+            return;
+        }
+
+        for (ConsistencyIssueDTO issue : issues) {
+            if (issue == null) {
+                continue;
+            }
+            List<ConsistencyThreadLocation> locations = mapConsistencyIssueLocations(issue);
+            CommentThreadGroup group = createConsistencyCheckGroup(exercise);
+
+            for (ConsistencyThreadLocation location : locations) {
+                CommentThread thread = buildConsistencyCheckThread(exercise, location);
+                thread.setGroup(group);
+                Comment comment = buildConsistencyCheckComment(thread, issue);
+                thread.getComments().add(comment);
+                commentThreadRepository.save(thread);
+            }
+        }
     }
 
     /**
@@ -830,18 +812,6 @@ public class ExerciseReviewService {
      * @param comment the created initial comment
      */
     public record ThreadCreationResult(CommentThread thread, Comment comment) {
-    }
-
-    private boolean startsWithConsistencyCheckComment(CommentThread thread) {
-        return findFirstComment(thread).map(comment -> comment.getType() == CommentType.CONSISTENCY_CHECK).orElse(false);
-    }
-
-    private Optional<Comment> findFirstComment(CommentThread thread) {
-        if (thread == null || thread.getComments() == null || thread.getComments().isEmpty()) {
-            return Optional.empty();
-        }
-        return thread.getComments().stream().min(Comparator.comparing(Comment::getCreatedDate, Comparator.nullsLast(Comparator.naturalOrder())).thenComparing(Comment::getId,
-                Comparator.nullsLast(Comparator.naturalOrder())));
     }
 
     private CommentThread buildConsistencyCheckThread(Exercise exercise, ConsistencyThreadLocation location) {

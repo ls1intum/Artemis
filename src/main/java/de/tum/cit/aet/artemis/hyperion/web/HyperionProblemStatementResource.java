@@ -77,7 +77,7 @@ public class HyperionProblemStatementResource {
         log.debug("REST request to Hyperion consistency check for programming exercise [{}]", exerciseId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         var response = consistencyCheckService.checkConsistency(exercise);
-        exerciseReviewService.replaceConsistencyCheckComments(exerciseId, response.issues());
+        exerciseReviewService.createConsistencyCheckThreads(exerciseId, response.issues());
         return ResponseEntity.ok(response);
     }
 

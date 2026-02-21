@@ -168,7 +168,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void shouldReplaceConsistencyCheckThreadsWithLatestIssues() {
+    void shouldAppendConsistencyCheckThreadsWithoutDeletingPreviousOnes() {
         CommentThread oldConsistencyThread = persistThread(programmingExercise);
         Comment oldConsistencyComment = buildConsistencyIssueCommentEntity("Old consistency issue");
         oldConsistencyComment.setThread(oldConsistencyThread);
@@ -180,15 +180,19 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         commentRepository.save(userComment);
 
         ConsistencyIssueDTO issue = buildConsistencyIssue("New consistency issue", ArtifactType.PROBLEM_STATEMENT, "", 2);
-        exerciseReviewService.replaceConsistencyCheckComments(programmingExercise.getId(), List.of(issue));
+        exerciseReviewService.createConsistencyCheckThreads(programmingExercise.getId(), List.of(issue));
 
         Set<CommentThread> threads = commentThreadRepository.findWithCommentsByExerciseId(programmingExercise.getId());
-        assertThat(threads).hasSize(2);
+        assertThat(threads).hasSize(3);
 
         CommentThread persistedUserThread = threads.stream().filter(thread -> thread.getId().equals(userThread.getId())).findFirst().orElseThrow();
         assertThat(persistedUserThread.getComments()).singleElement().extracting(Comment::getType).isEqualTo(CommentType.USER);
 
-        CommentThread generatedConsistencyThread = threads.stream().filter(thread -> !thread.getId().equals(userThread.getId())).findFirst().orElseThrow();
+        CommentThread persistedOldConsistencyThread = threads.stream().filter(thread -> thread.getId().equals(oldConsistencyThread.getId())).findFirst().orElseThrow();
+        assertThat(persistedOldConsistencyThread.getComments()).singleElement().extracting(Comment::getType).isEqualTo(CommentType.CONSISTENCY_CHECK);
+
+        CommentThread generatedConsistencyThread = threads.stream().filter(thread -> !thread.getId().equals(userThread.getId()))
+                .filter(thread -> !thread.getId().equals(oldConsistencyThread.getId())).findFirst().orElseThrow();
         assertThat(generatedConsistencyThread.getTargetType()).isEqualTo(CommentThreadLocationType.PROBLEM_STATEMENT);
         assertThat(generatedConsistencyThread.getLineNumber()).isEqualTo(2);
         assertThat(generatedConsistencyThread.getGroup()).isNotNull();
@@ -200,15 +204,15 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void shouldDeletePreviousConsistencyCheckThreadsWhenNoIssuesRemain() {
+    void shouldKeepPreviousConsistencyCheckThreadsWhenNoIssuesRemain() {
         CommentThread oldConsistencyThread = persistThread(programmingExercise);
         Comment oldConsistencyComment = buildConsistencyIssueCommentEntity("Old consistency issue");
         oldConsistencyComment.setThread(oldConsistencyThread);
         commentRepository.save(oldConsistencyComment);
 
-        exerciseReviewService.replaceConsistencyCheckComments(programmingExercise.getId(), List.of());
+        exerciseReviewService.createConsistencyCheckThreads(programmingExercise.getId(), List.of());
 
-        assertThat(commentThreadRepository.findById(oldConsistencyThread.getId())).isEmpty();
+        assertThat(commentThreadRepository.findById(oldConsistencyThread.getId())).isPresent();
     }
 
     @Test
@@ -216,7 +220,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     void shouldMapTemplateRepositoryIssueToTemplateReviewThread() {
         ConsistencyIssueDTO issue = buildConsistencyIssue("Template issue", ArtifactType.TEMPLATE_REPOSITORY, "src/Main.java", 8);
 
-        exerciseReviewService.replaceConsistencyCheckComments(programmingExercise.getId(), List.of(issue));
+        exerciseReviewService.createConsistencyCheckThreads(programmingExercise.getId(), List.of(issue));
 
         Set<CommentThread> threads = commentThreadRepository.findWithCommentsByExerciseId(programmingExercise.getId());
         assertThat(threads).singleElement().satisfies(thread -> {
@@ -237,7 +241,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         ConsistencyIssueDTO secondIssue = new ConsistencyIssueDTO(Severity.LOW, ConsistencyIssueCategory.ATTRIBUTE_TYPE_MISMATCH, "Second grouped issue", "Fix second issue",
                 List.of(new ArtifactLocationDTO(ArtifactType.SOLUTION_REPOSITORY, "src/B.java", 5, 5), new ArtifactLocationDTO(ArtifactType.PROBLEM_STATEMENT, "", 2, 2)));
 
-        exerciseReviewService.replaceConsistencyCheckComments(programmingExercise.getId(), List.of(firstIssue, secondIssue));
+        exerciseReviewService.createConsistencyCheckThreads(programmingExercise.getId(), List.of(firstIssue, secondIssue));
 
         Set<CommentThread> threads = commentThreadRepository.findWithCommentsByExerciseId(programmingExercise.getId());
         assertThat(threads).hasSize(4);
