@@ -82,7 +82,7 @@ public class TutorialGroupChannelManagementService {
      * <p>
      * - Create channel if it does not exist
      * - Add all students of tutorial group to channel
-     * - Add teaching assistant to channel and make him/her moderator
+     * - Add teaching assistant to channel and make them moderator
      *
      * @param tutorialGroupToSetUp the tutorial group for which the channel should be set up
      * @return the created or existing channel

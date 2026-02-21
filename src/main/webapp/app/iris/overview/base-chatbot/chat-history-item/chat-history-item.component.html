@@ -8,14 +8,17 @@
     (keydown.enter)="onItemClick()"
 >
     <div class="chat-history-text">
+        @if (isNewChat()) {
+            <fa-icon [icon]="faPlus" class="new-chat-icon" />
+        }
         {{ session().title ? session().title : (session().creationDate | date: 'dd.MM.yy HH:mm') }}
     </div>
     @if (relatedEntityName() && icon() && tooltipKey()) {
         <div class="related-entity-info">
             <div class="related-entity-name">
+                <fa-icon [icon]="icon()!" [ngbTooltip]="tooltipKey()! | artemisTranslate" />
                 {{ relatedEntityName() }}
             </div>
-            <fa-icon [icon]="icon()!" [ngbTooltip]="tooltipKey()! | artemisTranslate" />
         </div>
     }
 </div>
