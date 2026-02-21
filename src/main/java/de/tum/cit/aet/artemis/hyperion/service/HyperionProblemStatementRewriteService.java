@@ -3,8 +3,6 @@ package de.tum.cit.aet.artemis.hyperion.service;
 import java.util.List;
 import java.util.Map;
 
-import jakarta.annotation.Nullable;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -15,7 +13,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
-import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
@@ -35,7 +32,6 @@ public class HyperionProblemStatementRewriteService {
 
     private static final String REWRITE_PIPELINE_ID = "HYPERION_PROBLEM_REWRITE";
 
-    @Nullable
     private final ChatClient chatClient;
 
     private final HyperionPromptTemplateService templateService;
@@ -49,13 +45,13 @@ public class HyperionProblemStatementRewriteService {
     /**
      * Creates a new ProblemStatementRewriteService.
      *
-     * @param chatClient           the AI chat client, may be null if AI is not configured
+     * @param chatClient           the AI chat client (optional)
      * @param templateService      prompt template service
      * @param observationRegistry  the observation registry for metrics
      * @param llmTokenUsageService service for tracking LLM token usage
      * @param userRepository       repository for resolving current user
      */
-    public HyperionProblemStatementRewriteService(@Nullable ChatClient chatClient, HyperionPromptTemplateService templateService, ObservationRegistry observationRegistry,
+    public HyperionProblemStatementRewriteService(ChatClient chatClient, HyperionPromptTemplateService templateService, ObservationRegistry observationRegistry,
             LLMTokenUsageService llmTokenUsageService, UserRepository userRepository) {
         this.chatClient = chatClient;
         this.templateService = templateService;
@@ -74,10 +70,6 @@ public class HyperionProblemStatementRewriteService {
     @Observed(name = "hyperion.rewrite", contextualName = "problem statement rewrite", lowCardinalityKeyValues = { "ai.span", "true" })
     public ProblemStatementRewriteResponseDTO rewriteProblemStatement(Course course, String problemStatementText) {
         log.debug("Rewriting problem statement for course {}", course.getId());
-
-        if (chatClient == null) {
-            throw new InternalServerErrorAlertException("AI chat client is not configured", "ProblemStatement", "ProblemStatementRewrite.chatClientNotConfigured");
-        }
 
         var current = observationRegistry.getCurrentObservation();
         if (current != null) {
