@@ -20,7 +20,6 @@ import {
     signal,
     untracked,
 } from '@angular/core';
-import { faBold, faItalic, faUnderline } from '@fortawesome/free-solid-svg-icons';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import {
     NgbDropdown,
@@ -349,9 +348,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     static readonly TAB_EDIT = 'editor_edit';
     static readonly TAB_PREVIEW = 'editor_preview';
     static readonly TAB_VISUAL = 'editor_visual';
-    readonly boldIcon = faBold;
-    readonly italicIcon = faItalic;
-    readonly underlineIcon = faUnderline;
     readonly colorPickerMarginTop = 35;
     readonly colorPickerHeight = 110;
     // Icons
