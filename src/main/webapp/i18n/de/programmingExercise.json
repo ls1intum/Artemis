@@ -250,6 +250,8 @@
                 "creationAssistance": "Erstellungsassistenz",
                 "generateCode": "Code generieren",
                 "generating": "Generiere...",
+                "runningTitle": "Code-Generierung läuft",
+                "runningText": "Die Code-Generierung läuft aktuell für diese Übung durch einen anderen Benutzer. Bitte versuchen Sie es später erneut.",
                 "description": "Generiere Lösung, Template und Test-Code mit KI",
                 "tooltip": "KI Code-Generierung - Generiere Lösung, Template und Test-Code",
                 "confirmTitle": "Code-Generierung bestätigen",

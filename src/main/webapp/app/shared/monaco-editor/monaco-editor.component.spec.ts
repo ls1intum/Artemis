@@ -10,6 +10,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
+import * as monaco from 'monaco-editor';
 
 describe('MonacoEditorComponent', () => {
     let fixture: ComponentFixture<MonacoEditorComponent>;
@@ -268,6 +269,39 @@ describe('MonacoEditorComponent', () => {
         expect(button.isVisible()).toBeFalse();
     });
 
+    it('should restore previous Monaco options when clearing the line decorations hover button', () => {
+        fixture.detectChanges();
+        const updateOptionsSpy = jest.spyOn((comp as any)._editor, 'updateOptions');
+        const originalGetOption = (comp as any)._editor.getOption.bind((comp as any)._editor);
+        const getOptionSpy = jest.spyOn((comp as any)._editor, 'getOption').mockImplementation((option: monaco.editor.EditorOption) => {
+            if (option === monaco.editor.EditorOption.folding) {
+                return false;
+            }
+            if (option === monaco.editor.EditorOption.lineDecorationsWidth) {
+                return '1ch';
+            }
+            return originalGetOption(option);
+        });
+
+        updateOptionsSpy.mockClear();
+        comp.setLineDecorationsHoverButton('testClass', () => {});
+        comp.clearLineDecorationsHoverButton();
+
+        expect(updateOptionsSpy).toHaveBeenNthCalledWith(2, { folding: false, lineDecorationsWidth: '1ch' });
+        expect(getOptionSpy).toHaveBeenCalledWith(monaco.editor.EditorOption.folding);
+        expect(getOptionSpy).toHaveBeenCalledWith(monaco.editor.EditorOption.lineDecorationsWidth);
+    });
+
+    it('should not overwrite editor options when clearing without an active line decorations hover button', () => {
+        fixture.detectChanges();
+        const updateOptionsSpy = jest.spyOn((comp as any)._editor, 'updateOptions');
+        updateOptionsSpy.mockClear();
+
+        comp.clearLineDecorationsHoverButton();
+
+        expect(updateOptionsSpy).not.toHaveBeenCalled();
+    });
+
     it('should not allow editing in readonly mode', () => {
         fixture.componentRef.setInput('readOnly', true);
         fixture.detectChanges();
@@ -398,6 +432,13 @@ describe('MonacoEditorComponent', () => {
         expect(model?.getValue()).toBe(singleLineText);
     });
 
+    it('should return empty line content when no model is active', () => {
+        fixture.detectChanges();
+        comp.disposeModels();
+
+        expect(comp.getLineContent(1)).toBe('');
+    });
+
     it('should get the content of a specific line', () => {
         fixture.detectChanges();
         comp.setText(multiLineText);
@@ -417,6 +458,16 @@ describe('MonacoEditorComponent', () => {
         // Empty line
         comp.setText('line1\n\nline3');
         expect(comp.getLineContent(2)).toBe('');
+    });
+
+    it('should delegate setPosition to the Monaco editor', () => {
+        fixture.detectChanges();
+        const setPositionSpy = jest.spyOn((comp as any)._editor, 'setPosition');
+        const position = { lineNumber: 3, column: 2 };
+
+        comp.setPosition(position);
+
+        expect(setPositionSpy).toHaveBeenCalledExactlyOnceWith(position);
     });
 
     it('should delete a combined emoji entirely on backspace press', fakeAsync(() => {

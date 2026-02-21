@@ -61,13 +61,12 @@
                 !programmingExerciseCreationConfig().isImportFromExistingExercise
             ) {
                 <jhi-programming-exercise-editable-instructions
-                    [participation]="programmingExercise()?.templateParticipation!"
                     [exercise]="programmingExercise()!"
                     [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
                     [showStatus]="!!programmingExercise()?.id"
                     [editMode]="!!programmingExercise()?.id"
                     (hasUnsavedChanges)="programmingExerciseCreationConfig().hasUnsavedChanges = $event"
-                    (instructionChange)="onProblemStatementChange($event)"
+                    (instructionChange)="onInstructionChange($event)"
                     (exerciseChange)="programmingExerciseChange.emit($event)"
                     [forceRender]="programmingExerciseCreationConfig().rerenderSubject"
                     class="form__editable-instructions"
@@ -79,7 +78,7 @@
             [exercise]="programmingExercise()!"
             [courseId]="programmingExercise()?.course?.id ?? programmingExercise()?.exerciseGroup?.exam?.course?.id ?? 0"
             [problemStatement]="programmingExercise()?.problemStatement || ''"
-            (problemStatementChange)="onProblemStatementChange($event)"
+            (problemStatementChange)="onInstructionChange($event)"
         />
     }
     @if (isEditFieldDisplayedRecord()?.linkedCompetencies && !programmingExerciseCreationConfig().isExamMode) {

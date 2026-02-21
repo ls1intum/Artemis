@@ -90,19 +90,6 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
     }
 
     /**
-     * Handles problem statement changes from the editor
-     */
-    onProblemStatementChange(newProblemStatement: string): void {
-        const exercise = this.programmingExercise();
-        this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
-        if (exercise) {
-            exercise.problemStatement = newProblemStatement;
-            this.programmingExerciseChange.emit(exercise);
-        }
-        this.problemStatementChange.emit(newProblemStatement);
-    }
-
-    /**
      * Cancels the ongoing problem statement generation.
      * Preserves the user's prompt so they can retry or modify it.
      */
@@ -181,5 +168,15 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
             exercise.competencyLinks = competencyLinks;
             this.programmingExerciseChange.emit(exercise);
         }
+    }
+
+    onInstructionChange(problemStatement: string): void {
+        const exercise = this.programmingExercise();
+        this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
+        if (exercise) {
+            exercise.problemStatement = problemStatement;
+            this.programmingExerciseChange.emit(exercise);
+        }
+        this.problemStatementChange.emit(problemStatement);
     }
 }
