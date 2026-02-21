@@ -248,7 +248,8 @@ public record CourseInfoDTO(
 
 
 ### DTO Composition
-Java Records do not support inheritance.
+
+Java Records do not support class inheritance.
 To share common attributes across multiple DTOs (e.g., standard fields like ID, creation date, or common exercise details)
 without duplicating code, use **composition** combined with the `@JsonUnwrapped` annotation.
 
@@ -326,8 +327,8 @@ This interface handles the routing. Notice how Jackson maps the string names (e.
     @JsonSubTypes.Type(value = ShortAnswerQuestionCreateDTO.class, name = "short-answer")
 })
 public sealed interface QuizQuestionCreateDTO permits
-    DragAndDropQuestionCreateDTO,
     MultipleChoiceQuestionCreateDTO,
+    DragAndDropQuestionCreateDTO,
     ShortAnswerQuestionCreateDTO {
 }
 ```
