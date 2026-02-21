@@ -42,7 +42,7 @@ import { NgClass } from '@angular/common';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
-import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
 import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
 
@@ -358,21 +358,21 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     async showAISelectionModal(): Promise<void> {
         this.closeChat();
-        const choice = await this.llmModalService.open();
+        const choice = await this.llmModalService.open(this.accountService.userIdentity()?.selectedLLMUsage);
 
         switch (choice) {
-            case 'cloud':
+            case LLMSelectionDecision.CLOUD_AI:
                 this.acceptPermission(LLMSelectionDecision.CLOUD_AI);
                 this.reopenChat.emit();
                 break;
-            case 'local':
+            case LLMSelectionDecision.LOCAL_AI:
                 this.acceptPermission(LLMSelectionDecision.LOCAL_AI);
                 this.reopenChat.emit();
                 break;
-            case 'no_ai':
+            case LLMSelectionDecision.NO_AI:
                 this.chatService.updateLLMUsageConsent(LLMSelectionDecision.NO_AI);
                 break;
-            case 'none':
+            case LLM_MODAL_DISMISSED:
                 break;
         }
     }
