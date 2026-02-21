@@ -1,0 +1,70 @@
+<button class="close-btn" (click)="close()" [attr.aria-label]="'artemisApp.iris.aboutIrisModal.close' | artemisTranslate">
+    <fa-icon [icon]="faXmark" aria-hidden="true" />
+</button>
+
+<div class="modal-content-wrapper" aria-labelledby="about-iris-title">
+    <!-- Header: Logo + title + subtexts -->
+    <div class="header-section">
+        <jhi-iris-logo [size]="IrisLogoSize.SMALL" />
+        <div class="header-text">
+            <h2 id="about-iris-title" jhiTranslate="artemisApp.iris.aboutIrisModal.meetIris"></h2>
+            <p class="subtitle" jhiTranslate="artemisApp.iris.aboutIrisModal.subtitle"></p>
+            <p class="description" jhiTranslate="artemisApp.iris.aboutIrisModal.description"></p>
+        </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- Section: What Iris can do -->
+    <section>
+        <h3 class="section-title" jhiTranslate="artemisApp.iris.aboutIrisModal.whatIrisCanDo"></h3>
+        @for (card of whatIrisCanDo; track card.titleKey) {
+            <div class="feature-card">
+                <div class="icon-wrapper" aria-hidden="true">
+                    <fa-icon [icon]="card.icon" aria-hidden="true" />
+                </div>
+                <div>
+                    <p class="card-title-text" jhiTranslate="{{ card.titleKey }}"></p>
+                    <p class="card-description" jhiTranslate="{{ card.descKey }}"></p>
+                </div>
+            </div>
+        }
+    </section>
+
+    <hr class="divider" />
+
+    <!-- Section: What to expect -->
+    <section>
+        <h3 class="section-title" jhiTranslate="artemisApp.iris.aboutIrisModal.whatToExpect"></h3>
+        @for (card of whatToExpect; track card.titleKey) {
+            <div class="feature-card">
+                <div class="icon-wrapper icon-wrapper--expect" aria-hidden="true">
+                    <fa-icon [icon]="card.icon" aria-hidden="true" />
+                </div>
+                <div>
+                    <p class="card-title-text" jhiTranslate="{{ card.titleKey }}"></p>
+                    <p class="card-description" jhiTranslate="{{ card.descKey }}"></p>
+                </div>
+            </div>
+        }
+    </section>
+
+    <hr class="divider" />
+
+    <!-- Privacy block -->
+    <div class="privacy-section">
+        <div class="icon-wrapper icon-wrapper--privacy" aria-hidden="true">
+            <fa-icon [icon]="faShield" aria-hidden="true" />
+        </div>
+        <div>
+            <h3 class="section-title privacy-title" jhiTranslate="artemisApp.iris.aboutIrisModal.privacyTitle"></h3>
+            <p class="card-description" jhiTranslate="artemisApp.iris.aboutIrisModal.privacyDesc"></p>
+            <p class="privacy-disclaimer" jhiTranslate="artemisApp.iris.aboutIrisModal.privacyDisclaimer"></p>
+        </div>
+    </div>
+
+    <!-- Try Iris button -->
+    <div class="try-iris-btn-wrapper">
+        <button class="btn btn-primary try-iris-btn" (click)="tryIris()" jhiTranslate="artemisApp.iris.aboutIrisModal.tryIris"></button>
+    </div>
+</div>

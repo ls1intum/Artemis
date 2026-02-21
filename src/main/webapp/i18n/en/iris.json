@@ -186,6 +186,30 @@
                     "lecture": "This chat is related to a lecture."
                 }
             },
+            "aboutIrisModal": {
+                "meetIris": "Meet Iris",
+                "subtitle": "Your AI tutor, built right into Artemis.",
+                "description": "Iris helps with course-related programming questions and lecture content using your current context. Iris is part of the EduTelligence suite of AI features in Artemis learning platform.",
+                "whatIrisCanDo": "What Iris can do",
+                "whatToExpect": "What to expect from Iris",
+                "contextAwareTitle": "Context-aware",
+                "contextAwareDesc": "Iris can reference your problem statement, code, and build results, no copy-pasting needed.",
+                "guidedLearningTitle": "Guided learning",
+                "guidedLearningDesc": "Iris provides hints and explanations to help you solve problems independently.",
+                "feedbackHelpsTitle": "Feedback helps",
+                "feedbackHelpsDesc": "Rate answers and conversations to improve Iris' quality over time.",
+                "guideNotSolveTitle": "Guide, not solve",
+                "guideNotSolveDesc": "Iris does not provide complete solutions. It supports your problem-solving process.",
+                "stayOnTopicTitle": "Stay on topic",
+                "stayOnTopicDesc": "Iris answers questions about course content and programming topics only. It does not handle off-topic requests or organizational information.",
+                "ownYourWorkTitle": "Own your work",
+                "ownYourWorkDesc": "Use Iris as a learning aid, while maintaining academic integrity. Your submissions must reflect your own understanding and effort.",
+                "privacyTitle": "Privacy",
+                "privacyDesc": "Iris processes interactions within European data centers. Data handling follows applicable European data protection requirements.",
+                "privacyDisclaimer": "Review your institution's privacy policy for details.",
+                "tryIris": "Try Iris",
+                "close": "Close"
+            },
             "memories": {
                 "title": "Memories",
                 "loadingList": "Loading memories...",

@@ -186,6 +186,30 @@
                     "lecture": "Diese Konversation bezieht sich auf eine Vorlesung."
                 }
             },
+            "aboutIrisModal": {
+                "meetIris": "Lern Iris kennen",
+                "subtitle": "Dein KI-Tutor, direkt in Artemis integriert.",
+                "description": "Iris hilft bei kursbezogenen Programmieraufgaben und Vorlesungsinhalten unter Verwendung deines aktuellen Kontexts. Iris ist Teil der EduTelligence-Suite mit KI-Funktionen in der Artemis-Lernplattform.",
+                "whatIrisCanDo": "Was Iris kann",
+                "whatToExpect": "Was du von Iris erwarten kannst",
+                "contextAwareTitle": "Kontextbewusst",
+                "contextAwareDesc": "Iris kann deine Aufgabenstellung, deinen Code und Build-Ergebnisse berücksichtigen – kein Kopieren und Einfügen nötig.",
+                "guidedLearningTitle": "Geführtes Lernen",
+                "guidedLearningDesc": "Iris gibt Hinweise und Erklärungen, damit du Probleme eigenständig lösen kannst.",
+                "feedbackHelpsTitle": "Feedback hilft",
+                "feedbackHelpsDesc": "Bewerte Antworten und Gespräche, um die Qualität von Iris mit der Zeit zu verbessern.",
+                "guideNotSolveTitle": "Anleiten, nicht lösen",
+                "guideNotSolveDesc": "Iris liefert keine vollständigen Lösungen. Es unterstützt deinen Problemlösungsprozess.",
+                "stayOnTopicTitle": "Beim Thema bleiben",
+                "stayOnTopicDesc": "Iris beantwortet nur Fragen zu Kursinhalten und Programmierungsthemen. Themenfremde Anfragen oder Organisationsfragen werden nicht bearbeitet.",
+                "ownYourWorkTitle": "Eigene Arbeit",
+                "ownYourWorkDesc": "Nutze Iris als Lernhilfe und wahre dabei die akademische Integrität. Deine Abgaben müssen dein eigenes Verständnis und deinen eigenen Einsatz widerspiegeln.",
+                "privacyTitle": "Datenschutz",
+                "privacyDesc": "Iris verarbeitet Interaktionen in europäischen Rechenzentren. Die Datenverarbeitung erfolgt gemäß den geltenden europäischen Datenschutzanforderungen.",
+                "privacyDisclaimer": "Lies die Datenschutzerklärung deiner Einrichtung für Details.",
+                "tryIris": "Iris ausprobieren",
+                "close": "Schließen"
+            },
             "memories": {
                 "title": "Erinnerungen",
                 "loadingList": "Lade Erinnerungen...",
