@@ -153,6 +153,10 @@ public class HyperionProblemStatementResource {
     /**
      * POST courses/{courseId}/checklist-actions: Apply an AI-powered checklist
      * action to modify the problem statement.
+     * <p>
+     * Note: This endpoint only transforms the problem statement text via AI and does
+     * not access any exercise data. Course-level editor authorization is sufficient
+     * because no exercise-specific resources are read or modified.
      *
      * @param courseId the id of the course
      * @param request  the action request containing the action type and context

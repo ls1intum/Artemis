@@ -2,7 +2,7 @@
     <h3 jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle" id="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle"></h3>
     <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepMessage"></p>
     <!-- User Prompt Input -->
-    @if (hyperionEnabled) {
+    @if (!programmingExercise()?.id && hyperionEnabled) {
         <div class="mb-4">
             <label for="userPrompt" class="form-label" jhiTranslate="artemisApp.programmingExercise.problemStatement.yourRequirements"></label>
             <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.problemStatement.generateDraftDescription" />
@@ -73,10 +73,10 @@
             }
         </div>
 
-        @if (hyperionEnabled) {
+        @if (hyperionEnabled && (programmingExercise()?.course?.id || programmingExercise()?.exerciseGroup?.exam?.course?.id)) {
             <jhi-checklist-panel
                 [exercise]="programmingExercise()!"
-                [courseId]="programmingExercise()?.course?.id ?? programmingExercise()?.exerciseGroup?.exam?.course?.id ?? 0"
+                [courseId]="(programmingExercise()?.course?.id ?? programmingExercise()?.exerciseGroup?.exam?.course?.id)!"
                 [problemStatement]="programmingExercise()?.problemStatement || ''"
                 (problemStatementChange)="onInstructionChange($event)"
                 (competencyLinksChange)="onCompetencyLinksChange($event)"

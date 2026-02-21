@@ -173,12 +173,15 @@ public class HyperionChecklistService {
         }
     }
 
+    private static final int MAX_CONTEXT_VALUE_LENGTH = 2000;
+
     /**
      * Builds action-specific instructions for the AI prompt based on the action type
-     * and context.
+     * and context. Context values are truncated to {@value MAX_CONTEXT_VALUE_LENGTH}
+     * characters to mitigate prompt injection risk.
      */
     private String buildActionInstructions(ChecklistActionRequestDTO request) {
-        Map<String, String> ctx = request.context() != null ? request.context() : Map.of();
+        Map<String, String> ctx = sanitizeContext(request.context());
 
         return switch (request.actionType()) {
             case FIX_QUALITY_ISSUE -> {
@@ -457,6 +460,26 @@ public class HyperionChecklistService {
         }
 
         return new QualityIssueDTO(issue.category(), issue.severity(), issue.description(), location, issue.suggestedFix(), issue.impactOnLearners());
+    }
+
+    /**
+     * Sanitizes context map values by truncating them to {@value MAX_CONTEXT_VALUE_LENGTH}
+     * characters. This limits the surface area for prompt injection via user-controlled
+     * context values.
+     */
+    private Map<String, String> sanitizeContext(Map<String, String> context) {
+        if (context == null || context.isEmpty()) {
+            return Map.of();
+        }
+        Map<String, String> sanitized = new HashMap<>();
+        for (var entry : context.entrySet()) {
+            String value = entry.getValue();
+            if (value != null && value.length() > MAX_CONTEXT_VALUE_LENGTH) {
+                value = value.substring(0, MAX_CONTEXT_VALUE_LENGTH);
+            }
+            sanitized.put(entry.getKey(), value != null ? value : "");
+        }
+        return sanitized;
     }
 
     // ===== Structured Output Schemas =====

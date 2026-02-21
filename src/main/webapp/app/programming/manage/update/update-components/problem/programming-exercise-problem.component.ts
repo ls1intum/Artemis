@@ -5,7 +5,7 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
-import { CompetencyExerciseLink, CompetencyLearningObjectLink, MEDIUM_COMPETENCY_LINK_WEIGHT } from 'app/atlas/shared/entities/competency.model';
+import { CompetencyExerciseLink, CompetencyLearningObjectLink } from 'app/atlas/shared/entities/competency.model';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
@@ -181,41 +181,12 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
     /**
      * Updates the CompetencySelectionComponent's available list, selection state, and checkbox states
      * so that newly linked or created competencies are immediately visible.
-     *
-     * TODO: This method directly accesses CompetencySelectionComponent internals (competencyLinks,
-     * checkboxStates, writeValue). Ideally, expose a public refresh() method on
-     * CompetencySelectionComponent or use input bindings to trigger the update declaratively.
      */
     private refreshCompetencySelection(competencyLinks: CompetencyExerciseLink[] | CompetencyLearningObjectLink[]): void {
         const selection = this.competencySelectionComponent();
         if (!selection || !competencyLinks) return;
 
-        // Add any new competencies to the available list that aren't there yet
-        if (selection.competencyLinks) {
-            const availableIds = new Set(selection.competencyLinks.map((l) => l.competency?.id).filter(Boolean));
-            for (const link of competencyLinks) {
-                if (link.competency?.id && !availableIds.has(link.competency.id)) {
-                    selection.competencyLinks.push(new CompetencyLearningObjectLink(link.competency, link.weight ?? MEDIUM_COMPETENCY_LINK_WEIGHT));
-                }
-            }
-        }
-
-        // Update selection state via writeValue
-        selection.writeValue(competencyLinks);
-
-        // Update checkbox states to match the current selection
-        if (selection.competencyLinks) {
-            const selectedIds = new Set(competencyLinks.map((l) => l.competency?.id).filter(Boolean));
-            selection.checkboxStates = selection.competencyLinks.reduce(
-                (states, cl) => {
-                    if (cl.competency?.id) {
-                        states[cl.competency.id] = selectedIds.has(cl.competency.id);
-                    }
-                    return states;
-                },
-                {} as Record<number, boolean>,
-            );
-        }
+        selection.refreshWithLinks(competencyLinks);
     }
 
     onDifficultyChange(difficulty: string): void {
@@ -229,11 +200,11 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
 
     onInstructionChange(problemStatement: string): void {
         const exercise = this.programmingExercise();
-        this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
         if (exercise) {
             exercise.problemStatement = problemStatement;
+            this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
             this.programmingExerciseChange.emit(exercise);
+            this.problemStatementChange.emit(problemStatement);
         }
-        this.problemStatementChange.emit(problemStatement);
     }
 }

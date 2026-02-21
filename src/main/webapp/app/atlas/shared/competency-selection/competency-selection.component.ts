@@ -197,6 +197,42 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
         }
     }
 
+    /**
+     * Updates the available competency list with any new competencies from the given links,
+     * refreshes the selection state via writeValue, and rebuilds checkbox states.
+     * Use this to programmatically update the selection from outside the component.
+     */
+    refreshWithLinks(links: CompetencyLearningObjectLink[]): void {
+        if (!links) return;
+
+        // Add any new competencies to the available list that aren't there yet
+        if (this.competencyLinks) {
+            const availableIds = new Set(this.competencyLinks.map((l) => l.competency?.id).filter(Boolean));
+            for (const link of links) {
+                if (link.competency?.id && !availableIds.has(link.competency.id)) {
+                    this.competencyLinks.push(new CompetencyLearningObjectLink(link.competency, link.weight ?? MEDIUM_COMPETENCY_LINK_WEIGHT));
+                }
+            }
+        }
+
+        // Update selection state
+        this.writeValue(links);
+
+        // Rebuild checkbox states to match the current selection
+        if (this.competencyLinks) {
+            const selectedIds = new Set(links.map((l) => l.competency?.id).filter(Boolean));
+            this.checkboxStates = this.competencyLinks.reduce(
+                (states, cl) => {
+                    if (cl.competency?.id) {
+                        states[cl.competency.id] = selectedIds.has(cl.competency.id);
+                    }
+                    return states;
+                },
+                {} as Record<number, boolean>,
+            );
+        }
+    }
+
     registerOnChange(fn: any): void {
         this._onChange = fn;
     }
