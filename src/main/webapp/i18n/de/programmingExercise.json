@@ -805,7 +805,9 @@
                     "linkError": "Verknüpfung der Kompetenzen fehlgeschlagen. Bitte erneut versuchen.",
                     "createSuccess": "Neue Kompetenzen erstellt und mit der Aufgabe verknüpft.",
                     "allExist": "Alle abgeleiteten Kompetenzen existieren bereits im Kurs.",
-                    "createError": "Erstellen der Kompetenzen fehlgeschlagen. Bitte erneut versuchen."
+                    "createError": "Erstellen der Kompetenzen fehlgeschlagen. Bitte erneut versuchen.",
+                    "showDetails": "Details",
+                    "hideDetails": "Ausblenden"
                 },
                 "bloomRadar": {
                     "title": "Bloom-Taxonomie-Verteilung"
@@ -832,7 +834,9 @@
                     "noChanges": "Keine Änderungen für diese Aktion nötig.",
                     "adaptTo": "Anpassen auf:",
                     "current": "(aktuell)"
-                }
+                },
+                "outdated": "Veraltet",
+                "reanalyze": "Erneut analysieren"
             }
         },
         "error": {

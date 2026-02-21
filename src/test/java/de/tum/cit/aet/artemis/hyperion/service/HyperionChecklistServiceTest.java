@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -55,7 +56,7 @@ class HyperionChecklistServiceTest {
         when(taskRepository.findByExerciseIdWithTestCases(any())).thenReturn(java.util.Set.of());
 
         var templateService = new HyperionPromptTemplateService();
-        this.hyperionChecklistService = new HyperionChecklistService(chatClient, templateService, observationRegistry, standardizedCompetencyApi, taskRepository);
+        this.hyperionChecklistService = new HyperionChecklistService(chatClient, templateService, observationRegistry, Optional.of(standardizedCompetencyApi), taskRepository);
     }
 
     @Test

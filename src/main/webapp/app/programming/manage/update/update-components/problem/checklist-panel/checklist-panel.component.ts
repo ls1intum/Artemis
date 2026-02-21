@@ -744,7 +744,7 @@ export class ChecklistPanelComponent {
 
                 // Create all new competencies in parallel
                 const createObservables = toCreate.map((comp) => this.competencyService.create(comp, courseId));
-                forkJoin(createObservables).subscribe({
+                forkJoin([...createObservables]).subscribe({
                     next: (responses) => {
                         const newLinks: CompetencyExerciseLink[] = [...existingLinks];
                         const newlyCreated = new Set<string>();
