@@ -272,7 +272,7 @@
                         <h3 jhiTranslate="artemisApp.iris.chat.helpOffer"></h3>
                     }
                     @if (showContextSelection()) {
-                        <jhi-context-selection [courseId]="courseId()" (showIconAndHelpOffer)="showIconAndHelpOffer.set($event)" />
+                        <jhi-context-selection [courseId]="courseId()" (contextSelectionMade)="showIconAndHelpOffer.set($event)" />
                     }
                 </div>
             }

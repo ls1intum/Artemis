@@ -46,8 +46,12 @@ const DEFAULT_OPTIONS: ContextOption[] = [
     },
 ];
 
-// Supported exercise types for Iris chat
-const SUPPORTED_EXERCISE_TYPES = [ExerciseType.TEXT, ExerciseType.PROGRAMMING];
+// Maps exercise types that have Iris chat integration to their ChatServiceMode.
+// To add Iris support for a new exercise type, add a single entry here.
+const EXERCISE_TYPE_TO_CHAT_MODE: Record<string, ChatServiceMode> = {
+    [ExerciseType.TEXT]: ChatServiceMode.TEXT_EXERCISE,
+    [ExerciseType.PROGRAMMING]: ChatServiceMode.PROGRAMMING_EXERCISE,
+};
 
 @Component({
     selector: 'jhi-context-selection',
@@ -71,7 +75,7 @@ export class ContextSelectionComponent {
     readonly options = input<ContextOption[]>(DEFAULT_OPTIONS);
 
     // Outputs
-    readonly showIconAndHelpOffer = output<boolean>();
+    readonly contextSelectionMade = output<boolean>();
 
     // Consolidated selection state (discriminated union)
     readonly selection = signal<Selection>({ type: 'course' });
@@ -104,13 +108,14 @@ export class ContextSelectionComponent {
         return this.lectures().filter((lecture) => lecture.title?.toLowerCase().includes(query));
     });
 
+    readonly supportedExercises = computed(() => this.exercises().filter((exercise) => exercise.type && exercise.type in EXERCISE_TYPE_TO_CHAT_MODE));
+
     readonly filteredExercises = computed(() => {
         const query = this.searchQuery().toLowerCase();
-        const supportedExercises = this.exercises().filter((exercise) => exercise.type && SUPPORTED_EXERCISE_TYPES.includes(exercise.type));
         if (!query) {
-            return supportedExercises;
+            return this.supportedExercises();
         }
-        return supportedExercises.filter((exercise) => exercise.title?.toLowerCase().includes(query));
+        return this.supportedExercises().filter((exercise) => exercise.title?.toLowerCase().includes(query));
     });
 
     constructor() {
@@ -125,6 +130,7 @@ export class ContextSelectionComponent {
                         return of({ lectures: cachedCourse.lectures ?? [], exercises: cachedCourse.exercises ?? [] });
                     }
                     // Fallback: Load from server
+                    // TODO: Replace with a lighter endpoint that only fetches exercises and lectures (without competencies)
                     return this.courseManagementService.findWithExercisesAndLecturesAndCompetencies(courseId).pipe(
                         map((response) => ({
                             lectures: response.body?.lectures ?? [],
@@ -167,8 +173,8 @@ export class ContextSelectionComponent {
     selectExercise(exercise: Exercise): void {
         this.selection.set({ type: 'exercise', exercise });
         this.updateView('main');
-        if (exercise.id !== undefined) {
-            const mode = exercise.type === ExerciseType.TEXT ? ChatServiceMode.TEXT_EXERCISE : ChatServiceMode.PROGRAMMING_EXERCISE;
+        const mode = exercise.type ? EXERCISE_TYPE_TO_CHAT_MODE[exercise.type] : undefined;
+        if (exercise.id !== undefined && mode) {
             this.chatService.switchTo(mode, exercise.id, true);
         }
     }
@@ -188,6 +194,6 @@ export class ContextSelectionComponent {
     private updateView(view: ViewState): void {
         this.searchQuery.set('');
         this.currentView.set(view);
-        this.showIconAndHelpOffer.emit(view === 'main');
+        this.contextSelectionMade.emit(view === 'main');
     }
 }
