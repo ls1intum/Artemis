@@ -1,4 +1,6 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { of } from 'rxjs';
@@ -18,12 +20,15 @@ import { Participation } from 'app/exercise/shared/entities/participation/partic
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { provideHttpClient } from '@angular/common/http';
 import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 
 describe('AccountService', () => {
+    setupTestBed({ zoneless: true });
+
     let accountService: AccountService;
     let httpService: MockHttpService;
-    let getStub: jest.SpyInstance;
+    let getStub: ReturnType<typeof vi.spyOn>;
     let httpMock: HttpTestingController;
 
     const getUserUrl = 'api/core/public/account';
@@ -56,31 +61,26 @@ describe('AccountService', () => {
         accountService = TestBed.inject(AccountService);
         httpService = new MockHttpService();
         httpMock = TestBed.inject(HttpTestingController);
-        getStub = jest.spyOn(httpService, 'get');
+        getStub = vi.spyOn(httpService, 'get');
     });
 
     afterEach(() => {
         httpMock.verify();
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
-    it('should fetch the user on identity if the userIdentity is not defined yet', fakeAsync(() => {
-        let userReceived: User;
-        accountService.identity().then((returnedUser: User) => {
-            userReceived = returnedUser;
-        });
+    it('should fetch the user on identity if the userIdentity is not defined yet', async () => {
+        const identityPromise = accountService.identity();
 
         const req = httpMock.expectOne({ method: 'GET', url: getUserUrl });
         req.flush(user);
 
-        // Use tick() to simulate the passage of time and allow promise resolution
-        tick();
+        const userReceived = await identityPromise;
 
-        // @ts-ignore
         expect(userReceived).toEqual(user);
         expect(accountService.userIdentity()).toEqual(user);
-        expect(accountService.isAuthenticated()).toBeTrue();
-    }));
+        expect(accountService.isAuthenticated()).toBe(true);
+    });
 
     it('should handle user SSH public key correctly', () => {
         const sshKey = new UserSshPublicKey();
@@ -91,32 +91,27 @@ describe('AccountService', () => {
         expect(sshKey.label).toBe('test-label');
     });
 
-    it('should fetch the user on identity if the userIdentity is defined yet (force=true)', fakeAsync(() => {
-        let userReceived: User;
+    it('should fetch the user on identity if the userIdentity is defined yet (force=true)', async () => {
         accountService.userIdentity.set(user);
         expect(accountService.userIdentity()).toEqual(user);
-        expect(accountService.isAuthenticated()).toBeTrue();
+        expect(accountService.isAuthenticated()).toBe(true);
 
-        accountService.identity(true).then((returnedUser: User) => {
-            userReceived = returnedUser;
-        });
+        const identityPromise = accountService.identity(true);
 
         const req = httpMock.expectOne({ method: 'GET', url: getUserUrl });
         req.flush(user2);
 
-        // Use tick() to simulate the passage of time and allow promise resolution
-        tick();
+        const userReceived = await identityPromise;
 
-        // @ts-ignore
         expect(userReceived).toEqual(user2);
         expect(accountService.userIdentity()).toEqual(user2);
-        expect(accountService.isAuthenticated()).toBeTrue();
-    }));
+        expect(accountService.isAuthenticated()).toBe(true);
+    });
 
     it('should NOT fetch the user on identity if the userIdentity is defined (force=false)', async () => {
         accountService.userIdentity.set(user);
         expect(accountService.userIdentity()).toEqual(user);
-        expect(accountService.isAuthenticated()).toBeTrue();
+        expect(accountService.isAuthenticated()).toBe(true);
         getStub.mockReturnValue(of({ body: user2 }));
 
         const userReceived = await accountService.identity(false);
@@ -124,12 +119,12 @@ describe('AccountService', () => {
         expect(getStub).not.toHaveBeenCalled();
         expect(userReceived).toEqual(user);
         expect(accountService.userIdentity()).toEqual(user);
-        expect(accountService.isAuthenticated()).toBeTrue();
+        expect(accountService.isAuthenticated()).toBe(true);
     });
 
     it('should authenticate a user', () => {
         expect(accountService.userIdentity()).toBeUndefined();
-        expect(accountService.isAuthenticated()).toBeFalse();
+        expect(accountService.isAuthenticated()).toBe(false);
 
         accountService.authenticate(user);
 
@@ -149,38 +144,38 @@ describe('AccountService', () => {
         it.each(authorities)('should return false if not authenticated, no user id and no authorities are set', async (authority: Authority) => {
             usedAuthorities.push(authority);
 
-            await expect(accountService.hasAnyAuthority(usedAuthorities)).resolves.toBeFalse();
+            await expect(accountService.hasAnyAuthority(usedAuthorities)).resolves.toBe(false);
         });
 
         it.each(authorities)('should return false if authenticated, user id but no authorities are set', async (authority: Authority) => {
             accountService.userIdentity.set(user);
             usedAuthorities.push(authority);
 
-            await expect(accountService.hasAnyAuthority(usedAuthorities)).resolves.toBeFalse();
+            await expect(accountService.hasAnyAuthority(usedAuthorities)).resolves.toBe(false);
         });
 
         it.each(authorities)('should return true if user is required', async (authority: Authority) => {
             accountService.userIdentity.set(user3);
             usedAuthorities.push(authority);
 
-            await expect(accountService.hasAnyAuthority(usedAuthorities)).resolves.toBeTrue();
+            await expect(accountService.hasAnyAuthority(usedAuthorities)).resolves.toBe(true);
         });
 
         it.each(authorities)('should return true if authority matches exactly', async (authority: Authority) => {
             accountService.userIdentity.set({ id: authorities.indexOf(authority), groups: ['USER'], authorities: [authority] } as User);
 
-            await expect(accountService.hasAnyAuthority([authority])).resolves.toBeTrue();
+            await expect(accountService.hasAnyAuthority([authority])).resolves.toBe(true);
         });
 
         it.each(authorities)('should return false if authority does not match', async (authority: Authority) => {
             const index = authorities.indexOf(authority);
             accountService.userIdentity.set({ id: index + 1, groups: ['USER'], authorities: [authorities[(index + 1) % 5]] } as User);
 
-            await expect(accountService.hasAnyAuthority([authority])).resolves.toBeFalse();
+            await expect(accountService.hasAnyAuthority([authority])).resolves.toBe(false);
         });
 
         it.each(authorities)('should return false if not authenticated', async (authority: Authority) => {
-            await expect(accountService.hasAuthority(authority)).resolves.toBeFalse();
+            await expect(accountService.hasAuthority(authority)).resolves.toBe(false);
         });
     });
 
@@ -189,21 +184,21 @@ describe('AccountService', () => {
         it.each(groups)('should return false if not authenticated', (group: string) => {
             result = accountService.hasGroup(group);
 
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
         });
 
         it.each(groups)('should return false if no authorities are set', (group: string) => {
             accountService.userIdentity.set(user);
             result = accountService.hasGroup(group);
 
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
         });
 
         it.each(groups)('should return false if no groups are set', (group: string) => {
             accountService.userIdentity.set({ id: 10, authorities } as User);
             result = accountService.hasGroup(group);
 
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
         });
 
         it.each(groups)('should return false if group does not match', (group: string) => {
@@ -212,7 +207,7 @@ describe('AccountService', () => {
 
             result = accountService.hasGroup(group);
 
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
         });
 
         it.each(groups)('should return true if group matchs', (group: string) => {
@@ -220,7 +215,7 @@ describe('AccountService', () => {
 
             result = accountService.hasGroup(group);
 
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
         });
     });
 
@@ -230,7 +225,7 @@ describe('AccountService', () => {
 
             result = accountService.isAtLeastTutorInCourse(course);
 
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
         });
 
         it.each(['TA', 'EDITOR', 'INSTRUCTOR'])('should return true if user is tutor, editor or instructor', (group: string) => {
@@ -238,7 +233,7 @@ describe('AccountService', () => {
 
             result = accountService.isAtLeastTutorInCourse(course);
 
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
         });
 
         it('should return true if user is system admin', () => {
@@ -246,7 +241,7 @@ describe('AccountService', () => {
 
             result = accountService.isAtLeastTutorInCourse(course);
 
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
         });
     });
 
@@ -256,7 +251,7 @@ describe('AccountService', () => {
 
             result = accountService.isAtLeastEditorInCourse(course);
 
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
         });
 
         it.each(['EDITOR', 'INSTRUCTOR'])('should return true if user is editor or instructor', (group: string) => {
@@ -264,7 +259,7 @@ describe('AccountService', () => {
 
             result = accountService.isAtLeastEditorInCourse(course);
 
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
         });
 
         it('should return true if user is system admin', () => {
@@ -272,7 +267,7 @@ describe('AccountService', () => {
 
             result = accountService.isAtLeastEditorInCourse(course);
 
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
         });
     });
 
@@ -282,7 +277,7 @@ describe('AccountService', () => {
 
             result = accountService.isAtLeastInstructorInCourse(course);
 
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
         });
 
         it('should return true if user is instructor', () => {
@@ -290,7 +285,7 @@ describe('AccountService', () => {
 
             result = accountService.isAtLeastInstructorInCourse(course);
 
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
         });
 
         it('should return true if user is system admin', () => {
@@ -298,7 +293,7 @@ describe('AccountService', () => {
 
             result = accountService.isAtLeastInstructorInCourse(course);
 
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
         });
     });
 
@@ -308,11 +303,11 @@ describe('AccountService', () => {
 
             result = accountService.isAtLeastTutorForExercise(exercise);
 
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
 
             result = accountService.isAtLeastTutorForExercise(examExercise);
 
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
         });
 
         it.each(['TA', 'EDITOR', 'INSTRUCTOR'])('should return true if user is tutor, editor or instructor', (group: string) => {
@@ -320,11 +315,11 @@ describe('AccountService', () => {
 
             result = accountService.isAtLeastTutorForExercise(exercise);
 
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
 
             result = accountService.isAtLeastTutorForExercise(examExercise);
 
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
         });
 
         it('should return true if user is system admin', () => {
@@ -332,11 +327,11 @@ describe('AccountService', () => {
 
             result = accountService.isAtLeastTutorForExercise(exercise);
 
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
 
             result = accountService.isAtLeastTutorForExercise(examExercise);
 
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
         });
     });
 
@@ -346,11 +341,11 @@ describe('AccountService', () => {
 
             result = accountService.isAtLeastEditorForExercise(exercise);
 
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
 
             result = accountService.isAtLeastEditorForExercise(examExercise);
 
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
         });
 
         it.each(['EDITOR', 'INSTRUCTOR'])('should return true if user is editor or instructor', (group: string) => {
@@ -358,11 +353,11 @@ describe('AccountService', () => {
 
             result = accountService.isAtLeastEditorForExercise(exercise);
 
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
 
             result = accountService.isAtLeastEditorForExercise(examExercise);
 
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
         });
 
         it('should return true if user is system admin', () => {
@@ -370,11 +365,11 @@ describe('AccountService', () => {
 
             result = accountService.isAtLeastEditorForExercise(exercise);
 
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
 
             result = accountService.isAtLeastEditorForExercise(examExercise);
 
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
         });
     });
 
@@ -384,11 +379,11 @@ describe('AccountService', () => {
 
             result = accountService.isAtLeastInstructorForExercise(exercise);
 
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
 
             result = accountService.isAtLeastInstructorForExercise(examExercise);
 
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
         });
 
         it('should return true if user is editor or instructor', () => {
@@ -396,11 +391,11 @@ describe('AccountService', () => {
 
             result = accountService.isAtLeastInstructorForExercise(exercise);
 
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
 
             result = accountService.isAtLeastInstructorForExercise(examExercise);
 
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
         });
 
         it('should return true if user is system admin', () => {
@@ -408,11 +403,11 @@ describe('AccountService', () => {
 
             result = accountService.isAtLeastInstructorForExercise(exercise);
 
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
 
             result = accountService.isAtLeastInstructorForExercise(examExercise);
 
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
         });
     });
 
@@ -422,7 +417,7 @@ describe('AccountService', () => {
 
             result = accountService.isAdmin();
 
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
         });
 
         it('should return true if user is system admin', () => {
@@ -430,7 +425,7 @@ describe('AccountService', () => {
 
             result = accountService.isAdmin();
 
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
         });
     });
 
@@ -439,10 +434,10 @@ describe('AccountService', () => {
 
         accountService.setAccessRightsForExerciseAndReferencedCourse(exercise);
 
-        expect(exercise.isAtLeastEditor).toBeTrue();
-        expect(exercise.isAtLeastInstructor).toBeTrue();
-        expect(exercise.course!.isAtLeastEditor).toBeTrue();
-        expect(exercise.course!.isAtLeastInstructor).toBeTrue();
+        expect(exercise.isAtLeastEditor).toBe(true);
+        expect(exercise.isAtLeastInstructor).toBe(true);
+        expect(exercise.course!.isAtLeastEditor).toBe(true);
+        expect(exercise.course!.isAtLeastInstructor).toBe(true);
     });
 
     it('should set access rights for referenced course in exam mode', () => {
@@ -450,10 +445,10 @@ describe('AccountService', () => {
 
         accountService.setAccessRightsForExerciseAndReferencedCourse(examExercise);
 
-        expect(examExercise.isAtLeastEditor).toBeTrue();
-        expect(examExercise.isAtLeastInstructor).toBeTrue();
-        expect(examExercise.exerciseGroup!.exam!.course!.isAtLeastEditor).toBeTrue();
-        expect(examExercise.exerciseGroup!.exam!.course!.isAtLeastInstructor).toBeTrue();
+        expect(examExercise.isAtLeastEditor).toBe(true);
+        expect(examExercise.isAtLeastInstructor).toBe(true);
+        expect(examExercise.exerciseGroup!.exam!.course!.isAtLeastEditor).toBe(true);
+        expect(examExercise.exerciseGroup!.exam!.course!.isAtLeastInstructor).toBe(true);
     });
 
     it('should set access rights for referenced exercise', () => {
@@ -462,10 +457,10 @@ describe('AccountService', () => {
 
         accountService.setAccessRightsForCourseAndReferencedExercises(course);
 
-        expect(exercise.isAtLeastEditor).toBeTrue();
-        expect(exercise.isAtLeastInstructor).toBeTrue();
-        expect(exercise.course!.isAtLeastEditor).toBeTrue();
-        expect(exercise.course!.isAtLeastInstructor).toBeTrue();
+        expect(exercise.isAtLeastEditor).toBe(true);
+        expect(exercise.isAtLeastInstructor).toBe(true);
+        expect(exercise.course!.isAtLeastEditor).toBe(true);
+        expect(exercise.course!.isAtLeastInstructor).toBe(true);
     });
 
     describe('test isOwnerOfParticipation', () => {
@@ -478,7 +473,7 @@ describe('AccountService', () => {
 
             result = accountService.isOwnerOfParticipation(participation);
 
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
         });
 
         it('should return true if student is owner', () => {
@@ -487,7 +482,7 @@ describe('AccountService', () => {
 
             result = accountService.isOwnerOfParticipation(participation);
 
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
         });
 
         it('should return false if student is not part of the team', () => {
@@ -496,7 +491,7 @@ describe('AccountService', () => {
 
             result = accountService.isOwnerOfParticipation(participation);
 
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
         });
 
         it('should return true if student is part of the team', () => {
@@ -505,7 +500,7 @@ describe('AccountService', () => {
 
             result = accountService.isOwnerOfParticipation(participation);
 
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
         });
     });
 
@@ -551,11 +546,11 @@ describe('AccountService', () => {
     });
 
     describe('test token related user retrieval logic', () => {
-        let fetchStub: jest.SpyInstance;
+        let fetchStub: ReturnType<typeof vi.spyOn>;
 
         beforeEach(() => {
             // @ts-ignore spying on private method
-            fetchStub = jest.spyOn(accountService, 'fetch');
+            fetchStub = vi.spyOn(accountService, 'fetch');
         });
 
         it('should not retrieve user if vcs token is missing but not required', () => {
@@ -607,7 +602,7 @@ describe('AccountService', () => {
             });
 
             const req = httpMock.expectOne({ method: 'GET', url: `api/core/account/participation-vcs-access-token?participationId=${participationId}` });
-            req.flush({ body: token });
+            req.flush(token);
         });
 
         it('should create VCS access token for a participation', () => {
@@ -617,19 +612,19 @@ describe('AccountService', () => {
             accountService.createVcsAccessToken(participationId).subscribe(() => {});
 
             const req = httpMock.expectOne({ method: 'PUT', url: `api/core/account/participation-vcs-access-token?participationId=${participationId}` });
-            req.flush({ body: token });
+            req.flush(token);
         });
     });
 
     describe('test external LLM usage acceptance', () => {
         beforeEach(() => {
-            jest.useFakeTimers();
+            vi.useFakeTimers();
             // Set a fixed date for consistent testing
-            jest.setSystemTime(new Date('2025-11-28'));
+            vi.setSystemTime(new Date('2025-11-28'));
         });
 
         afterEach(() => {
-            jest.useRealTimers();
+            vi.useRealTimers();
         });
 
         it('should set selectedLLMUsageTimestamp when user identity exists', () => {
@@ -757,6 +752,277 @@ describe('AccountService', () => {
 
             accountService.setUserLLMSelectionDecision(LLMSelectionDecision.NO_AI);
             expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.NO_AI);
+        });
+    });
+
+    describe('test save', () => {
+        it('should save user data', () => {
+            const userToSave = { id: 1, login: 'testuser' } as User;
+
+            accountService.save(userToSave).subscribe((response) => {
+                expect(response.body).toEqual(userToSave);
+            });
+
+            const req = httpMock.expectOne({ method: 'PUT', url: 'api/core/account' });
+            req.flush(userToSave);
+        });
+    });
+
+    describe('test setImageUrl', () => {
+        it('should set image url when user identity exists', () => {
+            accountService.userIdentity.set({ id: 1, groups: ['USER'] } as User);
+
+            accountService.setImageUrl('new-image.png');
+
+            expect(accountService.userIdentity()?.imageUrl).toBe('new-image.png');
+        });
+
+        it('should not throw error when user identity is undefined', () => {
+            accountService.userIdentity.set(undefined);
+
+            expect(() => accountService.setImageUrl('new-image.png')).not.toThrow();
+            expect(accountService.userIdentity()).toBeUndefined();
+        });
+    });
+
+    describe('test syncGroups', () => {
+        it('should not throw error when user identity is undefined', () => {
+            accountService.userIdentity.set(undefined);
+
+            expect(() => accountService.syncGroups(['USER', 'ADMIN'])).not.toThrow();
+            expect(accountService.userIdentity()).toBeUndefined();
+        });
+    });
+
+    describe('test isSuperAdmin', () => {
+        it('should return false if user is not super admin', () => {
+            accountService.userIdentity.set({ id: 1, groups: ['USER'], authorities: [Authority.STUDENT] } as User);
+
+            expect(accountService.isSuperAdmin()).toBe(false);
+        });
+
+        it('should return true if user is super admin', () => {
+            accountService.userIdentity.set({ id: 1, groups: ['USER'], authorities: [Authority.SUPER_ADMIN] } as User);
+
+            expect(accountService.isSuperAdmin()).toBe(true);
+        });
+    });
+
+    describe('test getAuthenticationState', () => {
+        it('should return observable of user', () => {
+            accountService.userIdentity.set(user);
+
+            accountService.getAuthenticationState().subscribe((userState) => {
+                expect(userState).toEqual(user);
+            });
+        });
+
+        it('should return an observable from the authentication state', () => {
+            const authState$ = accountService.getAuthenticationState();
+
+            expect(authState$).toBeDefined();
+            expect(authState$).toHaveProperty('subscribe');
+        });
+    });
+
+    describe('test hasAuthority with identity', () => {
+        it('should resolve true when user has the authority', async () => {
+            accountService.userIdentity.set({ id: 1, groups: ['USER'], authorities: [Authority.ADMIN] } as User);
+
+            const result = await accountService.hasAuthority(Authority.ADMIN);
+
+            expect(result).toBe(true);
+        });
+
+        it('should resolve false when user does not have the authority', async () => {
+            accountService.userIdentity.set({ id: 1, groups: ['USER'], authorities: [Authority.STUDENT] } as User);
+
+            const result = await accountService.hasAuthority(Authority.ADMIN);
+
+            expect(result).toBe(false);
+        });
+    });
+
+    describe('test identity with error handling', () => {
+        it('should set userIdentity to undefined on fetch error', async () => {
+            const identityPromise = accountService.identity();
+
+            const req = httpMock.expectOne({ method: 'GET', url: getUserUrl });
+            req.error(new ProgressEvent('error'));
+
+            const userReceived = await identityPromise;
+
+            expect(userReceived).toBeUndefined();
+            expect(accountService.userIdentity()).toBeUndefined();
+        });
+
+        it('should set userIdentity to undefined when response body is null', async () => {
+            const identityPromise = accountService.identity();
+
+            const req = httpMock.expectOne({ method: 'GET', url: getUserUrl });
+            req.flush(null);
+
+            const userReceived = await identityPromise;
+
+            expect(userReceived).toBeUndefined();
+            expect(accountService.userIdentity()).toBeUndefined();
+        });
+
+        it('should set language from session storage when user has no langKey', async () => {
+            const sessionStorage = TestBed.inject(SessionStorageService);
+            vi.spyOn(sessionStorage, 'retrieve').mockReturnValue('de');
+
+            const translateService = TestBed.inject(TranslateService);
+            const translateUseSpy = vi.spyOn(translateService, 'use');
+
+            const userWithoutLang = { id: 1, groups: ['USER'] } as User;
+            const identityPromise = accountService.identity();
+
+            const req = httpMock.expectOne({ method: 'GET', url: getUserUrl });
+            req.flush(userWithoutLang);
+
+            await identityPromise;
+
+            expect(translateUseSpy).toHaveBeenCalledWith('de');
+        });
+    });
+
+    describe('test isOwnerOfParticipation edge cases', () => {
+        it('should throw error when participation has no student and no team', () => {
+            const participation = {} as StudentParticipation;
+            accountService.userIdentity.set({ login: 'testuser' } as User);
+
+            expect(() => accountService.isOwnerOfParticipation(participation)).toThrow('Participation does not have any owners');
+        });
+    });
+
+    describe('test computed properties', () => {
+        it('should return askToSetupPasskey as false when user is undefined', () => {
+            accountService.userIdentity.set(undefined);
+            expect(accountService.askToSetupPasskey()).toBe(false);
+        });
+
+        it('should return askToSetupPasskey as true when user has it set', () => {
+            accountService.userIdentity.set({ id: 1, askToSetupPasskey: true } as User);
+            expect(accountService.askToSetupPasskey()).toBe(true);
+        });
+
+        it('should return isLoggedInWithPasskey as false when user is undefined', () => {
+            accountService.userIdentity.set(undefined);
+            expect(accountService.isLoggedInWithPasskey()).toBe(false);
+        });
+
+        it('should return isLoggedInWithPasskey as true when user logged in with passkey', () => {
+            accountService.userIdentity.set({ id: 1, loggedInWithPasskey: true } as User);
+            expect(accountService.isLoggedInWithPasskey()).toBe(true);
+        });
+
+        it('should return isPasskeySuperAdminApproved as false when user is undefined', () => {
+            accountService.userIdentity.set(undefined);
+            expect(accountService.isPasskeySuperAdminApproved()).toBe(false);
+        });
+
+        it('should return isPasskeySuperAdminApproved as true when passkey is approved', () => {
+            accountService.userIdentity.set({ id: 1, passkeySuperAdminApproved: true } as User);
+            expect(accountService.isPasskeySuperAdminApproved()).toBe(true);
+        });
+
+        it('should return isUserLoggedInWithApprovedPasskey as false when either condition is false', () => {
+            accountService.userIdentity.set({ id: 1, loggedInWithPasskey: true, passkeySuperAdminApproved: false } as User);
+            expect(accountService.isUserLoggedInWithApprovedPasskey()).toBe(false);
+
+            accountService.userIdentity.set({ id: 1, loggedInWithPasskey: false, passkeySuperAdminApproved: true } as User);
+            expect(accountService.isUserLoggedInWithApprovedPasskey()).toBe(false);
+        });
+
+        it('should return isUserLoggedInWithApprovedPasskey as true when both conditions are true', () => {
+            accountService.userIdentity.set({ id: 1, loggedInWithPasskey: true, passkeySuperAdminApproved: true } as User);
+            expect(accountService.isUserLoggedInWithApprovedPasskey()).toBe(true);
+        });
+    });
+
+    describe('test setUserEnabledMemiris', () => {
+        it('should update user memiris setting on success', () => {
+            accountService.userIdentity.set({ id: 1, groups: ['USER'], memirisEnabled: false } as User);
+
+            accountService.setUserEnabledMemiris(true);
+
+            const req = httpMock.expectOne({ method: 'PUT', url: 'api/core/account/enable-memiris' });
+            req.flush({});
+
+            expect(accountService.userIdentity()?.memirisEnabled).toBe(true);
+        });
+
+        it('should not update user when user identity is undefined', () => {
+            accountService.userIdentity.set(undefined);
+
+            accountService.setUserEnabledMemiris(true);
+
+            const req = httpMock.expectOne({ method: 'PUT', url: 'api/core/account/enable-memiris' });
+            req.flush({});
+
+            expect(accountService.userIdentity()).toBeUndefined();
+        });
+
+        it('should handle error gracefully', () => {
+            accountService.userIdentity.set({ id: 1, groups: ['USER'], memirisEnabled: false } as User);
+
+            accountService.setUserEnabledMemiris(true);
+
+            const req = httpMock.expectOne({ method: 'PUT', url: 'api/core/account/enable-memiris' });
+            req.error(new ProgressEvent('error'));
+
+            // User should remain unchanged
+            expect(accountService.userIdentity()?.memirisEnabled).toBe(false);
+        });
+    });
+
+    describe('test getToolToken', () => {
+        it('should get tool token', () => {
+            const expectedToken = 'test-tool-token';
+
+            accountService.getToolToken('vscode').subscribe((token) => {
+                expect(token).toBe(expectedToken);
+            });
+
+            const req = httpMock.expectOne({ method: 'POST', url: 'api/core/tool-token?tool=vscode' });
+            req.flush(expectedToken);
+        });
+    });
+
+    describe('test setAccessRightsForExerciseAndReferencedCourse edge cases', () => {
+        it('should handle exercise without course', () => {
+            accountService.userIdentity.set({ id: 10, groups: ['INSTRUCTOR'], authorities } as User);
+
+            const exerciseWithoutCourse = {} as Exercise;
+            accountService.setAccessRightsForExerciseAndReferencedCourse(exerciseWithoutCourse);
+
+            expect(exerciseWithoutCourse.isAtLeastTutor).toBe(true);
+            expect(exerciseWithoutCourse.isAtLeastEditor).toBe(true);
+            expect(exerciseWithoutCourse.isAtLeastInstructor).toBe(true);
+        });
+    });
+
+    describe('test setAccessRightsForCourseAndReferencedExercises edge cases', () => {
+        it('should handle course without exercises', () => {
+            accountService.userIdentity.set({ id: 10, groups: ['INSTRUCTOR'], authorities } as User);
+
+            const courseWithoutExercises = {
+                instructorGroupName: 'INSTRUCTOR',
+            } as Course;
+            accountService.setAccessRightsForCourseAndReferencedExercises(courseWithoutExercises);
+
+            expect(courseWithoutExercises.isAtLeastInstructor).toBe(true);
+        });
+    });
+
+    describe('test hasGroup edge cases', () => {
+        it('should return false when group is undefined', () => {
+            accountService.userIdentity.set({ id: 10, groups: ['USER'], authorities } as User);
+
+            const result = accountService.hasGroup(undefined);
+
+            expect(result).toBe(false);
         });
     });
 });

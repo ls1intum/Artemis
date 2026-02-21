@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
@@ -29,6 +31,8 @@ import { AlertService } from 'app/shared/service/alert.service';
 class UserSettingsMockComponent extends UserSettingsDirective {}
 
 describe('User Settings Directive', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: UserSettingsMockComponent;
     let fixture: ComponentFixture<UserSettingsMockComponent>;
 
@@ -73,18 +77,18 @@ describe('User Settings Directive', () => {
         userSettingsService = TestBed.inject(UserSettingsService);
         alertService = TestBed.inject(AlertService);
 
-        jest.spyOn(alertService, 'closeAll');
-        jest.spyOn(alertService, 'success');
-        jest.spyOn(alertService, 'error');
+        vi.spyOn(alertService, 'closeAll');
+        vi.spyOn(alertService, 'success');
+        vi.spyOn(alertService, 'error');
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('ngOnInit', () => {
         it('should close all alerts and load settings', () => {
-            jest.spyOn(comp, 'loadSetting' as any);
+            vi.spyOn(comp, 'loadSetting' as any);
 
             comp.ngOnInit();
 
@@ -96,9 +100,9 @@ describe('User Settings Directive', () => {
     describe('loadSetting', () => {
         it('should load settings successfully', () => {
             const httpResponse = new HttpResponse<Setting[]>({ body: mockSettings });
-            jest.spyOn(userSettingsService, 'loadSettings').mockReturnValue(of(httpResponse));
-            jest.spyOn(userSettingsService, 'loadSettingsSuccessAsSettingsStructure').mockReturnValue(mockUserSettingsStructure);
-            jest.spyOn(userSettingsService, 'extractIndividualSettingsFromSettingsStructure').mockReturnValue(mockSettings);
+            vi.spyOn(userSettingsService, 'loadSettings').mockReturnValue(of(httpResponse));
+            vi.spyOn(userSettingsService, 'loadSettingsSuccessAsSettingsStructure').mockReturnValue(mockUserSettingsStructure);
+            vi.spyOn(userSettingsService, 'extractIndividualSettingsFromSettingsStructure').mockReturnValue(mockSettings);
 
             comp['loadSetting']();
 
@@ -113,8 +117,8 @@ describe('User Settings Directive', () => {
 
         it('should handle error when loading settings', () => {
             const errorResponse = { status: 404, statusText: 'Not Found', error: { message: 'Settings not found', params: {} } };
-            jest.spyOn(userSettingsService, 'loadSettings').mockReturnValue(throwError(() => errorResponse));
-            jest.spyOn(comp, 'onError' as any);
+            vi.spyOn(userSettingsService, 'loadSettings').mockReturnValue(throwError(() => errorResponse));
+            vi.spyOn(comp, 'onError' as any);
 
             comp['loadSetting']();
 
@@ -131,10 +135,10 @@ describe('User Settings Directive', () => {
 
         it('should save settings successfully', () => {
             const httpResponse = new HttpResponse<Setting[]>({ body: mockSettings });
-            jest.spyOn(userSettingsService, 'saveSettings').mockReturnValue(of(httpResponse));
-            jest.spyOn(userSettingsService, 'saveSettingsSuccess').mockReturnValue(mockUserSettingsStructure);
-            jest.spyOn(userSettingsService, 'extractIndividualSettingsFromSettingsStructure').mockReturnValue(mockSettings);
-            jest.spyOn(comp, 'finishSaving' as any);
+            vi.spyOn(userSettingsService, 'saveSettings').mockReturnValue(of(httpResponse));
+            vi.spyOn(userSettingsService, 'saveSettingsSuccess').mockReturnValue(mockUserSettingsStructure);
+            vi.spyOn(userSettingsService, 'extractIndividualSettingsFromSettingsStructure').mockReturnValue(mockSettings);
+            vi.spyOn(comp, 'finishSaving' as any);
 
             comp.saveSettings();
 
@@ -149,8 +153,8 @@ describe('User Settings Directive', () => {
 
         it('should handle error when saving settings', () => {
             const errorResponse = { status: 500, statusText: 'Server Error', error: { message: 'Failed to save settings', params: {} } };
-            jest.spyOn(userSettingsService, 'saveSettings').mockReturnValue(throwError(() => errorResponse));
-            jest.spyOn(comp, 'onError' as any);
+            vi.spyOn(userSettingsService, 'saveSettings').mockReturnValue(throwError(() => errorResponse));
+            vi.spyOn(comp, 'onError' as any);
 
             comp.saveSettings();
 
@@ -160,7 +164,7 @@ describe('User Settings Directive', () => {
 
     describe('finishSaving', () => {
         it('should finalize the saving process', () => {
-            jest.spyOn(comp, 'createApplyChangesEvent' as any);
+            vi.spyOn(comp, 'createApplyChangesEvent' as any);
             comp.settingsChanged = true;
 
             comp['finishSaving']();
@@ -169,13 +173,13 @@ describe('User Settings Directive', () => {
             expect(alertService.closeAll).toHaveBeenCalled();
             expect(alertService.success).toHaveBeenCalledWith('artemisApp.userSettings.saveSettingsSuccessAlert');
 
-            expect(comp.settingsChanged).toBeFalse();
+            expect(comp.settingsChanged).toBe(false);
         });
     });
 
     describe('createApplyChangesEvent', () => {
         it('should send apply changes event with the correct message', () => {
-            jest.spyOn(userSettingsService, 'sendApplyChangesEvent');
+            vi.spyOn(userSettingsService, 'sendApplyChangesEvent');
             comp.changeEventMessage = 'settings.changed';
 
             comp['createApplyChangesEvent']();
@@ -232,17 +236,17 @@ describe('User Settings Directive', () => {
 
             // @ts-ignore
             const httpResponse = new HttpResponse<Setting[]>({ body: updatedSettings });
-            jest.spyOn(userSettingsService, 'saveSettings').mockReturnValue(of(httpResponse));
-            jest.spyOn(userSettingsService, 'saveSettingsSuccess').mockReturnValue(updatedUserSettingsStructure);
+            vi.spyOn(userSettingsService, 'saveSettings').mockReturnValue(of(httpResponse));
+            vi.spyOn(userSettingsService, 'saveSettingsSuccess').mockReturnValue(updatedUserSettingsStructure);
             // @ts-ignore
-            jest.spyOn(userSettingsService, 'extractIndividualSettingsFromSettingsStructure').mockReturnValue(updatedSettings);
-            jest.spyOn(userSettingsService, 'sendApplyChangesEvent');
+            vi.spyOn(userSettingsService, 'extractIndividualSettingsFromSettingsStructure').mockReturnValue(updatedSettings);
+            vi.spyOn(userSettingsService, 'sendApplyChangesEvent');
 
             comp.saveSettings();
 
             expect(comp.userSettings).toEqual(updatedUserSettingsStructure);
             expect(comp.settings).toEqual(updatedSettings);
-            expect(comp.settingsChanged).toBeFalse();
+            expect(comp.settingsChanged).toBe(false);
             expect(userSettingsService.sendApplyChangesEvent).toHaveBeenCalledWith('settings.changed');
             expect(alertService.success).toHaveBeenCalledWith('artemisApp.userSettings.saveSettingsSuccessAlert');
         });

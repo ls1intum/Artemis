@@ -1,7 +1,8 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FeedbackOnboardingModalComponent } from './feedback-onboarding-modal.component';
 import { LearnerProfileApiService } from '../../learner-profile-api.service';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { LearnerProfileDTO } from '../../dto/learner-profile-dto.model';
 import { provideHttpClient } from '@angular/common/http';
@@ -9,43 +10,34 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockProvider } from 'ng-mocks';
 import { TranslateModule } from '@ngx-translate/core';
 
-class MockActiveModal {
-    close = jest.fn();
-}
 class MockAlertService {
-    addAlert = jest.fn();
-    closeAll = jest.fn();
+    addAlert = vi.fn();
+    closeAll = vi.fn();
 }
 
 describe('FeedbackOnboardingModalComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: FeedbackOnboardingModalComponent;
     let fixture: ComponentFixture<FeedbackOnboardingModalComponent>;
     let learnerProfileApiService: LearnerProfileApiService;
     let alertService: AlertService;
-    let activeModal: NgbActiveModal;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [FeedbackOnboardingModalComponent, TranslateModule.forRoot()],
-            providers: [
-                MockProvider(LearnerProfileApiService),
-                { provide: NgbActiveModal, useClass: MockActiveModal },
-                { provide: AlertService, useClass: MockAlertService },
-                provideHttpClient(),
-                provideHttpClientTesting(),
-            ],
+            providers: [MockProvider(LearnerProfileApiService), { provide: AlertService, useClass: MockAlertService }, provideHttpClient(), provideHttpClientTesting()],
         }).compileComponents();
 
         fixture = TestBed.createComponent(FeedbackOnboardingModalComponent);
         component = fixture.componentInstance;
         learnerProfileApiService = TestBed.inject(LearnerProfileApiService);
         alertService = TestBed.inject(AlertService);
-        activeModal = TestBed.inject(NgbActiveModal);
         fixture.detectChanges();
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should create', () => {
@@ -77,16 +69,20 @@ describe('FeedbackOnboardingModalComponent', () => {
         expect(component.selected[1]).toBe(1);
     });
 
-    it('should close the modal', () => {
+    it('should close the modal by setting visible to false', () => {
+        component.visible.set(true);
         component.close();
-        expect(activeModal.close).toHaveBeenCalled();
+        expect(component.visible()).toBe(false);
     });
 
     describe('finish', () => {
-        it('should PUT updated profile', async () => {
+        it('should PUT updated profile and emit completed', async () => {
             component.selected = [1, 0];
-            const getSpy = jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(new LearnerProfileDTO({ id: 42 }));
-            const putSpy = jest.spyOn(learnerProfileApiService, 'putUpdatedLearnerProfile').mockResolvedValue(new LearnerProfileDTO({}));
+            const completedSpy = vi.fn();
+            component.completed.subscribe(completedSpy);
+            const getSpy = vi.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(new LearnerProfileDTO({ id: 42 }));
+            const putSpy = vi.spyOn(learnerProfileApiService, 'putUpdatedLearnerProfile').mockResolvedValue(new LearnerProfileDTO({}));
+            component.visible.set(true);
             await component.finish();
             expect(getSpy).toHaveBeenCalled();
             expect(putSpy).toHaveBeenCalledWith(
@@ -103,19 +99,21 @@ describe('FeedbackOnboardingModalComponent', () => {
                 message: 'artemisApp.learnerProfile.feedbackLearnerProfile.profileSaved',
             });
             expect(component.onboardingCompleted()).toBeUndefined();
-            expect(activeModal.close).toHaveBeenCalled();
+            expect(completedSpy).toHaveBeenCalledOnce();
+            expect(component.visible()).toBe(false);
         });
 
         it('should handle non-HTTP error and close modal', async () => {
             component.selected = [undefined, undefined];
-            jest.spyOn(learnerProfileApiService, 'putUpdatedLearnerProfile').mockRejectedValue(new Error('fail'));
+            vi.spyOn(learnerProfileApiService, 'putUpdatedLearnerProfile').mockRejectedValue(new Error('fail'));
+            component.visible.set(true);
             await component.finish();
             expect(alertService.addAlert).toHaveBeenCalledWith({
                 type: AlertType.DANGER,
                 message: 'artemisApp.learnerProfile.feedbackLearnerProfile.error',
             });
             expect(component.onboardingCompleted()).toBeUndefined();
-            expect(activeModal.close).toHaveBeenCalled();
+            expect(component.visible()).toBe(false);
         });
     });
 });

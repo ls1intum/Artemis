@@ -1,6 +1,8 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpClient } from '@angular/common/http';
 import { DebugElement } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
@@ -38,14 +40,16 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
 
 describe('ExerciseDetailsStudentActionsComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: ExerciseDetailsStudentActionsComponent;
     let fixture: ComponentFixture<ExerciseDetailsStudentActionsComponent>;
     let debugElement: DebugElement;
     let courseExerciseService: CourseExerciseService;
     let profileService: ProfileService;
-    let startExerciseStub: jest.SpyInstance;
-    let resumeStub: jest.SpyInstance;
-    let getProfileInfoSub: jest.SpyInstance;
+    let startExerciseStub: ReturnType<typeof vi.spyOn>;
+    let resumeStub: ReturnType<typeof vi.spyOn>;
+    let getProfileInfoSub: ReturnType<typeof vi.spyOn>;
     let router: MockRouter;
 
     const team = { id: 1, students: [{ id: 99 } as User] } as Team;
@@ -78,16 +82,16 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockModule(NgbTooltipModule)],
-            declarations: [
+            imports: [
+                MockModule(NgbTooltipModule),
                 ExerciseDetailsStudentActionsComponent,
                 MockComponent(ExerciseActionButtonComponent),
                 MockComponent(CodeButtonComponent),
                 MockComponent(StartPracticeModeButtonComponent),
                 MockPipe(ArtemisTranslatePipe, (query: any, args?: any) => query + (args ? args : '')),
+                MockDirective(FeatureToggleDirective),
                 ExtensionPointDirective,
                 MockRouterLinkDirective,
-                MockDirective(FeatureToggleDirective),
             ],
             providers: [
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
@@ -99,55 +103,60 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: ProfileService, useClass: MockProfileService },
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(ExerciseDetailsStudentActionsComponent, {
+                remove: { imports: [CodeButtonComponent] },
+                add: { imports: [MockComponent(CodeButtonComponent)] },
+            })
+            .compileComponents();
         fixture = TestBed.createComponent(ExerciseDetailsStudentActionsComponent);
         comp = fixture.componentInstance;
         debugElement = fixture.debugElement;
         courseExerciseService = TestBed.inject(CourseExerciseService);
         profileService = TestBed.inject(ProfileService);
         router = TestBed.inject(Router) as unknown as MockRouter;
-        getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
+        getProfileInfoSub = vi.spyOn(profileService, 'getProfileInfo');
         getProfileInfoSub.mockReturnValue({
             sshCloneURLTemplate: 'ssh://git@testserver.com:1234/',
             activeModuleFeatures: [MODULE_FEATURE_TEXT],
         } as unknown as ProfileInfo);
-        startExerciseStub = jest.spyOn(courseExerciseService, 'startExercise');
-        resumeStub = jest.spyOn(courseExerciseService, 'resumeProgrammingExercise');
+        startExerciseStub = vi.spyOn(courseExerciseService, 'startExercise');
+        resumeStub = vi.spyOn(courseExerciseService, 'resumeProgrammingExercise');
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it.each([ExerciseType.MODELING, ExerciseType.FILE_UPLOAD, ExerciseType.PROGRAMMING, ExerciseType.TEXT])(
         'should not show the buttons "Team" and "Start exercise" for a team exercise when not assigned to a team yet',
-        fakeAsync((exerciseType: ExerciseType) => {
-            comp.exercise = { ...teamExerciseWithoutTeamAssigned, type: exerciseType };
-            comp.ngOnChanges();
+        async (exerciseType: ExerciseType) => {
+            fixture.componentRef.setInput('exercise', { ...teamExerciseWithoutTeamAssigned, type: exerciseType });
+            TestBed.tick();
             fixture.detectChanges();
-            tick();
+            await fixture.whenStable();
 
             const viewTeamButton = fixture.debugElement.query(By.css('.view-team'));
             expect(viewTeamButton).toBeNull();
 
             const startExerciseButton = fixture.debugElement.query(By.css('.start-exercise'));
             expect(startExerciseButton).toBeNull();
-        }),
+        },
     );
 
     it.each([ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.FILE_UPLOAD, ExerciseType.PROGRAMMING])(
         'should show the buttons "Team" and "Start exercise" for a team exercise for a student to view their team when assigned to a team',
-        fakeAsync((exerciseType: ExerciseType) => {
-            comp.exercise = { ...teamExerciseWithTeamAssigned, type: exerciseType };
-            comp.ngOnChanges();
+        async (exerciseType: ExerciseType) => {
+            fixture.componentRef.setInput('exercise', { ...teamExerciseWithTeamAssigned, type: exerciseType });
+            TestBed.tick();
             fixture.detectChanges();
-            tick();
+            await fixture.whenStable();
 
             const viewTeamButton = fixture.debugElement.query(By.css('.view-team'));
             expect(viewTeamButton).not.toBeNull();
             const startExerciseButton = fixture.debugElement.query(By.css('.start-exercise'));
             expect(startExerciseButton).not.toBeNull();
-        }),
+        },
     );
 
     it('should create the correct repository URL for missing exerciseID in URL', () => {
@@ -158,11 +167,9 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         router.setUrl(repositoryUrl);
 
         // Assign the courseId and exerciseId to the component's input properties
-        comp.courseId = courseId;
-        comp.exercise = { id: exerciseId } as Exercise;
-
-        // Call the ngOnInit method to initialize the component
-        comp.ngOnInit();
+        fixture.componentRef.setInput('courseId', courseId);
+        fixture.componentRef.setInput('exercise', { id: exerciseId } as Exercise);
+        TestBed.tick();
     });
 
     it('should create the correct repository URL for exam exercises', () => {
@@ -174,37 +181,36 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         router.setUrl(repositoryUrl);
 
         // Assign the courseId and exerciseId to the component's input properties
-        comp.courseId = courseId;
-        comp.exercise = { id: exerciseId } as Exercise;
-
-        // Call the ngOnInit method to initialize the component
-        comp.ngOnInit();
+        fixture.componentRef.setInput('courseId', courseId);
+        fixture.componentRef.setInput('exercise', { id: exerciseId } as Exercise);
+        TestBed.tick();
 
         // Assert that the repositoryLink property is set correctly
     });
 
-    it('should reflect the correct participation state when team exercise was started', fakeAsync(() => {
+    it('should reflect the correct participation state when team exercise was started', async () => {
         const inactivePart = { id: 2, initializationState: InitializationState.UNINITIALIZED } as StudentParticipation;
         const initPart = { id: 2, initializationState: InitializationState.INITIALIZED } as StudentParticipation;
         const participationSubject = new Subject<StudentParticipation>();
 
-        comp.exercise = teamExerciseWithTeamAssigned;
+        fixture.componentRef.setInput('exercise', teamExerciseWithTeamAssigned);
+        TestBed.tick();
         startExerciseStub.mockReturnValue(participationSubject);
         comp.startExercise();
         participationSubject.next(inactivePart);
 
         fixture.changeDetectorRef.detectChanges();
-        tick();
+        await fixture.whenStable();
 
-        expect(comp.gradedParticipation?.initializationState).toEqual(InitializationState.UNINITIALIZED);
+        expect(comp.gradedParticipation()?.initializationState).toEqual(InitializationState.UNINITIALIZED);
 
         expect(startExerciseStub).toHaveBeenCalledOnce();
         participationSubject.next(initPart);
 
         fixture.changeDetectorRef.detectChanges();
-        tick();
+        await fixture.whenStable();
 
-        expect(comp.gradedParticipation?.initializationState).toEqual(InitializationState.INITIALIZED);
+        expect(comp.gradedParticipation()?.initializationState).toEqual(InitializationState.INITIALIZED);
 
         // Check that button "Start exercise" is no longer shown
         const startExerciseButton = fixture.debugElement.query(By.css('.start-exercise'));
@@ -215,11 +221,10 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(codeButton).toBeNull();
 
         fixture.destroy();
-        flush();
-    }));
+    });
 
-    it('should reflect the correct participation state for practice mode', fakeAsync(() => {
-        const exercise = {
+    it('should reflect the correct participation state for practice mode', async () => {
+        const exerciseData = {
             id: 43,
             type: ExerciseType.PROGRAMMING,
             dueDate: dayjs().subtract(5, 'minutes'),
@@ -228,10 +233,11 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         } as ProgrammingExercise;
         const initPart = { id: 2, initializationState: InitializationState.INITIALIZED, testRun: true } as StudentParticipation;
 
-        comp.exercise = exercise;
+        fixture.componentRef.setInput('exercise', exerciseData);
+        TestBed.tick();
 
         fixture.detectChanges();
-        tick();
+        await fixture.whenStable();
 
         let startPracticeButton = fixture.debugElement.query(By.css('jhi-start-practice-mode-button'));
         expect(startPracticeButton).not.toBeNull();
@@ -239,11 +245,11 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         let codeButton = fixture.debugElement.query(By.css('jhi-code-button'));
         expect(codeButton).toBeNull();
 
-        comp.exercise.studentParticipations = [initPart];
-        comp.practiceParticipation = initPart;
+        // Update participations via the component's public method
+        comp.receiveNewParticipation(initPart);
 
         fixture.changeDetectorRef.detectChanges();
-        tick();
+        await fixture.whenStable();
 
         startPracticeButton = fixture.debugElement.query(By.css('jhi-start-practice-mode-button'));
         expect(startPracticeButton).toBeNull();
@@ -252,19 +258,18 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(codeButton).toBeNull();
 
         fixture.destroy();
-        flush();
-    }));
+    });
 
-    it('should correctly not show the Code button for exam test runs', fakeAsync(() => {
+    it('should correctly not show the Code button for exam test runs', async () => {
         testRunParticipation.repositoryUri = undefined;
         testRunExercise.studentParticipations = [testRunParticipation];
 
-        comp.examMode = true;
-        comp.exercise = testRunExercise;
-        comp.practiceParticipation = testRunParticipation;
+        fixture.componentRef.setInput('examMode', true);
+        fixture.componentRef.setInput('exercise', testRunExercise);
+        TestBed.tick();
 
         fixture.detectChanges();
-        tick();
+        await fixture.whenStable();
 
         const startPracticeButton = fixture.debugElement.query(By.css('jhi-start-practice-mode-button'));
         expect(startPracticeButton).toBeNull();
@@ -273,19 +278,18 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(codeButton).toBeNull();
 
         fixture.destroy();
-        flush();
-    }));
+    });
 
-    it('should correctly show the Code button for exam test runs', fakeAsync(() => {
+    it('should correctly show the Code button for exam test runs', async () => {
         testRunParticipation.repositoryUri = 'https://clone-me.git';
         testRunExercise.studentParticipations = [testRunParticipation];
 
-        comp.examMode = true;
-        comp.exercise = testRunExercise;
-        comp.practiceParticipation = testRunParticipation;
+        fixture.componentRef.setInput('examMode', true);
+        fixture.componentRef.setInput('exercise', testRunExercise);
+        TestBed.tick();
 
         fixture.detectChanges();
-        tick();
+        await fixture.whenStable();
 
         const startPracticeButton = fixture.debugElement.query(By.css('jhi-start-practice-mode-button'));
         expect(startPracticeButton).toBeNull();
@@ -294,32 +298,33 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(codeButton).not.toBeNull();
 
         fixture.destroy();
-        flush();
-    }));
+    });
 
     it('should correctly resume programming participation', () => {
         const inactiveParticipation: ProgrammingExerciseStudentParticipation = { id: 1, initializationState: InitializationState.INACTIVE };
         const activeParticipation: ProgrammingExerciseStudentParticipation = { id: 1, initializationState: InitializationState.INITIALIZED };
         const practiceParticipation: ProgrammingExerciseStudentParticipation = { id: 2, testRun: true, initializationState: InitializationState.INACTIVE };
-        comp.exercise = { id: 3, studentParticipations: [inactiveParticipation, practiceParticipation] } as ProgrammingExercise;
+        fixture.componentRef.setInput('exercise', { id: 3, studentParticipations: [inactiveParticipation, practiceParticipation] } as ProgrammingExercise);
+        TestBed.tick();
         comp.updateParticipations();
 
         resumeStub.mockReturnValue(of(activeParticipation));
 
         comp.resumeProgrammingExercise(false);
 
-        expect(comp.exercise.studentParticipations).toEqual([activeParticipation, practiceParticipation]);
+        expect(comp.studentParticipations()).toEqual([activeParticipation, practiceParticipation]);
     });
 
-    it('should show correct buttons in exam mode', fakeAsync(() => {
-        const exercise = { type: ExerciseType.PROGRAMMING, allowOfflineIde: false, allowOnlineEditor: true } as ProgrammingExercise;
-        exercise.studentParticipations = [{ initializationState: InitializationState.INITIALIZED } as StudentParticipation];
-        comp.exercise = exercise;
-        comp.examMode = true;
+    it('should show correct buttons in exam mode', async () => {
+        const exerciseData = { type: ExerciseType.PROGRAMMING, allowOfflineIde: false, allowOnlineEditor: true } as ProgrammingExercise;
+        exerciseData.studentParticipations = [{ initializationState: InitializationState.INITIALIZED } as StudentParticipation];
+        fixture.componentRef.setInput('exercise', exerciseData);
+        fixture.componentRef.setInput('examMode', true);
+        TestBed.tick();
         comp.updateParticipations();
 
         fixture.changeDetectorRef.detectChanges();
-        tick();
+        await fixture.whenStable();
 
         let startExerciseButton = debugElement.query(By.css('button.start-exercise'));
         expect(startExerciseButton).toBeNull();
@@ -328,10 +333,10 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         let codeButton = debugElement.query(By.css('jhi-code-button'));
         expect(codeButton).toBeNull();
 
-        exercise.allowOfflineIde = true;
+        exerciseData.allowOfflineIde = true;
 
         fixture.changeDetectorRef.detectChanges();
-        tick();
+        await fixture.whenStable();
 
         startExerciseButton = debugElement.query(By.css('button.start-exercise'));
         expect(startExerciseButton).toBeNull();
@@ -339,19 +344,20 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(codeEditorButton).toBeNull();
         codeButton = debugElement.query(By.css('jhi-code-button'));
         expect(codeButton).toBeNull();
-    }));
+    });
 
-    it('should show correct buttons in exam mode, including code button', fakeAsync(() => {
-        const exercise = { type: ExerciseType.PROGRAMMING, allowOfflineIde: false, allowOnlineEditor: true } as ProgrammingExercise;
-        exercise.studentParticipations = [
+    it('should show correct buttons in exam mode, including code button', async () => {
+        const exerciseData = { type: ExerciseType.PROGRAMMING, allowOfflineIde: false, allowOnlineEditor: true } as ProgrammingExercise;
+        exerciseData.studentParticipations = [
             { initializationState: InitializationState.INITIALIZED, repositoryUri: 'https://clone-me.git' } as ProgrammingExerciseStudentParticipation,
         ];
-        comp.exercise = exercise;
-        comp.examMode = true;
+        fixture.componentRef.setInput('exercise', exerciseData);
+        fixture.componentRef.setInput('examMode', true);
+        TestBed.tick();
         comp.updateParticipations();
 
         fixture.changeDetectorRef.detectChanges();
-        tick();
+        await fixture.whenStable();
 
         let startExerciseButton = debugElement.query(By.css('button.start-exercise'));
         expect(startExerciseButton).toBeNull();
@@ -360,10 +366,10 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         let codeButton = debugElement.query(By.css('jhi-code-button'));
         expect(codeButton).toBeNull();
 
-        exercise.allowOfflineIde = true;
+        exerciseData.allowOfflineIde = true;
 
         fixture.changeDetectorRef.detectChanges();
-        tick();
+        await fixture.whenStable();
 
         startExerciseButton = debugElement.query(By.css('button.start-exercise'));
         expect(startExerciseButton).toBeNull();
@@ -371,32 +377,33 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(codeEditorButton).toBeNull();
         codeButton = debugElement.query(By.css('jhi-code-button'));
         expect(codeButton).not.toBeNull();
-    }));
+    });
 
     // Quiz not supported yet
     it.each([ExerciseType.PROGRAMMING, ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD])(
         'should disable start exercise button before start date %s',
-        fakeAsync((type: ExerciseType) => {
-            comp.exercise = { type, releaseDate: dayjs().subtract(1, 'hour'), startDate: dayjs().add(1, 'hour') } as ProgrammingExercise;
+        async (type: ExerciseType) => {
+            fixture.componentRef.setInput('exercise', { type, releaseDate: dayjs().subtract(1, 'hour'), startDate: dayjs().add(1, 'hour') } as ProgrammingExercise);
+            TestBed.tick();
 
             fixture.changeDetectorRef.detectChanges();
-            tick();
+            await fixture.whenStable();
 
             const startExerciseButton = debugElement.query(By.css('button.start-exercise'));
             expect(startExerciseButton).not.toBeNull();
-            expect(startExerciseButton.componentInstance.overwriteDisabled).toBeTrue();
-        }),
+            expect(startExerciseButton.componentInstance.overwriteDisabled()).toBe(true);
+        },
     );
 
-    describe('onInit', () => {
+    describe('effect on input changes', () => {
         it.each([
             [{ type: ExerciseType.QUIZ, quizBatches: [{ started: false }, { started: true }] } as QuizExercise, true],
             [{ type: ExerciseType.QUIZ, quizBatches: [] as QuizBatch[] } as QuizExercise, false],
-            [{ type: ExerciseType.TEXT } as TextExercise, undefined],
-        ])('should determine if it is an uninitialized quiz', (exercise: Exercise, expected: boolean) => {
-            comp.exercise = exercise;
-            comp.ngOnInit();
-            expect(comp.uninitializedQuiz).toBe(expected);
+            [{ type: ExerciseType.TEXT } as TextExercise, false],
+        ])('should determine if it is an uninitialized quiz', (exerciseData: Exercise, expected: boolean) => {
+            fixture.componentRef.setInput('exercise', exerciseData);
+            TestBed.tick();
+            expect(comp.uninitializedQuiz()).toBe(expected);
         });
 
         it.each([
@@ -407,21 +414,21 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
                 false,
             ],
             [{ type: ExerciseType.QUIZ, quizBatches: [{ started: true }], studentParticipations: [{ initializationState: InitializationState.FINISHED }] } as QuizExercise, false],
-        ])('should determine if quiz is not started', (exercise: Exercise, expected: boolean) => {
-            comp.exercise = exercise;
-            comp.ngOnInit();
-            expect(comp.quizNotStarted).toBe(expected);
+        ])('should determine if quiz is not started', (exerciseData: Exercise, expected: boolean) => {
+            fixture.componentRef.setInput('exercise', exerciseData);
+            TestBed.tick();
+            expect(comp.quizNotStarted()).toBe(expected);
         });
     });
 
-    it('ngOnChanges should determine participations', () => {
+    it('effect on input changes should determine participations', () => {
         const gradedParticipation = { id: 42 };
         const practiceParticipation = { id: 43, testRun: true };
 
-        comp.exercise = { studentParticipations: [gradedParticipation, practiceParticipation] } as Exercise;
-        comp.ngOnChanges();
-        expect(comp.gradedParticipation).toEqual(gradedParticipation);
-        expect(comp.practiceParticipation).toEqual(practiceParticipation);
+        fixture.componentRef.setInput('exercise', { studentParticipations: [gradedParticipation, practiceParticipation] } as Exercise);
+        TestBed.tick();
+        expect(comp.gradedParticipation()).toEqual(gradedParticipation);
+        expect(comp.practiceParticipation()).toEqual(practiceParticipation);
     });
 
     it.each([
@@ -492,23 +499,22 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         ],
     ])(
         'should show correct open exercise button for text exercises',
-        fakeAsync((exercise: Exercise, shouldShowButton: boolean, expectedLabel: string | undefined, shouldBeOutlined: boolean | undefined) => {
-            comp.exercise = exercise;
-            comp.ngOnInit();
-            comp.ngOnChanges();
+        async (exerciseData: Exercise, shouldShowButton: boolean, expectedLabel: string | undefined, shouldBeOutlined: boolean | undefined) => {
+            fixture.componentRef.setInput('exercise', exerciseData);
+            TestBed.tick();
 
             fixture.changeDetectorRef.detectChanges();
-            tick();
+            await fixture.whenStable();
 
             const button = debugElement.query(By.css('button.open-exercise'));
 
             if (shouldShowButton) {
                 expect(button).not.toBeNull();
-                expect(button.componentInstance.buttonLabel).toBe('artemisApp.exerciseActions.' + expectedLabel);
-                expect(button.componentInstance.outlined).toBe(shouldBeOutlined);
+                expect(button.componentInstance.buttonLabel()).toBe('artemisApp.exerciseActions.' + expectedLabel);
+                expect(button.componentInstance.outlined()).toBe(shouldBeOutlined);
             } else {
                 expect(button).toBeNull();
             }
-        }),
+        },
     );
 });

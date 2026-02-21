@@ -4,7 +4,7 @@
         <span class="d-none d-sm-inline"> {{ 'global.menu.admin.userManagement' | artemisTranslate }}</span>
     </button>
     <div ngbDropdownMenu aria-labelledby="instructor-actions-dropdown">
-        @for (userAddAction of userAddActions; track userAddAction) {
+        @for (userAddAction of userAddActions(); track userAddAction) {
             <a class="btn" [routerLink]="userAddAction.routerLink" ngbDropdownItem [id]="userAddAction.id">
                 @if (userAddAction.icon) {
                     <fa-icon [fixedWidth]="true" [icon]="userAddAction.icon" class="ms-2 me-3" />

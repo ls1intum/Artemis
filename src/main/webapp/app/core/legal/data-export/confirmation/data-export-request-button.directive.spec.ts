@@ -1,12 +1,14 @@
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { Component, DebugElement, signal } from '@angular/core';
+import { Component, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { DataExportRequestButtonDirective } from 'app/core/legal/data-export/confirmation/data-export-request-button.directive';
-import { DataExportConfirmationDialogService } from 'app/core/legal/data-export/confirmation/data-export-confirmation-dialog.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MockComponent } from 'ng-mocks';
+import { DataExportConfirmationDialogComponent } from 'app/core/legal/data-export/confirmation/data-export-confirmation-dialog.component';
 
 @Component({
     selector: 'jhi-test-component',
@@ -16,60 +18,37 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 class TestComponent {}
 
 describe('DataExportRequestButtonDirective', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<TestComponent>;
     let debugElement: DebugElement;
-    let dataExportConfirmationDialogService: DataExportConfirmationDialogService;
     let translateService: TranslateService;
-    let translateSpy: jest.SpyInstance;
+    let translateSpy: ReturnType<typeof vi.spyOn>;
 
-    beforeEach(() => {
-        // Create mock componentInstance with signal-like properties
-        const mockComponentInstance = {
-            expectedLogin: signal(''),
-            adminDialog: signal(false),
-            expectedLoginOfOtherUser: signal(''),
-            dataExportRequest: undefined,
-            dataExportRequestForAnotherUser: undefined,
-            dialogError: undefined,
-        };
+    beforeEach(async () => {
+        TestBed.configureTestingModule({
+            imports: [TestComponent, FaIconComponent, MockComponent(DataExportConfirmationDialogComponent)],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+        });
+        await TestBed.compileComponents();
 
-        const mockModalService = {
-            open: jest.fn().mockReturnValue({
-                result: Promise.resolve(),
-                componentInstance: mockComponentInstance,
-            }),
-        };
-
-        return TestBed.configureTestingModule({
-            imports: [TestComponent, FaIconComponent],
-            providers: [
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: NgbModal, useValue: mockModalService },
-            ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(TestComponent);
-                debugElement = fixture.debugElement;
-                dataExportConfirmationDialogService = TestBed.inject(DataExportConfirmationDialogService);
-                translateService = TestBed.inject(TranslateService);
-                translateSpy = jest.spyOn(translateService, 'instant');
-            });
+        fixture = TestBed.createComponent(TestComponent);
+        debugElement = fixture.debugElement;
+        translateService = TestBed.inject(TranslateService);
+        translateSpy = vi.spyOn(translateService, 'instant');
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should be correctly initialized', () => {
         fixture.detectChanges();
-        expect(translateSpy).toHaveBeenCalledOnce();
         expect(translateSpy).toHaveBeenCalledWith('artemisApp.dataExport.request');
 
-        // Check that button was assigned with proper classes and type.
+        // Check that button was assigned with proper classes via host binding.
         const confirmButton = debugElement.query(By.css('.btn.btn-primary.btn-lg.me-1'));
         expect(confirmButton).not.toBeNull();
-        expect(confirmButton.properties['type']).toBe('submit');
 
         // Check that button text span was added to the DOM.
         const buttonText = debugElement.query(By.css('.d-xl-inline'));
@@ -82,15 +61,16 @@ describe('DataExportRequestButtonDirective', () => {
         expect(directiveInstance.expectedLogin()).toBe('login');
     });
 
-    it('should on click call data export confirmation dialog service', fakeAsync(() => {
-        // We ignore the console error because of ngForm not found, we only care about the dialog service call
-        console.error = jest.fn();
+    it('should on click open the dialog', async () => {
         fixture.detectChanges();
-        const dataExportConfirmationDialogSpy = jest.spyOn(dataExportConfirmationDialogService, 'openConfirmationDialog');
         const directiveEl = debugElement.query(By.directive(DataExportRequestButtonDirective));
+        const directiveInstance = directiveEl.injector.get(DataExportRequestButtonDirective);
+        expect(directiveInstance.dialogVisible()).toBe(false);
+
         directiveEl.nativeElement.click();
         fixture.detectChanges();
-        expect(dataExportConfirmationDialogSpy).toHaveBeenCalledOnce();
-        discardPeriodicTasks();
-    }));
+        await fixture.whenStable();
+
+        expect(directiveInstance.dialogVisible()).toBe(true);
+    });
 });

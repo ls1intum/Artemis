@@ -1,19 +1,17 @@
 import {
     AfterViewInit,
-    ChangeDetectorRef,
     Component,
     EmbeddedViewRef,
     HostListener,
     OnDestroy,
     OnInit,
-    QueryList,
     TemplateRef,
-    ViewChild,
-    ViewChildren,
     ViewContainerRef,
     effect,
     inject,
     signal,
+    viewChild,
+    viewChildren,
 } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
@@ -48,7 +46,6 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     protected courseManagementService = inject(CourseManagementService);
     protected courseStorageService = inject(CourseStorageService);
     protected route = inject(ActivatedRoute);
-    protected changeDetectorRef = inject(ChangeDetectorRef);
     protected metisConversationService = inject(MetisConversationService);
     protected router = inject(Router);
     protected courseAccessStorageService = inject(CourseAccessStorageService);
@@ -104,8 +101,8 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     protected controlsSubscription?: Subscription;
     protected vcSubscription?: Subscription;
 
-    @ViewChild('controlsViewContainer', { read: ViewContainerRef }) controlsViewContainer: ViewContainerRef;
-    @ViewChildren('controlsViewContainer') controlsViewContainerAsList: QueryList<ViewContainerRef>;
+    readonly controlsViewContainer = viewChild('controlsViewContainer', { read: ViewContainerRef });
+    readonly controlsViewContainerAsList = viewChildren<ViewContainerRef>('controlsViewContainer');
 
     protected readonly FeatureToggle = FeatureToggle;
 
@@ -189,11 +186,11 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     abstract switchCourse(course: Course): void;
 
     ngAfterViewInit() {
-        if (this.controlsViewContainer) {
+        if (this.controlsViewContainer()) {
             this.tryRenderControls();
-        } else {
-            this.vcSubscription = this.controlsViewContainerAsList.changes.subscribe(() => this.tryRenderControls());
         }
+        // Note: With signal-based viewChildren, we don't need to subscribe to changes.
+        // The controls rendering is handled in onSubRouteActivate via the controlsSubscription.
     }
 
     ngOnDestroy() {
@@ -258,9 +255,6 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
         }
 
         this.handleComponentActivation(componentRef);
-
-        // Since we change the pageTitle + might be pulling data upwards during a render cycle, we need to re-run change detection
-        this.changeDetectorRef.detectChanges();
     }
 
     /**
@@ -271,7 +265,6 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
         this.controls.set(undefined);
         this.controlConfiguration.set(undefined);
         this.controlsSubscription?.unsubscribe();
-        this.changeDetectorRef.detectChanges();
     }
 
     private removeCurrentControlsView() {
@@ -283,10 +276,10 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
      * Mounts the controls as specified by the currently mounted sub-route component to the ng-container in the top bar
      */
     tryRenderControls() {
-        if (this.controlConfiguration() && this.controls() && this.controlsViewContainer) {
+        const controlsViewContainer = this.controlsViewContainer();
+        if (this.controlConfiguration() && this.controls() && controlsViewContainer) {
             this.removeCurrentControlsView();
-            this.controlsEmbeddedView = this.controlsViewContainer.createEmbeddedView(this.controls()!);
-            this.controlsEmbeddedView.detectChanges();
+            this.controlsEmbeddedView = controlsViewContainer.createEmbeddedView(this.controls()!);
         }
     }
 

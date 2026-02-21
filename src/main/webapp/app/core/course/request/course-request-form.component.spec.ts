@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
@@ -11,6 +13,8 @@ import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 
 describe('CourseRequestFormComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: CourseRequestFormComponent;
     let fixture: ComponentFixture<CourseRequestFormComponent>;
     let form: FormGroup;
@@ -28,15 +32,14 @@ describe('CourseRequestFormComponent', () => {
         });
 
         await TestBed.configureTestingModule({
-            imports: [
-                CourseRequestFormComponent,
-                ReactiveFormsModule,
-                TranslateModule.forRoot(),
-                MockComponent(FormDateTimePickerComponent),
-                MockDirective(TranslateDirective),
-                MockPipe(ArtemisTranslatePipe),
-            ],
-        }).compileComponents();
+            imports: [CourseRequestFormComponent, ReactiveFormsModule, TranslateModule.forRoot()],
+        })
+            .overrideComponent(CourseRequestFormComponent, {
+                set: {
+                    imports: [ReactiveFormsModule, MockComponent(FormDateTimePickerComponent), MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)],
+                },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(CourseRequestFormComponent);
         component = fixture.componentInstance;
@@ -49,6 +52,10 @@ describe('CourseRequestFormComponent', () => {
         fixture.componentRef.setInput('showReasonPlaceholder', true);
 
         fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should create', () => {
@@ -142,7 +149,7 @@ describe('CourseRequestFormComponent', () => {
     });
 
     it('should emit formChange event when generating short name', () => {
-        const formChangeSpy = jest.spyOn(component.formChange, 'emit');
+        const formChangeSpy = vi.spyOn(component.formChange, 'emit');
 
         form.patchValue({
             title: 'Test Course',
@@ -165,13 +172,13 @@ describe('CourseRequestFormComponent', () => {
         fixture.componentRef.setInput('dateRangeInvalid', true);
         fixture.detectChanges();
 
-        expect(component.dateRangeInvalid()).toBeTrue();
+        expect(component.dateRangeInvalid()).toBe(true);
     });
 
     it('should handle showReasonPlaceholder input', () => {
         fixture.componentRef.setInput('showReasonPlaceholder', false);
         fixture.detectChanges();
 
-        expect(component.showReasonPlaceholder()).toBeFalse();
+        expect(component.showReasonPlaceholder()).toBe(false);
     });
 });

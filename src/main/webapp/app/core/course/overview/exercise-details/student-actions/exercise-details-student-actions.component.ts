@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostBinding, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ExternalCloningService } from 'app/programming/shared/services/external-cloning.service';
@@ -49,8 +49,12 @@ import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/subm
     selector: 'jhi-exercise-details-student-actions',
     templateUrl: './exercise-details-student-actions.component.html',
     styleUrls: ['../../course-overview/course-overview.scss'],
+    host: {
+        '[class.col]': 'equalColumns()',
+        '[class.col-auto]': 'smallColumns()',
+    },
 })
-export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges {
+export class ExerciseDetailsStudentActionsComponent {
     protected readonly faFolderOpen = faFolderOpen;
     protected readonly faUsers = faUsers;
     protected readonly faEye = faEye;
@@ -67,76 +71,101 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     private participationService = inject(ParticipationService);
     private profileService = inject(ProfileService);
 
-    @Input() @HostBinding('class.col') equalColumns = true;
-    @Input() @HostBinding('class.col-auto') smallColumns = false;
-
-    @Input() exercise: Exercise;
-    @Input() courseId: number;
-    @Input() smallButtons: boolean;
-    @Input() examMode: boolean;
-    @Input() isGeneratingFeedback: boolean;
-
-    @Output() generatingFeedback: EventEmitter<void> = new EventEmitter<void>();
-
-    uninitializedQuiz: boolean;
-    quizNotStarted: boolean;
-    gradedParticipation?: StudentParticipation;
-    practiceParticipation?: StudentParticipation;
-    programmingExercise?: ProgrammingExercise;
-    isTeamAvailable: boolean;
-    hasRatedGradedResult: boolean;
-    beforeDueDate: boolean;
-    editorLabel?: string;
-    athenaEnabled = false;
-    routerLink: string;
-    numberOfGradedParticipationResults: number;
-
-    ngOnInit(): void {
-        this.athenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
-
-        if (this.exercise.type === ExerciseType.QUIZ) {
-            const quizExercise = this.exercise as QuizExercise;
-            this.uninitializedQuiz = ArtemisQuizService.isUninitialized(quizExercise);
-            this.quizNotStarted = ArtemisQuizService.notStarted(quizExercise);
-        } else if (this.exercise.type === ExerciseType.PROGRAMMING) {
-            this.programmingExercise = this.exercise as ProgrammingExercise;
-        } else if (this.exercise.type === ExerciseType.MODELING) {
-            this.editorLabel = 'openModelingEditor';
-        } else if (this.exercise.type === ExerciseType.TEXT) {
-            this.editorLabel = 'openTextEditor';
-        } else if (this.exercise.type === ExerciseType.FILE_UPLOAD) {
-            this.editorLabel = 'uploadFile';
-        }
-
-        this.beforeDueDate = !this.exercise.dueDate || !hasExerciseDueDatePassed(this.exercise, this.gradedParticipation);
+    constructor() {
+        effect(() => {
+            const exercise = this.exercise();
+            untracked(() => {
+                if (!exercise) {
+                    return;
+                }
+                // Initialize local participations from the exercise input
+                this._studentParticipations.set(exercise.studentParticipations ?? []);
+                this.updateParticipations();
+                this._isTeamAvailable.set(!!(exercise.teamMode && exercise.studentAssignedTeamIdComputed && exercise.studentAssignedTeamId));
+                this.initializeExerciseSpecificState(exercise);
+            });
+        });
     }
 
-    /**
-     * Viewing the team is only possible if it's a team exercise and the student is already assigned to a team.
-     */
-    ngOnChanges() {
-        this.updateParticipations();
-        this.isTeamAvailable = !!(this.exercise.teamMode && this.exercise.studentAssignedTeamIdComputed && this.exercise.studentAssignedTeamId);
+    readonly equalColumns = input(true);
+    readonly smallColumns = input(false);
+
+    readonly exercise = input.required<Exercise>();
+    readonly courseId = input.required<number>();
+    readonly smallButtons = input<boolean>(false);
+    readonly examMode = input<boolean>(false);
+    readonly isGeneratingFeedback = input<boolean>(false);
+
+    readonly generatingFeedback = output<void>();
+
+    private readonly _uninitializedQuiz = signal(false);
+    private readonly _quizNotStarted = signal(false);
+    private readonly _gradedParticipation = signal<StudentParticipation | undefined>(undefined);
+    private readonly _practiceParticipation = signal<StudentParticipation | undefined>(undefined);
+    private readonly _programmingExercise = signal<ProgrammingExercise | undefined>(undefined);
+    private readonly _isTeamAvailable = signal(false);
+    private readonly _hasRatedGradedResult = signal(false);
+    private readonly _editorLabel = signal<string | undefined>(undefined);
+    private readonly _numberOfGradedParticipationResults = signal(0);
+    private readonly _isLoading = signal(false);
+    private readonly _studentParticipations = signal<StudentParticipation[]>([]);
+
+    readonly uninitializedQuiz = computed(() => this._uninitializedQuiz());
+    readonly quizNotStarted = computed(() => this._quizNotStarted());
+    readonly gradedParticipation = computed(() => this._gradedParticipation());
+    readonly practiceParticipation = computed(() => this._practiceParticipation());
+    readonly programmingExercise = computed(() => this._programmingExercise());
+    readonly isTeamAvailable = computed(() => this._isTeamAvailable());
+    readonly hasRatedGradedResult = computed(() => this._hasRatedGradedResult());
+    readonly editorLabel = computed(() => this._editorLabel());
+    readonly numberOfGradedParticipationResults = computed(() => this._numberOfGradedParticipationResults());
+    readonly isLoading = computed(() => this._isLoading());
+    readonly studentParticipations = computed(() => this._studentParticipations());
+
+    readonly athenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
+
+    readonly beforeDueDate = computed(() => {
+        const exercise = this.exercise();
+        return !exercise.dueDate || !hasExerciseDueDatePassed(exercise, this._gradedParticipation());
+    });
+
+    private initializeExerciseSpecificState(exercise: Exercise): void {
+        if (exercise.type === ExerciseType.QUIZ) {
+            const quizExercise = exercise as QuizExercise;
+            this._uninitializedQuiz.set(ArtemisQuizService.isUninitialized(quizExercise));
+            this._quizNotStarted.set(ArtemisQuizService.notStarted(quizExercise));
+        } else if (exercise.type === ExerciseType.PROGRAMMING) {
+            this._programmingExercise.set(exercise as ProgrammingExercise);
+        } else if (exercise.type === ExerciseType.MODELING) {
+            this._editorLabel.set('openModelingEditor');
+        } else if (exercise.type === ExerciseType.TEXT) {
+            this._editorLabel.set('openTextEditor');
+        } else if (exercise.type === ExerciseType.FILE_UPLOAD) {
+            this._editorLabel.set('uploadFile');
+        }
     }
 
     receiveNewParticipation(newParticipation: StudentParticipation) {
-        const studentParticipations = this.exercise.studentParticipations ?? [];
-        if (studentParticipations.map((participation) => participation.id).includes(newParticipation.id)) {
-            this.exercise.studentParticipations = studentParticipations.map((participation) => (participation.id === newParticipation.id ? newParticipation : participation));
+        const currentParticipations = this._studentParticipations();
+        let updatedParticipations: StudentParticipation[];
+        if (currentParticipations.map((participation) => participation.id).includes(newParticipation.id)) {
+            updatedParticipations = currentParticipations.map((participation) => (participation.id === newParticipation.id ? newParticipation : participation));
         } else {
-            this.exercise.studentParticipations = [...studentParticipations, newParticipation];
+            updatedParticipations = [...currentParticipations, newParticipation];
         }
+        this._studentParticipations.set(updatedParticipations);
         this.updateParticipations();
     }
 
     updateParticipations() {
-        const studentParticipations = this.exercise.studentParticipations ?? [];
-        this.gradedParticipation = this.participationService.getSpecificStudentParticipation(studentParticipations, false);
-        this.numberOfGradedParticipationResults = getAllResultsOfAllSubmissions(this.gradedParticipation?.submissions).length;
-        this.practiceParticipation = this.participationService.getSpecificStudentParticipation(studentParticipations, true);
+        const currentParticipations = this._studentParticipations();
+        const gradedParticipation = this.participationService.getSpecificStudentParticipation(currentParticipations, false);
+        this._gradedParticipation.set(gradedParticipation);
+        this._numberOfGradedParticipationResults.set(getAllResultsOfAllSubmissions(gradedParticipation?.submissions).length);
+        this._practiceParticipation.set(this.participationService.getSpecificStudentParticipation(currentParticipations, true));
 
-        this.hasRatedGradedResult = !!getAllResultsOfAllSubmissions(this.gradedParticipation?.submissions)?.some(
-            (result) => result.rated === true && result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA,
+        this._hasRatedGradedResult.set(
+            !!getAllResultsOfAllSubmissions(gradedParticipation?.submissions)?.some((result) => result.rated === true && result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA),
         );
     }
 
@@ -145,37 +174,39 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
      * isStartExerciseAvailable
      */
     isStartExerciseAvailable(): boolean {
-        const individualExerciseOrTeamAssigned = !!(!this.exercise.teamMode || this.exercise.studentAssignedTeamId);
-        return !this.examMode && individualExerciseOrTeamAssigned && isStartExerciseAvailable(this.exercise, this.gradedParticipation);
+        const exercise = this.exercise();
+        const individualExerciseOrTeamAssigned = !!(!exercise.teamMode || exercise.studentAssignedTeamId);
+        return !this.examMode() && individualExerciseOrTeamAssigned && isStartExerciseAvailable(this.exercise(), this._gradedParticipation());
     }
 
     /**
      * Resuming an exercise is not possible in the exam, otherwise see exercise.utils -> isResumeExerciseAvailable
      */
     isResumeExerciseAvailable(participation?: StudentParticipation): boolean {
-        return !this.examMode && isResumeExerciseAvailable(this.exercise, participation);
+        return !this.examMode() && isResumeExerciseAvailable(this.exercise(), participation);
     }
 
     /**
      * Practicing an exercise is not possible in the exam, otherwise see exercise.utils -> isStartPracticeAvailable
      */
     isStartPracticeAvailable(): boolean {
-        return !this.examMode && isStartPracticeAvailable(this.exercise, this.practiceParticipation);
+        return !this.examMode() && isStartPracticeAvailable(this.exercise(), this._practiceParticipation());
     }
 
     startExercise() {
-        this.exercise.loading = true;
+        this._isLoading.set(true);
+        const programmingExercise = this._programmingExercise();
         this.courseExerciseService
-            .startExercise(this.exercise.id!)
-            .pipe(finalize(() => (this.exercise.loading = false)))
+            .startExercise(this.exercise().id!)
+            .pipe(finalize(() => this._isLoading.set(false)))
             .subscribe({
                 next: (participation) => {
                     if (participation) {
                         this.receiveNewParticipation(participation);
                     }
-                    if (this.programmingExercise) {
+                    if (programmingExercise) {
                         if (participation?.initializationState === InitializationState.INITIALIZED) {
-                            if (this.programmingExercise.allowOfflineIde) {
+                            if (programmingExercise.allowOfflineIde) {
                                 this.alertService.success('artemisApp.exercise.personalRepositoryClone');
                             } else {
                                 this.alertService.success('artemisApp.exercise.personalRepositoryOnline');
@@ -198,17 +229,20 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
      * resume the programming exercise
      */
     resumeProgrammingExercise(testRun: boolean) {
-        this.exercise.loading = true;
-        const participation = testRun ? this.practiceParticipation : this.gradedParticipation;
+        this._isLoading.set(true);
+        const participation = testRun ? this._practiceParticipation() : this._gradedParticipation();
         this.courseExerciseService
-            .resumeProgrammingExercise(this.exercise.id!, participation!.id!)
-            .pipe(finalize(() => (this.exercise.loading = false)))
+            .resumeProgrammingExercise(this.exercise().id!, participation!.id!)
+            .pipe(finalize(() => this._isLoading.set(false)))
             .subscribe({
                 next: (resumedParticipation: StudentParticipation) => {
                     if (resumedParticipation) {
                         // Otherwise the client would think that all results are loaded, but there would not be any (=> no graded result).
-                        const replacedIndex = this.exercise.studentParticipations!.indexOf(participation!);
-                        this.exercise.studentParticipations![replacedIndex] = resumedParticipation;
+                        const currentParticipations = this._studentParticipations();
+                        const replacedIndex = currentParticipations.indexOf(participation!);
+                        const updatedParticipations = [...currentParticipations];
+                        updatedParticipations[replacedIndex] = resumedParticipation;
+                        this._studentParticipations.set(updatedParticipations);
                         this.updateParticipations();
                         this.alertService.success('artemisApp.exercise.resumeProgrammingExercise');
                     }
@@ -220,7 +254,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     }
 
     get isBeforeStartDateAndStudent(): boolean {
-        return !this.exercise.isAtLeastTutor && !!this.exercise.startDate && dayjs().isBefore(this.exercise.startDate);
+        const exercise = this.exercise();
+        return !exercise.isAtLeastTutor && !!exercise.startDate && dayjs().isBefore(exercise.startDate);
     }
 
     /**
@@ -237,13 +272,15 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
         if (!this.isRepositoryUriSet()) {
             return false;
         }
-        const shouldPreferPractice = this.participationService.shouldPreferPractice(this.exercise);
-        const activePracticeParticipation = this.practiceParticipation?.initializationState === InitializationState.INITIALIZED && (shouldPreferPractice || this.examMode);
-        const activeGradedParticipation = this.gradedParticipation?.initializationState === InitializationState.INITIALIZED;
+        const practiceParticipation = this._practiceParticipation();
+        const gradedParticipation = this._gradedParticipation();
+        const shouldPreferPractice = this.participationService.shouldPreferPractice(this.exercise());
+        const activePracticeParticipation = practiceParticipation?.initializationState === InitializationState.INITIALIZED && (shouldPreferPractice || this.examMode());
+        const activeGradedParticipation = gradedParticipation?.initializationState === InitializationState.INITIALIZED;
         const inactiveGradedParticipation =
-            !!this.gradedParticipation?.initializationState &&
-            [InitializationState.INACTIVE, InitializationState.FINISHED].includes(this.gradedParticipation.initializationState) &&
-            !isStartExerciseAvailable(this.exercise, this.gradedParticipation);
+            !!gradedParticipation?.initializationState &&
+            [InitializationState.INACTIVE, InitializationState.FINISHED].includes(gradedParticipation.initializationState) &&
+            !isStartExerciseAvailable(this.exercise(), gradedParticipation);
 
         return activePracticeParticipation || activeGradedParticipation || inactiveGradedParticipation;
     }
@@ -253,7 +290,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
      * We don't want to show buttons that would interact with the repository if the repository is not set
      */
     private isRepositoryUriSet(): boolean {
-        const participations = this.exercise.studentParticipations ?? [];
+        const participations = this._studentParticipations();
         const activeParticipation: ProgrammingExerciseStudentParticipation = this.participationService.getSpecificStudentParticipation(participations, false) ?? participations[0];
         return !!activeParticipation?.repositoryUri;
     }
@@ -264,14 +301,15 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
      * @return {assignedTeamId}
      */
     get assignedTeamId(): number | undefined {
-        const participations = this.exercise.studentParticipations;
-        return participations?.length ? participations[0].team?.id : this.exercise.studentAssignedTeamId;
+        const participations = this._studentParticipations();
+        return participations?.length ? participations[0].team?.id : this.exercise().studentAssignedTeamId;
     }
 
     get allowEditing(): boolean {
+        const gradedParticipation = this._gradedParticipation();
         return (
-            (this.gradedParticipation?.initializationState === InitializationState.INITIALIZED && this.beforeDueDate) ||
-            this.gradedParticipation?.initializationState === InitializationState.FINISHED
+            (gradedParticipation?.initializationState === InitializationState.INITIALIZED && this.beforeDueDate()) ||
+            gradedParticipation?.initializationState === InitializationState.FINISHED
         );
     }
 }

@@ -8,6 +8,8 @@ import angular from '@analogjs/vite-plugin-angular';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import path from 'node:path';
 
+const isCI = process.env.CI === 'true';
+
 export default defineConfig({
     // Only show errors, suppress sourcemap warnings from node_modules packages
     logLevel: 'error',
@@ -26,9 +28,7 @@ export default defineConfig({
         setupFiles: ['src/test/javascript/spec/vitest-test-setup.ts'],
         include: [
             'src/main/webapp/app/fileupload/**/*.spec.ts', // include fileupload tests
-            'src/main/webapp/app/core/account/**/*.spec.ts', // include core account tests
-            'src/main/webapp/app/core/admin/**/*.spec.ts', // include core admin tests
-            'src/main/webapp/app/core/course/manage/**/*.spec.ts', // include course manage tests
+            'src/main/webapp/app/core/**/*.spec.ts', // include all core tests
             'src/main/webapp/app/buildagent/**/*.spec.ts', // include build agent tests
             'src/main/webapp/app/text/**/*.spec.ts', // include text module tests
             'src/main/webapp/app/assessment/**/*.spec.ts', // include assessment tests
@@ -53,14 +53,12 @@ export default defineConfig({
         },
         coverage: {
             provider: 'istanbul',
-            reporter: ['text', 'lcov', 'html', 'json-summary'],
+            reporter: isCI ? ['text', 'lcov', 'json-summary'] : ['text', 'lcov', 'html', 'json-summary'],
             reportsDirectory: 'build/test-results/vitest/coverage',
             include: [
                 'src/main/webapp/app/assessment/**/*.ts', // include assessment for code coverage
                 'src/main/webapp/app/buildagent/**/*.ts', // include buildagent for code coverage
-                'src/main/webapp/app/core/account/**/*.ts', // include core account for code coverage
-                'src/main/webapp/app/core/admin/**/*.ts', // include core admin for code coverage
-                'src/main/webapp/app/core/course/manage/**/*.ts', // include course manage for code coverage
+                'src/main/webapp/app/core/**/*.ts', // include all core for code coverage
                 'src/main/webapp/app/fileupload/**/*.ts', // include fileupload for code coverage
                 'src/main/webapp/app/lecture/**/*.ts', // include lecture for code coverage
                 'src/main/webapp/app/quiz/**/*.ts', // include quiz for code coverage

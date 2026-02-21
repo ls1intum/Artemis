@@ -1,10 +1,10 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
 import { Color, LineChartModule, ScaleType } from '@swimlane/ngx-charts';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { round } from 'app/shared/util/utils';
-import { Subscription } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -26,69 +26,40 @@ const AVERAGE_GRAPH_COLOR = GraphColors.YELLOW;
     styleUrls: ['./course-exercise-performance.component.scss'],
     imports: [TranslateDirective, HelpIconComponent, LineChartModule, ArtemisTranslatePipe],
 })
-export class CourseExercisePerformanceComponent implements OnInit, OnChanges, OnDestroy {
+export class CourseExercisePerformanceComponent {
     private translateService = inject(TranslateService);
+    // Track language changes as a signal to make computed translations reactive
+    private readonly langChange = toSignal(this.translateService.onLangChange);
 
-    @Input() exercisePerformance: ExercisePerformance[] = [];
+    readonly exercisePerformance = input<ExercisePerformance[]>([]);
 
-    yourScoreLabel: string;
-    averageScoreLabel: string;
-    ngxData: NgxChartsMultiSeriesDataEntry[];
-    ngxColor: Color = {
+    readonly ngxColor: Color = {
         name: 'Performance in Exercises',
         selectable: true,
         group: ScaleType.Ordinal,
         domain: [YOUR_GRAPH_COLOR, AVERAGE_GRAPH_COLOR],
     };
-    yScaleMax = 100;
-
-    private translateServiceSubscription: Subscription;
 
     protected readonly YOUR_GRAPH_COLOR = YOUR_GRAPH_COLOR;
     protected readonly AVERAGE_GRAPH_COLOR = AVERAGE_GRAPH_COLOR;
 
-    constructor() {
-        this.translateServiceSubscription = this.translateService.onLangChange.subscribe(() => {
-            this.setupChart();
-        });
-    }
+    readonly yourScoreLabel = computed(() => {
+        this.langChange(); // Establish dependency on language changes
+        return this.translateService.instant('artemisApp.courseStudentDashboard.exercisePerformance.yourScoreLabel');
+    });
+    readonly averageScoreLabel = computed(() => {
+        this.langChange(); // Establish dependency on language changes
+        return this.translateService.instant('artemisApp.courseStudentDashboard.exercisePerformance.averageScoreLabel');
+    });
 
-    ngOnInit(): void {
-        this.setupChart();
-    }
-
-    ngOnDestroy(): void {
-        this.translateServiceSubscription.unsubscribe();
-    }
-
-    ngOnChanges() {
-        this.setupChart();
-    }
-
-    /**
-     * This getter checks if there is data available for the chart.
-     * It checks if `ngxData` is defined, if it has at least one entry, and if at least one of those entries has a non-empty `series` array.
-     * @returns {boolean} - Returns true if data is available for the chart, false otherwise.
-     */
-    get isDataAvailable(): boolean {
-        return this.ngxData && this.ngxData.length > 0 && this.ngxData.some((data) => data.series.length > 0);
-    }
-
-    /**
-     * This method is responsible for setting up the chart that displays the performance of the exercises.
-     * It translates the labels for the chart, prepares the data for the chart, and calculates the maximum value for the y-axis.
-     */
-    private setupChart(): void {
-        this.yourScoreLabel = this.translateService.instant('artemisApp.courseStudentDashboard.exercisePerformance.yourScoreLabel');
-        this.averageScoreLabel = this.translateService.instant('artemisApp.courseStudentDashboard.exercisePerformance.averageScoreLabel');
-
-        this.ngxData = [
+    readonly ngxData = computed<NgxChartsMultiSeriesDataEntry[]>(() => {
+        return [
             {
-                name: this.yourScoreLabel,
-                series: this.exercisePerformance.map((performance) => {
+                name: this.yourScoreLabel(),
+                series: this.exercisePerformance().map((performance) => {
                     return {
                         name: performance.shortName?.toUpperCase() || performance.title,
-                        value: round(performance.score || 0, 1), // If the score is undefined, set it to 0
+                        value: round(performance.score || 0, 1),
                         extra: {
                             title: performance.title,
                         },
@@ -96,8 +67,8 @@ export class CourseExercisePerformanceComponent implements OnInit, OnChanges, On
                 }),
             },
             {
-                name: this.averageScoreLabel,
-                series: this.exercisePerformance.map((performance) => {
+                name: this.averageScoreLabel(),
+                series: this.exercisePerformance().map((performance) => {
                     return {
                         name: performance.shortName?.toUpperCase() || performance.title,
                         value: round(performance.averageScore || 0, 1),
@@ -108,9 +79,16 @@ export class CourseExercisePerformanceComponent implements OnInit, OnChanges, On
                 }),
             },
         ];
+    });
 
-        // Round the maximum score up to the next multiple of 10
-        const maxScore = Math.max(...this.ngxData.flatMap((data) => data.series.map((series) => series.value)));
-        this.yScaleMax = Math.max(100, Math.ceil(maxScore / 10) * 10);
-    }
+    readonly yScaleMax = computed(() => {
+        const data = this.ngxData();
+        const maxScore = Math.max(...data.flatMap((d) => d.series.map((series) => series.value)));
+        return Math.max(100, Math.ceil(maxScore / 10) * 10);
+    });
+
+    readonly isDataAvailable = computed(() => {
+        const data = this.ngxData();
+        return data && data.length > 0 && data.some((d) => d.series.length > 0);
+    });
 }

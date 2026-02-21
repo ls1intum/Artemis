@@ -1,3 +1,4 @@
-@if (course.prerequisites?.length) {
-    <button class="btn btn-secondary" (click)="showPrerequisites(course.id!)" jhiTranslate="artemisApp.studentDashboard.enroll.coursePrerequisites"></button>
+@if (course().prerequisites?.length) {
+    <button class="btn btn-secondary" (click)="showPrerequisites(course().id!)" jhiTranslate="artemisApp.studentDashboard.enroll.coursePrerequisites"></button>
 }
+<jhi-course-prerequisites-modal [(visible)]="showModal" [courseId]="course().id!" />

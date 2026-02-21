@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -14,6 +16,8 @@ import { UserSettingsContainerComponent } from 'app/core/user/settings/user-sett
 import { MODULE_FEATURE_IRIS, PROFILE_ATHENA } from 'app/app.constants';
 
 describe('UserSettingsContainerComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<UserSettingsContainerComponent>;
     let component: UserSettingsContainerComponent;
 
@@ -40,16 +44,20 @@ describe('UserSettingsContainerComponent', () => {
         translateService.use('en');
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('should initialize', async () => {
         component.ngOnInit();
         expect(component.currentUser).toBeDefined();
-        expect(component.isAtLeastTutor).toBeTrue();
+        expect(component.isAtLeastTutor).toBe(true);
     });
 
     it('should set isPasskeyEnabled to false when the module feature is inactive', () => {
-        jest.spyOn(component['profileService'], 'isModuleFeatureActive').mockReturnValue(false);
+        vi.spyOn(component['profileService'], 'isModuleFeatureActive').mockReturnValue(false);
         component.ngOnInit();
-        expect(component.isPasskeyEnabled).toBeFalse();
+        expect(component.isPasskeyEnabled).toBe(false);
     });
 
     describe('isUsingLLM behavior', () => {
@@ -58,8 +66,8 @@ describe('UserSettingsContainerComponent', () => {
          * @param activeModuleFeatures for which true should be returned when calling isModuleFeatureActive
          */
         const spyOnProfileService = (activeProfiles: string[], activeModuleFeatures: string[] = []) => {
-            jest.spyOn(component['profileService'], 'isProfileActive').mockImplementation((profile) => activeProfiles.includes(profile));
-            jest.spyOn(component['profileService'], 'isModuleFeatureActive').mockImplementation((feature) => activeModuleFeatures.includes(feature));
+            vi.spyOn(component['profileService'], 'isProfileActive').mockImplementation((profile) => activeProfiles.includes(profile));
+            vi.spyOn(component['profileService'], 'isModuleFeatureActive').mockImplementation((feature) => activeModuleFeatures.includes(feature));
         };
 
         /**

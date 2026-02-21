@@ -1,37 +1,37 @@
-<div>
-    <div class="modal-header">
-        <h4 class="modal-title"><span jhiTranslate="artemisApp.lti.initialization.header"></span></h4>
+<p-dialog
+    [(visible)]="visible"
+    [modal]="true"
+    [closable]="false"
+    [closeOnEscape]="false"
+    [dismissableMask]="false"
+    [draggable]="false"
+    [appendTo]="'body'"
+    [style]="{ width: '50dvw' }"
+>
+    <ng-template #header>
+        <h4><span jhiTranslate="artemisApp.lti.initialization.header"></span></h4>
+    </ng-template>
+    <span jhiTranslate="artemisApp.lti.initialization.body.welcome"></span>
+    <div class="d-flex mb-3 mt-3">
+        <label class="col-sm-2 col-form-label" for="userLoginName"> <span jhiTranslate="artemisApp.lti.initialization.body.loginLabel"></span>: </label>
+        <input id="userLoginName" type="text" class="form-control" disabled [ngModel]="loginName()" />
+        <jhi-copy-to-clipboard-button [copyText]="loginName()" />
     </div>
-    <div class="modal-body">
-        <span jhiTranslate="artemisApp.lti.initialization.body.welcome"></span>
-        <div class="d-flex mb-3 mt-3">
-            <label class="col-sm-2 col-form-label" for="userLoginName"> <span jhiTranslate="artemisApp.lti.initialization.body.loginLabel"></span>: </label>
-            <input id="userLoginName" type="text" class="form-control" disabled [(ngModel)]="loginName" />
-            <jhi-copy-to-clipboard-button [copyText]="loginName" />
-        </div>
-        <div class="d-flex mb-3 mt-3">
-            <label class="col-sm-2 col-form-label" for="userPassword"> <span jhiTranslate="artemisApp.lti.initialization.body.passwordLabel"></span>: </label>
-            <input id="userPassword" type="text" class="form-control" disabled [(ngModel)]="password" />
-            <jhi-copy-to-clipboard-button [copyText]="password" />
-        </div>
-        <p>
-            <span jhiTranslate="artemisApp.lti.initialization.body.passwordHint">
-                Make sure to remember your password as you will need it to log in manually or connect with our services for programming exercises.<br />
-                If you forget your password, you can reset it on the login page. You can also change your password now:
-            </span>
-            <a target="_blank" [routerLink]="this.passwordResetLocation" jhiTranslate="artemisApp.lti.initialization.body.passwordChange"></a>
-        </p>
-        <p>
-            <input type="checkbox" class="form-check-input" (change)="readAndUnderstood = !readAndUnderstood" [checked]="readAndUnderstood" />
-            <strong jhiTranslate="artemisApp.lti.initialization.body.readAndUnderstood"></strong>
-        </p>
-        <button
-            type="button"
-            class="btn btn-primary"
-            data-dismiss="modal"
-            [disabled]="!readAndUnderstood"
-            (click)="clear()"
-            jhiTranslate="artemisApp.lti.initialization.body.confirm"
-        ></button>
+    <div class="d-flex mb-3 mt-3">
+        <label class="col-sm-2 col-form-label" for="userPassword"> <span jhiTranslate="artemisApp.lti.initialization.body.passwordLabel"></span>: </label>
+        <input id="userPassword" type="text" class="form-control" disabled [ngModel]="password()" />
+        <jhi-copy-to-clipboard-button [copyText]="password()" />
     </div>
-</div>
+    <p>
+        <span jhiTranslate="artemisApp.lti.initialization.body.passwordHint">
+            Make sure to remember your password as you will need it to log in manually or connect with our services for programming exercises.<br />
+            If you forget your password, you can reset it on the login page. You can also change your password now:
+        </span>
+        <a target="_blank" [routerLink]="this.passwordResetLocation" jhiTranslate="artemisApp.lti.initialization.body.passwordChange"></a>
+    </p>
+    <p>
+        <input type="checkbox" class="form-check-input" (change)="readAndUnderstood = !readAndUnderstood" [checked]="readAndUnderstood" />
+        <strong jhiTranslate="artemisApp.lti.initialization.body.readAndUnderstood"></strong>
+    </p>
+    <button type="button" class="btn btn-primary" [disabled]="!readAndUnderstood" (click)="clear()" jhiTranslate="artemisApp.lti.initialization.body.confirm"></button>
+</p-dialog>

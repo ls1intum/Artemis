@@ -69,3 +69,7 @@
         </table>
     </div>
 </div>
+
+@if (selectedOperation()) {
+    <jhi-cleanup-operation-modal [(visible)]="showCleanupModal" [operation]="selectedOperation()!" />
+}

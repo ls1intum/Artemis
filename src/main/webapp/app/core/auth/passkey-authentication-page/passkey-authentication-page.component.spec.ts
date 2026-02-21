@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { of } from 'rxjs';
@@ -18,6 +20,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockComponent, MockDirective } from 'ng-mocks';
 
 describe('PasskeyAuthenticationPageComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: PasskeyAuthenticationPageComponent;
     let fixture: ComponentFixture<PasskeyAuthenticationPageComponent>;
     let accountService: AccountService;
@@ -58,7 +62,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
 
     afterEach(() => {
         fixture.destroy();
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should create', () => {
@@ -67,7 +71,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
 
     describe('ngOnInit', () => {
         it('should initialize user identity on init', async () => {
-            const identitySpy = jest.spyOn(accountService, 'identity').mockResolvedValue({} as User);
+            const identitySpy = vi.spyOn(accountService, 'identity').mockResolvedValue({} as User);
 
             fixture.detectChanges();
             await fixture.whenStable();
@@ -76,7 +80,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
         });
 
         it('should retrieve returnUrl from query parameters on init', async () => {
-            jest.spyOn(accountService, 'identity').mockResolvedValue({} as User);
+            vi.spyOn(accountService, 'identity').mockResolvedValue({} as User);
             fixture.detectChanges();
             await fixture.whenStable();
 
@@ -84,15 +88,15 @@ describe('PasskeyAuthenticationPageComponent', () => {
         });
 
         it('should redirect to returnUrl if user is already logged in with passkey', async () => {
-            jest.spyOn(accountService, 'identity').mockResolvedValue({} as User);
-            jest.spyOn(accountService, 'isUserLoggedInWithApprovedPasskey').mockReturnValue(true);
-            const navigateByUrlSpy = jest.spyOn(router, 'navigateByUrl');
+            vi.spyOn(accountService, 'identity').mockResolvedValue({} as User);
+            vi.spyOn(accountService, 'isUserLoggedInWithApprovedPasskey').mockReturnValue(true);
+            const navigateByUrlSpy = vi.spyOn(router, 'navigateByUrl');
 
             // Trigger ngOnInit via detectChanges
             fixture.detectChanges();
 
             // Wait for all promises to resolve
-            await new Promise(process.nextTick);
+            await fixture.whenStable();
 
             expect(navigateByUrlSpy).toHaveBeenCalledWith('/admin/user-management');
         });
@@ -101,7 +105,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
     describe('redirectToOriginalUrlOrHome', () => {
         it('should navigate to returnUrl when redirectToOriginalUrlOrHome is called with returnUrl', () => {
             component.returnUrl = '/admin/metrics';
-            const navigateByUrlSpy = jest.spyOn(router, 'navigateByUrl');
+            const navigateByUrlSpy = vi.spyOn(router, 'navigateByUrl');
 
             component.redirectToOriginalUrlOrHome();
 
@@ -110,7 +114,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
 
         it('should navigate to home when redirectToOriginalUrlOrHome is called without returnUrl', () => {
             component.returnUrl = undefined;
-            const navigateSpy = jest.spyOn(router, 'navigate');
+            const navigateSpy = vi.spyOn(router, 'navigate');
 
             component.redirectToOriginalUrlOrHome();
 
@@ -121,9 +125,9 @@ describe('PasskeyAuthenticationPageComponent', () => {
     describe('setupPasskey', () => {
         it('should call webauthnService.addNewPasskey with user identity', async () => {
             const mockUser = { id: 1, login: 'testuser' };
-            jest.spyOn(accountService, 'userIdentity').mockReturnValue(mockUser as User);
-            const addNewPasskeySpy = jest.spyOn(webauthnService, 'addNewPasskey').mockResolvedValue(undefined);
-            const alertSuccessSpy = jest.spyOn(alertService, 'success');
+            vi.spyOn(accountService, 'userIdentity').mockReturnValue(mockUser as User);
+            const addNewPasskeySpy = vi.spyOn(webauthnService, 'addNewPasskey').mockResolvedValue(undefined);
+            const alertSuccessSpy = vi.spyOn(alertService, 'success');
 
             await component.setupPasskey();
 
@@ -133,9 +137,9 @@ describe('PasskeyAuthenticationPageComponent', () => {
 
         it('should show success alert after passkey setup', async () => {
             const mockUser = { id: 1, login: 'testuser' };
-            jest.spyOn(accountService, 'userIdentity').mockReturnValue(mockUser as User);
-            jest.spyOn(webauthnService, 'addNewPasskey').mockResolvedValue(undefined);
-            const alertSuccessSpy = jest.spyOn(alertService, 'success');
+            vi.spyOn(accountService, 'userIdentity').mockReturnValue(mockUser as User);
+            vi.spyOn(webauthnService, 'addNewPasskey').mockResolvedValue(undefined);
+            const alertSuccessSpy = vi.spyOn(alertService, 'success');
 
             await component.setupPasskey();
 
@@ -145,10 +149,10 @@ describe('PasskeyAuthenticationPageComponent', () => {
 
     describe('signInWithPasskey', () => {
         it('should login with passkey and redirect when user is logged in with approved passkey', async () => {
-            const loginSpy = jest.spyOn(webauthnService, 'loginWithPasskey').mockResolvedValue(undefined);
-            const identitySpy = jest.spyOn(accountService, 'identity').mockResolvedValue({} as User);
-            jest.spyOn(accountService, 'isUserLoggedInWithApprovedPasskey').mockReturnValue(true);
-            const redirectSpy = jest.spyOn(component, 'redirectToOriginalUrlOrHome');
+            const loginSpy = vi.spyOn(webauthnService, 'loginWithPasskey').mockResolvedValue(undefined);
+            const identitySpy = vi.spyOn(accountService, 'identity').mockResolvedValue({} as User);
+            vi.spyOn(accountService, 'isUserLoggedInWithApprovedPasskey').mockReturnValue(true);
+            const redirectSpy = vi.spyOn(component, 'redirectToOriginalUrlOrHome');
 
             await component.signInWithPasskey();
 
@@ -158,11 +162,11 @@ describe('PasskeyAuthenticationPageComponent', () => {
         });
 
         it('should show error when passkey is not super admin approved', async () => {
-            jest.spyOn(webauthnService, 'loginWithPasskey').mockResolvedValue(undefined);
-            jest.spyOn(accountService, 'identity').mockResolvedValue({} as User);
-            jest.spyOn(accountService, 'isUserLoggedInWithApprovedPasskey').mockReturnValue(false);
-            const alertErrorSpy = jest.spyOn(alertService, 'error');
-            const redirectSpy = jest.spyOn(component, 'redirectToOriginalUrlOrHome');
+            vi.spyOn(webauthnService, 'loginWithPasskey').mockResolvedValue(undefined);
+            vi.spyOn(accountService, 'identity').mockResolvedValue({} as User);
+            vi.spyOn(accountService, 'isUserLoggedInWithApprovedPasskey').mockReturnValue(false);
+            const alertErrorSpy = vi.spyOn(alertService, 'error');
+            const redirectSpy = vi.spyOn(component, 'redirectToOriginalUrlOrHome');
 
             await component.signInWithPasskey();
 
@@ -171,9 +175,9 @@ describe('PasskeyAuthenticationPageComponent', () => {
         });
 
         it('should refresh identity after login', async () => {
-            jest.spyOn(webauthnService, 'loginWithPasskey').mockResolvedValue(undefined);
-            const identitySpy = jest.spyOn(accountService, 'identity').mockResolvedValue({} as User);
-            jest.spyOn(accountService, 'isUserLoggedInWithApprovedPasskey').mockReturnValue(true);
+            vi.spyOn(webauthnService, 'loginWithPasskey').mockResolvedValue(undefined);
+            const identitySpy = vi.spyOn(accountService, 'identity').mockResolvedValue({} as User);
+            vi.spyOn(accountService, 'isUserLoggedInWithApprovedPasskey').mockReturnValue(true);
 
             await component.signInWithPasskey();
 
@@ -182,7 +186,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
     });
 
     it('should display setup passkey button when user should setup passkey', async () => {
-        jest.spyOn(accountService, 'askToSetupPasskey').mockReturnValue(true);
+        vi.spyOn(accountService, 'askToSetupPasskey').mockReturnValue(true);
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -194,7 +198,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
     });
 
     it('should display sign in button when user has passkey registered', async () => {
-        jest.spyOn(accountService, 'askToSetupPasskey').mockReturnValue(false);
+        vi.spyOn(accountService, 'askToSetupPasskey').mockReturnValue(false);
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -214,7 +218,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
     });
 
     it('should display info text when user is not logged in with passkey', async () => {
-        jest.spyOn(accountService, 'isLoggedInWithPasskey').mockReturnValue(false);
+        vi.spyOn(accountService, 'isLoggedInWithPasskey').mockReturnValue(false);
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -223,7 +227,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
     });
 
     it('should display info alert when user is not logged in with passkey', async () => {
-        jest.spyOn(accountService, 'isLoggedInWithPasskey').mockReturnValue(false);
+        vi.spyOn(accountService, 'isLoggedInWithPasskey').mockReturnValue(false);
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -235,7 +239,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
     });
 
     it('should display approval instructions with correct translation keys when user is logged in with passkey but not approved', async () => {
-        jest.spyOn(accountService, 'isLoggedInWithPasskey').mockReturnValue(true);
+        vi.spyOn(accountService, 'isLoggedInWithPasskey').mockReturnValue(true);
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -260,7 +264,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
     });
 
     it('should display warning alert when user is logged in with passkey but not approved', async () => {
-        jest.spyOn(accountService, 'isLoggedInWithPasskey').mockReturnValue(true);
+        vi.spyOn(accountService, 'isLoggedInWithPasskey').mockReturnValue(true);
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -272,7 +276,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
     });
 
     it('should set shouldSubmit to false on setup passkey button to prevent duplicate requests', async () => {
-        jest.spyOn(accountService, 'askToSetupPasskey').mockReturnValue(true);
+        vi.spyOn(accountService, 'askToSetupPasskey').mockReturnValue(true);
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -286,7 +290,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
     });
 
     it('should set shouldSubmit to false on sign in with passkey button to prevent duplicate requests', async () => {
-        jest.spyOn(accountService, 'askToSetupPasskey').mockReturnValue(false);
+        vi.spyOn(accountService, 'askToSetupPasskey').mockReturnValue(false);
         fixture.detectChanges();
         await fixture.whenStable();
 

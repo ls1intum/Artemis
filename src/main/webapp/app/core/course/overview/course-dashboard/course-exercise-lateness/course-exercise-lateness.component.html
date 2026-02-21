@@ -4,7 +4,7 @@
             <h4 jhiTranslate="artemisApp.courseStudentDashboard.exerciseLateness.title"></h4>
             <jhi-help-icon text="artemisApp.courseStudentDashboard.exerciseLateness.info" />
         </div>
-        @if (isDataAvailable) {
+        @if (isDataAvailable()) {
             <!-- Legend-->
             <div class="d-flex gap-3">
                 <div class="d-flex align-items-center gap-1">
@@ -18,11 +18,11 @@
             </div>
         }
     </div>
-    @if (isDataAvailable) {
+    @if (isDataAvailable()) {
         <div #containerRef class="mt-2 justify-content-center">
             <ngx-charts-line-chart
                 [view]="[containerRef.offsetWidth, 200]"
-                [results]="ngxData"
+                [results]="ngxData()"
                 [scheme]="ngxColor"
                 [legend]="false"
                 [maxXAxisTickLength]="6"
@@ -33,7 +33,7 @@
                 [yAxisLabel]="'artemisApp.courseStudentDashboard.exerciseLateness.yAxisLabel' | artemisTranslate"
                 [showYAxisLabel]="true"
                 [yScaleMin]="0"
-                [yScaleMax]="yScaleMax"
+                [yScaleMax]="yScaleMax()"
             >
                 <ng-template #tooltipTemplate let-model="model">
                     <div class="d-flex flex-column align-items-start py-2">

@@ -1,7 +1,9 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { of } from 'rxjs';
+import { firstValueFrom, of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { MockService } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
@@ -11,6 +13,8 @@ import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entit
 import { CalendarEventFilterOption } from 'app/core/calendar/shared/util/calendar-util';
 
 describe('CalendarService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: CalendarService;
     let httpMock: HttpTestingController;
 
@@ -63,6 +67,11 @@ describe('CalendarService', () => {
         onLangChange: of({ lang: 'en' }),
     };
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+        httpMock.verify();
+    });
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [
@@ -78,11 +87,7 @@ describe('CalendarService', () => {
         httpMock = TestBed.inject(HttpTestingController);
     });
 
-    afterEach(() => {
-        httpMock.verify();
-    });
-
-    it('should load events and create unfiltered event map', fakeAsync(() => {
+    it('should load events and create unfiltered event map', async () => {
         const tokenRequest = httpMock.expectOne((request) => request.url === expectedTokenUrl);
         tokenRequest.flush(testToken);
 
@@ -93,83 +98,62 @@ describe('CalendarService', () => {
             CalendarEventFilterOption.ExerciseEvents,
         ]);
 
-        service.loadEventsForCurrentMonth(courseId, date).subscribe(() => {
-            const result = service.eventMap();
-            expect(result.size).toBe(3);
-
-            const eventsOnFirst = result.get('2025-10-01');
-            expect(eventsOnFirst).toHaveLength(2);
-
-            expectCalendarEventToMatch(eventsOnFirst![0], {
-                type: CalendarEventType.Lecture,
-                title: 'Object Design',
-                startDate: '2025-10-01T08:00:00.000Z',
-                endDate: '2025-10-01T10:00:00.000Z',
-            });
-
-            expectCalendarEventToMatch(eventsOnFirst![1], {
-                type: CalendarEventType.TextExercise,
-                title: 'Start: Exercise Session',
-                startDate: '2025-10-01T10:00:00.000Z',
-            });
-
-            const eventsOnSecond = result.get('2025-10-02');
-            expect(eventsOnSecond).toHaveLength(1);
-            expectCalendarEventToMatch(eventsOnSecond![0], {
-                type: CalendarEventType.Exam,
-                title: 'Final Exam',
-                startDate: '2025-10-02T09:00:00.000Z',
-                endDate: '2025-10-02T11:00:00.000Z',
-                facilitator: 'Prof. Krusche',
-            });
-
-            const eventsOnThird = result.get('2025-10-03');
-            expect(eventsOnThird).toHaveLength(1);
-            expectCalendarEventToMatch(eventsOnThird![0], {
-                type: CalendarEventType.Tutorial,
-                title: 'Tutorial Session',
-                startDate: '2025-10-03T13:00:00.000Z',
-                endDate: '2025-10-03T14:00:00.000Z',
-                location: 'Zoom',
-                facilitator: 'Marlon Nienaber',
-            });
-        });
+        const promise = firstValueFrom(service.loadEventsForCurrentMonth(courseId, date));
 
         const eventRequest = httpMock.expectOne((request) => request.url === expectedEventUrl);
         expect(eventRequest.request.method).toBe('GET');
         eventRequest.flush(testRequestResponse);
-        tick();
-    }));
 
-    it('should load events and create filtered event map', fakeAsync(() => {
+        await promise;
+
+        const result = service.eventMap();
+        expect(result.size).toBe(3);
+
+        const eventsOnFirst = result.get('2025-10-01');
+        expect(eventsOnFirst).toHaveLength(2);
+
+        expectCalendarEventToMatch(eventsOnFirst![0], {
+            type: CalendarEventType.Lecture,
+            title: 'Object Design',
+            startDate: '2025-10-01T08:00:00.000Z',
+            endDate: '2025-10-01T10:00:00.000Z',
+        });
+
+        expectCalendarEventToMatch(eventsOnFirst![1], {
+            type: CalendarEventType.TextExercise,
+            title: 'Start: Exercise Session',
+            startDate: '2025-10-01T10:00:00.000Z',
+        });
+
+        const eventsOnSecond = result.get('2025-10-02');
+        expect(eventsOnSecond).toHaveLength(1);
+        expectCalendarEventToMatch(eventsOnSecond![0], {
+            type: CalendarEventType.Exam,
+            title: 'Final Exam',
+            startDate: '2025-10-02T09:00:00.000Z',
+            endDate: '2025-10-02T11:00:00.000Z',
+            facilitator: 'Prof. Krusche',
+        });
+
+        const eventsOnThird = result.get('2025-10-03');
+        expect(eventsOnThird).toHaveLength(1);
+        expectCalendarEventToMatch(eventsOnThird![0], {
+            type: CalendarEventType.Tutorial,
+            title: 'Tutorial Session',
+            startDate: '2025-10-03T13:00:00.000Z',
+            endDate: '2025-10-03T14:00:00.000Z',
+            location: 'Zoom',
+            facilitator: 'Marlon Nienaber',
+        });
+    });
+
+    it('should load events and create filtered event map', async () => {
         const tokenRequest = httpMock.expectOne((request) => request.url === expectedTokenUrl);
         tokenRequest.flush(testToken);
 
         service.includedEventFilterOptions.set([CalendarEventFilterOption.LectureEvents, CalendarEventFilterOption.ExamEvents]);
 
-        service.loadEventsForCurrentMonth(courseId, date).subscribe(() => {
-            const result = service.eventMap();
-            expect(result.size).toBe(2);
-
-            const eventsOnFirst = result.get('2025-10-01');
-            expect(eventsOnFirst).toHaveLength(1);
-            expectCalendarEventToMatch(eventsOnFirst![0], {
-                type: CalendarEventType.Lecture,
-                title: 'Object Design',
-                startDate: '2025-10-01T08:00:00.000Z',
-                endDate: '2025-10-01T10:00:00.000Z',
-            });
-
-            const eventsOnSecond = result.get('2025-10-02');
-            expect(eventsOnSecond).toHaveLength(1);
-            expectCalendarEventToMatch(eventsOnSecond![0], {
-                type: CalendarEventType.Exam,
-                title: 'Final Exam',
-                startDate: '2025-10-02T09:00:00.000Z',
-                endDate: '2025-10-02T11:00:00.000Z',
-                facilitator: 'Prof. Krusche',
-            });
-        });
+        const promise = firstValueFrom(service.loadEventsForCurrentMonth(courseId, date));
 
         const eventRequest = httpMock.expectOne((request) => request.url === expectedEventUrl);
         expect(eventRequest.request.method).toBe('GET');
@@ -177,31 +161,39 @@ describe('CalendarService', () => {
         expect(eventRequest.request.params.get('timeZone')).toBeTruthy();
 
         eventRequest.flush(testRequestResponse);
-        tick();
-    }));
 
-    it('should return filtered map when toggling options', fakeAsync(() => {
+        await promise;
+
+        const result = service.eventMap();
+        expect(result.size).toBe(2);
+
+        const eventsOnFirst = result.get('2025-10-01');
+        expect(eventsOnFirst).toHaveLength(1);
+        expectCalendarEventToMatch(eventsOnFirst![0], {
+            type: CalendarEventType.Lecture,
+            title: 'Object Design',
+            startDate: '2025-10-01T08:00:00.000Z',
+            endDate: '2025-10-01T10:00:00.000Z',
+        });
+
+        const eventsOnSecond = result.get('2025-10-02');
+        expect(eventsOnSecond).toHaveLength(1);
+        expectCalendarEventToMatch(eventsOnSecond![0], {
+            type: CalendarEventType.Exam,
+            title: 'Final Exam',
+            startDate: '2025-10-02T09:00:00.000Z',
+            endDate: '2025-10-02T11:00:00.000Z',
+            facilitator: 'Prof. Krusche',
+        });
+    });
+
+    it('should return filtered map when toggling options', async () => {
         const tokenRequest = httpMock.expectOne((request) => request.url === expectedTokenUrl);
         tokenRequest.flush(testToken);
 
         service.includedEventFilterOptions.set([CalendarEventFilterOption.ExamEvents]);
 
-        service.loadEventsForCurrentMonth(courseId, dayjs('2025-10-01')).subscribe(() => {
-            expect(service.eventMap().get('2025-10-01')).toBeUndefined();
-
-            service.toggleEventFilterOption(CalendarEventFilterOption.LectureEvents);
-
-            const filteredEvents = service.eventMap().get('2025-10-01');
-            expect(filteredEvents).toBeDefined();
-            expect(filteredEvents).toHaveLength(1);
-
-            expectCalendarEventToMatch(filteredEvents![0], {
-                type: CalendarEventType.Lecture,
-                title: 'Object Design',
-                startDate: '2025-10-01T08:00:00.000Z',
-                endDate: '2025-10-01T10:00:00.000Z',
-            });
-        });
+        const promise = firstValueFrom(service.loadEventsForCurrentMonth(courseId, dayjs('2025-10-01')));
 
         const eventRequest = httpMock.expectOne((request) => request.url === expectedEventUrl);
         expect(eventRequest.request.method).toBe('GET');
@@ -216,36 +208,52 @@ describe('CalendarService', () => {
             ],
         };
         eventRequest.flush(smallHttpResponse);
-        tick();
-    }));
 
-    it('should load subscription token and set token property', fakeAsync(() => {
+        await promise;
+
+        expect(service.eventMap().get('2025-10-01')).toBeUndefined();
+
+        service.toggleEventFilterOption(CalendarEventFilterOption.LectureEvents);
+
+        const filteredEvents = service.eventMap().get('2025-10-01');
+        expect(filteredEvents).toBeDefined();
+        expect(filteredEvents).toHaveLength(1);
+
+        expectCalendarEventToMatch(filteredEvents![0], {
+            type: CalendarEventType.Lecture,
+            title: 'Object Design',
+            startDate: '2025-10-01T08:00:00.000Z',
+            endDate: '2025-10-01T10:00:00.000Z',
+        });
+    });
+
+    it('should load subscription token and set token property', async () => {
         const tokenRequest = httpMock.expectOne((request) => request.url === expectedTokenUrl);
         tokenRequest.flush(testToken);
-        tick();
+        // Allow microtasks to complete
+        await Promise.resolve();
         expect(service.subscriptionToken()).toBe(testToken);
-    }));
+    });
 
-    it('should refresh', fakeAsync(() => {
+    it('should refresh', async () => {
         const initialTokenRequest = httpMock.expectOne((request) => request.url === expectedTokenUrl);
         initialTokenRequest.flush(testToken);
-        tick();
+        await Promise.resolve();
 
         service.includedEventFilterOptions.set([CalendarEventFilterOption.LectureEvents, CalendarEventFilterOption.ExamEvents]);
-        service.loadEventsForCurrentMonth(courseId, date).subscribe();
+        const loadPromise = firstValueFrom(service.loadEventsForCurrentMonth(courseId, date));
 
         const initialEventRequest = httpMock.expectOne((request) => request.url === expectedEventUrl);
         expect(initialEventRequest.request.method).toBe('GET');
         initialEventRequest.flush({});
-        tick();
+        await loadPromise;
 
         service.reloadEvents();
 
         const refreshEventRequest = httpMock.expectOne((request) => request.url === expectedEventUrl);
         expect(refreshEventRequest.request.method).toBe('GET');
         refreshEventRequest.flush({});
-        tick();
-    }));
+    });
 });
 
 function expectCalendarEventToMatch(

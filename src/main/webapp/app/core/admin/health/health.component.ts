@@ -1,10 +1,9 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 import { HealthService } from './health.service';
 import { HealthModalComponent } from './health-modal.component';
-import { Health, HealthDetails, HealthStatus } from 'app/core/admin/health/health.model';
+import { Health, HealthDetails, HealthKey, HealthStatus } from 'app/core/admin/health/health.model';
 import { faEye, faSync } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -30,14 +29,18 @@ import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title
         ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
+        HealthModalComponent,
     ],
 })
 export class HealthComponent implements OnInit {
-    private readonly modalService = inject(NgbModal);
     private readonly healthService = inject(HealthService);
 
     /** Current system health status */
     readonly health = signal<Health | undefined>(undefined);
+
+    /** Health modal visibility and data */
+    showHealthModal = signal(false);
+    selectedHealth = signal<{ key: HealthKey; value: HealthDetails } | undefined>(undefined);
 
     /** Icons */
     protected readonly faSync = faSync;
@@ -71,7 +74,7 @@ export class HealthComponent implements OnInit {
     }
 
     showHealth(health: { key: string; value: HealthDetails }): void {
-        const modalRef = this.modalService.open(HealthModalComponent);
-        modalRef.componentInstance.health.set(health);
+        this.selectedHealth.set(health as { key: HealthKey; value: HealthDetails });
+        this.showHealthModal.set(true);
     }
 }

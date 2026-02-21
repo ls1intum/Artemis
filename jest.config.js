@@ -7,8 +7,8 @@ const esModules = [
     '@angular/forms',
     '@angular/localize',
     '@angular/material',
-    '@angular/platform-browser-dynamic',
     '@angular/platform-browser',
+    '@angular/platform-browser-dynamic',
     '@angular/router',
     '@angular/service-worker',
     '@ctrl/ngx-emoji-mart',
@@ -83,45 +83,43 @@ module.exports = {
         ],
     ],
     collectCoverageFrom: [
-        '<rootDir>/src/main/webapp/**/*.ts',
-        '!<rootDir>/src/main/webapp/**/*.module.ts',        // ignore modules files because they cannot be properly tested
-        '!<rootDir>/src/main/webapp/**/*.routes.ts',        // ignore routes files because they cannot be properly tested
-        '!<rootDir>/src/main/webapp/**/*.route.ts',         // ignore route files because they cannot be properly tested
         '!<rootDir>/**/node_modules/**',
-        '!<rootDir>/src/main/webapp/app/openapi/**',        // ignore openapi files because they are generated
+        '!<rootDir>/src/main/webapp/**/*.module.ts',        // ignore modules files because they cannot be properly tested
+        '!<rootDir>/src/main/webapp/**/*.route.ts',         // ignore route files because they cannot be properly tested
+        '!<rootDir>/src/main/webapp/**/*.routes.ts',        // ignore routes files because they cannot be properly tested
         '!<rootDir>/src/main/webapp/app/assessment/**',     // assessment module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/buildagent/**',     // buildagent module uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/core/account/**',   // core account module uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/core/admin/**',     // core admin module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/core/**',           // core module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/fileupload/**',     // fileupload module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/iris/**',           // iris module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/lecture/**',        // lecture module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/lti/**',            // lti module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/modeling/**',       // modeling module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/openapi/**',        // ignore openapi files because they are generated
         '!<rootDir>/src/main/webapp/app/quiz/**',           // quiz module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/text/**',           // text module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/tutorialgroup/**',  // tutorialgroup module uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/lti/**',            // lti module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/atlas/**',          // atlas module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/iris/**',           // iris module uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/core/course/manage/**', // core course manage module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exercise/review/**', // review comment module uses Vitest (see vitest.config.ts)
+        '<rootDir>/src/main/webapp/**/*.ts',
     ],
     coveragePathIgnorePatterns: [
-        '<rootDir>/src/main/webapp/app/core/config/prod.config.ts',
-        '<rootDir>/src/main/webapp/app/openapi/',
         '<rootDir>/src/main/webapp/app/assessment/',        // assessment module uses Vitest
         '<rootDir>/src/main/webapp/app/buildagent/',        // buildagent module uses Vitest
-        '<rootDir>/src/main/webapp/app/core/account/',      // core account module uses Vitest
-        '<rootDir>/src/main/webapp/app/core/admin/',        // core admin module uses Vitest
+        '<rootDir>/src/main/webapp/app/core/',              // core module uses Vitest
         '<rootDir>/src/main/webapp/app/fileupload/',        // fileupload module uses Vitest
+        '<rootDir>/src/main/webapp/app/iris/',              // iris module uses Vitest
         '<rootDir>/src/main/webapp/app/lecture/',           // lecture module uses Vitest
+        '<rootDir>/src/main/webapp/app/lti/',               // lti module uses Vitest
         '<rootDir>/src/main/webapp/app/modeling/',          // modeling module uses Vitest
+        '<rootDir>/src/main/webapp/app/openapi/',
         '<rootDir>/src/main/webapp/app/quiz/',              // quiz module uses Vitest
         '<rootDir>/src/main/webapp/app/text/',              // text module uses Vitest
         '<rootDir>/src/main/webapp/app/tutorialgroup/',     // tutorialgroup module uses Vitest
-        '<rootDir>/src/main/webapp/app/lti/',               // lti module uses Vitest
         '<rootDir>/src/main/webapp/app/atlas/',             // atlas module uses Vitest
+        '<rootDir>/src/main/webapp/app/shared/components/buttons/', // buttons module uses Vitest
         '<rootDir>/src/main/webapp/app/iris/',              // iris module uses Vitest
-        '<rootDir>/src/main/webapp/app/core/course/manage/', // core course manage module uses Vitest
         '<rootDir>/src/main/webapp/app/shared/components/buttons', // buttons module uses Vitest
         '<rootDir>/src/main/webapp/app/exercise/review/', // review comment module uses Vitest
     ],
@@ -129,10 +127,10 @@ module.exports = {
     // coverage thresholds in vitest.config.ts. Per-module thresholds are enforced by check-client-module-coverage.mjs
     coverageThreshold: {
         global: {
-            statements: 89.3,
-            branches: 73.5,
-            functions: 83.3,
-            lines: 89.3,
+            statements: 88.5,
+            branches: 73.0,
+            functions: 80.2,
+            lines: 89.2,
         },
     },
     // 'json-summary' reporter is used by supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs
@@ -157,18 +155,16 @@ module.exports = {
     testPathIgnorePatterns: [
         '<rootDir>/src/main/webapp/app/assessment/',    // assessment module
         '<rootDir>/src/main/webapp/app/buildagent/',    // buildagent module
-        '<rootDir>/src/main/webapp/app/core/account/',  // core account module
-        '<rootDir>/src/main/webapp/app/core/admin/',    // core admin module
+        '<rootDir>/src/main/webapp/app/core/',          // core module
         '<rootDir>/src/main/webapp/app/fileupload/',    // fileupload module
+        '<rootDir>/src/main/webapp/app/iris/',          // iris module
         '<rootDir>/src/main/webapp/app/lecture/',       // lecture module
+        '<rootDir>/src/main/webapp/app/lti/',           // lti module
         '<rootDir>/src/main/webapp/app/modeling/',      // modeling module
         '<rootDir>/src/main/webapp/app/quiz/',          // quiz module
         '<rootDir>/src/main/webapp/app/text/',          // text module
         '<rootDir>/src/main/webapp/app/tutorialgroup/', // tutorialgroup module
-        '<rootDir>/src/main/webapp/app/lti/',           // lti module
         '<rootDir>/src/main/webapp/app/atlas/',         // atlas module
-        '<rootDir>/src/main/webapp/app/iris/',          // iris module
-        '<rootDir>/src/main/webapp/app/core/course/manage/', // core course manage module
         '<rootDir>/src/main/webapp/app/shared/components/buttons/', // shared/buttons components
         '<rootDir>/src/main/webapp/app/exercise/review/', // review comment module
     ],

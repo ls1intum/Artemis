@@ -1,4 +1,5 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Subscription, combineLatest } from 'rxjs';
@@ -8,7 +9,6 @@ import dayjs from 'dayjs/esm';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ExampleSolutionInfo, ExerciseDetailsType, ExerciseService } from 'app/exercise/services/exercise.service';
@@ -107,9 +107,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private quizExerciseService = inject(QuizExerciseService);
     private complaintService = inject(ComplaintService);
     private artemisMarkdown = inject(ArtemisMarkdownService);
-    private readonly cdr = inject(ChangeDetectorRef);
     private readonly scienceService = inject(ScienceService);
     private irisSettingsService = inject(IrisSettingsService);
+    private destroyRef = inject(DestroyRef);
 
     readonly AssessmentType = AssessmentType;
     readonly PlagiarismVerdict = PlagiarismVerdict;
@@ -127,37 +127,103 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     readonly isCommunicationEnabled = isCommunicationEnabled;
     readonly isMessagingEnabled = isMessagingEnabled;
 
+    // Use signals for reactive state
     public learningPathMode = false;
     public exerciseId: number;
     public courseId: number;
-    public exercise: Exercise;
-    resultWithComplaint?: Result;
-    latestRatedResult?: Result;
-    complaint?: Complaint;
-    showMoreResults = false;
-    public sortedHistoryResults: Result[];
-    private participationUpdateListener: Subscription;
-    private teamAssignmentUpdateListener: Subscription;
-    private submissionSubscription: Subscription;
-    studentParticipations: StudentParticipation[] = [];
-    resultsOfGradedStudentParticipation: (Result | undefined)[] = [];
-    gradedStudentParticipation?: StudentParticipation;
-    practiceStudentParticipation?: StudentParticipation;
-    isAfterAssessmentDueDate: boolean;
-    allowComplaintsForAutomaticAssessments: boolean;
-    baseResource: string;
-    submissionPolicy?: SubmissionPolicy;
-    exampleSolutionCollapsed: boolean;
-    plagiarismCaseInfo?: PlagiarismCaseInfo;
-    irisEnabled = false;
-    irisChatEnabled = false;
-    paramsSubscription: Subscription;
-    private irisSettingsSubscription?: Subscription;
-    instructorActionItems: InstructorActionItem[] = [];
-    exerciseIcon: IconProp;
-    numberOfPracticeResults: number;
 
-    exampleSolutionInfo?: ExampleSolutionInfo;
+    // Main exercise signal
+    private readonly _exercise = signal<Exercise | undefined>(undefined);
+    public get exercise(): Exercise | undefined {
+        return this._exercise();
+    }
+    public set exercise(value: Exercise | undefined) {
+        this._exercise.set(value);
+    }
+
+    // Student participations signal
+    private readonly _studentParticipations = signal<StudentParticipation[]>([]);
+    public get studentParticipations(): StudentParticipation[] {
+        return this._studentParticipations();
+    }
+    public set studentParticipations(value: StudentParticipation[]) {
+        this._studentParticipations.set(value);
+    }
+
+    // Computed signals for derived state
+    readonly gradedStudentParticipation = computed(() => {
+        return this.participationService.getSpecificStudentParticipation(this._studentParticipations(), false);
+    });
+
+    readonly practiceStudentParticipation = computed(() => {
+        return this.participationService.getSpecificStudentParticipation(this._studentParticipations(), true);
+    });
+
+    readonly numberOfPracticeResults = computed(() => {
+        return this.practiceStudentParticipation()?.submissions?.flatMap((submission) => submission.results)?.length ?? 0;
+    });
+
+    // Sorted results signal
+    private readonly _sortedHistoryResults = signal<Result[]>([]);
+    public get sortedHistoryResults(): Result[] {
+        return this._sortedHistoryResults();
+    }
+    public set sortedHistoryResults(value: Result[]) {
+        this._sortedHistoryResults.set(value);
+    }
+
+    // Read-only signal accessors for state only modified internally
+    private readonly _resultWithComplaint = signal<Result | undefined>(undefined);
+    readonly resultWithComplaint = this._resultWithComplaint.asReadonly();
+
+    private readonly _latestRatedResult = signal<Result | undefined>(undefined);
+    readonly latestRatedResult = this._latestRatedResult.asReadonly();
+
+    private readonly _complaint = signal<Complaint | undefined>(undefined);
+    readonly complaint = this._complaint.asReadonly();
+
+    private readonly _showMoreResults = signal(false);
+    readonly showMoreResults = this._showMoreResults.asReadonly();
+
+    private readonly _resultsOfGradedStudentParticipation = signal<(Result | undefined)[]>([]);
+    readonly resultsOfGradedStudentParticipation = this._resultsOfGradedStudentParticipation.asReadonly();
+
+    private readonly _isAfterAssessmentDueDate = signal(false);
+    readonly isAfterAssessmentDueDate = this._isAfterAssessmentDueDate.asReadonly();
+
+    private readonly _allowComplaintsForAutomaticAssessments = signal(false);
+    readonly allowComplaintsForAutomaticAssessments = this._allowComplaintsForAutomaticAssessments.asReadonly();
+
+    private readonly _baseResource = signal('');
+    readonly baseResource = this._baseResource.asReadonly();
+
+    private readonly _submissionPolicy = signal<SubmissionPolicy | undefined>(undefined);
+    readonly submissionPolicy = this._submissionPolicy.asReadonly();
+
+    private readonly _exampleSolutionCollapsed = signal<boolean | undefined>(undefined);
+    readonly exampleSolutionCollapsed = this._exampleSolutionCollapsed.asReadonly();
+
+    private readonly _plagiarismCaseInfo = signal<PlagiarismCaseInfo | undefined>(undefined);
+    readonly plagiarismCaseInfo = this._plagiarismCaseInfo.asReadonly();
+
+    private readonly _irisEnabled = signal(false);
+    readonly irisEnabled = this._irisEnabled.asReadonly();
+
+    private readonly _irisChatEnabled = signal(false);
+    readonly irisChatEnabled = this._irisChatEnabled.asReadonly();
+
+    private readonly _instructorActionItems = signal<InstructorActionItem[]>([]);
+    readonly instructorActionItems = this._instructorActionItems.asReadonly();
+
+    private readonly _exerciseIcon = signal<IconProp | undefined>(undefined);
+    readonly exerciseIcon = this._exerciseIcon.asReadonly();
+
+    private readonly _exampleSolutionInfo = signal<ExampleSolutionInfo | undefined>(undefined);
+    readonly exampleSolutionInfo = this._exampleSolutionInfo.asReadonly();
+
+    // Subscription tracking for methods called on each exercise load
+    private participationUpdateListener?: Subscription;
+    private teamAssignmentUpdateListener?: Subscription;
 
     // Icons
     faBook = faBook;
@@ -172,29 +238,32 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         const courseIdParams$ = this.route.parent?.parent?.params;
         const exerciseIdParams$ = this.route.params;
         if (courseIdParams$) {
-            this.paramsSubscription = combineLatest([courseIdParams$, exerciseIdParams$]).subscribe(([courseIdParams, exerciseIdParams]) => {
-                const didExerciseChange = this.exerciseId !== parseInt(exerciseIdParams.exerciseId, 10);
-                const didCourseChange = this.courseId !== parseInt(courseIdParams.courseId, 10);
+            combineLatest([courseIdParams$, exerciseIdParams$])
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe(([courseIdParams, exerciseIdParams]) => {
+                    const didExerciseChange = this.exerciseId !== parseInt(exerciseIdParams.exerciseId, 10);
+                    const didCourseChange = this.courseId !== parseInt(courseIdParams.courseId, 10);
 
-                // if learningPathMode is enabled these attributes will be set by the parent
-                if (!this.learningPathMode) {
-                    this.exerciseId = parseInt(exerciseIdParams.exerciseId, 10);
-                    this.courseId = parseInt(courseIdParams.courseId, 10);
-                }
-                if (didExerciseChange || didCourseChange) {
-                    this.loadExercise();
-                }
+                    // if learningPathMode is enabled these attributes will be set by the parent
+                    if (!this.learningPathMode) {
+                        this.exerciseId = parseInt(exerciseIdParams.exerciseId, 10);
+                        this.courseId = parseInt(courseIdParams.courseId, 10);
+                    }
+                    if (didExerciseChange || didCourseChange) {
+                        this.loadExercise();
+                    }
 
-                this.scienceService.logEvent(ScienceEventType.EXERCISE__OPEN, this.exerciseId);
-            });
+                    this.scienceService.logEvent(ScienceEventType.EXERCISE__OPEN, this.exerciseId);
+                });
         }
     }
 
     loadExercise() {
-        this.studentParticipations = this.participationWebsocketService.getParticipationsForExercise(this.exerciseId);
-        this.updateStudentParticipations();
-        this.resultWithComplaint = getFirstResultWithComplaintFromResults(
-            this.gradedStudentParticipation?.submissions?.flatMap((submission) => (submission.results ?? []).filter((result): result is Result => result !== undefined)),
+        this._studentParticipations.set(this.participationWebsocketService.getParticipationsForExercise(this.exerciseId));
+        this._resultWithComplaint.set(
+            getFirstResultWithComplaintFromResults(
+                this.gradedStudentParticipation()?.submissions?.flatMap((submission) => (submission.results ?? []).filter((result): result is Result => result !== undefined)),
+            ),
         );
         this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((exerciseResponse: HttpResponse<ExerciseDetailsType>) => {
             this.handleNewExercise(exerciseResponse.body!);
@@ -203,27 +272,30 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     handleNewExercise(newExerciseDetails: ExerciseDetailsType) {
-        this.exercise = newExerciseDetails.exercise;
-        this.filterUnfinishedResults(this.exercise.studentParticipations);
+        this._exercise.set(newExerciseDetails.exercise);
+        this.filterUnfinishedResults(this.exercise?.studentParticipations);
         this.mergeResultsAndSubmissionsForParticipations();
-        this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || dayjs().isAfter(this.exercise.assessmentDueDate);
-        this.allowComplaintsForAutomaticAssessments = false;
-        this.plagiarismCaseInfo = newExerciseDetails.plagiarismCaseInfo;
-        if (this.exercise.type === ExerciseType.PROGRAMMING) {
+        this._isAfterAssessmentDueDate.set(!this.exercise?.assessmentDueDate || dayjs().isAfter(this.exercise.assessmentDueDate));
+        this._allowComplaintsForAutomaticAssessments.set(false);
+        this._plagiarismCaseInfo.set(newExerciseDetails.plagiarismCaseInfo);
+        if (this.exercise?.type === ExerciseType.PROGRAMMING) {
             const programmingExercise = this.exercise as ProgrammingExercise;
             const isAfterDateForComplaint =
                 !this.exercise.dueDate ||
-                (hasExerciseDueDatePassed(this.exercise, this.gradedStudentParticipation) &&
+                (hasExerciseDueDatePassed(this.exercise, this.gradedStudentParticipation()) &&
                     (!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate || dayjs().isAfter(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate)));
 
-            this.allowComplaintsForAutomaticAssessments = !!programmingExercise.allowComplaintsForAutomaticAssessments && isAfterDateForComplaint;
-            this.submissionPolicy = programmingExercise.submissionPolicy;
+            this._allowComplaintsForAutomaticAssessments.set(!!programmingExercise.allowComplaintsForAutomaticAssessments && isAfterDateForComplaint);
+            this._submissionPolicy.set(programmingExercise.submissionPolicy);
 
-            this.irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
-            if (this.irisEnabled && !this.exercise.exerciseGroup && this.courseId) {
-                this.irisSettingsSubscription = this.irisSettingsService.getCourseSettingsWithRateLimit(this.courseId).subscribe((response) => {
-                    this.irisChatEnabled = response?.settings?.enabled ?? false;
-                });
+            this._irisEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS));
+            if (this.irisEnabled() && !this.exercise.exerciseGroup && this.courseId) {
+                this.irisSettingsService
+                    .getCourseSettingsWithRateLimit(this.courseId)
+                    .pipe(takeUntilDestroyed(this.destroyRef))
+                    .subscribe((response) => {
+                        this._irisChatEnabled.set(response?.settings?.enabled ?? false);
+                    });
             }
         }
 
@@ -231,13 +303,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.subscribeForNewResults();
         this.subscribeToTeamAssignmentUpdates();
 
-        this.baseResource = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/`;
+        this._baseResource.set(`/course-management/${this.courseId}/${this.exercise?.type}-exercises/${this.exercise?.id}/`);
         if (this.exercise?.type) {
-            this.exerciseIcon = getIcon(this.exercise?.type);
+            this._exerciseIcon.set(getIcon(this.exercise.type));
         }
         this.createInstructorActions();
-
-        this.cdr.detectChanges(); // IMPORTANT: necessary to update the view after the exercise has been loaded in learning path view
     }
 
     /**
@@ -247,27 +317,28 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * @param newExercise Exercise model that may have an exampleSolution.
      */
     showIfExampleSolutionPresent(newExercise: Exercise) {
-        this.exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo(newExercise, this.artemisMarkdown);
+        this._exampleSolutionInfo.set(ExerciseService.extractExampleSolutionInfo(newExercise, this.artemisMarkdown));
         // For TAs the example solution is collapsed on default to avoid spoiling, as the example solution is always shown to TAs
-        this.exampleSolutionCollapsed = !!newExercise?.isAtLeastTutor;
+        this._exampleSolutionCollapsed.set(!!newExercise?.isAtLeastTutor);
     }
 
     /**
      * Filters out any unfinished Results
      */
     private filterUnfinishedResults(participations?: StudentParticipation[]) {
-        participations?.forEach((participation: Participation) => {
+        participations?.forEach((participation) => {
             const results = participation?.submissions?.flatMap((submission) => submission.results) ?? [];
             if (results) {
-                this.resultsOfGradedStudentParticipation = results;
+                this._resultsOfGradedStudentParticipation.set(results);
             }
         });
     }
 
     sortResults() {
-        if (this.studentParticipations?.length) {
-            this.studentParticipations.forEach((participation) => participation.submissions?.flatMap((submission) => submission.results)?.sort(this.resultSortFunction));
-            this.sortedHistoryResults = this.studentParticipations
+        const participations = this._studentParticipations();
+        if (participations?.length) {
+            participations.forEach((participation) => participation.submissions?.flatMap((submission) => submission.results)?.sort(this.resultSortFunction));
+            const sorted = participations
                 .flatMap(
                     (participation) =>
                         participation.submissions?.flatMap((submission) => {
@@ -282,6 +353,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 )
                 .sort(this.resultSortFunction)
                 .filter((result) => !(result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && !result.successful));
+            this._sortedHistoryResults.set(sorted);
         }
     }
     private resultSortFunction = (a: Result, b: Result) => {
@@ -291,46 +363,47 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     };
 
     mergeResultsAndSubmissionsForParticipations() {
-        // if there are new student participation(s) from the server, we need to update this.studentParticipation
+        // if there are new student participation(s) from the server, we need to update studentParticipations
         if (this.exercise?.studentParticipations?.length) {
-            this.studentParticipations = this.participationService.mergeStudentParticipations(this.exercise.studentParticipations);
-            this.exercise.studentParticipations = this.studentParticipations;
-            this.updateStudentParticipations();
-            this.sortResults();
-            // Add exercise to studentParticipation, as the result component is dependent on its existence.
-            this.studentParticipations.forEach((participation) => (participation.exercise = this.exercise));
-        } else if (this.studentParticipations?.length && this.exercise) {
-            // otherwise we make sure that the student participation in exercise is correct
-            this.exercise.studentParticipations = this.studentParticipations;
+            const merged = this.participationService.mergeStudentParticipations(this.exercise.studentParticipations);
+            if (merged?.length) {
+                this._studentParticipations.set(merged);
+                this.sortResults();
+                // Add exercise to studentParticipation, as the result component is dependent on its existence.
+                merged.forEach((participation) => (participation.exercise = this.exercise));
+            }
         }
     }
 
     subscribeForNewResults() {
-        if (this.exercise && this.studentParticipations?.length) {
-            this.studentParticipations.forEach((participation) => {
-                this.participationWebsocketService.addParticipation(participation, this.exercise);
+        // Cancel previous subscription to avoid duplicates when exercise changes
+        this.participationUpdateListener?.unsubscribe();
+
+        const participations = this._studentParticipations();
+        if (this.exercise && participations?.length) {
+            participations.forEach((participation) => {
+                this.participationWebsocketService.addParticipation(participation, this.exercise!);
             });
         }
 
-        this.participationUpdateListener?.unsubscribe();
         this.participationUpdateListener = this.participationWebsocketService
             .subscribeForParticipationChanges()
             // Skip the first event, as it is the initial state. All data should already be loaded.
-            .pipe(skip(1))
+            .pipe(skip(1), takeUntilDestroyed(this.destroyRef))
             .subscribe((changedParticipation: StudentParticipation) => {
                 if (changedParticipation && this.exercise && changedParticipation.exercise?.id === this.exercise.id) {
+                    const currentGraded = this.gradedStudentParticipation();
                     // Notify student about late submission result
                     if (
                         changedParticipation.exercise?.dueDate &&
                         hasExerciseDueDatePassed(changedParticipation.exercise, changedParticipation) &&
-                        changedParticipation.id === this.gradedStudentParticipation?.id &&
-                        getAllResultsOfAllSubmissions(changedParticipation.submissions).length > getAllResultsOfAllSubmissions(this.gradedStudentParticipation?.submissions).length
+                        changedParticipation.id === currentGraded?.id &&
+                        getAllResultsOfAllSubmissions(changedParticipation.submissions).length > getAllResultsOfAllSubmissions(currentGraded?.submissions).length
                     ) {
                         this.alertService.success('artemisApp.exercise.lateSubmissionResultReceived');
                     }
                     if (
-                        (getAllResultsOfAllSubmissions(changedParticipation.submissions)?.length >
-                            getAllResultsOfAllSubmissions(this.gradedStudentParticipation?.submissions).length ||
+                        (getAllResultsOfAllSubmissions(changedParticipation.submissions)?.length > getAllResultsOfAllSubmissions(currentGraded?.submissions).length ||
                             getAllResultsOfAllSubmissions(changedParticipation.submissions)?.last()?.completionDate === undefined) &&
                         getAllResultsOfAllSubmissions(changedParticipation.submissions).last()?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
                         getAllResultsOfAllSubmissions(changedParticipation.submissions)?.last()?.successful !== undefined
@@ -341,34 +414,37 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                             this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
                         }
                     }
-                    if (this.studentParticipations?.some((participation) => participation.id === changedParticipation.id)) {
-                        this.exercise.studentParticipations = this.studentParticipations.map((participation) =>
-                            participation.id === changedParticipation.id ? changedParticipation : participation,
-                        );
+                    const currentParticipations = this._studentParticipations();
+                    let updatedParticipations: StudentParticipation[];
+                    if (currentParticipations?.some((participation) => participation.id === changedParticipation.id)) {
+                        updatedParticipations = currentParticipations.map((participation) => (participation.id === changedParticipation.id ? changedParticipation : participation));
                     } else {
-                        this.exercise.studentParticipations = [...this.studentParticipations, changedParticipation];
+                        updatedParticipations = [...currentParticipations, changedParticipation];
                     }
-                    this.updateStudentParticipations();
+                    this._studentParticipations.set(updatedParticipations);
                     this.mergeResultsAndSubmissionsForParticipations();
                 }
             });
-    }
-
-    private updateStudentParticipations() {
-        this.gradedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.studentParticipations, false);
-        this.practiceStudentParticipation = this.participationService.getSpecificStudentParticipation(this.studentParticipations, true);
-        this.numberOfPracticeResults = this.practiceStudentParticipation?.submissions?.flatMap((submission) => submission.results)?.length ?? 0;
     }
 
     /**
      * Receives team assignment changes and applies them if they belong to this exercise
      */
     async subscribeToTeamAssignmentUpdates() {
+        // Cancel previous subscription to avoid duplicates when exercise changes
+        this.teamAssignmentUpdateListener?.unsubscribe();
+
         this.teamAssignmentUpdateListener = (await this.teamService.teamAssignmentUpdates)
-            .pipe(filter(({ exerciseId }: TeamAssignmentPayload) => exerciseId === this.exercise?.id))
+            .pipe(
+                filter(({ exerciseId }: TeamAssignmentPayload) => exerciseId === this.exercise?.id),
+                takeUntilDestroyed(this.destroyRef),
+            )
             .subscribe((teamAssignment) => {
-                this.exercise!.studentAssignedTeamId = teamAssignment.teamId;
-                this.exercise!.studentParticipations = teamAssignment.studentParticipations;
+                if (this.exercise && teamAssignment.studentParticipations) {
+                    this.exercise.studentAssignedTeamId = teamAssignment.teamId;
+                    this._studentParticipations.set(teamAssignment.studentParticipations);
+                    this.mergeResultsAndSubmissionsForParticipations();
+                }
             });
     }
 
@@ -377,25 +453,29 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     get hasMoreResults(): boolean {
-        if (!this.studentParticipations?.length || !this.sortedHistoryResults.length) {
+        const participations = this._studentParticipations();
+        const sorted = this._sortedHistoryResults();
+        if (!participations?.length || !sorted.length) {
             return false;
         }
-        return this.sortedHistoryResults.length > MAX_RESULT_HISTORY_LENGTH;
+        return sorted.length > MAX_RESULT_HISTORY_LENGTH;
     }
 
     /**
      * Loads and stores the complaint if any exists. Furthermore, loads the latest rated result and stores it.
      */
     loadComplaintAndLatestRatedResult(): void {
-        if (!this.gradedStudentParticipation?.submissions?.[0] || !this.sortedHistoryResults?.length) {
+        const graded = this.gradedStudentParticipation();
+        const sorted = this._sortedHistoryResults();
+        if (!graded?.submissions?.[0] || !sorted?.length) {
             return;
         }
-        this.complaintService.findBySubmissionId(this.gradedStudentParticipation!.submissions![0].id!).subscribe({
+        this.complaintService.findBySubmissionId(graded.submissions[0].id!).subscribe({
             next: (res) => {
                 if (!res.body) {
                     return;
                 }
-                this.complaint = res.body;
+                this._complaint.set(res.body);
             },
             error: (err: HttpErrorResponse) => {
                 this.onError(err.message);
@@ -406,12 +486,12 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const ratedResults = getAllResultsOfAllSubmissions(this.gradedStudentParticipation?.submissions)
+        const ratedResults = getAllResultsOfAllSubmissions(graded?.submissions)
             ?.filter((result: Result) => result.rated)
             .sort(this.resultSortFunction);
         if (ratedResults) {
             const latestResult = ratedResults.last();
-            this.latestRatedResult = latestResult;
+            this._latestRatedResult.set(latestResult);
         }
     }
 
@@ -419,7 +499,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * Returns the status of the exercise if it is a quiz exercise or undefined otherwise.
      */
     get quizExerciseStatus(): QuizStatus | undefined {
-        if (this.exercise!.type === ExerciseType.QUIZ) {
+        if (this.exercise?.type === ExerciseType.QUIZ) {
             return this.quizExerciseService.getStatus(this.exercise as QuizExercise);
         }
         return undefined;
@@ -429,24 +509,30 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.alertService.error(error);
     }
 
+    toggleShowMoreResults() {
+        this._showMoreResults.update((v) => !v);
+    }
+
     /**
      * Used to change the boolean value for the example solution dropdown menu
      */
     changeExampleSolution() {
-        this.exampleSolutionCollapsed = !this.exampleSolutionCollapsed;
+        this._exampleSolutionCollapsed.update((v) => !v);
     }
 
     // INSTRUCTOR ACTIONS
     createInstructorActions() {
+        const items: InstructorActionItem[] = [];
         if (this.exercise?.isAtLeastTutor) {
-            this.instructorActionItems = this.createTutorActions();
+            items.push(...this.createTutorActions());
         }
         if (this.exercise?.isAtLeastEditor) {
-            this.instructorActionItems.push(...this.createEditorActions());
+            items.push(...this.createEditorActions());
         }
         if (this.exercise?.isAtLeastInstructor && this.QUIZ_ENDED_STATUS.includes(this.quizExerciseStatus)) {
-            this.instructorActionItems.push(this.getReEvaluateItem());
+            items.push(this.getReEvaluateItem());
         }
+        this._instructorActionItems.set(items);
     }
 
     createTutorActions(): InstructorActionItem[] {
@@ -462,12 +548,12 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     getDefaultItems(): InstructorActionItem[] {
         return [
             {
-                routerLink: `${this.baseResource}`,
+                routerLink: `${this.baseResource()}`,
                 icon: faEye,
                 translation: 'entity.action.view',
             },
             {
-                routerLink: `${this.baseResource}scores`,
+                routerLink: `${this.baseResource()}scores`,
                 icon: faTable,
                 translation: 'entity.action.scores',
             },
@@ -477,12 +563,12 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     getQuizItems(): InstructorActionItem[] {
         return [
             {
-                routerLink: `${this.baseResource}preview`,
+                routerLink: `${this.baseResource()}preview`,
                 icon: faEye,
                 translation: 'artemisApp.quizExercise.preview',
             },
             {
-                routerLink: `${this.baseResource}solution`,
+                routerLink: `${this.baseResource()}solution`,
                 icon: faEye,
                 translation: 'artemisApp.quizExercise.solution',
             },
@@ -491,7 +577,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     getParticipationItem(): InstructorActionItem {
         return {
-            routerLink: `${this.baseResource}participations`,
+            routerLink: `${this.baseResource()}participations`,
             icon: faListAlt,
             translation: 'artemisApp.exercise.participations',
         };
@@ -514,7 +600,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     getStatisticItem(routerLink: string): InstructorActionItem {
         return {
-            routerLink: `${this.baseResource}${routerLink}`,
+            routerLink: `${this.baseResource()}${routerLink}`,
             icon: faSignal,
             translation: 'artemisApp.courseOverview.exerciseDetails.instructorActions.statistics',
         };
@@ -522,7 +608,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     getGradingItem(): InstructorActionItem {
         return {
-            routerLink: `${this.baseResource}grading/test-cases`,
+            routerLink: `${this.baseResource()}grading/test-cases`,
             icon: faFileSignature,
             translation: 'artemisApp.programmingExercise.configureGrading.shortTitle',
         };
@@ -530,7 +616,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     getQuizEditItem(): InstructorActionItem {
         return {
-            routerLink: `${this.baseResource}edit`,
+            routerLink: `${this.baseResource()}edit`,
             icon: faWrench,
             translation: 'entity.action.edit',
         };
@@ -538,24 +624,19 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     getReEvaluateItem(): InstructorActionItem {
         return {
-            routerLink: `${this.baseResource}re-evaluate`,
+            routerLink: `${this.baseResource()}re-evaluate`,
             icon: faWrench,
             translation: 'entity.action.re-evaluate',
         };
     }
 
     ngOnDestroy() {
-        this.participationUpdateListener?.unsubscribe();
-        this.studentParticipations?.forEach((participation) => {
+        const participations = this._studentParticipations();
+        participations?.forEach((participation) => {
             if (participation.id && this.exercise) {
                 this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participation.id, this.exercise);
             }
         });
-
-        this.teamAssignmentUpdateListener?.unsubscribe();
-        this.submissionSubscription?.unsubscribe();
-        this.paramsSubscription?.unsubscribe();
-        this.irisSettingsSubscription?.unsubscribe();
     }
 
     protected readonly hasResults = hasResults;

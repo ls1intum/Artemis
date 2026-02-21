@@ -49,31 +49,28 @@ describe('KnowledgeAreaEditComponent', () => {
     ];
 
     beforeEach(async () => {
-        await TestBed.configureTestingModule({
+        TestBed.configureTestingModule({
             imports: [ReactiveFormsModule, KnowledgeAreaEditComponent],
             providers: [],
-        })
-            .overrideComponent(KnowledgeAreaEditComponent, {
-                set: {
-                    imports: [
-                        ReactiveFormsModule,
-                        FaIconComponent,
-                        MockComponent(ButtonComponent),
-                        MockPipe(HtmlForMarkdownPipe),
-                        MockComponent(MarkdownEditorMonacoComponent),
-                        MockDirective(TranslateDirective),
-                        MockDirective(DeleteButtonDirective),
-                    ],
-                },
-            })
-            .compileComponents()
-            .then(() => {
-                componentFixture = TestBed.createComponent(KnowledgeAreaEditComponent);
-                component = componentFixture.componentInstance;
-                // Use componentRef.setInput() for signal inputs
-                componentFixture.componentRef.setInput('knowledgeArea', defaultKnowledgeArea);
-                componentFixture.componentRef.setInput('knowledgeAreas', defaultKnowledgeAreas);
-            });
+        }).overrideComponent(KnowledgeAreaEditComponent, {
+            set: {
+                imports: [
+                    ReactiveFormsModule,
+                    FaIconComponent,
+                    MockComponent(ButtonComponent),
+                    MockPipe(HtmlForMarkdownPipe),
+                    MockComponent(MarkdownEditorMonacoComponent),
+                    MockDirective(TranslateDirective),
+                    MockDirective(DeleteButtonDirective),
+                ],
+            },
+        });
+        await TestBed.compileComponents();
+        componentFixture = TestBed.createComponent(KnowledgeAreaEditComponent);
+        component = componentFixture.componentInstance;
+        // Use componentRef.setInput() for signal inputs
+        componentFixture.componentRef.setInput('knowledgeArea', defaultKnowledgeArea);
+        componentFixture.componentRef.setInput('knowledgeAreas', defaultKnowledgeAreas);
     });
 
     afterEach(() => {

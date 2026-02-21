@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PasskeySettingsComponent } from 'app/core/user/settings/passkey-settings/passkey-settings.component';
 import { PasskeySettingsApiService } from 'app/core/user/settings/passkey-settings/passkey-settings-api.service';
@@ -20,6 +22,8 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { User } from 'app/core/user/user.model';
 
 describe('PasskeySettingsComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: PasskeySettingsComponent;
     let fixture: ComponentFixture<PasskeySettingsComponent>;
     let passkeySettingsApiService: PasskeySettingsApiService;
@@ -40,7 +44,7 @@ describe('PasskeySettingsComponent', () => {
     beforeEach(async () => {
         Object.defineProperty(navigator, 'credentials', {
             value: {
-                create: jest.fn().mockResolvedValue({} as any),
+                create: vi.fn().mockResolvedValue({} as any),
             },
             writable: true,
         });
@@ -67,13 +71,17 @@ describe('PasskeySettingsComponent', () => {
         alertService = TestBed.inject(AlertService);
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('should load the current user on initialization', () => {
-        jest.spyOn(accountService, 'getAuthenticationState');
+        vi.spyOn(accountService, 'getAuthenticationState');
         expect(component.currentUser()).toEqual({ id: 99 });
     });
 
     it('should update registered passkeys', async () => {
-        jest.spyOn(passkeySettingsApiService, 'getRegisteredPasskeys').mockResolvedValue(mockPasskeys);
+        vi.spyOn(passkeySettingsApiService, 'getRegisteredPasskeys').mockResolvedValue(mockPasskeys);
         await component.updateRegisteredPasskeys();
         expect(component.registeredPasskeys()).toEqual(mockPasskeys);
     });
@@ -90,7 +98,7 @@ describe('PasskeySettingsComponent', () => {
         accountService.userIdentity.set(initialUser);
 
         // Mock getRegisteredPasskeys to return empty array
-        jest.spyOn(passkeySettingsApiService, 'getRegisteredPasskeys').mockResolvedValue([]);
+        vi.spyOn(passkeySettingsApiService, 'getRegisteredPasskeys').mockResolvedValue([]);
 
         await component.updateRegisteredPasskeys();
 
@@ -109,8 +117,8 @@ describe('PasskeySettingsComponent', () => {
     });
 
     it('should handle errors when adding a new passkey', async () => {
-        jest.spyOn(alertService, 'addErrorAlert');
-        jest.spyOn(webauthnApiService, 'getRegistrationOptions').mockRejectedValue(new Error('Test Error'));
+        vi.spyOn(alertService, 'addErrorAlert');
+        vi.spyOn(webauthnApiService, 'getRegistrationOptions').mockRejectedValue(new Error('Test Error'));
         await expect(component.addPasskey()).rejects.toThrow('Test Error');
         expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.registration');
     });
@@ -118,24 +126,24 @@ describe('PasskeySettingsComponent', () => {
     it('should edit a passkey label', async () => {
         const passkey = { ...mockPasskeys[0], isEditingLabel: false };
         component.editPasskeyLabel(passkey);
-        expect(passkey.isEditingLabel).toBeTrue();
+        expect(passkey.isEditingLabel).toBe(true);
         expect(passkey.labelBeforeEdit).toEqual(passkey.label);
     });
 
     it('should save a passkey label', async () => {
         const passkey = { ...mockPasskeys[0], isEditingLabel: true };
-        jest.spyOn(passkeySettingsApiService, 'updatePasskeyLabel').mockResolvedValue(passkey);
+        vi.spyOn(passkeySettingsApiService, 'updatePasskeyLabel').mockResolvedValue(passkey);
 
         await component.savePasskeyLabel(passkey);
-        expect(passkey.isEditingLabel).toBeFalse();
+        expect(passkey.isEditingLabel).toBe(false);
         expect(passkeySettingsApiService.updatePasskeyLabel).toHaveBeenCalledWith(passkey.credentialId, passkey);
     });
 
     it('should handle errors when saving a passkey label', async () => {
         const passkey = { ...mockPasskeys[0], isEditingLabel: true };
         passkey.labelBeforeEdit = 'Initial Label - before save';
-        jest.spyOn(alertService, 'addErrorAlert');
-        jest.spyOn(passkeySettingsApiService, 'updatePasskeyLabel').mockRejectedValue(new Error('Test Error'));
+        vi.spyOn(alertService, 'addErrorAlert');
+        vi.spyOn(passkeySettingsApiService, 'updatePasskeyLabel').mockRejectedValue(new Error('Test Error'));
 
         await component.savePasskeyLabel(passkey);
         expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.save');
@@ -143,8 +151,8 @@ describe('PasskeySettingsComponent', () => {
     });
 
     it('should delete a passkey', async () => {
-        jest.spyOn(passkeySettingsApiService, 'deletePasskey').mockResolvedValue(undefined);
-        jest.spyOn(passkeySettingsApiService, 'getRegisteredPasskeys').mockResolvedValue([]);
+        vi.spyOn(passkeySettingsApiService, 'deletePasskey').mockResolvedValue(undefined);
+        vi.spyOn(passkeySettingsApiService, 'getRegisteredPasskeys').mockResolvedValue([]);
 
         await component.deletePasskey(mockPasskeys[0]);
         expect(passkeySettingsApiService.deletePasskey).toHaveBeenCalledWith(mockPasskeys[0].credentialId);
@@ -152,8 +160,8 @@ describe('PasskeySettingsComponent', () => {
     });
 
     it('should handle errors when deleting a passkey', async () => {
-        jest.spyOn(alertService, 'addErrorAlert');
-        jest.spyOn(passkeySettingsApiService, 'deletePasskey').mockRejectedValue(new Error('Test Error'));
+        vi.spyOn(alertService, 'addErrorAlert');
+        vi.spyOn(passkeySettingsApiService, 'deletePasskey').mockRejectedValue(new Error('Test Error'));
 
         await component.deletePasskey(mockPasskeys[0]);
         expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.delete');
@@ -198,7 +206,7 @@ describe('PasskeySettingsComponent', () => {
 
         component.cancelEditPasskeyLabel(passkey);
 
-        expect(passkey.isEditingLabel).toBeFalse();
+        expect(passkey.isEditingLabel).toBe(false);
         expect(passkey.label).toBe('Original Label');
     });
 

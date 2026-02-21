@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
@@ -25,6 +27,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideNoopAnimationsForTests } from 'test/helpers/animations';
 
 describe('CourseStatisticsComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: CourseStatisticsComponent;
     let fixture: ComponentFixture<CourseStatisticsComponent>;
     let courseStorageService: CourseStorageService;
@@ -332,8 +336,8 @@ describe('CourseStatisticsComponent', () => {
     course.exercises = [];
     course.presentationScore = 1;
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
+    beforeEach(async () => {
+        TestBed.configureTestingModule({
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -344,30 +348,29 @@ describe('CourseStatisticsComponent', () => {
                 provideHttpClientTesting(),
                 provideNoopAnimationsForTests(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CourseStatisticsComponent);
-                comp = fixture.componentInstance;
-                courseStorageService = TestBed.inject(CourseStorageService);
-                scoresStorageService = TestBed.inject(ScoresStorageService);
-                categoryFilter = TestBed.inject(ChartCategoryFilter);
-                categoryFilter.exerciseCategories = testCategories;
-            });
+        });
+        await TestBed.compileComponents();
+        fixture = TestBed.createComponent(CourseStatisticsComponent);
+        comp = fixture.componentInstance;
+        courseStorageService = TestBed.inject(CourseStorageService);
+        scoresStorageService = TestBed.inject(ScoresStorageService);
+        categoryFilter = TestBed.inject(ChartCategoryFilter);
+        categoryFilter.exerciseCategories = testCategories;
     });
 
     afterEach(() => {
         // has to be done so the component can cleanup properly
-        jest.spyOn(comp, 'ngOnDestroy').mockImplementation();
+        vi.spyOn(comp, 'ngOnDestroy').mockImplementation(() => {});
         fixture.destroy();
+        vi.restoreAllMocks();
     });
 
     it('should group all exercises', () => {
         const courseToAdd = { ...course };
         courseToAdd.exercises = [programmingExercise, quizExercise, ...modelingExercises, fileUploadExercise];
-        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(courseToAdd);
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(courseToAdd);
         const mockParticipationResult: ParticipationResultDTO = { rated: true, score: 100, participationId: 1 };
-        jest.spyOn(scoresStorageService, 'getStoredParticipationResult').mockReturnValue(mockParticipationResult);
+        vi.spyOn(scoresStorageService, 'getStoredParticipationResult').mockReturnValue(mockParticipationResult);
         fixture.detectChanges();
         comp.ngOnInit();
         // Include all exercises
@@ -383,15 +386,15 @@ describe('CourseStatisticsComponent', () => {
 
         const programming: NgxExercise = comp.ngxExerciseGroups.get(ExerciseType.PROGRAMMING)![0];
         expect(programming.series).toHaveLength(6);
-        expect(programming.series[2].isProgrammingExercise).toBeTrue();
+        expect(programming.series[2].isProgrammingExercise).toBe(true);
     });
 
     it('should filter all exercises not included in score', () => {
         const courseToAdd = { ...course };
         courseToAdd.exercises = [...modelingExercises];
-        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(courseToAdd);
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(courseToAdd);
         const mockParticipationResult: ParticipationResultDTO = { rated: true, score: 100, participationId: 1 };
-        jest.spyOn(scoresStorageService, 'getStoredParticipationResult').mockReturnValue(mockParticipationResult);
+        vi.spyOn(scoresStorageService, 'getStoredParticipationResult').mockReturnValue(mockParticipationResult);
         fixture.detectChanges();
         comp.ngOnInit();
 
@@ -422,7 +425,7 @@ describe('CourseStatisticsComponent', () => {
     it('should set the scores correctly after retrieving them from the store', () => {
         const courseToAdd = { ...course };
         courseToAdd.exercises = [...modelingExercises];
-        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(courseToAdd);
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(courseToAdd);
         const mockScoresPerExerciseType: Map<ExerciseType, CourseScores> = new Map<ExerciseType, CourseScores>();
         const mockCourseScores: CourseScores = new CourseScores(36, 36, 0, {
             absoluteScore: 20,
@@ -431,7 +434,7 @@ describe('CourseStatisticsComponent', () => {
             presentationScore: 0,
         });
         mockScoresPerExerciseType.set(ExerciseType.MODELING, mockCourseScores);
-        jest.spyOn(scoresStorageService, 'getStoredScoresPerExerciseType').mockReturnValue(mockScoresPerExerciseType);
+        vi.spyOn(scoresStorageService, 'getStoredScoresPerExerciseType').mockReturnValue(mockScoresPerExerciseType);
         fixture.detectChanges();
         comp.ngOnInit();
         fixture.changeDetectorRef.detectChanges();
@@ -463,7 +466,7 @@ describe('CourseStatisticsComponent', () => {
         courseToSubscribeTo.exercises = [...modelingExercises];
         courseStorageService.setCourses([courseToSubscribeTo]);
 
-        const updateCourseSpy = jest.spyOn(courseStorageService, 'updateCourse');
+        const updateCourseSpy = vi.spyOn(courseStorageService, 'updateCourse');
 
         courseStorageService.updateCourse(courseToSubscribeTo);
 
@@ -473,9 +476,9 @@ describe('CourseStatisticsComponent', () => {
 
     it('should delegate the user correctly', () => {
         const clickEvent = { exerciseId: 42 };
-        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
         const routingService = TestBed.inject(ArtemisNavigationUtilService);
-        const routingStub = jest.spyOn(routingService, 'routeInNewTab').mockImplementation();
+        const routingStub = vi.spyOn(routingService, 'routeInNewTab').mockImplementation(() => {});
         comp.ngOnInit();
 
         comp.onSelect(clickEvent);
@@ -492,10 +495,10 @@ describe('CourseStatisticsComponent', () => {
 
         it('should filter optional exercises correctly', () => {
             const mockParticipationResult: ParticipationResultDTO = { rated: true, score: 100, participationId: 1 };
-            jest.spyOn(scoresStorageService, 'getStoredParticipationResult').mockReturnValue(mockParticipationResult);
+            vi.spyOn(scoresStorageService, 'getStoredParticipationResult').mockReturnValue(mockParticipationResult);
             comp.toggleNotIncludedInScoreExercises();
 
-            expect(comp.currentlyHidingNotIncludedInScoreExercises).toBeFalse();
+            expect(comp.currentlyHidingNotIncludedInScoreExercises).toBe(false);
             expect(comp.ngxExerciseGroups.size).toBe(3);
             const modelingExercises = comp.ngxExerciseGroups.get(ExerciseType.MODELING)!;
             expect(modelingExercises).toHaveLength(5);
@@ -504,8 +507,8 @@ describe('CourseStatisticsComponent', () => {
         });
 
         it('should toggle categories', () => {
-            const getCurrentFilterStateMock = jest.spyOn(categoryFilter, 'getCurrentFilterState').mockReturnValue(false);
-            const toggleCategoryMock = jest.spyOn(categoryFilter, 'toggleCategory').mockReturnValue(exercises);
+            const getCurrentFilterStateMock = vi.spyOn(categoryFilter, 'getCurrentFilterState').mockReturnValue(false);
+            const toggleCategoryMock = vi.spyOn(categoryFilter, 'toggleCategory').mockReturnValue(exercises);
 
             comp.toggleCategory('test1');
 
@@ -516,7 +519,7 @@ describe('CourseStatisticsComponent', () => {
         });
 
         it('should toggle all categories', () => {
-            const toggleAllCategoriesMock = jest.spyOn(categoryFilter, 'toggleAllCategories').mockReturnValue(exercises);
+            const toggleAllCategoriesMock = vi.spyOn(categoryFilter, 'toggleAllCategories').mockReturnValue(exercises);
 
             comp.toggleAllCategories();
 
@@ -525,7 +528,7 @@ describe('CourseStatisticsComponent', () => {
         });
 
         it('should toggle exercises with no categories', () => {
-            const toggleExercisesWithNoCategoryMock = jest.spyOn(categoryFilter, 'toggleExercisesWithNoCategory').mockReturnValue(exercises);
+            const toggleExercisesWithNoCategoryMock = vi.spyOn(categoryFilter, 'toggleExercisesWithNoCategory').mockReturnValue(exercises);
 
             comp.toggleExercisesWithNoCategory();
 
@@ -543,7 +546,7 @@ describe('CourseStatisticsComponent', () => {
             const quizCategory = generateExerciseCategory(ExerciseType.QUIZ, 1);
             const quizWithCategory = { ...quizExercise, categories: [quizCategory] as ExerciseCategory[] };
             courseToAdd.exercises = [...modelingExercises, programmingWithCategory, quizWithCategory];
-            jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(courseToAdd);
+            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(courseToAdd);
             comp.ngOnInit();
             // return all exercises that are included in score
             return [modelingExercises[0], modelingExercises[2], modelingExercises[3], modelingExercises[4], quizWithCategory];

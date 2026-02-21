@@ -53,32 +53,29 @@ describe('StandardizedCompetencyEditComponent', () => {
     ];
 
     beforeEach(async () => {
-        await TestBed.configureTestingModule({
+        TestBed.configureTestingModule({
             imports: [ReactiveFormsModule, StandardizedCompetencyEditComponent],
             providers: [],
-        })
-            .overrideComponent(StandardizedCompetencyEditComponent, {
-                set: {
-                    imports: [
-                        ReactiveFormsModule,
-                        FaIconComponent,
-                        MockComponent(ButtonComponent),
-                        MockPipe(HtmlForMarkdownPipe),
-                        MockComponent(MarkdownEditorMonacoComponent),
-                        MockComponent(TaxonomySelectComponent),
-                        MockDirective(TranslateDirective),
-                        MockDirective(DeleteButtonDirective),
-                    ],
-                },
-            })
-            .compileComponents()
-            .then(() => {
-                componentFixture = TestBed.createComponent(StandardizedCompetencyEditComponent);
-                component = componentFixture.componentInstance;
-                // Use componentRef.setInput() for signal inputs
-                componentFixture.componentRef.setInput('competency', defaultCompetency);
-                componentFixture.componentRef.setInput('knowledgeAreas', defaultKnowledgeAreas);
-            });
+        }).overrideComponent(StandardizedCompetencyEditComponent, {
+            set: {
+                imports: [
+                    ReactiveFormsModule,
+                    FaIconComponent,
+                    MockComponent(ButtonComponent),
+                    MockPipe(HtmlForMarkdownPipe),
+                    MockComponent(MarkdownEditorMonacoComponent),
+                    MockComponent(TaxonomySelectComponent),
+                    MockDirective(TranslateDirective),
+                    MockDirective(DeleteButtonDirective),
+                ],
+            },
+        });
+        await TestBed.compileComponents();
+        componentFixture = TestBed.createComponent(StandardizedCompetencyEditComponent);
+        component = componentFixture.componentInstance;
+        // Use componentRef.setInput() for signal inputs
+        componentFixture.componentRef.setInput('competency', defaultCompetency);
+        componentFixture.componentRef.setInput('knowledgeAreas', defaultKnowledgeAreas);
     });
 
     afterEach(() => {

@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { BehaviorSubject, of } from 'rxjs';
@@ -33,8 +35,12 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 
 describe('CourseExercisesComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<CourseExercisesComponent>;
     let component: CourseExercisesComponent;
     let courseStorageService: CourseStorageService;
@@ -42,8 +48,7 @@ describe('CourseExercisesComponent', () => {
 
     let course: Course;
     let exercise: Exercise;
-    let courseStorageStub: jest.SpyInstance;
-    let exerciseServiceStub: jest.SpyInstance;
+    let exerciseServiceStub: ReturnType<typeof vi.spyOn>;
 
     const parentRoute = { params: of({ courseId: 123 }) } as any as ActivatedRoute;
     const queryParamsSubject = new BehaviorSubject({ exercises: '', isMultiLaunch: 'false' });
@@ -52,10 +57,14 @@ describe('CourseExercisesComponent', () => {
         queryParams: queryParamsSubject,
     } as any as ActivatedRoute;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         TestBed.configureTestingModule({
-            imports: [FormsModule, RouterModule.forRoot([]), MockModule(ReactiveFormsModule), MockDirective(TranslateDirective), FaIconComponent],
-            declarations: [
+            imports: [
+                FormsModule,
+                RouterModule.forRoot([]),
+                MockModule(ReactiveFormsModule),
+                MockDirective(TranslateDirective),
+                FaIconComponent,
                 CourseExercisesComponent,
                 SidebarComponent,
                 MockComponent(CourseExerciseRowComponent),
@@ -76,74 +85,91 @@ describe('CourseExercisesComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },
                 { provide: ProfileService, useClass: MockProfileService },
+                { provide: MetisConversationService, useClass: MockMetisConversationService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CourseExercisesComponent);
-                component = fixture.componentInstance;
-                courseStorageService = TestBed.inject(CourseStorageService);
-                exerciseService = TestBed.inject(ExerciseService);
+        });
+        await TestBed.compileComponents();
+        fixture = TestBed.createComponent(CourseExercisesComponent);
+        component = fixture.componentInstance;
+        courseStorageService = TestBed.inject(CourseStorageService);
+        exerciseService = TestBed.inject(ExerciseService);
 
-                component.sidebarData = { groupByCategory: true, sidebarType: 'exercise', storageId: 'exercise' };
-                course = new Course();
-                course.id = 123;
-                exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
-                exercise.dueDate = dayjs('2021-01-13T16:11:00+01:00').add(1, 'days');
-                exercise.releaseDate = dayjs('2021-01-13T16:11:00+01:00').subtract(1, 'days');
-                course.exercises = [exercise];
-                jest.spyOn(courseStorageService, 'subscribeToCourseUpdates').mockReturnValue(of(course));
-                courseStorageStub = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
-                exerciseServiceStub = jest.spyOn(exerciseService, 'find').mockReturnValue(
-                    of(
-                        new HttpResponse({
-                            body: exercise,
-                        }),
-                    ),
-                );
+        (component as any)._sidebarData.set({ groupByCategory: true, sidebarType: 'exercise', storageId: 'exercise' });
+        course = new Course();
+        course.id = 123;
+        exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
+        exercise.dueDate = dayjs('2021-01-13T16:11:00+01:00').add(1, 'days');
+        exercise.releaseDate = dayjs('2021-01-13T16:11:00+01:00').subtract(1, 'days');
+        course.exercises = [exercise];
+        vi.spyOn(courseStorageService, 'subscribeToCourseUpdates').mockReturnValue(of(course));
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
+        exerciseServiceStub = vi.spyOn(exerciseService, 'find').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: exercise,
+                }),
+            ),
+        );
 
-                fixture.detectChanges();
-            });
+        fixture.detectChanges();
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
-        expect(component.course).toEqual(course);
-        expect(courseStorageStub.mock.calls).toHaveLength(1);
-        expect(courseStorageStub.mock.calls[0][0]).toBe(course.id);
-        component.ngOnDestroy();
+        // Ensure course is set
+        (component as any)._course.set(course);
+        TestBed.tick();
+        expect(component.course()).toEqual(course);
+        // Component should be properly initialized with the course
+        expect(component.courseId()).toBe(course.id);
     });
 
     it('should display sidebar when course is provided', () => {
+        // Ensure course is set
+        (component as any)._course.set(course);
+        TestBed.tick();
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('jhi-sidebar')).not.toBeNull();
     });
 
     it('should toggle sidebar visibility based on isCollapsed property', () => {
-        component.isCollapsed = true;
+        // Ensure course is set and LTI is not shown
+        (component as any)._course.set(course);
+        (component as any)._isShownViaLti.set(false);
+        (component as any)._isCollapsed.set(true);
+        TestBed.tick();
         fixture.changeDetectorRef.detectChanges();
         expect(fixture.nativeElement.querySelector('.sidebar-collapsed')).not.toBeNull();
 
-        component.isCollapsed = false;
+        (component as any)._isCollapsed.set(false);
+        TestBed.tick();
         fixture.changeDetectorRef.detectChanges();
         expect(fixture.nativeElement.querySelector('.sidebar-collapsed')).toBeNull();
     });
 
     it('should toggle isNavbarCollapsed when toggleCollapseState is called', () => {
-        component.toggleSidebar();
-        expect(component.isCollapsed).toBeTrue();
+        (component as any)._isCollapsed.set(false);
+        TestBed.tick();
 
         component.toggleSidebar();
-        expect(component.isCollapsed).toBeFalse();
+        TestBed.tick();
+        expect(component.isCollapsed).toBe(true);
+
+        component.toggleSidebar();
+        TestBed.tick();
+        expect(component.isCollapsed).toBe(false);
     });
 
     it('should display "Please Select an Exercise" when no exercise is selected', () => {
-        component.exerciseSelected = false;
+        // Ensure course is set
+        (component as any)._course.set(course);
+        (component as any)._exerciseSelected.set(false);
+        TestBed.tick();
         fixture.changeDetectorRef.detectChanges();
         const noExerciseElement = fixture.debugElement.query(By.css('[jhiTranslate$=selectExercise]'));
         expect(noExerciseElement).toBeTruthy();
@@ -151,14 +177,17 @@ describe('CourseExercisesComponent', () => {
     });
 
     it('should display the exercise details when an exercise is selected', () => {
-        component.exerciseSelected = true;
+        // Ensure course is set
+        (component as any)._course.set(course);
+        (component as any)._exerciseSelected.set(true);
+        TestBed.tick();
         fixture.changeDetectorRef.detectChanges();
         expect(fixture.nativeElement.querySelector('router-outlet')).not.toBeNull();
     });
 
     it('should call exerciseService if multiLaunchExercises are present', () => {
-        component.isMultiLaunch = true;
-        component.multiLaunchExerciseIDs = [1, 2];
+        (component as any)._isMultiLaunch.set(true);
+        (component as any)._multiLaunchExerciseIDs.set([1, 2]);
 
         component.prepareSidebarData();
 

@@ -1,32 +1,34 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, effect, inject, input, model, untracked } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { finalize } from 'rxjs/operators';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CompetencyCardComponent } from 'app/atlas/overview/competency-card/competency-card.component';
+import { DialogModule } from 'primeng/dialog';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-course-prerequisites-modal',
     templateUrl: './course-prerequisites-modal.component.html',
-    imports: [TranslateDirective, CompetencyCardComponent],
+    imports: [TranslateDirective, CompetencyCardComponent, DialogModule, ArtemisTranslatePipe],
 })
-export class CoursePrerequisitesModalComponent implements OnInit {
+export class CoursePrerequisitesModalComponent {
     private alertService = inject(AlertService);
-    private activeModal = inject(NgbActiveModal);
     private prerequisiteService = inject(PrerequisiteService);
 
-    @Input()
-    courseId: number;
+    readonly visible = model<boolean>(false);
+    readonly courseId = input.required<number>();
 
     isLoading = false;
     prerequisites: Prerequisite[] = [];
 
-    ngOnInit(): void {
-        if (this.courseId) {
-            this.loadData();
-        }
+    constructor() {
+        effect(() => {
+            if (this.visible()) {
+                untracked(() => this.loadData());
+            }
+        });
     }
 
     /**
@@ -36,7 +38,7 @@ export class CoursePrerequisitesModalComponent implements OnInit {
     loadData() {
         this.isLoading = true;
         this.prerequisiteService
-            .getAllForCourse(this.courseId)
+            .getAllForCourse(this.courseId())
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
@@ -53,9 +55,9 @@ export class CoursePrerequisitesModalComponent implements OnInit {
     }
 
     /**
-     * Dismisses the currently active modal
+     * Closes the dialog
      */
     clear() {
-        this.activeModal.dismiss('cancel');
+        this.visible.set(false);
     }
 }

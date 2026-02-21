@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { forkJoin, of } from 'rxjs';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -9,7 +9,6 @@ import { Exercise, ExerciseType, IncludedInOverallScore, exerciseTypes } from 'a
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
-import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { average, round, roundScorePercentSpecifiedByCourseSettings, roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
@@ -88,8 +87,6 @@ export class CourseScoresComponent implements OnInit {
     private readonly route = inject(ActivatedRoute);
     private readonly courseManagementService = inject(CourseManagementService);
     private readonly sortService = inject(SortService);
-    private readonly changeDetector = inject(ChangeDetectorRef);
-    private readonly languageHelper = inject(JhiLanguageHelper);
     private readonly localeConversionService = inject(LocaleConversionService);
     private readonly gradingService = inject(GradingService);
     private readonly plagiarismCasesService = inject(PlagiarismCasesService);
@@ -173,11 +170,6 @@ export class CourseScoresComponent implements OnInit {
             this.courseManagementService.findWithExercises(params['courseId']).subscribe((findWithExercisesResult) => {
                 this.initializeWithCourse(findWithExercisesResult.body!);
             });
-        });
-
-        // Update the view if the language was changed
-        this.languageHelper.language.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-            this.changeDetector.detectChanges();
         });
     }
 
@@ -522,8 +514,6 @@ export class CourseScoresComponent implements OnInit {
             });
             this.studentStatistics.set(updatedStatistics);
         }
-
-        this.changeDetector.detectChanges();
     }
 
     /**
@@ -1034,7 +1024,6 @@ export class CourseScoresComponent implements OnInit {
         if (this.highlightedType() === type) {
             this.valueToHighlight.set(undefined);
             this.highlightedType.set(HighlightType.NONE);
-            this.changeDetector.detectChanges();
             return;
         }
         switch (type) {
@@ -1047,6 +1036,5 @@ export class CourseScoresComponent implements OnInit {
                 this.highlightedType.set(HighlightType.MEDIAN);
                 break;
         }
-        this.changeDetector.detectChanges();
     }
 }

@@ -59,6 +59,11 @@ globalThis.IntersectionObserver = class IntersectionObserver {
 URL.createObjectURL = vi.fn(() => 'blob:mock-url');
 URL.revokeObjectURL = vi.fn();
 
+// Mock window scroll methods not implemented in jsdom
+window.scroll = vi.fn();
+window.scrollTo = vi.fn();
+window.scrollBy = vi.fn();
+
 Object.defineProperty(window, 'matchMedia', {
     writable: true,
     value: vi.fn().mockImplementation((query: string) => ({
@@ -108,7 +113,7 @@ window.addEventListener('error', (event) => {
     }
 });
 
-// Suppress console.error for jsdom CSS parsing errors (PrimeNG custom properties) and navigation warnings
+// Suppress noisy console.error messages from jsdom and Angular in test environment
 const originalConsoleError = console.error;
 console.error = (...args: unknown[]) => {
     const msg = args[0];
@@ -122,7 +127,32 @@ console.error = (...args: unknown[]) => {
             return;
         }
     }
+    // Suppress stray undefined output
+    if (args.length === 1 && args[0] === undefined) {
+        return;
+    }
     originalConsoleError.apply(console, args);
+};
+
+// Suppress noisy console.warn messages from Angular and jsdom in test environment
+const originalConsoleWarn = console.warn;
+console.warn = (...args: unknown[]) => {
+    const msg = args[0];
+    if (typeof msg === 'string') {
+        // Suppress Angular NG0953: Unexpected emit for destroyed OutputRef
+        if (msg.includes('NG0953')) {
+            return;
+        }
+        // Suppress jsdom "Not implemented" warnings (e.g., window.scroll)
+        if (msg.includes('Not implemented')) {
+            return;
+        }
+    }
+    // Suppress stray undefined output
+    if (args.length === 1 && args[0] === undefined) {
+        return;
+    }
+    originalConsoleWarn.apply(console, args);
 };
 
 // Patch CSSStyleDeclaration to handle CSS custom properties gracefully

@@ -1,5 +1,7 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Component } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActiveMenuDirective } from './active-menu.directive';
 import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
@@ -13,6 +15,8 @@ class TestHostComponent {
 }
 
 describe('ActiveMenuDirective', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<TestHostComponent>;
     let hostComponent: TestHostComponent;
     let translateService: TranslateService;
@@ -23,7 +27,7 @@ describe('ActiveMenuDirective', () => {
 
         const mockTranslateService = {
             onLangChange: langChangeSubject.asObservable(),
-            getCurrentLang: jest.fn().mockReturnValue('en'),
+            getCurrentLang: vi.fn().mockReturnValue('en'),
         };
 
         await TestBed.configureTestingModule({
@@ -34,6 +38,10 @@ describe('ActiveMenuDirective', () => {
         fixture = TestBed.createComponent(TestHostComponent);
         hostComponent = fixture.componentInstance;
         translateService = TestBed.inject(TranslateService);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should create the directive', () => {
@@ -47,7 +55,7 @@ describe('ActiveMenuDirective', () => {
         fixture.detectChanges();
 
         const divElement = fixture.nativeElement.querySelector('div');
-        expect(divElement.classList.contains('active')).toBeTrue();
+        expect(divElement.classList.contains('active')).toBe(true);
     });
 
     it('should not add active class when menu language does not match current language', () => {
@@ -55,64 +63,64 @@ describe('ActiveMenuDirective', () => {
         fixture.detectChanges();
 
         const divElement = fixture.nativeElement.querySelector('div');
-        expect(divElement.classList.contains('active')).toBeFalse();
+        expect(divElement.classList.contains('active')).toBe(false);
     });
 
-    it('should update active class when language changes to match menu language', fakeAsync(() => {
+    it('should update active class when language changes to match menu language', async () => {
         hostComponent.menuLanguage = 'de';
         fixture.detectChanges();
 
         const divElement = fixture.nativeElement.querySelector('div');
-        expect(divElement.classList.contains('active')).toBeFalse();
+        expect(divElement.classList.contains('active')).toBe(false);
 
         // Simulate language change to German
         langChangeSubject.next({ lang: 'de', translations: {} });
-        tick();
+        await fixture.whenStable();
         fixture.detectChanges();
 
-        expect(divElement.classList.contains('active')).toBeTrue();
-    }));
+        expect(divElement.classList.contains('active')).toBe(true);
+    });
 
-    it('should remove active class when language changes to not match menu language', fakeAsync(() => {
+    it('should remove active class when language changes to not match menu language', async () => {
         hostComponent.menuLanguage = 'en';
         fixture.detectChanges();
 
         const divElement = fixture.nativeElement.querySelector('div');
-        expect(divElement.classList.contains('active')).toBeTrue();
+        expect(divElement.classList.contains('active')).toBe(true);
 
         // Simulate language change to German
         langChangeSubject.next({ lang: 'de', translations: {} });
-        tick();
+        await fixture.whenStable();
         fixture.detectChanges();
 
-        expect(divElement.classList.contains('active')).toBeFalse();
-    }));
+        expect(divElement.classList.contains('active')).toBe(false);
+    });
 
-    it('should handle multiple language changes correctly', fakeAsync(() => {
+    it('should handle multiple language changes correctly', async () => {
         hostComponent.menuLanguage = 'en';
         fixture.detectChanges();
 
         const divElement = fixture.nativeElement.querySelector('div');
-        expect(divElement.classList.contains('active')).toBeTrue();
+        expect(divElement.classList.contains('active')).toBe(true);
 
         // Change to German
         langChangeSubject.next({ lang: 'de', translations: {} });
-        tick();
+        await fixture.whenStable();
         fixture.detectChanges();
-        expect(divElement.classList.contains('active')).toBeFalse();
+        expect(divElement.classList.contains('active')).toBe(false);
 
         // Change back to English
         langChangeSubject.next({ lang: 'en', translations: {} });
-        tick();
+        await fixture.whenStable();
         fixture.detectChanges();
-        expect(divElement.classList.contains('active')).toBeTrue();
+        expect(divElement.classList.contains('active')).toBe(true);
 
         // Change to French
         langChangeSubject.next({ lang: 'fr', translations: {} });
-        tick();
+        await fixture.whenStable();
         fixture.detectChanges();
-        expect(divElement.classList.contains('active')).toBeFalse();
-    }));
+        expect(divElement.classList.contains('active')).toBe(false);
+    });
 
     it('should call getCurrentLang on initialization', () => {
         fixture.detectChanges();
@@ -125,20 +133,20 @@ describe('ActiveMenuDirective', () => {
 
         const divElement = fixture.nativeElement.querySelector('div');
         // undefined !== 'en', so should not have active class
-        expect(divElement.classList.contains('active')).toBeFalse();
+        expect(divElement.classList.contains('active')).toBe(false);
     });
 
-    it('should handle empty string menu language', fakeAsync(() => {
+    it('should handle empty string menu language', async () => {
         hostComponent.menuLanguage = '';
         fixture.detectChanges();
 
         const divElement = fixture.nativeElement.querySelector('div');
-        expect(divElement.classList.contains('active')).toBeFalse();
+        expect(divElement.classList.contains('active')).toBe(false);
 
         // Even if language changes to empty string, should match
         langChangeSubject.next({ lang: '', translations: {} });
-        tick();
+        await fixture.whenStable();
         fixture.detectChanges();
-        expect(divElement.classList.contains('active')).toBeTrue();
-    }));
+        expect(divElement.classList.contains('active')).toBe(true);
+    });
 });
