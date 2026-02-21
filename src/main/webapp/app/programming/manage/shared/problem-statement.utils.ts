@@ -5,10 +5,10 @@ import { ProblemStatementGenerationRequest } from 'app/openapi/model/problemStat
 import { ProblemStatementRefinementResponse } from 'app/openapi/model/problemStatementRefinementResponse';
 import { ProblemStatementGenerationResponse } from 'app/openapi/model/problemStatementGenerationResponse';
 
-/** Maximum allowed length for user prompts. Must match HyperionPromptSanitizer.MAX_USER_PROMPT_LENGTH on the server. */
+/** Maximum allowed length for user prompts. Must match HyperionUtils.MAX_USER_PROMPT_LENGTH on the server. */
 export const MAX_USER_PROMPT_LENGTH = 1000;
 
-/** Maximum allowed length for problem statements. Must match HyperionPromptSanitizer.MAX_PROBLEM_STATEMENT_LENGTH on the server. */
+/** Maximum allowed length for problem statements. Must match HyperionUtils.MAX_PROBLEM_STATEMENT_LENGTH on the server. */
 export const MAX_PROBLEM_STATEMENT_LENGTH = 50_000;
 
 /** Fraction of MAX_USER_PROMPT_LENGTH at which the character counter shows a warning. */

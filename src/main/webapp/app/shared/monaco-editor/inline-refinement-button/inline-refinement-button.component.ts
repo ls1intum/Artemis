@@ -79,7 +79,7 @@ export class InlineRefinementButtonComponent implements OnInit {
     readonly faPaperPlane = faPaperPlane;
     readonly faTimes = faTimes;
 
-    /** Maximum instruction length for inline refinement. Must match HyperionPromptSanitizer.MAX_INSTRUCTION_LENGTH. */
+    /** Maximum instruction length for inline refinement. Must match HyperionUtils.MAX_INSTRUCTION_LENGTH. */
     readonly MAX_INSTRUCTION_LENGTH = 500;
 
     /** Whether the instruction is near the character limit. */

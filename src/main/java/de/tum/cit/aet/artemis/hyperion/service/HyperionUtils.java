@@ -6,10 +6,11 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 /**
- * Shared utility class for sanitizing and validating inputs used in Hyperion prompt templates.
+ * Shared utility class for sanitizing, validating, and post-processing inputs and
+ * outputs used in Hyperion prompt templates.
  * Centralizes constants and methods shared across generation and refinement services.
  */
-final class HyperionPromptSanitizer {
+final class HyperionUtils {
 
     /**
      * Maximum allowed length for generated/refined problem statements (50,000 characters).
@@ -57,7 +58,7 @@ final class HyperionPromptSanitizer {
      */
     private static final Pattern HTML_TAG_PATTERN = Pattern.compile("<[^>]+>");
 
-    private HyperionPromptSanitizer() {
+    private HyperionUtils() {
         // utility class
     }
 
@@ -153,6 +154,44 @@ final class HyperionPromptSanitizer {
         }
         String sanitized = sanitizeInput(description);
         return sanitized.isBlank() ? DEFAULT_COURSE_DESCRIPTION : sanitized;
+    }
+
+    /** Pattern matching a line that starts with a line-number prefix: one or more digits followed by a colon and a space. */
+    private static final Pattern LINE_NUMBER_PREFIX = Pattern.compile("^\\d+: ");
+
+    /**
+     * Defensively strips line-number prefixes ({@code "1: "}, {@code "2: "}, \u2026) that an
+     * LLM may have copied from numbered input despite being instructed not to.
+     * <p>
+     * To avoid false positives on content that legitimately starts with digits followed
+     * by a colon (e.g. numbered lists), stripping is only applied when <em>every non-empty
+     * line</em> carries a sequential prefix starting from 1.
+     *
+     * @param text the raw LLM output, never null
+     * @return the text with line-number prefixes removed if they were consistently present, otherwise unchanged
+     */
+    static String stripLineNumbers(String text) {
+        String[] lines = text.split("\n", -1);
+        int expectedNumber = 1;
+        for (String line : lines) {
+            if (line.isEmpty()) {
+                continue; // skip blank lines \u2014 they won\u2019t have a prefix
+            }
+            if (!line.startsWith(expectedNumber + ": ")) {
+                return text; // not a consistent line-number pattern \u2192 return unchanged
+            }
+            expectedNumber++;
+        }
+
+        // All non-empty lines matched sequential prefixes \u2014 strip them
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < lines.length; i++) {
+            result.append(LINE_NUMBER_PREFIX.matcher(lines[i]).replaceFirst(""));
+            if (i < lines.length - 1) {
+                result.append("\n");
+            }
+        }
+        return result.toString();
     }
 
 }

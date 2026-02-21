@@ -384,4 +384,46 @@ class HyperionProblemStatementRefinementServiceTest {
         assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatementTargeted(createTestCourse(), request))
                 .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("null or empty");
     }
+
+    @Test
+    void refineProblemStatementTargeted_stripsLineNumbersFromResponse() {
+        String originalText = "Line one\nLine two\nLine three";
+        // LLM returns content with line-number prefixes despite being told not to
+        String llmResponse = "1: Line one\n2: Improved line two\n3: Line three";
+        String expectedStripped = "Line one\nImproved line two\nLine three";
+        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(llmResponse)))));
+
+        var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 2, 2, null, null, "Improve line two");
+        ProblemStatementRefinementResponseDTO resp = hyperionProblemStatementRefinementService.refineProblemStatementTargeted(createTestCourse(), request);
+        assertThat(resp).isNotNull();
+        assertThat(resp.refinedProblemStatement()).isEqualTo(expectedStripped);
+    }
+
+    @Test
+    void refineProblemStatementTargeted_doesNotStripNonSequentialLineNumbers() {
+        String originalText = "Some text";
+        // Content starting with digits-colon but not sequential line numbers — should not be stripped
+        String llmResponse = "3: First item\n5: Second item";
+        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(llmResponse)))));
+
+        var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 1, 1, null, null, "Transform this");
+        ProblemStatementRefinementResponseDTO resp = hyperionProblemStatementRefinementService.refineProblemStatementTargeted(createTestCourse(), request);
+        assertThat(resp).isNotNull();
+        // Non-sequential numbers should be preserved as-is
+        assertThat(resp.refinedProblemStatement()).isEqualTo(llmResponse);
+    }
+
+    @Test
+    void refineProblemStatementTargeted_preservesContentWithLeadingDigitsColon() {
+        String originalText = "Some text";
+        // Legitimate content that happens to start with "1: " on first line but not on second
+        String llmResponse = "1: Introduction\nNo prefix here";
+        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(llmResponse)))));
+
+        var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 1, 1, null, null, "Rewrite");
+        ProblemStatementRefinementResponseDTO resp = hyperionProblemStatementRefinementService.refineProblemStatementTargeted(createTestCourse(), request);
+        assertThat(resp).isNotNull();
+        // Because the second non-empty line doesn't have "2: " prefix, content should be preserved
+        assertThat(resp.refinedProblemStatement()).isEqualTo(llmResponse);
+    }
 }

@@ -1,10 +1,11 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
-import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.MAX_PROBLEM_STATEMENT_LENGTH;
-import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.getSanitizedCourseDescription;
-import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.getSanitizedCourseTitle;
-import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.sanitizeInput;
-import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.sanitizeInputPreserveLines;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.MAX_PROBLEM_STATEMENT_LENGTH;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.getSanitizedCourseDescription;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.getSanitizedCourseTitle;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.sanitizeInput;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.sanitizeInputPreserveLines;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.stripLineNumbers;
 
 import java.util.Map;
 
@@ -111,7 +112,7 @@ public class HyperionProblemStatementRefinementService {
         validateSanitizedProblemStatement(sanitizedProblemStatement);
 
         String sanitizedPrompt = sanitizeInput(userPrompt);
-        HyperionPromptSanitizer.validateUserPrompt(sanitizedPrompt, "ProblemStatementRefinement");
+        HyperionUtils.validateUserPrompt(sanitizedPrompt, "ProblemStatementRefinement");
 
         String systemPrompt = templateService.render("/prompts/hyperion/refine_problem_statement_system.st", Map.of());
 
@@ -133,6 +134,9 @@ public class HyperionProblemStatementRefinementService {
             throw new InternalServerErrorAlertException("Refined problem statement is null or empty", "ProblemStatement",
                     "ProblemStatementRefinement.problemStatementRefinementNull");
         }
+
+        // Defensively strip line-number prefixes the LLM may have included in its response
+        refinedProblemStatementText = stripLineNumbers(refinedProblemStatementText);
 
         return validateAndReturnResponse(sanitizedProblemStatement, refinedProblemStatementText);
     }
@@ -156,7 +160,7 @@ public class HyperionProblemStatementRefinementService {
         }
 
         String sanitizedInstruction = sanitizeInput(request.instruction());
-        HyperionPromptSanitizer.validateInstruction(sanitizedInstruction, "ProblemStatementRefinement");
+        HyperionUtils.validateInstruction(sanitizedInstruction, "ProblemStatementRefinement");
 
         // For targeted refinement, use line-preserving sanitization to keep line numbers aligned
         // with the client's selection. Full sanitizeInput() could remove entire lines (e.g., delimiter
@@ -198,6 +202,9 @@ public class HyperionProblemStatementRefinementService {
             throw new InternalServerErrorAlertException("Refined problem statement is null or empty", "ProblemStatement",
                     "ProblemStatementRefinement.problemStatementRefinementNull");
         }
+
+        // Defensively strip line-number prefixes the LLM may have copied from the input
+        refinedProblemStatementText = stripLineNumbers(refinedProblemStatementText);
 
         return validateAndReturnResponse(sanitizedProblemStatement, refinedProblemStatementText);
     }
