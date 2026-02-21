@@ -1,4 +1,4 @@
-<div class="inline-refinement-container d-flex align-items-center" [style.top.px]="top()" [style.left.px]="left()">
+<div class="inline-refinement-container d-flex align-items-center" [style.top.px]="top()" [style.left.px]="left()" (mousedown)="$event.preventDefault()">
     @if (!isExpanded()) {
         <!-- Collapsed: Trigger button with text label -->
         <button

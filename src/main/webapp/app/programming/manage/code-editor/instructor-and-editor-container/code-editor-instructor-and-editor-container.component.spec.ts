@@ -1019,7 +1019,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
     it('should delegate inline refinement to service and show diff on success', () => {
         (problemStatementService.refineTargeted as jest.Mock).mockReturnValue(of({ success: true, content: 'Refined content' }));
 
-        comp.onInlineRefinement({ instruction: 'Improve this', startLine: 1, endLine: 2, startColumn: 0, endColumn: 10 });
+        comp.onInlineRefinement({ instruction: 'Improve this', startLine: 1, endLine: 2, startColumn: 1, endColumn: 10 });
 
         expect(problemStatementService.refineTargeted).toHaveBeenCalledWith(
             comp.exercise,

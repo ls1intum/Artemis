@@ -155,17 +155,13 @@ public class HyperionProblemStatementRefinementService {
             throw new InternalServerErrorAlertException("AI chat client is not configured", "ProblemStatement", "ProblemStatementRefinement.chatClientNotConfigured");
         }
 
-        String originalProblemStatementText = request.problemStatementText();
-        if (originalProblemStatementText == null || originalProblemStatementText.isBlank()) {
-            throw new BadRequestAlertException("Cannot refine empty problem statement", "ProblemStatement", "ProblemStatementRefinement.problemStatementEmpty");
-        }
         String sanitizedInstruction = sanitizeInput(request.instruction());
         HyperionPromptSanitizer.validateInstruction(sanitizedInstruction, "ProblemStatementRefinement");
 
         // For targeted refinement, use line-preserving sanitization to keep line numbers aligned
         // with the client's selection. Full sanitizeInput() could remove entire lines (e.g., delimiter
         // lines), shifting all subsequent line numbers and causing the LLM to edit the wrong lines.
-        String sanitizedProblemStatement = sanitizeInputPreserveLines(originalProblemStatementText);
+        String sanitizedProblemStatement = sanitizeInputPreserveLines(request.problemStatementText());
         validateSanitizedProblemStatement(sanitizedProblemStatement);
         String[] lines = sanitizedProblemStatement.split("\n", -1);
         validateLineRange(request.startLine() - 1, request.endLine() - 1, lines.length);
@@ -193,7 +189,7 @@ public class HyperionProblemStatementRefinementService {
             refinedProblemStatementText = chatClient.prompt().system(systemPrompt).user(userMessage).call().content();
         }
         catch (Exception e) {
-            log.error("Error refining problem statement for course [{}]. Original statement length: {}. Error: {}", course.getId(), originalProblemStatementText.length(),
+            log.error("Error refining problem statement for course [{}]. Original statement length: {}. Error: {}", course.getId(), request.problemStatementText().length(),
                     e.getMessage(), e);
             throw new InternalServerErrorAlertException("Failed to refine problem statement", "ProblemStatement", "ProblemStatementRefinement.problemStatementRefinementFailed");
         }
