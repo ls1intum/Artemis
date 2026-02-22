@@ -53,7 +53,7 @@ describe('ExerciseReviewCommentService', () => {
 
         expect(changed).toBe(true);
         expect(service.threads()).toEqual([]);
-        expect(websocketServiceMock.subscribe).toHaveBeenCalledWith('/topic/exercises/42/review-threads');
+        expect(websocketServiceMock.subscribe).not.toHaveBeenCalled();
     });
 
     it('setExercise should not clear thread state when exercise id is unchanged', () => {
@@ -64,7 +64,7 @@ describe('ExerciseReviewCommentService', () => {
 
         expect(changed).toBe(false);
         expect(service.threads()).toEqual([{ id: 1 } as any]);
-        expect(websocketServiceMock.subscribe).toHaveBeenCalledTimes(1);
+        expect(websocketServiceMock.subscribe).not.toHaveBeenCalled();
     });
 
     it('reloadThreads should clear state when no active exercise exists', () => {
@@ -85,6 +85,7 @@ describe('ExerciseReviewCommentService', () => {
         req.flush([{ id: 11 }]);
 
         expect(service.threads()).toEqual([{ id: 11 } as any]);
+        expect(websocketServiceMock.subscribe).toHaveBeenCalledWith('/topic/exercises/2/review-threads');
     });
 
     it('reloadThreads should clear state and show alert on failure', () => {
@@ -98,6 +99,7 @@ describe('ExerciseReviewCommentService', () => {
 
         expect(service.threads()).toEqual([]);
         expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.review.loadFailed');
+        expect(websocketServiceMock.subscribe).toHaveBeenCalledWith('/topic/exercises/2/review-threads');
     });
 
     it('reloadThreads should ignore stale success responses after exercise switch', () => {
@@ -123,6 +125,49 @@ describe('ExerciseReviewCommentService', () => {
 
         expect(service.threads()).toEqual([]);
         expect(alertServiceMock.error).not.toHaveBeenCalled();
+    });
+
+    it('reloadThreads should merge websocket updates received during an in-flight reload', () => {
+        service.setExercise(4);
+
+        service.reloadThreads();
+        httpMock.expectOne('api/exercise/exercises/4/review-threads').flush([{ id: 1, comments: [] }]);
+
+        service.reloadThreads();
+        const req = httpMock.expectOne('api/exercise/exercises/4/review-threads');
+
+        websocketSubject.next({
+            action: ReviewThreadWebsocketAction.THREAD_CREATED,
+            exerciseId: 4,
+            thread: { id: 2, comments: [] } as any,
+        });
+
+        req.flush([{ id: 1, comments: [] }]);
+
+        expect(service.threads()).toEqual([
+            { id: 1, comments: [] },
+            { id: 2, comments: [] },
+        ] as any);
+    });
+
+    it('reloadThreads should preserve websocket deletions received during an in-flight reload', () => {
+        service.setExercise(4);
+
+        service.reloadThreads();
+        httpMock.expectOne('api/exercise/exercises/4/review-threads').flush([{ id: 1, comments: [{ id: 9 }] }]);
+
+        service.reloadThreads();
+        const req = httpMock.expectOne('api/exercise/exercises/4/review-threads');
+
+        websocketSubject.next({
+            action: ReviewThreadWebsocketAction.COMMENT_DELETED,
+            exerciseId: 4,
+            commentId: 9,
+        });
+
+        req.flush([{ id: 1, comments: [{ id: 9 }] }]);
+
+        expect(service.threads()).toEqual([]);
     });
 
     it('createThreadInContext should be ignored without active exercise', () => {
@@ -429,6 +474,8 @@ describe('ExerciseReviewCommentService', () => {
 
     it('should apply THREAD_CREATED websocket update idempotently', () => {
         service.setExercise(4);
+        service.reloadThreads();
+        httpMock.expectOne('api/exercise/exercises/4/review-threads').flush([]);
         service.threads.set([{ id: 1, comments: [] }] as any);
 
         websocketSubject.next({ action: ReviewThreadWebsocketAction.THREAD_CREATED, exerciseId: 4, thread: { id: 2, comments: [] } as any });
@@ -442,6 +489,8 @@ describe('ExerciseReviewCommentService', () => {
 
     it('should apply COMMENT_CREATED websocket update idempotently', () => {
         service.setExercise(4);
+        service.reloadThreads();
+        httpMock.expectOne('api/exercise/exercises/4/review-threads').flush([]);
         service.threads.set([{ id: 1, comments: [] }] as any);
 
         const comment = { id: 9, threadId: 1, content: { text: 'Hello' } } as any;
@@ -453,6 +502,8 @@ describe('ExerciseReviewCommentService', () => {
 
     it('should apply COMMENT_UPDATED websocket update', () => {
         service.setExercise(4);
+        service.reloadThreads();
+        httpMock.expectOne('api/exercise/exercises/4/review-threads').flush([]);
         service.threads.set([{ id: 1, comments: [{ id: 9, threadId: 1, content: { text: 'Old' } }] }] as any);
 
         websocketSubject.next({
@@ -466,6 +517,8 @@ describe('ExerciseReviewCommentService', () => {
 
     it('should apply COMMENT_DELETED websocket update and drop empty thread', () => {
         service.setExercise(4);
+        service.reloadThreads();
+        httpMock.expectOne('api/exercise/exercises/4/review-threads').flush([]);
         service.threads.set([{ id: 1, comments: [{ id: 9 }] }] as any);
 
         websocketSubject.next({
@@ -479,6 +532,8 @@ describe('ExerciseReviewCommentService', () => {
 
     it('should apply GROUP_UPDATED websocket update', () => {
         service.setExercise(4);
+        service.reloadThreads();
+        httpMock.expectOne('api/exercise/exercises/4/review-threads').flush([]);
         service.threads.set([
             { id: 1, groupId: undefined },
             { id: 2, groupId: undefined },
@@ -501,6 +556,8 @@ describe('ExerciseReviewCommentService', () => {
 
     it('should ignore websocket events from other exercises', () => {
         service.setExercise(4);
+        service.reloadThreads();
+        httpMock.expectOne('api/exercise/exercises/4/review-threads').flush([]);
         service.threads.set([{ id: 1, comments: [] }] as any);
 
         websocketSubject.next({

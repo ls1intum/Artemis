@@ -21,6 +21,10 @@ export class ExerciseReviewCommentService implements OnDestroy {
     private websocketService = inject(WebsocketService);
     private activeExerciseId?: number;
     private websocketSubscription?: Subscription;
+    private subscribedExerciseId?: number;
+    private isReloading = false;
+    private pendingWebsocketUpdates: ReviewThreadWebsocketUpdate[] = [];
+    private reloadSequence = 0;
 
     /**
      * Source of truth for currently loaded review comment threads.
@@ -38,14 +42,14 @@ export class ExerciseReviewCommentService implements OnDestroy {
         if (this.activeExerciseId === exerciseId) {
             return false;
         }
+        this.reloadSequence++;
+        this.isReloading = false;
+        this.pendingWebsocketUpdates = [];
         this.activeExerciseId = exerciseId;
         this.threads.set([]);
         this.websocketSubscription?.unsubscribe();
         this.websocketSubscription = undefined;
-        if (exerciseId) {
-            const topic = `/topic/exercises/${exerciseId}/review-threads`;
-            this.websocketSubscription = this.websocketService.subscribe<ReviewThreadWebsocketUpdate>(topic).subscribe((event) => this.applyWebsocketUpdate(event));
-        }
+        this.subscribedExerciseId = undefined;
         return true;
     }
 
@@ -58,19 +62,28 @@ export class ExerciseReviewCommentService implements OnDestroy {
             this.threads.set([]);
             return;
         }
+        const reloadId = ++this.reloadSequence;
+        this.isReloading = true;
+        this.pendingWebsocketUpdates = [];
         this.loadThreads(exerciseId).subscribe({
             next: (threads) => {
-                if (this.activeExerciseId !== exerciseId) {
+                if (this.activeExerciseId !== exerciseId || this.reloadSequence !== reloadId) {
                     return;
                 }
-                this.threads.set(threads);
+                this.threads.set(this.applyQueuedWebsocketUpdates(threads, this.pendingWebsocketUpdates));
+                this.pendingWebsocketUpdates = [];
+                this.isReloading = false;
+                this.ensureWebsocketSubscription(exerciseId);
             },
             error: () => {
-                if (this.activeExerciseId !== exerciseId) {
+                if (this.activeExerciseId !== exerciseId || this.reloadSequence !== reloadId) {
                     return;
                 }
-                this.threads.set([]);
+                this.threads.set(this.applyQueuedWebsocketUpdates([], this.pendingWebsocketUpdates));
+                this.pendingWebsocketUpdates = [];
+                this.isReloading = false;
                 this.alertService.error('artemisApp.review.loadFailed');
+                this.ensureWebsocketSubscription(exerciseId);
             },
         });
     }
@@ -435,42 +448,67 @@ export class ExerciseReviewCommentService implements OnDestroy {
         if (!update || !this.activeExerciseId || update.exerciseId !== this.activeExerciseId) {
             return;
         }
+        if (this.isReloading) {
+            this.pendingWebsocketUpdates.push(update);
+            return;
+        }
         this.threads.update((threads) => {
-            switch (update.action) {
-                case ReviewThreadWebsocketAction.THREAD_CREATED:
-                case ReviewThreadWebsocketAction.THREAD_UPDATED:
-                    if (!update.thread) {
-                        return threads;
-                    }
-                    return this.upsertThreadInThreads(threads, update.thread);
-                case ReviewThreadWebsocketAction.COMMENT_CREATED:
-                    if (!update.comment) {
-                        return threads;
-                    }
-                    return this.appendCommentToThreads(threads, update.comment);
-                case ReviewThreadWebsocketAction.COMMENT_UPDATED:
-                    if (!update.comment) {
-                        return threads;
-                    }
-                    return this.updateCommentInThreads(threads, update.comment);
-                case ReviewThreadWebsocketAction.COMMENT_DELETED:
-                    if (!update.commentId) {
-                        return threads;
-                    }
-                    return this.removeCommentFromThreads(threads, update.commentId);
-                case ReviewThreadWebsocketAction.GROUP_UPDATED:
-                    if (!update.threadIds) {
-                        return threads;
-                    }
-                    return this.updateGroupInThreads(threads, update.threadIds, update.groupId);
-                default:
-                    return threads;
-            }
+            return this.applyWebsocketUpdateToThreads(threads, update);
         });
+    }
+
+    private applyQueuedWebsocketUpdates(threads: CommentThread[], updates: ReviewThreadWebsocketUpdate[]): CommentThread[] {
+        return updates.reduce((accumulator, update) => this.applyWebsocketUpdateToThreads(accumulator, update), threads);
+    }
+
+    private applyWebsocketUpdateToThreads(threads: CommentThread[], update: ReviewThreadWebsocketUpdate): CommentThread[] {
+        switch (update.action) {
+            case ReviewThreadWebsocketAction.THREAD_CREATED:
+            case ReviewThreadWebsocketAction.THREAD_UPDATED:
+                if (!update.thread) {
+                    return threads;
+                }
+                return this.upsertThreadInThreads(threads, update.thread);
+            case ReviewThreadWebsocketAction.COMMENT_CREATED:
+                if (!update.comment) {
+                    return threads;
+                }
+                return this.appendCommentToThreads(threads, update.comment);
+            case ReviewThreadWebsocketAction.COMMENT_UPDATED:
+                if (!update.comment) {
+                    return threads;
+                }
+                return this.updateCommentInThreads(threads, update.comment);
+            case ReviewThreadWebsocketAction.COMMENT_DELETED:
+                if (!update.commentId) {
+                    return threads;
+                }
+                return this.removeCommentFromThreads(threads, update.commentId);
+            case ReviewThreadWebsocketAction.GROUP_UPDATED:
+                if (!update.threadIds) {
+                    return threads;
+                }
+                return this.updateGroupInThreads(threads, update.threadIds, update.groupId);
+            default:
+                return threads;
+        }
+    }
+
+    private ensureWebsocketSubscription(exerciseId: number): void {
+        if (this.subscribedExerciseId === exerciseId && this.websocketSubscription) {
+            return;
+        }
+        this.websocketSubscription?.unsubscribe();
+        const topic = `/topic/exercises/${exerciseId}/review-threads`;
+        this.websocketSubscription = this.websocketService.subscribe<ReviewThreadWebsocketUpdate>(topic).subscribe((event) => this.applyWebsocketUpdate(event));
+        this.subscribedExerciseId = exerciseId;
     }
 
     ngOnDestroy(): void {
         this.websocketSubscription?.unsubscribe();
         this.websocketSubscription = undefined;
+        this.subscribedExerciseId = undefined;
+        this.pendingWebsocketUpdates = [];
+        this.isReloading = false;
     }
 }
