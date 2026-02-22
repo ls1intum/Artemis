@@ -94,10 +94,19 @@ public class BuildJobContainerService {
     private static final Logger log = LoggerFactory.getLogger(BuildJobContainerService.class);
 
     /**
-     * Timeout in minutes for Docker exec commands. If a command does not complete within this time,
-     * the build job thread is unblocked and an exception is thrown to prevent permanently stuck threads.
+     * Timeout in minutes for Docker exec setup commands (mkdir, chmod, cp, etc.).
+     * If a setup command does not complete within this time, an exception is thrown.
      */
-    private static final int DOCKER_EXEC_TIMEOUT_MINUTES = 5;
+    private static final int DOCKER_SETUP_TIMEOUT_MINUTES = 5;
+
+    /**
+     * Timeout in minutes for the build script execution. This is intentionally longer than setup commands
+     * because build scripts may legitimately run for extended periods. The actual build timeout is enforced
+     * by the outer {@code future.get(buildJobTimeoutSeconds, ...)} in {@link BuildJobManagementService};
+     * this timeout serves only as a safety net to prevent permanently stuck threads if the outer timeout
+     * mechanism fails.
+     */
+    private static final int DOCKER_BUILD_SCRIPT_TIMEOUT_MINUTES = 20;
 
     /**
      * Subdirectory within the container's working directory where repositories are placed during build setup.
@@ -161,6 +170,9 @@ public class BuildJobContainerService {
      * @return {@link CreateContainerResponse} that can be used to start the container
      */
     public CreateContainerResponse configureContainer(String containerName, String image, String buildScript, DockerRunConfig runConfig) {
+        if (!buildAgentConfiguration.isDockerAvailable()) {
+            throw new LocalCIException("Docker is not available. Cannot configure container " + containerName);
+        }
         // Remove any existing container with the same name to avoid ConflictException.
         // This can happen when a job is re-queued after agent disconnect (same job ID = same container name).
         removeExistingContainer(containerName);
@@ -237,6 +249,9 @@ public class BuildJobContainerService {
      * @param containerId the ID of the container to be started
      */
     public void startContainer(String containerId) {
+        if (!buildAgentConfiguration.isDockerAvailable()) {
+            throw new LocalCIException("Docker is not available. Cannot start container " + containerId);
+        }
         try (final var startCommand = buildAgentConfiguration.getDockerClient().startContainerCmd(containerId)) {
             startCommand.exec();
         }
@@ -253,7 +268,7 @@ public class BuildJobContainerService {
         // The build script is executed as an additional process inside the container (docker exec), independent of the container's main process.
         // The call blocks until the script finishes, so it is safe to extract results after it returns.
         // forceRoot=false: the build script runs as the container's default user (not root) for security.
-        executeDockerCommand(containerId, buildJobId, false, "bash", LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/script.sh");
+        executeDockerCommand(containerId, buildJobId, false, DOCKER_BUILD_SCRIPT_TIMEOUT_MINUTES, "bash", LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/script.sh");
     }
 
     /**
@@ -331,7 +346,12 @@ public class BuildJobContainerService {
                 throw nfe;
             }
             String errorMessage = "Could not retrieve archive from container " + containerId + " at path " + path + " after " + MAX_TAR_OPERATION_RETRIES + " attempts";
-            log.error(errorMessage, e);
+            if (DockerUtil.isDockerNotAvailable(e)) {
+                log.warn("Docker is not available. {}: {}", errorMessage, e.getMessage());
+            }
+            else {
+                log.error(errorMessage, e);
+            }
             if (buildJobId != null) {
                 buildLogsMap.appendBuildLogEntry(buildJobId,
                         "Failed to retrieve build results after multiple attempts. This is an infrastructure issue, not a problem with your code. Please try rerunning your build.");
@@ -674,8 +694,7 @@ public class BuildJobContainerService {
             }
         }
 
-        // All retries exhausted
-        log.error("{} failed after {} attempts", operationName, MAX_TAR_OPERATION_RETRIES, lastException);
+        // All retries exhausted — callers handle Docker-unavailability vs. generic error logging
         throw lastException;
     }
 
@@ -720,7 +739,12 @@ public class BuildJobContainerService {
         catch (IOException e) {
             String errorMessage = "Could not copy to container " + containerId + " from source path " + sourcePath.toAbsolutePath() + " after " + MAX_TAR_OPERATION_RETRIES
                     + " attempts";
-            log.error(errorMessage, e);
+            if (DockerUtil.isDockerNotAvailable(e)) {
+                log.warn("Docker is not available. {}: {}", errorMessage, e.getMessage());
+            }
+            else {
+                log.error(errorMessage, e);
+            }
             if (buildJobId != null) {
                 buildLogsMap.appendBuildLogEntry(buildJobId,
                         "Failed to copy files to build container after multiple attempts. This is an infrastructure issue, not a problem with your code. Please try rerunning your build.");
@@ -865,6 +889,10 @@ public class BuildJobContainerService {
      * @throws LocalCIException if the command execution fails or is interrupted
      */
     private void executeDockerCommand(String containerId, String buildJobId, boolean forceRoot, String... command) {
+        executeDockerCommand(containerId, buildJobId, forceRoot, DOCKER_SETUP_TIMEOUT_MINUTES, command);
+    }
+
+    private void executeDockerCommand(String containerId, String buildJobId, boolean forceRoot, int timeoutMinutes, String... command) {
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
         try (var execCreateCommandTemp = dockerClient.execCreateCmd(containerId).withAttachStdout(true).withAttachStderr(true).withCmd(command)) {
             final var execCreateCommand = forceRoot ? execCreateCommandTemp.withUser("root") : execCreateCommandTemp;
@@ -915,9 +943,9 @@ public class BuildJobContainerService {
             }
 
             try {
-                boolean completed = latch.await(DOCKER_EXEC_TIMEOUT_MINUTES, TimeUnit.MINUTES);
+                boolean completed = latch.await(timeoutMinutes, TimeUnit.MINUTES);
                 if (!completed) {
-                    throw new LocalCIException("Docker command timed out after " + DOCKER_EXEC_TIMEOUT_MINUTES + " minutes: " + String.join(" ", command));
+                    throw new LocalCIException("Docker command timed out after " + timeoutMinutes + " minutes: " + String.join(" ", command));
                 }
             }
             catch (InterruptedException e) {
@@ -961,6 +989,13 @@ public class BuildJobContainerService {
      * @return the Container object if found, null otherwise
      */
     private Container getContainerForName(String containerName) {
+        // When Docker is temporarily unavailable, we skip the container lookup and return null.
+        // Any containers left behind will be cleaned up by the scheduled cleanUpContainers() task
+        // in BuildAgentDockerService once Docker becomes available again.
+        if (!buildAgentConfiguration.isDockerAvailable()) {
+            log.debug("Docker is not available. Cannot get container for name {}", containerName);
+            return null;
+        }
         try (final var listContainerCommand = buildAgentConfiguration.getDockerClient().listContainersCmd().withShowAll(true)) {
             List<Container> containers = listContainerCommand.exec();
             String expectedName = "/" + containerName;
@@ -969,7 +1004,7 @@ public class BuildJobContainerService {
         }
         catch (Exception ex) {
             if (DockerUtil.isDockerNotAvailable(ex)) {
-                log.error("Docker is not available: {}", ex.getMessage());
+                log.debug("Docker is not available: {}", ex.getMessage());
             }
             else {
                 log.error("Failed to get container for name {}: {}", containerName, ex.getMessage());
