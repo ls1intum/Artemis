@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import type { IconDefinition } from '@fortawesome/free-solid-svg-icons';
-import { faBook, faBrain, faCompass, faLightbulb, faShield, faThumbsUp, faUser, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faBrain, faCompass, faLightbulb, faShieldHalved, faThumbsUp, faUser, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
@@ -27,7 +27,7 @@ export class AboutIrisModalComponent {
 
     protected readonly IrisLogoSize = IrisLogoSize;
     protected readonly faXmark = faXmark;
-    protected readonly faShield = faShield;
+    protected readonly faShield = faShieldHalved;
 
     protected readonly whatIrisCanDo: FeatureCard[] = [
         {

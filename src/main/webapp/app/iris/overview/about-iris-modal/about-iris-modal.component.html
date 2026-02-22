@@ -1,11 +1,15 @@
-<button class="close-btn" (click)="close()" [attr.aria-label]="'artemisApp.iris.aboutIrisModal.close' | artemisTranslate">
-    <fa-icon [icon]="faXmark" aria-hidden="true" />
-</button>
+<div class="close-btn-container">
+    <button class="close-btn" (click)="close()" [attr.aria-label]="'artemisApp.iris.aboutIrisModal.close' | artemisTranslate">
+        <fa-icon [icon]="faXmark" aria-hidden="true" />
+    </button>
+</div>
 
 <div class="modal-content-wrapper" aria-labelledby="about-iris-title">
     <!-- Header: Logo + title + subtexts -->
     <div class="header-section">
-        <jhi-iris-logo [size]="IrisLogoSize.SMALL" />
+        <div class="logo-container">
+            <jhi-iris-logo [size]="IrisLogoSize.SMALL" />
+        </div>
         <div class="header-text">
             <h2 id="about-iris-title" jhiTranslate="artemisApp.iris.aboutIrisModal.meetIris"></h2>
             <p class="subtitle" jhiTranslate="artemisApp.iris.aboutIrisModal.subtitle"></p>

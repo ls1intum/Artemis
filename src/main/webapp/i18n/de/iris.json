@@ -189,7 +189,7 @@
             "aboutIrisModal": {
                 "meetIris": "Lern Iris kennen",
                 "subtitle": "Dein KI-Tutor, direkt in Artemis integriert.",
-                "description": "Iris hilft bei kursbezogenen Programmieraufgaben und Vorlesungsinhalten unter Verwendung deines aktuellen Kontexts. Iris ist Teil der EduTelligence-Suite mit KI-Funktionen in der Artemis-Lernplattform.",
+                "description": "Als Teil der EduTelligence-Suite von KI-Funktionen in Artemis hilft Iris bei kursbezogenen Programmierfragen und Vorlesungsinhalten unter Verwendung deines aktuellen Kontexts.",
                 "whatIrisCanDo": "Was Iris kann",
                 "whatToExpect": "Was du von Iris erwarten kannst",
                 "contextAwareTitle": "Kontextbewusst",
