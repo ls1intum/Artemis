@@ -95,31 +95,25 @@ export class ChecklistPanelComponent {
     // Track the latest problem statement (may be updated by AI actions before the input signal refreshes)
     private latestProblemStatement = signal<string | undefined>(undefined);
 
+    /** Effective problem statement: the latest AI-modified version, or the input signal. */
+    private readonly effectiveProblemStatement = computed(() => this.latestProblemStatement() ?? this.problemStatement());
+
     /**
      * Locally computed task and test counts from the problem statement.
      * Parses [task][TaskName](test1,test2) markers without relying on AI, saving tokens.
      */
     localTaskTestCounts = computed(() => {
-        const ps = this.latestProblemStatement() ?? this.problemStatement();
-        return this.countTasksAndTests(ps);
+        return this.countTasksAndTests(this.effectiveProblemStatement());
     });
 
-    sectionCompetencies = signal(true);
-    sectionDifficulty = signal(true);
-    sectionQuality = signal(true);
+    sectionExpanded: Record<ChecklistSectionType, ReturnType<typeof signal<boolean>>> = {
+        competencies: signal(true),
+        difficulty: signal(true),
+        quality: signal(true),
+    };
 
-    toggleSection(section: 'competencies' | 'difficulty' | 'quality') {
-        switch (section) {
-            case 'competencies':
-                this.sectionCompetencies.update((v) => !v);
-                break;
-            case 'difficulty':
-                this.sectionDifficulty.update((v) => !v);
-                break;
-            case 'quality':
-                this.sectionQuality.update((v) => !v);
-                break;
-        }
+    toggleSection(section: ChecklistSectionType) {
+        this.sectionExpanded[section].update((v) => !v);
     }
 
     readonly difficultyLevels = ['EASY', 'MEDIUM', 'HARD'] as const;
@@ -186,25 +180,6 @@ export class ChecklistPanelComponent {
 
     isCompetencyExpanded(rank: number): boolean {
         return this.expandedCompetencies().has(rank);
-    }
-
-    getConfidenceClass(confidence: number | undefined): string {
-        if (confidence === undefined) return 'bg-secondary';
-        if (confidence >= 0.8) return 'bg-success';
-        if (confidence >= 0.5) return 'bg-warning';
-        return 'bg-danger';
-    }
-
-    getSeverityClass(severity: string | undefined): string {
-        switch (severity?.toUpperCase()) {
-            case 'HIGH':
-                return 'text-danger';
-            case 'MEDIUM':
-                return 'text-warning';
-            case 'LOW':
-            default:
-                return 'text-info';
-        }
     }
 
     getSeverityTagSeverity(severity: string | undefined): 'danger' | 'warn' | 'info' {
@@ -416,7 +391,7 @@ export class ChecklistPanelComponent {
         this.sectionLoading.set(section);
         const ex = this.exercise();
         const request = {
-            problemStatementMarkdown: this.latestProblemStatement() ?? this.problemStatement(),
+            problemStatementMarkdown: this.effectiveProblemStatement(),
             declaredDifficulty: ex.difficulty,
             language: ex.programmingLanguage,
             exerciseId: ex.id,
@@ -467,7 +442,7 @@ export class ChecklistPanelComponent {
         this.applyAction(
             {
                 actionType: ChecklistActionRequest.ActionTypeEnum.FixQualityIssue,
-                problemStatementMarkdown: this.latestProblemStatement() ?? this.problemStatement(),
+                problemStatementMarkdown: this.effectiveProblemStatement(),
                 context: {
                     issueDescription: issue.description || '',
                     suggestedFix: issue.suggestedFix || '',
@@ -487,7 +462,7 @@ export class ChecklistPanelComponent {
         this.applyAction(
             {
                 actionType: ChecklistActionRequest.ActionTypeEnum.FixAllQualityIssues,
-                problemStatementMarkdown: this.latestProblemStatement() ?? this.problemStatement(),
+                problemStatementMarkdown: this.effectiveProblemStatement(),
                 context: { allIssues },
             },
             'fix-all',
@@ -504,7 +479,7 @@ export class ChecklistPanelComponent {
         this.applyAction(
             {
                 actionType: ChecklistActionRequest.ActionTypeEnum.AdaptDifficulty,
-                problemStatementMarkdown: this.latestProblemStatement() ?? this.problemStatement(),
+                problemStatementMarkdown: this.effectiveProblemStatement(),
                 context: {
                     targetDifficulty,
                     currentDifficulty: current,

@@ -93,6 +93,17 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Updated problem statement."))))).when(azureOpenAiChatModel).call(any(Prompt.class));
     }
 
+    private void mockChecklistAnalysis() {
+        doReturn(new ChatResponse(List.of(new Generation(
+                new AssistantMessage("{\"goals\": [{ \"skill\": \"Loops\", \"taxonomyLevel\": \"APPLY\", \"confidence\": 0.9, \"explanation\": \"Loop found\" }]}")))))
+                .when(azureOpenAiChatModel).call(org.mockito.ArgumentMatchers.<Prompt>argThat(p -> p.getContents().contains("infer the intended learning goals")));
+        doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("{\"suggested\": \"EASY\", \"reasoning\": \"Simple\"}"))))).when(azureOpenAiChatModel)
+                .call(org.mockito.ArgumentMatchers.<Prompt>argThat(p -> p.getContents().contains("suggest the appropriate difficulty level")));
+        doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(
+                "{\"issues\": [{ \"category\": \"CLARITY\", \"severity\": \"LOW\", \"description\": \"Vague\", \"suggestedFix\": \"Fix\", \"relatedLocations\": [] }]}")))))
+                .when(azureOpenAiChatModel).call(org.mockito.ArgumentMatchers.<Prompt>argThat(p -> p.getContents().contains("quality issues related to CLARITY")));
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void shouldReturnConsistencyIssuesEmptyForInstructor() throws Exception {
@@ -249,14 +260,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     void shouldAnalyzeChecklistForInstructor() throws Exception {
         long courseId = persistedCourseId;
 
-        doReturn(new ChatResponse(List.of(new Generation(
-                new AssistantMessage("{\"goals\": [{ \"skill\": \"Loops\", \"taxonomyLevel\": \"APPLY\", \"confidence\": 0.9, \"explanation\": \"Loop found\" }]}")))))
-                .when(azureOpenAiChatModel).call(org.mockito.ArgumentMatchers.<Prompt>argThat(p -> p.getContents().contains("infer the intended learning goals")));
-        doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("{\"suggested\": \"EASY\", \"reasoning\": \"Simple\"}"))))).when(azureOpenAiChatModel)
-                .call(org.mockito.ArgumentMatchers.<Prompt>argThat(p -> p.getContents().contains("suggest the appropriate difficulty level")));
-        doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(
-                "{\"issues\": [{ \"category\": \"CLARITY\", \"severity\": \"LOW\", \"description\": \"Vague\", \"suggestedFix\": \"Fix\", \"relatedLocations\": [] }]}")))))
-                .when(azureOpenAiChatModel).call(org.mockito.ArgumentMatchers.<Prompt>argThat(p -> p.getContents().contains("quality issues related to CLARITY")));
+        mockChecklistAnalysis();
 
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
 
@@ -271,14 +275,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     void shouldAnalyzeChecklistForEditor() throws Exception {
         long courseId = persistedCourseId;
 
-        doReturn(new ChatResponse(List.of(new Generation(
-                new AssistantMessage("{\"goals\": [{ \"skill\": \"Loops\", \"taxonomyLevel\": \"APPLY\", \"confidence\": 0.9, \"explanation\": \"Loop found\" }]}")))))
-                .when(azureOpenAiChatModel).call(org.mockito.ArgumentMatchers.<Prompt>argThat(p -> p.getContents().contains("infer the intended learning goals")));
-        doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("{\"suggested\": \"EASY\", \"reasoning\": \"Simple\"}"))))).when(azureOpenAiChatModel)
-                .call(org.mockito.ArgumentMatchers.<Prompt>argThat(p -> p.getContents().contains("suggest the appropriate difficulty level")));
-        doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(
-                "{\"issues\": [{ \"category\": \"CLARITY\", \"severity\": \"LOW\", \"description\": \"Vague\", \"suggestedFix\": \"Fix\", \"relatedLocations\": [] }]}")))))
-                .when(azureOpenAiChatModel).call(org.mockito.ArgumentMatchers.<Prompt>argThat(p -> p.getContents().contains("quality issues related to CLARITY")));
+        mockChecklistAnalysis();
 
         userUtilService.changeUser(TEST_PREFIX + "editor1");
 

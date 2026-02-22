@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -160,9 +161,9 @@ public class HyperionChecklistService {
      * declared difficulty) used by both full and single-section analysis.
      */
     private AnalysisContext buildAnalysisContext(ChecklistAnalysisRequestDTO request) {
-        String problemStatement = request.problemStatementMarkdown() != null ? request.problemStatementMarkdown() : "";
-        String declaredDifficulty = request.declaredDifficulty() != null ? request.declaredDifficulty() : "NOT_DECLARED";
-        String language = request.language() != null ? request.language() : "JAVA";
+        String problemStatement = request.problemStatementMarkdown(); // @NotBlank guarantees non-null after validation
+        String declaredDifficulty = Objects.requireNonNullElse(request.declaredDifficulty(), "NOT_DECLARED");
+        String language = Objects.requireNonNullElse(request.language(), "JAVA");
 
         // Fetch and serialize the competency catalog
         String catalogJson = serializeCompetencyCatalog();
@@ -206,7 +207,10 @@ public class HyperionChecklistService {
     public ChecklistActionResponseDTO applyChecklistAction(ChecklistActionRequestDTO request) {
         log.debug("Applying checklist action: {}", request.actionType());
 
-        String instructions = buildActionInstructions(request);
+        // Sanitize context once and reuse for both instructions and summary
+        Map<String, String> sanitizedContext = sanitizeContext(request.context());
+
+        String instructions = buildActionInstructions(request.actionType(), sanitizedContext);
         var templateInput = Map.of("action_type", request.actionType().name(), "instructions", instructions, "problem_statement", request.problemStatementMarkdown());
 
         String renderedPrompt = templates.render("/prompts/hyperion/checklist_action.st", templateInput);
@@ -222,7 +226,7 @@ public class HyperionChecklistService {
 
             String trimmed = result.trim();
             boolean changed = !trimmed.equals(request.problemStatementMarkdown().trim());
-            String summary = buildActionSummary(request);
+            String summary = buildActionSummary(request.actionType(), sanitizedContext);
             return new ChecklistActionResponseDTO(trimmed, changed, summary);
         }
         catch (Exception e) {
@@ -235,13 +239,11 @@ public class HyperionChecklistService {
 
     /**
      * Builds action-specific instructions for the AI prompt based on the action type
-     * and context. Context values are truncated to {@value MAX_CONTEXT_VALUE_LENGTH}
-     * characters to mitigate prompt injection risk.
+     * and pre-sanitized context. Context values have already been truncated to
+     * {@value MAX_CONTEXT_VALUE_LENGTH} characters to mitigate prompt injection risk.
      */
-    private String buildActionInstructions(ChecklistActionRequestDTO request) {
-        Map<String, String> ctx = sanitizeContext(request.context());
-
-        return switch (request.actionType()) {
+    private String buildActionInstructions(ChecklistActionRequestDTO.ActionType actionType, Map<String, String> ctx) {
+        return switch (actionType) {
             case FIX_QUALITY_ISSUE -> {
                 String description = ctx.getOrDefault("issueDescription", "Unknown issue");
                 String suggestedFix = ctx.getOrDefault("suggestedFix", "");
@@ -302,10 +304,8 @@ public class HyperionChecklistService {
     /**
      * Builds a short human-readable summary of what action was applied.
      */
-    private String buildActionSummary(ChecklistActionRequestDTO request) {
-        Map<String, String> ctx = sanitizeContext(request.context() != null ? request.context() : Map.of());
-
-        return switch (request.actionType()) {
+    private String buildActionSummary(ChecklistActionRequestDTO.ActionType actionType, Map<String, String> ctx) {
+        return switch (actionType) {
             case FIX_QUALITY_ISSUE -> "Fixed quality issue: " + ctx.getOrDefault("category", "unknown");
             case FIX_ALL_QUALITY_ISSUES -> "Fixed all quality issues";
             case ADAPT_DIFFICULTY -> "Adapted difficulty to " + ctx.getOrDefault("targetDifficulty", "unknown");
@@ -378,16 +378,11 @@ public class HyperionChecklistService {
      * Runs competency inference using the standardized catalog.
      */
     private List<InferredCompetencyDTO> runCompetencyInference(Map<String, String> input, Observation parentObs, List<String> taskNames) {
-        var child = Observation.createNotStarted("hyperion.checklist.competencies", observationRegistry).contextualName("competency inference")
-                .lowCardinalityKeyValue(KeyValue.of(AI_SPAN_KEY, AI_SPAN_VALUE)).highCardinalityKeyValue(KeyValue.of(LF_SPAN_NAME_KEY, "competency inference"))
-                .parentObservation(parentObs).start();
-
-        var resourcePath = "/prompts/hyperion/checklist_competencies.st";
         var competencyInput = new HashMap<>(input);
         competencyInput.put("task_names", taskNames.isEmpty() ? "(no tasks detected)" : String.join(", ", taskNames));
-        String renderedPrompt = templates.render(resourcePath, competencyInput);
+        String renderedPrompt = templates.render("/prompts/hyperion/checklist_competencies.st", competencyInput);
 
-        try (Observation.Scope scope = child.openScope()) {
+        return runWithObservation("hyperion.checklist.competencies", "competency inference", parentObs, () -> {
             var response = chatClient.prompt().system("You are an expert in computer science education and curriculum design. Return only JSON matching the schema.")
                     .user(renderedPrompt).call().responseEntity(StructuredOutputSchema.CompetenciesResponse.class);
 
@@ -401,15 +396,7 @@ public class HyperionChecklistService {
                 return new InferredCompetencyDTO(c.knowledgeAreaShortTitle(), c.competencyTitle(), c.competencyVersion(), c.catalogSourceId(), c.taxonomyLevel(), c.confidence(),
                         c.rank(), c.evidence(), c.whyThisMatches(), c.isLikelyPrimary(), relatedTasks);
             }).toList();
-        }
-        catch (Exception e) {
-            child.error(e);
-            log.warn("Failed to analyze competencies", e);
-            return List.of();
-        }
-        finally {
-            child.stop();
-        }
+        }, List.of());
     }
 
     /**
@@ -444,14 +431,9 @@ public class HyperionChecklistService {
      * Runs difficulty analysis.
      */
     private DifficultyAssessmentDTO runDifficultyAnalysis(Map<String, String> input, Observation parentObs, String declaredDifficulty) {
-        var child = Observation.createNotStarted("hyperion.checklist.difficulty", observationRegistry).contextualName("difficulty check")
-                .lowCardinalityKeyValue(KeyValue.of(AI_SPAN_KEY, AI_SPAN_VALUE)).highCardinalityKeyValue(KeyValue.of(LF_SPAN_NAME_KEY, "difficulty check"))
-                .parentObservation(parentObs).start();
+        String renderedPrompt = templates.render("/prompts/hyperion/checklist_difficulty.st", input);
 
-        var resourcePath = "/prompts/hyperion/checklist_difficulty.st";
-        String renderedPrompt = templates.render(resourcePath, input);
-
-        try (Observation.Scope scope = child.openScope()) {
+        return runWithObservation("hyperion.checklist.difficulty", "difficulty check", parentObs, () -> {
             var response = chatClient.prompt().system("You are an expert in computer science education. Return only JSON matching the schema.").user(renderedPrompt).call()
                     .responseEntity(StructuredOutputSchema.DifficultyResponse.class);
 
@@ -468,15 +450,7 @@ public class HyperionChecklistService {
             int testCount = entity.testCount() != null ? entity.testCount() : 0;
 
             return new DifficultyAssessmentDTO(suggested, confidence, entity.reasoning(), matches, delta, taskCount, testCount);
-        }
-        catch (Exception e) {
-            child.error(e);
-            log.warn("Failed to analyze difficulty", e);
-            return DifficultyAssessmentDTO.unknown("Analysis failed: " + e.getMessage());
-        }
-        finally {
-            child.stop();
-        }
+        }, DifficultyAssessmentDTO.unknown("Analysis failed"));
     }
 
     /**
@@ -495,29 +469,17 @@ public class HyperionChecklistService {
             return "UNKNOWN";
         }
 
-        if (suggestedLevel < declaredLevel) {
-            return "LOWER";
-        }
-        else if (suggestedLevel > declaredLevel) {
-            return "HIGHER";
-        }
-        else {
-            return "MATCH";
-        }
+        int cmp = Integer.compare(suggestedLevel, declaredLevel);
+        return cmp < 0 ? "LOWER" : cmp > 0 ? "HIGHER" : "MATCH";
     }
 
     /**
      * Runs quality analysis.
      */
     private List<QualityIssueDTO> runQualityAnalysis(Map<String, String> input, Observation parentObs) {
-        var child = Observation.createNotStarted("hyperion.checklist.quality", observationRegistry).contextualName("quality check")
-                .lowCardinalityKeyValue(KeyValue.of(AI_SPAN_KEY, AI_SPAN_VALUE)).highCardinalityKeyValue(KeyValue.of(LF_SPAN_NAME_KEY, "quality check"))
-                .parentObservation(parentObs).start();
+        String renderedPrompt = templates.render("/prompts/hyperion/checklist_quality.st", input);
 
-        var resourcePath = "/prompts/hyperion/checklist_quality.st";
-        String renderedPrompt = templates.render(resourcePath, input);
-
-        try (Observation.Scope scope = child.openScope()) {
+        return runWithObservation("hyperion.checklist.quality", "quality check", parentObs, () -> {
             var response = chatClient.prompt().system("You are a technical documentarian and educator. Return only JSON matching the schema.").user(renderedPrompt).call()
                     .responseEntity(StructuredOutputSchema.QualityResponse.class);
 
@@ -527,15 +489,7 @@ public class HyperionChecklistService {
             }
 
             return entity.issues().stream().map(this::mapQualityIssueToDto).toList();
-        }
-        catch (Exception e) {
-            child.error(e);
-            log.warn("Failed to analyze quality", e);
-            return List.of();
-        }
-        finally {
-            child.stop();
-        }
+        }, List.of());
     }
 
     private QualityIssueDTO mapQualityIssueToDto(StructuredOutputSchema.QualityIssue issue) {
@@ -565,6 +519,45 @@ public class HyperionChecklistService {
             sanitized.put(entry.getKey(), value != null ? value : "");
         }
         return sanitized;
+    }
+
+    // ===== Observation Helper =====
+
+    /**
+     * A supplier that may throw a checked exception.
+     */
+    @FunctionalInterface
+    private interface CheckedSupplier<T> {
+
+        T get() throws Exception;
+    }
+
+    /**
+     * Runs a unit of work inside a child observation span. On success the result is returned;
+     * on failure the error is recorded on the span and the {@code fallback} value is returned.
+     *
+     * @param <T>         the result type
+     * @param name        the metric/span name
+     * @param contextName the human-readable context name
+     * @param parentObs   the parent observation (may be {@code null})
+     * @param work        the work to execute inside the observation scope
+     * @param fallback    the value returned when {@code work} throws
+     * @return the result of {@code work}, or {@code fallback} on error
+     */
+    private <T> T runWithObservation(String name, String contextName, Observation parentObs, CheckedSupplier<T> work, T fallback) {
+        var child = Observation.createNotStarted(name, observationRegistry).contextualName(contextName).lowCardinalityKeyValue(KeyValue.of(AI_SPAN_KEY, AI_SPAN_VALUE))
+                .highCardinalityKeyValue(KeyValue.of(LF_SPAN_NAME_KEY, contextName)).parentObservation(parentObs).start();
+        try (var scope = child.openScope()) {
+            return work.get();
+        }
+        catch (Exception e) {
+            child.error(e);
+            log.warn("Failed to run {}", contextName, e);
+            return fallback;
+        }
+        finally {
+            child.stop();
+        }
     }
 
     // ===== Structured Output Schemas =====

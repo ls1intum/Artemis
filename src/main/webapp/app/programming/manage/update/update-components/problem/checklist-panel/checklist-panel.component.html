@@ -15,7 +15,7 @@
                 <!-- Quality Section (moved to top) -->
                 <div class="section-card mb-2 border rounded" [class.stale]="isSectionStale('quality')">
                     <div class="section-header p-2 d-flex align-items-center" (click)="toggleSection('quality')">
-                        <fa-icon [icon]="sectionQuality() ? faChevronDown : faChevronRight" class="me-2 text-muted" />
+                        <fa-icon [icon]="sectionExpanded['quality']() ? faChevronDown : faChevronRight" class="me-2 text-muted" />
                         <h6 class="mb-0" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.title">Quality Assessment</h6>
                         @if (result.qualityIssues?.length) {
                             <p-badge [value]="'' + result.qualityIssues?.length" severity="warn" class="ms-2" />
@@ -46,7 +46,7 @@
                             </button>
                         }
                     </div>
-                    @if (sectionQuality()) {
+                    @if (sectionExpanded['quality']()) {
                         <div class="section-body p-3">
                             <!-- Quality Radar Chart -->
                             <div class="quality-radar-section d-flex align-items-start gap-4 mb-3">
@@ -185,7 +185,7 @@
                 <!-- Estimated Learning Goals Section -->
                 <div class="section-card mb-2 border rounded" [class.stale]="isSectionStale('competencies')">
                     <div class="section-header p-2 d-flex align-items-center" (click)="toggleSection('competencies')">
-                        <fa-icon [icon]="sectionCompetencies() ? faChevronDown : faChevronRight" class="me-2 text-muted" />
+                        <fa-icon [icon]="sectionExpanded['competencies']() ? faChevronDown : faChevronRight" class="me-2 text-muted" />
                         <h6 class="mb-0" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.title">Estimated Learning Goals</h6>
                         @if (result.inferredCompetencies?.length) {
                             <p-badge [value]="'' + result.inferredCompetencies?.length" severity="info" class="ms-2" />
@@ -212,7 +212,7 @@
                             </button>
                         }
                     </div>
-                    @if (sectionCompetencies()) {
+                    @if (sectionExpanded['competencies']()) {
                         <div class="section-body p-0">
                             @if (!result.inferredCompetencies || result.inferredCompetencies.length === 0) {
                                 <div class="p-3 text-muted" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.empty">No competencies inferred.</div>
@@ -332,7 +332,7 @@
                 <!-- Difficulty Section -->
                 <div class="section-card mb-2 border rounded" [class.stale]="isSectionStale('difficulty')">
                     <div class="section-header p-2 d-flex align-items-center" (click)="toggleSection('difficulty')">
-                        <fa-icon [icon]="sectionDifficulty() ? faChevronDown : faChevronRight" class="me-2 text-muted" />
+                        <fa-icon [icon]="sectionExpanded['difficulty']() ? faChevronDown : faChevronRight" class="me-2 text-muted" />
                         <h6 class="mb-0" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.difficulty.title">Difficulty Assessment</h6>
                         @if (isSectionStale('difficulty')) {
                             <span class="ms-2 stale-badge">
@@ -356,7 +356,7 @@
                             </button>
                         }
                     </div>
-                    @if (sectionDifficulty() && result.difficultyAssessment) {
+                    @if (sectionExpanded['difficulty']() && result.difficultyAssessment) {
                         <div class="section-body p-3">
                             <div class="d-flex align-items-center mb-2 gap-3">
                                 <div>
