@@ -44,9 +44,28 @@
                 ></a>
             }
             @if (allowManagementActions()) {
-                <a [routerLink]="['registrations']" pButton class="p-button-secondary p-button-sm" data-testid="registrations-link">Registrations</a>
-                <a [routerLink]="['edit']" pButton class="p-button-primary p-button-sm" data-testid="edit-button">Edit</a>
-                <button pButton severity="danger" class="p-button-primary p-button-sm" data-testid="delete-button" (click)="confirmTutorialGroupDeletion($event)">Delete</button>
+                <a
+                    [routerLink]="['registrations']"
+                    pButton
+                    class="p-button-secondary p-button-sm"
+                    data-testid="registrations-link"
+                    jhiTranslate="artemisApp.pages.tutorialGroupDetail.registrationsLinkLabel"
+                ></a>
+                <a
+                    [routerLink]="['edit']"
+                    pButton
+                    class="p-button-primary p-button-sm"
+                    data-testid="edit-button"
+                    jhiTranslate="artemisApp.pages.tutorialGroupDetail.editLinkLabel"
+                ></a>
+                <button
+                    pButton
+                    severity="danger"
+                    class="p-button-primary p-button-sm"
+                    data-testid="delete-button"
+                    (click)="confirmTutorialGroupDeletion($event)"
+                    jhiTranslate="artemisApp.pages.tutorialGroupDetail.deleteButtonLabel"
+                ></button>
             }
         }
     </div>
@@ -179,7 +198,13 @@
         <h2 jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionsListTitle"></h2>
         <div class="spacer"></div>
         @if (allowManagementActions()) {
-            <button pButton class="p-button-primary p-button-sm" data-testid="new-session-button" (click)="openSessionModal()">New Session</button>
+            <button
+                pButton
+                class="p-button-primary p-button-sm"
+                data-testid="new-session-button"
+                jhiTranslate="artemisApp.pages.tutorialGroupDetail.newSessionButtonLabel"
+                (click)="openSessionModal()"
+            ></button>
         }
         <p-selectbutton
             [options]="sessionListOptions()"
@@ -200,7 +225,7 @@
                     <th jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionTableColumnTitle.status"></th>
                     <th jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionTableColumnTitle.attendance"></th>
                     @if (allowManagementActions()) {
-                        <th>Actions</th>
+                        <th jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionTableColumnTitle.actions"></th>
                     }
                 </tr>
             </thead>
@@ -244,20 +269,25 @@
                             <td>
                                 <div class="session-actions">
                                     @if (!session.isCancelled) {
-                                        <button pTooltip="Edit" tooltipPosition="left" (click)="openSessionModal(session.id)">
+                                        <button [pTooltip]="editSessionButtonTooltipLabel()" tooltipPosition="left" (click)="openSessionModal(session.id)">
                                             <fa-icon [icon]="faPenToSquare" aria-hidden="true" />
                                         </button>
                                     }
                                     @if (session.isCancelled) {
-                                        <button pTooltip="Undo Cancellation" tooltipPosition="left" (click)="activateTutorialGroupSession(session.id)">
+                                        <button [pTooltip]="activateSessionButtonTooltipLabel()" tooltipPosition="left" (click)="activateTutorialGroupSession(session.id)">
                                             <fa-icon [icon]="faCirclePlay" aria-hidden="true" />
                                         </button>
                                     } @else {
-                                        <button pTooltip="Cancel" tooltipPosition="left" (click)="cancelTutorialGroupSession(session.id)">
+                                        <button [pTooltip]="cancelSessionButtonTooltipLabel()" tooltipPosition="left" (click)="cancelTutorialGroupSession(session.id)">
                                             <fa-icon [icon]="faBan" aria-hidden="true" />
                                         </button>
                                     }
-                                    <button class="danger" pTooltip="Delete" tooltipPosition="left" (click)="confirmSessionDeletion($event, session.id)">
+                                    <button
+                                        [pTooltip]="deleteSessionButtonTooltipLabel()"
+                                        class="danger"
+                                        tooltipPosition="left"
+                                        (click)="confirmSessionDeletion($event, session.id)"
+                                    >
                                         <fa-icon [icon]="faTrash" aria-hidden="true" />
                                     </button>
                                 </div>

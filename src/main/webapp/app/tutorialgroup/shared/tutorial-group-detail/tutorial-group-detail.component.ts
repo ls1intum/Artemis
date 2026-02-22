@@ -155,6 +155,10 @@ export class TutorialGroupDetailComponent {
     tutorChatLink = computed(() => this.computeTutorChatLink());
     groupChannelLink = computed(() => this.computeGroupChannelLink());
     userIsNotTutor = computed(() => this.accountService.userIdentity()?.login !== this.tutorialGroup().tutorLogin);
+    editSessionButtonTooltipLabel = computed(() => this.computeEditSessionButtonTooltipLabel());
+    cancelSessionButtonTooltipLabel = computed(() => this.computeCancelSessionButtonTooltipLabel());
+    activateSessionButtonTooltipLabel = computed(() => this.computeActivateSessionButtonTooltipLabel());
+    deleteSessionButtonTooltipLabel = computed(() => this.computeDeleteSessionButtonTooltipLabel());
     onDeleteSession = output<ModifyTutorialGroupSessionEvent>();
     onCancelSession = output<ModifyTutorialGroupSessionEvent>();
     onUpdateSession = output<UpdateTutorialGroupSessionEvent>();
@@ -194,8 +198,8 @@ export class TutorialGroupDetailComponent {
     confirmTutorialGroupDeletion(event: Event) {
         this.confirmationService.confirm({
             target: event.target as EventTarget,
-            message: 'Do you really want to delete this tutorial group? This action can not be reversed!',
-            header: 'Delete Tutorial Group?',
+            message: this.translateService.instant('artemisApp.pages.tutorialGroupDetail.confirmationDialog.deleteGroup.message'),
+            header: this.translateService.instant('artemisApp.pages.tutorialGroupDetail.confirmationDialog.deleteGroup.header'),
             rejectButtonProps: {
                 label: this.translateService.instant('entity.action.cancel'),
                 severity: 'secondary',
@@ -213,8 +217,8 @@ export class TutorialGroupDetailComponent {
     confirmSessionDeletion(event: Event, sessionId: number) {
         this.confirmationService.confirm({
             target: event.target as EventTarget,
-            message: 'Do you really want to delete this session?',
-            header: 'Delete Session?',
+            message: this.translateService.instant('artemisApp.pages.tutorialGroupDetail.confirmationDialog.deleteSession.message'),
+            header: this.translateService.instant('artemisApp.pages.tutorialGroupDetail.confirmationDialog.deleteSession.header'),
             rejectButtonProps: {
                 label: this.translateService.instant('entity.action.cancel'),
                 severity: 'secondary',
@@ -343,13 +347,13 @@ export class TutorialGroupDetailComponent {
     private computePieChartData(): NgxChartsSingleSeriesDataEntry[] {
         const averageAttendanceRatio = this.averageAttendanceRatio();
         if (!averageAttendanceRatio) {
-            return [{ name: 'Not Attended', value: 100 }];
+            return [{ name: this.translateService.instant('artemisApp.pages.tutorialGroupDetail.pieChartCategoryLabel.notAttended'), value: 100 }];
         }
         const attendedValue = averageAttendanceRatio * 100;
         const notAttendedValue = 100 - attendedValue;
         return [
-            { name: 'Attended', value: attendedValue },
-            { name: 'Not Attended', value: notAttendedValue },
+            { name: this.translateService.instant('artemisApp.pages.tutorialGroupDetail.pieChartCategoryLabel.attended'), value: attendedValue },
+            { name: this.translateService.instant('artemisApp.pages.tutorialGroupDetail.pieChartCategoryLabel.notAttended'), value: notAttendedValue },
         ];
     }
 
@@ -458,5 +462,25 @@ export class TutorialGroupDetailComponent {
             'global.weekdays.sunday',
         ];
         return keys[weekDayIndex - 1];
+    }
+
+    private computeEditSessionButtonTooltipLabel(): string {
+        this.currentLocale();
+        return this.translateService.instant('artemisApp.pages.tutorialGroupDetail.sessionTableActionTooltipLabel.edit');
+    }
+
+    private computeCancelSessionButtonTooltipLabel(): string {
+        this.currentLocale();
+        return this.translateService.instant('artemisApp.pages.tutorialGroupDetail.sessionTableActionTooltipLabel.cancel');
+    }
+
+    private computeActivateSessionButtonTooltipLabel(): string {
+        this.currentLocale();
+        return this.translateService.instant('artemisApp.pages.tutorialGroupDetail.sessionTableActionTooltipLabel.activate');
+    }
+
+    private computeDeleteSessionButtonTooltipLabel(): string {
+        this.currentLocale();
+        return this.translateService.instant('artemisApp.pages.tutorialGroupDetail.sessionTableActionTooltipLabel.delete');
     }
 }

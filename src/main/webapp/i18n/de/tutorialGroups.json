@@ -348,16 +348,41 @@
                 "currentTutorialLectureLinkLabel": "Aktuelle Lektion",
                 "tutorChatLinkLabel": "Tutor Chat",
                 "groupChannelLinkLabel": "Gruppen Channel",
+                "registrationsLinkLabel": "Registrierungen",
+                "editLinkLabel": "Bearbeiten",
+                "deleteButtonLabel": "Löschen",
+                "newSessionButtonLabel": "Neue Session",
+                "confirmationDialog": {
+                    "deleteGroup": {
+                        "header": "Gruppe löschen?",
+                        "message": "Willst du wirklich diese Gruppe löschen? Diese Aktion kann nicht rückgängig gemacht werden!"
+                    },
+                    "deleteSession": {
+                        "header": "Session löschen?",
+                        "message": "Willst du wirklich diese Session löschen?"
+                    }
+                },
                 "sessionTableColumnTitle": {
                     "date": "Datum",
                     "time": "Uhrzeit",
                     "location": "Ort",
                     "attendance": "Teilnehmerzahl",
-                    "status": "Status"
+                    "status": "Status",
+                    "actions": "Aktionen"
+                },
+                "sessionTableActionTooltipLabel": {
+                    "edit": "Bearbeiten",
+                    "cancel": "Absagen",
+                    "activate": "Absage wiederrufen",
+                    "delete": "Löschen"
                 },
                 "disclaimerText": {
                     "noAttendanceDataAvailable": "Keine Daten verfügbar",
                     "noUpcomingSession": "Keine bevorstehende Session"
+                },
+                "pieChartCategoryLabel": {
+                    "attended": "Anwesend",
+                    "notAttended": "Abwesend"
                 },
                 "createOneToOneChatError": "Fehler beim Erstellen des Tutor-Chats. Bitte versuchen Sie es erneut.",
                 "managementActionErrorAlert": {
