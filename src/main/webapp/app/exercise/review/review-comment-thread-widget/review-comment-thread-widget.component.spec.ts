@@ -6,14 +6,14 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ConfirmationService } from 'primeng/api';
 
 describe('ReviewCommentThreadWidgetComponent', () => {
     setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ReviewCommentThreadWidgetComponent>;
     let comp: ReviewCommentThreadWidgetComponent;
     let reviewCommentService: any;
-    let modalService: { open: any };
+    let confirmationService: ConfirmationService;
 
     beforeEach(async () => {
         reviewCommentService = {
@@ -22,21 +22,18 @@ describe('ReviewCommentThreadWidgetComponent', () => {
             updateCommentInContext: vi.fn(),
             toggleResolvedInContext: vi.fn(),
         };
-        modalService = {
-            open: vi.fn().mockReturnValue({ componentInstance: {}, result: Promise.resolve() }),
-        };
 
         await TestBed.configureTestingModule({
             imports: [ReviewCommentThreadWidgetComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ExerciseReviewCommentService, useValue: reviewCommentService },
-                { provide: NgbModal, useValue: modalService },
             ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ReviewCommentThreadWidgetComponent);
         comp = fixture.componentInstance;
+        confirmationService = fixture.debugElement.injector.get(ConfirmationService);
         fixture.componentRef.setInput('thread', { id: 1, resolved: false, comments: [] } as any);
     });
 
@@ -51,39 +48,39 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         expect(comp.showThreadBody()).toBe(false);
     });
 
-    it('should open confirmation modal on deleteComment', () => {
+    it('should request confirmation dialog on deleteComment', () => {
+        const confirmSpy = vi.spyOn(confirmationService, 'confirm');
         comp.deleteComment(5);
-        expect(modalService.open).toHaveBeenCalledOnce();
+        expect(confirmSpy).toHaveBeenCalledOnce();
+        expect(confirmSpy).toHaveBeenCalledWith(expect.objectContaining({ message: expect.any(String), header: expect.any(String) }));
     });
 
-    it('should delete comment when deletion is confirmed', async () => {
-        let resolveModal: () => void;
-        const modalResult = new Promise<void>((resolve) => {
-            resolveModal = resolve;
+    it('should delete comment when deletion is confirmed', () => {
+        let acceptCallback: (() => void) | undefined;
+        vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: { accept?: () => void }) => {
+            acceptCallback = confirmation.accept;
+            return confirmationService;
         });
-        modalService.open.mockReturnValue({ componentInstance: {}, result: modalResult });
 
         comp.deleteComment(5);
         expect(reviewCommentService.deleteCommentInContext).not.toHaveBeenCalled();
 
-        resolveModal!();
-        await vi.waitFor(() => {
-            expect(reviewCommentService.deleteCommentInContext).toHaveBeenCalledWith(5);
-        });
+        acceptCallback?.();
+
+        expect(reviewCommentService.deleteCommentInContext).toHaveBeenCalledWith(5);
     });
 
-    it('should not delete comment when deletion modal is dismissed', async () => {
-        let rejectModal: (reason?: unknown) => void;
-        const modalResult = new Promise<void>((_resolve, reject) => {
-            rejectModal = reject;
+    it('should not delete comment when deletion is dismissed', () => {
+        let rejectCallback: (() => void) | undefined;
+        vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: { reject?: () => void }) => {
+            rejectCallback = confirmation.reject;
+            return confirmationService;
         });
-        modalService.open.mockReturnValue({ componentInstance: {}, result: modalResult });
 
         comp.deleteComment(5);
         expect(reviewCommentService.deleteCommentInContext).not.toHaveBeenCalled();
 
-        rejectModal!('dismissed');
-        await modalResult.catch(() => {});
+        rejectCallback?.();
 
         expect(reviewCommentService.deleteCommentInContext).not.toHaveBeenCalled();
     });
