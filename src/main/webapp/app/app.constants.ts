@@ -63,6 +63,8 @@ export const MODULE_FEATURE_SHARING = 'sharing';
 
 export const MODULE_FEATURE_LTI = 'lti';
 
+export const MODULE_FEATURE_THEIA = 'theia';
+
 export const MODULE_FEATURE_GLOBAL_SEARCH = 'global-search';
 
 export type ModuleFeature =
@@ -81,6 +83,7 @@ export type ModuleFeature =
     | typeof MODULE_FEATURE_NEBULA
     | typeof MODULE_FEATURE_SHARING
     | typeof MODULE_FEATURE_LTI
+    | typeof MODULE_FEATURE_THEIA
     | typeof MODULE_FEATURE_GLOBAL_SEARCH;
 
 export const PROFILE_LOCALCI = 'localci';
@@ -103,8 +106,6 @@ export const PROFILE_APOLLON = 'apollon';
 
 export const PROFILE_ATHENA = 'athena';
 
-export const PROFILE_THEIA = 'theia';
-
 export const PROFILE_LDAP = 'ldap';
 
 export const PROFILE_SAML2 = 'saml2';
@@ -120,6 +121,5 @@ export type ProfileFeature =
     | typeof PROFILE_JENKINS
     | typeof PROFILE_APOLLON
     | typeof PROFILE_ATHENA
-    | typeof PROFILE_THEIA
     | typeof PROFILE_LDAP
     | typeof PROFILE_SAML2;
