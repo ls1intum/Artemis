@@ -140,7 +140,7 @@ class HyperionChecklistServiceTest {
 
         ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem statement", "EASY", "JAVA", 1L);
 
-        ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeChecklist(request, 1L);
+        ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeChecklist(request, 1L).join();
 
         assertThat(response).isNotNull();
         assertThat(response.inferredCompetencies()).hasSize(1);
@@ -180,7 +180,7 @@ class HyperionChecklistServiceTest {
 
         ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem", null, null, 1L);
 
-        ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeChecklist(request, 1L);
+        ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeChecklist(request, 1L).join();
 
         assertThat(response).isNotNull();
         assertThat(response.inferredCompetencies()).isEmpty();
@@ -227,7 +227,7 @@ class HyperionChecklistServiceTest {
 
         ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem", null, null, 1L);
 
-        ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeChecklist(request, 1L);
+        ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeChecklist(request, 1L).join();
 
         // Bloom radar should be normalized to sum to 1.0
         var radar = response.bloomRadar();
@@ -262,7 +262,7 @@ class HyperionChecklistServiceTest {
 
         ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem", "EASY", "JAVA", 1L);
 
-        ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeSection(request, ChecklistSection.COMPETENCIES, 1L);
+        ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeSection(request, ChecklistSection.COMPETENCIES, 1L).join();
 
         assertThat(response).isNotNull();
         assertThat(response.inferredCompetencies()).hasSize(1);
@@ -289,7 +289,7 @@ class HyperionChecklistServiceTest {
 
         ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem", "EASY", "JAVA", null);
 
-        ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeSection(request, ChecklistSection.DIFFICULTY, 1L);
+        ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeSection(request, ChecklistSection.DIFFICULTY, 1L).join();
 
         assertThat(response).isNotNull();
         assertThat(response.difficultyAssessment()).isNotNull();
@@ -320,7 +320,7 @@ class HyperionChecklistServiceTest {
 
         ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem", null, null, null);
 
-        ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeSection(request, ChecklistSection.QUALITY, 1L);
+        ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeSection(request, ChecklistSection.QUALITY, 1L).join();
 
         assertThat(response).isNotNull();
         assertThat(response.qualityIssues()).hasSize(1);
