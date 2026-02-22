@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.TutorSuggestionStatusUpdateDTO;
@@ -72,11 +74,13 @@ public class PyrisStatusUpdateService {
 
     private final Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi;
 
+    private final WebsocketMessagingService websocketMessagingService;
+
     public PyrisStatusUpdateService(PyrisJobService pyrisJobService, IrisExerciseChatSessionService irisExerciseChatSessionService,
             IrisTextExerciseChatSessionService irisTextExerciseChatSessionService, IrisCourseChatSessionService courseChatSessionService,
             IrisCompetencyGenerationService competencyGenerationService, IrisLectureChatSessionService irisLectureChatSessionService,
             IrisTutorSuggestionSessionService irisTutorSuggestionSessionService, Optional<ProcessingStateCallbackApi> processingStateCallbackApi,
-            Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi, ObjectMapper objectMapper) {
+            Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi, ObjectMapper objectMapper, WebsocketMessagingService websocketMessagingService) {
         this.pyrisJobService = pyrisJobService;
         this.irisExerciseChatSessionService = irisExerciseChatSessionService;
         this.irisTextExerciseChatSessionService = irisTextExerciseChatSessionService;
@@ -87,6 +91,7 @@ public class PyrisStatusUpdateService {
         this.processingStateCallbackApi = processingStateCallbackApi;
         this.lectureTranscriptionsRepositoryApi = lectureTranscriptionsRepositoryApi;
         this.objectMapper = objectMapper;
+        this.websocketMessagingService = websocketMessagingService;
     }
 
     /**
@@ -181,6 +186,9 @@ public class PyrisStatusUpdateService {
         else {
             pyrisJobService.updateJob(job);
         }
+
+        // Notify the frontend so it can refresh the processing status without a manual page reload
+        websocketMessagingService.sendMessage("/topic/lectures/" + job.lectureId() + "/ingestion-status", Map.of("lectureUnitId", job.lectureUnitId()));
     }
 
     /**
@@ -235,6 +243,9 @@ public class PyrisStatusUpdateService {
         else {
             pyrisJobService.updateJob(job);
         }
+
+        // Notify the frontend so it can refresh the processing status without a manual page reload
+        websocketMessagingService.sendMessage("/topic/lectures/" + job.lectureId() + "/ingestion-status", Map.of("lectureUnitId", job.lectureUnitId()));
     }
 
     private void saveTranscriptionResult(String jobId, boolean success, String resultJson) {
