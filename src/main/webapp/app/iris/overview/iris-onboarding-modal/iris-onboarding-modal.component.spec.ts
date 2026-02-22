@@ -74,7 +74,7 @@ describe('IrisOnboardingModalComponent', () => {
                 MockProvider(DynamicDialogRef),
                 { provide: DynamicDialogConfig, useValue: { data: { hasAvailableExercises: true } } },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: Router, useValue: { events: routerEventsSubject.asObservable() } },
+                { provide: Router, useValue: { events: routerEventsSubject.asObservable(), url: '/courses/1/iris' } },
             ],
         });
 

@@ -366,8 +366,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
                     this.applyPromptStarter(result.promptKey);
                 }
             })
-            .catch(() => {
-                // Onboarding failed; proceed silently.
+            .catch((error) => {
+                // eslint-disable-next-line no-undef
+                console.warn('Onboarding failed; proceeding without it.', error);
             });
     }
 
