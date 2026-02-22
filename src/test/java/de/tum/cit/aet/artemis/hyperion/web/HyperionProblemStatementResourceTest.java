@@ -94,9 +94,10 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     private void mockChecklistAnalysis() {
-        doReturn(new ChatResponse(List.of(new Generation(
-                new AssistantMessage("{\"goals\": [{ \"skill\": \"Loops\", \"taxonomyLevel\": \"APPLY\", \"confidence\": 0.9, \"explanation\": \"Loop found\" }]}")))))
-                .when(azureOpenAiChatModel).call(org.mockito.ArgumentMatchers.<Prompt>argThat(p -> p.getContents().contains("infer the intended learning goals")));
+        doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(
+                "{\"competencies\": [{ \"competencyTitle\": \"Loops\", \"taxonomyLevel\": \"APPLY\", \"confidence\": 0.9, \"whyThisMatches\": \"Loop found\" }]}")))))
+                .when(azureOpenAiChatModel)
+                .call(org.mockito.ArgumentMatchers.<Prompt>argThat(p -> p.getContents().contains("match it to competencies from a standardized catalog")));
         doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("{\"suggested\": \"EASY\", \"reasoning\": \"Simple\"}"))))).when(azureOpenAiChatModel)
                 .call(org.mockito.ArgumentMatchers.<Prompt>argThat(p -> p.getContents().contains("suggest the appropriate difficulty level")));
         doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(

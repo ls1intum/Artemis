@@ -14,7 +14,15 @@
             <div class="analysis-results">
                 <!-- Quality Section (moved to top) -->
                 <div class="section-card mb-2 border rounded" [class.stale]="isSectionStale('quality')">
-                    <div class="section-header p-2 d-flex align-items-center" (click)="toggleSection('quality')">
+                    <div
+                        class="section-header p-2 d-flex align-items-center"
+                        role="button"
+                        tabindex="0"
+                        [attr.aria-expanded]="sectionExpanded['quality']()"
+                        (click)="toggleSection('quality')"
+                        (keydown.enter)="toggleSection('quality')"
+                        (keydown.space)="$event.preventDefault(); toggleSection('quality')"
+                    >
                         <fa-icon [icon]="sectionExpanded['quality']() ? faChevronDown : faChevronRight" class="me-2 text-muted" />
                         <h6 class="mb-0" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.title">Quality Assessment</h6>
                         @if (result.qualityIssues?.length) {
@@ -54,8 +62,8 @@
                                     <svg viewBox="-120 -120 240 240" width="220" height="220" style="overflow: visible">
                                         <!-- Background grid -->
                                         <g class="radar-grid">
-                                            @for (level of [0.25, 0.5, 0.75, 1.0]; track level) {
-                                                <polygon [attr.points]="getQualityGridPoints(level)" fill="none" stroke="var(--surface-500)" stroke-width="0.5" opacity="0.3" />
+                                            @for (points of qualityGridStrings; track $index) {
+                                                <polygon [attr.points]="points" fill="none" stroke="var(--surface-500)" stroke-width="0.5" opacity="0.3" />
                                             }
                                         </g>
                                         <!-- Axes -->
@@ -132,7 +140,7 @@
                                     </button>
                                 </div>
                                 <div class="quality-issues-list">
-                                    @for (issue of result.qualityIssues; track issue; let i = $index) {
+                                    @for (issue of result.qualityIssues; track $index; let i = $index) {
                                         <div class="quality-issue-item">
                                             <div class="d-flex justify-content-between align-items-start">
                                                 <div class="d-flex align-items-center gap-2 flex-wrap">
@@ -184,7 +192,15 @@
 
                 <!-- Estimated Learning Goals Section -->
                 <div class="section-card mb-2 border rounded" [class.stale]="isSectionStale('competencies')">
-                    <div class="section-header p-2 d-flex align-items-center" (click)="toggleSection('competencies')">
+                    <div
+                        class="section-header p-2 d-flex align-items-center"
+                        role="button"
+                        tabindex="0"
+                        [attr.aria-expanded]="sectionExpanded['competencies']()"
+                        (click)="toggleSection('competencies')"
+                        (keydown.enter)="toggleSection('competencies')"
+                        (keydown.space)="$event.preventDefault(); toggleSection('competencies')"
+                    >
                         <fa-icon [icon]="sectionExpanded['competencies']() ? faChevronDown : faChevronRight" class="me-2 text-muted" />
                         <h6 class="mb-0" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.title">Estimated Learning Goals</h6>
                         @if (result.inferredCompetencies?.length) {
@@ -268,14 +284,14 @@
                                                         <strong class="small" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.relatedTasks"
                                                             >Related tasks:</strong
                                                         >
-                                                        <span class="small text-muted ms-1">{{ comp.relatedTaskNames!.join(', ') }}</span>
+                                                        <span class="small text-muted ms-1">{{ comp.relatedTaskNames?.join(', ') }}</span>
                                                     }
                                                     @if (comp.evidence?.length) {
                                                         <strong class="small" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.evidence"
                                                             >Evidence:</strong
                                                         >
                                                         <ul class="small mb-0">
-                                                            @for (item of comp.evidence; track item) {
+                                                            @for (item of comp.evidence; track $index) {
                                                                 <li>{{ item }}</li>
                                                             }
                                                         </ul>
@@ -331,7 +347,15 @@
 
                 <!-- Difficulty Section -->
                 <div class="section-card mb-2 border rounded" [class.stale]="isSectionStale('difficulty')">
-                    <div class="section-header p-2 d-flex align-items-center" (click)="toggleSection('difficulty')">
+                    <div
+                        class="section-header p-2 d-flex align-items-center"
+                        role="button"
+                        tabindex="0"
+                        [attr.aria-expanded]="sectionExpanded['difficulty']()"
+                        (click)="toggleSection('difficulty')"
+                        (keydown.enter)="toggleSection('difficulty')"
+                        (keydown.space)="$event.preventDefault(); toggleSection('difficulty')"
+                    >
                         <fa-icon [icon]="sectionExpanded['difficulty']() ? faChevronDown : faChevronRight" class="me-2 text-muted" />
                         <h6 class="mb-0" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.difficulty.title">Difficulty Assessment</h6>
                         @if (isSectionStale('difficulty')) {

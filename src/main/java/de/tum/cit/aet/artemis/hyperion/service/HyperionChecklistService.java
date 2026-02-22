@@ -120,16 +120,22 @@ public class HyperionChecklistService {
 
         var qualityMono = Mono.fromCallable(() -> runQualityAnalysis(ctx.input(), ctx.parentObs())).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
 
-        var resultTuple = Mono.zip(competenciesMono, difficultyMono, qualityMono).block(Duration.ofSeconds(60));
+        try {
+            var resultTuple = Mono.zip(competenciesMono, difficultyMono, qualityMono).block(Duration.ofSeconds(60));
 
-        if (resultTuple == null) {
+            if (resultTuple == null) {
+                return ChecklistAnalysisResponseDTO.empty();
+            }
+
+            List<InferredCompetencyDTO> competencies = resultTuple.getT1();
+            BloomRadarDTO bloomRadar = computeBloomRadar(competencies);
+
+            return new ChecklistAnalysisResponseDTO(competencies, bloomRadar, resultTuple.getT2(), resultTuple.getT3());
+        }
+        catch (IllegalStateException e) {
+            log.warn("Checklist analysis timed out or failed (exerciseId={})", request.exerciseId(), e);
             return ChecklistAnalysisResponseDTO.empty();
         }
-
-        List<InferredCompetencyDTO> competencies = resultTuple.getT1();
-        BloomRadarDTO bloomRadar = computeBloomRadar(competencies);
-
-        return new ChecklistAnalysisResponseDTO(competencies, bloomRadar, resultTuple.getT2(), resultTuple.getT3());
     }
 
     /**
@@ -155,11 +161,11 @@ public class HyperionChecklistService {
             }
             case DIFFICULTY -> {
                 DifficultyAssessmentDTO difficulty = runDifficultyAnalysis(ctx.input(), ctx.parentObs(), ctx.declaredDifficulty());
-                yield new ChecklistAnalysisResponseDTO(List.of(), null, difficulty, null);
+                yield new ChecklistAnalysisResponseDTO(null, null, difficulty, null);
             }
             case QUALITY -> {
                 List<QualityIssueDTO> issues = runQualityAnalysis(ctx.input(), ctx.parentObs());
-                yield new ChecklistAnalysisResponseDTO(List.of(), null, null, issues);
+                yield new ChecklistAnalysisResponseDTO(null, null, null, issues);
             }
         };
     }

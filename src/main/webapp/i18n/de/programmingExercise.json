@@ -809,9 +809,6 @@
                     "showDetails": "Details",
                     "hideDetails": "Ausblenden"
                 },
-                "bloomRadar": {
-                    "title": "Bloom-Taxonomie-Verteilung"
-                },
                 "difficulty": {
                     "title": "Schwierigkeitsbewertung",
                     "suggested": "Vorgeschlagen:",

@@ -55,6 +55,7 @@ export function tokenizeAndStem(title: string): string[] {
     return title
         .split(/\s+/)
         .filter(Boolean)
+        .map((w) => w.toLowerCase())
         .filter((w) => !STOP_WORDS.has(w))
         .map((w) => stemWord(w))
         .sort();

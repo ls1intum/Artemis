@@ -1,6 +1,6 @@
-import { Component, DestroyRef, computed, inject, input, output, signal } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { CommonModule } from '@angular/common';
+import { DecimalPipe, NgClass } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { Tag } from 'primeng/tag';
@@ -38,8 +38,8 @@ import { Observable, forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { taskRegex } from 'app/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
 import { titleSimilarity } from './title-similarity.utils';
-
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 /** Type-safe section identifier used for stale tracking and section-level re-analysis. */
 type ChecklistSectionType = 'competencies' | 'difficulty' | 'quality';
@@ -50,14 +50,13 @@ const SECTION_TO_API_PARAM: Record<ChecklistSectionType, 'COMPETENCIES' | 'DIFFI
     difficulty: 'DIFFICULTY',
     quality: 'QUALITY',
 };
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-checklist-panel',
     templateUrl: './checklist-panel.component.html',
     styleUrls: ['./checklist-panel.component.scss'],
     standalone: true,
-    imports: [CommonModule, TranslateModule, FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective, Tag, ButtonDirective, Badge],
+    imports: [NgClass, DecimalPipe, TranslateModule, FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective, Tag, ButtonDirective, Badge],
 })
 export class ChecklistPanelComponent {
     private hyperionApiService = inject(HyperionProblemStatementApiService);
@@ -98,6 +97,20 @@ export class ChecklistPanelComponent {
 
     /** Effective problem statement: the latest AI-modified version, or the input signal. */
     private readonly effectiveProblemStatement = computed(() => this.latestProblemStatement() ?? this.problemStatement());
+
+    constructor() {
+        /**
+         * Clear latestProblemStatement once the input signal catches up to the
+         * AI-emitted value, ensuring subsequent manual edits are respected.
+         */
+        effect(() => {
+            const inputPS = this.problemStatement();
+            const latest = this.latestProblemStatement();
+            if (latest !== undefined && inputPS === latest) {
+                untracked(() => this.latestProblemStatement.set(undefined));
+            }
+        });
+    }
 
     /**
      * Locally computed task and test counts from the problem statement.
@@ -146,7 +159,7 @@ export class ChecklistPanelComponent {
         const ex = this.exercise();
         this.isLoading.set(true);
         const request = {
-            problemStatementMarkdown: this.problemStatement(),
+            problemStatementMarkdown: this.effectiveProblemStatement(),
             declaredDifficulty: ex.difficulty,
             language: ex.programmingLanguage,
             exerciseId: ex.id,
@@ -322,6 +335,9 @@ export class ChecklistPanelComponent {
             return `${x},${y}`;
         }).join(' ');
     }
+
+    /** Pre-computed grid polygon strings for the 4 scale levels. */
+    readonly qualityGridStrings = [0.25, 0.5, 0.75, 1.0].map((level) => this.getQualityGridPoints(level));
 
     qualityPolygonPoints = computed(() => {
         return this.qualityRadarPoints()
@@ -746,22 +762,6 @@ export class ChecklistPanelComponent {
     isCompetencyCreated(comp: InferredCompetency): boolean {
         return this.createdCompetencyTitles().has(comp.competencyTitle ?? '');
     }
-
-    /**
-     * Gets the count of inferred competencies that match existing course competencies
-     */
-    readonly matchingCount = computed(() => {
-        const inferred = this.analysisResult()?.inferredCompetencies ?? [];
-        return inferred.filter((c) => this.findMatchingCompetency(c) !== undefined).length;
-    });
-
-    /**
-     * Gets the count of inferred competencies that don't match any existing course competency
-     */
-    readonly unmatchedCount = computed(() => {
-        const inferred = this.analysisResult()?.inferredCompetencies ?? [];
-        return inferred.filter((c) => this.findMatchingCompetency(c) === undefined).length;
-    });
 
     /**
      * Counts tasks and unique test cases from the problem statement by parsing [task] markers.
