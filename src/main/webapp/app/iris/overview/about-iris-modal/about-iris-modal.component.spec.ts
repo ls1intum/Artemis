@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -18,7 +17,6 @@ describe('AboutIrisModalComponent', () => {
 
     let component: AboutIrisModalComponent;
     let fixture: ComponentFixture<AboutIrisModalComponent>;
-    let compiled: DebugElement;
     let dialogRef: { close: ReturnType<typeof vi.fn> };
     let chatService: { clearChat: ReturnType<typeof vi.fn> };
 
@@ -39,7 +37,6 @@ describe('AboutIrisModalComponent', () => {
 
         fixture = TestBed.createComponent(AboutIrisModalComponent);
         component = fixture.componentInstance;
-        compiled = fixture.debugElement;
         await fixture.whenStable();
     });
 
@@ -47,60 +44,51 @@ describe('AboutIrisModalComponent', () => {
         vi.restoreAllMocks();
     });
 
+    const expectValidCards = (cards: { titleKey: string; descKey: string; icon: object }[]) => {
+        for (const card of cards) {
+            expect(card.titleKey).toBeDefined();
+            expect(card.descKey).toBeDefined();
+            expect(card.icon).toBeDefined();
+        }
+    };
+
     it('should create', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should expose correct icons', () => {
+    it('should expose faXmark and faShield icons', () => {
         expect(component['faXmark']).toBeDefined();
         expect(component['faShield']).toBeDefined();
     });
 
-    it('should have 3 cards in whatIrisCanDo', () => {
-        const cards = component['whatIrisCanDo'];
-        expect(cards).toHaveLength(3);
-        for (const card of cards) {
-            expect(card.titleKey).toBeDefined();
-            expect(card.descKey).toBeDefined();
-            expect(card.icon).toBeDefined();
-        }
+    it.each([
+        ['whatIrisCanDo', 3],
+        ['whatToExpect', 3],
+    ] as const)('should have %i valid cards in %s', (key, expectedLength) => {
+        const cards = component[key];
+        expect(cards).toHaveLength(expectedLength);
+        expectValidCards(cards);
     });
 
-    it('should have 3 cards in whatToExpect', () => {
-        const cards = component['whatToExpect'];
-        expect(cards).toHaveLength(3);
-        for (const card of cards) {
-            expect(card.titleKey).toBeDefined();
-            expect(card.descKey).toBeDefined();
-            expect(card.icon).toBeDefined();
-        }
-    });
-
-    it('close() should call dialogRef.close() and not clearChat()', () => {
+    it('close() should call dialogRef.close() without clearing chat', () => {
         component.close();
         expect(dialogRef.close).toHaveBeenCalledOnce();
         expect(chatService.clearChat).not.toHaveBeenCalled();
     });
 
-    it('tryIris() should call clearChat() and dialogRef.close()', () => {
+    it('tryIris() should clear chat and close dialog', () => {
         component.tryIris();
         expect(chatService.clearChat).toHaveBeenCalledOnce();
         expect(dialogRef.close).toHaveBeenCalledOnce();
     });
 
-    it('close button click should call close()', async () => {
-        vi.spyOn(component, 'close');
-        const closeBtn = compiled.query(By.css('.close-btn'));
-        closeBtn.nativeElement.click();
+    it.each([
+        ['.close-btn', 'close'],
+        ['.try-iris-btn', 'tryIris'],
+    ] as const)('%s click should call %s()', async (selector, method) => {
+        vi.spyOn(component, method);
+        fixture.debugElement.query(By.css(selector)).nativeElement.click();
         await fixture.whenStable();
-        expect(component.close).toHaveBeenCalled();
-    });
-
-    it('Try Iris button click should call tryIris()', async () => {
-        vi.spyOn(component, 'tryIris');
-        const tryIrisBtn = compiled.query(By.css('.try-iris-btn'));
-        tryIrisBtn.nativeElement.click();
-        await fixture.whenStable();
-        expect(component.tryIris).toHaveBeenCalled();
+        expect(component[method]).toHaveBeenCalled();
     });
 });
