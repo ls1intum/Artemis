@@ -200,7 +200,7 @@
                                 <span jhiTranslate="artemisApp.programmingExercise.codeGeneration.generateCode">Generate Code</span>
                             </button>
 
-                            @if (exercise.isAtLeastInstructor) {
+                            @if (exercise.isAtLeastEditor) {
                                 @if (sortedIssues().length) {
                                     <div class="d-flex w-100">
                                         <button ngbDropdownItem class="flex-grow-1" (click)="checkConsistencies(exercise); aiDropdown.close()" [disabled]="isCheckingConsistency()">
