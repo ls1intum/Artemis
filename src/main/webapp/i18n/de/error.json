@@ -227,6 +227,7 @@
             "idNull": "Eine Tutoriengruppen-Konfiguration kann nicht ohne ID aktualisiert werden.",
 
             "tutorialPeriodMissing": "Das Startdatum und das Enddatum des Tutorienzeitraums müssen gesetzt sein.",
+            "tutorialPeriodInvalidFormat": "Das Startdatum und das Enddatum des Tutorienzeitraums müssen gültige ISO-8601-Datumsangaben sein.",
             "tutorialPeriodInvalidOrder": "Das Startdatum des Tutorienzeitraums muss vor dem Enddatum liegen.",
 
             "courseIdMismatch": "Die Kurs-ID im Pfad stimmt nicht mit dem Kurs der Tutoriengruppen-Konfiguration überein.",

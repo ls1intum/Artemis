@@ -146,14 +146,9 @@ public record TutorialGroupConfigurationDTO(Long id, @NotBlank String tutorialPe
         configuration.setTutorialPeriodEndInclusive(dto.tutorialPeriodEndInclusive());
         configuration.setUseTutorialGroupChannels(dto.useTutorialGroupChannels());
         configuration.setUsePublicTutorialGroupChannels(dto.usePublicTutorialGroupChannels());
-        if (dto.tutorialGroupFreePeriods() != null) {
-            Set<TutorialGroupFreePeriod> freePeriods = dto.tutorialGroupFreePeriods().stream().map(TutorialGroupFreePeriodDTO::from).collect(Collectors.toSet());
-            freePeriods.forEach(fp -> fp.setTutorialGroupsConfiguration(configuration));
-            configuration.setTutorialGroupFreePeriods(freePeriods);
-        }
-        else {
-            configuration.setTutorialGroupFreePeriods(Set.of());
-        }
+        Set<TutorialGroupFreePeriod> freePeriods = dto.tutorialGroupFreePeriods().stream().map(TutorialGroupFreePeriodDTO::from).collect(Collectors.toSet());
+        freePeriods.forEach(fp -> fp.setTutorialGroupsConfiguration(configuration));
+        configuration.setTutorialGroupFreePeriods(freePeriods);
         return configuration;
     }
 }
