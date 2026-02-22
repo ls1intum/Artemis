@@ -22,9 +22,12 @@ import org.springframework.ai.chat.prompt.Prompt;
 import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.StandardizedCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.KnowledgeArea;
+import de.tum.cit.aet.artemis.hyperion.domain.ChecklistSection;
+import de.tum.cit.aet.artemis.hyperion.domain.DifficultyDelta;
+import de.tum.cit.aet.artemis.hyperion.domain.QualityIssueCategory;
+import de.tum.cit.aet.artemis.hyperion.domain.SuggestedDifficulty;
 import de.tum.cit.aet.artemis.hyperion.dto.ChecklistAnalysisRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ChecklistAnalysisResponseDTO;
-import de.tum.cit.aet.artemis.hyperion.dto.ChecklistSection;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTaskTestRepository;
 import io.micrometer.observation.ObservationRegistry;
 
@@ -147,11 +150,11 @@ class HyperionChecklistServiceTest {
         assertThat(response.bloomRadar()).isNotNull();
 
         assertThat(response.difficultyAssessment()).isNotNull();
-        assertThat(response.difficultyAssessment().suggested()).isEqualTo("EASY");
-        assertThat(response.difficultyAssessment().delta()).isEqualTo("MATCH");
+        assertThat(response.difficultyAssessment().suggested()).isEqualTo(SuggestedDifficulty.EASY);
+        assertThat(response.difficultyAssessment().delta()).isEqualTo(DifficultyDelta.MATCH);
 
         assertThat(response.qualityIssues()).hasSize(1);
-        assertThat(response.qualityIssues().getFirst().category()).isEqualTo("CLARITY");
+        assertThat(response.qualityIssues().getFirst().category()).isEqualTo(QualityIssueCategory.CLARITY);
         assertThat(response.qualityIssues().getFirst().impactOnLearners()).isNotNull();
     }
 
@@ -185,7 +188,7 @@ class HyperionChecklistServiceTest {
 
         // Difficulty should be the fallback
         assertThat(response.difficultyAssessment()).isNotNull();
-        assertThat(response.difficultyAssessment().suggested()).isEqualTo("UNKNOWN");
+        assertThat(response.difficultyAssessment().suggested()).isEqualTo(SuggestedDifficulty.UNKNOWN);
         assertThat(response.difficultyAssessment().reasoning()).contains("Analysis failed");
     }
 
@@ -290,8 +293,8 @@ class HyperionChecklistServiceTest {
 
         assertThat(response).isNotNull();
         assertThat(response.difficultyAssessment()).isNotNull();
-        assertThat(response.difficultyAssessment().suggested()).isEqualTo("HARD");
-        assertThat(response.difficultyAssessment().delta()).isEqualTo("HIGHER");
+        assertThat(response.difficultyAssessment().suggested()).isEqualTo(SuggestedDifficulty.HARD);
+        assertThat(response.difficultyAssessment().delta()).isEqualTo(DifficultyDelta.HIGHER);
         // Other sections should be null
         assertThat(response.inferredCompetencies()).isNull();
         assertThat(response.qualityIssues()).isNull();
@@ -321,7 +324,7 @@ class HyperionChecklistServiceTest {
 
         assertThat(response).isNotNull();
         assertThat(response.qualityIssues()).hasSize(1);
-        assertThat(response.qualityIssues().getFirst().category()).isEqualTo("COMPLETENESS");
+        assertThat(response.qualityIssues().getFirst().category()).isEqualTo(QualityIssueCategory.COMPLETENESS);
         // Other sections should be null
         assertThat(response.inferredCompetencies()).isNull();
         assertThat(response.difficultyAssessment()).isNull();

@@ -10,12 +10,29 @@
 
 
 export interface DifficultyAssessment { 
-    suggested?: string;
+    suggested?: DifficultyAssessment.SuggestedEnum;
     confidence?: number;
     reasoning?: string;
     matchesDeclared?: boolean;
-    delta?: string;
+    delta?: DifficultyAssessment.DeltaEnum;
     taskCount?: number;
     testCount?: number;
 }
+export namespace DifficultyAssessment {
+    export const SuggestedEnum = {
+        Easy: 'EASY',
+        Medium: 'MEDIUM',
+        Hard: 'HARD',
+        Unknown: 'UNKNOWN'
+    } as const;
+    export type SuggestedEnum = typeof SuggestedEnum[keyof typeof SuggestedEnum];
+    export const DeltaEnum = {
+        Lower: 'LOWER',
+        Match: 'MATCH',
+        Higher: 'HIGHER',
+        Unknown: 'UNKNOWN'
+    } as const;
+    export type DeltaEnum = typeof DeltaEnum[keyof typeof DeltaEnum];
+}
+
 

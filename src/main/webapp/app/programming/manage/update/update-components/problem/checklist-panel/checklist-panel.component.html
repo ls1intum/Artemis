@@ -59,7 +59,15 @@
                             <!-- Quality Radar Chart -->
                             <div class="quality-radar-section d-flex align-items-start gap-4 mb-3">
                                 <div class="quality-radar-chart flex-shrink-0">
-                                    <svg viewBox="-120 -120 240 240" width="220" height="220" style="overflow: visible">
+                                    <svg
+                                        viewBox="-120 -120 240 240"
+                                        width="220"
+                                        height="220"
+                                        style="overflow: visible"
+                                        role="img"
+                                        [attr.aria-label]="'artemisApp.programmingExercise.instructorChecklist.quality.radarChartLabel' | artemisTranslate"
+                                    >
+                                        <title jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.radarChartLabel">Quality scores radar chart</title>
                                         <!-- Background grid -->
                                         <g class="radar-grid">
                                             @for (points of qualityGridStrings; track $index) {
@@ -432,7 +440,7 @@
                                         @if (isActionLoading('adapt-' + level)) {
                                             <fa-icon [icon]="faSpinner" animation="spin" size="xs" />
                                         } @else {
-                                            {{ level }}
+                                            {{ 'artemisApp.exercise.' + level.toLowerCase() | artemisTranslate }}
                                         }
                                         @if (exercise()?.difficulty === level) {
                                             <small class="ms-1" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.actions.current">(current)</small>

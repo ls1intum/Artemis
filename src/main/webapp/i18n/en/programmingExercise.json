@@ -827,7 +827,8 @@
                     "fix": "Fix",
                     "suggestedFix": "Suggested fix:",
                     "fixAll": "Fix All Issues",
-                    "fixIssue": "Apply AI fix for this issue"
+                    "fixIssue": "Apply AI fix for this issue",
+                    "radarChartLabel": "Quality scores radar chart"
                 },
                 "actions": {
                     "success": "Problem statement updated successfully.",

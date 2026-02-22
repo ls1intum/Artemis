@@ -402,8 +402,8 @@ describe('ChecklistPanelComponent', () => {
         });
 
         it('should correctly identify linked and created competencies', () => {
-            component.linkedCompetencyTitles.set(new Set(['Loops']));
-            component.createdCompetencyTitles.set(new Set(['Recursion']));
+            component.linkedCompetencyTitles.set(new Set(['loops']));
+            component.createdCompetencyTitles.set(new Set(['recursion']));
 
             expect(component.isCompetencyLinked({ competencyTitle: 'Loops' })).toBeTruthy();
             expect(component.isCompetencyLinked({ competencyTitle: 'Recursion' })).toBeFalsy();

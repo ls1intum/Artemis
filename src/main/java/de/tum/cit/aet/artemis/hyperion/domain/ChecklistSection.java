@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.hyperion.dto;
+package de.tum.cit.aet.artemis.hyperion.domain;
 
 /**
  * Enum representing the individual sections of the checklist analysis.

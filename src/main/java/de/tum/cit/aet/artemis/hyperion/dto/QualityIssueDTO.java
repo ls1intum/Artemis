@@ -2,6 +2,9 @@ package de.tum.cit.aet.artemis.hyperion.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.hyperion.domain.QualityIssueCategory;
+import de.tum.cit.aet.artemis.hyperion.domain.Severity;
+
 /**
  * DTO for a quality issue found in the problem statement.
  *
@@ -13,5 +16,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param impactOnLearners How this increases extraneous cognitive load
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record QualityIssueDTO(String category, String severity, String description, QualityIssueLocationDTO location, String suggestedFix, String impactOnLearners) {
+public record QualityIssueDTO(QualityIssueCategory category, Severity severity, String description, QualityIssueLocationDTO location, String suggestedFix,
+        String impactOnLearners) {
 }

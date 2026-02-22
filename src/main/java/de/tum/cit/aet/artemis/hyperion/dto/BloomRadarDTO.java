@@ -15,8 +15,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @param create     Proportion of CREATE level
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record BloomRadarDTO(@JsonProperty("REMEMBER") Double remember, @JsonProperty("UNDERSTAND") Double understand, @JsonProperty("APPLY") Double apply,
-        @JsonProperty("ANALYZE") Double analyze, @JsonProperty("EVALUATE") Double evaluate, @JsonProperty("CREATE") Double create) {
+public record BloomRadarDTO(@JsonProperty("REMEMBER") double remember, @JsonProperty("UNDERSTAND") double understand, @JsonProperty("APPLY") double apply,
+        @JsonProperty("ANALYZE") double analyze, @JsonProperty("EVALUATE") double evaluate, @JsonProperty("CREATE") double create) {
 
     /**
      * Creates an empty radar with all zeros.

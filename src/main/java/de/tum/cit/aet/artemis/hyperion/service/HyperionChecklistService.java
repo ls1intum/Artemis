@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,12 +27,16 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.KnowledgeArea;
 import de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.domain.ChecklistSection;
+import de.tum.cit.aet.artemis.hyperion.domain.DifficultyDelta;
+import de.tum.cit.aet.artemis.hyperion.domain.QualityIssueCategory;
+import de.tum.cit.aet.artemis.hyperion.domain.Severity;
+import de.tum.cit.aet.artemis.hyperion.domain.SuggestedDifficulty;
 import de.tum.cit.aet.artemis.hyperion.dto.BloomRadarDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ChecklistActionRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ChecklistActionResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ChecklistAnalysisRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ChecklistAnalysisResponseDTO;
-import de.tum.cit.aet.artemis.hyperion.dto.ChecklistSection;
 import de.tum.cit.aet.artemis.hyperion.dto.DifficultyAssessmentDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.InferredCompetencyDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QualityIssueDTO;
@@ -97,6 +102,19 @@ public class HyperionChecklistService {
 
     private final Object catalogLock = new Object();
 
+    /** Per-course competency cache entries. */
+    private final ConcurrentHashMap<Long, CourseCompetencyCacheEntry> courseCompetencyCache = new ConcurrentHashMap<>();
+
+    /** Time-to-live for per-course competency cache. */
+    private static final Duration COURSE_COMPETENCY_CACHE_TTL = Duration.ofMinutes(10);
+
+    private record CourseCompetencyCacheEntry(String json, Instant cachedAt) {
+
+        boolean isValid() {
+            return json != null && cachedAt != null && Instant.now().isBefore(cachedAt.plus(COURSE_COMPETENCY_CACHE_TTL));
+        }
+    }
+
     public HyperionChecklistService(ChatClient chatClient, HyperionPromptTemplateService templates, ObservationRegistry observationRegistry,
             Optional<StandardizedCompetencyApi> standardizedCompetencyApi, Optional<CourseCompetencyApi> courseCompetencyApi, ProgrammingExerciseTaskRepository taskRepository,
             ObjectMapper objectMapper) {
@@ -128,12 +146,13 @@ public class HyperionChecklistService {
 
         // Run three analyses concurrently
         var competenciesMono = Mono.fromCallable(() -> runCompetencyInference(ctx.input(), ctx.parentObs(), ctx.taskNames())).subscribeOn(Schedulers.boundedElastic())
-                .onErrorReturn(List.of());
+                .doOnError(e -> log.warn("Competency inference failed (exerciseId={})", request.exerciseId(), e)).onErrorReturn(List.of());
 
         var difficultyMono = Mono.fromCallable(() -> runDifficultyAnalysis(ctx.input(), ctx.parentObs(), ctx.declaredDifficulty())).subscribeOn(Schedulers.boundedElastic())
-                .onErrorReturn(DifficultyAssessmentDTO.unknown("Analysis failed"));
+                .doOnError(e -> log.warn("Difficulty analysis failed (exerciseId={})", request.exerciseId(), e)).onErrorReturn(DifficultyAssessmentDTO.unknown("Analysis failed"));
 
-        var qualityMono = Mono.fromCallable(() -> runQualityAnalysis(ctx.input(), ctx.parentObs())).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
+        var qualityMono = Mono.fromCallable(() -> runQualityAnalysis(ctx.input(), ctx.parentObs())).subscribeOn(Schedulers.boundedElastic())
+                .doOnError(e -> log.warn("Quality analysis failed (exerciseId={})", request.exerciseId(), e)).onErrorReturn(List.of());
 
         try {
             var resultTuple = Mono.zip(competenciesMono, difficultyMono, qualityMono).block(ANALYSIS_TIMEOUT);
@@ -413,6 +432,12 @@ public class HyperionChecklistService {
         if (courseCompetencyApi.isEmpty()) {
             return "[]";
         }
+
+        var cached = courseCompetencyCache.get(courseId);
+        if (cached != null && cached.isValid()) {
+            return cached.json();
+        }
+
         try {
             var competencies = courseCompetencyApi.get().findAllForCourse(courseId);
             List<Map<String, Object>> result = new ArrayList<>();
@@ -424,7 +449,9 @@ public class HyperionChecklistService {
                 entry.put("taxonomy", cc.getTaxonomy() != null ? cc.getTaxonomy().name() : null);
                 result.add(entry);
             }
-            return objectMapper.writeValueAsString(result);
+            String json = objectMapper.writeValueAsString(result);
+            courseCompetencyCache.put(courseId, new CourseCompetencyCacheEntry(json, Instant.now()));
+            return json;
         }
         catch (Exception e) {
             log.warn("Failed to serialize course competencies for courseId={}", courseId, e);
@@ -507,10 +534,11 @@ public class HyperionChecklistService {
                 return DifficultyAssessmentDTO.unknown("AI returned no response");
             }
 
-            String suggested = entity.suggested();
+            String suggestedStr = entity.suggested();
             Double confidence = entity.confidence();
-            boolean matches = suggested != null && declaredDifficulty != null && suggested.equalsIgnoreCase(declaredDifficulty);
-            String delta = computeDelta(declaredDifficulty, suggested);
+            SuggestedDifficulty suggested = parseEnumSafe(SuggestedDifficulty.class, suggestedStr);
+            boolean matches = suggestedStr != null && declaredDifficulty != null && suggestedStr.equalsIgnoreCase(declaredDifficulty);
+            DifficultyDelta delta = computeDelta(declaredDifficulty, suggestedStr);
             int taskCount = entity.taskCount() != null ? entity.taskCount() : 0;
             int testCount = entity.testCount() != null ? entity.testCount() : 0;
 
@@ -521,9 +549,9 @@ public class HyperionChecklistService {
     /**
      * Computes the delta between declared and suggested difficulty.
      */
-    private String computeDelta(String declared, String suggested) {
+    private DifficultyDelta computeDelta(String declared, String suggested) {
         if (declared == null || suggested == null) {
-            return "UNKNOWN";
+            return DifficultyDelta.UNKNOWN;
         }
 
         Map<String, Integer> levels = Map.of("EASY", 1, "MEDIUM", 2, "HARD", 3);
@@ -531,11 +559,11 @@ public class HyperionChecklistService {
         Integer suggestedLevel = levels.get(suggested.toUpperCase());
 
         if (declaredLevel == null || suggestedLevel == null) {
-            return "UNKNOWN";
+            return DifficultyDelta.UNKNOWN;
         }
 
         int cmp = Integer.compare(suggestedLevel, declaredLevel);
-        return cmp < 0 ? "LOWER" : cmp > 0 ? "HIGHER" : "MATCH";
+        return cmp < 0 ? DifficultyDelta.LOWER : cmp > 0 ? DifficultyDelta.HIGHER : DifficultyDelta.MATCH;
     }
 
     /**
@@ -563,7 +591,10 @@ public class HyperionChecklistService {
             location = new QualityIssueLocationDTO(issue.location().startLine(), issue.location().endLine());
         }
 
-        return new QualityIssueDTO(issue.category(), issue.severity(), issue.description(), location, issue.suggestedFix(), issue.impactOnLearners());
+        QualityIssueCategory category = parseEnumSafe(QualityIssueCategory.class, issue.category());
+        Severity severity = parseEnumSafe(Severity.class, issue.severity());
+
+        return new QualityIssueDTO(category, severity, issue.description(), location, issue.suggestedFix(), issue.impactOnLearners());
     }
 
     /**
@@ -584,6 +615,23 @@ public class HyperionChecklistService {
             sanitized.put(entry.getKey(), value != null ? value : "");
         }
         return sanitized;
+    }
+
+    /**
+     * Safely parses a string to an enum constant, returning {@code null} if the
+     * value is {@code null} or does not match any constant.
+     */
+    private <E extends Enum<E>> E parseEnumSafe(Class<E> enumType, String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return Enum.valueOf(enumType, value.toUpperCase());
+        }
+        catch (IllegalArgumentException e) {
+            log.debug("Unknown {} value: {}", enumType.getSimpleName(), value);
+            return null;
+        }
     }
 
     // ===== Observation Helper =====

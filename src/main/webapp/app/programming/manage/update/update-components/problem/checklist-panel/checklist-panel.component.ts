@@ -348,7 +348,7 @@ export class ChecklistPanelComponent {
 
     private applyAction(request: ChecklistActionRequest, loadingKey: string, staleMark: ChecklistSectionType[], onApplied?: () => void) {
         const cId = this.courseId();
-        if (!cId || this.isApplyingAction()) return;
+        if (!cId || this.isApplyingAction() || this.sectionLoading()) return;
 
         this.isApplyingAction.set(true);
         this.actionLoadingKey.set(loadingKey);
@@ -402,7 +402,7 @@ export class ChecklistPanelComponent {
      */
     reanalyzeSection(section: ChecklistSectionType) {
         const cId = this.courseId();
-        if (!cId || this.sectionLoading()) return;
+        if (!cId || this.sectionLoading() || this.isApplyingAction()) return;
 
         this.sectionLoading.set(section);
         const ex = this.exercise();
@@ -601,7 +601,7 @@ export class ChecklistPanelComponent {
                         if (courseComp) {
                             newLinks.push(new CompetencyExerciseLink(courseComp, exercise, MEDIUM_COMPETENCY_LINK_WEIGHT));
                             existingIds.add(matchId);
-                            newlyLinked.add(comp.competencyTitle ?? '');
+                            newlyLinked.add((comp.competencyTitle ?? '').toLowerCase());
                         }
                     }
 
@@ -654,7 +654,7 @@ export class ChecklistPanelComponent {
                         // Skip if AI already matched it to an existing course competency
                         if (comp.matchedCourseCompetencyId != null && comp.matchedCourseCompetencyId > 0) continue;
                         if (existingTitles.has(title.toLowerCase())) continue;
-                        if (this.createdCompetencyTitles().has(title)) continue;
+                        if (this.createdCompetencyTitles().has(title.toLowerCase())) continue;
 
                         const newComp = new Competency();
                         newComp.title = title;
@@ -675,35 +675,41 @@ export class ChecklistPanelComponent {
                     );
                     forkJoin(create$)
                         .pipe(takeUntilDestroyed(this.destroyRef))
-                        .subscribe((results) => {
-                            const fulfilled = results.filter((r) => r !== null);
+                        .subscribe({
+                            next: (results) => {
+                                const fulfilled = results.filter((r) => r !== null);
 
-                            if (fulfilled.length === 0) {
+                                if (fulfilled.length === 0) {
+                                    this.alertService.error('artemisApp.programmingExercise.instructorChecklist.competencies.createError');
+                                    this.isCreatingCompetencies.set(false);
+                                    return;
+                                }
+
+                                const newLinks: CompetencyExerciseLink[] = [...existingLinks];
+                                const newlyCreated = new Set<string>();
+
+                                for (const response of fulfilled) {
+                                    const created = response.body;
+                                    if (created?.id && !existingIds.has(created.id)) {
+                                        newLinks.push(new CompetencyExerciseLink(created, exercise, MEDIUM_COMPETENCY_LINK_WEIGHT));
+                                        existingIds.add(created.id);
+                                        newlyCreated.add((created.title ?? '').toLowerCase());
+                                        // Update local cache
+                                        this.courseCompetencies.update((current) => [...current, created]);
+                                    }
+                                }
+
+                                if (newlyCreated.size > 0) {
+                                    this.competencyLinksChange.emit(newLinks);
+                                    this.createdCompetencyTitles.set(new Set([...this.createdCompetencyTitles(), ...newlyCreated]));
+                                    this.alertService.success('artemisApp.programmingExercise.instructorChecklist.competencies.createSuccess');
+                                }
+                                this.isCreatingCompetencies.set(false);
+                            },
+                            error: () => {
                                 this.alertService.error('artemisApp.programmingExercise.instructorChecklist.competencies.createError');
                                 this.isCreatingCompetencies.set(false);
-                                return;
-                            }
-
-                            const newLinks: CompetencyExerciseLink[] = [...existingLinks];
-                            const newlyCreated = new Set<string>();
-
-                            for (const response of fulfilled) {
-                                const created = response.body;
-                                if (created?.id && !existingIds.has(created.id)) {
-                                    newLinks.push(new CompetencyExerciseLink(created, exercise, MEDIUM_COMPETENCY_LINK_WEIGHT));
-                                    existingIds.add(created.id);
-                                    newlyCreated.add(created.title ?? '');
-                                    // Update local cache
-                                    this.courseCompetencies.update((current) => [...current, created]);
-                                }
-                            }
-
-                            if (newlyCreated.size > 0) {
-                                this.competencyLinksChange.emit(newLinks);
-                                this.createdCompetencyTitles.set(new Set([...this.createdCompetencyTitles(), ...newlyCreated]));
-                                this.alertService.success('artemisApp.programmingExercise.instructorChecklist.competencies.createSuccess');
-                            }
-                            this.isCreatingCompetencies.set(false);
+                            },
                         });
                 },
                 error: () => {
@@ -717,14 +723,14 @@ export class ChecklistPanelComponent {
      * Checks if an inferred competency has been linked to the exercise
      */
     isCompetencyLinked(comp: InferredCompetency): boolean {
-        return this.linkedCompetencyTitles().has(comp.competencyTitle ?? '');
+        return this.linkedCompetencyTitles().has((comp.competencyTitle ?? '').toLowerCase());
     }
 
     /**
      * Checks if an inferred competency was created as a new course competency
      */
     isCompetencyCreated(comp: InferredCompetency): boolean {
-        return this.createdCompetencyTitles().has(comp.competencyTitle ?? '');
+        return this.createdCompetencyTitles().has((comp.competencyTitle ?? '').toLowerCase());
     }
 
     /**

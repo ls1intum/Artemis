@@ -175,7 +175,7 @@ export class HyperionProblemStatementApiService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/hyperion/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/checklist-analysis/sections/${this.configuration.encodeParam({name: "section", value: section, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}`;
+        let localVarPath = `/api/hyperion/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/checklist-analysis/sections/${this.configuration.encodeParam({name: "section", value: section, in: "path", style: "simple", explode: false, dataType: "'COMPETENCIES' | 'DIFFICULTY' | 'QUALITY'", dataFormat: undefined})}`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<ChecklistAnalysisResponse>('post', `${basePath}${localVarPath}`,
             {

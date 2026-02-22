@@ -11,11 +11,26 @@ import { QualityIssueLocation } from './qualityIssueLocation';
 
 
 export interface QualityIssue { 
-    category?: string;
-    severity?: string;
+    category?: QualityIssue.CategoryEnum;
+    severity?: QualityIssue.SeverityEnum;
     description?: string;
     location?: QualityIssueLocation;
     suggestedFix?: string;
     impactOnLearners?: string;
 }
+export namespace QualityIssue {
+    export const CategoryEnum = {
+        Clarity: 'CLARITY',
+        Coherence: 'COHERENCE',
+        Completeness: 'COMPLETENESS'
+    } as const;
+    export type CategoryEnum = typeof CategoryEnum[keyof typeof CategoryEnum];
+    export const SeverityEnum = {
+        Low: 'LOW',
+        Medium: 'MEDIUM',
+        High: 'HIGH'
+    } as const;
+    export type SeverityEnum = typeof SeverityEnum[keyof typeof SeverityEnum];
+}
+
 

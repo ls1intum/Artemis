@@ -827,7 +827,8 @@
                     "fix": "Beheben",
                     "suggestedFix": "Vorgeschlagene Lösung:",
                     "fixAll": "Alle Probleme beheben",
-                    "fixIssue": "KI-Lösung für dieses Problem anwenden"
+                    "fixIssue": "KI-Lösung für dieses Problem anwenden",
+                    "radarChartLabel": "Radar-Diagramm der Qualitätsbewertung"
                 },
                 "actions": {
                     "success": "Problemstellung erfolgreich aktualisiert.",
