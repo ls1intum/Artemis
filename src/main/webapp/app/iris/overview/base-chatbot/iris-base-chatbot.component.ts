@@ -111,6 +111,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected route = inject(ActivatedRoute);
     private readonly destroyRef = inject(DestroyRef);
     private readonly onboardingService = inject(IrisOnboardingService);
+    protected llmModalService = inject(LLMSelectionModalService);
     private readonly clipboard = inject(Clipboard);
 
     // Icons
@@ -358,11 +359,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         // Enable animations after initial messages have loaded
         // Delay ensures initial message batch doesn't trigger animations
         setTimeout(() => (this.shouldAnimate = true), 500);
-
-        // Show onboarding modal for first-time users (localStorage check is handled by the service)
-        this.onboardingService
+        void this.onboardingService
             .showOnboardingIfNeeded(this.hasAvailableExercises())
-            .then((result?: OnboardingResult) => {
+            .then((result) => {
                 if (result?.action === 'promptSelected') {
                     this.applyPromptStarter(result.promptKey);
                 }

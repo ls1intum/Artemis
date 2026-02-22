@@ -156,17 +156,26 @@ describe('CourseDashboardComponent', () => {
     });
 
     it('should set hasAvailableExercises to false when course has no exercises', () => {
-        (component as any).setCourse({ id: 123, exercises: [] });
+        const course = { id: 123, exercises: [] } as any;
+        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
+        jest.spyOn(courseStorageService, 'subscribeToCourseUpdates').mockReturnValue(of(course));
+        component.ngOnInit();
         expect(component.hasAvailableExercises).toBeFalse();
     });
 
     it('should set hasAvailableExercises to true when exercises are available', () => {
-        (component as any).setCourse({ id: 123, exercises: [{ id: 1 }] });
+        const course = { id: 123, exercises: [{ id: 1 }] } as any;
+        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
+        jest.spyOn(courseStorageService, 'subscribeToCourseUpdates').mockReturnValue(of(course));
+        component.ngOnInit();
         expect(component.hasAvailableExercises).toBeTrue();
     });
 
     it('should set hasAvailableExercises to true when exercises property is undefined', () => {
-        (component as any).setCourse({ id: 123 });
+        const course = { id: 123 } as any;
+        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
+        jest.spyOn(courseStorageService, 'subscribeToCourseUpdates').mockReturnValue(of(course));
+        component.ngOnInit();
         expect(component.hasAvailableExercises).toBeTrue();
     });
 

@@ -71,6 +71,9 @@ describe('IrisBaseChatbotComponent', () => {
     const mockUserService = {
         updateLLMSelectionDecision: vi.fn().mockReturnValue(of(new HttpResponse<void>())),
     } as any;
+    const mockOnboardingService = {
+        showOnboardingIfNeeded: vi.fn().mockResolvedValue(undefined),
+    } as any;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
