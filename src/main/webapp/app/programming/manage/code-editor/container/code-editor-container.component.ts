@@ -133,7 +133,6 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
 
     errorFiles: string[] = [];
     annotations: Array<Annotation> = [];
-
     constructor() {
         this.initializeProperties();
 
@@ -181,6 +180,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
         for (const [filePath, badgeCountsByType] of fileBadgesByType.entries()) {
             this.fileBadges[filePath] = Array.from(badgeCountsByType.entries()).map(([type, count]) => new FileBadge(type, count));
         }
+        this.changeDetector.markForCheck();
     }
 
     private collectFeedbackSuggestionBadges(fileBadgesByType: Map<string, Map<FileBadgeType, number>>): void {
