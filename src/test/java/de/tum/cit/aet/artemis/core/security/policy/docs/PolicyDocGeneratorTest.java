@@ -31,8 +31,9 @@ class PolicyDocGeneratorTest {
 
         assertThat(table).contains("| Test Feature");
         assertThat(table).contains("\u2714");
-        assertThat(table).contains("Super Admin");
-        assertThat(table).contains("Admin");
+        // Super Admin and Admin should be removed when Instructor is present
+        assertThat(table).doesNotContain("Super Admin");
+        assertThat(table).doesNotContain("Admin");
         assertThat(table).contains("Instructor");
     }
 
@@ -68,13 +69,20 @@ class PolicyDocGeneratorTest {
 
         String table = PolicyDocGenerator.generateTable(List.of(new PolicyDocGenerator.DocRow("Full", policy)));
 
-        for (String label : PolicyDocGenerator.COLUMN_LABELS.values()) {
-            assertThat(table).contains(label);
-        }
+        // Super Admin and Admin should be removed when course-specific roles are present
+        assertThat(table).doesNotContain("Super Admin");
+        assertThat(table).doesNotContain("Admin");
+        // All course-specific roles should be present
+        assertThat(table).contains("Instructor");
+        assertThat(table).contains("Editor");
+        assertThat(table).contains("Teaching Assistant");
+        assertThat(table).contains("Student");
+
         String[] lines = table.split("\n");
         String dataRow = lines[2];
         long checkCount = dataRow.chars().filter(c -> c == '\u2714').count();
-        assertThat(checkCount).isEqualTo(6);
+        // Should have 4 checkmarks (Instructor, Editor, Teaching Assistant, Student)
+        assertThat(checkCount).isEqualTo(4);
     }
 
     @Test
@@ -185,5 +193,165 @@ class PolicyDocGeneratorTest {
         List<AccessPolicy<?>> policies = PolicyDocGenerator.collectPolicies();
 
         assertThat(policies).anyMatch(p -> "programming-exercise-visibility".equals(p.getName()));
+    }
+
+    @Test
+    void testRemoveRedundantAdminRoles_RemovesAdminWhenInstructorPresent() {
+        // Policy with Super Admin, Admin, and Instructor
+        AccessPolicy<String> policy = AccessPolicy.forResource(String.class).named("test").section("S").feature("Feature")
+                .rule(when(ALWAYS).thenAllow().documentedFor(SUPER_ADMIN, ADMIN, INSTRUCTOR)).denyByDefault();
+
+        String table = PolicyDocGenerator.generateTable(List.of(new PolicyDocGenerator.DocRow("Feature", policy)));
+
+        // Should only show Instructor, not Super Admin or Admin
+        assertThat(table).contains("Instructor");
+        assertThat(table).doesNotContain("Super Admin");
+        assertThat(table).doesNotContain("Admin");
+    }
+
+    @Test
+    void testRemoveRedundantAdminRoles_PreservesAllCourseRoles() {
+        // Policy with Super Admin, Admin, Instructor, Editor, and Teaching Assistant (staff access)
+        AccessPolicy<String> policy = AccessPolicy.forResource(String.class).named("test").section("S").feature("Staff Feature")
+                .rule(when(ALWAYS).thenAllow().documentedFor(SUPER_ADMIN, ADMIN, INSTRUCTOR, EDITOR, TEACHING_ASSISTANT)).denyByDefault();
+
+        String table = PolicyDocGenerator.generateTable(List.of(new PolicyDocGenerator.DocRow("Staff Feature", policy)));
+
+        // Should show all course-specific roles
+        assertThat(table).contains("Instructor");
+        assertThat(table).contains("Editor");
+        assertThat(table).contains("Teaching Assistant");
+        // Should not show admin roles
+        assertThat(table).doesNotContain("Super Admin");
+        assertThat(table).doesNotContain("Admin");
+    }
+
+    @Test
+    void testRemoveRedundantAdminRoles_KeepsAdminWhenNoCourseRoles() {
+        // Policy with only Super Admin and Admin (no course-specific roles)
+        AccessPolicy<String> policy = AccessPolicy.forResource(String.class).named("test").section("S").feature("Admin Only")
+                .rule(when(ALWAYS).thenAllow().documentedFor(SUPER_ADMIN, ADMIN)).denyByDefault();
+
+        String table = PolicyDocGenerator.generateTable(List.of(new PolicyDocGenerator.DocRow("Admin Only", policy)));
+
+        // Should show both admin roles since no course-specific roles are present
+        assertThat(table).contains("Super Admin");
+        assertThat(table).contains("Admin");
+    }
+
+    @Test
+    void testRemoveRedundantAdminRoles_PreservesStudentRole() {
+        // Policy with all roles including Student
+        AccessPolicy<String> policy = AccessPolicy.forResource(String.class).named("test").section("S").feature("All Access")
+                .rule(when(ALWAYS).thenAllow().documentedFor(SUPER_ADMIN, ADMIN, INSTRUCTOR, EDITOR, TEACHING_ASSISTANT, STUDENT)).denyByDefault();
+
+        String table = PolicyDocGenerator.generateTable(List.of(new PolicyDocGenerator.DocRow("All Access", policy)));
+
+        // Should show all course-specific roles including Student
+        assertThat(table).contains("Student");
+        assertThat(table).contains("Instructor");
+        assertThat(table).contains("Editor");
+        assertThat(table).contains("Teaching Assistant");
+        // Should not show admin roles
+        assertThat(table).doesNotContain("Super Admin");
+        assertThat(table).doesNotContain("Admin");
+
+        // Count checkmarks
+        String[] lines = table.split("\n");
+        String dataRow = lines[2];
+        long checkCount = dataRow.chars().filter(c -> c == '\u2714').count();
+        assertThat(checkCount).isEqualTo(4); // Instructor, Editor, Teaching Assistant, Student
+    }
+
+    @Test
+    void testRemoveRedundantAdminRoles_StudentOnlyDoesNotShowAdminWhenSameCondition() {
+        // Policy where Admin and Student have the SAME condition - Admin should be removed
+        AccessPolicy<String> policy = AccessPolicy.forResource(String.class).named("test").section("S").feature("Student Feature")
+                .rule(when(ALWAYS).thenAllow().documentedFor(SUPER_ADMIN, ADMIN, STUDENT)).denyByDefault();
+
+        String table = PolicyDocGenerator.generateTable(List.of(new PolicyDocGenerator.DocRow("Student Feature", policy)));
+
+        // Should only show Student since all have same condition
+        assertThat(table).contains("Student");
+        assertThat(table).doesNotContain("Super Admin");
+        assertThat(table).doesNotContain("Admin");
+    }
+
+    @Test
+    void testRemoveRedundantAdminRoles_StudentWithDifferentConditionKeepsAdmin() {
+        // Policy where Admin has unconditional and Student has conditional - both should show
+        AccessPolicy<String> policy = AccessPolicy.forResource(String.class).named("test").section("S").feature("Student Feature")
+                .rule(when(ALWAYS).thenAllow().documentedFor(SUPER_ADMIN, ADMIN)).rule(when(ALWAYS).thenAllow().documentedFor(STUDENT).withNote("if enrolled")).denyByDefault();
+
+        String table = PolicyDocGenerator.generateTable(List.of(new PolicyDocGenerator.DocRow("Student Feature", policy)));
+
+        // Should show both Admin (unconditional) and Student (conditional)
+        assertThat(table).contains("Admin");
+        assertThat(table).contains("Super Admin");
+        assertThat(table).contains("Student");
+        assertThat(table).contains("\u2714 (if enrolled)");
+    }
+
+    @Test
+    void testRemoveRedundantAdminRoles_EditorOnlyDoesNotShowAdmin() {
+        // Policy with Super Admin, Admin, Instructor, and Editor
+        AccessPolicy<String> policy = AccessPolicy.forResource(String.class).named("test").section("S").feature("Editor Feature")
+                .rule(when(ALWAYS).thenAllow().documentedFor(SUPER_ADMIN, ADMIN, INSTRUCTOR, EDITOR)).denyByDefault();
+
+        String table = PolicyDocGenerator.generateTable(List.of(new PolicyDocGenerator.DocRow("Editor Feature", policy)));
+
+        // Should show course-specific roles only
+        assertThat(table).contains("Instructor");
+        assertThat(table).contains("Editor");
+        assertThat(table).doesNotContain("Super Admin");
+        assertThat(table).doesNotContain("Admin");
+
+        // Count checkmarks
+        String[] lines = table.split("\n");
+        String dataRow = lines[2];
+        long checkCount = dataRow.chars().filter(c -> c == '\u2714').count();
+        assertThat(checkCount).isEqualTo(2); // Instructor and Editor
+    }
+
+    @Test
+    void testRemoveRedundantAdminRoles_DifferentConditionsPreservesAdmin() {
+        // Policy with different conditions: Admin has unconditional access, course roles have conditional access
+        AccessPolicy<String> policy = AccessPolicy.forResource(String.class).named("test").section("S").feature("Programming Exercise")
+                .rule(when(ALWAYS).thenAllow().documentedFor(SUPER_ADMIN, ADMIN))
+                .rule(when(ALWAYS).thenAllow().documentedFor(INSTRUCTOR, EDITOR, TEACHING_ASSISTANT).withNote("if in course")).denyByDefault();
+
+        String table = PolicyDocGenerator.generateTable(List.of(new PolicyDocGenerator.DocRow("Programming Exercise", policy)));
+
+        // Should show Admin (unconditional) AND course roles (conditional)
+        assertThat(table).contains("Super Admin");
+        assertThat(table).contains("Admin");
+        assertThat(table).contains("Instructor");
+        assertThat(table).contains("Editor");
+        assertThat(table).contains("Teaching Assistant");
+
+        // Verify the different conditions are preserved
+        assertThat(table).contains("\u2714 (if in course)");
+
+        // Count checkmarks
+        String[] lines = table.split("\n");
+        String dataRow = lines[2];
+        // Should have 5 checkmarks: Super Admin, Admin (no condition), Instructor, Editor, TA (with condition)
+        long checkCount = dataRow.chars().filter(c -> c == '\u2714').count();
+        assertThat(checkCount).isEqualTo(5);
+    }
+
+    @Test
+    void testRemoveRedundantAdminRoles_MixedConditionsInMultipleRules() {
+        // Complex case: Admin in one rule (no condition), Student in another (with condition)
+        AccessPolicy<String> policy = AccessPolicy.forResource(String.class).named("test").section("S").feature("View Feature").rule(when(ALWAYS).thenAllow().documentedFor(ADMIN))
+                .rule(when(ALWAYS).thenAllow().documentedFor(STUDENT).withNote("if enrolled")).denyByDefault();
+
+        String table = PolicyDocGenerator.generateTable(List.of(new PolicyDocGenerator.DocRow("View Feature", policy)));
+
+        // Should show both Admin (unconditional) and Student (conditional)
+        assertThat(table).doesNotContain("Super Admin"); // Super Admin not in policy
+        assertThat(table).contains("Admin");
+        assertThat(table).contains("Student");
+        assertThat(table).contains("\u2714 (if enrolled)");
     }
 }

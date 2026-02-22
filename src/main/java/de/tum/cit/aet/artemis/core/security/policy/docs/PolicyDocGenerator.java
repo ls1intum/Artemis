@@ -102,19 +102,12 @@ public final class PolicyDocGenerator {
      * @return the markdown table as a string (without trailing newline)
      */
     static String generateTable(List<DocRow> docRows) {
-        // Compute column widths
-        int featureWidth = "Feature".length();
-        Map<Role, Integer> colWidths = new LinkedHashMap<>();
-        for (Role role : COLUMN_ORDER) {
-            colWidths.put(role, COLUMN_LABELS.get(role).length());
-        }
-
-        // Pre-compute cell values and track widths
+        // Pre-compute cell values for all rows
         List<String[]> rows = new ArrayList<>();
+        Set<Role> usedRoles = EnumSet.noneOf(Role.class);
+
         for (DocRow docRow : docRows) {
             String feature = docRow.feature();
-            featureWidth = Math.max(featureWidth, feature.length());
-
             String[] cells = new String[COLUMN_ORDER.size()];
             Map<Role, String> roleNotes = buildRoleNotes(docRow.policy());
 
@@ -122,9 +115,39 @@ public final class PolicyDocGenerator {
                 Role role = COLUMN_ORDER.get(i);
                 String cell = roleNotes.getOrDefault(role, "");
                 cells[i] = cell;
-                colWidths.put(role, Math.max(colWidths.get(role), cell.length()));
+                if (!cell.isEmpty()) {
+                    usedRoles.add(role);
+                }
             }
             rows.add(new String[] { feature, String.join("\0", cells) });
+        }
+
+        // Determine which columns to include (only those that are used at least once)
+        List<Role> includedRoles = new ArrayList<>();
+        for (Role role : COLUMN_ORDER) {
+            if (usedRoles.contains(role)) {
+                includedRoles.add(role);
+            }
+        }
+
+        // Compute column widths for included columns
+        int featureWidth = "Feature".length();
+        Map<Role, Integer> colWidths = new LinkedHashMap<>();
+        for (Role role : includedRoles) {
+            colWidths.put(role, COLUMN_LABELS.get(role).length());
+        }
+
+        for (String[] row : rows) {
+            String feature = row[0];
+            featureWidth = Math.max(featureWidth, feature.length());
+
+            String[] cells = row[1].split("\0", -1);
+            for (int i = 0; i < COLUMN_ORDER.size(); i++) {
+                Role role = COLUMN_ORDER.get(i);
+                if (includedRoles.contains(role)) {
+                    colWidths.put(role, Math.max(colWidths.get(role), cells[i].length()));
+                }
+            }
         }
 
         // Build the table
@@ -132,14 +155,14 @@ public final class PolicyDocGenerator {
 
         // Header row
         sb.append("| ").append(pad("Feature", featureWidth)).append(" |");
-        for (Role role : COLUMN_ORDER) {
+        for (Role role : includedRoles) {
             sb.append(" ").append(pad(COLUMN_LABELS.get(role), colWidths.get(role))).append(" |");
         }
         sb.append("\n");
 
         // Separator row
         sb.append("|").append("-".repeat(featureWidth + 2)).append("|");
-        for (Role role : COLUMN_ORDER) {
+        for (Role role : includedRoles) {
             sb.append("-".repeat(colWidths.get(role) + 2)).append("|");
         }
         sb.append("\n");
@@ -150,7 +173,10 @@ public final class PolicyDocGenerator {
             String[] cells = row[1].split("\0", -1);
             sb.append("| ").append(pad(feature, featureWidth)).append(" |");
             for (int i = 0; i < COLUMN_ORDER.size(); i++) {
-                sb.append(" ").append(pad(cells[i], colWidths.get(COLUMN_ORDER.get(i)))).append(" |");
+                Role role = COLUMN_ORDER.get(i);
+                if (includedRoles.contains(role)) {
+                    sb.append(" ").append(pad(cells[i], colWidths.get(role))).append(" |");
+                }
             }
             sb.append("\n");
         }
@@ -165,11 +191,15 @@ public final class PolicyDocGenerator {
 
     /**
      * Builds a map from role to cell text for a single policy.
+     * Removes Super Admin and Admin roles only if they have the same access conditions as course-specific roles.
+     * For example, if Super Admin, Admin, and Instructor all have unconditional access (✔), only Instructor is shown.
+     * But if Admin has ✔ and Instructor has "✔ (if in course)", both are shown since conditions differ.
      */
     private static Map<Role, String> buildRoleNotes(AccessPolicy<?> policy) {
-        Map<Role, String> result = new LinkedHashMap<>();
+        Map<Role, String> rawResult = new LinkedHashMap<>();
         Set<Role> seen = EnumSet.noneOf(Role.class);
 
+        // First, collect all roles with their notes
         for (PolicyRule<?> rule : policy.getRules()) {
             if (rule.effect() != PolicyEffect.ALLOW) {
                 continue;
@@ -177,11 +207,57 @@ public final class PolicyDocGenerator {
             for (Role role : rule.documentedRoles()) {
                 if (seen.add(role)) {
                     String note = rule.note();
-                    result.put(role, note != null ? "\u2714 (" + note + ")" : "\u2714");
+                    rawResult.put(role, note != null ? "\u2714 (" + note + ")" : "\u2714");
                 }
             }
         }
-        return result;
+
+        // Remove Super Admin and Admin if they have the same conditions as course-specific roles
+        return removeRedundantAdminRoles(rawResult);
+    }
+
+    /**
+     * Removes Super Admin and Admin roles only if they have the exact same access conditions (notes) as course-specific roles.
+     * This ensures that when Admin/Super Admin have different conditions (e.g., unconditional vs "if in course"), they are preserved.
+     *
+     * @param rawRoles map of all roles with access and their conditions
+     * @return map with Super Admin and Admin removed only if their conditions match course-specific roles
+     */
+    private static Map<Role, String> removeRedundantAdminRoles(Map<Role, String> rawRoles) {
+        if (rawRoles.isEmpty()) {
+            return rawRoles;
+        }
+
+        String superAdminCondition = rawRoles.get(Role.SUPER_ADMIN);
+        String adminCondition = rawRoles.get(Role.ADMIN);
+
+        // If neither Super Admin nor Admin are present, nothing to remove
+        if (superAdminCondition == null && adminCondition == null) {
+            return rawRoles;
+        }
+
+        // Check if any course-specific role has the SAME condition as Admin/Super Admin
+        boolean hasCourseRoleWithSameCondition = false;
+        for (Role courseRole : List.of(Role.INSTRUCTOR, Role.EDITOR, Role.TEACHING_ASSISTANT, Role.STUDENT)) {
+            String courseRoleCondition = rawRoles.get(courseRole);
+            if (courseRoleCondition != null) {
+                // If the course role has the same condition as Super Admin or Admin, they're redundant
+                if (courseRoleCondition.equals(superAdminCondition) || courseRoleCondition.equals(adminCondition)) {
+                    hasCourseRoleWithSameCondition = true;
+                    break;
+                }
+            }
+        }
+
+        // Only remove Super Admin and Admin if a course-specific role has the exact same condition
+        if (hasCourseRoleWithSameCondition) {
+            Map<Role, String> result = new LinkedHashMap<>(rawRoles);
+            result.remove(Role.SUPER_ADMIN);
+            result.remove(Role.ADMIN);
+            return result;
+        }
+
+        return rawRoles;
     }
 
     /**
