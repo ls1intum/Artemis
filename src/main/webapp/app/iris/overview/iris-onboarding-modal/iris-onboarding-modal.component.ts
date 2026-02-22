@@ -1,4 +1,4 @@
-import { Component, DestroyRef, WritableSignal, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, WritableSignal, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -38,6 +38,7 @@ type SidebarTooltipConfig = {
     // handling because the dialog is opened with closable: false (to prevent accidental
     // dismissal) — this gives us explicit control over the Escape key behaviour.
     host: { '(document:keydown.escape)': 'onEscapeKey()' },
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisOnboardingModalComponent {
     private dialogRef = inject(DynamicDialogRef);
@@ -162,6 +163,15 @@ export class IrisOnboardingModalComponent {
         this.isStep2PositionReady.set(false);
         this.step.set(1);
         this.scheduleExerciseTabPositionCalculation();
+
+        // If the user is already on the exercises page, Angular Router won't fire NavigationEnd
+        // for a same-route navigation (clicking the exercises tab would be a no-op). Skip
+        // straight to step 2 since the prerequisite is already met.
+        if (this.isExercisesUrl(this.router.url)) {
+            this.isStep2PositionReady.set(false);
+            this.next();
+            this.scheduleIrisIconPositionCalculation();
+        }
     }
 
     /**
@@ -190,6 +200,10 @@ export class IrisOnboardingModalComponent {
         }
     }
 
+    private isExercisesUrl(url: string): boolean {
+        return url.match(/\/courses\/\d+\/exercises(\/\d+)?/) !== null;
+    }
+
     /**
      * Handles navigation changes to auto-advance steps.
      */
@@ -197,8 +211,7 @@ export class IrisOnboardingModalComponent {
         // Step 1: User should navigate to any exercise page
         // Check for /courses/{id}/exercises pattern
         if (this.step() === 1) {
-            const isExercisePage = url.match(/\/courses\/\d+\/exercises\/\d+/) !== null;
-            if (isExercisePage) {
+            if (this.isExercisesUrl(url)) {
                 // User navigated to exercise page, advance to Step 2
                 this.isStep2PositionReady.set(false);
                 this.next();
@@ -285,8 +298,8 @@ export class IrisOnboardingModalComponent {
 
         const rect = tab.getBoundingClientRect();
         const spotlight = {
-            top: rect.top + window.scrollY,
-            left: rect.left + window.scrollX,
+            top: rect.top,
+            left: rect.left,
             width: rect.width,
             height: rect.height,
         };

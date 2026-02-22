@@ -109,6 +109,7 @@ export class IrisOnboardingService {
                 closable: false,
                 showHeader: false,
                 styleClass: 'iris-onboarding-dialog',
+                maskStyleClass: 'iris-onboarding-mask',
                 data: { hasAvailableExercises },
             }) ?? undefined;
 

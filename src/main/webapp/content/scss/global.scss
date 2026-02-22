@@ -848,15 +848,38 @@ Course Info Bar
 .iris-onboarding-dialog {
     // Allow clicks to pass through the PrimeNG dialog wrapper to the page beneath.
     // The onboarding component manages its own pointer-events on backdrops, tooltips, and modals.
-    pointer-events: none;
+    // !important is required because PrimeNG applies pointer-events: auto as an inline style
+    // on the .p-dialog root element (see inlineStyles.root in primeng-dialog.mjs).
+    pointer-events: none !important;
 
     // Cover the full screen
     max-width: 100% !important;
     width: 100vw !important;
     height: 100vh !important;
+    max-height: 100vh !important;
     margin: 0 !important;
     top: 0 !important;
     left: 0 !important;
+
+    // Neutralize the PrimeNG .p-dialog inner wrapper so it doesn't act as an opaque frame.
+    // Without this, the dialog background (white/surface) covers the page beneath the overlay,
+    // making the "transparent hole" in the spotlight reveal the dialog background instead of the page.
+    &.p-dialog,
+    .p-dialog {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        max-width: 100% !important;
+        max-height: 100% !important;
+        overflow: visible !important;
+    }
+
+    .p-dialog-header {
+        display: none !important;
+    }
 
     .p-dialog-content {
         background: transparent;
@@ -866,7 +889,15 @@ Course Info Bar
         height: 100%;
         padding: 0;
         pointer-events: none;
+        overflow: visible;
     }
+}
+
+.iris-onboarding-mask {
+    background: transparent !important;
+    pointer-events: none !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
 }
 
 // Cross-component button styling for onboarding modal (replaces ::ng-deep)

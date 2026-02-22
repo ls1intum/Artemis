@@ -1,4 +1,4 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -13,6 +13,7 @@ import { TranslateService } from '@ngx-translate/core';
         </div>
     `,
     styleUrls: ['./stepper.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StepperComponent {
     private readonly translateService = inject(TranslateService);

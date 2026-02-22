@@ -11,7 +11,7 @@
     --onboarding-tooltip-enter-ease: cubic-bezier(0.2, 0.9, 0.2, 1);
     --onboarding-tooltip-enter-distance: 16px;
     --onboarding-radius: 0.5rem;
-    --onboarding-modal-surface: var(--bs-modal-bg, var(--bs-card-bg));
+    --onboarding-modal-surface: var(--iris-primary-background);
     --onboarding-border: 1px solid var(--bs-border-color);
 }
 
@@ -49,14 +49,15 @@
     width: 700px;
     max-width: 90vw;
     height: 450px;
+    max-height: 90vh;
+    overflow-y: auto;
     display: flex;
-    overflow: hidden;
     pointer-events: auto; // Enable clicks on the modal
 }
 
 // Left side - Text content
 .welcome-text-section {
-    background: var(--bs-modal-bg);
+    background: var(--iris-primary-background);
     width: 380px;
     padding: 1.5rem;
     display: flex;
@@ -494,6 +495,8 @@
     box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
     max-width: 450px;
     height: 400px;
+    max-height: 90vh;
+    overflow-y: auto;
     width: 90%;
     display: flex;
     flex-direction: column;
