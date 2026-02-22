@@ -1,7 +1,7 @@
 <!-- main chat section -->
 <div class="chat-layout">
     @if (isChatHistoryAvailable()) {
-        <div class="chat-history" [ngClass]="{ 'chat-history-open': isChatHistoryOpen() }">
+        <div class="chat-history" [class.chat-history-open]="isChatHistoryOpen()">
             @if (!isChatHistoryOpen()) {
                 <div class="chat-history-collapsed">
                     <div
@@ -56,48 +56,14 @@
                     </div>
 
                     <div class="chat-history-list">
-                        @if (todaySessions().length > 0) {
-                            <div class="chat-history-label">
-                                <p jhiTranslate="artemisApp.iris.chatHistory.today"></p>
-                            </div>
-                            @for (session of todaySessions(); track session.id) {
-                                <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
-                            }
-                        }
-
-                        @if (yesterdaySessions().length > 0) {
-                            <div class="chat-history-label">
-                                <p jhiTranslate="artemisApp.iris.chatHistory.yesterday"></p>
-                            </div>
-                            @for (session of yesterdaySessions(); track session.id) {
-                                <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
-                            }
-                        }
-
-                        @if (last7DaysSessions().length > 0) {
-                            <div class="chat-history-label">
-                                <p jhiTranslate="artemisApp.iris.chatHistory.last7Days"></p>
-                            </div>
-                            @for (session of last7DaysSessions(); track session.id) {
-                                <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
-                            }
-                        }
-
-                        @if (last30DaysSessions().length > 0) {
-                            <div class="chat-history-label">
-                                <p jhiTranslate="artemisApp.iris.chatHistory.last30Days"></p>
-                            </div>
-                            @for (session of last30DaysSessions(); track session.id) {
-                                <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
-                            }
-                        }
-
-                        @if (olderSessions().length > 0) {
-                            <div class="chat-history-label">
-                                <p jhiTranslate="artemisApp.iris.chatHistory.older"></p>
-                            </div>
-                            @for (session of olderSessions(); track session.id) {
-                                <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
+                        @for (bucket of sessionBuckets(); track bucket.labelKey) {
+                            @if (bucket.sessions.length > 0) {
+                                <div class="chat-history-label">
+                                    <p [jhiTranslate]="bucket.labelKey"></p>
+                                </div>
+                                @for (session of bucket.sessions; track session.id) {
+                                    <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
+                                }
                             }
                         }
                     </div>
@@ -136,7 +102,8 @@
                             <div class="toolbox">
                                 <span
                                     class="rate-limit"
-                                    [ngbTooltip]="'artemisApp.exerciseChatbot.rateLimitTooltip' | artemisTranslate: { hours: rateLimitInfo()?.rateLimitTimeframeHours }"
+                                    [pTooltip]="'artemisApp.exerciseChatbot.rateLimitTooltip' | artemisTranslate: { hours: rateLimitInfo()?.rateLimitTimeframeHours }"
+                                    tooltipPosition="bottom"
                                 >
                                     {{ rateLimitInfo()?.currentMessageCount }} / {{ rateLimit }}
                                 </span>
@@ -241,13 +208,7 @@
                                 }
                             </div>
                         }
-                        @if (
-                            suggestions()?.length &&
-                            isAIEnabled() &&
-                            active() &&
-                            (!rateLimitInfo()?.rateLimit || rateLimitInfo()?.currentMessageCount !== rateLimitInfo()?.rateLimit) &&
-                            !hasActiveStage()
-                        ) {
+                        @if (canShowSuggestions()) {
                             <div animate.enter="suggestion-entering" animate.leave="suggestion-leaving">
                                 <div class="suggestions-container">
                                     @for (suggestion of suggestions(); track $index) {
@@ -321,12 +282,7 @@
                                 class="form-control"
                                 (input)="onInput()"
                                 (paste)="onPaste()"
-                                [disabled]="
-                                    isLoading() ||
-                                    !active() ||
-                                    (rateLimitInfo()?.rateLimit && rateLimitInfo()?.currentMessageCount === rateLimitInfo()?.rateLimit) ||
-                                    hasActiveStage()
-                                "
+                                [disabled]="isInputDisabled()"
                                 (keydown)="handleKey($event)"
                                 placeholder="{{ 'artemisApp.exerciseChatbot.inputMessage' | artemisTranslate }}"
                                 #messageTextarea
@@ -338,13 +294,7 @@
                                 (onClick)="onSend()"
                                 [btnType]="ButtonType.SUCCESS_OUTLINE"
                                 [icon]="faPaperPlane"
-                                [disabled]="
-                                    !newMessageTextContent().trim() ||
-                                    isLoading() ||
-                                    !active() ||
-                                    (rateLimitInfo()?.rateLimit && rateLimitInfo()?.currentMessageCount === rateLimitInfo()?.rateLimit) ||
-                                    hasActiveStage()
-                                "
+                                [disabled]="isSendDisabled()"
                             />
                         </div>
                     </div>

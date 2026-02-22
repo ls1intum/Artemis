@@ -266,6 +266,7 @@
 
 .bubble-left {
     --_d: 0%;
+
     margin-bottom: 8px;
     place-self: center;
     max-width: 100%;
@@ -273,6 +274,7 @@
 
 .bubble-right {
     --_d: 100%;
+
     place-self: end;
     float: right;
     background-color: var(--iris-tertiary-background);
@@ -419,25 +421,24 @@ pre {
     flex: 0 1 auto;
 
     textarea {
-        background-color: var(--iris-secondary-background);
+        background-color: transparent;
         flex: 1 0 auto;
-        padding: 16px 56px 36px 16px;
+        padding: 12px 16px 8px;
         resize: none;
-        border-radius: 8px;
-        min-height: 72px;
-        max-height: 200px;
+        border: none;
+        border-radius: 8px 8px 0 0;
+        min-height: 40px;
+        max-height: 164px;
         overflow-y: auto;
 
         &:focus {
             outline: none;
             box-shadow: none;
-            border-color: var(--primary);
         }
 
         &:disabled {
             opacity: 0.25;
             cursor: not-allowed;
-            background-color: var(--iris-secondary-background);
         }
     }
 
@@ -449,7 +450,15 @@ pre {
     .textarea-wrapper {
         position: relative;
         display: flex;
+        flex-direction: column;
         flex: 1;
+        background-color: var(--iris-secondary-background);
+        border: 1px solid var(--bs-border-color);
+        border-radius: 8px;
+
+        &:focus-within {
+            border-color: var(--primary);
+        }
     }
 }
 
@@ -664,11 +673,8 @@ pre {
 }
 
 #irisSendButton {
-    position: absolute;
-    right: 8px;
-    bottom: 8px;
-    margin-bottom: 0;
-    transform: none;
+    align-self: flex-end;
+    margin: 0 8px 8px 0;
 
     ::ng-deep button {
         border-radius: 8px;

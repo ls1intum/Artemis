@@ -14,7 +14,7 @@ import {
     faThumbsUp,
     faXmark,
 } from '@fortawesome/free-solid-svg-icons';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TooltipModule } from 'primeng/tooltip';
 import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { Clipboard } from '@angular/cdk/clipboard';
@@ -37,7 +37,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AsPipe } from 'app/shared/pipes/as.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ChatHistoryItemComponent } from './chat-history-item/chat-history-item.component';
-import { NgClass } from '@angular/common';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
@@ -70,7 +69,7 @@ const COPY_FEEDBACK_DURATION_MS = 1500;
         IrisLogoComponent,
         RouterLink,
         FaIconComponent,
-        NgbTooltip,
+        TooltipModule,
         TranslateDirective,
         ChatStatusBarComponent,
         FormsModule,
@@ -79,7 +78,6 @@ const COPY_FEEDBACK_DURATION_MS = 1500;
         AsPipe,
         HtmlForMarkdownPipe,
         ChatHistoryItemComponent,
-        NgClass,
         SearchFilterComponent,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -143,6 +141,29 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     // Computed state
     readonly hasActiveStage = computed(() => this.stages()?.some((stage) => [IrisStageStateDTO.IN_PROGRESS, IrisStageStateDTO.NOT_STARTED].includes(stage.state)) ?? false);
+    readonly isInputDisabled = computed(
+        () =>
+            this.isLoading() ||
+            !this.active() ||
+            !!(this.rateLimitInfo()?.rateLimit && this.rateLimitInfo()?.currentMessageCount === this.rateLimitInfo()?.rateLimit) ||
+            this.hasActiveStage(),
+    );
+    readonly isSendDisabled = computed(() => !this.newMessageTextContent().trim() || this.isInputDisabled());
+    readonly canShowSuggestions = computed(
+        () =>
+            !!this.suggestions()?.length &&
+            this.isAIEnabled() &&
+            this.active() &&
+            (!this.rateLimitInfo()?.rateLimit || this.rateLimitInfo()?.currentMessageCount !== this.rateLimitInfo()?.rateLimit) &&
+            !this.hasActiveStage(),
+    );
+    readonly sessionBuckets = computed(() => [
+        { labelKey: 'artemisApp.iris.chatHistory.today', sessions: this.todaySessions() },
+        { labelKey: 'artemisApp.iris.chatHistory.yesterday', sessions: this.yesterdaySessions() },
+        { labelKey: 'artemisApp.iris.chatHistory.last7Days', sessions: this.last7DaysSessions() },
+        { labelKey: 'artemisApp.iris.chatHistory.last30Days', sessions: this.last30DaysSessions() },
+        { labelKey: 'artemisApp.iris.chatHistory.older', sessions: this.olderSessions() },
+    ]);
     readonly isEmptyState = computed(() => !this.messages()?.length && !this.isEmbeddedChat());
     readonly hasHeaderContent = computed(() => {
         const hasRelatedEntity = !!this.relatedEntityRoute() && !!this.relatedEntityLinkButtonLabel() && this.isChatHistoryAvailable();
