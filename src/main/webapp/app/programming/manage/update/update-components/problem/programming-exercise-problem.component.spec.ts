@@ -181,8 +181,11 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         comp.onInstructionChange('Updated statement');
 
-        expect(exercise.problemStatement).toBe('Updated statement');
+        // The component emits a copy rather than mutating the original exercise
+        const emittedExercise = programmingExerciseSpy.mock.calls[0][0] as ProgrammingExercise;
+        expect(emittedExercise).not.toBe(exercise);
+        expect(emittedExercise.problemStatement).toBe('Updated statement');
         expect(problemStatementSpy).toHaveBeenCalledWith('Updated statement');
-        expect(programmingExerciseSpy).toHaveBeenCalledWith(exercise);
+        expect(emittedExercise).toBeInstanceOf(ProgrammingExercise);
     });
 });
