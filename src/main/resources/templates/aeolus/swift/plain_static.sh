@@ -11,16 +11,19 @@ build_and_test_the_code () {
   # In order to get the correct console output we need to execute the command within the ${studentParentWorkingDirectoryName} directory
   # swift build
   cd ${studentParentWorkingDirectoryName}
-  swift build || error=true
 
-  if [ ! $error ]
-  then
-      # swift test
-      swift test || true
+  # Compile the code
+  swift build
+  COMPILATION_EXIT_CODE=$?
+
+  if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+      cd ..
+      chmod -R 777 .
+      exit 1
   fi
 
-  # The used docker container is calling 'swift build' which creates files as root (e.g. tests.xml),
-  # so we need to allow everyone to access these files
+  # Run the tests
+  swift test || true
   cd ..
   chmod -R 777 .
 }

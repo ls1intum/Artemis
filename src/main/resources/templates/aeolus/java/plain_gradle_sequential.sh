@@ -4,12 +4,23 @@ export AEOLUS_INITIAL_DIRECTORY=${PWD}
 structural_tests () {
   echo '⚙️ executing structural_tests'
   chmod +x ./gradlew
-  ./gradlew clean structuralTests
+
+  # Compile the code first
+  ./gradlew clean testClasses
+  COMPILATION_EXIT_CODE=$?
+
+  if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+      exit 1
+  fi
+
+  # Run structural tests
+  ./gradlew structuralTests || true
 }
 
 behavior_tests () {
   echo '⚙️ executing behavior_tests'
-  ./gradlew behaviorTests
+  # Run behavior tests
+  ./gradlew behaviorTests || true
 }
 
 main () {

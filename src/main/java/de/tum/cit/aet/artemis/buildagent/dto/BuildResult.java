@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
 // in the future are migrated or cleared. Changes should be communicated in release notes as potentially breaking changes.
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record BuildResult(String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful, ZonedDateTime buildRunDate,
+public record BuildResult(String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isCompilationSuccessful, ZonedDateTime buildRunDate,
         List<LocalCIJobDTO> jobs, List<BuildLogDTO> buildLogEntries, List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports, boolean hasLogs)
         implements BuildResultNotification, Serializable {
 
@@ -34,8 +34,8 @@ public record BuildResult(String assignmentRepoBranchName, String assignmentRepo
         hasLogs = !buildLogEntries.isEmpty();
     }
 
-    public BuildResult(String branch, String assignmentRepoCommitHash, String testsRepoCommitHash, List<BuildLogDTO> buildLogs, boolean isBuildSuccessful) {
-        this(branch, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, null, null, buildLogs, null, buildLogs != null && !buildLogs.isEmpty());
+    public BuildResult(String branch, String assignmentRepoCommitHash, String testsRepoCommitHash, List<BuildLogDTO> buildLogs, boolean isCompilationSuccessful) {
+        this(branch, assignmentRepoCommitHash, testsRepoCommitHash, isCompilationSuccessful, null, null, buildLogs, null, buildLogs != null && !buildLogs.isEmpty());
     }
 
     @Override

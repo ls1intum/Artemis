@@ -1,14 +1,26 @@
 api: v0.0.1
+metadata:
+  name: "Python Sequential"
+  id: python_sequential
+  description: "Default build configuration for Python exercises with sequential test runs"
 actions:
   - name: compile_the_code
     script: |-
+      # Compile the code
       python3 -m compileall . -q
+      COMPILATION_EXIT_CODE=$?
+
+      if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+          exit 1
+      fi
     runAlways: false
   - name: run_structural_tests
-    script: pytest structural/* --junitxml=test-reports/structural-results.xml
+    script: pytest structural/* --junitxml=test-reports/structural-results.xml || true
     runAlways: false
   - name: run_behavior_tests
-    script: pytest behavior/* --junitxml=test-reports/behavior-results.xml
+    script: |-
+      # Run the behavioral tests
+      pytest behavior/* --junitxml=test-reports/behavior-results.xml || true
     runAlways: false
     results:
       - name: junit_test-reports/*results.xml

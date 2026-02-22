@@ -1,7 +1,8 @@
 api: v0.0.1
 metadata:
   name: JavaScript Static Code Analysis
-  description: Run tests using Jest
+  id: javascript_static
+  description: Run tests using Jest with static code analysis
 actions:
   - name: install_dependencies
     script: 'npm ci --prefer-offline --no-audit'
@@ -12,7 +13,9 @@ actions:
         path: 'eslint.sarif'
         type: sca
   - name: test
-    script: 'npm run test:ci'
+    script: |-
+      # Run the tests
+      npm run test:ci || true
     runAlways: false
     results:
       - name: junit

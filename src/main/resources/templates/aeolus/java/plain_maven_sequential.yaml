@@ -1,11 +1,35 @@
 api: v0.0.1
+metadata:
+  name: "Java Maven Sequential"
+  id: java_plain_maven_sequential
+  description: "Sequential build configuration for Java Maven exercises"
 actions:
   - name: structural
-    script: mvn clean test
+    script: |-
+      # Compile and run structural tests
+      mvn clean compile test-compile
+      COMPILATION_EXIT_CODE=$?
+
+      if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+          exit 1
+      fi
+
+      # Run structural tests
+      mvn test || true
     runAlways: false
     workdir: structural
   - name: behavior
-    script: mvn clean test
+    script: |-
+      # Compile and run behavior tests
+      mvn clean compile test-compile
+      COMPILATION_EXIT_CODE=$?
+
+      if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+          exit 1
+      fi
+
+      # Run behavior tests
+      mvn test || true
     runAlways: false
     workdir: behavior
     results:

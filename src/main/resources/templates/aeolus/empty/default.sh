@@ -10,6 +10,16 @@ install_dependencies () {
 run_tests () {
   echo '⚙️ executing run_tests'
   # TODO: Run the tests and generate JUnit XMLs
+  # Example pattern for exit codes:
+  #
+  # <compile_command>
+  # COMPILATION_EXIT_CODE=$?
+  #
+  # if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+  #     exit 1
+  # fi
+  #
+  # <test_command> || true
   echo 'Hello World'
 }
 

@@ -8,7 +8,8 @@ install () {
 
 run_all_tests () {
   echo '⚙️ executing run_all_tests'
-  Rscript -e 'library("testthat"); options(testthat.output_file = "junit.xml"); test_local(".", reporter = "junit")'
+  # Run the tests
+  Rscript -e 'library("testthat"); options(testthat.output_file = "junit.xml"); test_local(".", reporter = "junit")' || true
 }
 
 main () {

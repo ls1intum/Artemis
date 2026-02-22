@@ -28,9 +28,9 @@ build_and_run_all_tests () {
   rm -f ${studentParentWorkingDirectoryName}/Makefile
   cp -f ${testWorkingDirectory}/Makefile ${studentParentWorkingDirectoryName}/Makefile || exit 2
   cd ${testWorkingDirectory}
-  python3 Tests.py
-  rm Tests.py
-  rm -rf ./${testWorkingDirectory} || true
+
+  # Run the tests
+  python3 Tests.py || true
 }
 
 main () {

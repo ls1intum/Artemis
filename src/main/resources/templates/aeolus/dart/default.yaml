@@ -2,6 +2,7 @@ api: v0.0.1
 metadata:
   name: "Dart"
   id: dart
+  description: "Default build configuration for Dart exercises"
 actions:
   - name: install_dependencies
     script: |-
@@ -10,7 +11,8 @@ actions:
   - name: test
     script: |-
       cd "${testWorkingDirectory}"
-      dart test --reporter=json | tojunit | xmlstarlet ed -d '//failure/@message' -d '//error/@message' > report.xml
+      # Run the tests
+      dart test --reporter=json | tojunit | xmlstarlet ed -d '//failure/@message' -d '//error/@message' > report.xml || true
     results:
       - name: Minitest Test Results
         path: "${testWorkingDirectory}/report.xml"

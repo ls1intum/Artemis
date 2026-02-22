@@ -26,7 +26,7 @@ public record TestResultsDTO(@JsonProperty("successful") int successful, @JsonPr
         @JsonProperty("failures") int failures, @JsonProperty("fullName") String fullName, @JsonProperty("commits") @JsonSetter(nulls = Nulls.AS_EMPTY) List<CommitDTO> commits,
         @JsonProperty("results") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestSuiteDTO> results,
         @JsonProperty("staticCodeAnalysisReports") @JsonSetter(nulls = Nulls.AS_EMPTY) List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports,
-        @JsonProperty("runDate") ZonedDateTime runDate, @JsonProperty("isBuildSuccessful") boolean isBuildSuccessful,
+        @JsonProperty("runDate") ZonedDateTime runDate, @JsonProperty("isCompilationSuccessful") boolean isCompilationSuccessful,
         @JsonProperty("logs") @JsonSetter(nulls = Nulls.AS_EMPTY) List<String> logs) implements BuildResultNotification {
 
     public static TestResultsDTO convert(Object someResult) {

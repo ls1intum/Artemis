@@ -1,16 +1,32 @@
 api: v0.0.1
+metadata:
+  name: "Java Gradle Sequential"
+  id: java_plain_gradle_sequential
+  description: "Sequential build configuration for Java Gradle exercises"
 actions:
   - name: structural_tests
     script: |-
       chmod +x ./gradlew
-      ./gradlew clean structuralTests
+
+      # Compile the code first
+      ./gradlew clean testClasses
+      COMPILATION_EXIT_CODE=$?
+
+      if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+          exit 1
+      fi
+
+      # Run structural tests
+      ./gradlew structuralTests || true
     runAlways: false
     results:
       - name: junit_**/test-results/structuralTests/*.xml
         path: '**/test-results/structuralTests/*.xml'
         type: junit
   - name: behavior_tests
-    script: ./gradlew behaviorTests
+    script: |-
+      # Run behavior tests
+      ./gradlew behaviorTests || true
     runAlways: false
     results:
       - name: junit_**/test-results/behaviorTests/*.xml

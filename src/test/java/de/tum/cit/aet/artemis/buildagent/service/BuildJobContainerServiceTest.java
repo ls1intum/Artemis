@@ -27,6 +27,8 @@ import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.ExecCreateCmd;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.command.ExecStartCmd;
+import com.github.dockerjava.api.command.InspectExecCmd;
+import com.github.dockerjava.api.command.InspectExecResponse;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.HostConfig;
 
@@ -92,6 +94,13 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
             callback.onComplete();
             return null;
         });
+
+        // Mock for inspectExecCmd (used when capturing exit codes)
+        var inspectExecCmd = mock(InspectExecCmd.class);
+        var inspectExecResponse = mock(InspectExecResponse.class);
+        when(buildAgentConfiguration.getDockerClient().inspectExecCmd(anyString())).thenReturn(inspectExecCmd);
+        when(inspectExecCmd.exec()).thenReturn(inspectExecResponse);
+        when(inspectExecResponse.getExitCodeLong()).thenReturn(0L);
     }
 
     private HostConfig captureHostConfig() {

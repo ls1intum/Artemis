@@ -5,9 +5,18 @@ metadata:
   description: Test crate using cargo
 actions:
   - name: build
-    script: cargo build --tests --profile test
+    script: |-
+      # Compile the code
+      cargo build --tests --profile test
+      COMPILATION_EXIT_CODE=$?
+
+      if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+          exit 1
+      fi
   - name: run_all_tests
-    script: cargo nextest run --profile ci
+    script: |-
+      # Run the tests
+      cargo nextest run --profile ci || true
     results:
       - name: junit_target/nextest/ci/junit.xml
         path: target/nextest/ci/junit.xml

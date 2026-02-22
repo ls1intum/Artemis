@@ -3,17 +3,24 @@ set -e
 export AEOLUS_INITIAL_DIRECTORY=${PWD}
 compile_the_code () {
   echo '⚙️ executing compile_the_code'
+  # Compile the code
   python3 -m compileall . -q
+  COMPILATION_EXIT_CODE=$?
+
+  if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+      exit 1
+  fi
 }
 
 run_structural_tests () {
   echo '⚙️ executing run_structural_tests'
-  pytest structural/* --junitxml=test-reports/structural-results.xml
+  pytest structural/* --junitxml=test-reports/structural-results.xml || true
 }
 
 run_behavior_tests () {
   echo '⚙️ executing run_behavior_tests'
-  pytest behavior/* --junitxml=test-reports/behavior-results.xml
+  # Run the behavioral tests
+  pytest behavior/* --junitxml=test-reports/behavior-results.xml || true
 }
 
 main () {

@@ -2,6 +2,7 @@ api: v0.0.1
 metadata:
   name: "Ruby"
   id: ruby
+  description: "Default build configuration for Ruby exercises"
 actions:
   - name: install_dependencies
     script: |-
@@ -10,7 +11,8 @@ actions:
   - name: test
     script: |-
       cd "${testWorkingDirectory}"
-      bundler exec rake ci:test
+      # Run the tests
+      bundler exec rake ci:test || true
     results:
       - name: Minitest Test Results
         path: "${testWorkingDirectory}/report.xml"

@@ -170,8 +170,8 @@ public class ProgrammingExerciseGradingService {
             // Fetch submission or create a fallback
             var latestSubmission = getSubmissionForBuildResult(participation.getId(), buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
 
-            // Artemis considers a build as failed if no tests have been executed (e.g. due to a compile failure in the student code)
-            final var buildFailed = newResult.getFeedbacks().stream().allMatch(Feedback::isStaticCodeAnalysisFeedback);
+            // Build is considered failed if compilation failed (based on exit code from build script)
+            final var buildFailed = !buildResult.isCompilationSuccessful();
             latestSubmission.setBuildFailed(buildFailed);
 
             if (buildResult.hasLogs()) {

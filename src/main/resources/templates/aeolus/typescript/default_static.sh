@@ -13,12 +13,19 @@ static_code_analysis () {
 
 build () {
   echo '⚙️ executing build'
+  # Compile the code
   npm run build
+  COMPILATION_EXIT_CODE=$?
+
+  if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+      exit 1
+  fi
 }
 
 test () {
   echo '⚙️ executing test'
-  npm run test:ci
+  # Run the tests
+  npm run test:ci || true
 }
 
 main () {

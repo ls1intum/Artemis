@@ -1,7 +1,18 @@
 api: v0.0.1
+metadata:
+  name: "Java Maven Blackbox Static"
+  id: java_plain_maven_blackbox_static
+  description: "Blackbox build configuration for Java Maven exercises with static code analysis"
 actions:
   - name: build
-    script: mvn -B clean compile
+    script: |-
+      # Compile the code
+      mvn -B clean compile
+      COMPILATION_EXIT_CODE=$?
+
+      if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+          exit 1
+      fi
   - name: main_method_checker
     script: |-
       main_checker_output=$(pipeline-helper main-method -s target/classes)
@@ -76,7 +87,7 @@ actions:
       rm ${tool}.log || true
       timeout 60s runtest --tool ${tool} ${step}.exp || true
       cd ..
-      pipeline-helper -o customFeedbacks dejagnu -n "dejagnu[${step}]" -l testsuite/${tool}.log
+      pipeline-helper -o customFeedbacks dejagnu -n "dejagnu[${step}]" -l testsuite/${tool}.log || true
   - name: static_code_analysis
     script: |-
       mvn -B checkstyle:checkstyle

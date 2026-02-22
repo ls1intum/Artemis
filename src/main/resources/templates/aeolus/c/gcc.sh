@@ -60,12 +60,18 @@ build_and_run_all_tests () {
   # Build and run all tests if the compilation succeeds
   # ------------------------------
   sudo chown artemis_user:artemis_user .
-  gcc -c -Wall ${studentParentWorkingDirectoryName}/*.c || error=true
-  if [ ! $error ]
-  then
-      cd ${testWorkingDirectory} || exit 0
-      python3 Tests.py || true
+
+  # Compile the code
+  gcc -c -Wall ${studentParentWorkingDirectoryName}/*.c
+  COMPILATION_EXIT_CODE=$?
+
+  if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+      exit 1
   fi
+
+  # Run the tests
+  cd ${testWorkingDirectory} || exit 0
+  python3 Tests.py || true
 }
 
 main () {

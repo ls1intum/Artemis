@@ -1,7 +1,8 @@
 api: v0.0.1
 metadata:
-  name: TypeScript Static Code Analysis
-  description: Run tests using Jest
+  name: "TypeScript Static"
+  id: typescript_static
+  description: "Default build configuration for TypeScript exercises with static code analysis"
 actions:
   - name: install_dependencies
     script: 'npm ci --prefer-offline --no-audit'
@@ -12,9 +13,18 @@ actions:
         path: 'eslint.sarif'
         type: sca
   - name: build
-    script: 'npm run build'
+    script: |-
+      # Compile the code
+      npm run build
+      COMPILATION_EXIT_CODE=$?
+
+      if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+          exit 1
+      fi
   - name: test
-    script: 'npm run test:ci'
+    script: |-
+      # Run the tests
+      npm run test:ci || true
     runAlways: false
     results:
       - name: junit

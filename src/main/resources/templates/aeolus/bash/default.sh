@@ -13,6 +13,7 @@ create_results_directory () {
 
 test () {
   echo '⚙️ executing test'
+  # Run the tests
   bats --report-formatter junit --output results "${testWorkingDirectory}" || true
 }
 

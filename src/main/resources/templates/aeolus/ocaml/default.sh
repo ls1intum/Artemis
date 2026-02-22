@@ -6,7 +6,9 @@ build_and_test_the_code () {
   cd "${testWorkingDirectory}"
   # the build process is specified in `run.sh` in the test repository
   chmod +x run.sh
-  ./run.sh -s
+
+  # Run the build and tests
+  ./run.sh -s || true
 }
 
 junit () {

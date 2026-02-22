@@ -44,6 +44,8 @@ import com.github.dockerjava.api.command.DisconnectFromNetworkCmd;
 import com.github.dockerjava.api.command.ExecCreateCmd;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.command.ExecStartCmd;
+import com.github.dockerjava.api.command.InspectExecCmd;
+import com.github.dockerjava.api.command.InspectExecResponse;
 import com.github.dockerjava.api.command.InspectImageCmd;
 import com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.dockerjava.api.command.KillContainerCmd;
@@ -127,6 +129,13 @@ public class DockerClientTestService {
             callback.onComplete();
             return null;
         });
+
+        // Mock dockerClient.inspectExecCmd(String execId).exec() for exit code retrieval
+        InspectExecCmd inspectExecCmd = mock(InspectExecCmd.class);
+        InspectExecResponse inspectExecResponse = mock(InspectExecResponse.class);
+        when(dockerClient.inspectExecCmd(anyString())).thenReturn(inspectExecCmd);
+        when(inspectExecCmd.exec()).thenReturn(inspectExecResponse);
+        when(inspectExecResponse.getExitCodeLong()).thenReturn(0L);
 
         // Mock listContainerCmd() method.
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);

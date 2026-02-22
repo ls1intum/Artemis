@@ -2,15 +2,23 @@ api: v0.0.1
 metadata:
   name: "Go"
   id: Go
+  description: "Default build configuration for Go exercises"
 actions:
   - name: build
     script: |
       cd "${testWorkingDirectory}"
+      # Compile the code
       go test -c -o /dev/null ./...
+      COMPILATION_EXIT_CODE=$?
+
+      if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+          exit 1
+      fi
   - name: test
     script: |
       cd "${testWorkingDirectory}"
-      go test ./... -json 2>&1 | go-junit-report -parser gojson -out test-results.xml
+      # Run the tests
+      go test ./... -json 2>&1 | go-junit-report -parser gojson -out test-results.xml || true
     results:
       - name: Go Test Results
         path: "${testWorkingDirectory}/test-results.xml"

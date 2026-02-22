@@ -345,9 +345,9 @@ public class BuildJobExecutionService {
             buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
             log.debug(msg);
 
-            buildJobContainerService.runScriptInContainer(containerId, buildJob.id());
+            final int exitCode = buildJobContainerService.runScriptInContainer(containerId, buildJob.id());
 
-            msg = "~~~~~~~~~~~~~~~~~~~~ Finished Executing Build Script for Build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
+            msg = "~~~~~~~~~~~~~~~~~~~~ Finished Executing Build Script for Build job " + buildJob.id() + " (exit code: " + exitCode + ") ~~~~~~~~~~~~~~~~~~~~";
             buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
             log.info(msg);
 
@@ -365,13 +365,17 @@ public class BuildJobExecutionService {
             buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
             log.info(msg);
 
+            // Exit code 0 means compilation succeeded (tests may have failed but that's masked with || true)
+            // Any non-zero exit code means compilation failed
+            boolean compilationSuccessful = exitCode == 0;
+
             try {
                 testResultsTarInputStream = buildJobContainerService.getArchiveFromContainer(containerId, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY,
                         buildJob.id());
 
                 var buildLogs = buildLogsMap.getAndTruncateBuildLogs(buildJob.id());
-                buildResult = parseTestResults(testResultsTarInputStream, buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate,
-                        buildJob.id(), buildLogs);
+                buildResult = parseTestResults(testResultsTarInputStream, buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, compilationSuccessful,
+                        buildCompletedDate, buildJob.id(), buildLogs);
             }
             catch (NotFoundException e) {
                 msg = "Could not find test results in container " + containerName;
@@ -449,7 +453,7 @@ public class BuildJobExecutionService {
     // --- Helper methods ----
 
     private BuildResult parseTestResults(TarArchiveInputStream testResultsTarInputStream, String assignmentRepoBranchName, String assignmentRepoCommitHash,
-            String testsRepoCommitHash, ZonedDateTime buildCompletedDate, String buildJobId, List<BuildLogDTO> buildLogs) throws IOException {
+            String testsRepoCommitHash, boolean compilationSuccessful, ZonedDateTime buildCompletedDate, String buildJobId, List<BuildLogDTO> buildLogs) throws IOException {
 
         List<LocalCITestJobDTO> failedTests = new ArrayList<>();
         List<LocalCITestJobDTO> successfulTests = new ArrayList<>();
@@ -498,7 +502,7 @@ public class BuildJobExecutionService {
             }
         }
 
-        return constructBuildResult(failedTests, successfulTests, assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, !failedTests.isEmpty(),
+        return constructBuildResult(failedTests, successfulTests, assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, compilationSuccessful,
                 buildCompletedDate, staticCodeAnalysisReports, buildLogs);
     }
 
@@ -575,17 +579,17 @@ public class BuildJobExecutionService {
      * @param assignmentRepoBranchName  The name of the branch of the assignment repository that was checked out for the build.
      * @param assignmentRepoCommitHash  The commit hash of the assignment repository that was checked out for the build.
      * @param testsRepoCommitHash       The commit hash of the tests repository that was checked out for the build.
-     * @param isBuildSuccessful         Whether the build was successful or not.
+     * @param isCompilationSuccessful   Whether the compilation was successful or not (based on build script exit code).
      * @param buildRunDate              The date when the build was completed.
      * @param staticCodeAnalysisReports The static code analysis reports
      * @param buildLogs                 the build logs
      * @return a {@link BuildResult}
      */
     private BuildResult constructBuildResult(List<LocalCITestJobDTO> failedTests, List<LocalCITestJobDTO> successfulTests, String assignmentRepoBranchName,
-            String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful, ZonedDateTime buildRunDate,
+            String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isCompilationSuccessful, ZonedDateTime buildRunDate,
             List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports, List<BuildLogDTO> buildLogs) {
         LocalCIJobDTO job = new LocalCIJobDTO(failedTests, successfulTests);
-        return new BuildResult(assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, buildRunDate, List.of(job), buildLogs,
+        return new BuildResult(assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, isCompilationSuccessful, buildRunDate, List.of(job), buildLogs,
                 staticCodeAnalysisReports, true);
     }
 

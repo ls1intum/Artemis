@@ -11,12 +11,19 @@ static_code_analysis () {
 
 build () {
   echo '⚙️ executing build'
+  # Compile the code
   cargo build --tests --profile test
+  COMPILATION_EXIT_CODE=$?
+
+  if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+      exit 1
+  fi
 }
 
 run_all_tests () {
   echo '⚙️ executing run_all_tests'
-  cargo nextest run --profile ci
+  # Run the tests
+  cargo nextest run --profile ci || true
 }
 
 main () {

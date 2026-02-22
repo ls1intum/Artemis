@@ -3,7 +3,13 @@ set -e
 export AEOLUS_INITIAL_DIRECTORY=${PWD}
 build () {
   echo '⚙️ executing build'
+  # Compile the code
   mvn -B clean compile
+  COMPILATION_EXIT_CODE=$?
+
+  if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+      exit 1
+  fi
 }
 
 main_method_checker () {
@@ -90,7 +96,7 @@ advanced_tests () {
   rm ${tool}.log || true
   timeout 60s runtest --tool ${tool} ${step}.exp || true
   cd ..
-  pipeline-helper -o customFeedbacks dejagnu -n "dejagnu[${step}]" -l testsuite/${tool}.log
+  pipeline-helper -o customFeedbacks dejagnu -n "dejagnu[${step}]" -l testsuite/${tool}.log || true
 }
 
 static_code_analysis () {

@@ -1,9 +1,23 @@
 api: v0.0.1
+metadata:
+  name: "Java Gradle"
+  id: java_plain_gradle
+  description: "Default build configuration for Java Gradle exercises"
 actions:
   - name: gradle
     script: |-
       chmod +x ./gradlew
-      ./gradlew clean test
+
+      # Compile the code
+      ./gradlew clean testClasses
+      COMPILATION_EXIT_CODE=$?
+
+      if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+          exit 1
+      fi
+
+      # Run the tests
+      ./gradlew test || true
     runAlways: false
     results:
       - name: junit_**/test-results/test/*.xml

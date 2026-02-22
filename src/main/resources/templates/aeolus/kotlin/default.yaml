@@ -1,7 +1,21 @@
 api: v0.0.1
+metadata:
+  name: "Kotlin"
+  id: kotlin
+  description: "Default build configuration for Kotlin exercises"
 actions:
   - name: maven
-    script: mvn clean test
+    script: |-
+      # Compile the code
+      mvn clean compile test-compile
+      COMPILATION_EXIT_CODE=$?
+
+      if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+          exit 1
+      fi
+
+      # Run the tests
+      mvn test || true
     runAlways: false
     results:
       - name: junit

@@ -1,4 +1,8 @@
 api: v0.0.1
+metadata:
+  name: "VHDL"
+  id: vhdl
+  description: "Default build configuration for VHDL exercises"
 actions:
   - name: provide_environment_information
     script: |-
@@ -29,7 +33,9 @@ actions:
     runAlways: false
   - name: run_and_compile
     script: |-
-      python3 compileTest.py ../${studentParentWorkingDirectoryName}/
+      # Run the compile and tests
+      python3 compileTest.py ../${studentParentWorkingDirectoryName}/ || true
+
       rm compileTest.py
       cp result.xml ../${studentParentWorkingDirectoryName}/result.xml
     workdir: ${testWorkingDirectory}

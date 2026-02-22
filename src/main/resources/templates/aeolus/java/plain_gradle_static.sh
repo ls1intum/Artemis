@@ -4,7 +4,17 @@ export AEOLUS_INITIAL_DIRECTORY=${PWD}
 gradle () {
   echo '⚙️ executing gradle'
   chmod +x ./gradlew
-  ./gradlew clean test
+
+  # Compile the code
+  ./gradlew clean testClasses
+  COMPILATION_EXIT_CODE=$?
+
+  if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+      exit 1
+  fi
+
+  # Run the tests
+  ./gradlew test || true
 }
 
 static_code_analysis () {

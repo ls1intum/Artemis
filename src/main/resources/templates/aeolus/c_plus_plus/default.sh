@@ -38,7 +38,7 @@ build_and_run_all_tests () {
   fi
 
   # Run tests as unprivileged user
-  runuser -u artemis_user python3 Tests.py
+  runuser -u artemis_user python3 Tests.py || true
 }
 
 main () {

@@ -1,10 +1,16 @@
 api: v0.0.1
+metadata:
+  name: "OCaml"
+  id: ocaml
+  description: "Default build configuration for OCaml exercises"
 actions:
   - name: build_and_test_the_code
     script: |-
       # the build process is specified in `run.sh` in the test repository
       chmod +x run.sh
-      ./run.sh -s
+
+      # Run the build and tests
+      ./run.sh -s || true
     workdir: ${testWorkingDirectory}
     runAlways: false
   - name: junit

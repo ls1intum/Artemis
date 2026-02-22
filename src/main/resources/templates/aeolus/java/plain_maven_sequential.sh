@@ -4,13 +4,31 @@ export AEOLUS_INITIAL_DIRECTORY=${PWD}
 structural () {
   echo '⚙️ executing structural'
   cd "structural"
-  mvn clean test
+  # Compile and run structural tests
+  mvn clean compile test-compile
+  COMPILATION_EXIT_CODE=$?
+
+  if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+      exit 1
+  fi
+
+  # Run structural tests
+  mvn test || true
 }
 
 behavior () {
   echo '⚙️ executing behavior'
   cd "behavior"
-  mvn clean test
+  # Compile and run behavior tests
+  mvn clean compile test-compile
+  COMPILATION_EXIT_CODE=$?
+
+  if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+      exit 1
+  fi
+
+  # Run behavior tests
+  mvn test || true
 }
 
 main () {

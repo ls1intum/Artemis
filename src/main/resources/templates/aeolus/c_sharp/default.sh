@@ -3,12 +3,19 @@ set -e
 export AEOLUS_INITIAL_DIRECTORY=${PWD}
 build () {
   echo '⚙️ executing build'
+  # Compile the code
   dotnet build "${testWorkingDirectory}"
+  COMPILATION_EXIT_CODE=$?
+
+  if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+      exit 1
+  fi
 }
 
 test () {
   echo '⚙️ executing test'
-  dotnet test --logger=junit "${testWorkingDirectory}"
+  # Run the tests
+  dotnet test --logger=junit "${testWorkingDirectory}" || true
 }
 
 main () {

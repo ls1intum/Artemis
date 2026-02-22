@@ -40,7 +40,7 @@ actions:
       fi
 
       # Run tests as unprivileged user
-      runuser -u artemis_user python3 Tests.py
+      runuser -u artemis_user python3 Tests.py || true
     runAlways: false
     results:
       - name: junit_test-reports/tests-results.xml

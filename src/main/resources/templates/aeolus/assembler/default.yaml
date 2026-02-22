@@ -1,4 +1,8 @@
 api: v0.0.1
+metadata:
+  name: "Assembler"
+  id: assembler
+  description: "Build and test Assembler projects"
 actions:
   - name: provide_environment_information
     script: |-
@@ -31,7 +35,9 @@ actions:
   - name: run_and_compile
     script: |-
       cd ${testWorkingDirectory}
-      python3 compileTest.py ../${studentParentWorkingDirectoryName}/
+      # Run the compile and tests
+      python3 compileTest.py ../${studentParentWorkingDirectoryName}/ || true
+
       rm compileTest.py
       cp result.xml ../${studentParentWorkingDirectoryName}/result.xml
     runAlways: false

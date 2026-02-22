@@ -10,7 +10,8 @@ install_dependencies () {
 test () {
   echo '⚙️ executing test'
   cd "${testWorkingDirectory}"
-  dart test --reporter=json | tojunit | xmlstarlet ed -d '//failure/@message' -d '//error/@message' > report.xml
+  # Run the tests
+  dart test --reporter=json | tojunit | xmlstarlet ed -d '//failure/@message' -d '//error/@message' > report.xml || true
 }
 
 main () {

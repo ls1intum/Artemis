@@ -1,9 +1,23 @@
 api: v0.0.1
+metadata:
+  name: "Java Gradle Static"
+  id: java_plain_gradle_static
+  description: "Build configuration for Java Gradle exercises with static code analysis"
 actions:
   - name: gradle
     script: |-
       chmod +x ./gradlew
-      ./gradlew clean test
+
+      # Compile the code
+      ./gradlew clean testClasses
+      COMPILATION_EXIT_CODE=$?
+
+      if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+          exit 1
+      fi
+
+      # Run the tests
+      ./gradlew test || true
     runAlways: false
   - name: static_code_analysis
     script: ./gradlew check -x test

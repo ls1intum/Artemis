@@ -9,7 +9,8 @@ test () {
   sudo chown matlab:matlab test-results
   sudo rm /etc/sudoers.d/matlab
 
-  matlab -batch testRunner
+  # Run the tests
+  matlab -batch testRunner || true
 
 }
 

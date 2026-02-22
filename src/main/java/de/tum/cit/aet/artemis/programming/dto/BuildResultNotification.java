@@ -27,7 +27,7 @@ public interface BuildResultNotification {
     @Nullable
     String assignmentRepoBranchName();
 
-    boolean isBuildSuccessful();
+    boolean isCompilationSuccessful();
 
     Double buildScore();
 

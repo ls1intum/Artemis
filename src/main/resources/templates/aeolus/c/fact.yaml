@@ -1,4 +1,8 @@
 api: v0.0.1
+metadata:
+  name: "C FACT"
+  id: c-fact
+  description: "Build and test C projects with FACT"
 actions:
   - name: setup_the_build_environment
     script: |-
@@ -26,9 +30,9 @@ actions:
       rm -f ${studentParentWorkingDirectoryName}/Makefile
       cp -f ${testWorkingDirectory}/Makefile ${studentParentWorkingDirectoryName}/Makefile || exit 2
       cd ${testWorkingDirectory}
-      python3 Tests.py
-      rm Tests.py
-      rm -rf ./${testWorkingDirectory} || true
+
+      # Run the tests
+      python3 Tests.py || true
     runAlways: false
     results:
       - name: junit_test-reports/tests-results.xml

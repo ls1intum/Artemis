@@ -2,11 +2,21 @@ api: v0.0.1
 metadata:
   name: "C#"
   id: c_sharp
+  description: "Build and test C# projects"
 actions:
   - name: build
-    script: dotnet build "${testWorkingDirectory}"
+    script: |-
+      # Compile the code
+      dotnet build "${testWorkingDirectory}"
+      COMPILATION_EXIT_CODE=$?
+
+      if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+          exit 1
+      fi
   - name: test
-    script: dotnet test --logger=junit "${testWorkingDirectory}"
+    script: |-
+      # Run the tests
+      dotnet test --logger=junit "${testWorkingDirectory}" || true
     results:
       - name: NUnit Test Results
         path: "${testWorkingDirectory}/TestResults/TestResults.xml"

@@ -34,7 +34,9 @@ prepare_makefile () {
 run_and_compile () {
   echo '⚙️ executing run_and_compile'
   cd ${testWorkingDirectory}
-  python3 compileTest.py ../${studentParentWorkingDirectoryName}/
+  # Run the compile and tests
+  python3 compileTest.py ../${studentParentWorkingDirectoryName}/ || true
+
   rm compileTest.py
   cp result.xml ../${studentParentWorkingDirectoryName}/result.xml
 }

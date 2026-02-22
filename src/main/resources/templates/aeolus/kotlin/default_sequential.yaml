@@ -1,11 +1,26 @@
 api: v0.0.1
+metadata:
+  name: "Kotlin Sequential"
+  id: kotlin_sequential
+  description: "Default build configuration for Kotlin exercises with sequential test runs"
 actions:
   - name: structural
-    script: mvn clean test
+    script: |-
+      # Compile and run structural tests
+      mvn clean compile test-compile
+      COMPILATION_EXIT_CODE=$?
+
+      if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+          exit 1
+      fi
+
+      mvn test || true
     runAlways: false
     workdir: structural
   - name: behavior
-    script: mvn clean test
+    script: |-
+      # Run behavioral tests
+      mvn clean test || true
     runAlways: false
     workdir: behavior
   - name: junit

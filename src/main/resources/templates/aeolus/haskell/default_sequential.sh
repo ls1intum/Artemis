@@ -6,7 +6,7 @@ run_structural_tests () {
   # the build process is specified in `run.sh` in the test repository
   # -s enables the safe testing mode
   chmod +x run.sh
-  ./run.sh -s
+  ./run.sh -s || true
 }
 
 run_behavior_tests () {
@@ -14,7 +14,9 @@ run_behavior_tests () {
   # the build process is specified in `run.sh` in the test repository
   # -s enables the safe testing mode
   chmod +x run.sh
-  ./run.sh -s
+
+  # Run the behavioral tests
+  ./run.sh -s || true
 }
 
 main () {
