@@ -338,7 +338,7 @@ describe('ChecklistPanelComponent', () => {
 
             component.createAndLinkCompetencies();
 
-            // Flush microtasks from Promise.all().catch()
+            // Flush microtasks from Promise.allSettled().then()
             await new Promise<void>((resolve) => setTimeout(resolve));
 
             expect(errorSpy).toHaveBeenCalled();

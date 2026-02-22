@@ -676,34 +676,36 @@ export class ChecklistPanelComponent {
 
                     // Create all new competencies in parallel
                     const promises = toCreate.map((comp) => lastValueFrom(this.competencyService.create(comp, courseId)));
-                    Promise.allSettled(promises)
-                        .then((results) => {
-                            const newLinks: CompetencyExerciseLink[] = [...existingLinks];
-                            const newlyCreated = new Set<string>();
-                            const responses = results.filter((r): r is PromiseFulfilledResult<any> => r.status === 'fulfilled').map((r) => r.value);
+                    Promise.allSettled(promises).then((results) => {
+                        const fulfilled = results.filter((r): r is PromiseFulfilledResult<any> => r.status === 'fulfilled').map((r) => r.value);
 
-                            for (const response of responses) {
-                                const created = response.body;
-                                if (created?.id && !existingIds.has(created.id)) {
-                                    newLinks.push(new CompetencyExerciseLink(created, exercise, MEDIUM_COMPETENCY_LINK_WEIGHT));
-                                    existingIds.add(created.id);
-                                    newlyCreated.add(created.title ?? '');
-                                    // Update local cache
-                                    this.courseCompetencies.update((current) => [...current, created]);
-                                }
-                            }
-
-                            if (newlyCreated.size > 0) {
-                                this.competencyLinksChange.emit(newLinks);
-                                this.createdCompetencyTitles.set(new Set([...this.createdCompetencyTitles(), ...newlyCreated]));
-                                this.alertService.success('artemisApp.programmingExercise.instructorChecklist.competencies.createSuccess');
-                            }
-                            this.isCreatingCompetencies.set(false);
-                        })
-                        .catch(() => {
+                        if (fulfilled.length === 0) {
                             this.alertService.error('artemisApp.programmingExercise.instructorChecklist.competencies.createError');
                             this.isCreatingCompetencies.set(false);
-                        });
+                            return;
+                        }
+
+                        const newLinks: CompetencyExerciseLink[] = [...existingLinks];
+                        const newlyCreated = new Set<string>();
+
+                        for (const response of fulfilled) {
+                            const created = response.body;
+                            if (created?.id && !existingIds.has(created.id)) {
+                                newLinks.push(new CompetencyExerciseLink(created, exercise, MEDIUM_COMPETENCY_LINK_WEIGHT));
+                                existingIds.add(created.id);
+                                newlyCreated.add(created.title ?? '');
+                                // Update local cache
+                                this.courseCompetencies.update((current) => [...current, created]);
+                            }
+                        }
+
+                        if (newlyCreated.size > 0) {
+                            this.competencyLinksChange.emit(newLinks);
+                            this.createdCompetencyTitles.set(new Set([...this.createdCompetencyTitles(), ...newlyCreated]));
+                            this.alertService.success('artemisApp.programmingExercise.instructorChecklist.competencies.createSuccess');
+                        }
+                        this.isCreatingCompetencies.set(false);
+                    });
                 },
                 error: () => {
                     this.alertService.error('artemisApp.programmingExercise.instructorChecklist.competencies.createError');
