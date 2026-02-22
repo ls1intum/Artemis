@@ -33,8 +33,6 @@ public record ChecklistActionRequestDTO(@NotNull @Schema(description = "Type of 
         /** Fix all quality issues at once */
         FIX_ALL_QUALITY_ISSUES,
         /** Adapt the problem statement to a target difficulty level */
-        ADAPT_DIFFICULTY,
-        /** Shift the exercise focus towards a target Bloom's taxonomy level */
-        SHIFT_TAXONOMY
+        ADAPT_DIFFICULTY
     }
 }

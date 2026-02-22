@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -75,6 +77,12 @@ public class HyperionChecklistService {
     /** Lazily cached JSON representation of the standardized competency catalog. */
     private volatile String cachedCatalogJson;
 
+    /** Timestamp of when the catalog was last cached. */
+    private volatile Instant catalogCachedAt;
+
+    /** Time-to-live for the competency catalog cache. */
+    private static final Duration CATALOG_CACHE_TTL = Duration.ofHours(1);
+
     private final Object catalogLock = new Object();
 
     public HyperionChecklistService(ChatClient chatClient, HyperionPromptTemplateService templates, ObservationRegistry observationRegistry,
@@ -112,7 +120,7 @@ public class HyperionChecklistService {
 
         var qualityMono = Mono.fromCallable(() -> runQualityAnalysis(ctx.input(), ctx.parentObs())).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
 
-        var resultTuple = Mono.zip(competenciesMono, difficultyMono, qualityMono).block();
+        var resultTuple = Mono.zip(competenciesMono, difficultyMono, qualityMono).block(Duration.ofSeconds(60));
 
         if (resultTuple == null) {
             return ChecklistAnalysisResponseDTO.empty();
@@ -147,11 +155,11 @@ public class HyperionChecklistService {
             }
             case DIFFICULTY -> {
                 DifficultyAssessmentDTO difficulty = runDifficultyAnalysis(ctx.input(), ctx.parentObs(), ctx.declaredDifficulty());
-                yield new ChecklistAnalysisResponseDTO(null, null, difficulty, null);
+                yield new ChecklistAnalysisResponseDTO(List.of(), null, difficulty, null);
             }
             case QUALITY -> {
                 List<QualityIssueDTO> issues = runQualityAnalysis(ctx.input(), ctx.parentObs());
-                yield new ChecklistAnalysisResponseDTO(null, null, null, issues);
+                yield new ChecklistAnalysisResponseDTO(List.of(), null, null, issues);
             }
         };
     }
@@ -276,16 +284,6 @@ public class HyperionChecklistService {
                         + "- For EASIER: simplify requirements, reduce edge cases, add more hints and structure.\n"
                         + "- For HARDER: add complexity, edge cases, require deeper analysis.\n" + "\nPreserve the overall Artemis markdown structure and formatting style.";
             }
-            case SHIFT_TAXONOMY -> {
-                String targetTaxonomy = ctx.getOrDefault("targetTaxonomy", "APPLY");
-                String currentTaxonomySummary = ctx.getOrDefault("currentTaxonomySummary", "");
-                yield "Shift the overall focus of this exercise towards the Bloom's taxonomy level: " + wrapUserValue(targetTaxonomy) + ".\n"
-                        + (currentTaxonomySummary.isEmpty() ? "" : "Current taxonomy distribution: " + wrapUserValue(currentTaxonomySummary) + "\n")
-                        + "Taxonomy levels (from lower to higher cognitive demand): REMEMBER < UNDERSTAND < APPLY < ANALYZE < EVALUATE < CREATE.\n"
-                        + "Rewrite the problem statement so that the majority of tasks target the '" + targetTaxonomy + "' level.\n"
-                        + "For example: APPLY = implement given algorithms; ANALYZE = debug, compare, or dissect code; EVALUATE = justify design decisions; CREATE = design from scratch.\n"
-                        + "Preserve all Artemis task markers ([task] blocks) and test references. Adjust task descriptions and requirements to match the target taxonomy level.";
-            }
         };
     }
 
@@ -309,7 +307,6 @@ public class HyperionChecklistService {
             case FIX_QUALITY_ISSUE -> "Fixed quality issue: " + ctx.getOrDefault("category", "unknown");
             case FIX_ALL_QUALITY_ISSUES -> "Fixed all quality issues";
             case ADAPT_DIFFICULTY -> "Adapted difficulty to " + ctx.getOrDefault("targetDifficulty", "unknown");
-            case SHIFT_TAXONOMY -> "Shifted taxonomy focus to " + ctx.getOrDefault("targetTaxonomy", "unknown");
         };
     }
 
@@ -319,13 +316,15 @@ public class HyperionChecklistService {
      */
     private String serializeCompetencyCatalog() {
         String cached = this.cachedCatalogJson;
-        if (cached != null) {
+        Instant cachedAt = this.catalogCachedAt;
+        if (cached != null && cachedAt != null && Instant.now().isBefore(cachedAt.plus(CATALOG_CACHE_TTL))) {
             return cached;
         }
         synchronized (catalogLock) {
             // Double-checked locking: re-read after acquiring lock
             cached = this.cachedCatalogJson;
-            if (cached != null) {
+            cachedAt = this.catalogCachedAt;
+            if (cached != null && cachedAt != null && Instant.now().isBefore(cachedAt.plus(CATALOG_CACHE_TTL))) {
                 return cached;
             }
             if (standardizedCompetencyApi.isEmpty()) {
@@ -342,6 +341,7 @@ public class HyperionChecklistService {
 
                 String json = objectMapper.writeValueAsString(catalog);
                 this.cachedCatalogJson = json;
+                this.catalogCachedAt = Instant.now();
                 return json;
             }
             catch (JsonProcessingException e) {
@@ -401,18 +401,25 @@ public class HyperionChecklistService {
 
     /**
      * Computes the Bloom radar distribution from inferred competencies.
+     * Only recognised Bloom levels are aggregated; unknown or null taxonomy
+     * values are silently ignored so they don't distort the radar.
      */
     private BloomRadarDTO computeBloomRadar(List<InferredCompetencyDTO> competencies) {
         if (competencies == null || competencies.isEmpty()) {
             return BloomRadarDTO.empty();
         }
 
+        Set<String> knownLevels = Set.of("REMEMBER", "UNDERSTAND", "APPLY", "ANALYZE", "EVALUATE", "CREATE");
+
         // Aggregate confidence-weighted taxonomy levels
         Map<String, Double> taxonomyWeights = new HashMap<>();
         double totalWeight = 0.0;
 
         for (InferredCompetencyDTO comp : competencies) {
-            String level = comp.taxonomyLevel();
+            String level = comp.taxonomyLevel() != null ? comp.taxonomyLevel().toUpperCase() : null;
+            if (level == null || !knownLevels.contains(level)) {
+                continue;
+            }
             double confidence = comp.confidence() != null ? comp.confidence() : 0.5;
 
             taxonomyWeights.merge(level, confidence, Double::sum);

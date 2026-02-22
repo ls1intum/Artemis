@@ -661,7 +661,7 @@ export class ChecklistPanelComponent {
 
                     // Create all new competencies in parallel, tolerating individual failures
                     const create$ = toCreate.map((comp) => this.competencyService.create(comp, courseId).pipe(catchError(() => of(null))));
-                    forkJoin(create$)
+                    forkJoin([...create$])
                         .pipe(takeUntilDestroyed(this.destroyRef))
                         .subscribe((results) => {
                             const fulfilled = results.filter((r) => r !== null);
