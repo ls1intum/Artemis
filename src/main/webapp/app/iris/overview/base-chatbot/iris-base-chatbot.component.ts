@@ -17,7 +17,7 @@ import {
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { DialogService } from 'primeng/dynamicdialog';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
@@ -90,6 +90,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected accountService = inject(AccountService);
     protected translateService = inject(TranslateService);
     private readonly dialogService = inject(DialogService);
+    private aboutIrisDialogRef: DynamicDialogRef<AboutIrisModalComponent> | null = null;
 
     // Reactive signal for the localized "new chat" title
     private readonly newChatTitle = toSignal(this.translateService.stream('artemisApp.iris.chatHistory.newChat'), { initialValue: '' });
@@ -707,14 +708,16 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     openAboutIrisModal(): void {
-        this.dialogService.open(AboutIrisModalComponent, {
+        this.aboutIrisDialogRef = this.dialogService.open(AboutIrisModalComponent, {
             modal: true,
             closable: false,
             showHeader: false,
             styleClass: 'about-iris-dialog',
             maskStyleClass: 'about-iris-dialog',
-            breakpoints: { '960px': '680px', '640px': '95vw' },
+            width: '40rem',
+            breakpoints: { '640px': '95vw' },
         });
+        this.destroyRef.onDestroy(() => this.aboutIrisDialogRef?.close());
     }
 
     setSearchValue(searchValue: string) {

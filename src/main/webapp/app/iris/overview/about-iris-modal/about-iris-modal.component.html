@@ -28,8 +28,8 @@
                     <fa-icon [icon]="card.icon" aria-hidden="true" />
                 </div>
                 <div>
-                    <p class="card-title-text" jhiTranslate="{{ card.titleKey }}"></p>
-                    <p class="card-description" jhiTranslate="{{ card.descKey }}"></p>
+                    <p class="card-title-text" [jhiTranslate]="card.titleKey"></p>
+                    <p class="card-description" [jhiTranslate]="card.descKey"></p>
                 </div>
             </div>
         }
@@ -46,8 +46,8 @@
                     <fa-icon [icon]="card.icon" aria-hidden="true" />
                 </div>
                 <div>
-                    <p class="card-title-text" jhiTranslate="{{ card.titleKey }}"></p>
-                    <p class="card-description" jhiTranslate="{{ card.descKey }}"></p>
+                    <p class="card-title-text" [jhiTranslate]="card.titleKey"></p>
+                    <p class="card-description" [jhiTranslate]="card.descKey"></p>
                 </div>
             </div>
         }
