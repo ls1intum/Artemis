@@ -140,8 +140,9 @@ export class IrisCitationTextComponent {
         const title = lectureUnitTitle || fallbackTitle || '';
 
         const titleHtml = title ? `<span class="iris-citation__summary-title">${escapeHtml(title)}</span>` : '';
-        const lectureContext = lectureTitle ? this.translateService.instant('artemisApp.iris.citation.inLecture', { title: escapeHtml(lectureTitle) }) : '';
-        const lectureHtml = lectureContext ? `<span class="iris-citation__summary-lecture">${lectureContext}</span>` : '';
+        const lectureHtml = lectureTitle
+            ? `<span class="iris-citation__summary-lecture">${escapeHtml(this.translateService.instant('artemisApp.iris.citation.inLecture'))} ${escapeHtml(lectureTitle)}</span>`
+            : '';
         const summaryHtml = summaryText ? `<span class="iris-citation__summary-text">${escapeHtml(summaryText)}</span>` : '';
 
         return `${titleHtml}${lectureHtml}${summaryHtml}`;

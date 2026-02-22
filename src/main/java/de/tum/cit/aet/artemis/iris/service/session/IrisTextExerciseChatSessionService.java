@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.session;
 
 import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Conditional;
@@ -67,12 +68,12 @@ public class IrisTextExerciseChatSessionService
 
     private final UserRepository userRepository;
 
-    private final IrisCitationService irisCitationService;
+    private final Optional<IrisCitationService> irisCitationService;
 
     public IrisTextExerciseChatSessionService(IrisSettingsService irisSettingsService, IrisSessionRepository irisSessionRepository, IrisRateLimitService rateLimitService,
             IrisMessageService irisMessageService, Optional<TextRepositoryApi> textRepositoryApi, StudentParticipationRepository studentParticipationRepository,
             PyrisPipelineService pyrisPipelineService, PyrisJobService pyrisJobService, IrisChatWebsocketService irisChatWebsocketService,
-            AuthorizationCheckService authCheckService, UserRepository userRepository, IrisCitationService irisCitationService) {
+            AuthorizationCheckService authCheckService, UserRepository userRepository, Optional<IrisCitationService> irisCitationService) {
         this.irisSettingsService = irisSettingsService;
         this.irisSessionRepository = irisSessionRepository;
         this.rateLimitService = rateLimitService;
@@ -142,7 +143,7 @@ public class IrisTextExerciseChatSessionService
         if (statusUpdate.result() != null) {
             var message = session.newMessage();
             message.addContent(new IrisTextMessageContent(statusUpdate.result()));
-            var citationInfo = irisCitationService.resolveCitationInfo(statusUpdate.result());
+            var citationInfo = irisCitationService.map(service -> service.resolveCitationInfo(statusUpdate.result())).orElse(List.of());
             IrisMessage savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
             irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages(), sessionTitle, citationInfo);
         }

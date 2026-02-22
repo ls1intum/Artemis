@@ -140,7 +140,7 @@
                 "helpOffer": "How can I help you today?"
             },
             "citation": {
-                "inLecture": "in {{ title }}"
+                "inLecture": "in"
             },
             "tutorSuggestion": {
                 "loading": "Loading suggestions...",
