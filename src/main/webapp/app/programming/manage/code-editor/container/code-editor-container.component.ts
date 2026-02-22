@@ -204,6 +204,10 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
         const selectedAuxiliaryRepositoryId = this.selectedAuxiliaryRepositoryId();
         const reviewThreads = this.exerciseReviewCommentService.threads();
         for (const thread of reviewThreads) {
+            // File badges should only reflect active threads that still need attention.
+            if (thread.resolved || thread.outdated) {
+                continue;
+            }
             if (!matchesSelectedRepository(thread, selectedRepository, selectedAuxiliaryRepositoryId)) {
                 continue;
             }

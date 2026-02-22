@@ -95,7 +95,7 @@ describe('CodeEditorContainerComponent', () => {
         expect(component.fileBadges['src/main/App.java'][0].count).toBe(2);
     });
 
-    it('should count review thread badges per file (one badge count per thread)', () => {
+    it('should count only active review thread badges per file (one badge count per thread)', () => {
         reviewCommentService.threads.set([
             {
                 id: 1,
@@ -116,6 +116,26 @@ describe('CodeEditorContainerComponent', () => {
                 outdated: false,
                 resolved: false,
                 comments: [{ id: 13 }],
+            },
+            {
+                id: 22,
+                exerciseId: 10,
+                targetType: CommentThreadLocationType.TEMPLATE_REPO,
+                filePath: 'src/main/App.java',
+                initialLineNumber: 9,
+                outdated: false,
+                resolved: true,
+                comments: [{ id: 130 }],
+            },
+            {
+                id: 23,
+                exerciseId: 10,
+                targetType: CommentThreadLocationType.TEMPLATE_REPO,
+                filePath: 'src/main/App.java',
+                initialLineNumber: 10,
+                outdated: true,
+                resolved: false,
+                comments: [{ id: 131 }],
             },
             {
                 id: 3,
@@ -184,6 +204,37 @@ describe('CodeEditorContainerComponent', () => {
 
         const badges = component.fileBadges['src/main/Aux.java'];
         expect(badges.find((badge) => badge.type === FileBadgeType.REVIEW_COMMENT)?.count).toBe(1);
+    });
+
+    it('should reactively update review thread badges when threads signal changes after initial render', () => {
+        fixture.componentRef.setInput('enableExerciseReviewComments', true);
+        fixture.componentRef.setInput('selectedRepository', RepositoryType.TEMPLATE);
+        fixture.detectChanges();
+
+        expect(component.fileBadges['src/main/App.java']).toBeUndefined();
+
+        reviewCommentService.threads.set([
+            {
+                id: 1,
+                exerciseId: 10,
+                targetType: CommentThreadLocationType.TEMPLATE_REPO,
+                filePath: 'src/main/App.java',
+                initialLineNumber: 2,
+                outdated: false,
+                resolved: false,
+                comments: [{ id: 11 }],
+            },
+        ] as any);
+        fixture.detectChanges();
+
+        let badges = component.fileBadges['src/main/App.java'];
+        expect(badges.find((badge) => badge.type === FileBadgeType.REVIEW_COMMENT)?.count).toBe(1);
+
+        reviewCommentService.threads.set([]);
+        fixture.detectChanges();
+
+        badges = component.fileBadges['src/main/App.java'];
+        expect(badges).toBeUndefined();
     });
 
     it('should adjust editor and commit states based on unsaved files', () => {

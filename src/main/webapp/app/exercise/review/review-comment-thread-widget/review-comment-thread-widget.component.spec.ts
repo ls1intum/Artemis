@@ -57,19 +57,33 @@ describe('ReviewCommentThreadWidgetComponent', () => {
     });
 
     it('should delete comment when deletion is confirmed', async () => {
-        modalService.open.mockReturnValue({ componentInstance: {}, result: Promise.resolve() });
+        let resolveModal: () => void;
+        const modalResult = new Promise<void>((resolve) => {
+            resolveModal = resolve;
+        });
+        modalService.open.mockReturnValue({ componentInstance: {}, result: modalResult });
 
         comp.deleteComment(5);
-        await Promise.resolve();
+        expect(reviewCommentService.deleteCommentInContext).not.toHaveBeenCalled();
 
-        expect(reviewCommentService.deleteCommentInContext).toHaveBeenCalledWith(5);
+        resolveModal!();
+        await vi.waitFor(() => {
+            expect(reviewCommentService.deleteCommentInContext).toHaveBeenCalledWith(5);
+        });
     });
 
     it('should not delete comment when deletion modal is dismissed', async () => {
-        modalService.open.mockReturnValue({ componentInstance: {}, result: Promise.reject('dismissed') });
+        let rejectModal: (reason?: unknown) => void;
+        const modalResult = new Promise<void>((_resolve, reject) => {
+            rejectModal = reject;
+        });
+        modalService.open.mockReturnValue({ componentInstance: {}, result: modalResult });
 
         comp.deleteComment(5);
-        await Promise.resolve();
+        expect(reviewCommentService.deleteCommentInContext).not.toHaveBeenCalled();
+
+        rejectModal!('dismissed');
+        await modalResult.catch(() => {});
 
         expect(reviewCommentService.deleteCommentInContext).not.toHaveBeenCalled();
     });
