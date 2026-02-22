@@ -135,12 +135,7 @@ public class ParticipationService {
 
         // All other cases, i.e. normal exercises, and regular exam exercises
         else {
-            if (exercise instanceof QuizExercise) {
-                optionalStudentParticipation = findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, participant, false);
-            }
-            else {
-                optionalStudentParticipation = findOneByExerciseAndParticipantAnyState(exercise, participant);
-            }
+            optionalStudentParticipation = findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, participant, false);
             if (optionalStudentParticipation.isPresent() && optionalStudentParticipation.get().isPracticeMode() && exercise.isCourseExercise()) {
                 // In case there is already a practice participation, set it to inactive
                 optionalStudentParticipation.get().setInitializationState(InitializationState.INACTIVE);
@@ -287,9 +282,6 @@ public class ParticipationService {
      */
     public StudentParticipation startPracticeMode(Exercise exercise, Participant participant, Optional<StudentParticipation> optionalGradedStudentParticipation,
             boolean useGradedParticipation) {
-        if (!(exercise instanceof ProgrammingExercise || exercise instanceof QuizExercise)) {
-            throw new IllegalStateException("Only programming and quiz exercises support the practice mode at the moment");
-        }
         optionalGradedStudentParticipation.ifPresent(participation -> {
             participation.setInitializationState(InitializationState.FINISHED);
             participationRepository.save(participation);

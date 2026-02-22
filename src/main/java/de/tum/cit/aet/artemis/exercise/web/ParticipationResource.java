@@ -170,7 +170,7 @@ public class ParticipationResource {
             participant = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), user.getId())
                     .orElseThrow(() -> new BadRequestAlertException("Team exercise cannot be started without assigned team.", "participation", "teamExercise.cannotStart"));
         }
-        StudentParticipation participation = null;
+        StudentParticipation participation;
         try {
             participation = participationService.startExercise(exercise, participant, true);
         }
@@ -199,7 +199,6 @@ public class ParticipationResource {
      */
     @PostMapping("exercises/{exerciseId}/participations/practice")
     @EnforceAtLeastStudent
-    @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Participation> startPracticeParticipation(@PathVariable Long exerciseId,
             @RequestParam(value = "useGradedParticipation", defaultValue = "false") boolean useGradedParticipation) throws URISyntaxException {
         log.debug("REST request to practice Exercise : {}", exerciseId);
@@ -214,9 +213,8 @@ public class ParticipationResource {
         if (exercise.isTeamMode()) {
             throw new BadRequestAlertException("The practice mode is not yet supported for team exercises", ENTITY_NAME, "noPracticeModeForTeams");
         }
-        // TODO: we should allow the practice mode for all other exercise types as well
-        if (!(exercise instanceof ProgrammingExercise)) {
-            throw new BadRequestAlertException("The practice can only be used for programming exercises", ENTITY_NAME, "practiceModeOnlyForProgramming");
+        if (exercise instanceof ProgrammingExercise && !featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)) {
+            throw new BadRequestAlertException("The feature for programming exercises is disabled", ENTITY_NAME, "programmingExercisesDisabled");
         }
         if (exercise.getDueDate() == null || now().isBefore(exercise.getDueDate())
                 || (optionalGradedStudentParticipation.isPresent() && exerciseDateService.isBeforeDueDate(optionalGradedStudentParticipation.get()))) {

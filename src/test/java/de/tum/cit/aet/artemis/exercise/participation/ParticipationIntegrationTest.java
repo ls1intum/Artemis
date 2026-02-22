@@ -562,6 +562,80 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         request.post("/api/exercise/exercises/" + programmingExercise.getId() + "/participations/practice", null, HttpStatus.BAD_REQUEST);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void practiceTextExercise_successful() throws Exception {
+        textExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        exerciseRepository.save(textExercise);
+
+        StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations/practice", null,
+                StudentParticipation.class, HttpStatus.CREATED);
+        assertThat(participation).isNotNull();
+        assertThat(participation.isPracticeMode()).isTrue();
+        assertThat(participation.getAttempt()).isEqualTo(1);
+
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        assertThat(participation.getStudent()).contains(user);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void practiceModelingExercise_successful() throws Exception {
+        modelingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        exerciseRepository.save(modelingExercise);
+
+        StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + modelingExercise.getId() + "/participations/practice", null,
+                StudentParticipation.class, HttpStatus.CREATED);
+        assertThat(participation).isNotNull();
+        assertThat(participation.isPracticeMode()).isTrue();
+        assertThat(participation.getAttempt()).isEqualTo(1);
+
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        assertThat(participation.getStudent()).contains(user);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void practiceTextExercise_beforeDueDatePassed() throws Exception {
+        textExercise.setDueDate(ZonedDateTime.now().plusHours(2));
+        exerciseRepository.save(textExercise);
+        request.post("/api/exercise/exercises/" + textExercise.getId() + "/participations/practice", null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void practiceFileUploadExercise_notSupported() throws Exception {
+        List<FileUploadExercise> fileUploadExercises = fileUploadExerciseUtilService.createFileUploadExercisesWithCourse();
+        FileUploadExercise fileUploadExercise = exerciseRepository.save(fileUploadExercises.getFirst());
+        fileUploadExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        exerciseRepository.save(fileUploadExercise);
+        request.post("/api/exercise/exercises/" + fileUploadExercise.getId() + "/participations/practice", null, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void startGradedTextExercise_afterPracticeParticipationExists() throws Exception {
+        // First start a practice participation
+        textExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        exerciseRepository.save(textExercise);
+
+        StudentParticipation practiceParticipation = request.postWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations/practice", null,
+                StudentParticipation.class, HttpStatus.CREATED);
+        assertThat(practiceParticipation.isPracticeMode()).isTrue();
+
+        // Now reset due date and start a graded participation — should not return the
+        // practice one
+        textExercise.setDueDate(ZonedDateTime.now().plusHours(2));
+        exerciseRepository.save(textExercise);
+
+        URI location = request.post("/api/exercise/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.CREATED);
+        StudentParticipation gradedParticipation = request.get(location.getPath(), HttpStatus.OK, StudentParticipation.class);
+
+        assertThat(gradedParticipation).isNotNull();
+        assertThat(gradedParticipation.isPracticeMode()).isFalse();
+        assertThat(gradedParticipation.getId()).isNotEqualTo(practiceParticipation.getId());
+    }
+
     private void prepareMocksForProgrammingExercise() throws Exception {
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         jenkinsRequestMockProvider.enableMockingOfRequests();
