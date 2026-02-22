@@ -105,14 +105,14 @@
                 <ng-container ngbNavItem>
                     <div class="d-flex align-items-center" [style.flex-flow]="'row wrap'">
                         <!-- Standard -->
-                        @if (showTextStyleActions) {
+                        @if (showTextStyleActions()) {
                             @for (action of displayedActions.style; track action.id) {
                                 <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
                             }
                         } @else {
                             <button type="button" class="btn btn-sm py-0 text-style-icon" (click)="showTextStyleActions = true">Aa</button>
                         }
-                        @if (showNonTextStyleActions) {
+                        @if (showNonTextStyleActions()) {
                             @for (action of displayedActions.standard; track action.id) {
                                 <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
                             }
