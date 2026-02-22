@@ -140,7 +140,7 @@ public class HyperionConsistencyCheckService {
 
         String renderedRepositoryContext = exerciseContextRenderer.renderContext(exerciseWithParticipations);
         Long exerciseId = exerciseWithParticipations.getId();
-        String existingReviewThreads = exerciseId != null ? reviewCommentContextRenderer.renderReviewThreads(exerciseId) : "No existing review threads.";
+        String existingReviewThreads = exerciseId != null ? reviewCommentContextRenderer.renderReviewThreads(exerciseId) : "{\"threads\":[]}";
         String programmingLanguage = exerciseWithParticipations.getProgrammingLanguage() != null ? exerciseWithParticipations.getProgrammingLanguage().name() : "JAVA";
         var input = Map.of("rendered_context", renderedRepositoryContext, "programming_language", programmingLanguage, "existing_review_threads", existingReviewThreads);
 

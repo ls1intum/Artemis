@@ -148,7 +148,9 @@ public class HyperionReviewCommentContextRendererService {
             return truncateText(sanitizeAndNormalizeText(userContent.text()));
         }
         if (content instanceof ConsistencyIssueCommentContentDTO consistencyContent) {
-            String prefix = "[" + consistencyContent.severity().name() + "/" + consistencyContent.category().name() + "] ";
+            String severity = consistencyContent.severity() != null ? consistencyContent.severity().name() : "UNKNOWN";
+            String category = consistencyContent.category() != null ? consistencyContent.category().name() : "UNKNOWN";
+            String prefix = "[" + severity + "/" + category + "] ";
             return truncateText(prefix + sanitizeAndNormalizeText(consistencyContent.text()));
         }
         return truncateText(sanitizeAndNormalizeText(content.toString()));

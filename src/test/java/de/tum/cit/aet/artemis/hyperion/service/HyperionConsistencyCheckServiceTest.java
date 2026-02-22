@@ -201,6 +201,39 @@ class HyperionConsistencyCheckServiceTest {
         assertThat(promptText).contains("threads");
     }
 
+    @Test
+    void checkConsistency_handlesMissingConsistencyMetadataInRenderedThreadContext() throws Exception {
+        final var exercise = getProgrammingExercise();
+        when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(42L)).thenReturn(exercise);
+        when(repositoryService.getFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class)))
+                .thenReturn(Map.of("src/main/java/App.java", "class App { int sum(int a,int b){return a+b;} }"));
+
+        CommentThread existingThread = new CommentThread();
+        existingThread.setId(11L);
+        existingThread.setTargetType(CommentThreadLocationType.PROBLEM_STATEMENT);
+        existingThread.setInitialLineNumber(5);
+        existingThread.setLineNumber(5);
+        existingThread.setOutdated(false);
+        existingThread.setResolved(false);
+
+        Comment existingComment = new Comment();
+        existingComment.setType(CommentType.CONSISTENCY_CHECK);
+        existingComment.setContent(new ConsistencyIssueCommentContentDTO(null, null, "Missing metadata but keep text", null));
+        existingThread.getComments().add(existingComment);
+        when(commentThreadRepository.findWithCommentsByExerciseId(42L)).thenReturn(Set.of(existingThread));
+
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage("{\"issues\":[]}")))));
+
+        hyperionConsistencyCheckService.checkConsistency(exercise);
+
+        ArgumentCaptor<Prompt> promptCaptor = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel, atLeastOnce()).call(promptCaptor.capture());
+
+        String promptText = promptCaptor.getAllValues().stream().flatMap(prompt -> prompt.getInstructions().stream())
+                .map(content -> Objects.toString(content.getText(), content.toString())).collect(Collectors.joining("\n"));
+        assertThat(promptText).contains("[UNKNOWN/UNKNOWN] Missing metadata but keep text");
+    }
+
     private static LLMModelCostConfiguration createTestConfiguration() {
         var config = new LLMModelCostConfiguration();
         var modelCosts = Map.of("gpt-5-mini", createModelCostProperties(0.23f, 1.84f));

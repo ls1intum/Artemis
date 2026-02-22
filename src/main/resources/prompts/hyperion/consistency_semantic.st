@@ -2,7 +2,7 @@
 
 # EXISTING CONSISTENCY-CHECK REVIEW THREADS
 {{existing_review_threads}}
-The existing review threads above are JSON with shape: `{"threads":[{"targetType":...,"filePath":...,"lineNumber":...,"comments":[{"type":...,"text":...}]}]}` and include only consistency-check threads with the first consistency-check comment per thread.
+The above JSON (shape: `{"threads":[{"targetType":...,"filePath":...,"lineNumber":...,"comments":[{"type":...,"text":...}]}]}`) lists existing consistency-check threads (first comment per thread only). An empty threads array means no prior findings exist.
 
 # MISSION
 You are a Semantic Consistency Validator for programming exercises.
@@ -161,11 +161,14 @@ Analysis: Same entity with different names - students cannot map requirements to
 # FILE PATH RULES (MANDATORY)
 - `relatedLocations[].filePath` must always be a repository-internal relative path.
 - Do NOT include repository container prefixes such as `template_repository/`, `solution_repository/`, or `tests_repository/`.
-- For `TEMPLATE_REPOSITORY` and `SOLUTION_REPOSITORY`, Java/code paths should use the source prefix (e.g. `src/etc/Class.java`).
-- For `TESTS_REPOSITORY`, Java/code paths should use the test prefix (e.g. `test/etc/ClassTest.java`) and must not use `src/...`.
+- Use only file paths that actually appear in the rendered artifact context. Do not invent or normalize paths.
+- For `TEMPLATE_REPOSITORY` and `SOLUTION_REPOSITORY`, use the repository's real source path conventions from the context (language-dependent).
+- For `TESTS_REPOSITORY`, use the test repository's real path conventions from the context (often `test/...` for Java). Do not switch to `src/...` unless that exact path exists in test artifacts.
 - For problem statement locations, use `problem_statement.md`.
+- If you cannot identify a valid existing file path from the context, do not emit that repository location.
 
 # OUTPUT FORMAT
+Use real paths from the provided context. The file paths in this JSON snippet are illustrative examples only.
 ```json
 {
   "issues": [
@@ -175,7 +178,7 @@ Analysis: Same entity with different names - students cannot map requirements to
       "category": "IDENTIFIER_NAMING_INCONSISTENCY",
     "relatedLocations": [
         {
-          "type": "PROBLEM_STATEMENT" | "TEMPLATE_REPOSITORY" | "SOLUTION_REPOSITORY" | "TESTS_REPOSITORY",
+          "type": "TEMPLATE_REPOSITORY",
       "filePath": "src/etc/BubbleSort.java",
       "startLine": 1,
       "endLine": 10
