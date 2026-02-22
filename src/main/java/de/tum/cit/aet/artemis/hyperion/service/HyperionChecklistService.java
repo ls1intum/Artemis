@@ -92,12 +92,7 @@ public class HyperionChecklistService {
     /** Time-to-live for the competency catalog cache. */
     private static final Duration CATALOG_CACHE_TTL = Duration.ofHours(1);
 
-    /**
-     * Maximum time to block the servlet thread waiting for all three concurrent LLM analyses.
-     * This call blocks a Tomcat worker thread; keep low to avoid thread-pool exhaustion under
-     * concurrent use. Only instructor-level endpoints invoke this, so concurrency is expected
-     * to be low.
-     */
+    /** Maximum time to block the servlet thread waiting for all three concurrent LLM analyses. */
     private static final Duration ANALYSIS_TIMEOUT = Duration.ofSeconds(60);
 
     private final Object catalogLock = new Object();
@@ -227,9 +222,7 @@ public class HyperionChecklistService {
         var input = Map.of("problem_statement", problemStatement, "declared_difficulty", declaredDifficulty, "language", language, "competency_catalog", catalogJson,
                 "course_competencies", courseCompetenciesJson);
 
-        // Capture the parent observation on the servlet thread so that child spans created
-        // on Reactor's boundedElastic threads can be linked correctly. This is safe because
-        // parentObs is only read (never mutated) by the Mono callables.
+        // Capture the parent observation on the servlet thread so that child spans created on Reactor's boundedElastic threads can be linked correctly.
         Observation parentObs = observationRegistry.getCurrentObservation();
 
         // Load task names for the competency prompt (only for existing exercises)
@@ -251,11 +244,9 @@ public class HyperionChecklistService {
 
     /**
      * Applies a checklist action to modify the problem statement using AI.
-     * Builds action-specific instructions and calls the LLM to produce an updated
-     * problem statement.
+     * Builds action-specific instructions and calls the LLM to produce an updated problem statement.
      *
-     * @param request the action request containing the action type, problem statement,
-     *                    and context
+     * @param request the action request containing the action type, problem statement, and context
      * @return the response containing the updated problem statement
      */
     @Observed(name = "hyperion.checklist.action", contextualName = "checklist action", lowCardinalityKeyValues = { AI_SPAN_KEY, AI_SPAN_VALUE })
@@ -330,7 +321,9 @@ public class HyperionChecklistService {
         };
     }
 
-    /** Wraps a user-supplied context value with triple-backtick fences to reduce prompt injection risk. */
+    /**
+     * Wraps a user-supplied context value with triple-backtick fences to reduce prompt injection risk.
+     */
     private static String wrapUserValue(String value) {
         if (value == null || value.isEmpty()) {
             return "";
@@ -338,7 +331,9 @@ public class HyperionChecklistService {
         return "\n```user-input\n" + value + "\n```\n";
     }
 
-    /** Builds a short human-readable summary of what action was applied. */
+    /**
+     * Builds a short human-readable summary of what action was applied.
+     */
     private String buildActionSummary(ChecklistActionRequestDTO.ActionType actionType, Map<String, String> ctx) {
         return switch (actionType) {
             case FIX_QUALITY_ISSUE -> "Fixed quality issue: " + ctx.getOrDefault("category", "unknown");
@@ -347,7 +342,9 @@ public class HyperionChecklistService {
         };
     }
 
-    /** Serializes the standardized competency catalog to condensed JSON for the prompt. */
+    /**
+     * Serializes the standardized competency catalog to condensed JSON for the prompt.
+     */
     private String serializeCompetencyCatalog() {
         String cached = this.cachedCatalogJson;
         Instant cachedAt = this.catalogCachedAt;
@@ -409,9 +406,8 @@ public class HyperionChecklistService {
     }
 
     /**
-     * Serializes the existing course competencies to a condensed JSON array for inclusion
-     * in the competency inference prompt. This allows the AI to directly match inferred
-     * competencies against existing course competencies by returning their IDs.
+     * Serializes the existing course competencies to a condensed JSON array for inclusion in the competency inference prompt.
+     * This allows the AI to directly match inferred competencies against existing course competencies by returning their IDs.
      *
      * @param courseId the ID of the course
      * @return JSON array string of course competencies, or "[]" if unavailable
@@ -447,7 +443,9 @@ public class HyperionChecklistService {
         }
     }
 
-    /** Runs competency inference using the standardized catalog. */
+    /**
+     * Runs competency inference using the standardized catalog.
+     */
     private List<InferredCompetencyDTO> runCompetencyInference(Map<String, String> input, Observation parentObs, List<String> taskNames) {
         var competencyInput = new HashMap<>(input);
         competencyInput.put("task_names", taskNames.isEmpty() ? "(no tasks detected)" : String.join(", ", taskNames));
@@ -471,7 +469,9 @@ public class HyperionChecklistService {
                 c.evidence(), c.whyThisMatches(), c.isLikelyPrimary(), Objects.requireNonNullElse(c.relatedTaskNames(), List.of()), c.matchedCourseCompetencyId());
     }
 
-    /** Computes the Bloom radar distribution from inferred competencies. */
+    /**
+     * Computes the Bloom radar distribution from inferred competencies.
+     */
     private BloomRadarDTO computeBloomRadar(List<InferredCompetencyDTO> competencies) {
         if (competencies == null || competencies.isEmpty()) {
             return BloomRadarDTO.empty();
@@ -502,7 +502,9 @@ public class HyperionChecklistService {
         return new BloomRadarDTO(values[0], values[1], values[2], values[3], values[4], values[5]);
     }
 
-    /** Runs difficulty analysis. */
+    /**
+     * Runs difficulty analysis.
+     */
     private DifficultyAssessmentDTO runDifficultyAnalysis(Map<String, String> input, Observation parentObs, String declaredDifficulty) {
         String renderedPrompt = templates.render("/prompts/hyperion/checklist_difficulty.st", input);
 
@@ -526,7 +528,9 @@ public class HyperionChecklistService {
         }, DifficultyAssessmentDTO.unknown("Analysis failed"));
     }
 
-    /** Computes the delta between declared and suggested difficulty using enum ordinals. */
+    /**
+     * Computes the delta between declared and suggested difficulty using enum ordinals.
+     */
     private DifficultyDelta computeDelta(SuggestedDifficulty declared, SuggestedDifficulty suggested) {
         if (declared == null || suggested == null || declared == SuggestedDifficulty.UNKNOWN || suggested == SuggestedDifficulty.UNKNOWN) {
             return DifficultyDelta.UNKNOWN;
@@ -536,7 +540,9 @@ public class HyperionChecklistService {
         return cmp < 0 ? DifficultyDelta.LOWER : cmp > 0 ? DifficultyDelta.HIGHER : DifficultyDelta.MATCH;
     }
 
-    /** Runs quality analysis. */
+    /**
+     * Runs quality analysis.
+     */
     private List<QualityIssueDTO> runQualityAnalysis(Map<String, String> input, Observation parentObs) {
         String renderedPrompt = templates.render("/prompts/hyperion/checklist_quality.st", input);
 
@@ -565,7 +571,9 @@ public class HyperionChecklistService {
         return new QualityIssueDTO(category, severity, issue.description(), location, issue.suggestedFix(), issue.impactOnLearners());
     }
 
-    /** Sanitizes context map values by truncating them to {@value MAX_CONTEXT_VALUE_LENGTH} characters. */
+    /**
+     * Sanitizes context map values by truncating them to {@value MAX_CONTEXT_VALUE_LENGTH} characters.
+     */
     private Map<String, String> sanitizeContext(Map<String, String> context) {
         if (context == null || context.isEmpty()) {
             return Map.of();
@@ -576,7 +584,9 @@ public class HyperionChecklistService {
         }, HashMap::putAll);
     }
 
-    /** Safely parses a string to an enum constant, returning {@code null} if unrecognized. */
+    /**
+     * Safely parses a string to an enum constant, returning {@code null} if unrecognized.
+     */
     private <E extends Enum<E>> E parseEnumSafe(Class<E> enumType, String value) {
         if (value == null || value.isBlank()) {
             return null;
@@ -590,7 +600,9 @@ public class HyperionChecklistService {
         }
     }
 
-    /** A supplier that may throw a checked exception. */
+    /**
+     * A supplier that may throw a checked exception.
+     */
     @FunctionalInterface
     private interface CheckedSupplier<T> {
 

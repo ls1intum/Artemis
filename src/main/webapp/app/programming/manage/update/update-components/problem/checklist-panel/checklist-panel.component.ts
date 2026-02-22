@@ -41,10 +41,14 @@ import { taskRegex } from 'app/programming/shared/instructions-render/extensions
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
-/** Type-safe section identifier used for stale tracking and section-level re-analysis. */
+/**
+ * Type-safe section identifier used for stale tracking and section-level re-analysis.
+ */
 type ChecklistSectionType = 'competencies' | 'difficulty' | 'quality';
 
-/** Maps client-side lowercase section names to server-side uppercase enum values. */
+/**
+ * Maps client-side lowercase section names to server-side uppercase enum values.
+ */
 const SECTION_TO_API_PARAM: Record<ChecklistSectionType, 'COMPETENCIES' | 'DIFFICULTY' | 'QUALITY'> = {
     competencies: 'COMPETENCIES',
     difficulty: 'DIFFICULTY',
@@ -95,11 +99,16 @@ export class ChecklistPanelComponent {
     // Track the latest problem statement (may be updated by AI actions before the input signal refreshes)
     private latestProblemStatement = signal<string | undefined>(undefined);
 
-    /** Effective problem statement: the latest AI-modified version, or the input signal. */
+    /**
+     * Effective problem statement: the latest AI-modified version, or the input signal.
+     */
     private readonly effectiveProblemStatement = computed(() => this.latestProblemStatement() ?? this.problemStatement());
 
     constructor() {
-        /** Clear latestProblemStatement once the input signal catches up to the AI-emitted value. */
+        /**
+         * Clear latestProblemStatement once the input signal catches up to the
+         * AI-emitted value, ensuring subsequent manual edits are respected.
+         */
         effect(() => {
             const inputPS = this.problemStatement();
             const latest = this.latestProblemStatement();
@@ -109,7 +118,9 @@ export class ChecklistPanelComponent {
         });
     }
 
-    /** Locally computed task and test counts by parsing [task] markers (no AI needed). */
+    /**
+     * Locally computed task and test counts by parsing [task] markers (no AI needed).
+     */
     localTaskTestCounts = computed(() => {
         return this.countTasksAndTests(this.effectiveProblemStatement());
     });
@@ -288,7 +299,9 @@ export class ChecklistPanelComponent {
         }).join(' ');
     }
 
-    /** Pre-computed grid polygon strings for the 4 scale levels. */
+    /**
+     * Pre-computed grid polygon strings for the 4 scale levels.
+     */
     readonly qualityGridStrings = [0.25, 0.5, 0.75, 1.0].map((level) => this.getQualityGridPoints(level));
 
     qualityPolygonPoints = computed(() => {
@@ -296,8 +309,6 @@ export class ChecklistPanelComponent {
             .map((p) => `${p.dataX},${p.dataY}`)
             .join(' ');
     });
-
-    // ===== AI Action Methods =====
 
     private applyAction(request: ChecklistActionRequest, loadingKey: string, staleMark: ChecklistSectionType[], onApplied?: () => void) {
         const cId = this.courseId();
@@ -349,7 +360,9 @@ export class ChecklistPanelComponent {
         return this.sectionLoading() === section;
     }
 
-    /** Re-analyzes a single section via the section-specific endpoint (saving 2/3 of LLM calls). */
+    /**
+     * Re-analyzes a single section via the section-specific endpoint.
+     */
     reanalyzeSection(section: ChecklistSectionType) {
         const cId = this.courseId();
         if (!cId || this.sectionLoading() || this.isApplyingAction()) return;
@@ -472,9 +485,9 @@ export class ChecklistPanelComponent {
         return this.actionLoadingKey() === key;
     }
 
-    // ===== Competency Linking Methods =====
-
-    /** Maps an inferred taxonomy level string to CompetencyTaxonomy enum. */
+    /**
+     * Maps an inferred taxonomy level string to CompetencyTaxonomy enum
+     */
     private mapTaxonomy(level: string | undefined): CompetencyTaxonomy | undefined {
         if (!level) return undefined;
         const upper = level.toUpperCase();
@@ -484,7 +497,9 @@ export class ChecklistPanelComponent {
         return undefined;
     }
 
-    /** Loads course competencies, using the cached value if already populated. */
+    /**
+     * Loads course competencies, using the cached value if already populated.
+     */
     private loadCourseCompetencies(): Observable<CourseCompetency[]> {
         const cached = this.courseCompetencies();
         if (cached.length > 0) {
@@ -499,7 +514,9 @@ export class ChecklistPanelComponent {
         );
     }
 
-    /** Links inferred competencies to matching course competencies using matchedCourseCompetencyId. */
+    /**
+     * Links inferred competencies to matching course competencies using matchedCourseCompetencyId.
+     */
     linkMatchingCompetencies(): void {
         if (this.isLinkingCompetencies()) return;
 
@@ -560,7 +577,9 @@ export class ChecklistPanelComponent {
             });
     }
 
-    /** Creates new competencies from unmatched inferred competencies, then links them to the exercise. */
+    /**
+     * Creates new competencies from unmatched inferred competencies, then links them to the exercise.
+     */
     createAndLinkCompetencies(): void {
         if (this.isCreatingCompetencies()) return;
 
@@ -659,12 +678,16 @@ export class ChecklistPanelComponent {
         return titleSet.has((comp.competencyTitle ?? '').toLowerCase());
     }
 
-    /** Checks if an inferred competency has been linked to the exercise. */
+    /**
+     * Checks if an inferred competency has been linked to the exercise
+     */
     isCompetencyLinked(comp: InferredCompetency): boolean {
         return this.competencyTitleIn(comp, this.linkedCompetencyTitles());
     }
 
-    /** Checks if an inferred competency was created as a new course competency. */
+    /**
+     * Checks if an inferred competency was created as a new course competency
+     */
     isCompetencyCreated(comp: InferredCompetency): boolean {
         return this.competencyTitleIn(comp, this.createdCompetencyTitles());
     }
