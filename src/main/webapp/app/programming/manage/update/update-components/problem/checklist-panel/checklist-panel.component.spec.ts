@@ -373,6 +373,47 @@ describe('ChecklistPanelComponent', () => {
             expect(component.isCompetencyCreated({ competencyTitle: 'Loops' })).toBeFalsy();
         });
 
+        it('should prefer Tier 1 standardized competency match over fuzzy title match', () => {
+            // AI infers "Algorithm Analysis" which exactly matches a linked standardized competency
+            // but the course competency has a different user-facing title
+            const catalogResponse: ChecklistAnalysisResponse = {
+                inferredCompetencies: [
+                    {
+                        competencyTitle: 'Algorithm Analysis',
+                        knowledgeAreaShortTitle: 'AL',
+                        taxonomyLevel: 'ANALYZE',
+                        confidence: 0.95,
+                        rank: 1,
+                    },
+                ],
+                difficultyAssessment: { suggested: 'MEDIUM', reasoning: 'Reason', matchesDeclared: true },
+                qualityIssues: [],
+            };
+            // Course competency was imported from catalog and renamed by the instructor
+            const catalogLinkedCompetency: CourseCompetency = Object.assign(new Competency(), {
+                id: 100,
+                title: 'Complexity & Algorithms', // Renamed — fuzzy match would be poor
+                linkedStandardizedCompetency: { id: 42, title: 'Algorithm Analysis', knowledgeArea: { shortTitle: 'AL' } },
+            });
+            // Another course competency whose title is closer by fuzzy match
+            const fuzzyDecoy: CourseCompetency = Object.assign(new Competency(), {
+                id: 101,
+                title: 'Algorithm Analysis Basics',
+            });
+
+            component.analysisResult.set(catalogResponse);
+            vi.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [catalogLinkedCompetency, fuzzyDecoy] })) as any);
+            const emitSpy = vi.spyOn(component.competencyLinksChange, 'emit');
+
+            component.linkMatchingCompetencies();
+
+            // Should match the catalog-linked competency (id=100), NOT the fuzzy decoy (id=101)
+            expect(emitSpy).toHaveBeenCalled();
+            const emittedLinks = emitSpy.mock.calls[0][0] as CompetencyExerciseLink[];
+            expect(emittedLinks).toHaveLength(1);
+            expect(emittedLinks[0].competency?.id).toBe(100);
+        });
+
         it('should link competencies with fuzzy title matching', () => {
             // AI infers "Algorithm Design and Analysis" but course has "Algorithm Analysis"
             const fuzzyResponse: ChecklistAnalysisResponse = {

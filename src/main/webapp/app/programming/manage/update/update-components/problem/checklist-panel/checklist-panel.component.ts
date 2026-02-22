@@ -33,6 +33,7 @@ import { InferredCompetency } from 'app/openapi/model/inferredCompetency';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { Competency, CompetencyExerciseLink, CompetencyTaxonomy, CourseCompetency, MEDIUM_COMPETENCY_LINK_WEIGHT } from 'app/atlas/shared/entities/competency.model';
+import { HttpResponse } from '@angular/common/http';
 import { Observable, forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { taskRegex } from 'app/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
@@ -524,14 +525,43 @@ export class ChecklistPanelComponent {
     }
 
     /**
-     * Finds a matching course competency using fuzzy word-overlap matching.
-     * Handles cases where the AI-inferred title differs slightly from the course competency
-     * title (e.g., "Algorithm Analysis" vs "Algorithm Design and Analysis").
+     * Finds a matching course competency using a two-tier strategy:
+     *
+     * **Tier 1 – Standardized catalog match (deterministic)**:
+     * If a course competency was imported from the standardized catalog, its
+     * `linkedStandardizedCompetency` contains the exact catalog title and
+     * knowledge area. We compare these against the AI-inferred values for a
+     * precise, case-insensitive match that is immune to instructor renames.
+     *
+     * **Tier 2 – Fuzzy title match (fallback)**:
+     * For course competencies that were NOT imported from the catalog (no
+     * `linkedStandardizedCompetency`), we fall back to stemmed
+     * Damerau-Levenshtein similarity against the course competency title.
      */
     private findMatchingCompetency(inferred: InferredCompetency): CourseCompetency | undefined {
         const inferredTitle = inferred.competencyTitle?.toLowerCase().trim();
         if (!inferredTitle) return undefined;
 
+        const inferredKA = inferred.knowledgeAreaShortTitle?.toLowerCase().trim();
+
+        // --- Tier 1: exact match via linkedStandardizedCompetency ---
+        for (const cc of this.courseCompetencies()) {
+            const linked = cc.linkedStandardizedCompetency;
+            if (!linked?.title) continue;
+
+            const linkedTitle = linked.title.toLowerCase().trim();
+            if (linkedTitle !== inferredTitle) continue;
+
+            // If the AI also returned a knowledge-area code, verify it matches
+            // to avoid false positives when two knowledge areas share a title.
+            if (inferredKA && linked.knowledgeArea?.shortTitle) {
+                if (linked.knowledgeArea.shortTitle.toLowerCase().trim() !== inferredKA) continue;
+            }
+
+            return cc; // deterministic hit
+        }
+
+        // --- Tier 2: fuzzy title similarity fallback ---
         let bestMatch: CourseCompetency | undefined;
         let bestScore = 0;
 
@@ -660,8 +690,10 @@ export class ChecklistPanelComponent {
                     }
 
                     // Create all new competencies in parallel, tolerating individual failures
-                    const create$ = toCreate.map((comp) => this.competencyService.create(comp, courseId).pipe(catchError(() => of(null))));
-                    forkJoin([...create$])
+                    const create$: Observable<HttpResponse<Competency> | null>[] = toCreate.map((comp) =>
+                        this.competencyService.create(comp, courseId).pipe(catchError(() => of(null))),
+                    );
+                    forkJoin(create$)
                         .pipe(takeUntilDestroyed(this.destroyRef))
                         .subscribe((results) => {
                             const fulfilled = results.filter((r) => r !== null);
