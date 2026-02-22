@@ -21,7 +21,9 @@ import de.tum.cit.aet.artemis.hyperion.domain.SuggestedDifficulty;
 public record DifficultyAssessmentDTO(SuggestedDifficulty suggested, Double confidence, String reasoning, Boolean matchesDeclared, DifficultyDelta delta, Integer taskCount,
         Integer testCount) {
 
-    /** Creates an unknown assessment (when analysis fails). */
+    /**
+     * Creates an unknown assessment (when analysis fails).
+     */
     public static DifficultyAssessmentDTO unknown(String reason) {
         return new DifficultyAssessmentDTO(SuggestedDifficulty.UNKNOWN, 0.0, reason, null, DifficultyDelta.UNKNOWN, null, null);
     }

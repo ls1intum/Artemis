@@ -172,12 +172,12 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
         if (!competencyLinks) return;
         const exercise = this.programmingExercise();
         if (exercise) {
-            const updated = this.cloneExercise(exercise);
             // CompetencyExerciseLink extends CompetencyLearningObjectLink, so the assignment is safe.
-            updated.competencyLinks = competencyLinks.map((link) =>
-                link instanceof CompetencyExerciseLink ? link : new CompetencyExerciseLink(link.competency, updated, link.weight),
+            exercise.competencyLinks = competencyLinks.map((link) =>
+                link instanceof CompetencyExerciseLink ? link : new CompetencyExerciseLink(link.competency, exercise, link.weight),
             );
-            this.programmingExerciseChange.emit(updated);
+            this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
+            this.programmingExerciseChange.emit(exercise);
         }
         this.refreshCompetencySelection(competencyLinks);
     }
@@ -199,28 +199,19 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
             if (level === undefined) {
                 return;
             }
-            const updated = this.cloneExercise(exercise);
-            updated.difficulty = level;
+            exercise.difficulty = level;
             this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
-            this.programmingExerciseChange.emit(updated);
+            this.programmingExerciseChange.emit(exercise);
         }
     }
 
     onInstructionChange(problemStatement: string): void {
         const exercise = this.programmingExercise();
         if (exercise) {
-            const updated = this.cloneExercise(exercise);
-            updated.problemStatement = problemStatement;
+            exercise.problemStatement = problemStatement;
             this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
-            this.programmingExerciseChange.emit(updated);
+            this.programmingExerciseChange.emit(exercise);
             this.problemStatementChange.emit(problemStatement);
         }
-    }
-
-    /**
-     * Creates a shallow copy of the exercise so Angular change detection picks up the new reference.
-     */
-    private cloneExercise(exercise: ProgrammingExercise): ProgrammingExercise {
-        return Object.assign(Object.create(Object.getPrototypeOf(exercise)), exercise);
     }
 }

@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.web;
 
+import java.util.concurrent.CompletableFuture;
+
 import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
@@ -124,16 +126,15 @@ public class HyperionProblemStatementResource {
      *
      * @param courseId the id of the course
      * @param request  the request containing problem statement, metadata, and an optional exerciseId
-     * @return the checklist analysis result
+     * @return a future that completes with the checklist analysis result
      */
     @EnforceAtLeastEditorInCourse
     @PostMapping("courses/{courseId}/checklist-analysis")
-    public ResponseEntity<ChecklistAnalysisResponseDTO> analyzeChecklist(@PathVariable long courseId, @Valid @RequestBody ChecklistAnalysisRequestDTO request) {
+    public CompletableFuture<ResponseEntity<ChecklistAnalysisResponseDTO>> analyzeChecklist(@PathVariable long courseId, @Valid @RequestBody ChecklistAnalysisRequestDTO request) {
         log.debug("REST request to Hyperion checklist analysis for course [{}]", courseId);
         courseRepository.findByIdElseThrow(courseId);
         validateExerciseBelongsToCourse(request.exerciseId(), courseId);
-        var result = checklistService.analyzeChecklist(request, courseId);
-        return ResponseEntity.ok(result);
+        return checklistService.analyzeChecklist(request, courseId).thenApply(ResponseEntity::ok);
     }
 
     /**
@@ -142,17 +143,16 @@ public class HyperionProblemStatementResource {
      * @param courseId the id of the course
      * @param section  the section to analyze (COMPETENCIES, DIFFICULTY, or QUALITY)
      * @param request  the request containing problem statement and metadata
-     * @return the analysis response with only the requested section populated
+     * @return a future that completes with the analysis response with only the requested section populated
      */
     @EnforceAtLeastEditorInCourse
     @PostMapping("courses/{courseId}/checklist-analysis/sections/{section}")
-    public ResponseEntity<ChecklistAnalysisResponseDTO> analyzeChecklistSection(@PathVariable long courseId, @PathVariable ChecklistSection section,
+    public CompletableFuture<ResponseEntity<ChecklistAnalysisResponseDTO>> analyzeChecklistSection(@PathVariable long courseId, @PathVariable ChecklistSection section,
             @Valid @RequestBody ChecklistAnalysisRequestDTO request) {
         log.debug("REST request to Hyperion checklist section analysis [{}] for course [{}]", section, courseId);
         courseRepository.findByIdElseThrow(courseId);
         validateExerciseBelongsToCourse(request.exerciseId(), courseId);
-        var result = checklistService.analyzeSection(request, section, courseId);
-        return ResponseEntity.ok(result);
+        return checklistService.analyzeSection(request, section, courseId).thenApply(ResponseEntity::ok);
     }
 
     /**

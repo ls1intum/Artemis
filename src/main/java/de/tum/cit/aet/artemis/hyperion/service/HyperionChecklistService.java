@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
@@ -69,6 +70,8 @@ public class HyperionChecklistService {
 
     private static final String LF_SPAN_NAME_KEY = "lf.span.name";
 
+    private static final int MAX_CONTEXT_KEY_LENGTH = 100;
+
     private final ObjectMapper objectMapper;
 
     private final ChatClient chatClient;
@@ -92,7 +95,7 @@ public class HyperionChecklistService {
     /** Time-to-live for the competency catalog cache. */
     private static final Duration CATALOG_CACHE_TTL = Duration.ofHours(1);
 
-    /** Maximum time to block the servlet thread waiting for all three concurrent LLM analyses. */
+    /** Maximum timeout for concurrent LLM analyses. */
     private static final Duration ANALYSIS_TIMEOUT = Duration.ofSeconds(60);
 
     private final Object catalogLock = new Object();
@@ -125,16 +128,28 @@ public class HyperionChecklistService {
     /**
      * Analyzes the checklist for a programming exercise problem statement.
      * Runs three concurrent analyses: competency inference, difficulty assessment, and quality check.
+     * Returns a {@link CompletableFuture} so that the servlet thread is not blocked while waiting for
+     * the (potentially slow) LLM responses on the Reactor {@code boundedElastic} scheduler.
      *
      * @param request  The request containing the problem statement, metadata, and an optional exerciseId for task/test lookups
      * @param courseId The ID of the course (used to load course competencies for matching)
-     * @return The analysis response containing inferred competencies, bloom radar, difficulty, and quality issues
+     * @return a future that completes with the analysis response containing inferred competencies, bloom radar, difficulty, and quality issues
      */
-    @Observed(name = "hyperion.checklist", contextualName = "checklist analysis", lowCardinalityKeyValues = { AI_SPAN_KEY, AI_SPAN_VALUE })
-    public ChecklistAnalysisResponseDTO analyzeChecklist(ChecklistAnalysisRequestDTO request, long courseId) {
+    public CompletableFuture<ChecklistAnalysisResponseDTO> analyzeChecklist(ChecklistAnalysisRequestDTO request, long courseId) {
         log.debug("Performing checklist analysis (exerciseId={})", request.exerciseId());
 
-        var ctx = buildAnalysisContext(request, courseId);
+        Observation observation = Observation.createNotStarted("hyperion.checklist", observationRegistry).contextualName("checklist analysis")
+                .lowCardinalityKeyValue(KeyValue.of(AI_SPAN_KEY, AI_SPAN_VALUE)).start();
+
+        AnalysisContext ctx;
+        try (var scope = observation.openScope()) {
+            ctx = buildAnalysisContext(request, courseId);
+        }
+        catch (Exception e) {
+            observation.error(e);
+            observation.stop();
+            return CompletableFuture.completedFuture(ChecklistAnalysisResponseDTO.empty());
+        }
 
         // Run three analyses concurrently
         var competenciesMono = Mono.fromCallable(() -> runCompetencyInference(ctx.input(), ctx.parentObs(), ctx.taskNames())).subscribeOn(Schedulers.boundedElastic())
@@ -146,62 +161,62 @@ public class HyperionChecklistService {
         var qualityMono = Mono.fromCallable(() -> runQualityAnalysis(ctx.input(), ctx.parentObs())).subscribeOn(Schedulers.boundedElastic())
                 .doOnError(e -> log.warn("Quality analysis failed (exerciseId={})", request.exerciseId(), e)).onErrorReturn(List.of());
 
-        try {
-            var resultTuple = Mono.zip(competenciesMono, difficultyMono, qualityMono).block(ANALYSIS_TIMEOUT);
-
-            if (resultTuple == null) {
-                return ChecklistAnalysisResponseDTO.empty();
-            }
-
+        return Mono.zip(competenciesMono, difficultyMono, qualityMono).timeout(ANALYSIS_TIMEOUT).map(resultTuple -> {
             List<InferredCompetencyDTO> competencies = resultTuple.getT1();
             BloomRadarDTO bloomRadar = computeBloomRadar(competencies);
-
             return new ChecklistAnalysisResponseDTO(competencies, bloomRadar, resultTuple.getT2(), resultTuple.getT3());
-        }
-        catch (IllegalStateException e) {
+        }).onErrorResume(e -> {
             log.warn("Checklist analysis timed out or failed (exerciseId={})", request.exerciseId(), e);
-            return ChecklistAnalysisResponseDTO.empty();
-        }
+            observation.error(e);
+            return Mono.just(ChecklistAnalysisResponseDTO.empty());
+        }).doFinally(signal -> observation.stop()).toFuture();
     }
 
     /**
      * Analyzes a single section of the checklist for a programming exercise.
      * Only runs the requested analysis (competencies, difficulty, or quality), avoiding unnecessary LLM calls for the other sections.
+     * Returns a {@link CompletableFuture} so that the servlet thread is not blocked while waiting for the LLM response.
      *
      * @param request  The request containing the problem statement and metadata
      * @param section  The section to analyze
      * @param courseId The ID of the course
-     * @return The analysis response with only the requested section populated
+     * @return a future that completes with the analysis response with only the requested section populated
      */
-    @Observed(name = "hyperion.checklist.section", contextualName = "checklist section analysis", lowCardinalityKeyValues = { AI_SPAN_KEY, AI_SPAN_VALUE })
-    public ChecklistAnalysisResponseDTO analyzeSection(ChecklistAnalysisRequestDTO request, ChecklistSection section, long courseId) {
+    public CompletableFuture<ChecklistAnalysisResponseDTO> analyzeSection(ChecklistAnalysisRequestDTO request, ChecklistSection section, long courseId) {
         log.debug("Performing single-section checklist analysis: {} (exerciseId={})", section, request.exerciseId());
 
-        var ctx = buildAnalysisContext(request, courseId);
+        Observation observation = Observation.createNotStarted("hyperion.checklist.section", observationRegistry).contextualName("checklist section analysis")
+                .lowCardinalityKeyValue(KeyValue.of(AI_SPAN_KEY, AI_SPAN_VALUE)).start();
 
-        try {
-            var result = Mono.fromCallable(() -> switch (section) {
-                case COMPETENCIES -> {
-                    List<InferredCompetencyDTO> competencies = runCompetencyInference(ctx.input(), ctx.parentObs(), ctx.taskNames());
-                    BloomRadarDTO bloomRadar = computeBloomRadar(competencies);
-                    yield new ChecklistAnalysisResponseDTO(competencies, bloomRadar, null, null);
-                }
-                case DIFFICULTY -> {
-                    DifficultyAssessmentDTO difficulty = runDifficultyAnalysis(ctx.input(), ctx.parentObs(), ctx.declaredDifficulty());
-                    yield new ChecklistAnalysisResponseDTO(null, null, difficulty, null);
-                }
-                case QUALITY -> {
-                    List<QualityIssueDTO> issues = runQualityAnalysis(ctx.input(), ctx.parentObs());
-                    yield new ChecklistAnalysisResponseDTO(null, null, null, issues);
-                }
-            }).subscribeOn(Schedulers.boundedElastic()).block(ANALYSIS_TIMEOUT);
-
-            return result != null ? result : ChecklistAnalysisResponseDTO.empty();
+        AnalysisContext ctx;
+        try (var scope = observation.openScope()) {
+            ctx = buildAnalysisContext(request, courseId);
         }
-        catch (IllegalStateException e) {
+        catch (Exception e) {
+            observation.error(e);
+            observation.stop();
+            return CompletableFuture.completedFuture(ChecklistAnalysisResponseDTO.empty());
+        }
+
+        return Mono.fromCallable(() -> switch (section) {
+            case COMPETENCIES -> {
+                List<InferredCompetencyDTO> competencies = runCompetencyInference(ctx.input(), ctx.parentObs(), ctx.taskNames());
+                BloomRadarDTO bloomRadar = computeBloomRadar(competencies);
+                yield new ChecklistAnalysisResponseDTO(competencies, bloomRadar, null, null);
+            }
+            case DIFFICULTY -> {
+                DifficultyAssessmentDTO difficulty = runDifficultyAnalysis(ctx.input(), ctx.parentObs(), ctx.declaredDifficulty());
+                yield new ChecklistAnalysisResponseDTO(null, null, difficulty, null);
+            }
+            case QUALITY -> {
+                List<QualityIssueDTO> issues = runQualityAnalysis(ctx.input(), ctx.parentObs());
+                yield new ChecklistAnalysisResponseDTO(null, null, null, issues);
+            }
+        }).subscribeOn(Schedulers.boundedElastic()).timeout(ANALYSIS_TIMEOUT).onErrorResume(e -> {
             log.warn("Section analysis timed out or failed: {} (exerciseId={})", section, request.exerciseId(), e);
-            return ChecklistAnalysisResponseDTO.empty();
-        }
+            observation.error(e);
+            return Mono.just(ChecklistAnalysisResponseDTO.empty());
+        }).doFinally(signal -> observation.stop()).toFuture();
     }
 
     /**
@@ -323,10 +338,11 @@ public class HyperionChecklistService {
 
     /**
      * Wraps a user-supplied context value with triple-backtick fences to reduce prompt injection risk.
+     * Returns a placeholder for missing values so the surrounding label is never left bare.
      */
     private static String wrapUserValue(String value) {
-        if (value == null || value.isEmpty()) {
-            return "";
+        if (value == null || value.isBlank()) {
+            return "(not provided)";
         }
         return "\n```user-input\n" + value + "\n```\n";
     }
@@ -572,15 +588,20 @@ public class HyperionChecklistService {
     }
 
     /**
-     * Sanitizes context map values by truncating them to {@value MAX_CONTEXT_VALUE_LENGTH} characters.
+     * Sanitizes context map entries by truncating keys to {@value MAX_CONTEXT_KEY_LENGTH} characters and values to {@value MAX_CONTEXT_VALUE_LENGTH} characters.
      */
     private Map<String, String> sanitizeContext(Map<String, String> context) {
         if (context == null || context.isEmpty()) {
             return Map.of();
         }
         return context.entrySet().stream().collect(HashMap::new, (m, e) -> {
+            String key = e.getKey();
+            if (key == null || key.isBlank()) {
+                return; // skip entries with blank keys
+            }
+            key = key.length() > MAX_CONTEXT_KEY_LENGTH ? key.substring(0, MAX_CONTEXT_KEY_LENGTH) : key;
             String value = e.getValue();
-            m.put(e.getKey(), value == null ? "" : (value.length() > MAX_CONTEXT_VALUE_LENGTH ? value.substring(0, MAX_CONTEXT_VALUE_LENGTH) : value));
+            m.put(key, value == null ? "" : (value.length() > MAX_CONTEXT_VALUE_LENGTH ? value.substring(0, MAX_CONTEXT_VALUE_LENGTH) : value));
         }, HashMap::putAll);
     }
 

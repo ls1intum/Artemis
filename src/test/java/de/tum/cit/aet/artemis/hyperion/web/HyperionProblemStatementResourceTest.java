@@ -3,8 +3,10 @@ package de.tum.cit.aet.artemis.hyperion.web;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
@@ -18,6 +20,8 @@ import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
@@ -32,6 +36,9 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    private MockMvc mockMvc;
 
     private static final String TEST_PREFIX = "hyperionproblemstatementresource";
 
@@ -94,15 +101,14 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     private void mockChecklistAnalysis() {
+        // The full checklist analysis makes three LLM calls (competencies, difficulty, quality).
+        // Use sequential returns with any(Prompt.class) to avoid coupling to prompt content.
         doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(
                 "{\"competencies\": [{ \"competencyTitle\": \"Loops\", \"taxonomyLevel\": \"APPLY\", \"confidence\": 0.9, \"whyThisMatches\": \"Loop found\" }]}")))))
-                .when(azureOpenAiChatModel)
-                .call(org.mockito.ArgumentMatchers.<Prompt>argThat(p -> p.getContents().contains("match it to competencies from a standardized catalog")));
-        doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("{\"suggested\": \"EASY\", \"reasoning\": \"Simple\"}"))))).when(azureOpenAiChatModel)
-                .call(org.mockito.ArgumentMatchers.<Prompt>argThat(p -> p.getContents().contains("suggest the appropriate difficulty level")));
-        doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(
-                "{\"issues\": [{ \"category\": \"CLARITY\", \"severity\": \"LOW\", \"description\": \"Vague\", \"suggestedFix\": \"Fix\", \"relatedLocations\": [] }]}")))))
-                .when(azureOpenAiChatModel).call(org.mockito.ArgumentMatchers.<Prompt>argThat(p -> p.getContents().contains("quality issues related to CLARITY")));
+                .doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("{\"suggested\": \"EASY\", \"reasoning\": \"Simple\"}")))))
+                .doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(
+                        "{\"issues\": [{ \"category\": \"CLARITY\", \"severity\": \"LOW\", \"description\": \"Vague\", \"suggestedFix\": \"Fix\", \"relatedLocations\": [] }]}")))))
+                .when(azureOpenAiChatModel).call(any(Prompt.class));
     }
 
     @Test
@@ -267,8 +273,11 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
 
         String body = "{\"problemStatementMarkdown\":\"Problem\", \"declaredDifficulty\":\"EASY\", \"exerciseId\":" + persistedExerciseId + "}";
 
-        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/checklist-analysis", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.inferredCompetencies").isArray()).andExpect(jsonPath("$.qualityIssues").isArray());
+        MvcResult mvcResult = request.performMvcRequest(post("/api/hyperion/courses/{courseId}/checklist-analysis", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(request().asyncStarted()).andReturn();
+
+        mockMvc.perform(asyncDispatch(mvcResult)).andExpect(status().isOk()).andExpect(jsonPath("$.inferredCompetencies").isArray())
+                .andExpect(jsonPath("$.qualityIssues").isArray());
     }
 
     @Test
@@ -282,8 +291,10 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
 
         String body = "{\"problemStatementMarkdown\":\"Problem\", \"declaredDifficulty\":\"EASY\", \"exerciseId\":" + persistedExerciseId + "}";
 
-        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/checklist-analysis", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
-                .andExpect(status().isOk());
+        MvcResult mvcResult = request.performMvcRequest(post("/api/hyperion/courses/{courseId}/checklist-analysis", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(request().asyncStarted()).andReturn();
+
+        mockMvc.perform(asyncDispatch(mvcResult)).andExpect(status().isOk());
     }
 
     @Test
@@ -343,9 +354,12 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
 
         String body = "{\"problemStatementMarkdown\":\"Problem\", \"declaredDifficulty\":\"EASY\", \"exerciseId\":" + persistedExerciseId + "}";
 
-        request.performMvcRequest(
-                post("/api/hyperion/courses/{courseId}/checklist-analysis/sections/{section}", courseId, "QUALITY").contentType(MediaType.APPLICATION_JSON).content(body))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.qualityIssues").isArray());
+        MvcResult mvcResult = request
+                .performMvcRequest(
+                        post("/api/hyperion/courses/{courseId}/checklist-analysis/sections/{section}", courseId, "QUALITY").contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(request().asyncStarted()).andReturn();
+
+        mockMvc.perform(asyncDispatch(mvcResult)).andExpect(status().isOk()).andExpect(jsonPath("$.qualityIssues").isArray());
     }
 
     @Test
@@ -360,9 +374,11 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
 
         String body = "{\"problemStatementMarkdown\":\"Problem\", \"declaredDifficulty\":\"EASY\"}";
 
-        request.performMvcRequest(
+        MvcResult mvcResult = request.performMvcRequest(
                 post("/api/hyperion/courses/{courseId}/checklist-analysis/sections/{section}", courseId, "DIFFICULTY").contentType(MediaType.APPLICATION_JSON).content(body))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.difficultyAssessment").exists());
+                .andExpect(request().asyncStarted()).andReturn();
+
+        mockMvc.perform(asyncDispatch(mvcResult)).andExpect(status().isOk()).andExpect(jsonPath("$.difficultyAssessment").exists());
     }
 
     @Test
