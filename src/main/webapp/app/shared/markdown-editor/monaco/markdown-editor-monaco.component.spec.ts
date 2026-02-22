@@ -502,16 +502,16 @@ describe('MarkdownEditorMonacoComponent', () => {
         jest.spyOn(comp, 'isInCommunication').mockReturnValue(false);
         fixture.detectChanges();
 
-        expect(comp.showTextStyleActions).toBeTrue();
-        expect(comp.showNonTextStyleActions).toBeTrue();
+        expect(comp.showTextStyleActions()).toBeTrue();
+        expect(comp.showNonTextStyleActions()).toBeTrue();
     });
 
     it('should hide text style actions in communication mode by default', () => {
         jest.spyOn(comp, 'isInCommunication').mockReturnValue(true);
         fixture.detectChanges();
 
-        expect(comp.showTextStyleActions).toBeFalse();
-        expect(comp.showNonTextStyleActions).toBeTrue();
+        expect(comp.showTextStyleActions()).toBeFalse();
+        expect(comp.showNonTextStyleActions()).toBeTrue();
     });
 
     it('should show text style actions in communication mode when text is selected', () => {
@@ -520,7 +520,7 @@ describe('MarkdownEditorMonacoComponent', () => {
 
         comp.onSelectionChanged({ isEmpty: false });
 
-        expect(comp.showTextStyleActions).toBeTrue();
-        expect(comp.showNonTextStyleActions).toBeFalse();
+        expect(comp.showTextStyleActions()).toBeTrue();
+        expect(comp.showNonTextStyleActions()).toBeFalse();
     });
 });
