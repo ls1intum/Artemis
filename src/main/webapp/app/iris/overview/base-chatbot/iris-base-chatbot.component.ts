@@ -335,6 +335,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
                 clearInterval(this.dayTickIntervalId);
             }
         });
+        this.destroyRef.onDestroy(() => this.aboutIrisDialogRef?.close());
     }
 
     /**
@@ -717,7 +718,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             width: '40rem',
             breakpoints: { '640px': '95vw' },
         });
-        this.destroyRef.onDestroy(() => this.aboutIrisDialogRef?.close());
     }
 
     setSearchValue(searchValue: string) {

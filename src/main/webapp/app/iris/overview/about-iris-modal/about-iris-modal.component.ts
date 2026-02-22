@@ -7,6 +7,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { ButtonDirective } from 'primeng/button';
 
 interface FeatureCard {
     titleKey: string;
@@ -18,7 +19,7 @@ interface FeatureCard {
     selector: 'jhi-about-iris-modal',
     templateUrl: './about-iris-modal.component.html',
     styleUrl: './about-iris-modal.component.scss',
-    imports: [IrisLogoComponent, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [IrisLogoComponent, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, ButtonDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AboutIrisModalComponent {
