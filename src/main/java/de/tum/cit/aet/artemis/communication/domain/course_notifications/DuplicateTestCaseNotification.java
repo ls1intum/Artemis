@@ -22,15 +22,22 @@ public class DuplicateTestCaseNotification extends CourseNotification {
 
     protected String dueDate;
 
+    protected Long examId;
+
+    protected Long exerciseGroupId;
+
     /**
      * Default constructor used when creating a new duplicate test case notification.
      */
-    public DuplicateTestCaseNotification(Long courseId, String courseTitle, String courseImageUrl, Long exerciseId, String exerciseTitle, String releaseDate, String dueDate) {
+    public DuplicateTestCaseNotification(Long courseId, String courseTitle, String courseImageUrl, Long exerciseId, String exerciseTitle, String releaseDate, String dueDate,
+            Long examId, Long exerciseGroupId) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
         this.exerciseId = exerciseId;
         this.exerciseTitle = exerciseTitle;
         this.releaseDate = releaseDate;
         this.dueDate = dueDate;
+        this.examId = examId;
+        this.exerciseGroupId = exerciseGroupId;
     }
 
     /**
@@ -57,6 +64,9 @@ public class DuplicateTestCaseNotification extends CourseNotification {
 
     @Override
     public String getRelativeWebAppUrl() {
+        if (examId != null && exerciseGroupId != null) {
+            return "/course-management/" + courseId + "/exams/" + examId + "/exercise-groups/" + exerciseGroupId + "/programming-exercises/" + exerciseId;
+        }
         return "/courses/" + courseId + "/exercises/" + exerciseId;
     }
 }

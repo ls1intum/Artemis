@@ -69,9 +69,9 @@
             "vcsTokenExpiredTip": "Your VCS access token has expired. Renew it {link:here}.",
             "startExerciseBeforeStartDate": "You cannot participate before the start date of the exercise.",
             "deleteMultipleExercisesQuestion": "Are you sure you want to delete the selected exercises?",
-            "externalLLMUsage": {
-                "popUpLabel": "Confirm LLM Usage",
-                "popUpMessage": "By accepting, you confirm that you are at least 18 years old and that you agree to the processing of your interactions with Artemis, as well as the necessary contextual data, such as your code. No data is stored."
+            "aiExperienceConfirmation": {
+                "popUpLabel": "Confirm AI Usage",
+                "popUpMessage": "By accepting, you confirm that you are at least 18 years old and that you agree to the processing of your interactions with Artemis, as well as the necessary contextual data, such as your code. No data is stored in the cloud."
             }
         }
     }
