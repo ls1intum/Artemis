@@ -12,6 +12,31 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .chat-history-item-actions {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        flex-shrink: 0;
+    }
+
+    .menu-trigger {
+        display: none;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 2px 4px;
+        border-radius: 4px;
+        color: var(--body-color);
+        font-size: 14px;
+        line-height: 1;
+
+        &:hover {
+            background-color: var(--iris-accent-border-color);
+        }
     }
 
     .related-entity-info {
@@ -37,6 +62,10 @@
         .related-entity-info {
             border: 1px solid var(--iris-accent-border-color);
         }
+
+        .menu-trigger {
+            display: block;
+        }
     }
 
     &.chat-history-item-selected {
@@ -46,5 +75,24 @@
         .related-entity-info {
             border: 1px solid var(--iris-accent-border-color);
         }
+
+        .menu-trigger {
+            display: block;
+        }
+    }
+}
+
+// Scoped to .chat-history-item-menu to avoid leaking to other PrimeNG menus.
+// ::ng-deep is needed because the popup is portaled to <body> via appendTo="body".
+:host ::ng-deep .chat-history-item-menu .danger {
+    color: var(--bs-danger);
+    cursor: pointer;
+    padding: 0.5rem 0.75rem;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+
+    &:hover {
+        background-color: var(--iris-accent-background);
     }
 }

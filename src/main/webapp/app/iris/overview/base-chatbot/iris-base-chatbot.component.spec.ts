@@ -640,8 +640,7 @@ describe('IrisBaseChatbotComponent', () => {
     it('should start a new session when the new chat item is clicked', () => {
         const newChatSession: IrisSessionDTO = {
             id: 2,
-            // MockTranslateService.stream() returns the key itself, so use the translation key
-            title: 'artemisApp.iris.chatHistory.newChat',
+            title: 'New chat',
             creationDate: new Date(),
             chatMode: ChatServiceMode.COURSE,
             entityId: 1,
