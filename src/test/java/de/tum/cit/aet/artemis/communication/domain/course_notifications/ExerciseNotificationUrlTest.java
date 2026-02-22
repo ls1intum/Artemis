@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.communication.domain.course_notifications;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -114,14 +115,14 @@ class ExerciseNotificationUrlTest {
 
     @Test
     void testNewManualFeedbackRequestNotification_courseExercise() {
-        var notification = new NewManualFeedbackRequestNotification(COURSE_ID, COURSE_TITLE, COURSE_ICON, EXERCISE_ID, EXERCISE_TITLE, null, null, "modeling");
-        assertThat(notification.getRelativeWebAppUrl()).isEqualTo("/courses/1/exercises/10");
+        var notification = new NewManualFeedbackRequestNotification(COURSE_ID, COURSE_TITLE, COURSE_ICON, EXERCISE_ID, EXERCISE_TITLE, null);
+        assertThat(notification.getRelativeWebAppUrl()).isEqualTo("/course-management/1/assessment-dashboard/10");
     }
 
     @Test
     void testNewManualFeedbackRequestNotification_examExercise() {
-        var notification = new NewManualFeedbackRequestNotification(COURSE_ID, COURSE_TITLE, COURSE_ICON, EXERCISE_ID, EXERCISE_TITLE, EXAM_ID, EXERCISE_GROUP_ID, "modeling");
-        assertThat(notification.getRelativeWebAppUrl()).isEqualTo("/course-management/1/exams/100/exercise-groups/50/modeling-exercises/10");
+        var notification = new NewManualFeedbackRequestNotification(COURSE_ID, COURSE_TITLE, COURSE_ICON, EXERCISE_ID, EXERCISE_TITLE, EXAM_ID);
+        assertThat(notification.getRelativeWebAppUrl()).isEqualTo("/course-management/1/exams/100/assessment-dashboard/10");
     }
 
     // Student-facing notifications
@@ -172,6 +173,77 @@ class ExerciseNotificationUrlTest {
     void testPlagiarismCaseVerdictNotification_examExercise() {
         var notification = new PlagiarismCaseVerdictNotification(COURSE_ID, COURSE_TITLE, COURSE_ICON, EXERCISE_ID, EXERCISE_TITLE, "programming", "POINT_DEDUCTION", EXAM_ID);
         assertThat(notification.getRelativeWebAppUrl()).isEqualTo("/courses/1/exams/100");
+    }
+
+    // Database constructor tests (verifying reflection-based field parsing)
+
+    @Test
+    void testDuplicateTestCaseNotification_examExercise_fromDatabase() {
+        var params = new HashMap<String, String>();
+        params.put("exerciseId", "10");
+        params.put("exerciseTitle", EXERCISE_TITLE);
+        params.put("releaseDate", "01.01.2025");
+        params.put("dueDate", "01.02.2025");
+        params.put("examId", "100");
+        params.put("exerciseGroupId", "50");
+        var notification = new DuplicateTestCaseNotification(1L, COURSE_ID, ZonedDateTime.now(), params);
+        assertThat(notification.getRelativeWebAppUrl()).isEqualTo("/course-management/1/exams/100/exercise-groups/50/programming-exercises/10");
+    }
+
+    @Test
+    void testProgrammingBuildRunUpdateNotification_examExercise_fromDatabase() {
+        var params = Map.of("exerciseId", "10", "exerciseTitle", EXERCISE_TITLE, "examId", "100", "exerciseGroupId", "50");
+        var notification = new ProgrammingBuildRunUpdateNotification(1L, COURSE_ID, ZonedDateTime.now(), params);
+        assertThat(notification.getRelativeWebAppUrl()).isEqualTo("/course-management/1/exams/100/exercise-groups/50/programming-exercises/10");
+    }
+
+    @Test
+    void testNewManualFeedbackRequestNotification_examExercise_fromDatabase() {
+        var params = Map.of("exerciseId", "10", "exerciseTitle", EXERCISE_TITLE, "examId", "100");
+        var notification = new NewManualFeedbackRequestNotification(1L, COURSE_ID, ZonedDateTime.now(), params);
+        assertThat(notification.getRelativeWebAppUrl()).isEqualTo("/course-management/1/exams/100/assessment-dashboard/10");
+    }
+
+    @Test
+    void testNewManualFeedbackRequestNotification_courseExercise_fromDatabase() {
+        var params = Map.of("exerciseId", "10", "exerciseTitle", EXERCISE_TITLE);
+        var notification = new NewManualFeedbackRequestNotification(1L, COURSE_ID, ZonedDateTime.now(), params);
+        assertThat(notification.getRelativeWebAppUrl()).isEqualTo("/course-management/1/assessment-dashboard/10");
+    }
+
+    @Test
+    void testNewPlagiarismCaseNotification_examExercise_fromDatabase() {
+        var params = Map.of("exerciseId", "10", "exerciseTitle", EXERCISE_TITLE, "exerciseType", "programming", "postMarkdownContent", "content", "examId", "100");
+        var notification = new NewPlagiarismCaseNotification(1L, COURSE_ID, ZonedDateTime.now(), params);
+        assertThat(notification.getRelativeWebAppUrl()).isEqualTo("/courses/1/exams/100");
+    }
+
+    @Test
+    void testNewCpcPlagiarismCaseNotification_examExercise_fromDatabase() {
+        var params = Map.of("exerciseId", "10", "exerciseTitle", EXERCISE_TITLE, "exerciseType", "programming", "postMarkdownContent", "content", "examId", "100");
+        var notification = new NewCpcPlagiarismCaseNotification(1L, COURSE_ID, ZonedDateTime.now(), params);
+        assertThat(notification.getRelativeWebAppUrl()).isEqualTo("/courses/1/exams/100");
+    }
+
+    @Test
+    void testPlagiarismCaseVerdictNotification_examExercise_fromDatabase() {
+        var params = Map.of("exerciseId", "10", "exerciseTitle", EXERCISE_TITLE, "exerciseType", "programming", "verdict", "POINT_DEDUCTION", "examId", "100");
+        var notification = new PlagiarismCaseVerdictNotification(1L, COURSE_ID, ZonedDateTime.now(), params);
+        assertThat(notification.getRelativeWebAppUrl()).isEqualTo("/courses/1/exams/100");
+    }
+
+    // Exercise type with hyphen (file-upload) to verify URL construction
+
+    @Test
+    void testExerciseUpdatedNotification_examFileUploadExercise() {
+        var notification = new ExerciseUpdatedNotification(COURSE_ID, COURSE_TITLE, COURSE_ICON, EXERCISE_ID, EXERCISE_TITLE, EXAM_ID, EXERCISE_GROUP_ID, "file-upload");
+        assertThat(notification.getRelativeWebAppUrl()).isEqualTo("/course-management/1/exams/100/exercise-groups/50/file-upload-exercises/10");
+    }
+
+    @Test
+    void testNewManualFeedbackRequestNotification_examFileUploadExercise() {
+        var notification = new NewManualFeedbackRequestNotification(COURSE_ID, COURSE_TITLE, COURSE_ICON, EXERCISE_ID, EXERCISE_TITLE, EXAM_ID);
+        assertThat(notification.getRelativeWebAppUrl()).isEqualTo("/course-management/1/exams/100/assessment-dashboard/10");
     }
 
     // Edge case: partial exam data should fall back to course URL

@@ -256,10 +256,9 @@ public class GroupNotificationService {
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         var recipients = userRepository.getTutors(course);
 
-        ExerciseGroup exerciseGroup = exercise.isExamExercise() ? exercise.getExerciseGroup() : null;
+        Long examId = exercise.isExamExercise() ? exercise.getExerciseGroup().getExam().getId() : null;
         var manualFeedbackRequestNotification = new NewManualFeedbackRequestNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
-                exercise.getExerciseNotificationTitle(), exerciseGroup != null ? exerciseGroup.getExam().getId() : null, exerciseGroup != null ? exerciseGroup.getId() : null,
-                exercise.getType());
+                exercise.getExerciseNotificationTitle(), examId);
 
         courseNotificationService.sendCourseNotification(manualFeedbackRequestNotification, recipients.stream().toList());
     }

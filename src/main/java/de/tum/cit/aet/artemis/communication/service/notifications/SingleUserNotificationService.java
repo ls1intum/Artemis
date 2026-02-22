@@ -117,12 +117,12 @@ public class SingleUserNotificationService {
      * @param result    containing information needed for the email
      */
     public void checkNotificationForAssessmentExerciseSubmission(Exercise exercise, User recipient, Result result) {
-        // only send the notification now if no assessment due date was set or if it is in the past
-        if (exercise.isCourseExercise() && ExerciseDateService.isAfterAssessmentDueDate(exercise)) {
+        // Only send the notification now if no assessment due date was set or if it is in the past.
+        // For exam exercises with an assessmentDueDate, notification is handled by the scheduler.
+        if (ExerciseDateService.isAfterAssessmentDueDate(exercise)) {
             saturateExerciseWithResultAndStudentParticipationForGivenUserForEmail(exercise, recipient, result);
             notifyUserAboutAssessedExerciseSubmission(exercise, recipient);
         }
-        // no scheduling needed because it is already part of updating/creating exercises
     }
 
     /**
