@@ -11,7 +11,7 @@ import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
-import { Renderer2 } from '@angular/core';
+import { Renderer2, RendererStyleFlags2 } from '@angular/core';
 import { CLOSED_NOTIFICATION_IDS_STORAGE_KEY, SystemNotificationComponent, WEBSOCKET_CHANNEL } from 'app/core/notification/system-notification/system-notification.component';
 import { SystemNotificationService } from 'app/core/notification/system-notification/system-notification.service';
 
@@ -282,7 +282,7 @@ describe('System Notification Component', () => {
             // In jsdom, offsetHeight is 0, so the variable will be set to '0px'
             const setStyleCalls = setStyleSpy.mock.calls.filter((call) => call[1] === '--system-notification-height');
             expect(setStyleCalls.length).toBeGreaterThanOrEqual(1);
-            expect(setStyleCalls[0]).toEqual([document.documentElement, '--system-notification-height', '0px']);
+            expect(setStyleCalls[0]).toEqual([document.documentElement, '--system-notification-height', '0px', RendererStyleFlags2.DashCase]);
 
             flush();
         }));
@@ -298,7 +298,7 @@ describe('System Notification Component', () => {
 
             systemNotificationComponent.ngOnDestroy();
 
-            expect(setStyleSpy).toHaveBeenCalledWith(document.documentElement, '--system-notification-height', '0px');
+            expect(setStyleSpy).toHaveBeenCalledWith(document.documentElement, '--system-notification-height', '0px', RendererStyleFlags2.DashCase);
             flush();
         }));
 
@@ -342,7 +342,7 @@ describe('System Notification Component', () => {
 
             // The height changed (from simulated 50 to actual 0 in jsdom), so setStyle should be called
             const lastCall = setStyleSpy.mock.calls.filter((call) => call[1] === '--system-notification-height').pop();
-            expect(lastCall).toEqual([document.documentElement, '--system-notification-height', '0px']);
+            expect(lastCall).toEqual([document.documentElement, '--system-notification-height', '0px', RendererStyleFlags2.DashCase]);
 
             flush();
         }));

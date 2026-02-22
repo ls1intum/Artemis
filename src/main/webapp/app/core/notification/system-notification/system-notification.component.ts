@@ -1,4 +1,4 @@
-import { AfterViewChecked, Component, ElementRef, OnDestroy, OnInit, Renderer2, inject } from '@angular/core';
+import { AfterViewChecked, Component, ElementRef, OnDestroy, OnInit, Renderer2, RendererStyleFlags2, inject } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { SystemNotification, SystemNotificationType } from 'app/core/shared/entities/system-notification.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -74,7 +74,7 @@ export class SystemNotificationComponent implements OnInit, OnDestroy, AfterView
         this.authSubscription?.unsubscribe();
         this.websocketStatusSubscription?.unsubscribe();
         this.systemNotificationSubscription?.unsubscribe();
-        this.renderer.setStyle(this.document.documentElement, '--system-notification-height', '0px');
+        this.renderer.setStyle(this.document.documentElement, '--system-notification-height', '0px', RendererStyleFlags2.DashCase);
     }
 
     private loadActiveNotification() {
@@ -150,7 +150,7 @@ export class SystemNotificationComponent implements OnInit, OnDestroy, AfterView
         const height = (this.elementRef.nativeElement as HTMLElement).offsetHeight;
         if (height !== this.lastNotificationHeight) {
             this.lastNotificationHeight = height;
-            this.renderer.setStyle(this.document.documentElement, '--system-notification-height', `${height}px`);
+            this.renderer.setStyle(this.document.documentElement, '--system-notification-height', `${height}px`, RendererStyleFlags2.DashCase);
         }
     }
 }
