@@ -27,6 +27,8 @@ class ExerciseNotificationUrlTest {
 
     private static final String EXERCISE_TITLE = "Test Exercise";
 
+    private static final ZonedDateTime FIXED_TIMESTAMP = ZonedDateTime.parse("2025-01-15T10:00:00+01:00");
+
     // Instructor-facing notifications
 
     @Test
@@ -44,35 +46,35 @@ class ExerciseNotificationUrlTest {
     @Test
     void testProgrammingTestCasesChangedNotification_examExercise_fromDatabase() {
         var params = Map.of("exerciseId", "10", "exerciseTitle", EXERCISE_TITLE, "examId", "100", "exerciseGroupId", "50");
-        var notification = new ProgrammingTestCasesChangedNotification(1L, COURSE_ID, ZonedDateTime.now(), params);
+        var notification = new ProgrammingTestCasesChangedNotification(1L, COURSE_ID, FIXED_TIMESTAMP, params);
         assertThat(notification.getRelativeWebAppUrl()).isEqualTo("/course-management/1/exams/100/exercise-groups/50/programming-exercises/10");
     }
 
     @Test
     void testExerciseUpdatedNotification_examExercise_fromDatabase() {
         var params = Map.of("exerciseId", "10", "exerciseTitle", EXERCISE_TITLE, "examId", "100", "exerciseGroupId", "50", "exerciseType", "modeling");
-        var notification = new ExerciseUpdatedNotification(1L, COURSE_ID, ZonedDateTime.now(), params);
+        var notification = new ExerciseUpdatedNotification(1L, COURSE_ID, FIXED_TIMESTAMP, params);
         assertThat(notification.getRelativeWebAppUrl()).isEqualTo("/course-management/1/exams/100/exercise-groups/50/modeling-exercises/10");
     }
 
     @Test
     void testExerciseUpdatedNotification_courseExercise_fromDatabase() {
         var params = Map.of("exerciseId", "10", "exerciseTitle", EXERCISE_TITLE, "exerciseType", "text");
-        var notification = new ExerciseUpdatedNotification(1L, COURSE_ID, ZonedDateTime.now(), params);
+        var notification = new ExerciseUpdatedNotification(1L, COURSE_ID, FIXED_TIMESTAMP, params);
         assertThat(notification.getRelativeWebAppUrl()).isEqualTo("/courses/1/exercises/10");
     }
 
     @Test
     void testExerciseAssessedNotification_examExercise_fromDatabase() {
         var params = Map.of("exerciseId", "10", "exerciseTitle", EXERCISE_TITLE, "exerciseType", "programming", "numberOfPoints", "100", "score", "85", "examId", "100");
-        var notification = new ExerciseAssessedNotification(1L, COURSE_ID, ZonedDateTime.now(), params);
+        var notification = new ExerciseAssessedNotification(1L, COURSE_ID, FIXED_TIMESTAMP, params);
         assertThat(notification.getRelativeWebAppUrl()).isEqualTo("/courses/1/exams/100");
     }
 
     @Test
     void testExerciseAssessedNotification_courseExercise_fromDatabase() {
         var params = Map.of("exerciseId", "10", "exerciseTitle", EXERCISE_TITLE, "exerciseType", "programming", "numberOfPoints", "100", "score", "85");
-        var notification = new ExerciseAssessedNotification(1L, COURSE_ID, ZonedDateTime.now(), params);
+        var notification = new ExerciseAssessedNotification(1L, COURSE_ID, FIXED_TIMESTAMP, params);
         assertThat(notification.getRelativeWebAppUrl()).isEqualTo("/courses/1/exercises/10");
     }
 
@@ -186,49 +188,49 @@ class ExerciseNotificationUrlTest {
     @Test
     void testDuplicateTestCaseNotification_examExercise_fromDatabase() {
         var params = Map.of("exerciseId", "10", "exerciseTitle", EXERCISE_TITLE, "releaseDate", "01.01.2025", "dueDate", "01.02.2025", "examId", "100", "exerciseGroupId", "50");
-        var notification = new DuplicateTestCaseNotification(1L, COURSE_ID, ZonedDateTime.now(), params);
+        var notification = new DuplicateTestCaseNotification(1L, COURSE_ID, FIXED_TIMESTAMP, params);
         assertThat(notification.getRelativeWebAppUrl()).isEqualTo("/course-management/1/exams/100/exercise-groups/50/programming-exercises/10");
     }
 
     @Test
     void testProgrammingBuildRunUpdateNotification_examExercise_fromDatabase() {
         var params = Map.of("exerciseId", "10", "exerciseTitle", EXERCISE_TITLE, "examId", "100", "exerciseGroupId", "50");
-        var notification = new ProgrammingBuildRunUpdateNotification(1L, COURSE_ID, ZonedDateTime.now(), params);
+        var notification = new ProgrammingBuildRunUpdateNotification(1L, COURSE_ID, FIXED_TIMESTAMP, params);
         assertThat(notification.getRelativeWebAppUrl()).isEqualTo("/course-management/1/exams/100/exercise-groups/50/programming-exercises/10");
     }
 
     @Test
     void testNewManualFeedbackRequestNotification_examExercise_fromDatabase() {
         var params = Map.of("exerciseId", "10", "exerciseTitle", EXERCISE_TITLE, "examId", "100");
-        var notification = new NewManualFeedbackRequestNotification(1L, COURSE_ID, ZonedDateTime.now(), params);
+        var notification = new NewManualFeedbackRequestNotification(1L, COURSE_ID, FIXED_TIMESTAMP, params);
         assertThat(notification.getRelativeWebAppUrl()).isEqualTo("/course-management/1/exams/100/assessment-dashboard/10");
     }
 
     @Test
     void testNewManualFeedbackRequestNotification_courseExercise_fromDatabase() {
         var params = Map.of("exerciseId", "10", "exerciseTitle", EXERCISE_TITLE);
-        var notification = new NewManualFeedbackRequestNotification(1L, COURSE_ID, ZonedDateTime.now(), params);
+        var notification = new NewManualFeedbackRequestNotification(1L, COURSE_ID, FIXED_TIMESTAMP, params);
         assertThat(notification.getRelativeWebAppUrl()).isEqualTo("/course-management/1/assessment-dashboard/10");
     }
 
     @Test
     void testNewPlagiarismCaseNotification_examExercise_fromDatabase() {
         var params = Map.of("exerciseId", "10", "exerciseTitle", EXERCISE_TITLE, "exerciseType", "programming", "postMarkdownContent", "content", "examId", "100");
-        var notification = new NewPlagiarismCaseNotification(1L, COURSE_ID, ZonedDateTime.now(), params);
+        var notification = new NewPlagiarismCaseNotification(1L, COURSE_ID, FIXED_TIMESTAMP, params);
         assertThat(notification.getRelativeWebAppUrl()).isEqualTo("/courses/1/exams/100");
     }
 
     @Test
     void testNewCpcPlagiarismCaseNotification_examExercise_fromDatabase() {
         var params = Map.of("exerciseId", "10", "exerciseTitle", EXERCISE_TITLE, "exerciseType", "programming", "postMarkdownContent", "content", "examId", "100");
-        var notification = new NewCpcPlagiarismCaseNotification(1L, COURSE_ID, ZonedDateTime.now(), params);
+        var notification = new NewCpcPlagiarismCaseNotification(1L, COURSE_ID, FIXED_TIMESTAMP, params);
         assertThat(notification.getRelativeWebAppUrl()).isEqualTo("/courses/1/exams/100");
     }
 
     @Test
     void testPlagiarismCaseVerdictNotification_examExercise_fromDatabase() {
         var params = Map.of("exerciseId", "10", "exerciseTitle", EXERCISE_TITLE, "exerciseType", "programming", "verdict", "POINT_DEDUCTION", "examId", "100");
-        var notification = new PlagiarismCaseVerdictNotification(1L, COURSE_ID, ZonedDateTime.now(), params);
+        var notification = new PlagiarismCaseVerdictNotification(1L, COURSE_ID, FIXED_TIMESTAMP, params);
         assertThat(notification.getRelativeWebAppUrl()).isEqualTo("/courses/1/exams/100");
     }
 
@@ -238,12 +240,6 @@ class ExerciseNotificationUrlTest {
     void testExerciseUpdatedNotification_examFileUploadExercise() {
         var notification = new ExerciseUpdatedNotification(COURSE_ID, COURSE_TITLE, COURSE_ICON, EXERCISE_ID, EXERCISE_TITLE, EXAM_ID, EXERCISE_GROUP_ID, "file-upload");
         assertThat(notification.getRelativeWebAppUrl()).isEqualTo("/course-management/1/exams/100/exercise-groups/50/file-upload-exercises/10");
-    }
-
-    @Test
-    void testNewManualFeedbackRequestNotification_examFileUploadExercise() {
-        var notification = new NewManualFeedbackRequestNotification(COURSE_ID, COURSE_TITLE, COURSE_ICON, EXERCISE_ID, EXERCISE_TITLE, EXAM_ID);
-        assertThat(notification.getRelativeWebAppUrl()).isEqualTo("/course-management/1/exams/100/assessment-dashboard/10");
     }
 
     // Edge case: partial exam data should fall back to course URL
