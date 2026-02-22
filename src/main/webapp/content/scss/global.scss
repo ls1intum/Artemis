@@ -1231,9 +1231,6 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
         border-radius: 1rem;
         overflow: hidden;
         background-color: var(--iris-secondary-background);
-    }
-
-    .p-dialog-content {
         position: relative;
         padding: 0;
     }

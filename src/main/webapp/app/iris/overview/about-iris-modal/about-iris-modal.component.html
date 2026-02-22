@@ -1,5 +1,5 @@
 <div class="close-btn-container">
-    <button class="close-btn" (click)="close()" [attr.aria-label]="'artemisApp.iris.aboutIrisModal.close' | artemisTranslate">
+    <button type="button" class="close-btn" (click)="close()" [attr.aria-label]="'artemisApp.iris.aboutIrisModal.close' | artemisTranslate">
         <fa-icon [icon]="faXmark" aria-hidden="true" />
     </button>
 </div>
@@ -69,6 +69,6 @@
 
     <!-- Try Iris button -->
     <div class="try-iris-btn-wrapper">
-        <button class="btn btn-primary try-iris-btn" (click)="tryIris()" jhiTranslate="artemisApp.iris.aboutIrisModal.tryIris"></button>
+        <button type="button" class="btn btn-primary try-iris-btn" (click)="tryIris()" jhiTranslate="artemisApp.iris.aboutIrisModal.tryIris"></button>
     </div>
 </div>

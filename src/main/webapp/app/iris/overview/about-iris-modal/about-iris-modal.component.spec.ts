@@ -64,7 +64,7 @@ describe('AboutIrisModalComponent', () => {
     it.each([
         ['whatIrisCanDo', 3],
         ['whatToExpect', 3],
-    ] as const)('should have %i valid cards in %s', (key, expectedLength) => {
+    ] as const)('should have %s valid cards in %i', (key, expectedLength) => {
         const cards = component[key];
         expect(cards).toHaveLength(expectedLength);
         expectValidCards(cards);

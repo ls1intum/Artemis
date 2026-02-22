@@ -712,7 +712,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             closable: false,
             showHeader: false,
             styleClass: 'about-iris-dialog',
-            width: '680px',
+            maskStyleClass: 'about-iris-dialog',
+            breakpoints: { '960px': '680px', '640px': '95vw' },
         });
     }
 

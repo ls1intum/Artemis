@@ -65,11 +65,11 @@ export class AboutIrisModalComponent {
         },
     ];
 
-    close(): void {
+    protected close(): void {
         this.dialogRef.close();
     }
 
-    tryIris(): void {
+    protected tryIris(): void {
         this.chatService.clearChat();
         this.dialogRef.close();
     }

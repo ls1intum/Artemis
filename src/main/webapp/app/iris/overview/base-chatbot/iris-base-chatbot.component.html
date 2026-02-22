@@ -28,7 +28,12 @@
                     </div>
                     @if (!isChatGptWrapper()) {
                         <div class="collapsed-bottom">
-                            <button class="collapsed-icon-button" (click)="openAboutIrisModal()" [attr.aria-label]="'artemisApp.iris.chatHistory.aboutIris' | artemisTranslate">
+                            <button
+                                type="button"
+                                class="collapsed-icon-button"
+                                (click)="openAboutIrisModal()"
+                                [attr.aria-label]="'artemisApp.iris.chatHistory.aboutIris' | artemisTranslate"
+                            >
                                 <fa-icon [icon]="faCircleInfo" class="info-button" />
                             </button>
                         </div>
@@ -100,7 +105,12 @@
                         <div class="chat-history-bottom">
                             <div class="chat-history-divider"></div>
                             <div class="chat-history-info-link">
-                                <button class="collapsed-icon-button" (click)="openAboutIrisModal()" [attr.aria-label]="'artemisApp.iris.chatHistory.aboutIris' | artemisTranslate">
+                                <button
+                                    type="button"
+                                    class="collapsed-icon-button"
+                                    (click)="openAboutIrisModal()"
+                                    [attr.aria-label]="'artemisApp.iris.chatHistory.aboutIris' | artemisTranslate"
+                                >
                                     <fa-icon [icon]="faCircleInfo" class="info-button" />
                                 </button>
                             </div>
