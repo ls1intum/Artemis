@@ -21,7 +21,6 @@ import {
     untracked,
 } from '@angular/core';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
-import { Disposable } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import {
     NgbDropdown,
     NgbDropdownMenu,
@@ -331,7 +330,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     };
     showTextStyleActions: boolean = true;
     showNonTextStyleActions: boolean = true;
-    private selectionChangeListener?: Disposable;
+    private selectionChangeListener?: { dispose(): void };
 
     readonly colorToClassMap = new Map<string, string>([
         ['#ca2024', 'red'],
