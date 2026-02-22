@@ -78,8 +78,8 @@ export class AiExperienceSettingsComponent implements OnInit {
                 this.messageCount.set(counts.messages);
             },
             error: () => {
-                // Show the delete button conservatively when count cannot be determined
-                this.sessionCount.set(-1);
+                // Count could not be determined; hide the delete button
+                this.sessionCount.set(0);
             },
         });
     }

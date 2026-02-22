@@ -170,7 +170,7 @@ public class IrisChatSessionResource {
     public ResponseEntity<Void> deleteSession(@PathVariable Long sessionId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         IrisChatSession session = irisChatSessionRepository.findById(sessionId).orElseThrow(() -> new EntityNotFoundException("Iris chat session", sessionId));
-        if (user.getId() == null || session.getUserId() != user.getId()) {
+        if (user.getId() == null || session.getUserId() != user.getId().longValue()) {
             throw new AccessForbiddenAlertException("You do not have access to this Iris chat session.", "iris", "iris.forbidden");
         }
         log.info("REST request to delete Iris chat session {} for user id {}", sessionId, user.getId());

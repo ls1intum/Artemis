@@ -136,12 +136,42 @@ describe('ChatHistoryItemComponent', () => {
         testSessionRendering(session, faKeyboard, 'artemisApp.iris.chatHistory.relatedEntityTooltip.programmingExercise', 'Exercise 1');
     });
 
-    it('should detect new chat session using translated title', async () => {
-        // MockTranslateService.stream returns the key itself as the translated value
-        const translatedKey = 'artemisApp.iris.chatHistory.newChat';
+    it('should detect new chat session with English title', async () => {
         const session: IrisSessionDTO = {
             id: 4,
-            title: translatedKey,
+            title: 'New chat',
+            creationDate: new Date(),
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 1,
+            entityName: 'Course 1',
+        };
+
+        fixture.componentRef.setInput('session', session);
+        await fixture.whenStable();
+
+        expect(component.isNewChat()).toBe(true);
+    });
+
+    it('should detect new chat session with German title', async () => {
+        const session: IrisSessionDTO = {
+            id: 4,
+            title: 'Neuer Chat',
+            creationDate: new Date(),
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 1,
+            entityName: 'Course 1',
+        };
+
+        fixture.componentRef.setInput('session', session);
+        await fixture.whenStable();
+
+        expect(component.isNewChat()).toBe(true);
+    });
+
+    it('should detect new chat session case-insensitively', async () => {
+        const session: IrisSessionDTO = {
+            id: 4,
+            title: 'NEW CHAT',
             creationDate: new Date(),
             chatMode: ChatServiceMode.COURSE,
             entityId: 1,
@@ -204,6 +234,25 @@ describe('ChatHistoryItemComponent', () => {
         component.onDeleteClick();
 
         expect(component.deleteSession.emit).toHaveBeenCalledWith(session);
+    });
+
+    it('should provide menuItems as a computed signal with delete action', async () => {
+        const session: IrisSessionDTO = {
+            id: 12,
+            title: 'Chat with menu',
+            creationDate: new Date(),
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 1,
+            entityName: 'Course 1',
+        };
+
+        fixture.componentRef.setInput('session', session);
+        await fixture.whenStable();
+
+        const items = component.menuItems();
+        expect(items).toHaveLength(1);
+        expect(items[0].icon).toBe('pi pi-trash');
+        expect(items[0].styleClass).toBe('danger');
     });
 
     it('should not render an icon and entity name for course session', async () => {

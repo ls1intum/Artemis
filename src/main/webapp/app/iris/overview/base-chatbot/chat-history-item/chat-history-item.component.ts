@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Signal, computed, effect, inject, input, output, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Signal, computed, inject, input, output, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { DatePipe, NgClass } from '@angular/common';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
@@ -22,7 +22,10 @@ import { MenuItem } from 'primeng/api';
 })
 export class ChatHistoryItemComponent {
     private readonly translateService = inject(TranslateService);
-    private readonly newChatTitle = toSignal(this.translateService.stream('artemisApp.iris.chatHistory.newChat'), { initialValue: '' });
+    // Known "new chat" titles from all languages (server-side: messages*.properties, client-side: iris.json).
+    // Must match the values in src/main/resources/i18n/messages*.properties (iris.chat.session.newChatTitle)
+    // and src/main/webapp/i18n/*/iris.json (artemisApp.iris.chatHistory.newChat).
+    private static readonly NEW_CHAT_TITLES = new Set(['new chat', 'neuer chat']);
     private readonly deleteLabel = toSignal(this.translateService.stream('artemisApp.iris.chatHistory.deleteSession'), { initialValue: '' });
 
     session = input.required<IrisSessionDTO>();
@@ -32,8 +35,10 @@ export class ChatHistoryItemComponent {
     relatedEntityName: Signal<string | undefined> = computed(() => this.session().entityName);
     readonly isNewChat = computed(() => {
         const title = this.session().title?.trim().toLowerCase();
-        const translatedNewChat = this.newChatTitle()?.trim().toLowerCase();
-        return !!title && !!translatedNewChat && title === translatedNewChat;
+        if (!title) {
+            return false;
+        }
+        return ChatHistoryItemComponent.NEW_CHAT_TITLES.has(title);
     });
     readonly faPlus = faPlus;
     readonly faEllipsisVertical = faEllipsisVertical;
@@ -42,29 +47,14 @@ export class ChatHistoryItemComponent {
 
     readonly contextMenu = viewChild<Menu>('menu');
 
-    menuItems: MenuItem[] = [
+    readonly menuItems = computed<MenuItem[]>(() => [
         {
-            label: this.translateService.instant('artemisApp.iris.chatHistory.deleteSession'),
+            label: this.deleteLabel(),
             icon: 'pi pi-trash',
             styleClass: 'danger',
             command: () => this.onDeleteClick(),
         },
-    ];
-
-    constructor() {
-        // Update menu item label reactively when language changes
-        effect(() => {
-            const label = this.deleteLabel();
-            this.menuItems = [
-                {
-                    label,
-                    icon: 'pi pi-trash',
-                    styleClass: 'danger',
-                    command: () => this.onDeleteClick(),
-                },
-            ];
-        });
-    }
+    ]);
 
     onItemClick(): void {
         this.sessionClicked.emit(this.session());

@@ -6,7 +6,7 @@
             "intro": "Artemis gives you full control over how AI supports your learning. Choose the option that works best for you — you can change your mind at any time.",
             "cloudHeader": "Cloud AI (Recommended)",
             "whatIsIt": "What is it?",
-            "cloudWhatIsIt": "Cloud AI connects you to powerful language models like GPT-4 and GPT-5 from OpenAI, running on Microsoft Azure servers located in the European Union.",
+            "cloudWhatIsIt": "Cloud AI connects you to powerful LLMs like the latest GPT-5 models from OpenAI, running on Microsoft Azure servers located in the European Union.",
             "howDoesItWork": "How does it work?",
             "cloudHowDoesItWork": "When you chat with Iris or request AI feedback, your questions and relevant exercise content are sent to EU-based Azure servers for processing. The AI generates a response and sends it back to Artemis — no data is stored in the cloud.",
             "whatDataProcessed": "What data is processed?",

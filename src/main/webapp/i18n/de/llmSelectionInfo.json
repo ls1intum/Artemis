@@ -6,7 +6,7 @@
             "intro": "In Artemis hast du die volle Kontrolle darüber, wie KI dein Lernen unterstützt. Wähle die Option, die am besten zu dir passt — du kannst deine Wahl jederzeit ändern.",
             "cloudHeader": "Cloud KI (Empfohlen)",
             "whatIsIt": "Was ist das?",
-            "cloudWhatIsIt": "Cloud KI verbindet dich mit leistungsstarken Sprachmodellen wie GPT-4 und GPT-5 von OpenAI, die auf Microsoft Azure-Servern innerhalb der Europäischen Union betrieben werden.",
+            "cloudWhatIsIt": "Cloud KI verbindet dich mit leistungsstarken LLMs wie den letzten GPT-5 Modellen von OpenAI, die auf Microsoft Azure-Servern innerhalb der Europäischen Union betrieben werden.",
             "howDoesItWork": "Wie funktioniert es?",
             "cloudHowDoesItWork": "Wenn du mit Iris chattest oder KI-Feedback anforderst, werden deine Fragen und die relevanten Aufgabeninhalte zur Verarbeitung an Azure-Server in der EU gesendet. Die KI erstellt eine Antwort und schickt sie an Artemis zurück — es werden keine Daten in der Cloud gespeichert.",
             "whatDataProcessed": "Welche Daten werden verarbeitet?",
