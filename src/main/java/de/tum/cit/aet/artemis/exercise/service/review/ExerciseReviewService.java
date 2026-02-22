@@ -288,9 +288,7 @@ public class ExerciseReviewService {
         if (!threads.isEmpty()) {
             for (CommentThread thread : threads) {
                 thread.setGroup(null);
-                if (thread.getId() != null) {
-                    threadIds.add(thread.getId());
-                }
+                threadIds.add(thread.getId());
             }
             commentThreadRepository.saveAll(threads);
         }

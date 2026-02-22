@@ -53,7 +53,7 @@ describe('ExerciseReviewCommentService', () => {
 
         expect(changed).toBe(true);
         expect(service.threads()).toEqual([]);
-        expect(websocketServiceMock.subscribe).not.toHaveBeenCalled();
+        expect(websocketServiceMock.subscribe).toHaveBeenCalledWith('/topic/exercises/42/review-threads');
     });
 
     it('setExercise should not clear thread state when exercise id is unchanged', () => {
@@ -64,7 +64,7 @@ describe('ExerciseReviewCommentService', () => {
 
         expect(changed).toBe(false);
         expect(service.threads()).toEqual([{ id: 1 } as any]);
-        expect(websocketServiceMock.subscribe).not.toHaveBeenCalled();
+        expect(websocketServiceMock.subscribe).toHaveBeenCalledTimes(1);
     });
 
     it('reloadThreads should clear state when no active exercise exists', () => {
@@ -125,6 +125,18 @@ describe('ExerciseReviewCommentService', () => {
 
         expect(service.threads()).toEqual([]);
         expect(alertServiceMock.error).not.toHaveBeenCalled();
+    });
+
+    it('setExercise should apply websocket events before the first reload', () => {
+        service.setExercise(4);
+
+        websocketSubject.next({
+            action: ReviewThreadWebsocketAction.THREAD_CREATED,
+            exerciseId: 4,
+            thread: { id: 2, comments: [] } as any,
+        });
+
+        expect(service.threads()).toEqual([{ id: 2, comments: [] }] as any);
     });
 
     it('reloadThreads should merge websocket updates received during an in-flight reload', () => {
@@ -513,6 +525,53 @@ describe('ExerciseReviewCommentService', () => {
         });
 
         expect(service.threads()).toEqual([{ id: 1, comments: [{ id: 9, threadId: 1, content: { text: 'New' } }] }] as any);
+    });
+
+    it('should preserve local comments when THREAD_UPDATED websocket payload is stale', () => {
+        service.setExercise(4);
+        service.reloadThreads();
+        httpMock.expectOne('api/exercise/exercises/4/review-threads').flush([]);
+        service.threads.set([
+            { id: 1, resolved: false, comments: [{ id: 11, threadId: 1, content: { text: 'new comment' }, lastModifiedDate: '2026-01-01T10:00:00.000Z' }] },
+        ] as any);
+
+        websocketSubject.next({
+            action: ReviewThreadWebsocketAction.THREAD_UPDATED,
+            exerciseId: 4,
+            thread: { id: 1, resolved: true, comments: [] } as any,
+        });
+
+        expect(service.threads()).toEqual([
+            { id: 1, resolved: true, comments: [{ id: 11, threadId: 1, content: { text: 'new comment' }, lastModifiedDate: '2026-01-01T10:00:00.000Z' }] },
+        ] as any);
+    });
+
+    it('should keep the most recent comment version when THREAD_UPDATED contains duplicates', () => {
+        service.setExercise(4);
+        service.reloadThreads();
+        httpMock.expectOne('api/exercise/exercises/4/review-threads').flush([]);
+        service.threads.set([
+            {
+                id: 1,
+                comments: [{ id: 11, threadId: 1, content: { text: 'newer local' }, lastModifiedDate: '2026-01-01T10:00:00.000Z' }],
+            },
+        ] as any);
+
+        websocketSubject.next({
+            action: ReviewThreadWebsocketAction.THREAD_UPDATED,
+            exerciseId: 4,
+            thread: {
+                id: 1,
+                comments: [{ id: 11, threadId: 1, content: { text: 'older incoming' }, lastModifiedDate: '2026-01-01T09:00:00.000Z' }],
+            } as any,
+        });
+
+        expect(service.threads()).toEqual([
+            {
+                id: 1,
+                comments: [{ id: 11, threadId: 1, content: { text: 'newer local' }, lastModifiedDate: '2026-01-01T10:00:00.000Z' }],
+            },
+        ] as any);
     });
 
     it('should apply COMMENT_DELETED websocket update and drop empty thread', () => {

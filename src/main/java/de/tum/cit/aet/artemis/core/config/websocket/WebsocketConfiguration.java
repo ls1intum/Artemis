@@ -405,8 +405,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
             if (isReviewThreadDestination(destination)) {
                 long exerciseId = getExerciseIdFromReviewThreadDestination(destination).orElseThrow();
-                var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-                return authorizationCheckService.isAtLeastEditorInCourse(login, exercise.getCourseViaExerciseGroupOrCourseMember().getId());
+                return authorizationCheckService.isAtLeastEditorInExercise(login, exerciseId);
             }
 
             if (isNonPersonalExerciseResultDestination(destination)) {

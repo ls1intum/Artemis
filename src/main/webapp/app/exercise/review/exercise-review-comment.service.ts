@@ -50,6 +50,9 @@ export class ExerciseReviewCommentService implements OnDestroy {
         this.websocketSubscription?.unsubscribe();
         this.websocketSubscription = undefined;
         this.subscribedExerciseId = undefined;
+        if (exerciseId) {
+            this.ensureWebsocketSubscription(exerciseId);
+        }
         return true;
     }
 
@@ -420,18 +423,94 @@ export class ExerciseReviewCommentService implements OnDestroy {
         return [...threads, newThread];
     }
 
-    upsertThreadInThreads(threads: CommentThread[], updatedThread: CommentThread): CommentThread[] {
+    /**
+     * Merges a thread update into the current list while preserving any comments that might have been
+     * received through dedicated comment events but are not present on the incoming thread payload.
+     *
+     * @param threads The current thread list.
+     * @param updatedThread The updated thread from websocket.
+     * @returns The merged thread list.
+     */
+    private mergeThreadUpdateInThreads(threads: CommentThread[], updatedThread: CommentThread): CommentThread[] {
         if (!updatedThread.id) {
             return threads;
         }
-        const threadExists = threads.some((thread) => thread.id === updatedThread.id);
-        if (threadExists) {
-            return this.replaceThreadInThreads(threads, updatedThread);
+        const existingThread = threads.find((thread) => thread.id === updatedThread.id);
+        if (!existingThread) {
+            return [...threads, updatedThread];
         }
-        return [...threads, updatedThread];
+        const existingComments = existingThread.comments ?? [];
+        const incomingComments = updatedThread.comments ?? [];
+        const mergedComments = this.mergeThreadComments(existingComments, incomingComments);
+        return threads.map((thread) => {
+            if (thread.id !== updatedThread.id) {
+                return thread;
+            }
+            return Object.assign({}, thread, updatedThread, { comments: mergedComments });
+        });
     }
 
-    updateGroupInThreads(threads: CommentThread[], threadIds: number[], groupId?: number): CommentThread[] {
+    /**
+     * Merges comments by id and prefers the most recently modified representation for duplicates.
+     *
+     * @param existingComments Comments already present locally.
+     * @param incomingComments Comments provided by the incoming thread update.
+     * @returns A merged comment list.
+     */
+    private mergeThreadComments(existingComments: Comment[], incomingComments: Comment[]): Comment[] {
+        const commentsById = new Map<number, Comment>();
+        for (const comment of existingComments) {
+            if (comment?.id !== undefined) {
+                commentsById.set(comment.id, comment);
+            }
+        }
+        for (const comment of incomingComments) {
+            if (comment?.id === undefined) {
+                continue;
+            }
+            const existing = commentsById.get(comment.id);
+            commentsById.set(comment.id, existing ? this.pickMostRecentComment(existing, comment) : comment);
+        }
+        return Array.from(commentsById.values());
+    }
+
+    /**
+     * Chooses the newer comment representation by comparing modification timestamps.
+     *
+     * @param existingComment The currently stored comment.
+     * @param incomingComment The incoming comment payload.
+     * @returns The comment considered most recent.
+     */
+    private pickMostRecentComment(existingComment: Comment, incomingComment: Comment): Comment {
+        const existingTimestamp = this.toTimestamp(existingComment.lastModifiedDate ?? existingComment.createdDate);
+        const incomingTimestamp = this.toTimestamp(incomingComment.lastModifiedDate ?? incomingComment.createdDate);
+        if (existingTimestamp !== undefined && incomingTimestamp !== undefined) {
+            return incomingTimestamp >= existingTimestamp ? incomingComment : existingComment;
+        }
+        if (incomingTimestamp !== undefined) {
+            return incomingComment;
+        }
+        if (existingTimestamp !== undefined) {
+            return existingComment;
+        }
+        return incomingComment;
+    }
+
+    /**
+     * Parses an ISO-like timestamp string into milliseconds since epoch.
+     *
+     * @param timestamp The timestamp string to parse.
+     * @returns Milliseconds since epoch, or undefined if parsing fails.
+     */
+    private toTimestamp(timestamp?: string): number | undefined {
+        if (!timestamp) {
+            return undefined;
+        }
+        const parsed = Date.parse(timestamp);
+        return Number.isNaN(parsed) ? undefined : parsed;
+    }
+
+    private updateGroupInThreads(threads: CommentThread[], threadIds: number[], groupId?: number): CommentThread[] {
         if (!threadIds || threadIds.length === 0) {
             return threads;
         }
@@ -444,6 +523,14 @@ export class ExerciseReviewCommentService implements OnDestroy {
         });
     }
 
+    /**
+     * Applies a single websocket update for the active exercise.
+     *
+     * During a reload, updates are queued and replayed after the REST snapshot arrives to avoid
+     * race conditions between snapshot and incremental events.
+     *
+     * @param update The incoming websocket update.
+     */
     private applyWebsocketUpdate(update: ReviewThreadWebsocketUpdate): void {
         if (!update || !this.activeExerciseId || update.exerciseId !== this.activeExerciseId) {
             return;
@@ -457,18 +544,39 @@ export class ExerciseReviewCommentService implements OnDestroy {
         });
     }
 
+    /**
+     * Replays queued websocket updates on top of a freshly loaded thread snapshot.
+     *
+     * @param threads The thread snapshot from REST.
+     * @param updates The queued websocket updates in arrival order.
+     * @returns The merged thread state.
+     */
     private applyQueuedWebsocketUpdates(threads: CommentThread[], updates: ReviewThreadWebsocketUpdate[]): CommentThread[] {
         return updates.reduce((accumulator, update) => this.applyWebsocketUpdateToThreads(accumulator, update), threads);
     }
 
+    /**
+     * Applies one websocket event to the current thread collection using idempotent reducers.
+     *
+     * Note: The initiating client can process the same logical change via HTTP and the echoed websocket event.
+     * This is acceptable because reducers are idempotent, and the widget manager rerenders only when state changes.
+     *
+     * @param threads The current thread list.
+     * @param update The websocket update to apply.
+     * @returns The updated thread list.
+     */
     private applyWebsocketUpdateToThreads(threads: CommentThread[], update: ReviewThreadWebsocketUpdate): CommentThread[] {
         switch (update.action) {
             case ReviewThreadWebsocketAction.THREAD_CREATED:
+                if (!update.thread) {
+                    return threads;
+                }
+                return this.appendThreadToThreads(threads, update.thread);
             case ReviewThreadWebsocketAction.THREAD_UPDATED:
                 if (!update.thread) {
                     return threads;
                 }
-                return this.upsertThreadInThreads(threads, update.thread);
+                return this.mergeThreadUpdateInThreads(threads, update.thread);
             case ReviewThreadWebsocketAction.COMMENT_CREATED:
                 if (!update.comment) {
                     return threads;
@@ -494,6 +602,11 @@ export class ExerciseReviewCommentService implements OnDestroy {
         }
     }
 
+    /**
+     * Ensures an active websocket subscription for the given exercise and replaces stale subscriptions.
+     *
+     * @param exerciseId The exercise id whose review thread topic should be observed.
+     */
     private ensureWebsocketSubscription(exerciseId: number): void {
         if (this.subscribedExerciseId === exerciseId && this.websocketSubscription) {
             return;

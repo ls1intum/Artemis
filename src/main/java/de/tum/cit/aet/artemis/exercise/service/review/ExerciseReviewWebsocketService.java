@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.exercise.dto.review.CommentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CommentThreadDTO;
-import de.tum.cit.aet.artemis.exercise.dto.review.ReviewThreadWebsocketAction;
 import de.tum.cit.aet.artemis.exercise.dto.review.ReviewThreadWebsocketDTO;
 
 @Profile(PROFILE_CORE)
@@ -41,37 +40,37 @@ public class ExerciseReviewWebsocketService {
         return getExerciseIdFromReviewThreadDestination(destination).isPresent();
     }
 
+    /**
+     * Builds the websocket topic for review thread updates of an exercise.
+     *
+     * @param exerciseId the exercise id
+     * @return the websocket destination topic
+     */
     private String getTopic(Long exerciseId) {
         return "/topic/exercises/" + exerciseId + "/review-threads";
     }
 
     public void notifyThreadCreated(Long exerciseId, CommentThreadDTO thread) {
-        websocketMessagingService.sendMessage(getTopic(exerciseId),
-                new ReviewThreadWebsocketDTO(ReviewThreadWebsocketAction.THREAD_CREATED, exerciseId, thread, null, null, null, null));
+        websocketMessagingService.sendMessage(getTopic(exerciseId), ReviewThreadWebsocketDTO.threadCreated(exerciseId, thread));
     }
 
     public void notifyThreadUpdated(Long exerciseId, CommentThreadDTO thread) {
-        websocketMessagingService.sendMessage(getTopic(exerciseId),
-                new ReviewThreadWebsocketDTO(ReviewThreadWebsocketAction.THREAD_UPDATED, exerciseId, thread, null, null, null, null));
+        websocketMessagingService.sendMessage(getTopic(exerciseId), ReviewThreadWebsocketDTO.threadUpdated(exerciseId, thread));
     }
 
     public void notifyCommentCreated(Long exerciseId, CommentDTO comment) {
-        websocketMessagingService.sendMessage(getTopic(exerciseId),
-                new ReviewThreadWebsocketDTO(ReviewThreadWebsocketAction.COMMENT_CREATED, exerciseId, null, comment, null, null, null));
+        websocketMessagingService.sendMessage(getTopic(exerciseId), ReviewThreadWebsocketDTO.commentCreated(exerciseId, comment));
     }
 
     public void notifyCommentUpdated(Long exerciseId, CommentDTO comment) {
-        websocketMessagingService.sendMessage(getTopic(exerciseId),
-                new ReviewThreadWebsocketDTO(ReviewThreadWebsocketAction.COMMENT_UPDATED, exerciseId, null, comment, null, null, null));
+        websocketMessagingService.sendMessage(getTopic(exerciseId), ReviewThreadWebsocketDTO.commentUpdated(exerciseId, comment));
     }
 
     public void notifyCommentDeleted(Long exerciseId, Long commentId) {
-        websocketMessagingService.sendMessage(getTopic(exerciseId),
-                new ReviewThreadWebsocketDTO(ReviewThreadWebsocketAction.COMMENT_DELETED, exerciseId, null, null, commentId, null, null));
+        websocketMessagingService.sendMessage(getTopic(exerciseId), ReviewThreadWebsocketDTO.commentDeleted(exerciseId, commentId));
     }
 
     public void notifyGroupUpdated(Long exerciseId, List<Long> threadIds, Long groupId) {
-        websocketMessagingService.sendMessage(getTopic(exerciseId),
-                new ReviewThreadWebsocketDTO(ReviewThreadWebsocketAction.GROUP_UPDATED, exerciseId, null, null, null, threadIds, groupId));
+        websocketMessagingService.sendMessage(getTopic(exerciseId), ReviewThreadWebsocketDTO.groupUpdated(exerciseId, threadIds, groupId));
     }
 }

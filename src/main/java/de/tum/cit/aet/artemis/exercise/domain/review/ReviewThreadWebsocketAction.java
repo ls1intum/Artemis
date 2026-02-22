@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.exercise.dto.review;
+package de.tum.cit.aet.artemis.exercise.domain.review;
 
 /**
  * Action types for exercise review thread websocket updates.
