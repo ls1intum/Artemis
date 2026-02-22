@@ -21,6 +21,7 @@ import {
     untracked,
 } from '@angular/core';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { Disposable } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import {
     NgbDropdown,
     NgbDropdownMenu,
@@ -330,6 +331,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     };
     showTextStyleActions: boolean = true;
     showNonTextStyleActions: boolean = true;
+    private selectionChangeListener?: Disposable;
 
     readonly colorToClassMap = new Map<string, string>([
         ['#ca2024', 'red'],
@@ -499,7 +501,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         }
         if (this.isInCommunication()) {
             this.showTextStyleActions = false;
-            this.monacoEditor.onDidChangeTextSelection((selection) => this.onSelectionChanged(selection));
+            this.selectionChangeListener = this.monacoEditor.onDidChangeTextSelection((selection) => this.onSelectionChanged(selection));
         }
         this.renderEditorWidgets();
         this.updateReviewCommentButton();
@@ -524,6 +526,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.resizeObserver?.disconnect();
         this.reviewCommentManager?.disposeAll();
         this.monacoEditor?.clearLineDecorationsHoverButton();
+        this.selectionChangeListener?.dispose();
     }
 
     onTextChanged(event: { text: string; fileName: string }): void {
