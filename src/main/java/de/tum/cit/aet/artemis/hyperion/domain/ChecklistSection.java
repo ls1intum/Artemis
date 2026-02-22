@@ -1,9 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.domain;
 
-/**
- * Enum representing the individual sections of the checklist analysis.
- * Used to request a single-section re-analysis instead of the full 3-way analysis.
- */
+/** Sections of the checklist analysis, used for single-section re-analysis. */
 public enum ChecklistSection {
 
     COMPETENCIES, DIFFICULTY, QUALITY

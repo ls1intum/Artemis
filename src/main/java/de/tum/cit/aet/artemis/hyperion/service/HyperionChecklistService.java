@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.StandardizedCompetencyApi;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.KnowledgeArea;
 import de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency;
@@ -52,9 +54,7 @@ import reactor.core.scheduler.Schedulers;
 
 /**
  * Service for analyzing the instructor checklist for programming exercises.
- * Uses the standardized competency catalog to infer competencies, assess
- * difficulty,
- * and identify quality issues in the problem statement.
+ * Uses the standardized competency catalog to infer competencies, assess difficulty, and identify quality issues in the problem statement.
  */
 @Service
 @Lazy
@@ -129,14 +129,11 @@ public class HyperionChecklistService {
 
     /**
      * Analyzes the checklist for a programming exercise problem statement.
-     * Runs three concurrent analyses: competency inference, difficulty assessment,
-     * and quality check.
+     * Runs three concurrent analyses: competency inference, difficulty assessment, and quality check.
      *
-     * @param request  The request containing the problem statement, metadata, and
-     *                     an optional exerciseId for task/test lookups
+     * @param request  The request containing the problem statement, metadata, and an optional exerciseId for task/test lookups
      * @param courseId The ID of the course (used to load course competencies for matching)
-     * @return The analysis response containing inferred competencies, bloom radar,
-     *         difficulty, and quality issues
+     * @return The analysis response containing inferred competencies, bloom radar, difficulty, and quality issues
      */
     @Observed(name = "hyperion.checklist", contextualName = "checklist analysis", lowCardinalityKeyValues = { AI_SPAN_KEY, AI_SPAN_VALUE })
     public ChecklistAnalysisResponseDTO analyzeChecklist(ChecklistAnalysisRequestDTO request, long courseId) {
@@ -174,8 +171,7 @@ public class HyperionChecklistService {
 
     /**
      * Analyzes a single section of the checklist for a programming exercise.
-     * Only runs the requested analysis (competencies, difficulty, or quality),
-     * avoiding unnecessary LLM calls for the other sections.
+     * Only runs the requested analysis (competencies, difficulty, or quality), avoiding unnecessary LLM calls for the other sections.
      *
      * @param request  The request containing the problem statement and metadata
      * @param section  The section to analyze
@@ -214,8 +210,7 @@ public class HyperionChecklistService {
     }
 
     /**
-     * Builds the shared analysis context (input map, parent observation, task names,
-     * declared difficulty) used by both full and single-section analysis.
+     * Builds the shared analysis context (input map, parent observation, task names, declared difficulty) used by both full and single-section analysis.
      */
     private AnalysisContext buildAnalysisContext(ChecklistAnalysisRequestDTO request, long courseId) {
         String problemStatement = request.problemStatementMarkdown(); // @NotBlank guarantees non-null after validation
@@ -250,9 +245,7 @@ public class HyperionChecklistService {
         return new AnalysisContext(input, parentObs, taskNames, declaredDifficulty);
     }
 
-    /**
-     * Internal record holding the shared context needed for analysis methods.
-     */
+    /** Internal record holding the shared context needed for analysis methods. */
     private record AnalysisContext(Map<String, String> input, Observation parentObs, List<String> taskNames, String declaredDifficulty) {
     }
 
@@ -299,11 +292,7 @@ public class HyperionChecklistService {
 
     private static final int MAX_CONTEXT_VALUE_LENGTH = 2000;
 
-    /**
-     * Builds action-specific instructions for the AI prompt based on the action type
-     * and pre-sanitized context. Context values have already been truncated to
-     * {@value MAX_CONTEXT_VALUE_LENGTH} characters to mitigate prompt injection risk.
-     */
+    /** Builds action-specific instructions for the AI prompt based on action type and pre-sanitized context. */
     private String buildActionInstructions(ChecklistActionRequestDTO.ActionType actionType, Map<String, String> ctx) {
         return switch (actionType) {
             case FIX_QUALITY_ISSUE -> {
@@ -341,11 +330,7 @@ public class HyperionChecklistService {
         };
     }
 
-    /**
-     * Wraps a user-supplied context value with structural delimiters to reduce
-     * prompt injection risk. Uses triple-backtick fences rather than XML tags
-     * to avoid triggering Azure Content Safety filters.
-     */
+    /** Wraps a user-supplied context value with triple-backtick fences to reduce prompt injection risk. */
     private static String wrapUserValue(String value) {
         if (value == null || value.isEmpty()) {
             return "";
@@ -353,9 +338,7 @@ public class HyperionChecklistService {
         return "\n```user-input\n" + value + "\n```\n";
     }
 
-    /**
-     * Builds a short human-readable summary of what action was applied.
-     */
+    /** Builds a short human-readable summary of what action was applied. */
     private String buildActionSummary(ChecklistActionRequestDTO.ActionType actionType, Map<String, String> ctx) {
         return switch (actionType) {
             case FIX_QUALITY_ISSUE -> "Fixed quality issue: " + ctx.getOrDefault("category", "unknown");
@@ -364,10 +347,7 @@ public class HyperionChecklistService {
         };
     }
 
-    /**
-     * Serializes the standardized competency catalog to a condensed JSON format for
-     * the prompt.
-     */
+    /** Serializes the standardized competency catalog to condensed JSON for the prompt. */
     private String serializeCompetencyCatalog() {
         String cached = this.cachedCatalogJson;
         Instant cachedAt = this.catalogCachedAt;
@@ -467,9 +447,7 @@ public class HyperionChecklistService {
         }
     }
 
-    /**
-     * Runs competency inference using the standardized catalog.
-     */
+    /** Runs competency inference using the standardized catalog. */
     private List<InferredCompetencyDTO> runCompetencyInference(Map<String, String> input, Observation parentObs, List<String> taskNames) {
         var competencyInput = new HashMap<>(input);
         competencyInput.put("task_names", taskNames.isEmpty() ? "(no tasks detected)" : String.join(", ", taskNames));
@@ -484,52 +462,47 @@ public class HyperionChecklistService {
                 return List.of();
             }
 
-            return entity.competencies().stream().map(c -> {
-                List<String> relatedTasks = c.relatedTaskNames() != null ? c.relatedTaskNames() : List.of();
-                return new InferredCompetencyDTO(c.knowledgeAreaShortTitle(), c.competencyTitle(), c.competencyVersion(), c.catalogSourceId(), c.taxonomyLevel(), c.confidence(),
-                        c.rank(), c.evidence(), c.whyThisMatches(), c.isLikelyPrimary(), relatedTasks, c.matchedCourseCompetencyId());
-            }).toList();
+            return entity.competencies().stream().map(HyperionChecklistService::toInferredCompetencyDTO).toList();
         }, List.of());
     }
 
-    /**
-     * Computes the Bloom radar distribution from inferred competencies.
-     * Only recognised Bloom levels are aggregated; unknown or null taxonomy
-     * values are silently ignored so they don't distort the radar.
-     */
+    private static InferredCompetencyDTO toInferredCompetencyDTO(StructuredOutputSchema.CompetencyItem c) {
+        return new InferredCompetencyDTO(c.knowledgeAreaShortTitle(), c.competencyTitle(), c.competencyVersion(), c.catalogSourceId(), c.taxonomyLevel(), c.confidence(), c.rank(),
+                c.evidence(), c.whyThisMatches(), c.isLikelyPrimary(), Objects.requireNonNullElse(c.relatedTaskNames(), List.of()), c.matchedCourseCompetencyId());
+    }
+
+    /** Computes the Bloom radar distribution from inferred competencies. */
     private BloomRadarDTO computeBloomRadar(List<InferredCompetencyDTO> competencies) {
         if (competencies == null || competencies.isEmpty()) {
             return BloomRadarDTO.empty();
         }
 
-        Set<String> knownLevels = Set.of("REMEMBER", "UNDERSTAND", "APPLY", "ANALYZE", "EVALUATE", "CREATE");
-
         // Aggregate confidence-weighted taxonomy levels
-        Map<String, Double> taxonomyWeights = new HashMap<>();
+        Map<CompetencyTaxonomy, Double> taxonomyWeights = new EnumMap<>(CompetencyTaxonomy.class);
         double totalWeight = 0.0;
 
         for (InferredCompetencyDTO comp : competencies) {
-            String level = comp.taxonomyLevel() != null ? comp.taxonomyLevel().toUpperCase() : null;
-            if (level == null || !knownLevels.contains(level)) {
+            CompetencyTaxonomy level = parseEnumSafe(CompetencyTaxonomy.class, comp.taxonomyLevel());
+            if (level == null) {
                 continue;
             }
             double confidence = comp.confidence() != null ? comp.confidence() : 0.5;
-
             taxonomyWeights.merge(level, confidence, Double::sum);
             totalWeight += confidence;
         }
 
         // Normalize to sum to 1.0
         final double finalTotal = totalWeight > 0 ? totalWeight : 1.0;
+        CompetencyTaxonomy[] levels = CompetencyTaxonomy.values();
+        double[] values = new double[levels.length];
+        for (int i = 0; i < levels.length; i++) {
+            values[i] = taxonomyWeights.getOrDefault(levels[i], 0.0) / finalTotal;
+        }
 
-        return new BloomRadarDTO(taxonomyWeights.getOrDefault("REMEMBER", 0.0) / finalTotal, taxonomyWeights.getOrDefault("UNDERSTAND", 0.0) / finalTotal,
-                taxonomyWeights.getOrDefault("APPLY", 0.0) / finalTotal, taxonomyWeights.getOrDefault("ANALYZE", 0.0) / finalTotal,
-                taxonomyWeights.getOrDefault("EVALUATE", 0.0) / finalTotal, taxonomyWeights.getOrDefault("CREATE", 0.0) / finalTotal);
+        return new BloomRadarDTO(values[0], values[1], values[2], values[3], values[4], values[5]);
     }
 
-    /**
-     * Runs difficulty analysis.
-     */
+    /** Runs difficulty analysis. */
     private DifficultyAssessmentDTO runDifficultyAnalysis(Map<String, String> input, Observation parentObs, String declaredDifficulty) {
         String renderedPrompt = templates.render("/prompts/hyperion/checklist_difficulty.st", input);
 
@@ -542,41 +515,28 @@ public class HyperionChecklistService {
                 return DifficultyAssessmentDTO.unknown("AI returned no response");
             }
 
-            String suggestedStr = entity.suggested();
-            Double confidence = entity.confidence();
-            SuggestedDifficulty suggested = parseEnumSafe(SuggestedDifficulty.class, suggestedStr);
-            boolean matches = suggestedStr != null && declaredDifficulty != null && suggestedStr.equalsIgnoreCase(declaredDifficulty);
-            DifficultyDelta delta = computeDelta(declaredDifficulty, suggestedStr);
+            SuggestedDifficulty suggested = parseEnumSafe(SuggestedDifficulty.class, entity.suggested());
+            SuggestedDifficulty declared = parseEnumSafe(SuggestedDifficulty.class, declaredDifficulty);
+            boolean matches = suggested != null && suggested != SuggestedDifficulty.UNKNOWN && suggested == declared;
+            DifficultyDelta delta = computeDelta(declared, suggested);
             int taskCount = entity.taskCount() != null ? entity.taskCount() : 0;
             int testCount = entity.testCount() != null ? entity.testCount() : 0;
 
-            return new DifficultyAssessmentDTO(suggested, confidence, entity.reasoning(), matches, delta, taskCount, testCount);
+            return new DifficultyAssessmentDTO(suggested, entity.confidence(), entity.reasoning(), matches, delta, taskCount, testCount);
         }, DifficultyAssessmentDTO.unknown("Analysis failed"));
     }
 
-    /**
-     * Computes the delta between declared and suggested difficulty.
-     */
-    private DifficultyDelta computeDelta(String declared, String suggested) {
-        if (declared == null || suggested == null) {
+    /** Computes the delta between declared and suggested difficulty using enum ordinals. */
+    private DifficultyDelta computeDelta(SuggestedDifficulty declared, SuggestedDifficulty suggested) {
+        if (declared == null || suggested == null || declared == SuggestedDifficulty.UNKNOWN || suggested == SuggestedDifficulty.UNKNOWN) {
             return DifficultyDelta.UNKNOWN;
         }
 
-        Map<String, Integer> levels = Map.of("EASY", 1, "MEDIUM", 2, "HARD", 3);
-        Integer declaredLevel = levels.get(declared.toUpperCase());
-        Integer suggestedLevel = levels.get(suggested.toUpperCase());
-
-        if (declaredLevel == null || suggestedLevel == null) {
-            return DifficultyDelta.UNKNOWN;
-        }
-
-        int cmp = Integer.compare(suggestedLevel, declaredLevel);
+        int cmp = Integer.compare(suggested.ordinal(), declared.ordinal());
         return cmp < 0 ? DifficultyDelta.LOWER : cmp > 0 ? DifficultyDelta.HIGHER : DifficultyDelta.MATCH;
     }
 
-    /**
-     * Runs quality analysis.
-     */
+    /** Runs quality analysis. */
     private List<QualityIssueDTO> runQualityAnalysis(Map<String, String> input, Observation parentObs) {
         String renderedPrompt = templates.render("/prompts/hyperion/checklist_quality.st", input);
 
@@ -605,30 +565,18 @@ public class HyperionChecklistService {
         return new QualityIssueDTO(category, severity, issue.description(), location, issue.suggestedFix(), issue.impactOnLearners());
     }
 
-    /**
-     * Sanitizes context map values by truncating them to {@value MAX_CONTEXT_VALUE_LENGTH}
-     * characters. This limits the surface area for prompt injection via user-controlled
-     * context values.
-     */
+    /** Sanitizes context map values by truncating them to {@value MAX_CONTEXT_VALUE_LENGTH} characters. */
     private Map<String, String> sanitizeContext(Map<String, String> context) {
         if (context == null || context.isEmpty()) {
             return Map.of();
         }
-        Map<String, String> sanitized = new HashMap<>();
-        for (var entry : context.entrySet()) {
-            String value = entry.getValue();
-            if (value != null && value.length() > MAX_CONTEXT_VALUE_LENGTH) {
-                value = value.substring(0, MAX_CONTEXT_VALUE_LENGTH);
-            }
-            sanitized.put(entry.getKey(), value != null ? value : "");
-        }
-        return sanitized;
+        return context.entrySet().stream().collect(HashMap::new, (m, e) -> {
+            String value = e.getValue();
+            m.put(e.getKey(), value == null ? "" : (value.length() > MAX_CONTEXT_VALUE_LENGTH ? value.substring(0, MAX_CONTEXT_VALUE_LENGTH) : value));
+        }, HashMap::putAll);
     }
 
-    /**
-     * Safely parses a string to an enum constant, returning {@code null} if the
-     * value is {@code null} or does not match any constant.
-     */
+    /** Safely parses a string to an enum constant, returning {@code null} if unrecognized. */
     private <E extends Enum<E>> E parseEnumSafe(Class<E> enumType, String value) {
         if (value == null || value.isBlank()) {
             return null;
@@ -642,11 +590,7 @@ public class HyperionChecklistService {
         }
     }
 
-    // ===== Observation Helper =====
-
-    /**
-     * A supplier that may throw a checked exception.
-     */
+    /** A supplier that may throw a checked exception. */
     @FunctionalInterface
     private interface CheckedSupplier<T> {
 
@@ -680,8 +624,6 @@ public class HyperionChecklistService {
             child.stop();
         }
     }
-
-    // ===== Structured Output Schemas =====
 
     private static class StructuredOutputSchema {
 

@@ -99,10 +99,7 @@ export class ChecklistPanelComponent {
     private readonly effectiveProblemStatement = computed(() => this.latestProblemStatement() ?? this.problemStatement());
 
     constructor() {
-        /**
-         * Clear latestProblemStatement once the input signal catches up to the
-         * AI-emitted value, ensuring subsequent manual edits are respected.
-         */
+        /** Clear latestProblemStatement once the input signal catches up to the AI-emitted value. */
         effect(() => {
             const inputPS = this.problemStatement();
             const latest = this.latestProblemStatement();
@@ -112,10 +109,7 @@ export class ChecklistPanelComponent {
         });
     }
 
-    /**
-     * Locally computed task and test counts from the problem statement.
-     * Parses [task][TaskName](test1,test2) markers without relying on AI, saving tokens.
-     */
+    /** Locally computed task and test counts by parsing [task] markers (no AI needed). */
     localTaskTestCounts = computed(() => {
         return this.countTasksAndTests(this.effectiveProblemStatement());
     });
@@ -196,81 +190,39 @@ export class ChecklistPanelComponent {
         return this.expandedCompetencies().has(rank);
     }
 
+    private static readonly SEVERITY_TAG_MAP: Record<string, 'danger' | 'warn' | 'info'> = { HIGH: 'danger', MEDIUM: 'warn', LOW: 'info' };
+    private static readonly CATEGORY_COLOR_MAP: Record<string, string> = { CLARITY: 'category-clarity', COHERENCE: 'category-coherence', COMPLETENESS: 'category-completeness' };
+    private static readonly DIFFICULTY_SEVERITY_MAP: Record<string, 'success' | 'warn' | 'danger'> = { EASY: 'success', MEDIUM: 'warn', HARD: 'danger' };
+    private static readonly DELTA_CLASS_MAP: Record<string, string> = { HIGHER: 'text-danger', LOWER: 'text-warning', MATCH: 'text-success' };
+    private static readonly DELTA_LABEL_KEYS: Record<string, string> = {
+        HIGHER: 'artemisApp.programmingExercise.instructorChecklist.difficulty.harderThanDeclared',
+        LOWER: 'artemisApp.programmingExercise.instructorChecklist.difficulty.easierThanDeclared',
+        MATCH: 'artemisApp.programmingExercise.instructorChecklist.difficulty.matchesDeclared',
+    };
+
     getSeverityTagSeverity(severity: string | undefined): 'danger' | 'warn' | 'info' {
-        switch (severity?.toUpperCase()) {
-            case 'HIGH':
-                return 'danger';
-            case 'MEDIUM':
-                return 'warn';
-            case 'LOW':
-            default:
-                return 'info';
-        }
+        return ChecklistPanelComponent.SEVERITY_TAG_MAP[severity?.toUpperCase() ?? ''] ?? 'info';
     }
 
     getCategoryColorClass(category: string | undefined): string {
-        switch (category?.toUpperCase()) {
-            case 'CLARITY':
-                return 'category-clarity';
-            case 'COHERENCE':
-                return 'category-coherence';
-            case 'COMPLETENESS':
-                return 'category-completeness';
-            default:
-                return 'category-default';
-        }
+        return ChecklistPanelComponent.CATEGORY_COLOR_MAP[category?.toUpperCase() ?? ''] ?? 'category-default';
     }
 
     getDifficultySeverity(level: string | undefined): 'success' | 'warn' | 'danger' {
-        switch (level?.toUpperCase()) {
-            case 'EASY':
-                return 'success';
-            case 'MEDIUM':
-                return 'warn';
-            case 'HARD':
-                return 'danger';
-            default:
-                return 'warn';
-        }
+        return ChecklistPanelComponent.DIFFICULTY_SEVERITY_MAP[level?.toUpperCase() ?? ''] ?? 'warn';
     }
 
     getDeltaIcon(delta: string | undefined) {
-        switch (delta) {
-            case 'HIGHER':
-                return this.faArrowUp;
-            case 'LOWER':
-                return this.faArrowDown;
-            case 'MATCH':
-                return this.faEquals;
-            default:
-                return this.faQuestion;
-        }
+        return { HIGHER: this.faArrowUp, LOWER: this.faArrowDown, MATCH: this.faEquals }[delta ?? ''] ?? this.faQuestion;
     }
 
     getDeltaLabel(delta: string | undefined): string {
-        switch (delta) {
-            case 'HIGHER':
-                return this.translateService.instant('artemisApp.programmingExercise.instructorChecklist.difficulty.harderThanDeclared');
-            case 'LOWER':
-                return this.translateService.instant('artemisApp.programmingExercise.instructorChecklist.difficulty.easierThanDeclared');
-            case 'MATCH':
-                return this.translateService.instant('artemisApp.programmingExercise.instructorChecklist.difficulty.matchesDeclared');
-            default:
-                return this.translateService.instant('artemisApp.programmingExercise.instructorChecklist.difficulty.unknown');
-        }
+        const key = ChecklistPanelComponent.DELTA_LABEL_KEYS[delta ?? ''] ?? 'artemisApp.programmingExercise.instructorChecklist.difficulty.unknown';
+        return this.translateService.instant(key);
     }
 
     getDeltaClass(delta: string | undefined): string {
-        switch (delta) {
-            case 'HIGHER':
-                return 'text-danger';
-            case 'LOWER':
-                return 'text-warning';
-            case 'MATCH':
-                return 'text-success';
-            default:
-                return 'text-secondary';
-        }
+        return ChecklistPanelComponent.DELTA_CLASS_MAP[delta ?? ''] ?? 'text-secondary';
     }
 
     // Quality radar chart for Clarity, Coherence, Completeness
@@ -397,10 +349,7 @@ export class ChecklistPanelComponent {
         return this.sectionLoading() === section;
     }
 
-    /**
-     * Re-analyzes a single section by calling the section-specific endpoint,
-     * which only runs the requested analysis (saving 2/3 of LLM calls).
-     */
+    /** Re-analyzes a single section via the section-specific endpoint (saving 2/3 of LLM calls). */
     reanalyzeSection(section: ChecklistSectionType) {
         const cId = this.courseId();
         if (!cId || this.sectionLoading() || this.isApplyingAction()) return;
@@ -423,15 +372,12 @@ export class ChecklistPanelComponent {
                 next: (res: ChecklistAnalysisResponse) => {
                     const current = this.analysisResult();
                     if (current) {
-                        const updated = { ...current };
-                        if (section === 'quality') {
-                            updated.qualityIssues = res.qualityIssues;
-                        } else if (section === 'competencies') {
-                            updated.inferredCompetencies = res.inferredCompetencies;
-                        } else if (section === 'difficulty') {
-                            updated.difficultyAssessment = res.difficultyAssessment;
-                        }
-                        this.analysisResult.set(updated);
+                        const sectionFieldMap: Record<ChecklistSectionType, keyof ChecklistAnalysisResponse> = {
+                            quality: 'qualityIssues',
+                            competencies: 'inferredCompetencies',
+                            difficulty: 'difficultyAssessment',
+                        };
+                        this.analysisResult.set({ ...current, [sectionFieldMap[section]]: res[sectionFieldMap[section]] });
                     } else {
                         this.analysisResult.set(res);
                     }
@@ -528,9 +474,7 @@ export class ChecklistPanelComponent {
 
     // ===== Competency Linking Methods =====
 
-    /**
-     * Maps an inferred taxonomy level string to CompetencyTaxonomy enum
-     */
+    /** Maps an inferred taxonomy level string to CompetencyTaxonomy enum. */
     private mapTaxonomy(level: string | undefined): CompetencyTaxonomy | undefined {
         if (!level) return undefined;
         const upper = level.toUpperCase();
@@ -540,9 +484,7 @@ export class ChecklistPanelComponent {
         return undefined;
     }
 
-    /**
-     * Loads course competencies, using the cached value if already populated.
-     */
+    /** Loads course competencies, using the cached value if already populated. */
     private loadCourseCompetencies(): Observable<CourseCompetency[]> {
         const cached = this.courseCompetencies();
         if (cached.length > 0) {
@@ -557,11 +499,7 @@ export class ChecklistPanelComponent {
         );
     }
 
-    /**
-     * Link inferred competencies to matching existing course competencies.
-     * Uses the AI-returned matchedCourseCompetencyId for accurate semantic matching,
-     * loading course competencies to resolve the IDs to entities.
-     */
+    /** Links inferred competencies to matching course competencies using matchedCourseCompetencyId. */
     linkMatchingCompetencies(): void {
         if (this.isLinkingCompetencies()) return;
 
@@ -622,10 +560,7 @@ export class ChecklistPanelComponent {
             });
     }
 
-    /**
-     * Creates new competencies from inferred competencies that don't match any existing
-     * course competency (AI returned no matchedCourseCompetencyId), then links them to the exercise.
-     */
+    /** Creates new competencies from unmatched inferred competencies, then links them to the exercise. */
     createAndLinkCompetencies(): void {
         if (this.isCreatingCompetencies()) return;
 
@@ -720,24 +655,21 @@ export class ChecklistPanelComponent {
             });
     }
 
-    /**
-     * Checks if an inferred competency has been linked to the exercise
-     */
+    private competencyTitleIn(comp: InferredCompetency, titleSet: Set<string>): boolean {
+        return titleSet.has((comp.competencyTitle ?? '').toLowerCase());
+    }
+
+    /** Checks if an inferred competency has been linked to the exercise. */
     isCompetencyLinked(comp: InferredCompetency): boolean {
-        return this.linkedCompetencyTitles().has((comp.competencyTitle ?? '').toLowerCase());
+        return this.competencyTitleIn(comp, this.linkedCompetencyTitles());
     }
 
-    /**
-     * Checks if an inferred competency was created as a new course competency
-     */
+    /** Checks if an inferred competency was created as a new course competency. */
     isCompetencyCreated(comp: InferredCompetency): boolean {
-        return this.createdCompetencyTitles().has((comp.competencyTitle ?? '').toLowerCase());
+        return this.competencyTitleIn(comp, this.createdCompetencyTitles());
     }
 
-    /**
-     * Counts tasks and unique test cases from the problem statement by parsing [task] markers.
-     * This avoids relying on AI for counting, saving tokens.
-     */
+    /** Counts tasks and unique test cases by parsing [task] markers in the problem statement. */
     private countTasksAndTests(problemStatement: string): { tasks: number; tests: number } {
         const matches = [...problemStatement.matchAll(taskRegex)];
         let taskCount = 0;

@@ -83,10 +83,7 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
     private translateService = inject(TranslateService);
     private alertService = inject(AlertService);
 
-    /**
-     * Lifecycle hook that is called when the component is destroyed.
-     * Cleans up the subscription to prevent memory leaks.
-     */
+    /** Cleans up the generation subscription to prevent memory leaks. */
     ngOnDestroy(): void {
         if (this.currentGenerationSubscription) {
             this.currentGenerationSubscription.unsubscribe();
@@ -94,10 +91,7 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
         }
     }
 
-    /**
-     * Cancels the ongoing problem statement generation.
-     * Preserves the user's prompt so they can retry or modify it.
-     */
+    /** Cancels the ongoing problem statement generation, preserving the user's prompt. */
     cancelGeneration(): void {
         if (this.currentGenerationSubscription) {
             this.currentGenerationSubscription.unsubscribe();
@@ -106,9 +100,7 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
         this.isGenerating = false;
     }
 
-    /**
-     * Generates a draft problem statement using the user's prompt
-     */
+    /** Generates a draft problem statement using the user's prompt. */
     generateProblemStatement(): void {
         const exercise = this.programmingExercise();
         const courseId = exercise?.course?.id ?? exercise?.exerciseGroup?.exam?.course?.id;
@@ -157,17 +149,12 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
 
     protected readonly ButtonSize = ButtonSize;
 
-    /**
-     * Get the translated example placeholder text for the input field
-     */
+    /** Gets the translated example placeholder text for the input field. */
     getTranslatedPlaceholder(): string {
         return this.translateService.instant('artemisApp.programmingExercise.problemStatement.examplePlaceholder');
     }
 
-    /**
-     * Handles changes to competency links from either the checklist panel or the competency selection.
-     * Also refreshes the CompetencySelectionComponent to reflect changes (e.g., newly created/linked competencies).
-     */
+    /** Handles competency link changes and refreshes the CompetencySelectionComponent. */
     onCompetencyLinksChange(competencyLinks: CompetencyExerciseLink[] | CompetencyLearningObjectLink[] | undefined): void {
         if (!competencyLinks) return;
         const exercise = this.programmingExercise();
@@ -182,10 +169,7 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
         this.refreshCompetencySelection(competencyLinks);
     }
 
-    /**
-     * Updates the CompetencySelectionComponent's available list, selection state, and checkbox states
-     * so that newly linked or created competencies are immediately visible.
-     */
+    /** Refreshes the CompetencySelectionComponent so newly linked/created competencies are visible. */
     private refreshCompetencySelection(competencyLinks: CompetencyExerciseLink[] | CompetencyLearningObjectLink[]): void {
         const selection = this.competencySelectionComponent();
         if (!selection || !competencyLinks) return;
@@ -218,10 +202,7 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
         }
     }
 
-    /**
-     * Creates a shallow copy of the exercise, preserving its prototype chain,
-     * so that Angular change detection picks up the new reference.
-     */
+    /** Creates a shallow copy of the exercise so Angular change detection picks up the new reference. */
     private cloneExercise(exercise: ProgrammingExercise): ProgrammingExercise {
         return Object.assign(Object.create(Object.getPrototypeOf(exercise)), exercise);
     }

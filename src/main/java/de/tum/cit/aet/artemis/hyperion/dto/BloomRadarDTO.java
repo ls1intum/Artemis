@@ -18,9 +18,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public record BloomRadarDTO(@JsonProperty("REMEMBER") double remember, @JsonProperty("UNDERSTAND") double understand, @JsonProperty("APPLY") double apply,
         @JsonProperty("ANALYZE") double analyze, @JsonProperty("EVALUATE") double evaluate, @JsonProperty("CREATE") double create) {
 
-    /**
-     * Creates an empty radar with all zeros.
-     */
+    /** Creates an empty radar with all zeros. */
     public static BloomRadarDTO empty() {
         return new BloomRadarDTO(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
     }

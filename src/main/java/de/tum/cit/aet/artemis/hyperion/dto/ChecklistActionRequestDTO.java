@@ -24,9 +24,7 @@ public record ChecklistActionRequestDTO(@NotNull @Schema(description = "Type of 
         @NotBlank @Size(max = 50000) @Schema(description = "Current problem statement markdown") String problemStatementMarkdown,
         @Size(max = 20) @Schema(description = "Action-specific context parameters") Map<String, @Size(max = 2000) String> context) {
 
-    /**
-     * Enum representing the types of checklist actions that can be applied.
-     */
+    /** Types of checklist actions that can be applied. */
     public enum ActionType {
         /** Fix a single quality issue identified in the analysis */
         FIX_QUALITY_ISSUE,

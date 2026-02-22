@@ -37,8 +37,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 /**
- * REST controller for Hyperion problem statement features (generation, rewrite,
- * and consistency check).
+ * REST controller for Hyperion problem statement features (generation, rewrite, and consistency check).
  */
 @Conditional(HyperionEnabled.class)
 @Lazy
@@ -72,13 +71,11 @@ public class HyperionProblemStatementResource {
     }
 
     /**
-     * POST programming-exercises/{programmingExerciseId}/consistency-check: Check
-     * the consistency of a programming exercise.
+     * POST programming-exercises/{programmingExerciseId}/consistency-check: Check the consistency of a programming exercise.
      * Returns a JSON body with the issues (can be empty list).
      *
      * @param exerciseId the id of the programming exercise to check
-     * @return the ResponseEntity with status 200 (OK) and the consistency check
-     *         result or an error status
+     * @return the ResponseEntity with status 200 (OK) and the consistency check result or an error status
      */
     @PostMapping("programming-exercises/{programmingExerciseId}/consistency-check")
     @EnforceAtLeastEditorInExercise
@@ -90,13 +87,11 @@ public class HyperionProblemStatementResource {
     }
 
     /**
-     * POST courses/{courseId}/problem-statements/rewrite: Rewrite a problem
-     * statement for a course context.
+     * POST courses/{courseId}/problem-statements/rewrite: Rewrite a problem statement for a course context.
      *
      * @param courseId the id of the course the problem statement belongs to
      * @param request  the request containing the original problem statement text
-     * @return the ResponseEntity with status 200 (OK) and the rewritten problem
-     *         statement or an error status
+     * @return the ResponseEntity with status 200 (OK) and the rewritten problem statement or an error status
      */
     @EnforceAtLeastEditorInCourse
     @PostMapping("courses/{courseId}/problem-statements/rewrite")
@@ -108,13 +103,11 @@ public class HyperionProblemStatementResource {
     }
 
     /**
-     * POST courses/{courseId}/problem-statements/generate: Generate a draft problem
-     * statement for a programming exercise in the given course.
+     * POST courses/{courseId}/problem-statements/generate: Generate a draft problem statement for a programming exercise in the given course.
      *
      * @param courseId the id of the course the problem statement belongs to
      * @param request  the request containing the user prompt
-     * @return the ResponseEntity with status 200 (OK) and the generated draft
-     *         problem statement or an error status
+     * @return the ResponseEntity with status 200 (OK) and the generated draft problem statement or an error status
      */
     @EnforceAtLeastEditorInCourse
     @PostMapping("courses/{courseId}/problem-statements/generate")
@@ -127,12 +120,10 @@ public class HyperionProblemStatementResource {
     }
 
     /**
-     * POST courses/{courseId}/checklist-analysis: Analyze the problem statement
-     * for checklist (learning goals, difficulty, quality).
+     * POST courses/{courseId}/checklist-analysis: Analyze the problem statement for checklist (learning goals, difficulty, quality).
      *
      * @param courseId the id of the course
-     * @param request  the request containing problem statement, metadata, and
-     *                     an optional exerciseId
+     * @param request  the request containing problem statement, metadata, and an optional exerciseId
      * @return the checklist analysis result
      */
     @EnforceAtLeastEditorInCourse
@@ -146,11 +137,7 @@ public class HyperionProblemStatementResource {
     }
 
     /**
-     * POST courses/{courseId}/checklist-analysis/sections/{section}: Analyze a single
-     * section of the checklist (competencies, difficulty, or quality).
-     * <p>
-     * This avoids running all three LLM analyses when only one section needs to be
-     * refreshed, significantly reducing token usage and latency.
+     * POST courses/{courseId}/checklist-analysis/sections/{section}: Analyze a single section of the checklist (competencies, difficulty, or quality).
      *
      * @param courseId the id of the course
      * @param section  the section to analyze (COMPETENCIES, DIFFICULTY, or QUALITY)
@@ -185,12 +172,7 @@ public class HyperionProblemStatementResource {
     }
 
     /**
-     * POST courses/{courseId}/checklist-actions: Apply an AI-powered checklist
-     * action to modify the problem statement.
-     * <p>
-     * Note: This endpoint only transforms the problem statement text via AI and does
-     * not access any exercise data. Course-level editor authorization is sufficient
-     * because no exercise-specific resources are read or modified.
+     * POST courses/{courseId}/checklist-actions: Apply an AI-powered checklist action to modify the problem statement.
      *
      * @param courseId the id of the course
      * @param request  the action request containing the action type and context

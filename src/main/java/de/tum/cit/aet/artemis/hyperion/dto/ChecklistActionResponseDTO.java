@@ -16,12 +16,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public record ChecklistActionResponseDTO(@Schema(description = "The updated problem statement markdown") String updatedProblemStatement,
         @Schema(description = "Whether the action was successfully applied") boolean applied, @Schema(description = "Short summary of what was changed") String summary) {
 
-    /**
-     * Creates a failed response when the action could not be applied.
-     *
-     * @param originalText the original problem statement
-     * @return a response indicating failure
-     */
+    /** Creates a failed response when the action could not be applied. */
     public static ChecklistActionResponseDTO failed(String originalText) {
         return new ChecklistActionResponseDTO(originalText, false, "Action could not be applied");
     }

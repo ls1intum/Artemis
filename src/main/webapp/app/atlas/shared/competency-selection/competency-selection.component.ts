@@ -133,10 +133,7 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
         }
     }
 
-    /**
-     * Set the available competencyLinks for selection
-     * @param competencies The competencies of the course
-     */
+    /** Sets the available competency links for selection. */
     setCompetencyLinks(competencies: CourseCompetency[]) {
         this.competencyLinks = competencies.map((competency) => {
             // Remove unnecessary properties
@@ -197,11 +194,7 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
         }
     }
 
-    /**
-     * Updates the available competency list with any new competencies from the given links,
-     * refreshes the selection state via writeValue, and rebuilds checkbox states.
-     * Use this to programmatically update the selection from outside the component.
-     */
+    /** Merges new competencies from the given links into the available list and rebuilds selection/checkbox state. */
     refreshWithLinks(links: CompetencyLearningObjectLink[]): void {
         if (!links) return;
 

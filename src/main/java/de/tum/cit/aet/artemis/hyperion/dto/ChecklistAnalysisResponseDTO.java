@@ -17,9 +17,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public record ChecklistAnalysisResponseDTO(List<InferredCompetencyDTO> inferredCompetencies, BloomRadarDTO bloomRadar, DifficultyAssessmentDTO difficultyAssessment,
         List<QualityIssueDTO> qualityIssues) {
 
-    /**
-     * Creates an empty response (when analysis fails).
-     */
+    /** Creates an empty response (when analysis fails). */
     public static ChecklistAnalysisResponseDTO empty() {
         return new ChecklistAnalysisResponseDTO(List.of(), BloomRadarDTO.empty(), null, List.of());
     }
