@@ -208,10 +208,11 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
         // Add any new competencies to the available list that aren't there yet
         if (this.competencyLinks) {
             const availableIds = new Set(this.competencyLinks.map((l) => l.competency?.id).filter(Boolean));
-            for (const link of links) {
-                if (link.competency?.id && !availableIds.has(link.competency.id)) {
-                    this.competencyLinks.push(new CompetencyLearningObjectLink(link.competency, link.weight ?? MEDIUM_COMPETENCY_LINK_WEIGHT));
-                }
+            const newLinks = links
+                .filter((link) => link.competency?.id && !availableIds.has(link.competency.id))
+                .map((link) => new CompetencyLearningObjectLink(link.competency, link.weight ?? MEDIUM_COMPETENCY_LINK_WEIGHT));
+            if (newLinks.length > 0) {
+                this.competencyLinks = [...this.competencyLinks, ...newLinks];
             }
         }
 

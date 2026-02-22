@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.ChecklistActionRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ChecklistActionResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ChecklistAnalysisRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ChecklistAnalysisResponseDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ChecklistSection;
 import de.tum.cit.aet.artemis.hyperion.dto.DifficultyAssessmentDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.InferredCompetencyDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QualityIssueDTO;
@@ -92,36 +93,18 @@ public class HyperionChecklistService {
      */
     @Observed(name = "hyperion.checklist", contextualName = "checklist analysis", lowCardinalityKeyValues = { AI_SPAN_KEY, AI_SPAN_VALUE })
     public ChecklistAnalysisResponseDTO analyzeChecklist(ChecklistAnalysisRequestDTO request) {
-        log.info("Performing checklist analysis (exerciseId={})", request.exerciseId());
+        log.debug("Performing checklist analysis (exerciseId={})", request.exerciseId());
 
-        String problemStatement = request.problemStatementMarkdown() != null ? request.problemStatementMarkdown() : "";
-        String declaredDifficulty = request.declaredDifficulty() != null ? request.declaredDifficulty() : "NOT_DECLARED";
-        String language = request.language() != null ? request.language() : "JAVA";
-
-        // Fetch and serialize the competency catalog
-        String catalogJson = serializeCompetencyCatalog();
-
-        var input = Map.of("problem_statement", problemStatement, "declared_difficulty", declaredDifficulty, "language", language, "competency_catalog", catalogJson);
-
-        Observation parentObs = observationRegistry.getCurrentObservation();
-
-        // Load task names for the competency prompt (only for existing exercises)
-        List<String> taskNames;
-        if (request.exerciseId() != null) {
-            Set<ProgrammingExerciseTask> tasks = taskRepository.findByExerciseIdWithTestCases(request.exerciseId());
-            taskNames = tasks.stream().map(ProgrammingExerciseTask::getTaskName).filter(name -> name != null && !name.isBlank()).toList();
-        }
-        else {
-            taskNames = List.of();
-        }
+        var ctx = buildAnalysisContext(request);
 
         // Run three analyses concurrently
-        var competenciesMono = Mono.fromCallable(() -> runCompetencyInference(input, parentObs, taskNames)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
+        var competenciesMono = Mono.fromCallable(() -> runCompetencyInference(ctx.input(), ctx.parentObs(), ctx.taskNames())).subscribeOn(Schedulers.boundedElastic())
+                .onErrorReturn(List.of());
 
-        var difficultyMono = Mono.fromCallable(() -> runDifficultyAnalysis(input, parentObs, declaredDifficulty)).subscribeOn(Schedulers.boundedElastic())
+        var difficultyMono = Mono.fromCallable(() -> runDifficultyAnalysis(ctx.input(), ctx.parentObs(), ctx.declaredDifficulty())).subscribeOn(Schedulers.boundedElastic())
                 .onErrorReturn(DifficultyAssessmentDTO.unknown("Analysis failed"));
 
-        var qualityMono = Mono.fromCallable(() -> runQualityAnalysis(input, parentObs)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
+        var qualityMono = Mono.fromCallable(() -> runQualityAnalysis(ctx.input(), ctx.parentObs())).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
 
         var resultTuple = Mono.zip(competenciesMono, difficultyMono, qualityMono).block();
 
@@ -136,6 +119,76 @@ public class HyperionChecklistService {
     }
 
     /**
+     * Analyzes a single section of the checklist for a programming exercise.
+     * Only runs the requested analysis (competencies, difficulty, or quality),
+     * avoiding unnecessary LLM calls for the other sections.
+     *
+     * @param request The request containing the problem statement and metadata
+     * @param section The section to analyze
+     * @return The analysis response with only the requested section populated
+     */
+    @Observed(name = "hyperion.checklist.section", contextualName = "checklist section analysis", lowCardinalityKeyValues = { AI_SPAN_KEY, AI_SPAN_VALUE })
+    public ChecklistAnalysisResponseDTO analyzeSection(ChecklistAnalysisRequestDTO request, ChecklistSection section) {
+        log.debug("Performing single-section checklist analysis: {} (exerciseId={})", section, request.exerciseId());
+
+        var ctx = buildAnalysisContext(request);
+
+        return switch (section) {
+            case COMPETENCIES -> {
+                List<InferredCompetencyDTO> competencies = runCompetencyInference(ctx.input(), ctx.parentObs(), ctx.taskNames());
+                BloomRadarDTO bloomRadar = computeBloomRadar(competencies);
+                yield new ChecklistAnalysisResponseDTO(competencies, bloomRadar, null, null);
+            }
+            case DIFFICULTY -> {
+                DifficultyAssessmentDTO difficulty = runDifficultyAnalysis(ctx.input(), ctx.parentObs(), ctx.declaredDifficulty());
+                yield new ChecklistAnalysisResponseDTO(null, null, difficulty, null);
+            }
+            case QUALITY -> {
+                List<QualityIssueDTO> issues = runQualityAnalysis(ctx.input(), ctx.parentObs());
+                yield new ChecklistAnalysisResponseDTO(null, null, null, issues);
+            }
+        };
+    }
+
+    /**
+     * Builds the shared analysis context (input map, parent observation, task names,
+     * declared difficulty) used by both full and single-section analysis.
+     */
+    private AnalysisContext buildAnalysisContext(ChecklistAnalysisRequestDTO request) {
+        String problemStatement = request.problemStatementMarkdown() != null ? request.problemStatementMarkdown() : "";
+        String declaredDifficulty = request.declaredDifficulty() != null ? request.declaredDifficulty() : "NOT_DECLARED";
+        String language = request.language() != null ? request.language() : "JAVA";
+
+        // Fetch and serialize the competency catalog
+        String catalogJson = serializeCompetencyCatalog();
+
+        var input = Map.of("problem_statement", problemStatement, "declared_difficulty", declaredDifficulty, "language", language, "competency_catalog", catalogJson);
+
+        // Capture the parent observation on the servlet thread so that child spans created
+        // on Reactor's boundedElastic threads can be linked correctly. This is safe because
+        // parentObs is only read (never mutated) by the Mono callables.
+        Observation parentObs = observationRegistry.getCurrentObservation();
+
+        // Load task names for the competency prompt (only for existing exercises)
+        List<String> taskNames;
+        if (request.exerciseId() != null) {
+            Set<ProgrammingExerciseTask> tasks = taskRepository.findByExerciseIdWithTestCases(request.exerciseId());
+            taskNames = tasks.stream().map(ProgrammingExerciseTask::getTaskName).filter(name -> name != null && !name.isBlank()).toList();
+        }
+        else {
+            taskNames = List.of();
+        }
+
+        return new AnalysisContext(input, parentObs, taskNames, declaredDifficulty);
+    }
+
+    /**
+     * Internal record holding the shared context needed for analysis methods.
+     */
+    private record AnalysisContext(Map<String, String> input, Observation parentObs, List<String> taskNames, String declaredDifficulty) {
+    }
+
+    /**
      * Applies a checklist action to modify the problem statement using AI.
      * Builds action-specific instructions and calls the LLM to produce an updated
      * problem statement.
@@ -146,7 +199,7 @@ public class HyperionChecklistService {
      */
     @Observed(name = "hyperion.checklist.action", contextualName = "checklist action", lowCardinalityKeyValues = { AI_SPAN_KEY, AI_SPAN_VALUE })
     public ChecklistActionResponseDTO applyChecklistAction(ChecklistActionRequestDTO request) {
-        log.info("Applying checklist action: {}", request.actionType());
+        log.debug("Applying checklist action: {}", request.actionType());
 
         String instructions = buildActionInstructions(request);
         var templateInput = Map.of("action_type", request.actionType().name(), "instructions", instructions, "problem_statement", request.problemStatementMarkdown());
@@ -188,12 +241,13 @@ public class HyperionChecklistService {
                 String description = ctx.getOrDefault("issueDescription", "Unknown issue");
                 String suggestedFix = ctx.getOrDefault("suggestedFix", "");
                 String category = ctx.getOrDefault("category", "");
-                yield "Fix the following " + category + " quality issue in the problem statement:\n" + "Issue: " + description + "\n"
-                        + (suggestedFix.isEmpty() ? "" : "Suggested fix: " + suggestedFix + "\n") + "Make minimal, targeted changes to address ONLY this specific issue.";
+                yield "Fix the following quality issue in the problem statement:\n" + "Category: " + wrapUserValue(category) + "\n" + "Issue: " + wrapUserValue(description) + "\n"
+                        + (suggestedFix.isEmpty() ? "" : "Suggested fix: " + wrapUserValue(suggestedFix) + "\n")
+                        + "Make minimal, targeted changes to address ONLY this specific issue.";
             }
             case FIX_ALL_QUALITY_ISSUES -> {
                 String issuesList = ctx.getOrDefault("allIssues", "No issues provided");
-                yield "Fix ALL of the following quality issues in the problem statement:\n" + issuesList + "\n"
+                yield "Fix ALL of the following quality issues in the problem statement:\n" + wrapUserValue(issuesList) + "\n"
                         + "Address each issue with targeted changes. Do not rewrite unrelated sections.";
             }
             case ADAPT_DIFFICULTY -> {
@@ -202,9 +256,10 @@ public class HyperionChecklistService {
                 String reasoning = ctx.getOrDefault("reasoning", "");
                 String taskCount = ctx.getOrDefault("taskCount", "unknown");
                 String testCount = ctx.getOrDefault("testCount", "unknown");
-                yield "Adapt the problem statement difficulty from " + currentDifficulty + " to " + targetDifficulty + ".\n" + "Current structural metrics: " + taskCount
-                        + " tasks, " + testCount + " tests.\n" + "Target ranges: EASY (1-6 tasks, 3-15 tests), MEDIUM (4-15 tasks, 8-20 tests), HARD (8-25 tasks, 12-30 tests).\n"
-                        + (reasoning.isEmpty() ? "" : "Context: " + reasoning + "\n") + "\nCRITICAL INSTRUCTIONS:\n"
+                yield "Adapt the problem statement difficulty from " + wrapUserValue(currentDifficulty) + " to " + wrapUserValue(targetDifficulty) + ".\n"
+                        + "Current structural metrics: " + wrapUserValue(taskCount) + " tasks, " + wrapUserValue(testCount) + " tests.\n"
+                        + "Target ranges: EASY (1-6 tasks, 3-15 tests), MEDIUM (4-15 tasks, 8-20 tests), HARD (8-25 tasks, 12-30 tests).\n"
+                        + (reasoning.isEmpty() ? "" : "Context: " + wrapUserValue(reasoning) + "\n") + "\nCRITICAL INSTRUCTIONS:\n"
                         + "You MUST adjust the NUMBER of tasks and tests to fall within the target range.\n"
                         + "- Artemis tasks use this exact format: [task][Task Name](testCaseName1,testCaseName2)\n"
                         + "- Each [task] block counts as one task. The names inside (...) count as tests.\n"
@@ -217,14 +272,26 @@ public class HyperionChecklistService {
             case SHIFT_TAXONOMY -> {
                 String targetTaxonomy = ctx.getOrDefault("targetTaxonomy", "APPLY");
                 String currentTaxonomySummary = ctx.getOrDefault("currentTaxonomySummary", "");
-                yield "Shift the overall focus of this exercise towards the Bloom's taxonomy level: " + targetTaxonomy + ".\n"
-                        + (currentTaxonomySummary.isEmpty() ? "" : "Current taxonomy distribution: " + currentTaxonomySummary + "\n")
+                yield "Shift the overall focus of this exercise towards the Bloom's taxonomy level: " + wrapUserValue(targetTaxonomy) + ".\n"
+                        + (currentTaxonomySummary.isEmpty() ? "" : "Current taxonomy distribution: " + wrapUserValue(currentTaxonomySummary) + "\n")
                         + "Taxonomy levels (from lower to higher cognitive demand): REMEMBER < UNDERSTAND < APPLY < ANALYZE < EVALUATE < CREATE.\n"
                         + "Rewrite the problem statement so that the majority of tasks target the '" + targetTaxonomy + "' level.\n"
                         + "For example: APPLY = implement given algorithms; ANALYZE = debug, compare, or dissect code; EVALUATE = justify design decisions; CREATE = design from scratch.\n"
                         + "Preserve all Artemis task markers ([task] blocks) and test references. Adjust task descriptions and requirements to match the target taxonomy level.";
             }
         };
+    }
+
+    /**
+     * Wraps a user-supplied context value with structural delimiters to reduce
+     * prompt injection risk. Uses triple-backtick fences rather than XML tags
+     * to avoid triggering Azure Content Safety filters.
+     */
+    private static String wrapUserValue(String value) {
+        if (value == null || value.isEmpty()) {
+            return "";
+        }
+        return "\n```user-input\n" + value + "\n```\n";
     }
 
     /**

@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.atlas.api.StandardizedCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.KnowledgeArea;
 import de.tum.cit.aet.artemis.hyperion.dto.ChecklistAnalysisRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ChecklistAnalysisResponseDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ChecklistSection;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTaskTestRepository;
 import io.micrometer.observation.ObservationRegistry;
 
@@ -219,5 +220,95 @@ class HyperionChecklistServiceTest {
         // APPLY should have 80% of the weight (0.8 confidence)
         assertThat(radar.apply()).isCloseTo(0.8, org.assertj.core.data.Offset.offset(0.01));
         assertThat(radar.analyze()).isCloseTo(0.2, org.assertj.core.data.Offset.offset(0.01));
+    }
+
+    @Test
+    void analyzeSection_competenciesOnly() {
+        String competenciesJson = """
+                {
+                    "competencies": [
+                        {
+                            "knowledgeAreaShortTitle": "SE",
+                            "competencyTitle": "Testing",
+                            "competencyVersion": "1.0.0",
+                            "taxonomyLevel": "APPLY",
+                            "confidence": 0.85,
+                            "rank": 1,
+                            "isLikelyPrimary": true
+                        }
+                    ]
+                }
+                """;
+
+        when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(competenciesJson)))));
+
+        ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem", "EASY", "JAVA", 1L);
+
+        ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeSection(request, ChecklistSection.COMPETENCIES);
+
+        assertThat(response).isNotNull();
+        assertThat(response.inferredCompetencies()).hasSize(1);
+        assertThat(response.inferredCompetencies().getFirst().competencyTitle()).isEqualTo("Testing");
+        assertThat(response.bloomRadar()).isNotNull();
+        // Other sections should be null
+        assertThat(response.difficultyAssessment()).isNull();
+        assertThat(response.qualityIssues()).isNull();
+    }
+
+    @Test
+    void analyzeSection_difficultyOnly() {
+        String difficultyJson = """
+                {
+                    "suggested": "HARD",
+                    "confidence": 0.9,
+                    "reasoning": "Complex problem.",
+                    "taskCount": 10,
+                    "testCount": 20
+                }
+                """;
+
+        when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(difficultyJson)))));
+
+        ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem", "EASY", "JAVA", null);
+
+        ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeSection(request, ChecklistSection.DIFFICULTY);
+
+        assertThat(response).isNotNull();
+        assertThat(response.difficultyAssessment()).isNotNull();
+        assertThat(response.difficultyAssessment().suggested()).isEqualTo("HARD");
+        assertThat(response.difficultyAssessment().delta()).isEqualTo("HIGHER");
+        // Other sections should be null
+        assertThat(response.inferredCompetencies()).isNull();
+        assertThat(response.qualityIssues()).isNull();
+    }
+
+    @Test
+    void analyzeSection_qualityOnly() {
+        String qualityJson = """
+                {
+                    "issues": [
+                        {
+                            "category": "COMPLETENESS",
+                            "severity": "HIGH",
+                            "description": "Missing edge case",
+                            "suggestedFix": "Add edge case handling",
+                            "impactOnLearners": "Students may miss requirements"
+                        }
+                    ]
+                }
+                """;
+
+        when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(qualityJson)))));
+
+        ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem", null, null, null);
+
+        ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeSection(request, ChecklistSection.QUALITY);
+
+        assertThat(response).isNotNull();
+        assertThat(response.qualityIssues()).hasSize(1);
+        assertThat(response.qualityIssues().getFirst().category()).isEqualTo("COMPLETENESS");
+        // Other sections should be null
+        assertThat(response.inferredCompetencies()).isNull();
+        assertThat(response.difficultyAssessment()).isNull();
     }
 }

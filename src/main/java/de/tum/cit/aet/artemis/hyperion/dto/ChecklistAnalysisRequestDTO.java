@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.dto;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -15,5 +15,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  *                                     JAVA, PYTHON)
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ChecklistAnalysisRequestDTO(@NotNull String problemStatementMarkdown, String declaredDifficulty, String language, Long exerciseId) {
+public record ChecklistAnalysisRequestDTO(@NotBlank String problemStatementMarkdown, String declaredDifficulty, String language, Long exerciseId) {
 }

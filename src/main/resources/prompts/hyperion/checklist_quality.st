@@ -22,16 +22,18 @@ Analyze the following programming exercise problem statement for quality issues 
 ## Problem Statement
 {{problem_statement}}
 
-Return your response as a JSON array:
+Return your response as a JSON object with an "issues" key containing an array, matching this schema:
 ```json
-[
-  {
-    "category": "CLARITY|COHERENCE|COMPLETENESS",
-    "severity": "LOW|MEDIUM|HIGH",
-    "description": "string",
-    "location": { "startLine": number, "endLine": number } | null,
-    "suggestedFix": "string",
-    "impactOnLearners": "string"
-  }
-]
+{
+  "issues": [
+    {
+      "category": "CLARITY|COHERENCE|COMPLETENESS",
+      "severity": "LOW|MEDIUM|HIGH",
+      "description": "string",
+      "location": { "startLine": number, "endLine": number } | null,
+      "suggestedFix": "string",
+      "impactOnLearners": "string"
+    }
+  ]
+}
 ```

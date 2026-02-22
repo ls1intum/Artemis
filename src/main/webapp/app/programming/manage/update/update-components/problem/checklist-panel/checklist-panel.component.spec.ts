@@ -663,7 +663,7 @@ describe('ChecklistPanelComponent', () => {
         it('should update only the quality section when reanalyzing quality', () => {
             component.analysisResult.set(mockResponse);
             component.staleSections.set(new Set(['quality']));
-            vi.spyOn(apiService, 'analyzeChecklist').mockReturnValue(of(fullResponse) as any);
+            vi.spyOn(apiService, 'analyzeChecklistSection').mockReturnValue(of(fullResponse) as any);
 
             component.reanalyzeSection('quality');
 
@@ -680,7 +680,7 @@ describe('ChecklistPanelComponent', () => {
         it('should update only the competencies section when reanalyzing competencies', () => {
             component.analysisResult.set(mockResponse);
             component.staleSections.set(new Set(['competencies']));
-            vi.spyOn(apiService, 'analyzeChecklist').mockReturnValue(of(fullResponse) as any);
+            vi.spyOn(apiService, 'analyzeChecklistSection').mockReturnValue(of(fullResponse) as any);
 
             component.reanalyzeSection('competencies');
 
@@ -692,7 +692,7 @@ describe('ChecklistPanelComponent', () => {
         it('should update only the difficulty section when reanalyzing difficulty', () => {
             component.analysisResult.set(mockResponse);
             component.staleSections.set(new Set(['difficulty']));
-            vi.spyOn(apiService, 'analyzeChecklist').mockReturnValue(of(fullResponse) as any);
+            vi.spyOn(apiService, 'analyzeChecklistSection').mockReturnValue(of(fullResponse) as any);
 
             component.reanalyzeSection('difficulty');
 
@@ -703,7 +703,7 @@ describe('ChecklistPanelComponent', () => {
 
         it('should handle re-analyze error gracefully', () => {
             component.analysisResult.set(mockResponse);
-            vi.spyOn(apiService, 'analyzeChecklist').mockReturnValue(throwError(() => new Error('Failed')) as any);
+            vi.spyOn(apiService, 'analyzeChecklistSection').mockReturnValue(throwError(() => new Error('Failed')) as any);
             const errorSpy = vi.spyOn(alertService, 'error');
 
             component.reanalyzeSection('quality');
@@ -716,7 +716,7 @@ describe('ChecklistPanelComponent', () => {
 
         it('should not start re-analyze when another section is already loading', () => {
             component.sectionLoading.set('quality');
-            const analyzeSpy = vi.spyOn(apiService, 'analyzeChecklist');
+            const analyzeSpy = vi.spyOn(apiService, 'analyzeChecklistSection');
 
             component.reanalyzeSection('difficulty');
 
@@ -725,12 +725,21 @@ describe('ChecklistPanelComponent', () => {
 
         it('should set sectionLoading while re-analyzing', () => {
             component.analysisResult.set(mockResponse);
-            vi.spyOn(apiService, 'analyzeChecklist').mockReturnValue(of(fullResponse) as any);
+            vi.spyOn(apiService, 'analyzeChecklistSection').mockReturnValue(of(fullResponse) as any);
 
             expect(component.sectionLoading()).toBeUndefined();
             component.reanalyzeSection('quality');
             // After completion, loading is cleared
             expect(component.sectionLoading()).toBeUndefined();
+        });
+
+        it('should call analyzeChecklistSection with correct section parameter', () => {
+            component.analysisResult.set(mockResponse);
+            const sectionSpy = vi.spyOn(apiService, 'analyzeChecklistSection').mockReturnValue(of(fullResponse) as any);
+
+            component.reanalyzeSection('quality');
+
+            expect(sectionSpy).toHaveBeenCalledWith(courseId, 'QUALITY', expect.objectContaining({ problemStatementMarkdown: 'Problem statement' }));
         });
     });
 });

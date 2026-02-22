@@ -396,8 +396,8 @@ export class ChecklistPanelComponent {
     }
 
     /**
-     * Re-analyzes a single section by calling the full analysis endpoint
-     * but only updating the specified section of the result.
+     * Re-analyzes a single section by calling the section-specific endpoint,
+     * which only runs the requested analysis (saving 2/3 of LLM calls).
      */
     reanalyzeSection(section: string) {
         const cId = this.courseId();
@@ -412,8 +412,10 @@ export class ChecklistPanelComponent {
             exerciseId: ex.id,
         };
 
+        const sectionParam = section.toUpperCase() as 'COMPETENCIES' | 'DIFFICULTY' | 'QUALITY';
+
         this.hyperionApiService
-            .analyzeChecklist(cId, request)
+            .analyzeChecklistSection(cId, sectionParam, request)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (res: ChecklistAnalysisResponse) => {
@@ -726,18 +728,18 @@ export class ChecklistPanelComponent {
     /**
      * Gets the count of inferred competencies that match existing course competencies
      */
-    get matchingCount(): number {
+    readonly matchingCount = computed(() => {
         const inferred = this.analysisResult()?.inferredCompetencies ?? [];
         return inferred.filter((c) => this.findMatchingCompetency(c) !== undefined).length;
-    }
+    });
 
     /**
      * Gets the count of inferred competencies that don't match any existing course competency
      */
-    get unmatchedCount(): number {
+    readonly unmatchedCount = computed(() => {
         const inferred = this.analysisResult()?.inferredCompetencies ?? [];
         return inferred.filter((c) => this.findMatchingCompetency(c) === undefined).length;
-    }
+    });
 
     /**
      * Counts tasks and unique test cases from the problem statement by parsing [task] markers.

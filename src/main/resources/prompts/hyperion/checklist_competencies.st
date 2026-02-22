@@ -37,21 +37,23 @@ The following tasks are defined in the exercise: {{task_names}}
 ## Programming Language
 {{language}}
 
-Return your response as a JSON array matching this schema:
+Return your response as a JSON object with a "competencies" key containing an array, matching this schema:
 ```json
-[
-  {
-    "knowledgeAreaShortTitle": "string",
-    "competencyTitle": "string",
-    "competencyVersion": "string",
-    "catalogSourceId": number|null,
-    "taxonomyLevel": "REMEMBER|UNDERSTAND|APPLY|ANALYZE|EVALUATE|CREATE",
-    "confidence": 0.0-1.0,
-    "rank": 1,
-    "evidence": ["string", "string"],
-    "whyThisMatches": "string",
-    "isLikelyPrimary": boolean,
-    "relatedTaskNames": ["string"]
-  }
-]
+{
+  "competencies": [
+    {
+      "knowledgeAreaShortTitle": "string",
+      "competencyTitle": "string",
+      "competencyVersion": "string",
+      "catalogSourceId": number|null,
+      "taxonomyLevel": "REMEMBER|UNDERSTAND|APPLY|ANALYZE|EVALUATE|CREATE",
+      "confidence": 0.0-1.0,
+      "rank": 1,
+      "evidence": ["string", "string"],
+      "whyThisMatches": "string",
+      "isLikelyPrimary": boolean,
+      "relatedTaskNames": ["string"]
+    }
+  ]
+}
 ```

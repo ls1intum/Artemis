@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.ChecklistActionRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ChecklistActionResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ChecklistAnalysisRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ChecklistAnalysisResponseDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ChecklistSection;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementGenerationResponseDTO;
@@ -147,6 +148,35 @@ public class HyperionProblemStatementResource {
             }
         }
         var result = checklistService.analyzeChecklist(request);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * POST courses/{courseId}/checklist-analysis/sections/{section}: Analyze a single
+     * section of the checklist (competencies, difficulty, or quality).
+     * <p>
+     * This avoids running all three LLM analyses when only one section needs to be
+     * refreshed, significantly reducing token usage and latency.
+     *
+     * @param courseId the id of the course
+     * @param section  the section to analyze (COMPETENCIES, DIFFICULTY, or QUALITY)
+     * @param request  the request containing problem statement and metadata
+     * @return the analysis response with only the requested section populated
+     */
+    @EnforceAtLeastEditorInCourse
+    @PostMapping("courses/{courseId}/checklist-analysis/sections/{section}")
+    public ResponseEntity<ChecklistAnalysisResponseDTO> analyzeChecklistSection(@PathVariable long courseId, @PathVariable ChecklistSection section,
+            @Valid @RequestBody ChecklistAnalysisRequestDTO request) {
+        log.debug("REST request to Hyperion checklist section analysis [{}] for course [{}]", section, courseId);
+        courseRepository.findByIdElseThrow(courseId);
+        if (request.exerciseId() != null) {
+            ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(request.exerciseId());
+            Course exerciseCourse = exercise.getCourseViaExerciseGroupOrCourseMember();
+            if (exerciseCourse == null || !exerciseCourse.getId().equals(courseId)) {
+                throw new BadRequestAlertException("Exercise does not belong to the specified course", "exercise", "exerciseCourseMismatch");
+            }
+        }
+        var result = checklistService.analyzeSection(request, section);
         return ResponseEntity.ok(result);
     }
 
