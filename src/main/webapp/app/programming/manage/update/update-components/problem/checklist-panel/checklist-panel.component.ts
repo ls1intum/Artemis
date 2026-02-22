@@ -33,12 +33,22 @@ import { InferredCompetency } from 'app/openapi/model/inferredCompetency';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { Competency, CompetencyExerciseLink, CompetencyTaxonomy, CourseCompetency, MEDIUM_COMPETENCY_LINK_WEIGHT } from 'app/atlas/shared/entities/competency.model';
-import { Observable, lastValueFrom, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, forkJoin, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { taskRegex } from 'app/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
 import { titleSimilarity } from './title-similarity.utils';
 
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+
+/** Type-safe section identifier used for stale tracking and section-level re-analysis. */
+type ChecklistSectionType = 'competencies' | 'difficulty' | 'quality';
+
+/** Maps client-side lowercase section names to server-side uppercase enum values. */
+const SECTION_TO_API_PARAM: Record<ChecklistSectionType, 'COMPETENCIES' | 'DIFFICULTY' | 'QUALITY'> = {
+    competencies: 'COMPETENCIES',
+    difficulty: 'DIFFICULTY',
+    quality: 'QUALITY',
+};
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
@@ -79,8 +89,8 @@ export class ChecklistPanelComponent {
     expandedCompetencies = signal<Set<number>>(new Set());
 
     // Stale tracking: sections that may be outdated after an AI action modified the problem statement
-    staleSections = signal<Set<string>>(new Set());
-    sectionLoading = signal<string | undefined>(undefined);
+    staleSections = signal<Set<ChecklistSectionType>>(new Set());
+    sectionLoading = signal<ChecklistSectionType | undefined>(undefined);
 
     // Track the latest problem statement (may be updated by AI actions before the input signal refreshes)
     private latestProblemStatement = signal<string | undefined>(undefined);
@@ -115,22 +125,22 @@ export class ChecklistPanelComponent {
     readonly difficultyLevels = ['EASY', 'MEDIUM', 'HARD'] as const;
 
     // Icons
-    faCheckCircle = faCheckCircle;
-    faInfoCircle = faInfoCircle;
-    faSpinner = faSpinner;
-    faMagic = faMagic;
-    faChevronDown = faChevronDown;
-    faChevronRight = faChevronRight;
-    faArrowUp = faArrowUp;
-    faArrowDown = faArrowDown;
-    faEquals = faEquals;
-    faQuestion = faQuestion;
-    faWrench = faWrench;
-    faBolt = faBolt;
-    faSync = faSync;
-    faLink = faLink;
-    faPlus = faPlus;
-    faExclamationTriangle = faExclamationTriangle;
+    readonly faCheckCircle = faCheckCircle;
+    readonly faInfoCircle = faInfoCircle;
+    readonly faSpinner = faSpinner;
+    readonly faMagic = faMagic;
+    readonly faChevronDown = faChevronDown;
+    readonly faChevronRight = faChevronRight;
+    readonly faArrowUp = faArrowUp;
+    readonly faArrowDown = faArrowDown;
+    readonly faEquals = faEquals;
+    readonly faQuestion = faQuestion;
+    readonly faWrench = faWrench;
+    readonly faBolt = faBolt;
+    readonly faSync = faSync;
+    readonly faLink = faLink;
+    readonly faPlus = faPlus;
+    readonly faExclamationTriangle = faExclamationTriangle;
 
     analyze() {
         const cId = this.courseId();
@@ -345,7 +355,7 @@ export class ChecklistPanelComponent {
 
     // ===== AI Action Methods =====
 
-    private applyAction(request: ChecklistActionRequest, loadingKey: string, staleMark: string[], onApplied?: () => void) {
+    private applyAction(request: ChecklistActionRequest, loadingKey: string, staleMark: ChecklistSectionType[], onApplied?: () => void) {
         const cId = this.courseId();
         if (!cId || this.isApplyingAction()) return;
 
@@ -379,7 +389,7 @@ export class ChecklistPanelComponent {
             });
     }
 
-    private markSectionsStale(sections: string[]) {
+    private markSectionsStale(sections: ChecklistSectionType[]) {
         const current = new Set(this.staleSections());
         for (const s of sections) {
             current.add(s);
@@ -387,11 +397,11 @@ export class ChecklistPanelComponent {
         this.staleSections.set(current);
     }
 
-    isSectionStale(section: string): boolean {
+    isSectionStale(section: ChecklistSectionType): boolean {
         return this.staleSections().has(section);
     }
 
-    isSectionLoading(section: string): boolean {
+    isSectionLoading(section: ChecklistSectionType): boolean {
         return this.sectionLoading() === section;
     }
 
@@ -399,7 +409,7 @@ export class ChecklistPanelComponent {
      * Re-analyzes a single section by calling the section-specific endpoint,
      * which only runs the requested analysis (saving 2/3 of LLM calls).
      */
-    reanalyzeSection(section: string) {
+    reanalyzeSection(section: ChecklistSectionType) {
         const cId = this.courseId();
         if (!cId || this.sectionLoading()) return;
 
@@ -412,7 +422,7 @@ export class ChecklistPanelComponent {
             exerciseId: ex.id,
         };
 
-        const sectionParam = section.toUpperCase() as 'COMPETENCIES' | 'DIFFICULTY' | 'QUALITY';
+        const sectionParam = SECTION_TO_API_PARAM[section];
 
         this.hyperionApiService
             .analyzeChecklistSection(cId, sectionParam, request)
@@ -674,38 +684,40 @@ export class ChecklistPanelComponent {
                         return;
                     }
 
-                    // Create all new competencies in parallel
-                    const promises = toCreate.map((comp) => lastValueFrom(this.competencyService.create(comp, courseId)));
-                    Promise.allSettled(promises).then((results) => {
-                        const fulfilled = results.filter((r): r is PromiseFulfilledResult<any> => r.status === 'fulfilled').map((r) => r.value);
+                    // Create all new competencies in parallel, tolerating individual failures
+                    const create$ = toCreate.map((comp) => this.competencyService.create(comp, courseId).pipe(catchError(() => of(null))));
+                    forkJoin(create$)
+                        .pipe(takeUntilDestroyed(this.destroyRef))
+                        .subscribe((results) => {
+                            const fulfilled = results.filter((r) => r !== null);
 
-                        if (fulfilled.length === 0) {
-                            this.alertService.error('artemisApp.programmingExercise.instructorChecklist.competencies.createError');
-                            this.isCreatingCompetencies.set(false);
-                            return;
-                        }
-
-                        const newLinks: CompetencyExerciseLink[] = [...existingLinks];
-                        const newlyCreated = new Set<string>();
-
-                        for (const response of fulfilled) {
-                            const created = response.body;
-                            if (created?.id && !existingIds.has(created.id)) {
-                                newLinks.push(new CompetencyExerciseLink(created, exercise, MEDIUM_COMPETENCY_LINK_WEIGHT));
-                                existingIds.add(created.id);
-                                newlyCreated.add(created.title ?? '');
-                                // Update local cache
-                                this.courseCompetencies.update((current) => [...current, created]);
+                            if (fulfilled.length === 0) {
+                                this.alertService.error('artemisApp.programmingExercise.instructorChecklist.competencies.createError');
+                                this.isCreatingCompetencies.set(false);
+                                return;
                             }
-                        }
 
-                        if (newlyCreated.size > 0) {
-                            this.competencyLinksChange.emit(newLinks);
-                            this.createdCompetencyTitles.set(new Set([...this.createdCompetencyTitles(), ...newlyCreated]));
-                            this.alertService.success('artemisApp.programmingExercise.instructorChecklist.competencies.createSuccess');
-                        }
-                        this.isCreatingCompetencies.set(false);
-                    });
+                            const newLinks: CompetencyExerciseLink[] = [...existingLinks];
+                            const newlyCreated = new Set<string>();
+
+                            for (const response of fulfilled) {
+                                const created = response.body;
+                                if (created?.id && !existingIds.has(created.id)) {
+                                    newLinks.push(new CompetencyExerciseLink(created, exercise, MEDIUM_COMPETENCY_LINK_WEIGHT));
+                                    existingIds.add(created.id);
+                                    newlyCreated.add(created.title ?? '');
+                                    // Update local cache
+                                    this.courseCompetencies.update((current) => [...current, created]);
+                                }
+                            }
+
+                            if (newlyCreated.size > 0) {
+                                this.competencyLinksChange.emit(newLinks);
+                                this.createdCompetencyTitles.set(new Set([...this.createdCompetencyTitles(), ...newlyCreated]));
+                                this.alertService.success('artemisApp.programmingExercise.instructorChecklist.competencies.createSuccess');
+                            }
+                            this.isCreatingCompetencies.set(false);
+                        });
                 },
                 error: () => {
                     this.alertService.error('artemisApp.programmingExercise.instructorChecklist.competencies.createError');

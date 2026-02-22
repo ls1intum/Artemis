@@ -172,7 +172,10 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
         if (!competencyLinks) return;
         const exercise = this.programmingExercise();
         if (exercise) {
-            exercise.competencyLinks = competencyLinks as CompetencyExerciseLink[];
+            // CompetencyExerciseLink extends CompetencyLearningObjectLink, so the assignment is safe
+            exercise.competencyLinks = competencyLinks.map((link) =>
+                link instanceof CompetencyExerciseLink ? link : new CompetencyExerciseLink(link.competency, exercise, link.weight),
+            );
             this.programmingExerciseChange.emit(exercise);
         }
         this.refreshCompetencySelection(competencyLinks);

@@ -13,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param difficultyAssessment Difficulty assessment with delta indicator
  * @param qualityIssues        Quality issues found in the problem statement
  */
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record ChecklistAnalysisResponseDTO(List<InferredCompetencyDTO> inferredCompetencies, BloomRadarDTO bloomRadar, DifficultyAssessmentDTO difficultyAssessment,
         List<QualityIssueDTO> qualityIssues) {
 

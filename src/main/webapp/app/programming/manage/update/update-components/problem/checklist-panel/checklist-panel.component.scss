@@ -16,7 +16,7 @@
         overflow: hidden;
 
         &.stale {
-            border-color: var(--warning) !important;
+            border-color: var(--warning);
         }
     }
 

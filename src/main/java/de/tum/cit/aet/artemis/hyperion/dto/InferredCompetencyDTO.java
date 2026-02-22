@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param relatedTaskNames        Names of exercise tasks that exercise this
  *                                    competency (mapped by LLM)
  */
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record InferredCompetencyDTO(String knowledgeAreaShortTitle, String competencyTitle, String competencyVersion, Long catalogSourceId, String taxonomyLevel, Double confidence,
         Integer rank, List<String> evidence, String whyThisMatches, Boolean isLikelyPrimary, List<String> relatedTaskNames) {
 }

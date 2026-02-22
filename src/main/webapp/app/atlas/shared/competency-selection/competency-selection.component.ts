@@ -219,6 +219,11 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
         // Update selection state
         this.writeValue(links);
 
+        // Notify the form control of the change to maintain ControlValueAccessor contract
+        if (this._onChange) {
+            this._onChange(links);
+        }
+
         // Rebuild checkbox states to match the current selection
         if (this.competencyLinks) {
             const selectedIds = new Set(links.map((l) => l.competency?.id).filter(Boolean));

@@ -74,6 +74,8 @@ public class HyperionChecklistService {
     /** Lazily cached JSON representation of the standardized competency catalog. */
     private volatile String cachedCatalogJson;
 
+    private final Object catalogLock = new Object();
+
     public HyperionChecklistService(ChatClient chatClient, HyperionPromptTemplateService templates, ObservationRegistry observationRegistry,
             Optional<StandardizedCompetencyApi> standardizedCompetencyApi, ProgrammingExerciseTaskRepository taskRepository, ObjectMapper objectMapper) {
         this.chatClient = chatClient;
@@ -320,25 +322,32 @@ public class HyperionChecklistService {
         if (cached != null) {
             return cached;
         }
-        if (standardizedCompetencyApi.isEmpty()) {
-            log.warn("StandardizedCompetencyApi is not available (Atlas module disabled). Using empty catalog.");
-            return "[]";
-        }
-        try {
-            List<KnowledgeArea> knowledgeAreas = standardizedCompetencyApi.get().getAllForTreeView();
-            List<Map<String, Object>> catalog = new ArrayList<>();
-
-            for (KnowledgeArea ka : knowledgeAreas) {
-                serializeKnowledgeArea(ka, catalog);
+        synchronized (catalogLock) {
+            // Double-checked locking: re-read after acquiring lock
+            cached = this.cachedCatalogJson;
+            if (cached != null) {
+                return cached;
             }
+            if (standardizedCompetencyApi.isEmpty()) {
+                log.warn("StandardizedCompetencyApi is not available (Atlas module disabled). Using empty catalog.");
+                return "[]";
+            }
+            try {
+                List<KnowledgeArea> knowledgeAreas = standardizedCompetencyApi.get().getAllForTreeView();
+                List<Map<String, Object>> catalog = new ArrayList<>();
 
-            String json = objectMapper.writeValueAsString(catalog);
-            this.cachedCatalogJson = json;
-            return json;
-        }
-        catch (JsonProcessingException e) {
-            log.error("Failed to serialize competency catalog", e);
-            return "[]";
+                for (KnowledgeArea ka : knowledgeAreas) {
+                    serializeKnowledgeArea(ka, catalog);
+                }
+
+                String json = objectMapper.writeValueAsString(catalog);
+                this.cachedCatalogJson = json;
+                return json;
+            }
+            catch (JsonProcessingException e) {
+                log.error("Failed to serialize competency catalog", e);
+                return "[]";
+            }
         }
     }
 
