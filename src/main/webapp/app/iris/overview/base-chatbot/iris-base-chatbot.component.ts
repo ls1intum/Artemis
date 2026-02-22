@@ -95,7 +95,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected accountService = inject(AccountService);
     protected translateService = inject(TranslateService);
     private readonly dialogService = inject(DialogService);
-    private aboutIrisDialogRef: DynamicDialogRef<AboutIrisModalComponent> | null = null;
+    private aboutIrisDialogRef: DynamicDialogRef<AboutIrisModalComponent> | undefined;
     private readonly alertService = inject(AlertService);
     private readonly confirmationService = inject(ConfirmationService);
 
@@ -745,15 +745,17 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     openAboutIrisModal(): void {
-        this.aboutIrisDialogRef = this.dialogService.open(AboutIrisModalComponent, {
-            modal: true,
-            closable: false,
-            showHeader: false,
-            styleClass: 'about-iris-dialog',
-            maskStyleClass: 'about-iris-dialog',
-            width: '40rem',
-            breakpoints: { '640px': '95vw' },
-        });
+        this.aboutIrisDialogRef?.close();
+        this.aboutIrisDialogRef =
+            this.dialogService.open(AboutIrisModalComponent, {
+                modal: true,
+                closable: false,
+                showHeader: false,
+                styleClass: 'about-iris-dialog',
+                maskStyleClass: 'about-iris-dialog',
+                width: '40rem',
+                breakpoints: { '640px': '95vw' },
+            }) ?? undefined;
     }
 
     setSearchValue(searchValue: string) {

@@ -4,7 +4,7 @@
     </button>
 </div>
 
-<div class="modal-content-wrapper" aria-labelledby="about-iris-title">
+<div class="modal-content-wrapper" role="document" aria-labelledby="about-iris-title">
     <!-- Header: Logo + title + subtexts -->
     <div class="header-section">
         <div class="logo-container">
@@ -25,7 +25,7 @@
         @for (card of whatIrisCanDo; track card.titleKey) {
             <div class="feature-card">
                 <div class="icon-wrapper" aria-hidden="true">
-                    <fa-icon [icon]="card.icon" aria-hidden="true" />
+                    <fa-icon [icon]="card.icon" />
                 </div>
                 <div>
                     <p class="card-title-text" [jhiTranslate]="card.titleKey"></p>
@@ -43,7 +43,7 @@
         @for (card of whatToExpect; track card.titleKey) {
             <div class="feature-card">
                 <div class="icon-wrapper icon-wrapper--expect" aria-hidden="true">
-                    <fa-icon [icon]="card.icon" aria-hidden="true" />
+                    <fa-icon [icon]="card.icon" />
                 </div>
                 <div>
                     <p class="card-title-text" [jhiTranslate]="card.titleKey"></p>
@@ -58,7 +58,7 @@
     <!-- Privacy block -->
     <div class="privacy-section">
         <div class="icon-wrapper icon-wrapper--privacy" aria-hidden="true">
-            <fa-icon [icon]="faShield" aria-hidden="true" />
+            <fa-icon [icon]="faShield" />
         </div>
         <div>
             <h3 class="section-title privacy-title" jhiTranslate="artemisApp.iris.aboutIrisModal.privacyTitle"></h3>
