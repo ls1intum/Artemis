@@ -6,20 +6,35 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { WebsocketService } from 'app/shared/service/websocket.service';
+import { Subject } from 'rxjs';
+import { ReviewThreadWebsocketAction, ReviewThreadWebsocketUpdate } from 'app/exercise/shared/entities/review/review-thread-websocket-update.model';
 
 describe('ExerciseReviewCommentService', () => {
     setupTestBed({ zoneless: true });
     let service: ExerciseReviewCommentService;
     let httpMock: HttpTestingController;
     let alertServiceMock: { error: ReturnType<typeof vi.fn> };
+    let websocketServiceMock: { subscribe: ReturnType<typeof vi.fn> };
+    let websocketSubject: Subject<ReviewThreadWebsocketUpdate>;
 
     beforeEach(() => {
         alertServiceMock = {
             error: vi.fn(),
         };
+        websocketSubject = new Subject<ReviewThreadWebsocketUpdate>();
+        websocketServiceMock = {
+            subscribe: vi.fn(() => websocketSubject.asObservable()),
+        };
 
         TestBed.configureTestingModule({
-            providers: [ExerciseReviewCommentService, provideHttpClient(), provideHttpClientTesting(), { provide: AlertService, useValue: alertServiceMock }],
+            providers: [
+                ExerciseReviewCommentService,
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: AlertService, useValue: alertServiceMock },
+                { provide: WebsocketService, useValue: websocketServiceMock },
+            ],
         });
 
         service = TestBed.inject(ExerciseReviewCommentService);
@@ -38,6 +53,7 @@ describe('ExerciseReviewCommentService', () => {
 
         expect(changed).toBe(true);
         expect(service.threads()).toEqual([]);
+        expect(websocketServiceMock.subscribe).toHaveBeenCalledWith('/topic/exercises/42/review-threads');
     });
 
     it('setExercise should not clear thread state when exercise id is unchanged', () => {
@@ -48,6 +64,7 @@ describe('ExerciseReviewCommentService', () => {
 
         expect(changed).toBe(false);
         expect(service.threads()).toEqual([{ id: 1 } as any]);
+        expect(websocketServiceMock.subscribe).toHaveBeenCalledTimes(1);
     });
 
     it('reloadThreads should clear state when no active exercise exists', () => {
@@ -408,5 +425,90 @@ describe('ExerciseReviewCommentService', () => {
         const result = service.appendThreadToThreads(threads, newThread);
 
         expect(result).toHaveLength(2);
+    });
+
+    it('should apply THREAD_CREATED websocket update idempotently', () => {
+        service.setExercise(4);
+        service.threads.set([{ id: 1, comments: [] }] as any);
+
+        websocketSubject.next({ action: ReviewThreadWebsocketAction.THREAD_CREATED, exerciseId: 4, thread: { id: 2, comments: [] } as any });
+        websocketSubject.next({ action: ReviewThreadWebsocketAction.THREAD_CREATED, exerciseId: 4, thread: { id: 2, comments: [] } as any });
+
+        expect(service.threads()).toEqual([
+            { id: 1, comments: [] },
+            { id: 2, comments: [] },
+        ] as any);
+    });
+
+    it('should apply COMMENT_CREATED websocket update idempotently', () => {
+        service.setExercise(4);
+        service.threads.set([{ id: 1, comments: [] }] as any);
+
+        const comment = { id: 9, threadId: 1, content: { text: 'Hello' } } as any;
+        websocketSubject.next({ action: ReviewThreadWebsocketAction.COMMENT_CREATED, exerciseId: 4, comment });
+        websocketSubject.next({ action: ReviewThreadWebsocketAction.COMMENT_CREATED, exerciseId: 4, comment });
+
+        expect(service.threads()).toEqual([{ id: 1, comments: [comment] }] as any);
+    });
+
+    it('should apply COMMENT_UPDATED websocket update', () => {
+        service.setExercise(4);
+        service.threads.set([{ id: 1, comments: [{ id: 9, threadId: 1, content: { text: 'Old' } }] }] as any);
+
+        websocketSubject.next({
+            action: ReviewThreadWebsocketAction.COMMENT_UPDATED,
+            exerciseId: 4,
+            comment: { id: 9, threadId: 1, content: { text: 'New' } } as any,
+        });
+
+        expect(service.threads()).toEqual([{ id: 1, comments: [{ id: 9, threadId: 1, content: { text: 'New' } }] }] as any);
+    });
+
+    it('should apply COMMENT_DELETED websocket update and drop empty thread', () => {
+        service.setExercise(4);
+        service.threads.set([{ id: 1, comments: [{ id: 9 }] }] as any);
+
+        websocketSubject.next({
+            action: ReviewThreadWebsocketAction.COMMENT_DELETED,
+            exerciseId: 4,
+            commentId: 9,
+        });
+
+        expect(service.threads()).toEqual([]);
+    });
+
+    it('should apply GROUP_UPDATED websocket update', () => {
+        service.setExercise(4);
+        service.threads.set([
+            { id: 1, groupId: undefined },
+            { id: 2, groupId: undefined },
+            { id: 3, groupId: 8 },
+        ] as any);
+
+        websocketSubject.next({
+            action: ReviewThreadWebsocketAction.GROUP_UPDATED,
+            exerciseId: 4,
+            threadIds: [1, 2],
+            groupId: 77,
+        });
+
+        expect(service.threads()).toEqual([
+            { id: 1, groupId: 77 },
+            { id: 2, groupId: 77 },
+            { id: 3, groupId: 8 },
+        ] as any);
+    });
+
+    it('should ignore websocket events from other exercises', () => {
+        service.setExercise(4);
+        service.threads.set([{ id: 1, comments: [] }] as any);
+
+        websocketSubject.next({
+            action: ReviewThreadWebsocketAction.THREAD_CREATED,
+            exerciseId: 5,
+            thread: { id: 2, comments: [] } as any,
+        });
+
+        expect(service.threads()).toEqual([{ id: 1, comments: [] }] as any);
     });
 });

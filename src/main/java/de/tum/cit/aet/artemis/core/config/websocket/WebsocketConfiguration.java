@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.core.config.websocket;
 import static de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService.getExerciseIdFromNonPersonalExerciseResultDestination;
 import static de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService.isNonPersonalExerciseResultDestination;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewWebsocketService.getExerciseIdFromReviewThreadDestination;
+import static de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewWebsocketService.isReviewThreadDestination;
 import static de.tum.cit.aet.artemis.exercise.web.ParticipationTeamWebsocketService.getParticipationIdFromDestination;
 import static de.tum.cit.aet.artemis.exercise.web.ParticipationTeamWebsocketService.isParticipationTeamDestination;
 import static de.tum.cit.aet.artemis.programming.service.localci.LocalCIWebsocketMessagingService.isBuildAgentDestination;
@@ -400,6 +402,13 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 Long participationId = getParticipationIdFromDestination(destination);
                 return isParticipationOwnedByUser(principal, participationId);
             }
+
+            if (isReviewThreadDestination(destination)) {
+                long exerciseId = getExerciseIdFromReviewThreadDestination(destination).orElseThrow();
+                var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+                return authorizationCheckService.isAtLeastEditorInCourse(login, exercise.getCourseViaExerciseGroupOrCourseMember().getId());
+            }
+
             if (isNonPersonalExerciseResultDestination(destination)) {
                 final long exerciseId = getExerciseIdFromNonPersonalExerciseResultDestination(destination).orElseThrow();
 

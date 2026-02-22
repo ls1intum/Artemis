@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -277,20 +278,25 @@ public class ExerciseReviewService {
      * @throws EntityNotFoundException  if the group does not exist
      * @throws BadRequestAlertException if the group exercise does not match the request exercise
      */
-    public void deleteGroup(long exerciseId, long groupId) {
+    public List<Long> deleteGroup(long exerciseId, long groupId) {
         CommentThreadGroup group = commentThreadGroupRepository.findById(groupId).orElseThrow(() -> new EntityNotFoundException("CommentThreadGroup", groupId));
 
         validateExerciseIdMatchesRequest(exerciseId, group.getExercise().getId(), THREAD_GROUP_ENTITY_NAME);
 
         List<CommentThread> threads = commentThreadRepository.findByGroupId(groupId);
+        List<Long> threadIds = new ArrayList<>();
         if (!threads.isEmpty()) {
             for (CommentThread thread : threads) {
                 thread.setGroup(null);
+                if (thread.getId() != null) {
+                    threadIds.add(thread.getId());
+                }
             }
             commentThreadRepository.saveAll(threads);
         }
 
         commentThreadGroupRepository.delete(group);
+        return threadIds;
     }
 
     /**

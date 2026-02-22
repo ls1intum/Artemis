@@ -1,9 +1,11 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, OnDestroy, inject, signal } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
+import { Observable, Subscription, map } from 'rxjs';
 import { Comment, CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentThread, CreateCommentThread, UpdateThreadResolvedState } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { AlertService } from 'app/shared/service/alert.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
+import { ReviewThreadWebsocketAction, ReviewThreadWebsocketUpdate } from 'app/exercise/shared/entities/review/review-thread-websocket-update.model';
 
 type CommentThreadArrayResponseType = HttpResponse<CommentThread[]>;
 type CommentThreadResponseType = HttpResponse<CommentThread>;
@@ -11,12 +13,14 @@ type CommentResponseType = HttpResponse<Comment>;
 type ReviewCommentSuccessCallback = () => void;
 
 @Injectable({ providedIn: 'root' })
-export class ExerciseReviewCommentService {
+export class ExerciseReviewCommentService implements OnDestroy {
     public readonly resourceUrl = 'api/exercise/exercises';
 
     private http = inject(HttpClient);
     private alertService = inject(AlertService);
+    private websocketService = inject(WebsocketService);
     private activeExerciseId?: number;
+    private websocketSubscription?: Subscription;
 
     /**
      * Source of truth for currently loaded review comment threads.
@@ -36,6 +40,12 @@ export class ExerciseReviewCommentService {
         }
         this.activeExerciseId = exerciseId;
         this.threads.set([]);
+        this.websocketSubscription?.unsubscribe();
+        this.websocketSubscription = undefined;
+        if (exerciseId) {
+            const topic = `/topic/exercises/${exerciseId}/review-threads`;
+            this.websocketSubscription = this.websocketService.subscribe<ReviewThreadWebsocketUpdate>(topic).subscribe((event) => this.applyWebsocketUpdate(event));
+        }
         return true;
     }
 
@@ -338,6 +348,9 @@ export class ExerciseReviewCommentService {
                 return thread;
             }
             const comments = thread.comments ?? [];
+            if (createdComment.id !== undefined && comments.some((comment) => comment.id === createdComment.id)) {
+                return thread;
+            }
             return Object.assign({}, thread, { comments: [...comments, createdComment] });
         });
     }
@@ -388,6 +401,76 @@ export class ExerciseReviewCommentService {
         if (!newThread.id) {
             return threads;
         }
+        if (threads.some((thread) => thread.id === newThread.id)) {
+            return threads;
+        }
         return [...threads, newThread];
+    }
+
+    upsertThreadInThreads(threads: CommentThread[], updatedThread: CommentThread): CommentThread[] {
+        if (!updatedThread.id) {
+            return threads;
+        }
+        const threadExists = threads.some((thread) => thread.id === updatedThread.id);
+        if (threadExists) {
+            return this.replaceThreadInThreads(threads, updatedThread);
+        }
+        return [...threads, updatedThread];
+    }
+
+    updateGroupInThreads(threads: CommentThread[], threadIds: number[], groupId?: number): CommentThread[] {
+        if (!threadIds || threadIds.length === 0) {
+            return threads;
+        }
+        const affectedThreadIds = new Set(threadIds);
+        return threads.map((thread) => {
+            if (!affectedThreadIds.has(thread.id)) {
+                return thread;
+            }
+            return Object.assign({}, thread, { groupId });
+        });
+    }
+
+    private applyWebsocketUpdate(update: ReviewThreadWebsocketUpdate): void {
+        if (!update || !this.activeExerciseId || update.exerciseId !== this.activeExerciseId) {
+            return;
+        }
+        this.threads.update((threads) => {
+            switch (update.action) {
+                case ReviewThreadWebsocketAction.THREAD_CREATED:
+                case ReviewThreadWebsocketAction.THREAD_UPDATED:
+                    if (!update.thread) {
+                        return threads;
+                    }
+                    return this.upsertThreadInThreads(threads, update.thread);
+                case ReviewThreadWebsocketAction.COMMENT_CREATED:
+                    if (!update.comment) {
+                        return threads;
+                    }
+                    return this.appendCommentToThreads(threads, update.comment);
+                case ReviewThreadWebsocketAction.COMMENT_UPDATED:
+                    if (!update.comment) {
+                        return threads;
+                    }
+                    return this.updateCommentInThreads(threads, update.comment);
+                case ReviewThreadWebsocketAction.COMMENT_DELETED:
+                    if (!update.commentId) {
+                        return threads;
+                    }
+                    return this.removeCommentFromThreads(threads, update.commentId);
+                case ReviewThreadWebsocketAction.GROUP_UPDATED:
+                    if (!update.threadIds) {
+                        return threads;
+                    }
+                    return this.updateGroupInThreads(threads, update.threadIds, update.groupId);
+                default:
+                    return threads;
+            }
+        });
+    }
+
+    ngOnDestroy(): void {
+        this.websocketSubscription?.unsubscribe();
+        this.websocketSubscription = undefined;
     }
 }
