@@ -2,7 +2,6 @@ import {
     AfterContentInit,
     AfterViewInit,
     ChangeDetectionStrategy,
-    ChangeDetectorRef,
     Component,
     ElementRef,
     EventEmitter,
@@ -165,7 +164,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     protected readonly artemisIntelligenceService = inject(ArtemisIntelligenceService); // used in template
     private readonly viewContainerRef = inject(ViewContainerRef);
     private readonly exerciseReviewCommentService = inject(ExerciseReviewCommentService);
-    private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
     @ViewChild(MonacoEditorComponent, { static: false }) monacoEditor: MonacoEditorComponent;
     @ViewChild('fullElement', { static: true }) fullElement: ElementRef<HTMLDivElement>;
@@ -328,8 +326,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         artemisIntelligence: [],
         meta: [],
     };
-    showTextStyleActions: boolean = true;
-    showNonTextStyleActions: boolean = true;
+    showTextStyleActions = signal<boolean>(true);
+    showNonTextStyleActions = signal<boolean>(true);
     private selectionChangeListener?: { dispose(): void };
 
     readonly colorToClassMap = new Map<string, string>([
@@ -499,7 +497,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             this.monacoEditor.applyOptionPreset(DEFAULT_MARKDOWN_EDITOR_OPTIONS);
         }
         if (this.isInCommunication()) {
-            this.showTextStyleActions = false;
+            this.showTextStyleActions.set(false);
             this.selectionChangeListener = this.monacoEditor.onDidChangeTextSelection((selection) => this.onSelectionChanged(selection));
         }
         this.renderEditorWidgets();
@@ -533,13 +531,12 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.markdownChange.emit(event.text);
     }
 
-    onSelectionChanged(selection: { isEmpty: boolean }): void {
-        if (!selection.isEmpty === this.showTextStyleActions) {
+    private onSelectionChanged(selection: { isEmpty: boolean }): void {
+        if (!selection.isEmpty === this.showTextStyleActions()) {
             return;
         }
-        this.showTextStyleActions = !selection.isEmpty;
-        this.showNonTextStyleActions = selection.isEmpty;
-        this.changeDetectorRef.markForCheck();
+        this.showTextStyleActions.set(!selection.isEmpty);
+        this.showNonTextStyleActions.set(selection.isEmpty);
     }
 
     /**
