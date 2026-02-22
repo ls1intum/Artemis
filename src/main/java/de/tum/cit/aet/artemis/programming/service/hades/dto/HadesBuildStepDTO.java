@@ -19,21 +19,6 @@ public record HadesBuildStepDTO(Integer id, String name, String image, List<Volu
     public record VolumeMount(String name, String mountPath) {
     }
 
-    // Clone Step constructor
-    public HadesBuildStepDTO(Integer id, String name, String image, List<VolumeMount> volumeMounts, String workingDir, HashMap<String, String> metadata) {
-        this(id, name, image, volumeMounts, workingDir, metadata, "");
-    }
-
-    // Execute Step constructor
-    public HadesBuildStepDTO(Integer id, String name, String image, List<VolumeMount> volumeMounts, String script) {
-        this(id, name, image, volumeMounts, "", new HashMap<>(), script);
-    }
-
-    // Result Parse Step constructor
-    public HadesBuildStepDTO(Integer id, String name, String image, List<VolumeMount> volumeMounts, HashMap<String, String> metadata) {
-        this(id, name, image, volumeMounts, "", metadata, "");
-    }
-
     @Override
     public String toString() {
         return "HadesBuildStepDTO{" + "id=" + id + ", name='" + name + '\'' + ", image='" + image + '\'' + ", volumeMounts=" + volumeMounts + ", workingDir='" + workingDir + '\''

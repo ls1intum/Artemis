@@ -165,20 +165,22 @@ public class HadesService implements StatelessCIService {
         cloneMetadata.put("HADES_ASSIGNMENT_PATH", assignmentPath);
         cloneMetadata.put("HADES_ASSIGNMENT_ORDER", assignmentOrder);
 
-        steps.add(new HadesBuildStepDTO(1, "Clone", cloneDockerImage, volumeMounts, workingDir, cloneMetadata));
+        steps.add(new HadesBuildStepDTO(1, "Clone", cloneDockerImage, volumeMounts, workingDir, cloneMetadata, ""));
 
         // Create Execute Step
         ProjectType projectType = ProjectType.tryFromString(buildTriggerRequestDTO.additionalProperties().get("projectType"));
         var image = programmingLanguageConfiguration.getImage(ProgrammingLanguage.valueOf(buildTriggerRequestDTO.programmingLanguage()), Optional.ofNullable(projectType));
         var script = buildTriggerRequestDTO.buildScript();
         var fullScript = "set -e && cd /shared && " + script;
-        steps.add(new HadesBuildStepDTO(2, "Execute", image, volumeMounts, fullScript));
+        var executeMetadata = new HashMap<String, String>();
+        executeMetadata.put("CONTINUE_ON_ERROR", "true");
+        steps.add(new HadesBuildStepDTO(2, "Execute", image, volumeMounts, "", executeMetadata, fullScript));
 
         // Create Parse Result Step
         var parseResultMetadata = new HashMap<String, String>();
         parseResultMetadata.put("API_ENDPOINT", adapterEndPoint);
         parseResultMetadata.put("INGEST_DIR", ingestDir);
-        steps.add(new HadesBuildStepDTO(3, "Parse Result", resultParserImage, volumeMounts, parseResultMetadata));
+        steps.add(new HadesBuildStepDTO(3, "Parse Result", resultParserImage, volumeMounts, "", parseResultMetadata, ""));
 
         // Create Hades Job
         var timestamp = java.time.Instant.now().toString();
