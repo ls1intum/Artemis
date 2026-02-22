@@ -115,7 +115,13 @@
         "dockerFlagsParsingError": "Fehler beim Parsen der Docker-Flags.",
         "dueDateOver": {
             "noParticipationPossible": "Das Abgabedatum der Übung ist bereits abgelaufen, du kannst nicht mehr an dieser Übung teilnehmen.",
-            "participationInPracticeMode": "Das Abgabedatum der Übung ist bereits abgelaufen, eine reguläre Teilnahme an der Übung ist nicht mehr möglich. Du kannst den Übungsmodus verwenden, um die Übung zu lösen."
+            "participationInPracticeMode": "Das Abgabedatum der Übung ist bereits abgelaufen, eine reguläre Teilnahme an der Übung ist nicht mehr möglich. Du kannst den Übungsmodus verwenden, um die Übung zu lösen.",
+            "unsupportedExerciseType": "Dieser Aufgabentyp unterstützt den Übungsmodus nicht.",
+            "notAvailableInExam": "Der Übungsmodus ist für Klausuraufgaben nicht verfügbar.",
+            "notSupportedForTeams": "Der Übungsmodus wird für Teamübungen noch nicht unterstützt.",
+            "programmingExercisesDisabled": "Die Funktion für Programmieraufgaben ist deaktiviert.",
+            "athenaProfileRequired": "Der Übungsmodus für Text- und Modellierungsaufgaben erfordert ein aktives Athena-Profil.",
+            "feedbackRequestAfterDueDate": "Die Abgabefrist ist abgelaufen. Starte eine Übungsteilnahme, um nach der Frist Feedback anzufordern."
         },
         "teamExercise": {
             "cannotStart": "Teamübung kann nicht ohne zugewiesenes Team gestartet werden."

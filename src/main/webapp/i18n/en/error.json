@@ -115,7 +115,13 @@
         "dockerFlagsParsingError": "Error while parsing the docker flags.",
         "dueDateOver": {
             "noParticipationPossible": "The exercise due date is already over, you can no longer participate in this exercise.",
-            "participationInPracticeMode": "The exercise due date is already over, a regular participation in the exercise is no longer possible. You can use the Practice Mode to solve the exercise."
+            "participationInPracticeMode": "The exercise due date is already over, a regular participation in the exercise is no longer possible. You can use the Practice Mode to solve the exercise.",
+            "unsupportedExerciseType": "This exercise type does not support practice mode.",
+            "notAvailableInExam": "Practice mode is not available for exam exercises.",
+            "notSupportedForTeams": "Practice mode is not yet supported for team exercises.",
+            "programmingExercisesDisabled": "The feature for programming exercises is disabled.",
+            "athenaProfileRequired": "Practice mode for text and modeling exercises requires the Athena profile to be active.",
+            "feedbackRequestAfterDueDate": "The due date has passed. Start a practice participation to request feedback after the deadline."
         },
         "teamExercise": {
             "cannotStart": "Team exercise cannot be started without assigned team."

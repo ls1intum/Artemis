@@ -467,7 +467,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @WithMockUser(username = TEST_PREFIX + "student1")
     void practiceProgrammingExercise_featureDisabled() throws Exception {
         featureToggleService.disableFeature(Feature.ProgrammingExercises);
-        request.post("/api/exercise/exercises/" + programmingExercise.getId() + "/participations/practice", null, HttpStatus.FORBIDDEN);
+        request.post("/api/exercise/exercises/" + programmingExercise.getId() + "/participations/practice", null, HttpStatus.BAD_REQUEST);
 
         // Reset
         featureToggleService.enableFeature(Feature.ProgrammingExercises);
@@ -560,6 +560,124 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         programmingExercise.setMode(ExerciseMode.TEAM);
         exerciseRepository.save(programmingExercise);
         request.post("/api/exercise/exercises/" + programmingExercise.getId() + "/participations/practice", null, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void practiceTextExercise_successful() throws Exception {
+        textExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        exerciseRepository.save(textExercise);
+
+        StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations/practice", null,
+                StudentParticipation.class, HttpStatus.CREATED);
+        assertThat(participation).isNotNull();
+        assertThat(participation.isPracticeMode()).isTrue();
+        assertThat(participation.getAttempt()).isEqualTo(1);
+
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        assertThat(participation.getStudent()).contains(user);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void practiceModelingExercise_successful() throws Exception {
+        modelingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        exerciseRepository.save(modelingExercise);
+
+        StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + modelingExercise.getId() + "/participations/practice", null,
+                StudentParticipation.class, HttpStatus.CREATED);
+        assertThat(participation).isNotNull();
+        assertThat(participation.isPracticeMode()).isTrue();
+        assertThat(participation.getAttempt()).isEqualTo(1);
+
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        assertThat(participation.getStudent()).contains(user);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void practiceTextExercise_beforeDueDatePassed() throws Exception {
+        textExercise.setDueDate(ZonedDateTime.now().plusHours(2));
+        exerciseRepository.save(textExercise);
+        request.post("/api/exercise/exercises/" + textExercise.getId() + "/participations/practice", null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void practiceFileUploadExercise_notSupported() throws Exception {
+        List<FileUploadExercise> fileUploadExercises = fileUploadExerciseUtilService.createFileUploadExercisesWithCourse();
+        FileUploadExercise fileUploadExercise = exerciseRepository.save(fileUploadExercises.getFirst());
+        fileUploadExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        exerciseRepository.save(fileUploadExercise);
+        request.post("/api/exercise/exercises/" + fileUploadExercise.getId() + "/participations/practice", null, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void startGradedTextExercise_afterPracticeParticipationExists() throws Exception {
+        // First start a practice participation
+        textExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        exerciseRepository.save(textExercise);
+
+        StudentParticipation practiceParticipation = request.postWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations/practice", null,
+                StudentParticipation.class, HttpStatus.CREATED);
+        assertThat(practiceParticipation.isPracticeMode()).isTrue();
+
+        // Now reset due date and start a graded participation — should not return the
+        // practice one
+        textExercise.setDueDate(ZonedDateTime.now().plusHours(2));
+        exerciseRepository.save(textExercise);
+
+        URI location = request.post("/api/exercise/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.CREATED);
+        StudentParticipation gradedParticipation = request.get(location.getPath(), HttpStatus.OK, StudentParticipation.class);
+
+        assertThat(gradedParticipation).isNotNull();
+        assertThat(gradedParticipation.isPracticeMode()).isFalse();
+        assertThat(gradedParticipation.getId()).isNotEqualTo(practiceParticipation.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void practiceModelingExercise_beforeDueDatePassed() throws Exception {
+        modelingExercise.setDueDate(ZonedDateTime.now().plusHours(2));
+        exerciseRepository.save(modelingExercise);
+        request.post("/api/exercise/exercises/" + modelingExercise.getId() + "/participations/practice", null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void practiceTextExercise_alreadyExists_reusesParticipation() throws Exception {
+        textExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        exerciseRepository.save(textExercise);
+
+        StudentParticipation firstParticipation = request.postWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations/practice", null,
+                StudentParticipation.class, HttpStatus.CREATED);
+        assertThat(firstParticipation.isPracticeMode()).isTrue();
+
+        // Starting practice mode again should return the same participation
+        StudentParticipation secondParticipation = request.postWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations/practice", null,
+                StudentParticipation.class, HttpStatus.CREATED);
+        assertThat(secondParticipation.getId()).isEqualTo(firstParticipation.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void practiceTextExercise_examExercise_notAllowed() throws Exception {
+        Exam exam = ExamFactory.generateExamWithExerciseGroup(course, false);
+        exam = examRepository.save(exam);
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
+        TextExercise examTextExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
+        examTextExercise = exerciseRepository.save(examTextExercise);
+        request.post("/api/exercise/exercises/" + examTextExercise.getId() + "/participations/practice", null, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void practiceTextExercise_teamExercise_notAllowed() throws Exception {
+        textExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        textExercise.setMode(ExerciseMode.TEAM);
+        exerciseRepository.save(textExercise);
+        request.post("/api/exercise/exercises/" + textExercise.getId() + "/participations/practice", null, HttpStatus.BAD_REQUEST);
     }
 
     private void prepareMocksForProgrammingExercise() throws Exception {
@@ -1680,7 +1798,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         result.setExerciseId(programmingExercise.getId());
         resultRepository.save(result);
 
-        request.putAndExpectError("/api/exercise/exercises/" + programmingExercise.getId() + "/request-feedback", null, HttpStatus.BAD_REQUEST, "feedbackRequestAfterDueDate");
+        request.putAndExpectError("/api/exercise/exercises/" + programmingExercise.getId() + "/request-feedback", null, HttpStatus.BAD_REQUEST,
+                "dueDateOver.feedbackRequestAfterDueDate");
     }
 
     @Test
@@ -1770,6 +1889,147 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         submissionRepository.save(submission);
 
         request.putWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/request-feedback", null, StudentParticipation.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void whenTextFeedbackRequestedAfterDueDateWithPracticeParticipation_thenSucceed() throws Exception {
+        setupAthenaForExercise(textExercise, ATHENA_MODULE_TEXT_TEST);
+        textExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        exerciseRepository.save(textExercise);
+
+        var practiceParticipation = participationRepo
+                .save(ParticipationFactory.generatePracticeStudentParticipation(textExercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1")));
+        var submission = ParticipationFactory.generateTextSubmission("some practice text", Language.ENGLISH, true);
+        submission.setParticipation(practiceParticipation);
+        submissionRepository.save(submission);
+        participationUtilService.addResultToSubmission(AssessmentType.MANUAL, ZonedDateTime.now(), submission);
+
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
+
+        request.putWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/request-feedback", null, StudentParticipation.class, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void whenModelingFeedbackRequestedAfterDueDateWithPracticeParticipation_thenSucceed() throws Exception {
+        setupAthenaForExercise(modelingExercise, "module_modeling_test");
+        modelingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        exerciseRepository.save(modelingExercise);
+
+        var practiceParticipation = participationRepo
+                .save(ParticipationFactory.generatePracticeStudentParticipation(modelingExercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1")));
+        var submission = ParticipationFactory.generateModelingSubmission("some practice model", true);
+        submission.setParticipation(practiceParticipation);
+        submissionRepository.save(submission);
+        participationUtilService.addResultToSubmission(AssessmentType.MANUAL, ZonedDateTime.now(), submission);
+
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modeling");
+
+        request.putWithResponseBody("/api/exercise/exercises/" + modelingExercise.getId() + "/request-feedback", null, StudentParticipation.class, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void whenTextFeedbackRequestedAfterDueDateWithoutPracticeParticipation_thenFail() throws Exception {
+        textExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        exerciseRepository.save(textExercise);
+
+        var gradedParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        participationRepo.save(gradedParticipation);
+
+        var submission = ParticipationFactory.generateTextSubmission("some text", Language.ENGLISH, true);
+        submission.setParticipation(gradedParticipation);
+        submissionRepository.save(submission);
+
+        request.putAndExpectError("/api/exercise/exercises/" + textExercise.getId() + "/request-feedback", null, HttpStatus.BAD_REQUEST, "dueDateOver.feedbackRequestAfterDueDate");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void whenModelingFeedbackRequestedAfterDueDateWithoutPracticeParticipation_thenFail() throws Exception {
+        modelingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        exerciseRepository.save(modelingExercise);
+
+        var gradedParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, modelingExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        participationRepo.save(gradedParticipation);
+
+        var submission = ParticipationFactory.generateModelingSubmission("some model", true);
+        submission.setParticipation(gradedParticipation);
+        submissionRepository.save(submission);
+
+        request.putAndExpectError("/api/exercise/exercises/" + modelingExercise.getId() + "/request-feedback", null, HttpStatus.BAD_REQUEST,
+                "dueDateOver.feedbackRequestAfterDueDate");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void whenTextFeedbackRequestedBeforeDueDate_usesGradedParticipation() throws Exception {
+        setupAthenaForExercise(textExercise, ATHENA_MODULE_TEXT_TEST);
+        // Due date in the future — before deadline
+        textExercise.setDueDate(ZonedDateTime.now().plusHours(2));
+        exerciseRepository.save(textExercise);
+
+        var gradedParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        participationRepo.save(gradedParticipation);
+
+        var submission = ParticipationFactory.generateTextSubmission("some text", Language.ENGLISH, true);
+        submission.setParticipation(gradedParticipation);
+        submissionRepository.save(submission);
+        participationUtilService.addResultToSubmission(AssessmentType.MANUAL, ZonedDateTime.now(), submission);
+
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
+
+        var responseParticipation = request.putWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/request-feedback", null, StudentParticipation.class,
+                HttpStatus.OK);
+
+        assertThat(responseParticipation).isNotNull();
+        assertThat(responseParticipation.getId()).isEqualTo(gradedParticipation.getId());
+        assertThat(responseParticipation.isPracticeMode()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void whenTextFeedbackRequestedAfterDueDate_usePracticeParticipation() throws Exception {
+        setupAthenaForExercise(textExercise, ATHENA_MODULE_TEXT_TEST);
+        textExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        exerciseRepository.save(textExercise);
+
+        // Create graded participation
+        var gradedParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        participationRepo.save(gradedParticipation);
+        var gradedSubmission = ParticipationFactory.generateTextSubmission("graded text", Language.ENGLISH, true);
+        gradedSubmission.setParticipation(gradedParticipation);
+        submissionRepository.save(gradedSubmission);
+
+        // Create practice participation
+        var practiceParticipation = participationRepo
+                .save(ParticipationFactory.generatePracticeStudentParticipation(textExercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1")));
+        var practiceSubmission = ParticipationFactory.generateTextSubmission("practice text", Language.ENGLISH, true);
+        practiceSubmission.setParticipation(practiceParticipation);
+        submissionRepository.save(practiceSubmission);
+        participationUtilService.addResultToSubmission(AssessmentType.MANUAL, ZonedDateTime.now(), practiceSubmission);
+
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
+
+        var responseParticipation = request.putWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/request-feedback", null, StudentParticipation.class,
+                HttpStatus.OK);
+
+        assertThat(responseParticipation).isNotNull();
+        assertThat(responseParticipation.getId()).isEqualTo(practiceParticipation.getId());
+        assertThat(responseParticipation.isPracticeMode()).isTrue();
+    }
+
+    private void setupAthenaForExercise(Exercise exercise, String feedbackModule) {
+        var exerciseCourse = exercise.getCourseViaExerciseGroupOrCourseMember();
+        exerciseCourse.setRestrictedAthenaModulesAccess(true);
+        courseRepository.save(exerciseCourse);
+        exercise.setFeedbackSuggestionModule(feedbackModule);
+        exerciseRepository.save(exercise);
     }
 
     @Test
