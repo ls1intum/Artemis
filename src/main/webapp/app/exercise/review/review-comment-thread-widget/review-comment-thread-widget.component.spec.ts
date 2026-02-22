@@ -6,12 +6,14 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 describe('ReviewCommentThreadWidgetComponent', () => {
     setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ReviewCommentThreadWidgetComponent>;
     let comp: ReviewCommentThreadWidgetComponent;
     let reviewCommentService: any;
+    let modalService: { open: any };
 
     beforeEach(async () => {
         reviewCommentService = {
@@ -20,12 +22,16 @@ describe('ReviewCommentThreadWidgetComponent', () => {
             updateCommentInContext: vi.fn(),
             toggleResolvedInContext: vi.fn(),
         };
+        modalService = {
+            open: vi.fn().mockReturnValue({ componentInstance: {}, result: Promise.resolve() }),
+        };
 
         await TestBed.configureTestingModule({
             imports: [ReviewCommentThreadWidgetComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ExerciseReviewCommentService, useValue: reviewCommentService },
+                { provide: NgbModal, useValue: modalService },
             ],
         }).compileComponents();
 
@@ -45,9 +51,27 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         expect(comp.showThreadBody()).toBe(false);
     });
 
-    it('should emit delete on deleteComment', () => {
+    it('should open confirmation modal on deleteComment', () => {
         comp.deleteComment(5);
+        expect(modalService.open).toHaveBeenCalledOnce();
+    });
+
+    it('should delete comment when deletion is confirmed', async () => {
+        modalService.open.mockReturnValue({ componentInstance: {}, result: Promise.resolve() });
+
+        comp.deleteComment(5);
+        await Promise.resolve();
+
         expect(reviewCommentService.deleteCommentInContext).toHaveBeenCalledWith(5);
+    });
+
+    it('should not delete comment when deletion modal is dismissed', async () => {
+        modalService.open.mockReturnValue({ componentInstance: {}, result: Promise.reject('dismissed') });
+
+        comp.deleteComment(5);
+        await Promise.resolve();
+
+        expect(reviewCommentService.deleteCommentInContext).not.toHaveBeenCalled();
     });
 
     it('should update comment on saveEditing and clear editing state', () => {

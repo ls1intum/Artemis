@@ -1102,7 +1102,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         const mockFileBadges = {
             'folderA/file': [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 1)],
             'folderB/file1': [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 1)],
-            'folderB/file2': [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 2)],
+            'folderB/file2': [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 2), new FileBadge(FileBadgeType.REVIEW_COMMENT, 1)],
         };
 
         beforeEach(() => {
@@ -1122,7 +1122,7 @@ describe('CodeEditorFileBrowserComponent', () => {
 
         it('should aggregate file badges for a collapsed folder', () => {
             const result = comp.getFolderBadges({ value: 'folderB', collapsed: true } as TreeViewItem<string>);
-            expect(result).toEqual([new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 3)]); // 1 + 2
+            expect(result).toEqual([new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 3), new FileBadge(FileBadgeType.REVIEW_COMMENT, 1)]); // 1 + 2 suggestions, 1 review thread
         });
     });
 });

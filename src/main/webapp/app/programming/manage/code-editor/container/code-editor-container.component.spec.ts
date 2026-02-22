@@ -8,6 +8,7 @@ import {
     FileBadgeType,
     FileType,
     RenameFileChange,
+    RepositoryType,
 } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService, TranslateStore } from '@ngx-translate/core';
@@ -19,6 +20,9 @@ import { Participation } from 'app/exercise/shared/entities/participation/partic
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { editor } from 'monaco-editor';
+import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { WritableSignal, signal } from '@angular/core';
 
 class MockFileService {
     updateFileReferences = jest.fn((refs) => refs);
@@ -30,8 +34,12 @@ describe('CodeEditorContainerComponent', () => {
     let fixture: ComponentFixture<CodeEditorContainerComponent>;
     let alertService: AlertService;
     let fileService: MockFileService;
+    let reviewCommentService: { threads: WritableSignal<any[]> };
 
     beforeEach(async () => {
+        reviewCommentService = {
+            threads: signal([]),
+        };
         await TestBed.configureTestingModule({
             imports: [CodeEditorContainerComponent],
             providers: [
@@ -39,6 +47,7 @@ describe('CodeEditorContainerComponent', () => {
                 { provide: TranslateStore, useValue: {} },
                 { provide: AlertService, useValue: { error: jest.fn() } as any },
                 { provide: CodeEditorFileService, useClass: MockFileService },
+                { provide: ExerciseReviewCommentService, useValue: reviewCommentService },
             ],
         })
             .overrideComponent(CodeEditorContainerComponent, {
@@ -84,6 +93,97 @@ describe('CodeEditorContainerComponent', () => {
         expect(Object.keys(component.fileBadges)).toEqual(expect.arrayContaining(['src/main/App.java', 'src/Other.java']));
         expect(component.fileBadges['src/main/App.java'][0].type).toBe(FileBadgeType.FEEDBACK_SUGGESTION);
         expect(component.fileBadges['src/main/App.java'][0].count).toBe(2);
+    });
+
+    it('should count review thread badges per file (one badge count per thread)', () => {
+        reviewCommentService.threads.set([
+            {
+                id: 1,
+                exerciseId: 10,
+                targetType: CommentThreadLocationType.TEMPLATE_REPO,
+                filePath: 'src/main/App.java',
+                initialLineNumber: 2,
+                outdated: false,
+                resolved: false,
+                comments: [{ id: 11 }, { id: 12 }],
+            },
+            {
+                id: 2,
+                exerciseId: 10,
+                targetType: CommentThreadLocationType.TEMPLATE_REPO,
+                filePath: 'src/main/App.java',
+                initialLineNumber: 8,
+                outdated: false,
+                resolved: false,
+                comments: [{ id: 13 }],
+            },
+            {
+                id: 3,
+                exerciseId: 10,
+                targetType: CommentThreadLocationType.SOLUTION_REPO,
+                filePath: 'src/main/App.java',
+                initialLineNumber: 9,
+                outdated: false,
+                resolved: false,
+                comments: [{ id: 14 }],
+            },
+            {
+                id: 4,
+                exerciseId: 10,
+                targetType: CommentThreadLocationType.TEMPLATE_REPO,
+                filePath: 'src/main/Other.java',
+                initialLineNumber: 10,
+                outdated: false,
+                resolved: false,
+                comments: [{ id: 15 }],
+            },
+        ] as any);
+
+        fixture.componentRef.setInput('enableExerciseReviewComments', true);
+        fixture.componentRef.setInput('selectedRepository', RepositoryType.TEMPLATE);
+        fixture.detectChanges();
+
+        const appBadges = component.fileBadges['src/main/App.java'];
+        const reviewThreadBadge = appBadges.find((badge) => badge.type === FileBadgeType.REVIEW_COMMENT);
+        expect(reviewThreadBadge?.count).toBe(2);
+
+        const otherBadges = component.fileBadges['src/main/Other.java'];
+        expect(otherBadges.find((badge) => badge.type === FileBadgeType.REVIEW_COMMENT)?.count).toBe(1);
+    });
+
+    it('should filter auxiliary review thread badges by selected auxiliary repository', () => {
+        reviewCommentService.threads.set([
+            {
+                id: 1,
+                exerciseId: 10,
+                targetType: CommentThreadLocationType.AUXILIARY_REPO,
+                auxiliaryRepositoryId: 20,
+                filePath: 'src/main/Aux.java',
+                initialLineNumber: 2,
+                outdated: false,
+                resolved: false,
+                comments: [{ id: 11 }],
+            },
+            {
+                id: 2,
+                exerciseId: 10,
+                targetType: CommentThreadLocationType.AUXILIARY_REPO,
+                auxiliaryRepositoryId: 30,
+                filePath: 'src/main/Aux.java',
+                initialLineNumber: 8,
+                outdated: false,
+                resolved: false,
+                comments: [{ id: 12 }],
+            },
+        ] as any);
+
+        fixture.componentRef.setInput('enableExerciseReviewComments', true);
+        fixture.componentRef.setInput('selectedRepository', RepositoryType.AUXILIARY);
+        fixture.componentRef.setInput('selectedAuxiliaryRepositoryId', 20);
+        fixture.detectChanges();
+
+        const badges = component.fileBadges['src/main/Aux.java'];
+        expect(badges.find((badge) => badge.type === FileBadgeType.REVIEW_COMMENT)?.count).toBe(1);
     });
 
     it('should adjust editor and commit states based on unsaved files', () => {

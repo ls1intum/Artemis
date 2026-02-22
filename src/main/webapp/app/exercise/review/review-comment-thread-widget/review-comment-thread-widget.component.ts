@@ -14,6 +14,8 @@ import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs/operators';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 
 @Component({
     selector: 'jhi-review-comment-thread-widget',
@@ -49,6 +51,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     private readonly translateService = inject(TranslateService);
     private readonly changeDetectorRef = inject(ChangeDetectorRef);
     private readonly reviewCommentService = inject(ExerciseReviewCommentService);
+    private readonly modalService = inject(NgbModal);
     readonly orderedComments = computed(() => {
         const comments = this.thread().comments ?? [];
         return [...comments].sort((a, b) => {
@@ -75,7 +78,14 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
      * @param commentId The id of the comment to delete.
      */
     deleteComment(commentId: number): void {
-        this.reviewCommentService.deleteCommentInContext(commentId);
+        const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'md' });
+        modalRef.componentInstance.title = 'artemisApp.review.deleteCommentConfirmTitle';
+        modalRef.componentInstance.text = 'artemisApp.review.deleteCommentConfirmText';
+        modalRef.componentInstance.translateText = true;
+        modalRef.result.then(
+            () => this.reviewCommentService.deleteCommentInContext(commentId),
+            () => {},
+        );
     }
 
     /**
@@ -217,7 +227,9 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
             return;
         }
         if (actionId === 'delete') {
-            this.deleteComment(comment.id);
+            if (comment.id !== undefined) {
+                this.deleteComment(comment.id);
+            }
         }
     }
 
