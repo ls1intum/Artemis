@@ -2,7 +2,7 @@
 
 # EXISTING CONSISTENCY-CHECK REVIEW THREADS
 {{existing_review_threads}}
-The above JSON (shape: `{"threads":[{"targetType":...,"filePath":...,"lineNumber":...,"comments":[{"type":...,"text":...}]}]}`) lists existing consistency-check threads (first comment per thread only). An empty threads array means no prior findings exist.
+The above JSON (shape: `{"threads":[{"targetType":...,"filePath":...,"lineNumber":...,"resolved":...,"outdated":...,"groupId":...,"comments":[{"type":...,"text":...}]}]}`) lists existing consistency-check threads (first comment per thread only). An empty threads array means no prior findings exist.
 
 # MISSION
 You are a Structural Consistency Validator for programming exercises.

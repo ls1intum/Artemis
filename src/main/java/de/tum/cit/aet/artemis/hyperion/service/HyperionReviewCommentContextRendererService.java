@@ -82,7 +82,7 @@ public class HyperionReviewCommentContextRendererService {
      */
     public String renderReviewThreads(long exerciseId) {
         Set<CommentThread> threads = commentThreadRepository.findWithCommentsByExerciseId(exerciseId);
-        if (threads == null || threads.isEmpty()) {
+        if (threads.isEmpty()) {
             return "{\"threads\":[]}";
         }
         List<Map<String, Object>> serializedThreads = new ArrayList<>();
@@ -202,6 +202,9 @@ public class HyperionReviewCommentContextRendererService {
      * @return text limited to {@link #MAX_COMMENT_TEXT_LENGTH} characters
      */
     private String truncateText(String text) {
+        if (text == null || text.isEmpty()) {
+            return "";
+        }
         if (text.length() <= MAX_COMMENT_TEXT_LENGTH) {
             return text;
         }
