@@ -655,7 +655,7 @@ public class ExerciseReviewService {
     /**
      * Builds a persisted consistency-check thread from a mapped issue location.
      * Problem statement threads intentionally do not store a file path.
-     * Problem-statement threads store the initial exercise version at creation time.
+     * Problem-statement threads store the latest exercise version at creation time when available.
      * Repository-based threads store the initial commit SHA at creation time.
      *
      * @param exercise the exercise owning the thread
@@ -668,7 +668,7 @@ public class ExerciseReviewService {
         thread.setTargetType(location.targetType());
         thread.setInitialFilePath(location.filePath());
         thread.setFilePath(location.filePath());
-        thread.setInitialVersion(resolveInitialVersion(location.targetType(), exercise.getId()));
+        thread.setInitialVersion(resolveLatestVersion(thread));
         thread.setInitialCommitSha(resolveLatestCommitSha(location.targetType(), null, exercise.getId()));
         thread.setInitialLineNumber(location.lineNumber());
         thread.setLineNumber(location.lineNumber());
