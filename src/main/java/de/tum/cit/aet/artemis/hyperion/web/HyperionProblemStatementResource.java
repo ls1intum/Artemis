@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.hyperion.web;
 
-import java.util.concurrent.CompletableFuture;
-
 import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
@@ -123,36 +121,40 @@ public class HyperionProblemStatementResource {
 
     /**
      * POST courses/{courseId}/checklist-analysis: Analyze the problem statement for checklist (learning goals, difficulty, quality).
+     * The three LLM calls (competency, difficulty, quality) run concurrently inside the service.
      *
      * @param courseId the id of the course
      * @param request  the request containing problem statement, metadata, and an optional exerciseId
-     * @return a future that completes with the checklist analysis result
+     * @return the checklist analysis result
      */
     @EnforceAtLeastEditorInCourse
     @PostMapping("courses/{courseId}/checklist-analysis")
-    public CompletableFuture<ResponseEntity<ChecklistAnalysisResponseDTO>> analyzeChecklist(@PathVariable long courseId, @Valid @RequestBody ChecklistAnalysisRequestDTO request) {
+    public ResponseEntity<ChecklistAnalysisResponseDTO> analyzeChecklist(@PathVariable long courseId, @Valid @RequestBody ChecklistAnalysisRequestDTO request) {
         log.debug("REST request to Hyperion checklist analysis for course [{}]", courseId);
         courseRepository.findByIdElseThrow(courseId);
         validateExerciseBelongsToCourse(request.exerciseId(), courseId);
-        return checklistService.analyzeChecklist(request, courseId).thenApply(ResponseEntity::ok);
+        var result = checklistService.analyzeChecklist(request, courseId).join();
+        return ResponseEntity.ok(result);
     }
 
     /**
      * POST courses/{courseId}/checklist-analysis/sections/{section}: Analyze a single section of the checklist (competencies, difficulty, or quality).
+     * Blocking here is acceptable because Artemis runs on virtual threads.
      *
      * @param courseId the id of the course
      * @param section  the section to analyze (COMPETENCIES, DIFFICULTY, or QUALITY)
      * @param request  the request containing problem statement and metadata
-     * @return a future that completes with the analysis response with only the requested section populated
+     * @return the analysis response with only the requested section populated
      */
     @EnforceAtLeastEditorInCourse
     @PostMapping("courses/{courseId}/checklist-analysis/sections/{section}")
-    public CompletableFuture<ResponseEntity<ChecklistAnalysisResponseDTO>> analyzeChecklistSection(@PathVariable long courseId, @PathVariable ChecklistSection section,
+    public ResponseEntity<ChecklistAnalysisResponseDTO> analyzeChecklistSection(@PathVariable long courseId, @PathVariable ChecklistSection section,
             @Valid @RequestBody ChecklistAnalysisRequestDTO request) {
         log.debug("REST request to Hyperion checklist section analysis [{}] for course [{}]", section, courseId);
         courseRepository.findByIdElseThrow(courseId);
         validateExerciseBelongsToCourse(request.exerciseId(), courseId);
-        return checklistService.analyzeSection(request, section, courseId).thenApply(ResponseEntity::ok);
+        var result = checklistService.analyzeSection(request, section, courseId).join();
+        return ResponseEntity.ok(result);
     }
 
     /**
