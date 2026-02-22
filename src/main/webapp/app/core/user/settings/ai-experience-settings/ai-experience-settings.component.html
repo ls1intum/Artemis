@@ -67,12 +67,15 @@
         <button
             jhiDeleteButton
             [actionType]="ActionType.Cleanup"
+            [renderButtonText]="false"
             [deleteQuestion]="'artemisApp.userSettings.aiExperienceSettingsPage.deleteQuestion'"
             [entityTitle]="'delete all'"
             [deleteConfirmationText]="'artemisApp.userSettings.aiExperienceSettingsPage.typeDeleteAllToConfirm'"
             (delete)="deleteAllIrisInteractions()"
             [dialogError]="dialogError$"
-        ></button>
+        >
+            <span class="text-white" jhiTranslate="entity.action.cleanup"></span>
+        </button>
     </div>
 } @else {
     <p class="mt-2 text-body-secondary" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.noData"></p>

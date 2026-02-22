@@ -28,5 +28,12 @@
             </button>
         }
     </div>
-    <p-menu #menu [model]="menuItems()" [popup]="true" appendTo="body" styleClass="chat-history-item-menu" />
+    <p-menu #menu [model]="menuItems" [popup]="true" appendTo="body" styleClass="chat-history-item-menu">
+        <ng-template #item let-item>
+            <a class="p-menu-item-link danger">
+                <fa-icon [icon]="faTrash" />
+                <span class="p-menu-item-label ms-2">{{ item.label }}</span>
+            </a>
+        </ng-template>
+    </p-menu>
 </div>

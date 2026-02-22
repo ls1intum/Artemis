@@ -1,9 +1,8 @@
 import { ChangeDetectionStrategy, Component, Signal, computed, inject, input, output, viewChild } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { DatePipe, NgClass } from '@angular/common';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faChalkboardUser, faEllipsisVertical, faKeyboard, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faChalkboardUser, faEllipsisVertical, faKeyboard, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
@@ -26,7 +25,6 @@ export class ChatHistoryItemComponent {
     // Must match the values in src/main/resources/i18n/messages*.properties (iris.chat.session.newChatTitle)
     // and src/main/webapp/i18n/*/iris.json (artemisApp.iris.chatHistory.newChat).
     private static readonly NEW_CHAT_TITLES = new Set(['new chat', 'neuer chat']);
-    private readonly deleteLabel = toSignal(this.translateService.stream('artemisApp.iris.chatHistory.deleteSession'), { initialValue: '' });
 
     session = input.required<IrisSessionDTO>();
     active = input<boolean>(false);
@@ -42,19 +40,15 @@ export class ChatHistoryItemComponent {
     });
     readonly faPlus = faPlus;
     readonly faEllipsisVertical = faEllipsisVertical;
+    readonly faTrash = faTrash;
     sessionClicked = output<IrisSessionDTO>();
     deleteSession = output<IrisSessionDTO>();
 
     readonly contextMenu = viewChild<Menu>('menu');
 
-    readonly menuItems = computed<MenuItem[]>(() => [
-        {
-            label: this.deleteLabel(),
-            icon: 'pi pi-trash',
-            styleClass: 'danger',
-            command: () => this.onDeleteClick(),
-        },
-    ]);
+    // Built fresh on each toggle so the label always reflects the current language,
+    // and the PrimeNG popup Menu (appendTo="body") receives up-to-date items.
+    menuItems: MenuItem[] = [];
 
     onItemClick(): void {
         this.sessionClicked.emit(this.session());
@@ -62,6 +56,13 @@ export class ChatHistoryItemComponent {
 
     onMenuToggle(event: Event): void {
         event.stopPropagation();
+        this.menuItems = [
+            {
+                label: this.translateService.instant('artemisApp.iris.chatHistory.deleteSession'),
+                styleClass: 'danger',
+                command: () => this.onDeleteClick(),
+            },
+        ];
         this.contextMenu()?.toggle(event);
     }
 
