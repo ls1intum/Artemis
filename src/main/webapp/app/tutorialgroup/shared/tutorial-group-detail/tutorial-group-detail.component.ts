@@ -327,9 +327,9 @@ export class TutorialGroupDetailComponent {
 
     private computeAverageAttendanceRatio(sessions: TutorialGroupSessionDTO[], capacity: number | undefined): number | undefined {
         if (capacity === undefined) return undefined;
-        const sessionsWithAttendance = sessions.filter((session) => session.attendanceCount !== undefined && session.attendanceCount !== null);
+        const sessionsWithAttendance = sessions.filter((session) => session.attendance !== undefined && session.attendance !== null);
         if (sessionsWithAttendance.length === 0) return undefined;
-        const averageAttendance = sessionsWithAttendance.reduce((sum, session) => sum + session.attendanceCount!, 0) / sessionsWithAttendance.length;
+        const averageAttendance = sessionsWithAttendance.reduce((sum, session) => sum + session.attendance!, 0) / sessionsWithAttendance.length;
         return averageAttendance / capacity;
     }
 
@@ -436,11 +436,11 @@ export class TutorialGroupDetailComponent {
         const timeChanged = session.timeChanged;
         const dateChanged = session.dateChanged;
         let attendance: string | undefined = undefined;
-        if (session.attendanceCount !== undefined) {
+        if (session.attendance !== undefined) {
             if (capacity !== undefined) {
-                attendance = session.attendanceCount + ' / ' + capacity;
+                attendance = session.attendance + ' / ' + capacity;
             } else {
-                attendance = session.attendanceCount.toString();
+                attendance = session.attendance.toString();
             }
         }
         return { id, date, time, location, isCancelled, locationChanged, timeChanged, dateChanged, attendance };

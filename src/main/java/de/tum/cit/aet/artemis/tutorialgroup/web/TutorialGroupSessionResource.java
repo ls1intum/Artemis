@@ -23,6 +23,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -154,6 +155,7 @@ public class TutorialGroupSessionResource {
         sessionToUpdate.setStart(updatedSession.getStart());
         sessionToUpdate.setEnd(updatedSession.getEnd());
         sessionToUpdate.setLocation(updatedSession.getLocation());
+        sessionToUpdate.setAttendanceCount(updatedSession.getAttendanceCount());
 
         isValidTutorialGroupSession(sessionToUpdate, ZoneId.of(configuration.getCourse().getTimeZone()));
 
@@ -376,7 +378,8 @@ public class TutorialGroupSessionResource {
      * DTO used because we want to interpret the dates in the time zone of the tutorial groups configuration
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record TutorialGroupSessionRequestDTO(@NonNull LocalDate date, @NonNull LocalTime startTime, @NonNull LocalTime endTime, @Size(min = 1, max = 2000) String location) {
+    public record TutorialGroupSessionRequestDTO(@NonNull LocalDate date, @NonNull LocalTime startTime, @NonNull LocalTime endTime, @Size(min = 1, max = 2000) String location,
+            @Nullable Integer attendance) {
 
         public void validityCheck() {
             if (startTime.isAfter(endTime)) {
@@ -395,6 +398,7 @@ public class TutorialGroupSessionResource {
             tutorialGroupSession.setStart(interpretInTimeZone(date, startTime, tutorialGroupsConfiguration.getCourse().getTimeZone()));
             tutorialGroupSession.setEnd(interpretInTimeZone(date, endTime, tutorialGroupsConfiguration.getCourse().getTimeZone()));
             tutorialGroupSession.setLocation(location);
+            tutorialGroupSession.setAttendanceCount(attendance);
             return tutorialGroupSession;
         }
 

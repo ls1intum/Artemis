@@ -1,11 +1,11 @@
-<p-dialog header="Edit Session" [modal]="true" [(visible)]="isOpen" focusOnShow="false">
+<p-dialog header="Edit Session" [modal]="true" [(visible)]="isOpen" focusOnShow="false" (onHide)="clearData()">
     <div class="frame">
         <div class="label-and-input">
             @let dateValidation = dateValidationResult();
             <label>Date</label>
             <p-inputgroup>
                 <p-datepicker
-                    placeholder="Date"
+                    placeholder="Date *"
                     appendTo="body"
                     [(ngModel)]="date"
                     (onBlur)="dateInputTouched.set(true)"
@@ -23,7 +23,7 @@
             <label>Start Time</label>
             <p-inputgroup>
                 <p-datepicker
-                    placeholder="Start Time"
+                    placeholder="Start Time *"
                     appendTo="body"
                     [(ngModel)]="startTime"
                     [timeOnly]="true"
@@ -42,7 +42,7 @@
             <label>End Time</label>
             <p-inputgroup>
                 <p-datepicker
-                    placeholder="End Time"
+                    placeholder="End Time *"
                     appendTo="body"
                     [(ngModel)]="endTime"
                     [timeOnly]="true"
@@ -63,7 +63,7 @@
                 <input
                     pInputText
                     [(ngModel)]="location"
-                    placeholder="Location"
+                    placeholder="Location *"
                     (blur)="locationInputTouched.set(true)"
                     [invalid]="locationValidation.status === ValidationStatus.INVALID && locationInputTouched()"
                 />
@@ -74,7 +74,14 @@
                 }
             </p-inputgroup>
         </div>
+        <div class="label-and-input">
+            <label>Attendance</label>
+            <p-inputgroup>
+                <p-inputnumber placeholder="Attendance" [(ngModel)]="attendance" [min]="0" [showButtons]="true" />
+            </p-inputgroup>
+        </div>
         <div class="controls-footer">
+            <span>* required</span>
             <button pButton class="p-button-secondary p-button-sm" (click)="cancel()">Cancel</button>
             <button pButton class="p-button-primary p-button-sm" [disabled]="saveButtonDisabled()" (click)="save()">Save</button>
         </div>

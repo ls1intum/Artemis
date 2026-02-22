@@ -21,5 +21,11 @@
         justify-content: end;
         gap: 1rem;
         margin-top: 1rem;
+        align-items: center;
+
+        span {
+            font-size: 12px;
+            color: var(--secondary);
+        }
     }
 }

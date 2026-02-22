@@ -39,7 +39,6 @@
                         [(ngModel)]="selectedTutorId"
                         [filter]="true"
                         [invalid]="tutorValidation.status === ValidationStatus.INVALID && tutorInputTouched()"
-                        [showClear]="true"
                         (onBlur)="tutorInputTouched.set(true)"
                     />
                     @if (tutorValidation.status === ValidationStatus.INVALID && tutorInputTouched()) {

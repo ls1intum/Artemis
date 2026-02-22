@@ -32,7 +32,7 @@ export class TutorialGroupSessionDTO {
         public locationChanged: boolean,
         public timeChanged: boolean,
         public dateChanged: boolean,
-        public attendanceCount?: number,
+        public attendance?: number,
     ) {}
 }
 

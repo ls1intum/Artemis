@@ -10,6 +10,7 @@ import { Validation, ValidationStatus } from 'app/tutorialgroup/manage/tutorial-
 import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
 import { TooltipModule } from 'primeng/tooltip';
 import dayjs from 'dayjs/esm';
+import { InputNumberModule } from 'primeng/inputnumber';
 
 export interface UpdateTutorialGroupSessionData {
     tutorialGroupSessionId: number;
@@ -18,7 +19,7 @@ export interface UpdateTutorialGroupSessionData {
 
 @Component({
     selector: 'jhi-tutorial-session-create-or-edit-modal',
-    imports: [DialogModule, FormsModule, DatePickerModule, InputGroupModule, InputTextModule, ButtonModule, InputGroupAddonModule, TooltipModule],
+    imports: [DialogModule, FormsModule, DatePickerModule, InputGroupModule, InputTextModule, ButtonModule, InputGroupAddonModule, TooltipModule, InputNumberModule],
     templateUrl: './tutorial-session-create-or-edit-modal.component.html',
     styleUrl: './tutorial-session-create-or-edit-modal.component.scss',
 })
@@ -28,26 +29,21 @@ export class TutorialSessionCreateOrEditModalComponent {
     private session = signal<TutorialGroupSessionDTO | undefined>(undefined);
 
     isOpen = signal(false);
-
     date = signal<Date | undefined>(undefined);
     dateValidationResult = computed<Validation>(() => this.computeDateValidation());
     dateInputTouched = signal(false);
-
     startTime = signal<Date | undefined>(undefined);
     startTimeValidationResult = computed<Validation>(() => this.computeStartTimeValidation());
     startTimeInputTouched = signal(false);
-
     endTime = signal<Date | undefined>(undefined);
     endTimeValidationResult = computed<Validation>(() => this.computeEndTimeValidation());
     endTimeInputTouched = signal(false);
-
     location = signal<string>('');
     locationValidationResult = computed<Validation>(() => this.computeLocationValidation());
     locationInputTouched = signal(false);
-
     inputsInvalid = computed(() => this.computeIfInputsInvalid());
     saveButtonDisabled = computed<boolean>(() => this.computeIfSaveButtonDisabled());
-
+    attendance = signal<number | undefined>(undefined);
     onUpdate = output<UpdateTutorialGroupSessionData>();
     onCreate = output<CreateOrUpdateTutorialGroupSessionDTO>();
 
@@ -78,16 +74,30 @@ export class TutorialSessionCreateOrEditModalComponent {
         this.isOpen.set(false);
     }
 
+    clearData() {
+        this.session.set(undefined);
+        this.date.set(undefined);
+        this.dateInputTouched.set(false);
+        this.startTime.set(undefined);
+        this.startTimeInputTouched.set(false);
+        this.endTime.set(undefined);
+        this.endTimeInputTouched.set(false);
+        this.location.set('');
+        this.locationInputTouched.set(false);
+    }
+
     private createSession() {
         const date = dayjs(this.date()).format('YYYY-MM-DD');
         const startTime = dayjs(this.startTime()).format('HH:mm');
         const endTime = dayjs(this.endTime()).format('HH:mm');
         const location = this.location();
+        const attendance = this.attendance();
         const createTutorialGroupSessionDTO: CreateOrUpdateTutorialGroupSessionDTO = {
             date: date,
             startTime: startTime,
             endTime: endTime,
             location: location,
+            attendance: attendance,
         };
         this.onCreate.emit(createTutorialGroupSessionDTO);
     }
@@ -98,29 +108,19 @@ export class TutorialSessionCreateOrEditModalComponent {
         const startTime = dayjs(this.startTime()).format('HH:mm');
         const endTime = dayjs(this.endTime()).format('HH:mm');
         const location = this.location();
+        const attendance = this.attendance();
         const updateTutorialGroupSessionDTO: CreateOrUpdateTutorialGroupSessionDTO = {
             date: date,
             startTime: startTime,
             endTime: endTime,
             location: location,
+            attendance: attendance,
         };
         const updateTutorialGroupSessionData: UpdateTutorialGroupSessionData = {
             tutorialGroupSessionId: tutorialGroupSessionId,
             updateTutorialGroupSessionDTO: updateTutorialGroupSessionDTO,
         };
         this.onUpdate.emit(updateTutorialGroupSessionData);
-    }
-
-    private clearData() {
-        this.session.set(undefined);
-        this.date.set(undefined);
-        this.dateInputTouched.set(false);
-        this.startTime.set(undefined);
-        this.startTimeInputTouched.set(false);
-        this.endTime.set(undefined);
-        this.endTimeInputTouched.set(false);
-        this.location.set('');
-        this.locationInputTouched.set(false);
     }
 
     private computeIfSaveButtonDisabled(): boolean {
@@ -206,6 +206,7 @@ export class TutorialSessionCreateOrEditModalComponent {
         const startTimeChanged = startTime.getHours() !== originalStart.hour() || startTime.getMinutes() !== originalStart.minute();
         const endTimeChanged = endTime.getHours() !== originalEnd.hour() || endTime.getMinutes() !== originalEnd.minute();
         const locationChanged = location !== session.location;
-        return dateChanged || startTimeChanged || endTimeChanged || locationChanged;
+        const attendanceChanged = this.attendance() !== session.attendance;
+        return dateChanged || startTimeChanged || endTimeChanged || locationChanged || attendanceChanged;
     }
 }
