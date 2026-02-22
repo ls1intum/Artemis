@@ -40,7 +40,7 @@ import { ChatHistoryItemComponent } from './chat-history-item/chat-history-item.
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
-import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
 
 // Session history time bucket boundaries (in days ago)
@@ -79,15 +79,21 @@ const COPY_FEEDBACK_DURATION_MS = 1500;
         HtmlForMarkdownPipe,
         ChatHistoryItemComponent,
         SearchFilterComponent,
+        ConfirmDialogModule,
     ],
+    providers: [ConfirmationService],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisBaseChatbotComponent implements AfterViewInit {
     protected accountService = inject(AccountService);
     protected translateService = inject(TranslateService);
+    private readonly alertService = inject(AlertService);
+    private readonly confirmationService = inject(ConfirmationService);
 
-    // Reactive signal for the localized "new chat" title
-    private readonly newChatTitle = toSignal(this.translateService.stream('artemisApp.iris.chatHistory.newChat'), { initialValue: '' });
+    // Known "new chat" titles from all languages (server-side: messages*.properties, client-side: iris.json).
+    // Must match the values in src/main/resources/i18n/messages*.properties (iris.chat.session.newChatTitle)
+    // and src/main/webapp/i18n/*/iris.json (artemisApp.iris.chatHistory.newChat).
+    private static readonly NEW_CHAT_TITLES = new Set(['new chat', 'neuer chat']);
     protected statusService = inject(IrisStatusService);
     protected chatService = inject(IrisChatService);
     protected route = inject(ActivatedRoute);
@@ -376,21 +382,21 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     async showAISelectionModal(): Promise<void> {
         this.closeChat();
-        const choice = await this.llmModalService.open();
+        const choice = await this.llmModalService.open(this.accountService.userIdentity()?.selectedLLMUsage);
 
         switch (choice) {
-            case 'cloud':
+            case LLMSelectionDecision.CLOUD_AI:
                 this.acceptPermission(LLMSelectionDecision.CLOUD_AI);
                 this.reopenChat.emit();
                 break;
-            case 'local':
+            case LLMSelectionDecision.LOCAL_AI:
                 this.acceptPermission(LLMSelectionDecision.LOCAL_AI);
                 this.reopenChat.emit();
                 break;
-            case 'no_ai':
+            case LLMSelectionDecision.NO_AI:
                 this.chatService.updateLLMUsageConsent(LLMSelectionDecision.NO_AI);
                 break;
-            case 'none':
+            case LLM_MODAL_DISMISSED:
                 break;
         }
     }
@@ -669,6 +675,31 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         this.chatService.switchToSession(session);
     }
 
+    onDeleteSession(session: IrisSessionDTO) {
+        const title = session.title || formatDate(session.creationDate, 'dd.MM.yy HH:mm', 'en');
+        this.confirmationService.confirm({
+            header: this.translateService.instant('artemisApp.iris.chatHistory.deleteSessionHeader'),
+            message: this.translateService.instant('artemisApp.iris.chatHistory.deleteSessionQuestion', { title }),
+            acceptLabel: this.translateService.instant('entity.action.delete'),
+            rejectLabel: this.translateService.instant('entity.action.cancel'),
+            acceptButtonStyleClass: 'p-button-danger',
+            rejectButtonStyleClass: 'p-button-secondary',
+            accept: () => {
+                this.chatService
+                    .deleteSession(session.id)
+                    .pipe(takeUntilDestroyed(this.destroyRef))
+                    .subscribe({
+                        next: () => {
+                            this.alertService.success('artemisApp.iris.chatHistory.deleteSessionSuccess');
+                        },
+                        error: () => {
+                            this.alertService.error('artemisApp.iris.chatHistory.deleteSessionError');
+                        },
+                    });
+            },
+        });
+    }
+
     setChatHistoryVisibility(isOpen: boolean) {
         this.isChatHistoryOpen.set(isOpen);
         if (!isOpen) {
@@ -678,8 +709,10 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     private isNewChatSession(session: IrisSessionDTO): boolean {
         const title = session.title?.trim().toLowerCase();
-        const translatedNewChat = this.newChatTitle()?.trim().toLowerCase();
-        return !!title && !!translatedNewChat && title === translatedNewChat;
+        if (!title) {
+            return false;
+        }
+        return IrisBaseChatbotComponent.NEW_CHAT_TITLES.has(title);
     }
 
     /**
