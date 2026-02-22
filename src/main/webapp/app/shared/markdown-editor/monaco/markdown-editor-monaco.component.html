@@ -110,7 +110,7 @@
                                 <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
                             }
                         } @else {
-                            <button type="button" class="btn btn-sm py-0 text-style-icon" (click)="showTextStyleActions = true">Aa</button>
+                            <button type="button" class="btn btn-sm py-0 text-style-icon" (click)="showTextStyleActions.set(true)">Aa</button>
                         }
                         @if (showNonTextStyleActions()) {
                             @for (action of displayedActions.standard; track action.id) {
