@@ -11,7 +11,7 @@ import { TextEditorKeybinding } from 'app/shared/monaco-editor/model/actions/ada
  * for features like continuing lists with Shift/Cmd+Enter.
  *
  * @abstract
- * @extends TextEditorAction
+ * @extends TextStyleTextEditorAction
  */
 export abstract class ListAction extends TextStyleTextEditorAction {
     protected static editorsWithListener = new WeakMap<TextEditor, boolean>();
