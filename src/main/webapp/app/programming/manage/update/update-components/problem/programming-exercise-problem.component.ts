@@ -172,11 +172,13 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
         if (!competencyLinks) return;
         const exercise = this.programmingExercise();
         if (exercise) {
-            // CompetencyExerciseLink extends CompetencyLearningObjectLink, so the assignment is safe
-            exercise.competencyLinks = competencyLinks.map((link) =>
-                link instanceof CompetencyExerciseLink ? link : new CompetencyExerciseLink(link.competency, exercise, link.weight),
+            // Create a shallow copy to ensure Angular change detection picks up the new reference.
+            // CompetencyExerciseLink extends CompetencyLearningObjectLink, so the assignment is safe.
+            const updated = Object.assign(Object.create(Object.getPrototypeOf(exercise)), exercise);
+            updated.competencyLinks = competencyLinks.map((link) =>
+                link instanceof CompetencyExerciseLink ? link : new CompetencyExerciseLink(link.competency, updated, link.weight),
             );
-            this.programmingExerciseChange.emit(exercise);
+            this.programmingExerciseChange.emit(updated);
         }
         this.refreshCompetencySelection(competencyLinks);
     }
@@ -195,18 +197,20 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
     onDifficultyChange(difficulty: string): void {
         const exercise = this.programmingExercise();
         if (exercise) {
-            exercise.difficulty = DifficultyLevel[difficulty as keyof typeof DifficultyLevel];
+            const updated = Object.assign(Object.create(Object.getPrototypeOf(exercise)), exercise);
+            updated.difficulty = DifficultyLevel[difficulty as keyof typeof DifficultyLevel];
             this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
-            this.programmingExerciseChange.emit(exercise);
+            this.programmingExerciseChange.emit(updated);
         }
     }
 
     onInstructionChange(problemStatement: string): void {
         const exercise = this.programmingExercise();
         if (exercise) {
-            exercise.problemStatement = problemStatement;
+            const updated = Object.assign(Object.create(Object.getPrototypeOf(exercise)), exercise);
+            updated.problemStatement = problemStatement;
             this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
-            this.programmingExerciseChange.emit(exercise);
+            this.programmingExerciseChange.emit(updated);
             this.problemStatementChange.emit(problemStatement);
         }
     }

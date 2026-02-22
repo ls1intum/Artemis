@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.Optional;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -46,9 +47,11 @@ class HyperionChecklistServiceTest {
 
     private HyperionChecklistService hyperionChecklistService;
 
+    private AutoCloseable mocks;
+
     @BeforeEach
     void setup() {
-        MockitoAnnotations.openMocks(this);
+        mocks = MockitoAnnotations.openMocks(this);
         ChatClient chatClient = ChatClient.create(chatModel);
 
         // Mock ObservationRegistry to return a no-op observation
@@ -66,6 +69,11 @@ class HyperionChecklistServiceTest {
         var templateService = new HyperionPromptTemplateService();
         this.hyperionChecklistService = new HyperionChecklistService(chatClient, templateService, observationRegistry, Optional.of(standardizedCompetencyApi),
                 Optional.of(courseCompetencyApi), taskRepository, new com.fasterxml.jackson.databind.ObjectMapper());
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        mocks.close();
     }
 
     @Test

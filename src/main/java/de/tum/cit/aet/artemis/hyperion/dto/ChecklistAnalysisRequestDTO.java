@@ -18,6 +18,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ChecklistAnalysisRequestDTO(@NotBlank @Size(max = 50000) String problemStatementMarkdown,
-        @Pattern(regexp = "^(EASY|MEDIUM|HARD)?$", message = "declaredDifficulty must be EASY, MEDIUM, or HARD") String declaredDifficulty, @Size(max = 50) String language,
+        @Pattern(regexp = "^(EASY|MEDIUM|HARD)$", message = "declaredDifficulty must be EASY, MEDIUM, or HARD") String declaredDifficulty, @Size(max = 50) String language,
         Long exerciseId) {
 }

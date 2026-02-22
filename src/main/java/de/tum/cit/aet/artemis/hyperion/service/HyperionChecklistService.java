@@ -87,6 +87,14 @@ public class HyperionChecklistService {
     /** Time-to-live for the competency catalog cache. */
     private static final Duration CATALOG_CACHE_TTL = Duration.ofHours(1);
 
+    /**
+     * Maximum time to block the servlet thread waiting for all three concurrent LLM analyses.
+     * This call blocks a Tomcat worker thread; keep low to avoid thread-pool exhaustion under
+     * concurrent use. Only instructor-level endpoints invoke this, so concurrency is expected
+     * to be low.
+     */
+    private static final Duration ANALYSIS_TIMEOUT = Duration.ofSeconds(60);
+
     private final Object catalogLock = new Object();
 
     public HyperionChecklistService(ChatClient chatClient, HyperionPromptTemplateService templates, ObservationRegistry observationRegistry,
@@ -128,7 +136,7 @@ public class HyperionChecklistService {
         var qualityMono = Mono.fromCallable(() -> runQualityAnalysis(ctx.input(), ctx.parentObs())).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
 
         try {
-            var resultTuple = Mono.zip(competenciesMono, difficultyMono, qualityMono).block(Duration.ofSeconds(60));
+            var resultTuple = Mono.zip(competenciesMono, difficultyMono, qualityMono).block(ANALYSIS_TIMEOUT);
 
             if (resultTuple == null) {
                 return ChecklistAnalysisResponseDTO.empty();
@@ -184,7 +192,8 @@ public class HyperionChecklistService {
      */
     private AnalysisContext buildAnalysisContext(ChecklistAnalysisRequestDTO request, long courseId) {
         String problemStatement = request.problemStatementMarkdown(); // @NotBlank guarantees non-null after validation
-        String declaredDifficulty = Objects.requireNonNullElse(request.declaredDifficulty(), "NOT_DECLARED");
+        String rawDifficulty = request.declaredDifficulty();
+        String declaredDifficulty = (rawDifficulty == null || rawDifficulty.isBlank()) ? "NOT_DECLARED" : rawDifficulty;
         String language = Objects.requireNonNullElse(request.language(), "JAVA");
 
         // Fetch and serialize the competency catalog
