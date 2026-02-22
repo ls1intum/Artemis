@@ -66,7 +66,7 @@ describe('ScienceSettingsComponent', () => {
         jest.spyOn(userSettingsServiceMock, 'saveSettings').mockReturnValue(of(saveResponse));
         jest.spyOn(userSettingsServiceMock, 'saveSettingsSuccess').mockReturnValue(comp.userSettings);
         jest.spyOn(userSettingsServiceMock, 'extractIndividualSettingsFromSettingsStructure').mockReturnValue(comp.settings);
-        const event = { currentTarget: { id: settingId } };
+        const event = { currentTarget: { id: settingId } } as unknown as MouseEvent;
 
         comp.toggleSetting(event);
 
@@ -79,7 +79,7 @@ describe('ScienceSettingsComponent', () => {
         comp.settings = [scienceSetting];
         const errorResponse = new HttpErrorResponse({ error: { message: 'Save failed' }, status: 500 });
         jest.spyOn(userSettingsServiceMock, 'saveSettings').mockReturnValue(throwError(() => errorResponse));
-        const event = { currentTarget: { id: settingId } };
+        const event = { currentTarget: { id: settingId } } as unknown as MouseEvent;
 
         comp.toggleSetting(event);
 
@@ -90,7 +90,7 @@ describe('ScienceSettingsComponent', () => {
     it('should not save when setting ID is not found', () => {
         comp.settings = [scienceSetting];
         const saveSpy = jest.spyOn(userSettingsServiceMock, 'saveSettings');
-        const event = { currentTarget: { id: 'NON_EXISTENT_ID' } };
+        const event = { currentTarget: { id: 'NON_EXISTENT_ID' } } as unknown as MouseEvent;
 
         comp.toggleSetting(event);
 

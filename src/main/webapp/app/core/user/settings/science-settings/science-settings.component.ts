@@ -33,6 +33,7 @@ export class ScienceSettingsComponent extends UserSettingsDirective implements O
     private featureToggleActiveSubscription?: Subscription;
     private saveSubscription?: Subscription;
     featureToggleActive = false;
+    private lastConfirmedValues = new Map<string, boolean>();
 
     declare userSettings: UserSettingsStructure<ScienceSetting>;
     declare settings: Array<ScienceSetting>;
@@ -51,6 +52,7 @@ export class ScienceSettingsComponent extends UserSettingsDirective implements O
             this.settings = this.userSettingsService.extractIndividualSettingsFromSettingsStructure(this.userSettings);
             this.changeDetector.detectChanges();
         }
+        this.storeConfirmedValues();
 
         // subscribe to feature toggle changes
         this.featureToggleActiveSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.Science).subscribe((active) => {
@@ -68,12 +70,12 @@ export class ScienceSettingsComponent extends UserSettingsDirective implements O
      * Toggles the respective setting and saves it immediately
      */
     toggleSetting(event: MouseEvent) {
-        const settingId = (event.currentTarget as HTMLElement)?.id;
+        const settingId = (event.currentTarget as HTMLElement | undefined)?.id;
         const settingToUpdate = this.settings.find((setting) => setting.settingId === settingId);
         if (!settingToUpdate) {
             return;
         }
-        const previousValue = settingToUpdate.active;
+        const confirmedValue = this.lastConfirmedValues.get(settingToUpdate.settingId) ?? settingToUpdate.active;
         settingToUpdate.active = !settingToUpdate.active;
         settingToUpdate.changed = true;
 
@@ -81,18 +83,26 @@ export class ScienceSettingsComponent extends UserSettingsDirective implements O
         this.saveSubscription?.unsubscribe();
         this.saveSubscription = this.userSettingsService.saveSettings(this.settings, this.userSettingsCategory).subscribe({
             next: (res) => {
-                if (res.body) {
-                    this.userSettings = this.userSettingsService.saveSettingsSuccess(this.userSettings, res.body);
-                    this.settings = this.userSettingsService.extractIndividualSettingsFromSettingsStructure(this.userSettings);
+                if (!res.body) {
+                    return;
                 }
+                this.userSettings = this.userSettingsService.saveSettingsSuccess(this.userSettings, res.body);
+                this.settings = this.userSettingsService.extractIndividualSettingsFromSettingsStructure(this.userSettings);
+                this.storeConfirmedValues();
                 this.finishSaving();
             },
             error: (res) => {
-                // Revert the toggle on save failure
-                settingToUpdate.active = previousValue;
+                // Revert to the last server-confirmed value
+                settingToUpdate.active = confirmedValue;
                 settingToUpdate.changed = false;
                 this.onError(res);
             },
         });
+    }
+
+    private storeConfirmedValues(): void {
+        for (const setting of this.settings) {
+            this.lastConfirmedValues.set(setting.settingId, setting.active);
+        }
     }
 }
