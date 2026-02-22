@@ -55,6 +55,8 @@ public class LectureTranscriptionService {
 
     private final String nebulaSecretToken;
 
+    private final String irisBaseUrl;
+
     private final Optional<ProcessingStateCallbackApi> processingStateCallbackApi;
 
     private final Optional<IrisTranscriptionApi> irisTranscriptionApi;
@@ -66,7 +68,8 @@ public class LectureTranscriptionService {
     public LectureTranscriptionService(LectureTranscriptionsRepositoryApi lectureTranscriptionsRepositoryApi, LectureUnitRepositoryApi lectureUnitRepositoryApi,
             @Qualifier("nebulaRestTemplate") RestTemplate restTemplate, @Qualifier("pyrisRestTemplate") Optional<RestTemplate> pyrisRestTemplate,
             @Value("${artemis.nebula.url}") String nebulaBaseUrl, @Value("${artemis.nebula.secret-token}") String nebulaSecretToken,
-            Optional<ProcessingStateCallbackApi> processingStateCallbackApi, Optional<IrisTranscriptionApi> irisTranscriptionApi, @Value("${server.url}") String artemisBaseUrl) {
+            Optional<ProcessingStateCallbackApi> processingStateCallbackApi, Optional<IrisTranscriptionApi> irisTranscriptionApi, @Value("${server.url}") String artemisBaseUrl,
+            @Value("${artemis.iris.url}") String irisBaseUrl) {
         this.lectureTranscriptionsRepositoryApi = lectureTranscriptionsRepositoryApi;
         this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.restTemplate = restTemplate;
@@ -76,6 +79,7 @@ public class LectureTranscriptionService {
         this.processingStateCallbackApi = processingStateCallbackApi;
         this.irisTranscriptionApi = irisTranscriptionApi;
         this.artemisBaseUrl = artemisBaseUrl;
+        this.irisBaseUrl = irisBaseUrl;
     }
 
     /**
@@ -251,7 +255,7 @@ public class LectureTranscriptionService {
             // Authorization header is automatically added by PyrisAuthorizationInterceptor
             HttpEntity<NebulaTranscriptionRequestDTO> entity = new HttpEntity<>(fullRequest, headers);
 
-            String url = nebulaBaseUrl + "/api/v1/webhooks/transcription/video";
+            String url = irisBaseUrl + "/api/v1/webhooks/transcription/video";
             templateToUse.exchange(url, HttpMethod.POST, entity, Void.class);
 
             // Create placeholder transcription with our generated token as jobId
