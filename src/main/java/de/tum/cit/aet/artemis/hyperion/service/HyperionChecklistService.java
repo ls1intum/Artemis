@@ -71,6 +71,9 @@ public class HyperionChecklistService {
 
     private final ProgrammingExerciseTaskRepository taskRepository;
 
+    /** Lazily cached JSON representation of the standardized competency catalog. */
+    private volatile String cachedCatalogJson;
+
     public HyperionChecklistService(ChatClient chatClient, HyperionPromptTemplateService templates, ObservationRegistry observationRegistry,
             Optional<StandardizedCompetencyApi> standardizedCompetencyApi, ProgrammingExerciseTaskRepository taskRepository, ObjectMapper objectMapper) {
         this.chatClient = chatClient;
@@ -298,7 +301,7 @@ public class HyperionChecklistService {
      * Builds a short human-readable summary of what action was applied.
      */
     private String buildActionSummary(ChecklistActionRequestDTO request) {
-        Map<String, String> ctx = request.context() != null ? request.context() : Map.of();
+        Map<String, String> ctx = sanitizeContext(request.context() != null ? request.context() : Map.of());
 
         return switch (request.actionType()) {
             case FIX_QUALITY_ISSUE -> "Fixed quality issue: " + ctx.getOrDefault("category", "unknown");
@@ -313,6 +316,10 @@ public class HyperionChecklistService {
      * the prompt.
      */
     private String serializeCompetencyCatalog() {
+        String cached = this.cachedCatalogJson;
+        if (cached != null) {
+            return cached;
+        }
         if (standardizedCompetencyApi.isEmpty()) {
             log.warn("StandardizedCompetencyApi is not available (Atlas module disabled). Using empty catalog.");
             return "[]";
@@ -325,7 +332,9 @@ public class HyperionChecklistService {
                 serializeKnowledgeArea(ka, catalog);
             }
 
-            return objectMapper.writeValueAsString(catalog);
+            String json = objectMapper.writeValueAsString(catalog);
+            this.cachedCatalogJson = json;
+            return json;
         }
         catch (JsonProcessingException e) {
             log.error("Failed to serialize competency catalog", e);

@@ -140,13 +140,7 @@ public class HyperionProblemStatementResource {
     public ResponseEntity<ChecklistAnalysisResponseDTO> analyzeChecklist(@PathVariable long courseId, @Valid @RequestBody ChecklistAnalysisRequestDTO request) {
         log.debug("REST request to Hyperion checklist analysis for course [{}]", courseId);
         courseRepository.findByIdElseThrow(courseId);
-        if (request.exerciseId() != null) {
-            ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(request.exerciseId());
-            Course exerciseCourse = exercise.getCourseViaExerciseGroupOrCourseMember();
-            if (exerciseCourse == null || !exerciseCourse.getId().equals(courseId)) {
-                throw new BadRequestAlertException("Exercise does not belong to the specified course", "exercise", "exerciseCourseMismatch");
-            }
-        }
+        validateExerciseBelongsToCourse(request.exerciseId(), courseId);
         var result = checklistService.analyzeChecklist(request);
         return ResponseEntity.ok(result);
     }
@@ -169,15 +163,25 @@ public class HyperionProblemStatementResource {
             @Valid @RequestBody ChecklistAnalysisRequestDTO request) {
         log.debug("REST request to Hyperion checklist section analysis [{}] for course [{}]", section, courseId);
         courseRepository.findByIdElseThrow(courseId);
-        if (request.exerciseId() != null) {
-            ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(request.exerciseId());
+        validateExerciseBelongsToCourse(request.exerciseId(), courseId);
+        var result = checklistService.analyzeSection(request, section);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Validates that the given exercise belongs to the specified course.
+     *
+     * @param exerciseId the id of the exercise (may be null, in which case no validation is performed)
+     * @param courseId   the id of the course
+     */
+    private void validateExerciseBelongsToCourse(Long exerciseId, long courseId) {
+        if (exerciseId != null) {
+            ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
             Course exerciseCourse = exercise.getCourseViaExerciseGroupOrCourseMember();
             if (exerciseCourse == null || !exerciseCourse.getId().equals(courseId)) {
                 throw new BadRequestAlertException("Exercise does not belong to the specified course", "exercise", "exerciseCourseMismatch");
             }
         }
-        var result = checklistService.analyzeSection(request, section);
-        return ResponseEntity.ok(result);
     }
 
     /**

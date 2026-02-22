@@ -14,7 +14,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @param evaluate   Proportion of EVALUATE level
  * @param create     Proportion of CREATE level
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record BloomRadarDTO(@JsonProperty("REMEMBER") Double remember, @JsonProperty("UNDERSTAND") Double understand, @JsonProperty("APPLY") Double apply,
         @JsonProperty("ANALYZE") Double analyze, @JsonProperty("EVALUATE") Double evaluate, @JsonProperty("CREATE") Double create) {
 

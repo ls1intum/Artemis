@@ -14,9 +14,10 @@ class HyperionCodeStyleArchitectureTest extends AbstractModuleCodeStyleTest {
         return 0;
     }
 
-    // return 2 as HyperionCodeGenerationEventDTO and ChecklistActionRequestDTO use ENUMs inside as part of the data transfer
+    // return 3 as HyperionCodeGenerationEventDTO and ChecklistActionRequestDTO use ENUMs inside as part of the data transfer,
+    // and ChecklistSection is a standalone enum used as a path variable for section-level analysis
     @Override
     protected int dtoNameEndingThreshold() {
-        return 2;
+        return 3;
     }
 }

@@ -676,10 +676,11 @@ export class ChecklistPanelComponent {
 
                     // Create all new competencies in parallel
                     const promises = toCreate.map((comp) => lastValueFrom(this.competencyService.create(comp, courseId)));
-                    Promise.all(promises)
-                        .then((responses) => {
+                    Promise.allSettled(promises)
+                        .then((results) => {
                             const newLinks: CompetencyExerciseLink[] = [...existingLinks];
                             const newlyCreated = new Set<string>();
+                            const responses = results.filter((r): r is PromiseFulfilledResult<any> => r.status === 'fulfilled').map((r) => r.value);
 
                             for (const response of responses) {
                                 const created = response.body;

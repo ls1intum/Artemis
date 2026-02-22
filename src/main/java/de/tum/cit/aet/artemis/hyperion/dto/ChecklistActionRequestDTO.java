@@ -4,6 +4,7 @@ import java.util.Map;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -20,7 +21,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "Request to apply an AI-powered checklist action to the problem statement")
 public record ChecklistActionRequestDTO(@NotNull @Schema(description = "Type of action to apply") ActionType actionType,
-        @NotBlank @Schema(description = "Current problem statement markdown") String problemStatementMarkdown,
+        @NotBlank @Size(max = 50000) @Schema(description = "Current problem statement markdown") String problemStatementMarkdown,
         @Schema(description = "Action-specific context parameters") Map<String, String> context) {
 
     /**

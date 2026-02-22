@@ -14,7 +14,7 @@
             <div class="analysis-results">
                 <!-- Quality Section (moved to top) -->
                 <div class="section-card mb-2 border rounded" [class.stale]="isSectionStale('quality')">
-                    <div class="section-header p-2 d-flex align-items-center" (click)="toggleSection('quality')" style="cursor: pointer">
+                    <div class="section-header p-2 d-flex align-items-center" (click)="toggleSection('quality')">
                         <fa-icon [icon]="sectionQuality() ? faChevronDown : faChevronRight" class="me-2 text-muted" />
                         <h6 class="mb-0" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.title">Quality Assessment</h6>
                         @if (result.qualityIssues?.length) {
@@ -184,7 +184,7 @@
 
                 <!-- Estimated Learning Goals Section -->
                 <div class="section-card mb-2 border rounded" [class.stale]="isSectionStale('competencies')">
-                    <div class="section-header p-2 d-flex align-items-center" (click)="toggleSection('competencies')" style="cursor: pointer">
+                    <div class="section-header p-2 d-flex align-items-center" (click)="toggleSection('competencies')">
                         <fa-icon [icon]="sectionCompetencies() ? faChevronDown : faChevronRight" class="me-2 text-muted" />
                         <h6 class="mb-0" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.title">Estimated Learning Goals</h6>
                         @if (result.inferredCompetencies?.length) {
@@ -331,7 +331,7 @@
 
                 <!-- Difficulty Section -->
                 <div class="section-card mb-2 border rounded" [class.stale]="isSectionStale('difficulty')">
-                    <div class="section-header p-2 d-flex align-items-center" (click)="toggleSection('difficulty')" style="cursor: pointer">
+                    <div class="section-header p-2 d-flex align-items-center" (click)="toggleSection('difficulty')">
                         <fa-icon [icon]="sectionDifficulty() ? faChevronDown : faChevronRight" class="me-2 text-muted" />
                         <h6 class="mb-0" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.difficulty.title">Difficulty Assessment</h6>
                         @if (isSectionStale('difficulty')) {

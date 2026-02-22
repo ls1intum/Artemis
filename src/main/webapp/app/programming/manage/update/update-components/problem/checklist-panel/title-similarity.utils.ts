@@ -104,6 +104,7 @@ export function damerauLevenshtein(a: string, b: string): number {
  * variants, and stop-word differences in a single unified metric.
  */
 export function titleSimilarity(a: string, b: string): number {
+    if (!a || !b) return 0;
     if (a === b) return 1.0;
 
     // One completely contains the other → high match
