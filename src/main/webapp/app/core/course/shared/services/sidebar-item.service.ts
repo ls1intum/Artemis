@@ -201,6 +201,16 @@ export class CourseSidebarItemService {
         };
     }
 
+    getIrisItem(): SidebarItem {
+        return {
+            routerLink: 'iris',
+            icon: faRobot,
+            title: 'Iris',
+            translation: 'artemisApp.courseOverview.menu.iris',
+            hidden: false,
+        };
+    }
+
     getFaqManagementItem(courseId: number): SidebarItem {
         return {
             routerLink: `${courseId}/faqs`,
@@ -254,9 +264,9 @@ export class CourseSidebarItemService {
 
     getBuildQueueItem(courseId: number): SidebarItem {
         return {
-            routerLink: `${courseId}/build-queue`,
+            routerLink: `${courseId}/build-overview`,
             icon: faList,
-            title: 'Build Queue',
+            title: 'Build Overview',
             translation: 'artemisApp.buildQueue.title',
             hidden: false,
         };

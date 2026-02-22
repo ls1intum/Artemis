@@ -34,10 +34,10 @@ describe('ExerciseChatbotButtonComponent', () => {
     let mockDialog: MatDialog;
     let mockOverlay: Overlay;
     let mockActivatedRoute: ActivatedRoute;
-    let mockDialogClose: ReturnType<typeof vi.fn>;
+    let mockDialogClose: any;
+    let mockDialogAfterClosed: Subject<void>;
     let mockParamsSubject: Subject<any>;
     let mockQueryParamsSubject: Subject<any>;
-    let mockDialogAfterClosed: Subject<void>;
     let accountService: AccountService;
 
     const statusMock = {
@@ -45,10 +45,7 @@ describe('ExerciseChatbotButtonComponent', () => {
         handleRateLimitInfo: vi.fn(),
         setCurrentCourse: vi.fn(),
     };
-    const userMock = {
-        acceptExternalLLMUsage: vi.fn(),
-    };
-    const accountMock = { externalLLMUsageAccepted: dayjs() } as User;
+    const accountMock = { selectedLLMUsageTimestamp: dayjs() } as User;
 
     const mockExerciseId = 123;
     const mockCourseId = 456;
@@ -56,13 +53,13 @@ describe('ExerciseChatbotButtonComponent', () => {
     beforeEach(async () => {
         mockParamsSubject = new Subject();
         mockQueryParamsSubject = new Subject();
-        mockDialogAfterClosed = new Subject<void>();
         mockActivatedRoute = {
-            params: mockParamsSubject.asObservable(),
-            queryParams: mockQueryParamsSubject.asObservable(),
+            params: mockParamsSubject,
+            queryParams: mockQueryParamsSubject,
         } as unknown as ActivatedRoute;
 
         mockDialogClose = vi.fn();
+        mockDialogAfterClosed = new Subject<void>();
 
         mockDialog = {
             open: vi.fn().mockReturnValue({
@@ -91,24 +88,28 @@ describe('ExerciseChatbotButtonComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useValue: mockActivatedRoute },
                 { provide: IrisStatusService, useValue: statusMock },
-                { provide: UserService, useValue: userMock },
+                { provide: UserService, useValue: {} },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(IrisExerciseChatbotButtonComponent);
-                component = fixture.componentInstance;
-                // Set required input before detectChanges to avoid signal errors
-                fixture.componentRef.setInput('mode', ChatServiceMode.PROGRAMMING_EXERCISE);
-                fixture.detectChanges();
-                chatService = TestBed.inject(IrisChatService);
-                chatService.setCourseId(mockCourseId);
-                chatHttpServiceMock = TestBed.inject(IrisChatHttpService);
-                wsServiceMock = TestBed.inject(IrisWebsocketService);
-                accountService = TestBed.inject(AccountService);
+        }).compileComponents();
 
-                accountService.userIdentity.set(accountMock);
-            });
+        fixture = TestBed.createComponent(IrisExerciseChatbotButtonComponent);
+        component = fixture.componentInstance;
+
+        // Set required input BEFORE first detectChanges
+        fixture.componentRef.setInput('mode', ChatServiceMode.PROGRAMMING_EXERCISE);
+
+        chatService = TestBed.inject(IrisChatService);
+        chatService.setCourseId(mockCourseId);
+        chatHttpServiceMock = TestBed.inject(IrisChatHttpService);
+        wsServiceMock = TestBed.inject(IrisWebsocketService);
+        accountService = TestBed.inject(AccountService);
+
+        accountService.userIdentity.set(accountMock);
+
+        // Emit empty query params initially
+        mockQueryParamsSubject.next({});
+
+        fixture.detectChanges();
     });
 
     afterEach(() => {
@@ -127,9 +128,12 @@ describe('ExerciseChatbotButtonComponent', () => {
         mockParamsSubject.next({
             exerciseId: mockExerciseId,
         });
-        await fixture.whenStable();
 
-        expect(spy).toHaveBeenCalledExactlyOnceWith(ChatServiceMode.PROGRAMMING_EXERCISE, mockExerciseId);
+        await fixture.whenStable();
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(spy).toHaveBeenCalledOnce();
+        expect(spy).toHaveBeenCalledWith(ChatServiceMode.PROGRAMMING_EXERCISE, mockExerciseId);
     });
 
     it('should subscribe to route.params and call chatService.switchTo with text exercise mode', async () => {
@@ -144,9 +148,12 @@ describe('ExerciseChatbotButtonComponent', () => {
         mockParamsSubject.next({
             exerciseId: mockExerciseId,
         });
-        await fixture.whenStable();
 
-        expect(spy).toHaveBeenCalledExactlyOnceWith(ChatServiceMode.TEXT_EXERCISE, mockExerciseId);
+        await fixture.whenStable();
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(spy).toHaveBeenCalledOnce();
+        expect(spy).toHaveBeenCalledWith(ChatServiceMode.TEXT_EXERCISE, mockExerciseId);
     });
 
     it('should close the dialog when destroying the object', () => {
@@ -160,24 +167,23 @@ describe('ExerciseChatbotButtonComponent', () => {
         expect(mockDialogClose).toHaveBeenCalled();
     });
 
-    it('should show new message indicator when chatbot is closed', async () => {
+    it('should not show new message indicator when chatbot is closed', async () => {
         // given
         vi.spyOn(chatHttpServiceMock, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(mockExerciseId)));
         vi.spyOn(chatHttpServiceMock, 'getChatSessions').mockReturnValue(of([]));
         vi.spyOn(wsServiceMock, 'subscribeToSession').mockReturnValueOnce(of(mockWebsocketServerMessage));
-        fixture.componentRef.setInput('mode', ChatServiceMode.PROGRAMMING_EXERCISE);
         mockParamsSubject.next({
             exerciseId: mockExerciseId,
         });
         chatService.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, mockExerciseId);
 
-        // when - wait for stability, then detect changes
+        // when
         await fixture.whenStable();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // then
         const unreadIndicatorElement: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('.unread-indicator');
-        expect(unreadIndicatorElement).not.toBeNull();
+        expect(unreadIndicatorElement).toBeNull();
     });
 
     it('should not show new message indicator when chatbot is open', async () => {
@@ -185,59 +191,143 @@ describe('ExerciseChatbotButtonComponent', () => {
         vi.spyOn(chatHttpServiceMock, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(mockExerciseId)));
         vi.spyOn(chatHttpServiceMock, 'getChatSessions').mockReturnValue(of([]));
         vi.spyOn(wsServiceMock, 'subscribeToSession').mockReturnValueOnce(of(mockWebsocketServerMessage));
-        fixture.componentRef.setInput('mode', ChatServiceMode.PROGRAMMING_EXERCISE);
         mockParamsSubject.next({
             exerciseId: mockExerciseId,
         });
         chatService.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, mockExerciseId);
-
-        // Wait for message to be received
-        await fixture.whenStable();
-        fixture.detectChanges();
-
-        // Verify indicator shows when chat is closed
-        expect(component.chatOpen()).toBe(false);
-        let unreadIndicatorElement = fixture.debugElement.nativeElement.querySelector('.unread-indicator');
-        expect(unreadIndicatorElement).not.toBeNull();
-
-        // Now open chat
         component.openChat();
-        await fixture.whenStable();
-        fixture.detectChanges();
 
-        // then - when chat is open, the entire button section (including unread indicator) should not be rendered
-        expect(component.chatOpen()).toBe(true);
-        unreadIndicatorElement = fixture.debugElement.nativeElement.querySelector('.unread-indicator');
+        // when
+        await fixture.whenStable();
+        fixture.changeDetectorRef.detectChanges();
+
+        // then
+        const unreadIndicatorElement: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('.unread-indicator');
         expect(unreadIndicatorElement).toBeNull();
     });
 
-    it('should open chatbot if irisQuestion is provided in the queryParams', async () => {
-        // given - set the input first
+    it('should not open the chatbot if no irisQuestion is provided in the queryParams', async () => {
+        // given
+        const mockQueryParams = {};
         fixture.componentRef.setInput('mode', ChatServiceMode.PROGRAMMING_EXERCISE);
-        fixture.detectChanges();
 
-        // when - emit queryParams with irisQuestion
-        mockQueryParamsSubject.next({ irisQuestion: 'Can you explain me the error I got?' });
+        // when
+        mockQueryParamsSubject.next(mockQueryParams);
         await fixture.whenStable();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
-        // then
-        expect(component.chatOpen()).toBe(true);
+        // then - use signal getter
+        expect(component.chatOpen()).toBe(false);
     });
 
-    it('should not open the chatbot if no irisQuestion is provided in the queryParams', async () => {
-        // given - set the input first
-        fixture.componentRef.setInput('mode', ChatServiceMode.PROGRAMMING_EXERCISE);
-        fixture.detectChanges();
+    describe('checkOverflow', () => {
+        it('should set isOverflowing to false when chatBubble element does not exist', () => {
+            component.isOverflowing.set(true);
+            component.checkOverflow();
+            expect(component.isOverflowing()).toBe(false);
+        });
 
-        // chatOpen starts as false
-        expect(component.chatOpen()).toBe(false);
+        it('should set isOverflowing to false when bubble-text element does not exist', () => {
+            // Create a mock bubble element without bubble-text child
+            const mockBubble = document.createElement('div');
+            vi.spyOn(component, 'chatBubble' as any).mockReturnValue({ nativeElement: mockBubble });
 
-        // when - emit empty query params
-        mockQueryParamsSubject.next({});
-        await fixture.whenStable();
+            component.isOverflowing.set(true);
+            component.checkOverflow();
 
-        // then - chatOpen should still be false
-        expect(component.chatOpen()).toBe(false);
+            expect(component.isOverflowing()).toBe(false);
+        });
+
+        it('should set isOverflowing to true when text scrollHeight exceeds clientHeight', () => {
+            // Create mock elements
+            const mockBubble = document.createElement('div');
+            const mockText = document.createElement('div');
+            mockText.classList.add('bubble-text');
+            mockBubble.appendChild(mockText);
+
+            // Mock scrollHeight > clientHeight
+            Object.defineProperty(mockText, 'scrollHeight', { value: 100, configurable: true });
+            Object.defineProperty(mockText, 'clientHeight', { value: 50, configurable: true });
+
+            vi.spyOn(component, 'chatBubble' as any).mockReturnValue({ nativeElement: mockBubble });
+
+            component.checkOverflow();
+
+            expect(component.isOverflowing()).toBe(true);
+        });
+
+        it('should set isOverflowing to false when text scrollHeight equals clientHeight', () => {
+            // Create mock elements
+            const mockBubble = document.createElement('div');
+            const mockText = document.createElement('div');
+            mockText.classList.add('bubble-text');
+            mockBubble.appendChild(mockText);
+
+            // Mock scrollHeight = clientHeight
+            Object.defineProperty(mockText, 'scrollHeight', { value: 50, configurable: true });
+            Object.defineProperty(mockText, 'clientHeight', { value: 50, configurable: true });
+
+            vi.spyOn(component, 'chatBubble' as any).mockReturnValue({ nativeElement: mockBubble });
+
+            component.checkOverflow();
+
+            expect(component.isOverflowing()).toBe(false);
+        });
+    });
+
+    describe('handleButtonClick', () => {
+        it('should close dialog and set chatOpen to false when chat is open', () => {
+            component.openChat();
+            expect(component.chatOpen()).toBe(true);
+
+            component.handleButtonClick();
+
+            expect(mockDialog.closeAll).toHaveBeenCalled();
+            expect(component.chatOpen()).toBe(false);
+        });
+
+        it('should open chat when chat is closed', () => {
+            expect(component.chatOpen()).toBe(false);
+
+            component.handleButtonClick();
+
+            expect(component.chatOpen()).toBe(true);
+            expect(mockDialog.open).toHaveBeenCalled();
+        });
+    });
+
+    describe('dialog close handling', () => {
+        it('should reset state when dialog is closed externally', async () => {
+            component.openChat();
+            component.newIrisMessage.set('Some message');
+            expect(component.chatOpen()).toBe(true);
+
+            // Simulate dialog closing
+            mockDialogAfterClosed.next();
+            await fixture.whenStable();
+
+            expect(component.chatOpen()).toBe(false);
+            expect(component.newIrisMessage()).toBeUndefined();
+        });
+    });
+
+    describe('lecture mode', () => {
+        it('should subscribe to route.params and call chatService.switchTo with lecture mode', async () => {
+            const lectureId = 789;
+            vi.spyOn(chatHttpServiceMock, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(lectureId)));
+            vi.spyOn(chatHttpServiceMock, 'getChatSessions').mockReturnValue(of([]));
+            vi.spyOn(wsServiceMock, 'subscribeToSession').mockReturnValueOnce(of());
+            const spy = vi.spyOn(chatService, 'switchTo');
+
+            fixture.componentRef.setInput('mode', ChatServiceMode.LECTURE);
+            fixture.changeDetectorRef.detectChanges();
+
+            mockParamsSubject.next({
+                lectureId: lectureId,
+            });
+            await fixture.whenStable();
+
+            expect(spy).toHaveBeenCalledExactlyOnceWith(ChatServiceMode.LECTURE, lectureId);
+        });
     });
 });

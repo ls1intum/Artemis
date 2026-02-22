@@ -59,6 +59,7 @@ import { CourseOperationProgressDTO, CourseOperationType } from 'app/core/course
 import { CourseOperationProgressComponent } from 'app/core/course/manage/course-operation-progress/course-operation-progress.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { IS_AT_LEAST_ADMIN } from 'app/shared/constants/authority.constants';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
 
 @Component({
@@ -110,6 +111,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
     protected readonly ButtonSize = ButtonSize;
     protected readonly ActionType = ActionType;
+    protected readonly IS_AT_LEAST_ADMIN = IS_AT_LEAST_ADMIN;
 
     private eventSubscriber: Subscription;
     private featureToggleSub: Subscription;
@@ -247,6 +249,12 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             }
             return routerUrl.includes(route.urlPart);
         });
+
+        // Hide Student View button for routes that have no corresponding student view
+        if (routerUrl.includes('build-overview')) {
+            this.studentViewLink.set([]);
+            return;
+        }
 
         this.studentViewLink.set(matchedRoute ? matchedRoute.targetPath : defaultPath);
     }

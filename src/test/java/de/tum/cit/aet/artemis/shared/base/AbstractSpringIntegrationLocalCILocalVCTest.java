@@ -5,13 +5,10 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ARTEMIS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LDAP;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_THEIA;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
@@ -82,18 +79,19 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 @ResourceLock("AbstractSpringIntegrationLocalCILocalVCTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 // NOTE: in a "single node" environment, PROFILE_BUILDAGENT must be before PROFILE_CORE to avoid issues
-@ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_BUILDAGENT, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_LOCALCI, PROFILE_LOCALVC, PROFILE_LDAP, PROFILE_LTI,
-        PROFILE_AEOLUS, PROFILE_THEIA, PROFILE_IRIS, PROFILE_ATHENA })
+@ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_BUILDAGENT, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_LOCALCI, PROFILE_LOCALVC, PROFILE_LDAP, PROFILE_AEOLUS,
+        PROFILE_ATHENA })
 // Note: the server.port property must correspond to the port used in the artemis.version-control.url property.
 @TestPropertySource(properties = { "artemis.user-management.use-external=false", "artemis.sharing.enabled=true", "artemis.continuous-integration.specify-concurrent-builds=true",
         "artemis.continuous-integration.concurrent-build-size=1", "artemis.continuous-integration.asynchronous=false",
         "artemis.continuous-integration.build.images.java.default=dummy-docker-image", "artemis.continuous-integration.image-cleanup.enabled=true",
-        "artemis.continuous-integration.image-cleanup.disk-space-threshold-mb=1000000000", "spring.liquibase.enabled=true", "artemis.iris.health-ttl=500",
-        "info.contact=test@localhost", "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_localci_localvc", "artemis.version-control.build-agent-use-ssh=true",
-        "artemis.version-control.ssh-private-key-folder-path=local/server-integration-test-localci/ssh-keys", "artemis.hyperion.enabled=true", "artemis.nebula.enabled=false",
+        "artemis.continuous-integration.image-cleanup.disk-space-threshold-mb=1000000000", "spring.liquibase.enabled=true", "artemis.iris.enabled=true",
+        "artemis.iris.health-ttl=500", "info.contact=test@localhost", "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_localci_localvc",
+        "artemis.version-control.build-agent-use-ssh=true", "artemis.version-control.ssh-private-key-folder-path=local/server-integration-test-localci/ssh-keys",
+        "artemis.hyperion.enabled=true", "artemis.nebula.enabled=false",
         // Use separate repo paths for LocalCI/LocalVC tests to isolate from other test buckets
         "artemis.repo-clone-path=./local/server-integration-test-localci/repos",
-        "artemis.version-control.local-vcs-repo-path=./local/server-integration-test-localci/local-vcs-repos" })
+        "artemis.version-control.local-vcs-repo-path=./local/server-integration-test-localci/local-vcs-repos", "artemis.lti.enabled=true" })
 @ContextConfiguration(classes = TestBuildAgentConfiguration.class)
 public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends AbstractArtemisIntegrationTest {
 

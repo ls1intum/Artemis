@@ -60,7 +60,19 @@ public class LocalCIService implements StatelessCIService {
 
     @Override
     public ConnectorHealth health() {
-        return new ConnectorHealth(true, Map.of("buildAgents", distributedDataAccessService.getBuildAgentInformation()));
+        // Return a simplified view of build agents for health check
+        // This excludes sensitive/large data like build scripts, repository URIs, SSH keys
+        var buildAgentsSummary = distributedDataAccessService.getBuildAgentInformation().stream().map(agent -> {
+            var buildAgent = agent.buildAgent();
+            var name = buildAgent.name() != null ? buildAgent.name() : "Unknown";
+            var displayName = buildAgent.displayName() != null ? buildAgent.displayName() : name;
+            var memberAddress = buildAgent.memberAddress() != null ? buildAgent.memberAddress() : "";
+            var status = agent.status() != null ? agent.status().name() : "UNKNOWN";
+            var runningJobs = agent.runningBuildJobs().stream().map(job -> job.name() != null ? job.name() : job.id()).map(String::valueOf).toList();
+            return Map.of("name", name, "displayName", displayName, "memberAddress", memberAddress, "status", status, "maxJobs", agent.maxNumberOfConcurrentBuildJobs(),
+                    "currentJobs", agent.numberOfCurrentBuildJobs(), "runningJobs", runningJobs);
+        }).toList();
+        return new ConnectorHealth(true, Map.of("buildAgents", buildAgentsSummary));
     }
 
     // This method is temporary, for an adaptation to the new-result endpoint

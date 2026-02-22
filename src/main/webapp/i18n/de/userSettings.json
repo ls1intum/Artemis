@@ -8,7 +8,7 @@
             "vcsAccessTokenSettings": "VCS Token",
             "passkeys": "Passkeys",
             "accountInformation": "Account Informationen",
-            "externalLLMUsage": "Externe LLM-Nutzung",
+            "LLMUsage": "LLM Nutzung",
             "learnerProfile": "Lernprofil",
             "notificationSettings": "Benachrichtigungen",
             "notificationSettingsFilterInfo": "Diese Einstellungen filtern auch die Seitenleiste für Mitteilungen",
@@ -21,9 +21,12 @@
                 "jetbrainsHelp": "Um JetBrains IDEs zu verwenden, installiere bitte die JetBrains Toolbox.",
                 "addNewLanguage": "Neue sprachspezifische Einstellungen hinzufügen"
             },
-            "externalLLMUsageSettingsPage": {
-                "accepted": "Du hast die Nutzung von externen LLMs am {{acceptedDate}} akzeptiert.",
-                "declined": "Du hast die Nutzung von externen LLMs nicht akzeptiert."
+            "LLMUsageSettingsPage": {
+                "cloudAccepted": "Du hast Cloud-KI am {{acceptedDate}} ausgewählt.",
+                "onPremiseAccepted": "Du hast lokale KI am {{acceptedDate}} ausgewählt.",
+                "AIDeclined": "Du hast die Nutzung von LLMs am {{acceptedDate}} explizit abgelehnt.",
+                "noAISelected": "Du hast noch keine Entscheidung über die Verwendung von LLMs getroffen.",
+                "chooseAI": "Auswahl ändern"
             },
             "sshSettingsPage": {
                 "sshSettingsInfoText": "Hier kannst du einen öffentlichen SSH-Schlüssel festlegen, um Git-Repositories über SSH zu klonen. Weitere Einzelheiten findest du in der Dokumentation.",
@@ -112,7 +115,8 @@
                 },
                 "error": {
                     "invalidCredential": "Es wurde ein ungültiger Passkey bereitgestellt. Bitte versuche es erneut mit einem anderen Authentifikator (z. B. Apple Keychain, Windows Hello, Google Password Manager, etc.).",
-                    "login": "Login mit Passkey fehlgeschlagen. Bitte überprüfe, ob du einen Passkey bei Artemis registriert hast.",
+                    "login": "Login mit Passkey fehlgeschlagen. Bitte überprüfe, ob du einen Passkey bei Artemis registriert hast. Sofern ein Passkey registriert ist, lade die Seite neu und versuche es erneut.",
+                    "loginDeactivated": "Login mit Passkey fehlgeschlagen, bitte lade die Seite erneut und probiere es nochmal. Falls das nicht hilft, scheint der Account deaktiviert zu sein.",
                     "passkeyAlreadyRegistered": "Du hast bereits einen Passkey mit dem ausgewählten Authentifikator registriert. Wähle einen anderen Authentifikator, wenn du einen weiteren Passkey registrieren möchtest.",
                     "registration": "Der Passkey konnte nicht registriert werden. Bitte versuche es erneut.",
                     "save": "Der Passkey konnte nicht gespeichert werden. Bitte versuche es erneut.",
@@ -141,7 +145,7 @@
                 "editAccountSettings": "Kontoeinstellungen bearbeiten"
             },
             "categories": {
-                "externalLLMUsage": "Externe LLM-Nutzungseinstellungen",
+                "LLMUsage": "LLM-Nutzungseinstellungen",
                 "NOTIFICATION_SETTINGS": "Benachrichtigungseinstellungen",
                 "SCIENCE_SETTINGS": "Forschungseinstellungen",
                 "SSH_SETTINGS": "SSH Einstellungen",

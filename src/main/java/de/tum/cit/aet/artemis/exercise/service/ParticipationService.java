@@ -162,7 +162,7 @@ public class ParticipationService {
             if (participation.getInitializationState() == null || participation.getInitializationState() == InitializationState.UNINITIALIZED
                     || participation.getInitializationState() == InitializationState.FINISHED && !(exercise instanceof QuizExercise)) {
                 // in case the participation was finished before, we set it to initialized again so that the user sees the correct button "Open modeling editor" on the client side.
-                // Only for quiz exercises, the participation status FINISHED should not be overwritten since the user must not change his submission once submitted
+                // Only for quiz exercises, the participation status FINISHED should not be overwritten since the user must not change their submission once submitted
                 participation.setInitializationState(InitializationState.INITIALIZED);
             }
             // TODO: load submission with exercise for exam edge case:
@@ -365,7 +365,7 @@ public class ParticipationService {
             ProgrammingExerciseStudentParticipation programmingParticipation = (ProgrammingExerciseStudentParticipation) participation;
             // Note: we make sure to use the correct programming exercises here to avoid org.hibernate.LazyInitializationException later
             programmingParticipation.setProgrammingExercise(programmingExercise);
-            // Note: we need a repository, otherwise the student would not be possible to click resume (in case he wants to further participate after the due date)
+            // Note: we need a repository, otherwise the student would not be possible to click resume (in case they want to further participate after the due date)
             programmingParticipation = copyRepository(programmingExercise, programmingExercise.getVcsTemplateRepositoryUri(), programmingParticipation);
             programmingParticipation = configureRepository(programmingParticipation);
             participation = programmingParticipation;

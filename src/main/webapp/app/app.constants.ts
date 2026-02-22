@@ -41,6 +41,8 @@ export const MODULE_FEATURE_ATLAS = 'atlas';
 
 export const MODULE_FEATURE_HYPERION = 'hyperion';
 
+export const MODULE_FEATURE_IRIS = 'iris';
+
 export const MODULE_FEATURE_EXAM = 'exam';
 
 export const MODULE_FEATURE_PLAGIARISM = 'plagiarism';
@@ -59,11 +61,16 @@ export const MODULE_FEATURE_NEBULA = 'nebula';
 
 export const MODULE_FEATURE_SHARING = 'sharing';
 
+export const MODULE_FEATURE_LTI = 'lti';
+
+export const MODULE_FEATURE_THEIA = 'theia';
+
 export type ModuleFeature =
     | typeof MODULE_FEATURE_PASSKEY
     | typeof MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN
     | typeof MODULE_FEATURE_ATLAS
     | typeof MODULE_FEATURE_HYPERION
+    | typeof MODULE_FEATURE_IRIS
     | typeof MODULE_FEATURE_EXAM
     | typeof MODULE_FEATURE_PLAGIARISM
     | typeof MODULE_FEATURE_TEXT
@@ -72,15 +79,15 @@ export type ModuleFeature =
     | typeof MODULE_FEATURE_LECTURE
     | typeof MODULE_FEATURE_TUTORIALGROUP
     | typeof MODULE_FEATURE_NEBULA
-    | typeof MODULE_FEATURE_SHARING;
+    | typeof MODULE_FEATURE_SHARING
+    | typeof MODULE_FEATURE_LTI
+    | typeof MODULE_FEATURE_THEIA;
 
 export const PROFILE_LOCALCI = 'localci';
 
 export const PROFILE_BUILDAGENT = 'buildagent';
 
 export const PROFILE_AEOLUS = 'aeolus';
-
-export const PROFILE_IRIS = 'iris';
 
 export const PROFILE_LTI = 'lti';
 
@@ -96,8 +103,6 @@ export const PROFILE_APOLLON = 'apollon';
 
 export const PROFILE_ATHENA = 'athena';
 
-export const PROFILE_THEIA = 'theia';
-
 export const PROFILE_LDAP = 'ldap';
 
 export const PROFILE_SAML2 = 'saml2';
@@ -106,7 +111,6 @@ export type ProfileFeature =
     | typeof PROFILE_LOCALCI
     | typeof PROFILE_BUILDAGENT
     | typeof PROFILE_AEOLUS
-    | typeof PROFILE_IRIS
     | typeof PROFILE_LTI
     | typeof PROFILE_PROD
     | typeof PROFILE_DEV
@@ -114,6 +118,5 @@ export type ProfileFeature =
     | typeof PROFILE_JENKINS
     | typeof PROFILE_APOLLON
     | typeof PROFILE_ATHENA
-    | typeof PROFILE_THEIA
     | typeof PROFILE_LDAP
     | typeof PROFILE_SAML2;

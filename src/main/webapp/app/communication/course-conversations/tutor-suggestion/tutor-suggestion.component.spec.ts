@@ -59,7 +59,7 @@ describe('TutorSuggestionComponent', () => {
         setCurrentCourse: jest.fn(),
     } as any;
     const mockUserService = {
-        updateExternalLLMUsageConsent: jest.fn(),
+        updateLLMSelectionDecision: jest.fn(),
     } as any;
 
     beforeEach(async () => {
@@ -102,7 +102,7 @@ describe('TutorSuggestionComponent', () => {
 
         jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
         chatService.setCourseId(123);
-        accountService.userIdentity.set({ externalLLMUsageAccepted: dayjs() } as User);
+        accountService.userIdentity.set({ selectedLLMUsageTimestamp: dayjs() } as User);
 
         componentRef.setInput('post', { id: 1 } as any);
         componentRef.setInput('course', { id: 1 } as any);
@@ -111,7 +111,7 @@ describe('TutorSuggestionComponent', () => {
     it('should initialize and switch chat service if IRIS is enabled', () => {
         jest.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(true);
         jest.spyOn(courseSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(courseSettings));
-        jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+        jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
         const switchToSpy = jest.spyOn(chatService, 'switchTo').mockReturnValue(undefined);
         const getFeatureToggleSpy = jest.spyOn(featureToggleService, 'getFeatureToggleActive');
         const getActiveStatusSpy = jest.spyOn(irisStatusService, 'getActiveStatus');
@@ -124,7 +124,7 @@ describe('TutorSuggestionComponent', () => {
     it('should initialize properly in ngOnInit and load settings', fakeAsync(() => {
         jest.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(true);
         const getCourseSettingsSpy = jest.spyOn(courseSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(courseSettings));
-        const profileServiceMock = jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+        const profileServiceMock = jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
         const switchToSpy = jest.spyOn(chatService, 'switchTo').mockReturnValue(undefined);
         jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
         jest.spyOn(irisStatusService, 'getActiveStatus').mockReturnValue(of(true));
@@ -136,8 +136,8 @@ describe('TutorSuggestionComponent', () => {
     }));
 
     describe('should set irisEnabled to', () => {
-        it('false if Iris profile is not enabled', fakeAsync(() => {
-            jest.spyOn(profileService, 'isProfileActive').mockReturnValue(false);
+        it('false if Iris module feature is not enabled', fakeAsync(() => {
+            jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(false);
             jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
             jest.spyOn(irisStatusService, 'getActiveStatus').mockReturnValue(of(true));
 
@@ -209,7 +209,7 @@ describe('TutorSuggestionComponent', () => {
         it('true if all conditions are met', fakeAsync(() => {
             jest.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(true);
             jest.spyOn(courseSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(courseSettings));
-            jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+            jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
             jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
             jest.spyOn(irisStatusService, 'getActiveStatus').mockReturnValue(of(true));
             fixture.detectChanges();
@@ -244,7 +244,7 @@ describe('TutorSuggestionComponent', () => {
 
     it('should unsubscribe from all services on destroy', () => {
         jest.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(true);
-        jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+        jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
         jest.spyOn(courseSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(courseSettings));
         jest.spyOn(chatService, 'currentStages').mockReturnValue(of([]));
 
@@ -395,7 +395,7 @@ describe('TutorSuggestionComponent', () => {
 
         it('should not request suggestion when student is not tutor in course', fakeAsync(() => {
             jest.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(false);
-            jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+            jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
             jest.spyOn(courseSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(courseSettings));
             jest.spyOn(chatService, 'currentStages').mockReturnValue(of([]));
             jest.spyOn(chatService, 'currentError').mockReturnValue(of());

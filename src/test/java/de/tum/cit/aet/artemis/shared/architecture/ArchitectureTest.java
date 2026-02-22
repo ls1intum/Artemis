@@ -114,7 +114,11 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testNoGoogleImport() {
-        ArchRule noGoogleDependencies = noClasses().should().dependOnClassesThat().resideInAnyPackage("com.google");
+        ArchRule noGoogleDependencies = noClasses().should().dependOnClassesThat().resideInAnyPackage("com.google..")
+                .because("Google libraries (Guava, Gson) are forbidden to reduce incompatibilities, to reduce dependencies and security risks. " + "Alternatives: "
+                        + "Guava Cache -> Spring CacheManager (see HazelcastConfiguration), " + "Guava Collections -> Java Collections API (List.of(), Set.of(), Map.of()), "
+                        + "Guava Strings -> Apache Commons Lang3 StringUtils or Spring StringUtils, " + "Guava Preconditions -> Objects.requireNonNull() or Spring Assert, "
+                        + "Guava Optional -> java.util.Optional, " + "Gson -> Jackson ObjectMapper");
         noGoogleDependencies.check(allClasses);
     }
 
@@ -240,13 +244,28 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
+    void testJavaxActivationExclusion() {
+        var javaxActivationUsageRule = noClasses().should().dependOnClassesThat().resideInAnyPackage("javax.activation..")
+                .because("javax.activation is an outdated library, please use an alternative.");
+        var result = javaxActivationUsageRule.evaluate(allClasses);
+        assertThat(result.getFailureReport().getDetails()).hasSize(0);
+    }
+
+    @Test
     void testGsonExclusion() {
-        // TODO: Replace all uses of gson with Jackson and check that gson is not used any more
         var gsonUsageRule = noClasses().should().accessClassesThat().resideInAnyPackage("com.google.gson..").because("we use an alternative JSON parsing library.");
         var result = gsonUsageRule.evaluate(allClasses);
-        log.info("Current number of Gson usages: {}", result.getFailureReport().getDetails().size());
-        // TODO: reduce the following number to 0
-        assertThat(result.getFailureReport().getDetails()).hasSizeLessThanOrEqualTo(664);
+        log.debug("Current number of Gson usages: {}", result.getFailureReport().getDetails().size());
+        assertThat(result.getFailureReport().getDetails()).hasSize(0);
+    }
+
+    @Test
+    void testGuavaExclusion() {
+        var guavaUsageRule = noClasses().should().accessClassesThat().resideInAnyPackage("com.google.common..")
+                .because("Guava is not allowed. Use standard Java or Spring alternatives instead.");
+        var result = guavaUsageRule.evaluate(allClasses);
+        log.debug("Current number of Guava usages: {}", result.getFailureReport().getDetails().size());
+        assertThat(result.getFailureReport().getDetails()).hasSize(0);
     }
 
     /**
@@ -426,6 +445,131 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 .because("All Spring components should be lazy-loaded to improve startup time");
 
         rule.check(allClasses);
+    }
+
+    /**
+     * Ensures that @Lazy is not used on constructor or method parameters in Spring beans.
+     * <p>
+     * Using @Lazy on parameters is often a workaround for circular dependencies, which indicates
+     * poor architecture. Instead, @Lazy should only be used at the class level to mark the entire
+     * bean as lazy-loaded. If you have a circular dependency, refactor the code to break the cycle.
+     * <p>
+     * <b>Important:</b> Neither @Lazy on parameters nor ObjectProvider should be used to resolve
+     * circular dependencies. Both patterns hide architectural problems and should be avoided.
+     *
+     * @see #ensureObjectProviderNotUsedForCircularDependencies()
+     */
+    @Test
+    void ensureLazyAnnotationNotUsedOnParameters() {
+        ArchRule constructorRule = constructors().that().areDeclaredInClassesThat().areAnnotatedWith(Controller.class).or().areDeclaredInClassesThat()
+                .areAnnotatedWith(RestController.class).or().areDeclaredInClassesThat().areAnnotatedWith(Repository.class).or().areDeclaredInClassesThat()
+                .areAnnotatedWith(Service.class).or().areDeclaredInClassesThat().areAnnotatedWith(Component.class).or().areDeclaredInClassesThat()
+                .areAnnotatedWith(Configuration.class).should(notHaveParametersAnnotatedWithLazy())
+                .because("@Lazy should only be used as a class-level annotation, not on constructor parameters. "
+                        + "To lazily inject a dependency, mark the dependency class itself with @Lazy instead.");
+
+        ArchRule methodRule = methods().that().areDeclaredInClassesThat().areAnnotatedWith(Controller.class).or().areDeclaredInClassesThat().areAnnotatedWith(RestController.class)
+                .or().areDeclaredInClassesThat().areAnnotatedWith(Repository.class).or().areDeclaredInClassesThat().areAnnotatedWith(Service.class).or().areDeclaredInClassesThat()
+                .areAnnotatedWith(Component.class).or().areDeclaredInClassesThat().areAnnotatedWith(Configuration.class).should(notHaveMethodParametersAnnotatedWithLazy())
+                .because("@Lazy should only be used as a class-level annotation, not on method parameters. "
+                        + "To lazily inject a dependency, mark the dependency class itself with @Lazy instead.");
+
+        constructorRule.check(productionClasses);
+        methodRule.check(productionClasses);
+    }
+
+    private ArchCondition<JavaConstructor> notHaveParametersAnnotatedWithLazy() {
+        return new ArchCondition<>("not have parameters annotated with @Lazy") {
+
+            // JPA entity listeners are instantiated by Hibernate during EntityManagerFactory construction,
+            // before the full Spring context is available. Using @Lazy on constructor parameters is the
+            // only way to break the circular dependency: EntityManagerFactory → EntityListener → Services
+            // → Repositories → EntityManagerFactory. This exception should NOT be extended to other classes.
+            private static final Set<String> JPA_ENTITY_LISTENER_EXCEPTIONS = Set.of("de.tum.cit.aet.artemis.assessment.ResultListener");
+
+            @Override
+            public void check(JavaConstructor constructor, ConditionEvents events) {
+                if (JPA_ENTITY_LISTENER_EXCEPTIONS.contains(constructor.getOwner().getFullName())) {
+                    return;
+                }
+                for (var parameter : constructor.getParameters()) {
+                    if (parameter.isAnnotatedWith(Lazy.class)) {
+                        events.add(violated(constructor,
+                                String.format(
+                                        "Constructor %s has parameter '%s' annotated with @Lazy. "
+                                                + "Remove @Lazy from the parameter and ensure the injected bean class is annotated with @Lazy instead.",
+                                        constructor.getFullName(), parameter.getRawType().getSimpleName())));
+                    }
+                }
+            }
+        };
+    }
+
+    private ArchCondition<JavaMethod> notHaveMethodParametersAnnotatedWithLazy() {
+        return new ArchCondition<>("not have parameters annotated with @Lazy") {
+
+            @Override
+            public void check(JavaMethod method, ConditionEvents events) {
+                for (var parameter : method.getParameters()) {
+                    if (parameter.isAnnotatedWith(Lazy.class)) {
+                        events.add(violated(method,
+                                String.format(
+                                        "Method %s has parameter '%s' annotated with @Lazy. "
+                                                + "Remove @Lazy from the parameter and ensure the injected bean class is annotated with @Lazy instead.",
+                                        method.getFullName(), parameter.getRawType().getSimpleName())));
+                    }
+                }
+            }
+        };
+    }
+
+    /**
+     * Ensures that ObjectProvider is not used in constructor parameters of Spring beans.
+     * <p>
+     * ObjectProvider can be misused as a workaround for circular dependencies, similar to @Lazy
+     * on parameters. This hides architectural problems and should be avoided.
+     * <p>
+     * <b>Allowed uses:</b>
+     * <ul>
+     * <li>In @Bean method parameters within @Configuration classes (standard Spring pattern)</li>
+     * <li>For genuinely optional dependencies where getIfAvailable() is used</li>
+     * <li>In health indicators that need to check if a service exists</li>
+     * </ul>
+     * <p>
+     * <b>Important:</b> Neither @Lazy on parameters nor ObjectProvider should be used to resolve
+     * circular dependencies. Both patterns hide architectural problems and should be avoided.
+     *
+     * @see #ensureLazyAnnotationNotUsedOnParameters()
+     */
+    @Test
+    void ensureObjectProviderNotUsedForCircularDependencies() {
+        ArchRule rule = constructors().that().areDeclaredInClassesThat().areAnnotatedWith(Controller.class).or().areDeclaredInClassesThat().areAnnotatedWith(RestController.class)
+                .or().areDeclaredInClassesThat().areAnnotatedWith(Repository.class).or().areDeclaredInClassesThat().areAnnotatedWith(Service.class).or().areDeclaredInClassesThat()
+                .areAnnotatedWith(Component.class)
+                // Exclude @Configuration classes - ObjectProvider in @Bean methods is a standard Spring pattern
+                .and().areDeclaredInClassesThat().areNotAnnotatedWith(Configuration.class).should(notHaveObjectProviderParameters())
+                .because("ObjectProvider should not be used in constructor parameters to work around circular dependencies. "
+                        + "If you have a circular dependency, refactor the code to break the cycle. "
+                        + "ObjectProvider is only acceptable for genuinely optional dependencies (using getIfAvailable()).");
+
+        rule.check(productionClasses);
+    }
+
+    private ArchCondition<JavaConstructor> notHaveObjectProviderParameters() {
+        return new ArchCondition<>("not have ObjectProvider parameters") {
+
+            @Override
+            public void check(JavaConstructor constructor, ConditionEvents events) {
+                for (var parameter : constructor.getParameters()) {
+                    String typeName = parameter.getRawType().getName();
+                    if (typeName.equals("org.springframework.beans.factory.ObjectProvider")) {
+                        events.add(violated(constructor,
+                                String.format("Constructor %s has parameter of type ObjectProvider. " + "ObjectProvider should not be used to work around circular dependencies. "
+                                        + "Refactor the code to break the dependency cycle instead.", constructor.getFullName())));
+                    }
+                }
+            }
+        };
     }
 
     @Test

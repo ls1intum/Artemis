@@ -7,7 +7,7 @@
             "sshSettings": "SSH",
             "vcsAccessTokenSettings": "VCS Token",
             "passkeys": "Passkeys",
-            "externalLLMUsage": "External LLM Usage",
+            "LLMUsage": "LLM Usage",
             "accountInformation": "Account Information",
             "learnerProfile": "Learner Profile",
             "notificationSettings": "Notifications",
@@ -21,9 +21,12 @@
                 "jetbrainsHelp": "To use JetBrains IDEs, please install the JetBrains Toolbox.",
                 "addNewLanguage": "Add new language specific preferences"
             },
-            "externalLLMUsageSettingsPage": {
-                "accepted": "You have accepted the usage of external LLMs on {{acceptedDate}}.",
-                "declined": "You have not accepted the usage of external LLMs."
+            "LLMUsageSettingsPage": {
+                "cloudAccepted": "You have selected Cloud AI on {{acceptedDate}}.",
+                "onPremiseAccepted": "You have selected On-premise AI on {{acceptedDate}}.",
+                "AIDeclined": "You have explicitly declined AI usage on {{acceptedDate}}.",
+                "noAISelected": "You haven't made a decision on the usage of LLMs.",
+                "chooseAI": "Change Selection"
             },
             "sshSettingsPage": {
                 "sshSettingsInfoText": "Here you can set a public SSH key to clone git repositories via SSH. For more details see the documentation.",
@@ -112,7 +115,8 @@
                 },
                 "error": {
                     "invalidCredential": "An invalid passkey was provided. Please try again with a different authenticator (e.g. Apple Keychain, Windows Hello, Google Password Manager, etc.).",
-                    "login": "Login with Passkey failed. Please check you registered a passkey with Artemis.",
+                    "login": "Login with Passkey failed. Please check that you registered a passkey with Artemis. If you registered a passkey reload the page and try to log in again.",
+                    "loginDeactivated": "Login with Passkey failed, please reload the page and try again. If that does not help, your account was most likely deactivated.",
                     "passkeyAlreadyRegistered": "You have already registered a passkey with the selected authenticator, choose a different authenticator if you want to register another passkey.",
                     "registration": "The passkey could not be registered. Please try again.",
                     "save": "The passkey could not be saved. Please try again.",
@@ -141,7 +145,7 @@
                 "editAccountSettings": "Edit Account Settings"
             },
             "categories": {
-                "externalLLMUsage": "External LLM Usage Settings",
+                "LLMUsage": "LLM Usage Settings",
                 "NOTIFICATION_SETTINGS": "Notification Settings",
                 "SCIENCE_SETTINGS": "Science Settings",
                 "SSH_SETTINGS": "SSH Settings",

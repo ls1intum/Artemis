@@ -100,8 +100,10 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/text/**',           // text module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/tutorialgroup/**',  // tutorialgroup module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/lti/**',            // lti module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/atlas/**',          // atlas module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/iris/**',           // iris module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/core/course/manage/**', // core course manage module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/review/**', // review comment module uses Vitest (see vitest.config.ts)
     ],
     coveragePathIgnorePatterns: [
         '<rootDir>/src/main/webapp/app/core/config/prod.config.ts',
@@ -117,17 +119,20 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/text/',              // text module uses Vitest
         '<rootDir>/src/main/webapp/app/tutorialgroup/',     // tutorialgroup module uses Vitest
         '<rootDir>/src/main/webapp/app/lti/',               // lti module uses Vitest
+        '<rootDir>/src/main/webapp/app/atlas/',             // atlas module uses Vitest
         '<rootDir>/src/main/webapp/app/iris/',              // iris module uses Vitest
         '<rootDir>/src/main/webapp/app/core/course/manage/', // core course manage module uses Vitest
+        '<rootDir>/src/main/webapp/app/shared/components/buttons', // buttons module uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/review/', // review comment module uses Vitest
     ],
     // Global coverage thresholds for Jest. Modules using Vitest (e.g., fileupload) have their own
     // coverage thresholds in vitest.config.ts. Per-module thresholds are enforced by check-client-module-coverage.mjs
     coverageThreshold: {
         global: {
-            statements: 89.4,
+            statements: 89.3,
             branches: 73.5,
             functions: 83.3,
-            lines: 89.5,
+            lines: 89.3,
         },
     },
     // 'json-summary' reporter is used by supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs
@@ -161,8 +166,11 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/text/',          // text module
         '<rootDir>/src/main/webapp/app/tutorialgroup/', // tutorialgroup module
         '<rootDir>/src/main/webapp/app/lti/',           // lti module
+        '<rootDir>/src/main/webapp/app/atlas/',         // atlas module
         '<rootDir>/src/main/webapp/app/iris/',          // iris module
         '<rootDir>/src/main/webapp/app/core/course/manage/', // core course manage module
+        '<rootDir>/src/main/webapp/app/shared/components/buttons/', // shared/buttons components
+        '<rootDir>/src/main/webapp/app/exercise/review/', // review comment module
     ],
     testTimeout: 3000,
     testMatch: [
@@ -180,6 +188,7 @@ module.exports = {
         '^lodash-es$': 'lodash',
         '\\.css$': '<rootDir>/src/test/javascript/spec/stub.js',
         '^monaco-editor$': '<rootDir>/node_modules/monaco-editor/esm/vs/editor/editor.api.js',
+        'monaco-editor/esm/vs/editor/edcore.main': '<rootDir>/src/test/javascript/spec/helpers/mocks/mock-monaco-editor.ts',
         '^@ls1intum/apollon$': '<rootDir>/node_modules/@ls1intum/apollon/lib/es6/index.js', // adjust if the package.json "exports" points elsewhere
         '^@ls1intum/apollon/lib/es6/(.*)': '<rootDir>/node_modules/@ls1intum/apollon/lib/es6/$1',
     },

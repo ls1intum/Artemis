@@ -3,6 +3,8 @@ artemis:
         enabled: true
     hyperion:
         enabled: false
+    iris:
+        enabled: false
     exam:
         enabled: true
     plagiarism:
@@ -27,6 +29,8 @@ artemis:
 
     tutorialgroup:
         enabled: true
+    lti:
+        enabled: false
     user-management:
         passkey:
             enabled: false # used by Constants.PASSKEY_ENABLED_PROPERTY_NAME
@@ -57,7 +61,7 @@ management:
     endpoint:
         health:
             show-details: when_authorized
-            roles: 'ROLE_ADMIN'
+            roles: 'ROLE_ADMIN,ROLE_SUPER_ADMIN'
             probes:
                 enabled: true
         jhimetrics:

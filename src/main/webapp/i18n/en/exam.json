@@ -41,13 +41,29 @@
                     "allowNarrowLayouts": "Allow narrower layouts?",
                     "allowNarrowLayoutsTooltip": "If enabled, allows Artemis to seat students directly next to each other, if it is otherwise unable to seat all students",
                     "searchPlaceholder": "Search by room number, name, and/or building",
-                    "number": "Number",
+                    "number": "Room Number",
                     "name": "Name",
                     "building": "Building",
                     "enoughSeatsForStudents": "You can seat all {{ totalStudents }} students.",
                     "notEnoughSeatsForStudents": "You can only seat {{ usableCapacity }} of the {{ totalStudents }} students ({{ percentage }}%).",
                     "distribute": "Distribute",
-                    "distributeWarning": "You do not have enough capacities"
+                    "noRoomSelected": "No room is selected"
+                },
+                "export": {
+                    "buttonTitle": "Export Users",
+                    "dialogTitle": "Export Users",
+                    "introText": "This dialog can be used to export the information of all students registered for this exam.",
+                    "finalize": "Export",
+                    "header": {
+                        "matriculationNumber": "Matriculation Number",
+                        "login": "Login",
+                        "name": "Name",
+                        "email": "E-Mail",
+                        "room": "Room",
+                        "seat": "Seat",
+                        "fullLocation": "<exam title>: <full room name>: <seat>"
+                    },
+                    "exportFailed": "Export failed"
                 }
             },
             "overview": {
@@ -747,7 +763,7 @@
             "announcementCreate": {
                 "button": "Create Announcement",
                 "title": "Make Live Exam Announcement",
-                "task": "Enter your announcement below. You can use Markdown text formatting.",
+                "task": "Enter your announcement below.",
                 "preview": "Preview",
                 "sendButton": "Send Announcement",
                 "sending": "Sending announcement...",

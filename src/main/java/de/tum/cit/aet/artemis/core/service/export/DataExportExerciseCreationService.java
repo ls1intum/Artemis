@@ -171,7 +171,6 @@ public class DataExportExerciseCreationService {
                 Collections.synchronizedList(new ArrayList<>()), repositoryExportOptions);
 
         createPlagiarismCaseInfoExport(programmingExercise, exerciseDir, user.getId());
-
     }
 
     /**
@@ -255,7 +254,7 @@ public class DataExportExerciseCreationService {
             FileUtils.writeByteArrayToFile(outputDir.resolve(fileName + PDF_FILE_EXTENSION).toFile(), modelAsPdf.readAllBytes());
         }
         catch (Exception e) {
-            log.warn("Failed to include the model as pdf, going to include it as plain JSON file.");
+            log.warn("Failed to include the model as pdf, going to include it as plain JSON file.", e);
             addModelJsonWithExplanationHowToView(modelingSubmission.getModel(), outputDir, fileName);
         }
     }
@@ -414,13 +413,12 @@ public class DataExportExerciseCreationService {
             return;
         }
 
-        PlagiarismCaseApi api = plagiarismCaseApi.get();
-        var plagiarismCaseOptional = api.findByStudentIdAndExerciseIdWithPostAndAnswerPost(userId, exercise.getId());
-        List<String> headers = new ArrayList<>();
-        var dataStreamBuilder = Stream.builder();
+        var plagiarismCaseOptional = plagiarismCaseApi.get().findByStudentIdAndExerciseIdWithPostAndAnswerPost(userId, exercise.getId());
         if (plagiarismCaseOptional.isEmpty()) {
             return;
         }
+        List<String> headers = new ArrayList<>();
+        var dataStreamBuilder = Stream.builder();
         var plagiarismCase = plagiarismCaseOptional.get();
         if (plagiarismCase.getVerdict() != null) {
             headers.add("Verdict");

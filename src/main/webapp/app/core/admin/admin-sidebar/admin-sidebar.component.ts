@@ -5,11 +5,13 @@ import {
     faBookOpen,
     faBroom,
     faClipboardList,
+    faCubes,
     faDownload,
     faEye,
     faFlag,
     faGears,
     faHeart,
+    faKey,
     faList,
     faLock,
     faPlug,
@@ -62,6 +64,9 @@ export class AdminSidebarComponent {
     standardizedCompetenciesEnabled = input<boolean>(false);
     atlasEnabled = input<boolean>(false);
     examEnabled = input<boolean>(false);
+    passkeyEnabled = input<boolean>(false);
+    passkeyRequiredForAdmin = input<boolean>(false);
+    isSuperAdmin = input<boolean>(false);
 
     toggleCollapseState = output<void>();
 
@@ -76,31 +81,42 @@ export class AdminSidebarComponent {
         const groups: AdminSidebarGroup[] = [];
 
         // Group 1: User & Organization Management
+        const accountGroupItems: AdminSidebarItem[] = [
+            {
+                routerLink: '/admin/data-exports',
+                icon: faDownload,
+                title: 'Data Exports',
+                translation: 'global.menu.admin.sidebar.dataExports',
+                testId: 'admin-data-exports',
+            },
+            {
+                routerLink: '/admin/organization-management',
+                icon: faUniversity,
+                title: 'Organizations',
+                translation: 'global.menu.admin.sidebar.organizations',
+                testId: 'admin-organization-management',
+            },
+            {
+                routerLink: '/admin/user-management',
+                icon: faUser,
+                title: 'Users',
+                translation: 'global.menu.admin.sidebar.users',
+                testId: 'admin-user-management',
+            },
+        ];
+        if (this.passkeyEnabled() && this.passkeyRequiredForAdmin() && this.isSuperAdmin()) {
+            accountGroupItems.push({
+                routerLink: '/admin/passkey-management',
+                icon: faKey,
+                title: 'Passkey Management',
+                translation: 'global.menu.admin.sidebar.passkeyManagement',
+                testId: 'admin-passkey-management',
+            });
+        }
+
         groups.push({
             translation: 'global.menu.admin.groups.usersAndOrganizations',
-            items: [
-                {
-                    routerLink: '/admin/data-exports',
-                    icon: faDownload,
-                    title: 'Data Exports',
-                    translation: 'global.menu.admin.sidebar.dataExports',
-                    testId: 'admin-data-exports',
-                },
-                {
-                    routerLink: '/admin/organization-management',
-                    icon: faUniversity,
-                    title: 'Organizations',
-                    translation: 'global.menu.admin.sidebar.organizations',
-                    testId: 'admin-organization-management',
-                },
-                {
-                    routerLink: '/admin/user-management',
-                    icon: faUser,
-                    title: 'Users',
-                    translation: 'global.menu.admin.sidebar.users',
-                    testId: 'admin-user-management',
-                },
-            ],
+            items: accountGroupItems,
         });
 
         // Group 2: Content & Learning
@@ -186,6 +202,13 @@ export class AdminSidebarComponent {
                     testId: 'admin-metrics',
                 },
                 {
+                    routerLink: '/admin/dependencies',
+                    icon: faCubes,
+                    title: 'Dependencies',
+                    translation: 'global.menu.admin.sidebar.dependencies',
+                    testId: 'admin-dependencies',
+                },
+                {
                     routerLink: '/admin/user-statistics',
                     icon: faEye,
                     title: 'Statistics',
@@ -215,11 +238,11 @@ export class AdminSidebarComponent {
                         testId: 'admin-build-agents',
                     },
                     {
-                        routerLink: '/admin/build-queue',
+                        routerLink: '/admin/build-overview',
                         icon: faList,
                         title: 'Build Overview',
                         translation: 'global.menu.admin.sidebar.buildQueue',
-                        testId: 'admin-build-queue',
+                        testId: 'admin-build-overview',
                     },
                 ],
             });

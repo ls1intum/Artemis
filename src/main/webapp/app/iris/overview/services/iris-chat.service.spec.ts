@@ -11,7 +11,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockProvider } from 'ng-mocks';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
-import dayjs from 'dayjs/esm';
 import {
     mockClientMessage,
     mockConversation,
@@ -34,6 +33,7 @@ import { IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat
 import { IrisStageDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { User } from 'app/core/user/user.model';
+import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 
 describe('IrisChatService', () => {
     setupTestBed({ zoneless: true });
@@ -80,7 +80,7 @@ describe('IrisChatService', () => {
         wsMock = TestBed.inject(IrisWebsocketService);
         accountService = TestBed.inject(AccountService);
 
-        accountService.userIdentity.set({ externalLLMUsageAccepted: dayjs() } as User);
+        accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
 
         service.setCourseId(courseId);
     });
@@ -350,8 +350,8 @@ describe('IrisChatService', () => {
         });
 
         it('should switch if LLM usage is not required for the mode', async () => {
-            accountService.userIdentity.set({ externalLLMUsageAccepted: undefined } as User);
-            service['hasJustAcceptedExternalLLMUsage'] = false;
+            accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
+            service['hasJustAcceptedLLMUsage'] = false;
             service['sessionCreationIdentifier'] = 'tutor-suggestion/1';
 
             const newSession = { id: 12, chatMode: ChatServiceMode.TUTOR_SUGGESTION, creationDate: new Date(), entityId: 1 } as IrisSessionDTO;
@@ -373,8 +373,8 @@ describe('IrisChatService', () => {
         });
 
         it('should switch if user has just accepted LLM usage', async () => {
-            accountService.userIdentity.set({ externalLLMUsageAccepted: undefined } as User);
-            service['hasJustAcceptedExternalLLMUsage'] = true;
+            accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
+            service['hasJustAcceptedLLMUsage'] = true;
             service['sessionCreationIdentifier'] = 'course/1';
 
             const newSession = { id: 12, chatMode: ChatServiceMode.COURSE, creationDate: new Date(), entityId: 1 } as IrisSessionDTO;

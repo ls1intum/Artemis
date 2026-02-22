@@ -82,6 +82,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestionStatistic;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSolution;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
 import de.tum.cit.aet.artemis.quiz.dto.QuizBatchJoinDTO;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseDatesDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseForCourseDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithQuestionsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithSolutionDTO;
@@ -1154,12 +1155,12 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
         quizExercise.setReleaseDate(ZonedDateTime.now().minusHours(5));
 
-        QuizExercise updatedQuizExercise = request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-now", quizExercise, QuizExercise.class, OK);
+        QuizExerciseDatesDTO updatedQuizExercise = request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-now", null, QuizExerciseDatesDTO.class,
+                OK);
 
-        long millis = ChronoUnit.MILLIS.between(Objects.requireNonNull(updatedQuizExercise.getQuizBatches().stream().findAny().orElseThrow().getStartTime()), ZonedDateTime.now());
+        long millis = ChronoUnit.MILLIS.between(Objects.requireNonNull(updatedQuizExercise.startDate()), ZonedDateTime.now());
         // actually the two dates should be "exactly" the same, but for the sake of slow CI testing machines and to prevent flaky tests, we live with the following rule
         assertThat(millis).isCloseTo(0, byLessThan(2000L));
-        assertThat(updatedQuizExercise.getQuizBatches()).allMatch(QuizBatch::isStarted);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -1177,14 +1178,14 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     @EnumSource(QuizMode.class)
     void testPerformSetVisible(QuizMode quizMode) throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().minusHours(5), null, quizMode);
-
         // we expect a bad request because the quiz is already visible
-        request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/set-visible", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/set-visible", null, QuizExerciseDatesDTO.class, HttpStatus.BAD_REQUEST);
         quizExercise.setReleaseDate(ZonedDateTime.now().plusDays(1));
         quizExerciseService.save(quizExercise);
 
-        QuizExercise updatedQuizExercise = request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/set-visible", quizExercise, QuizExercise.class, OK);
-        assertThat(updatedQuizExercise.isVisibleToStudents()).isTrue();
+        QuizExerciseDatesDTO updatedQuizExercise = request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/set-visible", null,
+                QuizExerciseDatesDTO.class, OK);
+        assertThat(updatedQuizExercise.releaseDate().isBefore(ZonedDateTime.now())).isTrue();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")

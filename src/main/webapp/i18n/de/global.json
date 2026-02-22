@@ -140,6 +140,7 @@
                 "sidebar": {
                     "organizations": "Organisationen",
                     "users": "Benutzer",
+                    "passkeyManagement": "Passkeys",
                     "courseRequests": "Kursanfragen",
                     "dataExports": "Datenexporte",
                     "iris": "Iris",
@@ -160,7 +161,8 @@
                     "imprint": "Impressum",
                     "privacy": "Datenschutz",
                     "notifications": "Mitteilungen",
-                    "examRooms": "Prüfungsräume"
+                    "examRooms": "Prüfungsräume",
+                    "dependencies": "Abhängigkeiten"
                 },
                 "collapseMenu": "Menü einklappen (Strg + M)",
                 "expandMenu": "Menü ausklappen (Strg + M)",
@@ -429,6 +431,7 @@
         "competencies": "Kompetenzen",
         "learningPath": "Lernpfad",
         "dashboard": "Übersichtsseite",
+        "iris": "Iris",
         "tutorialGroups": "Übungsgruppen",
         "statistics": "Kursstatistiken",
         "exams": "Klausuren",

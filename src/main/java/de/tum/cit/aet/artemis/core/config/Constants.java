@@ -316,11 +316,6 @@ public final class Constants {
     public static final String PROFILE_CORE = "core";
 
     /**
-     * The name of the Spring profile used for Iris / Pyris functionality.
-     */
-    public static final String PROFILE_IRIS = "iris";
-
-    /**
      * The name of the Spring profile used for Athena functionality.
      */
     public static final String PROFILE_ATHENA = "athena";
@@ -347,11 +342,6 @@ public final class Constants {
     public static final String PROFILE_LDAP = "ldap";
 
     /**
-     * The name of the Spring profile used for activating LTI in Artemis, see {@link de.tum.cit.aet.artemis.lti.web.LtiResource}.
-     */
-    public static final String PROFILE_LTI = "lti";
-
-    /**
      * The name of the Spring profile used for activating SAML2 in Artemis, see {@link de.tum.cit.aet.artemis.core.service.connectors.SAML2Service}.
      */
     public static final String PROFILE_SAML2 = "saml2";
@@ -374,14 +364,9 @@ public final class Constants {
     public static final String PROFILE_CORE_AND_SCHEDULING = PROFILE_CORE + " & " + PROFILE_SCHEDULING;
 
     /**
-     * Profile combination for one primary node, where LTI AND scheduling is active
+     * The name of the module feature used for Theia as an external online IDE.
      */
-    public static final String PROFILE_LTI_AND_SCHEDULING = PROFILE_LTI + " & " + PROFILE_SCHEDULING;
-
-    /**
-     * The name of the Spring profile used for Theia as an external online IDE.
-     */
-    public static final String PROFILE_THEIA = "theia";
+    public static final String MODULE_FEATURE_THEIA = "theia";
 
     /**
      * The name of the profile for integration independent tests
@@ -417,6 +402,11 @@ public final class Constants {
      * The name of the module feature used for Hyperion functionality.
      */
     public static final String MODULE_FEATURE_HYPERION = "hyperion";
+
+    /**
+     * The name of the module feature used for Iris / Pyris functionality.
+     */
+    public static final String MODULE_FEATURE_IRIS = "iris";
 
     /**
      * The name of the module feature used for Exam functionality.
@@ -464,6 +454,11 @@ public final class Constants {
     public static final String MODULE_FEATURE_SHARING = "sharing";
 
     /**
+     * The name of the module feature used for LTI functionality.
+     */
+    public static final String MODULE_FEATURE_LTI = "lti";
+
+    /**
      * The name of the property used to enable or disable Atlas functionality.
      */
     public static final String ATLAS_ENABLED_PROPERTY_NAME = "artemis.atlas.enabled";
@@ -472,6 +467,11 @@ public final class Constants {
      * The name of the property used to enable or disable Hyperion functionality.
      */
     public static final String HYPERION_ENABLED_PROPERTY_NAME = "artemis.hyperion.enabled";
+
+    /**
+     * The name of the property used to enable or disable Iris / Pyris functionality.
+     */
+    public static final String IRIS_ENABLED_PROPERTY_NAME = "artemis.iris.enabled";
 
     /**
      * The name of the property used to enable or disable exam functionality.
@@ -527,6 +527,21 @@ public final class Constants {
      * The name of the property used to enable or disable nebula functionalities.
      */
     public static final String NEBULA_ENABLED_PROPERTY_NAME = "artemis.nebula.enabled";
+
+    /**
+     * The name of the property used to enable or disable LTI functionality.
+     */
+    public static final String LTI_ENABLED_PROPERTY_NAME = "artemis.lti.enabled";
+
+    /**
+     * The name of the property used to enable or disable Theia functionality.
+     */
+    public static final String THEIA_ENABLED_PROPERTY_NAME = "artemis.theia.enabled";
+
+    /**
+     * The name of the property used to enable or disable Weaviate integration.
+     */
+    public static final String WEAVIATE_ENABLED_PROPERTY_NAME = "artemis.weaviate.enabled";
 
     /**
      * The name of the property used to define the directories for file uploads.
@@ -589,6 +604,8 @@ public final class Constants {
     public static final String REDIS = "Redis";
 
     public static final String LOCAL = "Local";
+
+    public static final String AI_SELECTION_DECISION = "AI_SELECTION_DECISION";
 
     private Constants() {
     }

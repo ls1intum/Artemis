@@ -38,7 +38,7 @@ import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/su
 import { ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
-import { MODULE_FEATURE_PLAGIARISM, PROFILE_AEOLUS, PROFILE_LOCALCI, PROFILE_THEIA } from 'app/app.constants';
+import { MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_THEIA, PROFILE_AEOLUS, PROFILE_LOCALCI } from 'app/app.constants';
 import { AeolusService } from 'app/programming/shared/services/aeolus.service';
 import { SharingInfo } from 'app/sharing/sharing.model';
 import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/update/update-components/information/programming-exercise-information.component';
@@ -545,7 +545,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.customBuildPlansSupported = PROFILE_AEOLUS;
         }
 
-        this.theiaEnabled = this.profileService.isProfileActive(PROFILE_THEIA);
+        this.theiaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA);
         this.plagiarismEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM);
         this.defineSupportedProgrammingLanguages();
     }
@@ -586,7 +586,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle',
                 valid: Boolean(
                     this.exerciseGradingComponent?.formValid &&
-                        (this.isExamMode || !this.isEditFieldDisplayedRecord().plagiarismControl || this.exercisePlagiarismComponent()?.isFormValid()),
+                    (this.isExamMode || !this.isEditFieldDisplayedRecord().plagiarismControl || this.exercisePlagiarismComponent()?.isFormValid()),
                 ),
                 empty: this.exerciseGradingComponent?.formEmpty,
             },
@@ -989,7 +989,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     isEventInsideTextArea(event: Event): boolean {
         if (event.target instanceof Element) {
-            return event.target.tagName === 'TEXTAREA';
+            return event.target.tagName === 'TEXTAREA' || event.target.className === 'native-edit-context';
         }
         return false;
     }

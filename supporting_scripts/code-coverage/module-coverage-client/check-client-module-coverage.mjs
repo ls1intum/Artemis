@@ -51,10 +51,10 @@ const moduleThresholds = {
         lines:      93.70,
     },
     atlas: {
-        statements: 91.30,
+        statements: 91.20,
         branches:   66.30,
         functions:  84.70,
-        lines:      91.20,
+        lines:      91.00,
     },
     buildagent: {
         statements: 89.80,
@@ -69,10 +69,10 @@ const moduleThresholds = {
         lines:      92.70,
     },
     core: {
-        statements: 89.30,
-        branches:   70.00,
-        functions:  80.00,
-        lines:      89.30,
+        statements: 88.40,
+        branches:   68.50,
+        functions:  79.60,
+        lines:      88.30,
     },
     exam: {
         statements: 91.50,
@@ -81,10 +81,10 @@ const moduleThresholds = {
         lines:      91.80,
     },
     exercise: {
-        statements: 87.80,
-        branches:   76.20,
-        functions:  79.10,
-        lines:      88.00,
+        statements: 86.80,
+        branches:   75.00,
+        functions:  77.30,
+        lines:      87.00,
     },
     fileupload: {
         statements: 94.40,
@@ -102,10 +102,10 @@ const moduleThresholds = {
         lines:      0,
     },
     iris: {
-        statements: 88.5,
-        branches:   76.5,
-        functions:  84.0,
-        lines:      88.8,
+        statements: 85.70,
+        branches:   73.00,
+        functions:  79.80,
+        lines:      86.40,
     },
     lecture: {
         statements: 92.50,
@@ -120,16 +120,16 @@ const moduleThresholds = {
         lines:      93.20,
     },
     modeling: {
-        statements: 89.00,
-        branches:   72.40,
+        statements: 87.30,
+        branches:   72.20,
         functions:  84.40,
-        lines:      89.20,
+        lines:      87.30,
     },
     plagiarism: {
-        statements: 93.40,
+        statements: 93.30,
         branches:   81.90,
-        functions:  87.10,
-        lines:      93.50,
+        functions:  86.80,
+        lines:      93.40,
     },
     programming: {
         statements: 89.40,

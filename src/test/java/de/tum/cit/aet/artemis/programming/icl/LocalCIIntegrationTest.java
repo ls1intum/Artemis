@@ -351,30 +351,48 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testMissingBuildJobRetry() {
+        // Stop the build agent to prevent the build job from being processed
+        sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
+
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         processNewPush(commitHash, studentAssignmentRepository.remoteBareGitRepo.getRepository(), userTestRepository.getUserWithGroupsAndAuthorities());
 
-        await().until(() -> {
+        // Wait for build job to appear with QUEUED status
+        await().atMost(60, TimeUnit.SECONDS).pollInterval(500, TimeUnit.MILLISECONDS).until(() -> {
             Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId());
             return buildJobOptional.isPresent() && buildJobOptional.get().getBuildStatus() == BuildStatus.QUEUED;
         });
 
         BuildJob buildJob = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId()).orElseThrow();
+        String originalBuildJobId = buildJob.getBuildJobId();
+
+        // Mark the job as MISSING so the retry service will pick it up
         buildJob.setBuildStatus(BuildStatus.MISSING);
         buildJob.setBuildSubmissionDate(ZonedDateTime.now().minusMinutes(10));
-        buildJobRepository.save(buildJob);
+        buildJobRepository.saveAndFlush(buildJob);
+
+        // Clear the queue so the retry service doesn't find it there
+        queuedJobs.clear();
 
         localCIMissingJobService.retryMissingJobs();
 
-        // job for participation should be retried so retry count should be 1 and status QUEUED
-        await().until(() -> {
-            Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildJobIdDesc(buildJob.getParticipationId());
-            if (buildJobOptional.isEmpty()) {
-                return false;
-            }
-            BuildJob retriedBuildJob = buildJobOptional.get();
-            return (retriedBuildJob.getBuildStatus() == BuildStatus.QUEUED || retriedBuildJob.getBuildStatus() == BuildStatus.BUILDING) && retriedBuildJob.getRetryCount() == 1;
+        // Verify: The original job should now have retryCount incremented
+        // Use Awaitility because incrementRetryCount is a database operation that may need time to propagate
+        await().atMost(5, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).untilAsserted(() -> {
+            BuildJob updatedOriginalJob = buildJobRepository.findByBuildJobId(originalBuildJobId).orElseThrow();
+            assertThat(updatedOriginalJob.getRetryCount()).isEqualTo(1);
         });
+
+        // Verify: A new job should exist with retryCount=1 (the retried job)
+        await().atMost(60, TimeUnit.SECONDS).pollInterval(500, TimeUnit.MILLISECONDS).until(() -> {
+            List<BuildJob> allJobsForParticipation = buildJobRepository.findAll().stream()
+                    .filter(j -> j.getParticipationId() != null && j.getParticipationId().equals(studentParticipation.getId())).toList();
+            // We should have at least 2 jobs: the original MISSING one and the new retried one
+            return allJobsForParticipation.size() >= 2 && allJobsForParticipation.stream().anyMatch(j -> j.getRetryCount() == 1 && !j.getBuildJobId().equals(originalBuildJobId));
+        });
+
+        // Resume the build agent
+        sharedQueueProcessingService.init();
         processingJobs.clear();
         queuedJobs.clear();
     }
@@ -881,7 +899,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         BuildAgentInformation buildAgent = new BuildAgentInformation(buildAgentDTO, 0, 0, new ArrayList<>(List.of()), BuildAgentStatus.IDLE, null, null, 100);
         buildAgentInformation.put(memberAddress, buildAgent);
         int consecutiveFailedBuildJobs = 100;
-        BuildAgentDetailsDTO updatedDetails = new BuildAgentDetailsDTO(0, 0, 0, 0, 0, 0, null, ZonedDateTime.now(), null, consecutiveFailedBuildJobs);
+        BuildAgentDetailsDTO updatedDetails = new BuildAgentDetailsDTO(0, 0, 0, 0, 0, 0, null, ZonedDateTime.now(), null, consecutiveFailedBuildJobs, null);
         BuildAgentInformation updatedInfo = new BuildAgentInformation(buildAgent.buildAgent(), buildAgent.maxNumberOfConcurrentBuildJobs(), buildAgent.numberOfCurrentBuildJobs(),
                 buildAgent.runningBuildJobs(), BuildAgentStatus.SELF_PAUSED, buildAgent.publicSshKey(), updatedDetails, buildAgent.pauseAfterConsecutiveBuildFailures());
 

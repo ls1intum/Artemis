@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamLiveEventRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
+import de.tum.cit.aet.artemis.exam.repository.ExamSessionRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -74,6 +75,8 @@ public class ExamDeletionService {
 
     private final ExamLiveEventRepository examLiveEventRepository;
 
+    private final ExamSessionRepository examSessionRepository;
+
     private final BuildJobRepository buildJobRepository;
 
     private final PostRepository postRepository;
@@ -87,8 +90,9 @@ public class ExamDeletionService {
     public ExamDeletionService(ExerciseDeletionService exerciseDeletionService, ParticipationDeletionService participationDeletionService, CacheManager cacheManager,
             UserRepository userRepository, ExamRepository examRepository, AuditEventRepository auditEventRepository, StudentExamRepository studentExamRepository,
             GradingScaleRepository gradingScaleRepository, StudentParticipationRepository studentParticipationRepository, ChannelRepository channelRepository,
-            ChannelService channelService, ExamLiveEventRepository examLiveEventRepository, BuildJobRepository buildJobRepository, PostRepository postRepository,
-            AnswerPostRepository answerPostRepository, ProgrammingExerciseRepository programmingExerciseRepository, ExamUserRepository examUserRepository) {
+            ChannelService channelService, ExamLiveEventRepository examLiveEventRepository, ExamSessionRepository examSessionRepository, BuildJobRepository buildJobRepository,
+            PostRepository postRepository, AnswerPostRepository answerPostRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            ExamUserRepository examUserRepository) {
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationDeletionService = participationDeletionService;
         this.cacheManager = cacheManager;
@@ -101,6 +105,7 @@ public class ExamDeletionService {
         this.channelRepository = channelRepository;
         this.channelService = channelService;
         this.examLiveEventRepository = examLiveEventRepository;
+        this.examSessionRepository = examSessionRepository;
         this.buildJobRepository = buildJobRepository;
         this.postRepository = postRepository;
         this.answerPostRepository = answerPostRepository;
@@ -169,6 +174,7 @@ public class ExamDeletionService {
      * <p>
      * The deleted elements are:
      * <ul>
+     * <li>All ExamSessions (via bulk delete query, must be deleted before StudentExams due to foreign key constraint)</li>
      * <li>All StudentExams (via bulk delete query)</li>
      * <li>All student participations, submissions, and results for exam exercises</li>
      * <li>All plagiarism results for exam exercises</li>
@@ -200,6 +206,10 @@ public class ExamDeletionService {
         for (Long exerciseId : exerciseIds) {
             exerciseDeletionService.reset(exerciseId);
         }
+
+        // Delete exam sessions first to avoid foreign key constraint violations
+        // (exam_session references student_exam via student_exam_id)
+        examSessionRepository.deleteAllByExamId(examId);
 
         // Delete all student exams via bulk query - more efficient than loading and deleting entities
         studentExamRepository.deleteAllByExamId(examId);
@@ -257,7 +267,7 @@ public class ExamDeletionService {
         List<StudentExam> otherTestRunsOfInstructor = studentExamRepository.findAllTestRunsWithExercisesByExamIdForUser(testRun.getExam().getId(), instructor.getId()).stream()
                 .filter(studentExam -> !studentExam.getId().equals(testRunId)).toList();
 
-        // We cannot delete participations which are referenced by other test runs. (an instructor is free to create as many test runs as he likes)
+        // We cannot delete participations which are referenced by other test runs. (an instructor is free to create as many test runs as they like)
         var testRunExercises = testRun.getExercises();
         // Collect all distinct exercises of other instructor test runs
         var allInstructorTestRunExercises = otherTestRunsOfInstructor.stream().flatMap(studentExam -> studentExam.getExercises().stream()).distinct().toList();

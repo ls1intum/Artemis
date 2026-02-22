@@ -1,9 +1,12 @@
-<div #fullElement class="h-100">
+<div #fullElement class="h-100 d-flex flex-column">
+    @if (showMarkdownInfoText()) {
+        <div class="pb-1 text-muted small flex-shrink-0" jhiTranslate="artemisApp.markdownEditor.infoText"></div>
+    }
     <div
         #wrapper
-        class="markdown-editor-wrapper"
+        class="markdown-editor-wrapper flex-grow-1"
         [style.overflow]="inEditMode ? 'visible' : 'auto'"
-        [style.height.px]="inEditMode ? targetWrapperHeight : undefined"
+        [style.height]="inEditMode && targetWrapperHeight ? targetWrapperHeight + 'px' : 'auto'"
         [style.cursor]="isResizing ? 'ns-resize' : undefined"
         [style.min-height.px]="minWrapperHeight"
     >
@@ -27,6 +30,7 @@
                         @if (enableFileUpload) {
                             <div class="d-flex align-items-center border-top" #fileUploadFooter>
                                 <input
+                                    #fileUploadInput
                                     [id]="'file-upload ' + uniqueMarkdownEditorId"
                                     class="file-upload-footer-input"
                                     type="file"
@@ -48,9 +52,11 @@
                                         ></span>
                                     </div>
                                 </label>
-                                <a class="col-auto mx-1" href="https://markdown-it.github.io/">
-                                    <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.markdownEditor.guide' | artemisTranslate" />
-                                </a>
+                                @if (!showMarkdownInfoText()) {
+                                    <a class="col-auto mx-1" href="https://markdown-it.github.io/">
+                                        <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.markdownEditor.guide' | artemisTranslate" />
+                                    </a>
+                                }
                                 @if (editType() !== EditType.UPDATE && isInCommunication()) {
                                     <ng-container [ngTemplateOutlet]="irisButton" [ngTemplateOutletContext]="{ extraClass: 'ms-1 col-auto' }" />
                                     <ng-container [ngTemplateOutlet]="sendButton" [ngTemplateOutletContext]="{ extraClass: 'ms-1 col-auto', testId: 'save' }" />
@@ -154,9 +160,18 @@
                             </button>
                             <mat-menu #subMenuLecture="matMenu" type="button">
                                 @for (lecture of displayedActions.lecture.lecturesWithDetails; track lecture.id) {
-                                    <button class="ps-1 me-1" mat-menu-item [matMenuTriggerFor]="lectureMenuUnits" type="button">
+                                    <button
+                                        class="ps-1 me-1"
+                                        mat-menu-item
+                                        [matMenuTriggerFor]="hasReferencableAttachments(lecture) ? lectureMenuUnits : null"
+                                        (click)="
+                                            !hasReferencableAttachments(lecture) && displayedActions.lecture.executeInCurrentEditor({ reference: ReferenceType.LECTURE, lecture })
+                                        "
+                                        type="button"
+                                    >
                                         {{ lecture.title }}
                                     </button>
+
                                     <mat-menu #lectureMenuUnits="matMenu" type="button">
                                         <button
                                             class="border-bottom ps-1 me-1"
@@ -169,7 +184,20 @@
                                         @for (unit of lecture.attachmentVideoUnits; track unit.id) {
                                             <!-- Only show attachment units with an attachment -->
                                             @if (unit.attachment && unit.attachment.link) {
-                                                <button class="ps-1 me-1" mat-menu-item [matMenuTriggerFor]="lectureMenuUnitsSlide" type="button">
+                                                <button
+                                                    class="ps-1 me-1"
+                                                    mat-menu-item
+                                                    [matMenuTriggerFor]="unit.slides?.length ? lectureMenuUnitsSlide : null"
+                                                    (click)="
+                                                        !unit.slides?.length &&
+                                                            displayedActions.lecture.executeInCurrentEditor({
+                                                                reference: ReferenceType.ATTACHMENT_UNITS,
+                                                                lecture,
+                                                                attachmentVideoUnit: unit,
+                                                            })
+                                                    "
+                                                    type="button"
+                                                >
                                                     <span>{{ unit.name }}</span>
                                                 </button>
                                                 <mat-menu #lectureMenuUnitsSlide="matMenu" type="button">
@@ -204,8 +232,6 @@
                                                         >
                                                             <span [jhiTranslate]="'artemisApp.markdownEditor.slideWithNumber'" [translateValues]="{ number: index + 1 }"></span>
                                                         </button>
-                                                    } @empty {
-                                                        <ng-container [ngTemplateOutlet]="noItemsAvailable" />
                                                     }
                                                 </mat-menu>
                                             }

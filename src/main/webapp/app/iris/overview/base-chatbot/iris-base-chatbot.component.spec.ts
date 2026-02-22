@@ -17,7 +17,6 @@ import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.s
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.service';
 import { of } from 'rxjs';
-import dayjs from 'dayjs/esm';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import {
@@ -31,7 +30,9 @@ import {
 } from 'test/helpers/sample/iris-sample-data';
 import { By } from '@angular/platform-browser';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { IrisMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
+import { IrisAssistantMessage, IrisMessage, IrisSender, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
+import { IrisMessageContentType, IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
+import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
@@ -39,6 +40,8 @@ import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { User } from 'app/core/user/user.model';
+import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 
 describe('IrisBaseChatbotComponent', () => {
     setupTestBed({ zoneless: true });
@@ -57,8 +60,11 @@ describe('IrisBaseChatbotComponent', () => {
         getActiveStatus: vi.fn().mockReturnValue(of({})),
         setCurrentCourse: vi.fn(),
     } as any;
+    const mockLLMModalService = {
+        open: vi.fn().mockResolvedValue(LLM_MODAL_DISMISSED),
+    } as any;
     const mockUserService = {
-        updateExternalLLMUsageConsent: vi.fn(),
+        updateLLMSelectionDecision: vi.fn().mockReturnValue(of(new HttpResponse<void>())),
     } as any;
 
     beforeEach(async () => {
@@ -82,6 +88,7 @@ describe('IrisBaseChatbotComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: UserService, useValue: mockUserService },
                 { provide: IrisStatusService, useValue: statusMock },
+                { provide: LLMSelectionModalService, useValue: mockLLMModalService },
                 MockProvider(ActivatedRoute),
                 MockProvider(IrisChatHttpService),
                 MockProvider(IrisWebsocketService),
@@ -102,7 +109,7 @@ describe('IrisBaseChatbotComponent', () => {
                 accountService = TestBed.inject(AccountService);
 
                 // Set user identity BEFORE creating component (constructor reads this)
-                accountService.userIdentity.set({ externalLLMUsageAccepted: dayjs() } as User);
+                accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
                 vi.spyOn(accountService, 'getAuthenticationState').mockReturnValue(of());
 
                 // Now create component
@@ -122,33 +129,33 @@ describe('IrisBaseChatbotComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should set userAccepted to true if user has accepted the external LLM usage policy', () => {
-        // Component was created in beforeEach with accepted user
-        expect(component.userAccepted()).toBe(true);
+    it('should set userAccepted to CLOUD_AI if user has accepted the external LLM usage policy', () => {
+        expect(component.userAccepted()).toBe(LLMSelectionDecision.CLOUD_AI);
     });
 
     describe('when user has not accepted LLM usage policy', () => {
-        beforeEach(() => {
-            accountService.userIdentity.set({ externalLLMUsageAccepted: undefined } as User);
+        it('should set userAccepted to undefined', async () => {
+            accountService.userIdentity.set({ selectedLLMUsage: undefined } as User);
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
+
             fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
             fixture.detectChanges();
-        });
-
-        it('should set userAccepted to false', () => {
-            expect(component.userAccepted()).toBe(false);
+            // Flush the pending setTimeout from the constructor that triggers showAISelectionModal
+            await new Promise((resolve) => setTimeout(resolve, 0));
+            await fixture.whenStable();
+            expect(component.userAccepted()).toBeUndefined();
         });
     });
 
     it('should call API when user accept the policy', () => {
-        const stub = vi.spyOn(mockUserService, 'updateExternalLLMUsageConsent');
-        stub.mockReturnValue(of(new HttpResponse<void>()));
+        const chatServiceSpy = vi.spyOn(chatService, 'updateLLMUsageConsent').mockImplementation(() => {});
 
-        component.acceptPermission();
+        component.acceptPermission(LLMSelectionDecision.CLOUD_AI);
 
-        expect(stub).toHaveBeenCalledOnce();
-        expect(component.userAccepted()).toBe(true);
+        expect(chatServiceSpy).toHaveBeenCalledOnce();
+        expect(chatServiceSpy).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
+        expect(component.userAccepted()).toBe(LLMSelectionDecision.CLOUD_AI);
     });
 
     it('should add user message on send', async () => {
@@ -274,7 +281,7 @@ describe('IrisBaseChatbotComponent', () => {
         vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
         const getChatSessionsSpy = vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
 
-        component.userAccepted.set(true);
+        component.userAccepted.set(LLMSelectionDecision.CLOUD_AI);
         chatService.switchTo(ChatServiceMode.COURSE, 123);
 
         component.ngAfterViewInit();
@@ -386,9 +393,16 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     it('should adjust textarea rows and call adjustChatBodyHeight', () => {
+        // The textarea is only rendered when userAccepted is true
+        component.userAccepted.set(LLMSelectionDecision.CLOUD_AI);
+        fixture.detectChanges();
+
         const textarea = fixture.nativeElement.querySelector('textarea');
         const originalScrollHeightGetter = textarea.__lookupGetter__('scrollHeight');
         const originalGetComputedStyle = window.getComputedStyle;
+
+        // Set some text content to avoid early return
+        textarea.value = 'Some text content';
 
         const scrollHeightGetterSpy = vi.spyOn(textarea, 'scrollHeight', 'get').mockReturnValue(100);
         const getComputedStyleSpy = vi.spyOn(window, 'getComputedStyle').mockImplementation(
@@ -400,9 +414,8 @@ describe('IrisBaseChatbotComponent', () => {
 
         component.adjustTextareaRows();
 
-        // Line height is calculated as follows: 20px (line height) + 4px (padding) = 24px
-        // The height of the textarea should be 72px (3 rows * (lineHeight + padding))
-        expect(textarea.style.height).toBe('72px'); // Assuming the calculated height is 60px
+        // The method caps height at min(scrollHeight, maxHeight=200), so with scrollHeight=100 it should be 100px
+        expect(textarea.style.height).toBe('100px');
 
         // Restore original getters and methods
         scrollHeightGetterSpy.mockRestore();
@@ -419,8 +432,8 @@ describe('IrisBaseChatbotComponent', () => {
         expect(sendButton.disabled).toBeTruthy();
     });
 
-    it('should not render submit button if hasUserAcceptedExternalLLMUsage is false', () => {
-        component.userAccepted.set(false);
+    it('should not render submit button if userAccepted is undefined or NO_AI', () => {
+        component.userAccepted.set(undefined);
         component.isLoading.set(false);
         // error is from toSignal and readonly - but button visibility only depends on userAccepted
         fixture.changeDetectorRef.detectChanges();
@@ -430,23 +443,25 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     it('should not disable submit button if isLoading is false and no error exists', () => {
-        component.userAccepted.set(true);
+        component.userAccepted.set(LLMSelectionDecision.CLOUD_AI);
         component.isLoading.set(false);
+        component.newMessageTextContent.set('test message');
         // error is from toSignal - button disabled state doesn't depend on error
         fixture.changeDetectorRef.detectChanges();
         const sendButton = fixture.debugElement.query(By.css('#irisSendButton')).componentInstance;
 
-        expect(sendButton.disabled).toBeFalsy();
+        expect(sendButton.disabled()).toBeFalsy();
     });
 
     it('should not disable submit button if isLoading is false and error is not fatal', () => {
-        component.userAccepted.set(true);
+        component.userAccepted.set(LLMSelectionDecision.CLOUD_AI);
         component.isLoading.set(false);
+        component.newMessageTextContent.set('test message');
         // error is from toSignal - button disabled state doesn't depend on error
         fixture.changeDetectorRef.detectChanges();
         const sendButton = fixture.debugElement.query(By.css('#irisSendButton')).componentInstance;
 
-        expect(sendButton.disabled).toBeFalsy();
+        expect(sendButton.disabled()).toBeFalsy();
     });
 
     it('should handle suggestion click correctly', () => {
@@ -506,8 +521,8 @@ describe('IrisBaseChatbotComponent', () => {
             });
         });
 
-        it('should not render suggestions if hasUserAcceptedExternalLLMUsage is false', () => {
-            component.userAccepted.set(false);
+        it('should not render suggestions if userAccepted is not CLOUD_AI or LOCAL_AI', () => {
+            component.userAccepted.set(LLMSelectionDecision.NO_AI);
             fixture.changeDetectorRef.detectChanges();
 
             const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
@@ -620,9 +635,29 @@ describe('IrisBaseChatbotComponent', () => {
         });
     });
 
+    it('should start a new session when the new chat item is clicked', () => {
+        const newChatSession: IrisSessionDTO = {
+            id: 2,
+            // MockTranslateService.stream() returns the key itself, so use the translation key
+            title: 'artemisApp.iris.chatHistory.newChat',
+            creationDate: new Date(),
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 1,
+            entityName: 'Course 1',
+        };
+        const clearChatSpy = vi.spyOn(chatService, 'clearChat').mockReturnValue();
+        const switchToSessionSpy = vi.spyOn(chatService, 'switchToSession').mockReturnValue();
+
+        component.onSessionClick(newChatSession);
+
+        expect(clearChatSpy).toHaveBeenCalledOnce();
+        expect(switchToSessionSpy).not.toHaveBeenCalled();
+    });
+
     it('should switch to the selected session on session click', () => {
         const mockSession: IrisSessionDTO = {
-            id: 2,
+            id: 3,
+            title: 'Course chat',
             creationDate: new Date(),
             chatMode: ChatServiceMode.COURSE,
             entityId: 1,
@@ -826,6 +861,82 @@ describe('IrisBaseChatbotComponent', () => {
         });
     });
 
+    describe('copyMessage', () => {
+        it('should not copy if message has no content', () => {
+            const message = { id: 1, content: undefined } as any;
+
+            component.copyMessage(message);
+
+            expect(component.copiedMessageKey()).toBeUndefined();
+        });
+
+        it('should not copy if message content is empty array', () => {
+            const message = { id: 1, content: [] } as any;
+
+            component.copyMessage(message);
+
+            expect(component.copiedMessageKey()).toBeUndefined();
+        });
+
+        it('should not throw when clipboard API is not available', () => {
+            const message = {
+                id: 1,
+                content: [{ type: 'TEXT', textContent: 'Hello world' }],
+            } as any;
+
+            // Should not throw regardless of clipboard availability
+            expect(() => component.copyMessage(message)).not.toThrow();
+        });
+
+        it('should correctly identify copied message by id', () => {
+            const message = { id: 42 } as any;
+
+            component.copiedMessageKey.set(42);
+
+            expect(component.isCopied(message)).toBe(true);
+            expect(component.isCopied({ id: 99 } as any)).toBe(false);
+        });
+
+        it('should use messageIndex as key when message has no id', () => {
+            const message = { id: undefined } as any;
+
+            component.copiedMessageKey.set(5);
+
+            expect(component.isCopied(message, 5)).toBe(true);
+            expect(component.isCopied(message, 3)).toBe(false);
+        });
+    });
+
+    describe('adjustTextareaRows', () => {
+        it('should reset height and return early when textarea is empty', () => {
+            component.userAccepted.set(LLMSelectionDecision.CLOUD_AI);
+            fixture.detectChanges();
+
+            const textarea = fixture.nativeElement.querySelector('textarea');
+            textarea.value = '';
+            const adjustScrollButtonPositionSpy = vi.spyOn(component, 'adjustScrollButtonPosition');
+
+            component.adjustTextareaRows();
+
+            expect(textarea.style.height).toBe('');
+            expect(adjustScrollButtonPositionSpy).toHaveBeenCalledWith(1);
+        });
+
+        it('should reset height and return early when textarea has only whitespace', () => {
+            component.userAccepted.set(LLMSelectionDecision.CLOUD_AI);
+            fixture.detectChanges();
+
+            const textarea = fixture.nativeElement.querySelector('textarea');
+            textarea.value = '   ';
+            const adjustScrollButtonPositionSpy = vi.spyOn(component, 'adjustScrollButtonPosition');
+
+            component.adjustTextareaRows();
+
+            expect(textarea.style.height).toBe('');
+            expect(adjustScrollButtonPositionSpy).toHaveBeenCalledWith(1);
+        });
+    });
+
     describe('Related entity button', () => {
         it('should display correct related entity button when lecture session selected', async () => {
             // Mock the service observables before component creation
@@ -865,6 +976,211 @@ describe('IrisBaseChatbotComponent', () => {
             const relatedEntityButton = fixture.nativeElement.querySelector('.related-entity-button') as HTMLButtonElement;
             expect(relatedEntityButton).not.toBeNull();
             expect(component.relatedEntityRoute()).toBe('../exercises/99');
+        });
+    });
+
+    describe('LLM Selection Modal', () => {
+        let mockLLMModalService: any;
+
+        beforeEach(() => {
+            mockLLMModalService = TestBed.inject(LLMSelectionModalService);
+        });
+
+        it('should show LLM selection modal when userAccepted is undefined', async () => {
+            accountService.userIdentity.set({ selectedLLMUsage: undefined } as User);
+
+            const openSpy = vi.spyOn(mockLLMModalService, 'open').mockResolvedValue(LLM_MODAL_DISMISSED);
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+            // Flush the pending setTimeout from the constructor that triggers showAISelectionModal
+            await new Promise((resolve) => setTimeout(resolve, 0));
+            await fixture.whenStable();
+
+            expect(component.userAccepted()).toBeUndefined();
+            expect(openSpy).toHaveBeenCalled();
+        });
+
+        it('should not show LLM selection modal when userAccepted is already set', async () => {
+            const mockUser = { selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User;
+            accountService.userIdentity.set(mockUser);
+            vi.spyOn(accountService, 'userIdentity').mockReturnValue(mockUser as any);
+
+            mockLLMModalService.open.mockClear();
+            const openSpy = vi.spyOn(mockLLMModalService, 'open');
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            const chatBody = fixture.nativeElement.querySelector('.chat-body');
+            if (chatBody) {
+                chatBody.scrollTo = vi.fn();
+            }
+            fixture.detectChanges();
+
+            await fixture.whenStable();
+
+            expect(component.userAccepted()).toBe(LLMSelectionDecision.CLOUD_AI);
+            expect(openSpy).not.toHaveBeenCalled();
+        });
+
+        it('should set userAccepted to CLOUD_AI when user selects cloud in modal', async () => {
+            accountService.userIdentity.set({ selectedLLMUsage: undefined } as User);
+            vi.spyOn(mockLLMModalService, 'open').mockResolvedValue(LLMSelectionDecision.CLOUD_AI);
+            vi.spyOn(chatService, 'updateLLMUsageConsent').mockImplementation(() => {});
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            // Flush the pending setTimeout from the constructor and then call directly
+            await new Promise((resolve) => setTimeout(resolve, 0));
+            await component.showAISelectionModal();
+
+            expect(component.userAccepted()).toBe(LLMSelectionDecision.CLOUD_AI);
+        });
+
+        it('should set userAccepted to LOCAL_AI when user selects local in modal', async () => {
+            vi.spyOn(mockLLMModalService, 'open').mockResolvedValue(LLMSelectionDecision.LOCAL_AI);
+            vi.spyOn(chatService, 'updateLLMUsageConsent').mockImplementation(() => {});
+
+            await component.showAISelectionModal();
+
+            expect(component.userAccepted()).toBe(LLMSelectionDecision.LOCAL_AI);
+        });
+
+        it('should close chat when user selects no_ai in modal', async () => {
+            vi.spyOn(mockLLMModalService, 'open').mockResolvedValue(LLMSelectionDecision.NO_AI);
+            vi.spyOn(chatService, 'updateLLMUsageConsent').mockImplementation(() => {});
+            vi.spyOn(component.closeClicked, 'emit');
+
+            await component.showAISelectionModal();
+
+            expect(chatService.updateLLMUsageConsent).toHaveBeenCalledWith(LLMSelectionDecision.NO_AI);
+            expect(component.closeClicked.emit).toHaveBeenCalledOnce();
+        });
+
+        it('should close chat when user dismisses modal (none)', async () => {
+            vi.spyOn(mockLLMModalService, 'open').mockResolvedValue(LLM_MODAL_DISMISSED);
+            vi.spyOn(component.closeClicked, 'emit');
+
+            await component.showAISelectionModal();
+
+            expect(component.closeClicked.emit).toHaveBeenCalledOnce();
+        });
+    });
+
+    describe('LLM Selection rendering', () => {
+        it('should render chat input when userAccepted is CLOUD_AI', () => {
+            component.userAccepted.set(LLMSelectionDecision.CLOUD_AI);
+            fixture.changeDetectorRef.detectChanges();
+
+            const chatInput = fixture.nativeElement.querySelector('.chat-input');
+            expect(chatInput).not.toBeNull();
+        });
+
+        it('should render chat input when userAccepted is LOCAL_AI', () => {
+            component.userAccepted.set(LLMSelectionDecision.LOCAL_AI);
+            fixture.changeDetectorRef.detectChanges();
+
+            const chatInput = fixture.nativeElement.querySelector('.chat-input');
+            expect(chatInput).not.toBeNull();
+        });
+
+        it('should show error message when userAccepted is NO_AI', () => {
+            component.userAccepted.set(LLMSelectionDecision.NO_AI);
+            fixture.changeDetectorRef.detectChanges();
+
+            const errorMessages = fixture.nativeElement.querySelectorAll('.client-chat-error');
+            expect(errorMessages.length).toBeGreaterThan(0);
+            const allErrorText = Array.from(errorMessages)
+                .map((msg: any) => msg.textContent)
+                .join(' ');
+
+            expect(allErrorText).toContain('aiUsageDeclined');
+        });
+
+        it('should not render chat input when userAccepted is NO_AI', () => {
+            component.userAccepted.set(LLMSelectionDecision.NO_AI);
+            fixture.changeDetectorRef.detectChanges();
+
+            const chatInput = fixture.nativeElement.querySelector('.chat-input');
+            expect(chatInput).toBeNull();
+        });
+
+        it('should not render chat input when userAccepted is undefined', () => {
+            component.userAccepted.set(undefined);
+            fixture.changeDetectorRef.detectChanges();
+
+            const chatInput = fixture.nativeElement.querySelector('.chat-input');
+            expect(chatInput).toBeNull();
+        });
+    });
+
+    describe('suggestions with LLM selection', () => {
+        const expectedSuggestions = ['suggestion1', 'suggestion2'];
+        const mockMessages = [mockClientMessage, mockServerMessage];
+
+        beforeEach(() => {
+            vi.spyOn(chatService, 'currentSuggestions').mockReturnValue(of(expectedSuggestions));
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+        });
+
+        it('should not render suggestions when userAccepted is NO_AI', () => {
+            component.userAccepted.set(LLMSelectionDecision.NO_AI);
+            fixture.changeDetectorRef.detectChanges();
+
+            const suggestionButtons = fixture.nativeElement.querySelectorAll('.iris-suggestion-buttons');
+            expect(suggestionButtons).toHaveLength(0);
+        });
+
+        it('should not render suggestions when userAccepted is undefined', () => {
+            component.userAccepted.set(undefined);
+            fixture.changeDetectorRef.detectChanges();
+
+            const suggestionButtons = fixture.nativeElement.querySelectorAll('.iris-suggestion-buttons');
+            expect(suggestionButtons).toHaveLength(0);
+        });
+    });
+
+    describe('processMessages newline handling', () => {
+        it('should not apply newline doubling to any messages', () => {
+            const tableMarkdown = '| Item | Details |\n|------|--------|\n| Lang | Java |';
+            const llmMessage = {
+                sender: IrisSender.LLM,
+                id: 10,
+                content: [{ type: IrisMessageContentType.TEXT, textContent: tableMarkdown } as IrisTextMessageContent],
+                sentAt: dayjs(),
+            } as IrisAssistantMessage;
+
+            const userText = 'Line1\nLine2\n\nLine3';
+            const userMessage = {
+                sender: IrisSender.USER,
+                id: 11,
+                content: [{ type: IrisMessageContentType.TEXT, textContent: userText } as IrisTextMessageContent],
+                sentAt: dayjs(),
+            } as IrisUserMessage;
+
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([userMessage, llmMessage]));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            const processedMessages = component.messages();
+            const userContent = processedMessages[0].content![0] as IrisTextMessageContent;
+            const llmContent = processedMessages[1].content![0] as IrisTextMessageContent;
+            // Neither message type should have newlines modified — line breaks are handled by markdown-it's breaks: true option
+            expect(llmContent.textContent).toBe(tableMarkdown);
+            expect(userContent.textContent).toBe(userText);
         });
     });
 });
