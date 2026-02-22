@@ -133,7 +133,10 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
         }
     }
 
-    /** Sets the available competency links for selection. */
+    /**
+     * Set the available competencyLinks for selection
+     * @param competencies The competencies of the course
+     */
     setCompetencyLinks(competencies: CourseCompetency[]) {
         this.competencyLinks = competencies.map((competency) => {
             // Remove unnecessary properties
