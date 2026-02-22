@@ -9,12 +9,11 @@ import { UrlSerializer } from '@angular/router';
 import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ScienceSettingsComponent } from 'app/core/user/settings/science-settings/science-settings.component';
 import { ScienceSettingsService } from 'app/core/user/settings/science-settings/science-settings.service';
 import { ScienceSetting, scienceSettingsStructure } from 'app/core/user/settings/science-settings/science-settings-structure';
 import { UserSettingsService } from 'app/core/user/settings/directive/user-settings.service';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 
 describe('ScienceSettingsComponent', () => {
@@ -64,8 +63,8 @@ describe('ScienceSettingsComponent', () => {
         comp.settings = [scienceSetting];
         const saveResponse = new HttpResponse<ScienceSetting[]>({ body: [{ ...scienceSetting, active: true, changed: false }] });
         jest.spyOn(userSettingsServiceMock, 'saveSettings').mockReturnValue(of(saveResponse));
-        jest.spyOn(userSettingsServiceMock, 'saveSettingsSuccess').mockReturnValue(comp.userSettings);
-        jest.spyOn(userSettingsServiceMock, 'extractIndividualSettingsFromSettingsStructure').mockReturnValue(comp.settings);
+        jest.spyOn(userSettingsServiceMock, 'saveSettingsSuccess').mockReturnValue(scienceSettingsStructure);
+        jest.spyOn(userSettingsServiceMock, 'extractIndividualSettingsFromSettingsStructure').mockReturnValue([scienceSetting]);
         const event = { currentTarget: { id: settingId } } as unknown as MouseEvent;
 
         comp.toggleSetting(event);

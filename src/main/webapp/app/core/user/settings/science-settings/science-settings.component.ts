@@ -50,9 +50,9 @@ export class ScienceSettingsComponent extends UserSettingsDirective implements O
             // else reuse the already available/loaded ones
             this.userSettings = this.userSettingsService.loadSettingsSuccessAsSettingsStructure(newestScienceSettings, this.userSettingsCategory);
             this.settings = this.userSettingsService.extractIndividualSettingsFromSettingsStructure(this.userSettings);
+            this.storeConfirmedValues();
             this.changeDetector.detectChanges();
         }
-        this.storeConfirmedValues();
 
         // subscribe to feature toggle changes
         this.featureToggleActiveSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.Science).subscribe((active) => {
@@ -101,8 +101,11 @@ export class ScienceSettingsComponent extends UserSettingsDirective implements O
     }
 
     private storeConfirmedValues(): void {
+        if (!this.settings) {
+            return;
+        }
         for (const setting of this.settings) {
-            this.lastConfirmedValues.set(setting.settingId, setting.active);
+            this.lastConfirmedValues.set(setting.settingId, !!setting.active);
         }
     }
 }
