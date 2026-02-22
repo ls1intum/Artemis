@@ -47,3 +47,11 @@ export interface RawTutorialGroupSessionDTO {
     dateChanged: boolean;
     attendanceCount?: number;
 }
+
+export interface CreateOrUpdateTutorialGroupSessionDTO {
+    date: string;
+    startTime: string;
+    endTime: string;
+    location: string;
+    attendance?: number;
+}

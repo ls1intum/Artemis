@@ -270,4 +270,4 @@
     }
 </div>
 <p-confirmDialog />
-<jhi-tutorial-session-create-or-edit-modal (onUpdate)="updateTutorialGroupSession($event)" #sessionModal />
+<jhi-tutorial-session-create-or-edit-modal (onUpdate)="updateTutorialGroupSession($event)" (onCreate)="createTutorialGroupSession($event)" #sessionModal />

@@ -44,7 +44,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.OldCreateTutorialGroupDTO;
-import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailSessionDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupSessionDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupFreePeriodRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
@@ -494,14 +494,14 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
         }
     }
 
-    void assertGroupDTOHasCorrectFields(TutorialGroupDetailSessionDTO dto, TutorialGroupSession session) {
+    void assertGroupDTOHasCorrectFields(TutorialGroupSessionDTO dto, TutorialGroupSession session) {
         assertThat(dto.start().toInstant()).isEqualTo(session.getStart().toInstant());
         assertThat(dto.end().toInstant()).isEqualTo(session.getEnd().toInstant());
         assertThat(dto.location()).isEqualTo(session.getLocation());
         assertThat(dto.attendanceCount()).isEqualTo(session.getAttendanceCount());
     }
 
-    void assertGroupDTOHasCorrectFlags(TutorialGroupDetailSessionDTO dto, boolean expectIsCancelled, boolean expectLocationChanged, boolean expectTimeChanged,
+    void assertGroupDTOHasCorrectFlags(TutorialGroupSessionDTO dto, boolean expectIsCancelled, boolean expectLocationChanged, boolean expectTimeChanged,
             boolean expectDateChanged) {
         assertThat(dto.isCancelled()).isEqualTo(expectIsCancelled);
         assertThat(dto.locationChanged()).isEqualTo(expectLocationChanged);

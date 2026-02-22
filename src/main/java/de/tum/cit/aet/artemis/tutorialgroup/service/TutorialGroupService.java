@@ -56,8 +56,8 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistrationType
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDTO;
-import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailSessionDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupRegisterStudentDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupSessionDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRegistrationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
@@ -330,7 +330,7 @@ public class TutorialGroupService {
         Set<User> foundStudents = new HashSet<>();
         List<TutorialGroupRegisterStudentDTO> notFoundStudentDTOs = new LinkedList<>();
         for (var studentDto : studentDTOs) {
-            findStudent(studentDto, tutorialGroup.getCourse().getStudentGroupName()).ifPresentOrElse(foundStudents::add, () -> notFoundStudentDTOs.add(studentDto));
+            findStudent(studentDto.login(), tutorialGroup.getCourse().getStudentGroupName()).ifPresentOrElse(foundStudents::add, () -> notFoundStudentDTOs.add(studentDto));
         }
         registerMultipleStudentsToTutorialGroup(foundStudents, tutorialGroup, registrationType, responsibleUser, true);
         return notFoundStudentDTOs;
@@ -340,7 +340,6 @@ public class TutorialGroupService {
         Set<User> students = new HashSet<>();
         for (var login : logins) {
             var student = findStudent(login, tutorialGroup.getCourse().getStudentGroupName()).orElseThrow(() -> new BadRequestException("Some students do not exist!"));
-            ;
             students.add(student);
         }
         registerMultipleStudentsToTutorialGroup(students, tutorialGroup, registrationType, responsibleUser, true);
@@ -642,10 +641,10 @@ public class TutorialGroupService {
      * @throws EntityNotFoundException if no tutorial group exists with the given ID
      */
     public TutorialGroupDTO getTutorialGroupDTO(long tutorialGroupId, long courseId, ZoneId courseTimeZone) {
-        RawTutorialGroupDTO rawTutorialGroupDTO = tutorialGroupRepository.getRawTutorialGroupDTO(tutorialGroupId, courseId)
+        RawTutorialGroupDTO rawGroupDTOs = tutorialGroupRepository.getRawTutorialGroupDTO(tutorialGroupId, courseId)
                 .orElseThrow(() -> new EntityNotFoundException("No tutorial group found with id " + tutorialGroupId + " found for course with id " + courseId + "."));
 
-        String tutorLogin = rawTutorialGroupDTO.tutorLogin();
+        String tutorLogin = rawGroupDTOs.tutorLogin();
         String currentUserLogin = userRepository.getCurrentUserLogin();
         Long tutorChatId = null;
         if (!tutorLogin.equals(currentUserLogin)) {
@@ -653,21 +652,21 @@ public class TutorialGroupService {
         }
 
         List<RawTutorialGroupDetailSessionDTO> rawSessionDTOs = tutorialGroupSessionRepository.getTutorialGroupDetailSessionData(tutorialGroupId);
-        List<TutorialGroupDetailSessionDTO> sessionDTOs;
-        // the schedule related properties are null if and only if there is no schedule for the tutorial group
-        if (rawTutorialGroupDTO.scheduleDayOfWeek() != null) {
-            int scheduleDayOfWeek = rawTutorialGroupDTO.scheduleDayOfWeek();
-            LocalTime scheduleStart = LocalTime.parse(rawTutorialGroupDTO.scheduleStartTime());
-            LocalTime scheduleEnd = LocalTime.parse(rawTutorialGroupDTO.scheduleEndTime());
-            String scheduleLocation = rawTutorialGroupDTO.scheduleLocation();
-            sessionDTOs = rawSessionDTOs.stream()
-                    .map(data -> TutorialGroupDetailSessionDTO.from(data, scheduleDayOfWeek, scheduleStart, scheduleEnd, scheduleLocation, courseTimeZone)).toList();
+        List<TutorialGroupSessionDTO> sessionDTOs;
+        // the schedule related properties are null if and only if there is no schedule for the tutorial group TODO: bundle in a nested schedule DTO
+        if (rawGroupDTOs.scheduleDayOfWeek() != null) {
+            int scheduleDayOfWeek = rawGroupDTOs.scheduleDayOfWeek();
+            LocalTime scheduleStart = LocalTime.parse(rawGroupDTOs.scheduleStartTime());
+            LocalTime scheduleEnd = LocalTime.parse(rawGroupDTOs.scheduleEndTime());
+            String scheduleLocation = rawGroupDTOs.scheduleLocation();
+            sessionDTOs = rawSessionDTOs.stream().map(data -> TutorialGroupSessionDTO.from(data, scheduleDayOfWeek, scheduleStart, scheduleEnd, scheduleLocation, courseTimeZone))
+                    .toList();
         }
         else {
-            sessionDTOs = rawSessionDTOs.stream().map(TutorialGroupDetailSessionDTO::from).toList();
+            sessionDTOs = rawSessionDTOs.stream().map(TutorialGroupSessionDTO::from).toList();
         }
 
-        return TutorialGroupDTO.from(rawTutorialGroupDTO, sessionDTOs, tutorChatId);
+        return TutorialGroupDTO.from(rawGroupDTOs, sessionDTOs, tutorChatId);
     }
 
     /**
@@ -730,12 +729,6 @@ public class TutorialGroupService {
         if (!this.userHasManagingRightsForTutorialGroup(tutorialGroup, user, isAdminOrInstructor)) {
             throw new AccessForbiddenException("The user is not allowed to modify the sessions of tutorial group: " + tutorialGroup.getId());
         }
-    }
-
-    private Optional<User> findStudent(TutorialGroupRegisterStudentDTO studentDTO, String studentCourseGroupName) {
-        var userOptional = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(studentDTO.registrationNumber())
-                .or(() -> userRepository.findUserWithGroupsAndAuthoritiesByLogin(studentDTO.login()));
-        return userOptional.isPresent() && userOptional.get().getGroups().contains(studentCourseGroupName) ? userOptional : Optional.empty();
     }
 
     private Optional<User> findStudent(String login, String studentCourseGroupName) {

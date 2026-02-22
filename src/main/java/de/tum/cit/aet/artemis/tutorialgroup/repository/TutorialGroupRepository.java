@@ -132,6 +132,15 @@ public interface TutorialGroupRepository extends ArtemisJpaRepository<TutorialGr
     Optional<TutorialGroup> findByIdWithSessions(@Param("tutorialGroupId") long tutorialGroupId);
 
     @Query("""
+            SELECT tutorialGroup
+            FROM TutorialGroup tutorialGroup
+                LEFT JOIN FETCH tutorialGroup.tutorialGroupSessions
+                LEFT JOIN FETCH tutorialGroup.tutorialGroupSchedule
+            WHERE tutorialGroup.id = :tutorialGroupId
+            """)
+    Optional<TutorialGroup> findByIdWithSessionsAndSchedule(@Param("tutorialGroupId") long tutorialGroupId);
+
+    @Query("""
             SELECT new de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDTO(
                 tutorialGroup.id,
                 tutorialGroup.title,
@@ -175,6 +184,10 @@ public interface TutorialGroupRepository extends ArtemisJpaRepository<TutorialGr
 
     default TutorialGroup findByIdWithSessionsElseThrow(long tutorialGroupId) {
         return getValueElseThrow(findByIdWithSessions(tutorialGroupId), tutorialGroupId);
+    }
+
+    default TutorialGroup findByIdWithSessionsAndScheduleElseThrow(long tutorialGroupId) {
+        return getValueElseThrow(findByIdWithSessionsAndSchedule(tutorialGroupId), tutorialGroupId);
     }
 
     default TutorialGroup findByIdWithTeachingAssistantAndCourseElseThrow(long tutorialGroupId) {

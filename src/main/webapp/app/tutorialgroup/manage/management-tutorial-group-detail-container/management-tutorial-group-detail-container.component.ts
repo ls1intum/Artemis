@@ -6,6 +6,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Router } from '@angular/router';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import {
+    CreateTutorialGroupSessionEvent,
     DeleteTutorialGroupEvent,
     ModifyTutorialGroupSessionEvent,
     TutorialGroupDetailComponent,
@@ -122,6 +123,26 @@ export class ManagementTutorialGroupDetailContainerComponent {
         const updateTutorialGroupSessionDTO = updateEvent.updateTutorialGroupSessionDTO;
         this.tutorialGroupSessionService
             .update(courseId, tutorialGroupId, tutorialGroupSessionId, updateTutorialGroupSessionDTO)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: () => {
+                    this.tutorialGroupService.fetchTutorialGroupDTO(courseId, tutorialGroupId); // TODO: rather update without fetch?
+                    this.isLoading.set(false);
+                },
+                error: () => {
+                    this.alertService.addErrorAlert('Something went wrong while updating the session. Please try again.');
+                    this.isLoading.set(false);
+                },
+            });
+    }
+
+    createSession(createEvent: CreateTutorialGroupSessionEvent) {
+        this.isLoading.set(true);
+        const courseId = createEvent.courseId;
+        const tutorialGroupId = createEvent.tutorialGroupId;
+        const createTutorialGroupSessionDTO = createEvent.createTutorialGroupSessionDTO;
+        this.tutorialGroupSessionService
+            .create(courseId, tutorialGroupId, createTutorialGroupSessionDTO)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => {

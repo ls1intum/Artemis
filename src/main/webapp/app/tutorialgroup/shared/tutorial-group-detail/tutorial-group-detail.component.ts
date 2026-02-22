@@ -23,7 +23,7 @@ import {
     faUsers,
 } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { TutorialGroupSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { CreateOrUpdateTutorialGroupSessionDTO, TutorialGroupSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { SelectButton } from 'primeng/selectbutton';
 import { FormsModule } from '@angular/forms';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
@@ -46,7 +46,6 @@ import {
     UpdateTutorialGroupSessionData,
 } from 'app/tutorialgroup/manage/tutorial-group-session-create-or-edit-modal/tutorial-session-create-or-edit-modal.component';
 import { TooltipModule } from 'primeng/tooltip';
-import { UpdateTutorialGroupSessionDTO } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
 
 interface TutorialGroupDetailSession {
     id: number;
@@ -70,7 +69,13 @@ export interface UpdateTutorialGroupSessionEvent {
     courseId: number;
     tutorialGroupId: number;
     tutorialGroupSessionId: number;
-    updateTutorialGroupSessionDTO: UpdateTutorialGroupSessionDTO;
+    updateTutorialGroupSessionDTO: CreateOrUpdateTutorialGroupSessionDTO;
+}
+
+export interface CreateTutorialGroupSessionEvent {
+    courseId: number;
+    tutorialGroupId: number;
+    createTutorialGroupSessionDTO: CreateOrUpdateTutorialGroupSessionDTO;
 }
 
 export interface DeleteTutorialGroupEvent {
@@ -153,6 +158,7 @@ export class TutorialGroupDetailComponent {
     onDeleteSession = output<ModifyTutorialGroupSessionEvent>();
     onCancelSession = output<ModifyTutorialGroupSessionEvent>();
     onUpdateSession = output<UpdateTutorialGroupSessionEvent>();
+    onCreateSession = output<CreateTutorialGroupSessionEvent>();
     onActivateSession = output<ModifyTutorialGroupSessionEvent>();
     onDeleteGroup = output<DeleteTutorialGroupEvent>();
 
@@ -267,6 +273,18 @@ export class TutorialGroupDetailComponent {
             updateTutorialGroupSessionDTO: updateTutorialGroupSessionData.updateTutorialGroupSessionDTO,
         };
         this.onUpdateSession.emit(updateTutorialGroupSessionEvent);
+    }
+
+    createTutorialGroupSession(createTutorialGroupSessionDTO: CreateOrUpdateTutorialGroupSessionDTO) {
+        const courseId = this.course().id;
+        if (!courseId) return;
+        const tutorialGroupId = this.tutorialGroup().id;
+        const createTutorialGroupSessionEvent: CreateTutorialGroupSessionEvent = {
+            courseId: courseId,
+            tutorialGroupId: tutorialGroupId,
+            createTutorialGroupSessionDTO: createTutorialGroupSessionDTO,
+        };
+        this.onCreateSession.emit(createTutorialGroupSessionEvent);
     }
 
     private deleteTutorialGroupSession(sessionId: number) {

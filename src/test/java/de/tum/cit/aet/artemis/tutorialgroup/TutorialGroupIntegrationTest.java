@@ -51,7 +51,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistrationType
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDTO;
-import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailSessionDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupSessionDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource;
 import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource.TutorialGroupRegistrationImportDTO;
 
@@ -1384,25 +1384,25 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
             assertThat(groupDTO.campus()).isEqualTo(group.getCampus());
             assertThat(groupDTO.groupChannelId()).isEqualTo(channel.getId());
 
-            List<TutorialGroupDetailSessionDTO> sessionDTOs = groupDTO.sessions();
+            List<TutorialGroupSessionDTO> sessionDTOs = groupDTO.sessions();
             assertThat(sessionDTOs).hasSize(5);
-            TutorialGroupDetailSessionDTO firstSessionDTO = sessionDTOs.getFirst();
+            TutorialGroupSessionDTO firstSessionDTO = sessionDTOs.getFirst();
             assertGroupDTOHasCorrectFields(firstSessionDTO, cancelledSession);
             assertGroupDTOHasCorrectFlags(firstSessionDTO, true, false, false, false);
 
-            TutorialGroupDetailSessionDTO secondSessionDTO = sessionDTOs.get(1);
+            TutorialGroupSessionDTO secondSessionDTO = sessionDTOs.get(1);
             assertGroupDTOHasCorrectFields(secondSessionDTO, relocatedSession);
             assertGroupDTOHasCorrectFlags(secondSessionDTO, false, true, false, false);
 
-            TutorialGroupDetailSessionDTO thirdSessionDTO = sessionDTOs.get(2);
+            TutorialGroupSessionDTO thirdSessionDTO = sessionDTOs.get(2);
             assertGroupDTOHasCorrectFields(thirdSessionDTO, changedTimeSession);
             assertGroupDTOHasCorrectFlags(thirdSessionDTO, false, false, true, false);
 
-            TutorialGroupDetailSessionDTO fourthSessionDTO = sessionDTOs.get(3);
+            TutorialGroupSessionDTO fourthSessionDTO = sessionDTOs.get(3);
             assertGroupDTOHasCorrectFields(fourthSessionDTO, changedDateSession);
             assertGroupDTOHasCorrectFlags(fourthSessionDTO, false, false, false, true);
 
-            TutorialGroupDetailSessionDTO fifthSessionDTO = sessionDTOs.get(4);
+            TutorialGroupSessionDTO fifthSessionDTO = sessionDTOs.get(4);
             assertGroupDTOHasCorrectFields(fifthSessionDTO, attendanceCountSession);
             assertGroupDTOHasCorrectFlags(fifthSessionDTO, false, false, false, false);
         }

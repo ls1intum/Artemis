@@ -5,16 +5,15 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { InputGroupModule } from 'primeng/inputgroup';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
-import { TutorialGroupSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { CreateOrUpdateTutorialGroupSessionDTO, TutorialGroupSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { Validation, ValidationStatus } from 'app/tutorialgroup/manage/tutorial-create-or-edit/tutorial-create-or-edit.component';
 import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
 import { TooltipModule } from 'primeng/tooltip';
-import { UpdateTutorialGroupSessionDTO } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
 import dayjs from 'dayjs/esm';
 
 export interface UpdateTutorialGroupSessionData {
     tutorialGroupSessionId: number;
-    updateTutorialGroupSessionDTO: UpdateTutorialGroupSessionDTO;
+    updateTutorialGroupSessionDTO: CreateOrUpdateTutorialGroupSessionDTO;
 }
 
 @Component({
@@ -50,6 +49,7 @@ export class TutorialSessionCreateOrEditModalComponent {
     saveButtonDisabled = computed<boolean>(() => this.computeIfSaveButtonDisabled());
 
     onUpdate = output<UpdateTutorialGroupSessionData>();
+    onCreate = output<CreateOrUpdateTutorialGroupSessionDTO>();
 
     open(session?: TutorialGroupSessionDTO) {
         if (session) {
@@ -67,7 +67,7 @@ export class TutorialSessionCreateOrEditModalComponent {
         if (session) {
             this.updateSession(session);
         } else {
-            // TODO: implement create
+            this.createSession();
         }
         this.clearData();
         this.isOpen.set(false);
@@ -78,13 +78,27 @@ export class TutorialSessionCreateOrEditModalComponent {
         this.isOpen.set(false);
     }
 
+    private createSession() {
+        const date = dayjs(this.date()).format('YYYY-MM-DD');
+        const startTime = dayjs(this.startTime()).format('HH:mm');
+        const endTime = dayjs(this.endTime()).format('HH:mm');
+        const location = this.location();
+        const createTutorialGroupSessionDTO: CreateOrUpdateTutorialGroupSessionDTO = {
+            date: date,
+            startTime: startTime,
+            endTime: endTime,
+            location: location,
+        };
+        this.onCreate.emit(createTutorialGroupSessionDTO);
+    }
+
     private updateSession(session: TutorialGroupSessionDTO) {
         const tutorialGroupSessionId = session.id;
         const date = dayjs(this.date()).format('YYYY-MM-DD');
         const startTime = dayjs(this.startTime()).format('HH:mm');
         const endTime = dayjs(this.endTime()).format('HH:mm');
         const location = this.location();
-        const updateTutorialGroupSessionDTO: UpdateTutorialGroupSessionDTO = {
+        const updateTutorialGroupSessionDTO: CreateOrUpdateTutorialGroupSessionDTO = {
             date: date,
             startTime: startTime,
             endTime: endTime,
