@@ -15,6 +15,7 @@ import java.util.Set;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.transport.RefSpec;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -217,7 +218,15 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void shouldMapTemplateRepositoryIssueToTemplateReviewThread() {
+    void shouldMapTemplateRepositoryIssueToTemplateReviewThread() throws Exception {
+        LocalRepoWithGit templateRepo = createLocalRepositoryWithGit("template-issue");
+        pushFileToRepository(templateRepo, "src/Main.java", "class Main {}");
+
+        var templateParticipation = programmingExercise.getTemplateParticipation();
+        templateParticipation.setRepositoryUri(templateRepo.uri().toString());
+        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
+
         ConsistencyIssueDTO issue = buildConsistencyIssue("Template issue", ArtifactType.TEMPLATE_REPOSITORY, "src/Main.java", 8);
 
         exerciseReviewService.createConsistencyCheckThreads(programmingExercise.getId(), List.of(issue));
@@ -234,7 +243,26 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void shouldCreateOneGroupPerIssueAndThreadsForAllRelatedLocations() {
+    void shouldCreateOneGroupPerIssueAndThreadsForAllRelatedLocations() throws Exception {
+        LocalRepoWithGit templateRepo = createLocalRepositoryWithGit("template-grouped");
+        pushFileToRepository(templateRepo, "src/A.java", "class A {}");
+        var templateParticipation = programmingExercise.getTemplateParticipation();
+        templateParticipation.setRepositoryUri(templateRepo.uri().toString());
+        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+
+        LocalRepoWithGit testsRepo = createLocalRepositoryWithGit("tests-grouped");
+        pushFileToRepository(testsRepo, "test/ATest.java", "class ATest {}");
+        programmingExercise.setTestRepositoryUri(testsRepo.uri().toString());
+        programmingExerciseRepository.save(programmingExercise);
+
+        LocalRepoWithGit solutionRepo = createLocalRepositoryWithGit("solution-grouped");
+        pushFileToRepository(solutionRepo, "src/B.java", "class B {}");
+        var solutionParticipation = programmingExercise.getSolutionParticipation();
+        solutionParticipation.setRepositoryUri(solutionRepo.uri().toString());
+        solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
+
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
+
         ConsistencyIssueDTO firstIssue = new ConsistencyIssueDTO(Severity.HIGH, ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH, "First grouped issue", "Fix first issue",
                 List.of(new ArtifactLocationDTO(ArtifactType.TEMPLATE_REPOSITORY, "src/A.java", 3, 3),
                         new ArtifactLocationDTO(ArtifactType.TESTS_REPOSITORY, "test/ATest.java", 8, 8)));
@@ -287,6 +315,17 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
             assertThat(thread.getFilePath()).isNull();
             assertThat(thread.getLineNumber()).isEqualTo(2);
         });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldSkipConsistencyIssueWhenRepositoryFileDoesNotExist() {
+        ConsistencyIssueDTO issue = buildConsistencyIssue("Missing file issue", ArtifactType.TEMPLATE_REPOSITORY, "src/DoesNotExist.java", 3);
+
+        exerciseReviewService.createConsistencyCheckThreads(programmingExercise.getId(), List.of(issue));
+
+        Set<CommentThread> threads = commentThreadRepository.findWithCommentsByExerciseId(programmingExercise.getId());
+        assertThat(threads).isEmpty();
     }
 
     @Test
@@ -682,13 +721,13 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         FileUtils.writeStringToFile(filePath.toFile(), oldText, StandardCharsets.UTF_8);
         repo.git().add().addFilepattern(".").call();
         RevCommit oldCommit = GitService.commit(repo.git()).setMessage("Add file").call();
-        repo.git().push().setRemote("origin").call();
+        pushHeadToDefaultBranch(repo.git());
 
         String newText = String.join("\n", "alpha", "inserted", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta-updated", "iota", "kappa", "");
         FileUtils.writeStringToFile(filePath.toFile(), newText, StandardCharsets.UTF_8);
         repo.git().add().addFilepattern(".").call();
         RevCommit newCommit = GitService.commit(repo.git()).setMessage("Update file").call();
-        repo.git().push().setRemote("origin").call();
+        pushHeadToDefaultBranch(repo.git());
 
         LineMappingResult shiftedLine = exerciseReviewService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 2);
         assertThat(shiftedLine.newLine()).isEqualTo(3);
@@ -713,12 +752,12 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         FileUtils.writeStringToFile(filePath.toFile(), "a\nb\nc\n", StandardCharsets.UTF_8);
         repo.git().add().addFilepattern(".").call();
         RevCommit oldCommit = GitService.commit(repo.git()).setMessage("Add file").call();
-        repo.git().push().setRemote("origin").call();
+        pushHeadToDefaultBranch(repo.git());
 
         Files.deleteIfExists(filePath);
         repo.git().add().addFilepattern(".").call();
         RevCommit newCommit = GitService.commit(repo.git()).setMessage("Delete file").call();
-        repo.git().push().setRemote("origin").call();
+        pushHeadToDefaultBranch(repo.git());
 
         LineMappingResult result = exerciseReviewService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 1);
         assertThat(result.newLine()).isNull();
@@ -731,14 +770,14 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         LocalVCRepositoryUri repositoryUri = repo.uri();
 
         RevCommit oldCommit = GitService.commit(repo.git()).setMessage("Initial").call();
-        repo.git().push().setRemote("origin").call();
+        pushHeadToDefaultBranch(repo.git());
 
         Path filePath = repo.workingCopyPath().resolve("src").resolve("Main.java");
         Files.createDirectories(filePath.getParent());
         FileUtils.writeStringToFile(filePath.toFile(), "a\nb\nc\n", StandardCharsets.UTF_8);
         repo.git().add().addFilepattern(".").call();
         RevCommit newCommit = GitService.commit(repo.git()).setMessage("Add file").call();
-        repo.git().push().setRemote("origin").call();
+        pushHeadToDefaultBranch(repo.git());
 
         LineMappingResult result = exerciseReviewService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 1);
         assertThat(result.newLine()).isNull();
@@ -1022,15 +1061,43 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         FileUtils.writeStringToFile(filePath.toFile(), oldText, StandardCharsets.UTF_8);
         repo.git().add().addFilepattern(".").call();
         RevCommit oldCommit = GitService.commit(repo.git()).setMessage("Add file").call();
-        repo.git().push().setRemote("origin").call();
+        pushHeadToDefaultBranch(repo.git());
 
         String newText = String.join("\n", "alpha", "inserted", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta", "iota", "kappa", "");
         FileUtils.writeStringToFile(filePath.toFile(), newText, StandardCharsets.UTF_8);
         repo.git().add().addFilepattern(".").call();
         RevCommit newCommit = GitService.commit(repo.git()).setMessage("Update file").call();
-        repo.git().push().setRemote("origin").call();
+        pushHeadToDefaultBranch(repo.git());
 
         return new RepoHistory(repo.uri(), oldCommit.getName(), newCommit.getName());
+    }
+
+    /**
+     * Adds or updates one file in a local working copy and pushes the commit to origin.
+     *
+     * @param repo           local repo wrapper
+     * @param repositoryPath repository-relative file path
+     * @param fileContent    UTF-8 file content to write
+     * @throws Exception if git or file operations fail
+     */
+    private void pushFileToRepository(LocalRepoWithGit repo, String repositoryPath, String fileContent) throws Exception {
+        Path filePath = repo.workingCopyPath().resolve(repositoryPath);
+        Files.createDirectories(filePath.getParent());
+        FileUtils.writeStringToFile(filePath.toFile(), fileContent, StandardCharsets.UTF_8);
+        repo.git().add().addFilepattern(".").call();
+        GitService.commit(repo.git()).setMessage("Add " + repositoryPath).call();
+        pushHeadToDefaultBranch(repo.git());
+    }
+
+    /**
+     * Pushes the current local HEAD to the configured default branch on origin.
+     * This keeps repository history deterministic in tests and avoids implicit remote HEAD/branch behavior.
+     *
+     * @param git the local git handle
+     * @throws Exception if pushing fails
+     */
+    private void pushHeadToDefaultBranch(Git git) throws Exception {
+        git.push().setRemote("origin").setRefSpecs(new RefSpec("HEAD:refs/heads/" + defaultBranch)).call();
     }
 
     private LocalRepoWithGit createLocalRepositoryWithGit(String suffix) throws Exception {
