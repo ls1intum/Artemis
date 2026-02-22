@@ -123,6 +123,14 @@
                                         [entityTitle]="modelingExercise.title || ''"
                                         deleteQuestion="artemisApp.exercise.delete.question"
                                         deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                                        entitySummaryTitle="artemisApp.exercise.delete.summary.title"
+                                        [fetchEntitySummary]="fetchExerciseDeletionSummary(modelingExercise)"
+                                        [translateValues]="{
+                                            courseTitle: course.title,
+                                            courseType: course.testCourse
+                                                ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate)
+                                                : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
+                                        }"
                                         (delete)="deleteModelingExercise(modelingExercise.id!)"
                                         [dialogError]="dialogError$"
                                     >
@@ -142,9 +150,15 @@
                         jhiDeleteButton
                         [entityTitle]="'Delete All Modeling Exercises'"
                         deleteQuestion="artemisApp.exerciseActions.deleteMultipleExercisesQuestion"
+                        [translateValues]="{
+                            courseTitle: course.title,
+                            courseType: course.testCourse
+                                ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate)
+                                : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
+                        }"
                         (delete)="deleteMultipleExercises(selectedExercises, modelingExerciseService)"
                         [dialogError]="dialogError$"
-                        id="delete-all-quiz"
+                        id="delete-all-modeling"
                         class="mb-1"
                     >
                         <fa-icon [icon]="faTrash" />

@@ -25,6 +25,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { EntityTitleService } from 'app/core/navbar/entity-title.service';
+import { ExerciseDeletionSummaryDTO } from 'app/exercise/shared/entities/exercise-deletion-summary.model';
+import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 
 describe('Exercise Service', () => {
     let service: ExerciseService;
@@ -520,6 +522,115 @@ describe('Exercise Service', () => {
         httpMock.expectOne({
             url: `api/exercise/exercises/${exerciseId}/toggle-second-correction`,
             method: 'PUT',
+        });
+    });
+
+    describe('getDeletionSummary', () => {
+        const exerciseId = 128;
+
+        it('should fetch and transform deletion summary for programming exercise', () => {
+            const testExercise = { id: exerciseId, type: ExerciseType.PROGRAMMING } as Exercise;
+            const dto: ExerciseDeletionSummaryDTO = {
+                numberOfStudentParticipations: 50,
+                numberOfBuilds: 100,
+                numberOfAssessments: 25,
+                numberOfCommunicationPosts: 10,
+                numberOfAnswerPosts: 5,
+            };
+
+            let result: EntitySummary | undefined;
+            service.getDeletionSummary(testExercise).subscribe((summary) => (result = summary));
+
+            const testRequest = httpMock.expectOne({
+                url: `api/exercise/exercises/${exerciseId}/deletion-summary`,
+                method: 'GET',
+            });
+
+            testRequest.flush(dto);
+
+            expect(result).toEqual({
+                'artemisApp.exercise.delete.summary.numberOfStudentParticipations': 50,
+                'artemisApp.exercise.delete.summary.numberOfBuilds': 100,
+                'artemisApp.exercise.delete.summary.numberOfAssessments': 25,
+                'artemisApp.exercise.delete.summary.numberOfCommunicationPosts': 10,
+                'artemisApp.exercise.delete.summary.numberOfAnswerPosts': 5,
+            });
+        });
+
+        it('should exclude numberOfBuilds for non-programming exercises', () => {
+            const testExercise = { id: exerciseId, type: ExerciseType.TEXT } as Exercise;
+            const dto: ExerciseDeletionSummaryDTO = {
+                numberOfStudentParticipations: 30,
+                numberOfBuilds: 50,
+                numberOfAssessments: 20,
+                numberOfCommunicationPosts: 8,
+                numberOfAnswerPosts: 3,
+            };
+
+            let result: EntitySummary | undefined;
+            service.getDeletionSummary(testExercise).subscribe((summary) => (result = summary));
+
+            const testRequest = httpMock.expectOne({
+                url: `api/exercise/exercises/${exerciseId}/deletion-summary`,
+                method: 'GET',
+            });
+
+            testRequest.flush(dto);
+
+            expect(result).toEqual({
+                'artemisApp.exercise.delete.summary.numberOfStudentParticipations': 30,
+                'artemisApp.exercise.delete.summary.numberOfAssessments': 20,
+                'artemisApp.exercise.delete.summary.numberOfCommunicationPosts': 8,
+                'artemisApp.exercise.delete.summary.numberOfAnswerPosts': 3,
+            });
+            expect(result).not.toHaveProperty('artemisApp.exercise.delete.summary.numberOfBuilds');
+        });
+
+        it('should exclude numberOfBuilds and numberOfAssessments for quiz exercises', () => {
+            const testExercise = { id: exerciseId, type: ExerciseType.QUIZ } as Exercise;
+            const dto: ExerciseDeletionSummaryDTO = {
+                numberOfStudentParticipations: 0,
+                numberOfBuilds: 0,
+                numberOfAssessments: 0,
+                numberOfCommunicationPosts: 0,
+                numberOfAnswerPosts: 0,
+            };
+
+            let result: EntitySummary | undefined;
+            service.getDeletionSummary(testExercise).subscribe((summary) => (result = summary));
+
+            const testRequest = httpMock.expectOne({
+                url: `api/exercise/exercises/${exerciseId}/deletion-summary`,
+                method: 'GET',
+            });
+
+            testRequest.flush(dto);
+
+            expect(result).toEqual({
+                'artemisApp.exercise.delete.summary.numberOfStudentParticipations': 0,
+                'artemisApp.exercise.delete.summary.numberOfCommunicationPosts': 0,
+                'artemisApp.exercise.delete.summary.numberOfAnswerPosts': 0,
+            });
+            expect(result).not.toHaveProperty('artemisApp.exercise.delete.summary.numberOfBuilds');
+            expect(result).not.toHaveProperty('artemisApp.exercise.delete.summary.numberOfAssessments');
+        });
+
+        it('should return empty object for exercise without id', () => {
+            const testExercise = { type: ExerciseType.TEXT } as Exercise;
+
+            let result: EntitySummary | undefined;
+            service.getDeletionSummary(testExercise).subscribe((summary) => (result = summary));
+
+            expect(result).toEqual({});
+        });
+
+        it('should return empty object for exercise without type', () => {
+            const testExercise = { id: exerciseId } as Exercise;
+
+            let result: EntitySummary | undefined;
+            service.getDeletionSummary(testExercise).subscribe((summary) => (result = summary));
+
+            expect(result).toEqual({});
         });
     });
 });

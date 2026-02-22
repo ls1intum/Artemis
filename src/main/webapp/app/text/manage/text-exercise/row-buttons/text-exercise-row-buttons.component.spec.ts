@@ -12,6 +12,8 @@ import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { TextExerciseRowButtonsComponent } from 'app/text/manage/text-exercise/row-buttons/text-exercise-row-buttons.component';
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('TextExercise Row Buttons Component', () => {
     setupTestBed({ zoneless: true });
@@ -25,6 +27,7 @@ describe('TextExercise Row Buttons Component', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
                 { provide: TextExerciseService, useValue: { delete: vi.fn() } },
                 { provide: EventManager, useValue: { broadcast: vi.fn() } },
             ],

@@ -99,6 +99,14 @@
                                         [entityTitle]="fileUploadExercise.title"
                                         deleteQuestion="artemisApp.exercise.delete.question"
                                         deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                                        entitySummaryTitle="artemisApp.exercise.delete.summary.title"
+                                        [fetchEntitySummary]="fetchExerciseDeletionSummary(fileUploadExercise)"
+                                        [translateValues]="{
+                                            courseTitle: course.title,
+                                            courseType: course.testCourse
+                                                ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate)
+                                                : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
+                                        }"
                                         (delete)="deleteFileUploadExercise(fileUploadExercise.id)"
                                         [dialogError]="dialogError$"
                                     >
@@ -118,9 +126,15 @@
                         jhiDeleteButton
                         [entityTitle]="'Delete All File Upload Exercises'"
                         deleteQuestion="artemisApp.exerciseActions.deleteMultipleExercisesQuestion"
+                        [translateValues]="{
+                            courseTitle: course.title,
+                            courseType: course.testCourse
+                                ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate)
+                                : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
+                        }"
                         (delete)="deleteMultipleExercises(selectedExercises, fileUploadExerciseService)"
                         [dialogError]="dialogError$"
-                        id="delete-all-quiz"
+                        id="delete-all-file-upload"
                         class="mb-1"
                     >
                         <fa-icon [icon]="faTrash" />

@@ -191,14 +191,14 @@
                                             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                                             jhiDeleteButton
                                             [entityTitle]="programmingExercise.title!"
-                                            entitySummaryTitle="artemisApp.programmingExercise.delete.summary.title"
-                                            [fetchEntitySummary]="fetchExerciseDeletionSummary(programmingExercise.id!)"
+                                            entitySummaryTitle="artemisApp.exercise.delete.summary.title"
+                                            [fetchEntitySummary]="fetchExerciseDeletionSummary(programmingExercise)"
                                             deleteQuestion="artemisApp.programmingExercise.delete.questionLocalVC.single"
                                             [translateValues]="{
                                                 courseTitle: course.title,
                                                 courseType: course.testCourse
-                                                    ? ('artemisApp.programmingExercise.delete.testCourse' | artemisTranslate)
-                                                    : ('artemisApp.programmingExercise.delete.realCourse' | artemisTranslate),
+                                                    ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate)
+                                                    : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
                                             }"
                                             (delete)="deleteProgrammingExercise(programmingExercise.id!, $event)"
                                             [dialogError]="dialogError$"
@@ -251,8 +251,8 @@
                         [translateValues]="{
                             courseTitle: course.title,
                             courseType: course.testCourse
-                                ? ('artemisApp.programmingExercise.delete.testCourse' | artemisTranslate)
-                                : ('artemisApp.programmingExercise.delete.realCourse' | artemisTranslate),
+                                ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate)
+                                : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
                         }"
                         (delete)="deleteMultipleProgrammingExercises(selectedExercises, $event)"
                         [requireConfirmationOnlyForAdditionalChecks]="true"

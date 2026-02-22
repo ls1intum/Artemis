@@ -58,7 +58,7 @@
                         }
                         <td class="d-md-table-cell"><jhi-exercise-categories [exercise]="textExercise" /></td>
                         <td class="text-end">
-                            <jhi-text-exercise-row-buttons [courseId]="courseId" [exercise]="textExercise" />
+                            <jhi-text-exercise-row-buttons [courseId]="courseId" [course]="course" [exercise]="textExercise" />
                         </td>
                     </tr>
                 }
@@ -71,9 +71,15 @@
                         jhiDeleteButton
                         [entityTitle]="'Delete All Text Exercises'"
                         deleteQuestion="artemisApp.exerciseActions.deleteMultipleExercisesQuestion"
+                        [translateValues]="{
+                            courseTitle: course.title,
+                            courseType: course.testCourse
+                                ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate)
+                                : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
+                        }"
                         (delete)="deleteMultipleExercises(selectedExercises, textExerciseService)"
                         [dialogError]="dialogError$"
-                        id="delete-all-quiz"
+                        id="delete-all-text"
                         class="mb-1"
                     >
                         <fa-icon [icon]="faTrash" />

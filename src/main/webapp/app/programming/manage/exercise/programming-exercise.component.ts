@@ -220,7 +220,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         modalRef.componentInstance.exercisesToCheck = this.selectedExercises;
     }
 
-    fetchExerciseDeletionSummary(exerciseId: number): Observable<EntitySummary> {
-        return this.programmingExerciseService.getDeletionSummary(exerciseId);
+    fetchExerciseDeletionSummary(exercise: ProgrammingExercise): Observable<EntitySummary> {
+        return this.exerciseService.getDeletionSummary(exercise);
     }
 }

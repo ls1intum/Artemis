@@ -24,6 +24,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 
 @Component({
     selector: 'jhi-exam-exercise-row-buttons',
@@ -36,6 +37,7 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private modelingExerciseService = inject(ModelingExerciseService);
     private quizExerciseService = inject(QuizExerciseService);
+    private exerciseService = inject(ExerciseService);
     private eventManager = inject(EventManager);
     private profileService = inject(ProfileService);
 
@@ -173,8 +175,8 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
         });
     }
 
-    fetchProgrammingExerciseDeletionSummary(exerciseId: number): Observable<EntitySummary> {
-        return this.programmingExerciseService.getDeletionSummary(exerciseId);
+    fetchExerciseDeletionSummary(): Observable<EntitySummary> {
+        return this.exerciseService.getDeletionSummary(this.exercise);
     }
 
     /**

@@ -19,11 +19,13 @@ import de.tum.cit.aet.artemis.assessment.service.ExampleSubmissionService;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitApi;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismResultApi;
@@ -86,6 +88,16 @@ public class ExerciseDeletionService {
         this.textApi = textApi;
         this.channelService = channelService;
         this.competencyProgressApi = competencyProgressApi;
+    }
+
+    /**
+     * Get a summary for the deletion of an exercise.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the summary of the deletion of the exercise
+     */
+    public ExerciseDeletionSummaryDTO getDeletionSummary(long exerciseId) {
+        return exerciseRepository.findDeletionSummaryByExerciseId(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
     }
 
     /**
