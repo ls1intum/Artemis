@@ -18,6 +18,7 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 
+import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.StandardizedCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.KnowledgeArea;
 import de.tum.cit.aet.artemis.hyperion.dto.ChecklistAnalysisRequestDTO;
@@ -38,6 +39,9 @@ class HyperionChecklistServiceTest {
     private StandardizedCompetencyApi standardizedCompetencyApi;
 
     @Mock
+    private CourseCompetencyApi courseCompetencyApi;
+
+    @Mock
     private ProgrammingExerciseTaskTestRepository taskRepository;
 
     private HyperionChecklistService hyperionChecklistService;
@@ -56,9 +60,12 @@ class HyperionChecklistServiceTest {
 
         when(taskRepository.findByExerciseIdWithTestCases(any())).thenReturn(java.util.Set.of());
 
+        // Mock CourseCompetencyApi to return empty set
+        when(courseCompetencyApi.findAllForCourse(any(Long.class))).thenReturn(java.util.Set.of());
+
         var templateService = new HyperionPromptTemplateService();
-        this.hyperionChecklistService = new HyperionChecklistService(chatClient, templateService, observationRegistry, Optional.of(standardizedCompetencyApi), taskRepository,
-                new com.fasterxml.jackson.databind.ObjectMapper());
+        this.hyperionChecklistService = new HyperionChecklistService(chatClient, templateService, observationRegistry, Optional.of(standardizedCompetencyApi),
+                Optional.of(courseCompetencyApi), taskRepository, new com.fasterxml.jackson.databind.ObjectMapper());
     }
 
     @Test
@@ -122,7 +129,7 @@ class HyperionChecklistServiceTest {
 
         ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem statement", "EASY", "JAVA", 1L);
 
-        ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeChecklist(request);
+        ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeChecklist(request, 1L);
 
         assertThat(response).isNotNull();
         assertThat(response.inferredCompetencies()).hasSize(1);
@@ -162,7 +169,7 @@ class HyperionChecklistServiceTest {
 
         ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem", null, null, 1L);
 
-        ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeChecklist(request);
+        ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeChecklist(request, 1L);
 
         assertThat(response).isNotNull();
         assertThat(response.inferredCompetencies()).isEmpty();
@@ -209,7 +216,7 @@ class HyperionChecklistServiceTest {
 
         ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem", null, null, 1L);
 
-        ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeChecklist(request);
+        ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeChecklist(request, 1L);
 
         // Bloom radar should be normalized to sum to 1.0
         var radar = response.bloomRadar();
@@ -244,7 +251,7 @@ class HyperionChecklistServiceTest {
 
         ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem", "EASY", "JAVA", 1L);
 
-        ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeSection(request, ChecklistSection.COMPETENCIES);
+        ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeSection(request, ChecklistSection.COMPETENCIES, 1L);
 
         assertThat(response).isNotNull();
         assertThat(response.inferredCompetencies()).hasSize(1);
@@ -271,7 +278,7 @@ class HyperionChecklistServiceTest {
 
         ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem", "EASY", "JAVA", null);
 
-        ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeSection(request, ChecklistSection.DIFFICULTY);
+        ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeSection(request, ChecklistSection.DIFFICULTY, 1L);
 
         assertThat(response).isNotNull();
         assertThat(response.difficultyAssessment()).isNotNull();
@@ -302,7 +309,7 @@ class HyperionChecklistServiceTest {
 
         ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem", null, null, null);
 
-        ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeSection(request, ChecklistSection.QUALITY);
+        ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeSection(request, ChecklistSection.QUALITY, 1L);
 
         assertThat(response).isNotNull();
         assertThat(response.qualityIssues()).hasSize(1);

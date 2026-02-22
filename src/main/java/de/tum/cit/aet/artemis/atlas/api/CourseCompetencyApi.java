@@ -51,4 +51,14 @@ public class CourseCompetencyApi extends AbstractAtlasApi {
     public Set<Competency> findCourseCompetenciesByIdsAndCourseId(Set<Long> ids, long courseId) {
         return competencyRepository.findAllByIdsAndCourseId(ids, courseId);
     }
+
+    /**
+     * Finds all course competencies for a given course.
+     *
+     * @param courseId the ID of the course
+     * @return set of course competencies belonging to the course
+     */
+    public Set<CourseCompetency> findAllForCourse(long courseId) {
+        return courseCompetencyRepository.findAllForCourse(courseId);
+    }
 }

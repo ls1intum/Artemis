@@ -21,5 +21,6 @@ export interface InferredCompetency {
     whyThisMatches?: string;
     isLikelyPrimary?: boolean;
     relatedTaskNames?: Array<string>;
+    matchedCourseCompetencyId?: number;
 }
 

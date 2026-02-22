@@ -37,7 +37,6 @@ import { HttpResponse } from '@angular/common/http';
 import { Observable, forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { taskRegex } from 'app/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
-import { titleSimilarity } from './title-similarity.utils';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
@@ -541,62 +540,6 @@ export class ChecklistPanelComponent {
     }
 
     /**
-     * Finds a matching course competency using a two-tier strategy:
-     *
-     * **Tier 1 – Standardized catalog match (deterministic)**:
-     * If a course competency was imported from the standardized catalog, its
-     * `linkedStandardizedCompetency` contains the exact catalog title and
-     * knowledge area. We compare these against the AI-inferred values for a
-     * precise, case-insensitive match that is immune to instructor renames.
-     *
-     * **Tier 2 – Fuzzy title match (fallback)**:
-     * For course competencies that were NOT imported from the catalog (no
-     * `linkedStandardizedCompetency`), we fall back to stemmed
-     * Damerau-Levenshtein similarity against the course competency title.
-     */
-    private findMatchingCompetency(inferred: InferredCompetency): CourseCompetency | undefined {
-        const inferredTitle = inferred.competencyTitle?.toLowerCase().trim();
-        if (!inferredTitle) return undefined;
-
-        const inferredKA = inferred.knowledgeAreaShortTitle?.toLowerCase().trim();
-
-        // --- Tier 1: exact match via linkedStandardizedCompetency ---
-        for (const cc of this.courseCompetencies()) {
-            const linked = cc.linkedStandardizedCompetency;
-            if (!linked?.title) continue;
-
-            const linkedTitle = linked.title.toLowerCase().trim();
-            if (linkedTitle !== inferredTitle) continue;
-
-            // If the AI also returned a knowledge-area code, verify it matches
-            // to avoid false positives when two knowledge areas share a title.
-            if (inferredKA && linked.knowledgeArea?.shortTitle) {
-                if (linked.knowledgeArea.shortTitle.toLowerCase().trim() !== inferredKA) continue;
-            }
-
-            return cc; // deterministic hit
-        }
-
-        // --- Tier 2: fuzzy title similarity fallback ---
-        let bestMatch: CourseCompetency | undefined;
-        let bestScore = 0;
-
-        for (const cc of this.courseCompetencies()) {
-            const courseTitle = cc.title?.toLowerCase().trim();
-            if (!courseTitle) continue;
-
-            const score = titleSimilarity(inferredTitle, courseTitle);
-            if (score > bestScore) {
-                bestScore = score;
-                bestMatch = cc;
-            }
-        }
-
-        // Require at least 50% word overlap to consider it a match
-        return bestScore >= 0.5 ? bestMatch : undefined;
-    }
-
-    /**
      * Loads course competencies, using the cached value if already populated.
      */
     private loadCourseCompetencies(): Observable<CourseCompetency[]> {
@@ -615,7 +558,8 @@ export class ChecklistPanelComponent {
 
     /**
      * Link inferred competencies to matching existing course competencies.
-     * Matches by title similarity and adds them to the exercise's competencyLinks.
+     * Uses the AI-returned matchedCourseCompetencyId for accurate semantic matching,
+     * loading course competencies to resolve the IDs to entities.
      */
     linkMatchingCompetencies(): void {
         if (this.isLinkingCompetencies()) return;
@@ -624,21 +568,39 @@ export class ChecklistPanelComponent {
         const inferred = this.analysisResult()?.inferredCompetencies ?? [];
         const exercise = this.exercise();
 
-        // Ensure we have course competencies loaded (uses cache if available)
+        // Collect IDs that the AI matched
+        const matchedIds = new Set(inferred.map((c) => c.matchedCourseCompetencyId).filter((id): id is number => id != null && id > 0));
+
+        if (matchedIds.size === 0) {
+            this.alertService.warning('artemisApp.programmingExercise.instructorChecklist.competencies.noMatches');
+            this.isLinkingCompetencies.set(false);
+            return;
+        }
+
+        // Load course competencies to resolve IDs to entity objects
         this.loadCourseCompetencies()
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => {
+                    const competencyById = new Map(
+                        this.courseCompetencies()
+                            .filter((c) => c.id != null)
+                            .map((c) => [c.id!, c]),
+                    );
                     const existingLinks = exercise?.competencyLinks ?? [];
                     const existingIds = new Set(existingLinks.map((link) => link.competency?.id).filter(Boolean));
                     const newLinks: CompetencyExerciseLink[] = [...existingLinks];
                     const newlyLinked = new Set<string>();
 
                     for (const comp of inferred) {
-                        const match = this.findMatchingCompetency(comp);
-                        if (match?.id && !existingIds.has(match.id)) {
-                            newLinks.push(new CompetencyExerciseLink(match, exercise, MEDIUM_COMPETENCY_LINK_WEIGHT));
-                            existingIds.add(match.id);
+                        const matchId = comp.matchedCourseCompetencyId;
+                        if (matchId == null || !matchedIds.has(matchId)) continue;
+                        if (existingIds.has(matchId)) continue;
+
+                        const courseComp = competencyById.get(matchId);
+                        if (courseComp) {
+                            newLinks.push(new CompetencyExerciseLink(courseComp, exercise, MEDIUM_COMPETENCY_LINK_WEIGHT));
+                            existingIds.add(matchId);
                             newlyLinked.add(comp.competencyTitle ?? '');
                         }
                     }
@@ -661,7 +623,7 @@ export class ChecklistPanelComponent {
 
     /**
      * Creates new competencies from inferred competencies that don't match any existing
-     * course competency, then links them to the exercise.
+     * course competency (AI returned no matchedCourseCompetencyId), then links them to the exercise.
      */
     createAndLinkCompetencies(): void {
         if (this.isCreatingCompetencies()) return;
@@ -684,11 +646,13 @@ export class ChecklistPanelComponent {
                             .filter(Boolean),
                     );
 
-                    // Find inferred competencies that don't match existing ones
+                    // Only create competencies the AI did NOT match to an existing one
                     const toCreate: Competency[] = [];
                     for (const comp of inferred) {
                         const title = comp.competencyTitle?.trim();
                         if (!title) continue;
+                        // Skip if AI already matched it to an existing course competency
+                        if (comp.matchedCourseCompetencyId != null && comp.matchedCourseCompetencyId > 0) continue;
                         if (existingTitles.has(title.toLowerCase())) continue;
                         if (this.createdCompetencyTitles().has(title)) continue;
 

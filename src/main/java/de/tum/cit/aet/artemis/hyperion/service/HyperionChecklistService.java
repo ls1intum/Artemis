@@ -20,7 +20,9 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.StandardizedCompetencyApi;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.KnowledgeArea;
 import de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
@@ -72,6 +74,8 @@ public class HyperionChecklistService {
 
     private final Optional<StandardizedCompetencyApi> standardizedCompetencyApi;
 
+    private final Optional<CourseCompetencyApi> courseCompetencyApi;
+
     private final ProgrammingExerciseTaskRepository taskRepository;
 
     /** Lazily cached JSON representation of the standardized competency catalog. */
@@ -86,11 +90,13 @@ public class HyperionChecklistService {
     private final Object catalogLock = new Object();
 
     public HyperionChecklistService(ChatClient chatClient, HyperionPromptTemplateService templates, ObservationRegistry observationRegistry,
-            Optional<StandardizedCompetencyApi> standardizedCompetencyApi, ProgrammingExerciseTaskRepository taskRepository, ObjectMapper objectMapper) {
+            Optional<StandardizedCompetencyApi> standardizedCompetencyApi, Optional<CourseCompetencyApi> courseCompetencyApi, ProgrammingExerciseTaskRepository taskRepository,
+            ObjectMapper objectMapper) {
         this.chatClient = chatClient;
         this.templates = templates;
         this.observationRegistry = observationRegistry;
         this.standardizedCompetencyApi = standardizedCompetencyApi;
+        this.courseCompetencyApi = courseCompetencyApi;
         this.taskRepository = taskRepository;
         this.objectMapper = objectMapper;
     }
@@ -100,16 +106,17 @@ public class HyperionChecklistService {
      * Runs three concurrent analyses: competency inference, difficulty assessment,
      * and quality check.
      *
-     * @param request The request containing the problem statement, metadata, and
-     *                    an optional exerciseId for task/test lookups
+     * @param request  The request containing the problem statement, metadata, and
+     *                     an optional exerciseId for task/test lookups
+     * @param courseId The ID of the course (used to load course competencies for matching)
      * @return The analysis response containing inferred competencies, bloom radar,
      *         difficulty, and quality issues
      */
     @Observed(name = "hyperion.checklist", contextualName = "checklist analysis", lowCardinalityKeyValues = { AI_SPAN_KEY, AI_SPAN_VALUE })
-    public ChecklistAnalysisResponseDTO analyzeChecklist(ChecklistAnalysisRequestDTO request) {
+    public ChecklistAnalysisResponseDTO analyzeChecklist(ChecklistAnalysisRequestDTO request, long courseId) {
         log.debug("Performing checklist analysis (exerciseId={})", request.exerciseId());
 
-        var ctx = buildAnalysisContext(request);
+        var ctx = buildAnalysisContext(request, courseId);
 
         // Run three analyses concurrently
         var competenciesMono = Mono.fromCallable(() -> runCompetencyInference(ctx.input(), ctx.parentObs(), ctx.taskNames())).subscribeOn(Schedulers.boundedElastic())
@@ -143,15 +150,16 @@ public class HyperionChecklistService {
      * Only runs the requested analysis (competencies, difficulty, or quality),
      * avoiding unnecessary LLM calls for the other sections.
      *
-     * @param request The request containing the problem statement and metadata
-     * @param section The section to analyze
+     * @param request  The request containing the problem statement and metadata
+     * @param section  The section to analyze
+     * @param courseId The ID of the course
      * @return The analysis response with only the requested section populated
      */
     @Observed(name = "hyperion.checklist.section", contextualName = "checklist section analysis", lowCardinalityKeyValues = { AI_SPAN_KEY, AI_SPAN_VALUE })
-    public ChecklistAnalysisResponseDTO analyzeSection(ChecklistAnalysisRequestDTO request, ChecklistSection section) {
+    public ChecklistAnalysisResponseDTO analyzeSection(ChecklistAnalysisRequestDTO request, ChecklistSection section, long courseId) {
         log.debug("Performing single-section checklist analysis: {} (exerciseId={})", section, request.exerciseId());
 
-        var ctx = buildAnalysisContext(request);
+        var ctx = buildAnalysisContext(request, courseId);
 
         return switch (section) {
             case COMPETENCIES -> {
@@ -174,7 +182,7 @@ public class HyperionChecklistService {
      * Builds the shared analysis context (input map, parent observation, task names,
      * declared difficulty) used by both full and single-section analysis.
      */
-    private AnalysisContext buildAnalysisContext(ChecklistAnalysisRequestDTO request) {
+    private AnalysisContext buildAnalysisContext(ChecklistAnalysisRequestDTO request, long courseId) {
         String problemStatement = request.problemStatementMarkdown(); // @NotBlank guarantees non-null after validation
         String declaredDifficulty = Objects.requireNonNullElse(request.declaredDifficulty(), "NOT_DECLARED");
         String language = Objects.requireNonNullElse(request.language(), "JAVA");
@@ -182,7 +190,11 @@ public class HyperionChecklistService {
         // Fetch and serialize the competency catalog
         String catalogJson = serializeCompetencyCatalog();
 
-        var input = Map.of("problem_statement", problemStatement, "declared_difficulty", declaredDifficulty, "language", language, "competency_catalog", catalogJson);
+        // Load and serialize existing course competencies for AI-based matching
+        String courseCompetenciesJson = serializeCourseCompetencies(courseId);
+
+        var input = Map.of("problem_statement", problemStatement, "declared_difficulty", declaredDifficulty, "language", language, "competency_catalog", catalogJson,
+                "course_competencies", courseCompetenciesJson);
 
         // Capture the parent observation on the servlet thread so that child spans created
         // on Reactor's boundedElastic threads can be linked correctly. This is safe because
@@ -381,6 +393,37 @@ public class HyperionChecklistService {
     }
 
     /**
+     * Serializes the existing course competencies to a condensed JSON array for inclusion
+     * in the competency inference prompt. This allows the AI to directly match inferred
+     * competencies against existing course competencies by returning their IDs.
+     *
+     * @param courseId the ID of the course
+     * @return JSON array string of course competencies, or "[]" if unavailable
+     */
+    private String serializeCourseCompetencies(long courseId) {
+        if (courseCompetencyApi.isEmpty()) {
+            return "[]";
+        }
+        try {
+            var competencies = courseCompetencyApi.get().findAllForCourse(courseId);
+            List<Map<String, Object>> result = new ArrayList<>();
+            for (CourseCompetency cc : competencies) {
+                Map<String, Object> entry = new HashMap<>();
+                entry.put("id", cc.getId());
+                entry.put("title", cc.getTitle());
+                entry.put("description", cc.getDescription());
+                entry.put("taxonomy", cc.getTaxonomy() != null ? cc.getTaxonomy().name() : null);
+                result.add(entry);
+            }
+            return objectMapper.writeValueAsString(result);
+        }
+        catch (Exception e) {
+            log.warn("Failed to serialize course competencies for courseId={}", courseId, e);
+            return "[]";
+        }
+    }
+
+    /**
      * Runs competency inference using the standardized catalog.
      */
     private List<InferredCompetencyDTO> runCompetencyInference(Map<String, String> input, Observation parentObs, List<String> taskNames) {
@@ -400,7 +443,7 @@ public class HyperionChecklistService {
             return entity.competencies().stream().map(c -> {
                 List<String> relatedTasks = c.relatedTaskNames() != null ? c.relatedTaskNames() : List.of();
                 return new InferredCompetencyDTO(c.knowledgeAreaShortTitle(), c.competencyTitle(), c.competencyVersion(), c.catalogSourceId(), c.taxonomyLevel(), c.confidence(),
-                        c.rank(), c.evidence(), c.whyThisMatches(), c.isLikelyPrimary(), relatedTasks);
+                        c.rank(), c.evidence(), c.whyThisMatches(), c.isLikelyPrimary(), relatedTasks, c.matchedCourseCompetencyId());
             }).toList();
         }, List.of());
     }
@@ -581,7 +624,7 @@ public class HyperionChecklistService {
         }
 
         record CompetencyItem(String knowledgeAreaShortTitle, String competencyTitle, String competencyVersion, Long catalogSourceId, String taxonomyLevel, Double confidence,
-                Integer rank, List<String> evidence, String whyThisMatches, Boolean isLikelyPrimary, List<String> relatedTaskNames) {
+                Integer rank, List<String> evidence, String whyThisMatches, Boolean isLikelyPrimary, List<String> relatedTaskNames, Long matchedCourseCompetencyId) {
         }
 
         record DifficultyResponse(String suggested, Double confidence, String reasoning, Integer taskCount, Integer testCount) {

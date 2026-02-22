@@ -240,6 +240,7 @@ describe('ChecklistPanelComponent', () => {
                     confidence: 0.9,
                     whyThisMatches: 'Uses loop constructs',
                     rank: 1,
+                    matchedCourseCompetencyId: 1,
                 },
                 {
                     competencyTitle: 'Recursion',
@@ -253,7 +254,7 @@ describe('ChecklistPanelComponent', () => {
             qualityIssues: [],
         };
 
-        it('should link matching competencies and emit changes', () => {
+        it('should link matching competencies using AI-returned matchedCourseCompetencyId', () => {
             component.analysisResult.set(mockResponseWithCompetencies);
             vi.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [mockCourseCompetency] })) as any);
             const emitSpy = vi.spyOn(component.competencyLinksChange, 'emit');
@@ -270,13 +271,27 @@ describe('ChecklistPanelComponent', () => {
             expect(component.isLinkingCompetencies()).toBeFalsy();
         });
 
-        it('should show warning when no matching competencies found', () => {
-            component.analysisResult.set(mockResponseWithCompetencies);
-            vi.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [] })) as any);
+        it('should show warning when no inferred competencies have matchedCourseCompetencyId', () => {
+            const responseNoMatches: ChecklistAnalysisResponse = {
+                inferredCompetencies: [
+                    {
+                        competencyTitle: 'Recursion',
+                        taxonomyLevel: 'ANALYZE',
+                        confidence: 0.7,
+                        rank: 1,
+                    },
+                ],
+                difficultyAssessment: { suggested: 'EASY', reasoning: 'Reason', matchesDeclared: true },
+                qualityIssues: [],
+            };
+            component.analysisResult.set(responseNoMatches);
             const warningSpy = vi.spyOn(alertService, 'warning');
+            const getAllSpy = vi.spyOn(competencyService, 'getAllForCourse');
 
             component.linkMatchingCompetencies();
 
+            // Should not even load course competencies since no IDs to match
+            expect(getAllSpy).not.toHaveBeenCalled();
             expect(warningSpy).toHaveBeenCalled();
             expect(component.isLinkingCompetencies()).toBeFalsy();
         });
@@ -292,9 +307,23 @@ describe('ChecklistPanelComponent', () => {
             expect(component.isLinkingCompetencies()).toBeFalsy();
         });
 
-        it('should create and link new competencies', async () => {
+        it('should skip already linked competencies', () => {
+            const existingLink = new CompetencyExerciseLink(mockCourseCompetency, component.exercise(), 1);
+            fixture.componentRef.setInput('exercise', Object.assign(new ProgrammingExercise(undefined, undefined), { id: 1, competencyLinks: [existingLink] }));
+
             component.analysisResult.set(mockResponseWithCompetencies);
-            // Only 'Loops' exists, so 'Recursion' should be created
+            vi.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [mockCourseCompetency] })) as any);
+            const warningSpy = vi.spyOn(alertService, 'warning');
+
+            component.linkMatchingCompetencies();
+
+            // Competency id=1 already linked, so no new links should be created
+            expect(warningSpy).toHaveBeenCalled();
+        });
+
+        it('should create and link new competencies for unmatched inferred competencies', async () => {
+            component.analysisResult.set(mockResponseWithCompetencies);
+            // 'Loops' exists and is matched by AI (matchedCourseCompetencyId=1), so only 'Recursion' should be created
             vi.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [mockCourseCompetency] })) as any);
 
             const createdCompetency = Object.assign(new Competency(), { id: 99, title: 'Recursion', taxonomy: CompetencyTaxonomy.ANALYZE });
@@ -305,7 +334,7 @@ describe('ChecklistPanelComponent', () => {
 
             component.createAndLinkCompetencies();
 
-            // Flush microtasks from Promise.all().then()
+            // Flush microtasks from forkJoin
             await new Promise<void>((resolve) => setTimeout(resolve));
 
             expect(competencyService.create).toHaveBeenCalledWith(expect.objectContaining({ title: 'Recursion' }), courseId);
@@ -314,13 +343,22 @@ describe('ChecklistPanelComponent', () => {
             expect(component.isCreatingCompetencies()).toBeFalsy();
         });
 
-        it('should show warning when all competencies already exist', () => {
-            const responseAllExist: ChecklistAnalysisResponse = {
-                inferredCompetencies: [{ competencyTitle: 'Loops', taxonomyLevel: 'APPLY', rank: 1 }],
+        it('should not create competencies that AI already matched', async () => {
+            // All competencies have matchedCourseCompetencyId
+            const allMatchedResponse: ChecklistAnalysisResponse = {
+                inferredCompetencies: [
+                    {
+                        competencyTitle: 'Loops',
+                        taxonomyLevel: 'APPLY',
+                        confidence: 0.9,
+                        rank: 1,
+                        matchedCourseCompetencyId: 1,
+                    },
+                ],
                 difficultyAssessment: { suggested: 'EASY', reasoning: 'Reason', matchesDeclared: true },
                 qualityIssues: [],
             };
-            component.analysisResult.set(responseAllExist);
+            component.analysisResult.set(allMatchedResponse);
             vi.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [mockCourseCompetency] })) as any);
             const warningSpy = vi.spyOn(alertService, 'warning');
 
@@ -338,7 +376,7 @@ describe('ChecklistPanelComponent', () => {
 
             component.createAndLinkCompetencies();
 
-            // Flush microtasks from Promise.allSettled().then()
+            // Flush microtasks from forkJoin
             await new Promise<void>((resolve) => setTimeout(resolve));
 
             expect(errorSpy).toHaveBeenCalled();
@@ -371,202 +409,6 @@ describe('ChecklistPanelComponent', () => {
             expect(component.isCompetencyLinked({ competencyTitle: 'Recursion' })).toBeFalsy();
             expect(component.isCompetencyCreated({ competencyTitle: 'Recursion' })).toBeTruthy();
             expect(component.isCompetencyCreated({ competencyTitle: 'Loops' })).toBeFalsy();
-        });
-
-        it('should prefer Tier 1 standardized competency match over fuzzy title match', () => {
-            // AI infers "Algorithm Analysis" which exactly matches a linked standardized competency
-            // but the course competency has a different user-facing title
-            const catalogResponse: ChecklistAnalysisResponse = {
-                inferredCompetencies: [
-                    {
-                        competencyTitle: 'Algorithm Analysis',
-                        knowledgeAreaShortTitle: 'AL',
-                        taxonomyLevel: 'ANALYZE',
-                        confidence: 0.95,
-                        rank: 1,
-                    },
-                ],
-                difficultyAssessment: { suggested: 'MEDIUM', reasoning: 'Reason', matchesDeclared: true },
-                qualityIssues: [],
-            };
-            // Course competency was imported from catalog and renamed by the instructor
-            const catalogLinkedCompetency: CourseCompetency = Object.assign(new Competency(), {
-                id: 100,
-                title: 'Complexity & Algorithms', // Renamed — fuzzy match would be poor
-                linkedStandardizedCompetency: { id: 42, title: 'Algorithm Analysis', knowledgeArea: { shortTitle: 'AL' } },
-            });
-            // Another course competency whose title is closer by fuzzy match
-            const fuzzyDecoy: CourseCompetency = Object.assign(new Competency(), {
-                id: 101,
-                title: 'Algorithm Analysis Basics',
-            });
-
-            component.analysisResult.set(catalogResponse);
-            vi.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [catalogLinkedCompetency, fuzzyDecoy] })) as any);
-            const emitSpy = vi.spyOn(component.competencyLinksChange, 'emit');
-
-            component.linkMatchingCompetencies();
-
-            // Should match the catalog-linked competency (id=100), NOT the fuzzy decoy (id=101)
-            expect(emitSpy).toHaveBeenCalled();
-            const emittedLinks = emitSpy.mock.calls[0][0] as CompetencyExerciseLink[];
-            expect(emittedLinks).toHaveLength(1);
-            expect(emittedLinks[0].competency?.id).toBe(100);
-        });
-
-        it('should link competencies with fuzzy title matching', () => {
-            // AI infers "Algorithm Design and Analysis" but course has "Algorithm Analysis"
-            const fuzzyResponse: ChecklistAnalysisResponse = {
-                inferredCompetencies: [
-                    {
-                        competencyTitle: 'Algorithm Design and Analysis',
-                        taxonomyLevel: 'ANALYZE',
-                        confidence: 0.9,
-                        rank: 1,
-                    },
-                ],
-                difficultyAssessment: { suggested: 'MEDIUM', reasoning: 'Reason', matchesDeclared: true },
-                qualityIssues: [],
-            };
-            const fuzzyCompetency: CourseCompetency = Object.assign(new Competency(), {
-                id: 10,
-                title: 'Algorithm Analysis',
-            });
-
-            component.analysisResult.set(fuzzyResponse);
-            vi.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [fuzzyCompetency] })) as any);
-            const emitSpy = vi.spyOn(component.competencyLinksChange, 'emit');
-
-            component.linkMatchingCompetencies();
-
-            // "Algorithm Analysis" is contained in "Algorithm Design and Analysis" → should match
-            expect(emitSpy).toHaveBeenCalled();
-            const emittedLinks = emitSpy.mock.calls[0][0] as CompetencyExerciseLink[];
-            expect(emittedLinks).toHaveLength(1);
-            expect(emittedLinks[0].competency?.id).toBe(10);
-        });
-
-        it('should not match competencies with very different titles', () => {
-            const noMatchResponse: ChecklistAnalysisResponse = {
-                inferredCompetencies: [
-                    {
-                        competencyTitle: 'Machine Learning Fundamentals',
-                        taxonomyLevel: 'UNDERSTAND',
-                        confidence: 0.8,
-                        rank: 1,
-                    },
-                ],
-                difficultyAssessment: { suggested: 'HARD', reasoning: 'Reason', matchesDeclared: true },
-                qualityIssues: [],
-            };
-            const unrelatedCompetency: CourseCompetency = Object.assign(new Competency(), {
-                id: 20,
-                title: 'Database Design',
-            });
-
-            component.analysisResult.set(noMatchResponse);
-            vi.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [unrelatedCompetency] })) as any);
-            const warningSpy = vi.spyOn(alertService, 'warning');
-
-            component.linkMatchingCompetencies();
-
-            expect(warningSpy).toHaveBeenCalled();
-        });
-
-        it('should match competencies despite morphological differences via stemming', () => {
-            // AI infers "Sorting Algorithms" but course has "Sort Algorithm"
-            const stemResponse: ChecklistAnalysisResponse = {
-                inferredCompetencies: [
-                    {
-                        competencyTitle: 'Sorting Algorithms',
-                        taxonomyLevel: 'APPLY',
-                        confidence: 0.9,
-                        rank: 1,
-                    },
-                ],
-                difficultyAssessment: { suggested: 'MEDIUM', reasoning: 'Reason', matchesDeclared: true },
-                qualityIssues: [],
-            };
-            const stemCompetency: CourseCompetency = Object.assign(new Competency(), {
-                id: 30,
-                title: 'Sort Algorithm',
-            });
-
-            component.analysisResult.set(stemResponse);
-            vi.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [stemCompetency] })) as any);
-            const emitSpy = vi.spyOn(component.competencyLinksChange, 'emit');
-
-            component.linkMatchingCompetencies();
-
-            // "Sorting" → "sort", "Algorithms" → "algorithm" should match "Sort" → "sort", "Algorithm" → "algorithm"
-            expect(emitSpy).toHaveBeenCalled();
-            const emittedLinks = emitSpy.mock.calls[0][0] as CompetencyExerciseLink[];
-            expect(emittedLinks).toHaveLength(1);
-            expect(emittedLinks[0].competency?.id).toBe(30);
-        });
-
-        it('should match competencies when titles differ only by stop words', () => {
-            // AI infers "Design of Data Structures" but course has "Data Structure Design"
-            const stopWordResponse: ChecklistAnalysisResponse = {
-                inferredCompetencies: [
-                    {
-                        competencyTitle: 'Design of Data Structures',
-                        taxonomyLevel: 'APPLY',
-                        confidence: 0.85,
-                        rank: 1,
-                    },
-                ],
-                difficultyAssessment: { suggested: 'MEDIUM', reasoning: 'Reason', matchesDeclared: true },
-                qualityIssues: [],
-            };
-            const stopWordCompetency: CourseCompetency = Object.assign(new Competency(), {
-                id: 40,
-                title: 'Data Structure Design',
-            });
-
-            component.analysisResult.set(stopWordResponse);
-            vi.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [stopWordCompetency] })) as any);
-            const emitSpy = vi.spyOn(component.competencyLinksChange, 'emit');
-
-            component.linkMatchingCompetencies();
-
-            // "of" is a stop word → ignored; "Structures" → "structur", "Structure" → "structur" → match
-            expect(emitSpy).toHaveBeenCalled();
-            const emittedLinks = emitSpy.mock.calls[0][0] as CompetencyExerciseLink[];
-            expect(emittedLinks).toHaveLength(1);
-            expect(emittedLinks[0].competency?.id).toBe(40);
-        });
-
-        it('should match competencies despite minor typos via Damerau-Levenshtein distance', () => {
-            // AI infers "Objcet Oriented Design" (typo: transposition) but course has "Object Oriented Design"
-            const typoResponse: ChecklistAnalysisResponse = {
-                inferredCompetencies: [
-                    {
-                        competencyTitle: 'Objcet Oriented Design',
-                        taxonomyLevel: 'APPLY',
-                        confidence: 0.85,
-                        rank: 1,
-                    },
-                ],
-                difficultyAssessment: { suggested: 'MEDIUM', reasoning: 'Reason', matchesDeclared: true },
-                qualityIssues: [],
-            };
-            const typoCompetency: CourseCompetency = Object.assign(new Competency(), {
-                id: 50,
-                title: 'Object Oriented Design',
-            });
-
-            component.analysisResult.set(typoResponse);
-            vi.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [typoCompetency] })) as any);
-            const emitSpy = vi.spyOn(component.competencyLinksChange, 'emit');
-
-            component.linkMatchingCompetencies();
-
-            // "Objcet" vs "Object" is a single transposition → Damerau-Levenshtein distance = 1
-            expect(emitSpy).toHaveBeenCalled();
-            const emittedLinks = emitSpy.mock.calls[0][0] as CompetencyExerciseLink[];
-            expect(emittedLinks).toHaveLength(1);
-            expect(emittedLinks[0].competency?.id).toBe(50);
         });
     });
 

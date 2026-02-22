@@ -141,7 +141,7 @@ public class HyperionProblemStatementResource {
         log.debug("REST request to Hyperion checklist analysis for course [{}]", courseId);
         courseRepository.findByIdElseThrow(courseId);
         validateExerciseBelongsToCourse(request.exerciseId(), courseId);
-        var result = checklistService.analyzeChecklist(request);
+        var result = checklistService.analyzeChecklist(request, courseId);
         return ResponseEntity.ok(result);
     }
 
@@ -164,7 +164,7 @@ public class HyperionProblemStatementResource {
         log.debug("REST request to Hyperion checklist section analysis [{}] for course [{}]", section, courseId);
         courseRepository.findByIdElseThrow(courseId);
         validateExerciseBelongsToCourse(request.exerciseId(), courseId);
-        var result = checklistService.analyzeSection(request, section);
+        var result = checklistService.analyzeSection(request, section, courseId);
         return ResponseEntity.ok(result);
     }
 

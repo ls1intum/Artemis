@@ -5,6 +5,14 @@ The following is a condensed JSON catalog of knowledge areas and competencies:
 
 {{competency_catalog}}
 
+## Existing Course Competencies
+The following competencies are already defined in the instructor's course. Each has a unique `id`.
+If an inferred competency matches one of these, set `matchedCourseCompetencyId` to its `id`.
+Match semantically — the titles may differ slightly, be synonyms, or use different phrasing.
+Only match when you are confident the concepts are genuinely equivalent. Set to `null` if no match.
+
+{{course_competencies}}
+
 ## Task
 Analyze the problem statement below and identify the 1 to 5 most relevant competencies from the catalog above. Only include competencies that are genuinely exercised — do not pad with low-relevance matches.
 
@@ -20,6 +28,7 @@ For each competency, provide:
 9. **whyThisMatches**: 1-2 sentences explaining why this competency matches in instructor-friendly language
 10. **isLikelyPrimary**: true if this is the primary competency being exercised
 11. **relatedTaskNames**: list of task names from the exercise that exercise this competency (use exact names from the task list below)
+12. **matchedCourseCompetencyId**: the `id` of the matching course competency from the list above, or null if none matches
 
 ## Exercise Tasks
 The following tasks are defined in the exercise: {{task_names}}
@@ -30,6 +39,7 @@ The following tasks are defined in the exercise: {{task_names}}
 - Use phrasing like "likely exercised" or "suggested alignment" - avoid claiming pedagogical intent
 - Short evidence bullets only - no long verbatim copying
 - Do NOT pad with low-confidence filler competencies just to reach 5
+- For matchedCourseCompetencyId: match by semantic equivalence, not just title overlap. Consider descriptions and taxonomy levels.
 
 ## Problem Statement
 {{problem_statement}}
@@ -52,7 +62,8 @@ Return your response as a JSON object with a "competencies" key containing an ar
       "evidence": ["string", "string"],
       "whyThisMatches": "string",
       "isLikelyPrimary": boolean,
-      "relatedTaskNames": ["string"]
+      "relatedTaskNames": ["string"],
+      "matchedCourseCompetencyId": number|null
     }
   ]
 }
