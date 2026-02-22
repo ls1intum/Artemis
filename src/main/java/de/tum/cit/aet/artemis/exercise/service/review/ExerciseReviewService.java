@@ -4,10 +4,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -19,19 +17,14 @@ import org.eclipse.jgit.diff.Edit;
 import org.eclipse.jgit.diff.EditList;
 import org.eclipse.jgit.diff.RawText;
 import org.eclipse.jgit.diff.RawTextComparator;
-import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
-import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.util.io.DisabledOutputStream;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -60,13 +53,10 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadGroupRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadRepository;
+import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewRepositoryService.ConsistencyTargetRepositoryUris;
 import de.tum.cit.aet.artemis.exercise.service.review.validation.ExerciseReviewValidationUtil;
 import de.tum.cit.aet.artemis.hyperion.dto.ArtifactLocationDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueDTO;
-import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
@@ -83,9 +73,6 @@ public class ExerciseReviewService {
 
     private static final String THREAD_GROUP_ENTITY_NAME = "exerciseReviewCommentThreadGroup";
 
-    @Value("${artemis.version-control.default-branch:main}")
-    private String defaultBranch;
-
     private final CommentThreadGroupRepository commentThreadGroupRepository;
 
     private final CommentThreadRepository commentThreadRepository;
@@ -96,26 +83,23 @@ public class ExerciseReviewService {
 
     private final ExerciseVersionRepository exerciseVersionRepository;
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
-
-    private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
-
     private final UserRepository userRepository;
 
     private final GitService gitService;
 
+    private final ExerciseReviewRepositoryService exerciseReviewRepositoryService;
+
     public ExerciseReviewService(CommentThreadGroupRepository commentThreadGroupRepository, CommentThreadRepository commentThreadRepository, CommentRepository commentRepository,
-            ExerciseRepository exerciseRepository, ExerciseVersionRepository exerciseVersionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, UserRepository userRepository, GitService gitService) {
+            ExerciseRepository exerciseRepository, ExerciseVersionRepository exerciseVersionRepository, UserRepository userRepository, GitService gitService,
+            ExerciseReviewRepositoryService exerciseReviewRepositoryService) {
         this.commentThreadGroupRepository = commentThreadGroupRepository;
         this.commentThreadRepository = commentThreadRepository;
         this.commentRepository = commentRepository;
         this.exerciseRepository = exerciseRepository;
         this.exerciseVersionRepository = exerciseVersionRepository;
-        this.programmingExerciseRepository = programmingExerciseRepository;
-        this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.userRepository = userRepository;
         this.gitService = gitService;
+        this.exerciseReviewRepositoryService = exerciseReviewRepositoryService;
     }
 
     /**
@@ -163,7 +147,7 @@ public class ExerciseReviewService {
      */
     public void createConsistencyCheckThreads(long exerciseId, List<ConsistencyIssueDTO> issues) {
         Exercise exercise = exerciseRepository.findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
-        Map<CommentThreadLocationType, LocalVCRepositoryUri> repositoryUrisByTarget = resolveConsistencyTargetRepositoryUris(exerciseId);
+        ConsistencyTargetRepositoryUris repositoryUrisByTarget = exerciseReviewRepositoryService.resolveTargetRepositoryUris(exerciseId);
 
         if (issues == null || issues.isEmpty()) {
             return;
@@ -654,50 +638,11 @@ public class ExerciseReviewService {
      * @throws BadRequestAlertException if the exercise is not a programming exercise
      */
     public String resolveLatestCommitSha(CommentThreadLocationType targetType, Long auxiliaryRepositoryId, long exerciseId) {
-        if (targetType == CommentThreadLocationType.PROBLEM_STATEMENT) {
-            return null;
-        }
-
-        ProgrammingExercise exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(exerciseId)
-                .orElseThrow(() -> new BadRequestAlertException("Exercise is not a programming exercise", THREAD_ENTITY_NAME, "exerciseNotProgramming"));
-
-        LocalVCRepositoryUri repositoryUri = switch (targetType) {
-            case TEMPLATE_REPO -> exercise.getVcsTemplateRepositoryUri() != null ? exercise.getVcsTemplateRepositoryUri()
-                    : exercise.getTemplateParticipation() != null ? exercise.getTemplateParticipation().getVcsRepositoryUri() : null;
-            case SOLUTION_REPO -> exercise.getVcsSolutionRepositoryUri() != null ? exercise.getVcsSolutionRepositoryUri()
-                    : exercise.getSolutionParticipation() != null ? exercise.getSolutionParticipation().getVcsRepositoryUri() : null;
-            case TEST_REPO -> exercise.getVcsTestRepositoryUri();
-            case AUXILIARY_REPO -> getAuxiliaryRepositoryUri(auxiliaryRepositoryId, exerciseId);
-            case PROBLEM_STATEMENT -> null;
-        };
-
-        if (repositoryUri == null) {
+        String commitSha = exerciseReviewRepositoryService.resolveLatestCommitSha(targetType, auxiliaryRepositoryId, exerciseId);
+        if (commitSha == null && targetType != CommentThreadLocationType.PROBLEM_STATEMENT) {
             log.warn("Repository URI missing for thread target {} in exercise {}", targetType, exerciseId);
-            return null;
         }
-
-        return gitService.getLastCommitHash(repositoryUri);
-    }
-
-    /**
-     * Resolves the LocalVC repository URI for the given auxiliary repository id and exercise.
-     *
-     * @param auxiliaryRepositoryId the auxiliary repository id
-     * @param exerciseId            the exercise id
-     * @return the resolved repository URI
-     */
-    private LocalVCRepositoryUri getAuxiliaryRepositoryUri(Long auxiliaryRepositoryId, long exerciseId) {
-        if (auxiliaryRepositoryId == null) {
-            throw new BadRequestAlertException("Auxiliary repository id is required", THREAD_ENTITY_NAME, "auxiliaryRepositoryMissing");
-        }
-
-        AuxiliaryRepository auxiliaryRepository = auxiliaryRepositoryRepository.findById(auxiliaryRepositoryId)
-                .orElseThrow(() -> new EntityNotFoundException("AuxiliaryRepository", auxiliaryRepositoryId));
-        if (auxiliaryRepository.getExercise() == null || auxiliaryRepository.getExercise().getId() == null
-                || !Objects.equals(auxiliaryRepository.getExercise().getId(), exerciseId)) {
-            throw new BadRequestAlertException("Auxiliary repository does not belong to exercise", THREAD_ENTITY_NAME, "auxiliaryRepositoryMismatch");
-        }
-        return auxiliaryRepository.getVcsRepositoryUri();
+        return commitSha;
     }
 
     /**
@@ -767,51 +712,15 @@ public class ExerciseReviewService {
     }
 
     /**
-     * Resolves repository URIs for consistency-check repository targets.
-     *
-     * @param exerciseId the exercise id
-     * @return map from thread target type to repository URI for supported repository-backed targets
-     */
-    private Map<CommentThreadLocationType, LocalVCRepositoryUri> resolveConsistencyTargetRepositoryUris(long exerciseId) {
-        var programmingExerciseOpt = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(exerciseId);
-        if (programmingExerciseOpt.isEmpty()) {
-            return Map.of();
-        }
-
-        ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
-        Map<CommentThreadLocationType, LocalVCRepositoryUri> repositoryUris = new EnumMap<>(CommentThreadLocationType.class);
-
-        LocalVCRepositoryUri templateUri = programmingExercise.getVcsTemplateRepositoryUri() != null ? programmingExercise.getVcsTemplateRepositoryUri()
-                : programmingExercise.getTemplateParticipation() != null ? programmingExercise.getTemplateParticipation().getVcsRepositoryUri() : null;
-        if (templateUri != null) {
-            repositoryUris.put(CommentThreadLocationType.TEMPLATE_REPO, templateUri);
-        }
-
-        LocalVCRepositoryUri solutionUri = programmingExercise.getVcsSolutionRepositoryUri() != null ? programmingExercise.getVcsSolutionRepositoryUri()
-                : programmingExercise.getSolutionParticipation() != null ? programmingExercise.getSolutionParticipation().getVcsRepositoryUri() : null;
-        if (solutionUri != null) {
-            repositoryUris.put(CommentThreadLocationType.SOLUTION_REPO, solutionUri);
-        }
-
-        LocalVCRepositoryUri testUri = programmingExercise.getVcsTestRepositoryUri();
-        if (testUri != null) {
-            repositoryUris.put(CommentThreadLocationType.TEST_REPO, testUri);
-        }
-
-        return repositoryUris;
-    }
-
-    /**
      * Maps a consistency issue to one or more review-thread locations.
      * Assumes the issue and all locations were validated beforehand.
      *
      * @param issue                  the consistency issue
      * @param exerciseId             exercise id used for logging context
-     * @param repositoryUrisByTarget repository URI lookup by thread target type
+     * @param repositoryUrisByTarget repository URI lookups for consistency-check targets
      * @return normalized list of thread locations
      */
-    private List<ConsistencyThreadLocation> mapConsistencyIssueLocations(ConsistencyIssueDTO issue, long exerciseId,
-            Map<CommentThreadLocationType, LocalVCRepositoryUri> repositoryUrisByTarget) {
+    private List<ConsistencyThreadLocation> mapConsistencyIssueLocations(ConsistencyIssueDTO issue, long exerciseId, ConsistencyTargetRepositoryUris repositoryUrisByTarget) {
         return issue.relatedLocations().stream().map(location -> mapConsistencyIssueLocation(location, exerciseId, repositoryUrisByTarget)).flatMap(Optional::stream).distinct()
                 .toList();
     }
@@ -821,11 +730,10 @@ public class ExerciseReviewService {
      *
      * @param location               the artifact location from Hyperion output
      * @param exerciseId             exercise id used for logging context
-     * @param repositoryUrisByTarget repository URI lookup by thread target type
+     * @param repositoryUrisByTarget repository URI lookups for consistency-check targets
      * @return normalized thread location
      */
-    private Optional<ConsistencyThreadLocation> mapConsistencyIssueLocation(ArtifactLocationDTO location, long exerciseId,
-            Map<CommentThreadLocationType, LocalVCRepositoryUri> repositoryUrisByTarget) {
+    private Optional<ConsistencyThreadLocation> mapConsistencyIssueLocation(ArtifactLocationDTO location, long exerciseId, ConsistencyTargetRepositoryUris repositoryUrisByTarget) {
         int lineNumber = location.endLine();
         return switch (location.type()) {
             case PROBLEM_STATEMENT -> Optional.of(new ConsistencyThreadLocation(CommentThreadLocationType.PROBLEM_STATEMENT, null, lineNumber));
@@ -845,51 +753,17 @@ public class ExerciseReviewService {
      * @param filePath               repository-relative file path
      * @param lineNumber             1-based line number
      * @param exerciseId             exercise id for logging context
-     * @param repositoryUrisByTarget map of available repository URIs by target type
+     * @param repositoryUrisByTarget repository URI lookups for consistency-check targets
      * @return mapped location, or empty if the file does not exist in the repository
      */
     private Optional<ConsistencyThreadLocation> mapRepositoryConsistencyIssueLocation(CommentThreadLocationType targetType, String filePath, int lineNumber, long exerciseId,
-            Map<CommentThreadLocationType, LocalVCRepositoryUri> repositoryUrisByTarget) {
-        LocalVCRepositoryUri repositoryUri = repositoryUrisByTarget.get(targetType);
-        if (repositoryUri == null) {
-            log.warn("Skipping consistency issue location for exercise {} because repository URI for {} is missing", exerciseId, targetType);
+            ConsistencyTargetRepositoryUris repositoryUrisByTarget) {
+        Optional<String> validationError = exerciseReviewRepositoryService.validateFileExists(targetType, filePath, repositoryUrisByTarget);
+        if (validationError.isPresent()) {
+            log.warn("Skipping consistency issue location for exercise {} because {}", exerciseId, validationError.get());
             return Optional.empty();
         }
-
-        try (var repository = gitService.getBareRepository(repositoryUri, false)) {
-            if (!doesFileExistInBareRepository(repository, filePath)) {
-                log.warn("Skipping consistency issue location for exercise {} because file '{}' does not exist in {}", exerciseId, filePath, targetType);
-                return Optional.empty();
-            }
-        }
-        catch (Exception ex) {
-            log.warn("Skipping consistency issue location for exercise {} because file existence check failed for '{}' in {}: {}", exerciseId, filePath, targetType,
-                    ex.getMessage());
-            return Optional.empty();
-        }
-
         return Optional.of(new ConsistencyThreadLocation(targetType, filePath, lineNumber));
-    }
-
-    /**
-     * Checks whether a repository-relative path exists as a regular file in the configured default branch of a bare repository.
-     *
-     * @param repository the bare repository
-     * @param filePath   repository-relative file path using forward slashes
-     * @return {@code true} if the path resolves to a blob entry in the default branch tree; {@code false} otherwise
-     * @throws IOException if resolving or traversing the default branch commit tree fails
-     */
-    private boolean doesFileExistInBareRepository(Repository repository, String filePath) throws IOException {
-        ObjectId defaultBranchCommitId = repository.resolve(Constants.R_HEADS + defaultBranch);
-        if (defaultBranchCommitId == null) {
-            return false;
-        }
-        try (RevWalk revWalk = new RevWalk(repository)) {
-            RevCommit commit = revWalk.parseCommit(defaultBranchCommitId);
-            try (TreeWalk treeWalk = TreeWalk.forPath(repository, filePath, commit.getTree())) {
-                return treeWalk != null && treeWalk.getFileMode(0).getObjectType() == Constants.OBJ_BLOB;
-            }
-        }
     }
 
     /**
