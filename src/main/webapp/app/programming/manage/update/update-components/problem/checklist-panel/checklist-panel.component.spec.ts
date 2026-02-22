@@ -14,6 +14,8 @@ import { of, throwError } from 'rxjs';
 import { ChecklistAnalysisResponse } from 'app/openapi/model/checklistAnalysisResponse';
 import { ChecklistActionResponse } from 'app/openapi/model/checklistActionResponse';
 import { ChecklistActionRequest } from 'app/openapi/model/checklistActionRequest';
+import { QualityIssue } from 'app/openapi/model/qualityIssue';
+import { DifficultyAssessment } from 'app/openapi/model/difficultyAssessment';
 import { By } from '@angular/platform-browser';
 import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
@@ -45,7 +47,7 @@ describe('ChecklistPanelComponent', () => {
                 relatedTaskNames: ['Implement loop'],
             },
         ],
-        difficultyAssessment: { suggested: 'EASY', reasoning: 'Reason', matchesDeclared: true, taskCount: 5, testCount: 10 },
+        difficultyAssessment: { suggested: DifficultyAssessment.SuggestedEnum.Easy, reasoning: 'Reason', matchesDeclared: true, taskCount: 5, testCount: 10 },
         qualityIssues: [],
     };
 
@@ -126,8 +128,13 @@ describe('ChecklistPanelComponent', () => {
         };
 
         it('should fix a single quality issue and remove it optimistically', () => {
-            const issueToFix = { description: 'Unclear wording', suggestedFix: 'Reword it', category: 'CLARITY', severity: 'MEDIUM' };
-            const otherIssue = { description: 'Missing info', category: 'COMPLETENESS', severity: 'HIGH' };
+            const issueToFix: QualityIssue = {
+                description: 'Unclear wording',
+                suggestedFix: 'Reword it',
+                category: QualityIssue.CategoryEnum.Clarity,
+                severity: QualityIssue.SeverityEnum.Medium,
+            };
+            const otherIssue: QualityIssue = { description: 'Missing info', category: QualityIssue.CategoryEnum.Completeness, severity: QualityIssue.SeverityEnum.High };
             component.analysisResult.set({ ...mockResponse, qualityIssues: [issueToFix, otherIssue] });
 
             const actionSpy = vi.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(mockActionResponse) as any);
@@ -153,8 +160,8 @@ describe('ChecklistPanelComponent', () => {
             component.analysisResult.set({
                 ...mockResponse,
                 qualityIssues: [
-                    { description: 'Issue 1', category: 'CLARITY', severity: 'MEDIUM' },
-                    { description: 'Issue 2', category: 'COMPLETENESS', severity: 'HIGH' },
+                    { description: 'Issue 1', category: QualityIssue.CategoryEnum.Clarity, severity: QualityIssue.SeverityEnum.Medium },
+                    { description: 'Issue 2', category: QualityIssue.CategoryEnum.Completeness, severity: QualityIssue.SeverityEnum.High },
                 ],
             });
             const actionSpy = vi.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(mockActionResponse) as any);
@@ -195,7 +202,7 @@ describe('ChecklistPanelComponent', () => {
             vi.spyOn(apiService, 'applyChecklistAction').mockReturnValue(throwError(() => new Error('Failed')) as any);
             const errorSpy = vi.spyOn(alertService, 'error');
 
-            component.fixQualityIssue({ description: 'Test', category: 'CLARITY' }, 0);
+            component.fixQualityIssue({ description: 'Test', category: QualityIssue.CategoryEnum.Clarity }, 0);
 
             expect(errorSpy).toHaveBeenCalled();
             expect(component.isApplyingAction()).toBeFalsy();
@@ -206,7 +213,7 @@ describe('ChecklistPanelComponent', () => {
             component.isApplyingAction.set(true);
             const actionSpy = vi.spyOn(apiService, 'applyChecklistAction');
 
-            component.fixQualityIssue({ description: 'Test', category: 'CLARITY' }, 0);
+            component.fixQualityIssue({ description: 'Test', category: QualityIssue.CategoryEnum.Clarity }, 0);
 
             expect(actionSpy).not.toHaveBeenCalled();
         });
@@ -219,7 +226,7 @@ describe('ChecklistPanelComponent', () => {
             vi.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(noChangeResponse) as any);
             const warningSpy = vi.spyOn(alertService, 'warning');
 
-            component.fixQualityIssue({ description: 'Test', category: 'CLARITY' }, 0);
+            component.fixQualityIssue({ description: 'Test', category: QualityIssue.CategoryEnum.Clarity }, 0);
 
             expect(warningSpy).toHaveBeenCalled();
         });
@@ -473,10 +480,13 @@ describe('ChecklistPanelComponent', () => {
         };
 
         it('should mark competencies and difficulty as stale after fixing a quality issue', () => {
-            component.analysisResult.set({ ...mockResponse, qualityIssues: [{ description: 'Issue', category: 'CLARITY', severity: 'LOW' }] });
+            component.analysisResult.set({
+                ...mockResponse,
+                qualityIssues: [{ description: 'Issue', category: QualityIssue.CategoryEnum.Clarity, severity: QualityIssue.SeverityEnum.Low }],
+            });
             vi.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(mockActionResponse) as any);
 
-            component.fixQualityIssue({ description: 'Issue', category: 'CLARITY', severity: 'LOW' }, 0);
+            component.fixQualityIssue({ description: 'Issue', category: QualityIssue.CategoryEnum.Clarity, severity: QualityIssue.SeverityEnum.Low }, 0);
 
             expect(component.isSectionStale('competencies')).toBeTruthy();
             expect(component.isSectionStale('difficulty')).toBeTruthy();
@@ -514,11 +524,14 @@ describe('ChecklistPanelComponent', () => {
         });
 
         it('should accumulate stale sections across multiple actions', () => {
-            component.analysisResult.set({ ...mockResponse, qualityIssues: [{ description: 'Issue', category: 'CLARITY', severity: 'LOW' }] });
+            component.analysisResult.set({
+                ...mockResponse,
+                qualityIssues: [{ description: 'Issue', category: QualityIssue.CategoryEnum.Clarity, severity: QualityIssue.SeverityEnum.Low }],
+            });
             vi.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(mockActionResponse) as any);
 
             // First: fix quality → competencies + difficulty stale
-            component.fixQualityIssue({ description: 'Issue', category: 'CLARITY', severity: 'LOW' }, 0);
+            component.fixQualityIssue({ description: 'Issue', category: QualityIssue.CategoryEnum.Clarity, severity: QualityIssue.SeverityEnum.Low }, 0);
 
             expect(component.isSectionStale('competencies')).toBeTruthy();
             expect(component.isSectionStale('difficulty')).toBeTruthy();
@@ -538,9 +551,9 @@ describe('ChecklistPanelComponent', () => {
 
     describe('Per-Section Re-analyze', () => {
         const fullResponse: ChecklistAnalysisResponse = {
-            qualityIssues: [{ description: 'New issue', category: 'COHERENCE', severity: 'HIGH' }],
+            qualityIssues: [{ description: 'New issue', category: QualityIssue.CategoryEnum.Coherence, severity: QualityIssue.SeverityEnum.High }],
             inferredCompetencies: [{ competencyTitle: 'New Comp', taxonomyLevel: 'UNDERSTAND', rank: 1 }],
-            difficultyAssessment: { suggested: 'HARD', reasoning: 'Updated', matchesDeclared: false, taskCount: 3, testCount: 6 },
+            difficultyAssessment: { suggested: DifficultyAssessment.SuggestedEnum.Hard, reasoning: 'Updated', matchesDeclared: false, taskCount: 3, testCount: 6 },
         };
 
         it('should update only the quality section when reanalyzing quality', () => {

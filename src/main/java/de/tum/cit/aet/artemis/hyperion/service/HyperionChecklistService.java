@@ -188,21 +188,29 @@ public class HyperionChecklistService {
 
         var ctx = buildAnalysisContext(request, courseId);
 
-        return switch (section) {
-            case COMPETENCIES -> {
-                List<InferredCompetencyDTO> competencies = runCompetencyInference(ctx.input(), ctx.parentObs(), ctx.taskNames());
-                BloomRadarDTO bloomRadar = computeBloomRadar(competencies);
-                yield new ChecklistAnalysisResponseDTO(competencies, bloomRadar, null, null);
-            }
-            case DIFFICULTY -> {
-                DifficultyAssessmentDTO difficulty = runDifficultyAnalysis(ctx.input(), ctx.parentObs(), ctx.declaredDifficulty());
-                yield new ChecklistAnalysisResponseDTO(null, null, difficulty, null);
-            }
-            case QUALITY -> {
-                List<QualityIssueDTO> issues = runQualityAnalysis(ctx.input(), ctx.parentObs());
-                yield new ChecklistAnalysisResponseDTO(null, null, null, issues);
-            }
-        };
+        try {
+            var result = Mono.fromCallable(() -> switch (section) {
+                case COMPETENCIES -> {
+                    List<InferredCompetencyDTO> competencies = runCompetencyInference(ctx.input(), ctx.parentObs(), ctx.taskNames());
+                    BloomRadarDTO bloomRadar = computeBloomRadar(competencies);
+                    yield new ChecklistAnalysisResponseDTO(competencies, bloomRadar, null, null);
+                }
+                case DIFFICULTY -> {
+                    DifficultyAssessmentDTO difficulty = runDifficultyAnalysis(ctx.input(), ctx.parentObs(), ctx.declaredDifficulty());
+                    yield new ChecklistAnalysisResponseDTO(null, null, difficulty, null);
+                }
+                case QUALITY -> {
+                    List<QualityIssueDTO> issues = runQualityAnalysis(ctx.input(), ctx.parentObs());
+                    yield new ChecklistAnalysisResponseDTO(null, null, null, issues);
+                }
+            }).subscribeOn(Schedulers.boundedElastic()).block(ANALYSIS_TIMEOUT);
+
+            return result != null ? result : ChecklistAnalysisResponseDTO.empty();
+        }
+        catch (IllegalStateException e) {
+            log.warn("Section analysis timed out or failed: {} (exerciseId={})", section, request.exerciseId(), e);
+            return ChecklistAnalysisResponseDTO.empty();
+        }
     }
 
     /**

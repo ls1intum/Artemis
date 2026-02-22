@@ -28,6 +28,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
 import { ChecklistAnalysisResponse } from 'app/openapi/model/checklistAnalysisResponse';
 import { ChecklistActionRequest } from 'app/openapi/model/checklistActionRequest';
+import { DifficultyAssessment } from 'app/openapi/model/difficultyAssessment';
 import { QualityIssue } from 'app/openapi/model/qualityIssue';
 import { InferredCompetency } from 'app/openapi/model/inferredCompetency';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -511,8 +512,8 @@ export class ChecklistPanelComponent {
                     ...r,
                     difficultyAssessment: {
                         ...r.difficultyAssessment,
-                        suggested: targetDifficulty,
-                        delta: 'MATCH',
+                        suggested: targetDifficulty as DifficultyAssessment.SuggestedEnum,
+                        delta: 'MATCH' as DifficultyAssessment.DeltaEnum,
                         reasoning: `Adapted to ${targetDifficulty}. Re-analyze for an updated assessment.`,
                     },
                 }));
