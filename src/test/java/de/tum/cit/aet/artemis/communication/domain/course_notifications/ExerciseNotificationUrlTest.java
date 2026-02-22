@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.communication.domain.course_notifications;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -54,6 +53,13 @@ class ExerciseNotificationUrlTest {
         var params = Map.of("exerciseId", "10", "exerciseTitle", EXERCISE_TITLE, "examId", "100", "exerciseGroupId", "50", "exerciseType", "modeling");
         var notification = new ExerciseUpdatedNotification(1L, COURSE_ID, ZonedDateTime.now(), params);
         assertThat(notification.getRelativeWebAppUrl()).isEqualTo("/course-management/1/exams/100/exercise-groups/50/modeling-exercises/10");
+    }
+
+    @Test
+    void testExerciseUpdatedNotification_courseExercise_fromDatabase() {
+        var params = Map.of("exerciseId", "10", "exerciseTitle", EXERCISE_TITLE, "exerciseType", "text");
+        var notification = new ExerciseUpdatedNotification(1L, COURSE_ID, ZonedDateTime.now(), params);
+        assertThat(notification.getRelativeWebAppUrl()).isEqualTo("/courses/1/exercises/10");
     }
 
     @Test
@@ -179,13 +185,7 @@ class ExerciseNotificationUrlTest {
 
     @Test
     void testDuplicateTestCaseNotification_examExercise_fromDatabase() {
-        var params = new HashMap<String, String>();
-        params.put("exerciseId", "10");
-        params.put("exerciseTitle", EXERCISE_TITLE);
-        params.put("releaseDate", "01.01.2025");
-        params.put("dueDate", "01.02.2025");
-        params.put("examId", "100");
-        params.put("exerciseGroupId", "50");
+        var params = Map.of("exerciseId", "10", "exerciseTitle", EXERCISE_TITLE, "releaseDate", "01.01.2025", "dueDate", "01.02.2025", "examId", "100", "exerciseGroupId", "50");
         var notification = new DuplicateTestCaseNotification(1L, COURSE_ID, ZonedDateTime.now(), params);
         assertThat(notification.getRelativeWebAppUrl()).isEqualTo("/course-management/1/exams/100/exercise-groups/50/programming-exercises/10");
     }
