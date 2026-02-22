@@ -46,9 +46,10 @@ import { ConsistencyCheckError } from 'app/programming/shared/entities/consisten
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
 import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
-import { Comment, CommentType } from 'app/exercise/shared/entities/review/comment.model';
+import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContent, CommentContentType, ConsistencyIssueCommentContent } from 'app/exercise/shared/entities/review/comment-content.model';
 import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { getFirstCommentByCreatedDateThenId } from 'app/exercise/review/review-comment-utils';
 
 const SEVERITY_ORDER: Record<ConsistencyIssue.SeverityEnum, number> = {
     [ConsistencyIssue.SeverityEnum.High]: 0,
@@ -615,7 +616,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     private extractConsistencyIssueContent(thread: CommentThread): ConsistencyIssueCommentContent | undefined {
-        const firstComment = this.findFirstComment(thread);
+        const firstComment = getFirstCommentByCreatedDateThenId(thread.comments);
         if (!firstComment || firstComment.type !== CommentType.CONSISTENCY_CHECK) {
             return undefined;
         }
@@ -626,21 +627,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }
 
         return content;
-    }
-
-    private findFirstComment(thread: CommentThread): Comment | undefined {
-        if (!thread.comments?.length) {
-            return undefined;
-        }
-
-        return [...thread.comments].sort((a, b) => {
-            const aDate = a.createdDate ? Date.parse(a.createdDate) : 0;
-            const bDate = b.createdDate ? Date.parse(b.createdDate) : 0;
-            if (aDate !== bDate) {
-                return aDate - bDate;
-            }
-            return (a.id ?? 0) - (b.id ?? 0);
-        })[0];
     }
 
     private navigateToLocation(location: { targetType: CommentThreadLocationType; filePath?: string; lineNumber?: number; auxiliaryRepositoryId?: number }): void {

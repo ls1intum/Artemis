@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -139,7 +140,8 @@ public class ExerciseReviewService {
     /**
      * Persists newly detected consistency-check issues as review comment threads.
      * Existing consistency-check threads are kept untouched.
-     * For each consistency issue, one thread group is created and all related locations with existing repository files are persisted as threads within that group.
+     * For each consistency issue, all related locations with existing repository files are persisted as threads.
+     * A thread group is created only when an issue has multiple persisted locations.
      * Invalid issues are ignored to keep consistency-check processing resilient.
      *
      * @param exerciseId the programming exercise id that owns the review comments
@@ -153,6 +155,7 @@ public class ExerciseReviewService {
             return;
         }
 
+        List<CommentThread> threadsToPersist = new ArrayList<>();
         for (ConsistencyIssueDTO issue : issues) {
             Optional<String> validationError = ExerciseReviewValidationUtil.validateConsistencyIssue(issue);
             if (validationError.isPresent()) {
@@ -165,15 +168,19 @@ public class ExerciseReviewService {
                 log.warn("Skipping consistency issue for exercise {} because no related repository location exists", exerciseId);
                 continue;
             }
-            CommentThreadGroup group = createConsistencyCheckGroup(exercise);
+            CommentThreadGroup group = locations.size() > 1 ? createConsistencyCheckGroup(exercise) : null;
 
             for (ConsistencyThreadLocation location : locations) {
                 CommentThread thread = buildConsistencyCheckThread(exercise, location);
                 thread.setGroup(group);
                 Comment comment = buildConsistencyCheckComment(thread, issue);
                 thread.getComments().add(comment);
-                commentThreadRepository.save(thread);
+                threadsToPersist.add(thread);
             }
+        }
+
+        if (!threadsToPersist.isEmpty()) {
+            commentThreadRepository.saveAll(threadsToPersist);
         }
     }
 
@@ -648,6 +655,8 @@ public class ExerciseReviewService {
     /**
      * Builds a persisted consistency-check thread from a mapped issue location.
      * Problem statement threads intentionally do not store a file path.
+     * Problem-statement threads store the initial exercise version at creation time.
+     * Repository-based threads store the initial commit SHA at creation time.
      *
      * @param exercise the exercise owning the thread
      * @param location the mapped consistency issue location
@@ -659,6 +668,8 @@ public class ExerciseReviewService {
         thread.setTargetType(location.targetType());
         thread.setInitialFilePath(location.filePath());
         thread.setFilePath(location.filePath());
+        thread.setInitialVersion(resolveInitialVersion(location.targetType(), exercise.getId()));
+        thread.setInitialCommitSha(resolveLatestCommitSha(location.targetType(), null, exercise.getId()));
         thread.setInitialLineNumber(location.lineNumber());
         thread.setLineNumber(location.lineNumber());
         thread.setOutdated(false);
@@ -738,11 +749,11 @@ public class ExerciseReviewService {
         return switch (location.type()) {
             case PROBLEM_STATEMENT -> Optional.of(new ConsistencyThreadLocation(CommentThreadLocationType.PROBLEM_STATEMENT, null, lineNumber));
             case TEMPLATE_REPOSITORY ->
-                mapRepositoryConsistencyIssueLocation(CommentThreadLocationType.TEMPLATE_REPO, location.filePath(), lineNumber, exerciseId, repositoryUrisByTarget);
+                mapRepositoryConsistencyIssueLocation(CommentThreadLocationType.TEMPLATE_REPO, null, location.filePath(), lineNumber, exerciseId, repositoryUrisByTarget);
             case SOLUTION_REPOSITORY ->
-                mapRepositoryConsistencyIssueLocation(CommentThreadLocationType.SOLUTION_REPO, location.filePath(), lineNumber, exerciseId, repositoryUrisByTarget);
+                mapRepositoryConsistencyIssueLocation(CommentThreadLocationType.SOLUTION_REPO, null, location.filePath(), lineNumber, exerciseId, repositoryUrisByTarget);
             case TESTS_REPOSITORY ->
-                mapRepositoryConsistencyIssueLocation(CommentThreadLocationType.TEST_REPO, location.filePath(), lineNumber, exerciseId, repositoryUrisByTarget);
+                mapRepositoryConsistencyIssueLocation(CommentThreadLocationType.TEST_REPO, null, location.filePath(), lineNumber, exerciseId, repositoryUrisByTarget);
         };
     }
 
@@ -750,15 +761,16 @@ public class ExerciseReviewService {
      * Maps one repository-based consistency location if the referenced file exists in the target repository.
      *
      * @param targetType             repository-backed thread target type
+     * @param auxiliaryRepositoryId  auxiliary repository id when {@code targetType} is {@code AUXILIARY_REPO}
      * @param filePath               repository-relative file path
      * @param lineNumber             1-based line number
      * @param exerciseId             exercise id for logging context
      * @param repositoryUrisByTarget repository URI lookups for consistency-check targets
      * @return mapped location, or empty if the file does not exist in the repository
      */
-    private Optional<ConsistencyThreadLocation> mapRepositoryConsistencyIssueLocation(CommentThreadLocationType targetType, String filePath, int lineNumber, long exerciseId,
-            ConsistencyTargetRepositoryUris repositoryUrisByTarget) {
-        Optional<String> validationError = exerciseReviewRepositoryService.validateFileExists(targetType, filePath, repositoryUrisByTarget);
+    private Optional<ConsistencyThreadLocation> mapRepositoryConsistencyIssueLocation(CommentThreadLocationType targetType, @Nullable Long auxiliaryRepositoryId, String filePath,
+            int lineNumber, long exerciseId, ConsistencyTargetRepositoryUris repositoryUrisByTarget) {
+        Optional<String> validationError = exerciseReviewRepositoryService.validateFileExists(targetType, auxiliaryRepositoryId, filePath, repositoryUrisByTarget);
         if (validationError.isPresent()) {
             log.warn("Skipping consistency issue location for exercise {} because {}", exerciseId, validationError.get());
             return Optional.empty();

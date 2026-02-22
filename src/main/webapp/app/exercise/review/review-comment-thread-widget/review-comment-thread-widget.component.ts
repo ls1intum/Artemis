@@ -14,6 +14,7 @@ import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs/operators';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+import { sortCommentsByCreatedDateThenId } from 'app/exercise/review/review-comment-utils';
 
 interface RelatedThreadLocation {
     threadId: number;
@@ -57,17 +58,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     private readonly translateService = inject(TranslateService);
     private readonly changeDetectorRef = inject(ChangeDetectorRef);
     private readonly reviewCommentService = inject(ExerciseReviewCommentService);
-    readonly orderedComments = computed(() => {
-        const comments = this.thread().comments ?? [];
-        return [...comments].sort((a, b) => {
-            const aDate = a.createdDate ? Date.parse(a.createdDate) : 0;
-            const bDate = b.createdDate ? Date.parse(b.createdDate) : 0;
-            if (aDate !== bDate) {
-                return aDate - bDate;
-            }
-            return (a.id ?? 0) - (b.id ?? 0);
-        });
-    });
+    readonly orderedComments = computed(() => sortCommentsByCreatedDateThenId(this.thread().comments));
     readonly renderedComments = computed(() => {
         return this.orderedComments().map((comment) => ({
             comment,
@@ -90,6 +81,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     });
     readonly isConsistencyIssueThread = computed(() => this.firstConsistencyIssueContent() !== undefined);
     readonly relatedGroupLocations = computed<RelatedThreadLocation[]>(() => {
+        // Recompute related location labels when language changes because repository labels are translated.
         this.languageVersion();
         const currentThread = this.thread();
         const groupId = currentThread.groupId;
@@ -333,20 +325,12 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
             return `${repositoryLabel}:${lineNumber}`;
         }
 
-        const filePath = thread.filePath ?? thread.initialFilePath ?? this.getFallbackPathForTargetType(thread.targetType);
+        const filePath = thread.filePath ?? thread.initialFilePath;
         if (!filePath) {
             return undefined;
         }
 
         return `${repositoryLabel}: ${filePath}:${lineNumber}`;
-    }
-
-    private getFallbackPathForTargetType(targetType: CommentThreadLocationType): string | undefined {
-        if (targetType === CommentThreadLocationType.PROBLEM_STATEMENT) {
-            return 'problem_statement.md';
-        }
-
-        return undefined;
     }
 
     private getRepositoryLabel(targetType: CommentThreadLocationType): string {

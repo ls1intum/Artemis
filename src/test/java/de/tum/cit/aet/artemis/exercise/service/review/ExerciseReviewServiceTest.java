@@ -170,6 +170,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldAppendConsistencyCheckThreadsWithoutDeletingPreviousOnes() {
+        ExerciseVersion initialVersion = createExerciseVersion();
         CommentThread oldConsistencyThread = persistThread(programmingExercise);
         Comment oldConsistencyComment = buildConsistencyIssueCommentEntity("Old consistency issue");
         oldConsistencyComment.setThread(oldConsistencyThread);
@@ -196,7 +197,9 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
                 .filter(thread -> !thread.getId().equals(oldConsistencyThread.getId())).findFirst().orElseThrow();
         assertThat(generatedConsistencyThread.getTargetType()).isEqualTo(CommentThreadLocationType.PROBLEM_STATEMENT);
         assertThat(generatedConsistencyThread.getLineNumber()).isEqualTo(2);
-        assertThat(generatedConsistencyThread.getGroup()).isNotNull();
+        assertThat(generatedConsistencyThread.getGroup()).isNull();
+        assertThat(generatedConsistencyThread.getInitialVersion()).isEqualTo(initialVersion);
+        assertThat(generatedConsistencyThread.getInitialCommitSha()).isNull();
         assertThat(generatedConsistencyThread.getComments()).singleElement().extracting(Comment::getType).isEqualTo(CommentType.CONSISTENCY_CHECK);
         var content = generatedConsistencyThread.getComments().iterator().next().getContent();
         assertThat(content).isInstanceOf(ConsistencyIssueCommentContentDTO.class);
@@ -226,6 +229,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         templateParticipation.setRepositoryUri(templateRepo.uri().toString());
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
         programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
+        String expectedCommitSha = gitService.getLastCommitHash(templateRepo.uri());
 
         ConsistencyIssueDTO issue = buildConsistencyIssue("Template issue", ArtifactType.TEMPLATE_REPOSITORY, "src/Main.java", 8);
 
@@ -236,7 +240,8 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
             assertThat(thread.getTargetType()).isEqualTo(CommentThreadLocationType.TEMPLATE_REPO);
             assertThat(thread.getFilePath()).isEqualTo("src/Main.java");
             assertThat(thread.getLineNumber()).isEqualTo(8);
-            assertThat(thread.getGroup()).isNotNull();
+            assertThat(thread.getGroup()).isNull();
+            assertThat(thread.getInitialCommitSha()).isEqualTo(expectedCommitSha);
             assertThat(thread.getComments()).singleElement().extracting(Comment::getType).isEqualTo(CommentType.CONSISTENCY_CHECK);
         });
     }
@@ -244,6 +249,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldCreateOneGroupPerIssueAndThreadsForAllRelatedLocations() throws Exception {
+        createExerciseVersion();
         LocalRepoWithGit templateRepo = createLocalRepositoryWithGit("template-grouped");
         pushFileToRepository(templateRepo, "src/A.java", "class A {}");
         var templateParticipation = programmingExercise.getTemplateParticipation();
@@ -314,6 +320,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
             assertThat(thread.getTargetType()).isEqualTo(CommentThreadLocationType.PROBLEM_STATEMENT);
             assertThat(thread.getFilePath()).isNull();
             assertThat(thread.getLineNumber()).isEqualTo(2);
+            assertThat(thread.getInitialVersion()).isNotNull();
         });
     }
 

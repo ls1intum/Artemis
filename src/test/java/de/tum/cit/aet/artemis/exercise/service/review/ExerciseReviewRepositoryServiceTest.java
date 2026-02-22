@@ -27,14 +27,14 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
 class ExerciseReviewRepositoryServiceTest {
 
     @Mock
-    private ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     @Mock
     private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
@@ -218,7 +218,7 @@ class ExerciseReviewRepositoryServiceTest {
     void shouldReturnValidationErrorWhenRepositoryUriIsMissingForFileValidation() {
         ConsistencyTargetRepositoryUris uris = new ConsistencyTargetRepositoryUris(Map.of(), Map.of());
 
-        Optional<String> validationError = repositoryService.validateFileExists(CommentThreadLocationType.TEMPLATE_REPO, "src/main/App.java", uris);
+        Optional<String> validationError = repositoryService.validateFileExists(CommentThreadLocationType.TEMPLATE_REPO, null, "src/main/App.java", uris);
 
         assertThat(validationError).contains("repository URI for TEMPLATE_REPO is missing");
     }
@@ -229,11 +229,25 @@ class ExerciseReviewRepositoryServiceTest {
         ConsistencyTargetRepositoryUris uris = new ConsistencyTargetRepositoryUris(Map.of(CommentThreadLocationType.TEMPLATE_REPO, templateUri), Map.of());
         when(gitService.getBareRepository(eq(templateUri), eq(false))).thenThrow(new RuntimeException("boom"));
 
-        Optional<String> validationError = repositoryService.validateFileExists(CommentThreadLocationType.TEMPLATE_REPO, "src/main/App.java", uris);
+        Optional<String> validationError = repositoryService.validateFileExists(CommentThreadLocationType.TEMPLATE_REPO, null, "src/main/App.java", uris);
 
         assertThat(validationError).isPresent();
         assertThat(validationError.get()).contains("file existence check failed");
         assertThat(validationError.get()).contains("boom");
+    }
+
+    @Test
+    void shouldResolveAuxiliaryRepositoryUriWhenValidatingAuxiliaryRepositoryFile() {
+        LocalVCRepositoryUri auxiliaryUri = new LocalVCRepositoryUri("http://localhost/git/EX1/ex1-aux.git");
+        ConsistencyTargetRepositoryUris uris = new ConsistencyTargetRepositoryUris(Map.of(), Map.of(77L, auxiliaryUri));
+        when(gitService.getBareRepository(eq(auxiliaryUri), eq(false))).thenThrow(new RuntimeException("boom"));
+
+        Optional<String> validationError = repositoryService.validateFileExists(CommentThreadLocationType.AUXILIARY_REPO, 77L, "src/main/App.java", uris);
+
+        assertThat(validationError).isPresent();
+        assertThat(validationError.get()).contains("file existence check failed");
+        assertThat(validationError.get()).contains("boom");
+        verify(gitService).getBareRepository(eq(auxiliaryUri), eq(false));
     }
 
     private static ProgrammingExercise createProgrammingExercise(long id) {

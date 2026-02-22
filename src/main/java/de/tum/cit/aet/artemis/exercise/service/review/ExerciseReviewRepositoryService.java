@@ -135,12 +135,14 @@ public class ExerciseReviewRepositoryService {
      * Validates that a repository-relative path exists as a regular file in the configured default branch of a bare repository target.
      *
      * @param targetType             repository-backed thread target type
+     * @param auxiliaryRepositoryId  auxiliary repository id when {@code targetType} is {@code AUXILIARY_REPO}
      * @param filePath               repository-relative file path using forward slashes
      * @param repositoryUrisByTarget repository URI lookups for consistency-check targets
      * @return empty if valid; otherwise an error message describing why validation failed
      */
-    public Optional<String> validateFileExists(CommentThreadLocationType targetType, String filePath, ConsistencyTargetRepositoryUris repositoryUrisByTarget) {
-        LocalVCRepositoryUri repositoryUri = findConsistencyTargetRepositoryUri(targetType, null, repositoryUrisByTarget);
+    public Optional<String> validateFileExists(CommentThreadLocationType targetType, @Nullable Long auxiliaryRepositoryId, String filePath,
+            ConsistencyTargetRepositoryUris repositoryUrisByTarget) {
+        LocalVCRepositoryUri repositoryUri = findConsistencyTargetRepositoryUri(targetType, auxiliaryRepositoryId, repositoryUrisByTarget);
         if (repositoryUri == null) {
             return Optional.of("repository URI for " + targetType + " is missing");
         }
