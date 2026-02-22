@@ -39,9 +39,11 @@ import de.tum.cit.aet.artemis.exercise.domain.review.Comment;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThread;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThreadLocationType;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentType;
+import de.tum.cit.aet.artemis.exercise.dto.review.ConsistencyIssueCommentContentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UserCommentContentDTO;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadRepository;
 import de.tum.cit.aet.artemis.hyperion.domain.ConsistencyIssueCategory;
+import de.tum.cit.aet.artemis.hyperion.domain.Severity;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -90,8 +92,9 @@ class HyperionConsistencyCheckServiceTest {
         var costConfiguration = createTestConfiguration();
         var llmTokenUsageService = new LLMTokenUsageService(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository, costConfiguration);
         var observationRegistry = ObservationRegistry.create();
+        var reviewCommentContextRenderer = new HyperionReviewCommentContextRendererService(commentThreadRepository, new ObjectMapper());
         this.hyperionConsistencyCheckService = new HyperionConsistencyCheckService(programmingExerciseRepository, chatClient, templateService, exerciseContextRenderer,
-                observationRegistry, llmTokenUsageService, userRepository, commentThreadRepository, new ObjectMapper());
+                reviewCommentContextRenderer, observationRegistry, llmTokenUsageService, userRepository);
     }
 
     @Test
@@ -152,7 +155,7 @@ class HyperionConsistencyCheckServiceTest {
     }
 
     @Test
-    void checkConsistency_includesExistingReviewThreadsInPrompt() throws Exception {
+    void checkConsistency_includesExistingConsistencyCheckThreadsInPrompt() throws Exception {
         final var exercise = getProgrammingExercise();
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(42L)).thenReturn(exercise);
         when(repositoryService.getFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class)))
@@ -171,10 +174,17 @@ class HyperionConsistencyCheckServiceTest {
         author.setLastName("Lovelace");
 
         Comment existingComment = new Comment();
-        existingComment.setType(CommentType.USER);
+        existingComment.setType(CommentType.CONSISTENCY_CHECK);
         existingComment.setAuthor(author);
-        existingComment.setContent(new UserCommentContentDTO("Already discussed naming mismatch"));
+        existingComment
+                .setContent(new ConsistencyIssueCommentContentDTO(Severity.HIGH, ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH, "Already discussed naming mismatch", null));
         existingThread.getComments().add(existingComment);
+
+        Comment replyComment = new Comment();
+        replyComment.setType(CommentType.USER);
+        replyComment.setAuthor(author);
+        replyComment.setContent(new UserCommentContentDTO("This user reply should not be part of prompt context"));
+        existingThread.getComments().add(replyComment);
         when(commentThreadRepository.findWithCommentsByExerciseId(42L)).thenReturn(Set.of(existingThread));
 
         when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage("{\"issues\":[]}")))));
@@ -187,6 +197,7 @@ class HyperionConsistencyCheckServiceTest {
         String promptText = promptCaptor.getAllValues().stream().flatMap(prompt -> prompt.getInstructions().stream())
                 .map(content -> Objects.toString(content.getText(), content.toString())).collect(Collectors.joining("\n"));
         assertThat(promptText).contains("Already discussed naming mismatch");
+        assertThat(promptText).doesNotContain("This user reply should not be part of prompt context");
         assertThat(promptText).contains("threads");
     }
 

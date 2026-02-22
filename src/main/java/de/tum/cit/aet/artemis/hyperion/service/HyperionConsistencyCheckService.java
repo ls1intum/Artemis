@@ -3,12 +3,9 @@ package de.tum.cit.aet.artemis.hyperion.service;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Stream;
 
@@ -20,21 +17,11 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
-import de.tum.cit.aet.artemis.exercise.domain.review.Comment;
-import de.tum.cit.aet.artemis.exercise.domain.review.CommentThread;
-import de.tum.cit.aet.artemis.exercise.domain.review.CommentThreadGroup;
-import de.tum.cit.aet.artemis.exercise.dto.review.CommentContentDTO;
-import de.tum.cit.aet.artemis.exercise.dto.review.ConsistencyIssueCommentContentDTO;
-import de.tum.cit.aet.artemis.exercise.dto.review.UserCommentContentDTO;
-import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadRepository;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.domain.ArtifactType;
 import de.tum.cit.aet.artemis.hyperion.domain.ConsistencyIssueCategory;
@@ -91,9 +78,7 @@ public class HyperionConsistencyCheckService {
 
     private final UserRepository userRepository;
 
-    private final CommentThreadRepository commentThreadRepository;
-
-    private final ObjectMapper objectMapper;
+    private final HyperionReviewCommentContextRendererService reviewCommentContextRenderer;
 
     private final ObservationRegistry observationRegistry;
 
@@ -104,23 +89,21 @@ public class HyperionConsistencyCheckService {
      * @param chatClient                    configured Spring AI chat client
      * @param templates                     prompt template renderer
      * @param exerciseContextRenderer       renderer for exercise problem/repository context
+     * @param reviewCommentContextRenderer  renderer for existing review-thread prompt context
      * @param observationRegistry           Micrometer observation registry
      * @param llmTokenUsageService          service for persisting token usage
      * @param userRepository                repository for resolving current user id
-     * @param commentThreadRepository       repository for loading existing review threads
-     * @param objectMapper                  mapper used for deterministic JSON serialization of thread context
      */
     public HyperionConsistencyCheckService(ProgrammingExerciseRepository programmingExerciseRepository, ChatClient chatClient, HyperionPromptTemplateService templates,
-            HyperionProgrammingExerciseContextRendererService exerciseContextRenderer, ObservationRegistry observationRegistry, LLMTokenUsageService llmTokenUsageService,
-            UserRepository userRepository, CommentThreadRepository commentThreadRepository, ObjectMapper objectMapper) {
+            HyperionProgrammingExerciseContextRendererService exerciseContextRenderer, HyperionReviewCommentContextRendererService reviewCommentContextRenderer,
+            ObservationRegistry observationRegistry, LLMTokenUsageService llmTokenUsageService, UserRepository userRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.chatClient = chatClient;
         this.templates = templates;
         this.exerciseContextRenderer = exerciseContextRenderer;
+        this.reviewCommentContextRenderer = reviewCommentContextRenderer;
         this.llmTokenUsageService = llmTokenUsageService;
         this.userRepository = userRepository;
-        this.commentThreadRepository = commentThreadRepository;
-        this.objectMapper = objectMapper;
         this.observationRegistry = observationRegistry;
     }
 
@@ -157,7 +140,7 @@ public class HyperionConsistencyCheckService {
 
         String renderedRepositoryContext = exerciseContextRenderer.renderContext(exerciseWithParticipations);
         Long exerciseId = exerciseWithParticipations.getId();
-        String existingReviewThreads = exerciseId != null ? renderExistingReviewThreads(exerciseId) : "No existing review threads.";
+        String existingReviewThreads = exerciseId != null ? reviewCommentContextRenderer.renderReviewThreads(exerciseId) : "No existing review threads.";
         String programmingLanguage = exerciseWithParticipations.getProgrammingLanguage() != null ? exerciseWithParticipations.getProgrammingLanguage().name() : "JAVA";
         var input = Map.of("rendered_context", renderedRepositoryContext, "programming_language", programmingLanguage, "existing_review_threads", existingReviewThreads);
 
@@ -372,83 +355,4 @@ public class HyperionConsistencyCheckService {
         }
     }
 
-    /**
-     * Serializes existing exercise review threads (including comments) into deterministic JSON for LLM context.
-     *
-     * @param exerciseId id of the exercise whose threads should be serialized
-     * @return JSON object string containing a {@code threads} array
-     */
-    private String renderExistingReviewThreads(long exerciseId) {
-        Set<CommentThread> threads = commentThreadRepository.findWithCommentsByExerciseId(exerciseId);
-        if (threads == null || threads.isEmpty()) {
-            return "{\"threads\":[]}";
-        }
-        List<Map<String, Object>> serializedThreads = new ArrayList<>();
-        List<CommentThread> sortedThreads = threads.stream().sorted(Comparator.comparing(CommentThread::getId, Comparator.nullsLast(Comparator.naturalOrder()))).toList();
-        for (CommentThread thread : sortedThreads) {
-            Map<String, Object> serializedThread = new LinkedHashMap<>();
-            serializedThread.put("targetType", thread.getTargetType() != null ? thread.getTargetType().name() : null);
-            serializedThread.put("filePath", thread.getFilePath() != null ? thread.getFilePath() : thread.getInitialFilePath());
-            serializedThread.put("lineNumber", thread.getLineNumber() != null ? thread.getLineNumber() : thread.getInitialLineNumber());
-            serializedThread.put("resolved", thread.isResolved());
-            serializedThread.put("outdated", thread.isOutdated());
-            CommentThreadGroup group = thread.getGroup();
-            serializedThread.put("groupId", group != null ? group.getId() : null);
-
-            List<Comment> sortedComments = thread.getComments() == null ? List.of()
-                    : thread.getComments().stream().sorted(Comparator.comparing(Comment::getCreatedDate, Comparator.nullsLast(Comparator.naturalOrder()))
-                            .thenComparing(Comment::getId, Comparator.nullsLast(Comparator.naturalOrder()))).toList();
-            List<Map<String, Object>> serializedComments = new ArrayList<>(sortedComments.size());
-            for (Comment comment : sortedComments) {
-                Map<String, Object> serializedComment = new LinkedHashMap<>();
-                serializedComment.put("type", comment.getType() != null ? comment.getType().name() : null);
-                serializedComment.put("text", extractCommentText(comment.getContent()));
-                serializedComments.add(serializedComment);
-            }
-            serializedThread.put("comments", serializedComments);
-            serializedThreads.add(serializedThread);
-        }
-
-        Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("threads", serializedThreads);
-        try {
-            return objectMapper.writeValueAsString(payload);
-        }
-        catch (JsonProcessingException e) {
-            log.warn("Failed to serialize existing review threads for exercise {}", exerciseId, e);
-            return "{\"threads\":[]}";
-        }
-    }
-
-    /**
-     * Extracts the user-visible text payload from a polymorphic review comment content DTO.
-     *
-     * @param content review comment content
-     * @return normalized text representation used in prompt context
-     */
-    private String extractCommentText(CommentContentDTO content) {
-        if (content == null) {
-            return "";
-        }
-        if (content instanceof UserCommentContentDTO userContent) {
-            return normalizeWhitespace(userContent.text());
-        }
-        if (content instanceof ConsistencyIssueCommentContentDTO consistencyContent) {
-            return "[" + consistencyContent.severity().name() + "/" + consistencyContent.category().name() + "] " + normalizeWhitespace(consistencyContent.text());
-        }
-        return normalizeWhitespace(content.toString());
-    }
-
-    /**
-     * Normalizes line breaks and trims surrounding whitespace for compact single-line prompt embedding.
-     *
-     * @param text raw text
-     * @return normalized text with escaped newlines
-     */
-    private String normalizeWhitespace(String text) {
-        if (text == null || text.isBlank()) {
-            return "";
-        }
-        return text.replace("\r\n", "\n").replace('\r', '\n').replace("\n", "\\n").trim();
-    }
 }
