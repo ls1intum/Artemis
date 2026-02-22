@@ -160,8 +160,8 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
     }
 
     @Test
-    void testRunScriptInContainerExecutesSynchronously() {
-        buildJobContainerService.runScriptInContainer(DUMMY_CONTAINER_ID, "build-job-1");
+    void testRunScriptInContainerReturnsZero() {
+        int exitCode = buildJobContainerService.runScriptInContainer(DUMMY_CONTAINER_ID, "build-job-1");
 
         // Verify that the exec command attaches stdout and stderr for synchronous output capture
         verify(execCreateCmd).withAttachStdout(true);
@@ -170,6 +170,20 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
         // Verify that the exec start command runs in non-detached (synchronous) mode,
         // which ensures the command completes before control returns to the caller
         verify(execStartCmd).withDetach(false);
+
+        // Exit code is taken from inspectExecCmd (mocked to return 0 in setUp)
+        assertThat(exitCode).isZero();
+    }
+
+    @Test
+    void testRunScriptInContainerReturnsNonZero() {
+        var inspectExecCmd = buildAgentConfiguration.getDockerClient().inspectExecCmd("exec-1234");
+        var inspectExecResponse = inspectExecCmd.exec();
+        when(inspectExecResponse.getExitCodeLong()).thenReturn(1L);
+
+        int exitCode = buildJobContainerService.runScriptInContainer(DUMMY_CONTAINER_ID, "build-job-2");
+
+        assertThat(exitCode).isEqualTo(1);
     }
 
     @Test

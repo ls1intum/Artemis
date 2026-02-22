@@ -629,6 +629,39 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     }
 
     /**
+     * Test that when the build script exits with a non-zero exit code (simulating a compilation failure),
+     * the resulting {@link de.tum.cit.aet.artemis.buildagent.dto.BuildResult} has
+     * {@code isCompilationSuccessful() == false}, while the build job itself completes with
+     * {@link BuildStatus#SUCCESSFUL} (no system error occurred).
+     */
+    @Test
+    void testBuildJobWithCompilationFailureProducesCompilationSuccessfulFalse() {
+        // Override the mock exit code to simulate a compilation failure (exit code 1).
+        when(dockerClient.inspectExecCmd(anyString()).exec().getExitCodeLong()).thenReturn(1L);
+
+        try {
+            var queueItem = createBaseBuildJobQueueItemForTrigger();
+
+            buildJobQueue.add(queueItem);
+
+            await().atMost(30, TimeUnit.SECONDS).until(() -> {
+                var resultQueueItem = resultQueue.poll();
+                if (resultQueueItem == null || !resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())) {
+                    return false;
+                }
+                assertThat(resultQueueItem.buildJobQueueItem().status()).isEqualTo(BuildStatus.SUCCESSFUL);
+                assertThat(resultQueueItem.buildResult()).isNotNull();
+                assertThat(resultQueueItem.buildResult().isCompilationSuccessful()).isFalse();
+                return true;
+            });
+        }
+        finally {
+            // Reset the exit code to 0 so subsequent tests are not affected
+            when(dockerClient.inspectExecCmd(anyString()).exec().getExitCodeLong()).thenReturn(0L);
+        }
+    }
+
+    /**
      * Test that the Docker version is retrieved and stored in build agent details.
      * The scheduled task should populate the Docker version which then appears in the distributed map.
      */
