@@ -224,12 +224,13 @@
             },
             "globalNotificationSettings": {
                 "title": "Notifications",
-                "description": "You'll receive email notifications for the following security-related activities. Manage your preferences below.",
+                "description": "You'll receive email notifications for the following security and system activities. Manage your preferences below.",
                 "options": {
                     "NEW_LOGIN": "New Login",
                     "NEW_PASSKEY_ADDED": "New Passkey Added",
                     "VCS_TOKEN_EXPIRED": "VCS Token Expired",
-                    "SSH_KEY_EXPIRED": "SSH Key Expired"
+                    "SSH_KEY_EXPIRED": "SSH Key Expired",
+                    "MAINTENANCE": "Planned Maintenance Announcements"
                 },
                 "viewPasskeySettings": "View Passkey Settings",
                 "viewVcsTokenSettings": "View VCS Token Settings",

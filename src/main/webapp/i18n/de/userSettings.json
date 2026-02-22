@@ -224,12 +224,13 @@
             },
             "globalNotificationSettings": {
                 "title": "Benachrichtigungen",
-                "description": "Du erhältst E-Mail-Benachrichtigungen für die folgenden sicherheitsbezogenen Aktivitäten. Verwalte deine Einstellungen unten.",
+                "description": "Du erhältst E-Mail-Benachrichtigungen für die folgenden sicherheits- und systembezogenen Aktivitäten. Verwalte deine Einstellungen unten.",
                 "options": {
                     "NEW_LOGIN": "Neuer Login",
                     "NEW_PASSKEY_ADDED": "Neuer Passkey hinzugefügt",
                     "VCS_TOKEN_EXPIRED": "VCS-Token abgelaufen",
-                    "SSH_KEY_EXPIRED": "SSH-Schlüssel abgelaufen"
+                    "SSH_KEY_EXPIRED": "SSH-Schlüssel abgelaufen",
+                    "MAINTENANCE": "Geplante Wartungsankündigungen"
                 },
                 "viewPasskeySettings": "Passkey-Einstellungen anzeigen",
                 "viewVcsTokenSettings": "VCS-Token-Einstellungen anzeigen",
