@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.exercise.service;
+package de.tum.cit.aet.artemis.exercise.service.review;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -41,7 +41,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionTestRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadGroupRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadRepository;
-import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewService.LineMappingResult;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.hyperion.domain.ArtifactType;

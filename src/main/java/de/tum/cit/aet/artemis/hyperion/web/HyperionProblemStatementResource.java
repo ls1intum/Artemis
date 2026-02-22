@@ -77,7 +77,12 @@ public class HyperionProblemStatementResource {
         log.debug("REST request to Hyperion consistency check for programming exercise [{}]", exerciseId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         var response = consistencyCheckService.checkConsistency(exercise);
-        exerciseReviewService.createConsistencyCheckThreads(exerciseId, response.issues());
+        try {
+            exerciseReviewService.createConsistencyCheckThreads(exerciseId, response.issues());
+        }
+        catch (RuntimeException ex) {
+            log.warn("Consistency check succeeded for exercise {}, but persisting review-comment threads failed", exerciseId, ex);
+        }
         return ResponseEntity.ok(response);
     }
 

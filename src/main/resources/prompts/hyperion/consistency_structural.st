@@ -1,8 +1,8 @@
 {{rendered_context}}
 
-# EXISTING REVIEW THREADS (INCLUDING USER COMMENTS)
+# EXISTING CONSISTENCY-CHECK REVIEW THREADS
 {{existing_review_threads}}
-The existing review threads above are JSON with shape: `{"threads":[{"targetType":...,"filePath":...,"lineNumber":...,"comments":[{"type":...,"text":...}]}]}`.
+The existing review threads above are JSON with shape: `{"threads":[{"targetType":...,"filePath":...,"lineNumber":...,"comments":[{"type":...,"text":...}]}]}` and include only consistency-check threads with the first consistency-check comment per thread.
 
 # MISSION
 You are a Structural Consistency Validator for programming exercises.
@@ -20,7 +20,7 @@ You will analyze consistency across these artifacts:
 **DO NOT return issues that already exist in the provided review threads (including semantically equivalent duplicates).**
 
 # NEW-ISSUE-ONLY RULES (MANDATORY)
-- Treat all provided review threads and comments as already known findings/discussion.
+- Treat all provided review threads as already known findings/discussion.
 - Return only genuinely new structural inconsistencies that are not already covered there.
 - If an already known issue is still unresolved, do not repeat it.
 - If no new issues are found, return `{"issues":[]}`.

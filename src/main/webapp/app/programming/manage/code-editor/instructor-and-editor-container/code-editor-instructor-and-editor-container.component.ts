@@ -1,4 +1,4 @@
-import { Component, TemplateRef, ViewChild, computed, inject, signal } from '@angular/core';
+import { Component, TemplateRef, ViewChild, computed, effect, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
@@ -149,6 +149,28 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private activeJobId?: string;
     private statusSubscription?: Subscription;
     private restoreRequestId = 0;
+
+    constructor() {
+        super();
+        effect(() => {
+            if (!this.showConsistencyIssuesToolbar()) {
+                return;
+            }
+
+            const issues = this.sortedIssues();
+            if (!issues.length) {
+                return;
+            }
+
+            const hasValidSelection = this.selectedIssue ? issues.some((issue) => issue.threadId === this.selectedIssue?.threadId) : false;
+            if (hasValidSelection) {
+                return;
+            }
+
+            this.selectedIssue = issues[0];
+            this.jumpToLocation(this.selectedIssue);
+        });
+    }
 
     override loadExercise(exerciseId: number): Observable<ProgrammingExercise> {
         return super.loadExercise(exerciseId).pipe(

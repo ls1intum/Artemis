@@ -86,21 +86,12 @@ public class HyperionReviewCommentContextRendererService {
             return "{\"threads\":[]}";
         }
         List<Map<String, Object>> serializedThreads = new ArrayList<>();
-        List<CommentThread> sortedThreads = threads.stream().sorted(Comparator.comparing(CommentThread::getId, Comparator.nullsLast(Comparator.naturalOrder()))).toList();
+        List<CommentThread> sortedThreads = threads.stream().sorted(Comparator.comparing(CommentThread::getId, Comparator.nullsLast(Comparator.reverseOrder()))).toList();
         int serializedCommentCount = 0;
         for (CommentThread thread : sortedThreads) {
             if (serializedCommentCount >= MAX_SERIALIZED_COMMENTS) {
                 break;
             }
-
-            Map<String, Object> serializedThread = new LinkedHashMap<>();
-            serializedThread.put("targetType", thread.getTargetType() != null ? thread.getTargetType().name() : null);
-            serializedThread.put("filePath", thread.getFilePath() != null ? thread.getFilePath() : thread.getInitialFilePath());
-            serializedThread.put("lineNumber", thread.getLineNumber() != null ? thread.getLineNumber() : thread.getInitialLineNumber());
-            serializedThread.put("resolved", thread.isResolved());
-            serializedThread.put("outdated", thread.isOutdated());
-            CommentThreadGroup group = thread.getGroup();
-            serializedThread.put("groupId", group != null ? group.getId() : null);
 
             List<Comment> sortedComments = thread.getComments() == null ? List.of()
                     : thread.getComments().stream().sorted(Comparator.comparing(Comment::getCreatedDate, Comparator.nullsLast(Comparator.naturalOrder()))
@@ -112,6 +103,15 @@ public class HyperionReviewCommentContextRendererService {
             if (firstComment.getType() != CommentType.CONSISTENCY_CHECK) {
                 continue;
             }
+
+            Map<String, Object> serializedThread = new LinkedHashMap<>();
+            serializedThread.put("targetType", thread.getTargetType() != null ? thread.getTargetType().name() : null);
+            serializedThread.put("filePath", thread.getFilePath() != null ? thread.getFilePath() : thread.getInitialFilePath());
+            serializedThread.put("lineNumber", thread.getLineNumber() != null ? thread.getLineNumber() : thread.getInitialLineNumber());
+            serializedThread.put("resolved", thread.isResolved());
+            serializedThread.put("outdated", thread.isOutdated());
+            CommentThreadGroup group = thread.getGroup();
+            serializedThread.put("groupId", group != null ? group.getId() : null);
 
             List<Map<String, Object>> serializedComments = new ArrayList<>(1);
             Map<String, Object> serializedComment = new LinkedHashMap<>();
