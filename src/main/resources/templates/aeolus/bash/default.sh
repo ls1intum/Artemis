@@ -6,6 +6,17 @@ set_permissions () {
   find "${studentParentWorkingDirectoryName}" -type f -exec chmod +x "{}" +
 }
 
+syntax_check () {
+  echo '⚙️ executing syntax_check'
+  # Check for syntax errors in the student code
+  find "${studentParentWorkingDirectoryName}" -name "*.sh" -exec bash -n {} +
+  COMPILATION_EXIT_CODE=$?
+
+  if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+      exit 1
+  fi
+}
+
 create_results_directory () {
   echo '⚙️ executing create_results_directory'
   mkdir results
@@ -25,6 +36,8 @@ main () {
   _script_name=${BASH_SOURCE[0]:-$0}
   cd "${AEOLUS_INITIAL_DIRECTORY}"
   bash -c "source ${_script_name} aeolus_sourcing; set_permissions"
+  cd "${AEOLUS_INITIAL_DIRECTORY}"
+  bash -c "source ${_script_name} aeolus_sourcing; syntax_check"
   cd "${AEOLUS_INITIAL_DIRECTORY}"
   bash -c "source ${_script_name} aeolus_sourcing; create_results_directory"
   cd "${AEOLUS_INITIAL_DIRECTORY}"

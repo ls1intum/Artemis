@@ -31,10 +31,22 @@ prepare_makefile () {
   cp -f ${testWorkingDirectory}/io.inc ${studentParentWorkingDirectoryName}/io.inc || exit 2
 }
 
-run_and_compile () {
-  echo '⚙️ executing run_and_compile'
+compile () {
+  echo '⚙️ executing compile'
   cd ${testWorkingDirectory}
-  # Run the compile and tests
+  # Compile the code
+  make -C ../${studentParentWorkingDirectoryName}/ all
+  COMPILATION_EXIT_CODE=$?
+
+  if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+      exit 1
+  fi
+}
+
+test () {
+  echo '⚙️ executing test'
+  cd ${testWorkingDirectory}
+  # Run the tests
   python3 compileTest.py ../${studentParentWorkingDirectoryName}/ || true
 
   rm compileTest.py
@@ -66,7 +78,9 @@ main () {
   cd "${AEOLUS_INITIAL_DIRECTORY}"
   bash -c "source ${_script_name} aeolus_sourcing; prepare_makefile"
   cd "${AEOLUS_INITIAL_DIRECTORY}"
-  bash -c "source ${_script_name} aeolus_sourcing; run_and_compile"
+  bash -c "source ${_script_name} aeolus_sourcing; compile"
+  cd "${AEOLUS_INITIAL_DIRECTORY}"
+  bash -c "source ${_script_name} aeolus_sourcing; test"
 }
 
 main "${@}"

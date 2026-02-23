@@ -12,6 +12,15 @@ actions:
     script: |-
       cd "${testWorkingDirectory}"
       dart pub get
+  - name: syntax_check
+    script: |-
+      # Check for compilation errors in the student code
+      dart analyze --fatal-errors "${studentParentWorkingDirectoryName}"
+      COMPILATION_EXIT_CODE=$?
+
+      if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+          exit 1
+      fi
   - name: static_code_analysis
     script: dart analyze --format=json "${studentParentWorkingDirectoryName}" | analyze_sarif --srcroot "${studentParentWorkingDirectoryName}" --output 'dart_analyze.sarif'
     results:

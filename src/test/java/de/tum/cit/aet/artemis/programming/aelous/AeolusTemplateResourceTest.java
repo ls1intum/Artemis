@@ -47,18 +47,39 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
             new TestProvider("JAVA/PLAIN_MAVEN?staticAnalysis=true", 2),
             new TestProvider("JAVA/MAVEN_BLACKBOX", 7),
             new TestProvider("JAVA/MAVEN_BLACKBOX?staticAnalysis=true", 8),
-            new TestProvider("ASSEMBLER", 4),
+            new TestProvider("ASSEMBLER", 5),
             new TestProvider("C/FACT", 2),
             new TestProvider("C/GCC", 3),
             new TestProvider("C/GCC?staticAnalysis=true", 3),
             new TestProvider("KOTLIN", 1),
             new TestProvider("KOTLIN?sequentialRuns=true", 3),
-            new TestProvider("VHDL", 4),
+            new TestProvider("VHDL", 5),
             new TestProvider("HASKELL", 1),
-            new TestProvider("HASKELL?sequentialRuns=true", 2),
+            new TestProvider("HASKELL?sequentialRuns=true", 3),
             new TestProvider("OCAML", 2),
             new TestProvider("SWIFT/PLAIN", 1),
-            new TestProvider("SWIFT/PLAIN?staticAnalysis=true", 2)
+            new TestProvider("SWIFT/PLAIN?staticAnalysis=true", 2),
+            new TestProvider("PYTHON", 1),
+            new TestProvider("PYTHON?staticAnalysis=true", 2),
+            new TestProvider("PYTHON?sequentialRuns=true", 3),
+            new TestProvider("RUST", 2),
+            new TestProvider("RUST?staticAnalysis=true", 3),
+            new TestProvider("TYPESCRIPT", 3),
+            new TestProvider("TYPESCRIPT?staticAnalysis=true", 4),
+            new TestProvider("C_SHARP", 2),
+            new TestProvider("GO", 2),
+            new TestProvider("C_PLUS_PLUS", 2),
+            new TestProvider("C_PLUS_PLUS?staticAnalysis=true", 3),
+            new TestProvider("JAVASCRIPT", 3),
+            new TestProvider("JAVASCRIPT?staticAnalysis=true", 4),
+            new TestProvider("RUBY", 3),
+            new TestProvider("RUBY?staticAnalysis=true", 4),
+            new TestProvider("R", 3),
+            new TestProvider("R?staticAnalysis=true", 4),
+            new TestProvider("DART", 3),
+            new TestProvider("DART?staticAnalysis=true", 5),
+            new TestProvider("BASH", 4),
+            new TestProvider("MATLAB", 2)
         ).map(provider -> Arguments.of(provider.templateKey(), provider.expectedScriptActions()));
         // @formatter:on
     }
@@ -175,5 +196,10 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
         assertThat(windfile.metadata().gitCredentials()).isNull();
         assertThat(windfile.metadata().docker()).isNotNull();
         assertThat(windfile.scriptActions().size()).isEqualTo(expectedScriptActions);
+
+        // Every template must capture the compilation exit code and exit with 1 on failure.
+        // This ensures that the build agent can detect compilation failures via the container exit code.
+        assertThat(windfile.scriptActions()).as("Windfile '%s' must contain compilation exit code detection", windfile.metadata().id())
+                .anyMatch(action -> action.script() != null && action.script().contains("COMPILATION_EXIT_CODE=$?") && action.script().contains("exit 1"));
     }
 }

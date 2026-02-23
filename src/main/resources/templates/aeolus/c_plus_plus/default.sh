@@ -37,6 +37,14 @@ build_and_run_all_tests () {
       . /venv/bin/activate
   fi
 
+  # Compile the code
+  g++ -c -Wall ${studentParentWorkingDirectoryName}/*.cpp 2>&1
+  COMPILATION_EXIT_CODE=$?
+
+  if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+      exit 1
+  fi
+
   # Run tests as unprivileged user
   runuser -u artemis_user python3 Tests.py || true
 }

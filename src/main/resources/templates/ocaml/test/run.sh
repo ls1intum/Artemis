@@ -62,25 +62,25 @@ eval $(opam env)
 # build the limitation checker
 if ! timeout -s SIGTERM $BUILD_TIMEOUT dune build checker >&3 2>&3; then
     echo "Unable to build submission, please ensure that your code builds and matches the provided interface" >&2
-    exit 0
+    exit 1
 fi
 # and run it
 # this will report syntax errors in the submission
 if ! timeout -s SIGTERM $BUILD_TIMEOUT checker/checker.exe; then
     echo "Unable to build submission, please ensure that your code builds and matches the provided interface" >&2
-    exit 0
+    exit 1
 fi
 # build the student submission
 # don't reference the tests or solution, so that we can show the build output to the student and not leak test / solution code
 if ! timeout -s SIGTERM $BUILD_TIMEOUT dune build --force ${solutionWorkingDirectory}; then
     echo "Unable to build submission, please ensure that your code builds and matches the provided interface" >&2
-    exit 0
+    exit 1
 fi
 # If there are build failures, the compiler sometimes prints source code of tests to stderr by default, which is shown to the participant.
 # Therefore, drop stderr output. If the student submission builds and matches the interface, this should never fail
 if ! timeout -s SIGTERM $BUILD_TIMEOUT dune build --force test >&3 2>&3; then
     echo "Unable to build tests, please report this failure to an instructor" >&2
-    exit 0
+    exit 1
 fi
 
 cd "$BUILD_ROOT" || exit

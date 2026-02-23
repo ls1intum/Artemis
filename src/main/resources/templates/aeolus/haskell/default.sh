@@ -8,7 +8,13 @@ build_and_test_the_code () {
   chmod +x run.sh
 
   # Run the build and tests
-  ./run.sh -s || true
+  # run.sh exits with 1 on compilation failure, 0 otherwise
+  ./run.sh -s
+  COMPILATION_EXIT_CODE=$?
+
+  if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+      exit 1
+  fi
 }
 
 main () {

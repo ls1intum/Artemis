@@ -6,6 +6,15 @@ metadata:
 actions:
   - name: set_permissions
     script: 'find "${studentParentWorkingDirectoryName}" -type f -exec chmod +x "{}" +'
+  - name: syntax_check
+    script: |-
+      # Check for syntax errors in the student code
+      find "${studentParentWorkingDirectoryName}" -name "*.sh" -exec bash -n {} +
+      COMPILATION_EXIT_CODE=$?
+
+      if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+          exit 1
+      fi
   - name: create_results_directory
     script: 'mkdir results'
   - name: test

@@ -27,6 +27,15 @@ build_and_run_all_tests () {
   rm -f ${studentParentWorkingDirectoryName}/GNUmakefile
   rm -f ${studentParentWorkingDirectoryName}/Makefile
   cp -f ${testWorkingDirectory}/Makefile ${studentParentWorkingDirectoryName}/Makefile || exit 2
+
+  # Compile the code
+  make -C ${studentParentWorkingDirectoryName}/ all
+  COMPILATION_EXIT_CODE=$?
+
+  if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+      exit 1
+  fi
+
   cd ${testWorkingDirectory}
 
   # Run the tests

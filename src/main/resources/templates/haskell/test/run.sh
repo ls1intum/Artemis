@@ -23,11 +23,16 @@ while IFS= read file; do
 done < <(find ${studentParentWorkingDirectoryName}/src -type f)
 
 # build the libraries - do not forget to set the right compilation flag (Prod)
-stack build --allow-different-user --flag test:Prod && \
-  # delete the solution and tests (so that students cannot access it) when in safe mode
-  ($safe && \
-    (rm -rf ${solutionWorkingDirectory} && rm -rf test) \
-  ) \
-  # run the test executable and return 0
-  # Note: as a convention, a failed haskell tasty test suite returns 1, but this stops the JUnit Parser from running.
-  (stack exec test --allow-different-user || exit 0)
+stack build --allow-different-user --flag test:Prod
+COMPILATION_EXIT_CODE=$?
+
+if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+    exit 1
+fi
+
+# delete the solution and tests (so that students cannot access it) when in safe mode
+$safe && (rm -rf ${solutionWorkingDirectory} && rm -rf test)
+
+# run the test executable and return 0
+# Note: as a convention, a failed haskell tasty test suite returns 1, but this stops the JUnit Parser from running.
+stack exec test --allow-different-user || exit 0

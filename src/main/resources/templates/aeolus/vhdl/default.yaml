@@ -31,9 +31,20 @@ actions:
       rm -f ${studentParentWorkingDirectoryName}/{GNUmakefile, Makefile, makefile}
       cp -f ${testWorkingDirectory}/Makefile ${studentParentWorkingDirectoryName}/Makefile || exit 2
     runAlways: false
-  - name: run_and_compile
+  - name: compile
     script: |-
-      # Run the compile and tests
+      # Compile the code
+      make -C ../${studentParentWorkingDirectoryName}/ all
+      COMPILATION_EXIT_CODE=$?
+
+      if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+          exit 1
+      fi
+    workdir: ${testWorkingDirectory}
+    runAlways: false
+  - name: test
+    script: |-
+      # Run the tests
       python3 compileTest.py ../${studentParentWorkingDirectoryName}/ || true
 
       rm compileTest.py

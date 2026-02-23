@@ -8,6 +8,16 @@ actions:
     script: |-
       cd "${testWorkingDirectory}"
       dart pub get
+  - name: syntax_check
+    script: |-
+      cd "${testWorkingDirectory}"
+      # Check for compilation errors in the student code
+      dart analyze --fatal-errors "${studentParentWorkingDirectoryName}"
+      COMPILATION_EXIT_CODE=$?
+
+      if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+          exit 1
+      fi
   - name: test
     script: |-
       cd "${testWorkingDirectory}"

@@ -4,6 +4,15 @@ metadata:
   id: r_static
   description: "Default build configuration for R exercises with static code analysis"
 actions:
+  - name: syntax_check
+    script: |-
+      # Check for syntax errors in the student code
+      Rscript -e 'files <- list.files("${studentParentWorkingDirectoryName}", pattern="\\.R$", recursive=TRUE, full.names=TRUE); for (f in files) { tryCatch(parse(f), error=function(e) { cat(conditionMessage(e), "\n"); quit(status=1) }) }'
+      COMPILATION_EXIT_CODE=$?
+
+      if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+          exit 1
+      fi
   - name: install
     script: Rscript -e 'remotes::install_local()'
   - name: static_code_analysis

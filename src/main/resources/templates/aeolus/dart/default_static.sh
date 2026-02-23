@@ -13,6 +13,17 @@ install_dependencies () {
   dart pub get
 }
 
+syntax_check () {
+  echo '⚙️ executing syntax_check'
+  # Check for compilation errors in the student code
+  dart analyze --fatal-errors "${studentParentWorkingDirectoryName}"
+  COMPILATION_EXIT_CODE=$?
+
+  if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+      exit 1
+  fi
+}
+
 static_code_analysis () {
   echo '⚙️ executing static_code_analysis'
   dart analyze --format=json "${studentParentWorkingDirectoryName}" | analyze_sarif --srcroot "${studentParentWorkingDirectoryName}" --output 'dart_analyze.sarif'
@@ -35,6 +46,8 @@ main () {
   bash -c "source ${_script_name} aeolus_sourcing; install_student_dependencies"
   cd "${AEOLUS_INITIAL_DIRECTORY}"
   bash -c "source ${_script_name} aeolus_sourcing; install_dependencies"
+  cd "${AEOLUS_INITIAL_DIRECTORY}"
+  bash -c "source ${_script_name} aeolus_sourcing; syntax_check"
   cd "${AEOLUS_INITIAL_DIRECTORY}"
   bash -c "source ${_script_name} aeolus_sourcing; static_code_analysis"
   cd "${AEOLUS_INITIAL_DIRECTORY}"

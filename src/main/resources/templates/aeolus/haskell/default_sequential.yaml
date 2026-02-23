@@ -4,17 +4,27 @@ metadata:
   id: haskell_sequential
   description: "Sequential build configuration for Haskell exercises"
 actions:
-  - name: run_structural_tests
+  - name: build_the_code
     script: |-
       # the build process is specified in `run.sh` in the test repository
       # -s enables the safe testing mode
+      chmod +x run.sh
+
+      # Compile the code - run.sh exits with 1 on compilation failure
+      ./run.sh -s
+      COMPILATION_EXIT_CODE=$?
+
+      if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+          exit 1
+      fi
+    runAlways: false
+  - name: run_structural_tests
+    script: |-
       chmod +x run.sh
       ./run.sh -s || true
     runAlways: false
   - name: run_behavior_tests
     script: |-
-      # the build process is specified in `run.sh` in the test repository
-      # -s enables the safe testing mode
       chmod +x run.sh
 
       # Run the behavioral tests

@@ -8,6 +8,15 @@ actions:
     script: |-
       cd "${testWorkingDirectory}"
       bundler install
+  - name: syntax_check
+    script: |-
+      # Check for syntax errors in the student code
+      find "${studentParentWorkingDirectoryName}" -name "*.rb" -exec ruby -c {} +
+      COMPILATION_EXIT_CODE=$?
+
+      if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+          exit 1
+      fi
   - name: static_code_analysis
     script: |-
       cd "${testWorkingDirectory}"

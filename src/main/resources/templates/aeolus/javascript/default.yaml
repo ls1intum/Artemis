@@ -6,6 +6,15 @@ metadata:
 actions:
   - name: install_dependencies
     script: 'npm ci --prefer-offline --no-audit'
+  - name: syntax_check
+    script: |-
+      # Check for syntax errors in the student code
+      find "${studentParentWorkingDirectoryName}" -name "*.js" -not -path "*/node_modules/*" -exec node --check {} +
+      COMPILATION_EXIT_CODE=$?
+
+      if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+          exit 1
+      fi
   - name: test
     script: |-
       # Run the tests

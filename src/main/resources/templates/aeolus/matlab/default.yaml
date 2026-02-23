@@ -4,12 +4,29 @@ metadata:
   id: matlab
   description: "Default build configuration for MATLAB exercises"
 actions:
+  - name: syntax_check
+    script: |
+      cd "${testWorkingDirectory}"
+
+      sudo mkdir -p test-results
+      sudo chown matlab:matlab test-results
+
+      # Check for syntax errors in the student code
+      matlab -batch "\
+        files = dir(fullfile('..', '${studentParentWorkingDirectoryName}', '**', '*.m')); \
+        for k = 1:numel(files), \
+          file = fullfile(files(k).folder, files(k).name); \
+          if ~isempty(checkcode(file)), exit(1); end; \
+        end"
+      COMPILATION_EXIT_CODE=$?
+
+      if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+          exit 1
+      fi
   - name: test
     script: |
       cd "${testWorkingDirectory}"
 
-      sudo mkdir test-results
-      sudo chown matlab:matlab test-results
       sudo rm /etc/sudoers.d/matlab
 
       # Run the tests

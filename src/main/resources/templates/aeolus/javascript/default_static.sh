@@ -6,6 +6,17 @@ install_dependencies () {
   npm ci --prefer-offline --no-audit
 }
 
+syntax_check () {
+  echo '⚙️ executing syntax_check'
+  # Check for syntax errors in the student code
+  find "${studentParentWorkingDirectoryName}" -name "*.js" -not -path "*/node_modules/*" -exec node --check {} +
+  COMPILATION_EXIT_CODE=$?
+
+  if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
+      exit 1
+  fi
+}
+
 static_code_analysis () {
   echo '⚙️ executing static_code_analysis'
   npm run lint:ci || [ $? -eq 1 ]
@@ -25,6 +36,8 @@ main () {
   _script_name=${BASH_SOURCE[0]:-$0}
   cd "${AEOLUS_INITIAL_DIRECTORY}"
   bash -c "source ${_script_name} aeolus_sourcing; install_dependencies"
+  cd "${AEOLUS_INITIAL_DIRECTORY}"
+  bash -c "source ${_script_name} aeolus_sourcing; syntax_check"
   cd "${AEOLUS_INITIAL_DIRECTORY}"
   bash -c "source ${_script_name} aeolus_sourcing; static_code_analysis"
   cd "${AEOLUS_INITIAL_DIRECTORY}"
