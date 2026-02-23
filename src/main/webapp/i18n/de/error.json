@@ -211,6 +211,7 @@
             "courseInformationSharingDisabled": "Beiträge sind in diesem Kurs deaktiviert.",
             "plagiarismCaseMissing": "Der Beitrag muss einem Plagiatsfall zugeordnet sein.",
             "idExists": "Ein neuer Beitrag darf noch keine ID haben"
+        },
         "ProblemStatementGeneration": {
             "generatedProblemStatementTooLong": "Die generierte Aufgabenbeschreibung ist zu lang. Bitte versuche es erneut mit einer anderen Eingabe.",
             "chatClientNotConfigured": "KI-Generierung ist derzeit nicht verfügbar. Bitte kontaktiere den Administrator.",
