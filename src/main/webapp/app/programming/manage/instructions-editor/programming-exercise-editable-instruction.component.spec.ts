@@ -462,6 +462,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         // Enable hyperion
         jest.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockReturnValue(true);
+        fixture.destroy();
         fixture = TestBed.createComponent(ProgrammingExerciseEditableInstructionComponent);
         comp = fixture.componentInstance;
 

@@ -6,6 +6,7 @@ import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/pro
 import { ProblemStatementAnalysis } from 'app/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -34,8 +35,9 @@ import { Annotation } from 'app/programming/shared/code-editor/monaco/code-edito
 import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { ProblemStatementSyncService, ProblemStatementSyncState } from 'app/programming/manage/services/problem-statement-sync.service';
-import { INLINE_REFINEMENT_PROMPT_WIDTH_PX } from 'app/programming/manage/shared/problem-statement.utils';
+import { INLINE_REFINEMENT_PROMPT_WIDTH_PX, InlineRefinementEvent, InstructionSelectionPosition } from 'app/programming/manage/shared/problem-statement.utils';
 import { editor } from 'monaco-editor';
+import { MonacoBinding } from 'y-monaco';
 import { InlineRefinementButtonComponent } from 'app/shared/monaco-editor/inline-refinement-button/inline-refinement-button.component';
 
 @Component({
@@ -133,6 +135,16 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     readonly renderSideBySide = input<boolean>(true);
 
+    readonly exercise = input.required<ProgrammingExercise>();
+    /**
+     * Optional participation to use for the preview. Falls back to exercise().templateParticipation.
+     * In the code editor view, this is the currently selected participation (template/solution/student).
+     */
+    readonly participation = input<Participation>();
+    readonly forceRender = input<Observable<void> | undefined>();
+    readonly showPreview = input<boolean>(true);
+    readonly enableExerciseReviewComments = input<boolean>(false);
+
     readonly hasUnsavedChanges = output<boolean>();
     readonly instructionChange = output<string>();
     readonly onProblemStatementSaved = output<void>();
@@ -140,14 +152,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     inlineRefinementPosition = signal<{ top: number; left: number } | undefined>(undefined);
     selectedTextForRefinement = signal('');
-    selectionPositionInfo = signal<{ startLine: number; endLine: number; startColumn: number; endColumn: number } | undefined>(undefined);
-    readonly onInlineRefinement = output<{
-        instruction: string;
-        startLine: number;
-        endLine: number;
-        startColumn: number;
-        endColumn: number;
-    }>();
+    selectionPositionInfo = signal<InstructionSelectionPosition | undefined>(undefined);
+    readonly onInlineRefinement = output<InlineRefinementEvent>();
 
     /** Emits diff line change information when in diff mode */
     readonly diffLineChange = output<{ ready: boolean; lineChange: LineChange }>();
@@ -414,14 +420,10 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      */
     onEditorSelectionChange(
         selection:
-            | {
-                  startLine: number;
-                  endLine: number;
-                  startColumn: number;
-                  endColumn: number;
+            | (InstructionSelectionPosition & {
                   selectedText: string;
                   screenPosition: { top: number; left: number };
-              }
+              })
             | undefined,
     ): void {
         // Show/hide inline refinement button based on selection
@@ -429,7 +431,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             const viewportWidth = window.innerWidth;
             const viewportHeight = window.innerHeight;
             const clampedLeft = Math.max(8, Math.min(selection.screenPosition.left, viewportWidth - INLINE_REFINEMENT_PROMPT_WIDTH_PX - 8));
-            const clampedTop = Math.min(selection.screenPosition.top, viewportHeight - 60);
+            const clampedTop = Math.max(8, Math.min(selection.screenPosition.top, viewportHeight - 60));
             this.inlineRefinementPosition.set({
                 top: clampedTop,
                 left: clampedLeft,
@@ -459,7 +461,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * Handles inline refinement submission.
      * Emits the event for parent to process the refinement.
      */
-    onInlineRefine(event: { instruction: string; startLine: number; endLine: number; startColumn: number; endColumn: number }): void {
+    onInlineRefine(event: InlineRefinementEvent): void {
         this.onInlineRefinement.emit(event);
         this.hideInlineRefinementButton();
     }

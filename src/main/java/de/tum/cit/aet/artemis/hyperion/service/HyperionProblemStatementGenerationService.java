@@ -5,6 +5,8 @@ import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.getSanitized
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.getSanitizedCourseTitle;
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.sanitizeInput;
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.stripLineNumbers;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.stripWrapperMarkers;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.validateUserPrompt;
 
 import java.util.Map;
 
@@ -65,7 +67,7 @@ public class HyperionProblemStatementGenerationService {
         }
 
         String sanitizedPrompt = sanitizeInput(userPrompt);
-        HyperionUtils.validateUserPrompt(sanitizedPrompt, "ProblemStatementGeneration");
+        validateUserPrompt(sanitizedPrompt, "ProblemStatementGeneration");
 
         String systemPrompt = templateService.render("/prompts/hyperion/generate_draft_problem_statement_system.st", Map.of());
 
@@ -87,8 +89,9 @@ public class HyperionProblemStatementGenerationService {
                     "ProblemStatementGeneration.problemStatementGenerationNull");
         }
 
-        // Defensively strip line-number prefixes the LLM may have included in its response
+        // Defensively strip artifacts the LLM may have copied from the prompt template
         generatedProblemStatement = stripLineNumbers(generatedProblemStatement);
+        generatedProblemStatement = stripWrapperMarkers(generatedProblemStatement);
 
         generatedProblemStatement = generatedProblemStatement.trim();
 

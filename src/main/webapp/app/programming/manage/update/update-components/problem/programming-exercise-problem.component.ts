@@ -25,9 +25,9 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AlertService } from 'app/shared/service/alert.service';
 
-import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
 import { ProblemStatementAiOperationsHelper } from 'app/programming/manage/shared/problem-statement-ai-operations.helper';
+import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 
 @Component({
     selector: 'jhi-programming-exercise-problem',

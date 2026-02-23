@@ -347,6 +347,17 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void shouldReturnForbiddenForTargetedRefineWithNonExistentCourse() throws Exception {
+        long nonExistentCourseId = 999999L;
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        String body = buildTargetedRefinementBody("Original", 1, 1, null, null, "Fix this");
+        request.performMvcRequest(
+                post("/api/hyperion/courses/{courseId}/problem-statements/refine/targeted", nonExistentCourseId).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void shouldReturnBadRequestForBlankGenerateUserPrompt() throws Exception {
         long courseId = persistedCourseId;
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
@@ -442,7 +453,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         // startLine=5 > endLine=2 should be rejected
         String body = buildTargetedRefinementBody("Some problem statement text", 5, 2, null, null, "Improve this");
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/refine/targeted", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.title").value("Bad Request")).andExpect(jsonPath("$.message").value("error.http.400"));
     }
 
     @Test
@@ -453,7 +464,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         courseRepository.findById(courseId).orElseThrow();
         String body = buildTargetedRefinementBody("Some problem statement text", 1, 1, null, null, "   ");
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/refine/targeted", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.title").value("Bad Request")).andExpect(jsonPath("$.message").value("error.http.400"));
     }
 
     @Test
@@ -464,7 +475,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         courseRepository.findById(courseId).orElseThrow();
         String body = buildTargetedRefinementBody("", 1, 1, null, null, "Improve this");
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/refine/targeted", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.title").value("Method argument not valid")).andExpect(jsonPath("$.message").value("error.validation"));
     }
 
     @Test
@@ -476,7 +487,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         // startColumn only, without endColumn — mismatched nullability
         String body = "{\"problemStatementText\":\"Some text\",\"startLine\":1,\"endLine\":1,\"startColumn\":3,\"instruction\":\"Fix this\"}";
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/refine/targeted", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.title").value("Bad Request")).andExpect(jsonPath("$.message").value("error.http.400"));
     }
 
     @Test
@@ -488,7 +499,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         // same line, startColumn >= endColumn
         String body = buildTargetedRefinementBody("Some problem statement text", 1, 1, 5, 3, "Improve this");
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/refine/targeted", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.title").value("Bad Request")).andExpect(jsonPath("$.message").value("error.http.400"));
     }
 
     @Test

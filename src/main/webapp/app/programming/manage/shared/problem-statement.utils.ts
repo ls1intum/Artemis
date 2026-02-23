@@ -21,17 +21,24 @@ export const INLINE_REFINEMENT_PROMPT_WIDTH_PX = 370;
 const CARRIAGE_RETURN_PATTERN = /\r\n?/g;
 
 /**
- * Event structure for inline refinement requests from the editor.
- * Column values follow Monaco conventions: 1-indexed, with endColumn being exclusive
- * (pointing to the character after the last selected character).
+ * Position information for a text selection in the editor.
+ * Column values follow Monaco conventions: 1-indexed, with endColumn being exclusive.
  */
-export interface InlineRefinementEvent {
-    instruction: string;
+export interface InstructionSelectionPosition {
     startLine: number;
     endLine: number;
     startColumn: number;
     /** Exclusive end column (1-indexed) — points after the last selected character. */
     endColumn: number;
+}
+
+/**
+ * Event structure for inline refinement requests from the editor.
+ * Column values follow Monaco conventions: 1-indexed, with endColumn being exclusive
+ * (pointing to the character after the last selected character).
+ */
+export interface InlineRefinementEvent extends InstructionSelectionPosition {
+    instruction: string;
 }
 
 /**
@@ -100,12 +107,12 @@ export function buildGlobalRefinementRequest(problemStatementText: string, userP
  */
 export function buildTargetedRefinementRequest(problemStatementText: string, event: InlineRefinementEvent): ProblemStatementTargetedRefinementRequest {
     return {
-        problemStatementText: problemStatementText ?? '',
+        problemStatementText: problemStatementText,
         startLine: event.startLine,
         endLine: event.endLine,
         startColumn: event.startColumn,
         endColumn: event.endColumn,
-        instruction: event.instruction,
+        instruction: event.instruction.trim(),
     };
 }
 

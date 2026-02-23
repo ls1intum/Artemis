@@ -1,24 +1,26 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 class HyperionUtilsTest {
-
-    // --- Constants ---
 
     @Test
     void constants_haveExpectedValues() {
         assertThat(HyperionUtils.MAX_PROBLEM_STATEMENT_LENGTH).isEqualTo(50_000);
         assertThat(HyperionUtils.MAX_USER_PROMPT_LENGTH).isEqualTo(1_000);
+        assertThat(HyperionUtils.MAX_INSTRUCTION_LENGTH).isEqualTo(500);
         assertThat(HyperionUtils.DEFAULT_COURSE_TITLE).isEqualTo("Programming Course");
         assertThat(HyperionUtils.DEFAULT_COURSE_DESCRIPTION).isEqualTo("A programming course");
     }
-
-    // --- sanitizeInput ---
 
     @Test
     void sanitizeInput_returnsEmptyStringForNull() {
@@ -129,7 +131,39 @@ class HyperionUtilsTest {
         assertThat(result).contains("Normal text");
     }
 
-    // --- validateUserPrompt ---
+    @Test
+    void sanitizeInputPreserveLines_removesDelimiterButPreservesLineCount() {
+        String input = "Line1\n--- BEGIN SECTION ---\nLine3";
+        String result = HyperionUtils.sanitizeInputPreserveLines(input);
+
+        assertThat(result).doesNotContain("BEGIN SECTION");
+        // Delimiter content is blanked but the newline structure is kept
+        assertThat(result.split("\n", -1)).hasSameSizeAs(input.split("\n", -1));
+    }
+
+    @Test
+    void sanitizeInputPreserveLines_preservesLeadingAndTrailingWhitespace() {
+        String input = "  hello world  ";
+        String result = HyperionUtils.sanitizeInputPreserveLines(input);
+
+        // Unlike sanitizeInput, no trim is applied
+        assertThat(result).isEqualTo("  hello world  ");
+    }
+
+    @Test
+    void sanitizeInputPreserveLines_stripsTemplateVarsButPreservesNewlines() {
+        String input = "Line1\n{{injected}}\nLine3";
+        String result = HyperionUtils.sanitizeInputPreserveLines(input);
+
+        assertThat(result).doesNotContain("{{");
+        assertThat(result.split("\n", -1)).hasSameSizeAs(input.split("\n", -1));
+    }
+
+    @Test
+    void sanitizeInputPreserveLines_returnsEmptyStringForNull() {
+        String result = HyperionUtils.sanitizeInputPreserveLines(null);
+        assertThat(result).isEmpty();
+    }
 
     @ParameterizedTest
     @NullAndEmptySource
@@ -157,7 +191,31 @@ class HyperionUtilsTest {
         // No exception expected
     }
 
-    // --- getSanitizedCourseTitle ---
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = { "   ", "\t", "\n" })
+    void validateInstruction_rejectsBlankInstructions(String instruction) {
+        assertThatThrownBy(() -> HyperionUtils.validateInstruction(instruction, "Test")).isInstanceOf(BadRequestAlertException.class);
+    }
+
+    @Test
+    void validateInstruction_acceptsValidInstruction() {
+        HyperionUtils.validateInstruction("A valid instruction", "Test");
+        // No exception expected
+    }
+
+    @Test
+    void validateInstruction_rejectsOverlongInstruction() {
+        String longInstruction = "a".repeat(HyperionUtils.MAX_INSTRUCTION_LENGTH + 1);
+        assertThatThrownBy(() -> HyperionUtils.validateInstruction(longInstruction, "Test")).isInstanceOf(BadRequestAlertException.class);
+    }
+
+    @Test
+    void validateInstruction_acceptsExactlyMaxLength() {
+        String maxInstruction = "a".repeat(HyperionUtils.MAX_INSTRUCTION_LENGTH);
+        HyperionUtils.validateInstruction(maxInstruction, "Test");
+        // No exception expected
+    }
 
     @Test
     void getSanitizedCourseTitle_returnsTitleWhenPresent() {
@@ -193,8 +251,6 @@ class HyperionUtilsTest {
         course.setTitle("CS\u0000101");
         assertThat(HyperionUtils.getSanitizedCourseTitle(course)).isEqualTo("CS101");
     }
-
-    // --- getSanitizedCourseDescription ---
 
     @Test
     void getSanitizedCourseDescription_returnsDescriptionWhenPresent() {
@@ -256,8 +312,6 @@ class HyperionUtilsTest {
         assertThat(HyperionUtils.getSanitizedCourseDescription(course)).isEqualTo(HyperionUtils.DEFAULT_COURSE_DESCRIPTION);
     }
 
-    // --- stripLineNumbers ---
-
     @Test
     void stripLineNumbers_removesSequentialPrefixes() {
         String input = "1: First line\n2: Second line\n3: Third line";
@@ -313,5 +367,58 @@ class HyperionUtilsTest {
     @Test
     void stripLineNumbers_handlesEmptyString() {
         assertThat(HyperionUtils.stripLineNumbers("")).isEqualTo("");
+    }
+
+    @Test
+    void stripWrapperMarkers_removesBeginEndProblemStatement() {
+        String input = "--- BEGIN PROBLEM STATEMENT ---\nHello World\n--- END PROBLEM STATEMENT ---";
+        assertThat(HyperionUtils.stripWrapperMarkers(input)).isEqualTo("Hello World");
+    }
+
+    @Test
+    void stripWrapperMarkers_removesBeginEndWithBlankSurrounding() {
+        String input = "\n--- BEGIN PROBLEM STATEMENT ---\nLine 1\nLine 2\n--- END PROBLEM STATEMENT ---\n";
+        assertThat(HyperionUtils.stripWrapperMarkers(input)).isEqualTo("Line 1\nLine 2");
+    }
+
+    @Test
+    void stripWrapperMarkers_removesOnlyLeadingMarker() {
+        String input = "--- BEGIN PROBLEM STATEMENT ---\nContent here";
+        assertThat(HyperionUtils.stripWrapperMarkers(input)).isEqualTo("Content here");
+    }
+
+    @Test
+    void stripWrapperMarkers_removesOnlyTrailingMarker() {
+        String input = "Content here\n--- END PROBLEM STATEMENT ---";
+        assertThat(HyperionUtils.stripWrapperMarkers(input)).isEqualTo("Content here");
+    }
+
+    @Test
+    void stripWrapperMarkers_preservesContentWithoutMarkers() {
+        String input = "Just normal content\nwith multiple lines";
+        assertThat(HyperionUtils.stripWrapperMarkers(input)).isEqualTo(input);
+    }
+
+    @Test
+    void stripWrapperMarkers_preservesInteriorMarkerLines() {
+        String input = "Intro\n--- BEGIN SECTION ---\nMiddle\n--- END SECTION ---\nOutro";
+        assertThat(HyperionUtils.stripWrapperMarkers(input)).isEqualTo(input);
+    }
+
+    @Test
+    void stripWrapperMarkers_handlesEmptyString() {
+        assertThat(HyperionUtils.stripWrapperMarkers("")).isEqualTo("");
+    }
+
+    @Test
+    void stripWrapperMarkers_handlesCaseInsensitiveMarkers() {
+        String input = "--- begin Problem Statement ---\nContent\n--- end Problem Statement ---";
+        assertThat(HyperionUtils.stripWrapperMarkers(input)).isEqualTo("Content");
+    }
+
+    @Test
+    void stripWrapperMarkers_handlesTargetedInstructionMarkers() {
+        String input = "--- BEGIN TARGETED INSTRUCTIONS ---\nContent\n--- END TARGETED INSTRUCTIONS ---";
+        assertThat(HyperionUtils.stripWrapperMarkers(input)).isEqualTo("Content");
     }
 }

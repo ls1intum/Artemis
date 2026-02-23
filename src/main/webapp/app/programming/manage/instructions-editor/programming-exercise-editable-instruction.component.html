@@ -54,7 +54,6 @@
                 [endLine]="selectionPositionInfo()!.endLine"
                 [startColumn]="selectionPositionInfo()!.startColumn"
                 [endColumn]="selectionPositionInfo()!.endColumn"
-                [isLoading]="isAiApplying()"
                 (refine)="onInlineRefine($event)"
                 (closeRefinement)="hideInlineRefinementButton()"
             />

@@ -125,6 +125,7 @@ export class ProblemStatementAiOperationsHelper {
         this.currentAiOperationSubscription?.unsubscribe();
         this.currentAiOperationSubscription = this.problemStatementService
             .generateProblemStatement(exercise, prompt, (v) => this.isGeneratingOrRefining.set(v))
+            .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (result) => {
                     if (result.success && result.content) {
@@ -165,6 +166,7 @@ export class ProblemStatementAiOperationsHelper {
         this.currentAiOperationSubscription?.unsubscribe();
         this.currentAiOperationSubscription = this.problemStatementService
             .refineGlobally(exercise, currentContent, prompt, (v) => this.isGeneratingOrRefining.set(v))
+            .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (result) => {
                     if (result.success && result.content) {
@@ -203,6 +205,7 @@ export class ProblemStatementAiOperationsHelper {
         const currentContent = editableInstructions?.getCurrentContent() ?? exercise?.problemStatement;
 
         if (!currentContent?.trim()) {
+            this.alertService.error('artemisApp.programmingExercise.problemStatement.inlineRefinement.emptyStatementError');
             return;
         }
 
@@ -210,6 +213,7 @@ export class ProblemStatementAiOperationsHelper {
         const requestId = ++this.refinementRequestId;
         this.currentAiOperationSubscription = this.problemStatementService
             .refineTargeted(exercise, currentContent, event, (v) => this.isGeneratingOrRefining.set(v))
+            .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (result) => {
                     if (result.success && result.content) {

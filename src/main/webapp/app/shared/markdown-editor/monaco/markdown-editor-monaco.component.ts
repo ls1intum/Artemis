@@ -125,6 +125,9 @@ const BORDER_HEIGHT_OFFSET = 2;
 const PROBLEM_STATEMENT_FILE_PATH = 'problem_statement.md';
 const REVIEW_COMMENT_HOVER_BUTTON_CLASS = 'monaco-add-review-comment-button';
 
+/** Vertical offset (in px) applied below the selection end position for the floating action button. */
+const FLOATING_BUTTON_VERTICAL_OFFSET = 5;
+
 @Component({
     selector: 'jhi-markdown-editor-monaco',
     templateUrl: './markdown-editor-monaco.component.html',
@@ -318,6 +321,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     @Output()
     onLeaveVisualTab = new EventEmitter<void>();
+
+    readonly onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
 
     /** Emits when user selects lines in the editor (includes selectedText, position, and column info for inline refinement) */
     readonly onSelectionChange = output<
@@ -569,7 +574,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
                 const editorRect = editorDom.getBoundingClientRect();
                 const screenPosition = {
-                    top: editorRect.top + coords.top + coords.height + 5,
+                    top: editorRect.top + coords.top + coords.height + FLOATING_BUTTON_VERTICAL_OFFSET,
                     left: editorRect.left + coords.left,
                 };
 
@@ -605,6 +610,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     ngOnDestroy(): void {
         this.resizeObserver?.disconnect();
         this.selectionChangeDisposable?.dispose();
+        this.reviewCommentManager?.disposeAll();
+        this.monacoEditor?.clearLineDecorationsHoverButton();
     }
 
     onTextChanged(event: { text: string; fileName: string }): void {
@@ -898,7 +905,10 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * Gets the current selection in the editor.
      * @returns The current selection or undefined.
      */
-    getSelection(): { startLine: number; endLine: number } | undefined {
+    getSelection(): { startLine: number; endLine: number; startColumn: number; endColumn: number } | undefined {
+        if (!this.monacoEditor) {
+            return undefined;
+        }
         const sel = this.monacoEditor.getSelection();
         if (!sel) {
             return undefined;
@@ -906,6 +916,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         return {
             startLine: sel.startLineNumber,
             endLine: sel.endLineNumber,
+            startColumn: sel.startColumn,
+            endColumn: sel.endColumn,
         };
     }
 

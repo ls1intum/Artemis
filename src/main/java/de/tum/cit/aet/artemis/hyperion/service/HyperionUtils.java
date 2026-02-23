@@ -58,6 +58,16 @@ final class HyperionUtils {
      */
     private static final Pattern HTML_TAG_PATTERN = Pattern.compile("<[^>]+>");
 
+    /**
+     * Pattern matching wrapper marker lines that the LLM may copy from the prompt template
+     * (e.g. {@code "--- BEGIN PROBLEM STATEMENT ---"}, {@code "--- END PROBLEM STATEMENT ---"}).
+     * Matches lines consisting of three or more dashes, optional whitespace, BEGIN/END, any label, and closing dashes.
+     */
+    private static final Pattern WRAPPER_MARKER_LINE = Pattern.compile("^\\s*-{3,}\\s*(?:BEGIN|END)\\s+.*-{3,}\\s*$", Pattern.CASE_INSENSITIVE);
+
+    /** Pattern matching a line that starts with a line-number prefix: one or more digits followed by a colon and a space. */
+    private static final Pattern LINE_NUMBER_PREFIX = Pattern.compile("^\\d+: ");
+
     private HyperionUtils() {
         // utility class
     }
@@ -156,9 +166,6 @@ final class HyperionUtils {
         return sanitized.isBlank() ? DEFAULT_COURSE_DESCRIPTION : sanitized;
     }
 
-    /** Pattern matching a line that starts with a line-number prefix: one or more digits followed by a colon and a space. */
-    private static final Pattern LINE_NUMBER_PREFIX = Pattern.compile("^\\d+: ");
-
     /**
      * Defensively strips line-number prefixes ({@code "1: "}, {@code "2: "}, \u2026) that an
      * LLM may have copied from numbered input despite being instructed not to.
@@ -188,6 +195,54 @@ final class HyperionUtils {
         for (int i = 0; i < lines.length; i++) {
             result.append(LINE_NUMBER_PREFIX.matcher(lines[i]).replaceFirst(""));
             if (i < lines.length - 1) {
+                result.append("\n");
+            }
+        }
+        return result.toString();
+    }
+
+    /**
+     * Strips wrapper marker lines (e.g. {@code "--- BEGIN PROBLEM STATEMENT ---"},
+     * {@code "--- END PROBLEM STATEMENT ---"}) that an LLM may copy from the prompt
+     * template into its response.
+     * <p>
+     * Only the first and last non-blank lines are checked, since the LLM typically
+     * wraps the entire output. Interior lines that happen to match are left intact
+     * to avoid stripping legitimate content.
+     *
+     * @param text the raw LLM output, never null
+     * @return the text with leading/trailing wrapper markers removed, trimmed
+     */
+    static String stripWrapperMarkers(String text) {
+        String[] lines = text.split("\n", -1);
+
+        int start = 0;
+        int end = lines.length - 1;
+
+        // Skip leading blank lines, then check for a wrapper marker
+        while (start <= end && lines[start].isBlank()) {
+            start++;
+        }
+        if (start <= end && WRAPPER_MARKER_LINE.matcher(lines[start]).matches()) {
+            start++;
+        }
+
+        // Skip trailing blank lines, then check for a wrapper marker
+        while (end >= start && lines[end].isBlank()) {
+            end--;
+        }
+        if (end >= start && WRAPPER_MARKER_LINE.matcher(lines[end]).matches()) {
+            end--;
+        }
+
+        if (start > end) {
+            return "";
+        }
+
+        StringBuilder result = new StringBuilder();
+        for (int i = start; i <= end; i++) {
+            result.append(lines[i]);
+            if (i < end) {
                 result.append("\n");
             }
         }

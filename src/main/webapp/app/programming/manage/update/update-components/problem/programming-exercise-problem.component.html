@@ -73,6 +73,42 @@
                 !programmingExerciseCreationConfig().isImportFromExistingExercise
             ) {
                 <!-- Single Unified Editor - switches between normal and diff modes -->
+                @if (showDiff()) {
+                    <!-- Diff review banner -->
+                    <p-message severity="info" styleClass="w-100 mb-1" [closable]="false">
+                        <div class="d-flex flex-wrap align-items-center gap-2">
+                            <strong class="small" jhiTranslate="artemisApp.programmingExercise.problemStatement.reviewChanges"></strong>
+                            <span class="text-muted small" jhiTranslate="artemisApp.programmingExercise.problemStatement.reviewChangesDescription"></span>
+                            <button
+                                pButton
+                                type="button"
+                                severity="primary"
+                                size="small"
+                                [pTooltip]="'artemisApp.programmingExercise.diffReport.splitView.tooltip' | artemisTranslate"
+                                tooltipPosition="bottom"
+                                (click)="allowSplitView.set(!allowSplitView())"
+                            >
+                                <fa-icon [icon]="faTableColumns" class="me-1" />
+                                <span [jhiTranslate]="'artemisApp.programmingExercise.diffReport.splitView.' + (allowSplitView() ? 'disable' : 'enable')"></span>
+                            </button>
+                            <button pButton type="button" severity="secondary" size="small" [disabled]="isAiApplying()" (click)="revertAllChanges()">
+                                <fa-icon [icon]="faBan" class="me-1" />
+                                <span jhiTranslate="artemisApp.programmingExercise.problemStatement.revertAll"></span>
+                            </button>
+                            <jhi-git-diff-line-stat
+                                class="fw-bold mx-1"
+                                [addedLineCount]="addedLineCount()"
+                                [removedLineCount]="removedLineCount()"
+                                [pTooltip]="'artemisApp.programmingExercise.problemStatement.diffLineStatTooltip' | artemisTranslate"
+                                tooltipPosition="bottom"
+                            />
+                            <button pButton type="button" severity="success" size="small" [disabled]="isAiApplying()" (click)="closeDiffView()">
+                                <fa-icon [icon]="faSave" class="me-1" />
+                                <span jhiTranslate="artemisApp.programmingExercise.problemStatement.doneReviewing"></span>
+                            </button>
+                        </div>
+                    </p-message>
+                }
                 <jhi-programming-exercise-editable-instructions
                     #editableInstructions
                     [exercise]="programmingExercise()!"
@@ -81,6 +117,7 @@
                     [showStatus]="!!programmingExercise()?.id"
                     [editMode]="!!programmingExercise()?.id"
                     [isGeneratingOrRefining]="isGeneratingOrRefining()"
+                    [mode]="showDiff() ? 'diff' : 'normal'"
                     (hasUnsavedChanges)="programmingExerciseCreationConfig().hasUnsavedChanges = $event"
                     (onInlineRefinement)="onInlineRefinement($event)"
                     [renderSideBySide]="allowSplitView()"

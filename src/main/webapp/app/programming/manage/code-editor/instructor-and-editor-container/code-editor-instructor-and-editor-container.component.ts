@@ -544,8 +544,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     /**
+    /**
      * Cancels the ongoing problem statement generation or refinement.
-     * Preserves the user's prompt so they can retry or modify it.
+     * Resets all in-progress states.
      */
     cancelAiOperation(): void {
         this.aiOps.cancelAiOperation();
