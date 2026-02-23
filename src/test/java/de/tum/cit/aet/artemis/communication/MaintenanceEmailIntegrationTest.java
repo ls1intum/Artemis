@@ -145,7 +145,6 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         var notificationDate = ZonedDateTime.now();
         var expireDate = ZonedDateTime.now().plusHours(1);
 
-        // Use HashMap to allow null-free map (notificationText is omitted)
         testMailService.buildAndSendSync(recipient, "email.notification.maintenance.title", "mail/notification/maintenanceEmail",
                 Map.of("notificationTitle", "Quick Maintenance", "formattedStart", formatDate(notificationDate, "en"), "formattedEnd", formatDate(expireDate, "en")));
 
@@ -270,8 +269,8 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         ZonedDateTime localDateTime = dateTime.withZoneSameInstant(ZoneId.systemDefault());
         Locale locale = Locale.forLanguageTag(langKey);
         DateTimeFormatter formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM).withLocale(locale);
-        String zoneName = localDateTime.getZone().getDisplayName(java.time.format.TextStyle.SHORT, locale);
-        return localDateTime.format(formatter) + " " + zoneName;
+        DateTimeFormatter zoneFormatter = DateTimeFormatter.ofPattern("z").withLocale(locale);
+        return localDateTime.format(formatter) + " " + localDateTime.format(zoneFormatter);
     }
 
     /**

@@ -112,7 +112,7 @@ public class SystemNotificationService {
 
         for (var recipient : recipients) {
             try {
-                String langKey = recipient.langKey() != null ? recipient.langKey() : "en";
+                String langKey = (recipient.langKey() != null && !recipient.langKey().isBlank()) ? recipient.langKey() : "en";
 
                 var user = new User();
                 user.setId(recipient.id());
@@ -124,8 +124,9 @@ public class SystemNotificationService {
                 String[] formattedDates = formattedDatesByLocale.computeIfAbsent(langKey, lk -> {
                     Locale locale = Locale.forLanguageTag(lk);
                     DateTimeFormatter formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM).withLocale(locale);
-                    String zoneName = localStart.getZone().getDisplayName(java.time.format.TextStyle.SHORT, locale);
-                    return new String[] { localStart.format(formatter) + " " + zoneName, localEnd.format(formatter) + " " + zoneName };
+                    DateTimeFormatter zoneFormatter = DateTimeFormatter.ofPattern("z").withLocale(locale);
+                    return new String[] { localStart.format(formatter) + " " + localStart.format(zoneFormatter),
+                            localEnd.format(formatter) + " " + localEnd.format(zoneFormatter) };
                 });
 
                 var mutableVars = new HashMap<String, Object>();
