@@ -172,7 +172,7 @@ export class ChecklistPanelComponent {
 
     analyze() {
         const cId = this.courseId();
-        if (!cId || this.isApplyingAction() || this.sectionLoading().size > 0) {
+        if (cId == null || this.isApplyingAction() || this.sectionLoading().size > 0) {
             return;
         }
 
@@ -333,7 +333,7 @@ export class ChecklistPanelComponent {
 
     private applyAction(request: ChecklistActionRequest, loadingKey: string, staleMark: ChecklistSectionType[], onApplied?: () => void) {
         const cId = this.courseId();
-        if (!cId || this.isApplyingAction() || this.sectionLoading().size > 0) return;
+        if (cId == null || this.isApplyingAction() || this.sectionLoading().size > 0) return;
 
         this.isApplyingAction.set(true);
         this.actionLoadingKey.set(loadingKey);
@@ -386,7 +386,7 @@ export class ChecklistPanelComponent {
      */
     reanalyzeSection(section: ChecklistSectionType) {
         const cId = this.courseId();
-        if (!cId || this.isLoading() || this.sectionLoading().has(section) || this.isApplyingAction()) return;
+        if (cId == null || this.isLoading() || this.sectionLoading().has(section) || this.isApplyingAction()) return;
 
         this.updateSet(this.sectionLoading, section, 'add');
         const ex = this.exercise();
@@ -713,6 +713,7 @@ export class ChecklistPanelComponent {
 
         for (const match of matches) {
             taskCount++;
+            // taskRegex capture group 2: comma-separated test case names
             const testList = match[2]?.trim();
             if (testList) {
                 testList

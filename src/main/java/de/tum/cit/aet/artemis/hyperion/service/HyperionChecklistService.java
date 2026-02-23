@@ -51,7 +51,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepo
 import io.micrometer.common.KeyValue;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
-import io.micrometer.observation.annotation.Observed;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
@@ -75,6 +74,9 @@ public class HyperionChecklistService {
     private static final int MAX_CONTEXT_KEY_LENGTH = 100;
 
     private static final int MAX_CONTEXT_VALUE_LENGTH = 10000;
+
+    /** Default programming language assumed when none is declared and no exercise is linked. */
+    private static final String DEFAULT_LANGUAGE = "JAVA";
 
     private final ObjectMapper objectMapper;
 
@@ -249,7 +251,8 @@ public class HyperionChecklistService {
             }
         }
         if (language == null) {
-            language = "JAVA";
+            log.debug("No programming language declared and no exercise language found; defaulting to {}", DEFAULT_LANGUAGE);
+            language = DEFAULT_LANGUAGE;
         }
 
         // Fetch and serialize the competency catalog
@@ -289,9 +292,11 @@ public class HyperionChecklistService {
      * @param request the action request containing the action type, problem statement, and context
      * @return a future that completes with the response containing the updated problem statement
      */
-    @Observed(name = "hyperion.checklist.action", contextualName = "checklist action", lowCardinalityKeyValues = { AI_SPAN_KEY, AI_SPAN_VALUE })
     public CompletableFuture<ChecklistActionResponseDTO> applyChecklistAction(ChecklistActionRequestDTO request) {
         log.debug("Applying checklist action: {}", request.actionType());
+
+        Observation observation = Observation.createNotStarted("hyperion.checklist.action", observationRegistry).contextualName("checklist action")
+                .lowCardinalityKeyValue(KeyValue.of(AI_SPAN_KEY, AI_SPAN_VALUE)).start();
 
         return Mono.fromCallable(() -> {
             // Sanitize context once and reuse for both instructions and summary
@@ -318,9 +323,10 @@ public class HyperionChecklistService {
             }
             catch (Exception e) {
                 log.warn("Failed to apply checklist action {}: {}", request.actionType(), e.getMessage(), e);
+                observation.error(e);
                 return ChecklistActionResponseDTO.failed(request.problemStatementMarkdown());
             }
-        }).subscribeOn(Schedulers.boundedElastic()).toFuture();
+        }).subscribeOn(Schedulers.boundedElastic()).doOnError(observation::error).doFinally(signal -> observation.stop()).toFuture();
     }
 
     /** Builds action-specific instructions for the AI prompt based on action type and pre-sanitized context. */
@@ -484,10 +490,10 @@ public class HyperionChecklistService {
                 result.add(entry);
             }
             String json = objectMapper.writeValueAsString(result);
-            if (courseCompetencyCache.size() >= MAX_COURSE_CACHE_SIZE) {
+            courseCompetencyCache.put(courseId, new CourseCompetencyCacheEntry(json, Instant.now()));
+            while (courseCompetencyCache.size() > MAX_COURSE_CACHE_SIZE) {
                 evictStaleCourseCompetencyEntries();
             }
-            courseCompetencyCache.put(courseId, new CourseCompetencyCacheEntry(json, Instant.now()));
             return json;
         }
         catch (Exception e) {
