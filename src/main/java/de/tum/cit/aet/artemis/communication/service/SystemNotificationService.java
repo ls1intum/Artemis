@@ -114,7 +114,7 @@ public class SystemNotificationService {
 
         for (var recipient : recipients) {
             try {
-                String langKey = (recipient.langKey() != null && !recipient.langKey().isBlank()) ? recipient.langKey() : "en";
+                String langKey = (recipient.langKey() != null && !recipient.langKey().isBlank()) ? recipient.langKey().strip() : "en";
 
                 var user = new User();
                 user.setId(recipient.id());
