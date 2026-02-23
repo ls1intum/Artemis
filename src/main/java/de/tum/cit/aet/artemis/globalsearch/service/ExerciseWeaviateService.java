@@ -41,7 +41,7 @@ public class ExerciseWeaviateService {
     }
 
     /**
-     * Inserts exercise metadata into Weaviate.
+     * Inserts exercise metadata into Weaviate using an upsert strategy.
      *
      * @param exercise the exercise to insert
      */
@@ -52,7 +52,7 @@ public class ExerciseWeaviateService {
         }
 
         try {
-            insertExerciseIntoWeaviate(exercise);
+            upsertExerciseInWeaviate(exercise);
             log.debug("Successfully inserted exercise {} '{}' into Weaviate", exercise.getId(), exercise.getTitle());
         }
         catch (Exception e) {
@@ -164,18 +164,6 @@ public class ExerciseWeaviateService {
                 updateExercise(exercise);
             }
         }
-    }
-
-    /**
-     * Inserts exercise data into the Weaviate collection.
-     *
-     * @param exercise the exercise to insert
-     * @throws Exception if the insertion fails
-     */
-    private void insertExerciseIntoWeaviate(Exercise exercise) throws Exception {
-        var collection = weaviateService.getCollection(ExerciseSchema.COLLECTION_NAME);
-        Map<String, Object> properties = buildExerciseProperties(exercise);
-        collection.data.insert(properties);
     }
 
     /**
