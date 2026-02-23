@@ -261,14 +261,9 @@ public class BuildJobContainerService {
 
     /**
      * Run the script in the container and wait for it to finish before returning.
-     * The exit code of the script is used to determine the compilation status:
-     * - Exit code 0: Compilation succeeded (RESULT: SUCCESS)
-     * - Exit code 1: Compilation failed (RESULT: COMPILATION_FAILED)
-     * - Exit code 2: Tests failed but compilation succeeded (RESULT: TESTS_FAILED)
-     *
      * @param containerId the id of the container in which the script should be run
      * @param buildJobId  the id of the build job that is currently being executed
-     * @return the exit code of the build script (0 = success, 1 = compilation failed, 2 = tests failed)
+     * @return the exit code of the build script
      */
     public int runScriptInContainer(String containerId, String buildJobId) {
         log.info("Started running the build script for build job in container with id {}", containerId);
