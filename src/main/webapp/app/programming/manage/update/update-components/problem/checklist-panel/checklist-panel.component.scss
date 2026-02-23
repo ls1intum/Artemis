@@ -90,6 +90,10 @@
         }
     }
 
+    .quality-issue-item.issue-selected {
+        background-color: color-mix(in srgb, var(--primary) 8%, transparent);
+    }
+
     .evidence-section {
         background-color: color-mix(in srgb, var(--primary) 6%, transparent);
         padding: 0.5rem 0.75rem;

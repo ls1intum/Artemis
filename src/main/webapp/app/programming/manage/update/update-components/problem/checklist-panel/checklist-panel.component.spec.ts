@@ -689,4 +689,171 @@ describe('ChecklistPanelComponent', () => {
             expect(sectionSpy).toHaveBeenCalledWith(courseId, 'QUALITY', expect.objectContaining({ problemStatementMarkdown: 'Problem statement' }));
         });
     });
+
+    describe('Discard & Multi-Select', () => {
+        const issue1: QualityIssue = { description: 'Issue 1', category: QualityIssue.CategoryEnum.Clarity, severity: QualityIssue.SeverityEnum.Low };
+        const issue2: QualityIssue = { description: 'Issue 2', category: QualityIssue.CategoryEnum.Completeness, severity: QualityIssue.SeverityEnum.Medium };
+        const issue3: QualityIssue = { description: 'Issue 3', category: QualityIssue.CategoryEnum.Coherence, severity: QualityIssue.SeverityEnum.High };
+
+        beforeEach(() => {
+            component.analysisResult.set(Object.assign({}, mockResponse, { qualityIssues: [issue1, issue2, issue3] }));
+        });
+
+        it('should discard a single quality issue and show success alert', () => {
+            const successSpy = vi.spyOn(alertService, 'success');
+
+            component.discardQualityIssue(1);
+
+            expect(component.analysisResult()?.qualityIssues).toHaveLength(2);
+            expect(component.analysisResult()?.qualityIssues?.[0]).toEqual(issue1);
+            expect(component.analysisResult()?.qualityIssues?.[1]).toEqual(issue3);
+            expect(successSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.instructorChecklist.quality.discarded');
+        });
+
+        it('should reindex selected indices after discarding an issue', () => {
+            component.selectedIssueIndices.set(new Set([0, 2]));
+
+            component.discardQualityIssue(1);
+
+            // Index 0 stays, index 2 becomes 1 (shifted down)
+            expect(component.selectedIssueIndices()).toEqual(new Set([0, 1]));
+        });
+
+        it('should remove discarded index from selection', () => {
+            component.selectedIssueIndices.set(new Set([0, 1, 2]));
+
+            component.discardQualityIssue(1);
+
+            // Index 1 removed, index 2 shifted to 1
+            expect(component.selectedIssueIndices()).toEqual(new Set([0, 1]));
+        });
+
+        it('should toggle issue selection on and off', () => {
+            expect(component.isIssueSelected(0)).toBeFalsy();
+
+            component.toggleIssueSelection(0);
+            expect(component.isIssueSelected(0)).toBeTruthy();
+
+            component.toggleIssueSelection(0);
+            expect(component.isIssueSelected(0)).toBeFalsy();
+        });
+
+        it('should select all issues', () => {
+            component.selectAllIssues();
+
+            expect(component.selectedIssueIndices()).toEqual(new Set([0, 1, 2]));
+            expect(component.allIssuesSelected()).toBeTruthy();
+        });
+
+        it('should deselect all issues', () => {
+            component.selectAllIssues();
+            component.deselectAllIssues();
+
+            expect(component.selectedIssueIndices().size).toBe(0);
+            expect(component.allIssuesSelected()).toBeFalsy();
+        });
+
+        it('should return false for allIssuesSelected when no issues exist', () => {
+            component.analysisResult.set(Object.assign({}, mockResponse, { qualityIssues: [] }));
+            expect(component.allIssuesSelected()).toBeFalsy();
+        });
+
+        it('should discard all selected issues and clear selection', () => {
+            const successSpy = vi.spyOn(alertService, 'success');
+            component.selectedIssueIndices.set(new Set([0, 2]));
+
+            component.discardSelectedIssues();
+
+            expect(component.analysisResult()?.qualityIssues).toHaveLength(1);
+            expect(component.analysisResult()?.qualityIssues?.[0]).toEqual(issue2);
+            expect(component.selectedIssueIndices().size).toBe(0);
+            expect(successSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.instructorChecklist.quality.discardedMultiple');
+        });
+
+        it('should not discard when no issues are selected', () => {
+            const successSpy = vi.spyOn(alertService, 'success');
+
+            component.discardSelectedIssues();
+
+            expect(component.analysisResult()?.qualityIssues).toHaveLength(3);
+            expect(successSpy).not.toHaveBeenCalled();
+        });
+
+        it('should fix selected issues via AI and remove them optimistically', () => {
+            const mockActionResponse: ChecklistActionResponse = {
+                updatedProblemStatement: 'Updated',
+                applied: true,
+                summary: 'Fixed selected',
+            };
+            const actionSpy = vi.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(mockActionResponse) as any);
+            const emitSpy = vi.spyOn(component.problemStatementDiffRequest, 'emit');
+            component.selectedIssueIndices.set(new Set([0, 2]));
+
+            component.fixSelectedIssues();
+
+            expect(actionSpy).toHaveBeenCalledWith(
+                courseId,
+                expect.objectContaining({
+                    actionType: ChecklistActionRequest.ActionTypeEnum.FixAllQualityIssues,
+                }),
+            );
+            expect(emitSpy).toHaveBeenCalledWith('Updated');
+            // Only issue2 (index 1) should remain
+            expect(component.analysisResult()?.qualityIssues).toHaveLength(1);
+            expect(component.analysisResult()?.qualityIssues?.[0]).toEqual(issue2);
+            expect(component.selectedIssueIndices().size).toBe(0);
+        });
+
+        it('should not fix selected when selection is empty', () => {
+            const actionSpy = vi.spyOn(apiService, 'applyChecklistAction');
+
+            component.fixSelectedIssues();
+
+            expect(actionSpy).not.toHaveBeenCalled();
+        });
+
+        it('should clear selected indices when fixAllQualityIssues is called', () => {
+            const mockActionResponse: ChecklistActionResponse = { updatedProblemStatement: 'Updated', applied: true };
+            vi.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(mockActionResponse) as any);
+            component.selectedIssueIndices.set(new Set([0, 1]));
+
+            component.fixAllQualityIssues();
+
+            expect(component.selectedIssueIndices().size).toBe(0);
+        });
+    });
+
+    describe('Problem Statement Change Invalidation', () => {
+        it('should mark all sections stale when problem statement changes externally', () => {
+            component.analysisResult.set(mockResponse);
+            fixture.detectChanges();
+
+            fixture.componentRef.setInput('problemStatement', 'Changed problem statement');
+            fixture.detectChanges();
+
+            expect(component.isSectionStale('quality')).toBeTruthy();
+            expect(component.isSectionStale('competencies')).toBeTruthy();
+            expect(component.isSectionStale('difficulty')).toBeTruthy();
+        });
+
+        it('should not mark sections stale when no analysis result exists', () => {
+            // analysisResult is undefined by default
+            expect(component.analysisResult()).toBeUndefined();
+
+            fixture.componentRef.setInput('problemStatement', 'Changed problem statement');
+            fixture.detectChanges();
+
+            expect(component.staleSections().size).toBe(0);
+        });
+
+        it('should not mark sections stale when problem statement stays the same', () => {
+            component.analysisResult.set(mockResponse);
+            fixture.detectChanges();
+
+            fixture.componentRef.setInput('problemStatement', 'Problem statement');
+            fixture.detectChanges();
+
+            expect(component.staleSections().size).toBe(0);
+        });
+    });
 });

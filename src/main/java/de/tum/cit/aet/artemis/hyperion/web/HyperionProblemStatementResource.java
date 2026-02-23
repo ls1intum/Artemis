@@ -83,7 +83,7 @@ public class HyperionProblemStatementResource {
     }
 
     @InitBinder
-    public void initBinder(WebDataBinder binder) {
+    void initBinder(WebDataBinder binder) {
         binder.registerCustomEditor(ChecklistSection.class, new PropertyEditorSupport() {
 
             @Override

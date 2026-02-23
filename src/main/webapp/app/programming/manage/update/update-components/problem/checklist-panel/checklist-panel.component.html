@@ -138,28 +138,88 @@
                             </div>
 
                             @if (result.qualityIssues && result.qualityIssues.length > 0) {
-                                <div class="d-flex justify-content-end mb-2">
-                                    <button
-                                        pButton
-                                        severity="primary"
-                                        size="small"
-                                        [outlined]="true"
-                                        [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0"
-                                        (click)="fixAllQualityIssues()"
-                                    >
-                                        @if (isActionLoading('fix-all')) {
-                                            <fa-icon [icon]="faSpinner" animation="spin" size="xs" class="me-1" />
-                                        } @else {
-                                            <fa-icon [icon]="faBolt" size="xs" class="me-1" />
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <p-checkbox
+                                            [binary]="true"
+                                            [ngModel]="allIssuesSelected()"
+                                            (onChange)="allIssuesSelected() ? deselectAllIssues() : selectAllIssues()"
+                                            [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0"
+                                            inputId="select-all-issues"
+                                            data-testid="select-all-issues"
+                                        />
+                                        <label for="select-all-issues" class="small text-muted mb-0">
+                                            {{
+                                                (allIssuesSelected()
+                                                    ? 'artemisApp.programmingExercise.instructorChecklist.quality.deselectAll'
+                                                    : 'artemisApp.programmingExercise.instructorChecklist.quality.selectAll'
+                                                ) | artemisTranslate
+                                            }}
+                                        </label>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        @if (selectedIssueIndices().size > 0) {
+                                            <button
+                                                pButton
+                                                severity="warn"
+                                                size="small"
+                                                [outlined]="true"
+                                                [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0"
+                                                (click)="fixSelectedIssues()"
+                                                data-testid="fix-selected-button"
+                                            >
+                                                @if (isActionLoading('fix-selected')) {
+                                                    <fa-icon [icon]="faSpinner" animation="spin" size="xs" class="me-1" />
+                                                } @else {
+                                                    <fa-icon [icon]="faBolt" size="xs" class="me-1" />
+                                                }
+                                                <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.fixSelected">Fix Selected</span>
+                                                <span class="ms-1">({{ selectedIssueIndices().size }})</span>
+                                            </button>
+                                            <button
+                                                pButton
+                                                severity="secondary"
+                                                size="small"
+                                                [outlined]="true"
+                                                [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0"
+                                                (click)="discardSelectedIssues()"
+                                                data-testid="discard-selected-button"
+                                            >
+                                                <fa-icon [icon]="faTrashCan" size="xs" class="me-1" />
+                                                <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.discardSelected">Discard Selected</span>
+                                                <span class="ms-1">({{ selectedIssueIndices().size }})</span>
+                                            </button>
                                         }
-                                        <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.fixAll">Fix All Issues</span>
-                                    </button>
+                                        <button
+                                            pButton
+                                            severity="primary"
+                                            size="small"
+                                            [outlined]="true"
+                                            [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0"
+                                            (click)="fixAllQualityIssues()"
+                                        >
+                                            @if (isActionLoading('fix-all')) {
+                                                <fa-icon [icon]="faSpinner" animation="spin" size="xs" class="me-1" />
+                                            } @else {
+                                                <fa-icon [icon]="faBolt" size="xs" class="me-1" />
+                                            }
+                                            <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.fixAll">Fix All Issues</span>
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="quality-issues-list">
                                     @for (issue of result.qualityIssues; track $index; let i = $index) {
-                                        <div class="quality-issue-item">
+                                        <div class="quality-issue-item" [class.issue-selected]="isIssueSelected(i)">
                                             <div class="d-flex justify-content-between align-items-start">
                                                 <div class="d-flex align-items-center gap-2 flex-wrap">
+                                                    <p-checkbox
+                                                        [binary]="true"
+                                                        [ngModel]="isIssueSelected(i)"
+                                                        (onChange)="toggleIssueSelection(i)"
+                                                        [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0"
+                                                        [inputId]="'issue-select-' + i"
+                                                        [attr.data-testid]="'issue-checkbox-' + i"
+                                                    />
                                                     <p-tag [value]="issue.category" styleClass="category-badge" [ngClass]="getCategoryColorClass(issue.category)" />
                                                     <p-tag [value]="issue.severity" [severity]="getSeverityTagSeverity(issue.severity)" />
                                                 </div>
@@ -182,6 +242,18 @@
                                                             <fa-icon [icon]="faWrench" size="xs" />
                                                         }
                                                         <span class="ms-1" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.fix">Fix</span>
+                                                    </button>
+                                                    <button
+                                                        pButton
+                                                        severity="secondary"
+                                                        size="small"
+                                                        [text]="true"
+                                                        [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0"
+                                                        (click)="discardQualityIssue(i)"
+                                                        [attr.title]="'artemisApp.programmingExercise.instructorChecklist.quality.discardIssue' | artemisTranslate"
+                                                        [attr.data-testid]="'discard-issue-' + i"
+                                                    >
+                                                        <fa-icon [icon]="faTrashCan" size="xs" />
                                                     </button>
                                                 </div>
                                             </div>

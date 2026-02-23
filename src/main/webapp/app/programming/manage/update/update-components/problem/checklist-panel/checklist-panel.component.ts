@@ -22,6 +22,7 @@ import {
     faQuestion,
     faSpinner,
     faSync,
+    faTrashCan,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -45,6 +46,8 @@ import {
 import { EMPTY, Observable, from, of } from 'rxjs';
 import { catchError, concatMap, map, switchMap, tap, toArray } from 'rxjs/operators';
 import { taskRegex } from 'app/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
+import { Checkbox } from 'primeng/checkbox';
+import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
@@ -76,7 +79,7 @@ const PENALTY_LOW = 0.1;
     templateUrl: './checklist-panel.component.html',
     styleUrls: ['./checklist-panel.component.scss'],
     standalone: true,
-    imports: [NgClass, DecimalPipe, TranslateModule, FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective, Tag, ButtonDirective, Badge],
+    imports: [NgClass, DecimalPipe, TranslateModule, FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective, Tag, ButtonDirective, Badge, Checkbox, FormsModule],
 })
 export class ChecklistPanelComponent {
     private hyperionApiService = inject(HyperionProblemStatementApiService);
@@ -108,6 +111,9 @@ export class ChecklistPanelComponent {
     // Expanded state for competency evidence
     expandedCompetencies = signal<Set<number>>(new Set());
 
+    // Quality issue multi-select state
+    selectedIssueIndices = signal<Set<number>>(new Set());
+
     // Stale tracking: sections that may be outdated after an AI action modified the problem statement
     staleSections = signal<Set<ChecklistSectionType>>(new Set());
     sectionLoading = signal<Set<ChecklistSectionType>>(new Set());
@@ -131,6 +137,23 @@ export class ChecklistPanelComponent {
             if (latest !== undefined && inputPS === latest) {
                 untracked(() => this.latestProblemStatement.set(undefined));
             }
+        });
+
+        /**
+         * When the problem statement input changes (external edit), mark all
+         * checklist sections as stale so the user knows results may be outdated.
+         */
+        let previousPS: string | undefined;
+        effect(() => {
+            const currentPS = this.problemStatement();
+            if (previousPS !== undefined && currentPS !== previousPS) {
+                untracked(() => {
+                    if (this.analysisResult()) {
+                        this.staleSections.set(new Set<ChecklistSectionType>(['competencies', 'difficulty', 'quality']));
+                    }
+                });
+            }
+            previousPS = currentPS;
         });
     }
 
@@ -169,6 +192,7 @@ export class ChecklistPanelComponent {
     readonly faSync = faSync;
     readonly faLink = faLink;
     readonly faExclamationTriangle = faExclamationTriangle;
+    readonly faTrashCan = faTrashCan;
 
     analyze() {
         const cId = this.courseId();
@@ -457,8 +481,117 @@ export class ChecklistPanelComponent {
             },
             'fix-all',
             ['competencies', 'difficulty'],
-            () => this.updateAnalysisOptimistically((r) => Object.assign({}, r, { qualityIssues: [] })),
+            () => {
+                this.updateAnalysisOptimistically((r) => Object.assign({}, r, { qualityIssues: [] }));
+                this.selectedIssueIndices.set(new Set());
+            },
         );
+    }
+
+    /**
+     * Discards a single quality issue from the list without AI action.
+     * The quality radar graph is NOT updated (scores remain unchanged until re-analysis).
+     */
+    discardQualityIssue(index: number) {
+        this.updateAnalysisOptimistically((r) => Object.assign({}, r, { qualityIssues: (r.qualityIssues ?? []).filter((_, i) => i !== index) }));
+        // Reindex selected indices after removal
+        this.selectedIssueIndices.update((current) => {
+            const updated = new Set<number>();
+            for (const idx of current) {
+                if (idx < index) updated.add(idx);
+                else if (idx > index) updated.add(idx - 1);
+                // idx === index is removed (discarded)
+            }
+            return updated;
+        });
+        this.alertService.success('artemisApp.programmingExercise.instructorChecklist.quality.discarded');
+    }
+
+    /**
+     * Toggles selection state of a quality issue at the given index.
+     */
+    toggleIssueSelection(index: number) {
+        this.selectedIssueIndices.update((current) => {
+            const updated = new Set(current);
+            if (updated.has(index)) {
+                updated.delete(index);
+            } else {
+                updated.add(index);
+            }
+            return updated;
+        });
+    }
+
+    /**
+     * Returns whether a quality issue at the given index is selected.
+     */
+    isIssueSelected(index: number): boolean {
+        return this.selectedIssueIndices().has(index);
+    }
+
+    /**
+     * Selects all quality issues.
+     */
+    selectAllIssues() {
+        const count = this.analysisResult()?.qualityIssues?.length ?? 0;
+        this.selectedIssueIndices.set(new Set(Array.from({ length: count }, (_, i) => i)));
+    }
+
+    /**
+     * Deselects all quality issues.
+     */
+    deselectAllIssues() {
+        this.selectedIssueIndices.set(new Set());
+    }
+
+    /**
+     * Whether all quality issues are currently selected.
+     */
+    allIssuesSelected(): boolean {
+        const count = this.analysisResult()?.qualityIssues?.length ?? 0;
+        return count > 0 && this.selectedIssueIndices().size === count;
+    }
+
+    /**
+     * Fixes all currently selected quality issues via AI in a single batch action.
+     */
+    fixSelectedIssues() {
+        const issues = this.analysisResult()?.qualityIssues ?? [];
+        const selected = this.selectedIssueIndices();
+        if (selected.size === 0) return;
+
+        const selectedIssues = [...selected]
+            .sort((a, b) => a - b)
+            .map((i) => issues[i])
+            .filter(Boolean);
+        const allIssues = selectedIssues.map((i, idx) => `${idx + 1}. [${i.category}/${i.severity}] ${i.description} (Fix: ${i.suggestedFix || 'N/A'})`).join('\n');
+
+        this.applyAction(
+            {
+                actionType: ChecklistActionRequest.ActionTypeEnum.FixAllQualityIssues,
+                problemStatementMarkdown: this.effectiveProblemStatement(),
+                context: { allIssues },
+            },
+            'fix-selected',
+            ['competencies', 'difficulty'],
+            () => {
+                this.updateAnalysisOptimistically((r) => Object.assign({}, r, { qualityIssues: (r.qualityIssues ?? []).filter((_, i) => !selected.has(i)) }));
+                this.selectedIssueIndices.set(new Set());
+            },
+        );
+    }
+
+    /**
+     * Discards all currently selected quality issues from the list without AI action.
+     * The quality radar graph is NOT updated (scores remain unchanged until re-analysis).
+     */
+    discardSelectedIssues() {
+        const selected = this.selectedIssueIndices();
+        if (selected.size === 0) return;
+
+        this.updateAnalysisOptimistically((r) => Object.assign({}, r, { qualityIssues: (r.qualityIssues ?? []).filter((_, i) => !selected.has(i)) }));
+        this.selectedIssueIndices.set(new Set());
+        this.alertService.success('artemisApp.programmingExercise.instructorChecklist.quality.discardedMultiple');
     }
 
     adaptDifficulty(targetDifficulty: DifficultyAssessment.SuggestedEnum) {
