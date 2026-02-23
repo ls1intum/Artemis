@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ChecklistPanelComponent } from './checklist-panel.component';
+import { ChecklistPanelComponent, ChecklistSectionType } from './checklist-panel.component';
 import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -20,7 +20,15 @@ import { By } from '@angular/platform-browser';
 import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { HttpResponse } from '@angular/common/http';
-import { Competency, CompetencyExerciseLink, CompetencyTaxonomy, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
+import {
+    Competency,
+    CompetencyExerciseLink,
+    CompetencyTaxonomy,
+    CourseCompetency,
+    HIGH_COMPETENCY_LINK_WEIGHT,
+    LOW_COMPETENCY_LINK_WEIGHT,
+    MEDIUM_COMPETENCY_LINK_WEIGHT,
+} from 'app/atlas/shared/entities/competency.model';
 
 describe('ChecklistPanelComponent', () => {
     setupTestBed({ zoneless: true });
@@ -232,7 +240,7 @@ describe('ChecklistPanelComponent', () => {
         });
     });
 
-    describe('Competency Linking Methods', () => {
+    describe('Apply Competencies (unified link + create)', () => {
         const mockCourseCompetency: CourseCompetency = Object.assign(new Competency(), {
             id: 1,
             title: 'Loops',
@@ -248,6 +256,7 @@ describe('ChecklistPanelComponent', () => {
                     whyThisMatches: 'Uses loop constructs',
                     rank: 1,
                     matchedCourseCompetencyId: 1,
+                    isLikelyPrimary: true,
                 },
                 {
                     competencyTitle: 'Recursion',
@@ -261,76 +270,8 @@ describe('ChecklistPanelComponent', () => {
             qualityIssues: [],
         };
 
-        it('should link matching competencies using AI-returned matchedCourseCompetencyId', () => {
+        it('should link matched competencies and create unmatched ones in a single call', async () => {
             component.analysisResult.set(mockResponseWithCompetencies);
-            vi.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [mockCourseCompetency] })) as any);
-            const emitSpy = vi.spyOn(component.competencyLinksChange, 'emit');
-            const successSpy = vi.spyOn(alertService, 'success');
-
-            component.linkMatchingCompetencies();
-
-            expect(competencyService.getAllForCourse).toHaveBeenCalledWith(courseId);
-            expect(emitSpy).toHaveBeenCalled();
-            const emittedLinks = emitSpy.mock.calls[0][0] as CompetencyExerciseLink[];
-            expect(emittedLinks).toHaveLength(1);
-            expect(emittedLinks[0].competency?.id).toBe(1);
-            expect(successSpy).toHaveBeenCalled();
-            expect(component.isLinkingCompetencies()).toBeFalsy();
-        });
-
-        it('should show warning when no inferred competencies have matchedCourseCompetencyId', () => {
-            const responseNoMatches: ChecklistAnalysisResponse = {
-                inferredCompetencies: [
-                    {
-                        competencyTitle: 'Recursion',
-                        taxonomyLevel: 'ANALYZE',
-                        confidence: 0.7,
-                        rank: 1,
-                    },
-                ],
-                difficultyAssessment: { suggested: 'EASY', reasoning: 'Reason', matchesDeclared: true },
-                qualityIssues: [],
-            };
-            component.analysisResult.set(responseNoMatches);
-            const warningSpy = vi.spyOn(alertService, 'warning');
-            const getAllSpy = vi.spyOn(competencyService, 'getAllForCourse');
-
-            component.linkMatchingCompetencies();
-
-            // Should not even load course competencies since no IDs to match
-            expect(getAllSpy).not.toHaveBeenCalled();
-            expect(warningSpy).toHaveBeenCalled();
-            expect(component.isLinkingCompetencies()).toBeFalsy();
-        });
-
-        it('should handle error when linking competencies', () => {
-            component.analysisResult.set(mockResponseWithCompetencies);
-            vi.spyOn(competencyService, 'getAllForCourse').mockReturnValue(throwError(() => new Error('Failed')) as any);
-            const errorSpy = vi.spyOn(alertService, 'error');
-
-            component.linkMatchingCompetencies();
-
-            expect(errorSpy).toHaveBeenCalled();
-            expect(component.isLinkingCompetencies()).toBeFalsy();
-        });
-
-        it('should skip already linked competencies', () => {
-            const existingLink = new CompetencyExerciseLink(mockCourseCompetency, component.exercise(), 1);
-            fixture.componentRef.setInput('exercise', Object.assign(new ProgrammingExercise(undefined, undefined), { id: 1, competencyLinks: [existingLink] }));
-
-            component.analysisResult.set(mockResponseWithCompetencies);
-            vi.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [mockCourseCompetency] })) as any);
-            const warningSpy = vi.spyOn(alertService, 'warning');
-
-            component.linkMatchingCompetencies();
-
-            // Competency id=1 already linked, so no new links should be created
-            expect(warningSpy).toHaveBeenCalled();
-        });
-
-        it('should create and link new competencies for unmatched inferred competencies', async () => {
-            component.analysisResult.set(mockResponseWithCompetencies);
-            // 'Loops' exists and is matched by AI (matchedCourseCompetencyId=1), so only 'Recursion' should be created
             vi.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [mockCourseCompetency] })) as any);
 
             const createdCompetency = Object.assign(new Competency(), { id: 99, title: 'Recursion', taxonomy: CompetencyTaxonomy.ANALYZE });
@@ -339,19 +280,92 @@ describe('ChecklistPanelComponent', () => {
             const emitSpy = vi.spyOn(component.competencyLinksChange, 'emit');
             const successSpy = vi.spyOn(alertService, 'success');
 
-            component.createAndLinkCompetencies();
+            component.applyCompetencies();
 
             // Flush microtasks from forkJoin
             await new Promise<void>((resolve) => setTimeout(resolve));
 
+            expect(competencyService.getAllForCourse).toHaveBeenCalledWith(courseId);
+            // 'Recursion' should be created (not matched by AI)
             expect(competencyService.create).toHaveBeenCalledWith(expect.objectContaining({ title: 'Recursion' }), courseId);
             expect(emitSpy).toHaveBeenCalled();
+            const emittedLinks = emitSpy.mock.calls[0][0] as CompetencyExerciseLink[];
+            // Both 'Loops' (linked) and 'Recursion' (created) should be in the emitted links
+            expect(emittedLinks).toHaveLength(2);
+            expect(emittedLinks.map((l) => l.competency?.title).sort()).toEqual(['Loops', 'Recursion']);
+            // Loops is primary (rank 1, confidence 0.9) → HIGH weight; Recursion is non-primary, confidence 0.7 → MEDIUM weight
+            const loopsLink = emittedLinks.find((l) => l.competency?.title === 'Loops');
+            const recursionLink = emittedLinks.find((l) => l.competency?.title === 'Recursion');
+            expect(loopsLink?.weight).toBe(HIGH_COMPETENCY_LINK_WEIGHT);
+            expect(recursionLink?.weight).toBe(MEDIUM_COMPETENCY_LINK_WEIGHT);
             expect(successSpy).toHaveBeenCalled();
-            expect(component.isCreatingCompetencies()).toBeFalsy();
+            expect(component.isSyncingCompetencies()).toBeFalsy();
         });
 
-        it('should not create competencies that AI already matched', async () => {
-            // All competencies have matchedCourseCompetencyId
+        it('should create all competencies when none match existing ones', async () => {
+            const responseNoMatches: ChecklistAnalysisResponse = {
+                inferredCompetencies: [
+                    {
+                        competencyTitle: 'Recursion',
+                        taxonomyLevel: 'ANALYZE',
+                        confidence: 0.7,
+                        whyThisMatches: 'Recursive patterns',
+                        rank: 1,
+                    },
+                ],
+                difficultyAssessment: { suggested: 'EASY', reasoning: 'Reason', matchesDeclared: true },
+                qualityIssues: [],
+            };
+            component.analysisResult.set(responseNoMatches);
+            // No course competency matches 'Recursion'
+            vi.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [mockCourseCompetency] })) as any);
+            const createdCompetency = Object.assign(new Competency(), { id: 99, title: 'Recursion', taxonomy: CompetencyTaxonomy.ANALYZE });
+            vi.spyOn(competencyService, 'create').mockReturnValue(of(new HttpResponse({ body: createdCompetency })) as any);
+            const emitSpy = vi.spyOn(component.competencyLinksChange, 'emit');
+
+            component.applyCompetencies();
+
+            await new Promise<void>((resolve) => setTimeout(resolve));
+
+            expect(competencyService.create).toHaveBeenCalledWith(expect.objectContaining({ title: 'Recursion' }), courseId);
+            expect(emitSpy).toHaveBeenCalled();
+            expect(component.isSyncingCompetencies()).toBeFalsy();
+        });
+
+        it('should assign LOW relevance weight to low-confidence non-primary competencies', async () => {
+            const lowConfidenceResponse: ChecklistAnalysisResponse = {
+                inferredCompetencies: [
+                    {
+                        competencyTitle: 'Loops',
+                        taxonomyLevel: 'APPLY',
+                        confidence: 0.5,
+                        whyThisMatches: 'Minor usage',
+                        rank: 1,
+                        matchedCourseCompetencyId: 1,
+                        isLikelyPrimary: false,
+                    },
+                ],
+                difficultyAssessment: { suggested: 'EASY', reasoning: 'Reason', matchesDeclared: true },
+                qualityIssues: [],
+            };
+            component.analysisResult.set(lowConfidenceResponse);
+            vi.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [mockCourseCompetency] })) as any);
+            const emitSpy = vi.spyOn(component.competencyLinksChange, 'emit');
+
+            component.applyCompetencies();
+
+            await new Promise<void>((resolve) => setTimeout(resolve));
+
+            expect(emitSpy).toHaveBeenCalled();
+            const emittedLinks = emitSpy.mock.calls[0][0] as CompetencyExerciseLink[];
+            const loopsLink = emittedLinks.find((l) => l.competency?.title === 'Loops');
+            expect(loopsLink?.weight).toBe(LOW_COMPETENCY_LINK_WEIGHT);
+        });
+
+        it('should show warning when all competencies are already linked', () => {
+            const existingLink = new CompetencyExerciseLink(mockCourseCompetency, component.exercise(), 1);
+            fixture.componentRef.setInput('exercise', Object.assign(new ProgrammingExercise(undefined, undefined), { id: 1, competencyLinks: [existingLink] }));
+
             const allMatchedResponse: ChecklistAnalysisResponse = {
                 inferredCompetencies: [
                     {
@@ -369,41 +383,28 @@ describe('ChecklistPanelComponent', () => {
             vi.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [mockCourseCompetency] })) as any);
             const warningSpy = vi.spyOn(alertService, 'warning');
 
-            component.createAndLinkCompetencies();
+            component.applyCompetencies();
 
             expect(warningSpy).toHaveBeenCalled();
-            expect(component.isCreatingCompetencies()).toBeFalsy();
+            expect(component.isSyncingCompetencies()).toBeFalsy();
         });
 
-        it('should handle error when creating competencies', async () => {
+        it('should handle error when loading course competencies fails', () => {
             component.analysisResult.set(mockResponseWithCompetencies);
-            vi.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [] })) as any);
-            vi.spyOn(competencyService, 'create').mockReturnValue(throwError(() => new Error('Failed')) as any);
+            vi.spyOn(competencyService, 'getAllForCourse').mockReturnValue(throwError(() => new Error('Failed')) as any);
             const errorSpy = vi.spyOn(alertService, 'error');
 
-            component.createAndLinkCompetencies();
-
-            // Flush microtasks from forkJoin
-            await new Promise<void>((resolve) => setTimeout(resolve));
+            component.applyCompetencies();
 
             expect(errorSpy).toHaveBeenCalled();
-            expect(component.isCreatingCompetencies()).toBeFalsy();
+            expect(component.isSyncingCompetencies()).toBeFalsy();
         });
 
-        it('should not link when already linking', () => {
-            component.isLinkingCompetencies.set(true);
+        it('should not run when already syncing', () => {
+            component.isSyncingCompetencies.set(true);
             const getAllSpy = vi.spyOn(competencyService, 'getAllForCourse');
 
-            component.linkMatchingCompetencies();
-
-            expect(getAllSpy).not.toHaveBeenCalled();
-        });
-
-        it('should not create when already creating', () => {
-            component.isCreatingCompetencies.set(true);
-            const getAllSpy = vi.spyOn(competencyService, 'getAllForCourse');
-
-            component.createAndLinkCompetencies();
+            component.applyCompetencies();
 
             expect(getAllSpy).not.toHaveBeenCalled();
         });
@@ -523,6 +524,19 @@ describe('ChecklistPanelComponent', () => {
             expect(component.staleSections().size).toBe(0);
         });
 
+        it('should clear linked and created competency titles when full analyze completes', () => {
+            component.linkedCompetencyTitles.set(new Set(['loops']));
+            component.createdCompetencyTitles.set(new Set(['recursion']));
+            vi.spyOn(apiService, 'analyzeChecklist').mockReturnValue(of(mockResponse) as any);
+            const emitSpy = vi.spyOn(component.competencyLinksChange, 'emit');
+
+            component.analyze();
+
+            expect(component.linkedCompetencyTitles().size).toBe(0);
+            expect(component.createdCompetencyTitles().size).toBe(0);
+            expect(emitSpy).toHaveBeenCalledWith([]);
+        });
+
         it('should accumulate stale sections across multiple actions', () => {
             component.analysisResult.set({
                 ...mockResponse,
@@ -570,7 +584,7 @@ describe('ChecklistPanelComponent', () => {
             expect(component.analysisResult()?.difficultyAssessment).toEqual(mockResponse.difficultyAssessment);
             // Stale cleared for quality
             expect(component.isSectionStale('quality')).toBeFalsy();
-            expect(component.sectionLoading()).toBeUndefined();
+            expect(component.sectionLoading().size).toBe(0);
         });
 
         it('should update only the competencies section when reanalyzing competencies', () => {
@@ -583,6 +597,31 @@ describe('ChecklistPanelComponent', () => {
             expect(component.analysisResult()?.inferredCompetencies).toEqual(fullResponse.inferredCompetencies);
             expect(component.analysisResult()?.qualityIssues).toEqual(mockResponse.qualityIssues);
             expect(component.isSectionStale('competencies')).toBeFalsy();
+        });
+
+        it('should clear linked and created competency titles when competencies section is reanalyzed', () => {
+            component.analysisResult.set(mockResponse);
+            component.linkedCompetencyTitles.set(new Set(['loops']));
+            component.createdCompetencyTitles.set(new Set(['recursion']));
+            vi.spyOn(apiService, 'analyzeChecklistSection').mockReturnValue(of(fullResponse) as any);
+            const emitSpy = vi.spyOn(component.competencyLinksChange, 'emit');
+
+            component.reanalyzeSection('competencies');
+
+            expect(component.linkedCompetencyTitles().size).toBe(0);
+            expect(component.createdCompetencyTitles().size).toBe(0);
+            expect(emitSpy).toHaveBeenCalledWith([]);
+        });
+
+        it('should NOT emit competencyLinksChange when non-competencies section is reanalyzed', () => {
+            component.analysisResult.set(mockResponse);
+            component.linkedCompetencyTitles.set(new Set(['loops']));
+            vi.spyOn(apiService, 'analyzeChecklistSection').mockReturnValue(of(fullResponse) as any);
+            const emitSpy = vi.spyOn(component.competencyLinksChange, 'emit');
+
+            component.reanalyzeSection('quality');
+
+            expect(emitSpy).not.toHaveBeenCalled();
         });
 
         it('should update only the difficulty section when reanalyzing difficulty', () => {
@@ -605,28 +644,38 @@ describe('ChecklistPanelComponent', () => {
             component.reanalyzeSection('quality');
 
             expect(errorSpy).toHaveBeenCalled();
-            expect(component.sectionLoading()).toBeUndefined();
+            expect(component.sectionLoading().size).toBe(0);
             // Original result preserved
             expect(component.analysisResult()).toEqual(mockResponse);
         });
 
-        it('should not start re-analyze when another section is already loading', () => {
-            component.sectionLoading.set('quality');
+        it('should not start re-analyze when the same section is already loading', () => {
+            component.sectionLoading.set(new Set<ChecklistSectionType>(['quality']));
             const analyzeSpy = vi.spyOn(apiService, 'analyzeChecklistSection');
+
+            component.reanalyzeSection('quality');
+
+            expect(analyzeSpy).not.toHaveBeenCalled();
+        });
+
+        it('should allow parallel re-analyze of different sections', () => {
+            component.analysisResult.set(mockResponse);
+            component.sectionLoading.set(new Set<ChecklistSectionType>(['quality']));
+            const analyzeSpy = vi.spyOn(apiService, 'analyzeChecklistSection').mockReturnValue(of(fullResponse) as any);
 
             component.reanalyzeSection('difficulty');
 
-            expect(analyzeSpy).not.toHaveBeenCalled();
+            expect(analyzeSpy).toHaveBeenCalledWith(courseId, 'DIFFICULTY', expect.objectContaining({ problemStatementMarkdown: 'Problem statement' }));
         });
 
         it('should set sectionLoading while re-analyzing', () => {
             component.analysisResult.set(mockResponse);
             vi.spyOn(apiService, 'analyzeChecklistSection').mockReturnValue(of(fullResponse) as any);
 
-            expect(component.sectionLoading()).toBeUndefined();
+            expect(component.sectionLoading().size).toBe(0);
             component.reanalyzeSection('quality');
             // After completion, loading is cleared
-            expect(component.sectionLoading()).toBeUndefined();
+            expect(component.sectionLoading().size).toBe(0);
         });
 
         it('should call analyzeChecklistSection with correct section parameter', () => {

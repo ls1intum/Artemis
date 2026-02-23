@@ -21,7 +21,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(description = "Request to apply an AI-powered checklist action to the problem statement")
 public record ChecklistActionRequestDTO(@NotNull @Schema(description = "Type of action to apply") ActionType actionType,
         @NotBlank @Size(max = 50000) @Schema(description = "Current problem statement markdown") String problemStatementMarkdown,
-        @Size(max = 20) @Schema(description = "Action-specific context parameters") Map<String, @Size(max = 2000) String> context) {
+        @Size(max = 20) @Schema(description = "Action-specific context parameters") Map<String, @Size(max = 10000) String> context) {
 
     /**
      * Enum representing the types of checklist actions that can be applied.

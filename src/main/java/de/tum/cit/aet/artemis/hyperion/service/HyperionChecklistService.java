@@ -231,6 +231,9 @@ public class HyperionChecklistService {
         // Fetch and serialize the competency catalog
         String catalogJson = serializeCompetencyCatalog();
 
+        // Invalidate the per-course competency cache so the AI always sees freshly created/deleted competencies
+        courseCompetencyCache.remove(courseId);
+
         // Load and serialize existing course competencies for AI-based matching
         String courseCompetenciesJson = serializeCourseCompetencies(courseId);
 
@@ -296,7 +299,7 @@ public class HyperionChecklistService {
         }
     }
 
-    private static final int MAX_CONTEXT_VALUE_LENGTH = 2000;
+    private static final int MAX_CONTEXT_VALUE_LENGTH = 10000;
 
     /** Builds action-specific instructions for the AI prompt based on action type and pre-sanitized context. */
     private String buildActionInstructions(ChecklistActionRequestDTO.ActionType actionType, Map<String, String> ctx) {
@@ -563,8 +566,10 @@ public class HyperionChecklistService {
         String renderedPrompt = templates.render("/prompts/hyperion/checklist_quality.st", input);
 
         return runWithObservation("hyperion.checklist.quality", "quality check", parentObs, () -> {
-            var response = chatClient.prompt().system("You are a technical documentarian and educator. Return only JSON matching the schema.").user(renderedPrompt).call()
-                    .responseEntity(StructuredOutputSchema.QualityResponse.class);
+            var response = chatClient.prompt()
+                    .system("You are a strict, conservative technical reviewer. Report ONLY issues that clearly match the defined criteria. "
+                            + "When in doubt, do NOT report an issue. An empty result is perfectly valid. Return only JSON matching the schema.")
+                    .user(renderedPrompt).call().responseEntity(StructuredOutputSchema.QualityResponse.class);
 
             var entity = response.entity();
             if (entity == null || entity.issues() == null) {

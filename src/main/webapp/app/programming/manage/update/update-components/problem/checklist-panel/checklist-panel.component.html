@@ -47,7 +47,7 @@
                                 size="small"
                                 class="reanalyze-btn"
                                 (click)="$event.stopPropagation(); reanalyzeSection('quality')"
-                                [disabled]="!!sectionLoading()"
+                                [disabled]="isSectionLoading('quality')"
                             >
                                 <fa-icon [icon]="faSync" [animation]="isSectionLoading('quality') ? 'spin' : undefined" class="me-1" />
                                 <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.reanalyze">Re-analyze</span>
@@ -229,7 +229,7 @@
                                 size="small"
                                 class="reanalyze-btn"
                                 (click)="$event.stopPropagation(); reanalyzeSection('competencies')"
-                                [disabled]="!!sectionLoading()"
+                                [disabled]="isSectionLoading('competencies')"
                             >
                                 <fa-icon [icon]="faSync" [animation]="isSectionLoading('competencies') ? 'spin' : undefined" class="me-1" />
                                 <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.reanalyze">Re-analyze</span>
@@ -310,42 +310,20 @@
                                     }
                                 </div>
 
-                                <!-- Competency Linking Actions -->
+                                <!-- Competency Linking Action -->
                                 <div class="competency-actions-section p-3 border-top">
                                     <div class="d-flex align-items-center gap-2 flex-wrap">
-                                        <button
-                                            pButton
-                                            severity="primary"
-                                            size="small"
-                                            [outlined]="true"
-                                            [disabled]="isLinkingCompetencies() || isCreatingCompetencies()"
-                                            (click)="linkMatchingCompetencies()"
-                                        >
-                                            @if (isLinkingCompetencies()) {
+                                        <button pButton severity="primary" size="small" [outlined]="true" [disabled]="isSyncingCompetencies()" (click)="applyCompetencies()">
+                                            @if (isSyncingCompetencies()) {
                                                 <fa-icon [icon]="faSpinner" animation="spin" size="xs" class="me-1" />
                                             } @else {
                                                 <fa-icon [icon]="faLink" size="xs" class="me-1" />
                                             }
-                                            <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.linkMatching">Link Matching</span>
-                                        </button>
-                                        <button
-                                            pButton
-                                            severity="success"
-                                            size="small"
-                                            [outlined]="true"
-                                            [disabled]="isLinkingCompetencies() || isCreatingCompetencies()"
-                                            (click)="createAndLinkCompetencies()"
-                                        >
-                                            @if (isCreatingCompetencies()) {
-                                                <fa-icon [icon]="faSpinner" animation="spin" size="xs" class="me-1" />
-                                            } @else {
-                                                <fa-icon [icon]="faPlus" size="xs" class="me-1" />
-                                            }
-                                            <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.createAndLink">Create & Link New</span>
+                                            <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.applyCompetencies">Apply Competencies</span>
                                         </button>
                                     </div>
-                                    <small class="text-muted mt-1 d-block" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.actionsHint">
-                                        Link matches existing course competencies. Create adds new competencies to the course and links them.
+                                    <small class="text-muted mt-1 d-block" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.applyHint">
+                                        Links matching course competencies and creates new ones for unmatched learning goals.
                                     </small>
                                 </div>
                             }
@@ -381,7 +359,7 @@
                                 size="small"
                                 class="reanalyze-btn"
                                 (click)="$event.stopPropagation(); reanalyzeSection('difficulty')"
-                                [disabled]="!!sectionLoading()"
+                                [disabled]="isSectionLoading('difficulty')"
                             >
                                 <fa-icon [icon]="faSync" [animation]="isSectionLoading('difficulty') ? 'spin' : undefined" class="me-1" />
                                 <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.reanalyze">Re-analyze</span>

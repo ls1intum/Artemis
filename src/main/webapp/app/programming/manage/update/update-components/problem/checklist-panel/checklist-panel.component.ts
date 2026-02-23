@@ -33,7 +33,15 @@ import { QualityIssue } from 'app/openapi/model/qualityIssue';
 import { InferredCompetency } from 'app/openapi/model/inferredCompetency';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
-import { Competency, CompetencyExerciseLink, CompetencyTaxonomy, CourseCompetency, MEDIUM_COMPETENCY_LINK_WEIGHT } from 'app/atlas/shared/entities/competency.model';
+import {
+    Competency,
+    CompetencyExerciseLink,
+    CompetencyTaxonomy,
+    CourseCompetency,
+    HIGH_COMPETENCY_LINK_WEIGHT,
+    LOW_COMPETENCY_LINK_WEIGHT,
+    MEDIUM_COMPETENCY_LINK_WEIGHT,
+} from 'app/atlas/shared/entities/competency.model';
 import { HttpResponse } from '@angular/common/http';
 import { Observable, forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
@@ -44,7 +52,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 /**
  * Type-safe section identifier used for stale tracking and section-level re-analysis.
  */
-type ChecklistSectionType = 'competencies' | 'difficulty' | 'quality';
+export type ChecklistSectionType = 'competencies' | 'difficulty' | 'quality';
 
 /**
  * Maps client-side lowercase section names to server-side uppercase enum values.
@@ -86,15 +94,14 @@ export class ChecklistPanelComponent {
     courseCompetencies = signal<CourseCompetency[]>([]);
     linkedCompetencyTitles = signal<Set<string>>(new Set());
     createdCompetencyTitles = signal<Set<string>>(new Set());
-    isLinkingCompetencies = signal<boolean>(false);
-    isCreatingCompetencies = signal<boolean>(false);
+    isSyncingCompetencies = signal<boolean>(false);
 
     // Expanded state for competency evidence
     expandedCompetencies = signal<Set<number>>(new Set());
 
     // Stale tracking: sections that may be outdated after an AI action modified the problem statement
     staleSections = signal<Set<ChecklistSectionType>>(new Set());
-    sectionLoading = signal<ChecklistSectionType | undefined>(undefined);
+    sectionLoading = signal<Set<ChecklistSectionType>>(new Set());
 
     // Track the latest problem statement (may be updated by AI actions before the input signal refreshes)
     private latestProblemStatement = signal<string | undefined>(undefined);
@@ -178,6 +185,10 @@ export class ChecklistPanelComponent {
                     this.analysisResult.set(res);
                     this.isLoading.set(false);
                     this.staleSections.set(new Set());
+                    // New analysis results invalidate previous linking state
+                    this.linkedCompetencyTitles.set(new Set());
+                    this.createdCompetencyTitles.set(new Set());
+                    this.competencyLinksChange.emit([]);
                 },
                 error: () => {
                     this.alertService.error('artemisApp.programmingExercise.instructorChecklist.actions.error');
@@ -312,7 +323,7 @@ export class ChecklistPanelComponent {
 
     private applyAction(request: ChecklistActionRequest, loadingKey: string, staleMark: ChecklistSectionType[], onApplied?: () => void) {
         const cId = this.courseId();
-        if (!cId || this.isApplyingAction() || this.sectionLoading()) return;
+        if (!cId || this.isApplyingAction() || this.sectionLoading().size > 0) return;
 
         this.isApplyingAction.set(true);
         this.actionLoadingKey.set(loadingKey);
@@ -357,7 +368,7 @@ export class ChecklistPanelComponent {
     }
 
     isSectionLoading(section: ChecklistSectionType): boolean {
-        return this.sectionLoading() === section;
+        return this.sectionLoading().has(section);
     }
 
     /**
@@ -365,9 +376,9 @@ export class ChecklistPanelComponent {
      */
     reanalyzeSection(section: ChecklistSectionType) {
         const cId = this.courseId();
-        if (!cId || this.sectionLoading() || this.isApplyingAction()) return;
+        if (!cId || this.sectionLoading().has(section) || this.isApplyingAction()) return;
 
-        this.sectionLoading.set(section);
+        this.sectionLoading.set(new Set([...this.sectionLoading(), section]));
         const ex = this.exercise();
         const request = {
             problemStatementMarkdown: this.effectiveProblemStatement(),
@@ -394,15 +405,25 @@ export class ChecklistPanelComponent {
                     } else {
                         this.analysisResult.set(res);
                     }
+                    // New competency results invalidate previous linking state
+                    if (section === 'competencies') {
+                        this.linkedCompetencyTitles.set(new Set());
+                        this.createdCompetencyTitles.set(new Set());
+                        this.competencyLinksChange.emit([]);
+                    }
                     // Remove stale mark for this section
                     const stale = new Set(this.staleSections());
                     stale.delete(section);
                     this.staleSections.set(stale);
-                    this.sectionLoading.set(undefined);
+                    const loading = new Set(this.sectionLoading());
+                    loading.delete(section);
+                    this.sectionLoading.set(loading);
                 },
                 error: () => {
                     this.alertService.error('artemisApp.programmingExercise.instructorChecklist.actions.error');
-                    this.sectionLoading.set(undefined);
+                    const loading = new Set(this.sectionLoading());
+                    loading.delete(section);
+                    this.sectionLoading.set(loading);
                 },
             });
     }
@@ -499,11 +520,14 @@ export class ChecklistPanelComponent {
 
     /**
      * Loads course competencies, using the cached value if already populated.
+     * @param forceReload if true, bypasses the cache and fetches fresh data from the server
      */
-    private loadCourseCompetencies(): Observable<CourseCompetency[]> {
-        const cached = this.courseCompetencies();
-        if (cached.length > 0) {
-            return of(cached);
+    private loadCourseCompetencies(forceReload = false): Observable<CourseCompetency[]> {
+        if (!forceReload) {
+            const cached = this.courseCompetencies();
+            if (cached.length > 0) {
+                return of(cached);
+            }
         }
         return this.competencyService.getAllForCourse(this.courseId()).pipe(
             map((res) => {
@@ -515,112 +539,72 @@ export class ChecklistPanelComponent {
     }
 
     /**
-     * Links inferred competencies to matching course competencies using matchedCourseCompetencyId.
+     * Unified method: links inferred competencies to matching course competencies,
+     * then creates new course competencies for any that couldn't be matched and links those too.
+     *
+     * Matching strategy (per inferred competency):
+     *   1. Use AI-provided matchedCourseCompetencyId if available and still exists
+     *   2. If unmatched, create a new course competency and link it
      */
-    linkMatchingCompetencies(): void {
-        if (this.isLinkingCompetencies()) return;
+    applyCompetencies(): void {
+        if (this.isSyncingCompetencies()) return;
 
-        this.isLinkingCompetencies.set(true);
-        const inferred = this.analysisResult()?.inferredCompetencies ?? [];
-        const exercise = this.exercise();
-
-        // Collect IDs that the AI matched
-        const matchedIds = new Set(inferred.map((c) => c.matchedCourseCompetencyId).filter((id): id is number => id != null && id > 0));
-
-        if (matchedIds.size === 0) {
-            this.alertService.warning('artemisApp.programmingExercise.instructorChecklist.competencies.noMatches');
-            this.isLinkingCompetencies.set(false);
-            return;
-        }
-
-        // Load course competencies to resolve IDs to entity objects
-        this.loadCourseCompetencies()
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({
-                next: () => {
-                    const competencyById = new Map(
-                        this.courseCompetencies()
-                            .filter((c) => c.id != null)
-                            .map((c) => [c.id!, c]),
-                    );
-                    const existingLinks = exercise?.competencyLinks ?? [];
-                    const existingIds = new Set(existingLinks.map((link) => link.competency?.id).filter(Boolean));
-                    const newLinks: CompetencyExerciseLink[] = [...existingLinks];
-                    const newlyLinked = new Set<string>();
-
-                    for (const comp of inferred) {
-                        const matchId = comp.matchedCourseCompetencyId;
-                        if (matchId == null || !matchedIds.has(matchId)) continue;
-                        if (existingIds.has(matchId)) continue;
-
-                        const courseComp = competencyById.get(matchId);
-                        if (courseComp) {
-                            newLinks.push(new CompetencyExerciseLink(courseComp, exercise, MEDIUM_COMPETENCY_LINK_WEIGHT));
-                            existingIds.add(matchId);
-                            newlyLinked.add((comp.competencyTitle ?? '').toLowerCase());
-                        }
-                    }
-
-                    if (newlyLinked.size > 0) {
-                        this.competencyLinksChange.emit(newLinks);
-                        this.linkedCompetencyTitles.set(new Set([...this.linkedCompetencyTitles(), ...newlyLinked]));
-                        this.alertService.success('artemisApp.programmingExercise.instructorChecklist.competencies.linkSuccess');
-                    } else {
-                        this.alertService.warning('artemisApp.programmingExercise.instructorChecklist.competencies.noMatches');
-                    }
-                    this.isLinkingCompetencies.set(false);
-                },
-                error: () => {
-                    this.alertService.error('artemisApp.programmingExercise.instructorChecklist.competencies.linkError');
-                    this.isLinkingCompetencies.set(false);
-                },
-            });
-    }
-
-    /**
-     * Creates new competencies from unmatched inferred competencies, then links them to the exercise.
-     */
-    createAndLinkCompetencies(): void {
-        if (this.isCreatingCompetencies()) return;
-
-        this.isCreatingCompetencies.set(true);
+        this.isSyncingCompetencies.set(true);
         const inferred = this.analysisResult()?.inferredCompetencies ?? [];
         const exercise = this.exercise();
         const courseId = this.courseId();
 
-        // First ensure course competencies are loaded (uses cache if available)
-        this.loadCourseCompetencies()
+        // Force-reload course competencies so manually created / deleted ones are reflected
+        this.loadCourseCompetencies(true)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => {
-                    const existingLinks = exercise?.competencyLinks ?? [];
-                    const existingIds = new Set(existingLinks.map((link) => link.competency?.id).filter(Boolean));
-                    const existingTitles = new Set(
-                        this.courseCompetencies()
-                            .map((c) => c.title?.toLowerCase().trim())
-                            .filter(Boolean),
-                    );
+                    const courseComps = this.courseCompetencies();
+                    const competencyById = new Map(courseComps.filter((c) => c.id != null).map((c) => [c.id!, c]));
+                    const existingCompIds = new Set(courseComps.filter((c) => c.id != null).map((c) => c.id!));
 
-                    // Only create competencies the AI did NOT match to an existing one
+                    // Reconcile createdCompetencyTitles against what still exists
+                    const existingTitles = new Set(courseComps.map((c) => c.title?.toLowerCase().trim()).filter(Boolean));
+                    const reconciledCreated = new Set([...this.createdCompetencyTitles()].filter((t) => existingTitles.has(t)));
+                    this.createdCompetencyTitles.set(reconciledCreated);
+
+                    const existingLinks = exercise?.competencyLinks ?? [];
+                    const linkedIds = new Set(existingLinks.map((link) => link.competency?.id).filter(Boolean));
+                    const allLinks: CompetencyExerciseLink[] = [...existingLinks];
+                    const newlyLinked = new Set<string>();
                     const toCreate: Competency[] = [];
+                    const toCreateInferred: InferredCompetency[] = [];
+
                     for (const comp of inferred) {
                         const title = comp.competencyTitle?.trim();
                         if (!title) continue;
-                        // Skip if AI already matched it to an existing course competency
-                        if (comp.matchedCourseCompetencyId != null && comp.matchedCourseCompetencyId > 0) continue;
-                        if (existingTitles.has(title.toLowerCase())) continue;
-                        if (this.createdCompetencyTitles().has(title.toLowerCase())) continue;
 
-                        const newComp = new Competency();
-                        newComp.title = title;
-                        newComp.description = comp.whyThisMatches ?? `Inferred from problem statement analysis. Evidence: ${(comp.evidence ?? []).join('; ')}`;
-                        newComp.taxonomy = this.mapTaxonomy(comp.taxonomyLevel);
-                        toCreate.push(newComp);
+                        // Try AI-provided matchedCourseCompetencyId
+                        let courseComp: CourseCompetency | undefined;
+                        const matchId = comp.matchedCourseCompetencyId;
+                        if (matchId != null && matchId > 0 && existingCompIds.has(matchId)) {
+                            courseComp = competencyById.get(matchId);
+                        }
+
+                        if (courseComp?.id && !linkedIds.has(courseComp.id)) {
+                            // Matched — link directly with AI-inferred relevance
+                            allLinks.push(new CompetencyExerciseLink(courseComp, exercise, this.computeRelevanceWeight(comp)));
+                            linkedIds.add(courseComp.id);
+                            newlyLinked.add(title.toLowerCase());
+                        } else if (!courseComp && !reconciledCreated.has(title.toLowerCase())) {
+                            // No match — queue for creation
+                            const newComp = new Competency();
+                            newComp.title = title;
+                            newComp.description = comp.whyThisMatches ?? `Inferred from problem statement analysis. Evidence: ${(comp.evidence ?? []).join('; ')}`;
+                            newComp.taxonomy = this.mapTaxonomy(comp.taxonomyLevel);
+                            toCreate.push(newComp);
+                            toCreateInferred.push(comp);
+                        }
                     }
 
                     if (toCreate.length === 0) {
-                        this.alertService.warning('artemisApp.programmingExercise.instructorChecklist.competencies.allExist');
-                        this.isCreatingCompetencies.set(false);
+                        // Nothing to create — emit links (if any) and finish
+                        this.finishApply(allLinks, newlyLinked, new Set());
                         return;
                     }
 
@@ -632,46 +616,51 @@ export class ChecklistPanelComponent {
                         .pipe(takeUntilDestroyed(this.destroyRef))
                         .subscribe({
                             next: (results) => {
-                                const fulfilled = results.filter((r) => r !== null);
-
-                                if (fulfilled.length === 0) {
-                                    this.alertService.error('artemisApp.programmingExercise.instructorChecklist.competencies.createError');
-                                    this.isCreatingCompetencies.set(false);
-                                    return;
-                                }
-
-                                const newLinks: CompetencyExerciseLink[] = [...existingLinks];
                                 const newlyCreated = new Set<string>();
-
-                                for (const response of fulfilled) {
+                                for (let i = 0; i < results.length; i++) {
+                                    const response = results[i];
+                                    if (!response) continue;
                                     const created = response.body;
-                                    if (created?.id && !existingIds.has(created.id)) {
-                                        newLinks.push(new CompetencyExerciseLink(created, exercise, MEDIUM_COMPETENCY_LINK_WEIGHT));
-                                        existingIds.add(created.id);
+                                    if (created?.id && !linkedIds.has(created.id)) {
+                                        const inferredComp = toCreateInferred[i];
+                                        allLinks.push(new CompetencyExerciseLink(created, exercise, this.computeRelevanceWeight(inferredComp)));
+                                        linkedIds.add(created.id);
                                         newlyCreated.add((created.title ?? '').toLowerCase());
-                                        // Update local cache
                                         this.courseCompetencies.update((current) => [...current, created]);
                                     }
                                 }
-
-                                if (newlyCreated.size > 0) {
-                                    this.competencyLinksChange.emit(newLinks);
-                                    this.createdCompetencyTitles.set(new Set([...this.createdCompetencyTitles(), ...newlyCreated]));
-                                    this.alertService.success('artemisApp.programmingExercise.instructorChecklist.competencies.createSuccess');
-                                }
-                                this.isCreatingCompetencies.set(false);
+                                this.finishApply(allLinks, newlyLinked, newlyCreated);
                             },
                             error: () => {
-                                this.alertService.error('artemisApp.programmingExercise.instructorChecklist.competencies.createError');
-                                this.isCreatingCompetencies.set(false);
+                                // Creation failed, but we may still have linked some — emit what we have
+                                this.finishApply(allLinks, newlyLinked, new Set());
+                                this.alertService.error('artemisApp.programmingExercise.instructorChecklist.competencies.syncError');
                             },
                         });
                 },
                 error: () => {
-                    this.alertService.error('artemisApp.programmingExercise.instructorChecklist.competencies.createError');
-                    this.isCreatingCompetencies.set(false);
+                    this.alertService.error('artemisApp.programmingExercise.instructorChecklist.competencies.syncError');
+                    this.isSyncingCompetencies.set(false);
                 },
             });
+    }
+
+    /**
+     * Helper to finalize applyCompetencies: emits links, updates tracking sets, shows alerts.
+     */
+    private finishApply(allLinks: CompetencyExerciseLink[], linked: Set<string>, created: Set<string>): void {
+        const totalNew = linked.size + created.size;
+        if (totalNew > 0) {
+            this.competencyLinksChange.emit(allLinks);
+            this.linkedCompetencyTitles.set(new Set([...this.linkedCompetencyTitles(), ...linked, ...created]));
+            if (created.size > 0) {
+                this.createdCompetencyTitles.set(new Set([...this.createdCompetencyTitles(), ...created]));
+            }
+            this.alertService.success('artemisApp.programmingExercise.instructorChecklist.competencies.syncSuccess');
+        } else {
+            this.alertService.warning('artemisApp.programmingExercise.instructorChecklist.competencies.allLinked');
+        }
+        this.isSyncingCompetencies.set(false);
     }
 
     private competencyTitleIn(comp: InferredCompetency, titleSet: Set<string>): boolean {
@@ -683,6 +672,20 @@ export class ChecklistPanelComponent {
      */
     isCompetencyLinked(comp: InferredCompetency): boolean {
         return this.competencyTitleIn(comp, this.linkedCompetencyTitles());
+    }
+
+    /**
+     * Computes the relevance weight for a competency link based on AI-inferred data.
+     * Primary competencies get HIGH weight, high-confidence ones get MEDIUM, others get LOW.
+     */
+    private computeRelevanceWeight(comp: InferredCompetency): number {
+        if (comp.isLikelyPrimary) {
+            return HIGH_COMPETENCY_LINK_WEIGHT;
+        }
+        if (comp.confidence != null && comp.confidence >= 0.7) {
+            return MEDIUM_COMPETENCY_LINK_WEIGHT;
+        }
+        return LOW_COMPETENCY_LINK_WEIGHT;
     }
 
     /**
