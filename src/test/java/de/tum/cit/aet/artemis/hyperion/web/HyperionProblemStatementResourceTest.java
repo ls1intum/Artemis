@@ -118,10 +118,6 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(json))))).when(azureOpenAiChatModel).call(any(Prompt.class));
     }
 
-    private void mockGenerateSuccess() {
-        doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Draft problem statement generated successfully."))))).when(azureOpenAiChatModel)
-                .call(any(Prompt.class));
-      
     private void mockChatSuccess(String responseMessage) {
         doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(responseMessage))))).when(azureOpenAiChatModel).call(any(Prompt.class));
     }

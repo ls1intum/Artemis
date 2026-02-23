@@ -1,4 +1,4 @@
-import { Component, DestroyRef, Injector, OnDestroy, TemplateRef, ViewChild, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, Injector, OnDestroy, TemplateRef, ViewChild, afterNextRender, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
@@ -57,7 +57,6 @@ import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContent, CommentContentType, ConsistencyIssueCommentContent } from 'app/exercise/shared/entities/review/comment-content.model';
 import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { getFirstCommentByCreatedDateThenId } from 'app/exercise/review/review-comment-utils';
-import { getRepoPath } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
@@ -68,7 +67,7 @@ import { TextareaModule } from 'primeng/textarea';
 import { BadgeModule } from 'primeng/badge';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
-import { Popover, PopoverModule } from 'primeng/popover'; 
+import { Popover, PopoverModule } from 'primeng/popover';
 
 const SEVERITY_ORDER: Record<ConsistencyIssue.SeverityEnum, number> = {
     [ConsistencyIssue.SeverityEnum.High]: 0,
