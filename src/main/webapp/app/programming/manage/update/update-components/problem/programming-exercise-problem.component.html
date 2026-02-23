@@ -117,12 +117,12 @@
                 <jhi-programming-exercise-editable-instructions
                     #editableInstructions
                     [exercise]="programmingExercise()!"
-                    (instructionChange)="onInstructionChange($event)"
                     [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
                     [showStatus]="!!programmingExercise()?.id"
                     [editMode]="!!programmingExercise()?.id"
                     [isGeneratingOrRefining]="isGeneratingOrRefining()"
                     (hasUnsavedChanges)="programmingExerciseCreationConfig().hasUnsavedChanges = $event"
+                    (instructionChange)="onInstructionChange($event)"
                     [mode]="showDiff() ? 'diff' : 'normal'"
                     [renderSideBySide]="allowSplitView()"
                     (diffLineChange)="onDiffLineChange($event)"
@@ -131,6 +131,16 @@
                 />
             }
         </div>
+
+        @if (hyperionEnabled && (programmingExercise()?.course?.id || programmingExercise()?.exerciseGroup?.exam?.course?.id)) {
+            <jhi-checklist-panel
+                [exercise]="programmingExercise()!"
+                [courseId]="(programmingExercise()?.course?.id ?? programmingExercise()?.exerciseGroup?.exam?.course?.id)!"
+                [problemStatement]="programmingExercise()?.problemStatement || ''"
+                (problemStatementChange)="onInstructionChange($event)"
+                (problemStatementDiffRequest)="onChecklistActionDiffRequest($event)"
+            />
+        }
     }
     @if (isEditFieldDisplayedRecord()?.linkedCompetencies && !programmingExerciseCreationConfig().isExamMode) {
         <div class="form-group">

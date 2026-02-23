@@ -1,0 +1,94 @@
+.checklist-panel {
+    border: 1px solid var(--surface-border);
+    border-radius: var(--border-radius);
+    background: var(--surface-ground);
+
+    .checklist-panel-header,
+    .section-header {
+        background: var(--surface-100);
+    }
+
+    .section-header {
+        cursor: pointer;
+    }
+
+    .section-card {
+        overflow: hidden;
+
+        &.stale {
+            border-color: var(--warning);
+        }
+    }
+
+    .stale-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        color: var(--warning);
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .reanalyze-btn {
+        font-size: 0.75rem;
+    }
+
+    .expand-details-btn {
+        font-size: 0.75rem;
+    }
+
+    .quality-radar-chart {
+        svg {
+            display: block;
+        }
+
+        .radar-label {
+            font-family: var(--font-family);
+        }
+    }
+
+    .quality-dot {
+        width: 0.5rem;
+        height: 0.5rem;
+        border-radius: 50%;
+        display: inline-block;
+        flex-shrink: 0;
+    }
+
+    .category-clarity {
+        background-color: var(--primary);
+        color: var(--primary-color-text);
+    }
+
+    .category-coherence {
+        background-color: var(--info);
+        color: var(--info-color-text);
+    }
+
+    .category-completeness {
+        background-color: var(--success);
+        color: var(--success-color-text);
+    }
+
+    .category-default {
+        background-color: var(--surface-500);
+        color: var(--surface-ground);
+    }
+
+    .quality-issues-list {
+        border-top: 1px solid var(--surface-border);
+    }
+
+    .quality-issue-item {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--surface-border);
+
+        &:last-child {
+            border-bottom: none;
+        }
+    }
+
+    .quality-issue-item.issue-selected {
+        background-color: color-mix(in srgb, var(--primary) 8%, transparent);
+    }
+}

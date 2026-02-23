@@ -1,0 +1,295 @@
+<div class="checklist-panel mb-3">
+    <div class="checklist-panel-header d-flex justify-content-between align-items-center p-3 border-bottom">
+        <h5 class="mb-0" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.title">Instructor Checklist</h5>
+        <button
+            pButton
+            severity="primary"
+            size="small"
+            data-testid="analyze-button"
+            (click)="analyze()"
+            [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0"
+        >
+            <fa-icon [icon]="isLoading() ? faSpinner : faMagic" [animation]="isLoading() ? 'spin' : undefined" />
+            <span class="ms-1">{{
+                (isLoading() ? 'artemisApp.programmingExercise.instructorChecklist.analyzing' : 'artemisApp.programmingExercise.instructorChecklist.analyze') | artemisTranslate
+            }}</span>
+        </button>
+    </div>
+
+    <div class="checklist-panel-body p-3">
+        @if (analysisResult(); as result) {
+            <div class="analysis-results">
+                <!-- Quality Section (moved to top) -->
+                <div class="section-card mb-2 border rounded" [class.stale]="isSectionStale('quality')">
+                    <div
+                        class="section-header p-2 d-flex align-items-center"
+                        role="button"
+                        tabindex="0"
+                        [attr.aria-expanded]="sectionExpanded['quality']()"
+                        (click)="toggleSection('quality')"
+                        (keydown.enter)="toggleSection('quality')"
+                        (keydown.space)="$event.preventDefault(); toggleSection('quality')"
+                    >
+                        <fa-icon [icon]="sectionExpanded['quality']() ? faChevronDown : faChevronRight" class="me-2 text-muted" />
+                        <h6 class="mb-0" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.title">Quality Assessment</h6>
+                        @if (result.qualityIssues?.length) {
+                            <p-badge [value]="'' + result.qualityIssues?.length" severity="warn" class="ms-2" />
+                        } @else {
+                            <p-tag severity="success" class="ms-2">
+                                <fa-icon [icon]="faCheckCircle" size="xs" />
+                            </p-tag>
+                        }
+                        @if (isSectionStale('quality')) {
+                            <span class="ms-2 stale-badge">
+                                <fa-icon [icon]="faExclamationTriangle" />
+                                <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.outdated">Outdated</span>
+                            </span>
+                        }
+                        <span class="flex-grow-1"></span>
+                        @if (isSectionStale('quality') || isSectionLoading('quality')) {
+                            <button
+                                pButton
+                                severity="warn"
+                                [text]="true"
+                                size="small"
+                                class="reanalyze-btn"
+                                (click)="$event.stopPropagation(); reanalyzeSection('quality')"
+                                [disabled]="isLoading() || isSectionLoading('quality')"
+                            >
+                                <fa-icon [icon]="faSync" [animation]="isSectionLoading('quality') ? 'spin' : undefined" class="me-1" />
+                                <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.reanalyze">Re-analyze</span>
+                            </button>
+                        }
+                    </div>
+                    @if (sectionExpanded['quality']()) {
+                        <div class="section-body p-3">
+                            <!-- Quality Radar Chart -->
+                            <div class="quality-radar-section d-flex align-items-start gap-4 mb-3">
+                                <div class="quality-radar-chart flex-shrink-0">
+                                    <svg
+                                        viewBox="-120 -120 240 240"
+                                        width="220"
+                                        height="220"
+                                        style="overflow: visible"
+                                        role="img"
+                                        [attr.aria-label]="'artemisApp.programmingExercise.instructorChecklist.quality.radarChartLabel' | artemisTranslate"
+                                    >
+                                        <title jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.radarChartLabel">Quality scores radar chart</title>
+                                        <!-- Background grid -->
+                                        <g class="radar-grid">
+                                            @for (points of qualityGridStrings; track $index) {
+                                                <polygon [attr.points]="points" fill="none" stroke="var(--surface-500)" stroke-width="0.5" opacity="0.3" />
+                                            }
+                                        </g>
+                                        <!-- Axes -->
+                                        <g class="radar-axes">
+                                            @for (point of qualityRadarPoints(); track point.label) {
+                                                <line x1="0" y1="0" [attr.x2]="point.axisX" [attr.y2]="point.axisY" [style.stroke]="point.color" stroke-width="1" opacity="0.5" />
+                                            }
+                                        </g>
+                                        <!-- Data polygon -->
+                                        <polygon [attr.points]="qualityPolygonPoints()" fill="var(--primary)" fill-opacity="0.15" stroke="var(--primary)" stroke-width="2" />
+                                        <!-- Data points and labels -->
+                                        @for (point of qualityRadarPoints(); track point.label) {
+                                            <circle
+                                                [attr.cx]="point.dataX"
+                                                [attr.cy]="point.dataY"
+                                                r="4"
+                                                [style.fill]="point.color"
+                                                stroke="var(--surface-ground)"
+                                                stroke-width="1.5"
+                                            />
+                                            <text
+                                                [attr.x]="point.labelX"
+                                                [attr.y]="point.labelY"
+                                                text-anchor="middle"
+                                                dominant-baseline="middle"
+                                                class="radar-label"
+                                                [style.fill]="point.color"
+                                                font-size="11"
+                                                font-weight="600"
+                                            >
+                                                {{ point.label }}
+                                            </text>
+                                            <text
+                                                [attr.x]="point.labelX"
+                                                [attr.y]="point.labelY + 14"
+                                                text-anchor="middle"
+                                                dominant-baseline="middle"
+                                                [style.fill]="point.color"
+                                                font-size="10"
+                                                opacity="0.7"
+                                            >
+                                                {{ point.value * 100 | number: '1.0-0' }}%
+                                            </text>
+                                        }
+                                    </svg>
+                                </div>
+                                <!-- Quality Legend -->
+                                <div class="quality-legend flex-grow-1 small">
+                                    @for (point of qualityRadarPoints(); track point.label) {
+                                        <div class="d-flex align-items-center mb-2">
+                                            <span class="quality-dot me-2" [style.background-color]="point.color"></span>
+                                            <span class="fw-semibold me-2">{{ point.label }}</span>
+                                            <span class="text-muted">{{ point.value * 100 | number: '1.0-0' }}%</span>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+
+                            @if (result.qualityIssues && result.qualityIssues.length > 0) {
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <p-checkbox
+                                            [binary]="true"
+                                            [ngModel]="allIssuesSelected()"
+                                            (onChange)="allIssuesSelected() ? deselectAllIssues() : selectAllIssues()"
+                                            [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0"
+                                            inputId="select-all-issues"
+                                            data-testid="select-all-issues"
+                                        />
+                                        <label for="select-all-issues" class="small text-muted mb-0">
+                                            {{
+                                                (allIssuesSelected()
+                                                    ? 'artemisApp.programmingExercise.instructorChecklist.quality.deselectAll'
+                                                    : 'artemisApp.programmingExercise.instructorChecklist.quality.selectAll'
+                                                ) | artemisTranslate
+                                            }}
+                                        </label>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        @if (selectedIssueIndices().size > 0) {
+                                            <button
+                                                pButton
+                                                severity="warn"
+                                                size="small"
+                                                [outlined]="true"
+                                                [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0"
+                                                (click)="fixSelectedIssues()"
+                                                data-testid="fix-selected-button"
+                                            >
+                                                @if (isActionLoading('fix-selected')) {
+                                                    <fa-icon [icon]="faSpinner" animation="spin" size="xs" class="me-1" />
+                                                } @else {
+                                                    <fa-icon [icon]="faBolt" size="xs" class="me-1" />
+                                                }
+                                                <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.fixSelected">Fix Selected</span>
+                                                <span class="ms-1">({{ selectedIssueIndices().size }})</span>
+                                            </button>
+                                            <button
+                                                pButton
+                                                severity="secondary"
+                                                size="small"
+                                                [outlined]="true"
+                                                [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0"
+                                                (click)="discardSelectedIssues()"
+                                                data-testid="discard-selected-button"
+                                            >
+                                                <fa-icon [icon]="faTrashCan" size="xs" class="me-1" />
+                                                <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.discardSelected">Discard Selected</span>
+                                                <span class="ms-1">({{ selectedIssueIndices().size }})</span>
+                                            </button>
+                                        }
+                                        <button
+                                            pButton
+                                            severity="primary"
+                                            size="small"
+                                            [outlined]="true"
+                                            [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0"
+                                            (click)="fixAllQualityIssues()"
+                                        >
+                                            @if (isActionLoading('fix-all')) {
+                                                <fa-icon [icon]="faSpinner" animation="spin" size="xs" class="me-1" />
+                                            } @else {
+                                                <fa-icon [icon]="faBolt" size="xs" class="me-1" />
+                                            }
+                                            <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.fixAll">Fix All Issues</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="quality-issues-list">
+                                    @for (issue of result.qualityIssues; track $index; let i = $index) {
+                                        <div class="quality-issue-item" [class.issue-selected]="isIssueSelected(i)">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                                    <p-checkbox
+                                                        [binary]="true"
+                                                        [ngModel]="isIssueSelected(i)"
+                                                        (onChange)="toggleIssueSelection(i)"
+                                                        [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0"
+                                                        [inputId]="'issue-select-' + i"
+                                                        [attr.data-testid]="'issue-checkbox-' + i"
+                                                    />
+                                                    <p-tag [value]="issue.category" styleClass="category-badge" [ngClass]="getCategoryColorClass(issue.category)" />
+                                                    <p-tag [value]="issue.severity" [severity]="getSeverityTagSeverity(issue.severity)" />
+                                                </div>
+                                                <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                                                    @if (issue.location?.startLine) {
+                                                        <small class="text-muted">Line {{ issue.location?.startLine }}</small>
+                                                    }
+                                                    <button
+                                                        pButton
+                                                        severity="warn"
+                                                        size="small"
+                                                        [outlined]="true"
+                                                        [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0"
+                                                        (click)="fixQualityIssue(issue, i)"
+                                                        [attr.title]="'artemisApp.programmingExercise.instructorChecklist.quality.fixIssue' | artemisTranslate"
+                                                    >
+                                                        @if (isActionLoading('fix-issue-' + i)) {
+                                                            <fa-icon [icon]="faSpinner" animation="spin" size="xs" />
+                                                        } @else {
+                                                            <fa-icon [icon]="faWrench" size="xs" />
+                                                        }
+                                                        <span class="ms-1" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.fix">Fix</span>
+                                                    </button>
+                                                    <button
+                                                        pButton
+                                                        severity="secondary"
+                                                        size="small"
+                                                        [text]="true"
+                                                        [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0"
+                                                        (click)="discardQualityIssue(i)"
+                                                        [attr.title]="'artemisApp.programmingExercise.instructorChecklist.quality.discardIssue' | artemisTranslate"
+                                                        [attr.data-testid]="'discard-issue-' + i"
+                                                    >
+                                                        <fa-icon [icon]="faTrashCan" size="xs" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <p class="mb-1 mt-2 small">{{ issue.description }}</p>
+                                            @if (issue.suggestedFix) {
+                                                <div class="small text-muted">
+                                                    <strong jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.suggestedFix">Suggested fix:</strong>
+                                                    {{ issue.suggestedFix }}
+                                                </div>
+                                            }
+                                            @if (issue.impactOnLearners) {
+                                                <div class="small text-muted fst-italic mt-1">
+                                                    <fa-icon [icon]="faInfoCircle" class="me-1" />
+                                                    {{ issue.impactOnLearners }}
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            } @else {
+                                <div class="text-success d-flex align-items-center gap-2 py-2">
+                                    <fa-icon [icon]="faCheckCircle" />
+                                    <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.empty">No quality issues found.</span>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <!-- Competencies and Difficulty sections will be added in future PRs -->
+            </div>
+        }
+        @if (!analysisResult()) {
+            <div class="text-muted text-center p-3" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.defaultMessage">
+                Click "Analyze Problem Statement" to check for competencies, difficulty, and quality issues.
+            </div>
+        }
+    </div>
+</div>

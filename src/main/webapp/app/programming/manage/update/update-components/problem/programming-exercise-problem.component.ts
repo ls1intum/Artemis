@@ -26,6 +26,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ChecklistPanelComponent } from './checklist-panel/checklist-panel.component';
 import { AlertService } from 'app/shared/service/alert.service';
 
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
@@ -48,6 +49,7 @@ import { LineChange } from 'app/programming/shared/utils/diff.utils';
         ButtonModule,
         FaIconComponent,
         HelpIconComponent,
+        ChecklistPanelComponent,
         GitDiffLineStatComponent,
         MessageModule,
     ],
@@ -70,6 +72,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     private profileService = inject(ProfileService);
     hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
 
+    // icons
     facArtemisIntelligence = facArtemisIntelligence;
     faSpinner = faSpinner;
 
@@ -276,9 +279,6 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
         return this.translateService.instant('artemisApp.programmingExercise.problemStatement.examplePlaceholder');
     }
 
-    /**
-     * Handles changes to competency links
-     */
     onCompetencyLinksChange(competencyLinks: ProgrammingExercise['competencyLinks']): void {
         const exercise = this.programmingExercise();
         if (exercise) {
@@ -292,14 +292,32 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
         this.removedLineCount.set(event.lineChange.removedLineCount);
     }
 
-    onInstructionChange(problemStatement: string) {
+    /**
+     * Opens the diff view to show changes proposed by a checklist AI action.
+     * Uses the same diff review flow as refineProblemStatement().
+     */
+    onChecklistActionDiffRequest(proposedContent: string): void {
+        this.showDiff.set(true);
+        const requestId = ++this.refinementRequestId;
+        afterNextRender(
+            () => {
+                if (requestId === this.refinementRequestId && this.showDiff()) {
+                    this.editableInstructions()?.applyRefinedContent(proposedContent);
+                }
+            },
+            { injector: this.injector },
+        );
+    }
+
+    onInstructionChange(problemStatement: string): void {
         const exercise = this.programmingExercise();
         const previousContent = this.currentProblemStatement();
         this.currentProblemStatement.set(problemStatement);
-        if (problemStatement !== previousContent) {
+        const changed = problemStatement !== previousContent;
+        if (changed) {
             this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
         }
-        if (exercise) {
+        if (exercise && changed) {
             exercise.problemStatement = problemStatement;
             this.programmingExerciseChange.emit(exercise);
         }
