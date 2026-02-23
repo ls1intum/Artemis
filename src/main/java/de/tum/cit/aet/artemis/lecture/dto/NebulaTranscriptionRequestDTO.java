@@ -14,6 +14,7 @@ public record NebulaTranscriptionRequestDTO(@NotNull String videoUrl, @NotNull L
      * @param authenticationToken The token used for callback authentication (also serves as runId)
      * @param artemisBaseUrl      The base URL of Artemis for callbacks
      */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record NebulaTranscriptionSettingsDTO(String authenticationToken, String artemisBaseUrl) {
     }
 }

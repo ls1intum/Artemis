@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
@@ -89,9 +90,14 @@ class LectureContentProcessingServiceTest {
                 Optional.of(irisLectureApi), featureToggleService, processingStateCallbackService);
 
         // Set up test data
+        Course testCourse = new Course();
+        testCourse.setId(10L);
+        testCourse.setTitle("Test Course");
+
         testLecture = new Lecture();
         testLecture.setId(1L);
         testLecture.setTitle("Test Lecture");
+        testLecture.setCourse(testCourse);
 
         testUnit = new AttachmentVideoUnit();
         testUnit.setId(100L);
