@@ -10,12 +10,12 @@
 
 
 /**
- * Response containing generated problem statement
+ * Response containing refined problem statement
  */
-export interface ProblemStatementGenerationResponse { 
+export interface ProblemStatementRefinementResponse { 
     /**
-     * Draft problem statement text
+     * Refined problem statement text
      */
-    draftProblemStatement?: string;
+    refinedProblemStatement?: string;
 }
 

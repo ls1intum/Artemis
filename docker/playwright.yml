@@ -34,7 +34,7 @@ services:
           npm run playwright:setup &&
                 npm run playwright:test:filtered &&
                     if [ -f ./test-reports/results-parallel.xml ] || [ -f ./test-reports/results-sequential.xml ]; then
-                            rm ./test-reports/results-parallel.xml ./test-reports/results-sequential.xml
+                            rm -f ./test-reports/results-parallel.xml ./test-reports/results-sequential.xml
                     fi
           '
         volumes:
