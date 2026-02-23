@@ -439,8 +439,11 @@ public class HyperionChecklistService {
         }
 
         var cached = courseCompetencyCache.get(courseId);
-        if (cached != null && cached.isValid()) {
-            return cached.json();
+        if (cached != null) {
+            if (cached.isValid()) {
+                return cached.json();
+            }
+            courseCompetencyCache.remove(courseId, cached);
         }
 
         try {
@@ -512,15 +515,13 @@ public class HyperionChecklistService {
             totalWeight += confidence;
         }
 
-        // Normalize to sum to 1.0
+        // Normalize to sum to 1.0, explicitly mapping each enum constant by name
         final double finalTotal = totalWeight > 0 ? totalWeight : 1.0;
-        CompetencyTaxonomy[] levels = CompetencyTaxonomy.values();
-        double[] values = new double[levels.length];
-        for (int i = 0; i < levels.length; i++) {
-            values[i] = taxonomyWeights.getOrDefault(levels[i], 0.0) / finalTotal;
-        }
 
-        return new BloomRadarDTO(values[0], values[1], values[2], values[3], values[4], values[5]);
+        return new BloomRadarDTO(taxonomyWeights.getOrDefault(CompetencyTaxonomy.REMEMBER, 0.0) / finalTotal,
+                taxonomyWeights.getOrDefault(CompetencyTaxonomy.UNDERSTAND, 0.0) / finalTotal, taxonomyWeights.getOrDefault(CompetencyTaxonomy.APPLY, 0.0) / finalTotal,
+                taxonomyWeights.getOrDefault(CompetencyTaxonomy.ANALYZE, 0.0) / finalTotal, taxonomyWeights.getOrDefault(CompetencyTaxonomy.EVALUATE, 0.0) / finalTotal,
+                taxonomyWeights.getOrDefault(CompetencyTaxonomy.CREATE, 0.0) / finalTotal);
     }
 
     /**

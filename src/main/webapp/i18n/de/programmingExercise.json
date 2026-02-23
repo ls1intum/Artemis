@@ -12,6 +12,12 @@
                 "switchToAdvancedMode": "Zum erweiterten Modus wechseln",
                 "advancedModeTooltip": "Der erweiterte Modus bietet erweiterte Konfigurationsmöglichkeiten."
             },
+            "problemStatementGlobalRefinementRequest": {
+                "userPrompt": "Eingabeaufforderung"
+            },
+            "problemStatementGenerationRequest": {
+                "userPrompt": "Eingabeaufforderung"
+            },
             "created": "Programmieraufgabe erstellt mit Titel {{ param }}",
             "updated": "Programmieraufgabe aktualisiert mit Titel {{ param }}",
             "deleted": "Programmieraufgabe gelöscht mit Titel {{ param }}",
@@ -240,11 +246,24 @@
                 "testCaseCommand": "Testfall einfügen",
                 "tasksOfExercise": "Teilaufgaben:",
                 "generationAssistance": "Entwurf der Problemstellung erstellen",
+                "refinementAssistance": "Problemstellung verfeinern",
                 "generateDraftDescription": "Verwende dieses Feld, um die Aufgabenbeschreibung zu entwerfen oder die aktuelle Formulierung zu verfeinern. Deine Eingaben steuern sowohl die Problemstellung als auch die Lernziele. Sei konkret zu Anforderungen, Konzepten und Randbedingungen.",
                 "yourRequirements": "Deine Anforderungen",
                 "examplePlaceholder": "Beispiel: Erstelle eine Java-Übung zur Implementierung eines binären Suchbaums mit Insert-, Delete- und Search-Operationen. Studierende sollen Verständnis für Baumtraversal und rekursive Algorithmen demonstrieren.",
                 "generationSuccess": "Aufgabenstellung wurde erfolgreich generiert.",
-                "generationError": "Fehler beim Generieren der Aufgabenstellung. Bitte versuche es erneut."
+                "generationError": "Fehler beim Generieren der Aufgabenstellung. Bitte versuche es erneut.",
+                "refinementSuccess": "Aufgabenstellung wurde erfolgreich verfeinert.",
+                "refinementError": "Fehler beim Verfeinern der Aufgabenstellung. Bitte versuche es erneut.",
+                "cannotRefineEmpty": "Eine leere Aufgabenstellung kann nicht verfeinert werden. Bitte f\u00fcge zuerst Inhalt hinzu.",
+                "problemStatementTooLong": "Die Aufgabenstellung ist zu lang zum Verfeinern. Bitte kürze den Inhalt und versuche es erneut.",
+                "reviewChanges": "Änderungen überprüfen",
+                "reviewChangesDescription": "Grüne Zeilen werden hinzugefügt, rote Zeilen werden entfernt.",
+                "revertAll": "Alles zurücksetzen",
+                "doneReviewing": "Fertig mit Überprüfung",
+                "aiRefining": "KI aktualisiert die Aufgabenstellung...",
+                "generate": "Generieren",
+                "refine": "Verfeinern",
+                "diffLineStatTooltip": "Zeilen, die durch die KI-Verfeinerung hinzugefügt und entfernt wurden."
             },
             "codeGeneration": {
                 "creationAssistance": "Erstellungsassistenz",
@@ -788,9 +807,9 @@
                 "title": "Checkliste für Lehrende",
                 "analyze": "Problemstellung analysieren",
                 "analyzing": "Analysiere...",
-                "defaultMessage": "Klicke auf \"Problemstellung analysieren\", um nach Qualitätsproblemen und Lernzielen zu suchen.",
+                "defaultMessage": "Klicke auf \"Problemstellung analysieren\", um nach Kompetenzbereichen, Schwierigkeitsbewertung und Qualitätsproblemen zu suchen.",
                 "competencies": {
-                    "title": "Geschätzte Lernziele",
+                    "title": "Geschätzte Kompetenzen",
                     "empty": "Keine Kompetenzen abgeleitet.",
                     "primary": "Primär",
                     "evidence": "Belege:",

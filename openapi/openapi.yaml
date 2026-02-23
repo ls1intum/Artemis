@@ -265,6 +265,26 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/ProblemStatementRewriteResponse'}
+  /api/hyperion/courses/{courseId}/problem-statements/refine/global:
+    post:
+      tags: [hyperion-problem-statement]
+      operationId: refineProblemStatementGlobally
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ProblemStatementGlobalRefinementRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ProblemStatementRefinementResponse'}
   /api/hyperion/courses/{courseId}/problem-statements/generate:
     post:
       tags: [hyperion-problem-statement]
@@ -705,6 +725,12 @@ components:
         completion: {type: integer, format: int64, description: Completion token length,
           example: 3753}
         total: {type: integer, format: int64, description: Total token length, example: 13957}
+    ProblemStatementRefinementResponse:
+      type: object
+      description: Response containing refined problem statement
+      properties:
+        refinedProblemStatement: {type: string, description: Refined problem statement
+            text}
     ProblemStatementGenerationRequest:
       type: object
       description: Request to generate a problem statement
@@ -921,3 +947,12 @@ components:
         registrationNumber: {type: string}
         firstName: {type: string}
         lastName: {type: string}
+    ProblemStatementGlobalRefinementRequest:
+      type: object
+      description: Request to refine a problem statement globally using a user prompt
+      properties:
+        problemStatementText: {type: string, description: 'Original problem statement
+            text to be refined (max 50,000 chars)', maxLength: 50000, minLength: 1}
+        userPrompt: {type: string, description: User prompt for global refinement,
+          maxLength: 1000, minLength: 1}
+      required: [problemStatementText, userPrompt]

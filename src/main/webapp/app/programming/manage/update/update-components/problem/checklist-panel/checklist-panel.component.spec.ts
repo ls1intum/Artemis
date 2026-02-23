@@ -40,10 +40,6 @@ describe('ChecklistPanelComponent', () => {
     let competencyService: CompetencyService;
 
     const courseId = 42;
-    const exercise = new ProgrammingExercise(undefined, undefined);
-    exercise.id = 123;
-    exercise.problemStatement = 'Problem statement';
-    exercise.difficulty = DifficultyLevel.EASY; // Changed 'EASY' to DifficultyLevel.EASY for consistency with mockExercise
 
     const mockResponse: ChecklistAnalysisResponse = {
         inferredCompetencies: [
@@ -75,6 +71,11 @@ describe('ChecklistPanelComponent', () => {
         apiService = TestBed.inject(HyperionProblemStatementApiService);
         alertService = TestBed.inject(AlertService);
         competencyService = TestBed.inject(CompetencyService);
+
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.id = 123;
+        exercise.problemStatement = 'Problem statement';
+        exercise.difficulty = DifficultyLevel.EASY;
 
         fixture.componentRef.setInput('exercise', exercise);
         fixture.componentRef.setInput('courseId', courseId);
@@ -147,7 +148,7 @@ describe('ChecklistPanelComponent', () => {
 
             const actionSpy = vi.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(mockActionResponse) as any);
             vi.spyOn(apiService, 'analyzeChecklist').mockReturnValue(of(mockResponse) as any);
-            const emitSpy = vi.spyOn(component.problemStatementChange, 'emit');
+            const emitSpy = vi.spyOn(component.problemStatementDiffRequest, 'emit');
 
             component.fixQualityIssue(issueToFix, 0);
 

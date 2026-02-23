@@ -26,6 +26,8 @@ model/examSeat.ts
 model/inferredCompetency.ts
 model/problemStatementGenerationRequest.ts
 model/problemStatementGenerationResponse.ts
+model/problemStatementGlobalRefinementRequest.ts
+model/problemStatementRefinementResponse.ts
 model/problemStatementRewriteRequest.ts
 model/problemStatementRewriteResponse.ts
 model/qualityIssue.ts

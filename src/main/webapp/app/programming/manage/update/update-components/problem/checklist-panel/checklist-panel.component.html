@@ -292,17 +292,17 @@
                                                     severity="secondary"
                                                     size="small"
                                                     class="expand-details-btn flex-shrink-0"
-                                                    (click)="toggleCompetencyExpand(comp.rank || 0); $event.stopPropagation()"
+                                                    (click)="toggleCompetencyExpand($index); $event.stopPropagation()"
                                                 >
-                                                    <fa-icon [icon]="isCompetencyExpanded(comp.rank || 0) ? faChevronDown : faChevronRight" size="xs" class="me-1" />
+                                                    <fa-icon [icon]="isCompetencyExpanded($index) ? faChevronDown : faChevronRight" size="xs" class="me-1" />
                                                     <span>{{
-                                                        isCompetencyExpanded(comp.rank || 0)
+                                                        isCompetencyExpanded($index)
                                                             ? ('artemisApp.programmingExercise.instructorChecklist.competencies.hideDetails' | artemisTranslate)
                                                             : ('artemisApp.programmingExercise.instructorChecklist.competencies.showDetails' | artemisTranslate)
                                                     }}</span>
                                                 </button>
                                             </div>
-                                            @if (isCompetencyExpanded(comp.rank || 0)) {
+                                            @if (isCompetencyExpanded($index)) {
                                                 <div class="evidence-section mt-2">
                                                     @if (comp.relatedTaskNames?.length) {
                                                         <strong class="small" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.relatedTasks"

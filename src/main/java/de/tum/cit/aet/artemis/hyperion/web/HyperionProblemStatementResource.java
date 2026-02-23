@@ -27,17 +27,20 @@ import de.tum.cit.aet.artemis.hyperion.dto.ChecklistAnalysisResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementGenerationResponseDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementGlobalRefinementRequestDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRefinementResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionChecklistService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionConsistencyCheckService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionProblemStatementGenerationService;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionProblemStatementRefinementService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionProblemStatementRewriteService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 /**
- * REST controller for Hyperion problem statement features (generation, rewrite, and consistency check).
+ * REST controller for Hyperion problem statement features (generation, refinement, rewrite, and consistency check).
  */
 @Conditional(HyperionEnabled.class)
 @Lazy
@@ -59,15 +62,19 @@ public class HyperionProblemStatementResource {
 
     private final HyperionChecklistService checklistService;
 
+    private final HyperionProblemStatementRefinementService problemStatementRefinementService;
+
     public HyperionProblemStatementResource(CourseRepository courseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             HyperionConsistencyCheckService consistencyCheckService, HyperionProblemStatementRewriteService problemStatementRewriteService,
-            HyperionProblemStatementGenerationService problemStatementGenerationService, HyperionChecklistService checklistService) {
+            HyperionProblemStatementGenerationService problemStatementGenerationService, HyperionChecklistService checklistService,
+            HyperionProblemStatementRefinementService problemStatementRefinementService) {
         this.courseRepository = courseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.consistencyCheckService = consistencyCheckService;
         this.problemStatementRewriteService = problemStatementRewriteService;
         this.problemStatementGenerationService = problemStatementGenerationService;
         this.checklistService = checklistService;
+        this.problemStatementRefinementService = problemStatementRefinementService;
     }
 
     /**
@@ -120,6 +127,7 @@ public class HyperionProblemStatementResource {
     }
 
     /**
+     * /**
      * POST courses/{courseId}/checklist-analysis: Analyze the problem statement for checklist (learning goals, difficulty, quality).
      * The three LLM calls (competency, difficulty, quality) run concurrently inside the service.
      * Blocking on the CompletableFuture here is acceptable because Artemis runs on virtual threads.
@@ -188,5 +196,22 @@ public class HyperionProblemStatementResource {
         courseRepository.findByIdElseThrow(courseId);
         var actionResult = checklistService.applyChecklistAction(request);
         return ResponseEntity.ok(actionResult);
+    }
+
+    /**
+     * POST courses/{courseId}/problem-statements/refine/global: Refine an existing problem statement using a global prompt.
+     *
+     * @param courseId the id of the course the problem statement belongs to
+     * @param request  the request containing the original problem statement and user prompt
+     * @return the ResponseEntity with status 200 (OK) and the refined problem statement or an error status
+     */
+    @EnforceAtLeastEditorInCourse
+    @PostMapping("courses/{courseId}/problem-statements/refine/global")
+    public ResponseEntity<ProblemStatementRefinementResponseDTO> refineProblemStatementGlobally(@PathVariable long courseId,
+            @Valid @RequestBody ProblemStatementGlobalRefinementRequestDTO request) {
+        log.debug("REST request to Hyperion refine the problem statement globally for course [{}]", courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        var result = problemStatementRefinementService.refineProblemStatement(course, request.problemStatementText(), request.userPrompt());
+        return ResponseEntity.ok(result);
     }
 }

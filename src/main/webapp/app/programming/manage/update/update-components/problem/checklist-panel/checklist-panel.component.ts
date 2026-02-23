@@ -42,7 +42,6 @@ import {
     LOW_COMPETENCY_LINK_WEIGHT,
     MEDIUM_COMPETENCY_LINK_WEIGHT,
 } from 'app/atlas/shared/entities/competency.model';
-import { HttpResponse } from '@angular/common/http';
 import { EMPTY, Observable, forkJoin, of } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { taskRegex } from 'app/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
@@ -82,6 +81,7 @@ export class ChecklistPanelComponent {
     problemStatement = input.required<string>();
 
     problemStatementChange = output<string>();
+    problemStatementDiffRequest = output<string>();
     competencyLinksChange = output<CompetencyExerciseLink[]>();
     difficultyChange = output<string>();
 
@@ -337,7 +337,7 @@ export class ChecklistPanelComponent {
                     if (res.applied) {
                         const newProblemStatement = res.updatedProblemStatement ?? this.latestProblemStatement() ?? this.problemStatement();
                         this.latestProblemStatement.set(newProblemStatement);
-                        this.problemStatementChange.emit(newProblemStatement);
+                        this.problemStatementDiffRequest.emit(newProblemStatement);
                         this.alertService.success('artemisApp.programmingExercise.instructorChecklist.actions.success');
                         onApplied?.();
                         // Mark other sections as stale instead of re-analyzing
@@ -395,7 +395,8 @@ export class ChecklistPanelComponent {
                 next: (res: ChecklistAnalysisResponse) => {
                     const current = this.analysisResult();
                     if (current) {
-                        this.analysisResult.set({ ...current, [SECTION_TO_FIELD[section]]: res[SECTION_TO_FIELD[section]] });
+                        const updated = Object.assign({}, current, { [SECTION_TO_FIELD[section]]: res[SECTION_TO_FIELD[section]] });
+                        this.analysisResult.set(updated);
                     } else {
                         this.analysisResult.set(res);
                     }
@@ -431,7 +432,7 @@ export class ChecklistPanelComponent {
             },
             `fix-issue-${index}`,
             ['competencies', 'difficulty'],
-            () => this.updateAnalysisOptimistically((r) => ({ ...r, qualityIssues: (r.qualityIssues ?? []).filter((_, i) => i !== index) })),
+            () => this.updateAnalysisOptimistically((r) => Object.assign({}, r, { qualityIssues: (r.qualityIssues ?? []).filter((_, i) => i !== index) })),
         );
     }
 
@@ -447,7 +448,7 @@ export class ChecklistPanelComponent {
             },
             'fix-all',
             ['competencies', 'difficulty'],
-            () => this.updateAnalysisOptimistically((r) => ({ ...r, qualityIssues: [] })),
+            () => this.updateAnalysisOptimistically((r) => Object.assign({}, r, { qualityIssues: [] })),
         );
     }
 
@@ -471,17 +472,17 @@ export class ChecklistPanelComponent {
             `adapt-${targetDifficulty}`,
             ['quality', 'competencies'],
             () => {
-                this.updateAnalysisOptimistically((r) => ({
-                    ...r,
-                    difficultyAssessment: {
-                        ...r.difficultyAssessment,
-                        suggested: targetDifficulty,
-                        delta: DifficultyAssessment.DeltaEnum.Match,
-                        reasoning: this.translateService.instant('artemisApp.programmingExercise.instructorChecklist.actions.adaptedReasoning', {
-                            difficulty: targetDifficulty,
+                this.updateAnalysisOptimistically((r) =>
+                    Object.assign({}, r, {
+                        difficultyAssessment: Object.assign({}, r.difficultyAssessment, {
+                            suggested: targetDifficulty,
+                            delta: DifficultyAssessment.DeltaEnum.Match,
+                            reasoning: this.translateService.instant('artemisApp.programmingExercise.instructorChecklist.actions.adaptedReasoning', {
+                                difficulty: targetDifficulty,
+                            }),
                         }),
-                    },
-                }));
+                    }),
+                );
                 this.difficultyChange.emit(targetDifficulty);
             },
         );
@@ -547,16 +548,23 @@ export class ChecklistPanelComponent {
                         this.finishApply(allLinks, newlyLinked, new Set());
                         return EMPTY;
                     }
-                    const create$: Observable<HttpResponse<Competency> | null>[] = toCreate.map((comp) =>
-                        this.competencyService.create(comp, courseId).pipe(catchError(() => of(null))),
+                    const create$ = toCreate.map((comp) =>
+                        this.competencyService.create(comp, courseId).pipe(
+                            map((response) => ({ success: true as const, response })),
+                            catchError(() => of({ success: false as const, response: null })),
+                        ),
                     );
                     return forkJoin(create$).pipe(
                         tap((results) => {
                             const newlyCreated = new Set<string>();
+                            let failureCount = 0;
                             for (let i = 0; i < results.length; i++) {
-                                const response = results[i];
-                                if (!response) continue;
-                                const created = response.body;
+                                const result = results[i];
+                                if (!result.success) {
+                                    failureCount++;
+                                    continue;
+                                }
+                                const created = result.response?.body;
                                 if (created?.id && !linkedIds.has(created.id)) {
                                     allLinks.push(new CompetencyExerciseLink(created, exercise, this.computeRelevanceWeight(toCreateInferred[i])));
                                     linkedIds.add(created.id);
@@ -565,6 +573,11 @@ export class ChecklistPanelComponent {
                                 }
                             }
                             this.finishApply(allLinks, newlyLinked, newlyCreated);
+                            if (failureCount > 0 && failureCount < results.length) {
+                                this.alertService.warning('artemisApp.programmingExercise.instructorChecklist.competencies.syncError');
+                            } else if (failureCount === results.length) {
+                                this.alertService.error('artemisApp.programmingExercise.instructorChecklist.competencies.syncError');
+                            }
                         }),
                         catchError(() => {
                             this.finishApply(allLinks, newlyLinked, new Set());
