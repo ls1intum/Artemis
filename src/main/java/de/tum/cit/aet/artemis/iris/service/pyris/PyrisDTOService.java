@@ -122,6 +122,9 @@ public class PyrisDTOService {
     }
 
     private Map<String, String> getFilteredRepositoryContents(ProgrammingExerciseParticipation participation) {
+        if (participation == null) {
+            return Map.of();
+        }
         var language = participation.getProgrammingExercise().getProgrammingLanguage();
 
         var repositoryContents = getRepositoryContents(participation.getVcsRepositoryUri());
@@ -138,6 +141,9 @@ public class PyrisDTOService {
      * @return the repository or empty if it could not be fetched
      */
     private Map<String, String> getRepositoryContents(LocalVCRepositoryUri repositoryUri) {
+        if (repositoryUri == null) {
+            return Map.of();
+        }
         try {
             return repositoryService.getFilesContentFromBareRepositoryForLastCommit(repositoryUri);
         }
