@@ -20,6 +20,7 @@ import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
@@ -48,6 +49,7 @@ import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.co
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
+import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
 
 // Session history time bucket boundaries (in days ago)
 const YESTERDAY_OFFSET = 1;
@@ -95,6 +97,8 @@ const COPY_FEEDBACK_DURATION_MS = 1500;
 export class IrisBaseChatbotComponent implements AfterViewInit {
     protected accountService = inject(AccountService);
     protected translateService = inject(TranslateService);
+    private readonly dialogService = inject(DialogService);
+    private aboutIrisDialogRef: DynamicDialogRef<AboutIrisModalComponent> | undefined;
     private readonly alertService = inject(AlertService);
     private readonly confirmationService = inject(ConfirmationService);
 
@@ -344,6 +348,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
                 clearInterval(this.dayTickIntervalId);
             }
         });
+        this.destroyRef.onDestroy(() => this.aboutIrisDialogRef?.close());
     }
 
     /**
@@ -741,6 +746,20 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     openNewSession() {
         this.chatService.clearChat();
+    }
+
+    openAboutIrisModal(): void {
+        this.aboutIrisDialogRef?.close();
+        this.aboutIrisDialogRef =
+            this.dialogService.open(AboutIrisModalComponent, {
+                modal: true,
+                closable: false,
+                showHeader: false,
+                styleClass: 'about-iris-dialog',
+                maskStyleClass: 'about-iris-dialog',
+                width: '40rem',
+                breakpoints: { '640px': '95vw' },
+            }) ?? undefined;
     }
 
     setSearchValue(searchValue: string) {
