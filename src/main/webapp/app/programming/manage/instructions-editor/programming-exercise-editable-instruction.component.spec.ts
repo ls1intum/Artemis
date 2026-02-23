@@ -408,4 +408,45 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         expect(actions).toHaveLength(1);
         expect(actions[0]).toBeInstanceOf(RewriteAction);
     });
+
+    it('should cleanup subscriptions on destroy', fakeAsync(() => {
+        setRequiredInputs(fixture, exercise);
+        fixture.componentRef.setInput('participation', templateParticipation);
+        fixture.detectChanges();
+        tick();
+
+        // Get subscription reference before destroy
+        const testCaseSubscription = comp.testCaseSubscription;
+
+        // Destroy the component
+        comp.ngOnDestroy();
+
+        // Verify cleanup occurred
+        if (testCaseSubscription) {
+            expect(testCaseSubscription.closed).toBeTrue();
+        }
+
+        flush();
+    }));
+
+    it('should subscribe for test cases when exercise changes', fakeAsync(() => {
+        const newExercise = { ...exercise, id: 31 } as ProgrammingExercise;
+        setRequiredInputs(fixture, exercise);
+        fixture.componentRef.setInput('participation', templateParticipation);
+        fixture.detectChanges();
+        tick();
+
+        // Reset spy
+        generateHtmlSubjectStub.mockClear();
+
+        // Trigger exercise change
+        fixture.componentRef.setInput('exercise', newExercise);
+        fixture.detectChanges();
+        tick();
+
+        expect(subscribeForTestCaseSpy).toHaveBeenCalledWith(newExercise.id);
+
+        fixture.destroy();
+        flush();
+    }));
 });
