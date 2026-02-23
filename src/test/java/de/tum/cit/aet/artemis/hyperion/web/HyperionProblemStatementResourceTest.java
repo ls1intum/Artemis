@@ -350,7 +350,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     void shouldReturnForbiddenForTargetedRefineWithNonExistentCourse() throws Exception {
         long nonExistentCourseId = 999999L;
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
-        String body = "{\"problemStatementText\":\"Original\",\"startLine\":1,\"endLine\":1,\"instruction\":\"Fix this\"}";
+        String body = buildTargetedRefinementBody("Original", 1, 1, null, null, "Fix this");
         request.performMvcRequest(
                 post("/api/hyperion/courses/{courseId}/problem-statements/refine/targeted", nonExistentCourseId).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isForbidden());

@@ -530,6 +530,8 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(result).toEqual({
             startLine: 1,
             endLine: 3,
+            startColumn: 1,
+            endColumn: 10,
         });
     });
 

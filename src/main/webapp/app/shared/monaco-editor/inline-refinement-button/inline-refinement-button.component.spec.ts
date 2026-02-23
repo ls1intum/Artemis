@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { InlineRefinementButtonComponent } from './inline-refinement-button.component';
 import { TranslateService } from '@ngx-translate/core';
 import { vi } from 'vitest';
@@ -6,6 +7,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { Subject } from 'rxjs';
 
 describe('InlineRefinementButtonComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<InlineRefinementButtonComponent>;
     let comp: InlineRefinementButtonComponent;
     let translateService: TranslateService;

@@ -215,8 +215,9 @@ public class HyperionProblemStatementRefinementService {
         }
         else {
             if (request.hasColumnRange()) {
-                return String.format("Lines %d-%d, from column %d on line %d to column %d on line %d", request.startLine(), request.endLine(), request.startColumn(),
-                        request.startLine(), request.endColumn() - 1, request.endLine());
+                String selectedText = extractSelectedText(request, lines);
+                return String.format("Lines %d-%d, from column %d on line %d to column %d on line %d (modify ONLY the text: \"%s\")", request.startLine(), request.endLine(),
+                        request.startColumn(), request.startLine(), request.endColumn() - 1, request.endLine(), selectedText);
             }
             return "Lines " + request.startLine() + "-" + request.endLine();
         }

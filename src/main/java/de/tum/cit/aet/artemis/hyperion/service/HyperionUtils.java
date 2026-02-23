@@ -58,6 +58,16 @@ final class HyperionUtils {
      */
     private static final Pattern HTML_TAG_PATTERN = Pattern.compile("<[^>]+>");
 
+    /**
+     * Pattern matching wrapper marker lines that the LLM may copy from the prompt template
+     * (e.g. {@code "--- BEGIN PROBLEM STATEMENT ---"}, {@code "--- END PROBLEM STATEMENT ---"}).
+     * Matches lines consisting of three or more dashes, optional whitespace, BEGIN/END, any label, and closing dashes.
+     */
+    private static final Pattern WRAPPER_MARKER_LINE = Pattern.compile("^\\s*-{3,}\\s*(?:BEGIN|END)\\s+.*-{3,}\\s*$", Pattern.CASE_INSENSITIVE);
+
+    /** Pattern matching a line that starts with a line-number prefix: one or more digits followed by a colon and a space. */
+    private static final Pattern LINE_NUMBER_PREFIX = Pattern.compile("^\\d+: ");
+
     private HyperionUtils() {
         // utility class
     }
@@ -155,16 +165,6 @@ final class HyperionUtils {
         String sanitized = sanitizeInput(description);
         return sanitized.isBlank() ? DEFAULT_COURSE_DESCRIPTION : sanitized;
     }
-
-    /**
-     * Pattern matching wrapper marker lines that the LLM may copy from the prompt template
-     * (e.g. {@code "--- BEGIN PROBLEM STATEMENT ---"}, {@code "--- END PROBLEM STATEMENT ---"}).
-     * Matches lines consisting of three or more dashes, optional whitespace, BEGIN/END, any label, and closing dashes.
-     */
-    private static final Pattern WRAPPER_MARKER_LINE = Pattern.compile("^\\s*-{3,}\\s*(?:BEGIN|END)\\s+.*-{3,}\\s*$", Pattern.CASE_INSENSITIVE);
-
-    /** Pattern matching a line that starts with a line-number prefix: one or more digits followed by a colon and a space. */
-    private static final Pattern LINE_NUMBER_PREFIX = Pattern.compile("^\\d+: ");
 
     /**
      * Defensively strips line-number prefixes ({@code "1: "}, {@code "2: "}, \u2026) that an

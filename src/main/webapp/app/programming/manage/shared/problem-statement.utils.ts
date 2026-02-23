@@ -112,7 +112,7 @@ export function buildTargetedRefinementRequest(problemStatementText: string, eve
         endLine: event.endLine,
         startColumn: event.startColumn,
         endColumn: event.endColumn,
-        instruction: event.instruction?.trim(),
+        instruction: event.instruction.trim(),
     };
 }
 

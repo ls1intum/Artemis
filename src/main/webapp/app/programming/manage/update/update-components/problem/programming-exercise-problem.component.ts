@@ -303,6 +303,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
         const requestId = ++this.refinementRequestId;
         this.currentAiOperationSubscription = this.problemStatementService
             .refineTargeted(exercise, currentContent, event, (v) => this.isGeneratingOrRefining.set(v))
+            .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (result) => {
                     if (result.success && result.content) {

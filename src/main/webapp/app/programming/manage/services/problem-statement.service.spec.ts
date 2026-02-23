@@ -1,8 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { TestBed, fakeAsync } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { vi } from 'vitest';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ProblemStatementService } from './problem-statement.service';
 import { FileService } from 'app/shared/service/file.service';
 import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
@@ -12,6 +13,7 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 
 describe('ProblemStatementService', () => {
+    setupTestBed({ zoneless: true });
     let service: ProblemStatementService;
     let fileServiceMock: { getTemplateFile: ReturnType<typeof vi.fn> };
     let hyperionApiMock: {
@@ -84,21 +86,21 @@ describe('ProblemStatementService', () => {
     });
 
     describe('generateProblemStatement', () => {
-        it('should return failure when exercise is undefined', fakeAsync(() => {
+        it('should return failure when exercise is undefined', () => {
             const loadingSignal = signal(false);
             let result: any;
             service.generateProblemStatement(undefined, 'prompt', (v: boolean) => loadingSignal.set(v)).subscribe((r) => (result = r));
             expect(result).toEqual({ success: false, errorHandled: true });
-        }));
+        });
 
-        it('should return failure when prompt is empty', fakeAsync(() => {
+        it('should return failure when prompt is empty', () => {
             const loadingSignal = signal(false);
             let result: any;
             service.generateProblemStatement(exerciseWithCourse, '   ', (v: boolean) => loadingSignal.set(v)).subscribe((r) => (result = r));
             expect(result).toEqual({ success: false, errorHandled: true });
-        }));
+        });
 
-        it('should generate successfully', fakeAsync(() => {
+        it('should generate successfully', () => {
             hyperionApiMock.generateProblemStatement.mockReturnValue(of({ draftProblemStatement: 'Generated!' }) as any);
             const loadingSignal = signal(false);
             let result: any;
@@ -107,25 +109,29 @@ describe('ProblemStatementService', () => {
             expect(result.content).toBe('Generated!');
             expect(loadingSignal()).toBeFalsy();
             expect(alertServiceMock.success).toHaveBeenCalled();
-        }));
+        });
 
-        it('should set loading signal during generation', fakeAsync(() => {
-            hyperionApiMock.generateProblemStatement.mockReturnValue(of({ draftProblemStatement: 'Generated!' }) as any);
+        it('should set loading signal during generation', () => {
+            const response$ = new Subject<any>();
+            hyperionApiMock.generateProblemStatement.mockReturnValue(response$);
             const loadingSignal = signal(false);
             service.generateProblemStatement(exerciseWithCourse, 'prompt', (v: boolean) => loadingSignal.set(v)).subscribe();
+            expect(loadingSignal()).toBeTruthy();
+            response$.next({ draftProblemStatement: 'Generated!' });
+            response$.complete();
             expect(loadingSignal()).toBeFalsy();
-        }));
+        });
 
-        it('should handle invalid generation response', fakeAsync(() => {
+        it('should handle invalid generation response', () => {
             hyperionApiMock.generateProblemStatement.mockReturnValue(of({ draftProblemStatement: '' }) as any);
             const loadingSignal = signal(false);
             let result: any;
             service.generateProblemStatement(exerciseWithCourse, 'prompt', (v: boolean) => loadingSignal.set(v)).subscribe((r) => (result = r));
             expect(result.success).toBeFalsy();
             expect(alertServiceMock.success).not.toHaveBeenCalled();
-        }));
+        });
 
-        it('should handle API error', fakeAsync(() => {
+        it('should handle API error', () => {
             hyperionApiMock.generateProblemStatement.mockReturnValue(throwError(() => new Error('Network error')));
             const loadingSignal = signal(false);
             let result: any;
@@ -133,9 +139,9 @@ describe('ProblemStatementService', () => {
             expect(result.success).toBeFalsy();
             expect(result.errorHandled).toBeFalsy();
             expect(loadingSignal()).toBeFalsy();
-        }));
+        });
 
-        it('should detect interceptor-handled HTTP errors', fakeAsync(() => {
+        it('should detect interceptor-handled HTTP errors', () => {
             const httpError = new HttpErrorResponse({ error: { errorKey: 'someError' }, status: 400 });
             hyperionApiMock.generateProblemStatement.mockReturnValue(throwError(() => httpError));
             const loadingSignal = signal(false);
@@ -143,33 +149,33 @@ describe('ProblemStatementService', () => {
             service.generateProblemStatement(exerciseWithCourse, 'prompt', (v: boolean) => loadingSignal.set(v)).subscribe((r) => (result = r));
             expect(result.success).toBeFalsy();
             expect(result.errorHandled).toBeTruthy();
-        }));
+        });
     });
 
     describe('refineGlobally', () => {
-        it('should return failure and show error when content is empty', fakeAsync(() => {
+        it('should return failure and show error when content is empty', () => {
             const loadingSignal = signal(false);
             let result: any;
             service.refineGlobally(exerciseWithCourse, '', 'prompt', (v: boolean) => loadingSignal.set(v)).subscribe((r) => (result = r));
             expect(result).toEqual({ success: false, errorHandled: true });
             expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.cannotRefineEmpty');
-        }));
+        });
 
-        it('should return failure when prompt is empty', fakeAsync(() => {
+        it('should return failure when prompt is empty', () => {
             const loadingSignal = signal(false);
             let result: any;
             service.refineGlobally(exerciseWithCourse, 'content', '', (v: boolean) => loadingSignal.set(v)).subscribe((r) => (result = r));
             expect(result).toEqual({ success: false, errorHandled: true });
-        }));
+        });
 
-        it('should return failure when exercise has no course', fakeAsync(() => {
+        it('should return failure when exercise has no course', () => {
             const loadingSignal = signal(false);
             let result: any;
             service.refineGlobally({} as ProgrammingExercise, 'content', 'prompt', (v: boolean) => loadingSignal.set(v)).subscribe((r) => (result = r));
             expect(result).toEqual({ success: false, errorHandled: true });
-        }));
+        });
 
-        it('should refine globally successfully', fakeAsync(() => {
+        it('should refine globally successfully', () => {
             hyperionApiMock.refineProblemStatementGlobally.mockReturnValue(of({ refinedProblemStatement: 'Refined!' }) as any);
             const loadingSignal = signal(false);
             let result: any;
@@ -177,38 +183,38 @@ describe('ProblemStatementService', () => {
             expect(result.success).toBeTruthy();
             expect(result.content).toBe('Refined!');
             expect(alertServiceMock.success).toHaveBeenCalled();
-        }));
+        });
 
-        it('should handle API error during global refinement', fakeAsync(() => {
+        it('should handle API error during global refinement', () => {
             hyperionApiMock.refineProblemStatementGlobally.mockReturnValue(throwError(() => new Error('fail')));
             const loadingSignal = signal(false);
             let result: any;
             service.refineGlobally(exerciseWithCourse, 'content', 'prompt', (v: boolean) => loadingSignal.set(v)).subscribe((r) => (result = r));
             expect(result.success).toBeFalsy();
             expect(loadingSignal()).toBeFalsy();
-        }));
+        });
     });
 
     describe('refineTargeted', () => {
         const event = { instruction: 'Fix this', startLine: 1, endLine: 3, startColumn: 1, endColumn: 10 };
 
-        it('should return failure when exercise has no course', fakeAsync(() => {
+        it('should return failure when exercise has no course', () => {
             const loadingSignal = signal(false);
             let result: any;
             service.refineTargeted({} as ProgrammingExercise, 'content', event, (v: boolean) => loadingSignal.set(v)).subscribe((r) => (result = r));
             expect(result).toEqual({ success: false, errorHandled: true });
             expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
-        }));
+        });
 
-        it('should return failure when content is empty', fakeAsync(() => {
+        it('should return failure when content is empty', () => {
             const loadingSignal = signal(false);
             let result: any;
             service.refineTargeted(exerciseWithCourse, '', event, (v: boolean) => loadingSignal.set(v)).subscribe((r) => (result = r));
             expect(result).toEqual({ success: false, errorHandled: true });
             expect(alertServiceMock.error).toHaveBeenCalled();
-        }));
+        });
 
-        it('should refine targeted successfully', fakeAsync(() => {
+        it('should refine targeted successfully', () => {
             hyperionApiMock.refineProblemStatementTargeted.mockReturnValue(of({ refinedProblemStatement: 'Targeted refined!' }) as any);
             const loadingSignal = signal(false);
             let result: any;
@@ -216,15 +222,15 @@ describe('ProblemStatementService', () => {
             expect(result.success).toBeTruthy();
             expect(result.content).toBe('Targeted refined!');
             expect(alertServiceMock.success).toHaveBeenCalled();
-        }));
+        });
 
-        it('should handle API error during targeted refinement', fakeAsync(() => {
+        it('should handle API error during targeted refinement', () => {
             hyperionApiMock.refineProblemStatementTargeted.mockReturnValue(throwError(() => new Error('fail')));
             const loadingSignal = signal(false);
             let result: any;
             service.refineTargeted(exerciseWithCourse, 'content', event, (v: boolean) => loadingSignal.set(v)).subscribe((r) => (result = r));
             expect(result.success).toBeFalsy();
             expect(loadingSignal()).toBeFalsy();
-        }));
+        });
     });
 });

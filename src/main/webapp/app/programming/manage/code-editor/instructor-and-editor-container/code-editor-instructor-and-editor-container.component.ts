@@ -581,7 +581,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     /**
-     * Toggles the refinement prompt visibility.
+     * Cancels the ongoing problem statement generation or refinement.
+     * Resets all in-progress states.
      */
     cancelAiOperation(): void {
         this.currentAiOperationSubscription?.unsubscribe();

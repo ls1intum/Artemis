@@ -610,6 +610,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     ngOnDestroy(): void {
         this.resizeObserver?.disconnect();
         this.selectionChangeDisposable?.dispose();
+        this.reviewCommentManager?.disposeAll();
+        this.monacoEditor?.clearLineDecorationsHoverButton();
     }
 
     onTextChanged(event: { text: string; fileName: string }): void {
@@ -903,7 +905,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * Gets the current selection in the editor.
      * @returns The current selection or undefined.
      */
-    getSelection(): { startLine: number; endLine: number } | undefined {
+    getSelection(): { startLine: number; endLine: number; startColumn: number; endColumn: number } | undefined {
         if (!this.monacoEditor) {
             return undefined;
         }
@@ -914,6 +916,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         return {
             startLine: sel.startLineNumber,
             endLine: sel.endLineNumber,
+            startColumn: sel.startColumn,
+            endColumn: sel.endColumn,
         };
     }
 

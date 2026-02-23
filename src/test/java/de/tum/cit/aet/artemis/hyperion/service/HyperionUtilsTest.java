@@ -159,6 +159,12 @@ class HyperionUtilsTest {
         assertThat(result.split("\n", -1)).hasSameSizeAs(input.split("\n", -1));
     }
 
+    @Test
+    void sanitizeInputPreserveLines_returnsEmptyStringForNull() {
+        String result = HyperionUtils.sanitizeInputPreserveLines(null);
+        assertThat(result).isEmpty();
+    }
+
     @ParameterizedTest
     @NullAndEmptySource
     @ValueSource(strings = { "   ", "\t", "\n" })
