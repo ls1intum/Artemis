@@ -61,7 +61,9 @@ public class ExerciseWeaviateService {
     }
 
     /**
-     * Updates exercise metadata in Weaviate by deleting and re-inserting.
+     * Updates exercise metadata in Weaviate using an upsert strategy.
+     * Queries for the existing object by exercise ID, then uses replace if found or insert if not.
+     * This avoids the data loss window of delete-then-insert and uses Weaviate's intended update API.
      *
      * @param exercise the exercise to update
      */
@@ -72,21 +74,62 @@ public class ExerciseWeaviateService {
         }
 
         try {
-            deleteExerciseFromWeaviate(exercise.getId());
-        }
-        catch (Exception e) {
-            log.debug("Failed to delete existing exercise {} from Weaviate during update, we assume the exercise did not exist in Weaviate yet: {}", exercise.getId(),
-                    e.getMessage(), e);
-            // Continue with insert attempt even if delete fails, as it might be a non-existent entry
-        }
-
-        try {
-            insertExerciseIntoWeaviate(exercise);
+            upsertExerciseInWeaviate(exercise);
             log.debug("Successfully updated exercise {} '{}' in Weaviate", exercise.getId(), exercise.getTitle());
         }
         catch (Exception e) {
             log.error("Failed to update exercise {} in Weaviate: {}", exercise.getId(), e.getMessage(), e);
         }
+    }
+
+    /**
+     * Performs an upsert operation: queries for existing object and replaces it, or inserts if not found.
+     *
+     * @param exercise the exercise to upsert
+     * @throws Exception if the operation fails
+     */
+    private void upsertExerciseInWeaviate(Exercise exercise) throws Exception {
+        var collection = weaviateService.getCollection(ExerciseSchema.COLLECTION_NAME);
+
+        var existingObjectQueryResult = collection.query.fetchObjects(query -> query.filters(Filter.property(ExerciseSchema.Properties.EXERCISE_ID).eq(exercise.getId())).limit(1));
+
+        Map<String, Object> properties = buildExerciseProperties(exercise);
+
+        if (!existingObjectQueryResult.objects().isEmpty()) {
+            // Object exists - use replace to update it
+            var existingObject = existingObjectQueryResult.objects().getFirst();
+            String uuid = existingObject.uuid();
+            collection.data.replace(uuid, r -> r.properties(properties));
+            log.debug("Replaced existing exercise {} with UUID {}", exercise.getId(), uuid);
+        }
+        else {
+            // Object doesn't exist - insert new one
+            collection.data.insert(properties);
+            log.debug("Inserted new exercise {}", exercise.getId());
+        }
+    }
+
+    /**
+     * Builds the complete property map for an exercise.
+     *
+     * @param exercise the exercise
+     * @return the property map ready for Weaviate
+     */
+    private Map<String, Object> buildExerciseProperties(Exercise exercise) {
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        Map<String, Object> properties = new HashMap<>();
+
+        properties.put(ExerciseSchema.Properties.EXERCISE_ID, exercise.getId());
+        properties.put(ExerciseSchema.Properties.COURSE_ID, course.getId());
+        properties.put(ExerciseSchema.Properties.TITLE, exercise.getTitle());
+        properties.put(ExerciseSchema.Properties.EXERCISE_TYPE, exercise.getType());
+        properties.put(ExerciseSchema.Properties.MAX_POINTS, exercise.getMaxPoints() != null ? exercise.getMaxPoints() : 0.0);
+
+        addSharedExerciseProperties(exercise, course, properties);
+        addExamProperties(exercise, properties);
+        addExerciseTypeSpecificProperties(exercise, properties);
+
+        return properties;
     }
 
     /**
@@ -130,20 +173,8 @@ public class ExerciseWeaviateService {
      * @throws Exception if the insertion fails
      */
     private void insertExerciseIntoWeaviate(Exercise exercise) throws Exception {
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         var collection = weaviateService.getCollection(ExerciseSchema.COLLECTION_NAME);
-
-        Map<String, Object> properties = new HashMap<>();
-        properties.put(ExerciseSchema.Properties.EXERCISE_ID, exercise.getId());
-        properties.put(ExerciseSchema.Properties.COURSE_ID, course.getId());
-        properties.put(ExerciseSchema.Properties.TITLE, exercise.getTitle());
-        properties.put(ExerciseSchema.Properties.EXERCISE_TYPE, exercise.getType());
-        properties.put(ExerciseSchema.Properties.MAX_POINTS, exercise.getMaxPoints() != null ? exercise.getMaxPoints() : 0.0);
-
-        addSharedExerciseProperties(exercise, course, properties);
-        addExamProperties(exercise, properties);
-        addExerciseTypeSpecificProperties(exercise, properties);
-
+        Map<String, Object> properties = buildExerciseProperties(exercise);
         collection.data.insert(properties);
     }
 
