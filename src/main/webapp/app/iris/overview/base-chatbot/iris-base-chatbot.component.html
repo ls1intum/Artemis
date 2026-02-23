@@ -163,9 +163,7 @@
                                             <div style="width: fit-content; position: relative">
                                                 @if (content.type === IrisMessageContentType.TEXT) {
                                                     <div class="bubble-left">
-                                                        <span
-                                                            [innerHTML]="(content | as: IrisTextMessageContent).textContent! | htmlForMarkdown: [] : undefined : undefined : true"
-                                                        ></span>
+                                                        <jhi-iris-citation-text [text]="(content | as: IrisTextMessageContent).textContent" [citationInfo]="citationInfo()" />
                                                     </div>
 
                                                     <div class="rate-message-buttons toolbox">

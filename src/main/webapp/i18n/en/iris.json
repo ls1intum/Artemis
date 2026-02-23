@@ -139,6 +139,9 @@
             "chat": {
                 "helpOffer": "How can I help you today?"
             },
+            "citation": {
+                "inLecture": "in"
+            },
             "tutorSuggestion": {
                 "loading": "Loading suggestions...",
                 "noIris": "Iris is currently unavailable."
