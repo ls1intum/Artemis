@@ -230,9 +230,7 @@ class HyperionProblemStatementRefinementServiceTest {
     void refineProblemStatement_throwsExceptionWhenProblemStatementTooLong() {
         // 50001 characters exceeds MAX_PROBLEM_STATEMENT_LENGTH (50000)
         String tooLongProblemStatement = "a".repeat(50_001);
-        var course = new Course();
-        course.setTitle("Test Course");
-        course.setDescription("Test Description");
+        var course = createTestCourse();
 
         assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatement(course, tooLongProblemStatement, "Refine this"))
                 .isInstanceOf(BadRequestAlertException.class).hasMessageContaining("exceeds maximum length");
@@ -334,7 +332,6 @@ class HyperionProblemStatementRefinementServiceTest {
     void refineProblemStatementTargeted_throwsExceptionWhenLineRangeOutOfBounds() {
         // Only 1 line but requesting line 5
         String originalText = "Single line";
-        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage("Changed")))));
 
         var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 5, 5, null, null, "Fix this");
         assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatementTargeted(createTestCourse(), request)).isInstanceOf(BadRequestAlertException.class)

@@ -14,6 +14,7 @@ class HyperionUtilsTest {
     void constants_haveExpectedValues() {
         assertThat(HyperionUtils.MAX_PROBLEM_STATEMENT_LENGTH).isEqualTo(50_000);
         assertThat(HyperionUtils.MAX_USER_PROMPT_LENGTH).isEqualTo(1_000);
+        assertThat(HyperionUtils.MAX_INSTRUCTION_LENGTH).isEqualTo(500);
         assertThat(HyperionUtils.DEFAULT_COURSE_TITLE).isEqualTo("Programming Course");
         assertThat(HyperionUtils.DEFAULT_COURSE_DESCRIPTION).isEqualTo("A programming course");
     }
@@ -154,6 +155,34 @@ class HyperionUtilsTest {
     void validateUserPrompt_acceptsExactlyMaxLength() {
         String maxPrompt = "a".repeat(HyperionUtils.MAX_USER_PROMPT_LENGTH);
         HyperionUtils.validateUserPrompt(maxPrompt, "Test");
+        // No exception expected
+    }
+
+    // --- validateInstruction ---
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = { "   ", "\t", "\n" })
+    void validateInstruction_rejectsBlankInstructions(String instruction) {
+        assertThatThrownBy(() -> HyperionUtils.validateInstruction(instruction, "Test")).isInstanceOf(BadRequestAlertException.class);
+    }
+
+    @Test
+    void validateInstruction_acceptsValidInstruction() {
+        HyperionUtils.validateInstruction("A valid instruction", "Test");
+        // No exception expected
+    }
+
+    @Test
+    void validateInstruction_rejectsOverlongInstruction() {
+        String longInstruction = "a".repeat(HyperionUtils.MAX_INSTRUCTION_LENGTH + 1);
+        assertThatThrownBy(() -> HyperionUtils.validateInstruction(longInstruction, "Test")).isInstanceOf(BadRequestAlertException.class);
+    }
+
+    @Test
+    void validateInstruction_acceptsExactlyMaxLength() {
+        String maxInstruction = "a".repeat(HyperionUtils.MAX_INSTRUCTION_LENGTH);
+        HyperionUtils.validateInstruction(maxInstruction, "Test");
         // No exception expected
     }
 

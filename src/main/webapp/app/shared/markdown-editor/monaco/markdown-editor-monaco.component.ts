@@ -319,6 +319,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     @Output()
     onLeaveVisualTab = new EventEmitter<void>();
 
+    readonly onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
+
     /** Emits when user selects lines in the editor (includes selectedText, position, and column info for inline refinement) */
     readonly onSelectionChange = output<
         | {
@@ -899,6 +901,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * @returns The current selection or undefined.
      */
     getSelection(): { startLine: number; endLine: number } | undefined {
+        if (!this.monacoEditor) {
+            return undefined;
+        }
         const sel = this.monacoEditor.getSelection();
         if (!sel) {
             return undefined;

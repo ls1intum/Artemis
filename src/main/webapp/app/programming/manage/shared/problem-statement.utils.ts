@@ -100,7 +100,7 @@ export function buildGlobalRefinementRequest(problemStatementText: string, userP
  */
 export function buildTargetedRefinementRequest(problemStatementText: string, event: InlineRefinementEvent): ProblemStatementTargetedRefinementRequest {
     return {
-        problemStatementText: problemStatementText ?? '',
+        problemStatementText: problemStatementText,
         startLine: event.startLine,
         endLine: event.endLine,
         startColumn: event.startColumn,

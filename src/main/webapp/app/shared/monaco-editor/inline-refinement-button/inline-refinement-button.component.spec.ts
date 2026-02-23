@@ -32,7 +32,7 @@ describe('InlineRefinementButtonComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should create', () => {
@@ -50,10 +50,10 @@ describe('InlineRefinementButtonComponent', () => {
 
         expect(comp.isExpanded()).toBeTruthy();
         vi.useRealTimers();
-    });
+    }));
 
     it('should emit refine event with correct data on submit', () => {
-        const refineSpy = jest.spyOn(comp.refine, 'emit');
+        const refineSpy = vi.spyOn(comp.refine, 'emit');
 
         comp.expand();
         comp.instruction.set('Improve clarity');
@@ -69,7 +69,7 @@ describe('InlineRefinementButtonComponent', () => {
     });
 
     it('should not emit refine event when instruction is empty', () => {
-        const refineSpy = jest.spyOn(comp.refine, 'emit');
+        const refineSpy = vi.spyOn(comp.refine, 'emit');
 
         comp.expand();
         comp.instruction.set('');
@@ -79,7 +79,7 @@ describe('InlineRefinementButtonComponent', () => {
     });
 
     it('should not emit refine event when instruction is only whitespace', () => {
-        const refineSpy = jest.spyOn(comp.refine, 'emit');
+        const refineSpy = vi.spyOn(comp.refine, 'emit');
 
         comp.expand();
         comp.instruction.set('   ');
@@ -89,7 +89,7 @@ describe('InlineRefinementButtonComponent', () => {
     });
 
     it('should not emit refine event when isLoading is true', () => {
-        const refineSpy = jest.spyOn(comp.refine, 'emit');
+        const refineSpy = vi.spyOn(comp.refine, 'emit');
 
         fixture.componentRef.setInput('isLoading', true);
         fixture.detectChanges();
@@ -102,10 +102,10 @@ describe('InlineRefinementButtonComponent', () => {
     });
 
     it('should submit on Enter key press', () => {
-        const submitSpy = jest.spyOn(comp, 'submit');
+        const submitSpy = vi.spyOn(comp, 'submit');
         const event = new KeyboardEvent('keydown', { key: 'Enter' });
-        jest.spyOn(event, 'stopPropagation');
-        jest.spyOn(event, 'preventDefault');
+        vi.spyOn(event, 'stopPropagation');
+        vi.spyOn(event, 'preventDefault');
 
         comp.onKeydown(event);
 
@@ -115,7 +115,7 @@ describe('InlineRefinementButtonComponent', () => {
     });
 
     it('should not submit on Shift+Enter key press', () => {
-        const submitSpy = jest.spyOn(comp, 'submit');
+        const submitSpy = vi.spyOn(comp, 'submit');
         const event = new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true });
 
         comp.onKeydown(event);
@@ -124,7 +124,7 @@ describe('InlineRefinementButtonComponent', () => {
     });
 
     it('should emit closeRefinement on Escape key press', () => {
-        const closeSpy = jest.spyOn(comp.closeRefinement, 'emit');
+        const closeSpy = vi.spyOn(comp.closeRefinement, 'emit');
         const event = new KeyboardEvent('keydown', { key: 'Escape' });
 
         comp.onKeydown(event);
@@ -133,7 +133,7 @@ describe('InlineRefinementButtonComponent', () => {
     });
 
     it('should emit closeRefinement when handleClose is called', () => {
-        const closeSpy = jest.spyOn(comp.closeRefinement, 'emit');
+        const closeSpy = vi.spyOn(comp.closeRefinement, 'emit');
 
         comp.handleClose();
 
@@ -169,13 +169,13 @@ describe('InlineRefinementButtonComponent', () => {
         fixture.componentRef.setInput('endColumn', 5);
 
         // Spy on the new component's cdr BEFORE detectChanges
-        const cdrSpy = jest.spyOn(comp['cdr'], 'markForCheck');
+        const cdrSpy = vi.spyOn(comp['cdr'], 'markForCheck');
         fixture.detectChanges();
 
         langChangeSubject.next({ lang: 'de' });
 
         expect(cdrSpy).toHaveBeenCalled();
-    }));
+    });
 
     it('should have correct input values', () => {
         expect(comp.top()).toBe(100);
@@ -189,7 +189,7 @@ describe('InlineRefinementButtonComponent', () => {
 
     it('should stop propagation on all keydown events', () => {
         const event = new KeyboardEvent('keydown', { key: 'a' });
-        jest.spyOn(event, 'stopPropagation');
+        vi.spyOn(event, 'stopPropagation');
 
         comp.onKeydown(event);
 

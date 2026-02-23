@@ -7,6 +7,7 @@ import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProb
 import { AlertService } from 'app/shared/service/alert.service';
 import {
     InlineRefinementEvent,
+    MAX_PROBLEM_STATEMENT_LENGTH,
     buildGenerationRequest,
     buildGlobalRefinementRequest,
     buildTargetedRefinementRequest,

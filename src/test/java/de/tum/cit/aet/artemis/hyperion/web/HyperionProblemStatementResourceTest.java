@@ -347,6 +347,17 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void shouldReturnForbiddenForTargetedRefineWithNonExistentCourse() throws Exception {
+        long nonExistentCourseId = 999999L;
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        String body = "{\"problemStatementText\":\"Original\",\"startLine\":1,\"endLine\":1,\"instruction\":\"Fix this\"}";
+        request.performMvcRequest(
+                post("/api/hyperion/courses/{courseId}/problem-statements/refine/targeted", nonExistentCourseId).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void shouldReturnBadRequestForBlankGenerateUserPrompt() throws Exception {
         long courseId = persistedCourseId;
         userUtilService.changeUser(TEST_PREFIX + "instructor1");

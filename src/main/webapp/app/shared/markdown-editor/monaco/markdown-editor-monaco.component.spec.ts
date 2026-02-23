@@ -519,7 +519,7 @@ describe('MarkdownEditorMonacoComponent', () => {
         const mockSelection = {
             startLineNumber: 1,
             endLineNumber: 3,
-            startColumn: 0,
+            startColumn: 1,
             endColumn: 10,
         };
 

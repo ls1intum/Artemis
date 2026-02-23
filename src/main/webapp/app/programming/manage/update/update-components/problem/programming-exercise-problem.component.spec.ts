@@ -312,7 +312,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         // Set up state
         comp.isGeneratingOrRefining.set(true);
 
-        comp.cancelGeneration();
+        comp.cancelAiOperation();
 
         // Verify state is reset
         expect(comp.isGeneratingOrRefining()).toBeFalse();
@@ -453,7 +453,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         comp.refineProblemStatement();
 
         expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.refinementError');
-    });
+    }));
 
     it('should handle refinement error', () => {
         const programmingExercise = new ProgrammingExercise(undefined, undefined);

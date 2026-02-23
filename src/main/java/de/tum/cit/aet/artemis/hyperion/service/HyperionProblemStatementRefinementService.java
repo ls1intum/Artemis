@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRefinementResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementTargetedRefinementRequestDTO;
+import io.micrometer.observation.annotation.Observed;
 
 /**
  * Service for refining existing problem statements using Spring AI. Supports two refinement modes:
@@ -35,12 +36,6 @@ import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementTargetedRefinementReq
 public class HyperionProblemStatementRefinementService {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionProblemStatementRefinementService.class);
-
-    /**
-     * Maximum allowed length for generated problem statements (50,000 characters).
-     * This prevents excessively long responses that could cause performance issues.
-     */
-    private static final int MAX_PROBLEM_STATEMENT_LENGTH = 50_000;
 
     /**
      * Maximum length for displaying selected text in prompts.
@@ -61,16 +56,6 @@ public class HyperionProblemStatementRefinementService {
      * Offset to convert a 1-indexed column to a 0-indexed Java string position.
      */
     private static final int ONE_INDEXED_TO_ZERO_INDEXED_OFFSET = 1;
-
-    /**
-     * Default course title when not specified.
-     */
-    private static final String DEFAULT_COURSE_TITLE = "Programming Course";
-
-    /**
-     * Default course description when not specified.
-     */
-    private static final String DEFAULT_COURSE_DESCRIPTION = "A programming course";
 
     @Nullable
     private final ChatClient chatClient;
@@ -269,7 +254,8 @@ public class HyperionProblemStatementRefinementService {
             String text = line.substring(startCol, endCol);
             return truncateForDisplay(text);
         }
-        throw new BadRequestAlertException("Failed to extract text for targeted refinement", "ProblemStatement", "ProblemStatementRefinement.textExtractionFailed");
+        throw new BadRequestAlertException(String.format("Invalid column range for line selection: startCol=%d, endCol=%d, lineLength=%d", startCol, endCol, line.length()),
+                "ProblemStatement", "ProblemStatementRefinement.textExtractionFailed");
     }
 
     /**
