@@ -30,8 +30,8 @@ import de.tum.cit.aet.artemis.hyperion.domain.QualityIssueCategory;
 import de.tum.cit.aet.artemis.hyperion.domain.SuggestedDifficulty;
 import de.tum.cit.aet.artemis.hyperion.dto.ChecklistAnalysisRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ChecklistAnalysisResponseDTO;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTaskTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import io.micrometer.observation.ObservationRegistry;
 
 class HyperionChecklistServiceTest {
@@ -49,7 +49,7 @@ class HyperionChecklistServiceTest {
     private ProgrammingExerciseTaskTestRepository taskRepository;
 
     @Mock
-    private ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     private HyperionChecklistService hyperionChecklistService;
 
