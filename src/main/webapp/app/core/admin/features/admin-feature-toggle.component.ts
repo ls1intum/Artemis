@@ -35,7 +35,6 @@ import {
     PROFILE_LDAP,
     PROFILE_LOCALCI,
     PROFILE_SAML2,
-    PROFILE_THEIA,
     ProfileFeature,
 } from 'app/app.constants';
 
@@ -90,7 +89,6 @@ export class AdminFeatureToggleComponent implements OnInit {
     /** Profiles to display (excluding internal profiles like dev, prod, test) */
     private readonly displayedProfiles: ProfileFeature[] = [
         PROFILE_ATHENA,
-        PROFILE_THEIA,
         PROFILE_LDAP,
         PROFILE_SAML2,
         PROFILE_LOCALCI,
@@ -138,7 +136,6 @@ export class AdminFeatureToggleComponent implements OnInit {
     /** Documentation links for profile-based features */
     private readonly profileDocumentationLinks: Partial<Record<ProfileFeature, string>> = {
         [PROFILE_ATHENA]: 'https://docs.artemis.tum.de/admin/extensions-setup#athena-service',
-        [PROFILE_THEIA]: 'https://docs.artemis.tum.de/developer/setup#run-the-server-via-a-run-configuration-in-intellij',
         [PROFILE_LDAP]: 'https://docs.artemis.tum.de/admin/production-setup/security#ldap-authentication',
         [PROFILE_SAML2]: 'https://docs.artemis.tum.de/admin/saml2-login-registration',
         [PROFILE_LOCALCI]: 'https://docs.artemis.tum.de/developer/setup#integrated-code-lifecycle-setup',
