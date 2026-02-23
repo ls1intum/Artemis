@@ -50,7 +50,7 @@ import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service'
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
 import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
-import { IrisOnboardingService, OnboardingResult } from 'app/iris/overview/iris-onboarding-modal/iris-onboarding.service';
+import { IrisOnboardingService } from 'app/iris/overview/iris-onboarding-modal/iris-onboarding.service';
 import { IRIS_PROMPT_CONFIGS } from 'app/iris/shared/iris-prompt.constants';
 
 // Session history time bucket boundaries (in days ago)
@@ -111,8 +111,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected route = inject(ActivatedRoute);
     private readonly destroyRef = inject(DestroyRef);
     private readonly onboardingService = inject(IrisOnboardingService);
-    protected llmModalService = inject(LLMSelectionModalService);
-    private readonly clipboard = inject(Clipboard);
 
     // Icons
     protected readonly faPaperPlane = faPaperPlane;
@@ -414,16 +412,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             case LLM_MODAL_DISMISSED:
                 break;
         }
-    }
-
-    private focusInputAfterAcceptance() {
-        setTimeout(() => {
-            if (this.messageTextarea()) {
-                this.messageTextarea()!.nativeElement.focus();
-            } else if (this.acceptButton()) {
-                this.acceptButton()!.nativeElement.focus();
-            }
-        }, 150);
     }
 
     /**
