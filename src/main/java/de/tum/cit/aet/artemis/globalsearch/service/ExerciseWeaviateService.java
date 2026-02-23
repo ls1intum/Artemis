@@ -4,7 +4,6 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,24 +34,18 @@ public class ExerciseWeaviateService {
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseWeaviateService.class);
 
-    private final Optional<WeaviateService> weaviateService;
+    private final WeaviateService weaviateService;
 
-    public ExerciseWeaviateService(Optional<WeaviateService> weaviateService) {
+    public ExerciseWeaviateService(WeaviateService weaviateService) {
         this.weaviateService = weaviateService;
     }
 
     /**
      * Inserts exercise metadata into Weaviate.
-     * If Weaviate is not enabled, this method does nothing.
      *
      * @param exercise the exercise to insert
      */
     public void insertExercise(Exercise exercise) {
-        if (weaviateService.isEmpty()) {
-            log.trace("Weaviate is not enabled, skipping exercise insertion for exercise {}", exercise.getId());
-            return;
-        }
-
         if (exercise.getId() == null) {
             log.warn("Cannot insert exercise without an ID");
             return;
@@ -69,16 +62,10 @@ public class ExerciseWeaviateService {
 
     /**
      * Updates exercise metadata in Weaviate by deleting and re-inserting.
-     * If Weaviate is not enabled, this method does nothing.
      *
      * @param exercise the exercise to update
      */
     public void updateExercise(Exercise exercise) {
-        if (weaviateService.isEmpty()) {
-            log.trace("Weaviate is not enabled, skipping exercise update for exercise {}", exercise.getId());
-            return;
-        }
-
         if (exercise.getId() == null) {
             log.warn("Cannot update exercise without an ID");
             return;
@@ -104,16 +91,10 @@ public class ExerciseWeaviateService {
 
     /**
      * Deletes exercise metadata from Weaviate.
-     * If Weaviate is not enabled, this method does nothing.
      *
      * @param exerciseId the ID of the exercise to delete
      */
     public void deleteExercise(long exerciseId) {
-        if (weaviateService.isEmpty()) {
-            log.trace("Weaviate is not enabled, skipping exercise deletion for exercise {}", exerciseId);
-            return;
-        }
-
         try {
             deleteExerciseFromWeaviate(exerciseId);
             log.debug("Successfully deleted exercise {} from Weaviate", exerciseId);
@@ -127,17 +108,11 @@ public class ExerciseWeaviateService {
      * Updates Weaviate metadata for all exercises belonging to an exam.
      * This should be called when exam dates change to keep the denormalized
      * exam date fields (visible date, start date, end date) in sync.
-     * If Weaviate is not enabled, this method does nothing.
      *
      * @param exam the exam whose exercises should be updated (must have exercise groups and exercises loaded)
      */
     public void updateExamExercises(Exam exam) {
         if (exam == null || exam.getExerciseGroups() == null) {
-            return;
-        }
-
-        if (weaviateService.isEmpty()) {
-            log.trace("Weaviate is not enabled, skipping exercise update for exam with id {}", exam.getId());
             return;
         }
 
@@ -156,7 +131,7 @@ public class ExerciseWeaviateService {
      */
     private void insertExerciseIntoWeaviate(Exercise exercise) throws Exception {
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        var collection = weaviateService.orElseThrow().getCollection(ExerciseSchema.COLLECTION_NAME);
+        var collection = weaviateService.getCollection(ExerciseSchema.COLLECTION_NAME);
 
         Map<String, Object> properties = new HashMap<>();
         properties.put(ExerciseSchema.Properties.EXERCISE_ID, exercise.getId());
@@ -273,7 +248,7 @@ public class ExerciseWeaviateService {
      * @param exerciseId the exercise ID
      */
     private void deleteExerciseFromWeaviate(long exerciseId) {
-        var collection = weaviateService.orElseThrow().getCollection(ExerciseSchema.COLLECTION_NAME);
+        var collection = weaviateService.getCollection(ExerciseSchema.COLLECTION_NAME);
         var deleteResult = collection.data.deleteMany(Filter.property(ExerciseSchema.Properties.EXERCISE_ID).eq(exerciseId));
         log.debug("Deleted {} exercise entries for exercise ID {}", deleteResult.successful(), exerciseId);
     }
