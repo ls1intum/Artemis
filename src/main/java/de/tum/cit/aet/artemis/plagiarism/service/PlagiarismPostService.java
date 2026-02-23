@@ -45,8 +45,6 @@ public class PlagiarismPostService extends PostingService {
 
     private final PlagiarismCaseService plagiarismCaseService;
 
-    private static final String PLAGIARISM_POST_ENTITY_NAME = "PlagiarismPost";
-
     protected PlagiarismPostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             SavedPostRepository savedPostRepository, PostRepository postRepository, ExerciseRepository exerciseRepository, WebsocketMessagingService websocketMessagingService,
             PlagiarismCaseService plagiarismCaseService, PlagiarismCaseRepository plagiarismCaseRepository, ConversationParticipantRepository conversationParticipantRepository) {
@@ -69,17 +67,12 @@ public class PlagiarismPostService extends PostingService {
         Post post = postDto.toEntity();
         // checks
         if (post.getId() != null) {
-            throw new BadRequestAlertException("A new post cannot already have an ID", PLAGIARISM_POST_ENTITY_NAME, "idExists");
+            throw new BadRequestAlertException("A new post cannot already have an ID", PlagiarismPostCreationDTO.PLAGIARISM_POST_ENTITY_NAME, "idExists");
         }
-
-        if (post.getPlagiarismCase() == null) {
-            throw new BadRequestAlertException("The post must be associated with a plagiarism case.", PLAGIARISM_POST_ENTITY_NAME, "plagiarismCaseMissing");
-        }
-
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();
         final Course course = courseRepository.findByIdElseThrow(courseId);
         if (course.getCourseInformationSharingConfiguration() == CourseInformationSharingConfiguration.DISABLED) {
-            throw new BadRequestAlertException("Posting is disabled for this course.", PLAGIARISM_POST_ENTITY_NAME, "courseInformationSharingDisabled");
+            throw new BadRequestAlertException("Posting is disabled for this course.", PlagiarismPostCreationDTO.PLAGIARISM_POST_ENTITY_NAME, "courseInformationSharingDisabled");
         }
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
@@ -93,7 +86,8 @@ public class PlagiarismPostService extends PostingService {
 
         Post savedPost = postRepository.save(post);
         plagiarismCaseService.savePostForPlagiarismCaseAndNotifyStudent(savedPost.getPlagiarismCase().getId(), savedPost);
-
+        PlagiarismCase fullCase = plagiarismCaseRepository.findByIdElseThrow(savedPost.getPlagiarismCase().getId());
+        savedPost.setPlagiarismCase(fullCase);
         return PlagiarismPostCreationResponseDTO.of(savedPost);
     }
 

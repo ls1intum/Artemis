@@ -197,23 +197,11 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateExistingPost_badRequest() throws Exception {
-        Post existingPostToSave = existingPosts.getFirst();
-
-        var sizeBefore = postRepository.findAll().size();
-
-        request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts", PlagiarismPostCreationDTO.of(existingPostToSave), PlagiarismPostCreationResponseDTO.class,
-                HttpStatus.BAD_REQUEST);
-        assertThat(postRepository.findAll()).hasSize(sizeBefore);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreatePostWithoutPlagiarismCase_badRequest() throws Exception {
         Course course = conversationUtilService.createCourseWithPostsDisabled();
         courseId = course.getId();
         Post postToSave = createPostWithoutContext();
-        var invalidDto = new PlagiarismPostCreationDTO(null, postToSave.getContent(), postToSave.getTitle(), true, false, null);
+        var invalidDto = new PlagiarismPostCreationDTO(postToSave.getContent(), postToSave.getTitle(), true, false, null);
 
         request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts", invalidDto, PlagiarismPostCreationResponseDTO.class, HttpStatus.BAD_REQUEST);
     }

@@ -22,6 +22,8 @@ export interface ContextSelectorOption {
     conversation?: Conversation;
 }
 
+type PostCreator = (post: Post) => Observable<Post>;
+
 @Component({
     selector: 'jhi-post-create-edit-modal',
     templateUrl: './post-create-edit-modal.component.html',
@@ -47,7 +49,7 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
     // Icons
     faAngleUp = faAngleUp;
     faAngleDown = faAngleDown;
-    createOverride = input<((post: Post) => Observable<Post>) | undefined>(undefined);
+    createOverride = input<PostCreator | undefined>(undefined);
 
     /**
      * on initialization: reset all input field of the modal, determine the post context;
