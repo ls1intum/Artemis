@@ -104,7 +104,8 @@ public class ExerciseReviewResource {
             @Valid @NotNull @RequestBody CreateCommentThreadGroupDTO createCommentThreadGroupDTO) throws URISyntaxException {
         log.debug("REST request to create exercise review thread group for exercise {}", exerciseId);
         CommentThreadGroup savedGroup = exerciseReviewService.createGroup(exerciseId, createCommentThreadGroupDTO);
-        exerciseReviewWebsocketService.notifyGroupUpdated(exerciseId, createCommentThreadGroupDTO.threadIds(), savedGroup.getId());
+        List<Long> savedThreadIds = savedGroup.getThreads().stream().map(CommentThread::getId).sorted().toList();
+        exerciseReviewWebsocketService.notifyGroupUpdated(exerciseId, savedThreadIds, savedGroup.getId());
         return ResponseEntity.created(new URI("/api/exercise/exercises/" + exerciseId + "/review-thread-groups/" + savedGroup.getId())).body(new CommentThreadGroupDTO(savedGroup));
     }
 
