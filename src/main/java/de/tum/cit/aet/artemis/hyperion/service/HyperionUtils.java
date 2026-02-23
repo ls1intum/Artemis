@@ -50,8 +50,11 @@ final class HyperionUtils {
     /**
      * Pattern matching template variable sequences (e.g. "{{variable}}").
      * Stripping these prevents users from injecting fake template placeholders that could be expanded by the template engine.
+     * Uses a non-greedy match so that inner '}' characters don't leave orphaned braces.
+     * Note: regex cannot perfectly handle arbitrarily nested braces, but this non-greedy
+     * approach addresses the observed orphaned '}' issue with the previous [^}]* pattern.
      */
-    private static final Pattern TEMPLATE_VAR_PATTERN = Pattern.compile("\\{\\{[^}]*\\}\\}");
+    private static final Pattern TEMPLATE_VAR_PATTERN = Pattern.compile("\\{\\{[\\s\\S]*?\\}\\}");
 
     /**
      * Pattern matching HTML tags for stripping from rich-text content like course descriptions.

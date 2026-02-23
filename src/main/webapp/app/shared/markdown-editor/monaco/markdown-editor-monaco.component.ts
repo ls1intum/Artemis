@@ -89,6 +89,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { CommentThread, CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-widget-manager';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+import { EditorSelectionWithPosition } from 'app/programming/manage/shared/problem-statement.utils';
 
 export enum MarkdownEditorHeight {
     INLINE = 125,
@@ -325,17 +326,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     readonly onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
 
     /** Emits when user selects lines in the editor (includes selectedText, position, and column info for inline refinement) */
-    readonly onSelectionChange = output<
-        | {
-              startLine: number;
-              endLine: number;
-              startColumn: number;
-              endColumn: number;
-              selectedText: string;
-              screenPosition: { top: number; left: number };
-          }
-        | undefined
-    >();
+    readonly onSelectionChange = output<EditorSelectionWithPosition | undefined>();
 
     defaultPreviewHtml: SafeHtml | undefined;
     inPreviewMode = false;
@@ -345,6 +336,10 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     resizeObserver?: ResizeObserver;
     /** Disposable for the selection change listener */
     private selectionChangeDisposable?: { dispose: () => void };
+    /** Disposable for the scroll change listener used to reposition the inline refinement button */
+    private scrollChangeDisposable?: { dispose: () => void };
+    /** Cached model selection used to re-compute screen position after scroll */
+    private cachedSelection?: { startLineNumber: number; endLineNumber: number; startColumn: number; endColumn: number; selectedText: string };
     targetWrapperHeight?: number;
     minWrapperHeight?: number;
     constrainDragPositionFn?: (pointerPosition: Point) => Point;
@@ -558,37 +553,67 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
                 // Only emit if there's actual text selected (not just cursor movement)
                 if (selectedText.trim().length === 0) {
+                    this.cachedSelection = undefined;
                     this.onSelectionChange.emit(undefined);
                     return;
                 }
 
-                // Calculate screen position for floating button
-                const endPosition = { lineNumber: selection.endLineNumber, column: selection.endColumn };
-                const coords = this.monacoEditor.getScrolledVisiblePosition(endPosition);
-                const editorDom = this.monacoEditor.getDomNode();
-
-                if (!coords || !editorDom) {
-                    this.onSelectionChange.emit(undefined);
-                    return;
-                }
-
-                const editorRect = editorDom.getBoundingClientRect();
-                const screenPosition = {
-                    top: editorRect.top + coords.top + coords.height + FLOATING_BUTTON_VERTICAL_OFFSET,
-                    left: editorRect.left + coords.left,
-                };
-
-                this.onSelectionChange.emit({
-                    startLine: selection.startLineNumber,
-                    endLine: selection.endLineNumber,
+                // Cache the selection so scroll events can re-compute position
+                this.cachedSelection = {
+                    startLineNumber: selection.startLineNumber,
+                    endLineNumber: selection.endLineNumber,
                     startColumn: selection.startColumn,
                     endColumn: selection.endColumn,
                     selectedText,
-                    screenPosition,
-                });
+                };
+
+                this.emitSelectionWithScreenPosition();
             } else {
+                this.cachedSelection = undefined;
                 this.onSelectionChange.emit(undefined);
             }
+        });
+
+        // Subscribe to scroll changes to reposition the inline refinement button
+        // when the selection scrolls back into view.
+        this.scrollChangeDisposable = this.monacoEditor.getEditor().onDidScrollChange(() => {
+            if (this.cachedSelection) {
+                this.emitSelectionWithScreenPosition();
+            }
+        });
+    }
+
+    /**
+     * Computes the screen position from the cached selection and emits the selection event.
+     * If the selection end is scrolled off-screen (coords are null), emits undefined to hide the button.
+     */
+    private emitSelectionWithScreenPosition(): void {
+        if (!this.cachedSelection) {
+            return;
+        }
+
+        const endPosition = { lineNumber: this.cachedSelection.endLineNumber, column: this.cachedSelection.endColumn };
+        const coords = this.monacoEditor.getScrolledVisiblePosition(endPosition);
+        const editorDom = this.monacoEditor.getDomNode();
+
+        if (!coords || !editorDom) {
+            this.onSelectionChange.emit(undefined);
+            return;
+        }
+
+        const editorRect = editorDom.getBoundingClientRect();
+        const screenPosition = {
+            top: editorRect.top + coords.top + coords.height + FLOATING_BUTTON_VERTICAL_OFFSET,
+            left: editorRect.left + coords.left,
+        };
+
+        this.onSelectionChange.emit({
+            startLine: this.cachedSelection.startLineNumber,
+            endLine: this.cachedSelection.endLineNumber,
+            startColumn: this.cachedSelection.startColumn,
+            endColumn: this.cachedSelection.endColumn,
+            selectedText: this.cachedSelection.selectedText,
+            screenPosition,
         });
     }
 
@@ -610,6 +635,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     ngOnDestroy(): void {
         this.resizeObserver?.disconnect();
         this.selectionChangeDisposable?.dispose();
+        this.scrollChangeDisposable?.dispose();
         this.reviewCommentManager?.disposeAll();
         this.monacoEditor?.clearLineDecorationsHoverButton();
     }

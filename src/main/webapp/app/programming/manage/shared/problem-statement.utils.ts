@@ -42,6 +42,15 @@ export interface InlineRefinementEvent extends InstructionSelectionPosition {
 }
 
 /**
+ * Full selection event emitted by the editor, combining position data with
+ * the selected text and its screen coordinates for floating UI placement.
+ */
+export interface EditorSelectionWithPosition extends InstructionSelectionPosition {
+    selectedText: string;
+    screenPosition: { top: number; left: number };
+}
+
+/**
  * Normalizes a string by trimming whitespace and normalizing line endings.
  * This helps compare problem statements that might have formatting differences.
  */

@@ -576,6 +576,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 },
                 error: () => {
                     this.alertService.error('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
+                    this.isGeneratingOrRefining.set(false);
+                    this.currentAiOperationSubscription = undefined;
                 },
             });
     }
@@ -638,6 +640,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                         this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
                     }
                 },
+                error: () => {
+                    this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
+                    this.isGeneratingOrRefining.set(false);
+                    this.currentAiOperationSubscription = undefined;
+                },
             });
     }
 
@@ -672,6 +679,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     } else if (!result.errorHandled) {
                         this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
                     }
+                },
+                error: () => {
+                    this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
+                    this.isGeneratingOrRefining.set(false);
+                    this.currentAiOperationSubscription = undefined;
                 },
             });
     }
