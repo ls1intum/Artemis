@@ -10,6 +10,11 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AdminSystemNotificationService } from 'app/core/notification/system-notification/admin-system-notification.service';
 import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
+import { CheckboxModule } from 'primeng/checkbox';
+import { InputTextModule } from 'primeng/inputtext';
+import { SelectModule } from 'primeng/select';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 
 /**
  * Form structure for system notification editing.
@@ -31,7 +36,20 @@ interface SystemNotificationForm {
 @Component({
     selector: 'jhi-system-notification-management-update',
     templateUrl: './system-notification-management-update.component.html',
-    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FormDateTimePickerComponent, FaIconComponent, ArtemisTranslatePipe, AdminTitleBarTitleDirective],
+    imports: [
+        FormsModule,
+        ReactiveFormsModule,
+        TranslateDirective,
+        FormDateTimePickerComponent,
+        FaIconComponent,
+        ArtemisTranslatePipe,
+        AdminTitleBarTitleDirective,
+        CheckboxModule,
+        InputTextModule,
+        SelectModule,
+        ButtonModule,
+        MessageModule,
+    ],
 })
 export class SystemNotificationManagementUpdateComponent implements OnInit {
     private readonly systemNotificationService = inject(AdminSystemNotificationService);
@@ -44,11 +62,17 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
     /** Whether the form is currently being submitted */
     readonly isSaving = signal(false);
 
+    /** Whether to send maintenance email to instructors when creating */
+    readonly sendMaintenanceEmail = signal(false);
+
+    /** Number of instructors who would receive the maintenance email */
+    readonly recipientCount = signal<number | undefined>(undefined);
+
     /** Available notification types for the dropdown */
     protected readonly systemNotificationTypes = [
         { name: 'INFO', value: SystemNotificationType.INFO },
         { name: 'WARNING', value: SystemNotificationType.WARNING },
-    ] as const;
+    ];
 
     /** The reactive form for editing notification properties */
     readonly form = new FormGroup<SystemNotificationForm>(
@@ -82,7 +106,18 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
                     notificationDate: this.notification.notificationDate,
                     expireDate: this.notification.expireDate,
                 });
+            } else {
+                this.loadRecipientCount();
             }
+        });
+    }
+
+    /**
+     * Loads the count of instructors who would receive the maintenance email.
+     */
+    private loadRecipientCount(): void {
+        this.systemNotificationService.getMaintenanceRecipientsCount().subscribe({
+            next: (count) => this.recipientCount.set(count),
         });
     }
 
@@ -147,7 +182,7 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
             expireDate: formValues.expireDate ?? undefined,
         };
 
-        const saveOperation = this.notification.id ? this.systemNotificationService.update(toSave) : this.systemNotificationService.create(toSave);
+        const saveOperation = this.notification.id ? this.systemNotificationService.update(toSave) : this.systemNotificationService.create(toSave, this.sendMaintenanceEmail());
 
         saveOperation.subscribe({
             next: () => this.onSaveSuccess(),

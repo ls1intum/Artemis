@@ -2,25 +2,34 @@ package de.tum.cit.aet.artemis.iris.web;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.core.repository.CustomAuditEventRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
+import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionCountDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionDTO;
+import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
@@ -36,6 +45,8 @@ import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 @RequestMapping("api/iris/chat-history/")
 public class IrisChatSessionResource {
 
+    private static final Logger log = LoggerFactory.getLogger(IrisChatSessionResource.class);
+
     protected final UserRepository userRepository;
 
     protected final IrisSessionService irisSessionService;
@@ -50,9 +61,13 @@ public class IrisChatSessionResource {
 
     private final IrisSessionRepository irisSessionRepository;
 
+    private final IrisChatSessionRepository irisChatSessionRepository;
+
+    private final CustomAuditEventRepository auditEventRepository;
+
     protected IrisChatSessionResource(UserRepository userRepository, CourseRepository courseRepository, IrisSessionService irisSessionService,
             IrisSettingsService irisSettingsService, PyrisHealthIndicator pyrisHealthIndicator, IrisRateLimitService irisRateLimitService,
-            IrisSessionRepository irisSessionRepository) {
+            IrisSessionRepository irisSessionRepository, IrisChatSessionRepository irisChatSessionRepository, CustomAuditEventRepository auditEventRepository) {
         this.userRepository = userRepository;
         this.irisSessionService = irisSessionService;
         this.irisSettingsService = irisSettingsService;
@@ -60,6 +75,8 @@ public class IrisChatSessionResource {
         this.irisRateLimitService = irisRateLimitService;
         this.courseRepository = courseRepository;
         this.irisSessionRepository = irisSessionRepository;
+        this.irisChatSessionRepository = irisChatSessionRepository;
+        this.auditEventRepository = auditEventRepository;
     }
 
     /**
@@ -106,5 +123,60 @@ public class IrisChatSessionResource {
         else {
             return ResponseEntity.ok(List.of());
         }
+    }
+
+    /**
+     * GET /api/iris/chat-history/sessions/count : Get the number of sessions and messages for the current user.
+     *
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and body containing session and message counts
+     */
+    @GetMapping("sessions/count")
+    @EnforceAtLeastStudent
+    public ResponseEntity<IrisChatSessionCountDTO> getSessionAndMessageCount() {
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        long sessionCount = irisChatSessionRepository.countByUserId(user.getId());
+        long messageCount = irisChatSessionRepository.countMessagesByUserId(user.getId());
+        return ResponseEntity.ok(new IrisChatSessionCountDTO(sessionCount, messageCount));
+    }
+
+    /**
+     * DELETE /api/iris/chat-history/sessions : Delete all Iris chat sessions for the current user.
+     * Messages and their content are removed via cascade.
+     *
+     * @return the {@link ResponseEntity} with status {@code 204 (No Content)}
+     */
+    @DeleteMapping("sessions")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> deleteAllSessionsForCurrentUser() {
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        long sessionCount = irisChatSessionRepository.countByUserId(user.getId());
+        long messageCount = irisChatSessionRepository.countMessagesByUserId(user.getId());
+        log.info("REST request to delete all Iris chat sessions for user id {} (sessions={}, messages={})", user.getId(), sessionCount, messageCount);
+        irisChatSessionRepository.deleteAllByUserId(user.getId());
+        var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_ALL_IRIS_SESSIONS, "sessions=" + sessionCount, "messages=" + messageCount);
+        auditEventRepository.add(auditEvent);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * DELETE /api/iris/chat-history/sessions/{sessionId} : Delete a single Iris chat session.
+     * Only the owner of the session can delete it.
+     *
+     * @param sessionId the ID of the session to delete
+     * @return the {@link ResponseEntity} with status {@code 204 (No Content)}
+     */
+    @DeleteMapping("sessions/{sessionId}")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> deleteSession(@PathVariable Long sessionId) {
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        IrisChatSession session = irisChatSessionRepository.findById(sessionId).orElseThrow(() -> new EntityNotFoundException("Iris chat session", sessionId));
+        if (user.getId() == null || session.getUserId() != user.getId().longValue()) {
+            throw new AccessForbiddenAlertException("You do not have access to this Iris chat session.", "iris", "iris.forbidden");
+        }
+        log.info("REST request to delete Iris chat session {} for user id {}", sessionId, user.getId());
+        irisChatSessionRepository.deleteById(sessionId);
+        var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_IRIS_SESSION, "sessionId=" + sessionId);
+        auditEventRepository.add(auditEvent);
+        return ResponseEntity.noContent().build();
     }
 }
