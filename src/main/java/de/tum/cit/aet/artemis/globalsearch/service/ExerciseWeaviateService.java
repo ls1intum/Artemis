@@ -43,33 +43,13 @@ public class ExerciseWeaviateService {
     }
 
     /**
-     * Inserts exercise metadata into Weaviate using an upsert strategy.
-     *
-     * @param exercise the exercise to insert
-     */
-    public void insertExercise(Exercise exercise) {
-        if (exercise.getId() == null) {
-            log.warn("Cannot insert exercise without an ID");
-            return;
-        }
-
-        try {
-            upsertExerciseInWeaviate(exercise);
-            log.debug("Successfully inserted exercise {} '{}' into Weaviate", exercise.getId(), exercise.getTitle());
-        }
-        catch (Exception e) {
-            log.error("Failed to insert exercise {} into Weaviate: {}", exercise.getId(), e.getMessage(), e);
-        }
-    }
-
-    /**
      * Updates exercise metadata in Weaviate using an upsert strategy.
      * Queries for the existing object by exercise ID, then uses replace if found or insert if not.
      * This avoids the data loss window of delete-then-insert and uses Weaviate's intended update API.
      *
      * @param exercise the exercise to update
      */
-    public void updateExercise(Exercise exercise) {
+    private void updateExercise(Exercise exercise) {
         if (exercise.getId() == null) {
             log.warn("Cannot update exercise without an ID");
             return;
@@ -135,40 +115,6 @@ public class ExerciseWeaviateService {
     }
 
     /**
-     * Deletes exercise metadata from Weaviate.
-     *
-     * @param exerciseId the ID of the exercise to delete
-     */
-    public void deleteExercise(long exerciseId) {
-        try {
-            deleteExerciseFromWeaviate(exerciseId);
-            log.debug("Successfully deleted exercise {} from Weaviate", exerciseId);
-        }
-        catch (Exception e) {
-            log.error("Failed to delete exercise {} from Weaviate: {}", exerciseId, e.getMessage(), e);
-        }
-    }
-
-    /**
-     * Updates Weaviate metadata for all exercises belonging to an exam.
-     * This should be called when exam dates change to keep the denormalized
-     * exam date fields (visible date, start date, end date) in sync.
-     *
-     * @param exam the exam whose exercises should be updated (must have exercise groups and exercises loaded)
-     */
-    public void updateExamExercises(Exam exam) {
-        if (exam == null || exam.getExerciseGroups() == null) {
-            return;
-        }
-
-        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            for (Exercise exercise : exerciseGroup.getExercises()) {
-                updateExercise(exercise);
-            }
-        }
-    }
-
-    /**
      * Asynchronously inserts exercise metadata into Weaviate.
      * This method executes in a separate thread to avoid blocking the HTTP request thread.
      *
@@ -177,7 +123,19 @@ public class ExerciseWeaviateService {
     @Async
     public void insertExerciseAsync(Exercise exercise) {
         SecurityUtils.setAuthorizationObject();
-        insertExercise(exercise);
+
+        if (exercise.getId() == null) {
+            log.warn("Cannot insert exercise without an ID");
+            return;
+        }
+
+        try {
+            upsertExerciseInWeaviate(exercise);
+            log.debug("Successfully inserted exercise {} '{}' into Weaviate", exercise.getId(), exercise.getTitle());
+        }
+        catch (Exception e) {
+            log.error("Failed to insert exercise {} into Weaviate: {}", exercise.getId(), e.getMessage(), e);
+        }
     }
 
     /**
@@ -201,7 +159,14 @@ public class ExerciseWeaviateService {
     @Async
     public void deleteExerciseAsync(long exerciseId) {
         SecurityUtils.setAuthorizationObject();
-        deleteExercise(exerciseId);
+
+        try {
+            deleteExerciseFromWeaviate(exerciseId);
+            log.debug("Successfully deleted exercise {} from Weaviate", exerciseId);
+        }
+        catch (Exception e) {
+            log.error("Failed to delete exercise {} from Weaviate: {}", exerciseId, e.getMessage(), e);
+        }
     }
 
     /**
@@ -213,7 +178,16 @@ public class ExerciseWeaviateService {
     @Async
     public void updateExamExercisesAsync(Exam exam) {
         SecurityUtils.setAuthorizationObject();
-        updateExamExercises(exam);
+
+        if (exam == null || exam.getExerciseGroups() == null) {
+            return;
+        }
+
+        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
+            for (Exercise exercise : exerciseGroup.getExercises()) {
+                updateExercise(exercise);
+            }
+        }
     }
 
     /**
