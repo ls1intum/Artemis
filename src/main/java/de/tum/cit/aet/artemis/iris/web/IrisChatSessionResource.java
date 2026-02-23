@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionCountDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
+import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisHealthIndicator;
@@ -61,13 +62,16 @@ public class IrisChatSessionResource {
 
     private final IrisSessionRepository irisSessionRepository;
 
+    private final IrisCitationService irisCitationService;
+
     private final IrisChatSessionRepository irisChatSessionRepository;
 
     private final CustomAuditEventRepository auditEventRepository;
 
     protected IrisChatSessionResource(UserRepository userRepository, CourseRepository courseRepository, IrisSessionService irisSessionService,
             IrisSettingsService irisSettingsService, PyrisHealthIndicator pyrisHealthIndicator, IrisRateLimitService irisRateLimitService,
-            IrisSessionRepository irisSessionRepository, IrisChatSessionRepository irisChatSessionRepository, CustomAuditEventRepository auditEventRepository) {
+            IrisSessionRepository irisSessionRepository, IrisCitationService irisCitationService, IrisChatSessionRepository irisChatSessionRepository,
+            CustomAuditEventRepository auditEventRepository) {
         this.userRepository = userRepository;
         this.irisSessionService = irisSessionService;
         this.irisSettingsService = irisSettingsService;
@@ -75,6 +79,7 @@ public class IrisChatSessionResource {
         this.irisRateLimitService = irisRateLimitService;
         this.courseRepository = courseRepository;
         this.irisSessionRepository = irisSessionRepository;
+        this.irisCitationService = irisCitationService;
         this.irisChatSessionRepository = irisChatSessionRepository;
         this.auditEventRepository = auditEventRepository;
     }
@@ -100,6 +105,7 @@ public class IrisChatSessionResource {
         boolean enabled = irisSettingsService.isEnabledForCourse(courseId);
 
         if (enabled) {
+            irisSession.setCitationInfo(irisCitationService.resolveCitationInfoFromMessages(irisSession.getMessages()));
             return ResponseEntity.ok((IrisChatSession) irisSession);
         }
         throw new AccessForbiddenAlertException("This Iris chat Type is disabled in the course.", "iris", "iris.disabled");
