@@ -100,7 +100,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
                 "{\"competencies\": [{ \"competencyTitle\": \"Loops\", \"taxonomyLevel\": \"APPLY\", \"confidence\": 0.9, \"whyThisMatches\": \"Loop found\" }]}")))))
                 .doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("{\"suggested\": \"EASY\", \"reasoning\": \"Simple\"}")))))
                 .doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(
-                        "{\"issues\": [{ \"category\": \"CLARITY\", \"severity\": \"LOW\", \"description\": \"Vague\", \"suggestedFix\": \"Fix\", \"relatedLocations\": [] }]}")))))
+                        "{\"issues\": [{ \"category\": \"CLARITY\", \"severity\": \"LOW\", \"description\": \"Vague\", \"suggestedFix\": \"Fix\", \"location\": null }]}")))))
                 .when(azureOpenAiChatModel).call(any(Prompt.class));
     }
 
@@ -282,7 +282,8 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         String body = "{\"problemStatementMarkdown\":\"Problem\", \"declaredDifficulty\":\"EASY\", \"exerciseId\":" + persistedExerciseId + "}";
 
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/checklist-analysis", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk()).andExpect(jsonPath("$.inferredCompetencies").isArray()).andExpect(jsonPath("$.qualityIssues").isArray())
+                .andExpect(jsonPath("$.difficultyAssessment").exists());
     }
 
     @Test
@@ -313,7 +314,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         // Create a second course with its own exercise
         Course otherCourse = new Course();
         otherCourse.setTitle("Other Course");
-        otherCourse.setInstructorGroupName(TEST_PREFIX + "instructor");
+        otherCourse.setInstructorGroupName(TEST_PREFIX + "instructor-other");
         otherCourse = courseRepository.save(otherCourse);
 
         ProgrammingExercise otherExercise = new ProgrammingExercise();
@@ -335,7 +336,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         long courseId = persistedCourseId;
 
         doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(
-                "{\"issues\": [{ \"category\": \"CLARITY\", \"severity\": \"LOW\", \"description\": \"Vague\", \"suggestedFix\": \"Fix\", \"relatedLocations\": [] }]}")))))
+                "{\"issues\": [{ \"category\": \"CLARITY\", \"severity\": \"LOW\", \"description\": \"Vague\", \"suggestedFix\": \"Fix\", \"location\": null }]}")))))
                 .when(azureOpenAiChatModel).call(any(Prompt.class));
 
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
@@ -344,7 +345,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
 
         request.performMvcRequest(
                 post("/api/hyperion/courses/{courseId}/checklist-analysis/sections/{section}", courseId, "QUALITY").contentType(MediaType.APPLICATION_JSON).content(body))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.qualityIssues").isArray());
+                .andExpect(status().isOk()).andExpect(jsonPath("$.qualityIssues").isArray()).andExpect(jsonPath("$.qualityIssues[0].category").value("CLARITY"));
     }
 
     @Test
@@ -361,7 +362,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
 
         request.performMvcRequest(
                 post("/api/hyperion/courses/{courseId}/checklist-analysis/sections/{section}", courseId, "DIFFICULTY").contentType(MediaType.APPLICATION_JSON).content(body))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.difficultyAssessment").exists());
+                .andExpect(status().isOk()).andExpect(jsonPath("$.difficultyAssessment").exists()).andExpect(jsonPath("$.difficultyAssessment.suggested").value("EASY"));
     }
 
     @Test
@@ -393,7 +394,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     void shouldReturnBadRequestForChecklistSectionAnalysisCourseMismatch() throws Exception {
         Course otherCourse = new Course();
         otherCourse.setTitle("Other Course Section");
-        otherCourse.setInstructorGroupName(TEST_PREFIX + "instructor");
+        otherCourse.setInstructorGroupName(TEST_PREFIX + "instructor-other-section");
         otherCourse = courseRepository.save(otherCourse);
 
         ProgrammingExercise otherExercise = new ProgrammingExercise();
@@ -419,7 +420,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         String body = "{\"actionType\":\"FIX_QUALITY_ISSUE\",\"problemStatementMarkdown\":\"Problem\","
                 + "\"context\":{\"issueDescription\":\"Vague instructions\",\"category\":\"CLARITY\"}}";
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/checklist-actions", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.updatedProblemStatement").isString()).andExpect(jsonPath("$.applied").isBoolean());
+                .andExpect(status().isOk()).andExpect(jsonPath("$.updatedProblemStatement").isString()).andExpect(jsonPath("$.applied").value(true));
     }
 
     @Test
@@ -432,7 +433,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         String body = "{\"actionType\":\"ADAPT_DIFFICULTY\",\"problemStatementMarkdown\":\"Problem\","
                 + "\"context\":{\"targetDifficulty\":\"MEDIUM\",\"currentDifficulty\":\"EASY\"}}";
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/checklist-actions", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.updatedProblemStatement").isString());
+                .andExpect(status().isOk()).andExpect(jsonPath("$.updatedProblemStatement").isString()).andExpect(jsonPath("$.applied").value(true));
     }
 
     @Test

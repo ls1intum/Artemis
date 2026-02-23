@@ -62,17 +62,17 @@
 
     .category-coherence {
         background-color: var(--info);
-        color: var(--primary-color-text);
+        color: var(--info-color-text);
     }
 
     .category-completeness {
         background-color: var(--success);
-        color: var(--primary-color-text);
+        color: var(--success-color-text);
     }
 
     .category-default {
         background-color: var(--surface-500);
-        color: var(--primary-color-text);
+        color: var(--surface-ground);
     }
 
     .quality-issues-list,
@@ -108,6 +108,11 @@
 
         &:hover:not(:disabled) {
             opacity: 1;
+        }
+
+        &:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
         }
 
         &--current {

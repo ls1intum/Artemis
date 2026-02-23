@@ -1,7 +1,14 @@
 <div class="checklist-panel mb-3">
     <div class="checklist-panel-header d-flex justify-content-between align-items-center p-3 border-bottom">
         <h5 class="mb-0" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.title">Instructor Checklist</h5>
-        <button pButton severity="primary" size="small" (click)="analyze()" [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0">
+        <button
+            pButton
+            severity="primary"
+            size="small"
+            data-testid="analyze-button"
+            (click)="analyze()"
+            [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0"
+        >
             <fa-icon [icon]="isLoading() ? faSpinner : faMagic" [animation]="isLoading() ? 'spin' : undefined" />
             <span class="ms-1">{{
                 (isLoading() ? 'artemisApp.programmingExercise.instructorChecklist.analyzing' : 'artemisApp.programmingExercise.instructorChecklist.analyze') | artemisTranslate
@@ -47,7 +54,7 @@
                                 size="small"
                                 class="reanalyze-btn"
                                 (click)="$event.stopPropagation(); reanalyzeSection('quality')"
-                                [disabled]="isSectionLoading('quality')"
+                                [disabled]="isLoading() || isSectionLoading('quality')"
                             >
                                 <fa-icon [icon]="faSync" [animation]="isSectionLoading('quality') ? 'spin' : undefined" class="me-1" />
                                 <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.reanalyze">Re-analyze</span>
@@ -143,7 +150,7 @@
                                         severity="primary"
                                         size="small"
                                         [outlined]="true"
-                                        [disabled]="isApplyingAction() || sectionLoading().size > 0"
+                                        [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0"
                                         (click)="fixAllQualityIssues()"
                                     >
                                         @if (isActionLoading('fix-all')) {
@@ -171,7 +178,7 @@
                                                         severity="warn"
                                                         size="small"
                                                         [outlined]="true"
-                                                        [disabled]="isApplyingAction() || sectionLoading().size > 0"
+                                                        [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0"
                                                         (click)="fixQualityIssue(issue, i)"
                                                         [attr.title]="'artemisApp.programmingExercise.instructorChecklist.quality.fixIssue' | artemisTranslate"
                                                     >
@@ -236,7 +243,7 @@
                                 size="small"
                                 class="reanalyze-btn"
                                 (click)="$event.stopPropagation(); reanalyzeSection('competencies')"
-                                [disabled]="isSectionLoading('competencies')"
+                                [disabled]="isLoading() || isSectionLoading('competencies')"
                             >
                                 <fa-icon [icon]="faSync" [animation]="isSectionLoading('competencies') ? 'spin' : undefined" class="me-1" />
                                 <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.reanalyze">Re-analyze</span>
@@ -250,7 +257,7 @@
                             }
                             @if (result.inferredCompetencies && result.inferredCompetencies.length > 0) {
                                 <div class="competency-list">
-                                    @for (comp of result.inferredCompetencies; track comp.rank) {
+                                    @for (comp of result.inferredCompetencies; track $index) {
                                         <div class="competency-item">
                                             <div class="d-flex justify-content-between align-items-start">
                                                 <div class="flex-grow-1">
@@ -327,7 +334,7 @@
                                             severity="primary"
                                             size="small"
                                             [outlined]="true"
-                                            [disabled]="isSyncingCompetencies() || isApplyingAction() || sectionLoading().size > 0"
+                                            [disabled]="isLoading() || isSyncingCompetencies() || isApplyingAction() || sectionLoading().size > 0"
                                             (click)="applyCompetencies()"
                                         >
                                             @if (isSyncingCompetencies()) {
@@ -375,7 +382,7 @@
                                 size="small"
                                 class="reanalyze-btn"
                                 (click)="$event.stopPropagation(); reanalyzeSection('difficulty')"
-                                [disabled]="isSectionLoading('difficulty')"
+                                [disabled]="isLoading() || isSectionLoading('difficulty')"
                             >
                                 <fa-icon [icon]="faSync" [animation]="isSectionLoading('difficulty') ? 'spin' : undefined" class="me-1" />
                                 <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.reanalyze">Re-analyze</span>
@@ -428,7 +435,7 @@
                                             'difficulty-chip--current': exercise()?.difficulty === level,
                                             'difficulty-chip--suggested': result.difficultyAssessment.suggested === level && exercise()?.difficulty !== level,
                                         }"
-                                        [disabled]="isApplyingAction() || sectionLoading().size > 0 || exercise()?.difficulty === level"
+                                        [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0 || exercise()?.difficulty === level"
                                         (click)="adaptDifficulty(level)"
                                     >
                                         @if (isActionLoading('adapt-' + level)) {

@@ -829,7 +829,8 @@
                     "error": "Aktion konnte nicht angewendet werden. Bitte erneut versuchen.",
                     "noChanges": "Keine Änderungen für diese Aktion nötig.",
                     "adaptTo": "Anpassen auf:",
-                    "current": "(aktuell)"
+                    "current": "(aktuell)",
+                    "adaptedReasoning": "An {{ difficulty }} angepasst. Erneut analysieren für eine aktualisierte Bewertung."
                 },
                 "outdated": "Veraltet",
                 "reanalyze": "Erneut analysieren"

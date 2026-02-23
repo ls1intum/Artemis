@@ -19,6 +19,8 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.StandardizedCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.KnowledgeArea;
@@ -35,9 +37,6 @@ class HyperionChecklistServiceTest {
 
     @Mock
     private ChatModel chatModel;
-
-    @Mock
-    private ObservationRegistry observationRegistry;
 
     @Mock
     private StandardizedCompetencyApi standardizedCompetencyApi;
@@ -57,10 +56,6 @@ class HyperionChecklistServiceTest {
         mocks = MockitoAnnotations.openMocks(this);
         ChatClient chatClient = ChatClient.create(chatModel);
 
-        // Mock ObservationRegistry to return a no-op observation
-        when(observationRegistry.getCurrentObservation()).thenReturn(null);
-        when(observationRegistry.observationConfig()).thenReturn(new ObservationRegistry.ObservationConfig());
-
         // Mock StandardizedCompetencyService to return empty catalog
         when(standardizedCompetencyApi.getAllForTreeView()).thenReturn(List.of());
 
@@ -70,8 +65,8 @@ class HyperionChecklistServiceTest {
         when(courseCompetencyApi.findAllForCourse(any(Long.class))).thenReturn(java.util.Set.of());
 
         var templateService = new HyperionPromptTemplateService();
-        this.hyperionChecklistService = new HyperionChecklistService(chatClient, templateService, observationRegistry, Optional.of(standardizedCompetencyApi),
-                Optional.of(courseCompetencyApi), taskRepository, new com.fasterxml.jackson.databind.ObjectMapper());
+        this.hyperionChecklistService = new HyperionChecklistService(chatClient, templateService, ObservationRegistry.NOOP, Optional.of(standardizedCompetencyApi),
+                Optional.of(courseCompetencyApi), taskRepository, new ObjectMapper());
     }
 
     @AfterEach
@@ -135,7 +130,7 @@ class HyperionChecklistServiceTest {
             else if (text.contains("quality issues related to CLARITY")) {
                 return new ChatResponse(List.of(new Generation(new AssistantMessage(qualityJson))));
             }
-            return new ChatResponse(List.of(new Generation(new AssistantMessage("{}"))));
+            throw new AssertionError("Unexpected prompt: " + text);
         });
 
         ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem statement", "EASY", "JAVA", 1L);
@@ -175,7 +170,7 @@ class HyperionChecklistServiceTest {
             else if (text.contains("quality issues related to CLARITY")) {
                 return new ChatResponse(List.of(new Generation(new AssistantMessage(qualityJson))));
             }
-            return new ChatResponse(List.of(new Generation(new AssistantMessage("{}"))));
+            throw new AssertionError("Unexpected prompt: " + text);
         });
 
         ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem", null, null, 1L);

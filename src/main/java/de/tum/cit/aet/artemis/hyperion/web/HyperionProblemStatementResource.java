@@ -122,6 +122,7 @@ public class HyperionProblemStatementResource {
     /**
      * POST courses/{courseId}/checklist-analysis: Analyze the problem statement for checklist (learning goals, difficulty, quality).
      * The three LLM calls (competency, difficulty, quality) run concurrently inside the service.
+     * Blocking on the CompletableFuture here is acceptable because Artemis runs on virtual threads.
      *
      * @param courseId the id of the course
      * @param request  the request containing problem statement, metadata, and an optional exerciseId

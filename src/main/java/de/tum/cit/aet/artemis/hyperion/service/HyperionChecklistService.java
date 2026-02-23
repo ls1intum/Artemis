@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -231,9 +232,6 @@ public class HyperionChecklistService {
         // Fetch and serialize the competency catalog
         String catalogJson = serializeCompetencyCatalog();
 
-        // Invalidate the per-course competency cache so the AI always sees freshly created/deleted competencies
-        courseCompetencyCache.remove(courseId);
-
         // Load and serialize existing course competencies for AI-based matching
         String courseCompetenciesJson = serializeCourseCompetencies(courseId);
 
@@ -347,7 +345,9 @@ public class HyperionChecklistService {
         if (value == null || value.isBlank()) {
             return "(not provided)";
         }
-        return "\n```user-input\n" + value + "\n```\n";
+        // Escape any triple-backtick sequences to prevent breakout from the fence
+        String sanitized = value.replace("```", "``\\`");
+        return "\n```user-input\n" + sanitized + "\n```\n";
     }
 
     /**
@@ -379,6 +379,8 @@ public class HyperionChecklistService {
             }
             if (standardizedCompetencyApi.isEmpty()) {
                 log.warn("StandardizedCompetencyApi is not available (Atlas module disabled). Using empty catalog.");
+                this.cachedCatalogJson = "[]";
+                this.catalogCachedAt = Instant.now();
                 return "[]";
             }
             try {
@@ -547,15 +549,23 @@ public class HyperionChecklistService {
         }, DifficultyAssessmentDTO.unknown("Analysis failed"));
     }
 
+    /** Stable ranking for difficulty levels, independent of enum declaration order. */
+    private static final Map<SuggestedDifficulty, Integer> DIFFICULTY_RANKS = Map.of(SuggestedDifficulty.EASY, 0, SuggestedDifficulty.MEDIUM, 1, SuggestedDifficulty.HARD, 2);
+
     /**
-     * Computes the delta between declared and suggested difficulty using enum ordinals.
+     * Computes the delta between declared and suggested difficulty using an explicit ranking.
      */
     private DifficultyDelta computeDelta(SuggestedDifficulty declared, SuggestedDifficulty suggested) {
         if (declared == null || suggested == null || declared == SuggestedDifficulty.UNKNOWN || suggested == SuggestedDifficulty.UNKNOWN) {
             return DifficultyDelta.UNKNOWN;
         }
 
-        int cmp = Integer.compare(suggested.ordinal(), declared.ordinal());
+        int declaredRank = DIFFICULTY_RANKS.getOrDefault(declared, -1);
+        int suggestedRank = DIFFICULTY_RANKS.getOrDefault(suggested, -1);
+        if (declaredRank < 0 || suggestedRank < 0) {
+            return DifficultyDelta.UNKNOWN;
+        }
+        int cmp = Integer.compare(suggestedRank, declaredRank);
         return cmp < 0 ? DifficultyDelta.LOWER : cmp > 0 ? DifficultyDelta.HIGHER : DifficultyDelta.MATCH;
     }
 
@@ -614,7 +624,7 @@ public class HyperionChecklistService {
             return null;
         }
         try {
-            return Enum.valueOf(enumType, value.toUpperCase());
+            return Enum.valueOf(enumType, value.toUpperCase(Locale.ROOT));
         }
         catch (IllegalArgumentException e) {
             log.debug("Unknown {} value: {}", enumType.getSimpleName(), value);

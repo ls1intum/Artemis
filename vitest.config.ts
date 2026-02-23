@@ -73,6 +73,7 @@ export default defineConfig({
                 'src/main/webapp/app/iris/**/*.ts', // include iris for code coverage
                 'src/main/webapp/app/shared/components/buttons/**/*.ts', // include shared buttons for code coverage
                 'src/main/webapp/app/exercise/review/**/*.ts', // include review module for code coverage
+                'src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/**/*.ts', // include checklist-panel for code coverage
             ],
             exclude: [
                 '**/node_modules/**',   // exclude node_modules with third-party code

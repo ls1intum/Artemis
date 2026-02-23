@@ -181,10 +181,9 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         comp.onInstructionChange('Updated statement');
 
-        // The component mutates the exercise in place and emits the same reference
-        const emittedExercise = programmingExerciseSpy.mock.calls[0][0] as ProgrammingExercise;
-        expect(emittedExercise).toBe(exercise);
-        expect(emittedExercise.problemStatement).toBe('Updated statement');
+        expect(programmingExerciseSpy).toHaveBeenCalledOnce();
+        expect(programmingExerciseSpy).toHaveBeenCalledWith(expect.objectContaining({ problemStatement: 'Updated statement' }));
+        expect(exercise.problemStatement).toBe('Updated statement');
         expect(problemStatementSpy).toHaveBeenCalledWith('Updated statement');
     });
 });

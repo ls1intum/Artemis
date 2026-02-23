@@ -829,7 +829,8 @@
                     "error": "Failed to apply the action. Please try again.",
                     "noChanges": "No changes were needed for this action.",
                     "adaptTo": "Adapt to:",
-                    "current": "(current)"
+                    "current": "(current)",
+                    "adaptedReasoning": "Adapted to {{ difficulty }}. Re-analyze for an updated assessment."
                 },
                 "outdated": "Outdated",
                 "reanalyze": "Re-analyze"

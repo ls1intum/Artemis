@@ -93,8 +93,8 @@ describe('ChecklistPanelComponent', () => {
     it('should call analyzeChecklist on button click', () => {
         const analyzeSpy = vi.spyOn(apiService, 'analyzeChecklist').mockReturnValue(of(mockResponse) as any);
 
-        // Find analyze button
-        const button = fixture.debugElement.query(By.css('button'));
+        // Find analyze button by data-testid
+        const button = fixture.debugElement.query(By.css('[data-testid="analyze-button"]'));
         expect(button).toBeTruthy();
         button.nativeElement.click();
 

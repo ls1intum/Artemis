@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -16,5 +17,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ChecklistAnalysisRequestDTO(@NotBlank @Size(max = 50000) String problemStatementMarkdown,
         @Pattern(regexp = "^(EASY|MEDIUM|HARD)$", message = "declaredDifficulty must be EASY, MEDIUM, or HARD") String declaredDifficulty, @Size(max = 50) String language,
-        Long exerciseId) {
+        @Positive Long exerciseId) {
 }

@@ -28,18 +28,22 @@ Provide:
 5. **testCount**: The number of test case references you counted in the problem statement
 
 ## Problem Statement
+--- BEGIN PROBLEM STATEMENT ---
 {{problem_statement}}
+--- END PROBLEM STATEMENT ---
 
 ## Declared Difficulty (by instructor)
+--- BEGIN DECLARED DIFFICULTY ---
 {{declared_difficulty}}
+--- END DECLARED DIFFICULTY ---
 
 Return your response as JSON:
 ```json
 {
-  "suggested": "EASY|MEDIUM|HARD",
-  "confidence": 0.0-1.0,
-  "reasoning": "string",
-  "taskCount": number,
-  "testCount": number
+  "suggested": "MEDIUM",
+  "confidence": 0.75,
+  "reasoning": "The exercise has 6 tasks and 12 tests, placing it in the MEDIUM range structurally. The concepts involved are moderately complex.",
+  "taskCount": 6,
+  "testCount": 12
 }
 ```

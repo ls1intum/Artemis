@@ -169,7 +169,7 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
      * Also refreshes the CompetencySelectionComponent to reflect changes (e.g., newly created/linked competencies).
      */
     onCompetencyLinksChange(competencyLinks: CompetencyExerciseLink[] | CompetencyLearningObjectLink[] | undefined): void {
-        if (!competencyLinks) return;
+        if (!competencyLinks || this.programmingExerciseCreationConfig().isExamMode) return;
         const exercise = this.programmingExercise();
         if (exercise) {
             // CompetencyExerciseLink extends CompetencyLearningObjectLink, so the assignment is safe.
@@ -187,7 +187,7 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
      */
     private refreshCompetencySelection(competencyLinks: CompetencyExerciseLink[] | CompetencyLearningObjectLink[]): void {
         const selection = this.competencySelectionComponent();
-        if (!selection || !competencyLinks) return;
+        if (!selection) return;
 
         selection.refreshWithLinks(competencyLinks);
     }

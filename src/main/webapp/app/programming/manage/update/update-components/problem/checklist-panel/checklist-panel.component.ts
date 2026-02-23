@@ -335,7 +335,7 @@ export class ChecklistPanelComponent {
             .subscribe({
                 next: (res) => {
                     if (res.applied) {
-                        const newProblemStatement = res.updatedProblemStatement ?? '';
+                        const newProblemStatement = res.updatedProblemStatement ?? this.latestProblemStatement() ?? this.problemStatement();
                         this.latestProblemStatement.set(newProblemStatement);
                         this.problemStatementChange.emit(newProblemStatement);
                         this.alertService.success('artemisApp.programmingExercise.instructorChecklist.actions.success');
@@ -477,7 +477,9 @@ export class ChecklistPanelComponent {
                         ...r.difficultyAssessment,
                         suggested: targetDifficulty,
                         delta: DifficultyAssessment.DeltaEnum.Match,
-                        reasoning: `Adapted to ${targetDifficulty}. Re-analyze for an updated assessment.`,
+                        reasoning: this.translateService.instant('artemisApp.programmingExercise.instructorChecklist.actions.adaptedReasoning', {
+                            difficulty: targetDifficulty,
+                        }),
                     },
                 }));
                 this.difficultyChange.emit(targetDifficulty);
