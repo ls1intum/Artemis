@@ -12,6 +12,12 @@
                 "switchToAdvancedMode": "Switch to advanced mode",
                 "advancedModeTooltip": "The advanced mode offers extended configuration options."
             },
+            "problemStatementGlobalRefinementRequest": {
+                "userPrompt": "User Prompt"
+            },
+            "problemStatementGenerationRequest": {
+                "userPrompt": "User Prompt"
+            },
             "created": "Created new Programming Exercise with title {{ param }}",
             "updated": "Updated Programming Exercise with title {{ param }}",
             "deleted": "Deleted Programming Exercise with title {{ param }}",
@@ -240,11 +246,24 @@
                 "testCaseCommand": "Insert Test Case",
                 "tasksOfExercise": "Tasks:",
                 "generationAssistance": "Generate Draft Problem Statement",
+                "refinementAssistance": "Refine Problem Statement",
                 "generateDraftDescription": "Use this field to draft the exercise brief or refine the current statement. Your input drives both the Problem Statement and the Learning Objectives. Be concrete about requirements, concepts, and constraints.",
                 "yourRequirements": "Your Requirements",
                 "examplePlaceholder": "Example: Create a Java exercise about implementing a binary search tree with insert, delete, and search operations. Students should demonstrate understanding of tree traversal and recursive algorithms.",
                 "generationSuccess": "Problem statement has been successfully generated.",
-                "generationError": "Failed to generate problem statement. Please try again."
+                "generationError": "Failed to generate problem statement. Please try again.",
+                "refinementSuccess": "Problem statement has been successfully refined.",
+                "refinementError": "Failed to refine problem statement. Please try again.",
+                "cannotRefineEmpty": "Cannot refine an empty problem statement. Please add some content first.",
+                "problemStatementTooLong": "The problem statement is too long to refine. Please reduce the content and try again.",
+                "reviewChanges": "Review Changes",
+                "reviewChangesDescription": "Green lines will be added, red lines will be removed.",
+                "revertAll": "Revert All",
+                "doneReviewing": "Done Reviewing",
+                "aiRefining": "AI is updating the problem statement...",
+                "generate": "Generate",
+                "refine": "Refine",
+                "diffLineStatTooltip": "Lines added and removed by the AI refinement."
             },
             "codeGeneration": {
                 "creationAssistance": "Creation Assistance",

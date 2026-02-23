@@ -206,6 +206,27 @@
             "courseIdMissing": "Die Kurs ID ist erforderlich.",
             "forbidChangeCourseId": "Die Übungskurs-ID stimmt nicht mit der gespeicherten Kurs-ID überein"
         },
+        "ProblemStatementGeneration": {
+            "generatedProblemStatementTooLong": "Die generierte Aufgabenbeschreibung ist zu lang. Bitte versuche es erneut mit einer anderen Eingabe.",
+            "chatClientNotConfigured": "KI-Generierung ist derzeit nicht verfügbar. Bitte kontaktiere den Administrator.",
+            "chatClientNotConfigured_detail": "Der KI-Chat-Client ist nicht konfiguriert.",
+            "problemStatementGenerationFailed": "Fehler beim Generieren der Aufgabenstellung. Bitte versuche es später erneut.",
+            "problemStatementGenerationNull": "Die KI hat eine leere Antwort zurückgegeben. Bitte versuche es erneut.",
+            "userPromptEmpty": "Die Benutzereingabe darf nicht leer sein.",
+            "userPromptTooLong": "Die Benutzereingabe ist zu lang. Bitte kürze deine Anweisungen und versuche es erneut."
+        },
+        "ProblemStatementRefinement": {
+            "problemStatementEmpty": "Die Aufgabenbeschreibung darf nicht leer sein.",
+            "userPromptEmpty": "Die Benutzereingabe darf nicht leer sein.",
+            "userPromptTooLong": "Die Benutzereingabe ist zu lang. Bitte kürze deine Anweisungen und versuche es erneut.",
+            "chatClientNotConfigured": "KI-Verfeinerung ist derzeit nicht verfügbar. Bitte kontaktiere den Administrator.",
+            "chatClientNotConfigured_detail": "Der KI-Chat-Client ist nicht konfiguriert.",
+            "problemStatementTooLong": "Die Aufgabenbeschreibung ist zu lang. Bitte kürze den Inhalt und versuche es erneut.",
+            "problemStatementRefinementNull": "Die KI hat eine leere Antwort zurückgegeben. Bitte versuche es erneut.",
+            "refinedProblemStatementTooLong": "Die verfeinerte Aufgabenbeschreibung ist zu lang. Bitte passe die Verfeinerungsanweisungen an und versuche es erneut.",
+            "refinedProblemStatementUnchanged": "Die KI hat keine Änderungen an der Aufgabenbeschreibung vorgenommen. Bitte passe die Verfeinerungsanweisungen an und versuche es erneut.",
+            "problemStatementRefinementFailed": "Die Verfeinerung der Aufgabenbeschreibung ist fehlgeschlagen. Bitte versuche es später erneut."
+        },
         "noCourse": "Eine Klausur muss zu einem Kurs gehören.",
         "wrongCourseId": "Die Kurs-ID stimmt nicht mit dem Kurs der Klausur überein.",
         "examTimes": "Ungültige Klausurzeiten: Bitte stelle sicher, dass das Sichtbarkeitsdatum vor dem Startdatum liegt, das Startdatum vor dem Enddatum liegt und das Veröffentlichungsdatum der Beispiellösung (falls gesetzt) nach dem Enddatum liegt.",

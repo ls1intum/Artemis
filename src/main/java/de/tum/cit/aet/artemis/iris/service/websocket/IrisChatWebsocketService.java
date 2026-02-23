@@ -12,6 +12,7 @@ import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatWebsocketDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisCitationMetaDTO;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 
@@ -44,7 +45,7 @@ public class IrisChatWebsocketService {
      * @param stages      that should be sent over the websocket
      */
     public void sendMessage(IrisChatSession session, IrisMessage irisMessage, List<PyrisStageDTO> stages) {
-        this.sendMessage(session, irisMessage, stages, null);
+        this.sendMessage(session, irisMessage, stages, null, null);
     }
 
     /**
@@ -58,12 +59,14 @@ public class IrisChatWebsocketService {
      * @param irisMessage  that should be sent over the websocket
      * @param stages       that should be sent over the websocket
      * @param sessionTitle the session title to send
+     * @param citationInfo the citation metadata to send
      */
-    public void sendMessage(IrisChatSession session, IrisMessage irisMessage, List<PyrisStageDTO> stages, String sessionTitle) {
+    public void sendMessage(IrisChatSession session, IrisMessage irisMessage, List<PyrisStageDTO> stages, String sessionTitle, List<IrisCitationMetaDTO> citationInfo) {
+        // TODO: create DTOs for IrisChatSession and IrisMessage
         var user = userRepository.findByIdElseThrow(session.getUserId());
         var rateLimitInfo = rateLimitService.getRateLimitInformation(session, user);
         var topic = "" + session.getId(); // Todo: add more specific topic
-        var payload = new IrisChatWebsocketDTO(irisMessage, rateLimitInfo, stages, sessionTitle, null, null);
+        var payload = new IrisChatWebsocketDTO(irisMessage, rateLimitInfo, stages, sessionTitle, null, null, citationInfo);
         websocketService.send(user.getLogin(), topic, payload);
     }
 
@@ -90,7 +93,7 @@ public class IrisChatWebsocketService {
         var user = userRepository.findByIdElseThrow(session.getUserId());
         var rateLimitInfo = rateLimitService.getRateLimitInformation(session, user);
         var topic = "" + session.getId(); // Todo: add more specific topic
-        var payload = new IrisChatWebsocketDTO(null, rateLimitInfo, stages, sessionTitle, suggestions, tokens);
+        var payload = new IrisChatWebsocketDTO(null, rateLimitInfo, stages, sessionTitle, suggestions, tokens, null);
         websocketService.send(user.getLogin(), topic, payload);
     }
 }

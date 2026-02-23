@@ -206,6 +206,27 @@
             "courseIdMissing": "The courseId is required.",
             "forbidChangeCourseId": "Exercise course id does not match the stored course id"
         },
+        "ProblemStatementGeneration": {
+            "generatedProblemStatementTooLong": "The generated problem statement is too long. Please try again with a different prompt.",
+            "chatClientNotConfigured": "AI generation is currently unavailable. Please contact your administrator.",
+            "chatClientNotConfigured_detail": "AI chat client is not configured.",
+            "problemStatementGenerationFailed": "Failed to generate problem statement. Please try again later.",
+            "problemStatementGenerationNull": "The AI returned an empty response. Please try again.",
+            "userPromptEmpty": "The user prompt cannot be empty.",
+            "userPromptTooLong": "The user prompt is too long. Please shorten your instructions and try again."
+        },
+        "ProblemStatementRefinement": {
+            "problemStatementEmpty": "The problem statement cannot be empty.",
+            "userPromptEmpty": "The user prompt cannot be empty.",
+            "userPromptTooLong": "The user prompt is too long. Please shorten your instructions and try again.",
+            "chatClientNotConfigured": "AI refinement is currently unavailable. Please contact your administrator.",
+            "chatClientNotConfigured_detail": "AI chat client is not configured.",
+            "problemStatementTooLong": "The problem statement is too long. Please reduce the content and try again.",
+            "problemStatementRefinementNull": "The AI returned an empty response. Please try again.",
+            "refinedProblemStatementTooLong": "The refined problem statement is too long. Please adjust the refinement instructions and try again.",
+            "refinedProblemStatementUnchanged": "The AI did not make any changes to the problem statement. Please adjust the refinement instructions and try again.",
+            "problemStatementRefinementFailed": "Failed to refine the problem statement. Please try again later."
+        },
         "noCourse": "An exam must belong to a course.",
         "wrongCourseId": "The course ID does not match the course connected to the exam.",
         "examTimes": "Invalid exam times: Please check that visible date is before start date, start date is before end date, and example solution publication date (if set) is after end date.",
