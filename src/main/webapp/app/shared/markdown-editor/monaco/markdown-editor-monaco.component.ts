@@ -5,12 +5,14 @@ import {
     Component,
     ElementRef,
     EventEmitter,
+    Injector,
     Input,
     OnDestroy,
     Output,
     Signal,
     ViewChild,
     ViewContainerRef,
+    afterNextRender,
     computed,
     effect,
     inject,
@@ -19,7 +21,8 @@ import {
     signal,
     untracked,
 } from '@angular/core';
-import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { MonacoEditorComponent, MonacoEditorMode } from 'app/shared/monaco-editor/monaco-editor.component';
+import { LineChange } from 'app/programming/shared/utils/diff.utils';
 import {
     NgbDropdown,
     NgbDropdownMenu,
@@ -271,6 +274,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     readonly showLocationWarning = input<boolean>(false);
 
     isButtonLoading = input<boolean>(false);
+    readonly isAiLoading = input<boolean>(false);
     isFormGroupValid = input<boolean>(false);
     isInCommunication = input<boolean>(false);
     showMarkdownInfoText = input<boolean>(true);
@@ -281,7 +285,17 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     readonly fallbackConversationId = input<number>();
 
     showCloseButton = input<boolean>(false);
+    /** Whether the editor is read-only */
+    isReadOnly = input<boolean>(false);
+
+    mode = input<MonacoEditorMode>('normal');
+
+    renderSideBySide = input<boolean>(true);
+
     closeEditor = output<void>();
+
+    /** Emits diff line change information when in diff mode */
+    diffLineChange = output<{ ready: boolean; lineChange: LineChange }>();
 
     @Output()
     markdownChange = new EventEmitter<string>();
@@ -325,6 +339,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         meta: [],
     };
 
+    /**
+     * Color mapping from hex codes to CSS class names.
+     */
     readonly colorToClassMap = new Map<string, string>([
         ['#ca2024', 'red'],
         ['#3ea119', 'green'],
@@ -365,6 +382,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     constructor() {
         this.uniqueMarkdownEditorId = 'markdown-editor-' + window.crypto.randomUUID().toString();
+        const injector = inject(Injector);
 
         effect(() => {
             this.enableExerciseReviewComments();
@@ -378,6 +396,27 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             const threads = this.exerciseReviewCommentService.threads();
             this.reviewCommentManager?.updateDraftInputs();
             this.reviewCommentManager?.tryUpdateThreadInputs(threads);
+        });
+
+        // Adjust editor dimensions when mode changes (e.g. entering/leaving diff mode).
+        // Skip the initial run: the editor is already laid out by ngAfterViewInit, and an
+        // extra layout() call in tests triggers Monaco's monospace-font-assumption scheduler.
+        let lastObservedMode: MonacoEditorMode | undefined;
+        effect(() => {
+            const currentMode = this.mode();
+            if (lastObservedMode !== undefined && lastObservedMode !== currentMode) {
+                untracked(() => {
+                    afterNextRender(
+                        () => {
+                            if (this.monacoEditor) {
+                                this.adjustEditorDimensions();
+                            }
+                        },
+                        { injector },
+                    );
+                });
+            }
+            lastObservedMode = currentMode;
         });
     }
 
@@ -610,6 +649,10 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         }
     }
 
+    onDiffChanged(event: { ready: boolean; lineChange: LineChange }): void {
+        this.diffLineChange.emit(event);
+    }
+
     parseMarkdown(domainActionsToCheck: TextEditorDomainAction[] = this.domainActions): void {
         if (this.showDefaultPreview) {
             this.defaultPreviewHtml = this.artemisMarkdown.safeHtmlForMarkdown(this._markdown);
@@ -796,6 +839,32 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     private getProblemStatementThreadLine(thread: CommentThread): number {
         return (thread.lineNumber ?? thread.initialLineNumber ?? 1) - 1;
+    }
+
+    /**
+     * Applies new content to the right (modified) side of the diff editor.
+     * In live-synced mode, changes sync immediately as the model is shared.
+     * @param content The new content to apply.
+     */
+    applyDiffContent(content: string): void {
+        this.monacoEditor?.applyDiffContent(content);
+    }
+
+    /**
+     * Applies the refined content to the editor in diff mode.
+     * Alias for applyDiffContent for semantic clarity in refinement workflows.
+     * @param refined The new content to show in the modified editor.
+     */
+    applyRefinedContent(refined: string): void {
+        this.applyDiffContent(refined);
+    }
+
+    /**
+     * Reverts all changes in the diff editor
+     * by restoring the snapshot taken when diff mode was entered.
+     */
+    revertAll(): void {
+        this.monacoEditor?.revertAll();
     }
 
     /**
