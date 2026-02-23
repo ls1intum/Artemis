@@ -554,6 +554,22 @@ pre {
         margin: 0.5rem 0.75rem;
     }
 
+    .collapsed-icon-button {
+        padding: 4px 8px;
+        cursor: pointer;
+        border-radius: var(--bs-border-radius-lg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--bs-body-color);
+        background-color: transparent;
+        border: none;
+
+        &:hover {
+            background-color: var(--iris-accent-background);
+        }
+    }
+
     &-collapsed {
         display: flex;
         flex-direction: column;
@@ -561,20 +577,6 @@ pre {
         padding-top: 16px;
         height: 100%;
         gap: 4px;
-
-        .collapsed-icon-button {
-            padding: 6px 8px;
-            cursor: pointer;
-            border-radius: var(--bs-border-radius-lg);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--bs-body-color);
-
-            &:hover {
-                background-color: var(--iris-accent-background);
-            }
-        }
 
         .new-chat-button {
             margin: 0;
