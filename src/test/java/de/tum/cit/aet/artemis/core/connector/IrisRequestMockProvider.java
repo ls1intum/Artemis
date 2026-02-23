@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.tutorsuggestion.PyrisT
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyExtractionPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
+import de.tum.cit.aet.artemis.lecture.dto.NebulaTranscriptionRequestDTO;
 
 @Component
 @Conditional(IrisEnabled.class)
@@ -171,6 +172,10 @@ public class IrisRequestMockProvider {
 
     public void mockFaqIngestionWebhookRunResponse(Consumer<PyrisWebhookFaqIngestionExecutionDTO> responseConsumer) {
         mockWebhookPost("/faqs/ingest", PyrisWebhookFaqIngestionExecutionDTO.class, responseConsumer);
+    }
+
+    public void mockTranscriptionWebhookRunResponse(Consumer<NebulaTranscriptionRequestDTO> responseConsumer) {
+        mockWebhookPost("/transcription/video", NebulaTranscriptionRequestDTO.class, responseConsumer);
     }
 
     public void mockDeletionWebhookRunResponse(Consumer<PyrisWebhookLectureIngestionExecutionDTO> responseConsumer) {

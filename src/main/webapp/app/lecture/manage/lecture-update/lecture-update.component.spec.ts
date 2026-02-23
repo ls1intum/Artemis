@@ -41,6 +41,8 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
 import { PdfDropZoneComponent } from '../pdf-drop-zone/pdf-drop-zone.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { ConnectionState, WebsocketService } from 'app/shared/service/websocket.service';
+import { BehaviorSubject, EMPTY } from 'rxjs';
 
 describe('LectureUpdateComponent', () => {
     setupTestBed({ zoneless: true });
@@ -95,6 +97,19 @@ describe('LectureUpdateComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 MockProvider(CalendarService),
+                {
+                    provide: WebsocketService,
+                    useValue: {
+                        subscribe: vi.fn().mockReturnValue(EMPTY),
+                        get connectionState() {
+                            return new BehaviorSubject<ConnectionState>(new ConnectionState(false, false)).asObservable();
+                        },
+                        connect: vi.fn(),
+                        disconnect: vi.fn(),
+                        isConnected: vi.fn().mockReturnValue(false),
+                        send: vi.fn(),
+                    },
+                },
                 { provide: ProfileService, useClass: MockProfileService },
             ],
         });
