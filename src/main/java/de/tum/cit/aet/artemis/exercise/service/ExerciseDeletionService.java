@@ -183,7 +183,7 @@ public class ExerciseDeletionService {
 
         competencyProgressApi.ifPresent(api -> competencyLinks.stream().map(CompetencyExerciseLink::getCompetency).forEach(api::updateProgressByCompetencyAsync));
 
-        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.deleteExercise(exerciseId));
+        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.deleteExerciseAsync(exerciseId));
     }
 
     /**

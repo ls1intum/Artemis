@@ -155,7 +155,7 @@ public class ExerciseVersionService {
      */
     public void createExerciseVersionAndInsertInWeaviate(Exercise exercise) {
         createExerciseVersion(exercise);
-        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.insertExercise(exercise));
+        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.insertExerciseAsync(exercise));
     }
 
     /**
@@ -167,7 +167,7 @@ public class ExerciseVersionService {
      */
     public void createExerciseVersionAndInsertInWeaviate(Exercise exercise, User author) {
         createExerciseVersion(exercise, author);
-        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.insertExercise(exercise));
+        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.insertExerciseAsync(exercise));
     }
 
     /**
@@ -178,7 +178,7 @@ public class ExerciseVersionService {
      */
     public void createExerciseVersionAndUpdateInWeaviate(Exercise exercise) {
         createExerciseVersion(exercise);
-        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.updateExercise(exercise));
+        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.updateExerciseAsync(exercise));
     }
 
     /**
@@ -190,7 +190,7 @@ public class ExerciseVersionService {
      */
     public void createExerciseVersionAndUpdateInWeaviate(Exercise exercise, User author) {
         createExerciseVersion(exercise, author);
-        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.updateExercise(exercise));
+        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.updateExerciseAsync(exercise));
     }
 
     /**

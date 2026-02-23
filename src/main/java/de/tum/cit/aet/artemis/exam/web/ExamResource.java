@@ -313,7 +313,7 @@ public class ExamResource {
 
         boolean endDateChanged = comparator.compare(originalExam.getEndDate(), updatedExam.getEndDate()) != 0;
         if (visibleOrStartDateChanged || endDateChanged) {
-            exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.updateExamExercises(examWithExercises));
+            exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.updateExamExercisesAsync(examWithExercises));
         }
 
         if (updatedChannel != null) {
@@ -356,7 +356,7 @@ public class ExamResource {
         examService.updateStudentExamsAndRescheduleExercises(exam, originalExamDuration, workingTimeChange);
 
         // 3. Update Weaviate exercise metadata since the exam end date changed
-        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.updateExamExercises(exam));
+        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.updateExamExercisesAsync(exam));
 
         return ResponseEntity.ok(exam);
     }

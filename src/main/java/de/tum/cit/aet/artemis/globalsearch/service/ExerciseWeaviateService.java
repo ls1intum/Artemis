@@ -9,9 +9,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -164,6 +166,54 @@ public class ExerciseWeaviateService {
                 updateExercise(exercise);
             }
         }
+    }
+
+    /**
+     * Asynchronously inserts exercise metadata into Weaviate.
+     * This method executes in a separate thread to avoid blocking the HTTP request thread.
+     *
+     * @param exercise the exercise to insert
+     */
+    @Async
+    public void insertExerciseAsync(Exercise exercise) {
+        SecurityUtils.setAuthorizationObject();
+        insertExercise(exercise);
+    }
+
+    /**
+     * Asynchronously updates exercise metadata in Weaviate.
+     * This method executes in a separate thread to avoid blocking the HTTP request thread.
+     *
+     * @param exercise the exercise to update
+     */
+    @Async
+    public void updateExerciseAsync(Exercise exercise) {
+        SecurityUtils.setAuthorizationObject();
+        updateExercise(exercise);
+    }
+
+    /**
+     * Asynchronously deletes exercise metadata from Weaviate.
+     * This method executes in a separate thread to avoid blocking the HTTP request thread.
+     *
+     * @param exerciseId the ID of the exercise to delete
+     */
+    @Async
+    public void deleteExerciseAsync(long exerciseId) {
+        SecurityUtils.setAuthorizationObject();
+        deleteExercise(exerciseId);
+    }
+
+    /**
+     * Asynchronously updates Weaviate metadata for all exercises belonging to an exam.
+     * This method executes in a separate thread to avoid blocking the HTTP request thread.
+     *
+     * @param exam the exam whose exercises should be updated (must have exercise groups and exercises loaded)
+     */
+    @Async
+    public void updateExamExercisesAsync(Exam exam) {
+        SecurityUtils.setAuthorizationObject();
+        updateExamExercises(exam);
     }
 
     /**
