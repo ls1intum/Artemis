@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -269,5 +271,13 @@ class IrisCourseChatSessionResourceTest extends AbstractIrisIntegrationTest {
 
         var sessionFromDb = irisCourseChatSessionRepository.findById(response.getId()).orElseThrow();
         assertThat(sessionFromDb.getCourseId()).isEqualTo(course.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCurrentSessionOrCreateIfNotExists_invokesIrisCitationService() throws Exception {
+        request.postWithResponseBody("/api/iris/course-chat/" + course.getId() + "/sessions/current", null, IrisCourseChatSession.class, HttpStatus.OK);
+
+        verify(irisCitationService).enrichSessionWithCitationInfo(any());
     }
 }

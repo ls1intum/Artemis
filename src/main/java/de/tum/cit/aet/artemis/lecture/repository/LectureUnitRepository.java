@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.repository;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -81,6 +83,20 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
             """)
     Optional<LectureUnit> findByNameAndLectureTitleAndCourseIdWithCompetencies(@Param("name") String name, @Param("lectureTitle") String lectureTitle,
             @Param("courseId") long courseId) throws NonUniqueResultException;
+
+    /**
+     * Loads all lecture units for the given IDs together with their parent lecture in a single query.
+     *
+     * @param ids the IDs of the lecture units to load
+     * @return the lecture units with their lectures eagerly fetched; units whose ID is not found are simply absent from the result
+     */
+    @Query("""
+            SELECT lu
+            FROM LectureUnit lu
+                JOIN FETCH lu.lecture
+            WHERE lu.id IN :ids
+            """)
+    List<LectureUnit> findAllByIdsWithLecture(@Param("ids") Collection<Long> ids);
 
     default LectureUnit findByIdWithCompletedUsersElseThrow(long lectureUnitId) {
         return getValueElseThrow(findByIdWithCompletedUsers(lectureUnitId), lectureUnitId);
