@@ -6,7 +6,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,21 +36,6 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 public class HyperionReviewCommentContextRendererService {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionReviewCommentContextRendererService.class);
-
-    /** Pattern matching control characters except newline (\n), carriage return (\r), and tab (\t). */
-    private static final Pattern CONTROL_CHAR_PATTERN = Pattern.compile("[\\p{Cc}&&[^\\n\\r\\t]]");
-
-    /**
-     * Pattern matching prompt template delimiter lines (e.g. "--- BEGIN USER REQUIREMENTS ---").
-     * Stripping these prevents injecting fake section boundaries into prompt context.
-     */
-    private static final Pattern DELIMITER_PATTERN = Pattern.compile("^\\s*-{3,}\\s*(BEGIN|END)\\s+.*-{3,}$", Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
-
-    /**
-     * Pattern matching template variable sequences (e.g. "{{variable}}").
-     * Stripping these prevents injecting fake template placeholders.
-     */
-    private static final Pattern TEMPLATE_VAR_PATTERN = Pattern.compile("\\{\\{[^}]*\\}\\}");
 
     /** Maximum number of characters kept per serialized comment text in prompt context. */
     private static final int MAX_COMMENT_TEXT_LENGTH = 500;
@@ -163,23 +147,7 @@ public class HyperionReviewCommentContextRendererService {
      * @return sanitized, normalized, single-line-safe text
      */
     private String sanitizeAndNormalizeText(String text) {
-        return normalizeWhitespace(sanitizeInput(text));
-    }
-
-    /**
-     * Sanitizes prompt input by removing disallowed control characters, delimiter lines, and template placeholders.
-     *
-     * @param input raw input text
-     * @return sanitized text (never {@code null})
-     */
-    private String sanitizeInput(String input) {
-        if (input == null) {
-            return "";
-        }
-        String sanitized = CONTROL_CHAR_PATTERN.matcher(input).replaceAll("");
-        sanitized = DELIMITER_PATTERN.matcher(sanitized).replaceAll("");
-        sanitized = TEMPLATE_VAR_PATTERN.matcher(sanitized).replaceAll("");
-        return sanitized.trim();
+        return normalizeWhitespace(HyperionPromptSanitizer.sanitizeInput(text));
     }
 
     /**
