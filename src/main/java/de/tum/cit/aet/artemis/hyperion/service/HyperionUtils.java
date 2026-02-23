@@ -52,13 +52,35 @@ final class HyperionUtils {
     /**
      * Pattern matching template variable sequences (e.g. "{{variable}}").
      * Stripping these prevents users from injecting fake template placeholders that could be expanded by the template engine.
+     * Uses a non-greedy match so that inner '}' characters don't leave orphaned braces.
+     * Note: regex cannot perfectly handle arbitrarily nested braces, but this non-greedy
+     * approach addresses the observed orphaned '}' issue with the previous [^}]* pattern.
+     * May match across newlines; use {@link #TEMPLATE_VAR_LINE_PATTERN} when line structure must be preserved.
      */
-    private static final Pattern TEMPLATE_VAR_PATTERN = Pattern.compile("\\{\\{[^}]*\\}\\}");
+    private static final Pattern TEMPLATE_VAR_PATTERN = Pattern.compile("\\{\\{[\\s\\S]*?\\}\\}");
+
+    /**
+     * Line-scoped variant of {@link #TEMPLATE_VAR_PATTERN} that never matches across newlines.
+     * Uses a negated-newline class ({@code [^\n]}) so that embedded newlines inside a
+     * multi-line template variable are preserved, keeping line counts stable.
+     * Used by {@link #sanitizeInputPreserveLines(String)}.
+     */
+    private static final Pattern TEMPLATE_VAR_LINE_PATTERN = Pattern.compile("\\{\\{[^\\n]*?\\}\\}");
 
     /**
      * Pattern matching HTML tags for stripping from rich-text content like course descriptions.
      */
     private static final Pattern HTML_TAG_PATTERN = Pattern.compile("<[^>]+>");
+
+    /**
+     * Pattern matching wrapper marker lines that the LLM may copy from the prompt template
+     * (e.g. {@code "--- BEGIN PROBLEM STATEMENT ---"}, {@code "--- END PROBLEM STATEMENT ---"}).
+     * Matches lines consisting of three or more dashes, optional whitespace, BEGIN/END, any label, and closing dashes.
+     */
+    private static final Pattern WRAPPER_MARKER_LINE = Pattern.compile("^\\s*-{3,}\\s*(?:BEGIN|END)\\s+.*-{3,}\\s*$", Pattern.CASE_INSENSITIVE);
+
+    /** Pattern matching a line that starts with a line-number prefix: one or more digits followed by a colon and a space. */
+    private static final Pattern LINE_NUMBER_PREFIX = Pattern.compile("^\\d+: ");
 
     private HyperionUtils() {
         // utility class
@@ -130,7 +152,9 @@ final class HyperionUtils {
         }
         // Apply per-character sanitizations globally (these don't affect line count)
         String sanitized = CONTROL_CHAR_PATTERN.matcher(input).replaceAll("");
-        sanitized = TEMPLATE_VAR_PATTERN.matcher(sanitized).replaceAll("");
+        // Use the line-scoped pattern so template vars spanning multiple lines
+        // don't collapse embedded newlines and break line numbering.
+        sanitized = TEMPLATE_VAR_LINE_PATTERN.matcher(sanitized).replaceAll("");
         // DELIMITER_PATTERN uses MULTILINE so ^ and $ match per-line boundaries.
         // replaceAll("") blanks the content but preserves the newline, keeping line count stable.
         sanitized = DELIMITER_PATTERN.matcher(sanitized).replaceAll("");
@@ -166,6 +190,106 @@ final class HyperionUtils {
      */
     static Long resolveCurrentUserId(UserRepository userRepository) {
         return SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findIdByLogin).orElse(null);
+    }
+
+    /**
+     * Strips sequential line-number prefixes ({@code "1: "}, {@code "2: "}, …) that
+     * the LLM may have copied from the numbered prompt context.
+     * <p>
+     * Prefixes are only removed when <em>every</em> non-blank line carries a
+     * sequential prefix starting at 1. If any non-blank line is missing a prefix or
+     * the sequence is not contiguous the text is returned unchanged, so that
+     * legitimate content like numbered lists ({@code "1. "}) is never altered.
+     *
+     * @param text the raw LLM output, never null
+     * @return the text with line-number prefixes stripped, or the original text
+     */
+    static String stripLineNumbers(String text) {
+        if (text.isEmpty()) {
+            return text;
+        }
+
+        String[] lines = text.split("\n", -1);
+
+        // Verify every non-blank line has a sequential "N: " prefix starting at 1
+        int expectedNumber = 1;
+        for (String line : lines) {
+            if (line.isBlank()) {
+                continue;
+            }
+            if (!LINE_NUMBER_PREFIX.matcher(line).find()) {
+                return text;
+            }
+            int colonIndex = line.indexOf(": ");
+            int number = Integer.parseInt(line.substring(0, colonIndex));
+            if (number != expectedNumber) {
+                return text;
+            }
+            expectedNumber++;
+        }
+
+        // All non-blank lines are sequential — strip the prefixes
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < lines.length; i++) {
+            if (lines[i].isBlank()) {
+                result.append(lines[i]);
+            }
+            else {
+                result.append(LINE_NUMBER_PREFIX.matcher(lines[i]).replaceFirst(""));
+            }
+            if (i < lines.length - 1) {
+                result.append("\n");
+            }
+        }
+        return result.toString();
+    }
+
+    /**
+     * Strips wrapper marker lines (e.g. {@code "--- BEGIN PROBLEM STATEMENT ---"},
+     * {@code "--- END PROBLEM STATEMENT ---"}) that an LLM may copy from the prompt
+     * template into its response.
+     * <p>
+     * Only the first and last non-blank lines are checked, since the LLM typically
+     * wraps the entire output. Interior lines that happen to match are left intact
+     * to avoid stripping legitimate content.
+     *
+     * @param text the raw LLM output, never null
+     * @return the text with leading/trailing wrapper markers removed, trimmed
+     */
+    static String stripWrapperMarkers(String text) {
+        String[] lines = text.split("\n", -1);
+
+        int start = 0;
+        int end = lines.length - 1;
+
+        // Skip leading blank lines, then check for a wrapper marker
+        while (start <= end && lines[start].isBlank()) {
+            start++;
+        }
+        if (start <= end && WRAPPER_MARKER_LINE.matcher(lines[start]).matches()) {
+            start++;
+        }
+
+        // Skip trailing blank lines, then check for a wrapper marker
+        while (end >= start && lines[end].isBlank()) {
+            end--;
+        }
+        if (end >= start && WRAPPER_MARKER_LINE.matcher(lines[end]).matches()) {
+            end--;
+        }
+
+        if (start > end) {
+            return "";
+        }
+
+        StringBuilder result = new StringBuilder();
+        for (int i = start; i <= end; i++) {
+            result.append(lines[i]);
+            if (i < end) {
+                result.append("\n");
+            }
+        }
+        return result.toString();
     }
 
 }

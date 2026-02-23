@@ -1,6 +1,15 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
-import java.util.List;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.MAX_PROBLEM_STATEMENT_LENGTH;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.getSanitizedCourseDescription;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.getSanitizedCourseTitle;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.sanitizeInput;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.sanitizeInputPreserveLines;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.stripLineNumbers;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.stripWrapperMarkers;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.validateInstruction;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.validateUserPrompt;
+
 import java.util.Map;
 
 import org.jspecify.annotations.Nullable;
@@ -21,6 +30,7 @@ import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRefinementResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementTargetedRefinementRequestDTO;
+import io.micrometer.observation.annotation.Observed;
 
 /**
  * Service for refining existing problem statements using Spring AI. Supports two refinement modes:
@@ -35,12 +45,6 @@ public class HyperionProblemStatementRefinementService {
     private static final Logger log = LoggerFactory.getLogger(HyperionProblemStatementRefinementService.class);
 
     private static final String REFINEMENT_PIPELINE_ID = "HYPERION_PROBLEM_REFINEMENT";
-
-    /**
-     * Maximum allowed length for generated problem statements (50,000 characters).
-     * This prevents excessively long responses that could cause performance issues.
-     */
-    private static final int MAX_PROBLEM_STATEMENT_LENGTH = 50_000;
 
     /**
      * Maximum length for displaying selected text in prompts.
@@ -61,16 +65,6 @@ public class HyperionProblemStatementRefinementService {
      * Offset to convert a 1-indexed column to a 0-indexed Java string position.
      */
     private static final int ONE_INDEXED_TO_ZERO_INDEXED_OFFSET = 1;
-
-    /**
-     * Default course title when not specified.
-     */
-    private static final String DEFAULT_COURSE_TITLE = "Programming Course";
-
-    /**
-     * Default course description when not specified.
-     */
-    private static final String DEFAULT_COURSE_DESCRIPTION = "A programming course";
 
     @Nullable
     private final ChatClient chatClient;
@@ -123,7 +117,7 @@ public class HyperionProblemStatementRefinementService {
         validateSanitizedProblemStatement(sanitizedProblemStatement);
 
         String sanitizedPrompt = sanitizeInput(userPrompt);
-        HyperionUtils.validateUserPrompt(sanitizedPrompt, "ProblemStatementRefinement");
+        validateUserPrompt(sanitizedPrompt, "ProblemStatementRefinement");
 
         String systemPrompt = templateService.render("/prompts/hyperion/refine_problem_statement_system.st", Map.of());
 
@@ -151,8 +145,9 @@ public class HyperionProblemStatementRefinementService {
                     "ProblemStatementRefinement.problemStatementRefinementNull");
         }
 
-        // Defensively strip line-number prefixes the LLM may have included in its response
+        // Defensively strip artifacts the LLM may have copied from the prompt template
         refinedProblemStatementText = stripLineNumbers(refinedProblemStatementText);
+        refinedProblemStatementText = stripWrapperMarkers(refinedProblemStatementText);
 
         return validateAndReturnResponse(sanitizedProblemStatement, refinedProblemStatementText);
     }
@@ -176,7 +171,7 @@ public class HyperionProblemStatementRefinementService {
         }
 
         String sanitizedInstruction = sanitizeInput(request.instruction());
-        HyperionUtils.validateInstruction(sanitizedInstruction, "ProblemStatementRefinement");
+        validateInstruction(sanitizedInstruction, "ProblemStatementRefinement");
 
         // For targeted refinement, use line-preserving sanitization to keep line numbers aligned
         // with the client's selection. Full sanitizeInput() could remove entire lines (e.g., delimiter
@@ -224,8 +219,9 @@ public class HyperionProblemStatementRefinementService {
                     "ProblemStatementRefinement.problemStatementRefinementNull");
         }
 
-        // Defensively strip line-number prefixes the LLM may have copied from the input
+        // Defensively strip artifacts the LLM may have copied from the prompt template
         refinedProblemStatementText = stripLineNumbers(refinedProblemStatementText);
+        refinedProblemStatementText = stripWrapperMarkers(refinedProblemStatementText);
 
         return validateAndReturnResponse(sanitizedProblemStatement, refinedProblemStatementText);
     }
@@ -246,8 +242,9 @@ public class HyperionProblemStatementRefinementService {
         }
         else {
             if (request.hasColumnRange()) {
-                return String.format("Lines %d-%d, from column %d on line %d to column %d on line %d", request.startLine(), request.endLine(), request.startColumn(),
-                        request.startLine(), request.endColumn() - 1, request.endLine());
+                String selectedText = extractSelectedText(request, lines);
+                return String.format("Lines %d-%d, from column %d on line %d to column %d on line %d (modify ONLY the text: \"%s\")", request.startLine(), request.endLine(),
+                        request.startColumn(), request.startLine(), request.endColumn() - 1, request.endLine(), selectedText);
             }
             return "Lines " + request.startLine() + "-" + request.endLine();
         }
@@ -274,7 +271,7 @@ public class HyperionProblemStatementRefinementService {
      * Validates that the line range is within bounds.
      */
     private void validateLineRange(int startLineIdx, int endLineIdx, int totalLines) {
-        if (startLineIdx < 0 || endLineIdx >= totalLines) {
+        if (startLineIdx < 0 || endLineIdx >= totalLines || startLineIdx > endLineIdx) {
             throw new BadRequestAlertException("Invalid line range", "ProblemStatement", "ProblemStatementRefinement.invalidLineRange");
         }
     }
@@ -290,7 +287,8 @@ public class HyperionProblemStatementRefinementService {
             String text = line.substring(startCol, endCol);
             return truncateForDisplay(text);
         }
-        throw new BadRequestAlertException("Failed to extract text for targeted refinement", "ProblemStatement", "ProblemStatementRefinement.textExtractionFailed");
+        throw new BadRequestAlertException(String.format("Invalid column range for line selection: startCol=%d, endCol=%d, lineLength=%d", startCol, endCol, line.length()),
+                "ProblemStatement", "ProblemStatementRefinement.textExtractionFailed");
     }
 
     /**
@@ -301,7 +299,7 @@ public class HyperionProblemStatementRefinementService {
         int endCol = resolveEndColumn(endColObj, lastLine.length());
 
         String startPart = startCol < firstLine.length() ? firstLine.substring(startCol) : "";
-        String endPart = endCol <= lastLine.length() ? lastLine.substring(0, endCol) : lastLine;
+        String endPart = lastLine.substring(0, endCol);
 
         return truncateForDisplay(startPart + "..." + endPart);
     }

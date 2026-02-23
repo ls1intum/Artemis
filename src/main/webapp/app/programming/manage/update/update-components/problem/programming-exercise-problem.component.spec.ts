@@ -308,17 +308,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         expect(comp.shouldShowGenerateButton()).toBeFalse();
     });
 
-    it('should reset generation state on cancel', () => {
-        // Set up state
-        comp.isGeneratingOrRefining.set(true);
-
-        comp.cancelGeneration();
-
-        // Verify state is reset
-        expect(comp.isGeneratingOrRefining()).toBeFalse();
-    });
-
-    it('should handle inline refinement successfully', fakeAsync(() => {
+    it('should handle inline refinement successfully', () => {
         const programmingExercise = new ProgrammingExercise(undefined, undefined);
         programmingExercise.course = { id: 42 } as any;
         programmingExercise.problemStatement = 'Original problem statement with content';
@@ -354,7 +344,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         expect(comp.showDiff()).toBeTrue();
         expect(mockAlertService.success).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.inlineRefinement.success');
-    }));
+    });
 
     it('should handle inline refinement error when no courseId', () => {
         const programmingExercise = new ProgrammingExercise(undefined, undefined);
@@ -396,7 +386,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         expect(mockHyperionApiService.refineProblemStatementTargeted).not.toHaveBeenCalled();
     });
 
-    it('should handle inline refinement API error', fakeAsync(() => {
+    it('should handle inline refinement API error', () => {
         const programmingExercise = new ProgrammingExercise(undefined, undefined);
         programmingExercise.course = { id: 42 } as any;
         programmingExercise.problemStatement = 'Original content';
@@ -416,9 +406,9 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
         expect(comp.isGeneratingOrRefining()).toBeFalse();
-    }));
+    });
 
-    it('should handle inline refinement with empty response', fakeAsync(() => {
+    it('should handle inline refinement with empty response', () => {
         const programmingExercise = new ProgrammingExercise(undefined, undefined);
         programmingExercise.course = { id: 42 } as any;
         programmingExercise.problemStatement = 'Original content';
@@ -437,9 +427,9 @@ describe('ProgrammingExerciseProblemComponent', () => {
         comp.onInlineRefinement(event);
 
         expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
-    }));
+    });
 
-    it('should handle refinement with completely empty response', fakeAsync(() => {
+    it('should handle refinement with completely empty response', () => {
         const programmingExercise = new ProgrammingExercise(undefined, undefined);
         programmingExercise.course = { id: 42 } as any;
         programmingExercise.problemStatement = 'Original';

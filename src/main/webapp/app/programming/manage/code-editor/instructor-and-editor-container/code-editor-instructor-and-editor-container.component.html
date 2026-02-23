@@ -410,20 +410,21 @@
                 }
                 @if (exercise.templateParticipation && selectedParticipation) {
                     <jhi-programming-exercise-editable-instructions
-                        [(exercise)]="exercise"
-                        [(participation)]="selectedParticipation"
-                        [templateParticipation]="exercise.templateParticipation"
+                        [exercise]="exercise"
+                        [participation]="selectedParticipation"
                         [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
                         [externalHeight]="true"
                         [enableResize]="false"
                         [showPreview]="false"
                         [consistencyIssues]="consistencyIssues()"
+                        [enableExerciseReviewComments]="true"
                         [isGeneratingOrRefining]="isGeneratingOrRefining()"
                         [mode]="showDiff() ? 'diff' : 'normal'"
                         [renderSideBySide]="allowSplitView()"
                         (diffLineChange)="onDiffLineChange($event)"
                         class="flex-grow-1 overflow-auto"
                         (instructionChange)="onInstructionChanged($event)"
+                        (onProblemStatementSaved)="onProblemStatementSaved()"
                         (onInlineRefinement)="onInlineRefinement($event)"
                     />
                 } @else {
@@ -433,24 +434,6 @@
                         <span jhiTranslate="artemisApp.editor.fetchingParticipation"></span>
                     </div>
                 }
-                <jhi-programming-exercise-editable-instructions
-                    [exercise]="exercise"
-                    [participation]="selectedParticipation!"
-                    [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
-                    [externalHeight]="true"
-                    [enableResize]="false"
-                    [showPreview]="false"
-                    [consistencyIssues]="consistencyIssues()"
-                    [enableExerciseReviewComments]="true"
-                    [isGeneratingOrRefining]="isGeneratingOrRefining()"
-                    [mode]="showDiff() ? 'diff' : 'normal'"
-                    [renderSideBySide]="allowSplitView()"
-                    (diffLineChange)="onDiffLineChange($event)"
-                    class="flex-grow-1 overflow-auto"
-                    (instructionChange)="onInstructionChanged($event)"
-                    (onProblemStatementSaved)="onProblemStatementSaved()"
-                    (onInlineRefinement)="onInlineRefinement($event)"
-                />
             </div>
             <!-- Preview-only component for right sidebar -->
             <jhi-programming-exercise-instructions

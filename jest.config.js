@@ -178,9 +178,9 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/iris/',          // iris module
         '<rootDir>/src/main/webapp/app/core/course/manage/', // core course manage module
         '<rootDir>/src/main/webapp/app/shared/components/buttons/', // shared/buttons components
-        '<rootDir>/src/main/webapp/app/programming/manage/services/problem-statement.service.spec.ts',
-        '<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.spec.ts',
-        '<rootDir>/src/main/webapp/app/shared/monaco-editor/inline-refinement-button/',
+        '<rootDir>/src/main/webapp/app/programming/manage/services/problem-statement.service.spec.ts', // migrated to Vitest
+        '<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.spec.ts',    // migrated to Vitest
+        '<rootDir>/src/main/webapp/app/shared/monaco-editor/inline-refinement-button/',               // migrated to Vitest
         '<rootDir>/src/main/webapp/app/exercise/review/', // review comment module
         '<rootDir>/src/main/webapp/app/hyperion/',         // hyperion module
     ],

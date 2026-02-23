@@ -7,6 +7,8 @@ import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProb
 import { AlertService } from 'app/shared/service/alert.service';
 import {
     InlineRefinementEvent,
+    MAX_INSTRUCTION_LENGTH,
+    MAX_PROBLEM_STATEMENT_LENGTH,
     buildGenerationRequest,
     buildGlobalRefinementRequest,
     buildTargetedRefinementRequest,
@@ -101,6 +103,14 @@ export class ProblemStatementService {
         const courseId = getCourseId(exercise);
         if (!courseId || !currentContent?.trim()) {
             this.alertService.error('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
+            return of({ success: false, errorHandled: true });
+        }
+        if (currentContent.length > MAX_PROBLEM_STATEMENT_LENGTH) {
+            this.alertService.error('artemisApp.programmingExercise.problemStatement.problemStatementTooLong');
+            return of({ success: false, errorHandled: true });
+        }
+        if (event.instruction.trim().length > MAX_INSTRUCTION_LENGTH) {
+            this.alertService.error('artemisApp.programmingExercise.problemStatement.inlineRefinement.instructionTooLong');
             return of({ success: false, errorHandled: true });
         }
         setLoading(true);

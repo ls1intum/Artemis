@@ -14,24 +14,49 @@ export const MAX_PROBLEM_STATEMENT_LENGTH = 50_000;
 /** Fraction of MAX_USER_PROMPT_LENGTH at which the character counter shows a warning. */
 export const PROMPT_LENGTH_WARNING_THRESHOLD = 0.9;
 
-/** Approximate pixel width of the expanded inline refinement prompt (≈ min-width 20rem + padding/buttons). */
+/**
+ * Approximate pixel width of the expanded inline refinement prompt.
+ * Derived from the `min-width: 20rem` rule in
+ * `app/shared/monaco-editor/inline-refinement-button/inline-refinement-button.component.scss`
+ * (≈ 320 px at default font size) plus padding and action buttons.
+ * Keep in sync with that SCSS value.
+ */
 export const INLINE_REFINEMENT_PROMPT_WIDTH_PX = 370;
+
+/** Maximum allowed length for refinement instructions. Must match HyperionUtils.MAX_INSTRUCTION_LENGTH on the server. */
+export const MAX_INSTRUCTION_LENGTH = 500;
 
 /** Matches `\r\n` (Windows) and standalone `\r` (old Mac) line endings in a single pass. */
 const CARRIAGE_RETURN_PATTERN = /\r\n?/g;
+
+/**
+ * Position information for a text selection in the editor.
+ * Column values follow Monaco conventions: 1-indexed, with endColumn being exclusive.
+ */
+export interface InstructionSelectionPosition {
+    startLine: number;
+    endLine: number;
+    startColumn: number;
+    /** Exclusive end column (1-indexed) — points after the last selected character. */
+    endColumn: number;
+}
 
 /**
  * Event structure for inline refinement requests from the editor.
  * Column values follow Monaco conventions: 1-indexed, with endColumn being exclusive
  * (pointing to the character after the last selected character).
  */
-export interface InlineRefinementEvent {
+export interface InlineRefinementEvent extends InstructionSelectionPosition {
     instruction: string;
-    startLine: number;
-    endLine: number;
-    startColumn: number;
-    /** Exclusive end column (1-indexed) — points after the last selected character. */
-    endColumn: number;
+}
+
+/**
+ * Full selection event emitted by the editor, combining position data with
+ * the selected text and its screen coordinates for floating UI placement.
+ */
+export interface EditorSelectionWithPosition extends InstructionSelectionPosition {
+    selectedText: string;
+    screenPosition: { top: number; left: number };
 }
 
 /**
@@ -100,12 +125,12 @@ export function buildGlobalRefinementRequest(problemStatementText: string, userP
  */
 export function buildTargetedRefinementRequest(problemStatementText: string, event: InlineRefinementEvent): ProblemStatementTargetedRefinementRequest {
     return {
-        problemStatementText: problemStatementText ?? '',
+        problemStatementText: problemStatementText,
         startLine: event.startLine,
         endLine: event.endLine,
         startColumn: event.startColumn,
         endColumn: event.endColumn,
-        instruction: event.instruction,
+        instruction: event.instruction.trim(),
     };
 }
 

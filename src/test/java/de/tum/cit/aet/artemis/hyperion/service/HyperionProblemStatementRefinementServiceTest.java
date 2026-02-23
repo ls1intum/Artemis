@@ -9,7 +9,6 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -250,22 +249,13 @@ class HyperionProblemStatementRefinementServiceTest {
     void refineProblemStatement_throwsExceptionWhenProblemStatementTooLong() {
         // 50001 characters exceeds MAX_PROBLEM_STATEMENT_LENGTH (50000)
         String tooLongProblemStatement = "a".repeat(50_001);
-        var course = new Course();
-        course.setTitle("Test Course");
-        course.setDescription("Test Description");
+        var course = createTestCourse();
 
         assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatement(course, tooLongProblemStatement, "Refine this"))
                 .isInstanceOf(BadRequestAlertException.class).hasMessageContaining("exceeds maximum length");
     }
 
     // Targeted refinement tests
-
-    private Course createTestCourse() {
-        var course = new Course();
-        course.setTitle("Test Course");
-        course.setDescription("Test Description");
-        return course;
-    }
 
     @Test
     void refineProblemStatementTargeted_returnsRefinedStatement() {
@@ -321,7 +311,7 @@ class HyperionProblemStatementRefinementServiceTest {
 
         var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 1, 1, null, null, "Improve this");
         assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatementTargeted(createTestCourse(), request))
-                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("null");
+                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("null or empty");
     }
 
     @Test
@@ -355,7 +345,6 @@ class HyperionProblemStatementRefinementServiceTest {
     void refineProblemStatementTargeted_throwsExceptionWhenLineRangeOutOfBounds() {
         // Only 1 line but requesting line 5
         String originalText = "Single line";
-        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage("Changed")))));
 
         var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 5, 5, null, null, "Fix this");
         assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatementTargeted(createTestCourse(), request)).isInstanceOf(BadRequestAlertException.class)
@@ -446,5 +435,30 @@ class HyperionProblemStatementRefinementServiceTest {
         assertThat(resp).isNotNull();
         // Because the second non-empty line doesn't have "2: " prefix, content should be preserved
         assertThat(resp.refinedProblemStatement()).isEqualTo(llmResponse);
+    }
+
+    @Test
+    void refineProblemStatementTargeted_throwsExceptionWhenStartLineGreaterThanEndLine() {
+        String originalText = "Line one\nLine two\nLine three";
+        assertThatThrownBy(() -> new ProblemStatementTargetedRefinementRequestDTO(originalText, 3, 1, null, null, "Improve this")).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("startLine must be less than or equal to endLine");
+    }
+
+    @Test
+    void refineProblemStatementTargeted_withNullInstruction_doesNotThrowFromDTO() {
+        // Verify that the DTO constructor accepts null instruction (it's rejected at the service level, not the DTO level)
+        // Note: @NotBlank annotation covers null case via Spring validation, so the compact constructor does not throw
+        var request = new ProblemStatementTargetedRefinementRequestDTO("Some text", 1, 1, null, null, null);
+        assertThat(request).isNotNull();
+        assertThat(request.instruction()).isNull();
+    }
+
+    // --- Helpers ---
+
+    private Course createTestCourse() {
+        var course = new Course();
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+        return course;
     }
 }

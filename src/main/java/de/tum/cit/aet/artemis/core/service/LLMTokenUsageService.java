@@ -12,6 +12,8 @@ import java.util.stream.Collectors;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.chat.metadata.ChatResponseMetadata;
+import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -36,6 +38,11 @@ public class LLMTokenUsageService {
     private static final Logger log = LoggerFactory.getLogger(LLMTokenUsageService.class);
 
     private static final Pattern DATE_SUFFIX_PATTERN = Pattern.compile("-\\d{4}-\\d{2}-\\d{2}$");
+
+    /**
+     * Default value used when token-count metadata is missing ({@code null}).
+     */
+    private static final int DEFAULT_TOKEN_COUNT = 0;
 
     private final LLMTokenUsageTraceRepository llmTokenUsageTraceRepository;
 
@@ -149,11 +156,11 @@ public class LLMTokenUsageService {
             if (chatResponse == null || chatResponse.getMetadata() == null || chatResponse.getMetadata().getUsage() == null) {
                 return;
             }
-            var metadata = chatResponse.getMetadata();
-            var usage = metadata.getUsage();
+            ChatResponseMetadata metadata = chatResponse.getMetadata();
+            Usage usage = metadata.getUsage();
             String model = metadata.getModel() != null ? metadata.getModel() : "";
-            var llmRequest = buildLLMRequest(model, usage.getPromptTokens() != null ? usage.getPromptTokens() : 0,
-                    usage.getCompletionTokens() != null ? usage.getCompletionTokens() : 0, pipelineId);
+            LLMRequest llmRequest = buildLLMRequest(model, usage.getPromptTokens() != null ? usage.getPromptTokens() : DEFAULT_TOKEN_COUNT,
+                    usage.getCompletionTokens() != null ? usage.getCompletionTokens() : DEFAULT_TOKEN_COUNT, pipelineId);
             saveLLMTokenUsage(List.of(llmRequest), serviceType, builderFunction);
         }
         catch (Exception e) {
