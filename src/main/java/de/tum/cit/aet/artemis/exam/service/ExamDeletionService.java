@@ -267,7 +267,7 @@ public class ExamDeletionService {
         List<StudentExam> otherTestRunsOfInstructor = studentExamRepository.findAllTestRunsWithExercisesByExamIdForUser(testRun.getExam().getId(), instructor.getId()).stream()
                 .filter(studentExam -> !studentExam.getId().equals(testRunId)).toList();
 
-        // We cannot delete participations which are referenced by other test runs. (an instructor is free to create as many test runs as he likes)
+        // We cannot delete participations which are referenced by other test runs. (an instructor is free to create as many test runs as they like)
         var testRunExercises = testRun.getExercises();
         // Collect all distinct exercises of other instructor test runs
         var allInstructorTestRunExercises = otherTestRunsOfInstructor.stream().flatMap(studentExam -> studentExam.getExercises().stream()).distinct().toList();

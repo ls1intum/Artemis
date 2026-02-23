@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Add MAINTENANCE to the global_notification_type ENUM for MySQL / H2 -->
+    <changeSet id="20260220-01-add-maintenance-notification-type-mysql" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <or>
+                <dbms type="mysql"/>
+                <dbms type="h2"/>
+            </or>
+        </preConditions>
+
+        <modifyDataType tableName="global_notification_setting"
+                        columnName="global_notification_type"
+                        newDataType="ENUM('NEW_LOGIN', 'NEW_PASSKEY_ADDED', 'VCS_TOKEN_EXPIRED', 'SSH_KEY_EXPIRED', 'MAINTENANCE')"/>
+    </changeSet>
+
+</databaseChangeLog>
