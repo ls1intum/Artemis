@@ -153,6 +153,9 @@
                 "noExercises": "Keine Aufgaben verfügbar",
                 "loading": "Wird geladen..."
             },
+            "citation": {
+                "inLecture": "in"
+            },
             "tutorSuggestion": {
                 "loading": "Lade Vorschläge...",
                 "noIris": "Iris ist derzeit nicht verfügbar."

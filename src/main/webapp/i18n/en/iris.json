@@ -153,6 +153,9 @@
                 "noExercises": "No exercises available",
                 "loading": "Loading..."
             },
+            "citation": {
+                "inLecture": "in"
+            },
             "tutorSuggestion": {
                 "loading": "Loading suggestions...",
                 "noIris": "Iris is currently unavailable."
