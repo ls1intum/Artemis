@@ -65,9 +65,6 @@ describe('IrisBaseChatbotComponent', () => {
     const mockLLMModalService = {
         open: vi.fn().mockResolvedValue(LLM_MODAL_DISMISSED),
     } as any;
-    const mockOnboardingService = {
-        showOnboardingIfNeeded: vi.fn().mockResolvedValue(undefined),
-    } as any;
     const mockUserService = {
         updateLLMSelectionDecision: vi.fn().mockReturnValue(of(new HttpResponse<void>())),
     } as any;
@@ -1072,7 +1069,7 @@ describe('IrisBaseChatbotComponent', () => {
             expect(component.newMessageTextContent()).toBe('');
         });
 
-        it('should still show onboarding when userAccepted is already set (service handles localStorage check)', async () => {
+        it('should set userAccepted to CLOUD_AI from identity and trigger onboarding', async () => {
             const mockUser = { selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User;
             accountService.userIdentity.set(mockUser);
 
@@ -1094,7 +1091,7 @@ describe('IrisBaseChatbotComponent', () => {
             expect(mockOnboardingService.showOnboardingIfNeeded).toHaveBeenCalled();
         });
 
-        it('should set userAccepted to CLOUD_AI when acceptPermission is called with CLOUD_AI', () => {
+        it('should accept CLOUD_AI permission and update consent', () => {
             vi.spyOn(chatService, 'updateLLMUsageConsent').mockImplementation(() => {});
 
             component.acceptPermission(LLMSelectionDecision.CLOUD_AI);
@@ -1103,7 +1100,7 @@ describe('IrisBaseChatbotComponent', () => {
             expect(chatService.updateLLMUsageConsent).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
         });
 
-        it('should set userAccepted to LOCAL_AI when acceptPermission is called with LOCAL_AI', () => {
+        it('should accept LOCAL_AI permission and update consent', () => {
             vi.spyOn(chatService, 'updateLLMUsageConsent').mockImplementation(() => {});
 
             component.acceptPermission(LLMSelectionDecision.LOCAL_AI);
