@@ -42,6 +42,7 @@ import {
     LOW_COMPETENCY_LINK_WEIGHT,
     MEDIUM_COMPETENCY_LINK_WEIGHT,
 } from 'app/atlas/shared/entities/competency.model';
+import { HttpResponse } from '@angular/common/http';
 import { EMPTY, Observable, forkJoin, of } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { taskRegex } from 'app/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
@@ -544,7 +545,9 @@ export class ChecklistPanelComponent {
                         this.finishApply(allLinks, newlyLinked, new Set());
                         return EMPTY;
                     }
-                    const create$ = toCreate.map((comp) => this.competencyService.create(comp, courseId).pipe(catchError(() => of(null))));
+                    const create$: Observable<HttpResponse<Competency> | null>[] = toCreate.map((comp) =>
+                        this.competencyService.create(comp, courseId).pipe(catchError(() => of(null))),
+                    );
                     return forkJoin(create$).pipe(
                         tap((results) => {
                             const newlyCreated = new Set<string>();
