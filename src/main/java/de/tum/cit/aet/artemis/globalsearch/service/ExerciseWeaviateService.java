@@ -285,6 +285,10 @@ public class ExerciseWeaviateService {
      * @return the formatted date string
      */
     private String formatDate(ZonedDateTime dateTime) {
+        if (dateTime == null) {
+            return null;
+        }
+
         return dateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     }
 }
