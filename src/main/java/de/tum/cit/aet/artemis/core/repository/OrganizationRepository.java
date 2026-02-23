@@ -12,6 +12,7 @@ import org.jspecify.annotations.NonNull;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -26,7 +27,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 @Profile(PROFILE_CORE)
 @Lazy
 @Repository
-public interface OrganizationRepository extends ArtemisJpaRepository<Organization, Long> {
+public interface OrganizationRepository extends ArtemisJpaRepository<Organization, Long>, JpaSpecificationExecutor<Organization>, CustomOrganizationRepository {
 
     @Query("""
             SELECT organization
