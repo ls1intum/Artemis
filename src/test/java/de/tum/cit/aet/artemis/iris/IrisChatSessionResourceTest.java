@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -33,7 +32,6 @@ import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionCountDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
-import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionFactory;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
@@ -50,9 +48,6 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
 
     @Autowired
     private IrisMessageRepository irisMessageRepository;
-
-    @MockitoSpyBean
-    private IrisCitationService irisCitationService;
 
     @Autowired
     private TeamRepository teamRepository;

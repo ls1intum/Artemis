@@ -31,7 +31,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
@@ -50,7 +49,6 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSes
 import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
-import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
@@ -83,9 +81,6 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Autowired
     private IrisChatSessionUtilService irisChatSessionUtilService;
-
-    @MockitoSpyBean
-    private IrisCitationService irisCitationService;
 
     private ProgrammingExercise soloExercise;
 
