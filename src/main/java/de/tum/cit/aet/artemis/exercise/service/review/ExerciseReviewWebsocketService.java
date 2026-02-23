@@ -28,6 +28,12 @@ public class ExerciseReviewWebsocketService {
         this.websocketMessagingService = websocketMessagingService;
     }
 
+    /**
+     * Extracts the exercise id from a review thread websocket topic destination.
+     *
+     * @param destination the websocket destination topic
+     * @return an optional containing the exercise id if the destination matches
+     */
     public static Optional<Long> getExerciseIdFromReviewThreadDestination(String destination) {
         var matcher = REVIEW_THREAD_TOPIC_PATTERN.matcher(destination);
         if (matcher.matches()) {
@@ -36,6 +42,12 @@ public class ExerciseReviewWebsocketService {
         return Optional.empty();
     }
 
+    /**
+     * Checks whether the destination belongs to the review thread websocket topic.
+     *
+     * @param destination the websocket destination topic
+     * @return true if the destination is a review thread topic, false otherwise
+     */
     public static boolean isReviewThreadDestination(String destination) {
         return getExerciseIdFromReviewThreadDestination(destination).isPresent();
     }
@@ -50,26 +62,63 @@ public class ExerciseReviewWebsocketService {
         return "/topic/exercises/" + exerciseId + "/review-threads";
     }
 
+    /**
+     * Broadcasts a thread creation event to all subscribers of the exercise.
+     *
+     * @param exerciseId the exercise id
+     * @param thread     the created thread payload
+     */
     public void notifyThreadCreated(Long exerciseId, CommentThreadDTO thread) {
         websocketMessagingService.sendMessage(getTopic(exerciseId), ReviewThreadWebsocketDTO.threadCreated(exerciseId, thread));
     }
 
+    /**
+     * Broadcasts a thread update event to all subscribers of the exercise.
+     *
+     * @param exerciseId the exercise id
+     * @param thread     the updated thread payload
+     */
     public void notifyThreadUpdated(Long exerciseId, CommentThreadDTO thread) {
         websocketMessagingService.sendMessage(getTopic(exerciseId), ReviewThreadWebsocketDTO.threadUpdated(exerciseId, thread));
     }
 
+    /**
+     * Broadcasts a comment creation event to all subscribers of the exercise.
+     *
+     * @param exerciseId the exercise id
+     * @param comment    the created comment payload
+     */
     public void notifyCommentCreated(Long exerciseId, CommentDTO comment) {
         websocketMessagingService.sendMessage(getTopic(exerciseId), ReviewThreadWebsocketDTO.commentCreated(exerciseId, comment));
     }
 
+    /**
+     * Broadcasts a comment update event to all subscribers of the exercise.
+     *
+     * @param exerciseId the exercise id
+     * @param comment    the updated comment payload
+     */
     public void notifyCommentUpdated(Long exerciseId, CommentDTO comment) {
         websocketMessagingService.sendMessage(getTopic(exerciseId), ReviewThreadWebsocketDTO.commentUpdated(exerciseId, comment));
     }
 
+    /**
+     * Broadcasts a comment deletion event to all subscribers of the exercise.
+     *
+     * @param exerciseId the exercise id
+     * @param commentId  the deleted comment id
+     */
     public void notifyCommentDeleted(Long exerciseId, Long commentId) {
         websocketMessagingService.sendMessage(getTopic(exerciseId), ReviewThreadWebsocketDTO.commentDeleted(exerciseId, commentId));
     }
 
+    /**
+     * Broadcasts a group update event to all subscribers of the exercise.
+     *
+     * @param exerciseId the exercise id
+     * @param threadIds  ids of affected threads
+     * @param groupId    the updated group id
+     */
     public void notifyGroupUpdated(Long exerciseId, List<Long> threadIds, Long groupId) {
         websocketMessagingService.sendMessage(getTopic(exerciseId), ReviewThreadWebsocketDTO.groupUpdated(exerciseId, threadIds, groupId));
     }

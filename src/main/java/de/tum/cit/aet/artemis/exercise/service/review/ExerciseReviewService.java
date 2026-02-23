@@ -275,6 +275,7 @@ public class ExerciseReviewService {
      *
      * @param exerciseId the exercise id from the request path
      * @param groupId    the group id
+     * @return ids of threads that were detached from the deleted group
      * @throws EntityNotFoundException  if the group does not exist
      * @throws BadRequestAlertException if the group exercise does not match the request exercise
      */
