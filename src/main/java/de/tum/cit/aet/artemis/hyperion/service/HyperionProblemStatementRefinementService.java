@@ -44,7 +44,9 @@ public class HyperionProblemStatementRefinementService {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionProblemStatementRefinementService.class);
 
-    private static final String REFINEMENT_PIPELINE_ID = "HYPERION_PROBLEM_REFINEMENT";
+    private static final String GLOBAL_REFINEMENT_PIPELINE_ID = "HYPERION_PROBLEM_REFINEMENT_GLOBAL";
+
+    private static final String TARGETED_REFINEMENT_PIPELINE_ID = "HYPERION_PROBLEM_REFINEMENT_TARGETED";
 
     /**
      * Maximum length for displaying selected text in prompts.
@@ -78,9 +80,7 @@ public class HyperionProblemStatementRefinementService {
     /**
      * Creates a new HyperionProblemStatementRefinementService.
      *
-     * @param chatClient           the AI chat client for refining problem
-     *                                 statements,
-     *                                 may be null if AI is not configured
+     * @param chatClient           the AI chat client for refining problem statements, may be null if AI is not configured
      * @param templateService      the prompt template service for rendering AI prompts
      * @param llmTokenUsageService service for tracking LLM token usage
      * @param userRepository       repository for resolving current user

@@ -1,8 +1,13 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
-import java.util.List;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.MAX_PROBLEM_STATEMENT_LENGTH;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.sanitizeInput;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.stripLineNumbers;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.stripWrapperMarkers;
+
 import java.util.Map;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -13,11 +18,12 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteResponseDTO;
-import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.annotation.Observed;
 
 /**
@@ -32,6 +38,7 @@ public class HyperionProblemStatementRewriteService {
 
     private static final String REWRITE_PIPELINE_ID = "HYPERION_PROBLEM_REWRITE";
 
+    @Nullable
     private final ChatClient chatClient;
 
     private final HyperionPromptTemplateService templateService;
@@ -40,22 +47,18 @@ public class HyperionProblemStatementRewriteService {
 
     private final UserRepository userRepository;
 
-    private final ObservationRegistry observationRegistry;
-
     /**
      * Creates a new ProblemStatementRewriteService.
      *
-     * @param chatClient           the AI chat client (optional)
+     * @param chatClient           the AI chat client, may be null if AI is not configured
      * @param templateService      prompt template service
-     * @param observationRegistry  the observation registry for metrics
      * @param llmTokenUsageService service for tracking LLM token usage
      * @param userRepository       repository for resolving current user
      */
-    public HyperionProblemStatementRewriteService(ChatClient chatClient, HyperionPromptTemplateService templateService, ObservationRegistry observationRegistry,
-            LLMTokenUsageService llmTokenUsageService, UserRepository userRepository) {
+    public HyperionProblemStatementRewriteService(@Nullable ChatClient chatClient, HyperionPromptTemplateService templateService, LLMTokenUsageService llmTokenUsageService,
+            UserRepository userRepository) {
         this.chatClient = chatClient;
         this.templateService = templateService;
-        this.observationRegistry = observationRegistry;
         this.llmTokenUsageService = llmTokenUsageService;
         this.userRepository = userRepository;
     }
@@ -69,17 +72,19 @@ public class HyperionProblemStatementRewriteService {
      */
     @Observed(name = "hyperion.rewrite", contextualName = "problem statement rewrite", lowCardinalityKeyValues = { "ai.span", "true" })
     public ProblemStatementRewriteResponseDTO rewriteProblemStatement(Course course, String problemStatementText) {
-        log.debug("Rewriting problem statement for course {}", course.getId());
+        log.debug("Rewriting problem statement for course [{}]", course.getId());
 
-        var current = observationRegistry.getCurrentObservation();
-        if (current != null) {
-            String ctx = "rewrite problem statement for course id: " + course.getId();
-            current.contextualName(ctx);
-            current.highCardinalityKeyValue(io.micrometer.common.KeyValue.of("lf.trace.name", ctx));
+        if (chatClient == null) {
+            throw new InternalServerErrorAlertException("AI chat client is not configured", "ProblemStatement", "ProblemStatementRewrite.chatClientNotConfigured");
+        }
+
+        String sanitizedProblemStatement = sanitizeInput(problemStatementText);
+        if (sanitizedProblemStatement.isBlank()) {
+            throw new BadRequestAlertException("Problem statement cannot be empty", "ProblemStatement", "ProblemStatementRewrite.problemStatementEmpty");
         }
 
         String resourcePath = "/prompts/hyperion/rewrite_problem_statement.st";
-        Map<String, String> input = Map.of("text", problemStatementText.trim());
+        Map<String, String> input = Map.of("text", sanitizedProblemStatement);
         String renderedPrompt = templateService.render(resourcePath, input);
         ChatResponse chatResponse;
         String responseContent;
@@ -89,20 +94,33 @@ public class HyperionProblemStatementRewriteService {
                     .user(renderedPrompt).call().chatResponse();
             responseContent = LLMTokenUsageService.extractResponseText(chatResponse);
         }
-        catch (RuntimeException e) {
-            log.warn("Failed to obtain or parse AI response for {} - returning original text", resourcePath, e);
-            return new ProblemStatementRewriteResponseDTO(problemStatementText.trim(), false);
+        catch (Exception e) {
+            log.error("Error rewriting problem statement for course [{}]: {}", course.getId(), e.getMessage(), e);
+            throw new InternalServerErrorAlertException("Failed to rewrite problem statement", "ProblemStatement", "ProblemStatementRewrite.problemStatementRewriteFailed");
         }
         Long userId = HyperionUtils.resolveCurrentUserId(userRepository);
         llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, REWRITE_PIPELINE_ID,
                 builder -> builder.withCourse(course.getId()).withUser(userId));
 
-        if (responseContent == null) {
-            log.warn("AI returned null response for {} - returning original text", resourcePath);
-            return new ProblemStatementRewriteResponseDTO(problemStatementText.trim(), false);
+        boolean isEmptyResponse = responseContent == null || responseContent.isBlank();
+        if (isEmptyResponse) {
+            throw new InternalServerErrorAlertException("Rewritten problem statement is null or empty", "ProblemStatement", "ProblemStatementRewrite.problemStatementRewriteNull");
         }
+
+        // Defensively strip artifacts the LLM may have copied from the prompt template
+        responseContent = stripLineNumbers(responseContent);
+        responseContent = stripWrapperMarkers(responseContent);
+
         String result = responseContent.trim();
-        boolean improved = !result.equals(problemStatementText.trim());
+
+        // Validate response length
+        boolean exceedsMaxLength = result.length() > MAX_PROBLEM_STATEMENT_LENGTH;
+        if (exceedsMaxLength) {
+            throw new InternalServerErrorAlertException("Rewritten problem statement exceeds the maximum allowed length", "ProblemStatement",
+                    "ProblemStatementRewrite.rewrittenProblemStatementTooLong");
+        }
+
+        boolean improved = !result.equals(sanitizedProblemStatement);
         return new ProblemStatementRewriteResponseDTO(result, improved);
     }
 

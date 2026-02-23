@@ -40,6 +40,7 @@ public class HyperionProblemStatementGenerationService {
 
     private static final String GENERATION_PIPELINE_ID = "HYPERION_PROBLEM_GENERATION";
 
+    @Nullable
     private final ChatClient chatClient;
 
     private final HyperionPromptTemplateService templateService;
@@ -69,15 +70,17 @@ public class HyperionProblemStatementGenerationService {
      * Generate a problem statement for an exercise
      *
      * @param course     the course context for the problem statement
-     * @param userPrompt the user's requirements and instructions for the problem
-     *                       statement
+     * @param userPrompt the user's requirements and instructions for the problem statement
      * @return the generated problem statement response
-     * @throws InternalServerErrorAlertException if generation fails or response is
-     *                                               too long
+     * @throws InternalServerErrorAlertException if generation fails or response is too long
      */
     @Observed(name = "hyperion.generate", contextualName = "problem statement generation", lowCardinalityKeyValues = { "ai.span", "true" })
     public ProblemStatementGenerationResponseDTO generateProblemStatement(Course course, String userPrompt) {
         log.debug("Generating problem statement for course [{}]", course.getId());
+
+        if (chatClient == null) {
+            throw new InternalServerErrorAlertException("AI chat client is not configured", "ProblemStatement", "ProblemStatementGeneration.chatClientNotConfigured");
+        }
 
         String sanitizedPrompt = sanitizeInput(userPrompt);
         validateUserPrompt(sanitizedPrompt, "ProblemStatementGeneration");
