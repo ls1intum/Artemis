@@ -137,7 +137,7 @@ public class ExerciseWeaviateService {
         }
 
         if (weaviateService.isEmpty()) {
-            log.trace("Weaviate is not enabled, skipping exercise insertion for exam with id {}", exam.getId());
+            log.trace("Weaviate is not enabled, skipping exercise update for exam with id {}", exam.getId());
             return;
         }
 
