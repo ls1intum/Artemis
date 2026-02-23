@@ -198,7 +198,13 @@
                 "relatedEntityTooltip": {
                     "programmingExercise": "This chat is related to a programming exercise.",
                     "lecture": "This chat is related to a lecture."
-                }
+                },
+                "deleteSession": "Delete",
+                "deleteSessionHeader": "Delete Chat Session",
+                "deleteSessionQuestion": "Are you sure you want to delete the chat session \"{{title}}\"? This action cannot be undone.",
+                "deleteSessionSuccess": "Chat session deleted.",
+                "deleteSessionError": "Failed to delete chat session.",
+                "sessionMenuAriaLabel": "Chat session actions"
             },
             "memories": {
                 "title": "Memories",

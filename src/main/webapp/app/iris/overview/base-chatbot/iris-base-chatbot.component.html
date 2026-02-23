@@ -1,3 +1,4 @@
+<p-confirmDialog />
 <!-- main chat section -->
 <div class="chat-layout">
     @if (isChatHistoryAvailable()) {
@@ -61,7 +62,12 @@
                                 <p jhiTranslate="artemisApp.iris.chatHistory.today"></p>
                             </div>
                             @for (session of todaySessions(); track session.id) {
-                                <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
+                                <jhi-chat-history-item
+                                    [session]="session"
+                                    [active]="session.id === currentSessionId()"
+                                    (sessionClicked)="onSessionClick(session)"
+                                    (deleteSession)="onDeleteSession($event)"
+                                />
                             }
                         }
 
@@ -70,7 +76,12 @@
                                 <p jhiTranslate="artemisApp.iris.chatHistory.yesterday"></p>
                             </div>
                             @for (session of yesterdaySessions(); track session.id) {
-                                <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
+                                <jhi-chat-history-item
+                                    [session]="session"
+                                    [active]="session.id === currentSessionId()"
+                                    (sessionClicked)="onSessionClick(session)"
+                                    (deleteSession)="onDeleteSession($event)"
+                                />
                             }
                         }
 
@@ -79,7 +90,12 @@
                                 <p jhiTranslate="artemisApp.iris.chatHistory.last7Days"></p>
                             </div>
                             @for (session of last7DaysSessions(); track session.id) {
-                                <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
+                                <jhi-chat-history-item
+                                    [session]="session"
+                                    [active]="session.id === currentSessionId()"
+                                    (sessionClicked)="onSessionClick(session)"
+                                    (deleteSession)="onDeleteSession($event)"
+                                />
                             }
                         }
 
@@ -88,7 +104,12 @@
                                 <p jhiTranslate="artemisApp.iris.chatHistory.last30Days"></p>
                             </div>
                             @for (session of last30DaysSessions(); track session.id) {
-                                <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
+                                <jhi-chat-history-item
+                                    [session]="session"
+                                    [active]="session.id === currentSessionId()"
+                                    (sessionClicked)="onSessionClick(session)"
+                                    (deleteSession)="onDeleteSession($event)"
+                                />
                             }
                         }
 
@@ -97,7 +118,12 @@
                                 <p jhiTranslate="artemisApp.iris.chatHistory.older"></p>
                             </div>
                             @for (session of olderSessions(); track session.id) {
-                                <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
+                                <jhi-chat-history-item
+                                    [session]="session"
+                                    [active]="session.id === currentSessionId()"
+                                    (sessionClicked)="onSessionClick(session)"
+                                    (deleteSession)="onDeleteSession($event)"
+                                />
                             }
                         }
                     </div>
@@ -279,7 +305,7 @@
             <jhi-chat-status-bar [stages]="stages()" />
             @if (!userAccepted()) {
                 <div class="p-chat">
-                    <div class="message-text" jhiTranslate="artemisApp.exerciseActions.externalLLMUsage.popUpMessage"></div>
+                    <div class="message-text" jhiTranslate="artemisApp.exerciseActions.aiExperienceConfirmation.popUpMessage"></div>
                     <div class="button-container">
                         <button
                             type="button"
