@@ -169,7 +169,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     }
 
     /**
-     * Update the file badges for the code editor (includes both ungraded feedback suggestions and graded feedbacks)
+     * Updates file-browser badges for code files and the Problem Statement entry
+     * (includes feedback suggestions, graded feedbacks, and active review-comment threads).
      */
     updateFileBadges() {
         const fileBadgesByType = new Map<string, Map<FileBadgeType, number>>();
