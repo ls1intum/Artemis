@@ -343,4 +343,57 @@ class HyperionUtilsTest {
     void stripLineNumbers_handlesEmptyString() {
         assertThat(HyperionUtils.stripLineNumbers("")).isEqualTo("");
     }
+
+    @Test
+    void stripWrapperMarkers_removesBeginEndProblemStatement() {
+        String input = "--- BEGIN PROBLEM STATEMENT ---\nHello World\n--- END PROBLEM STATEMENT ---";
+        assertThat(HyperionUtils.stripWrapperMarkers(input)).isEqualTo("Hello World");
+    }
+
+    @Test
+    void stripWrapperMarkers_removesBeginEndWithBlankSurrounding() {
+        String input = "\n--- BEGIN PROBLEM STATEMENT ---\nLine 1\nLine 2\n--- END PROBLEM STATEMENT ---\n";
+        assertThat(HyperionUtils.stripWrapperMarkers(input)).isEqualTo("Line 1\nLine 2");
+    }
+
+    @Test
+    void stripWrapperMarkers_removesOnlyLeadingMarker() {
+        String input = "--- BEGIN PROBLEM STATEMENT ---\nContent here";
+        assertThat(HyperionUtils.stripWrapperMarkers(input)).isEqualTo("Content here");
+    }
+
+    @Test
+    void stripWrapperMarkers_removesOnlyTrailingMarker() {
+        String input = "Content here\n--- END PROBLEM STATEMENT ---";
+        assertThat(HyperionUtils.stripWrapperMarkers(input)).isEqualTo("Content here");
+    }
+
+    @Test
+    void stripWrapperMarkers_preservesContentWithoutMarkers() {
+        String input = "Just normal content\nwith multiple lines";
+        assertThat(HyperionUtils.stripWrapperMarkers(input)).isEqualTo(input);
+    }
+
+    @Test
+    void stripWrapperMarkers_preservesInteriorMarkerLines() {
+        String input = "Intro\n--- BEGIN SECTION ---\nMiddle\n--- END SECTION ---\nOutro";
+        assertThat(HyperionUtils.stripWrapperMarkers(input)).isEqualTo(input);
+    }
+
+    @Test
+    void stripWrapperMarkers_handlesEmptyString() {
+        assertThat(HyperionUtils.stripWrapperMarkers("")).isEqualTo("");
+    }
+
+    @Test
+    void stripWrapperMarkers_handlesCaseInsensitiveMarkers() {
+        String input = "--- begin Problem Statement ---\nContent\n--- end Problem Statement ---";
+        assertThat(HyperionUtils.stripWrapperMarkers(input)).isEqualTo("Content");
+    }
+
+    @Test
+    void stripWrapperMarkers_handlesTargetedInstructionMarkers() {
+        String input = "--- BEGIN TARGETED INSTRUCTIONS ---\nContent\n--- END TARGETED INSTRUCTIONS ---";
+        assertThat(HyperionUtils.stripWrapperMarkers(input)).isEqualTo("Content");
+    }
 }

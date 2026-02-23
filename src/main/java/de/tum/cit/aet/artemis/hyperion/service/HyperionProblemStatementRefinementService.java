@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.getSanitized
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.sanitizeInput;
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.sanitizeInputPreserveLines;
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.stripLineNumbers;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.stripWrapperMarkers;
 
 import java.util.Map;
 
@@ -120,8 +121,9 @@ public class HyperionProblemStatementRefinementService {
                     "ProblemStatementRefinement.problemStatementRefinementNull");
         }
 
-        // Defensively strip line-number prefixes the LLM may have included in its response
+        // Defensively strip artifacts the LLM may have copied from the prompt template
         refinedProblemStatementText = stripLineNumbers(refinedProblemStatementText);
+        refinedProblemStatementText = stripWrapperMarkers(refinedProblemStatementText);
 
         return validateAndReturnResponse(sanitizedProblemStatement, refinedProblemStatementText);
     }
@@ -188,8 +190,9 @@ public class HyperionProblemStatementRefinementService {
                     "ProblemStatementRefinement.problemStatementRefinementNull");
         }
 
-        // Defensively strip line-number prefixes the LLM may have copied from the input
+        // Defensively strip artifacts the LLM may have copied from the prompt template
         refinedProblemStatementText = stripLineNumbers(refinedProblemStatementText);
+        refinedProblemStatementText = stripWrapperMarkers(refinedProblemStatementText);
 
         return validateAndReturnResponse(sanitizedProblemStatement, refinedProblemStatementText);
     }
