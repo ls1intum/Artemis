@@ -21,6 +21,7 @@ import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectio
 import { IrisMessageRequestDTO } from 'app/iris/shared/entities/iris-message-request-dto.model';
 import { IrisMessageContentDTO } from 'app/iris/shared/entities/iris-message-content-dto.model';
 import { randomInt } from 'app/shared/util/utils';
+import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 
 export enum ChatServiceMode {
     TEXT_EXERCISE = 'TEXT_EXERCISE_CHAT',
@@ -87,6 +88,7 @@ export class IrisChatService implements OnDestroy {
     numNewMessages: BehaviorSubject<number> = new BehaviorSubject(0);
     stages: BehaviorSubject<IrisStageDTO[]> = new BehaviorSubject([]);
     suggestions: BehaviorSubject<string[]> = new BehaviorSubject([]);
+    citationInfo: BehaviorSubject<IrisCitationMetaDTO[]> = new BehaviorSubject([]);
     error: BehaviorSubject<IrisErrorMessageKey | undefined> = new BehaviorSubject(undefined);
     chatSessions: BehaviorSubject<IrisSessionDTO[]> = new BehaviorSubject([]);
 
@@ -393,6 +395,7 @@ export class IrisChatService implements OnDestroy {
                 this.addLatestEmptySessionToChatSessions(newIrisSession);
 
                 this.sessionId = newIrisSession.id;
+                this.citationInfo.next(newIrisSession.citationInfo || []);
                 this.messages.next(newIrisSession.messages || []);
                 this.parseLatestSuggestions(newIrisSession.latestSuggestions);
                 this.irisWebsocketService.subscribeToSession(this.sessionId).subscribe((message) => this.handleWebsocketMessage(message));
@@ -439,6 +442,10 @@ export class IrisChatService implements OnDestroy {
             const updatedSessions = this.chatSessions.getValue().map((session) => (session.id === this.sessionId ? { ...session, title: payload.sessionTitle } : session));
             this.chatSessions.next(updatedSessions);
         }
+        if (payload.citationInfo?.length) {
+            const merged = this.mergeCitationInfo(this.citationInfo.getValue(), payload.citationInfo);
+            this.citationInfo.next(merged);
+        }
         switch (payload.type) {
             case IrisChatWebsocketPayloadType.MESSAGE:
                 if (payload.message?.sender === IrisSender.LLM) {
@@ -473,6 +480,7 @@ export class IrisChatService implements OnDestroy {
             this.messages.next([]);
             this.stages.next([]);
             this.suggestions.next([]);
+            this.citationInfo.next([]);
             this.numNewMessages.next(0);
             this.newIrisMessage.next(undefined);
         }
@@ -615,6 +623,10 @@ export class IrisChatService implements OnDestroy {
         return this.stages.asObservable();
     }
 
+    public currentCitationInfo(): Observable<IrisCitationMetaDTO[]> {
+        return this.citationInfo.asObservable();
+    }
+
     public currentError(): Observable<IrisErrorMessageKey | undefined> {
         return this.error.asObservable();
     }
@@ -645,6 +657,17 @@ export class IrisChatService implements OnDestroy {
         if (courseId) {
             this.irisStatusService.setCurrentCourse(courseId);
         }
+    }
+
+    private mergeCitationInfo(existing: IrisCitationMetaDTO[], incoming: IrisCitationMetaDTO[]): IrisCitationMetaDTO[] {
+        const merged = new Map<number, IrisCitationMetaDTO>();
+        existing.forEach((citation) => {
+            merged.set(citation.entityId, citation);
+        });
+        incoming.forEach((citation) => {
+            merged.set(citation.entityId, citation);
+        });
+        return Array.from(merged.values());
     }
 
     public currentNumNewMessages(): Observable<number> {
