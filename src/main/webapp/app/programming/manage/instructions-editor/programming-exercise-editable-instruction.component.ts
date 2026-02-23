@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, HostListener, OnDestroy, ViewChild, ViewEncapsulation, computed, effect, inject, input, output, signal } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
-import { Observable, Subject, Subscription, of, throwError } from 'rxjs';
-import { catchError, map, switchMap, tap } from 'rxjs/operators';
+import { EMPTY, Observable, Subject, Subscription, of, throwError } from 'rxjs';
+import { catchError, finalize, map, switchMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { ProblemStatementAnalysis } from 'app/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
@@ -11,6 +11,8 @@ import { ProgrammingExerciseGradingService } from 'app/programming/manage/servic
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { faCheckCircle, faCircleNotch, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { MonacoEditorMode } from 'app/shared/monaco-editor/monaco-editor.component';
+import { LineChange } from 'app/programming/shared/utils/diff.utils';
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
 import { TaskAction } from 'app/shared/monaco-editor/model/actions/task.action';
 import { TestCaseAction } from 'app/shared/monaco-editor/model/actions/test-case.action';
@@ -22,6 +24,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseInstructionAnalysisComponent } from './analysis/programming-exercise-instruction-analysis.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
+
 import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
 import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_IRIS } from 'app/app.constants';
 import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
@@ -93,6 +96,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         }
         return actions;
     });
+    protected readonly isAiApplying = computed(() => this.isGeneratingOrRefining() || this.artemisIntelligenceService.isLoading());
 
     savingInstructions = false;
 
@@ -120,16 +124,26 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * Whether to show the preview button and default preview in the markdown editor.
      * Set to false when using an external preview component (e.g., in the code editor).
      */
+    readonly consistencyIssues = input<ConsistencyIssue[]>([]);
+    readonly enableExerciseReviewComments = input<boolean>(false);
     readonly showPreview = input<boolean>(true);
     readonly forceRender = input<Observable<void> | undefined>();
 
     readonly participation = input<Participation>();
     readonly exercise = input.required<ProgrammingExercise>();
-    readonly consistencyIssues = input<ConsistencyIssue[]>([]);
+    readonly isGeneratingOrRefining = input<boolean>(false);
+
+    readonly mode = input<MonacoEditorMode>('normal');
+
+    readonly renderSideBySide = input<boolean>(true);
+
     readonly hasUnsavedChanges = output<boolean>();
     readonly instructionChange = output<string>();
-
+    readonly onProblemStatementSaved = output<void>();
     generateHtmlSubject: Subject<void> = new Subject<void>();
+
+    /** Emits diff line change information when in diff mode */
+    readonly diffLineChange = output<{ ready: boolean; lineChange: LineChange }>();
 
     set unsavedChanges(hasChanges: boolean) {
         this.unsavedChangesValue = hasChanges;
@@ -186,6 +200,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         if (forceRender) {
             this.forceRenderSubscription = forceRender.subscribe(() => this.generateHtml());
         }
+
         // Trigger initial preview render after view initialization.
         // This ensures the ProgrammingExerciseInstructionComponent renders when first shown.
         if (this.showPreview()) {
@@ -212,16 +227,18 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             .pipe(
                 tap(() => {
                     this.unsavedChanges = false;
+                    this.onProblemStatementSaved.emit();
                 }),
                 catchError(() => {
                     // TODO: move to programming exercise translations
                     this.alertService.error(`artemisApp.editor.errors.problemStatementCouldNotBeUpdated`);
-                    return of(undefined);
+                    return EMPTY;
+                }),
+                finalize(() => {
+                    this.savingInstructions = false;
                 }),
             )
-            .subscribe(() => {
-                this.savingInstructions = false;
-            });
+            .subscribe();
     }
 
     @HostListener('document:keydown.control.s', ['$event'])
@@ -319,6 +336,37 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     };
 
     /**
+     * Gets the current content from the editor.
+     * In diff mode, returns the modified (right) side content.
+     * In normal mode, returns the current editor content.
+     *
+     * @returns The current editor content, or undefined if editor is not available.
+     */
+    getCurrentContent(): string | undefined {
+        const monacoEditor = this.markdownEditorMonaco?.monacoEditor;
+        if (!monacoEditor) {
+            return undefined;
+        }
+        return monacoEditor.getText();
+    }
+
+    /**
+     * Sets the editor text directly.
+     * Use this to revert content in the editor.
+     *
+     * @param text The text to set in the editor.
+     */
+    setText(text: string): void {
+        const monacoEditor = this.markdownEditorMonaco?.monacoEditor;
+        if (!monacoEditor) {
+            return;
+        }
+
+        monacoEditor.setText(text);
+        this.updateProblemStatement(text);
+    }
+
+    /**
      * Scrolls the Monaco editor to the specified line immediately.
      *
      * @param {number} lineNumber
@@ -326,6 +374,10 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      */
     jumpToLine(lineNumber: number) {
         this.markdownEditorMonaco?.monacoEditor.revealLine(lineNumber, editor.ScrollType.Immediate);
+    }
+
+    clearReviewCommentDrafts(): void {
+        this.markdownEditorMonaco?.clearReviewCommentDrafts();
     }
 
     private mapAnalysisToWarnings = (analysis: ProblemStatementAnalysis) => {
@@ -348,6 +400,27 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
         return annotations;
     };
+
+    /**
+     * Applies the refined content to the editor in diff mode.
+     * @param refined The new content to show in the modified editor.
+     */
+    applyRefinedContent(refined: string): void {
+        this.markdownEditorMonaco?.applyRefinedContent(refined);
+        // No explicit updateProblemStatement call needed: Monaco's onDidChangeModelContent
+        // event propagates the change via textChanged → markdownChange → updateProblemStatement.
+    }
+
+    /**
+     * Reverts all changes in the diff editor by restoring the snapshot taken when diff mode was entered.
+     */
+    revertAll(): void {
+        this.markdownEditorMonaco?.revertAll();
+        const currentContent = this.markdownEditorMonaco?.monacoEditor?.getText();
+        if (currentContent !== undefined) {
+            this.updateProblemStatement(currentContent);
+        }
+    }
 
     /**
      * Set up collaborative Yjs synchronization for the markdown editor.

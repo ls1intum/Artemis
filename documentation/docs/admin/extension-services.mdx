@@ -193,7 +193,7 @@ The configuration parameters are used by pipelines in Pyris to select the approp
   - `cost_per_million_input_token` / `cost_per_million_output_token`: Pricing information used for routing when multiple models satisfy the same requirements.
 
 <Callout variant={CalloutVariant.info}>
-  <p>Most existing pipelines currently require the full GPT-4.1 model family to be configured. Monitor Pyris logs for warnings about missing models so you can update your `llm_config.local.yml` accordingly.</p>
+  <p>Most existing pipelines currently require the full GPT-5.x model family to be configured. Monitor Pyris logs for warnings about missing models so you can update your `llm_config.local.yml` accordingly.</p>
 </Callout>
 
 **4. Run the Server**
@@ -442,7 +442,7 @@ curl http://localhost:3007/health
 
 #### Production deployment
 
-For production deployments, follow the <a href="https://github.com/ls1intum/edutelligence/blob/main/nebula/README.md#-production-deployment">Production Deployment guide in the Nebula README</a> and provision only the transcriber container plus the nginx gateway. Use distinct configuration files (`.env`, `llm_config.production.yml`, `nginx.production.conf`), keep Whisper / GPT-4o credentials secure, and omit the FAQ service unless you plan to experiment with rewriting features.
+For production deployments, follow the <a href="https://github.com/ls1intum/edutelligence/blob/main/nebula/README.md#-production-deployment">Production Deployment guide in the Nebula README</a> and provision only the transcriber container plus the nginx gateway. Use distinct configuration files (`.env`, `llm_config.production.yml`, `nginx.production.conf`), keep Whisper / GPT-5 credentials secure, and omit the FAQ service unless you plan to experiment with rewriting features.
 
 After the stack is up, verify that the gateway responds:
 ```bash
@@ -463,7 +463,7 @@ If Artemis reports unauthorized or internal errors when starting a job, double-c
 - `artemis.nebula.enabled=true`
 - The `artemis.nebula.url` matches the Nginx gateway URL (including scheme)
 - The Artemis secret token equals the key configured in Nginx (`map $http_authorization $api_key_valid`)
-- Nebula can reach its configured Whisper and GPT-4o endpoints (inspect the transcriber logs for HTTP 401/429/500 responses)
+- Nebula can reach its configured Whisper and GPT-5 endpoints (inspect the transcriber logs for HTTP 401/429/500 responses)
 
 With those pieces in place, instructors can automatically transcribe lecture recordings stored on TUM-Live without manual copy/paste workflows.
 
