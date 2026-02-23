@@ -4,7 +4,9 @@ import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertEx
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertExerciseNotInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.queryExerciseProperties;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -70,9 +72,9 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testInsertExercise_storesMetadataInWeaviate() throws Exception {
-            exerciseWeaviateService.insertExercise(programmingExercise);
+            exerciseWeaviateService.insertExerciseAsync(programmingExercise);
 
-            assertExerciseExistsInWeaviate(weaviateService, programmingExercise);
+            await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertExerciseExistsInWeaviate(weaviateService, programmingExercise));
 
             var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
             assertThat(properties.get(ExerciseSchema.Properties.PROGRAMMING_LANGUAGE)).isEqualTo(programmingExercise.getProgrammingLanguage().name());
@@ -83,7 +85,9 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testUpdateExercise_updatesMetadataInWeaviate() throws Exception {
-            exerciseWeaviateService.insertExercise(programmingExercise);
+            exerciseWeaviateService.insertExerciseAsync(programmingExercise);
+
+            await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertExerciseExistsInWeaviate(weaviateService, programmingExercise));
 
             // Modify exercise properties
             String updatedTitle = "Updated Weaviate Test Title";
@@ -91,26 +95,27 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
             programmingExercise.setTitle(updatedTitle);
             programmingExercise.setMaxPoints(updatedMaxPoints);
 
-            exerciseWeaviateService.updateExercise(programmingExercise);
+            exerciseWeaviateService.updateExerciseAsync(programmingExercise);
 
-            var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
-
-            assertThat(properties).isNotNull();
-            assertThat(properties.get(ExerciseSchema.Properties.TITLE)).isEqualTo(updatedTitle);
-            assertThat(((Number) properties.get(ExerciseSchema.Properties.MAX_POINTS)).doubleValue()).isEqualTo(updatedMaxPoints);
-            assertThat(((Number) properties.get(ExerciseSchema.Properties.EXERCISE_ID)).longValue()).isEqualTo(programmingExercise.getId());
+            await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+                var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
+                assertThat(properties).isNotNull();
+                assertThat(properties.get(ExerciseSchema.Properties.TITLE)).isEqualTo(updatedTitle);
+                assertThat(((Number) properties.get(ExerciseSchema.Properties.MAX_POINTS)).doubleValue()).isEqualTo(updatedMaxPoints);
+                assertThat(((Number) properties.get(ExerciseSchema.Properties.EXERCISE_ID)).longValue()).isEqualTo(programmingExercise.getId());
+            });
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testDeleteExercise_removesMetadataFromWeaviate() throws Exception {
-            exerciseWeaviateService.insertExercise(programmingExercise);
+            exerciseWeaviateService.insertExerciseAsync(programmingExercise);
 
-            assertExerciseExistsInWeaviate(weaviateService, programmingExercise);
+            await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertExerciseExistsInWeaviate(weaviateService, programmingExercise));
 
-            exerciseWeaviateService.deleteExercise(programmingExercise.getId());
+            exerciseWeaviateService.deleteExerciseAsync(programmingExercise.getId());
 
-            assertExerciseNotInWeaviate(weaviateService, programmingExercise.getId());
+            await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertExerciseNotInWeaviate(weaviateService, programmingExercise.getId()));
         }
     }
 
@@ -121,26 +126,28 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testUpdateProblemStatement_updatesWeaviate() throws Exception {
             // Insert exercise into Weaviate first
-            exerciseWeaviateService.insertExercise(programmingExercise);
-            assertExerciseExistsInWeaviate(weaviateService, programmingExercise);
+            exerciseWeaviateService.insertExerciseAsync(programmingExercise);
+            await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertExerciseExistsInWeaviate(weaviateService, programmingExercise));
 
             // Update problem statement via endpoint
             final var newProblem = "updated problem statement for weaviate test";
             final var endpoint = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/problem-statement";
             request.patchWithResponseBody(endpoint, newProblem, ProgrammingExercise.class, HttpStatus.OK, MediaType.TEXT_PLAIN);
 
-            // Verify Weaviate has the updated problem statement
-            var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
-            assertThat(properties).isNotNull();
-            assertThat(properties.get(ExerciseSchema.Properties.PROBLEM_STATEMENT)).isEqualTo(newProblem);
+            // Wait for async update from the endpoint to complete and verify Weaviate has the updated problem statement
+            await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+                var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
+                assertThat(properties).isNotNull();
+                assertThat(properties.get(ExerciseSchema.Properties.PROBLEM_STATEMENT)).isEqualTo(newProblem);
+            });
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testUpdateTimeline_updatesWeaviate() throws Exception {
             // Insert exercise into Weaviate first
-            exerciseWeaviateService.insertExercise(programmingExercise);
-            assertExerciseExistsInWeaviate(weaviateService, programmingExercise);
+            exerciseWeaviateService.insertExerciseAsync(programmingExercise);
+            await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertExerciseExistsInWeaviate(weaviateService, programmingExercise));
 
             // Update timeline via endpoint
             var exerciseForUpdate = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
@@ -150,10 +157,12 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
             final var endpoint = "/api/programming/programming-exercises/timeline";
             request.putWithResponseBody(endpoint, exerciseForUpdate, ProgrammingExercise.class, HttpStatus.OK);
 
-            // Verify Weaviate has the updated due date
-            var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
-            assertThat(properties).isNotNull();
-            assertThat(properties.get(ExerciseSchema.Properties.DUE_DATE)).isNotNull();
+            // Wait for async update from the endpoint to complete and verify Weaviate has the updated due date
+            await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+                var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
+                assertThat(properties).isNotNull();
+                assertThat(properties.get(ExerciseSchema.Properties.DUE_DATE)).isNotNull();
+            });
         }
     }
 }
