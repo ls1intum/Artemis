@@ -21,7 +21,7 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
-import { of } from 'rxjs';
+import { BehaviorSubject, Subject, of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
@@ -40,6 +40,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { ConnectionState, WebsocketService } from 'app/shared/service/websocket.service';
 
 @Component({ selector: 'jhi-competencies-popover', template: '' })
 class CompetenciesPopoverStubComponent {
@@ -65,6 +66,9 @@ describe('LectureUnitManagementComponent', () => {
     let findLectureWithDetailsSpy: ReturnType<typeof vi.spyOn>;
     let deleteLectureUnitSpy: ReturnType<typeof vi.spyOn>;
     let updateOrderSpy: ReturnType<typeof vi.spyOn>;
+    let websocketService: WebsocketService;
+    let ingestionSubject: Subject<unknown>;
+    let connectionStateSubject: BehaviorSubject<ConnectionState>;
 
     let attachmentVideoUnit: AttachmentVideoUnit;
     let exerciseUnit: ExerciseUnit;
@@ -76,6 +80,19 @@ describe('LectureUnitManagementComponent', () => {
     const route = { parent: { snapshot: { paramMap: convertToParamMap({ lectureId }) } } } as any as ActivatedRoute;
 
     beforeEach(async () => {
+        ingestionSubject = new Subject<unknown>();
+        connectionStateSubject = new BehaviorSubject<ConnectionState>(new ConnectionState(false, false));
+        const websocketServiceMock = {
+            subscribe: vi.fn().mockReturnValue(ingestionSubject.asObservable()),
+            get connectionState() {
+                return connectionStateSubject.asObservable();
+            },
+            connect: vi.fn(),
+            disconnect: vi.fn(),
+            isConnected: vi.fn().mockReturnValue(false),
+            send: vi.fn(),
+        };
+
         await TestBed.configureTestingModule({
             imports: [
                 MockDirective(NgbTooltip),
@@ -98,6 +115,7 @@ describe('LectureUnitManagementComponent', () => {
                 MockProvider(LectureService),
                 MockProvider(AlertService),
                 MockProvider(AttachmentVideoUnitService),
+                { provide: WebsocketService, useValue: websocketServiceMock },
                 { provide: Router, useClass: MockRouter },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -115,6 +133,7 @@ describe('LectureUnitManagementComponent', () => {
         lectureUnitService = TestBed.inject(LectureUnitService);
         alertService = TestBed.inject(AlertService);
         attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+        websocketService = TestBed.inject(WebsocketService);
         findLectureWithDetailsSpy = vi.spyOn(lectureService, 'findWithDetails');
         deleteLectureUnitSpy = vi.spyOn(lectureUnitService, 'delete');
         updateOrderSpy = vi.spyOn(lectureUnitService, 'updateOrder');
@@ -753,6 +772,24 @@ describe('LectureUnitManagementComponent', () => {
 
             // Should navigate to the last created unit (id: 30)
             expect(navigateSpy).toHaveBeenCalledWith(['/course-management', lecture.course!.id, 'lectures', lecture.id, 'unit-management', 'attachment-video-units', 30, 'edit']);
+        });
+    });
+
+    describe('WebSocket', () => {
+        it('should call loadAllStatuses when WebSocket ingestion-status message received', () => {
+            const loadAllStatusesSpy = vi.spyOn(lectureUnitManagementComponent as any, 'loadAllStatuses');
+            ingestionSubject.next({});
+            expect(loadAllStatusesSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should call loadAllStatuses on WebSocket reconnect but skip initial connection', () => {
+            const loadAllStatusesSpy = vi.spyOn(lectureUnitManagementComponent as any, 'loadAllStatuses');
+            // First emit after filter (skipped by skip(1))
+            connectionStateSubject.next(new ConnectionState(true, true));
+            expect(loadAllStatusesSpy).not.toHaveBeenCalled();
+            // Second emit (triggers loadAllStatuses)
+            connectionStateSubject.next(new ConnectionState(true, true));
+            expect(loadAllStatusesSpy).toHaveBeenCalledOnce();
         });
     });
 });
