@@ -257,12 +257,12 @@ describe('LLMSelectionModalComponent', () => {
             expect(event.preventDefault).toHaveBeenCalled();
         });
 
-        it('should navigate to /llm-selection', () => {
+        it('should navigate to /ai-experience-info', () => {
             const event = { preventDefault: jest.fn() } as any;
 
             component.onLearnMoreClick(event);
 
-            expect(router.navigate).toHaveBeenCalledWith(['/llm-selection']);
+            expect(router.navigate).toHaveBeenCalledWith(['/ai-experience-info']);
         });
 
         it('should close the modal after navigation', () => {
