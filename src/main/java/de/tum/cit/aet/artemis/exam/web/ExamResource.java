@@ -412,6 +412,9 @@ public class ExamResource {
         // Step 4: Import Exam with Exercises and create a channel for the exam
         Exam examCopied = examImportService.importExamWithExercises(examToBeImported, courseId);
 
+        // Step 5: Index all imported exercises in Weaviate
+        exerciseWeaviateService.ifPresent(service -> service.updateExamExercisesAsync(examCopied));
+
         return ResponseEntity.created(new URI("/api/exam/courses/" + courseId + "/exams/" + examCopied.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, examCopied.getTitle())).body(examCopied);
     }
