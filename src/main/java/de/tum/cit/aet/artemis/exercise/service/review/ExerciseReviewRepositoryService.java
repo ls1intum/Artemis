@@ -14,6 +14,8 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -36,6 +38,8 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 @Lazy
 @Service
 public class ExerciseReviewRepositoryService {
+
+    private static final Logger log = LoggerFactory.getLogger(ExerciseReviewRepositoryService.class);
 
     private static final String THREAD_ENTITY_NAME = "exerciseReviewCommentThread";
 
@@ -129,6 +133,31 @@ public class ExerciseReviewRepositoryService {
         }
 
         return new ConsistencyTargetRepositoryUris(Map.copyOf(repositoryUris), Map.copyOf(auxiliaryRepositoryUrisById));
+    }
+
+    /**
+     * Resolves latest commit SHAs once for all repository-backed consistency-check targets.
+     * Uses the already resolved repository URIs and avoids additional exercise lookups.
+     *
+     * @param repositoryUrisByTarget repository URI lookups for consistency-check targets
+     * @return latest commit SHA lookup by repository-backed thread target type
+     */
+    public Map<CommentThreadLocationType, String> resolveTargetCommitShas(ConsistencyTargetRepositoryUris repositoryUrisByTarget) {
+        Map<CommentThreadLocationType, String> commitShasByTarget = new EnumMap<>(CommentThreadLocationType.class);
+        for (Map.Entry<CommentThreadLocationType, LocalVCRepositoryUri> entry : repositoryUrisByTarget.repositoryUrisByTargetType().entrySet()) {
+            CommentThreadLocationType targetType = entry.getKey();
+            LocalVCRepositoryUri repositoryUri = entry.getValue();
+            if (targetType == CommentThreadLocationType.PROBLEM_STATEMENT || repositoryUri == null) {
+                continue;
+            }
+            try {
+                commitShasByTarget.put(targetType, gitService.getLastCommitHash(repositoryUri));
+            }
+            catch (Exception ex) {
+                log.warn("Could not resolve latest commit SHA for target {} and repository URI {}: {}", targetType, repositoryUri, ex.getMessage());
+            }
+        }
+        return Map.copyOf(commitShasByTarget);
     }
 
     /**

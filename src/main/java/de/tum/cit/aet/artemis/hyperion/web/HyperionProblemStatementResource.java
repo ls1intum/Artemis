@@ -59,8 +59,9 @@ public class HyperionProblemStatementResource {
     private final HyperionProblemStatementRefinementService problemStatementRefinementService;
 
     public HyperionProblemStatementResource(CourseRepository courseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            HyperionConsistencyCheckService consistencyCheckService, ExerciseReviewService exerciseReviewService, HyperionProblemStatementRewriteService problemStatementRewriteService,
-            HyperionProblemStatementGenerationService problemStatementGenerationService, HyperionProblemStatementRefinementService problemStatementRefinementService) {
+            HyperionConsistencyCheckService consistencyCheckService, ExerciseReviewService exerciseReviewService,
+            HyperionProblemStatementRewriteService problemStatementRewriteService, HyperionProblemStatementGenerationService problemStatementGenerationService,
+            HyperionProblemStatementRefinementService problemStatementRefinementService) {
         this.courseRepository = courseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.consistencyCheckService = consistencyCheckService;

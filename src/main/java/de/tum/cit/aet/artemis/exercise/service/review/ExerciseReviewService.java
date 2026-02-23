@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -149,11 +150,14 @@ public class ExerciseReviewService {
      */
     public void createConsistencyCheckThreads(long exerciseId, List<ConsistencyIssueDTO> issues) {
         Exercise exercise = exerciseRepository.findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
-        ConsistencyTargetRepositoryUris repositoryUrisByTarget = exerciseReviewRepositoryService.resolveTargetRepositoryUris(exerciseId);
 
         if (issues == null || issues.isEmpty()) {
             return;
         }
+
+        ConsistencyTargetRepositoryUris repositoryUrisByTarget = exerciseReviewRepositoryService.resolveTargetRepositoryUris(exerciseId);
+        Map<CommentThreadLocationType, String> initialCommitShasByTarget = exerciseReviewRepositoryService.resolveTargetCommitShas(repositoryUrisByTarget);
+        ExerciseVersion latestProblemStatementVersion = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exerciseId).orElse(null);
 
         List<CommentThread> threadsToPersist = new ArrayList<>();
         for (ConsistencyIssueDTO issue : issues) {
@@ -171,7 +175,7 @@ public class ExerciseReviewService {
             CommentThreadGroup group = locations.size() > 1 ? createConsistencyCheckGroup(exercise) : null;
 
             for (ConsistencyThreadLocation location : locations) {
-                CommentThread thread = buildConsistencyCheckThread(exercise, location);
+                CommentThread thread = buildConsistencyCheckThread(exercise, location, initialCommitShasByTarget, latestProblemStatementVersion);
                 thread.setGroup(group);
                 Comment comment = buildConsistencyCheckComment(thread, issue);
                 thread.getComments().add(comment);
@@ -658,23 +662,54 @@ public class ExerciseReviewService {
      * Problem-statement threads store the latest exercise version at creation time when available.
      * Repository-based threads store the initial commit SHA at creation time.
      *
-     * @param exercise the exercise owning the thread
-     * @param location the mapped consistency issue location
+     * @param exercise                      the exercise owning the thread
+     * @param location                      the mapped consistency issue location
+     * @param initialCommitShasByTarget     pre-resolved latest commit SHAs by repository-backed target type
+     * @param latestProblemStatementVersion the cached latest exercise version for problem-statement targets
      * @return a new consistency-check thread entity
      */
-    private CommentThread buildConsistencyCheckThread(Exercise exercise, ConsistencyThreadLocation location) {
+    private CommentThread buildConsistencyCheckThread(Exercise exercise, ConsistencyThreadLocation location, Map<CommentThreadLocationType, String> initialCommitShasByTarget,
+            @Nullable ExerciseVersion latestProblemStatementVersion) {
         CommentThread thread = new CommentThread();
         thread.setExercise(exercise);
         thread.setTargetType(location.targetType());
         thread.setInitialFilePath(location.filePath());
         thread.setFilePath(location.filePath());
-        thread.setInitialVersion(resolveLatestVersion(thread));
-        thread.setInitialCommitSha(resolveLatestCommitSha(location.targetType(), null, exercise.getId()));
+        thread.setInitialVersion(resolveConsistencyInitialVersion(location.targetType(), latestProblemStatementVersion));
+        thread.setInitialCommitSha(resolveConsistencyInitialCommitSha(location.targetType(), initialCommitShasByTarget));
         thread.setInitialLineNumber(location.lineNumber());
         thread.setLineNumber(location.lineNumber());
         thread.setOutdated(false);
         thread.setResolved(false);
         return thread;
+    }
+
+    /**
+     * Resolves the initial version for a consistency-check thread from the pre-resolved problem-statement version.
+     *
+     * @param targetType                    thread target type
+     * @param latestProblemStatementVersion cached latest exercise version for problem-statement targets
+     * @return the cached version for problem-statement targets, otherwise {@code null}
+     */
+    private ExerciseVersion resolveConsistencyInitialVersion(CommentThreadLocationType targetType, @Nullable ExerciseVersion latestProblemStatementVersion) {
+        if (targetType != CommentThreadLocationType.PROBLEM_STATEMENT) {
+            return null;
+        }
+        return latestProblemStatementVersion;
+    }
+
+    /**
+     * Resolves the initial commit SHA for a consistency-check thread location from pre-resolved target SHAs.
+     *
+     * @param targetType                thread target type
+     * @param initialCommitShasByTarget latest commit SHA lookup by target type
+     * @return the resolved initial commit SHA, or {@code null} for problem-statement threads and unavailable repository SHAs
+     */
+    private String resolveConsistencyInitialCommitSha(CommentThreadLocationType targetType, Map<CommentThreadLocationType, String> initialCommitShasByTarget) {
+        if (targetType == CommentThreadLocationType.PROBLEM_STATEMENT) {
+            return null;
+        }
+        return initialCommitShasByTarget.get(targetType);
     }
 
     /**
