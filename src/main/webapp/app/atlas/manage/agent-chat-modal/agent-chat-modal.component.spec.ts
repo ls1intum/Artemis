@@ -604,7 +604,7 @@ describe('AgentChatModalComponent', () => {
             const closeModalSpy = vi.spyOn(component as unknown as Record<string, () => void>, 'closeModal');
             fixture.detectChanges();
 
-            const closeButton = fixture.debugElement.nativeElement.querySelector('.btn-close');
+            const closeButton = fixture.debugElement.nativeElement.querySelector('button[aria-label="Close"]');
             closeButton.click();
 
             expect(closeModalSpy).toHaveBeenCalled();
