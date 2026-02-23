@@ -132,12 +132,12 @@ public class ExerciseWeaviateService {
      * @param exam the exam whose exercises should be updated (must have exercise groups and exercises loaded)
      */
     public void updateExamExercises(Exam exam) {
-        if (weaviateService.isEmpty()) {
-            log.trace("Weaviate is not enabled, skipping exercise insertion for exam with id {}", exam.getId());
+        if (exam == null || exam.getExerciseGroups() == null) {
             return;
         }
 
-        if (exam == null || exam.getExerciseGroups() == null) {
+        if (weaviateService.isEmpty()) {
+            log.trace("Weaviate is not enabled, skipping exercise insertion for exam with id {}", exam.getId());
             return;
         }
 
