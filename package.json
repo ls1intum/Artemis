@@ -82,30 +82,6 @@
         "zone.js": "0.16.0"
     },
     "overrides": {
-        "@angular-builders/jest": {
-            "@angular-devkit/build-angular": "^21.1.0",
-            "@angular/cdk": "^21.1.0",
-            "@angular/common": "^21.1.0",
-            "@angular/compiler": "^21.1.0",
-            "@angular/core": "^21.1.0",
-            "@angular/forms": "^21.1.0",
-            "@angular/platform-browser": "^21.1.0",
-            "@angular/platform-browser-dynamic": "^21.1.0",
-            "@angular/router": "^21.1.0",
-            "@angular/compiler-cli": "^21.1.0"
-        },
-        "@danielmoncada/angular-datetime-picker": {
-            "@angular/cdk": "^21.1.0",
-            "@angular/common": "^21.1.0",
-            "@angular/compiler": "^21.1.0",
-            "@angular/core": "^21.1.0",
-            "@angular/forms": "^21.1.0",
-            "@angular/platform-browser": "^21.1.0",
-            "@angular/platform-browser-dynamic": "^21.1.0",
-            "@angular/router": "^21.1.0",
-            "rxjs": "^7.8.2",
-            "zone.js": "^0.16.0"
-        },
         "@swimlane/ngx-charts": {
             "@angular/animations": "^21.1.0",
             "@angular/cdk": "^21.1.0",
@@ -269,6 +245,9 @@
         "vitest:coverage": "vitest run --coverage",
         "vitest:diff": "vitest run --changed origin/develop --passWithNoTests",
         "vitest:ui": "vitest --ui",
+        "sync-versions": "node supporting_scripts/sync-client-versions.mjs",
+        "sync-versions:check": "node supporting_scripts/sync-client-versions.mjs --check",
+        "sync-versions:reverse": "node supporting_scripts/sync-client-versions.mjs --reverse",
         "update": "ncu -i --format group",
         "webapp:build": "npm run clean-www && npm run prebuild -- --develop && ng build --configuration development",
         "webapp:prod": "npm run clean-www && npm run prebuild && cross-env NG_BUILD_OPTIMIZE_CHUNKS=1 ng build --configuration production",

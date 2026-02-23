@@ -7,7 +7,7 @@
 services:
     mailhog:
         container_name: artemis-mailhog
-        image: docker.io/mailhog/mailhog:v1.0.1
+        image: docker.io/mailhog/mailhog:${MAILHOG_VERSION}
         pull_policy: missing
         ports:
             - "1025:1025"

@@ -42,9 +42,10 @@ fi
 cd docker || { echo "ERROR: Failed to change to docker directory" >&2; exit 1; }
 
 # Pull the images to avoid using outdated images
-docker compose -f $COMPOSE_FILE pull --quiet --policy always
+# --env-file ../.env is needed because .env lives in the project root but we cd'd into docker/
+docker compose --env-file ../.env -f $COMPOSE_FILE pull --quiet --policy always
 # Run the tests
-docker compose -f $COMPOSE_FILE up --exit-code-from artemis-playwright
+docker compose --env-file ../.env -f $COMPOSE_FILE up --exit-code-from artemis-playwright
 
 exitCode=$?
 cd ..

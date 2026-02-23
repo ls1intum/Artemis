@@ -32,6 +32,13 @@ plugins {
     id "org.cyclonedx.bom" version "3.1.0"
 }
 
+// Load Docker image versions from .env (single source of truth for Docker, tests, and build dependencies)
+apply from: 'gradle/env.gradle'
+envProperties.each { key, value ->
+    // Convert UPPER_CASE to lower_case to match gradle.properties convention
+    ext.set(key.toLowerCase(), value)
+}
+
 group = "de.tum.cit.aet.artemis"
 version = "8.8.3"
 description = "Interactive Learning with Individual Feedback"
@@ -133,6 +140,8 @@ configurations.configureEach {
 
     exclude group: "org.testcontainers", module: "mariadb"
     exclude group: "org.testcontainers", module: "mssqlserver"
+    exclude group: "org.testcontainers", module: "testcontainers-mariadb"
+    exclude group: "org.testcontainers", module: "testcontainers-mssqlserver"
 
     exclude group: "jakarta.ws.rs", module: "jsr311-api"
 
@@ -414,7 +423,7 @@ dependencies {
     implementation "org.bouncycastle:bcprov-jdk18on:1.83"
 
     // required for database connections
-    implementation "com.mysql:mysql-connector-j:${mysql_version}"
+    implementation "com.mysql:mysql-connector-j:${mysql_connector_version}"
     implementation "org.postgresql:postgresql:42.7.9"
 
     implementation "org.zalando:problem-spring-web:0.29.1"
@@ -493,7 +502,7 @@ dependencies {
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.4"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.7.1"
     testImplementation "com.redis:testcontainers-redis:2.2.4"
-    testImplementation "org.testcontainers:weaviate:1.21.4"
+    testImplementation "org.testcontainers:testcontainers-weaviate:2.0.3"
     testImplementation "com.icegreen:greenmail-junit5:2.1.8"
     testImplementation "com.tngtech.archunit:archunit:1.4.1"
     testImplementation "org.skyscreamer:jsonassert:1.5.3"
@@ -522,7 +531,26 @@ apply from: "gradle/openapi.gradle"
 
 dependencyManagement {
     imports {
-        mavenBom "io.zonky.test.postgres:embedded-postgres-binaries-bom:18.1.0"
+        // BOM uses 3-part versions (e.g. 18.1.0); POSTGRES_VERSION from .env may be 2-part (e.g. 18.1)
+        def pgVersion = findProperty('postgres_version') ?: '18.1'
+        def bomVersion = pgVersion.count('.') < 2 ? "${pgVersion}.0" : pgVersion
+        mavenBom "io.zonky.test.postgres:embedded-postgres-binaries-bom:${bomVersion}"
+        mavenBom "org.testcontainers:testcontainers-bom:2.0.3"
+    }
+}
+
+// Testcontainers 2.0 renamed modules with a "testcontainers-" prefix.
+// Redirect old artifact names (used by Zonky and Spring Boot BOM) to the new ones.
+configurations.matching { it.name != 'mockitoAgent' }.configureEach {
+    resolutionStrategy {
+        dependencySubstitution {
+            substitute module("org.testcontainers:mysql") using module("org.testcontainers:testcontainers-mysql:2.0.3")
+            substitute module("org.testcontainers:postgresql") using module("org.testcontainers:testcontainers-postgresql:2.0.3")
+            substitute module("org.testcontainers:jdbc") using module("org.testcontainers:testcontainers-jdbc:2.0.3")
+            substitute module("org.testcontainers:database-commons") using module("org.testcontainers:testcontainers-database-commons:2.0.3")
+            substitute module("org.testcontainers:weaviate") using module("org.testcontainers:testcontainers-weaviate:2.0.3")
+            substitute module("org.testcontainers:testcontainers") using module("org.testcontainers:testcontainers:2.0.3")
+        }
     }
 }
 
@@ -577,10 +605,10 @@ tasks.named("dependencyUpdates").configure {
 // 1) Build production:                             ./gradlew -Pprod -Pwar clean bootWar
 // 2) Execute tests with coverage report:           ./gradlew test jacocoTestReport -x webapp
 // 2a) Execute tests without coverage report:       ./gradlew test -x webapp
-// 2b) Run a single test:                           ./gradlew test --tests ExamIntegrationTest -x webapp or ./gradlew test --tests ExamIntegrationTest.testGetExamScore -x webapp
-// 2c) Run tests for modules:                       ./gradlew test -DincludeModules=athena,atlas -x webapp (executes all tests in directories ./src/main/test/.../athena and ./src/main/test/.../atlas) + ArchitectureTests
-// 2d) Execute tests with Postgres container:       SPRING_PROFILES_INCLUDE=postgres ./gradlew test -x webapp
-// 2e) Execute tests with MySQL container:          SPRING_PROFILES_INCLUDE=mysql ./gradlew test -x webapp
+// 2b) Execute tests with MySQL test container:     ./gradlew testMysql -x webapp  (requires Docker)
+// 2c) Execute tests with Postgres test container:  ./gradlew testPostgres -x webapp  (requires Docker)
+// 2d) Run a single test:                           ./gradlew test --tests ExamIntegrationTest -x webapp or ./gradlew test --tests ExamIntegrationTest.testGetExamScore -x webapp
+// 2e) Run tests for modules:                       ./gradlew test -DincludeModules=athena,atlas -x webapp (executes all tests in directories ./src/main/test/.../athena and ./src/main/test/.../atlas) + ArchitectureTests
 // 3) Verify code coverage (after tests):           ./gradlew jacocoTestCoverageVerification -x webapp
 // 4) Check Java code format:                       ./gradlew spotlessCheck -x webapp
 // 5) Apply Java code formatter:                    ./gradlew spotlessApply -x webapp

@@ -13,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
+import java.util.stream.IntStream;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -73,6 +74,14 @@ public class ParticipantScoreScheduleService {
     private final TaskScheduler scheduler;
 
     private final Map<ParticipantScoreId, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
+
+    /**
+     * Striped locks to prevent concurrent executeTask calls for the same exercise+participant from creating duplicate participant scores.
+     * Using a fixed number of lock stripes avoids unbounded memory growth while still providing per-key synchronization.
+     */
+    private static final int NUM_LOCK_STRIPES = 32;
+
+    private final Object[] lockStripes = IntStream.range(0, NUM_LOCK_STRIPES).mapToObj(i -> new Object()).toArray();
 
     private Optional<Instant> lastScheduledRun = Optional.empty();
 
@@ -229,16 +238,13 @@ public class ParticipantScoreScheduleService {
      */
     private void scheduleTask(Long exerciseId, Long participantId, Instant resultLastModified, Long resultIdToBeDeleted) {
         final var participantScoreId = new ParticipantScoreId(exerciseId, participantId);
-        var task = scheduledTasks.get(participantScoreId);
-        if (task != null) {
-            // If a task is already scheduled, cancel it and reschedule it with the latest result
-            task.cancel(true);
-            scheduledTasks.remove(participantScoreId);
-        }
-
         var schedulingTime = ZonedDateTime.now().plus(DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS, ChronoUnit.MILLIS);
-        var future = scheduler.schedule(() -> this.executeTask(exerciseId, participantId, resultLastModified, resultIdToBeDeleted), schedulingTime.toInstant());
-        scheduledTasks.put(participantScoreId, future);
+        scheduledTasks.compute(participantScoreId, (key, existingTask) -> {
+            if (existingTask != null) {
+                existingTask.cancel(true);
+            }
+            return scheduler.schedule(() -> this.executeTask(exerciseId, participantId, resultLastModified, resultIdToBeDeleted), schedulingTime.toInstant());
+        });
         log.debug("Scheduled task for exercise {} and participant {} at {}.", exerciseId, participantId, schedulingTime);
     }
 
@@ -251,107 +257,112 @@ public class ParticipantScoreScheduleService {
      * @param resultIdToBeDeleted the id of the result that is about to be deleted (optional)
      */
     private void executeTask(Long exerciseId, Long participantId, Instant resultLastModified, Long resultIdToBeDeleted) {
-        long start = System.currentTimeMillis();
-        log.debug("Processing exercise {} and participant {} to update participant scores.", exerciseId, participantId);
-        try {
-            SecurityUtils.setAuthorizationObject();
+        final var participantScoreId = new ParticipantScoreId(exerciseId, participantId);
+        // Synchronize per exercise+participant to prevent concurrent tasks from creating duplicate participant scores.
+        // This can happen when a task is already running and cancel(true) fails to stop it before a new task is scheduled.
+        synchronized (lockStripes[Math.floorMod(participantScoreId.hashCode(), NUM_LOCK_STRIPES)]) {
+            long start = System.currentTimeMillis();
+            log.debug("Processing exercise {} and participant {} to update participant scores.", exerciseId, participantId);
+            try {
+                SecurityUtils.setAuthorizationObject();
 
-            var exercise = exerciseRepository.findById(exerciseId).orElse(null);
-            if (exercise == null) {
-                // If the exercise was deleted, we can delete all participant scores for it as well and skip
-                log.debug("Exercise {} no longer exists, deleting all participant scores for it.", exerciseId);
-                participantScoreRepository.deleteAllByExerciseId(exerciseId);
-                return;
-            }
-
-            Participant participant;
-            Optional<ParticipantScore> participantScore;
-            if (exercise.isTeamMode()) {
-                // Fetch the team and its score for the given exercise
-                participant = teamRepository.findWithStudentsById(participantId).orElse(null);
-                if (participant == null) {
-                    // If the team was deleted, we can delete all participant scores for it as well and skip
-                    log.debug("Team {} no longer exists, deleting all participant scores for it.", participantId);
-                    teamScoreRepository.deleteAllByTeamId(participantId);
+                var exercise = exerciseRepository.findById(exerciseId).orElse(null);
+                if (exercise == null) {
+                    // If the exercise was deleted, we can delete all participant scores for it as well and skip
+                    log.debug("Exercise {} no longer exists, deleting all participant scores for it.", exerciseId);
+                    participantScoreRepository.deleteAllByExerciseId(exerciseId);
                     return;
                 }
-                participantScore = teamScoreRepository.findByExercise_IdAndTeam_Id(exerciseId, participantId).map(Function.identity());
-            }
-            else {
-                // Fetch the student and its score for the given exercise
-                participant = userRepository.findById(participantId).orElse(null);
-                if (participant == null) {
-                    // If the user was deleted, we can delete all participant scores for it as well and skip
-                    log.debug("User {} no longer exists, deleting all participant scores for them.", participantId);
-                    studentScoreRepository.deleteAllByUserId(participantId);
-                    return;
-                }
-                participantScore = studentScoreRepository.findByExercise_IdAndUser_Id(exerciseId, participantId).map(Function.identity());
-            }
 
-            if (participantScore.isPresent()) {
-                var lastModified = participantScore.get().getLastModifiedDate();
-                if (lastModified != null && lastModified.isAfter(resultLastModified)) {
-                    // The participant score was already updated after the last modified date of the result that initiated this task
-                    // We assume we already processed the result with the last task that ran and therefore skip the processing
-                    log.debug("Participant score {} is already up-to-date, skipping.", participantScore.get().getId());
-                    return;
+                Participant participant;
+                Optional<ParticipantScore> participantScore;
+                if (exercise.isTeamMode()) {
+                    // Fetch the team and its score for the given exercise
+                    participant = teamRepository.findWithStudentsById(participantId).orElse(null);
+                    if (participant == null) {
+                        // If the team was deleted, we can delete all participant scores for it as well and skip
+                        log.debug("Team {} no longer exists, deleting all participant scores for it.", participantId);
+                        teamScoreRepository.deleteAllByTeamId(participantId);
+                        return;
+                    }
+                    participantScore = teamScoreRepository.findByExercise_IdAndTeam_Id(exerciseId, participantId).map(Function.identity());
                 }
-            }
-            else {
+                else {
+                    // Fetch the student and its score for the given exercise
+                    participant = userRepository.findById(participantId).orElse(null);
+                    if (participant == null) {
+                        // If the user was deleted, we can delete all participant scores for it as well and skip
+                        log.debug("User {} no longer exists, deleting all participant scores for them.", participantId);
+                        studentScoreRepository.deleteAllByUserId(participantId);
+                        return;
+                    }
+                    participantScore = studentScoreRepository.findByExercise_IdAndUser_Id(exerciseId, participantId).map(Function.identity());
+                }
+
+                if (participantScore.isPresent()) {
+                    var lastModified = participantScore.get().getLastModifiedDate();
+                    if (lastModified != null && lastModified.isAfter(resultLastModified)) {
+                        // The participant score was already updated after the last modified date of the result that initiated this task
+                        // We assume we already processed the result with the last task that ran and therefore skip the processing
+                        log.debug("Participant score {} is already up-to-date, skipping.", participantScore.get().getId());
+                        return;
+                    }
+                }
+                else {
+                    if (resultIdToBeDeleted != null) {
+                        // A participant score for this exercise/participant combination does not exist and this task was triggered because a result will be deleted
+                        // It is very likely that the whole participation or exercise is about to be deleted and their participant scores were already removed
+                        // We do not need to do anything in that case
+                        log.debug("Result {} will be deleted and participant score for its participation is already gone, skipping.", resultIdToBeDeleted);
+                        return;
+                    }
+                }
+
+                // Either use the existing participant score or create a new one
+                var score = participantScore.orElseGet(() -> {
+                    switch (participant) {
+                        case Team team -> {
+                            var teamScore = new TeamScore();
+                            teamScore.setTeam(team);
+                            teamScore.setExercise(exercise);
+                            return teamScore;
+                        }
+                        case User user -> {
+                            var studentScore = new StudentScore();
+                            studentScore.setUser(user);
+                            studentScore.setExercise(exercise);
+                            return studentScore;
+                        }
+                        default -> throw new IllegalArgumentException("Unknown participant type: " + participant);
+                    }
+                });
+
+                // Now do the heavy lifting and calculate the latest score based on all results for this exercise
+                // The result that is about to be deleted is excluded from the calculation
                 if (resultIdToBeDeleted != null) {
-                    // A participant score for this exercise/participant combination does not exist and this task was triggered because a result will be deleted
-                    // It is very likely that the whole participation or exercise is about to be deleted and their participant scores were already removed
-                    // We do not need to do anything in that case
-                    log.debug("Result {} will be deleted and participant score for its participation is already gone, skipping.", resultIdToBeDeleted);
-                    return;
+                    updateParticipantScore(score, resultIdToBeDeleted);
                 }
-            }
-
-            // Either use the existing participant score or create a new one
-            var score = participantScore.orElseGet(() -> {
-                switch (participant) {
-                    case Team team -> {
-                        var teamScore = new TeamScore();
-                        teamScore.setTeam(team);
-                        teamScore.setExercise(exercise);
-                        return teamScore;
-                    }
-                    case User user -> {
-                        var studentScore = new StudentScore();
-                        studentScore.setUser(user);
-                        studentScore.setExercise(exercise);
-                        return studentScore;
-                    }
-                    default -> throw new IllegalArgumentException("Unknown participant type: " + participant);
+                else {
+                    updateParticipantScore(score);
                 }
-            });
 
-            // Now do the heavy lifting and calculate the latest score based on all results for this exercise
-            // The result that is about to be deleted is excluded from the calculation
-            if (resultIdToBeDeleted != null) {
-                updateParticipantScore(score, resultIdToBeDeleted);
+                // Update the progress for competencies linked to this exercise
+                Participant scoreParticipant = score.getParticipant();
+                if (scoreParticipant instanceof Team team && !Hibernate.isInitialized(team.getStudents())) {
+                    scoreParticipant = teamRepository.findWithStudentsByIdElseThrow(team.getId());
+                }
+                Participant finalScoreParticipant = scoreParticipant;
+                competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectSync(score.getExercise(), finalScoreParticipant.getParticipants()));
             }
-            else {
-                updateParticipantScore(score);
+            catch (Exception e) {
+                log.error("Exception while processing participant score for exercise {} and participant {} for participant scores:", exerciseId, participantId, e);
             }
-
-            // Update the progress for competencies linked to this exercise
-            Participant scoreParticipant = score.getParticipant();
-            if (scoreParticipant instanceof Team team && !Hibernate.isInitialized(team.getStudents())) {
-                scoreParticipant = teamRepository.findWithStudentsByIdElseThrow(team.getId());
+            finally {
+                scheduledTasks.remove(participantScoreId);
             }
-            Participant finalScoreParticipant = scoreParticipant;
-            competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectSync(score.getExercise(), finalScoreParticipant.getParticipants()));
+            long end = System.currentTimeMillis();
+            log.debug("Updating the participant score for exercise {} and participant {} took {} ms.", exerciseId, participantId, end - start);
         }
-        catch (Exception e) {
-            log.error("Exception while processing participant score for exercise {} and participant {} for participant scores:", exerciseId, participantId, e);
-        }
-        finally {
-            scheduledTasks.remove(new ParticipantScoreId(exerciseId, participantId));
-        }
-        long end = System.currentTimeMillis();
-        log.debug("Updating the participant score for exercise {} and participant {} took {} ms.", exerciseId, participantId, end - start);
     }
 
     /**

@@ -1,6 +1,6 @@
 services:
   redis:
-    image: redis/redis-stack-server:7.2.0-v18
+    image: redis/redis-stack-server:${REDIS_STACK_VERSION}
     restart: always
     ports:
       - "6379:6379"

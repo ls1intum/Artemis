@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -569,12 +570,7 @@ class AtlasAgentServiceTest {
         @Test
         void shouldHandleMultipleMessagesWithMixedPreviewData() {
             String sessionId = "course_123_user_606";
-            String message1 = "First response %%PREVIEW_DATA_START%%{\"previews\":[{\"title\":\"Test 1\",\"description\":\"Desc 1\",\"taxonomy\":\"APPLY\",\"competencyId\":null,\"viewOnly\":null}]}%%PREVIEW_DATA_END%%";
-            String message2 = "Second response without preview";
-            String message3 = "Third response %%PREVIEW_DATA_START%%{\"previews\":[{\"title\":\"Test 2\",\"description\":\"Desc 2\",\"taxonomy\":\"ANALYZE\",\"competencyId\":null,\"viewOnly\":null}]}%%PREVIEW_DATA_END%%";
-
-            List<Message> messages = List.of(new UserMessage("User message 1"), new AssistantMessage(message1), new UserMessage("User message 2"), new AssistantMessage(message2),
-                    new UserMessage("User message 3"), new AssistantMessage(message3));
+            final var messages = getMessages();
 
             when(chatMemory.get(sessionId)).thenReturn(messages);
 
@@ -618,6 +614,16 @@ class AtlasAgentServiceTest {
             assertThat(result.get(1).competencyPreviews()).isNull();
             assertThat(result.get(2).content()).isEqualTo("Task completed successfully");
         }
+    }
+
+    @NonNull
+    private static List<Message> getMessages() {
+        String message1 = "First response %%PREVIEW_DATA_START%%{\"previews\":[{\"title\":\"Test 1\",\"description\":\"Desc 1\",\"taxonomy\":\"APPLY\",\"competencyId\":null,\"viewOnly\":null}]}%%PREVIEW_DATA_END%%";
+        String message2 = "Second response without preview";
+        String message3 = "Third response %%PREVIEW_DATA_START%%{\"previews\":[{\"title\":\"Test 2\",\"description\":\"Desc 2\",\"taxonomy\":\"ANALYZE\",\"competencyId\":null,\"viewOnly\":null}]}%%PREVIEW_DATA_END%%";
+
+        return List.of(new UserMessage("User message 1"), new AssistantMessage(message1), new UserMessage("User message 2"), new AssistantMessage(message2),
+                new UserMessage("User message 3"), new AssistantMessage(message3));
     }
 
 }
