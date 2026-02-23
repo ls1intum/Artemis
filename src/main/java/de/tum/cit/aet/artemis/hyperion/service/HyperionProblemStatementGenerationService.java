@@ -1,9 +1,12 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
-import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.MAX_PROBLEM_STATEMENT_LENGTH;
-import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.getSanitizedCourseDescription;
-import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.getSanitizedCourseTitle;
-import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.sanitizeInput;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.MAX_PROBLEM_STATEMENT_LENGTH;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.getSanitizedCourseDescription;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.getSanitizedCourseTitle;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.sanitizeInput;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.stripLineNumbers;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.stripWrapperMarkers;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.validateUserPrompt;
 
 import java.util.Map;
 
@@ -64,7 +67,7 @@ public class HyperionProblemStatementGenerationService {
         }
 
         String sanitizedPrompt = sanitizeInput(userPrompt);
-        HyperionPromptSanitizer.validateUserPrompt(sanitizedPrompt, "ProblemStatementGeneration");
+        validateUserPrompt(sanitizedPrompt, "ProblemStatementGeneration");
 
         String systemPrompt = templateService.render("/prompts/hyperion/generate_draft_problem_statement_system.st", Map.of());
 
@@ -85,6 +88,10 @@ public class HyperionProblemStatementGenerationService {
             throw new InternalServerErrorAlertException("Generated problem statement is null or empty", "ProblemStatement",
                     "ProblemStatementGeneration.problemStatementGenerationNull");
         }
+
+        // Defensively strip artifacts the LLM may have copied from the prompt template
+        generatedProblemStatement = stripLineNumbers(generatedProblemStatement);
+        generatedProblemStatement = stripWrapperMarkers(generatedProblemStatement);
 
         generatedProblemStatement = generatedProblemStatement.trim();
 

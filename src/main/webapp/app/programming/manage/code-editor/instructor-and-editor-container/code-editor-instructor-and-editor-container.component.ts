@@ -60,7 +60,7 @@ import { ButtonSize } from 'app/shared/components/buttons/button/button.componen
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
 import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
-import { MAX_USER_PROMPT_LENGTH, PROMPT_LENGTH_WARNING_THRESHOLD, isTemplateOrEmpty } from 'app/programming/manage/shared/problem-statement.utils';
+import { InlineRefinementEvent, MAX_USER_PROMPT_LENGTH, PROMPT_LENGTH_WARNING_THRESHOLD, isTemplateOrEmpty } from 'app/programming/manage/shared/problem-statement.utils';
 import { TooltipModule } from 'primeng/tooltip';
 import { TextareaModule } from 'primeng/textarea';
 import { BadgeModule } from 'primeng/badge';
@@ -541,8 +541,50 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     /**
+     * Handles inline refinement request from editor selection.
+     * Calls the Hyperion API with the selected text and instruction, then shows diff.
+     */
+    onInlineRefinement(event: InlineRefinementEvent): void {
+        const currentContent = this.editableInstructions()?.getCurrentContent() ?? this.exercise?.problemStatement;
+        if (!currentContent?.trim()) {
+            this.alertService.error('artemisApp.programmingExercise.problemStatement.inlineRefinement.emptyStatementError');
+            return;
+        }
+
+        this.currentAiOperationSubscription?.unsubscribe();
+        const requestId = ++this.refinementRequestId;
+        this.currentAiOperationSubscription = this.problemStatementService
+            .refineTargeted(this.exercise, currentContent, event, (v) => this.isGeneratingOrRefining.set(v))
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (result) => {
+                    if (result.success && result.content) {
+                        this.showDiff.set(true);
+                        const refinedContent = result.content;
+                        afterNextRender(
+                            () => {
+                                if (requestId === this.refinementRequestId && this.showDiff()) {
+                                    this.editableInstructions()?.applyRefinedContent(refinedContent);
+                                }
+                            },
+                            { injector: this.injector },
+                        );
+                    } else if (!result.errorHandled) {
+                        this.alertService.error('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
+                    }
+                    this.currentAiOperationSubscription = undefined;
+                },
+                error: () => {
+                    this.alertService.error('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
+                    this.isGeneratingOrRefining.set(false);
+                    this.currentAiOperationSubscription = undefined;
+                },
+            });
+    }
+
+    /**
      * Cancels the ongoing problem statement generation or refinement.
-     * Preserves the user's prompt so they can retry or modify it.
+     * Resets all in-progress states.
      */
     cancelAiOperation(): void {
         this.currentAiOperationSubscription?.unsubscribe();
@@ -578,6 +620,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.currentAiOperationSubscription?.unsubscribe();
         this.currentAiOperationSubscription = this.problemStatementService
             .generateProblemStatement(this.exercise, prompt, (v) => this.isGeneratingOrRefining.set(v))
+            .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (result) => {
                     if (result.success && result.content) {
@@ -597,6 +640,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                         this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
                     }
                 },
+                error: () => {
+                    this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
+                    this.isGeneratingOrRefining.set(false);
+                    this.currentAiOperationSubscription = undefined;
+                },
             });
     }
 
@@ -612,6 +660,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.currentAiOperationSubscription?.unsubscribe();
         this.currentAiOperationSubscription = this.problemStatementService
             .refineGlobally(this.exercise, currentContent, prompt, (v) => this.isGeneratingOrRefining.set(v))
+            .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (result) => {
                     if (result.success && result.content) {
@@ -630,6 +679,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     } else if (!result.errorHandled) {
                         this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
                     }
+                },
+                error: () => {
+                    this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
+                    this.isGeneratingOrRefining.set(false);
+                    this.currentAiOperationSubscription = undefined;
                 },
             });
     }

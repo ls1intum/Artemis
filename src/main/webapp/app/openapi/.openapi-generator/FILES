@@ -32,6 +32,7 @@ model/problemStatementRewriteRequest.ts
 model/problemStatementRewriteResponse.ts
 model/qualityIssue.ts
 model/qualityIssueLocation.ts
+model/problemStatementTargetedRefinementRequest.ts
 model/rewriteFaqRequest.ts
 model/rewriteFaqResponse.ts
 model/student.ts
