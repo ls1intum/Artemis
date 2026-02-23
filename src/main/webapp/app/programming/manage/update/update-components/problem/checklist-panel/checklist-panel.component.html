@@ -137,12 +137,6 @@
                                 </div>
                             </div>
 
-                            @if (!result.qualityIssues || result.qualityIssues.length === 0) {
-                                <div class="text-success d-flex align-items-center gap-2 py-2">
-                                    <fa-icon [icon]="faCheckCircle" />
-                                    <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.empty">No quality issues found.</span>
-                                </div>
-                            }
                             @if (result.qualityIssues && result.qualityIssues.length > 0) {
                                 <div class="d-flex justify-content-end mb-2">
                                     <button
@@ -206,6 +200,11 @@
                                             }
                                         </div>
                                     }
+                                </div>
+                            } @else {
+                                <div class="text-success d-flex align-items-center gap-2 py-2">
+                                    <fa-icon [icon]="faCheckCircle" />
+                                    <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.empty">No quality issues found.</span>
                                 </div>
                             }
                         </div>

@@ -62,6 +62,15 @@ const SECTION_TO_FIELD: Record<ChecklistSectionType, keyof ChecklistAnalysisResp
     difficulty: 'difficultyAssessment',
 };
 
+/** Default quality score before penalties are applied. */
+const DEFAULT_QUALITY_SCORE = 1.0;
+/** Penalty subtracted per HIGH-severity quality issue. */
+const PENALTY_HIGH = 0.3;
+/** Penalty subtracted per MEDIUM-severity quality issue. */
+const PENALTY_MEDIUM = 0.2;
+/** Penalty subtracted per LOW-severity quality issue. */
+const PENALTY_LOW = 0.1;
+
 @Component({
     selector: 'jhi-checklist-panel',
     templateUrl: './checklist-panel.component.html',
@@ -258,13 +267,13 @@ export class ChecklistPanelComponent {
 
     qualityScores = computed(() => {
         const issues = this.analysisResult()?.qualityIssues || [];
-        const scores: Record<string, number> = { CLARITY: 1.0, COHERENCE: 1.0, COMPLETENESS: 1.0 };
+        const scores: Record<string, number> = { CLARITY: DEFAULT_QUALITY_SCORE, COHERENCE: DEFAULT_QUALITY_SCORE, COMPLETENESS: DEFAULT_QUALITY_SCORE };
 
         for (const issue of issues) {
             const cat = issue.category?.toUpperCase() || '';
             if (cat in scores) {
                 const sev = issue.severity?.toUpperCase();
-                const penalty = sev === 'HIGH' ? 0.3 : sev === 'MEDIUM' ? 0.2 : 0.1;
+                const penalty = sev === 'HIGH' ? PENALTY_HIGH : sev === 'MEDIUM' ? PENALTY_MEDIUM : PENALTY_LOW;
                 scores[cat] = Math.max(0, scores[cat] - penalty);
             }
         }
@@ -379,7 +388,7 @@ export class ChecklistPanelComponent {
         const cId = this.courseId();
         if (!cId || this.isLoading() || this.sectionLoading().has(section) || this.isApplyingAction()) return;
 
-        this.addToSet(this.sectionLoading, section);
+        this.updateSet(this.sectionLoading, section, 'add');
         const ex = this.exercise();
         const request = {
             problemStatementMarkdown: this.effectiveProblemStatement(),
@@ -405,12 +414,12 @@ export class ChecklistPanelComponent {
                         this.createdCompetencyTitles.set(new Set());
                         this.competencyLinksChange.emit([]);
                     }
-                    this.deleteFromSet(this.staleSections, section);
-                    this.deleteFromSet(this.sectionLoading, section);
+                    this.updateSet(this.staleSections, section, 'delete');
+                    this.updateSet(this.sectionLoading, section, 'delete');
                 },
                 error: () => {
                     this.alertService.error('artemisApp.programmingExercise.instructorChecklist.actions.error');
-                    this.deleteFromSet(this.sectionLoading, section);
+                    this.updateSet(this.sectionLoading, section, 'delete');
                 },
             });
     }
@@ -554,7 +563,7 @@ export class ChecklistPanelComponent {
                             catchError(() => of({ success: false as const, response: null })),
                         ),
                     );
-                    return forkJoin(create$).pipe(
+                    return forkJoin([...create$]).pipe(
                         tap((results) => {
                             const newlyCreated = new Set<string>();
                             let failureCount = 0;
@@ -686,18 +695,10 @@ export class ChecklistPanelComponent {
         return LOW_COMPETENCY_LINK_WEIGHT;
     }
 
-    private addToSet<T>(sig: WritableSignal<Set<T>>, item: T) {
+    private updateSet<T>(sig: WritableSignal<Set<T>>, item: T, op: 'add' | 'delete') {
         sig.update((s) => {
             const n = new Set(s);
-            n.add(item);
-            return n;
-        });
-    }
-
-    private deleteFromSet<T>(sig: WritableSignal<Set<T>>, item: T) {
-        sig.update((s) => {
-            const n = new Set(s);
-            n.delete(item);
+            n[op](item);
             return n;
         });
     }

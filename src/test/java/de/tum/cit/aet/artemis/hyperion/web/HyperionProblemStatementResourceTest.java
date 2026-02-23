@@ -405,7 +405,9 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         String body = "{\"problemStatementMarkdown\":\"Problem\", \"declaredDifficulty\":\"EASY\", \"exerciseId\":" + persistedExerciseId + "}";
 
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/checklist-analysis", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.inferredCompetencies").isArray()).andExpect(jsonPath("$.qualityIssues").isArray());
+                .andExpect(status().isOk()).andExpect(jsonPath("$.inferredCompetencies").isArray()).andExpect(jsonPath("$.inferredCompetencies[0].competencyTitle").value("Loops"))
+                .andExpect(jsonPath("$.qualityIssues").isArray()).andExpect(jsonPath("$.qualityIssues[0].category").value("CLARITY"))
+                .andExpect(jsonPath("$.difficultyAssessment.suggested").value("EASY"));
     }
 
     @Test
@@ -420,8 +422,9 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         String body = "{\"problemStatementMarkdown\":\"Problem\", \"declaredDifficulty\":\"EASY\", \"exerciseId\":" + persistedExerciseId + "}";
 
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/checklist-analysis", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.inferredCompetencies").isArray()).andExpect(jsonPath("$.qualityIssues").isArray())
-                .andExpect(jsonPath("$.difficultyAssessment").exists());
+                .andExpect(status().isOk()).andExpect(jsonPath("$.inferredCompetencies").isArray()).andExpect(jsonPath("$.inferredCompetencies[0].competencyTitle").value("Loops"))
+                .andExpect(jsonPath("$.qualityIssues").isArray()).andExpect(jsonPath("$.qualityIssues[0].category").value("CLARITY"))
+                .andExpect(jsonPath("$.difficultyAssessment").exists()).andExpect(jsonPath("$.difficultyAssessment.suggested").value("EASY"));
     }
 
     @Test

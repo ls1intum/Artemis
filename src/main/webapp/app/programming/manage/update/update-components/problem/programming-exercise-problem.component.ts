@@ -351,12 +351,12 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
         const exercise = this.programmingExercise();
         const previousContent = this.currentProblemStatement();
         this.currentProblemStatement.set(problemStatement);
-        if (problemStatement !== previousContent) {
+        const changed = problemStatement !== previousContent;
+        if (changed) {
             this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
         }
-        if (exercise) {
+        if (exercise && changed) {
             exercise.problemStatement = problemStatement;
-            this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
             this.programmingExerciseChange.emit(exercise);
         }
         this.problemStatementChange.emit(problemStatement);

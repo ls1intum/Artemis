@@ -835,7 +835,7 @@
                     "unknown": "Unbekannt"
                 },
                 "quality": {
-                    "title": "Qualitätsbewertung",
+                    "title": "Qualitätsprobleme",
                     "empty": "Keine Qualitätsprobleme gefunden.",
                     "fix": "Beheben",
                     "suggestedFix": "Vorgeschlagene Lösung:",

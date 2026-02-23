@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.InferredCompetencyDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QualityIssueDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QualityIssueLocationDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
 import io.micrometer.common.KeyValue;
 import io.micrometer.observation.Observation;
@@ -87,6 +88,8 @@ public class HyperionChecklistService {
 
     private final ProgrammingExerciseTaskRepository taskRepository;
 
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
     /** Lazily cached JSON representation of the standardized competency catalog. */
     private volatile String cachedCatalogJson;
 
@@ -107,6 +110,9 @@ public class HyperionChecklistService {
     /** Time-to-live for per-course competency cache. */
     private static final Duration COURSE_COMPETENCY_CACHE_TTL = Duration.ofMinutes(10);
 
+    /** Maximum number of courses cached concurrently before stale entries are evicted. */
+    private static final int MAX_COURSE_CACHE_SIZE = 200;
+
     private record CourseCompetencyCacheEntry(String json, Instant cachedAt) {
 
         boolean isValid() {
@@ -114,15 +120,21 @@ public class HyperionChecklistService {
         }
     }
 
+    /** Removes all stale entries from the course competency cache. */
+    private void evictStaleCourseCompetencyEntries() {
+        courseCompetencyCache.entrySet().removeIf(entry -> !entry.getValue().isValid());
+    }
+
     public HyperionChecklistService(ChatClient chatClient, HyperionPromptTemplateService templates, ObservationRegistry observationRegistry,
             Optional<StandardizedCompetencyApi> standardizedCompetencyApi, Optional<CourseCompetencyApi> courseCompetencyApi, ProgrammingExerciseTaskRepository taskRepository,
-            ObjectMapper objectMapper) {
+            ProgrammingExerciseRepository programmingExerciseRepository, ObjectMapper objectMapper) {
         this.chatClient = chatClient;
         this.templates = templates;
         this.observationRegistry = observationRegistry;
         this.standardizedCompetencyApi = standardizedCompetencyApi;
         this.courseCompetencyApi = courseCompetencyApi;
         this.taskRepository = taskRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.objectMapper = objectMapper;
     }
 
@@ -227,7 +239,16 @@ public class HyperionChecklistService {
         String problemStatement = request.problemStatementMarkdown(); // @NotBlank guarantees non-null after validation
         String rawDifficulty = request.declaredDifficulty();
         String declaredDifficulty = (rawDifficulty == null || rawDifficulty.isBlank()) ? "NOT_DECLARED" : rawDifficulty;
-        String language = Objects.requireNonNullElse(request.language(), "JAVA");
+        String language = request.language();
+        if (language == null && request.exerciseId() != null) {
+            var exercise = programmingExerciseRepository.findById(request.exerciseId()).orElse(null);
+            if (exercise != null && exercise.getProgrammingLanguage() != null) {
+                language = exercise.getProgrammingLanguage().name();
+            }
+        }
+        if (language == null) {
+            language = "JAVA";
+        }
 
         // Fetch and serialize the competency catalog
         String catalogJson = serializeCompetencyCatalog();
@@ -458,6 +479,9 @@ public class HyperionChecklistService {
                 result.add(entry);
             }
             String json = objectMapper.writeValueAsString(result);
+            if (courseCompetencyCache.size() >= MAX_COURSE_CACHE_SIZE) {
+                evictStaleCourseCompetencyEntries();
+            }
             courseCompetencyCache.put(courseId, new CourseCompetencyCacheEntry(json, Instant.now()));
             return json;
         }
@@ -670,7 +694,7 @@ public class HyperionChecklistService {
         }
     }
 
-    private static class StructuredOutputSchema {
+    static class StructuredOutputSchema {
 
         record CompetenciesResponse(List<CompetencyItem> competencies) {
         }

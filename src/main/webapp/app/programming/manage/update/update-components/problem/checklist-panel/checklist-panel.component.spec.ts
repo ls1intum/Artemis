@@ -267,7 +267,7 @@ describe('ChecklistPanelComponent', () => {
                     rank: 2,
                 },
             ],
-            difficultyAssessment: { suggested: 'EASY', reasoning: 'Reason', matchesDeclared: true, taskCount: 5, testCount: 10 },
+            difficultyAssessment: { suggested: DifficultyAssessment.SuggestedEnum.Easy, reasoning: 'Reason', matchesDeclared: true, taskCount: 5, testCount: 10 },
             qualityIssues: [],
         };
 
@@ -314,7 +314,7 @@ describe('ChecklistPanelComponent', () => {
                         rank: 1,
                     },
                 ],
-                difficultyAssessment: { suggested: 'EASY', reasoning: 'Reason', matchesDeclared: true },
+                difficultyAssessment: { suggested: DifficultyAssessment.SuggestedEnum.Easy, reasoning: 'Reason', matchesDeclared: true },
                 qualityIssues: [],
             };
             component.analysisResult.set(responseNoMatches);
@@ -346,7 +346,7 @@ describe('ChecklistPanelComponent', () => {
                         isLikelyPrimary: false,
                     },
                 ],
-                difficultyAssessment: { suggested: 'EASY', reasoning: 'Reason', matchesDeclared: true },
+                difficultyAssessment: { suggested: DifficultyAssessment.SuggestedEnum.Easy, reasoning: 'Reason', matchesDeclared: true },
                 qualityIssues: [],
             };
             component.analysisResult.set(lowConfidenceResponse);
@@ -377,7 +377,7 @@ describe('ChecklistPanelComponent', () => {
                         matchedCourseCompetencyId: 1,
                     },
                 ],
-                difficultyAssessment: { suggested: 'EASY', reasoning: 'Reason', matchesDeclared: true },
+                difficultyAssessment: { suggested: DifficultyAssessment.SuggestedEnum.Easy, reasoning: 'Reason', matchesDeclared: true },
                 qualityIssues: [],
             };
             component.analysisResult.set(allMatchedResponse);

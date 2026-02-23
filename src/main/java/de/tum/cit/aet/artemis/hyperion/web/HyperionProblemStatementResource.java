@@ -127,7 +127,6 @@ public class HyperionProblemStatementResource {
     }
 
     /**
-     * /**
      * POST courses/{courseId}/checklist-analysis: Analyze the problem statement for checklist (learning goals, difficulty, quality).
      * The three LLM calls (competency, difficulty, quality) run concurrently inside the service.
      * Blocking on the CompletableFuture here is acceptable because Artemis runs on virtual threads.
@@ -140,7 +139,6 @@ public class HyperionProblemStatementResource {
     @PostMapping("courses/{courseId}/checklist-analysis")
     public ResponseEntity<ChecklistAnalysisResponseDTO> analyzeChecklist(@PathVariable long courseId, @Valid @RequestBody ChecklistAnalysisRequestDTO request) {
         log.debug("REST request to Hyperion checklist analysis for course [{}]", courseId);
-        courseRepository.findByIdElseThrow(courseId);
         validateExerciseBelongsToCourse(request.exerciseId(), courseId);
         var result = checklistService.analyzeChecklist(request, courseId).join();
         return ResponseEntity.ok(result);
