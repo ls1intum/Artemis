@@ -543,6 +543,16 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(result).toBeUndefined();
     });
 
+    it('should return undefined from getSelection when monacoEditor is undefined', () => {
+        fixture.detectChanges();
+
+        (comp as any).monacoEditor = undefined;
+
+        const result = comp.getSelection();
+
+        expect(result).toBeUndefined();
+    });
+
     it('should have consistencyIssues input', () => {
         fixture.detectChanges();
 

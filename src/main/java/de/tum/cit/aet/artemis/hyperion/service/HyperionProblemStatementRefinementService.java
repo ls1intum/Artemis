@@ -7,6 +7,8 @@ import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.sanitizeInpu
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.sanitizeInputPreserveLines;
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.stripLineNumbers;
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.stripWrapperMarkers;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.validateInstruction;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.validateUserPrompt;
 
 import java.util.Map;
 
@@ -98,7 +100,7 @@ public class HyperionProblemStatementRefinementService {
         validateSanitizedProblemStatement(sanitizedProblemStatement);
 
         String sanitizedPrompt = sanitizeInput(userPrompt);
-        HyperionUtils.validateUserPrompt(sanitizedPrompt, "ProblemStatementRefinement");
+        validateUserPrompt(sanitizedPrompt, "ProblemStatementRefinement");
 
         String systemPrompt = templateService.render("/prompts/hyperion/refine_problem_statement_system.st", Map.of());
 
@@ -147,7 +149,7 @@ public class HyperionProblemStatementRefinementService {
         }
 
         String sanitizedInstruction = sanitizeInput(request.instruction());
-        HyperionUtils.validateInstruction(sanitizedInstruction, "ProblemStatementRefinement");
+        validateInstruction(sanitizedInstruction, "ProblemStatementRefinement");
 
         // For targeted refinement, use line-preserving sanitization to keep line numbers aligned
         // with the client's selection. Full sanitizeInput() could remove entire lines (e.g., delimiter
@@ -241,7 +243,7 @@ public class HyperionProblemStatementRefinementService {
      * Validates that the line range is within bounds.
      */
     private void validateLineRange(int startLineIdx, int endLineIdx, int totalLines) {
-        if (startLineIdx < 0 || endLineIdx >= totalLines) {
+        if (startLineIdx < 0 || endLineIdx >= totalLines || startLineIdx > endLineIdx) {
             throw new BadRequestAlertException("Invalid line range", "ProblemStatement", "ProblemStatementRefinement.invalidLineRange");
         }
     }
@@ -269,7 +271,7 @@ public class HyperionProblemStatementRefinementService {
         int endCol = resolveEndColumn(endColObj, lastLine.length());
 
         String startPart = startCol < firstLine.length() ? firstLine.substring(startCol) : "";
-        String endPart = endCol <= lastLine.length() ? lastLine.substring(0, endCol) : lastLine;
+        String endPart = lastLine.substring(0, endCol);
 
         return truncateForDisplay(startPart + "..." + endPart);
     }

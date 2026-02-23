@@ -1,6 +1,7 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { InlineRefinementButtonComponent } from './inline-refinement-button.component';
 import { TranslateService } from '@ngx-translate/core';
+import { vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { Subject } from 'rxjs';
 
@@ -32,7 +33,7 @@ describe('InlineRefinementButtonComponent', () => {
     });
 
     afterEach(() => {
-        vi.restoreAllMocks();
+        vi.clearAllMocks();
     });
 
     it('should create', () => {
@@ -44,13 +45,14 @@ describe('InlineRefinementButtonComponent', () => {
         expect(comp.instruction()).toBe('');
     });
 
-    it('should expand and focus input when expand is called', fakeAsync(() => {
+    it('should expand and focus input when expand is called', () => {
+        vi.useFakeTimers();
         comp.expand();
-        tick(100);
+        vi.advanceTimersByTime(100);
 
         expect(comp.isExpanded()).toBeTruthy();
         vi.useRealTimers();
-    }));
+    });
 
     it('should emit refine event with correct data on submit', () => {
         const refineSpy = vi.spyOn(comp.refine, 'emit');

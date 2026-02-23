@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed, fakeAsync } from '@angular/core/testing';
 import { signal } from '@angular/core';
+import { vi } from 'vitest';
 import { of, throwError } from 'rxjs';
 import { ProblemStatementService } from './problem-statement.service';
 import { FileService } from 'app/shared/service/file.service';

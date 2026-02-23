@@ -125,6 +125,9 @@ const BORDER_HEIGHT_OFFSET = 2;
 const PROBLEM_STATEMENT_FILE_PATH = 'problem_statement.md';
 const REVIEW_COMMENT_HOVER_BUTTON_CLASS = 'monaco-add-review-comment-button';
 
+/** Vertical offset (in px) applied below the selection end position for the floating action button. */
+const FLOATING_BUTTON_VERTICAL_OFFSET = 5;
+
 @Component({
     selector: 'jhi-markdown-editor-monaco',
     templateUrl: './markdown-editor-monaco.component.html',
@@ -571,7 +574,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
                 const editorRect = editorDom.getBoundingClientRect();
                 const screenPosition = {
-                    top: editorRect.top + coords.top + coords.height + 5,
+                    top: editorRect.top + coords.top + coords.height + FLOATING_BUTTON_VERTICAL_OFFSET,
                     left: editorRect.left + coords.left,
                 };
 

@@ -1,14 +1,17 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 class HyperionUtilsTest {
-
-    // --- Constants ---
 
     @Test
     void constants_haveExpectedValues() {
@@ -18,8 +21,6 @@ class HyperionUtilsTest {
         assertThat(HyperionUtils.DEFAULT_COURSE_TITLE).isEqualTo("Programming Course");
         assertThat(HyperionUtils.DEFAULT_COURSE_DESCRIPTION).isEqualTo("A programming course");
     }
-
-    // --- sanitizeInput ---
 
     @Test
     void sanitizeInput_returnsEmptyStringForNull() {
@@ -130,7 +131,33 @@ class HyperionUtilsTest {
         assertThat(result).contains("Normal text");
     }
 
-    // --- validateUserPrompt ---
+    @Test
+    void sanitizeInputPreserveLines_removesDelimiterButPreservesLineCount() {
+        String input = "Line1\n--- BEGIN SECTION ---\nLine3";
+        String result = HyperionUtils.sanitizeInputPreserveLines(input);
+
+        assertThat(result).doesNotContain("BEGIN SECTION");
+        // Delimiter content is blanked but the newline structure is kept
+        assertThat(result.split("\n", -1)).hasSameSizeAs(input.split("\n", -1));
+    }
+
+    @Test
+    void sanitizeInputPreserveLines_preservesLeadingAndTrailingWhitespace() {
+        String input = "  hello world  ";
+        String result = HyperionUtils.sanitizeInputPreserveLines(input);
+
+        // Unlike sanitizeInput, no trim is applied
+        assertThat(result).isEqualTo("  hello world  ");
+    }
+
+    @Test
+    void sanitizeInputPreserveLines_stripsTemplateVarsButPreservesNewlines() {
+        String input = "Line1\n{{injected}}\nLine3";
+        String result = HyperionUtils.sanitizeInputPreserveLines(input);
+
+        assertThat(result).doesNotContain("{{");
+        assertThat(result.split("\n", -1)).hasSameSizeAs(input.split("\n", -1));
+    }
 
     @ParameterizedTest
     @NullAndEmptySource
@@ -158,8 +185,6 @@ class HyperionUtilsTest {
         // No exception expected
     }
 
-    // --- validateInstruction ---
-
     @ParameterizedTest
     @NullAndEmptySource
     @ValueSource(strings = { "   ", "\t", "\n" })
@@ -185,8 +210,6 @@ class HyperionUtilsTest {
         HyperionUtils.validateInstruction(maxInstruction, "Test");
         // No exception expected
     }
-
-    // --- getSanitizedCourseTitle ---
 
     @Test
     void getSanitizedCourseTitle_returnsTitleWhenPresent() {
@@ -222,8 +245,6 @@ class HyperionUtilsTest {
         course.setTitle("CS\u0000101");
         assertThat(HyperionUtils.getSanitizedCourseTitle(course)).isEqualTo("CS101");
     }
-
-    // --- getSanitizedCourseDescription ---
 
     @Test
     void getSanitizedCourseDescription_returnsDescriptionWhenPresent() {
@@ -284,8 +305,6 @@ class HyperionUtilsTest {
         course.setDescription("<br/><hr/>");
         assertThat(HyperionUtils.getSanitizedCourseDescription(course)).isEqualTo(HyperionUtils.DEFAULT_COURSE_DESCRIPTION);
     }
-
-    // --- stripLineNumbers ---
 
     @Test
     void stripLineNumbers_removesSequentialPrefixes() {

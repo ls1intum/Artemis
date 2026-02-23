@@ -35,7 +35,7 @@ import { Annotation } from 'app/programming/shared/code-editor/monaco/code-edito
 import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { ProblemStatementSyncService, ProblemStatementSyncState } from 'app/programming/manage/services/problem-statement-sync.service';
-import { INLINE_REFINEMENT_PROMPT_WIDTH_PX } from 'app/programming/manage/shared/problem-statement.utils';
+import { INLINE_REFINEMENT_PROMPT_WIDTH_PX, InlineRefinementEvent, InstructionSelectionPosition } from 'app/programming/manage/shared/problem-statement.utils';
 import { editor } from 'monaco-editor';
 import { MonacoBinding } from 'y-monaco';
 import { InlineRefinementButtonComponent } from 'app/shared/monaco-editor/inline-refinement-button/inline-refinement-button.component';
@@ -152,14 +152,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     inlineRefinementPosition = signal<{ top: number; left: number } | undefined>(undefined);
     selectedTextForRefinement = signal('');
-    selectionPositionInfo = signal<{ startLine: number; endLine: number; startColumn: number; endColumn: number } | undefined>(undefined);
-    readonly onInlineRefinement = output<{
-        instruction: string;
-        startLine: number;
-        endLine: number;
-        startColumn: number;
-        endColumn: number;
-    }>();
+    selectionPositionInfo = signal<InstructionSelectionPosition | undefined>(undefined);
+    readonly onInlineRefinement = output<InlineRefinementEvent>();
 
     /** Emits diff line change information when in diff mode */
     readonly diffLineChange = output<{ ready: boolean; lineChange: LineChange }>();
@@ -471,7 +465,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * Handles inline refinement submission.
      * Emits the event for parent to process the refinement.
      */
-    onInlineRefine(event: { instruction: string; startLine: number; endLine: number; startColumn: number; endColumn: number }): void {
+    onInlineRefine(event: InlineRefinementEvent): void {
         this.onInlineRefinement.emit(event);
         this.hideInlineRefinementButton();
     }
