@@ -99,6 +99,8 @@ public class SystemNotificationService {
      * @param notification the system notification containing maintenance details
      */
     public void sendMaintenanceEmails(SystemNotification notification) {
+        validateDatesElseThrow(notification);
+
         var recipients = maintenanceEmailRecipientRepository.findInstructorRecipientsForMaintenanceEmail(ZonedDateTime.now());
         log.info("Sending maintenance emails to {} instructor(s)", recipients.size());
 
