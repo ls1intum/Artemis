@@ -73,6 +73,7 @@
                 "show": "Show conversations",
                 "hide": "Hide conversations",
                 "notFound": "No conversation found",
+                "unreadMessages": "Unread",
                 "favoriteChannels": "Favorites",
                 "archivedChannels": "Archived",
                 "savedPosts": "Saved Messages",
