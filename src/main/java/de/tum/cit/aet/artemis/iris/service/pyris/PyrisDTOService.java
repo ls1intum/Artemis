@@ -133,12 +133,13 @@ public class PyrisDTOService {
     }
 
     /**
-     * Helper method to get & checkout the repository contents for a participation.
-     * This is an exception safe way to fetch the repository, as it will return an empty map if the repository could not be fetched.
+     * Helper method to get & checkout the repository contents for a given repository URI.
+     * This is an exception-safe way to fetch the repository contents: it returns an empty map
+     * if {@code repositoryUri} is null or if the repository could not be fetched.
      * This is useful, as the Pyris call should not fail if the repository is not available.
      *
      * @param repositoryUri the repositoryUri of the repository
-     * @return the repository or empty if it could not be fetched
+     * @return the repository contents, or an empty map if the URI is null or the fetch fails
      */
     private Map<String, String> getRepositoryContents(LocalVCRepositoryUri repositoryUri) {
         if (repositoryUri == null) {
