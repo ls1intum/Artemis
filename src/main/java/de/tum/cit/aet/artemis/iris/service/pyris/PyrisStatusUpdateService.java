@@ -4,14 +4,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
@@ -24,7 +19,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFa
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.transcription.PyrisTranscriptionResultDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.transcription.PyrisTranscriptionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseChatJob;
@@ -42,21 +36,14 @@ import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionServic
 import de.tum.cit.aet.artemis.iris.service.session.IrisLectureChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTextExerciseChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTutorSuggestionSessionService;
-import de.tum.cit.aet.artemis.lecture.api.LectureTranscriptionsRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
-import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
-import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 
 @Lazy
 @Service
 @Conditional(IrisEnabled.class)
 public class PyrisStatusUpdateService {
 
-    private static final Logger log = LoggerFactory.getLogger(PyrisStatusUpdateService.class);
-
     private final PyrisJobService pyrisJobService;
-
-    private final ObjectMapper objectMapper;
 
     private final IrisExerciseChatSessionService irisExerciseChatSessionService;
 
@@ -72,15 +59,15 @@ public class PyrisStatusUpdateService {
 
     private final Optional<ProcessingStateCallbackApi> processingStateCallbackApi;
 
-    private final Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi;
-
     private final WebsocketMessagingService websocketMessagingService;
+
+    private final PyrisTranscriptionStatusUpdateHandler transcriptionStatusUpdateHandler;
 
     public PyrisStatusUpdateService(PyrisJobService pyrisJobService, IrisExerciseChatSessionService irisExerciseChatSessionService,
             IrisTextExerciseChatSessionService irisTextExerciseChatSessionService, IrisCourseChatSessionService courseChatSessionService,
             IrisCompetencyGenerationService competencyGenerationService, IrisLectureChatSessionService irisLectureChatSessionService,
             IrisTutorSuggestionSessionService irisTutorSuggestionSessionService, Optional<ProcessingStateCallbackApi> processingStateCallbackApi,
-            Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi, ObjectMapper objectMapper, WebsocketMessagingService websocketMessagingService) {
+            WebsocketMessagingService websocketMessagingService, PyrisTranscriptionStatusUpdateHandler transcriptionStatusUpdateHandler) {
         this.pyrisJobService = pyrisJobService;
         this.irisExerciseChatSessionService = irisExerciseChatSessionService;
         this.irisTextExerciseChatSessionService = irisTextExerciseChatSessionService;
@@ -89,9 +76,8 @@ public class PyrisStatusUpdateService {
         this.irisLectureChatSessionService = irisLectureChatSessionService;
         this.irisTutorSuggestionSessionService = irisTutorSuggestionSessionService;
         this.processingStateCallbackApi = processingStateCallbackApi;
-        this.lectureTranscriptionsRepositoryApi = lectureTranscriptionsRepositoryApi;
-        this.objectMapper = objectMapper;
         this.websocketMessagingService = websocketMessagingService;
+        this.transcriptionStatusUpdateHandler = transcriptionStatusUpdateHandler;
     }
 
     /**
@@ -227,54 +213,13 @@ public class PyrisStatusUpdateService {
 
     /**
      * Handles the status update of a video transcription job.
-     * When complete, saves the transcription result and notifies the callback service.
+     * Delegates to {@link PyrisTranscriptionStatusUpdateHandler}.
      *
      * @param job          the job that is updated
      * @param statusUpdate the status update
      */
     public void handleStatusUpdate(TranscriptionWebhookJob job, PyrisTranscriptionStatusUpdateDTO statusUpdate) {
-        var isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state).allMatch(PyrisStageState::isTerminal);
-
-        if (isDone) {
-            pyrisJobService.removeJob(job);
-            boolean success = statusUpdate.stages().stream().map(PyrisStageDTO::state).noneMatch(state -> state == PyrisStageState.ERROR);
-            saveTranscriptionResult(job.jobId(), success, statusUpdate.result());
-        }
-        else {
-            pyrisJobService.updateJob(job);
-        }
-
-        // Notify the frontend so it can refresh the processing status without a manual page reload
-        websocketMessagingService.sendMessage("/topic/lectures/" + job.lectureId() + "/ingestion-status", Map.of("lectureUnitId", job.lectureUnitId()));
-    }
-
-    private void saveTranscriptionResult(String jobId, boolean success, String resultJson) {
-        lectureTranscriptionsRepositoryApi.ifPresent(api -> {
-            LectureTranscription transcription = api.findByJobId(jobId).orElse(null);
-            if (transcription == null) {
-                log.error("No transcription found for jobId: {}", jobId);
-                return;
-            }
-
-            if (!success) {
-                transcription.setTranscriptionStatus(TranscriptionStatus.FAILED);
-            }
-            else if (resultJson != null) {
-                try {
-                    PyrisTranscriptionResultDTO result = objectMapper.readValue(resultJson, PyrisTranscriptionResultDTO.class);
-                    transcription.setLanguage(result.language());
-                    transcription.setSegments(result.segments());
-                    transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
-                }
-                catch (JsonProcessingException e) {
-                    log.error("Failed to parse transcription result for jobId: {}", jobId, e);
-                    transcription.setTranscriptionStatus(TranscriptionStatus.FAILED);
-                }
-            }
-
-            LectureTranscription saved = api.save(transcription);
-            processingStateCallbackApi.ifPresent(callback -> callback.handleTranscriptionComplete(saved));
-        });
+        transcriptionStatusUpdateHandler.handleStatusUpdate(job, statusUpdate);
     }
 
 }
