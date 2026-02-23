@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -366,6 +368,14 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
         assertThat(response.getId()).isNotNull();
         assertThat(response.getContent()).hasSize(3);
         assertThat(response.getContent().get(0)).isInstanceOf(de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getCurrentSessionOrCreateIfNotExists_invokesIrisCitationService() throws Exception {
+        request.postWithResponseBody(exerciseChatUrl(exercise.getId()) + "/current", null, IrisProgrammingExerciseChatSession.class, HttpStatus.OK);
+
+        verify(irisCitationService).enrichSessionWithCitationInfo(any());
     }
 
     private static String exerciseChatUrl(long sessionId) {

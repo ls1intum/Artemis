@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisCourseChatSessionRepository;
+import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisHealthIndicator;
@@ -50,9 +51,11 @@ public class IrisCourseChatSessionResource {
 
     private final IrisCourseChatSessionService irisCourseChatSessionService;
 
+    private final IrisCitationService irisCitationService;
+
     protected IrisCourseChatSessionResource(IrisCourseChatSessionRepository irisCourseChatSessionRepository, UserRepository userRepository, CourseRepository courseRepository,
             IrisSessionService irisSessionService, IrisSettingsService irisSettingsService, PyrisHealthIndicator pyrisHealthIndicator, IrisRateLimitService irisRateLimitService,
-            IrisCourseChatSessionService irisCourseChatSessionService) {
+            IrisCourseChatSessionService irisCourseChatSessionService, IrisCitationService irisCitationService) {
         this.irisCourseChatSessionRepository = irisCourseChatSessionRepository;
         this.userRepository = userRepository;
         this.irisSessionService = irisSessionService;
@@ -61,6 +64,7 @@ public class IrisCourseChatSessionResource {
         this.irisRateLimitService = irisRateLimitService;
         this.courseRepository = courseRepository;
         this.irisCourseChatSessionService = irisCourseChatSessionService;
+        this.irisCitationService = irisCitationService;
     }
 
     /**
@@ -77,6 +81,7 @@ public class IrisCourseChatSessionResource {
         user.hasOptedIntoLLMUsageElseThrow();
 
         var session = irisCourseChatSessionService.getCurrentSessionOrCreateIfNotExists(course, user);
+        irisCitationService.enrichSessionWithCitationInfo(session);
         return ResponseEntity.ok(session);
     }
 
