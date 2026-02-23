@@ -104,7 +104,7 @@ public class ExerciseWeaviateService {
         properties.put(ExerciseSchema.Properties.EXERCISE_ID, exercise.getId());
         properties.put(ExerciseSchema.Properties.COURSE_ID, course.getId());
         properties.put(ExerciseSchema.Properties.TITLE, exercise.getTitle());
-        properties.put(ExerciseSchema.Properties.EXERCISE_TYPE, exercise.getType());
+        properties.put(ExerciseSchema.Properties.EXERCISE_TYPE, exercise.getExerciseType().name());
         properties.put(ExerciseSchema.Properties.MAX_POINTS, exercise.getMaxPoints() != null ? exercise.getMaxPoints() : 0.0);
 
         addSharedExerciseProperties(exercise, course, properties);
