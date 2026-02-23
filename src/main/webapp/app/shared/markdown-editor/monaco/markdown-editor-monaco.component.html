@@ -19,11 +19,15 @@
                     <div class="markdown-editor markdown-editor-wrapper flex-column" [ngClass]="{ 'd-flex': inEditMode, 'd-none': !inEditMode }">
                         <jhi-monaco-editor
                             class="h-100"
+                            [mode]="mode()"
                             [shrinkToFit]="false"
                             [stickyScroll]="false"
+                            [readOnly]="isReadOnly()"
+                            [renderSideBySide]="renderSideBySide()"
                             [textChangedEmitDelay]="200"
                             (textChanged)="onTextChanged($event)"
                             (contentHeightChanged)="onContentHeightChanged($event)"
+                            (diffChanged)="onDiffChanged($event)"
                             (drop)="onFileDrop($event)"
                             (onBlurEditor)="onBlurEditor.emit()"
                         />
@@ -255,7 +259,7 @@
                         <!-- AI Assistance -->
                         @if (displayedActions.artemisIntelligence.length > 0) {
                             <div class="btn-group" ngbDropdown role="group" aria-label="Button group with nested dropdown">
-                                @if (artemisIntelligenceService.isLoading()) {
+                                @if (artemisIntelligenceService.isLoading() || isAiLoading()) {
                                     <fa-icon [icon]="faSpinner" animation="spin" />
                                 } @else {
                                     <button
