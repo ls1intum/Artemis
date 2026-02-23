@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { signal } from '@angular/core';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
@@ -11,6 +12,9 @@ import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.compone
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import type { User } from 'app/core/user/user.model';
 
 describe('AboutIrisModalComponent', () => {
     setupTestBed({ zoneless: true });
@@ -19,6 +23,7 @@ describe('AboutIrisModalComponent', () => {
     let fixture: ComponentFixture<AboutIrisModalComponent>;
     let dialogRef: { close: ReturnType<typeof vi.fn> };
     let chatService: { clearChat: ReturnType<typeof vi.fn> };
+    const userIdentitySignal = signal<User | undefined>(undefined);
 
     beforeEach(async () => {
         vi.spyOn(console, 'warn').mockImplementation(() => {});
@@ -32,9 +37,11 @@ describe('AboutIrisModalComponent', () => {
                 { provide: DynamicDialogRef, useValue: dialogRef },
                 { provide: IrisChatService, useValue: chatService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useValue: { userIdentity: userIdentitySignal } },
             ],
         });
 
+        userIdentitySignal.set(undefined);
         fixture = TestBed.createComponent(AboutIrisModalComponent);
         component = fixture.componentInstance;
         await fixture.whenStable();
@@ -90,5 +97,27 @@ describe('AboutIrisModalComponent', () => {
         fixture.debugElement.query(By.css(selector)).nativeElement.click();
         await fixture.whenStable();
         expect(component[method]).toHaveBeenCalled();
+    });
+
+    describe('privacyDescKey', () => {
+        it('should return local key when user selected LOCAL_AI', () => {
+            userIdentitySignal.set({ selectedLLMUsage: LLMSelectionDecision.LOCAL_AI } as User);
+            expect(component.privacyDescKey()).toBe('artemisApp.iris.aboutIrisModal.privacyDescLocal');
+        });
+
+        it('should return default key when user selected CLOUD_AI', () => {
+            userIdentitySignal.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
+            expect(component.privacyDescKey()).toBe('artemisApp.iris.aboutIrisModal.privacyDesc');
+        });
+
+        it('should return default key when user selected NO_AI', () => {
+            userIdentitySignal.set({ selectedLLMUsage: LLMSelectionDecision.NO_AI } as User);
+            expect(component.privacyDescKey()).toBe('artemisApp.iris.aboutIrisModal.privacyDesc');
+        });
+
+        it('should return default key when userIdentity is undefined', () => {
+            userIdentitySignal.set(undefined);
+            expect(component.privacyDescKey()).toBe('artemisApp.iris.aboutIrisModal.privacyDesc');
+        });
     });
 });

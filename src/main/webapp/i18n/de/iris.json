@@ -212,6 +212,7 @@
                 "ownYourWorkDesc": "Nutze Iris als Lernhilfe und wahre dabei die akademische Integrität. Deine Abgaben müssen dein eigenes Verständnis und deinen eigenen Einsatz widerspiegeln.",
                 "privacyTitle": "Datenschutz",
                 "privacyDesc": "Iris verarbeitet Interaktionen in europäischen Rechenzentren. Die Datenverarbeitung erfolgt gemäß den geltenden europäischen Datenschutzanforderungen.",
+                "privacyDescLocal": "Iris verarbeitet Interaktionen vollständig auf der eigenen Infrastruktur deiner Einrichtung. Es werden keine Daten an externe Server gesendet.",
                 "privacyDisclaimer": "Lies die Datenschutzerklärung deiner Einrichtung für Details.",
                 "tryIris": "Iris ausprobieren",
                 "close": "Schließen"

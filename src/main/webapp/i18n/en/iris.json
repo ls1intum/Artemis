@@ -212,6 +212,7 @@
                 "ownYourWorkDesc": "Use Iris as a learning aid, while maintaining academic integrity. Your submissions must reflect your own understanding and effort.",
                 "privacyTitle": "Privacy",
                 "privacyDesc": "Iris processes interactions within European data centers. Data handling follows applicable European data protection requirements.",
+                "privacyDescLocal": "Iris processes interactions entirely on your institution's own infrastructure. No data is sent to external servers.",
                 "privacyDisclaimer": "Review your institution's privacy policy for details.",
                 "tryIris": "Try Iris",
                 "close": "Close"
