@@ -49,12 +49,16 @@ const routes: Routes = [
         },
     },
     {
-        path: 'llm-selection',
+        path: 'ai-experience-info',
         loadComponent: () => import('./logos/llm-selection-info.component').then((m) => m.LlmSelectionInfoComponent),
         data: {
-            pageTitle: 'artemisApp.llmSelectionInfo.pageTitle',
-            usesModuleBackground: true,
+            pageTitle: 'artemisApp.aiExperienceInfo.pageTitle',
         },
+    },
+    {
+        path: 'llm-selection',
+        redirectTo: 'ai-experience-info',
+        pathMatch: 'full',
     },
     {
         path: 'privacy/data-exports',

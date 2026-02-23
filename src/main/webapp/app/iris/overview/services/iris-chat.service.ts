@@ -683,6 +683,33 @@ export class IrisChatService implements OnDestroy {
     }
 
     /**
+     * Deletes a single chat session by ID.
+     * Removes it from the local session list and switches to another session if the deleted one was active.
+     * @param sessionId the ID of the session to delete
+     */
+    public deleteSession(sessionId: number): Observable<void> {
+        return this.irisChatHttpService.deleteSession(sessionId).pipe(
+            tap(() => {
+                const currentSessions = this.chatSessions.getValue().filter((s) => s.id !== sessionId);
+                if (this.latestStartedSession?.id === sessionId) {
+                    this.latestStartedSession = undefined;
+                }
+                this.chatSessions.next(currentSessions);
+
+                if (this.sessionId === sessionId) {
+                    this.close();
+                    if (currentSessions.length > 0) {
+                        this.switchToSession(currentSessions[0]);
+                    }
+                    // When no sessions remain, just stay in the closed state.
+                    // The user can start a new session manually via the "New chat" button.
+                }
+            }),
+            map(() => undefined),
+        );
+    }
+
+    /**
      * Sets whether the chat should reopen after being closed by LLM selection modal.
      */
     public setShouldReopenChat(value: boolean): void {

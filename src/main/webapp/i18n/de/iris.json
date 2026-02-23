@@ -187,7 +187,13 @@
                 "relatedEntityTooltip": {
                     "programmingExercise": "Diese Konversation bezieht sich auf eine Programmieraufgabe.",
                     "lecture": "Diese Konversation bezieht sich auf eine Vorlesung."
-                }
+                },
+                "deleteSession": "Löschen",
+                "deleteSessionHeader": "Chat-Sitzung löschen",
+                "deleteSessionQuestion": "Bist du sicher, dass du die Chat-Sitzung \"{{title}}\" löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.",
+                "deleteSessionSuccess": "Chat-Sitzung gelöscht.",
+                "deleteSessionError": "Chat-Sitzung konnte nicht gelöscht werden.",
+                "sessionMenuAriaLabel": "Chat-Sitzungsaktionen"
             },
             "memories": {
                 "title": "Erinnerungen",
