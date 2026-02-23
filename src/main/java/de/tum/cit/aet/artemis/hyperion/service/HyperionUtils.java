@@ -53,8 +53,17 @@ final class HyperionUtils {
      * Uses a non-greedy match so that inner '}' characters don't leave orphaned braces.
      * Note: regex cannot perfectly handle arbitrarily nested braces, but this non-greedy
      * approach addresses the observed orphaned '}' issue with the previous [^}]* pattern.
+     * May match across newlines; use {@link #TEMPLATE_VAR_LINE_PATTERN} when line structure must be preserved.
      */
     private static final Pattern TEMPLATE_VAR_PATTERN = Pattern.compile("\\{\\{[\\s\\S]*?\\}\\}");
+
+    /**
+     * Line-scoped variant of {@link #TEMPLATE_VAR_PATTERN} that never matches across newlines.
+     * Uses a negated-newline class ({@code [^\n]}) so that embedded newlines inside a
+     * multi-line template variable are preserved, keeping line counts stable.
+     * Used by {@link #sanitizeInputPreserveLines(String)}.
+     */
+    private static final Pattern TEMPLATE_VAR_LINE_PATTERN = Pattern.compile("\\{\\{[^\\n]*?\\}\\}");
 
     /**
      * Pattern matching HTML tags for stripping from rich-text content like course descriptions.
@@ -141,7 +150,9 @@ final class HyperionUtils {
         }
         // Apply per-character sanitizations globally (these don't affect line count)
         String sanitized = CONTROL_CHAR_PATTERN.matcher(input).replaceAll("");
-        sanitized = TEMPLATE_VAR_PATTERN.matcher(sanitized).replaceAll("");
+        // Use the line-scoped pattern so template vars spanning multiple lines
+        // don't collapse embedded newlines and break line numbering.
+        sanitized = TEMPLATE_VAR_LINE_PATTERN.matcher(sanitized).replaceAll("");
         // DELIMITER_PATTERN uses MULTILINE so ^ and $ match per-line boundaries.
         // replaceAll("") blanks the content but preserves the newline, keeping line count stable.
         sanitized = DELIMITER_PATTERN.matcher(sanitized).replaceAll("");

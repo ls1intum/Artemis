@@ -14,8 +14,17 @@ export const MAX_PROBLEM_STATEMENT_LENGTH = 50_000;
 /** Fraction of MAX_USER_PROMPT_LENGTH at which the character counter shows a warning. */
 export const PROMPT_LENGTH_WARNING_THRESHOLD = 0.9;
 
-/** Approximate pixel width of the expanded inline refinement prompt (≈ min-width 20rem + padding/buttons). */
+/**
+ * Approximate pixel width of the expanded inline refinement prompt.
+ * Derived from the `min-width: 20rem` rule in
+ * `app/shared/monaco-editor/inline-refinement-button/inline-refinement-button.component.scss`
+ * (≈ 320 px at default font size) plus padding and action buttons.
+ * Keep in sync with that SCSS value.
+ */
 export const INLINE_REFINEMENT_PROMPT_WIDTH_PX = 370;
+
+/** Maximum allowed length for refinement instructions. Must match HyperionUtils.MAX_INSTRUCTION_LENGTH on the server. */
+export const MAX_INSTRUCTION_LENGTH = 500;
 
 /** Matches `\r\n` (Windows) and standalone `\r` (old Mac) line endings in a single pass. */
 const CARRIAGE_RETURN_PATTERN = /\r\n?/g;

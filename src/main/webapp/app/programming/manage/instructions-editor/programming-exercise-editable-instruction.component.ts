@@ -12,7 +12,7 @@ import { ProgrammingExerciseGradingService } from 'app/programming/manage/servic
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { faCheckCircle, faCircleNotch, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { MonacoEditorMode } from 'app/shared/monaco-editor/monaco-editor.component';
+import { MonacoEditorMode } from 'app/shared/monaco-editor/model/monaco-editor.types';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
 import { TaskAction } from 'app/shared/monaco-editor/model/actions/task.action';

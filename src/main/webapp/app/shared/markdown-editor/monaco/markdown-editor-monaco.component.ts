@@ -89,7 +89,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { CommentThread, CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-widget-manager';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
-import { EditorSelectionWithPosition } from 'app/programming/manage/shared/problem-statement.utils';
+import { EditorSelectionWithPosition, InstructionSelectionPosition } from 'app/programming/manage/shared/problem-statement.utils';
+
+/** Cached selection with Monaco-compatible data used by scroll re-positioning. */
+type CachedSelectionWithText = InstructionSelectionPosition & { selectedText: string };
 
 export enum MarkdownEditorHeight {
     INLINE = 125,
@@ -339,7 +342,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     /** Disposable for the scroll change listener used to reposition the inline refinement button */
     private scrollChangeDisposable?: { dispose: () => void };
     /** Cached model selection used to re-compute screen position after scroll */
-    private cachedSelection?: { startLineNumber: number; endLineNumber: number; startColumn: number; endColumn: number; selectedText: string };
+    private cachedSelection?: CachedSelectionWithText;
+    /** Guards requestAnimationFrame scheduling so at most one rAF per scroll burst fires */
+    private pendingScrollRaf = false;
     targetWrapperHeight?: number;
     minWrapperHeight?: number;
     constrainDragPositionFn?: (pointerPosition: Point) => Point;
@@ -560,8 +565,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
                 // Cache the selection so scroll events can re-compute position
                 this.cachedSelection = {
-                    startLineNumber: selection.startLineNumber,
-                    endLineNumber: selection.endLineNumber,
+                    startLine: selection.startLineNumber,
+                    endLine: selection.endLineNumber,
                     startColumn: selection.startColumn,
                     endColumn: selection.endColumn,
                     selectedText,
@@ -576,9 +581,16 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
         // Subscribe to scroll changes to reposition the inline refinement button
         // when the selection scrolls back into view.
-        this.scrollChangeDisposable = this.monacoEditor.getEditor().onDidScrollChange(() => {
-            if (this.cachedSelection) {
-                this.emitSelectionWithScreenPosition();
+        // Throttled via requestAnimationFrame so at most one reposition per frame fires.
+        this.scrollChangeDisposable = this.monacoEditor.getEditor()?.onDidScrollChange(() => {
+            if (this.cachedSelection && !this.pendingScrollRaf) {
+                this.pendingScrollRaf = true;
+                requestAnimationFrame(() => {
+                    this.pendingScrollRaf = false;
+                    if (this.cachedSelection) {
+                        this.emitSelectionWithScreenPosition();
+                    }
+                });
             }
         });
     }
@@ -592,7 +604,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             return;
         }
 
-        const endPosition = { lineNumber: this.cachedSelection.endLineNumber, column: this.cachedSelection.endColumn };
+        const endPosition = { lineNumber: this.cachedSelection.endLine, column: this.cachedSelection.endColumn };
         const coords = this.monacoEditor.getScrolledVisiblePosition(endPosition);
         const editorDom = this.monacoEditor.getDomNode();
 
@@ -608,8 +620,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         };
 
         this.onSelectionChange.emit({
-            startLine: this.cachedSelection.startLineNumber,
-            endLine: this.cachedSelection.endLineNumber,
+            startLine: this.cachedSelection.startLine,
+            endLine: this.cachedSelection.endLine,
             startColumn: this.cachedSelection.startColumn,
             endColumn: this.cachedSelection.endColumn,
             selectedText: this.cachedSelection.selectedText,
