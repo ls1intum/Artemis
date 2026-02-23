@@ -66,7 +66,6 @@ describe('LectureUnitManagementComponent', () => {
     let findLectureWithDetailsSpy: ReturnType<typeof vi.spyOn>;
     let deleteLectureUnitSpy: ReturnType<typeof vi.spyOn>;
     let updateOrderSpy: ReturnType<typeof vi.spyOn>;
-    let websocketService: WebsocketService;
     let ingestionSubject: Subject<unknown>;
     let connectionStateSubject: BehaviorSubject<ConnectionState>;
 
@@ -133,7 +132,6 @@ describe('LectureUnitManagementComponent', () => {
         lectureUnitService = TestBed.inject(LectureUnitService);
         alertService = TestBed.inject(AlertService);
         attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
-        websocketService = TestBed.inject(WebsocketService);
         findLectureWithDetailsSpy = vi.spyOn(lectureService, 'findWithDetails');
         deleteLectureUnitSpy = vi.spyOn(lectureUnitService, 'delete');
         updateOrderSpy = vi.spyOn(lectureUnitService, 'updateOrder');
