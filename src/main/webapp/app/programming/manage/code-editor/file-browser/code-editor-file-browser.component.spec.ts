@@ -127,6 +127,19 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(openModalSpy).not.toHaveBeenCalled();
     });
 
+    it('should pass file badges to Problem Statement entry', () => {
+        const problemStatementBadges = [new FileBadge(FileBadgeType.REVIEW_COMMENT, 2)];
+        fixture.componentRef.setInput('isProblemStatementVisible', true);
+        fixture.componentRef.setInput('fileBadges', { [PROBLEM_STATEMENT_IDENTIFIER]: problemStatementBadges });
+        comp.repositoryFiles = { [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT };
+        comp.setupTreeview();
+        fixture.changeDetectorRef.detectChanges();
+
+        const problemStatement = debugElement.query(By.directive(CodeEditorFileBrowserProblemStatementComponent));
+        expect(problemStatement).toBeTruthy();
+        expect(problemStatement.componentInstance.badges).toEqual(problemStatementBadges);
+    });
+
     it('should NOT enter rename mode for Problem Statement (PS is not renamable)', fakeAsync(() => {
         comp.repositoryFiles = { [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT };
         comp.setupTreeview();

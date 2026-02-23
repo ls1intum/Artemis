@@ -7,6 +7,7 @@ import {
     EditorState,
     FileBadgeType,
     FileType,
+    PROBLEM_STATEMENT_IDENTIFIER,
     RenameFileChange,
     RepositoryType,
 } from 'app/programming/shared/code-editor/model/code-editor.model';
@@ -157,6 +158,15 @@ describe('CodeEditorContainerComponent', () => {
                 resolved: false,
                 comments: [{ id: 15 }],
             },
+            {
+                id: 5,
+                exerciseId: 10,
+                targetType: CommentThreadLocationType.PROBLEM_STATEMENT,
+                initialLineNumber: 1,
+                outdated: false,
+                resolved: false,
+                comments: [{ id: 16 }],
+            },
         ] as any);
 
         fixture.componentRef.setInput('enableExerciseReviewComments', true);
@@ -169,6 +179,9 @@ describe('CodeEditorContainerComponent', () => {
 
         const otherBadges = component.fileBadges['src/main/Other.java'];
         expect(otherBadges.find((badge) => badge.type === FileBadgeType.REVIEW_COMMENT)?.count).toBe(1);
+
+        const problemStatementBadges = component.fileBadges[PROBLEM_STATEMENT_IDENTIFIER];
+        expect(problemStatementBadges.find((badge) => badge.type === FileBadgeType.REVIEW_COMMENT)?.count).toBe(1);
     });
 
     it('should filter auxiliary review thread badges by selected auxiliary repository', () => {

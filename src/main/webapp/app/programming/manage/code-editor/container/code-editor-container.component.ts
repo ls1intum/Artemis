@@ -32,6 +32,7 @@ import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { editor } from 'monaco-editor';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { matchesSelectedRepository } from 'app/exercise/review/review-comment-utils';
+import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 
 export enum CollapsableCodeEditorElement {
     FileBrowser,
@@ -206,6 +207,10 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
         for (const thread of reviewThreads) {
             // File badges should only reflect active threads that still need attention.
             if (thread.resolved || thread.outdated) {
+                continue;
+            }
+            if (thread.targetType === CommentThreadLocationType.PROBLEM_STATEMENT) {
+                this.addBadgeCount(fileBadgesByType, PROBLEM_STATEMENT_IDENTIFIER, FileBadgeType.REVIEW_COMMENT, 1);
                 continue;
             }
             if (!matchesSelectedRepository(thread, selectedRepository, selectedAuxiliaryRepositoryId)) {

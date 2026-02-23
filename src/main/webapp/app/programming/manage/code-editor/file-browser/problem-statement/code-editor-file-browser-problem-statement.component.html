@@ -6,4 +6,7 @@
         jhiTranslate="artemisApp.exercise.problemStatement"
         [ngClass]="item().checked ? 'text-white' : 'text-primary'"
     ></span>
+    @for (badge of badges(); track badges().indexOf(badge)) {
+        <jhi-file-browser-badge [badge]="badge" [onColoredBackground]="item().checked" />
+    }
 </li>
