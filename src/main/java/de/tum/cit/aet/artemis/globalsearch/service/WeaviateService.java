@@ -55,7 +55,7 @@ public class WeaviateService {
     }
 
     /**
-     * Initializes the Weaviate collections on startup.
+     * Initializes the Weaviate collections when the service is first used.
      * Creates collections that don't exist yet.
      */
     @PostConstruct
