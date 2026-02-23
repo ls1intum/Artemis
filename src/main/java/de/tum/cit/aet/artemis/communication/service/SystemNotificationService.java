@@ -2,9 +2,13 @@ package de.tum.cit.aet.artemis.communication.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -98,27 +102,43 @@ public class SystemNotificationService {
         var recipients = maintenanceEmailRecipientRepository.findInstructorRecipientsForMaintenanceEmail(ZonedDateTime.now());
         log.info("Sending maintenance emails to {} instructor(s)", recipients.size());
 
-        var mutableVars = new HashMap<String, Object>();
-        if (notification.getTitle() != null) {
-            mutableVars.put("notificationTitle", notification.getTitle());
-        }
-        mutableVars.put("notificationDate", notification.getNotificationDate());
-        mutableVars.put("expireDate", notification.getExpireDate());
-        if (notification.getText() != null) {
-            mutableVars.put("notificationText", notification.getText());
-        }
-        var templateVars = Map.copyOf(mutableVars);
+        // Convert dates to server-local timezone so recipients see times relevant to the deployment location
+        ZoneId serverZone = ZoneId.systemDefault();
+        ZonedDateTime localStart = notification.getNotificationDate().withZoneSameInstant(serverZone);
+        ZonedDateTime localEnd = notification.getExpireDate().withZoneSameInstant(serverZone);
+
+        // Cache formatted dates per locale to avoid redundant DateTimeFormatter creation
+        var formattedDatesByLocale = new HashMap<String, String[]>();
 
         for (var recipient : recipients) {
             try {
+                String langKey = recipient.langKey() != null ? recipient.langKey() : "en";
+
                 var user = new User();
                 user.setId(recipient.id());
                 user.setEmail(recipient.email());
-                user.setLangKey(recipient.langKey());
+                user.setLangKey(langKey);
                 user.setFirstName(recipient.firstName());
                 user.setLastName(recipient.lastName());
 
-                mailSendingService.buildAndSendAsync(user, "email.notification.maintenance.title", "mail/notification/maintenanceEmail", templateVars);
+                String[] formattedDates = formattedDatesByLocale.computeIfAbsent(langKey, lk -> {
+                    Locale locale = Locale.forLanguageTag(lk);
+                    DateTimeFormatter formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM).withLocale(locale);
+                    String zoneName = localStart.getZone().getDisplayName(java.time.format.TextStyle.SHORT, locale);
+                    return new String[] { localStart.format(formatter) + " " + zoneName, localEnd.format(formatter) + " " + zoneName };
+                });
+
+                var mutableVars = new HashMap<String, Object>();
+                if (notification.getTitle() != null) {
+                    mutableVars.put("notificationTitle", notification.getTitle());
+                }
+                if (notification.getText() != null) {
+                    mutableVars.put("notificationText", notification.getText());
+                }
+                mutableVars.put("formattedStart", formattedDates[0]);
+                mutableVars.put("formattedEnd", formattedDates[1]);
+
+                mailSendingService.buildAndSendAsync(user, "email.notification.maintenance.title", "mail/notification/maintenanceEmail", Map.copyOf(mutableVars));
             }
             catch (Exception e) {
                 log.error("Failed to queue maintenance email for user {}: {}", recipient.id(), e.getMessage());
