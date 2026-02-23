@@ -4,8 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -110,8 +114,9 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         var notificationDate = ZonedDateTime.now();
         var expireDate = ZonedDateTime.now().plusHours(4);
 
-        testMailService.buildAndSendSync(recipient, "email.notification.maintenance.title", "mail/notification/maintenanceEmail", Map.of("notificationTitle", "Server Update v2.0",
-                "notificationText", "We will be updating the server to the latest version.", "notificationDate", notificationDate, "expireDate", expireDate));
+        testMailService.buildAndSendSync(recipient, "email.notification.maintenance.title", "mail/notification/maintenanceEmail",
+                Map.of("notificationTitle", "Server Update v2.0", "notificationText", "We will be updating the server to the latest version.", "formattedStart",
+                        formatDate(notificationDate, "en"), "formattedEnd", formatDate(expireDate, "en")));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("Server Update v2.0");
@@ -126,8 +131,9 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         var notificationDate = ZonedDateTime.now();
         var expireDate = ZonedDateTime.now().plusHours(2);
 
-        testMailService.buildAndSendSync(recipient, "email.notification.maintenance.title", "mail/notification/maintenanceEmail", Map.of("notificationTitle",
-                "Server-Aktualisierung", "notificationText", "Der Server wird aktualisiert.", "notificationDate", notificationDate, "expireDate", expireDate));
+        testMailService.buildAndSendSync(recipient, "email.notification.maintenance.title", "mail/notification/maintenanceEmail",
+                Map.of("notificationTitle", "Server-Aktualisierung", "notificationText", "Der Server wird aktualisiert.", "formattedStart", formatDate(notificationDate, "de"),
+                        "formattedEnd", formatDate(expireDate, "de")));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("Server-Aktualisierung");
@@ -139,9 +145,8 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         var notificationDate = ZonedDateTime.now();
         var expireDate = ZonedDateTime.now().plusHours(1);
 
-        // Use HashMap to allow null-free map (notificationText is omitted)
         testMailService.buildAndSendSync(recipient, "email.notification.maintenance.title", "mail/notification/maintenanceEmail",
-                Map.of("notificationTitle", "Quick Maintenance", "notificationDate", notificationDate, "expireDate", expireDate));
+                Map.of("notificationTitle", "Quick Maintenance", "formattedStart", formatDate(notificationDate, "en"), "formattedEnd", formatDate(expireDate, "en")));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("Quick Maintenance");
@@ -153,13 +158,16 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         var notificationDate = ZonedDateTime.now();
         var expireDate = ZonedDateTime.now().plusHours(3);
 
+        String start = formatDate(notificationDate, "en");
+        String end = formatDate(expireDate, "en");
+
         testMailService.buildAndSendSync(recipient, "email.notification.maintenance.title", "mail/notification/maintenanceEmail",
-                Map.of("notificationTitle", "Date Format Test", "notificationDate", notificationDate, "expireDate", expireDate));
+                Map.of("notificationTitle", "Date Format Test", "formattedStart", start, "formattedEnd", end));
 
         String body = getDeliveredEmailBody();
-        // Verify the date is formatted (not raw ZonedDateTime.toString() output)
-        assertThat(body).doesNotContain("[");
         assertThat(body).contains("Maintenance window:");
+        assertThat(body).contains(start);
+        assertThat(body).contains(end);
     }
 
     // ---- Repository query tests ----
@@ -255,6 +263,14 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
 
         var recipients = maintenanceEmailRecipientRepository.findInstructorRecipientsForMaintenanceEmail(now);
         assertThat(recipients).noneMatch(r -> r.id().equals(instructor.getId()));
+    }
+
+    private String formatDate(ZonedDateTime dateTime, String langKey) {
+        ZonedDateTime localDateTime = dateTime.withZoneSameInstant(ZoneId.systemDefault());
+        Locale locale = Locale.forLanguageTag(langKey);
+        DateTimeFormatter formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM).withLocale(locale);
+        DateTimeFormatter zoneFormatter = DateTimeFormatter.ofPattern("z").withLocale(locale);
+        return localDateTime.format(formatter) + " " + localDateTime.format(zoneFormatter);
     }
 
     /**
