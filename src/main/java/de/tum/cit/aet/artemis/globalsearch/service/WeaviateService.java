@@ -11,13 +11,13 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.exception.WeaviateException;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateCollectionSchema;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviatePropertyDefinition;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateReferenceDefinition;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateSchemas;
+import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
 import io.weaviate.client6.v1.api.WeaviateClient;
 import io.weaviate.client6.v1.api.collections.CollectionHandle;
 import io.weaviate.client6.v1.api.collections.Property;
