@@ -87,15 +87,7 @@ export class AdminFeatureToggleComponent implements OnInit {
     protected readonly faQuestionCircle = faQuestionCircle;
 
     /** Profiles to display (excluding internal profiles like dev, prod, test) */
-    private readonly displayedProfiles: ProfileFeature[] = [
-        PROFILE_ATHENA,
-        PROFILE_LDAP,
-        PROFILE_SAML2,
-        PROFILE_LOCALCI,
-        PROFILE_BUILDAGENT,
-        PROFILE_AEOLUS,
-        PROFILE_JENKINS,
-    ];
+    private readonly displayedProfiles: ProfileFeature[] = [PROFILE_ATHENA, PROFILE_LDAP, PROFILE_SAML2, PROFILE_LOCALCI, PROFILE_BUILDAGENT, PROFILE_AEOLUS, PROFILE_JENKINS];
 
     /** Module features to display */
     private readonly displayedModuleFeatures: ModuleFeature[] = [
