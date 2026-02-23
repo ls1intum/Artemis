@@ -139,6 +139,7 @@ public class HyperionProblemStatementResource {
     @PostMapping("courses/{courseId}/checklist-analysis")
     public ResponseEntity<ChecklistAnalysisResponseDTO> analyzeChecklist(@PathVariable long courseId, @Valid @RequestBody ChecklistAnalysisRequestDTO request) {
         log.debug("REST request to Hyperion checklist analysis for course [{}]", courseId);
+        courseRepository.findByIdElseThrow(courseId);
         validateExerciseBelongsToCourse(request.exerciseId(), courseId);
         var result = checklistService.analyzeChecklist(request, courseId).join();
         return ResponseEntity.ok(result);
@@ -192,7 +193,7 @@ public class HyperionProblemStatementResource {
     public ResponseEntity<ChecklistActionResponseDTO> applyChecklistAction(@PathVariable long courseId, @Valid @RequestBody ChecklistActionRequestDTO request) {
         log.debug("REST request to Hyperion checklist action [{}] for course [{}]", request.actionType(), courseId);
         courseRepository.findByIdElseThrow(courseId);
-        var actionResult = checklistService.applyChecklistAction(request);
+        var actionResult = checklistService.applyChecklistAction(request).join();
         return ResponseEntity.ok(actionResult);
     }
 

@@ -74,6 +74,8 @@ public class HyperionChecklistService {
 
     private static final int MAX_CONTEXT_KEY_LENGTH = 100;
 
+    private static final int MAX_CONTEXT_VALUE_LENGTH = 10000;
+
     private final ObjectMapper objectMapper;
 
     private final ChatClient chatClient;
@@ -282,43 +284,44 @@ public class HyperionChecklistService {
     /**
      * Applies a checklist action to modify the problem statement using AI.
      * Builds action-specific instructions and calls the LLM to produce an updated problem statement.
+     * Returns a {@link CompletableFuture} so that the servlet thread is not blocked while waiting for the LLM response.
      *
      * @param request the action request containing the action type, problem statement, and context
-     * @return the response containing the updated problem statement
+     * @return a future that completes with the response containing the updated problem statement
      */
     @Observed(name = "hyperion.checklist.action", contextualName = "checklist action", lowCardinalityKeyValues = { AI_SPAN_KEY, AI_SPAN_VALUE })
-    public ChecklistActionResponseDTO applyChecklistAction(ChecklistActionRequestDTO request) {
+    public CompletableFuture<ChecklistActionResponseDTO> applyChecklistAction(ChecklistActionRequestDTO request) {
         log.debug("Applying checklist action: {}", request.actionType());
 
-        // Sanitize context once and reuse for both instructions and summary
-        Map<String, String> sanitizedContext = sanitizeContext(request.context());
+        return Mono.fromCallable(() -> {
+            // Sanitize context once and reuse for both instructions and summary
+            Map<String, String> sanitizedContext = sanitizeContext(request.context());
 
-        String instructions = buildActionInstructions(request.actionType(), sanitizedContext);
-        var templateInput = Map.of("action_type", request.actionType().name(), "instructions", instructions, "problem_statement", request.problemStatementMarkdown());
+            String instructions = buildActionInstructions(request.actionType(), sanitizedContext);
+            var templateInput = Map.of("action_type", request.actionType().name(), "instructions", instructions, "problem_statement", request.problemStatementMarkdown());
 
-        String renderedPrompt = templates.render("/prompts/hyperion/checklist_action.st", templateInput);
+            String renderedPrompt = templates.render("/prompts/hyperion/checklist_action.st", templateInput);
 
-        try {
-            String result = chatClient.prompt()
-                    .system("You are an expert instructor modifying a programming exercise problem statement. Return ONLY the complete updated problem statement in Markdown.")
-                    .user(renderedPrompt).call().content();
+            try {
+                String result = chatClient.prompt()
+                        .system("You are an expert instructor modifying a programming exercise problem statement. Return ONLY the complete updated problem statement in Markdown.")
+                        .user(renderedPrompt).call().content();
 
-            if (result == null || result.isBlank()) {
+                if (result == null || result.isBlank()) {
+                    return ChecklistActionResponseDTO.failed(request.problemStatementMarkdown());
+                }
+
+                String trimmed = result.trim();
+                boolean changed = !trimmed.equals(request.problemStatementMarkdown().trim());
+                String summary = buildActionSummary(request.actionType(), sanitizedContext);
+                return new ChecklistActionResponseDTO(trimmed, changed, summary);
+            }
+            catch (Exception e) {
+                log.warn("Failed to apply checklist action {}: {}", request.actionType(), e.getMessage(), e);
                 return ChecklistActionResponseDTO.failed(request.problemStatementMarkdown());
             }
-
-            String trimmed = result.trim();
-            boolean changed = !trimmed.equals(request.problemStatementMarkdown().trim());
-            String summary = buildActionSummary(request.actionType(), sanitizedContext);
-            return new ChecklistActionResponseDTO(trimmed, changed, summary);
-        }
-        catch (Exception e) {
-            log.warn("Failed to apply checklist action {}: {}", request.actionType(), e.getMessage(), e);
-            return ChecklistActionResponseDTO.failed(request.problemStatementMarkdown());
-        }
+        }).subscribeOn(Schedulers.boundedElastic()).toFuture();
     }
-
-    private static final int MAX_CONTEXT_VALUE_LENGTH = 10000;
 
     /** Builds action-specific instructions for the AI prompt based on action type and pre-sanitized context. */
     private String buildActionInstructions(ChecklistActionRequestDTO.ActionType actionType, Map<String, String> ctx) {
@@ -419,6 +422,8 @@ public class HyperionChecklistService {
             }
             catch (JsonProcessingException e) {
                 log.error("Failed to serialize competency catalog", e);
+                this.cachedCatalogJson = "[]";
+                this.catalogCachedAt = Instant.now();
                 return "[]";
             }
         }
@@ -694,7 +699,7 @@ public class HyperionChecklistService {
         }
     }
 
-    static class StructuredOutputSchema {
+    private static class StructuredOutputSchema {
 
         record CompetenciesResponse(List<CompetencyItem> competencies) {
         }

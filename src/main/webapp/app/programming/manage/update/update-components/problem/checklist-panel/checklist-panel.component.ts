@@ -42,8 +42,8 @@ import {
     LOW_COMPETENCY_LINK_WEIGHT,
     MEDIUM_COMPETENCY_LINK_WEIGHT,
 } from 'app/atlas/shared/entities/competency.model';
-import { EMPTY, Observable, forkJoin, of } from 'rxjs';
-import { catchError, map, switchMap, tap } from 'rxjs/operators';
+import { EMPTY, Observable, from, of } from 'rxjs';
+import { catchError, concatMap, map, switchMap, tap, toArray } from 'rxjs/operators';
 import { taskRegex } from 'app/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -560,10 +560,12 @@ export class ChecklistPanelComponent {
                     const create$ = toCreate.map((comp) =>
                         this.competencyService.create(comp, courseId).pipe(
                             map((response) => ({ success: true as const, response })),
-                            catchError(() => of({ success: false as const, response: null })),
+                            catchError(() => of({ success: false as const, response: undefined })),
                         ),
                     );
-                    return forkJoin([...create$]).pipe(
+                    return from(create$).pipe(
+                        concatMap((obs) => obs),
+                        toArray(),
                         tap((results) => {
                             const newlyCreated = new Set<string>();
                             let failureCount = 0;

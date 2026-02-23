@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.hyperion.domain.QualityIssueCategory;
 import de.tum.cit.aet.artemis.hyperion.domain.SuggestedDifficulty;
 import de.tum.cit.aet.artemis.hyperion.dto.ChecklistAnalysisRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ChecklistAnalysisResponseDTO;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTaskTestRepository;
 import io.micrometer.observation.ObservationRegistry;
 
@@ -46,6 +47,9 @@ class HyperionChecklistServiceTest {
 
     @Mock
     private ProgrammingExerciseTaskTestRepository taskRepository;
+
+    @Mock
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     private HyperionChecklistService hyperionChecklistService;
 
@@ -66,7 +70,7 @@ class HyperionChecklistServiceTest {
 
         var templateService = new HyperionPromptTemplateService();
         this.hyperionChecklistService = new HyperionChecklistService(chatClient, templateService, ObservationRegistry.NOOP, Optional.of(standardizedCompetencyApi),
-                Optional.of(courseCompetencyApi), taskRepository, new ObjectMapper());
+                Optional.of(courseCompetencyApi), taskRepository, programmingExerciseRepository, new ObjectMapper());
     }
 
     @AfterEach

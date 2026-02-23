@@ -144,7 +144,7 @@ describe('ChecklistPanelComponent', () => {
                 severity: QualityIssue.SeverityEnum.Medium,
             };
             const otherIssue: QualityIssue = { description: 'Missing info', category: QualityIssue.CategoryEnum.Completeness, severity: QualityIssue.SeverityEnum.High };
-            component.analysisResult.set({ ...mockResponse, qualityIssues: [issueToFix, otherIssue] });
+            component.analysisResult.set(Object.assign({}, mockResponse, { qualityIssues: [issueToFix, otherIssue] }));
 
             const actionSpy = vi.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(mockActionResponse) as any);
             vi.spyOn(apiService, 'analyzeChecklist').mockReturnValue(of(mockResponse) as any);
@@ -166,13 +166,14 @@ describe('ChecklistPanelComponent', () => {
         });
 
         it('should fix all quality issues and clear them optimistically', () => {
-            component.analysisResult.set({
-                ...mockResponse,
-                qualityIssues: [
-                    { description: 'Issue 1', category: QualityIssue.CategoryEnum.Clarity, severity: QualityIssue.SeverityEnum.Medium },
-                    { description: 'Issue 2', category: QualityIssue.CategoryEnum.Completeness, severity: QualityIssue.SeverityEnum.High },
-                ],
-            });
+            component.analysisResult.set(
+                Object.assign({}, mockResponse, {
+                    qualityIssues: [
+                        { description: 'Issue 1', category: QualityIssue.CategoryEnum.Clarity, severity: QualityIssue.SeverityEnum.Medium },
+                        { description: 'Issue 2', category: QualityIssue.CategoryEnum.Completeness, severity: QualityIssue.SeverityEnum.High },
+                    ],
+                }),
+            );
             const actionSpy = vi.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(mockActionResponse) as any);
             vi.spyOn(apiService, 'analyzeChecklist').mockReturnValue(of(mockResponse) as any);
 
@@ -283,7 +284,7 @@ describe('ChecklistPanelComponent', () => {
 
             component.applyCompetencies();
 
-            // Flush microtasks from forkJoin
+            // Flush microtasks from observable pipeline
             await new Promise<void>((resolve) => setTimeout(resolve));
 
             expect(competencyService.getAllForCourse).toHaveBeenCalledWith(courseId);
@@ -480,10 +481,11 @@ describe('ChecklistPanelComponent', () => {
         };
 
         it('should mark competencies and difficulty as stale after fixing a quality issue', () => {
-            component.analysisResult.set({
-                ...mockResponse,
-                qualityIssues: [{ description: 'Issue', category: QualityIssue.CategoryEnum.Clarity, severity: QualityIssue.SeverityEnum.Low }],
-            });
+            component.analysisResult.set(
+                Object.assign({}, mockResponse, {
+                    qualityIssues: [{ description: 'Issue', category: QualityIssue.CategoryEnum.Clarity, severity: QualityIssue.SeverityEnum.Low }],
+                }),
+            );
             vi.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(mockActionResponse) as any);
 
             component.fixQualityIssue({ description: 'Issue', category: QualityIssue.CategoryEnum.Clarity, severity: QualityIssue.SeverityEnum.Low }, 0);
@@ -537,10 +539,11 @@ describe('ChecklistPanelComponent', () => {
         });
 
         it('should accumulate stale sections across multiple actions', () => {
-            component.analysisResult.set({
-                ...mockResponse,
-                qualityIssues: [{ description: 'Issue', category: QualityIssue.CategoryEnum.Clarity, severity: QualityIssue.SeverityEnum.Low }],
-            });
+            component.analysisResult.set(
+                Object.assign({}, mockResponse, {
+                    qualityIssues: [{ description: 'Issue', category: QualityIssue.CategoryEnum.Clarity, severity: QualityIssue.SeverityEnum.Low }],
+                }),
+            );
             vi.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(mockActionResponse) as any);
 
             // First: fix quality → competencies + difficulty stale
