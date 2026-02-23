@@ -7,7 +7,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 
 import { AdminFeatureToggleComponent } from 'app/core/admin/features/admin-feature-toggle.component';
-import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/service/feature-toggle.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -138,7 +138,7 @@ describe('AdminFeatureToggleComponentTest', () => {
         it('ngOnInit should load module features', () => {
             expect(comp.moduleFeatures()).toHaveLength(0);
             comp.ngOnInit();
-            expect(comp.moduleFeatures()).toHaveLength(15);
+            expect(comp.moduleFeatures()).toHaveLength(16);
         });
 
         it('should set isActive based on active module features', () => {
