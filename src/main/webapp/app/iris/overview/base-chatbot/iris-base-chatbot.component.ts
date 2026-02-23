@@ -46,6 +46,10 @@ import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service'
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
 import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
+import { AlertService } from 'app/shared/service/alert.service';
+import { formatDate } from '@angular/common';
 
 // Session history time bucket boundaries (in days ago)
 const YESTERDAY_OFFSET = 1;
@@ -252,7 +256,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     // ViewChilds
     readonly messagesElement = viewChild<ElementRef>('messagesElement');
-    readonly scrollArrow = viewChild<ElementRef>('scrollArrow');
     readonly messageTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('messageTextarea');
     readonly acceptButton = viewChild<ElementRef<HTMLButtonElement>>('acceptButton');
 
@@ -620,47 +623,22 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         textarea.style.height = 'auto'; // Reset the height to auto
         if (!textarea.value.trim()) {
             textarea.style.height = '';
-            this.adjustScrollButtonPosition(1);
             return;
         }
-        const bufferForSpaceBetweenLines = 4;
-        const lineHeight = parseInt(getComputedStyle(textarea).lineHeight, 10) + bufferForSpaceBetweenLines;
-        const maxHeight = 200;
+        const maxHeight = 164;
         const newHeight = Math.min(textarea.scrollHeight, maxHeight);
         textarea.style.height = `${newHeight}px`;
-
-        this.adjustScrollButtonPosition(newHeight / lineHeight);
     }
 
     /**
-     * Adjusts the position of the scroll button based on the number of rows in the message textarea.
-     * @param newRows - The new number of rows.
-     */
-    adjustScrollButtonPosition(newRows: number) {
-        const textareaRef = this.messageTextarea();
-        const scrollArrowRef = this.scrollArrow();
-        if (!textareaRef || !scrollArrowRef) return;
-        const textarea: HTMLTextAreaElement = textareaRef.nativeElement;
-        const scrollArrow: HTMLElement = scrollArrowRef.nativeElement;
-        const lineHeight = parseInt(window.getComputedStyle(textarea).lineHeight);
-        const rowHeight = lineHeight * newRows - lineHeight;
-        setTimeout(() => {
-            scrollArrow.style.bottom = `calc(11% + ${rowHeight}px)`;
-        }, 10);
-    }
-
-    /**
-     * Resets the textarea height and scroll button position.
+     * Resets the textarea height.
      */
     resetChatBodyHeight() {
         const textareaRef = this.messageTextarea();
-        const scrollArrowRef = this.scrollArrow();
-        if (!textareaRef || !scrollArrowRef) return;
+        if (!textareaRef) return;
         const textarea: HTMLTextAreaElement = textareaRef.nativeElement;
-        const scrollArrow: HTMLElement = scrollArrowRef.nativeElement;
         textarea.rows = 1;
         textarea.style.height = '';
-        scrollArrow.style.bottom = '';
     }
 
     checkChatScroll() {
@@ -752,14 +730,14 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         }
 
         const filtered = sessions.filter((session) => {
-            const sessionCreationDate = new Date(session.creationDate);
-            const isAfterOrOnStartDate = ignoreOlderBoundary || (rangeStartDate && sessionCreationDate.getTime() >= rangeStartDate.getTime());
-            const isBeforeOrOnEndDate = sessionCreationDate.getTime() <= rangeEndDate.getTime();
+            const activityDate = new Date(session.lastActivityDate ?? session.creationDate);
+            const isAfterOrOnStartDate = ignoreOlderBoundary || (rangeStartDate && activityDate.getTime() >= rangeStartDate.getTime());
+            const isBeforeOrOnEndDate = activityDate.getTime() <= rangeEndDate.getTime();
             return isBeforeOrOnEndDate && (ignoreOlderBoundary || isAfterOrOnStartDate);
         });
 
-        // Sort by creation date descending (most recent first)
-        return filtered.sort((a, b) => new Date(b.creationDate).getTime() - new Date(a.creationDate).getTime());
+        // Sort by last activity date descending (most recent first)
+        return filtered.sort((a, b) => new Date(b.lastActivityDate ?? b.creationDate).getTime() - new Date(a.lastActivityDate ?? a.creationDate).getTime());
     }
 
     openNewSession() {

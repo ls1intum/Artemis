@@ -187,6 +187,44 @@ describe('IrisBaseChatbotComponent', () => {
         expect(getChatSessionsSpy).toHaveBeenCalledOnce();
     });
 
+    it('should update lastActivityDate on the current session after sendMessage', async () => {
+        // given
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+
+        const oldDate = new Date('2025-01-01T00:00:00.000Z');
+        const mockSession: IrisSessionDTO = {
+            id: mockServerSessionHttpResponse.body!.id,
+            creationDate: oldDate,
+            lastActivityDate: oldDate,
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 123,
+            entityName: 'Course 1',
+        };
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([mockSession]));
+
+        const content = 'Hello';
+        const createdMessage = mockUserMessageWithContent(content);
+        vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisUserMessage>));
+        vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
+
+        component.newMessageTextContent.set(content);
+        chatService.switchTo(ChatServiceMode.COURSE, 123);
+        await fixture.whenStable();
+
+        const beforeSend = new Date();
+
+        // when
+        component.onSend();
+        await fixture.whenStable();
+
+        // then
+        const sessions = chatService.chatSessions.getValue();
+        const updatedSession = sessions.find((s) => s.id === mockServerSessionHttpResponse.body!.id);
+        expect(updatedSession).toBeDefined();
+        expect(updatedSession!.lastActivityDate!.getTime()).toBeGreaterThanOrEqual(beforeSend.getTime());
+    });
+
     it('should resend message', async () => {
         // given
         vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
@@ -212,6 +250,44 @@ describe('IrisBaseChatbotComponent', () => {
         expect(component.messages()).toContainEqual(createdMessage);
         expect(stub).toHaveBeenCalledWith(createdMessage);
         expect(getChatSessionsSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should update lastActivityDate on the current session after resendMessage', async () => {
+        // given
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+
+        const oldDate = new Date('2025-01-01T00:00:00.000Z');
+        const mockSession: IrisSessionDTO = {
+            id: mockServerSessionHttpResponse.body!.id,
+            creationDate: oldDate,
+            lastActivityDate: oldDate,
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 123,
+            entityName: 'Course 1',
+        };
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([mockSession]));
+
+        const content = 'Hello';
+        const createdMessage = mockUserMessageWithContent(content);
+        createdMessage.id = 2;
+        vi.spyOn(httpService, 'resendMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisUserMessage>));
+        vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
+
+        chatService.switchTo(ChatServiceMode.COURSE, 123);
+        await fixture.whenStable();
+
+        const beforeResend = new Date();
+
+        // when
+        component.resendMessage(createdMessage);
+        await fixture.whenStable();
+
+        // then
+        const sessions = chatService.chatSessions.getValue();
+        const updatedSession = sessions.find((s) => s.id === mockServerSessionHttpResponse.body!.id);
+        expect(updatedSession).toBeDefined();
+        expect(updatedSession!.lastActivityDate!.getTime()).toBeGreaterThanOrEqual(beforeResend.getTime());
     });
 
     it('should rate message', async () => {
@@ -695,6 +771,7 @@ describe('IrisBaseChatbotComponent', () => {
             id: 1,
             title: 'Greeting and study support',
             creationDate: new Date('2025-10-06T10:00:00.000Z'),
+            lastActivityDate: new Date('2025-10-06T10:00:00.000Z'),
             chatMode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
@@ -703,6 +780,7 @@ describe('IrisBaseChatbotComponent', () => {
             id: 2,
             title: 'Difference between strategy and bridge pattern',
             creationDate: new Date('2025-10-05T10:00:00.000Z'),
+            lastActivityDate: new Date('2025-10-05T10:00:00.000Z'),
             chatMode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
@@ -710,6 +788,7 @@ describe('IrisBaseChatbotComponent', () => {
         const sessionNoTitle: IrisSessionDTO = {
             id: 3,
             creationDate: new Date('2025-10-05T08:00:00.000Z'),
+            lastActivityDate: new Date('2025-10-05T08:00:00.000Z'),
             chatMode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
@@ -767,6 +846,7 @@ describe('IrisBaseChatbotComponent', () => {
         const sessionToday: IrisSessionDTO = {
             id: 1,
             creationDate: new Date('2025-06-23T10:00:00.000Z'),
+            lastActivityDate: new Date('2025-06-23T10:00:00.000Z'),
             chatMode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
@@ -774,6 +854,7 @@ describe('IrisBaseChatbotComponent', () => {
         const sessionYesterday: IrisSessionDTO = {
             id: 2,
             creationDate: new Date('2025-06-22T12:00:00.000Z'),
+            lastActivityDate: new Date('2025-06-22T12:00:00.000Z'),
             chatMode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
@@ -781,6 +862,7 @@ describe('IrisBaseChatbotComponent', () => {
         const session7DaysAgo: IrisSessionDTO = {
             id: 3,
             creationDate: new Date('2025-06-16T12:00:00.000Z'),
+            lastActivityDate: new Date('2025-06-16T12:00:00.000Z'),
             chatMode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
@@ -788,6 +870,7 @@ describe('IrisBaseChatbotComponent', () => {
         const session8DaysAgo: IrisSessionDTO = {
             id: 4,
             creationDate: new Date('2025-06-15T12:00:00.000Z'),
+            lastActivityDate: new Date('2025-06-15T12:00:00.000Z'),
             chatMode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
@@ -795,6 +878,7 @@ describe('IrisBaseChatbotComponent', () => {
         const session30DaysAgo: IrisSessionDTO = {
             id: 5,
             creationDate: new Date('2025-05-24T12:00:00.000Z'),
+            lastActivityDate: new Date('2025-05-24T12:00:00.000Z'),
             chatMode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
@@ -915,12 +999,10 @@ describe('IrisBaseChatbotComponent', () => {
 
             const textarea = fixture.nativeElement.querySelector('textarea');
             textarea.value = '';
-            const adjustScrollButtonPositionSpy = vi.spyOn(component, 'adjustScrollButtonPosition');
 
             component.adjustTextareaRows();
 
             expect(textarea.style.height).toBe('');
-            expect(adjustScrollButtonPositionSpy).toHaveBeenCalledWith(1);
         });
 
         it('should reset height and return early when textarea has only whitespace', () => {
@@ -929,12 +1011,10 @@ describe('IrisBaseChatbotComponent', () => {
 
             const textarea = fixture.nativeElement.querySelector('textarea');
             textarea.value = '   ';
-            const adjustScrollButtonPositionSpy = vi.spyOn(component, 'adjustScrollButtonPosition');
 
             component.adjustTextareaRows();
 
             expect(textarea.style.height).toBe('');
-            expect(adjustScrollButtonPositionSpy).toHaveBeenCalledWith(1);
         });
     });
 

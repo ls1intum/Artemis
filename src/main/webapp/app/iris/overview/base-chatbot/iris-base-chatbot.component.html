@@ -253,16 +253,6 @@
                     </div>
                 </div>
             }
-            <button
-                type="button"
-                class="scroll-to-bottom"
-                [hidden]="isScrolledToBottom()"
-                (click)="scrollToBottom('smooth')"
-                #scrollArrow
-                [attr.aria-label]="'artemisApp.exerciseChatbot.scrollToBottom' | artemisTranslate"
-            >
-                <fa-icon [icon]="faArrowDown" />
-            </button>
             @if (error()) {
                 <div class="client-chat-error">
                     {{ error() | artemisTranslate: { hours: rateLimitInfo()?.rateLimitTimeframeHours } }}
@@ -299,6 +289,15 @@
                                 [icon]="faPaperPlane"
                                 [disabled]="isSendDisabled()"
                             />
+                            <button
+                                type="button"
+                                class="scroll-to-bottom"
+                                [hidden]="isScrolledToBottom()"
+                                (click)="scrollToBottom('smooth')"
+                                [attr.aria-label]="'artemisApp.exerciseChatbot.scrollToBottom' | artemisTranslate"
+                            >
+                                <fa-icon [icon]="faArrowDown" />
+                            </button>
                         </div>
                     </div>
                     @if (!isChatGptWrapper()) {
