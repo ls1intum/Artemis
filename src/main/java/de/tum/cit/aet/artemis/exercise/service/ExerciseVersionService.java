@@ -153,7 +153,7 @@ public class ExerciseVersionService {
      *
      * @param exercise The newly created or imported exercise
      */
-    public void createExerciseVersionAndInsertInWeaviate(Exercise exercise) {
+    public void createExerciseVersionAndSyncMetadata(Exercise exercise) {
         createExerciseVersion(exercise);
         exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.insertExerciseAsync(exercise));
     }
@@ -165,7 +165,7 @@ public class ExerciseVersionService {
      * @param exercise The newly created or imported exercise
      * @param author   The user who created the version
      */
-    public void createExerciseVersionAndInsertInWeaviate(Exercise exercise, User author) {
+    public void createExerciseVersionAndSyncMetadata(Exercise exercise, User author) {
         createExerciseVersion(exercise, author);
         exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.insertExerciseAsync(exercise));
     }
@@ -176,7 +176,7 @@ public class ExerciseVersionService {
      *
      * @param exercise The updated exercise
      */
-    public void createExerciseVersionAndUpdateInWeaviate(Exercise exercise) {
+    public void createExerciseVersionAndUpdateMetadata(Exercise exercise) {
         createExerciseVersion(exercise);
         exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.updateExerciseAsync(exercise));
     }
@@ -188,7 +188,7 @@ public class ExerciseVersionService {
      * @param exercise The updated exercise
      * @param author   The user who created the version
      */
-    public void createExerciseVersionAndUpdateInWeaviate(Exercise exercise, User author) {
+    public void createExerciseVersionAndUpdateMetadata(Exercise exercise, User author) {
         createExerciseVersion(exercise, author);
         exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.updateExerciseAsync(exercise));
     }

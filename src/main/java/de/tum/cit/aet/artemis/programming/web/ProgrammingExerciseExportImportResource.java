@@ -272,7 +272,7 @@ public class ProgrammingExerciseExportImportResource {
 
             competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(importedProgrammingExercise));
 
-            exerciseVersionService.createExerciseVersionAndInsertInWeaviate(importedProgrammingExercise, user);
+            exerciseVersionService.createExerciseVersionAndSyncMetadata(importedProgrammingExercise, user);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, importedProgrammingExercise.getTitle()))
                     .body(importedProgrammingExercise);
 
@@ -315,7 +315,7 @@ public class ProgrammingExerciseExportImportResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
         try {
             ProgrammingExercise importedExercise = programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(programmingExercise, zipFile, course, user);
-            exerciseVersionService.createExerciseVersionAndInsertInWeaviate(importedExercise, user);
+            exerciseVersionService.createExerciseVersionAndSyncMetadata(importedExercise, user);
             return ResponseEntity.ok(importedExercise);
         }
         catch (IOException | URISyntaxException | GitAPIException e) {

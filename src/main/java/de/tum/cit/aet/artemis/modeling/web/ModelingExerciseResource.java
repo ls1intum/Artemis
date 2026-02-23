@@ -210,7 +210,7 @@ public class ModelingExerciseResource {
                 log.warn("Failed to notify AtlasML about modeling exercise creation: {}", e.getMessage());
             }
         });
-        exerciseVersionService.createExerciseVersionAndInsertInWeaviate(result);
+        exerciseVersionService.createExerciseVersionAndSyncMetadata(result);
 
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId())).body(result);
     }
@@ -306,7 +306,7 @@ public class ModelingExerciseResource {
             }
         });
 
-        exerciseVersionService.createExerciseVersionAndUpdateInWeaviate(persistedExercise);
+        exerciseVersionService.createExerciseVersionAndUpdateMetadata(persistedExercise);
 
         return ResponseEntity.ok(persistedExercise);
     }
@@ -430,7 +430,7 @@ public class ModelingExerciseResource {
         modelingExerciseRepository.save(newModelingExercise);
         // Notify AtlasML about the imported exercise
         atlasMLApi.ifPresent(api -> api.saveExerciseWithCompetencies(newModelingExercise));
-        exerciseVersionService.createExerciseVersionAndInsertInWeaviate(newModelingExercise, user);
+        exerciseVersionService.createExerciseVersionAndSyncMetadata(newModelingExercise, user);
 
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + newModelingExercise.getId())).body(newModelingExercise);
     }
