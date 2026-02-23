@@ -5,61 +5,34 @@
             <fa-icon [icon]="faPlus" /> <span jhiTranslate="artemisApp.organizationManagement.addLabel"></span>
         </button>
     </div>
-    <div class="table-responsive">
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th><span jhiTranslate="global.field.id"></span></th>
-                    <th><span jhiTranslate="artemisApp.organizationManagement.name"></span></th>
-                    <th><span jhiTranslate="artemisApp.organizationManagement.shortName"></span></th>
-                    <th><span jhiTranslate="artemisApp.organizationManagement.url"></span></th>
-                    <th><span jhiTranslate="artemisApp.organizationManagement.description"></span></th>
-                    <th><span jhiTranslate="artemisApp.organizationManagement.users"></span></th>
-                    <th><span jhiTranslate="artemisApp.organizationManagement.courses"></span></th>
-                    <th><span jhiTranslate="artemisApp.organizationManagement.emailPattern"></span></th>
-                </tr>
-            </thead>
-            <tbody>
-                @for (organization of organizations(); track trackIdentity($index, organization)) {
-                    <tr>
-                        <td>
-                            <span>{{ organization.id }}</span>
-                        </td>
-                        <td>
-                            <span>{{ organization.name }}</span>
-                        </td>
-                        <td>
-                            <span>{{ organization.shortName }}</span>
-                        </td>
-                        <td>{{ organization.url }}</td>
-                        <td>{{ organization.description }}</td>
-                        <td>{{ organization.numberOfUsers }}</td>
-                        <td>{{ organization.numberOfCourses }}</td>
-                        <td>{{ organization.emailPattern }}</td>
-                        <td class="text-end">
-                            <div class="btn-group flex-btn-group-container">
-                                <button type="submit" [routerLink]="['./', organization.id]" class="btn btn-info btn-sm">
-                                    <fa-icon [icon]="faEye" />
-                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.view"></span>
-                                </button>
-                                <button type="submit" [routerLink]="['./', organization.id, 'edit']" queryParamsHandling="merge" class="btn btn-warning btn-sm">
-                                    <fa-icon [icon]="faWrench" />
-                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
-                                </button>
-                                <button
-                                    jhiDeleteButton
-                                    [entityTitle]="organization.name!"
-                                    deleteQuestion="artemisApp.organizationManagement.delete.question"
-                                    (delete)="deleteOrganization(organization.id!)"
-                                    [dialogError]="dialogError$"
-                                >
-                                    <fa-icon [icon]="faTimes" />
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+    <div>
+        <jhi-table-view
+            [cols]="columns"
+            [vals]="organizations()"
+            [totalRows]="totalCount()"
+            (onLazyLoad)="loadOrganizations($event)"
+            [rowActions]="organizationActions"
+            [loading]="isLoading()"
+            (onRowSelect)="onOrganizationSelect($event)"
+        />
     </div>
 </div>
+
+<ng-template #organizationActions let-organization>
+    <div class="btn-group flex-btn-group-container">
+        <button type="submit" [routerLink]="['./', organization.id, 'edit']" queryParamsHandling="merge" class="btn btn-warning btn-sm" (click)="$event.stopPropagation()">
+            <fa-icon [icon]="faWrench" />
+            <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
+        </button>
+        <button
+            jhiDeleteButton
+            [entityTitle]="organization.name!"
+            deleteQuestion="artemisApp.organizationManagement.delete.question"
+            (delete)="deleteOrganization(organization.id!)"
+            [dialogError]="dialogError$"
+            (click)="$event.stopPropagation()"
+        >
+            <fa-icon [icon]="faTimes" />
+        </button>
+    </div>
+</ng-template>

@@ -1,10 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Observable, map, tap } from 'rxjs';
 
 import { Organization } from 'app/core/shared/entities/organization.model';
-import { OrganizationCountDto } from 'app/core/admin/organization-management/organization-count-dto.model';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
+import { PageableResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
 
 @Injectable({ providedIn: 'root' })
 export class OrganizationManagementService {
@@ -17,16 +17,23 @@ export class OrganizationManagementService {
     /**
      * Send GET request to retrieve all organizations
      */
-    getOrganizations(): Observable<Organization[]> {
-        return this.http.get<Organization[]>(this.adminResourceUrl).pipe(tap((orgs) => orgs?.forEach(this.sendTitlesToEntityTitleService.bind(this))));
+    getAllOrganizations(): Observable<Organization[]> {
+        return this.http.get<Organization[]>(`${this.adminResourceUrl}/all`).pipe(tap((orgs) => orgs?.forEach(this.sendTitlesToEntityTitleService.bind(this))));
     }
 
     /**
-     * Send GET request to retrieve the number of users and courses of
-     * all organizations
+     * Send GET request to retrieve a paginated and filtered list of organizations
+     * @param params the search and pagination parameters including search term, page, and page size
+     * @returns an observable emitting a pageable result containing the matching organizations and total element count
      */
-    getNumberOfUsersAndCoursesOfOrganizations(): Observable<OrganizationCountDto[]> {
-        return this.http.get<OrganizationCountDto[]>(this.adminResourceUrl + '/count-all');
+    getOrganizations(params: SearchTermPageableSearch): Observable<PageableResult<Organization>> {
+        return this.http.get<Organization[]>(this.adminResourceUrl, { params: { ...params }, observe: 'response' }).pipe(
+            tap((res) => res.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
+            map((res) => ({
+                content: res.body ?? [],
+                totalElements: Number(res.headers.get('X-Total-Count') ?? 0),
+            })),
+        );
     }
 
     /**

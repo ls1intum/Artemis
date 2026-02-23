@@ -14,7 +14,6 @@ import { SessionStorageService } from 'app/shared/service/session-storage.servic
 import { OrganizationManagementComponent } from 'app/core/admin/organization-management/organization-management.component';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { Organization } from 'app/core/shared/entities/organization.model';
-import { OrganizationCountDto } from 'app/core/admin/organization-management/organization-count-dto.model';
 
 describe('OrganizationManagementComponent', () => {
     setupTestBed({ zoneless: true });
@@ -48,20 +47,7 @@ describe('OrganizationManagementComponent', () => {
         organization2.id = 6;
         organization2.name = 'orgTwo';
 
-        const countOrg1 = new OrganizationCountDto();
-        countOrg1.organizationId = organization1.id;
-        countOrg1.numberOfUsers = 1;
-        countOrg1.numberOfCourses = 1;
-
-        const countOrg2 = new OrganizationCountDto();
-        countOrg2.organizationId = organization2.id;
-        countOrg2.numberOfUsers = 2;
-        countOrg2.numberOfCourses = 2;
-
-        const numOfUsersAndCoursesOfOrganizations = [countOrg1, countOrg2];
-
         vi.spyOn(organizationService, 'getOrganizations').mockReturnValue(of([organization1, organization2]));
-        vi.spyOn(organizationService, 'getNumberOfUsersAndCoursesOfOrganizations').mockReturnValue(of(numOfUsersAndCoursesOfOrganizations));
 
         fixture.detectChanges();
         expect(component).not.toBeNull();
