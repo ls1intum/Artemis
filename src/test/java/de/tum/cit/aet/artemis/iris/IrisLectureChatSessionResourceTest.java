@@ -190,7 +190,11 @@ class IrisLectureChatSessionResourceTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetCurrentSessionOrCreateIfNotExists_invokesIrisCitationService() throws Exception {
-        request.postWithResponseBody("/api/iris/lecture-chat/" + lecture.getId() + "/sessions/current", null, IrisLectureChatSession.class, HttpStatus.CREATED);
+        // Given: User already has an existing session so the "get existing" path is taken
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        irisLectureChatSessionRepository.save(new IrisLectureChatSession(lecture, user));
+
+        request.postWithResponseBody("/api/iris/lecture-chat/" + lecture.getId() + "/sessions/current", null, IrisLectureChatSession.class, HttpStatus.OK);
 
         verify(irisCitationService).enrichSessionWithCitationInfo(any());
     }

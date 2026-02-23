@@ -211,7 +211,11 @@ class IrisTextExerciseChatSessionResourceTest extends AbstractIrisIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetCurrentSessionOrCreateIfNotExists_invokesIrisCitationService() throws Exception {
-        request.postWithResponseBody("/api/iris/text-exercise-chat/" + textExercise.getId() + "/sessions/current", null, IrisTextExerciseChatSession.class, HttpStatus.CREATED);
+        // Given: User already has an existing session so the "get existing" path is taken
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        irisTextExerciseChatSessionRepository.save(new IrisTextExerciseChatSession(textExercise, user));
+
+        request.postWithResponseBody("/api/iris/text-exercise-chat/" + textExercise.getId() + "/sessions/current", null, IrisTextExerciseChatSession.class, HttpStatus.OK);
 
         verify(irisCitationService).enrichSessionWithCitationInfo(any());
     }
