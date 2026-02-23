@@ -581,15 +581,9 @@ public class HyperionChecklistService {
     }
 
     private QualityIssueDTO mapQualityIssueToDto(StructuredOutputSchema.QualityIssue issue) {
-        QualityIssueLocationDTO location = null;
-        if (issue.location() != null) {
-            location = new QualityIssueLocationDTO(issue.location().startLine(), issue.location().endLine());
-        }
-
-        QualityIssueCategory category = parseEnumSafe(QualityIssueCategory.class, issue.category());
-        Severity severity = parseEnumSafe(Severity.class, issue.severity());
-
-        return new QualityIssueDTO(category, severity, issue.description(), location, issue.suggestedFix(), issue.impactOnLearners());
+        var location = issue.location() != null ? new QualityIssueLocationDTO(issue.location().startLine(), issue.location().endLine()) : null;
+        return new QualityIssueDTO(parseEnumSafe(QualityIssueCategory.class, issue.category()), parseEnumSafe(Severity.class, issue.severity()), issue.description(), location,
+                issue.suggestedFix(), issue.impactOnLearners());
     }
 
     /**
@@ -599,15 +593,17 @@ public class HyperionChecklistService {
         if (context == null || context.isEmpty()) {
             return Map.of();
         }
-        return context.entrySet().stream().collect(HashMap::new, (m, e) -> {
-            String key = e.getKey();
+        var result = new HashMap<String, String>();
+        for (var entry : context.entrySet()) {
+            String key = entry.getKey();
             if (key == null || key.isBlank()) {
-                return; // skip entries with blank keys
+                continue;
             }
             key = key.length() > MAX_CONTEXT_KEY_LENGTH ? key.substring(0, MAX_CONTEXT_KEY_LENGTH) : key;
-            String value = e.getValue();
-            m.put(key, value == null ? "" : (value.length() > MAX_CONTEXT_VALUE_LENGTH ? value.substring(0, MAX_CONTEXT_VALUE_LENGTH) : value));
-        }, HashMap::putAll);
+            String value = entry.getValue();
+            result.put(key, value == null ? "" : (value.length() > MAX_CONTEXT_VALUE_LENGTH ? value.substring(0, MAX_CONTEXT_VALUE_LENGTH) : value));
+        }
+        return result;
     }
 
     /**

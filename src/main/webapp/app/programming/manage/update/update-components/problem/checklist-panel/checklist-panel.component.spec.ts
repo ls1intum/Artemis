@@ -409,14 +409,12 @@ describe('ChecklistPanelComponent', () => {
             expect(getAllSpy).not.toHaveBeenCalled();
         });
 
-        it('should correctly identify linked and created competencies', () => {
+        it('should correctly identify linked competencies', () => {
             component.linkedCompetencyTitles.set(new Set(['loops']));
             component.createdCompetencyTitles.set(new Set(['recursion']));
 
             expect(component.isCompetencyLinked({ competencyTitle: 'Loops' })).toBeTruthy();
             expect(component.isCompetencyLinked({ competencyTitle: 'Recursion' })).toBeFalsy();
-            expect(component.isCompetencyCreated({ competencyTitle: 'Recursion' })).toBeTruthy();
-            expect(component.isCompetencyCreated({ competencyTitle: 'Loops' })).toBeFalsy();
         });
     });
 

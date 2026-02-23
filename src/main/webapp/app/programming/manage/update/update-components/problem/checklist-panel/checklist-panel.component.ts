@@ -1,8 +1,9 @@
-import { Component, DestroyRef, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { Component, DestroyRef, WritableSignal, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DecimalPipe, NgClass } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { IconDefinition } from '@fortawesome/fontawesome-common-types';
 import { Tag } from 'primeng/tag';
 import { ButtonDirective } from 'primeng/button';
 import { Badge } from 'primeng/badge';
@@ -18,7 +19,6 @@ import {
     faInfoCircle,
     faLink,
     faMagic,
-    faPlus,
     faQuestion,
     faSpinner,
     faSync,
@@ -42,9 +42,8 @@ import {
     LOW_COMPETENCY_LINK_WEIGHT,
     MEDIUM_COMPETENCY_LINK_WEIGHT,
 } from 'app/atlas/shared/entities/competency.model';
-import { HttpResponse } from '@angular/common/http';
-import { Observable, forkJoin, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { EMPTY, Observable, forkJoin, of } from 'rxjs';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { taskRegex } from 'app/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -55,12 +54,12 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 export type ChecklistSectionType = 'competencies' | 'difficulty' | 'quality';
 
 /**
- * Maps client-side lowercase section names to server-side uppercase enum values.
+ * Maps client-side section names to their corresponding field in ChecklistAnalysisResponse.
  */
-const SECTION_TO_API_PARAM: Record<ChecklistSectionType, 'COMPETENCIES' | 'DIFFICULTY' | 'QUALITY'> = {
-    competencies: 'COMPETENCIES',
-    difficulty: 'DIFFICULTY',
-    quality: 'QUALITY',
+const SECTION_TO_FIELD: Record<ChecklistSectionType, keyof ChecklistAnalysisResponse> = {
+    quality: 'qualityIssues',
+    competencies: 'inferredCompetencies',
+    difficulty: 'difficultyAssessment',
 };
 
 @Component({
@@ -159,12 +158,11 @@ export class ChecklistPanelComponent {
     readonly faBolt = faBolt;
     readonly faSync = faSync;
     readonly faLink = faLink;
-    readonly faPlus = faPlus;
     readonly faExclamationTriangle = faExclamationTriangle;
 
     analyze() {
         const cId = this.courseId();
-        if (!cId) {
+        if (!cId || this.isApplyingAction() || this.sectionLoading().size > 0) {
             return;
         }
 
@@ -198,14 +196,15 @@ export class ChecklistPanelComponent {
     }
 
     toggleCompetencyExpand(rank: number) {
-        const current = this.expandedCompetencies();
-        const newSet = new Set(current);
-        if (newSet.has(rank)) {
-            newSet.delete(rank);
-        } else {
-            newSet.add(rank);
-        }
-        this.expandedCompetencies.set(newSet);
+        this.expandedCompetencies.update((s) => {
+            const n = new Set(s);
+            if (n.has(rank)) {
+                n.delete(rank);
+            } else {
+                n.add(rank);
+            }
+            return n;
+        });
     }
 
     isCompetencyExpanded(rank: number): boolean {
@@ -234,7 +233,7 @@ export class ChecklistPanelComponent {
         return ChecklistPanelComponent.DIFFICULTY_SEVERITY_MAP[level?.toUpperCase() ?? ''] ?? 'warn';
     }
 
-    getDeltaIcon(delta: string | undefined) {
+    getDeltaIcon(delta: string | undefined): IconDefinition {
         return { HIGHER: this.faArrowUp, LOWER: this.faArrowDown, MATCH: this.faEquals }[delta ?? ''] ?? this.faQuestion;
     }
 
@@ -263,7 +262,8 @@ export class ChecklistPanelComponent {
         for (const issue of issues) {
             const cat = issue.category?.toUpperCase() || '';
             if (cat in scores) {
-                const penalty = issue.severity?.toUpperCase() === 'HIGH' ? 0.3 : issue.severity?.toUpperCase() === 'MEDIUM' ? 0.2 : 0.1;
+                const sev = issue.severity?.toUpperCase();
+                const penalty = sev === 'HIGH' ? 0.3 : sev === 'MEDIUM' ? 0.2 : 0.1;
                 scores[cat] = Math.max(0, scores[cat] - penalty);
             }
         }
@@ -356,11 +356,11 @@ export class ChecklistPanelComponent {
     }
 
     private markSectionsStale(sections: ChecklistSectionType[]) {
-        const current = new Set(this.staleSections());
-        for (const s of sections) {
-            current.add(s);
-        }
-        this.staleSections.set(current);
+        this.staleSections.update((current) => {
+            const n = new Set(current);
+            sections.forEach((s) => n.add(s));
+            return n;
+        });
     }
 
     isSectionStale(section: ChecklistSectionType): boolean {
@@ -376,9 +376,9 @@ export class ChecklistPanelComponent {
      */
     reanalyzeSection(section: ChecklistSectionType) {
         const cId = this.courseId();
-        if (!cId || this.sectionLoading().has(section) || this.isApplyingAction()) return;
+        if (!cId || this.isLoading() || this.sectionLoading().has(section) || this.isApplyingAction()) return;
 
-        this.sectionLoading.set(new Set([...this.sectionLoading(), section]));
+        this.addToSet(this.sectionLoading, section);
         const ex = this.exercise();
         const request = {
             problemStatementMarkdown: this.effectiveProblemStatement(),
@@ -387,52 +387,34 @@ export class ChecklistPanelComponent {
             exerciseId: ex.id,
         };
 
-        const sectionParam = SECTION_TO_API_PARAM[section];
-
         this.hyperionApiService
-            .analyzeChecklistSection(cId, sectionParam, request)
+            .analyzeChecklistSection(cId, section.toUpperCase() as 'COMPETENCIES' | 'DIFFICULTY' | 'QUALITY', request)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (res: ChecklistAnalysisResponse) => {
                     const current = this.analysisResult();
                     if (current) {
-                        const sectionFieldMap: Record<ChecklistSectionType, keyof ChecklistAnalysisResponse> = {
-                            quality: 'qualityIssues',
-                            competencies: 'inferredCompetencies',
-                            difficulty: 'difficultyAssessment',
-                        };
-                        this.analysisResult.set({ ...current, [sectionFieldMap[section]]: res[sectionFieldMap[section]] });
+                        this.analysisResult.set({ ...current, [SECTION_TO_FIELD[section]]: res[SECTION_TO_FIELD[section]] });
                     } else {
                         this.analysisResult.set(res);
                     }
-                    // New competency results invalidate previous linking state
                     if (section === 'competencies') {
                         this.linkedCompetencyTitles.set(new Set());
                         this.createdCompetencyTitles.set(new Set());
                         this.competencyLinksChange.emit([]);
                     }
-                    // Remove stale mark for this section
-                    const stale = new Set(this.staleSections());
-                    stale.delete(section);
-                    this.staleSections.set(stale);
-                    const loading = new Set(this.sectionLoading());
-                    loading.delete(section);
-                    this.sectionLoading.set(loading);
+                    this.deleteFromSet(this.staleSections, section);
+                    this.deleteFromSet(this.sectionLoading, section);
                 },
                 error: () => {
                     this.alertService.error('artemisApp.programmingExercise.instructorChecklist.actions.error');
-                    const loading = new Set(this.sectionLoading());
-                    loading.delete(section);
-                    this.sectionLoading.set(loading);
+                    this.deleteFromSet(this.sectionLoading, section);
                 },
             });
     }
 
     private updateAnalysisOptimistically(updater: (current: ChecklistAnalysisResponse) => ChecklistAnalysisResponse) {
-        const current = this.analysisResult();
-        if (current) {
-            this.analysisResult.set(updater(current));
-        }
+        this.analysisResult.update((current) => (current ? updater(current) : current));
     }
 
     fixQualityIssue(issue: QualityIssue, index: number) {
@@ -468,7 +450,7 @@ export class ChecklistPanelComponent {
         );
     }
 
-    adaptDifficulty(targetDifficulty: string) {
+    adaptDifficulty(targetDifficulty: DifficultyAssessment.SuggestedEnum) {
         const current = this.exercise()?.difficulty || 'unknown';
         const assessment = this.analysisResult()?.difficultyAssessment;
         const reasoning = assessment?.reasoning || '';
@@ -492,8 +474,8 @@ export class ChecklistPanelComponent {
                     ...r,
                     difficultyAssessment: {
                         ...r.difficultyAssessment,
-                        suggested: targetDifficulty as DifficultyAssessment.SuggestedEnum,
-                        delta: 'MATCH' as DifficultyAssessment.DeltaEnum,
+                        suggested: targetDifficulty,
+                        delta: DifficultyAssessment.DeltaEnum.Match,
                         reasoning: `Adapted to ${targetDifficulty}. Re-analyze for an updated assessment.`,
                     },
                 }));
@@ -554,90 +536,41 @@ export class ChecklistPanelComponent {
         const exercise = this.exercise();
         const courseId = this.courseId();
 
-        // Force-reload course competencies so manually created / deleted ones are reflected
         this.loadCourseCompetencies(true)
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({
-                next: () => {
-                    const courseComps = this.courseCompetencies();
-                    const competencyById = new Map(courseComps.filter((c) => c.id != null).map((c) => [c.id!, c]));
-                    const existingCompIds = new Set(courseComps.filter((c) => c.id != null).map((c) => c.id!));
-
-                    // Reconcile createdCompetencyTitles against what still exists
-                    const existingTitles = new Set(courseComps.map((c) => c.title?.toLowerCase().trim()).filter(Boolean));
-                    const reconciledCreated = new Set([...this.createdCompetencyTitles()].filter((t) => existingTitles.has(t)));
-                    this.createdCompetencyTitles.set(reconciledCreated);
-
-                    const existingLinks = exercise?.competencyLinks ?? [];
-                    const linkedIds = new Set(existingLinks.map((link) => link.competency?.id).filter(Boolean));
-                    const allLinks: CompetencyExerciseLink[] = [...existingLinks];
-                    const newlyLinked = new Set<string>();
-                    const toCreate: Competency[] = [];
-                    const toCreateInferred: InferredCompetency[] = [];
-
-                    for (const comp of inferred) {
-                        const title = comp.competencyTitle?.trim();
-                        if (!title) continue;
-
-                        // Try AI-provided matchedCourseCompetencyId
-                        let courseComp: CourseCompetency | undefined;
-                        const matchId = comp.matchedCourseCompetencyId;
-                        if (matchId != null && matchId > 0 && existingCompIds.has(matchId)) {
-                            courseComp = competencyById.get(matchId);
-                        }
-
-                        if (courseComp?.id && !linkedIds.has(courseComp.id)) {
-                            // Matched — link directly with AI-inferred relevance
-                            allLinks.push(new CompetencyExerciseLink(courseComp, exercise, this.computeRelevanceWeight(comp)));
-                            linkedIds.add(courseComp.id);
-                            newlyLinked.add(title.toLowerCase());
-                        } else if (!courseComp && !reconciledCreated.has(title.toLowerCase())) {
-                            // No match — queue for creation
-                            const newComp = new Competency();
-                            newComp.title = title;
-                            newComp.description = comp.whyThisMatches ?? `Inferred from problem statement analysis. Evidence: ${(comp.evidence ?? []).join('; ')}`;
-                            newComp.taxonomy = this.mapTaxonomy(comp.taxonomyLevel);
-                            toCreate.push(newComp);
-                            toCreateInferred.push(comp);
-                        }
-                    }
-
+            .pipe(
+                switchMap(() => {
+                    const { allLinks, newlyLinked, toCreate, toCreateInferred, linkedIds } = this.reconcileCompetencies(inferred, exercise);
                     if (toCreate.length === 0) {
-                        // Nothing to create — emit links (if any) and finish
                         this.finishApply(allLinks, newlyLinked, new Set());
-                        return;
+                        return EMPTY;
                     }
-
-                    // Create all new competencies in parallel, tolerating individual failures
-                    const create$: Observable<HttpResponse<Competency> | null>[] = toCreate.map((comp) =>
-                        this.competencyService.create(comp, courseId).pipe(catchError(() => of(null))),
-                    );
-                    forkJoin(create$)
-                        .pipe(takeUntilDestroyed(this.destroyRef))
-                        .subscribe({
-                            next: (results) => {
-                                const newlyCreated = new Set<string>();
-                                for (let i = 0; i < results.length; i++) {
-                                    const response = results[i];
-                                    if (!response) continue;
-                                    const created = response.body;
-                                    if (created?.id && !linkedIds.has(created.id)) {
-                                        const inferredComp = toCreateInferred[i];
-                                        allLinks.push(new CompetencyExerciseLink(created, exercise, this.computeRelevanceWeight(inferredComp)));
-                                        linkedIds.add(created.id);
-                                        newlyCreated.add((created.title ?? '').toLowerCase());
-                                        this.courseCompetencies.update((current) => [...current, created]);
-                                    }
+                    const create$ = toCreate.map((comp) => this.competencyService.create(comp, courseId).pipe(catchError(() => of(null))));
+                    return forkJoin(create$).pipe(
+                        tap((results) => {
+                            const newlyCreated = new Set<string>();
+                            for (let i = 0; i < results.length; i++) {
+                                const response = results[i];
+                                if (!response) continue;
+                                const created = response.body;
+                                if (created?.id && !linkedIds.has(created.id)) {
+                                    allLinks.push(new CompetencyExerciseLink(created, exercise, this.computeRelevanceWeight(toCreateInferred[i])));
+                                    linkedIds.add(created.id);
+                                    newlyCreated.add((created.title ?? '').toLowerCase());
+                                    this.courseCompetencies.update((current) => [...current, created]);
                                 }
-                                this.finishApply(allLinks, newlyLinked, newlyCreated);
-                            },
-                            error: () => {
-                                // Creation failed, but we may still have linked some — emit what we have
-                                this.finishApply(allLinks, newlyLinked, new Set());
-                                this.alertService.error('artemisApp.programmingExercise.instructorChecklist.competencies.syncError');
-                            },
-                        });
-                },
+                            }
+                            this.finishApply(allLinks, newlyLinked, newlyCreated);
+                        }),
+                        catchError(() => {
+                            this.finishApply(allLinks, newlyLinked, new Set());
+                            this.alertService.error('artemisApp.programmingExercise.instructorChecklist.competencies.syncError');
+                            return EMPTY;
+                        }),
+                    );
+                }),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe({
                 error: () => {
                     this.alertService.error('artemisApp.programmingExercise.instructorChecklist.competencies.syncError');
                     this.isSyncingCompetencies.set(false);
@@ -663,8 +596,55 @@ export class ChecklistPanelComponent {
         this.isSyncingCompetencies.set(false);
     }
 
+    /**
+     * Reconciles inferred competencies against existing course competencies.
+     * Links matching competencies and queues unmatched ones for creation.
+     */
+    private reconcileCompetencies(inferred: InferredCompetency[], exercise: ProgrammingExercise) {
+        const courseComps = this.courseCompetencies();
+        const competencyById = new Map(courseComps.filter((c) => c.id != null).map((c) => [c.id!, c]));
+        const existingCompIds = new Set(courseComps.filter((c) => c.id != null).map((c) => c.id!));
+
+        const existingTitles = new Set(courseComps.map((c) => c.title?.toLowerCase().trim()).filter((t): t is string => !!t));
+        const reconciledCreated = new Set([...this.createdCompetencyTitles()].filter((t) => existingTitles.has(t)));
+        this.createdCompetencyTitles.set(reconciledCreated);
+
+        const existingLinks = exercise?.competencyLinks ?? [];
+        const linkedIds = new Set(existingLinks.map((link) => link.competency?.id).filter((id): id is number => id != null));
+        const allLinks: CompetencyExerciseLink[] = [...existingLinks];
+        const newlyLinked = new Set<string>();
+        const toCreate: Competency[] = [];
+        const toCreateInferred: InferredCompetency[] = [];
+
+        for (const comp of inferred) {
+            const title = comp.competencyTitle?.trim();
+            if (!title) continue;
+
+            let courseComp: CourseCompetency | undefined;
+            const matchId = comp.matchedCourseCompetencyId;
+            if (matchId != null && matchId > 0 && existingCompIds.has(matchId)) {
+                courseComp = competencyById.get(matchId);
+            }
+
+            if (courseComp?.id && !linkedIds.has(courseComp.id)) {
+                allLinks.push(new CompetencyExerciseLink(courseComp, exercise, this.computeRelevanceWeight(comp)));
+                linkedIds.add(courseComp.id);
+                newlyLinked.add(title.toLowerCase());
+            } else if (!courseComp && !reconciledCreated.has(title.toLowerCase())) {
+                const newComp = new Competency();
+                newComp.title = title;
+                newComp.description = comp.whyThisMatches ?? `Inferred from problem statement analysis. Evidence: ${(comp.evidence ?? []).join('; ')}`;
+                newComp.taxonomy = this.mapTaxonomy(comp.taxonomyLevel);
+                toCreate.push(newComp);
+                toCreateInferred.push(comp);
+            }
+        }
+
+        return { allLinks, newlyLinked, toCreate, toCreateInferred, linkedIds };
+    }
+
     private competencyTitleIn(comp: InferredCompetency, titleSet: Set<string>): boolean {
-        return titleSet.has((comp.competencyTitle ?? '').toLowerCase());
+        return titleSet.has((comp.competencyTitle ?? '').toLowerCase().trim());
     }
 
     /**
@@ -688,11 +668,20 @@ export class ChecklistPanelComponent {
         return LOW_COMPETENCY_LINK_WEIGHT;
     }
 
-    /**
-     * Checks if an inferred competency was created as a new course competency
-     */
-    isCompetencyCreated(comp: InferredCompetency): boolean {
-        return this.competencyTitleIn(comp, this.createdCompetencyTitles());
+    private addToSet<T>(sig: WritableSignal<Set<T>>, item: T) {
+        sig.update((s) => {
+            const n = new Set(s);
+            n.add(item);
+            return n;
+        });
+    }
+
+    private deleteFromSet<T>(sig: WritableSignal<Set<T>>, item: T) {
+        sig.update((s) => {
+            const n = new Set(s);
+            n.delete(item);
+            return n;
+        });
     }
 
     /** Counts tasks and unique test cases by parsing [task] markers in the problem statement. */

@@ -1,7 +1,7 @@
 <div class="checklist-panel mb-3">
     <div class="checklist-panel-header d-flex justify-content-between align-items-center p-3 border-bottom">
         <h5 class="mb-0" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.title">Instructor Checklist</h5>
-        <button pButton severity="primary" size="small" (click)="analyze()" [disabled]="isLoading() || isApplyingAction()">
+        <button pButton severity="primary" size="small" (click)="analyze()" [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0">
             <fa-icon [icon]="isLoading() ? faSpinner : faMagic" [animation]="isLoading() ? 'spin' : undefined" />
             <span class="ms-1">{{
                 (isLoading() ? 'artemisApp.programmingExercise.instructorChecklist.analyzing' : 'artemisApp.programmingExercise.instructorChecklist.analyze') | artemisTranslate
@@ -138,7 +138,14 @@
                             }
                             @if (result.qualityIssues && result.qualityIssues.length > 0) {
                                 <div class="d-flex justify-content-end mb-2">
-                                    <button pButton severity="primary" size="small" [outlined]="true" [disabled]="isApplyingAction()" (click)="fixAllQualityIssues()">
+                                    <button
+                                        pButton
+                                        severity="primary"
+                                        size="small"
+                                        [outlined]="true"
+                                        [disabled]="isApplyingAction() || sectionLoading().size > 0"
+                                        (click)="fixAllQualityIssues()"
+                                    >
                                         @if (isActionLoading('fix-all')) {
                                             <fa-icon [icon]="faSpinner" animation="spin" size="xs" class="me-1" />
                                         } @else {
@@ -164,7 +171,7 @@
                                                         severity="warn"
                                                         size="small"
                                                         [outlined]="true"
-                                                        [disabled]="isApplyingAction()"
+                                                        [disabled]="isApplyingAction() || sectionLoading().size > 0"
                                                         (click)="fixQualityIssue(issue, i)"
                                                         [attr.title]="'artemisApp.programmingExercise.instructorChecklist.quality.fixIssue' | artemisTranslate"
                                                     >
@@ -248,7 +255,9 @@
                                             <div class="d-flex justify-content-between align-items-start">
                                                 <div class="flex-grow-1">
                                                     <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
-                                                        <p-tag [value]="comp.knowledgeAreaShortTitle" severity="secondary" />
+                                                        @if (comp.knowledgeAreaShortTitle) {
+                                                            <p-tag [value]="comp.knowledgeAreaShortTitle" severity="secondary" />
+                                                        }
                                                         <strong class="small">{{ comp.competencyTitle }}</strong>
                                                         @if (comp.isLikelyPrimary) {
                                                             <p-tag
@@ -313,7 +322,14 @@
                                 <!-- Competency Linking Action -->
                                 <div class="competency-actions-section p-3 border-top">
                                     <div class="d-flex align-items-center gap-2 flex-wrap">
-                                        <button pButton severity="primary" size="small" [outlined]="true" [disabled]="isSyncingCompetencies()" (click)="applyCompetencies()">
+                                        <button
+                                            pButton
+                                            severity="primary"
+                                            size="small"
+                                            [outlined]="true"
+                                            [disabled]="isSyncingCompetencies() || isApplyingAction() || sectionLoading().size > 0"
+                                            (click)="applyCompetencies()"
+                                        >
                                             @if (isSyncingCompetencies()) {
                                                 <fa-icon [icon]="faSpinner" animation="spin" size="xs" class="me-1" />
                                             } @else {
@@ -412,7 +428,7 @@
                                             'difficulty-chip--current': exercise()?.difficulty === level,
                                             'difficulty-chip--suggested': result.difficultyAssessment.suggested === level && exercise()?.difficulty !== level,
                                         }"
-                                        [disabled]="isApplyingAction() || exercise()?.difficulty === level"
+                                        [disabled]="isApplyingAction() || sectionLoading().size > 0 || exercise()?.difficulty === level"
                                         (click)="adaptDifficulty(level)"
                                     >
                                         @if (isActionLoading('adapt-' + level)) {
