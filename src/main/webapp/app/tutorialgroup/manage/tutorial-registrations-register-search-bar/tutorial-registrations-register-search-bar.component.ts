@@ -11,6 +11,8 @@ import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-tutorial-registrations-register-search-bar',
@@ -21,6 +23,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 export class TutorialRegistrationsRegisterSearchBarComponent implements OnDestroy {
     private readonly PAGE_SIZE = 25;
 
+    private translateService = inject(TranslateService);
     private tutorialGroupsService = inject(TutorialGroupsService);
     private alertService = inject(AlertService);
     private overlay = inject(Overlay);
@@ -29,6 +32,7 @@ export class TutorialRegistrationsRegisterSearchBarComponent implements OnDestro
     private searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
     private panelTemplate = viewChild<TemplateRef<unknown>>('panelTemplate');
     private viewport = viewChild<CdkVirtualScrollViewport>(CdkVirtualScrollViewport);
+    private currentLocale = getCurrentLocaleSignal(this.translateService);
 
     courseId = input.required<number>();
     tutorialGroupId = input.required<number>();
@@ -253,6 +257,7 @@ export class TutorialRegistrationsRegisterSearchBarComponent implements OnDestro
     }
 
     private computeSearchBarPlaceholder(): string {
-        return 'Search by Login or Name';
+        this.currentLocale();
+        return this.translateService.instant('artemisApp.pages.tutorialGroupRegistrations.searchFieldPlaceholder');
     }
 }
