@@ -1,0 +1,78 @@
+<p-table
+    #dt
+    stripedRows
+    [columns]="cols()"
+    [value]="vals()"
+    [totalRecords]="totalRows()"
+    [tableStyle]="{ 'min-width': '50rem' }"
+    [paginator]="true"
+    [rows]="pageSize()"
+    [rowsPerPageOptions]="pageSizeOptions()"
+    [showCurrentPageReport]="true"
+    [currentPageReportTemplate]="'global.item-count' | artemisTranslate: { first: itemRangeBegin(), second: itemRangeEnd(), total: totalRows() }"
+    (onPage)="pageChange($event)"
+    [loading]="loading()"
+    selectionMode="single"
+    [(selection)]="selectedRow"
+    dataKey="id"
+    (onRowSelect)="onRowSelect.emit($event.data)"
+    [lazy]="true"
+    (onLazyLoad)="handleLazyLoad($event)"
+>
+    <ng-template #caption>
+        <div style="width: 15rem">
+            <jhi-search-filter (newSearchEvent)="onGlobalSearch($event)" />
+        </div>
+    </ng-template>
+    <ng-template #header let-columns>
+        <tr>
+            @for (col of columns; track col) {
+                <th [pSortableColumn]="col?.sort ? col.field : undefined" [style]="{ 'min-width': col?.width ?? 'auto' }">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            @if (col?.headerKey) {
+                                <span [jhiTranslate]="col.headerKey"></span>
+                            } @else {
+                                <span>{{ col?.header ?? '' }}</span>
+                            }
+                            @if (col?.sort && col?.field) {
+                                <p-sortIcon [field]="col.field" />
+                            }
+                        </div>
+                        @if (col?.filterType && col?.field) {
+                            <p-columnFilter [type]="col.filterType" [field]="col?.field" display="menu" class="ml-auto" />
+                        }
+                    </div>
+                </th>
+            }
+            <th></th>
+        </tr>
+    </ng-template>
+
+    <ng-template #body let-rowData let-columns="columns" let-rowIndex="rowIndex">
+        <tr [pSelectableRow]="rowData">
+            @for (col of columns; track col) {
+                <td>
+                    @if (col?.cellRenderer) {
+                        <ng-container *ngComponentOutlet="col.cellRenderer; inputs: { params: buildRendererParams(rowData, col, rowIndex) }" />
+                    } @else {
+                        {{ rowData?.[col?.field] }}
+                    }
+                </td>
+            }
+            @if (rowActions()) {
+                <td class="text-end">
+                    <ng-container [ngTemplateOutlet]="rowActions()!" [ngTemplateOutletContext]="{ $implicit: rowData }" />
+                </td>
+            }
+        </tr>
+    </ng-template>
+
+    <ng-template #emptymessage>
+        <tr>
+            <td [colSpan]="cols().length + (rowActions() ? 1 : 0)" class="text-secondary">
+                <span [jhiTranslate]="emptyMessageTranslation()"></span>
+            </td>
+        </tr>
+    </ng-template>
+</p-table>

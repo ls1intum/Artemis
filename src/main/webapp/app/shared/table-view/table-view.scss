@@ -1,0 +1,14 @@
+td {
+    padding: 8px 16px !important;
+}
+
+// Without ng-deep we fail to override the styles from primeng
+
+::ng-deep .p-datatable {
+    .p-datatable-header {
+        padding: 0 0 12px 0 !important;
+    }
+    .p-paginator {
+        justify-content: start !important;
+    }
+}
