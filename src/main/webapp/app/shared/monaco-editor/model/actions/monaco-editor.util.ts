@@ -6,6 +6,7 @@ export type MonacoEditorTextModel = monaco.editor.ITextModel;
 export type EditorPosition = monaco.IPosition;
 export type EditorRange = monaco.IRange;
 export type EditorOptions = monaco.editor.IEditorOptions;
+export type MonacoEditorDiffText = { original: string; modified: string };
 // Enums
 export const KeyModifier = monaco.KeyMod;
 export const KeyCode = monaco.KeyCode;

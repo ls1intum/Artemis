@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -317,5 +319,17 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
 
         // Should return 403 Forbidden when Iris is disabled at course level
         request.get("/api/iris/chat-history/" + course.getId() + "/session/" + courseSession.getId(), HttpStatus.FORBIDDEN, IrisSession.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getSessionForSessionId_invokesIrisCitationService() throws Exception {
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        IrisCourseChatSession courseSession = IrisChatSessionFactory.createCourseChatSessionForUser(course, user);
+        irisSessionRepository.save(courseSession);
+
+        request.get("/api/iris/chat-history/" + course.getId() + "/session/" + courseSession.getId(), HttpStatus.OK, IrisSession.class);
+
+        verify(irisCitationService).resolveCitationInfoFromMessages(any());
     }
 }
