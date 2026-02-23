@@ -35,7 +35,12 @@ import { Annotation } from 'app/programming/shared/code-editor/monaco/code-edito
 import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { ProblemStatementSyncService, ProblemStatementSyncState } from 'app/programming/manage/services/problem-statement-sync.service';
-import { INLINE_REFINEMENT_PROMPT_WIDTH_PX, InlineRefinementEvent, InstructionSelectionPosition } from 'app/programming/manage/shared/problem-statement.utils';
+import {
+    EditorSelectionWithPosition,
+    INLINE_REFINEMENT_PROMPT_WIDTH_PX,
+    InlineRefinementEvent,
+    InstructionSelectionPosition,
+} from 'app/programming/manage/shared/problem-statement.utils';
 import { editor } from 'monaco-editor';
 import { MonacoBinding } from 'y-monaco';
 import { InlineRefinementButtonComponent } from 'app/shared/monaco-editor/inline-refinement-button/inline-refinement-button.component';
@@ -418,14 +423,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * Handles selection changes from the markdown editor.
      * Shows floating refinement button when text is selected.
      */
-    onEditorSelectionChange(
-        selection:
-            | (InstructionSelectionPosition & {
-                  selectedText: string;
-                  screenPosition: { top: number; left: number };
-              })
-            | undefined,
-    ): void {
+    onEditorSelectionChange(selection: EditorSelectionWithPosition | undefined): void {
         // Show/hide inline refinement button based on selection
         if (selection && selection.selectedText && selection.selectedText.trim().length > 0 && this.hyperionEnabled && !this.isAiApplying()) {
             const viewportWidth = window.innerWidth;

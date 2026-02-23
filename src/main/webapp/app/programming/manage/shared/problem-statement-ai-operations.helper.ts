@@ -140,6 +140,11 @@ export class ProblemStatementAiOperationsHelper {
                         this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
                     }
                 },
+                error: () => {
+                    this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
+                    this.isGeneratingOrRefining.set(false);
+                    this.currentAiOperationSubscription = undefined;
+                },
             });
     }
 
@@ -185,6 +190,11 @@ export class ProblemStatementAiOperationsHelper {
                     } else if (!result.errorHandled) {
                         this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
                     }
+                },
+                error: () => {
+                    this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
+                    this.isGeneratingOrRefining.set(false);
+                    this.currentAiOperationSubscription = undefined;
                 },
             });
     }
@@ -234,6 +244,8 @@ export class ProblemStatementAiOperationsHelper {
                 },
                 error: () => {
                     this.alertService.error('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
+                    this.isGeneratingOrRefining.set(false);
+                    this.currentAiOperationSubscription = undefined;
                 },
             });
     }

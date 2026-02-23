@@ -544,7 +544,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     /**
-    /**
      * Cancels the ongoing problem statement generation or refinement.
      * Resets all in-progress states.
      */
