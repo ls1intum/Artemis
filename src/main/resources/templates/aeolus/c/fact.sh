@@ -29,7 +29,7 @@ build_and_run_all_tests () {
   cp -f ${testWorkingDirectory}/Makefile ${studentParentWorkingDirectoryName}/Makefile || exit 2
 
   # Compile the code
-  make -C ${studentParentWorkingDirectoryName}/ all
+  make -C ${studentParentWorkingDirectoryName}/ exercise
   COMPILATION_EXIT_CODE=$?
 
   if [ $COMPILATION_EXIT_CODE -ne 0 ]; then
