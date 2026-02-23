@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
-import de.tum.cit.aet.artemis.globalsearch.config.schema.entitySchemas.ExerciseSchema;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.ExerciseSchema;
 
 class WeaviateSchemasTest {
 

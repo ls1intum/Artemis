@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import de.tum.cit.aet.artemis.globalsearch.config.schema.entitySchemas.ExerciseSchema;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.ExerciseSchema;
 
 /**
  * Registry of all Weaviate collection schemas defined in Artemis.

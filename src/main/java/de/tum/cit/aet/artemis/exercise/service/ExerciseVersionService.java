@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionRepository;
 import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewService;
 import de.tum.cit.aet.artemis.fileupload.api.FileUploadApi;
-import de.tum.cit.aet.artemis.globalsearch.config.schema.entitySchemas.ExerciseSchema;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.ExerciseSchema;
 import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
 import de.tum.cit.aet.artemis.modeling.api.ModelingRepositoryApi;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;

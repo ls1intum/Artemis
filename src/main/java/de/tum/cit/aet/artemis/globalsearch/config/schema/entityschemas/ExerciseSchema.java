@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.globalsearch.config.schema.entitySchemas;
+package de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas;
 
 import static de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateDataType.BOOLEAN;
 import static de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateDataType.DATE;
