@@ -54,8 +54,7 @@ public class ProgrammingExerciseDeletionService {
     public ProgrammingExerciseDeletionService(ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             ProgrammingExerciseRepository programmingExerciseRepository, ParticipationDeletionService participationDeletionService,
             InstanceMessageSendService instanceMessageSendService, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, BuildJobRepository buildJobRepository,
-            ChannelRepository channelRepository, PostRepository postRepository, AnswerPostRepository answerPostRepository, InstanceMessageSendService instanceMessageSendService,
-            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository) {
+            ChannelRepository channelRepository, PostRepository postRepository, AnswerPostRepository answerPostRepository) {
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationDeletionService = participationDeletionService;

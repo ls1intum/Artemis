@@ -16,6 +16,8 @@ artemis:
     enabled: false
   hyperion:
     enabled: false
+  continuous-integration:
+    artemis-authentication-token-value: superduperlongtestingsecrettoken
 
   # Jenkins connector microservice configuration
   jenkins-connector:

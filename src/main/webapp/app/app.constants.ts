@@ -107,6 +107,10 @@ export const PROFILE_LDAP = 'ldap';
 
 export const PROFILE_SAML2 = 'saml2';
 
+export const PROFILE_STATELESS_JENKINS = 'stateless-jenkins';
+
+export const PROFILE_HADES = 'hades';
+
 export type ProfileFeature =
     | typeof PROFILE_LOCALCI
     | typeof PROFILE_BUILDAGENT
@@ -119,4 +123,6 @@ export type ProfileFeature =
     | typeof PROFILE_APOLLON
     | typeof PROFILE_ATHENA
     | typeof PROFILE_LDAP
-    | typeof PROFILE_SAML2;
+    | typeof PROFILE_SAML2
+    | typeof PROFILE_STATELESS_JENKINS
+    | typeof PROFILE_HADES;
