@@ -384,7 +384,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    private String buildTargetedRefinementBody(String problemStatement, int startLine, int endLine, Integer startColumn, Integer endColumn, String instruction)
+    private static String buildTargetedRefinementBody(String problemStatement, int startLine, int endLine, Integer startColumn, Integer endColumn, String instruction)
             throws JsonProcessingException {
         ObjectNode node = objectMapper.createObjectNode();
         node.put("problemStatementText", problemStatement);
@@ -498,9 +498,14 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         long courseId = persistedCourseId;
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         courseRepository.findById(courseId).orElseThrow();
-        // same line, startColumn >= endColumn
+        // same line, startColumn > endColumn
         String body = buildTargetedRefinementBody("Some problem statement text", 1, 1, 5, 3, "Improve this");
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/refine/targeted", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.title").value("Bad Request")).andExpect(jsonPath("$.message").value("error.http.400"));
+
+        // same line, startColumn == endColumn (boundary: zero-width selection must also be rejected)
+        String bodyEqual = buildTargetedRefinementBody("Some problem statement text", 1, 1, 3, 3, "Improve this");
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/refine/targeted", courseId).contentType(MediaType.APPLICATION_JSON).content(bodyEqual))
                 .andExpect(status().isBadRequest()).andExpect(jsonPath("$.title").value("Bad Request")).andExpect(jsonPath("$.message").value("error.http.400"));
     }
 
