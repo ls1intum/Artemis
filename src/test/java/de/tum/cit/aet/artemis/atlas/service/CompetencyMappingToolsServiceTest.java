@@ -29,6 +29,8 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyRelationService;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 
 /**
@@ -56,6 +58,12 @@ class CompetencyMappingToolsServiceTest {
     @Mock
     private AtlasMLApi atlasMLApi;
 
+    @Mock
+    private AuthorizationCheckService authorizationCheckService;
+
+    @Mock
+    private UserRepository userRepository;
+
     private CompetencyMappingToolsService service;
 
     private ObjectMapper objectMapper;
@@ -70,7 +78,7 @@ class CompetencyMappingToolsServiceTest {
     void setUp() {
         objectMapper = new ObjectMapper();
         service = new CompetencyMappingToolsService(objectMapper, courseCompetencyRepository, competencyRelationRepository, competencyRelationService, courseTestRepository,
-                sessionCacheService, atlasMLApi);
+                sessionCacheService, atlasMLApi, authorizationCheckService, userRepository);
 
         course = new Course();
         course.setId(123L);

@@ -500,20 +500,20 @@ public class AtlasAgentService {
         String cleanedText = (messageText.substring(0, startIndex) + messageText.substring(endIndex + PREVIEW_DATA_END_MARKER.length())).trim();
 
         try {
-            PreviewDataContainer container = objectMapper.readValue(jsonData, PreviewDataContainer.class);
-            return new PreviewDataResult(cleanedText, container.previews(), null, null);
-        }
-        catch (JsonProcessingException e) {
-            // If competency parsing fails, try relation preview
-            try {
-                RelationPreviewDataContainer relationContainer = objectMapper.readValue(jsonData, RelationPreviewDataContainer.class);
+            var node = objectMapper.readTree(jsonData);
+            boolean isRelationPreview = node.has("singleRelationPreview") || node.has("batchRelationPreview") || node.has("relationGraphPreview");
+            if (isRelationPreview) {
+                RelationPreviewDataContainer relationContainer = objectMapper.treeToValue(node, RelationPreviewDataContainer.class);
                 List<CompetencyRelationPreviewDTO> relationPreviews = convertToRelationPreviewsList(relationContainer.singleRelationPreview(),
                         relationContainer.batchRelationPreview());
                 return new PreviewDataResult(cleanedText, null, relationPreviews, relationContainer.relationGraphPreview());
             }
-            catch (JsonProcessingException ex) {
-                return new PreviewDataResult(cleanedText, null, null, null);
-            }
+
+            PreviewDataContainer container = objectMapper.treeToValue(node, PreviewDataContainer.class);
+            return new PreviewDataResult(cleanedText, container.previews(), null, null);
+        }
+        catch (JsonProcessingException e) {
+            return new PreviewDataResult(cleanedText, null, null, null);
         }
     }
 
@@ -539,14 +539,14 @@ public class AtlasAgentService {
     /**
      * Result of extracting preview data from a message.
      */
-    record PreviewDataResult(String cleanedText, @Nullable List<CompetencyPreviewDTO> previews, @Nullable List<CompetencyRelationPreviewDTO> relationPreviews,
+    private record PreviewDataResult(String cleanedText, @Nullable List<CompetencyPreviewDTO> previews, @Nullable List<CompetencyRelationPreviewDTO> relationPreviews,
             @Nullable RelationGraphPreviewDTO relationGraphPreview) {
     }
 
     /**
      * Container for embedding relation preview data in message text.
      */
-    record RelationPreviewDataContainer(@Nullable SingleRelationPreviewResponseDTO singleRelationPreview, @Nullable BatchRelationPreviewResponseDTO batchRelationPreview,
+    private record RelationPreviewDataContainer(@Nullable SingleRelationPreviewResponseDTO singleRelationPreview, @Nullable BatchRelationPreviewResponseDTO batchRelationPreview,
             @Nullable RelationGraphPreviewDTO relationGraphPreview) {
     }
 

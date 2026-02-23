@@ -1,7 +1,7 @@
 import { AfterViewChecked, AfterViewInit, Component, ElementRef, OnInit, computed, inject, output, signal, viewChild } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faPaperPlane, faRobot, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faPaperPlane, faRobot, faTimes, faUser } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
@@ -15,11 +15,21 @@ import { CompetencyService } from 'app/atlas/manage/services/competency.service'
 import { Competency, CompetencyRelationDTO, CompetencyRelationType, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
 import { RelationGraphPreview } from 'app/atlas/shared/entities/chat-message.model';
 import { CourseCompetenciesRelationGraphComponent } from 'app/atlas/manage/course-competencies-relation-graph/course-competencies-relation-graph.component';
+import { ButtonModule } from 'primeng/button';
 
 @Component({
     selector: 'jhi-agent-chat-modal',
     standalone: true,
-    imports: [CommonModule, TranslateDirective, FontAwesomeModule, FormsModule, ArtemisTranslatePipe, CompetencyCardComponent, CourseCompetenciesRelationGraphComponent],
+    imports: [
+        CommonModule,
+        TranslateDirective,
+        FontAwesomeModule,
+        FormsModule,
+        ArtemisTranslatePipe,
+        CompetencyCardComponent,
+        CourseCompetenciesRelationGraphComponent,
+        ButtonModule,
+    ],
     templateUrl: './agent-chat-modal.component.html',
     styleUrl: './agent-chat-modal.component.scss',
 })
@@ -29,6 +39,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
 
     protected readonly sendIcon = faPaperPlane;
     protected readonly robotIcon = faRobot;
+    protected readonly closeIcon = faTimes;
     protected readonly userIcon = faUser;
 
     private readonly activeModal = inject(NgbActiveModal);

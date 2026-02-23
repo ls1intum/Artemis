@@ -5,7 +5,9 @@
             <fa-icon [icon]="robotIcon" class="text-primary me-2 fs-5" />
             <h4 class="modal-title mb-0 text-body" jhiTranslate="artemisApp.agent.chat.title"></h4>
         </div>
-        <button type="button" class="btn-close" aria-label="Close" (click)="closeModal()"></button>
+        <button pButton type="button" severity="secondary" text rounded class="modal-close-button" aria-label="Close" (click)="closeModal()">
+            <fa-icon [icon]="closeIcon" />
+        </button>
     </div>
 
     <!-- Messages Container -->
@@ -26,8 +28,10 @@
                         @if (message.planPending && !message.planApproved) {
                             <div class="plan-approval-container mt-2">
                                 <button
+                                    pButton
                                     type="button"
-                                    class="btn btn-primary btn-sm"
+                                    size="small"
+                                    severity="primary"
                                     (click)="onApprovePlan(message)"
                                     [disabled]="isAgentTyping()"
                                     jhiTranslate="artemisApp.agent.chat.approvePlan"
@@ -48,10 +52,11 @@
                                 }
                                 @if (!message.competencyPreviews[0]?.viewOnly) {
                                     <button
+                                        pButton
                                         type="button"
-                                        class="btn btn-sm mt-2"
-                                        [class.btn-primary]="!message.competencyCreated"
-                                        [class.btn-success]="message.competencyCreated"
+                                        size="small"
+                                        class="mt-2"
+                                        [severity]="message.competencyCreated ? 'success' : 'primary'"
                                         (click)="onCreateCompetencies(message)"
                                         [disabled]="isAgentTyping() || message.competencyCreated"
                                     >
@@ -86,7 +91,7 @@
                         }
                         @if (message.relationGraphPreview) {
                             <div class="relation-graph-preview-container mt-2 border rounded">
-                                <div style="height: 400px">
+                                <div class="relation-graph-viewport">
                                     @if (message.graphCompetencies && message.graphRelations) {
                                         <jhi-course-competencies-relation-graph
                                             [courseCompetencies]="message.graphCompetencies"
@@ -96,12 +101,12 @@
                                     }
                                 </div>
                                 @if (!message.relationGraphPreview.viewOnly) {
-                                    <div class="p-3 border-top bg-light">
+                                    <div class="relation-graph-actions p-3 border-top">
                                         <button
+                                            pButton
                                             type="button"
-                                            class="btn btn-sm"
-                                            [class.btn-primary]="!message.relationCreated"
-                                            [class.btn-success]="message.relationCreated"
+                                            size="small"
+                                            [severity]="message.relationCreated ? 'success' : 'primary'"
                                             (click)="onCreateRelation(message)"
                                             [disabled]="isAgentTyping() || message.relationCreated"
                                         >
@@ -164,7 +169,7 @@
                     [disabled]="isAgentTyping()"
                     rows="1"
                 ></textarea>
-                <button type="button" class="btn btn-primary send-button ms-2" (click)="sendMessage()" [disabled]="!canSendMessage()" aria-label="Send">
+                <button pButton type="button" severity="primary" class="send-button ms-2" (click)="sendMessage()" [disabled]="!canSendMessage()" aria-label="Send">
                     <fa-icon [icon]="sendIcon" />
                 </button>
             </div>
