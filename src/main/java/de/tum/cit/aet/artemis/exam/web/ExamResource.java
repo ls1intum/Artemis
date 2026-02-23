@@ -311,10 +311,7 @@ public class ExamResource {
             examService.updateStudentExamsAndRescheduleExercises(examWithStudentExams, originalExamDuration, workingTimeChange);
         }
 
-        boolean endDateChanged = comparator.compare(originalExam.getEndDate(), updatedExam.getEndDate()) != 0;
-        if (visibleOrStartDateChanged || endDateChanged) {
-            exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.updateExamExercisesAsync(examWithExercises));
-        }
+        examService.syncExamExercisesMetadata(originalExam, updatedExam, examWithExercises);
 
         if (updatedChannel != null) {
             savedExam.setChannelName(updatedExam.getChannelName());
@@ -356,7 +353,7 @@ public class ExamResource {
         examService.updateStudentExamsAndRescheduleExercises(exam, originalExamDuration, workingTimeChange);
 
         // 3. Update Weaviate exercise metadata since the exam end date changed
-        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.updateExamExercisesAsync(exam));
+        examService.syncExamExercisesMetadata(exam);
 
         return ResponseEntity.ok(exam);
     }
@@ -411,9 +408,6 @@ public class ExamResource {
 
         // Step 4: Import Exam with Exercises and create a channel for the exam
         Exam examCopied = examImportService.importExamWithExercises(examToBeImported, courseId);
-
-        // Step 5: Index all imported exercises in Weaviate
-        exerciseWeaviateService.ifPresent(service -> service.updateExamExercisesAsync(examCopied));
 
         return ResponseEntity.created(new URI("/api/exam/courses/" + courseId + "/exams/" + examCopied.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, examCopied.getTitle())).body(examCopied);
