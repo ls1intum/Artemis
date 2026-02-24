@@ -65,8 +65,6 @@ export const MODULE_FEATURE_LTI = 'lti';
 
 export const MODULE_FEATURE_THEIA = 'theia';
 
-export const MODULE_FEATURE_GLOBAL_SEARCH = 'global-search';
-
 export type ModuleFeature =
     | typeof MODULE_FEATURE_PASSKEY
     | typeof MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN
@@ -83,8 +81,7 @@ export type ModuleFeature =
     | typeof MODULE_FEATURE_NEBULA
     | typeof MODULE_FEATURE_SHARING
     | typeof MODULE_FEATURE_LTI
-    | typeof MODULE_FEATURE_THEIA
-    | typeof MODULE_FEATURE_GLOBAL_SEARCH;
+    | typeof MODULE_FEATURE_THEIA;
 
 export const PROFILE_LOCALCI = 'localci';
 

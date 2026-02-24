@@ -33,6 +33,9 @@ public class FeatureToggleService {
     @Value("${artemis.science.event-logging.enable:false}")
     private boolean scienceEnabledOnStart;
 
+    @Value("${artemis.global-search.enable:false}")
+    private boolean globalSearchEnabledOnStart;
+
     private final RateLimitConfigurationService rateLimitConfigurationService;
 
     private final WebsocketMessagingService websocketMessagingService;
@@ -113,7 +116,7 @@ public class FeatureToggleService {
         }
 
         if (!features.containsKey(Feature.GlobalSearch)) {
-            features.put(Feature.GlobalSearch, false);
+            features.put(Feature.GlobalSearch, globalSearchEnabledOnStart);
         }
 
         // Disable LectureContentProcessing in dev profile to avoid issues with local file system access

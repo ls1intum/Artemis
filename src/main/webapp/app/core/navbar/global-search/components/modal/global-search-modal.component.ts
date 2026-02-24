@@ -33,7 +33,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
 
     @HostListener('window:keydown', ['$event'])
     handleKeyboardEvent(event: KeyboardEvent) {
-        if (event.key.toLowerCase() === 'k' && this.osDetector.isActionKey(event) && this.accountService.isAuthenticated()) {
+        if (this.isToggleShortcut(event)) {
             event.preventDefault();
             this.overlay.toggle();
         }
@@ -41,6 +41,10 @@ export class GlobalSearchModalComponent implements OnDestroy {
             event.preventDefault();
             this.overlay.close();
         }
+    }
+
+    private isToggleShortcut(event: KeyboardEvent): boolean {
+        return event.key.toLowerCase() === 'k' && this.osDetector.isActionKey(event) && this.accountService.isAuthenticated() && !event.repeat;
     }
 
     ngOnDestroy() {
