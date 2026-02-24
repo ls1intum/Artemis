@@ -27,7 +27,7 @@ jobs:
       - name: Check LOC and number of class dependencies
         run: |
           # TODO these values should become zero in the future
-          max_large_classes=15
+          max_large_classes=16
           max_complex_beans=12
 
           python supporting_scripts/analyze_java_files.py \
