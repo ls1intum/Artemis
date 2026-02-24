@@ -17,10 +17,14 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.OrganizationCountDTO;
+import de.tum.cit.aet.artemis.core.dto.OrganizationDTO;
+import de.tum.cit.aet.artemis.core.dto.SortingOrder;
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.organization.util.OrganizationUtilService;
 import de.tum.cit.aet.artemis.core.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
+import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -33,8 +37,31 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Autowired
     private OrganizationUtilService organizationUtilService;
 
+    @Autowired
+    private PageableSearchUtilService pageableSearchUtilService;
+
     /**
-     * Test if getting courses a user can enroll in works with multi organization and
+     * Builds a search DTO with the given search term and page size.
+     * Page index 0 is the first page (0-indexed as used by PageRequest.of in the
+     * repository).
+     */
+    private SearchTermPageableSearchDTO<String> buildSearch(String searchTerm, int page, int pageSize, String sortedColumn, SortingOrder sortingOrder) {
+        SearchTermPageableSearchDTO<String> search = new SearchTermPageableSearchDTO<>();
+        search.setPage(page);
+        search.setPageSize(pageSize);
+        search.setSearchTerm(searchTerm);
+        search.setSortedColumn(sortedColumn);
+        search.setSortingOrder(sortingOrder);
+        return search;
+    }
+
+    private SearchTermPageableSearchDTO<String> buildSearch(String searchTerm) {
+        return buildSearch(searchTerm, 0, 100, "id", SortingOrder.ASCENDING);
+    }
+
+    /**
+     * Test if getting courses a user can enroll in works with multi organization
+     * and
      * filters out basing on user's organizations
      */
     @Test
@@ -269,43 +296,141 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
     }
 
     /**
-     * Test get all organizations
+     * Test get all organizations without pagination
      */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetAllOrganizations() throws Exception {
         Organization organization = organizationUtilService.createOrganization();
         Organization organization2 = organizationUtilService.createOrganization();
-        organization = organizationRepo.save(organization);
-        organization2 = organizationRepo.save(organization2);
 
-        List<Organization> result = request.getList("/api/core/admin/organizations", HttpStatus.OK, Organization.class);
+        List<Organization> result = request.getList("/api/core/admin/organizations/all", HttpStatus.OK, Organization.class);
         assertThat(result).contains(organization, organization2);
     }
 
     /**
-     * Test get number of users and courses of all organizations
+     * Test get organizations with pagination
      */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void testGetNumberOfUsersAndCoursesOfAllOrganizations() throws Exception {
-        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
+    void testGetOrganizationsPaginated() throws Exception {
+        String prefix = "paginationTest";
+        Organization organizationA = organizationUtilService.createOrganization(prefix + "_A Org", "shortname", "url", "desc", null, "emailpattern");
+        Organization organizationB = organizationUtilService.createOrganization(prefix + "_B Org", "shortname2", "url2", "desc2", null, "emailpattern2");
+        Organization organizationC = organizationUtilService.createOrganization(prefix + "_C Org", "shortname3", "url3", "desc3", null, "emailpattern3");
+
+        // Page 0 with size 2 returns orgs A and B; page 1 with size 2 returns org C
+        SearchTermPageableSearchDTO<String> firstPageSearch = buildSearch(prefix, 0, 2, "name", SortingOrder.ASCENDING);
+        List<OrganizationDTO> firstPage = request.getList("/api/core/admin/organizations", HttpStatus.OK, OrganizationDTO.class,
+                pageableSearchUtilService.searchMapping(firstPageSearch));
+
+        SearchTermPageableSearchDTO<String> secondPageSearch = buildSearch(prefix, 1, 2, "name", SortingOrder.ASCENDING);
+        List<OrganizationDTO> secondPage = request.getList("/api/core/admin/organizations", HttpStatus.OK, OrganizationDTO.class,
+                pageableSearchUtilService.searchMapping(secondPageSearch));
+
+        assertThat(firstPage).hasSize(2);
+        assertThat(firstPage.get(0).id()).isEqualTo(organizationA.getId());
+        assertThat(firstPage.get(1).id()).isEqualTo(organizationB.getId());
+        assertThat(secondPage).hasSize(1);
+        assertThat(secondPage.get(0).id()).isEqualTo(organizationC.getId());
+    }
+
+    /**
+     * Test filtering organizations by search term across name, shortName, and
+     * emailPattern
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testGetOrganizationsPaginated_filterBySearchTerm() throws Exception {
+        String searchTerm = "uniqueSearchTerm";
+
+        // Organization where search term appears in name
+        Organization orgWithName = organizationUtilService.createOrganization(searchTerm + "_Name", "shortname1", "url1", "desc1", null, "pattern1");
+
+        // Organization where search term appears in shortName
+        Organization orgWithShortName = organizationUtilService.createOrganization("name2", searchTerm + "_Short", "url2", "desc2", null, "pattern2");
+
+        // Organization where search term appears in emailPattern
+        Organization orgWithEmailPattern = organizationUtilService.createOrganization("name3", "shortname3", "url3", "desc3", null, searchTerm + "_Email");
+
+        // Two organizations that do not contain the search term anywhere
+        organizationUtilService.createOrganization("name4", "shortname4", "url4", "desc4", null, "pattern4");
+        organizationUtilService.createOrganization("name5", "shortname5", "url5", "desc5", null, "pattern5");
+
+        SearchTermPageableSearchDTO<String> search = buildSearch(searchTerm);
+        List<OrganizationDTO> result = request.getList("/api/core/admin/organizations", HttpStatus.OK, OrganizationDTO.class, pageableSearchUtilService.searchMapping(search));
+
+        assertThat(result).hasSize(3);
+        List<Long> resultIds = result.stream().map(OrganizationDTO::id).toList();
+        assertThat(resultIds).contains(orgWithName.getId(), orgWithShortName.getId(), orgWithEmailPattern.getId());
+    }
+
+    /**
+     * Test that a search term matching nothing returns an empty list
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testGetOrganizationsPaginated_noMatchReturnsEmptyList() throws Exception {
+        organizationUtilService.createOrganization();
+
+        SearchTermPageableSearchDTO<String> search = buildSearch("nonExistentSearchTerm");
+        List<OrganizationDTO> result = request.getList("/api/core/admin/organizations", HttpStatus.OK, OrganizationDTO.class, pageableSearchUtilService.searchMapping(search));
+
+        assertThat(result).isEmpty();
+    }
+
+    /**
+     * Test sorting organizations by numberOfUsers: org with more users appears
+     * first when descending
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testGetOrganizationsPaginated_sortByNumberOfUsersDescending() throws Exception {
+        String prefix = "sortByUsers";
+        Organization orgNoUsers = organizationUtilService.createOrganization(prefix + "_NoUsers", "shortname", "url", "desc", null, "emailpattern");
+        Organization orgWithUsers = organizationUtilService.createOrganization(prefix + "_WithUsers", "shortname", "url", "desc", null, "emailpattern");
+
+        User student1 = userUtilService.createAndSaveUser(TEST_PREFIX + "user1");
+        User student2 = userUtilService.createAndSaveUser(TEST_PREFIX + "user2");
+        userTestRepository.addOrganizationToUser(student1.getId(), orgWithUsers);
+        userTestRepository.addOrganizationToUser(student2.getId(), orgWithUsers);
+
+        SearchTermPageableSearchDTO<String> search = buildSearch(prefix, 0, 10, "numberOfUsers", SortingOrder.DESCENDING);
+        List<OrganizationDTO> result = request.getList("/api/core/admin/organizations", HttpStatus.OK, OrganizationDTO.class, pageableSearchUtilService.searchMapping(search));
+
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).id()).isEqualTo(orgWithUsers.getId());
+        assertThat(result.get(0).numberOfUsers()).isEqualTo(2);
+        assertThat(result.get(1).id()).isEqualTo(orgNoUsers.getId());
+        assertThat(result.get(1).numberOfUsers()).isEqualTo(0);
+    }
+
+    /**
+     * Test that the OrganizationDTO returned by the paginated endpoint contains
+     * the correct aggregated user and course counts (replaces the removed count-all
+     * endpoint)
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testGetOrganizationsPaginated_dtoContainsUserAndCourseCounts() throws Exception {
+        String uniqueName = "userAndCourseCount";
+        Organization organization = organizationUtilService.createOrganization(uniqueName, "shortname", "url", "desc", null, "emailpattern");
+
+        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "name", "tutor", "editor", "instructor");
         course1 = courseRepository.save(course1);
-
-        Organization organization = organizationUtilService.createOrganization();
-        organization = organizationRepo.save(organization);
-
         courseRepository.addOrganizationToCourse(course1.getId(), organization);
-        User student = userUtilService.createAndSaveUser(TEST_PREFIX + "testGetNumberOfUsersOfAll_");
 
+        User student = userUtilService.createAndSaveUser(TEST_PREFIX + "user");
         userTestRepository.addOrganizationToUser(student.getId(), organization);
 
-        List<OrganizationCountDTO> result = request.getList("/api/core/admin/organizations/count-all", HttpStatus.OK, OrganizationCountDTO.class);
+        SearchTermPageableSearchDTO<String> search = buildSearch(uniqueName);
+        List<OrganizationDTO> result = request.getList("/api/core/admin/organizations", HttpStatus.OK, OrganizationDTO.class, pageableSearchUtilService.searchMapping(search));
 
-        assertThat(result).isNotEmpty();
-
-        assertThat(result.get(result.size() - 1).numberOfCourses()).isEqualTo(1);
-        assertThat(result.get(result.size() - 1).numberOfUsers()).isEqualTo(1);
+        assertThat(result).hasSize(1);
+        OrganizationDTO dto = result.get(0);
+        assertThat(dto.id()).isEqualTo(organization.getId());
+        assertThat(dto.numberOfUsers()).isEqualTo(1);
+        assertThat(dto.numberOfCourses()).isEqualTo(1);
     }
 
     /**

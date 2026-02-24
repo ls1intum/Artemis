@@ -13,7 +13,6 @@ import { Organization } from 'app/core/shared/entities/organization.model';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { User } from 'app/core/user/user.model';
-import { OrganizationCountDto } from 'app/core/admin/organization-management/organization-count-dto.model';
 import { firstValueFrom } from 'rxjs';
 
 describe('Organization Service', () => {
@@ -59,7 +58,7 @@ describe('Organization Service', () => {
 
     it('should return all organizations', async () => {
         const returnElement = createTestReturnElement();
-        const resultPromise = firstValueFrom(service.getOrganizations());
+        const resultPromise = firstValueFrom(service.getAllOrganizations());
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnElement);

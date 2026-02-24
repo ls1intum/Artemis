@@ -53,7 +53,7 @@ describe('OrganizationSelectorComponent', () => {
     });
 
     it('should load organizations and filter out the already assigned ones', fakeAsync(() => {
-        jest.spyOn(organizationService, 'getOrganizations').mockReturnValue(of([organization1, organization2]));
+        jest.spyOn(organizationService, 'getAllOrganizations').mockReturnValue(of([organization1, organization2]));
 
         fixture.changeDetectorRef.detectChanges();
         tick();
