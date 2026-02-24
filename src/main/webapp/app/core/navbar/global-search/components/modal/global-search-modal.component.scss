@@ -4,37 +4,21 @@
     background: var(--module-bg);
 }
 
-::ng-deep .global-search-dialog .p-dialog-content {
-    padding: 0;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-}
-
 // Search input section
 .search-input-container {
-    padding: 0;
-    display: flex;
-    align-items: center;
     gap: 0.75rem;
     border-bottom: 1.8px solid var(--bs-border-color);
-    flex-shrink: 0;
 }
 
 .search-icon {
     margin-left: 0.75rem;
-    color: var(--bs-secondary);
 }
 
 .search-input {
     flex: 1;
     padding: 0.75rem 0.75rem 0.75rem 0;
-    border: none;
     font-size: 1rem;
     outline: none;
-    background: transparent;
-    color: var(--bs-body-color);
 
     &::placeholder {
         color: var(--bs-secondary);
@@ -47,8 +31,6 @@
     flex: 1;
     overflow-y: auto;
     padding: 2.5rem;
-    text-align: center;
-    color: var(--bs-secondary);
 }
 
 // Footer with keyboard shortcuts
@@ -56,44 +38,15 @@
     padding: 0.75rem 1rem;
     background: var(--global-search-modal-footer-bg);
     border-top: 1px solid var(--bs-border-color);
-    flex-shrink: 0; // Don't let it shrink
-    text-align: left; // Force text alignment to left
 }
 
 .keyboard-hints {
-    display: flex;
-    align-items: center;
-    justify-content: space-between; // Space out left and right hints
-    gap: 1rem; // Space between hint groups
-    font-size: 0.75rem; // Small text
-    color: var(--bs-secondary);
-    width: 100%; // Ensure it takes full width
-}
-
-.hint-group {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-}
-
-.key-group {
-    display: flex;
-    align-items: center;
-    gap: 0.3rem;
-}
-
-.hint-text {
-    margin-left: 0.5rem;
+    font-size: 0.75rem;
 }
 
 .key-hint-small {
     padding: 0.25rem 0.35rem;
     background: var(--module-bg);
-    border: 1px solid var(--bs-border-color);
     border-radius: 0.25rem;
     font-size: 0.75rem;
-    font-family: monospace;
-    color: var(--bs-secondary);
-    display: inline-flex;
-    align-items: center;
 }

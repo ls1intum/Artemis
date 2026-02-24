@@ -15,7 +15,7 @@ import { DialogModule } from 'primeng/dialog';
     styleUrls: ['./global-search-modal.component.scss'],
 })
 export class GlobalSearchModalComponent implements OnDestroy {
-    private readonly overlay = inject(SearchOverlayService);
+    protected readonly overlay = inject(SearchOverlayService);
     private readonly osDetector = inject(OsDetectorService);
     private readonly accountService = inject(AccountService);
 
