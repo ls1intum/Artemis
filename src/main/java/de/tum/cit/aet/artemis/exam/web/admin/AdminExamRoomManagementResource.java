@@ -40,7 +40,6 @@ public class AdminExamRoomManagementResource {
      * @return a response entity with status 200 and a summary of the deletion process.
      */
     @DeleteMapping("outdated-and-unused")
-    @EnforceAdmin
     public ResponseEntity<ExamRoomDeletionSummaryDTO> deleteAllOutdatedAndUnusedExamRooms() {
         log.debug("REST request to delete all outdated and unused exam rooms");
 
