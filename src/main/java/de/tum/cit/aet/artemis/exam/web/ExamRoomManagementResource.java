@@ -10,7 +10,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.unit.DataSize;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,10 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
-import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomOverviewDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomUploadInformationDTO;
 import de.tum.cit.aet.artemis.exam.service.ExamRoomService;
@@ -105,19 +102,5 @@ public class ExamRoomManagementResource {
 
         var examRoomAdminOverviewDTO = examRoomService.getExamRoomOverview();
         return ResponseEntity.ok(examRoomAdminOverviewDTO);
-    }
-
-    /**
-     * DELETE /exam/rooms/outdated-and-unused: Delete all outdated and unused exam rooms.
-     *
-     * @return a response entity with status 200 and a summary of the deletion process.
-     */
-    @DeleteMapping("outdated-and-unused")
-    @EnforceAdmin
-    public ResponseEntity<ExamRoomDeletionSummaryDTO> deleteAllOutdatedAndUnusedExamRooms() {
-        log.debug("REST request to delete all outdated and unused exam rooms");
-
-        var examRoomDeletionSummaryDTO = examRoomService.deleteAllOutdatedAndUnusedExamRooms();
-        return ResponseEntity.ok(examRoomDeletionSummaryDTO);
     }
 }
