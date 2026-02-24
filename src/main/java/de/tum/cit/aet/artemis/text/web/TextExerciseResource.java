@@ -256,6 +256,7 @@ public class TextExerciseResource {
         Set<Submission> submissions = participation.getSubmissions();
         participation.setSubmissions(new HashSet<>());
 
+        boolean resultFound = false;
         for (Submission submission : submissions) {
             if (submission != null) {
                 TextSubmission textSubmission = (TextSubmission) submission;
@@ -273,6 +274,7 @@ public class TextExerciseResource {
                 Result result = (resultId != null) ? textSubmission.getResults().stream().filter(r -> r.getId().equals(resultId)).findFirst().orElse(null)
                         : textSubmission.getLatestResult();
                 if (result != null) {
+                    resultFound = true;
                     // Load TextBlocks for the Submission. They are needed to display the Feedback in the client.
                     final var textBlocks = textBlockRepository.findAllBySubmissionId(textSubmission.getId());
                     textSubmission.setBlocks(textBlocks);
@@ -291,6 +293,10 @@ public class TextExerciseResource {
                 }
                 participation.addSubmission(textSubmission);
             }
+        }
+
+        if (resultId != null && !resultFound) {
+            throw new EntityNotFoundException("Result", resultId);
         }
 
         // if all submissions were deleted, add a new one since the client relies on the existence of at least one submission
