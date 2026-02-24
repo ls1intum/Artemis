@@ -28,7 +28,8 @@ import { EventManager } from 'app/shared/service/event-manager.service';
 import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercise/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
 import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
 import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/detail-overview-list.component';
+import { DetailOverviewListComponent, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
+import { CompetencyExerciseLink, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
 
 describe('FileUploadExerciseDetailComponent', () => {
     setupTestBed({ zoneless: true });
@@ -398,6 +399,52 @@ describe('FileUploadExerciseDetailComponent', () => {
             const sections = component.exerciseDetailSections();
             const gradingSection = sections.find((s) => s.headline === 'artemisApp.exercise.sections.grading');
             expect(gradingSection).toBeDefined();
+        });
+    });
+
+    describe('competency links display', () => {
+        it('should display competency links when exercise has competencies', async () => {
+            const course = createCourse();
+            const exercise = createExercise(course);
+            const competency1 = { id: 1, title: 'Competency 1' } as CourseCompetency;
+            const competency2 = { id: 2, title: 'Competency 2' } as CourseCompetency;
+            exercise.competencyLinks = [{ competency: competency1 } as CompetencyExerciseLink, { competency: competency2 } as CompetencyExerciseLink];
+
+            vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
+
+            fixture = TestBed.createComponent(FileUploadExerciseDetailComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            const sections = component.exerciseDetailSections();
+            expect(sections.length).toBeGreaterThan(0);
+            const problemSection = sections.find((section) => section.headline === 'artemisApp.exercise.sections.problem');
+            expect(problemSection).toBeDefined();
+            const competencyDetail = problemSection?.details.find((detail) => detail && 'title' in detail && detail.title === 'artemisApp.competency.link.title');
+            expect(competencyDetail).toBeDefined();
+            expect(competencyDetail).toHaveProperty('type', DetailType.Text);
+            expect(competencyDetail).toHaveProperty('data.text', 'Competency 1, Competency 2');
+        });
+
+        it('should not display competency links when exercise has no competencies', async () => {
+            const course = createCourse();
+            const exercise = createExercise(course);
+            exercise.competencyLinks = [];
+
+            vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
+
+            fixture = TestBed.createComponent(FileUploadExerciseDetailComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            const sections = component.exerciseDetailSections();
+            expect(sections.length).toBeGreaterThan(0);
+            const problemSection = sections.find((section) => section.headline === 'artemisApp.exercise.sections.problem');
+            expect(problemSection).toBeDefined();
+            const competencyDetail = problemSection?.details.find((detail) => detail && 'title' in detail && detail.title === 'artemisApp.competency.link.title');
+            expect(competencyDetail).toBeUndefined();
         });
     });
 });

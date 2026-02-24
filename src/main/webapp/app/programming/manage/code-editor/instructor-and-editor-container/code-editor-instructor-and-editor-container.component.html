@@ -1,3 +1,13 @@
+<ng-template #codeGenerationRunningModal let-modal>
+    <div class="modal-header">
+        <h4 class="modal-title" jhiTranslate="artemisApp.programmingExercise.codeGeneration.runningTitle"></h4>
+        <button type="button" class="btn-close" [attr.aria-label]="'entity.action.close' | artemisTranslate" (click)="modal.dismiss('Cross click')"></button>
+    </div>
+    <div class="modal-body">
+        <p class="code-generation-running-text" jhiTranslate="artemisApp.programmingExercise.codeGeneration.runningText"></p>
+    </div>
+</ng-template>
+
 @if (loadingState === LOADING_STATE.INITIALIZING || loadingState === LOADING_STATE.FETCHING_FAILED) {
     <nav class="card">
         <div class="card-body">
@@ -22,11 +32,14 @@
             [participation]="selectedParticipation!"
             [buildable]="selectedRepository !== RepositoryType.TESTS"
             [selectedRepository]="selectedRepository"
+            [selectedAuxiliaryRepositoryId]="selectedRepository === RepositoryType.AUXILIARY ? selectedRepositoryId : undefined"
             [course]="course"
             [allowHiddenFiles]="true"
             [consistencyIssues]="consistencyIssues()"
+            [enableExerciseReviewComments]="true"
             (onFileLoad)="onFileLoad($event)"
             (onEditorLoaded)="onEditorLoaded()"
+            (onCommit)="onCommit()"
         >
             <div editorTitle>
                 <span>{{ exercise?.title }}</span>
@@ -57,7 +70,7 @@
                             [disabled]="!exercise || !exercise.templateParticipation || !exercise.templateParticipation.id || !exercise.templateParticipation.repositoryUri"
                             (click)="selectTemplateParticipation()"
                             ngbDropdownItem
-                            [style.background-color]="selectedRepository === RepositoryType.TEMPLATE ? '#3e8acc' : 'transparent'"
+                            [style.background-color]="selectedRepository === RepositoryType.TEMPLATE ? 'var(--link-color)' : 'transparent'"
                         >
                             <span jhiTranslate="artemisApp.editor.repoSelect.templateRepo"></span>
                         </button>
@@ -66,26 +79,65 @@
                             (click)="selectSolutionParticipation()"
                             ngbDropdownItem
                             [style.background-color]="selectedRepository === RepositoryType.SOLUTION ? 'var(--link-color)' : 'transparent'"
-                            jhiTranslate="artemisApp.editor.repoSelect.solutionRepo"
                         >
                             <span jhiTranslate="artemisApp.editor.repoSelect.solutionRepo"></span>
                         </button>
-                        <button
-                            [disabled]="
-                                loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO ||
-                                loadingState === LOADING_STATE.DELETING_ASSIGNMENT_REPO ||
-                                !exercise ||
-                                !exercise.studentParticipations ||
-                                !exercise.studentParticipations!.length ||
-                                (exercise.studentParticipations!.length > 0 && !repositoryUri(exercise.studentParticipations![0]))
-                            "
-                            (click)="selectAssignmentParticipation()"
-                            ngbDropdownItem
-                            [style.background-color]="selectedRepository === RepositoryType.ASSIGNMENT ? 'var(--link-color)' : 'transparent'"
-                            jhiTranslate="artemisApp.editor.repoSelect.assignmentRepo"
-                        >
-                            Assignment Participation
-                        </button>
+                        <div class="d-flex w-100">
+                            <button
+                                type="button"
+                                class="flex-grow-1 text-start"
+                                ngbDropdownItem
+                                [disabled]="
+                                    loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO ||
+                                    loadingState === LOADING_STATE.DELETING_ASSIGNMENT_REPO ||
+                                    !exercise.studentParticipations ||
+                                    !exercise.studentParticipations.length ||
+                                    (exercise.studentParticipations!.length > 0 && !repositoryUri(exercise.studentParticipations![0]))
+                                "
+                                (click)="selectAssignmentParticipation()"
+                                [style.background-color]="selectedRepository === RepositoryType.ASSIGNMENT ? 'var(--link-color)' : 'transparent'"
+                            >
+                                <span jhiTranslate="artemisApp.editor.repoSelect.assignmentRepo"></span>
+                            </button>
+                            @if (!exercise.studentParticipations || !exercise.studentParticipations.length) {
+                                <div class="vr my-1"></div>
+                                <button
+                                    type="button"
+                                    class="flex-shrink-1 w-auto px-2"
+                                    ngbDropdownItem
+                                    (click)="createAssignmentParticipation()"
+                                    [disabled]="isCreateAssignmentRepoDisabled || loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO"
+                                    [ngbTooltip]="
+                                        isCreateAssignmentRepoDisabled
+                                            ? ('artemisApp.editor.repoSelect.createAssignmentRepoDisabledTooltip' | artemisTranslate)
+                                            : ('artemisApp.editor.repoSelect.createAssignmentRepo' | artemisTranslate)
+                                    "
+                                >
+                                    @if (loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO) {
+                                        <fa-icon [icon]="faCircleNotch" animation="spin" />
+                                    } @else {
+                                        <fa-icon [icon]="faPlus" />
+                                    }
+                                </button>
+                            }
+                            @if (exercise.studentParticipations && exercise.studentParticipations.length && exercise.isAtLeastInstructor) {
+                                <div class="vr my-1"></div>
+                                <button
+                                    type="button"
+                                    class="flex-shrink-1 w-auto px-2 text-danger"
+                                    ngbDropdownItem
+                                    (click)="deleteAssignmentParticipation()"
+                                    [disabled]="loadingState !== LOADING_STATE.CLEAR"
+                                    [ngbTooltip]="'artemisApp.editor.repoSelect.deleteAssignmentRepo' | artemisTranslate"
+                                >
+                                    @if (loadingState === LOADING_STATE.DELETING_ASSIGNMENT_REPO) {
+                                        <fa-icon [icon]="faCircleNotch" animation="spin" />
+                                    } @else {
+                                        <fa-icon [icon]="faTimes" />
+                                    }
+                                </button>
+                            }
+                        </div>
                         <button
                             [disabled]="!exercise"
                             (click)="selectTestRepository()"
@@ -93,7 +145,7 @@
                             [style.background-color]="selectedRepository === RepositoryType.TESTS ? 'var(--link-color)' : 'transparent'"
                             jhiTranslate="artemisApp.editor.repoSelect.testRepo"
                         ></button>
-                        @for (auxiliaryRepository of exercise.auxiliaryRepositories; track exercise.auxiliaryRepositories; let i = $index) {
+                        @for (auxiliaryRepository of exercise.auxiliaryRepositories; track auxiliaryRepository.id ?? i; let i = $index) {
                             @if (auxiliaryRepository.id) {
                                 <button
                                     [disabled]="!exercise"
@@ -109,112 +161,197 @@
                         }
                     </div>
                 </div>
-                <!-- action buttons -->
-                <div class="d-flex align-items-center">
-                    @if (!exercise.studentParticipations || !exercise.studentParticipations.length) {
-                        <div
-                            [ngbTooltip]="'artemisApp.editor.repoSelect.createAssignmentRepoDisabledTooltip' | artemisTranslate"
-                            [disableTooltip]="!isCreateAssignmentRepoDisabled"
-                            class="d-inline-block"
-                        >
-                            <button (click)="createAssignmentParticipation()" [disabled]="isCreateAssignmentRepoDisabled" class="btn btn-primary me-2">
-                                @if (loadingState !== LOADING_STATE.CREATING_ASSIGNMENT_REPO) {
-                                    <fa-icon [icon]="faPlus" class="text-white me-2" />
-                                } @else {
-                                    <fa-icon [icon]="faCircleNotch" animation="spin" class="text-white me-2" />
-                                }
-                                <span jhiTranslate="artemisApp.editor.repoSelect.createAssignmentRepo"></span>
-                            </button>
-                        </div>
-                    }
-                    @if (exercise.studentParticipations && exercise.studentParticipations.length && exercise.isAtLeastInstructor) {
-                        <button (click)="deleteAssignmentParticipation()" [disabled]="loadingState !== LOADING_STATE.CLEAR" class="btn btn-danger me-2">
-                            @if (loadingState !== LOADING_STATE.DELETING_ASSIGNMENT_REPO && loadingState !== LOADING_STATE.CREATING_ASSIGNMENT_REPO) {
-                                <fa-icon [icon]="faTimes" class="text-white me-2" />
-                            }
-                            @if (loadingState === LOADING_STATE.DELETING_ASSIGNMENT_REPO || loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO) {
-                                <fa-icon [icon]="faCircleNotch" animation="spin" class="text-white me-2" />
-                            }
-                            <span jhiTranslate="artemisApp.editor.repoSelect.deleteAssignmentRepo"></span>
-                        </button>
-                    }
-                    <!-- Hyperion Code Generation -->
-                    @if (hyperionEnabled) {
-                        <div class="btn-group me-2" ngbDropdown role="group" aria-label="AI Code Generation">
-                            @if (isGeneratingCode()) {
-                                <button class="btn btn-outline-primary" disabled>
+                <!-- Artemis Intelligence - Consolidated AI Actions -->
+                @if (hyperionEnabled) {
+                    <!-- Toolbar divider -->
+                    <div class="vr mx-2"></div>
+
+                    <div class="position-relative d-flex align-items-center">
+                        <div class="btn-group">
+                            <button
+                                #aiDropdownToggle
+                                class="ai-dropdown-toggle"
+                                pButton
+                                severity="primary"
+                                [outlined]="true"
+                                type="button"
+                                (click)="aiMenuPopover.toggle($event)"
+                                [disabled]="
+                                    isAiApplying() ||
+                                    isGeneratingCode() ||
+                                    isCheckingConsistency() ||
+                                    loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO ||
+                                    loadingState === LOADING_STATE.DELETING_ASSIGNMENT_REPO
+                                "
+                            >
+                                @if (
+                                    isAiApplying() ||
+                                    isGeneratingCode() ||
+                                    isCheckingConsistency() ||
+                                    loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO ||
+                                    loadingState === LOADING_STATE.DELETING_ASSIGNMENT_REPO
+                                ) {
                                     <fa-icon [icon]="faSpinner" animation="spin" />
-                                </button>
-                            } @else {
-                                <button class="btn btn-outline-primary" type="button" ngbDropdownToggle>
-                                    <fa-icon [icon]="facArtemisIntelligence" />
-                                    <span class="ms-2" jhiTranslate="artemisApp.programmingExercise.codeGeneration.creationAssistance">Creation Assistance</span>
-                                </button>
-                                <div class="dropdown-menu" ngbDropdownMenu>
-                                    <button
-                                        type="button"
-                                        class="dropdown-item"
-                                        (click)="generateCode()"
-                                        [disabled]="isGeneratingCode()"
-                                        jhiTranslate="artemisApp.programmingExercise.codeGeneration.generateCode"
-                                    >
-                                        Generate Code
-                                    </button>
-                                </div>
-                            }
-                        </div>
-                    }
-                    @if (exercise.isAtLeastInstructor && hyperionEnabled) {
-                        <div ngbDropdown class="btn-group me-2" [autoClose]="false">
-                            <!-- Main action: Check Consistency -->
-                            <button class="btn btn-primary" (click)="checkConsistencies(exercise)" [disabled]="isCheckingConsistency()">
-                                @if (isCheckingConsistency()) {
-                                    <fa-icon [icon]="faCircleNotch" animation="spin" class="text-white me-2" />
                                 } @else {
-                                    <fa-icon [icon]="faCheckDouble" class="text-white me-2" />
+                                    <fa-icon [icon]="facArtemisIntelligence" />
                                 }
-                                <span jhiTranslate="artemisApp.hyperion.consistencyCheck.button"></span>
+                                <span class="ms-2" jhiTranslate="artemisApp.programmingExercise.artemisIntelligence.title"></span>
+                                @if (consistencyIssues().length) {
+                                    <p-badge [value]="'' + consistencyIssues().length" severity="warn" class="ms-1" />
+                                }
                             </button>
+                            <p-popover #aiMenuPopover [dismissable]="true" styleClass="ai-dropdown-menu p-0">
+                                <div class="ai-menu-items">
+                                    <!-- AI Generation Actions -->
+                                    <button class="ai-menu-item" (click)="generateCode(); aiMenuPopover.hide()" [disabled]="isGeneratingCode()">
+                                        <fa-icon [icon]="facArtemisIntelligence" class="me-2" />
+                                        <span jhiTranslate="artemisApp.programmingExercise.codeGeneration.generateCode">Generate Code</span>
+                                    </button>
 
-                            <button class="btn btn-primary dropdown-toggle dropdown-toggle-split" ngbDropdownToggle [disabled]="!consistencyIssues().length"></button>
+                                    @if (exercise.isAtLeastEditor) {
+                                        <!-- Problem Statement Refinement -->
+                                        <button class="ai-menu-item" (click)="toggleRefinementPopover($event, aiDropdownToggle); aiMenuPopover.hide()" [disabled]="isAiApplying()">
+                                            <fa-icon [icon]="facArtemisIntelligence" class="me-2" />
+                                            <span
+                                                [jhiTranslate]="
+                                                    shouldShowGenerateButton()
+                                                        ? 'artemisApp.programmingExercise.problemStatement.generationAssistance'
+                                                        : 'artemisApp.programmingExercise.problemStatement.refinementAssistance'
+                                                "
+                                            ></span>
+                                        </button>
 
-                            <!-- Dropdown menu with issues -->
-                            <div ngbDropdownMenu class="px-0 py-1">
-                                @for (issue of sortedIssues(); track issue; let last = $last) {
-                                    <div class="dropdown-item dropdown-item-nohover d-flex align-items-center justify-content-between consistency-issue-item">
-                                        <div class="d-flex align-items-center consistency-issue-item__meta">
-                                            <fa-icon [icon]="getSeverityIcon(issue.severity)" [class]="getSeverityColor(issue.severity) + ' me-1'" />
-                                            <span [jhiTranslate]="'artemisApp.hyperion.consistencyCheck.category.' + issue.category"></span>
-                                        </div>
-
-                                        <!-- Right side: two arrow buttons -->
-                                        <div class="d-flex align-items-center consistency-issue-item__actions">
-                                            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1" (click)="onIssueNavigate(issue, -1, $event)">
-                                                <fa-icon [icon]="faArrowLeft" class="text-primary" />
+                                        <!-- Split Button for Consistency Check if issues exist -->
+                                        @if (consistencyIssues().length) {
+                                            <div class="d-flex w-100">
+                                                <button
+                                                    class="ai-menu-item flex-grow-1"
+                                                    (click)="checkConsistencies(exercise); aiMenuPopover.hide()"
+                                                    [disabled]="isCheckingConsistency()"
+                                                >
+                                                    <fa-icon [icon]="faCheckDouble" class="me-2" />
+                                                    <span jhiTranslate="artemisApp.hyperion.consistencyCheck.button"></span>
+                                                </button>
+                                                <div class="vr my-1"></div>
+                                                <button class="ai-menu-item flex-shrink-1 w-auto px-3" (click)="toggleConsistencyIssuesToolbar(); aiMenuPopover.hide()">
+                                                    <fa-icon [icon]="faTriangleExclamation" class="me-2 text-warning" />
+                                                    <span jhiTranslate="artemisApp.hyperion.consistencyCheck.issues"></span>
+                                                </button>
+                                            </div>
+                                        } @else {
+                                            <button class="ai-menu-item" (click)="checkConsistencies(exercise); aiMenuPopover.hide()" [disabled]="isCheckingConsistency()">
+                                                <fa-icon [icon]="faCheckDouble" class="me-2" />
+                                                <span jhiTranslate="artemisApp.hyperion.consistencyCheck.button"></span>
                                             </button>
-
-                                            <span class="text-primary small">
-                                                @if (selectedIssue === issue) {
-                                                    {{ locationIndex + 1 }}/{{ issue.relatedLocations.length }}
-                                                } @else {
-                                                    -/{{ issue.relatedLocations.length }}
-                                                }
-                                            </span>
-
-                                            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1" (click)="onIssueNavigate(issue, 1, $event)">
-                                                <fa-icon [icon]="faArrowRight" class="text-primary" />
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    @if (!last) {
-                                        <div class="dropdown-divider"></div>
+                                        }
                                     }
-                                }
-                            </div>
+                                </div>
+                            </p-popover>
                         </div>
-                    }
-                </div>
+
+                        @if (isGeneratingOrRefining()) {
+                            <button pButton type="button" severity="secondary" outlined class="ms-1" (click)="cancelAiOperation()">
+                                <fa-icon [icon]="faBan" class="me-1" />
+                                <span class="d-none d-sm-inline" jhiTranslate="entity.action.cancel"></span>
+                            </button>
+                        }
+
+                        <!-- Refinement Prompt Popover -->
+                        <!-- Prompt is intentionally preserved on dismiss so users don't lose typed text -->
+                        <p-popover #refinementPopover [dismissable]="true" [style]="{ width: 'min(32rem, 90vw)' }" styleClass="border-1 border-primary">
+                            <div class="d-flex justify-content-between align-items-center p-3 bg-primary text-primary-contrast fw-medium">
+                                <span
+                                    [jhiTranslate]="
+                                        shouldShowGenerateButton()
+                                            ? 'artemisApp.programmingExercise.problemStatement.generationAssistance'
+                                            : 'artemisApp.programmingExercise.problemStatement.refinementAssistance'
+                                    "
+                                ></span>
+                                <button pButton type="button" severity="secondary" text rounded (click)="refinementPopover.hide()" aria-label="Close">
+                                    <fa-icon [icon]="faTimes" />
+                                </button>
+                            </div>
+                            <div class="p-3">
+                                <textarea
+                                    [ngModel]="refinementPrompt()"
+                                    (ngModelChange)="refinementPrompt.set($event)"
+                                    pTextarea
+                                    class="refinement-textarea"
+                                    rows="5"
+                                    cdkTrapFocus
+                                    cdkTrapFocusAutoCapture
+                                    [attr.aria-label]="'artemisApp.programmingExercise.problemStatement.yourRequirements' | artemisTranslate"
+                                    [placeholder]="'artemisApp.programmingExercise.problemStatement.yourRequirements' | artemisTranslate"
+                                    [disabled]="isAiApplying()"
+                                    [attr.maxlength]="MAX_USER_PROMPT_LENGTH"
+                                ></textarea>
+                                <div class="text-end small mt-1" [class.text-danger]="isPromptNearLimit()" [class.text-muted]="!isPromptNearLimit()">
+                                    {{ refinementPrompt().length }}/{{ MAX_USER_PROMPT_LENGTH }}
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-end p-3 refinement-popup-footer">
+                                <button pButton type="button" size="small" [disabled]="!refinementPrompt().trim() || isAiApplying()" (click)="submitRefinement()">
+                                    <fa-icon [icon]="faPaperPlane" class="me-1" />
+                                    <span
+                                        [jhiTranslate]="
+                                            shouldShowGenerateButton()
+                                                ? 'artemisApp.programmingExercise.problemStatement.generate'
+                                                : 'artemisApp.programmingExercise.problemStatement.refine'
+                                        "
+                                    ></span>
+                                </button>
+                            </div>
+                        </p-popover>
+                    </div>
+                }
+
+                <!-- Consistency Issue Navigator Toolbar -->
+                @if (showConsistencyIssuesToolbar() && consistencyIssues().length) {
+                    <div class="btn-group ms-2">
+                        <button
+                            pButton
+                            type="button"
+                            severity="secondary"
+                            outlined
+                            (click)="navigateGlobal(-1)"
+                            [pTooltip]="'artemisApp.hyperion.consistencyCheck.prevIssue' | artemisTranslate"
+                            [attr.aria-label]="'artemisApp.hyperion.consistencyCheck.prevIssue' | artemisTranslate"
+                        >
+                            <fa-icon [icon]="faArrowLeft" />
+                        </button>
+                        <button pButton type="button" severity="secondary" outlined class="consistency-issue-nav-btn" disabled>
+                            @if (selectedIssue) {
+                                <fa-icon [icon]="getSeverityIcon(selectedIssue.severity)" [class]="getSeverityColor(selectedIssue.severity) + ' me-1'" />
+                                <span [jhiTranslate]="'artemisApp.hyperion.consistencyCheck.category.' + selectedIssue.category"></span>
+                                <span class="ms-1 fw-bold">({{ currentGlobalIndex }} / {{ totalLocationsCount() }})</span>
+                            } @else {
+                                <span jhiTranslate="artemisApp.hyperion.consistencyCheck.issues"></span>
+                            }
+                        </button>
+                        <button
+                            pButton
+                            type="button"
+                            severity="secondary"
+                            outlined
+                            (click)="navigateGlobal(1)"
+                            [pTooltip]="'artemisApp.hyperion.consistencyCheck.nextIssue' | artemisTranslate"
+                            [attr.aria-label]="'artemisApp.hyperion.consistencyCheck.nextIssue' | artemisTranslate"
+                        >
+                            <fa-icon [icon]="faArrowRight" />
+                        </button>
+                        <button
+                            pButton
+                            type="button"
+                            severity="secondary"
+                            outlined
+                            (click)="toggleConsistencyIssuesToolbar()"
+                            [pTooltip]="'artemisApp.hyperion.consistencyCheck.closeIssues' | artemisTranslate"
+                            [attr.aria-label]="'artemisApp.hyperion.consistencyCheck.closeIssues' | artemisTranslate"
+                        >
+                            <fa-icon [icon]="faTimes" />
+                        </button>
+                    </div>
+                }
             </div>
             <div editorToolbar class="ms-auto d-flex align-items-center">
                 @if (selectedParticipation && selectedRepository !== RepositoryType.TESTS) {
@@ -233,19 +370,68 @@
                     <jhi-programming-exercise-student-trigger-build-button [exercise]="exercise" [participation]="selectedParticipation!" [btnSize]="ButtonSize.MEDIUM" />
                 }
             </div>
-            <jhi-programming-exercise-editable-instructions
-                editorCenter
-                [(exercise)]="exercise"
-                [(participation)]="selectedParticipation!"
-                [templateParticipation]="exercise.templateParticipation!"
-                [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
-                [externalHeight]="true"
-                [enableResize]="false"
-                [showPreview]="false"
-                [consistencyIssues]="consistencyIssues()"
-                class="instructions-wrapper__content card-body p-0"
-                (instructionChange)="onInstructionChanged($event)"
-            />
+            <!-- Editable instructions with diff support -->
+            <div editorCenter class="d-flex flex-column h-100 instructions-wrapper__content card-body p-0">
+                @if (showDiff()) {
+                    <!-- Diff review banner -->
+                    <p-message severity="info" styleClass="w-100 mb-1" [closable]="false">
+                        <div class="d-flex flex-wrap align-items-center gap-2">
+                            <strong class="small" jhiTranslate="artemisApp.programmingExercise.problemStatement.reviewChanges"></strong>
+                            <span class="text-muted small" jhiTranslate="artemisApp.programmingExercise.problemStatement.reviewChangesDescription"></span>
+                            <button
+                                pButton
+                                type="button"
+                                severity="primary"
+                                size="small"
+                                [pTooltip]="'artemisApp.programmingExercise.diffReport.splitView.tooltip' | artemisTranslate"
+                                tooltipPosition="bottom"
+                                (click)="allowSplitView.set(!allowSplitView())"
+                            >
+                                <fa-icon [icon]="faTableColumns" class="me-1" />
+                                <span [jhiTranslate]="'artemisApp.programmingExercise.diffReport.splitView.' + (allowSplitView() ? 'disable' : 'enable')"></span>
+                            </button>
+                            <button pButton type="button" severity="secondary" size="small" [disabled]="isAiApplying() || isGeneratingCode()" (click)="revertAllRefinement()">
+                                <fa-icon [icon]="faBan" class="me-1" />
+                                <span jhiTranslate="artemisApp.programmingExercise.problemStatement.revertAll"></span>
+                            </button>
+                            <jhi-git-diff-line-stat
+                                class="fw-bold mx-1"
+                                [addedLineCount]="addedLineCount()"
+                                [removedLineCount]="removedLineCount()"
+                                [pTooltip]="'artemisApp.programmingExercise.problemStatement.diffLineStatTooltip' | artemisTranslate"
+                                tooltipPosition="bottom"
+                            />
+                            <button pButton type="button" severity="success" size="small" [disabled]="isAiApplying() || isGeneratingCode()" (click)="closeDiff()">
+                                <fa-icon [icon]="faSave" class="me-1" />
+                                <span jhiTranslate="artemisApp.programmingExercise.problemStatement.doneReviewing"></span>
+                            </button>
+                        </div>
+                    </p-message>
+                }
+                @if (isGeneratingOrRefining()) {
+                    <p-message severity="info" styleClass="w-100 mb-2" [closable]="false">
+                        <fa-icon [icon]="faSpinner" animation="spin" class="me-2" />
+                        <span jhiTranslate="artemisApp.programmingExercise.problemStatement.aiRefining"></span>
+                    </p-message>
+                }
+                <jhi-programming-exercise-editable-instructions
+                    [exercise]="exercise"
+                    [participation]="selectedParticipation!"
+                    [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
+                    [externalHeight]="true"
+                    [enableResize]="false"
+                    [showPreview]="false"
+                    [consistencyIssues]="consistencyIssues()"
+                    [enableExerciseReviewComments]="true"
+                    [isGeneratingOrRefining]="isGeneratingOrRefining()"
+                    [mode]="showDiff() ? 'diff' : 'normal'"
+                    [renderSideBySide]="allowSplitView()"
+                    (diffLineChange)="onDiffLineChange($event)"
+                    class="flex-grow-1 overflow-auto"
+                    (instructionChange)="onInstructionChanged($event)"
+                    (onProblemStatementSaved)="onProblemStatementSaved()"
+                />
+            </div>
             <!-- Preview-only component for right sidebar -->
             <jhi-programming-exercise-instructions
                 editorSidebar

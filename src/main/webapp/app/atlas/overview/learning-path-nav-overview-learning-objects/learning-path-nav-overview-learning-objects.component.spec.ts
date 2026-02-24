@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
@@ -7,8 +8,10 @@ import { LearningPathNavOverviewLearningObjectsComponent } from 'app/atlas/overv
 import { LearningObjectType, LearningPathNavigationObjectDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('LearningPathNavOverviewLearningObjectsComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: LearningPathNavOverviewLearningObjectsComponent;
     let fixture: ComponentFixture<LearningPathNavOverviewLearningObjectsComponent>;
     let learningPathApiService: LearningPathApiService;
@@ -42,7 +45,7 @@ describe('LearningPathNavOverviewLearningObjectsComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -54,7 +57,7 @@ describe('LearningPathNavOverviewLearningObjectsComponent', () => {
     });
 
     it('should load learning objects', async () => {
-        const getLearningPathCompetencyLearningObjectsSpy = jest.spyOn(learningPathApiService, 'getLearningPathCompetencyLearningObjects').mockResolvedValue(learningObjects);
+        const getLearningPathCompetencyLearningObjectsSpy = vi.spyOn(learningPathApiService, 'getLearningPathCompetencyLearningObjects').mockResolvedValue(learningObjects);
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -66,8 +69,8 @@ describe('LearningPathNavOverviewLearningObjectsComponent', () => {
 
     it('should show error message when loading learning objects fails', async () => {
         const error = 'Failed to load learning objects';
-        jest.spyOn(learningPathApiService, 'getLearningPathCompetencyLearningObjects').mockRejectedValue(error);
-        const alertServiceErrorSpy = jest.spyOn(alertService, 'error');
+        vi.spyOn(learningPathApiService, 'getLearningPathCompetencyLearningObjects').mockRejectedValue(error);
+        const alertServiceErrorSpy = vi.spyOn(alertService, 'error');
 
         await component.loadLearningObjects();
 
@@ -75,8 +78,8 @@ describe('LearningPathNavOverviewLearningObjectsComponent', () => {
     });
 
     it('should set isLoading correctly', async () => {
-        jest.spyOn(learningPathApiService, 'getLearningPathCompetencyLearningObjects').mockResolvedValue(learningObjects);
-        const isLoadingSpy = jest.spyOn(component.isLoading, 'set');
+        vi.spyOn(learningPathApiService, 'getLearningPathCompetencyLearningObjects').mockResolvedValue(learningObjects);
+        const isLoadingSpy = vi.spyOn(component.isLoading, 'set');
 
         await component.loadLearningObjects();
 

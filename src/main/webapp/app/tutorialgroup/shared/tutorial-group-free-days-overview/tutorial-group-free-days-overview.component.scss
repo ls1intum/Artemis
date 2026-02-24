@@ -1,0 +1,20 @@
+.list-group {
+    margin-bottom: 0;
+}
+
+.list-group-item {
+    padding: 0.625rem 0.75rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.date-text {
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+.reason-button {
+    white-space: nowrap;
+}

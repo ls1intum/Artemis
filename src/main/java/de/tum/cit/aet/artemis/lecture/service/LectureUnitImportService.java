@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
-import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureContentProcessingApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
@@ -41,16 +40,13 @@ public class LectureUnitImportService {
 
     private final SlideSplitterService slideSplitterService;
 
-    private final Optional<IrisLectureApi> irisLectureApi;
-
-    private final LectureContentProcessingApi contentProcessingApi;
+    private final Optional<LectureContentProcessingApi> contentProcessingApi;
 
     public LectureUnitImportService(LectureUnitRepository lectureUnitRepository, AttachmentRepository attachmentRepository, SlideSplitterService slideSplitterService,
-            Optional<IrisLectureApi> irisLectureApi, LectureContentProcessingApi contentProcessingApi) {
+            Optional<LectureContentProcessingApi> contentProcessingApi) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.slideSplitterService = slideSplitterService;
-        this.irisLectureApi = irisLectureApi;
         this.contentProcessingApi = contentProcessingApi;
     }
 
@@ -76,7 +72,7 @@ public class LectureUnitImportService {
         // Trigger full content processing for attachment video units
         // This will check for TUM Live playlist availability, generate transcriptions if possible, and ingest to Pyris
         lectureUnits.stream().filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit).map(lectureUnit -> (AttachmentVideoUnit) lectureUnit)
-                .forEach(contentProcessingApi::triggerProcessing);
+                .forEach(unit -> contentProcessingApi.ifPresent(api -> api.triggerProcessing(unit)));
     }
 
     /**

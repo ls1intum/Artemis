@@ -1,24 +1,25 @@
 package de.tum.cit.aet.artemis.iris.repository;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.dao.IrisChatSessionDAO;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 
 @Lazy
 @Repository
-@Profile(PROFILE_IRIS)
+@Conditional(IrisEnabled.class)
 public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChatSession, Long> {
 
     /**
@@ -91,4 +92,36 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
             WHERE s.id IN :sessionIds
             """)
     Set<IrisChatSession> findAllWithMessagesByIds(@Param("sessionIds") Collection<Long> sessionIds);
+
+    /**
+     * Counts the number of chat sessions for a given user.
+     *
+     * @param userId the ID of the user
+     * @return the number of chat sessions
+     */
+    long countByUserId(long userId);
+
+    /**
+     * Counts the total number of messages across all chat sessions for a given user.
+     *
+     * @param userId the ID of the user
+     * @return the total number of messages
+     */
+    @Query("""
+            SELECT COUNT(m)
+            FROM IrisChatSession s
+                JOIN s.messages m
+            WHERE s.userId = :userId
+            """)
+    long countMessagesByUserId(@Param("userId") long userId);
+
+    /**
+     * Deletes all chat sessions for a given user.
+     * Messages and their content are removed via cascade (CascadeType.ALL + orphanRemoval on IrisSession.messages).
+     *
+     * @param userId the ID of the user whose sessions should be deleted
+     */
+    @Modifying
+    @Transactional // ok because of delete
+    void deleteAllByUserId(long userId);
 }

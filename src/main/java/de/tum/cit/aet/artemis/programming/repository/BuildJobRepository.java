@@ -117,6 +117,17 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
 
     Optional<BuildJob> findByBuildJobId(String buildJobId);
 
+    /**
+     * Finds a build job by its build job ID with all related data eagerly fetched.
+     * This includes the result, submission, participation, and exercise relationships
+     * needed to convert the entity to a DTO without lazy initialization issues.
+     *
+     * @param buildJobId the unique build job identifier
+     * @return an Optional containing the build job with all related data, or empty if not found
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "result", "result.submission", "result.submission.participation", "result.submission.participation.exercise" })
+    Optional<BuildJob> findWithDataByBuildJobId(String buildJobId);
+
     default BuildJob findByBuildJobIdElseThrow(String buildJobId) {
         return getValueElseThrow(findByBuildJobId(buildJobId));
     }

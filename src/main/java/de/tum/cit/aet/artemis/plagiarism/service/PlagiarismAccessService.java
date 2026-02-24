@@ -37,8 +37,8 @@ public class PlagiarismAccessService {
      * A student should not see both answers from both students for the comparison before the due date
      *
      * @param submissionId  the id of the submission to check.
-     * @param userLogin     the user login of the student asking to see his plagiarism comparison.
-     * @param participation the participation of the student asking to see his plagiarism comparison.
+     * @param userLogin     the user login of the student asking to see their plagiarism comparison.
+     * @param participation the participation of the student asking to see their plagiarism comparison.
      * @return true is the user has access to the submission
      */
     public boolean hasAccessToSubmission(Long submissionId, String userLogin, Participation participation) {

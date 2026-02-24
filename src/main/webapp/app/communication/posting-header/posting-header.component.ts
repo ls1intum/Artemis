@@ -172,7 +172,7 @@ export class PostingHeaderComponent implements OnInit, OnChanges {
 
     /**
      * Emits the event to open a user profile or direct chat when the author's name is clicked,
-     * unless the user is the author himself or role is missing
+     * unless the user is the author themself or role is missing
      */
     protected userNameClicked() {
         if (this.isAuthorOfPosting || !this.posting()?.authorRole) {

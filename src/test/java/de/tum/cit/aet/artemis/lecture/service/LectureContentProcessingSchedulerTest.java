@@ -55,6 +55,8 @@ class LectureContentProcessingSchedulerTest {
 
         // Enable the feature toggle by default
         when(featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)).thenReturn(true);
+        // Enable processing capabilities by default for retry tests
+        when(processingService.hasProcessingCapabilities()).thenReturn(true);
 
         scheduler = new LectureContentProcessingScheduler(processingStateRepository, attachmentVideoUnitRepository, processingService, featureToggleService);
 

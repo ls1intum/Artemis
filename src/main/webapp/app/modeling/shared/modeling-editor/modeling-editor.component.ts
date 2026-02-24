@@ -122,6 +122,9 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
             });
 
             this.modelSubscription = this.apollonEditor.subscribeToModelChange((model: UMLModel) => {
+                if (this.isDestroyed) {
+                    return;
+                }
                 this.onModelChanged.emit(model);
             });
 

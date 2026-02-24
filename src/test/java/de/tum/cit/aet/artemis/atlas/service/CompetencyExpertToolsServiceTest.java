@@ -44,7 +44,7 @@ class CompetencyExpertToolsServiceTest {
     private CourseTestRepository courseRepository;
 
     @Mock
-    private AtlasAgentService atlasAgentService;
+    private AtlasAgentSessionCacheService sessionCacheService;
 
     private ObjectMapper objectMapper;
 
@@ -57,7 +57,7 @@ class CompetencyExpertToolsServiceTest {
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper();
-        competencyExpertToolsService = new CompetencyExpertToolsService(objectMapper, competencyRepository, courseRepository, atlasAgentService);
+        competencyExpertToolsService = new CompetencyExpertToolsService(objectMapper, competencyRepository, courseRepository, sessionCacheService);
 
         // Setup test course
         testCourse = new Course();
@@ -453,11 +453,11 @@ class CompetencyExpertToolsServiceTest {
     class GetLastPreviewedCompetency {
 
         @Mock
-        private AtlasAgentService mockAtlasAgentService;
+        private AtlasAgentSessionCacheService mockSessionCacheService;
 
         @Test
         void shouldReturnErrorWhenNoActiveSession() throws JsonProcessingException {
-            CompetencyExpertToolsService service = new CompetencyExpertToolsService(objectMapper, competencyRepository, courseRepository, mockAtlasAgentService);
+            CompetencyExpertToolsService service = new CompetencyExpertToolsService(objectMapper, competencyRepository, courseRepository, mockSessionCacheService);
 
             // Don't set any session ID
             CompetencyExpertToolsService.clearCurrentSessionId();
@@ -472,12 +472,12 @@ class CompetencyExpertToolsServiceTest {
 
         @Test
         void shouldReturnErrorWhenNoPreviewedDataExists() throws JsonProcessingException {
-            CompetencyExpertToolsService service = new CompetencyExpertToolsService(objectMapper, competencyRepository, courseRepository, mockAtlasAgentService);
+            CompetencyExpertToolsService service = new CompetencyExpertToolsService(objectMapper, competencyRepository, courseRepository, mockSessionCacheService);
 
             String sessionId = "test_session";
             CompetencyExpertToolsService.setCurrentSessionId(sessionId);
 
-            when(mockAtlasAgentService.getCachedPendingCompetencyOperations(sessionId)).thenReturn(null);
+            when(mockSessionCacheService.getCachedPendingCompetencyOperations(sessionId)).thenReturn(null);
 
             String result = service.getLastPreviewedCompetency(123L);
 
@@ -491,14 +491,14 @@ class CompetencyExpertToolsServiceTest {
 
         @Test
         void shouldReturnCachedDataWhenAvailable() throws JsonProcessingException {
-            CompetencyExpertToolsService service = new CompetencyExpertToolsService(objectMapper, competencyRepository, courseRepository, mockAtlasAgentService);
+            CompetencyExpertToolsService service = new CompetencyExpertToolsService(objectMapper, competencyRepository, courseRepository, mockSessionCacheService);
 
             String sessionId = "test_session";
             CompetencyExpertToolsService.setCurrentSessionId(sessionId);
 
             List<CompetencyOperation> cachedData = List.of(new CompetencyOperation(null, "Cached Competency", "Description", CompetencyTaxonomy.APPLY));
 
-            when(mockAtlasAgentService.getCachedPendingCompetencyOperations(sessionId)).thenReturn(cachedData);
+            when(mockSessionCacheService.getCachedPendingCompetencyOperations(sessionId)).thenReturn(cachedData);
 
             String result = service.getLastPreviewedCompetency(123L);
 

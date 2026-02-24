@@ -20,9 +20,10 @@
         "archiver": "7.0.1"
     },
     "scripts": {
-        "playwright:test": "cross-env NODE_OPTIONS='--max-old-space-size=8192' npm-run-all --serial --continue-on-error playwright:test:parallel playwright:test:sequential merge-junit-reports merge-coverage-reports",
+        "playwright:test": "cross-env npm-run-all --serial --continue-on-error playwright:test:parallel playwright:test:sequential merge-junit-reports merge-coverage-reports",
         "playwright:test:parallel": "cross-env PLAYWRIGHT_TEST_TYPE=parallel playwright test e2e --project=fast-tests --project=slow-tests",
         "playwright:test:sequential": "cross-env PLAYWRIGHT_TEST_TYPE=sequential playwright test e2e --project=sequential-tests --workers 1",
+        "playwright:test:filtered": "cross-env bash ./run-tests.sh",
         "playwright:open": "playwright test e2e --ui",
         "playwright:setup": "npx playwright install --with-deps chromium && playwright test init",
         "playwright:setup-local": "npx playwright install --with-deps chromium",

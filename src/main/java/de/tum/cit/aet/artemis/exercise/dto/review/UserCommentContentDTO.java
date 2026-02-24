@@ -1,0 +1,13 @@
+package de.tum.cit.aet.artemis.exercise.dto.review;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@Schema(description = "Content for a user-provided review comment.")
+public record UserCommentContentDTO(@Schema(description = "Comment text supplied by the reviewer.") @NotBlank @Size(max = 10000) String text) implements CommentContentDTO {
+}

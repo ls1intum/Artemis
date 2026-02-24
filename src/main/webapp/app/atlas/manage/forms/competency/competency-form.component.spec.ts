@@ -1,5 +1,6 @@
+import { vi } from 'vitest';
 import { HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Competency, CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
@@ -17,8 +18,10 @@ import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker'
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CompetencyFormComponent', () => {
+    setupTestBed({ zoneless: true });
     let competencyFormComponentFixture: ComponentFixture<CompetencyFormComponent>;
     let competencyFormComponent: CompetencyFormComponent;
 
@@ -28,12 +31,16 @@ describe('CompetencyFormComponent', () => {
         TestBed.configureTestingModule({
             imports: [OwlNativeDateTimeModule, CommonCourseCompetencyFormComponent, MockComponent(MarkdownEditorMonacoComponent)],
             declarations: [],
-            providers: [MockProvider(CourseCompetencyService), MockProvider(LectureUnitService), { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                MockProvider(CourseCompetencyService, {
+                    getCourseCompetencyTitles: () => of(new HttpResponse({ body: [] })),
+                }),
+                MockProvider(LectureUnitService),
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         }).compileComponents();
 
-        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
-            return new MockResizeObserver(callback);
-        });
+        globalThis.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
         competencyFormComponentFixture = TestBed.createComponent(CompetencyFormComponent);
         competencyFormComponent = competencyFormComponentFixture.componentInstance;
         competencyFormComponentFixture.componentRef.setInput('competency', new Competency());
@@ -42,7 +49,7 @@ describe('CompetencyFormComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -50,49 +57,53 @@ describe('CompetencyFormComponent', () => {
         expect(competencyFormComponent).toBeDefined();
     });
 
-    it('should submit valid form', fakeAsync(() => {
-        // stubbing competency service for asynchronous validator
-        const courseCompetencyService = TestBed.inject(CourseCompetencyService);
-        const getAllTitlesSpy = jest.spyOn(courseCompetencyService, 'getCourseCompetencyTitles').mockReturnValue(of(new HttpResponse({ body: ['test'], status: 200 })));
+    it('should submit valid form', () => {
+        vi.useFakeTimers();
+        try {
+            // stubbing competency service for asynchronous validator
+            const courseCompetencyService = TestBed.inject(CourseCompetencyService);
+            const getAllTitlesSpy = vi.spyOn(courseCompetencyService, 'getCourseCompetencyTitles').mockReturnValue(of(new HttpResponse({ body: ['test'], status: 200 })));
 
-        const competencyOfResponse: Competency = { id: 1, title: 'test' };
+            const competencyOfResponse: Competency = { id: 1, title: 'test' };
 
-        const response: HttpResponse<Competency[]> = new HttpResponse({
-            body: [competencyOfResponse],
-            status: 200,
-        });
+            const response: HttpResponse<Competency[]> = new HttpResponse({
+                body: [competencyOfResponse],
+                status: 200,
+            });
 
-        jest.spyOn(courseCompetencyService, 'getAllForCourse').mockReturnValue(of(response));
+            vi.spyOn(courseCompetencyService, 'getAllForCourse').mockReturnValue(of(response));
 
-        competencyFormComponentFixture.detectChanges();
+            competencyFormComponentFixture.detectChanges();
 
-        const exampleTitle = 'uniqueName';
-        competencyFormComponent.titleControl!.setValue(exampleTitle);
-        const exampleDescription = 'lorem ipsum';
-        competencyFormComponent.descriptionControl!.setValue(exampleDescription);
-        const exampleLectureUnit = new TextUnit();
-        exampleLectureUnit.id = 1;
+            const exampleTitle = 'uniqueName';
+            competencyFormComponent.titleControl!.setValue(exampleTitle);
+            const exampleDescription = 'lorem ipsum';
+            competencyFormComponent.descriptionControl!.setValue(exampleDescription);
+            const exampleLectureUnit = new TextUnit();
+            exampleLectureUnit.id = 1;
 
-        const exampleLecture = new Lecture();
-        exampleLecture.id = 1;
-        exampleLecture.lectureUnits = [exampleLectureUnit];
+            const exampleLecture = new Lecture();
+            exampleLecture.id = 1;
+            exampleLecture.lectureUnits = [exampleLectureUnit];
 
-        competencyFormComponentFixture.detectChanges();
-        tick(250); // async validator fires after 250ms and fully filled in form should now be valid!
-        expect(competencyFormComponent.form.valid).toBeTrue();
-        expect(getAllTitlesSpy).toHaveBeenCalledOnce();
-        const submitFormSpy = jest.spyOn(competencyFormComponent, 'submitForm');
-        const submitFormEventSpy = jest.spyOn(competencyFormComponent.formSubmitted, 'emit');
+            competencyFormComponentFixture.detectChanges();
+            vi.advanceTimersByTime(250); // async validator fires after 250ms and fully filled in form should now be valid!
+            expect(competencyFormComponent.form.valid).toBeTruthy();
+            expect(getAllTitlesSpy).toHaveBeenCalledOnce();
+            const submitFormSpy = vi.spyOn(competencyFormComponent, 'submitForm');
+            const submitFormEventSpy = vi.spyOn(competencyFormComponent.formSubmitted, 'emit');
 
-        const submitButton = competencyFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
-        submitButton.click();
-        competencyFormComponentFixture.detectChanges();
+            const submitButton = competencyFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
+            submitButton.click();
+            competencyFormComponentFixture.detectChanges();
 
-        flush();
-        expect(submitFormSpy).toHaveBeenCalledOnce();
-        expect(submitFormEventSpy).toHaveBeenCalledOnce();
-        discardPeriodicTasks();
-    }));
+            vi.runOnlyPendingTimers();
+            expect(submitFormSpy).toHaveBeenCalledOnce();
+            expect(submitFormEventSpy).toHaveBeenCalledOnce();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
 
     it('should correctly set form values in edit mode', () => {
         competencyFormComponentFixture.componentRef.setInput('isEditMode', true);
@@ -120,7 +131,7 @@ describe('CompetencyFormComponent', () => {
         competencyFormComponentFixture.detectChanges();
 
         const commonCourseCompetencyFormComponent = competencyFormComponentFixture.debugElement.query(By.directive(CommonCourseCompetencyFormComponent)).componentInstance;
-        const suggestTaxonomySpy = jest.spyOn(commonCourseCompetencyFormComponent, 'suggestTaxonomies');
+        const suggestTaxonomySpy = vi.spyOn(commonCourseCompetencyFormComponent, 'suggestTaxonomies');
         const translateSpy = createTranslateSpy();
 
         const titleInput = competencyFormComponentFixture.nativeElement.querySelector('#title');
@@ -139,7 +150,7 @@ describe('CompetencyFormComponent', () => {
         competencyFormComponentFixture.detectChanges();
 
         const commonCourseCompetencyFormComponent = competencyFormComponentFixture.debugElement.query(By.directive(CommonCourseCompetencyFormComponent)).componentInstance;
-        const suggestTaxonomySpy = jest.spyOn(commonCourseCompetencyFormComponent, 'suggestTaxonomies');
+        const suggestTaxonomySpy = vi.spyOn(commonCourseCompetencyFormComponent, 'suggestTaxonomies');
         const translateSpy = createTranslateSpy();
 
         competencyFormComponent.updateDescriptionControl('Building a tool: create a plan and implement something!');
@@ -152,35 +163,38 @@ describe('CompetencyFormComponent', () => {
         ]);
     });
 
-    it('validator should verify title is unique', fakeAsync(() => {
-        const existingTitles = ['nameExisting'];
-        const courseCompetencyService = TestBed.inject(CourseCompetencyService);
-        jest.spyOn(courseCompetencyService, 'getCourseCompetencyTitles').mockReturnValue(of(new HttpResponse({ body: existingTitles, status: 200 })));
-        competencyFormComponentFixture.componentRef.setInput('isEditMode', true);
-        competencyFormComponentFixture.componentRef.setInput('formData', { title: 'initialName' } as CourseCompetencyFormData);
-        competencyFormComponentFixture.detectChanges();
+    it('validator should verify title is unique', () => {
+        vi.useFakeTimers();
+        try {
+            const existingTitles = ['nameExisting'];
+            const courseCompetencyService = TestBed.inject(CourseCompetencyService);
+            vi.spyOn(courseCompetencyService, 'getCourseCompetencyTitles').mockReturnValue(of(new HttpResponse({ body: existingTitles, status: 200 })));
+            competencyFormComponentFixture.componentRef.setInput('isEditMode', true);
+            competencyFormComponentFixture.componentRef.setInput('formData', { title: 'initialName' } as CourseCompetencyFormData);
+            competencyFormComponentFixture.detectChanges();
 
-        const titleControl = competencyFormComponent.titleControl!;
-        tick(250);
-        expect(titleControl.errors?.titleUnique).toBeUndefined();
+            const titleControl = competencyFormComponent.titleControl!;
+            vi.advanceTimersByTime(250);
+            expect(titleControl.errors?.titleUnique).toBeUndefined();
 
-        titleControl.setValue('anotherName');
-        tick(250);
-        expect(titleControl.errors?.titleUnique).toBeUndefined();
+            titleControl.setValue('anotherName');
+            vi.advanceTimersByTime(250);
+            expect(titleControl.errors?.titleUnique).toBeUndefined();
 
-        titleControl.setValue('');
-        tick(250);
-        expect(titleControl.errors?.titleUnique).toBeUndefined();
+            titleControl.setValue('');
+            vi.advanceTimersByTime(250);
+            expect(titleControl.errors?.titleUnique).toBeUndefined();
 
-        titleControl.setValue('nameExisting');
-        tick(250);
-        expect(titleControl.errors?.titleUnique).toBeDefined();
-        flush();
-        discardPeriodicTasks();
-    }));
+            titleControl.setValue('nameExisting');
+            vi.advanceTimersByTime(250);
+            expect(titleControl.errors?.titleUnique).toBeDefined();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
 
     function createTranslateSpy() {
-        return jest.spyOn(translateService, 'instant').mockImplementation((key) => {
+        return vi.spyOn(translateService, 'instant').mockImplementation((key) => {
             switch (key) {
                 case 'artemisApp.courseCompetency.keywords.REMEMBER':
                     return 'Something';

@@ -103,7 +103,7 @@ describe('Course Management Detail Component', () => {
     });
 
     it('should make iris settings call when instructor', async () => {
-        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: ['iris'] } as ProfileInfo);
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeModuleFeatures: ['iris'] } as ProfileInfo);
         courseDataSubject.next({ course: { ...course, isAtLeastInstructor: true } });
         const irisSpy = vi
             .spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit')
@@ -113,7 +113,7 @@ describe('Course Management Detail Component', () => {
     });
 
     it('should not make iris settings call when not instructor', async () => {
-        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: ['iris'] } as ProfileInfo);
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeModuleFeatures: ['iris'] } as ProfileInfo);
         courseDataSubject.next({ course: { ...course, isAtLeastEditor: true } });
         const irisSpy = vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit');
         await component.ngOnInit();
