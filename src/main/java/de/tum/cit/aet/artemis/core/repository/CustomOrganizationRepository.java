@@ -9,6 +9,9 @@ import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDT
  * Custom repository fragment for Organization entities with advanced querying
  * capabilities
  */
+@Profile(PROFILE_CORE)
+@Lazy
+@Repository
 public interface CustomOrganizationRepository {
 
     /**
