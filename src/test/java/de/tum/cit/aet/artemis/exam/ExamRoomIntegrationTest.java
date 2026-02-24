@@ -340,31 +340,31 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
     void testDeleteOutdatedAndUnusedExamRoomsAsStudent() throws Exception {
-        request.delete("/api/exam/rooms/outdated-and-unused", HttpStatus.FORBIDDEN);
+        request.delete("/api/exam/rooms/admin/outdated-and-unused", HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
     void testDeleteOutdatedAndUnusedExamRoomsAsTutor() throws Exception {
-        request.delete("/api/exam/rooms/outdated-and-unused", HttpStatus.FORBIDDEN);
+        request.delete("/api/exam/rooms/admin/outdated-and-unused", HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
     void testDeleteOutdatedAndUnusedExamRoomsAsEditor() throws Exception {
-        request.delete("/api/exam/rooms/outdated-and-unused", HttpStatus.FORBIDDEN);
+        request.delete("/api/exam/rooms/admin/outdated-and-unused", HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
     void testDeleteOutdatedAndUnusedExamRoomsAsInstructor() throws Exception {
-        request.delete("/api/exam/rooms/outdated-and-unused", HttpStatus.FORBIDDEN);
+        request.delete("/api/exam/rooms/admin/outdated-and-unused", HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testDeleteOutdatedAndUnusedExamRoomsAsAdmin() throws Exception {
-        request.delete("/api/exam/rooms/outdated-and-unused", HttpStatus.OK);
+        request.delete("/api/exam/rooms/admin/outdated-and-unused", HttpStatus.OK);
     }
 
     private void validateDeletionSummary(ExamRoomDeletionSummaryDTO deletionSummary, int expectedNumberOfDeletedRooms) {
@@ -375,7 +375,7 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testDeleteOutdatedAndUnusedExamRoomsEmpty() throws Exception {
-        var deletionSummary = request.delete("/api/exam/rooms/outdated-and-unused", new LinkedMultiValueMap<>(), null, ExamRoomDeletionSummaryDTO.class, HttpStatus.OK);
+        var deletionSummary = request.delete("/api/exam/rooms/admin/outdated-and-unused", new LinkedMultiValueMap<>(), null, ExamRoomDeletionSummaryDTO.class, HttpStatus.OK);
 
         validateDeletionSummary(deletionSummary, 0);
         validateDbStoredElementCounts(0, 0, 0);
@@ -387,7 +387,7 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         request.postMultipartFileOnly("/api/exam/rooms/upload", ExamRoomZipFiles.zipFileRealisticScenario, HttpStatus.OK);
         assertThat(examRoomRepository.count()).isPositive();
 
-        var deletionSummary = request.delete("/api/exam/rooms/outdated-and-unused", new LinkedMultiValueMap<>(), null, ExamRoomDeletionSummaryDTO.class, HttpStatus.OK);
+        var deletionSummary = request.delete("/api/exam/rooms/admin/outdated-and-unused", new LinkedMultiValueMap<>(), null, ExamRoomDeletionSummaryDTO.class, HttpStatus.OK);
         validateDeletionSummary(deletionSummary, 0);
         validateDbStoredElementCounts(59, 14_589, 212);
     }
@@ -402,7 +402,7 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         assertThat(examRoomRepository.count()).isPositive();
 
-        var deletionSummary = request.delete("/api/exam/rooms/outdated-and-unused", new LinkedMultiValueMap<>(), null, ExamRoomDeletionSummaryDTO.class, HttpStatus.OK);
+        var deletionSummary = request.delete("/api/exam/rooms/admin/outdated-and-unused", new LinkedMultiValueMap<>(), null, ExamRoomDeletionSummaryDTO.class, HttpStatus.OK);
         validateDeletionSummary(deletionSummary, 59 * (ITERATIONS - 1));
         validateDbStoredElementCounts(59, 14_589, 212);
     }

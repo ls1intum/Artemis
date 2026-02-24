@@ -33,6 +33,6 @@ export class ExamRoomsService {
      * each room, this also keeps all versions that are (still) being connected to an exam.
      */
     deleteOutdatedAndUnusedExamRooms(): Observable<HttpResponse<ExamRoomDeletionSummaryDTO>> {
-        return this.http.delete<ExamRoomDeletionSummaryDTO>(`${this.baseUrl}/outdated-and-unused`, { observe: 'response' });
+        return this.http.delete<ExamRoomDeletionSummaryDTO>(`${this.baseUrl}/admin/outdated-and-unused`, { observe: 'response' });
     }
 }

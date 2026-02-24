@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.exam.web.ExamRoomManagementResource;
 @EnforceAdmin
 @Lazy
 @RestController
-@RequestMapping("api/exam/admin/")
+@RequestMapping("api/exam/rooms/admin/")
 public class AdminExamRoomManagementResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminExamRoomManagementResource.class);

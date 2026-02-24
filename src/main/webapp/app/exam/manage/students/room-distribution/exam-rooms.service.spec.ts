@@ -114,7 +114,7 @@ describe('ExamRoomsService', () => {
                 expect(response.body?.numberOfDeletedExamRooms).toBe(15);
             });
 
-            const req = httpMock.expectOne('api/exam/rooms/outdated-and-unused');
+            const req = httpMock.expectOne('api/exam/rooms/admin/outdated-and-unused');
             expect(req.request.method).toBe('DELETE');
             req.flush(mockResponse);
         });
@@ -128,7 +128,7 @@ describe('ExamRoomsService', () => {
                 expect(response.body?.numberOfDeletedExamRooms).toBe(0);
             });
 
-            const req = httpMock.expectOne('api/exam/rooms/outdated-and-unused');
+            const req = httpMock.expectOne('api/exam/rooms/admin/outdated-and-unused');
             req.flush(mockResponse);
         });
     });
