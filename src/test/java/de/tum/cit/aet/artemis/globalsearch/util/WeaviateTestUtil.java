@@ -84,7 +84,7 @@ public final class WeaviateTestUtil {
         assertThat(properties).as("Exercise %d should exist in Weaviate", exercise.getId()).isNotNull();
 
         assertThat(properties.get(ExerciseSchema.Properties.TITLE)).isEqualTo(exercise.getTitle());
-        assertThat(properties.get(ExerciseSchema.Properties.EXERCISE_TYPE)).isEqualTo(exercise.getType());
+        assertThat(properties.get(ExerciseSchema.Properties.EXERCISE_TYPE)).isEqualTo(exercise.getExerciseType().name());
         assertThat(((Number) properties.get(ExerciseSchema.Properties.EXERCISE_ID)).longValue()).isEqualTo(exercise.getId());
 
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
