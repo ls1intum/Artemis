@@ -132,7 +132,8 @@ jobs:
           check-name: "Phase 1: E2E Test Report"
           commit-sha: ${{ github.event.workflow_run.head_sha }}
 
-      - name: Post E2E comment (Phase 1)
+      - name: Find PR number
+        id: find-pr
         if: (success() || failure()) && github.event.workflow_run.event == 'pull_request'
         uses: actions/github-script@v8
         continue-on-error: true
@@ -147,9 +148,43 @@ jobs:
             });
             if (!prs.length) {
               console.log(`No open PR found for branch ${branch}`);
-              return;
+              return '';
             }
-            const prNumber = prs[0].number;
+            return String(prs[0].number);
+
+      - name: Find existing E2E comment
+        id: find-comment
+        if: (success() || failure()) && steps.find-pr.outputs.result != ''
+        uses: actions/github-script@v8
+        continue-on-error: true
+        with:
+          script: |
+            const prNumber = Number('${{ steps.find-pr.outputs.result }}');
+            const marker = '<!-- E2E Test Results -->';
+            const MAX_PAGES = 50;
+            for (let page = 1; page <= MAX_PAGES; page++) {
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                per_page: 100,
+                page: page
+              });
+              if (!comments.length) break;
+              const found = comments.find(c => c.body && c.body.includes(marker));
+              if (found) return String(found.id);
+            }
+            return '';
+
+      - name: Post E2E comment (Phase 1)
+        if: (success() || failure()) && github.event.workflow_run.event == 'pull_request'
+        uses: actions/github-script@v8
+        continue-on-error: true
+        with:
+          script: |
+            const prNumber = Number('${{ steps.find-pr.outputs.result }}');
+            if (!prNumber) return;
+            const existingCommentId = Number('${{ steps.find-comment.outputs.result }}') || null;
 
             const testOutcome = '${{ steps.run-tests-phase1.outcome }}';
             const jobStatus = '${{ job.status }}';
@@ -186,32 +221,23 @@ jobs:
             body += `\n\n**Test Strategy:** Two-phase execution\n`;
             body += `- **Phase 1:** \`${relevantTests}\`\n`;
             body += `- **Phase 2:** \`${remainingTests || 'None'}\`\n`;
+            // <!-- OVERALL --> is a multi-step placeholder with a defined lifecycle:
+            //   1. Phase 1 (here): inserts the marker as a placeholder.
+            //   2. Phase 2 (run-e2e-remaining): if notes exist, prepends them *before* the
+            //      marker (keeping it intact) so the next step can still find it.
+            //   3. report-results job: replaces the marker with the final overall status line.
             body += `<!-- OVERALL -->\n\n`;
             body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\n`;
             body += `<!-- E2E Test Results -->`;
 
-            const marker = '<!-- E2E Test Results -->';
-            let existing = null;
-            for (let page = 1; !existing; page++) {
-              const { data: comments } = await github.rest.issues.listComments({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: prNumber,
-                per_page: 100,
-                page: page
-              });
-              if (!comments.length) break;
-              existing = comments.find(c => c.body && c.body.includes(marker));
-            }
-
-            if (existing) {
+            if (existingCommentId) {
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                comment_id: existing.id,
+                comment_id: existingCommentId,
                 body: body
               });
-              console.log(`Updated existing comment ${existing.id}`);
+              console.log(`Updated existing comment ${existingCommentId}`);
             } else {
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
@@ -296,7 +322,8 @@ jobs:
           check-name: "Phase 2: E2E Test Report"
           commit-sha: ${{ github.event.workflow_run.head_sha }}
 
-      - name: Update E2E comment (Phase 2)
+      - name: Find PR number
+        id: find-pr
         if: (success() || failure()) && github.event.workflow_run.event == 'pull_request'
         uses: actions/github-script@v8
         continue-on-error: true
@@ -311,9 +338,43 @@ jobs:
             });
             if (!prs.length) {
               console.log(`No open PR found for branch ${branch}`);
-              return;
+              return '';
             }
-            const prNumber = prs[0].number;
+            return String(prs[0].number);
+
+      - name: Find existing E2E comment
+        id: find-comment
+        if: (success() || failure()) && steps.find-pr.outputs.result != ''
+        uses: actions/github-script@v8
+        continue-on-error: true
+        with:
+          script: |
+            const prNumber = Number('${{ steps.find-pr.outputs.result }}');
+            const marker = '<!-- E2E Test Results -->';
+            const MAX_PAGES = 50;
+            for (let page = 1; page <= MAX_PAGES; page++) {
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                per_page: 100,
+                page: page
+              });
+              if (!comments.length) break;
+              const found = comments.find(c => c.body && c.body.includes(marker));
+              if (found) return String(found.id);
+            }
+            return '';
+
+      - name: Update E2E comment (Phase 2)
+        if: (success() || failure()) && github.event.workflow_run.event == 'pull_request'
+        uses: actions/github-script@v8
+        continue-on-error: true
+        with:
+          script: |
+            const prNumber = Number('${{ steps.find-pr.outputs.result }}');
+            if (!prNumber) return;
+            const existingCommentId = Number('${{ steps.find-comment.outputs.result }}') || null;
 
             const testOutcome = '${{ steps.run-tests-phase2.outcome }}';
             const jobStatus = '${{ job.status }}';
@@ -336,36 +397,32 @@ jobs:
               infraNote = '\n\n> ⚠️ **Note:** Tests passed but the job encountered an infrastructure issue (e.g., artifact upload failure). See the workflow run linked below for details.';
             }
 
-            const marker = '<!-- E2E Test Results -->';
-            let existing = null;
-            for (let page = 1; !existing; page++) {
-              const { data: comments } = await github.rest.issues.listComments({
+            if (existingCommentId) {
+              let body = (await github.rest.issues.getComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: prNumber,
-                per_page: 100,
-                page: page
-              });
-              if (!comments.length) break;
-              existing = comments.find(c => c.body && c.body.includes(marker));
-            }
+                comment_id: existingCommentId
+              })).data.body;
 
-            if (existing) {
-              let body = existing.body;
               // Replace Phase 2 placeholder with actual results
               body = body.replace(/<!-- PHASE2 -->.*<!-- \/PHASE2 -->/s, phase2Row);
-              // Add notes if needed
+
+              // If there are Phase 2 notes, insert them before <!-- OVERALL --> while keeping
+              // the marker intact. The report-results job will later replace <!-- OVERALL -->
+              // with the final overall status line (see the <!-- OVERALL --> lifecycle comment
+              // in the Phase 1 step).
               const notes = reporterNote + infraNote;
               if (notes) {
                 body = body.replace('<!-- OVERALL -->', notes + '\n<!-- OVERALL -->');
               }
+
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                comment_id: existing.id,
+                comment_id: existingCommentId,
                 body: body
               });
-              console.log(`Updated comment ${existing.id} with Phase 2 results`);
+              console.log(`Updated comment ${existingCommentId} with Phase 2 results`);
             } else {
               // Fallback: create new comment if Phase 1 comment not found
               const remainingTests = `${{ needs.determine-tests.outputs.remaining_tests }}`;
@@ -378,7 +435,7 @@ jobs:
               body += infraNote;
               body += `\n<!-- OVERALL -->\n\n`;
               body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\n`;
-              body += `${marker}`;
+              body += `<!-- E2E Test Results -->`;
 
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
@@ -471,7 +528,8 @@ jobs:
           include_time_in_summary: true
           report_paths: 'all-test-results/results.xml'
 
-      - name: Post E2E comment (All Tests)
+      - name: Find PR number
+        id: find-pr
         if: success() || failure()
         uses: actions/github-script@v8
         continue-on-error: true
@@ -486,9 +544,43 @@ jobs:
             });
             if (!prs.length) {
               console.log(`No open PR found for branch ${branch}`);
-              return;
+              return '';
             }
-            const prNumber = prs[0].number;
+            return String(prs[0].number);
+
+      - name: Find existing E2E comment
+        id: find-comment
+        if: (success() || failure()) && steps.find-pr.outputs.result != ''
+        uses: actions/github-script@v8
+        continue-on-error: true
+        with:
+          script: |
+            const prNumber = Number('${{ steps.find-pr.outputs.result }}');
+            const marker = '<!-- E2E Test Results -->';
+            const MAX_PAGES = 50;
+            for (let page = 1; page <= MAX_PAGES; page++) {
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                per_page: 100,
+                page: page
+              });
+              if (!comments.length) break;
+              const found = comments.find(c => c.body && c.body.includes(marker));
+              if (found) return String(found.id);
+            }
+            return '';
+
+      - name: Post E2E comment (All Tests)
+        if: success() || failure()
+        uses: actions/github-script@v8
+        continue-on-error: true
+        with:
+          script: |
+            const prNumber = Number('${{ steps.find-pr.outputs.result }}');
+            if (!prNumber) return;
+            const existingCommentId = Number('${{ steps.find-comment.outputs.result }}') || null;
 
             const testOutcome = '${{ steps.run-tests-all-pr.outcome }}';
             const jobStatus = '${{ job.status }}';
@@ -520,25 +612,11 @@ jobs:
             body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\n`;
             body += `<!-- E2E Test Results -->`;
 
-            const marker = '<!-- E2E Test Results -->';
-            let existing = null;
-            for (let page = 1; !existing; page++) {
-              const { data: comments } = await github.rest.issues.listComments({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: prNumber,
-                per_page: 100,
-                page: page
-              });
-              if (!comments.length) break;
-              existing = comments.find(c => c.body && c.body.includes(marker));
-            }
-
-            if (existing) {
+            if (existingCommentId) {
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                comment_id: existing.id,
+                comment_id: existingCommentId,
                 body: body
               });
             } else {
@@ -695,7 +773,8 @@ jobs:
             "${{ env.STATUSES_REQUEST_URL }}" \
             -d "$JSON_PAYLOAD"
 
-      - name: Update E2E comment with overall status
+      - name: Find PR number
+        id: find-pr
         if: always() && github.event.workflow_run.event == 'pull_request'
         uses: actions/github-script@v8
         continue-on-error: true
@@ -710,9 +789,43 @@ jobs:
             });
             if (!prs.length) {
               console.log(`No open PR found for branch ${branch}`);
-              return;
+              return '';
             }
-            const prNumber = prs[0].number;
+            return String(prs[0].number);
+
+      - name: Find existing E2E comment
+        id: find-comment
+        if: steps.find-pr.outputs.result != ''
+        uses: actions/github-script@v8
+        continue-on-error: true
+        with:
+          script: |
+            const prNumber = Number('${{ steps.find-pr.outputs.result }}');
+            const marker = '<!-- E2E Test Results -->';
+            const MAX_PAGES = 50;
+            for (let page = 1; page <= MAX_PAGES; page++) {
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                per_page: 100,
+                page: page
+              });
+              if (!comments.length) break;
+              const found = comments.find(c => c.body && c.body.includes(marker));
+              if (found) return String(found.id);
+            }
+            return '';
+
+      - name: Update E2E comment with overall status
+        if: always() && github.event.workflow_run.event == 'pull_request'
+        uses: actions/github-script@v8
+        continue-on-error: true
+        with:
+          script: |
+            const prNumber = Number('${{ steps.find-pr.outputs.result }}');
+            if (!prNumber) return;
+            const existingCommentId = Number('${{ steps.find-comment.outputs.result }}') || null;
 
             const status = `${{ steps.overall-status.outputs.status }}`;
             const description = `${{ steps.overall-status.outputs.description }}`;
@@ -722,22 +835,12 @@ jobs:
             const phase1Result = '${{ needs.run-e2e-relevant.result }}';
             const phase2Result = '${{ needs.run-e2e-remaining.result }}';
 
-            const marker = '<!-- E2E Test Results -->';
-            let existing = null;
-            for (let page = 1; !existing; page++) {
-              const { data: comments } = await github.rest.issues.listComments({
+            if (existingCommentId) {
+              let body = (await github.rest.issues.getComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: prNumber,
-                per_page: 100,
-                page: page
-              });
-              if (!comments.length) break;
-              existing = comments.find(c => c.body && c.body.includes(marker));
-            }
-
-            if (existing) {
-              let body = existing.body;
+                comment_id: existingCommentId
+              })).data.body;
 
               // If Phase 2 was never run, update the placeholder
               if (body.includes('<!-- PHASE2 -->')) {
@@ -753,18 +856,22 @@ jobs:
                 );
               }
 
-              // Replace overall placeholder
+              // Replace the <!-- OVERALL --> placeholder with the final status line.
+              // At this point the placeholder may have Phase 2 notes prepended before it
+              // (inserted by the run-e2e-remaining job). Those notes are preserved because
+              // this replacement only targets the marker itself.
               body = body.replace('<!-- OVERALL -->', overallLine);
 
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                comment_id: existing.id,
+                comment_id: existingCommentId,
                 body: body
               });
-              console.log(`Updated comment ${existing.id} with overall status`);
+              console.log(`Updated comment ${existingCommentId} with overall status`);
             } else {
               // Fallback: create a summary-only comment
+              const marker = '<!-- E2E Test Results -->';
               let body = `## End-to-End Test Results\n\n`;
               body += `**Overall: ${overallEmoji} ${description}**\n\n`;
               body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\n`;
