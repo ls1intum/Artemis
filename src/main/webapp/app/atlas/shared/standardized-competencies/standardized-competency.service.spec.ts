@@ -1,7 +1,7 @@
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { KnowledgeAreaDTO, Source, StandardizedCompetency } from 'app/atlas/shared/entities/standardized-competency.model';
+import { KnowledgeAreaDTO, Source, StandardizedCompetencyDTO } from 'app/atlas/shared/entities/standardized-competency.model';
 import { take } from 'rxjs';
 import { StandardizedCompetencyService } from 'app/atlas/shared/standardized-competencies/standardized-competency.service';
 import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
@@ -11,7 +11,7 @@ describe('StandardizedCompetencyService', () => {
     setupTestBed({ zoneless: true });
     let standardizedCompetencyService: StandardizedCompetencyService;
     let httpTestingController: HttpTestingController;
-    let defaultStandardizedCompetency: StandardizedCompetency;
+    let defaultStandardizedCompetency: StandardizedCompetencyDTO;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -33,9 +33,9 @@ describe('StandardizedCompetencyService', () => {
     });
 
     it('should get competency', () => {
-        let actualCompetency = new HttpResponse<StandardizedCompetency>();
+        let actualCompetency = new HttpResponse<StandardizedCompetencyDTO>();
         const expectedCompetency = defaultStandardizedCompetency;
-        const returnedFromService: StandardizedCompetency = { ...expectedCompetency };
+        const returnedFromService: StandardizedCompetencyDTO = { ...expectedCompetency };
 
         standardizedCompetencyService
             .getStandardizedCompetency(1)
