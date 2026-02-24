@@ -522,6 +522,7 @@ describe('MarkdownEditorMonacoComponent', () => {
 
         expect(comp.showTextStyleActions()).toBeTrue();
         expect(comp.showNonTextStyleActions()).toBeFalse();
+    });
 
     it('should emit closeEditor on close button click', () => {
         fixture.detectChanges();
