@@ -164,4 +164,16 @@ class LtiDynamicRegistrationServiceTest {
         assertThatExceptionOfType(BadRequestAlertException.class)
                 .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration("https://192.168.1.1/config", registrationToken));
     }
+
+    @Test
+    void badRequestWhenUrlPointsToIPv6Loopback() {
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration("https://[::1]/config", registrationToken));
+    }
+
+    @Test
+    void badRequestWhenUrlPointsToSharedAddressSpace() {
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration("https://100.64.0.1/config", registrationToken));
+    }
 }

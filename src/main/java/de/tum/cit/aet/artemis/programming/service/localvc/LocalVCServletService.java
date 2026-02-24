@@ -190,6 +190,20 @@ public class LocalVCServletService {
             throw new RepositoryNotFoundException(repositoryPath);
         }
 
+        // After confirming the path exists, resolve symlinks and verify the real path is still within the base
+        try {
+            Path realBasePath = localVCBasePath.toRealPath();
+            Path realRepositoryDir = repositoryDir.toRealPath();
+            if (!realRepositoryDir.startsWith(realBasePath)) {
+                String sanitizedPath = repositoryPath.replaceAll("[\\r\\n]", "_");
+                log.error("Blocked symlink-based path traversal for repository path: {}", sanitizedPath);
+                throw new RepositoryNotFoundException(repositoryPath);
+            }
+        }
+        catch (IOException e) {
+            throw new RepositoryNotFoundException(repositoryPath, e);
+        }
+
         log.debug("Opening local repository {}", repositoryPath);
         try {
             Repository repository = FileRepositoryBuilder.create(repositoryDir.toFile());

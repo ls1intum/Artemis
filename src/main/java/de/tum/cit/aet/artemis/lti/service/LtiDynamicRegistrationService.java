@@ -169,6 +169,17 @@ public class LtiDynamicRegistrationService {
                     return true;
                 }
             }
+            // IPv4-compatible IPv6 (::x.x.x.x) - deprecated (RFC 4291) but still parsed by Java
+            if (isV4Mapped) {
+                // bytes 0-9 are zero but bytes 10-11 are not 0xFF, so this is an IPv4-compatible address
+                byte[] v4Addr = new byte[] { addr[12], addr[13], addr[14], addr[15] };
+                try {
+                    return isPrivateOrReservedAddress(InetAddress.getByAddress(v4Addr));
+                }
+                catch (UnknownHostException e) {
+                    return true;
+                }
+            }
             // fc00::/7 - IPv6 Unique Local Addresses
             if ((addr[0] & 0xFE) == 0xFC) {
                 return true;
