@@ -69,7 +69,7 @@ public class MailSendingService {
 
         // Check if mail is properly configured (not using the default placeholder)
         String mailFrom = jHipsterProperties.getMail().getFrom();
-        this.mailConfigured = mailFrom != null && !mailFrom.isBlank() && !mailFrom.equals(DEFAULT_MAIL_FROM);
+        this.mailConfigured = mailFrom != null && !mailFrom.isBlank() && !mailFrom.equalsIgnoreCase(DEFAULT_MAIL_FROM);
 
         if (!this.mailConfigured) {
             log.warn("Email sending is disabled. To enable, configure 'jhipster.mail.from' in application.yml");
@@ -173,6 +173,7 @@ public class MailSendingService {
             content = templateEngine.process(contentTemplate, context);
         }
         catch (NoSuchMessageException | TemplateProcessingException ex) {
+            log.error("Failed to build email with subject key '{}' and template '{}': {}", subjectKey, contentTemplate, ex.getMessage(), ex);
             return;
         }
 
