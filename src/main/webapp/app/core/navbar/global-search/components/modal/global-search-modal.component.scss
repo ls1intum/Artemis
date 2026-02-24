@@ -1,4 +1,4 @@
-// Search input section
+/* Search input section */
 .search-input-container {
     gap: 0.75rem;
     border-bottom: 1.8px solid var(--bs-border-color);
@@ -20,14 +20,14 @@
     }
 }
 
-// Results section
+/* Results section */
 .results-container {
     flex: 1;
     overflow-y: auto;
     padding: 2.5rem;
 }
 
-// Footer with keyboard shortcuts
+/* Footer with keyboard shortcuts */
 .search-footer {
     padding: 0.75rem 1rem;
     background: var(--global-search-modal-footer-bg);
