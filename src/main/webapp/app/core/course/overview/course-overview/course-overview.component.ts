@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, Signal, inject, isSignal, signal } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subscription, of, throwError } from 'rxjs';
@@ -113,9 +113,17 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     faChevronRight = faChevronRight;
     faChevronLeft = faChevronLeft;
 
+    private resolveIsCollapsedValue(value: boolean | Signal<boolean> | undefined, fallback = false): boolean {
+        if (value === undefined) {
+            return fallback;
+        }
+
+        return isSignal(value) ? value() : value;
+    }
+
     async ngOnInit() {
         this.toggleSidebarEventSubscription = this.courseSidebarService.toggleSidebar$.subscribe(() => {
-            this.isSidebarCollapsed.update((value) => this.activatedComponentReference()?.isCollapsed ?? !value);
+            this.isSidebarCollapsed.update((value) => this.resolveIsCollapsedValue(this.activatedComponentReference()?.isCollapsed, !value));
         });
 
         this.subscription = this.route?.params.subscribe(async (params: { courseId: string }) => {
@@ -149,7 +157,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         });
 
         this.courseActionItems.set(this.getCourseActionItems());
-        this.isSidebarCollapsed.set(this.activatedComponentReference()?.isCollapsed ?? false);
+        this.isSidebarCollapsed.set(this.resolveIsCollapsedValue(this.activatedComponentReference()?.isCollapsed));
         this.sidebarItems.set(this.getSidebarItems());
         await this.initAfterCourseLoad();
     }
@@ -293,7 +301,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         }
         const childRouteComponent = this.activatedComponentReference();
         childRouteComponent?.toggleSidebar();
-        this.isSidebarCollapsed.set(childRouteComponent!.isCollapsed);
+        this.isSidebarCollapsed.set(this.resolveIsCollapsedValue(childRouteComponent?.isCollapsed));
     }
 
     getShowRefreshButton(): void {
