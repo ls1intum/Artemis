@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -36,8 +37,11 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
+import { DialogService } from 'primeng/dynamicdialog';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CompetencyManagementComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<CompetencyManagementComponent>;
     let component: CompetencyManagementComponent;
     let courseCompetencyApiService: CourseCompetencyApiService;
@@ -48,16 +52,15 @@ describe('CompetencyManagementComponent', () => {
     let localStorageService: LocalStorageService;
     let featureToggleService: MockFeatureToggleService;
 
-    let getProfileInfoSpy: jest.SpyInstance;
-    let getAllForCourseSpy: jest.SpyInstance;
-    let getIrisSettingsSpy: jest.SpyInstance;
+    let getProfileInfoSpy: ReturnType<typeof vi.spyOn>;
+    let getAllForCourseSpy: ReturnType<typeof vi.spyOn>;
+    let getIrisSettingsSpy: ReturnType<typeof vi.spyOn>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [NgbProgressbar],
-            declarations: [
+            imports: [
+                NgbProgressbar,
                 CompetencyManagementComponent,
-                MockHasAnyAuthorityDirective,
                 MockComponent(DocumentationButtonComponent),
                 MockComponent(ImportAllCompetenciesComponent),
                 MockComponent(CompetencyManagementTableComponent),
@@ -65,7 +68,9 @@ describe('CompetencyManagementComponent', () => {
                 MockPipe(HtmlForMarkdownPipe),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(DeleteButtonDirective),
+                MockDirective(MockHasAnyAuthorityDirective),
             ],
+            declarations: [],
             providers: [
                 provideRouter([]),
                 MockProvider(AccountService),
@@ -91,6 +96,7 @@ describe('CompetencyManagementComponent', () => {
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
+                MockProvider(DialogService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -115,7 +121,7 @@ describe('CompetencyManagementComponent', () => {
         courseCompetencyProgress.numberOfMasteredStudents = 5;
         courseCompetencyProgress.averageStudentScore = 90;
 
-        getAllForCourseSpy = jest.spyOn(courseCompetencyApiService, 'getCourseCompetenciesByCourseId').mockResolvedValue([
+        getAllForCourseSpy = vi.spyOn(courseCompetencyApiService, 'getCourseCompetenciesByCourseId').mockResolvedValue([
             competency,
             { id: 5, type: CourseCompetencyType.COMPETENCY } as Competency,
             {
@@ -127,9 +133,9 @@ describe('CompetencyManagementComponent', () => {
         const profileInfoResponse = {
             activeModuleFeatures: [MODULE_FEATURE_IRIS],
         } as ProfileInfo;
-        getProfileInfoSpy = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoResponse);
+        getProfileInfoSpy = vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoResponse);
 
-        getIrisSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(undefined));
+        getIrisSettingsSpy = vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(undefined));
 
         fixture = TestBed.createComponent(CompetencyManagementComponent);
         component = fixture.componentInstance;
@@ -138,7 +144,7 @@ describe('CompetencyManagementComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should show generate button if IRIS is enabled', async () => {
@@ -171,7 +177,7 @@ describe('CompetencyManagementComponent', () => {
     });
 
     it('should set isLoading correctly', async () => {
-        const isLoadingSpy = jest.spyOn(component.isLoading, 'set');
+        const isLoadingSpy = vi.spyOn(component.isLoading, 'set');
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -181,7 +187,7 @@ describe('CompetencyManagementComponent', () => {
     });
 
     it('should show alert when loading iris settings fails', async () => {
-        const errorSpy = jest.spyOn(alertService, 'error');
+        const errorSpy = vi.spyOn(alertService, 'error');
         getIrisSettingsSpy.mockReturnValueOnce(throwError(() => ({})));
 
         fixture.detectChanges();
@@ -191,7 +197,7 @@ describe('CompetencyManagementComponent', () => {
     });
 
     it('should show alert when loading course competencies fails', async () => {
-        const errorSpy = jest.spyOn(alertService, 'error');
+        const errorSpy = vi.spyOn(alertService, 'error');
         getAllForCourseSpy.mockRejectedValueOnce({});
 
         fixture.detectChanges();
@@ -202,7 +208,7 @@ describe('CompetencyManagementComponent', () => {
 
     it('should open course competency explanation', () => {
         localStorageService.store<boolean>('alreadyVisitedCompetencyManagement', true);
-        const openModalSpy = jest.spyOn(modalService, 'open');
+        const openModalSpy = vi.spyOn(modalService, 'open');
         fixture.detectChanges();
 
         component.openCourseCompetencyExplanation();
@@ -219,7 +225,7 @@ describe('CompetencyManagementComponent', () => {
         ];
 
         // Set up spies BEFORE detectChanges
-        jest.spyOn(courseCompetencyApiService, 'importAllByCourseId').mockResolvedValue(importedCompetencies);
+        vi.spyOn(courseCompetencyApiService, 'importAllByCourseId').mockResolvedValue(importedCompetencies);
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -243,7 +249,7 @@ describe('CompetencyManagementComponent', () => {
             componentInstance: {},
         } as NgbModalRef;
 
-        jest.spyOn(modalService, 'open').mockReturnValue(modalRef);
+        vi.spyOn(modalService, 'open').mockReturnValue(modalRef);
 
         fixture.detectChanges();
 
@@ -262,11 +268,11 @@ describe('CompetencyManagementComponent', () => {
             componentInstance: {
                 courseId: signal<number | null>(1),
                 competencyChanged: {
-                    subscribe: jest.fn(),
+                    subscribe: vi.fn(),
                 },
             },
         } as any;
-        const openModalSpy = jest.spyOn(modalService, 'open').mockReturnValue(modalRef);
+        const openModalSpy = vi.spyOn(modalService, 'open').mockReturnValue(modalRef);
         fixture.detectChanges();
 
         component['openAgentChatModal']();

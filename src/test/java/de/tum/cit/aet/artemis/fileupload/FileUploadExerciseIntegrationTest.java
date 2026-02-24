@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.fileupload;
 
 import static de.tum.cit.aet.artemis.core.util.TestResourceUtils.HalfSecond;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertExerciseNotInWeaviate;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertFileUploadExerciseExistsInWeaviate;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -53,6 +55,7 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.dto.UpdateFileUploadExerciseDTO;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseFactory;
+import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 
 class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTest {
@@ -62,6 +65,9 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
 
     @Autowired
     private AtlasMLRequestMockProvider atlasMLRequestMockProvider;
+
+    @Autowired(required = false)
+    private WeaviateService weaviateService;
 
     private static final String TEST_PREFIX = "fileuploaderxercise";
 
@@ -157,6 +163,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
 
         assertThat(channelFromDB).isNotNull();
         assertThat(channelFromDB.getName()).isEqualTo("exercise-new-fileupload-exerci");
+        assertFileUploadExerciseExistsInWeaviate(weaviateService, receivedFileUploadExercise);
     }
 
     @Test
@@ -291,10 +298,14 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteFileUploadExercise_asInstructor() throws Exception {
         Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
+        var exerciseIds = course.getExercises().stream().map(Exercise::getId).toList();
         for (var exercise : course.getExercises()) {
             request.delete("/api/fileupload/file-upload-exercises/" + exercise.getId(), HttpStatus.OK);
         }
         assertThat(exerciseRepository.findByCourseIdWithCategories(course.getId())).isEmpty();
+        for (var exerciseId : exerciseIds) {
+            assertExerciseNotInWeaviate(weaviateService, exerciseId);
+        }
     }
 
     @Test
@@ -380,6 +391,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         verify(examLiveEventsService, never()).createAndSendProblemStatementUpdateEvent(any(), any(), any());
         verify(groupNotificationScheduleService, times(1)).checkAndCreateAppropriateNotificationsWhenUpdatingExercise(any(), any(), any(), any());
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(fileUploadExercise), eq(Optional.of(fileUploadExercise)));
+        assertFileUploadExerciseExistsInWeaviate(weaviateService, receivedFileUploadExercise);
     }
 
     @Test
@@ -837,6 +849,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         assertThat(channelFromDB).isNotNull();
         assertThat(channelFromDB.getName()).isEqualTo(uniqueChannelName);
         verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(importedFileUploadExercise));
+        assertFileUploadExerciseExistsInWeaviate(weaviateService, importedFileUploadExercise);
     }
 
     @Test

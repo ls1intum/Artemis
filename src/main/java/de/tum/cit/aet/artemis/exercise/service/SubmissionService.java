@@ -378,7 +378,7 @@ public class SubmissionService {
                 if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
                     StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
 
-                    // the student himself is allowed to see the participant (i.e. himself or his team) of his participation
+                    // the student themself is allowed to see the participant (i.e. themself or their team) of their participation
                     if (!authCheckService.isOwnerOfParticipation(studentParticipation, user)) {
                         studentParticipation.filterSensitiveInformation();
                     }

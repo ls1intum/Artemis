@@ -151,7 +151,7 @@ public class TextExerciseCreationUpdateResource {
         // Notify AtlasML about the new text exercise
         notifyAtlasML(result, OperationTypeDTO.UPDATE, "text exercise creation");
 
-        exerciseVersionService.createExerciseVersion(result);
+        exerciseVersionService.createExerciseVersionAndSyncMetadata(result);
 
         return ResponseEntity.created(new URI("/api/text/text-exercises/" + result.getId())).body(result);
     }
@@ -220,7 +220,8 @@ public class TextExerciseCreationUpdateResource {
 
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(textExerciseBeforeUpdate, Optional.of(textExercise)));
 
-        exerciseVersionService.createExerciseVersion(updatedTextExercise);
+        exerciseVersionService.createExerciseVersionAndUpdateMetadata(updatedTextExercise);
+
         return ResponseEntity.ok(updatedTextExercise);
     }
 

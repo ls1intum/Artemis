@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 import { MockDirective, MockPipe } from 'ng-mocks';
@@ -5,8 +6,12 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { StandardizedCompetencyDTO } from 'app/atlas/shared/entities/standardized-competency.model';
 import { StandardizedCompetencyDetailComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-detail.component';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('StandardizedCompetencyDetailComponent', () => {
+    setupTestBed({ zoneless: true });
     let componentFixture: ComponentFixture<StandardizedCompetencyDetailComponent>;
     let component: StandardizedCompetencyDetailComponent;
     const defaultCompetency: StandardizedCompetencyDTO = {
@@ -20,23 +25,21 @@ describe('StandardizedCompetencyDetailComponent', () => {
     };
     const defaultKnowledgeAreaTitle = 'knowledgeArea';
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [StandardizedCompetencyDetailComponent],
-            declarations: [MockPipe(HtmlForMarkdownPipe), MockDirective(TranslateDirective)],
-            providers: [],
-        })
-            .compileComponents()
-            .then(() => {
-                componentFixture = TestBed.createComponent(StandardizedCompetencyDetailComponent);
-                component = componentFixture.componentInstance;
-                componentFixture.componentRef.setInput('competency', defaultCompetency);
-                componentFixture.componentRef.setInput('knowledgeAreaTitle', defaultKnowledgeAreaTitle);
-            });
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [StandardizedCompetencyDetailComponent, MockPipe(HtmlForMarkdownPipe), MockDirective(TranslateDirective)],
+            declarations: [],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+        }).compileComponents();
+
+        componentFixture = TestBed.createComponent(StandardizedCompetencyDetailComponent);
+        component = componentFixture.componentInstance;
+        componentFixture.componentRef.setInput('competency', defaultCompetency);
+        componentFixture.componentRef.setInput('knowledgeAreaTitle', defaultKnowledgeAreaTitle);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -45,7 +48,7 @@ describe('StandardizedCompetencyDetailComponent', () => {
     });
 
     it('should close', () => {
-        const closeSpy = jest.spyOn(component.onClose, 'emit');
+        const closeSpy = vi.spyOn(component.onClose, 'emit');
         component.close();
 
         expect(closeSpy).toHaveBeenCalled();

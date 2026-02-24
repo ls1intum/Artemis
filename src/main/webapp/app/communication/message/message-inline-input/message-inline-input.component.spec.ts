@@ -67,6 +67,7 @@ describe('MessageInlineInputComponent', () => {
             content: newContent,
         });
         component.confirm();
+        tick(300);
         expect(metisServiceCreateStub).toHaveBeenCalledWith({
             ...component.posting,
             content: newContent,
@@ -91,7 +92,7 @@ describe('MessageInlineInputComponent', () => {
 
         component.confirm();
 
-        tick();
+        tick(300);
         expect(component.isLoading).toBeFalse();
         expect(onCreateSpy).not.toHaveBeenCalled();
     }));

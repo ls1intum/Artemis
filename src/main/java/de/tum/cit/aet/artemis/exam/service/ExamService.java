@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.Principal;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -100,6 +101,7 @@ import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
+import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismCaseApi;
@@ -197,6 +199,8 @@ public class ExamService {
 
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
+    private final Optional<ExerciseWeaviateService> exerciseWeaviateService;
+
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, TutorLeaderboardService tutorLeaderboardService,
             StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository,
@@ -206,7 +210,7 @@ public class ExamService {
             SubmittedAnswerRepository submittedAnswerRepository, AuditEventRepository auditEventRepository, CourseScoreCalculationService courseScoreCalculationService,
             QuizResultService quizResultService, ExerciseRepository exerciseRepository, QuizQuestionRepository quizQuestionRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository) {
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, Optional<ExerciseWeaviateService> exerciseWeaviateService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -234,6 +238,7 @@ public class ExamService {
         this.quizQuestionRepository = quizQuestionRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
+        this.exerciseWeaviateService = exerciseWeaviateService;
     }
 
     private static boolean isSecondCorrectionEnabled(Exam exam) {
@@ -1561,6 +1566,34 @@ public class ExamService {
             }
         }
         studentExamRepository.saveAll(studentExams);
+    }
+
+    /**
+     * Syncs exam exercises with Weaviate if visible date, start date, or end date has changed.
+     *
+     * @param originalExam      the original exam before the update
+     * @param updatedExam       the updated exam
+     * @param examWithExercises the exam with exercises loaded
+     */
+    public void syncExamExercisesMetadata(Exam originalExam, Exam updatedExam, Exam examWithExercises) {
+        // We can't test dates for equality as the dates retrieved from the database lose precision. Also use instant to take timezones into account
+        Comparator<ZonedDateTime> comparator = Comparator.comparing(date -> date.truncatedTo(ChronoUnit.SECONDS).toInstant());
+        boolean visibleOrStartDateChanged = comparator.compare(originalExam.getVisibleDate(), updatedExam.getVisibleDate()) != 0
+                || comparator.compare(originalExam.getStartDate(), updatedExam.getStartDate()) != 0;
+        boolean endDateChanged = comparator.compare(originalExam.getEndDate(), updatedExam.getEndDate()) != 0;
+
+        if (visibleOrStartDateChanged || endDateChanged) {
+            exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.updateExamExercisesAsync(examWithExercises));
+        }
+    }
+
+    /**
+     * Syncs exam exercises with Weaviate.
+     *
+     * @param exam the exam whose exercises should be synced
+     */
+    public void syncExamExercisesMetadata(Exam exam) {
+        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.updateExamExercisesAsync(exam));
     }
 
     /**

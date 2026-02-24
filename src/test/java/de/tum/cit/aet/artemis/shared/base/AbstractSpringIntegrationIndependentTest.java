@@ -32,10 +32,13 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.web.client.RestTemplate;
+import org.testcontainers.weaviate.WeaviateContainer;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
@@ -53,6 +56,7 @@ import de.tum.cit.aet.artemis.nebula.service.TumLiveService;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.shared.WeaviateTestContainerFactory;
 
 /**
  * This SpringBootTest is used for tests that only require a minimal set of Active Spring Profiles.
@@ -69,6 +73,26 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 public abstract class AbstractSpringIntegrationIndependentTest extends AbstractArtemisIntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractSpringIntegrationIndependentTest.class);
+
+    protected static final WeaviateContainer weaviateContainer;
+
+    private static final String WEAVIATE_COLLECTION_PREFIX = "Test";
+
+    static {
+        weaviateContainer = WeaviateTestContainerFactory.getContainer();
+    }
+
+    @DynamicPropertySource
+    static void registerWeaviateProperties(DynamicPropertyRegistry registry) {
+        if (weaviateContainer != null && weaviateContainer.isRunning()) {
+            registry.add("artemis.weaviate.enabled", () -> true);
+            registry.add("artemis.weaviate.http-host", weaviateContainer::getHost);
+            registry.add("artemis.weaviate.http-port", () -> weaviateContainer.getMappedPort(8080));
+            registry.add("artemis.weaviate.grpc-port", () -> weaviateContainer.getMappedPort(50051));
+            registry.add("artemis.weaviate.scheme", () -> "http");
+            registry.add("artemis.weaviate.collection-prefix", () -> WEAVIATE_COLLECTION_PREFIX);
+        }
+    }
 
     @MockitoSpyBean
     protected OAuth2JWKSService oAuth2JWKSService;

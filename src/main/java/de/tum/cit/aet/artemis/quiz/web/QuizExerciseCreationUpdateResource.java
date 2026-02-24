@@ -121,7 +121,7 @@ public class QuizExerciseCreationUpdateResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         QuizExercise result = quizExerciseService.createQuizExercise(quizExercise, files, true);
-        exerciseVersionService.createExerciseVersion(result);
+        exerciseVersionService.createExerciseVersionAndSyncMetadata(result);
         return ResponseEntity.created(new URI("/api/quiz/quiz-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
@@ -155,7 +155,7 @@ public class QuizExerciseCreationUpdateResource {
         // Notify AtlasML about the new quiz exercise
         notifyAtlasML(result, OperationTypeDTO.UPDATE, "quiz exercise creation");
 
-        exerciseVersionService.createExerciseVersion(result);
+        exerciseVersionService.createExerciseVersionAndSyncMetadata(result);
 
         return ResponseEntity.created(new URI("/api/quiz/quiz-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
@@ -194,7 +194,7 @@ public class QuizExerciseCreationUpdateResource {
 
         // Notify AtlasML about the quiz exercise update
         notifyAtlasML(result, OperationTypeDTO.UPDATE, "quiz exercise update");
-        exerciseVersionService.createExerciseVersion(result);
+        exerciseVersionService.createExerciseVersionAndUpdateMetadata(result);
 
         QuizExerciseWithStatisticsDTO resultDTO = QuizExerciseWithStatisticsDTO.of(result);
 

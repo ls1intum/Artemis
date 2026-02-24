@@ -6,6 +6,7 @@ import { KnowledgeAreaForTree } from 'app/atlas/shared/entities/standardized-com
 @Component({
     selector: 'jhi-knowledge-area-tree',
     template: '',
+    standalone: true,
 })
 export class KnowledgeAreaTreeStubComponent {
     @Input({ required: true }) dataSource: MatTreeNestedDataSource<KnowledgeAreaForTree>;

@@ -136,7 +136,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     );
 
     it.each([ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.FILE_UPLOAD, ExerciseType.PROGRAMMING])(
-        'should show the buttons "Team" and "Start exercise" for a team exercise for a student to view his team when assigned to a team',
+        'should show the buttons "Team" and "Start exercise" for a team exercise for a student to view their team when assigned to a team',
         fakeAsync((exerciseType: ExerciseType) => {
             comp.exercise = { ...teamExerciseWithTeamAssigned, type: exerciseType };
             comp.ngOnChanges();
