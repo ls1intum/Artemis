@@ -9,10 +9,10 @@
     </p>
 
     <div class="global-toggle d-flex gap-2 mb-3">
-        <p-button class="flex-fill" [outlined]="!allLocal()" (onClick)="setAllDecisions(false)" styleClass="w-100">
+        <p-button size="small" [outlined]="!allLocal()" (onClick)="setAllDecisions(false)">
             <span jhiTranslate="artemisApp.exercise.metadataSync.keepAllLocal"></span>
         </p-button>
-        <p-button class="flex-fill" [outlined]="!allIncoming()" (onClick)="setAllDecisions(true)" styleClass="w-100">
+        <p-button size="small" [outlined]="!allIncoming()" (onClick)="setAllDecisions(true)">
             <span jhiTranslate="artemisApp.exercise.metadataSync.applyAllIncoming"></span>
         </p-button>
     </div>

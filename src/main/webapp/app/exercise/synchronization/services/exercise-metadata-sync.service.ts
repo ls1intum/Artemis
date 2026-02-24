@@ -473,6 +473,16 @@ export class ExerciseMetadataSyncService {
 
         const dialogRef = this.dialogService.open(ExerciseMetadataConflictModalComponent, {
             width: '80rem',
+            breakpoints: {
+                '1400px': '75vw',
+                '1200px': '85vw',
+                '992px': '95vw',
+            },
+            // Allow reopening the same component type for consecutive queued alerts.
+            // PrimeNG's DialogService deduplicates by component type and removes the
+            // entry from its internal map only after the close animation completes,
+            // which races with the queue immediately opening the next modal.
+            duplicate: true,
             modal: true,
             closable: false,
             closeOnEscape: false,
