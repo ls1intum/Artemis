@@ -185,7 +185,7 @@ class HyperionConsistencyCheckServiceTest {
         replyComment.setAuthor(author);
         replyComment.setContent(new UserCommentContentDTO("This user reply should not be part of prompt context"));
         existingThread.getComments().add(replyComment);
-        when(commentThreadRepository.findWithCommentsByExerciseId(42L)).thenReturn(Set.of(existingThread));
+        when(commentThreadRepository.findWithCommentsAndGroupByExerciseId(42L)).thenReturn(Set.of(existingThread));
 
         when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage("{\"issues\":[]}")))));
 
@@ -220,7 +220,7 @@ class HyperionConsistencyCheckServiceTest {
         existingComment.setType(CommentType.CONSISTENCY_CHECK);
         existingComment.setContent(new ConsistencyIssueCommentContentDTO(null, null, "Missing metadata but keep text", null));
         existingThread.getComments().add(existingComment);
-        when(commentThreadRepository.findWithCommentsByExerciseId(42L)).thenReturn(Set.of(existingThread));
+        when(commentThreadRepository.findWithCommentsAndGroupByExerciseId(42L)).thenReturn(Set.of(existingThread));
 
         when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage("{\"issues\":[]}")))));
 

@@ -48,6 +48,22 @@ public interface CommentThreadRepository extends ArtemisJpaRepository<CommentThr
     Set<CommentThread> findWithCommentsByExerciseId(@Param("exerciseId") long exerciseId);
 
     /**
+     * Find all comment threads for a given exercise with their comments and optional thread groups loaded.
+     * This is used for Hyperion prompt context rendering and intentionally does not fetch comment authors.
+     *
+     * @param exerciseId the exercise id
+     * @return list of comment threads with comments and groups
+     */
+    @Query("""
+            SELECT DISTINCT ct
+            FROM CommentThread ct
+                LEFT JOIN FETCH ct.group
+                LEFT JOIN FETCH ct.comments c
+            WHERE ct.exercise.id = :exerciseId
+            """)
+    Set<CommentThread> findWithCommentsAndGroupByExerciseId(@Param("exerciseId") long exerciseId);
+
+    /**
      * Find a comment thread by id with its comments loaded.
      *
      * @param threadId the thread id

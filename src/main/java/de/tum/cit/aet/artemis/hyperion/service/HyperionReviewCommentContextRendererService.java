@@ -65,7 +65,7 @@ public class HyperionReviewCommentContextRendererService {
      * @return JSON string for prompt embedding
      */
     public String renderReviewThreads(long exerciseId) {
-        Set<CommentThread> threads = commentThreadRepository.findWithCommentsByExerciseId(exerciseId);
+        Set<CommentThread> threads = commentThreadRepository.findWithCommentsAndGroupByExerciseId(exerciseId);
         if (threads.isEmpty()) {
             return "{\"threads\":[]}";
         }
@@ -77,13 +77,15 @@ public class HyperionReviewCommentContextRendererService {
                 break;
             }
 
-            List<Comment> sortedComments = thread.getComments() == null ? List.of()
-                    : thread.getComments().stream().sorted(Comparator.comparing(Comment::getCreatedDate, Comparator.nullsLast(Comparator.naturalOrder()))
-                            .thenComparing(Comment::getId, Comparator.nullsLast(Comparator.naturalOrder()))).toList();
-            if (sortedComments.isEmpty()) {
+            Set<Comment> comments = thread.getComments();
+            if (comments == null || comments.isEmpty()) {
                 continue;
             }
-            Comment firstComment = sortedComments.get(0);
+            Comment firstComment = comments.stream().min(Comparator.comparing(Comment::getCreatedDate, Comparator.nullsLast(Comparator.naturalOrder()))
+                    .thenComparing(Comment::getId, Comparator.nullsLast(Comparator.naturalOrder()))).orElse(null);
+            if (firstComment == null) {
+                continue;
+            }
             if (firstComment.getType() != CommentType.CONSISTENCY_CHECK) {
                 continue;
             }
