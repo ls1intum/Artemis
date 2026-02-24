@@ -221,11 +221,8 @@ jobs:
             body += `\n\n**Test Strategy:** Two-phase execution\n`;
             body += `- **Phase 1:** \`${relevantTests}\`\n`;
             body += `- **Phase 2:** \`${remainingTests || 'None'}\`\n`;
-            // <!-- OVERALL --> is a multi-step placeholder with a defined lifecycle:
-            //   1. Phase 1 (here): inserts the marker as a placeholder.
-            //   2. Phase 2 (run-e2e-remaining): if notes exist, prepends them *before* the
-            //      marker (keeping it intact) so the next step can still find it.
-            //   3. report-results job: replaces the marker with the final overall status line.
+            // <!-- OVERALL --> is a placeholder that the report-results job replaces
+            // with Phase 2 notes (if any) and the final overall status line.
             body += `<!-- OVERALL -->\n\n`;
             body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\n`;
             body += `<!-- E2E Test Results -->`;
@@ -263,6 +260,7 @@ jobs:
     environment: playwright-e2e-tests
     outputs:
       reporter_failed: ${{ steps.run-tests-phase2.outputs.reporter_failed }}
+      phase2_notes: ${{ steps.update-comment.outputs.phase2_notes }}
     env:
       ARTEMIS_ADMIN_PASSWORD: ${{ secrets.ARTEMIS_ADMIN_PASSWORD }}
       ARTEMIS_ADMIN_USERNAME: ${{ secrets.ARTEMIS_ADMIN_USERNAME }}
@@ -367,6 +365,7 @@ jobs:
             return '';
 
       - name: Update E2E comment (Phase 2)
+        id: update-comment
         if: (success() || failure()) && github.event.workflow_run.event == 'pull_request'
         uses: actions/github-script@v8
         continue-on-error: true
@@ -387,6 +386,8 @@ jobs:
 
             const phase2Row = `| **Phase 2** (Remaining) | ${phase2Emoji} ${phase2Status} | ${phase2Details} |`;
 
+            // Compute Phase 2 notes and pass them as an output so the report-results
+            // job can insert them alongside the overall status in a single replacement.
             let reporterNote = '';
             if (reporterFailed === 'true') {
               reporterNote = '\n\n> **Note:** The test reporter (monocart) failed in Phase 2. Test results were not affected, but coverage data may be incomplete.';
@@ -397,6 +398,8 @@ jobs:
               infraNote = '\n\n> ⚠️ **Note:** Tests passed but the job encountered an infrastructure issue (e.g., artifact upload failure). See the workflow run linked below for details.';
             }
 
+            core.setOutput('phase2_notes', reporterNote + infraNote);
+
             if (existingCommentId) {
               let body = (await github.rest.issues.getComment({
                 owner: context.repo.owner,
@@ -404,17 +407,9 @@ jobs:
                 comment_id: existingCommentId
               })).data.body;
 
-              // Replace Phase 2 placeholder with actual results
+              // Only replace the Phase 2 row placeholder. The <!-- OVERALL --> marker
+              // is left untouched for the report-results job to handle.
               body = body.replace(/<!-- PHASE2 -->.*<!-- \/PHASE2 -->/s, phase2Row);
-
-              // If there are Phase 2 notes, insert them before <!-- OVERALL --> while keeping
-              // the marker intact. The report-results job will later replace <!-- OVERALL -->
-              // with the final overall status line (see the <!-- OVERALL --> lifecycle comment
-              // in the Phase 1 step).
-              const notes = reporterNote + infraNote;
-              if (notes) {
-                body = body.replace('<!-- OVERALL -->', notes + '\n<!-- OVERALL -->');
-              }
 
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
@@ -424,16 +419,15 @@ jobs:
               });
               console.log(`Updated comment ${existingCommentId} with Phase 2 results`);
             } else {
-              // Fallback: create new comment if Phase 1 comment not found
-              const remainingTests = `${{ needs.determine-tests.outputs.remaining_tests }}`;
+              // Fallback: create new comment if Phase 1 comment not found.
+              // Notes are omitted here — the report-results job will insert them
+              // when it replaces <!-- OVERALL --> with the final status.
               let body = `## End-to-End Test Results\n\n`;
               body += `| Phase | Status | Details |\n`;
               body += `|-------|--------|---------|\n`;
               body += `| **Phase 1** (Relevant) | ✅ Passed | *(completed in previous step)* |\n`;
               body += `${phase2Row}\n`;
-              body += reporterNote;
-              body += infraNote;
-              body += `\n<!-- OVERALL -->\n\n`;
+              body += `<!-- OVERALL -->\n\n`;
               body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\n`;
               body += `<!-- E2E Test Results -->`;
 
@@ -834,6 +828,7 @@ jobs:
 
             const phase1Result = '${{ needs.run-e2e-relevant.result }}';
             const phase2Result = '${{ needs.run-e2e-remaining.result }}';
+            const phase2Notes = `${{ needs.run-e2e-remaining.outputs.phase2_notes || '' }}`;
 
             if (existingCommentId) {
               let body = (await github.rest.issues.getComment({
@@ -856,11 +851,9 @@ jobs:
                 );
               }
 
-              // Replace the <!-- OVERALL --> placeholder with the final status line.
-              // At this point the placeholder may have Phase 2 notes prepended before it
-              // (inserted by the run-e2e-remaining job). Those notes are preserved because
-              // this replacement only targets the marker itself.
-              body = body.replace('<!-- OVERALL -->', overallLine);
+              // Replace <!-- OVERALL --> with Phase 2 notes (if any) and the overall
+              // status line. This is the only place that touches this marker.
+              body = body.replace('<!-- OVERALL -->', phase2Notes + overallLine);
 
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
