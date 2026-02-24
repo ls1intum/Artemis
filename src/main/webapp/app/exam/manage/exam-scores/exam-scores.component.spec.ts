@@ -88,6 +88,8 @@ describe('ExamScoresComponent', () => {
         gradeName: '1',
     };
     const gradingScale = new GradingScale();
+    gradingScale.plagiarismGrade = 'U';
+    gradingScale.noParticipationGrade = 'X';
     gradingScale.gradeSteps = [gradeStep1, gradeStep2, gradeStep3, gradeStep4];
 
     const exInfo1 = {
@@ -717,6 +719,7 @@ describe('ExamScoresComponent', () => {
         examScoreDTOWithGrades.studentResults[0].hasPassed = true;
         jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTOWithGrades })));
         jest.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse({ body: toGradingScaleDTO(gradingScale) })));
+        jest.spyOn(gradingService, 'sortGradeSteps').mockImplementation((steps) => steps);
         jest.spyOn(gradingService, 'findMatchingGradeStep').mockReturnValue(gradingScale.gradeSteps[0]);
         fixture.detectChanges();
 
