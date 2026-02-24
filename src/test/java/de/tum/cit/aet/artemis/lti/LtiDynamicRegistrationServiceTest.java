@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.lti;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doThrow;
@@ -150,30 +151,35 @@ class LtiDynamicRegistrationServiceTest {
     @Test
     void badRequestWhenUrlIsNotHttps() {
         assertThatExceptionOfType(BadRequestAlertException.class)
-                .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration("http://example.com/config", registrationToken));
+                .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration("http://example.com/config", registrationToken))
+                .satisfies(ex -> assertThat(ex.getErrorKey()).isEqualTo("invalidUrl"));
     }
 
     @Test
     void badRequestWhenUrlPointsToLoopback() {
         assertThatExceptionOfType(BadRequestAlertException.class)
-                .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration("https://127.0.0.1/config", registrationToken));
+                .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration("https://127.0.0.1/config", registrationToken))
+                .satisfies(ex -> assertThat(ex.getErrorKey()).isEqualTo("invalidUrl"));
     }
 
     @Test
     void badRequestWhenUrlPointsToPrivateNetwork() {
         assertThatExceptionOfType(BadRequestAlertException.class)
-                .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration("https://192.168.1.1/config", registrationToken));
+                .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration("https://192.168.1.1/config", registrationToken))
+                .satisfies(ex -> assertThat(ex.getErrorKey()).isEqualTo("invalidUrl"));
     }
 
     @Test
     void badRequestWhenUrlPointsToIPv6Loopback() {
         assertThatExceptionOfType(BadRequestAlertException.class)
-                .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration("https://[::1]/config", registrationToken));
+                .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration("https://[::1]/config", registrationToken))
+                .satisfies(ex -> assertThat(ex.getErrorKey()).isEqualTo("invalidUrl"));
     }
 
     @Test
     void badRequestWhenUrlPointsToSharedAddressSpace() {
         assertThatExceptionOfType(BadRequestAlertException.class)
-                .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration("https://100.64.0.1/config", registrationToken));
+                .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration("https://100.64.0.1/config", registrationToken))
+                .satisfies(ex -> assertThat(ex.getErrorKey()).isEqualTo("invalidUrl"));
     }
 }
