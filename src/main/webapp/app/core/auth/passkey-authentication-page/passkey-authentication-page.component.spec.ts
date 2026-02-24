@@ -1,21 +1,21 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { of } from 'rxjs';
 import { PasskeyAuthenticationPageComponent } from './passkey-authentication-page.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauthn.service';
-import { provideRouter } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { By } from '@angular/platform-browser';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MockComponent, MockDirective } from 'ng-mocks';
 
 describe('PasskeyAuthenticationPageComponent', () => {
     let component: PasskeyAuthenticationPageComponent;
@@ -29,9 +29,6 @@ describe('PasskeyAuthenticationPageComponent', () => {
         TestBed.configureTestingModule({
             imports: [PasskeyAuthenticationPageComponent],
             providers: [
-                provideHttpClient(),
-                provideHttpClientTesting(),
-                provideRouter([]),
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: Router, useClass: MockRouter },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -44,7 +41,12 @@ describe('PasskeyAuthenticationPageComponent', () => {
                     },
                 },
             ],
-        });
+        })
+            .overrideComponent(PasskeyAuthenticationPageComponent, {
+                remove: { imports: [TranslateDirective, FaIconComponent, RouterLink] },
+                add: { imports: [MockDirective(TranslateDirective), MockComponent(FaIconComponent), MockDirective(RouterLink)] },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(PasskeyAuthenticationPageComponent);
         component = fixture.componentInstance;
@@ -55,6 +57,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
     });
 
     afterEach(() => {
+        fixture.destroy();
         jest.restoreAllMocks();
     });
 

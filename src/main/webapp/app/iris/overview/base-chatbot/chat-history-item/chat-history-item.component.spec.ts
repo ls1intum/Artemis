@@ -136,12 +136,42 @@ describe('ChatHistoryItemComponent', () => {
         testSessionRendering(session, faKeyboard, 'artemisApp.iris.chatHistory.relatedEntityTooltip.programmingExercise', 'Exercise 1');
     });
 
-    it('should detect new chat session using translated title', async () => {
-        // MockTranslateService.stream returns the key itself as the translated value
-        const translatedKey = 'artemisApp.iris.chatHistory.newChat';
+    it('should detect new chat session with English title', async () => {
         const session: IrisSessionDTO = {
             id: 4,
-            title: translatedKey,
+            title: 'New chat',
+            creationDate: new Date(),
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 1,
+            entityName: 'Course 1',
+        };
+
+        fixture.componentRef.setInput('session', session);
+        await fixture.whenStable();
+
+        expect(component.isNewChat()).toBe(true);
+    });
+
+    it('should detect new chat session with German title', async () => {
+        const session: IrisSessionDTO = {
+            id: 4,
+            title: 'Neuer Chat',
+            creationDate: new Date(),
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 1,
+            entityName: 'Course 1',
+        };
+
+        fixture.componentRef.setInput('session', session);
+        await fixture.whenStable();
+
+        expect(component.isNewChat()).toBe(true);
+    });
+
+    it('should detect new chat session case-insensitively', async () => {
+        const session: IrisSessionDTO = {
+            id: 4,
+            title: 'NEW CHAT',
             creationDate: new Date(),
             chatMode: ChatServiceMode.COURSE,
             entityId: 1,
@@ -168,6 +198,120 @@ describe('ChatHistoryItemComponent', () => {
         await fixture.whenStable();
 
         expect(component.isNewChat()).toBe(false);
+    });
+
+    it('should render menu trigger button for non-new-chat sessions', async () => {
+        const session: IrisSessionDTO = {
+            id: 10,
+            title: 'Some chat',
+            creationDate: new Date(),
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 1,
+            entityName: 'Course 1',
+        };
+
+        fixture.componentRef.setInput('session', session);
+        await fixture.whenStable();
+
+        const menuTrigger = fixture.debugElement.query(By.css('.menu-trigger'));
+        expect(menuTrigger).toBeTruthy();
+    });
+
+    it('should emit deleteSession when delete is clicked via onDeleteClick', async () => {
+        const session: IrisSessionDTO = {
+            id: 11,
+            title: 'Chat to delete',
+            creationDate: new Date(),
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 1,
+            entityName: 'Course 1',
+        };
+
+        fixture.componentRef.setInput('session', session);
+        await fixture.whenStable();
+
+        vi.spyOn(component.deleteSession, 'emit');
+        component.onDeleteClick();
+
+        expect(component.deleteSession.emit).toHaveBeenCalledWith(session);
+    });
+
+    it('should build menuItems with correct delete action on menu toggle', async () => {
+        const session: IrisSessionDTO = {
+            id: 12,
+            title: 'Chat with menu',
+            creationDate: new Date(),
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 1,
+            entityName: 'Course 1',
+        };
+
+        fixture.componentRef.setInput('session', session);
+        await fixture.whenStable();
+
+        // Menu items are empty before the first toggle
+        expect(component.menuItems).toHaveLength(0);
+
+        // Simulate menu toggle (stopPropagation on the event, build items, toggle menu)
+        const mockEvent = { stopPropagation: vi.fn() } as unknown as Event;
+        component.onMenuToggle(mockEvent);
+
+        // After toggle, menu items should be populated with the delete action
+        expect(component.menuItems).toHaveLength(1);
+        expect(component.menuItems[0].styleClass).toBe('danger');
+        expect(component.menuItems[0].label).toBeTruthy();
+    });
+
+    it('should emit deleteSession when menu item command is invoked', async () => {
+        const session: IrisSessionDTO = {
+            id: 13,
+            title: 'Chat to delete via menu',
+            creationDate: new Date(),
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 1,
+            entityName: 'Course 1',
+        };
+
+        fixture.componentRef.setInput('session', session);
+        await fixture.whenStable();
+
+        vi.spyOn(component.deleteSession, 'emit');
+
+        // Toggle to build menu items
+        const mockEvent = { stopPropagation: vi.fn() } as unknown as Event;
+        component.onMenuToggle(mockEvent);
+
+        // Invoke the command (simulates clicking the menu item)
+        component.menuItems[0].command!({});
+
+        expect(component.deleteSession.emit).toHaveBeenCalledWith(session);
+    });
+
+    it('should use current translation when building menu items on toggle', async () => {
+        const session: IrisSessionDTO = {
+            id: 14,
+            title: 'Chat for language test',
+            creationDate: new Date(),
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 1,
+            entityName: 'Course 1',
+        };
+
+        fixture.componentRef.setInput('session', session);
+        await fixture.whenStable();
+
+        const translateService = TestBed.inject(TranslateService);
+
+        // First toggle in English
+        vi.spyOn(translateService, 'instant').mockReturnValue('Delete');
+        const mockEvent = { stopPropagation: vi.fn() } as unknown as Event;
+        component.onMenuToggle(mockEvent);
+        expect(component.menuItems[0].label).toBe('Delete');
+
+        // Simulate language change to German and toggle again
+        vi.spyOn(translateService, 'instant').mockReturnValue('Löschen');
+        component.onMenuToggle(mockEvent);
+        expect(component.menuItems[0].label).toBe('Löschen');
     });
 
     it('should not render an icon and entity name for course session', async () => {

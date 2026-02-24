@@ -23,12 +23,12 @@
             "text4_1": "<b>Flexible Positioning:</b> Click and drag the chat widget to move it around your screen for optimal positioning while working on exercises.",
             "text4_2": "<b>Resizable Window:</b> Adjust the widget size by dragging its borders to fit your workspace and preferences.",
             "text4_3": "<b>Full Screen Mode:</b> Expand the widget to full screen for more detailed conversations and better readability.",
-            "text4_4": "<b>Session Management:</b> Clear your chat history anytime using the trash can button to start fresh conversations.",
+            "text4_4": "<b>Session Management:</b> Start a new conversation anytime using the \"New\" button. Previous conversations remain accessible in your chat history.",
             "text4_5": "<b>Persistent History:</b> Your conversation history is maintained across sessions, allowing you to continue previous discussions.",
             "supportText": "(For technical issues or feedback about Iris, please contact your course instructors or create an issue on GitHub: https://github.com/ls1intum/Artemis.)",
             "clearSession": {
-                "title": "Clear chat history",
-                "text": "Are you sure you want to clear the chat history?",
+                "title": "New conversation",
+                "text": "Are you sure you want to start a new conversation?",
                 "submit": "Confirm"
             },
             "errors": {
