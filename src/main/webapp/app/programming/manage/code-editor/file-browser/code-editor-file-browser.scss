@@ -61,8 +61,25 @@ File browser tree
                 align-items: center;
                 gap: 0.35rem;
                 min-width: 0;
-                flex: 0 1 auto;
+                flex: 1 1 auto;
                 margin-right: 0.35rem;
+                overflow: hidden;
+            }
+
+            .file-label-group .list-group-item__fileName {
+                min-width: 0;
+                white-space: nowrap;
+            }
+
+            .rename-input-wrapper {
+                min-width: 0;
+                flex: 1 1 auto;
+            }
+
+            .rename-input-wrapper .list-group-item__input {
+                width: 100%;
+                min-width: 7rem;
+                max-width: 18rem;
             }
 
             .list-group-item:hover {
@@ -82,6 +99,7 @@ File browser tree
             opacity: 0;
             transition: all 100ms ease-in-out;
             margin-left: auto;
+            flex: 0 0 auto;
 
             :not(:last-child) {
                 margin-right: 5px;

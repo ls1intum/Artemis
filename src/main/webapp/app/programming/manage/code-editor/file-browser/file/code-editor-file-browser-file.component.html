@@ -14,7 +14,7 @@
         }
         <!-- Renaming file tree item -->
         @if (isBeingRenamed()) {
-            <span class="ms-1"
+            <span class="ms-1 rename-input-wrapper"
                 ><input
                     #renamingInput
                     value="{{ item().text }}"
@@ -25,8 +25,10 @@
             /></span>
         }
         <!-- File badges -->
-        @for (badge of badges(); track badges().indexOf(badge)) {
-            <jhi-file-browser-badge [badge]="badge" [onColoredBackground]="item().checked || hasError() || hasChanges()" />
+        @if (!isBeingRenamed()) {
+            @for (badge of badges(); track badges().indexOf(badge)) {
+                <jhi-file-browser-badge [badge]="badge" [onColoredBackground]="item().checked || hasError() || hasChanges()" />
+            }
         }
     </span>
     <!-- File level actions -->

@@ -8,7 +8,7 @@
         }
         <!-- Renaming folder tree item -->
         @if (isBeingRenamed()) {
-            <span class="ms-1"
+            <span class="ms-1 rename-input-wrapper"
                 ><input
                     #renamingInput
                     value="{{ item().text }}"
@@ -19,8 +19,10 @@
             /></span>
         }
         <!-- File badges -->
-        @for (badge of badges(); track badges().indexOf(badge)) {
-            <jhi-file-browser-badge [badge]="badge" />
+        @if (!isBeingRenamed()) {
+            @for (badge of badges(); track badges().indexOf(badge)) {
+                <jhi-file-browser-badge [badge]="badge" />
+            }
         }
     </span>
     <!-- Folder level actions -->
