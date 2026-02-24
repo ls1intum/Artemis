@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CompetencyExerciseLinkResponseDTO(double weight, ExerciseForCompetencyDTO exercise) {
+public record CompetencyExerciseLinkResponseDTO(double weight, @Nullable ExerciseForCompetencyDTO exercise) {
 
     @Nullable
     public static CompetencyExerciseLinkResponseDTO of(@Nullable CompetencyExerciseLink link) {

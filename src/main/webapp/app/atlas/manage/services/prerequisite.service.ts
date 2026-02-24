@@ -120,7 +120,9 @@ export class PrerequisiteService extends CourseCompetencyService {
 
     private mapPrerequisiteArrayResponse(res: EntityArrayResponseDTOType): EntityArrayResponseType {
         const body = res.body ? res.body.map((dto) => toPrerequisite(dto)) : [];
-        body.forEach((prerequisite) => this.postProcessCompetency(prerequisite));
+        body.forEach((prerequisite) => {
+            this.postProcessCompetency(prerequisite);
+        });
         return res.clone({ body });
     }
 

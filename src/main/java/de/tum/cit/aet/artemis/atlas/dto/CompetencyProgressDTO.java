@@ -10,7 +10,10 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CompetencyProgressDTO(@Nullable Double progress, @Nullable Double confidence, @Nullable CompetencyProgressConfidenceReason confidenceReason) {
 
-    public static CompetencyProgressDTO of(CompetencyProgress progress) {
+    public static @Nullable CompetencyProgressDTO of(@Nullable CompetencyProgress progress) {
+        if (progress == null) {
+            return null;
+        }
         return new CompetencyProgressDTO(progress.getProgress(), progress.getConfidence(), progress.getConfidenceReason());
     }
 }

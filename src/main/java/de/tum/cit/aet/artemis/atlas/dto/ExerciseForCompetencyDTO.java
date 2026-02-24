@@ -23,7 +23,7 @@ public record ExerciseForCompetencyDTO(long id, String title, String shortName, 
         @Nullable Set<String> categories, boolean teamMode, @Nullable Long studentAssignedTeamId, boolean studentAssignedTeamIdComputed, @Nullable Boolean allowOnlineEditor,
         @Nullable Boolean allowOfflineIde, @Nullable Boolean quizStarted, @Nullable Boolean quizEnded) {
 
-    public static ExerciseForCompetencyDTO of(@Nullable Exercise exercise) {
+    public static @Nullable ExerciseForCompetencyDTO of(@Nullable Exercise exercise) {
         if (exercise == null) {
             return null;
         }

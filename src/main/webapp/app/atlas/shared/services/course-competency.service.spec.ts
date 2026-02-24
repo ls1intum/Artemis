@@ -84,7 +84,7 @@ describe('CourseCompetencyService', () => {
         const competencyDTO = new CompetencyWithTailRelationDTO();
         competencyDTO.competency = toCompetency(defaultCompetencies.first()!);
         competencyDTO.tailRelations = [];
-        const returnedFromService: CompetencyWithTailRelationResponseDTO[] = [{ competency: { ...defaultCompetencies.first()!, id: 1 }, tailRelations: [] }];
+        const returnedFromService: CompetencyWithTailRelationResponseDTO[] = [{ competency: Object.assign({}, defaultCompetencies.first()!, { id: 1 }), tailRelations: [] }];
         const expected = [competencyDTO];
 
         courseCompetencyService

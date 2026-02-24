@@ -13,7 +13,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record LinkedCourseCompetencyDTO(long id, long courseId, @Nullable String courseTitle, @Nullable String semester) {
 
-    public static LinkedCourseCompetencyDTO of(@Nullable CourseCompetency linkedCompetency) {
+    public static @Nullable LinkedCourseCompetencyDTO of(@Nullable CourseCompetency linkedCompetency) {
         if (linkedCompetency == null || linkedCompetency.getCourse() == null) {
             return null;
         }

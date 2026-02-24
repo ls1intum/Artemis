@@ -10,6 +10,7 @@ import {
     CompetencyRelationDTO,
     CompetencyWithTailRelationDTO,
     CourseCompetency,
+    CourseCompetencyImportOptionsDTO,
     CourseCompetencyProgress,
     CourseCompetencyType,
 } from 'app/atlas/shared/entities/competency.model';
@@ -61,11 +62,15 @@ export class CourseCompetencyService {
     getForImport(pageable: CompetencyPageableSearch) {
         const params = this.createCompetencySearchHttpParams(pageable);
         return this.httpClient.get<SearchResult<CourseCompetencyResponseDTO>>(`${this.resourceURL}/course-competencies/for-import`, { params, observe: 'response' }).pipe(
-            map((resp) => resp.body!),
-            map((result) => ({
-                ...result,
-                resultsOnPage: result.resultsOnPage.map((dto) => this.toCourseCompetency(dto)),
-            })),
+            map((resp) => {
+                const body = resp.body;
+                if (!body) {
+                    return { resultsOnPage: [], numberOfPages: 0 } as SearchResult<CourseCompetency>;
+                }
+                return Object.assign({}, body, {
+                    resultsOnPage: body.resultsOnPage.map((dto) => this.toCourseCompetency(dto)),
+                });
+            }),
         );
     }
 
@@ -93,7 +98,9 @@ export class CourseCompetencyService {
             .pipe(
                 map((res: EntityArrayResponseDTOType) => {
                     const competencies = res.body?.map((dto) => this.toCourseCompetency(dto)) ?? [];
-                    competencies.forEach((competency) => this.postProcessCompetency(competency));
+                    competencies.forEach((competency) => {
+                        this.postProcessCompetency(competency);
+                    });
                     return new HttpResponse({ body: competencies, headers: res.headers, status: res.status, url: res.url ?? undefined });
                 }),
                 tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
@@ -107,12 +114,12 @@ export class CourseCompetencyService {
             .get<CompetencyProgressDTO>(`${this.resourceURL}/courses/${courseId}/course-competencies/${competencyId}/student-progress`, { params, observe: 'response' })
             .pipe(
                 map((res: CompetencyProgressResponseDTOType) => {
-                    const body = res.body
-                        ? ({
+                    const body: CompetencyProgress | undefined = res.body
+                        ? {
                               progress: res.body.progress,
                               confidence: res.body.confidence,
                               confidenceReason: res.body.confidenceReason,
-                          } as CompetencyProgress)
+                          }
                         : undefined;
                     return new HttpResponse({ body, headers: res.headers, status: res.status, url: res.url ?? undefined });
                 }),
@@ -155,11 +162,17 @@ export class CourseCompetencyService {
     }
 
     importAll(courseId: number, sourceCourseId: number, importRelations: boolean) {
-        const params = new HttpParams().set('importRelations', importRelations);
         return this.httpClient
-            .post<
-                CompetencyWithTailRelationResponseDTO[]
-            >(`${this.resourceURL}/courses/${courseId}/course-competencies/import-all/${sourceCourseId}`, null, { params, observe: 'response' })
+            .post<CompetencyWithTailRelationResponseDTO[]>(
+                `${this.resourceURL}/courses/${courseId}/course-competencies/import-all`,
+                {
+                    sourceCourseId: sourceCourseId,
+                    importRelations: importRelations,
+                    importExercises: false,
+                    importLectures: false,
+                } as CourseCompetencyImportOptionsDTO,
+                { observe: 'response' },
+            )
             .pipe(
                 map((res) => {
                     const body = res.body?.map((entry) => ({
