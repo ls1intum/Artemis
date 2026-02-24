@@ -1,5 +1,5 @@
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TableLazyLoadEvent, TablePageEvent } from 'primeng/table';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ColumnDef, TableView } from './table-view';
@@ -31,7 +31,9 @@ describe('TableView', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [TableView],
-        }).compileComponents();
+        })
+            .overrideTemplate(TableView, '')
+            .compileComponents();
 
         fixture = TestBed.createComponent(TableView<TestData>);
         component = fixture.componentInstance;
@@ -47,6 +49,7 @@ describe('TableView', () => {
     afterEach(() => {
         vi.restoreAllMocks();
         vi.clearAllTimers();
+        vi.useRealTimers();
     });
 
     it('should create', () => {
@@ -206,19 +209,12 @@ describe('TableView', () => {
         expect(component.selectedRow).toEqual(mockData[1]);
     });
 
-    it('should support currentPageReport input', () => {
-        expect(component.currentPageReport()).toBeUndefined();
+    it('should debounce global search - single search', () => {
+        vi.useFakeTimers();
 
-        fixture.componentRef.setInput('currentPageReport', 'Page 1 of 5');
-        expect(component.currentPageReport()).toBe('Page 1 of 5');
-    });
-
-    it('should debounce global search - single search', fakeAsync(() => {
         const mockTable = { first: 0, filterGlobal: vi.fn() };
-        const mockViewChild = mockTable as any;
-
         // Mock the dt viewChild
-        vi.spyOn(component, 'dt').mockReturnValue(mockViewChild);
+        vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
 
         component.onGlobalSearch('test search');
 
@@ -226,45 +222,49 @@ describe('TableView', () => {
         expect(mockTable.filterGlobal).not.toHaveBeenCalled();
 
         // Wait for debounce
-        tick(TableView['SEARCH_DEBOUNCE_MS']);
+        vi.advanceTimersByTime(TableView['SEARCH_DEBOUNCE_MS']);
 
         expect(mockTable.filterGlobal).toHaveBeenCalledWith('test search', 'contains');
         expect(mockTable.first).toBe(0);
-    }));
+    });
 
-    it('should debounce global search - cancel previous search', fakeAsync(() => {
+    it('should debounce global search - cancel previous search', () => {
+        vi.useFakeTimers();
+
         const mockTable = { first: 0, filterGlobal: vi.fn() };
         vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
 
         // First search
         component.onGlobalSearch('first search');
-        tick(100);
+        vi.advanceTimersByTime(100);
 
         // Second search before timeout expires
         component.onGlobalSearch('second search');
-        tick(100);
+        vi.advanceTimersByTime(100);
 
         // At this point, total time is 200, but debounce is 300
         expect(mockTable.filterGlobal).not.toHaveBeenCalled();
 
         // Wait for debounce to complete
-        tick(200);
+        vi.advanceTimersByTime(200);
 
         // Should only call filterGlobal once with the second search term
         expect(mockTable.filterGlobal).toHaveBeenCalledTimes(1);
         expect(mockTable.filterGlobal).toHaveBeenCalledWith('second search', 'contains');
-    }));
+    });
 
-    it('should trim and lowercase search value', fakeAsync(() => {
+    it('should trim and lowercase search value', () => {
+        vi.useFakeTimers();
+
         const mockTable = { first: 0, filterGlobal: vi.fn() };
         vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
 
         component.onGlobalSearch('  TEST SEARCH  ');
 
-        tick(TableView['SEARCH_DEBOUNCE_MS']);
+        vi.advanceTimersByTime(TableView['SEARCH_DEBOUNCE_MS']);
 
         expect(mockTable.filterGlobal).toHaveBeenCalledWith('test search', 'contains');
-    }));
+    });
 
     it('should access currentFirst private property', () => {
         expect(component['currentFirst']()).toBe(0);

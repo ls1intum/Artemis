@@ -20,7 +20,7 @@ export interface ColumnDef<T> {
 export interface CellRendererParams<T> {
     data: T;
     col: ColumnDef<T>;
-    value: any;
+    value: T[keyof T] | undefined;
     rowIndex: number;
 }
 
@@ -42,10 +42,9 @@ export class TableView<T> {
     loading = input(false);
     emptyMessageTranslation = input<string>('artemisApp.dataTable.search.noResults');
     selectedRow: T | undefined;
-    currentPageReport = input<string>();
 
     onLazyLoad = output<TableLazyLoadEvent>();
-    onRowSelect = output<any>();
+    onRowSelect = output<T | T[] | undefined>();
 
     dt = viewChild.required<Table>('dt');
 

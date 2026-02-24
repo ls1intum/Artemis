@@ -81,7 +81,9 @@ export class OrganizationManagementComponent {
         });
     }
 
-    onOrganizationSelect(organization: Organization): void {
-        this.router.navigate([organization.id], { relativeTo: this.route });
+    onOrganizationSelect(organization: Organization | Organization[] | undefined): void {
+        if (organization && !Array.isArray(organization)) {
+            this.router.navigate([organization.id], { relativeTo: this.route });
+        }
     }
 }
