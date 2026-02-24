@@ -9,11 +9,12 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.service.CompetencyExpertToolsService.CompetencyOperation;
 
 /**
  * Service for managing cached session data for the Atlas Agent.
- * Handles caching of pending competency operations during multi-step agent interactions.
+ * Handles caching of pending competency and relation operations during multi-step agent interactions.
  * <p>
  * This service is extracted from AtlasAgentService to break the circular dependency between
  * AtlasAgentService and CompetencyExpertToolsService. Both services can now depend on this
@@ -29,6 +30,12 @@ public class AtlasAgentSessionCacheService {
      * Must be configured in HazelcastConfiguration with appropriate TTL (2 hours recommended).
      */
     public static final String ATLAS_SESSION_PENDING_OPERATIONS_CACHE = "atlas-session-pending-operations";
+
+    /**
+     * Cache name for tracking pending relation operations for each session.
+     * Must be configured in CacheConfiguration with appropriate TTL (2 hours recommended).
+     */
+    public static final String ATLAS_SESSION_PENDING_RELATIONS_CACHE = "atlas-session-pending-relations";
 
     private final CacheManager cacheManager;
 
@@ -74,6 +81,49 @@ public class AtlasAgentSessionCacheService {
      */
     public void clearCachedPendingCompetencyOperations(String sessionId) {
         Cache cache = cacheManager.getCache(ATLAS_SESSION_PENDING_OPERATIONS_CACHE);
+        if (cache != null) {
+            cache.evict(sessionId);
+        }
+    }
+
+    /**
+     * Get the cached relation operations for a session.
+     * Used by Competency Mapper to retrieve previous relation data.
+     *
+     * @param sessionId the session ID
+     * @return the cached relation operations, or null if none exist
+     */
+    @SuppressWarnings("unchecked")
+    public List<CompetencyRelationDTO> getCachedRelationData(String sessionId) {
+        Cache cache = cacheManager.getCache(ATLAS_SESSION_PENDING_RELATIONS_CACHE);
+        if (cache == null) {
+            return null;
+        }
+        return (List<CompetencyRelationDTO>) cache.get(sessionId, List.class);
+    }
+
+    /**
+     * Cache relation operations for a session.
+     * Called after preview generation to enable tracking.
+     *
+     * @param sessionId  the session ID
+     * @param operations the relation operations to cache
+     */
+    public void cacheRelationOperations(String sessionId, List<CompetencyRelationDTO> operations) {
+        Cache cache = cacheManager.getCache(ATLAS_SESSION_PENDING_RELATIONS_CACHE);
+        if (cache != null) {
+            cache.put(sessionId, operations);
+        }
+    }
+
+    /**
+     * Clear cached relation operations for a session.
+     * Called after successful save or when starting a new relation flow.
+     *
+     * @param sessionId the session ID
+     */
+    public void clearCachedRelationOperations(String sessionId) {
+        Cache cache = cacheManager.getCache(ATLAS_SESSION_PENDING_RELATIONS_CACHE);
         if (cache != null) {
             cache.evict(sessionId);
         }

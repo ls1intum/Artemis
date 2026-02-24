@@ -522,5 +522,20 @@ describe('MarkdownEditorMonacoComponent', () => {
 
         expect(comp.showTextStyleActions()).toBeTrue();
         expect(comp.showNonTextStyleActions()).toBeFalse();
+
+    it('should emit closeEditor on close button click', () => {
+        fixture.detectChanges();
+        const emitSpy = jest.spyOn(comp.closeEditor, 'emit');
+
+        comp.onCloseButtonClick();
+
+        expect(emitSpy).toHaveBeenCalled();
+    });
+
+    it('should have consistencyIssues input', () => {
+        fixture.detectChanges();
+
+        // Verify the consistencyIssues input is defined
+        expect(comp.consistencyIssues).toBeDefined();
     });
 });
