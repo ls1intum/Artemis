@@ -1,17 +1,20 @@
 package de.tum.cit.aet.artemis.assessment;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.assessment.domain.Bonus;
 import de.tum.cit.aet.artemis.assessment.domain.GradeStep;
 import de.tum.cit.aet.artemis.assessment.domain.GradeType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
@@ -21,6 +24,7 @@ import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingScaleUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
@@ -105,6 +109,15 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetGradingScaleForCourseNotFound() throws Exception {
         request.get("/api/assessment/courses/" + course.getId() + "/grading-scale", HttpStatus.OK, Void.class);
+    }
+
+    /**
+     * Test get request for a grading scale without instructor rights
+     */
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testGetGradingScale_shouldReturnForbiddenWhenUserIsNotInstructor() throws Exception {
+        request.get("/api/assessment/courses/" + course.getId() + "/grading-scale", HttpStatus.FORBIDDEN, GradingScaleDTO.class);
     }
 
     /**
@@ -261,7 +274,8 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         GradingScaleDTO expectedDto = GradingScaleDTO.of(courseGradingScale);
 
-        assertThat(savedGradingScale).usingRecursiveComparison().ignoringFields("id", "course", "exam").ignoringCollectionOrder().isEqualTo(expectedDto);
+        assertThat(savedGradingScale).usingRecursiveComparison().ignoringFields("id", "gradeSteps.gradeSteps.id", "course", "exam").ignoringCollectionOrder()
+                .isEqualTo(expectedDto);
     }
 
     /**
@@ -564,4 +578,41 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
                 && gradeStep1.getUpperBoundPercentage() == gradeStep2.upperBoundPercentage() && gradeStep1.getGradeName().equals(gradeStep2.gradeName());
     }
 
+    @Nested
+    class GradingScaleDTOTest {
+
+        @Test
+        void shouldCreateDTOWhenEntityIsValid() {
+            gradeSteps = gradingScaleUtilService.generateGradeStepSet(examGradingScale, true);
+            examGradingScale.setGradeSteps(gradeSteps);
+            exam.setExamMaxPoints(null);
+            examRepository.save(exam);
+            GradingScaleDTO dto = GradingScaleDTO.of(examGradingScale);
+
+            assertThat(dto).isNotNull();
+            assertThat(dto.gradeSteps().gradeSteps()).hasSize(examGradingScale.getGradeSteps().size());
+        }
+
+        @Test
+        void shouldReturnEmptyBonusSetWhenBonusIsNull() {
+            gradeSteps = gradingScaleUtilService.generateGradeStepSet(examGradingScale, true);
+            examGradingScale.setGradeSteps(gradeSteps);
+            exam.setExamMaxPoints(null);
+            examRepository.save(exam);
+            examGradingScale.setBonusFrom(null);
+
+            GradingScaleDTO dto = GradingScaleDTO.of(examGradingScale);
+            assertThat(dto.bonusFrom()).isEmpty();
+        }
+
+        @Test
+        void shouldThrowBadRequestWhenSourceGradingScaleIsNull() {
+
+            Bonus bonus = new Bonus();
+            bonus.setWeight(5.0);
+            bonus.setSourceGradingScale(null);
+
+            assertThatThrownBy(() -> GradingScaleDTO.BonusDTO.of(bonus)).isInstanceOf(BadRequestAlertException.class).hasMessageContaining("grading scale could not be found");
+        }
+    }
 }

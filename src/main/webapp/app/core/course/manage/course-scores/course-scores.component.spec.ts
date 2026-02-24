@@ -523,7 +523,11 @@ describe('CourseScoresComponent', () => {
         component.calculateGradingScaleInformation();
 
         expect(component.gradingScaleExists()).toBe(true);
-        expect(component.gradingScale()).toEqual(gradingScale);
+        const entity = component.gradingScale()!;
+        expect(entity.gradeType).toBe(GradeType.GRADE);
+        expect(entity.gradeSteps).toEqual([gradeStep]);
+        expect(entity.presentationsNumber).toBeUndefined();
+        expect(entity.presentationsWeight).toBeUndefined();
         expect(component.isBonus()).toBe(false);
         expect(component.maxGrade()).toBe('A');
         expect(component.averageGrade()).toBe('A');
