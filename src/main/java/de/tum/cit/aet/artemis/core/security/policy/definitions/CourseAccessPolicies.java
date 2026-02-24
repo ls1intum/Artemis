@@ -8,9 +8,9 @@ import static de.tum.cit.aet.artemis.core.security.Role.STUDENT;
 import static de.tum.cit.aet.artemis.core.security.Role.SUPER_ADMIN;
 import static de.tum.cit.aet.artemis.core.security.Role.TEACHING_ASSISTANT;
 import static de.tum.cit.aet.artemis.core.security.policy.AccessPolicy.when;
-import static de.tum.cit.aet.artemis.core.security.policy.Conditions.hasStarted;
-import static de.tum.cit.aet.artemis.core.security.policy.Conditions.isAdmin;
-import static de.tum.cit.aet.artemis.core.security.policy.Conditions.memberOfGroup;
+import static de.tum.cit.aet.artemis.core.security.policy.SpecificationConditions.hasStarted;
+import static de.tum.cit.aet.artemis.core.security.policy.SpecificationConditions.isAdmin;
+import static de.tum.cit.aet.artemis.core.security.policy.SpecificationConditions.memberOfGroup;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,6 +18,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.Course_;
 import de.tum.cit.aet.artemis.core.security.policy.AccessPolicy;
 
 /**
@@ -41,9 +42,11 @@ public class CourseAccessPolicies {
     @Lazy
     public AccessPolicy<Course> courseVisibilityPolicy() {
         return AccessPolicy.forResource(Course.class).named("course-visibility").section("Navigation").feature("Course Overview")
-                .rule(when(memberOfGroup(Course::getTeachingAssistantGroupName).or(memberOfGroup(Course::getEditorGroupName)).or(memberOfGroup(Course::getInstructorGroupName))
+                .rule(when(memberOfGroup(Course::getTeachingAssistantGroupName, Course_.teachingAssistantGroupName)
+                        .or(memberOfGroup(Course::getEditorGroupName, Course_.editorGroupName)).or(memberOfGroup(Course::getInstructorGroupName, Course_.instructorGroupName))
                         .or(isAdmin())).thenAllow().documentedFor(SUPER_ADMIN, ADMIN, INSTRUCTOR, EDITOR, TEACHING_ASSISTANT))
-                .rule(when(memberOfGroup(Course::getStudentGroupName).and(hasStarted(Course::getStartDate))).thenAllow().documentedFor(STUDENT).withNote("if enrolled + started"))
+                .rule(when(memberOfGroup(Course::getStudentGroupName, Course_.studentGroupName).and(hasStarted(Course::getStartDate, Course_.startDate))).thenAllow()
+                        .documentedFor(STUDENT).withNote("if enrolled + started"))
                 .denyByDefault();
     }
 
@@ -68,9 +71,10 @@ public class CourseAccessPolicies {
     public AccessPolicy<Course> courseStudentAccessPolicy() {
         return AccessPolicy.forResource(Course.class).named("course-student-access").section("Course Access")
                 .features("Search Users in Course", "Search Other Users in Course", "Search Course Members")
-                .rule(when(memberOfGroup(Course::getStudentGroupName).or(memberOfGroup(Course::getTeachingAssistantGroupName)).or(memberOfGroup(Course::getEditorGroupName))
-                        .or(memberOfGroup(Course::getInstructorGroupName)).or(isAdmin())).thenAllow()
-                        .documentedFor(SUPER_ADMIN, ADMIN, INSTRUCTOR, EDITOR, TEACHING_ASSISTANT, STUDENT))
+                .rule(when(memberOfGroup(Course::getStudentGroupName, Course_.studentGroupName)
+                        .or(memberOfGroup(Course::getTeachingAssistantGroupName, Course_.teachingAssistantGroupName))
+                        .or(memberOfGroup(Course::getEditorGroupName, Course_.editorGroupName)).or(memberOfGroup(Course::getInstructorGroupName, Course_.instructorGroupName))
+                        .or(isAdmin())).thenAllow().documentedFor(SUPER_ADMIN, ADMIN, INSTRUCTOR, EDITOR, TEACHING_ASSISTANT, STUDENT))
                 .denyByDefault();
     }
 
@@ -105,7 +109,8 @@ public class CourseAccessPolicies {
                 .features("Assessment Dashboard", "View Course with Exercises", "View Course Full Details", "View Course Organizations", "View Locked Submissions",
                         "View Exercise Due Dates", "View Assessment Dashboard Stats", "View Active Students Statistics", "View Lifetime Statistics", "View Management Detail",
                         "Search Students in Course")
-                .rule(when(memberOfGroup(Course::getTeachingAssistantGroupName).or(memberOfGroup(Course::getEditorGroupName)).or(memberOfGroup(Course::getInstructorGroupName))
+                .rule(when(memberOfGroup(Course::getTeachingAssistantGroupName, Course_.teachingAssistantGroupName)
+                        .or(memberOfGroup(Course::getEditorGroupName, Course_.editorGroupName)).or(memberOfGroup(Course::getInstructorGroupName, Course_.instructorGroupName))
                         .or(isAdmin())).thenAllow().documentedFor(SUPER_ADMIN, ADMIN, INSTRUCTOR, EDITOR, TEACHING_ASSISTANT))
                 .denyByDefault();
     }
@@ -129,8 +134,8 @@ public class CourseAccessPolicies {
     @Lazy
     public AccessPolicy<Course> courseEditorAccessPolicy() {
         return AccessPolicy.forResource(Course.class).named("course-editor-access").section("Course Access").features("View Exercise Categories", "View Existing Exercise Details")
-                .rule(when(memberOfGroup(Course::getEditorGroupName).or(memberOfGroup(Course::getInstructorGroupName)).or(isAdmin())).thenAllow().documentedFor(SUPER_ADMIN, ADMIN,
-                        INSTRUCTOR, EDITOR))
+                .rule(when(memberOfGroup(Course::getEditorGroupName, Course_.editorGroupName).or(memberOfGroup(Course::getInstructorGroupName, Course_.instructorGroupName))
+                        .or(isAdmin())).thenAllow().documentedFor(SUPER_ADMIN, ADMIN, INSTRUCTOR, EDITOR))
                 .denyByDefault();
     }
 
@@ -163,6 +168,7 @@ public class CourseAccessPolicies {
         return AccessPolicy.forResource(Course.class).named("course-instructor-access").section("Course Access")
                 .features("Update Course", "Archive Course", "Download Course Archive", "Cleanup Course", "View Import Summary", "Import Course Material", "List Course Users",
                         "Add User to Course", "Remove User from Course", "Batch Add Users to Group")
-                .rule(when(memberOfGroup(Course::getInstructorGroupName).or(isAdmin())).thenAllow().documentedFor(SUPER_ADMIN, ADMIN, INSTRUCTOR)).denyByDefault();
+                .rule(when(memberOfGroup(Course::getInstructorGroupName, Course_.instructorGroupName).or(isAdmin())).thenAllow().documentedFor(SUPER_ADMIN, ADMIN, INSTRUCTOR))
+                .denyByDefault();
     }
 }

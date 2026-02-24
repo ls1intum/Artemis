@@ -3,6 +3,9 @@ package de.tum.cit.aet.artemis.core.security.policy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+
+import org.springframework.data.jpa.domain.Specification;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 
@@ -126,6 +129,55 @@ public final class AccessPolicy<T> {
      */
     public List<PolicyRule<T>> getRules() {
         return rules;
+    }
+
+    /**
+     * Converts this access policy to a JPA Specification that can be used for database queries.
+     * <p>
+     * This enables using the same access logic for both runtime authorization checks
+     * and database filtering. The generated specification will match only resources that
+     * would pass the {@link #evaluate(User, Object)} check for the given user context.
+     * <p>
+     * <strong>Important:</strong> All conditions in the policy must implement {@link SpecificationCondition}
+     * for this conversion to work. Use conditions from {@link SpecificationConditions} instead of
+     * {@link Conditions} when defining policies that need to be converted to specifications.
+     *
+     * @param userGroups the groups the current user belongs to
+     * @param isAdmin    whether the current user is an admin
+     * @return a Specification representing this policy's ALLOW rules
+     * @throws IllegalStateException if any condition in the policy does not implement {@link SpecificationCondition}
+     */
+    public Specification<T> toSpecification(Set<String> userGroups, boolean isAdmin) {
+        return (root, query, criteriaBuilder) -> {
+            // Collect all ALLOW rule conditions
+            List<SpecificationCondition<T>> allowConditions = new ArrayList<>();
+
+            for (PolicyRule<T> rule : rules) {
+                if (rule.effect() == PolicyEffect.ALLOW) {
+                    PolicyCondition<T> condition = rule.condition();
+                    if (!(condition instanceof SpecificationCondition<T> specCondition)) {
+                        throw new IllegalStateException("Policy '" + name + "' contains a condition that does not implement SpecificationCondition. "
+                                + "Use SpecificationConditions instead of Conditions to enable query generation.");
+                    }
+                    allowConditions.add(specCondition);
+                }
+            }
+
+            // If no ALLOW rules and default is ALLOW, allow everything
+            if (allowConditions.isEmpty() && defaultEffect == PolicyEffect.ALLOW) {
+                return criteriaBuilder.conjunction(); // always true
+            }
+
+            // If no ALLOW rules and default is DENY, deny everything
+            if (allowConditions.isEmpty() && defaultEffect == PolicyEffect.DENY) {
+                return criteriaBuilder.disjunction(); // always false
+            }
+
+            // Combine all ALLOW conditions with OR
+            // (any rule that allows access should result in the resource being included)
+            return allowConditions.stream().map(cond -> cond.toPredicate(root, criteriaBuilder, userGroups, isAdmin)).reduce(criteriaBuilder::or)
+                    .orElse(defaultEffect == PolicyEffect.ALLOW ? criteriaBuilder.conjunction() : criteriaBuilder.disjunction());
+        };
     }
 
     /**
