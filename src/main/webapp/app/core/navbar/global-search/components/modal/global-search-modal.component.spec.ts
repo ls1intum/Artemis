@@ -124,6 +124,15 @@ describe('GlobalSearchModalComponent', () => {
             expect(searchOverlayService.toggle).not.toHaveBeenCalled();
         });
 
+        it('should not toggle modal when Cmd+K is held down (repeat event)', () => {
+            mockOsDetectorService.isActionKey.mockReturnValue(true);
+            const event = new KeyboardEvent('keydown', { key: 'k', metaKey: true, repeat: true });
+
+            component.handleKeyboardEvent(event);
+
+            expect(searchOverlayService.toggle).not.toHaveBeenCalled();
+        });
+
         it('should not toggle modal when Cmd+K is pressed and user is not authenticated', () => {
             const accountService = TestBed.inject(AccountService);
             vi.spyOn(accountService, 'isAuthenticated').mockReturnValue(false);
