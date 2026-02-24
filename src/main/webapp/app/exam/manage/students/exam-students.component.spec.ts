@@ -265,7 +265,7 @@ describe('ExamStudentsComponent', () => {
     });
 
     describe('room alias handling', () => {
-        it('should replace plannedRoom and actualRoom using aliases', () => {
+        it('should set aliases for plannedRoom and actualRoom', () => {
             const aliasMap = {
                 R1: 'Main Hall',
                 R2: 'Side Room',
@@ -287,8 +287,10 @@ describe('ExamStudentsComponent', () => {
             (component as any).exchangeRoomsForAliasesIfPossible();
 
             expect(studentsRoomDistributionService.getAliases).toHaveBeenCalledWith(course.id, examWithCourse.id);
-            expect(component.allRegisteredUsers[0].plannedRoom).toBe('Main Hall');
-            expect(component.allRegisteredUsers[0].actualRoom).toBe('Side Room');
+            expect(component.allRegisteredUsers[0].plannedRoom).toBe('R1');
+            expect(component.allRegisteredUsers[0].actualRoom).toBe('R2');
+            expect(component.allRegisteredUsers[0].plannedRoomAlias).toBe('Main Hall');
+            expect(component.allRegisteredUsers[0].actualRoomAlias).toBe('Side Room');
         });
 
         it('should leave rooms unchanged if no alias exists', () => {
@@ -312,7 +314,9 @@ describe('ExamStudentsComponent', () => {
             (component as any).exchangeRoomsForAliasesIfPossible();
 
             expect(component.allRegisteredUsers[0].plannedRoom).toBe('UNKNOWN');
-            expect(component.allRegisteredUsers[0].actualRoom).toBe('Main Hall');
+            expect(component.allRegisteredUsers[0].actualRoom).toBe('R1');
+            expect(component.allRegisteredUsers[0].plannedRoomAlias).toBeUndefined();
+            expect(component.allRegisteredUsers[0].actualRoomAlias).toBe('Main Hall');
         });
 
         it('should handle users without rooms gracefully', () => {
