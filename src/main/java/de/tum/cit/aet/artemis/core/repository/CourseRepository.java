@@ -17,6 +17,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -43,7 +44,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 @Profile(PROFILE_CORE)
 @Lazy
 @Repository
-public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
+public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, JpaSpecificationExecutor<Course> {
 
     @Query("""
             SELECT DISTINCT course.instructorGroupName
@@ -689,4 +690,87 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
             WHERE c.instructorGroupName IN :userGroups
             """)
     long countCoursesForInstructorWithGroups(@Param("userGroups") Set<String> userGroups);
+
+    // ===================================================================
+    // Default methods using Specifications (Examples for Migration)
+    // ===================================================================
+
+    /**
+     * Example: Find all active courses that the user can see based on their access level.
+     * This demonstrates how to combine multiple specifications.
+     * <p>
+     * Replaces: {@link #findAllActive(ZonedDateTime)} with access control
+     *
+     * @param userGroups the groups the user belongs to
+     * @param isAdmin    whether the user is an admin
+     * @return list of accessible active courses
+     */
+    default List<Course> findActiveCoursesVisibleToUser(Set<String> userGroups, boolean isAdmin) {
+        var now = ZonedDateTime.now();
+        var spec = CourseSpecs.and(CourseSpecs.isActive(now), CourseSpecs.isVisibleToUser(userGroups, isAdmin, now), CourseSpecs.distinct());
+        return findAll(spec);
+    }
+
+    /**
+     * Example: Find courses with staff access for management group names, filtered by active status.
+     * This demonstrates combining access policy specs with other filtering specs.
+     * <p>
+     * Replaces: {@link #findAllNotEndedCoursesByManagementGroupNames(ZonedDateTime, List)}
+     * <p>
+     * NOTE: This query uses the courseStaffAccessPolicy specification.
+     *
+     * @param userGroups the groups the user belongs to
+     * @param isAdmin    whether the user is an admin
+     * @return list of courses matching the criteria
+     */
+    default List<Course> findNotEndedCoursesWithStaffAccess(Set<String> userGroups, boolean isAdmin) {
+        var now = ZonedDateTime.now();
+        var spec = CourseSpecs.and(CourseSpecs.hasStaffAccess(userGroups, isAdmin), CourseSpecs.isNotEnded(now), CourseSpecs.distinct());
+        return findAll(spec);
+    }
+
+    /**
+     * Example: Find courses with editor access, optionally filtered by title.
+     * This demonstrates how to use nullable specifications for optional filtering.
+     * <p>
+     * Can replace: {@link #findByTitleInCoursesWhereInstructorOrEditor(String, Set, Pageable)}
+     * <p>
+     * NOTE: This query uses the courseEditorAccessPolicy specification.
+     *
+     * @param partialTitle optional title filter (null to skip filtering by title)
+     * @param userGroups   the groups the user belongs to
+     * @param isAdmin      whether the user is an admin
+     * @param pageable     pagination information
+     * @return page of courses matching the criteria
+     */
+    default Page<Course> findCoursesByTitleWithEditorAccess(String partialTitle, Set<String> userGroups, boolean isAdmin, Pageable pageable) {
+        var spec = CourseSpecs.and(CourseSpecs.hasEditorAccess(userGroups, isAdmin), CourseSpecs.titleContains(partialTitle), CourseSpecs.distinct());
+        return findAll(spec, pageable);
+    }
+
+    /**
+     * Example: Find all active courses with learning paths enabled.
+     * This demonstrates combining multiple feature flags and temporal conditions.
+     * <p>
+     * Replaces: {@link #findAllActiveForUserAndLearningPathsEnabled(ZonedDateTime)}
+     *
+     * @return list of active courses with learning paths enabled
+     */
+    default List<Course> findActiveCourseswithLearningPathsEnabled() {
+        var now = ZonedDateTime.now();
+        var spec = CourseSpecs.and(CourseSpecs.isActive(now), CourseSpecs.hasLearningPathsEnabled(), CourseSpecs.distinct());
+        return findAll(spec);
+    }
+
+    /**
+     * Example: Find courses with enrollment currently active.
+     * This demonstrates temporal filtering for enrollment windows.
+     *
+     * @return list of courses with active enrollment
+     */
+    default List<Course> findCoursesWithActiveEnrollment() {
+        var now = ZonedDateTime.now();
+        var spec = CourseSpecs.and(CourseSpecs.hasActiveEnrollment(now), CourseSpecs.distinct());
+        return findAll(spec);
+    }
 }
