@@ -1,23 +1,35 @@
 import { AfterViewChecked, AfterViewInit, Component, ElementRef, OnInit, computed, inject, output, signal, viewChild } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faPaperPlane, faRobot, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faPaperPlane, faRobot, faTimes, faUser } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
-import { AgentChatService, CompetencyPreviewResponse } from '../services/agent-chat.service';
+import { AgentChatService, CompetencyPreviewResponse, CompetencyRelationPreviewResponse } from '../services/agent-chat.service';
 import { ChatMessage } from 'app/atlas/shared/entities/chat-message.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencyCardComponent } from 'app/atlas/overview/competency-card/competency-card.component';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
-import { Competency } from 'app/atlas/shared/entities/competency.model';
+import { Competency, CompetencyRelationDTO, CompetencyRelationType, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
+import { RelationGraphPreview } from 'app/atlas/shared/entities/chat-message.model';
+import { CourseCompetenciesRelationGraphComponent } from 'app/atlas/manage/course-competencies-relation-graph/course-competencies-relation-graph.component';
+import { ButtonModule } from 'primeng/button';
 
 @Component({
     selector: 'jhi-agent-chat-modal',
     standalone: true,
-    imports: [CommonModule, TranslateDirective, FontAwesomeModule, FormsModule, ArtemisTranslatePipe, CompetencyCardComponent],
+    imports: [
+        CommonModule,
+        TranslateDirective,
+        FontAwesomeModule,
+        FormsModule,
+        ArtemisTranslatePipe,
+        CompetencyCardComponent,
+        CourseCompetenciesRelationGraphComponent,
+        ButtonModule,
+    ],
     templateUrl: './agent-chat-modal.component.html',
     styleUrl: './agent-chat-modal.component.scss',
 })
@@ -27,6 +39,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
 
     protected readonly sendIcon = faPaperPlane;
     protected readonly robotIcon = faRobot;
+    protected readonly closeIcon = faTimes;
     protected readonly userIcon = faUser;
 
     private readonly activeModal = inject(NgbActiveModal);
@@ -39,12 +52,14 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     currentMessage = signal('');
     isAgentTyping = signal(false);
     shouldScrollToBottom = signal(false);
+    selectedRelationId = signal<number | undefined>(undefined);
 
     // Event emitted when agent likely created/modified competencies
     competencyChanged = output<void>();
 
     // Message validation
     readonly MAX_MESSAGE_LENGTH = 8000;
+    readonly INPUT_FOCUS_DELAY_MS = 10;
 
     currentMessageLength = computed(() => this.currentMessage().length);
     isMessageTooLong = computed(() => this.currentMessageLength() > this.MAX_MESSAGE_LENGTH);
@@ -60,11 +75,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                     this.addMessage(this.translateService.instant('artemisApp.agent.chat.welcome'), false);
                 }
                 history.forEach((msg) => {
-                    if (msg.competencyPreviews && msg.competencyPreviews.length > 0) {
-                        this.addMessage(msg.content, msg.isUser, msg.competencyPreviews);
-                    } else {
-                        this.addMessage(msg.content, msg.isUser);
-                    }
+                    this.addMessage(msg.content, msg.isUser, msg.competencyPreviews, msg.relationPreviews, msg.relationGraphPreview);
                 });
             },
             error: () => {
@@ -74,7 +85,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     }
 
     ngAfterViewInit(): void {
-        setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
+        setTimeout(() => this.messageInput()?.nativeElement?.focus(), this.INPUT_FOCUS_DELAY_MS);
     }
 
     ngAfterViewChecked(): void {
@@ -106,19 +117,25 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             next: (response) => {
                 this.isAgentTyping.set(false);
 
-                this.addMessage(response.message || this.translateService.instant('artemisApp.agent.chat.error'), false, response.competencyPreviews);
+                this.addMessage(
+                    response.message || this.translateService.instant('artemisApp.agent.chat.error'),
+                    false,
+                    response.competencyPreviews,
+                    response.relationPreviews,
+                    response.relationGraphPreview,
+                );
 
                 if (response.competenciesModified) {
                     this.competencyChanged.emit();
                 }
 
-                setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
+                setTimeout(() => this.messageInput()?.nativeElement?.focus(), this.INPUT_FOCUS_DELAY_MS);
             },
             error: () => {
                 this.isAgentTyping.set(false);
                 this.addMessage(this.translateService.instant('artemisApp.agent.chat.error'), false);
                 // Restore focus to input after error
-                setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
+                setTimeout(() => this.messageInput()?.nativeElement?.focus(), this.INPUT_FOCUS_DELAY_MS);
             },
         });
     }
@@ -198,13 +215,54 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
 
                 this.competencyChanged.emit();
 
-                setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
+                setTimeout(() => this.messageInput()?.nativeElement?.focus(), this.INPUT_FOCUS_DELAY_MS);
             })
             .catch(() => {
                 this.isAgentTyping.set(false);
                 this.addMessage(this.translateService.instant('artemisApp.agent.chat.competencyProcessFailure'), false);
-                setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
+                setTimeout(() => this.messageInput()?.nativeElement?.focus(), this.INPUT_FOCUS_DELAY_MS);
             });
+    }
+
+    protected onCreateRelation(message: ChatMessage): void {
+        // Prevent duplicate creation
+        if (message.relationCreated || !message.relationPreviews || message.relationPreviews.length === 0) {
+            return;
+        }
+
+        this.isAgentTyping.set(true);
+
+        // Trigger relation creation via agent
+        this.agentChatService.sendMessage('[CREATE_APPROVED_RELATION]', this.courseId()).subscribe({
+            next: (response) => {
+                this.isAgentTyping.set(false);
+
+                // Mark this message's relation as created
+                this.messages.update((msgs) => msgs.map((msg) => (msg.id === message.id ? { ...msg, relationCreated: true } : msg)));
+
+                // Add agent response message
+                this.addMessage(
+                    response.message || this.translateService.instant('artemisApp.agent.chat.success.relationCreated'),
+                    false,
+                    response.competencyPreviews,
+                    response.relationPreviews,
+                    response.relationGraphPreview,
+                );
+
+                // Emit event to refresh competencies (relations affect the graph)
+                this.competencyChanged.emit();
+
+                // Restore focus to input
+                setTimeout(() => this.messageInput()?.nativeElement?.focus(), this.INPUT_FOCUS_DELAY_MS);
+            },
+            error: () => {
+                this.isAgentTyping.set(false);
+                this.addMessage(this.translateService.instant('artemisApp.agent.chat.failure.relationMappingFailed'), false);
+
+                // Restore focus to input
+                setTimeout(() => this.messageInput()?.nativeElement?.focus(), this.INPUT_FOCUS_DELAY_MS);
+            },
+        });
     }
 
     protected onApprovePlan(message: ChatMessage): void {
@@ -226,21 +284,28 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                     this.competencyChanged.emit();
                 }
 
-                setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
+                setTimeout(() => this.messageInput()?.nativeElement?.focus(), this.INPUT_FOCUS_DELAY_MS);
             },
             error: () => {
                 this.isAgentTyping.set(false);
                 this.addMessage(this.translateService.instant('artemisApp.agent.chat.error'), false);
-                setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
+                setTimeout(() => this.messageInput()?.nativeElement?.focus(), this.INPUT_FOCUS_DELAY_MS);
             },
         });
     }
 
     /**
-     * Adds a message to the chat with optional competency preview data.
+     * Adds a message to the chat with optional competency and relation preview data.
+     * Uses unified array-based approach for both competencies and relations (similar to competency cards).
      * Handles plan pending markers, preview data mapping, and automatic scrolling.
      */
-    private addMessage(content: string, isUser: boolean, competencyPreviews?: CompetencyPreviewResponse[]): void {
+    private addMessage(
+        content: string,
+        isUser: boolean,
+        competencyPreviews?: CompetencyPreviewResponse[],
+        relationPreviews?: CompetencyRelationPreviewResponse[],
+        relationGraphPreview?: RelationGraphPreview,
+    ): void {
         const message: ChatMessage = {
             id: this.generateMessageId(),
             content,
@@ -259,6 +324,67 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             }));
         }
 
+        if (relationPreviews && relationPreviews.length > 0) {
+            message.relationPreviews = relationPreviews.map((preview) => ({
+                relationId: preview.relationId,
+                headCompetencyId: preview.headCompetencyId,
+                headCompetencyTitle: preview.headCompetencyTitle,
+                tailCompetencyId: preview.tailCompetencyId,
+                tailCompetencyTitle: preview.tailCompetencyTitle,
+                relationType: preview.relationType,
+                viewOnly: preview.viewOnly,
+            }));
+        }
+
+        if (relationGraphPreview) {
+            message.relationGraphPreview = relationGraphPreview;
+            // Pre-compute graph data for stable rendering with ngx-graph
+            // Pass message.id to ensure unique edge IDs across multiple graph instances
+            message.graphCompetencies = this.convertNodesToCompetencies(relationGraphPreview.nodes);
+            message.graphRelations = this.convertEdgesToRelations(relationGraphPreview.edges, message.id);
+        }
+
+        this.finalizeMessage(message, isUser);
+    }
+
+    /**
+     * Converts graph nodes to CourseCompetency objects.
+     */
+    private convertNodesToCompetencies(nodes: { id: string; label: string }[]): CourseCompetency[] {
+        return nodes.map((node) => {
+            const competency = new Competency();
+            competency.id = Number(node.id);
+            competency.title = node.label;
+            return competency;
+        });
+    }
+
+    /**
+     * Converts graph edges to CompetencyRelationDTO objects.
+     * Generates unique IDs per graph instance to avoid SVG ID collisions when multiple graphs are rendered.
+     */
+    private convertEdgesToRelations(edges: { id: string; source: string; target: string; relationType: CompetencyRelationType }[], messageId: string): CompetencyRelationDTO[] {
+        return edges.map((edge) => {
+            // Combine message ID with edge ID to ensure uniqueness across graph instances
+            const relationId = this.hashStringToPositiveInt(messageId + edge.id);
+
+            return {
+                id: relationId,
+                headCompetencyId: Number(edge.source),
+                tailCompetencyId: Number(edge.target),
+                relationType: edge.relationType,
+            };
+        });
+    }
+
+    /**
+     * Finalizes a message before displaying it:
+     * - Detects plan approval markers
+     * - Appends it to the message list
+     * - Marks for scroll and change detection
+     */
+    private finalizeMessage(message: ChatMessage, isUser: boolean): void {
+        // Detect [PLAN_PENDING] markers and clean message text
         if (!isUser) {
             const cleanedContent = this.removePlanPendingMarkerFromMessageContent(message.content);
             if (cleanedContent !== undefined) {
@@ -325,5 +451,27 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             const textarea = this.messageInput().nativeElement;
             textarea.style.height = 'auto';
         }
+    }
+
+    /**
+     * Generates a stable positive integer hash from a string.
+     * Used to create consistent numeric IDs for ngx-graph edges.
+     */
+    private hashStringToPositiveInt(str: string): number {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charCodeAt(i);
+            hash = (hash << 5) - hash + char;
+            hash = hash & hash; // Convert to 32-bit integer
+        }
+        return Math.abs(hash);
+    }
+
+    /**
+     * Checks if the message contains an update operation (vs create).
+     * An update operation has at least one relationPreview with a relationId set.
+     */
+    protected isRelationUpdateOperation(message: ChatMessage): boolean {
+        return message.relationPreviews?.some((preview) => preview.relationId !== undefined) ?? false;
     }
 }

@@ -697,4 +697,33 @@ class AtlasMLServiceTest {
             atlasMLService.suggestCompetencyRelations(courseId);
         }).isInstanceOf(AtlasMLServiceException.class);
     }
+
+    @Test
+    void testMapCompetencyToCompetency_Success() {
+        Long sourceCompetencyId = 1L;
+        Long targetCompetencyId = 2L;
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(true);
+
+        ResponseEntity<Void> response = new ResponseEntity<>(HttpStatus.OK);
+        when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/map-competency-to-competency"), eq(HttpMethod.POST), any(HttpEntity.class), eq(Void.class)))
+                .thenReturn(response);
+
+        boolean result = atlasMLService.mapCompetencyToCompetency(sourceCompetencyId, targetCompetencyId);
+
+        assertThat(result).isTrue();
+        verify(atlasmlRestTemplate).exchange(eq("http://localhost:8000/api/v1/competency/map-competency-to-competency"), eq(HttpMethod.POST), any(HttpEntity.class),
+                eq(Void.class));
+    }
+
+    @Test
+    void testSaveCompetenciesWithDomainObjects_WhenFeatureDisabled() {
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(false);
+        Competency competency = new Competency();
+        competency.setId(1L);
+
+        boolean result = atlasMLService.saveCompetencies(List.of(competency), OperationTypeDTO.UPDATE);
+
+        assertThat(result).isTrue();
+        verify(atlasmlRestTemplate, org.mockito.Mockito.never()).exchange(any(String.class), any(HttpMethod.class), any(HttpEntity.class), eq(String.class));
+    }
 }
