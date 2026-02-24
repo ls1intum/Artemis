@@ -42,7 +42,7 @@
         "@stomp/stompjs": "7.3.0",
         "@swimlane/ngx-charts": "23.1.0",
         "@swimlane/ngx-graph": "11.0.0",
-        "@tumaet/apollon": "4.2.7",
+        "@tumaet/apollon": "4.2.8",
         "@vscode/codicons": "0.0.44",
         "@vscode/markdown-it-katex": "1.1.2",
         "bootstrap": "5.3.8",
