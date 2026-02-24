@@ -340,8 +340,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         artemisIntelligence: [],
         meta: [],
     };
-    showTextStyleActions = signal<boolean>(true);
-    showNonTextStyleActions = signal<boolean>(true);
+    readonly showTextStyleActions = signal<boolean>(true);
+    readonly showNonTextStyleActions = signal<boolean>(true);
     private selectionChangeListener?: { dispose(): void };
 
     /**
