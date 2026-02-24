@@ -1,6 +1,7 @@
 import { Component, ElementRef, HostListener, OnDestroy, inject, viewChild } from '@angular/core';
 import { SearchOverlayService } from '../../services/search-overlay.service';
 import { OsDetectorService } from '../../services/os-detector.service';
+import { AccountService } from 'app/core/auth/account.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowDown, faArrowUp, faSearch } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -16,6 +17,7 @@ import { DialogModule } from 'primeng/dialog';
 export class GlobalSearchModalComponent implements OnDestroy {
     protected overlay = inject(SearchOverlayService);
     protected osDetector = inject(OsDetectorService);
+    private accountService = inject(AccountService);
 
     protected readonly faSearch = faSearch;
     protected readonly faArrowUp = faArrowUp;
@@ -31,7 +33,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
 
     @HostListener('window:keydown', ['$event'])
     handleKeyboardEvent(event: KeyboardEvent) {
-        if (event.key.toLowerCase() === 'k' && this.osDetector.isActionKey(event)) {
+        if (event.key.toLowerCase() === 'k' && this.osDetector.isActionKey(event) && this.accountService.isAuthenticated()) {
             event.preventDefault();
             this.overlay.toggle();
         }

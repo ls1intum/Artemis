@@ -9,6 +9,8 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { GlobalSearchModalComponent } from './global-search-modal.component';
 import { SearchOverlayService } from '../../services/search-overlay.service';
 import { OsDetectorService } from '../../services/os-detector.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
@@ -42,6 +44,7 @@ describe('GlobalSearchModalComponent', () => {
                 provideHttpClientTesting(),
                 { provide: SearchOverlayService, useValue: mockSearchOverlayService },
                 { provide: OsDetectorService, useValue: mockOsDetectorService },
+                { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         });
@@ -120,6 +123,17 @@ describe('GlobalSearchModalComponent', () => {
 
             expect(searchOverlayService.toggle).not.toHaveBeenCalled();
         });
+
+        it('should not toggle modal when Cmd+K is pressed and user is not authenticated', () => {
+            const accountService = TestBed.inject(AccountService);
+            vi.spyOn(accountService, 'isAuthenticated').mockReturnValue(false);
+            mockOsDetectorService.isActionKey.mockReturnValue(true);
+            const event = new KeyboardEvent('keydown', { key: 'k', metaKey: true });
+
+            component.handleKeyboardEvent(event);
+
+            expect(searchOverlayService.toggle).not.toHaveBeenCalled();
+        });
     });
 
     describe('Modal Rendering', () => {
@@ -128,7 +142,7 @@ describe('GlobalSearchModalComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            const dialog = document.body.querySelector('.p-dialog');
+            const dialog = fixture.nativeElement.querySelector('.p-dialog');
             expect(dialog).toBeTruthy();
         });
 
@@ -136,7 +150,7 @@ describe('GlobalSearchModalComponent', () => {
             mockSearchOverlayService.isOpen.set(false);
             fixture.detectChanges();
 
-            const dialog = document.body.querySelector('.p-dialog');
+            const dialog = fixture.nativeElement.querySelector('.p-dialog');
             expect(dialog).toBeFalsy();
         });
 
@@ -145,7 +159,7 @@ describe('GlobalSearchModalComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            const searchInput = document.body.querySelector('.search-input');
+            const searchInput = fixture.nativeElement.querySelector('.search-input');
             expect(searchInput).toBeTruthy();
         });
 
@@ -154,8 +168,8 @@ describe('GlobalSearchModalComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            const footer = document.body.querySelector('.search-footer');
-            const hints = document.body.querySelectorAll('.key-hint-small');
+            const footer = fixture.nativeElement.querySelector('.search-footer');
+            const hints = fixture.nativeElement.querySelectorAll('.key-hint-small');
 
             expect(footer).toBeTruthy();
             expect(hints.length).toBeGreaterThan(0);
@@ -168,7 +182,7 @@ describe('GlobalSearchModalComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            const searchInput = document.body.querySelector('.search-input') as HTMLInputElement;
+            const searchInput = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
             expect(searchInput).toBeTruthy();
 
             await new Promise((resolve) => setTimeout(resolve, 10));
@@ -214,7 +228,7 @@ describe('GlobalSearchModalComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            const searchIcon = document.body.querySelector('.search-icon');
+            const searchIcon = fixture.nativeElement.querySelector('.search-icon');
             expect(searchIcon).toBeTruthy();
         });
 
@@ -223,7 +237,7 @@ describe('GlobalSearchModalComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            const icons = document.body.querySelectorAll('.key-hint-small fa-icon');
+            const icons = fixture.nativeElement.querySelectorAll('.key-hint-small fa-icon');
             expect(icons.length).toBeGreaterThanOrEqual(2);
         });
     });
