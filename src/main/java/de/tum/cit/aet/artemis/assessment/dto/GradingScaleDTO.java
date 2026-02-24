@@ -66,7 +66,7 @@ public record GradingScaleDTO(Long id, @NotNull GradeStepsDTO gradeSteps, BonusS
         Set<GradingScaleRequestDTO.GradeStepDTO> gradeSteps = Set.of();
         if (Hibernate.isInitialized(scale.getGradeSteps()) && scale.getGradeSteps() != null) {
             gradeSteps = scale.getGradeSteps().stream()
-                    .map(gradeStep -> new GradingScaleRequestDTO.GradeStepDTO(gradeStep.getLowerBoundPercentage(), gradeStep.isLowerBoundInclusive(),
+                    .map(gradeStep -> new GradingScaleRequestDTO.GradeStepDTO(gradeStep.getId(), gradeStep.getLowerBoundPercentage(), gradeStep.isLowerBoundInclusive(),
                             gradeStep.getUpperBoundPercentage(), gradeStep.isUpperBoundInclusive(), gradeStep.getGradeName(), gradeStep.getIsPassingGrade()))
                     .collect(Collectors.toSet());
         }

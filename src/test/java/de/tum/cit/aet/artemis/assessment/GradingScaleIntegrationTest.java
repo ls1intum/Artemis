@@ -63,8 +63,8 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         Set<GradingScaleRequestDTO.GradeStepDTO> gradeStepDTOs = new HashSet<>();
         if (gradingScale.getGradeSteps() != null) {
             for (GradeStep step : gradingScale.getGradeSteps()) {
-                gradeStepDTOs.add(new GradingScaleRequestDTO.GradeStepDTO(step.getLowerBoundPercentage(), step.isLowerBoundInclusive(), step.getUpperBoundPercentage(),
-                        step.isUpperBoundInclusive(), step.getGradeName(), step.getIsPassingGrade()));
+                gradeStepDTOs.add(new GradingScaleRequestDTO.GradeStepDTO(step.getId(), step.getLowerBoundPercentage(), step.isLowerBoundInclusive(),
+                        step.getUpperBoundPercentage(), step.isUpperBoundInclusive(), step.getGradeName(), step.getIsPassingGrade()));
             }
         }
         return new GradingScaleRequestDTO(gradingScale.getGradeType(), gradingScale.getBonusStrategy(), gradingScale.getPlagiarismGrade(), gradingScale.getNoParticipationGrade(),

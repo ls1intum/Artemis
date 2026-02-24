@@ -132,10 +132,9 @@ public class GradeStepResource {
             gradeStep.setGradingScale(null);
         }
         var newGradeSteps = gradeSteps.stream()
-                .map(gradeStep -> new GradingScaleRequestDTO.GradeStepDTO(gradeStep.getLowerBoundPercentage(), gradeStep.isLowerBoundInclusive(),
+                .map(gradeStep -> new GradingScaleRequestDTO.GradeStepDTO(gradeStep.getId(), gradeStep.getLowerBoundPercentage(), gradeStep.isLowerBoundInclusive(),
                         gradeStep.getUpperBoundPercentage(), gradeStep.isUpperBoundInclusive(), gradeStep.getGradeName(), gradeStep.getIsPassingGrade()))
                 .collect(Collectors.toSet());
-
         return new GradeStepsDTO(title, gradingScale.getGradeType(), newGradeSteps, maxPoints, gradingScale.getPlagiarismGradeOrDefault(),
                 gradingScale.getNoParticipationGradeOrDefault(), gradingScale.getPresentationsNumber(), gradingScale.getPresentationsWeight());
     }

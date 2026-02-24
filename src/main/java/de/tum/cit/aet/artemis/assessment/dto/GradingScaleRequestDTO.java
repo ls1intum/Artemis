@@ -48,8 +48,8 @@ public record GradingScaleRequestDTO(@NotNull GradeType gradeType, @Nullable Bon
      * DTO for a grade step within a grading scale.
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record GradeStepDTO(double lowerBoundPercentage, boolean lowerBoundInclusive, double upperBoundPercentage, boolean upperBoundInclusive, @NotNull String gradeName,
-            boolean isPassingGrade) {
+    public record GradeStepDTO(Long id, double lowerBoundPercentage, boolean lowerBoundInclusive, double upperBoundPercentage, boolean upperBoundInclusive,
+            @NotNull String gradeName, boolean isPassingGrade) {
 
         /**
          * Creates a GradeStep entity from this DTO.
