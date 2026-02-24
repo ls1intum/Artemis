@@ -186,7 +186,7 @@ public class LocalVCServletService {
             throw new RepositoryNotFoundException(repositoryPath);
         }
 
-        log.debug("Path to resolve repository from: {}", repositoryDir);
+        log.debug("Path to resolve repository from: {}", sanitizedPath);
         if (!Files.exists(repositoryDir)) {
             log.error("Could not find local repository with name {}", sanitizedPath);
             throw new RepositoryNotFoundException(repositoryPath);
