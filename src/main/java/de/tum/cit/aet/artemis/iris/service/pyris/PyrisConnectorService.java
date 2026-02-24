@@ -40,6 +40,8 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisLearningDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisMemoryConnectionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisMemoryDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisMemoryWithRelationsDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRequestDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchResultDTO;
 import de.tum.cit.aet.artemis.iris.web.internal.PyrisInternalStatusUpdateResource;
 
 /**
@@ -158,6 +160,32 @@ public class PyrisConnectorService {
         catch (RestClientException | IllegalArgumentException e) {
             log.error("Failed to delete Memiris memory {} for user {}", memoryId, userId, e);
             throw new PyrisConnectorException("Could not delete memory in Pyris");
+        }
+    }
+
+    /**
+     * Searches for lecture units in Pyris using a query string.
+     *
+     * @param query the search query
+     * @param limit the maximum number of results to return
+     * @return list of matching lecture search results
+     */
+    public List<PyrisLectureSearchResultDTO> searchLectures(String query, int limit) {
+        var endpoint = "/api/v1/search/lectures";
+        try {
+            var requestDTO = new PyrisLectureSearchRequestDTO(query, limit);
+            var response = restTemplate.postForEntity(pyrisUrl + endpoint, objectMapper.valueToTree(requestDTO), PyrisLectureSearchResultDTO[].class);
+            if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody() || response.getBody() == null) {
+                return List.of();
+            }
+            return Arrays.asList(response.getBody());
+        }
+        catch (HttpStatusCodeException e) {
+            throw toIrisException(e);
+        }
+        catch (RestClientException | IllegalArgumentException e) {
+            log.error("Failed to search lectures in Pyris", e);
+            throw new PyrisConnectorException("Could not fetch lecture search results from Pyris");
         }
     }
 
