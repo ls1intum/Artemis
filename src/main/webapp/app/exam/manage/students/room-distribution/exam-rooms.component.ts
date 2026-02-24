@@ -19,6 +19,7 @@ import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 
 /**
  * Admin component for managing exam rooms.
@@ -27,7 +28,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 @Component({
     selector: 'jhi-exam-rooms',
     templateUrl: './exam-rooms.component.html',
-    imports: [TranslateDirective, SortDirective, SortByDirective, FaIconComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, SortDirective, SortByDirective, FaIconComponent, ArtemisTranslatePipe, HelpIconComponent],
 })
 export class ExamRoomsComponent implements OnInit {
     private readonly baseTranslationPath = 'artemisApp.examRooms.management';

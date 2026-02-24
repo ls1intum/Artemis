@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomDeletionSummaryDTO;
@@ -32,6 +33,11 @@ import de.tum.cit.aet.artemis.exam.service.ExamRoomService;
  * Exam rooms are generally not bound to specific courses or exams, and can therefore be modified by every instructor.
  * The exam room management is essentially a very simplified, globally shared repository, where instructors can view
  * existing exam rooms and add new exam rooms or versions thereof.
+ * <p>
+ * Additionally, administrators can remove unused and outdated exam rooms. Instructors do not get these permissions, as
+ * exam rooms are shared and removing is a destructive operation. Also, removing no longer required exam rooms is not
+ * something that would actually affect an instructor, but rather is an operation that can be run whenever a safe
+ * cleanup is required, the need for which only an admin could determine.
  * <p>
  * Course and exam specific connections between are managed by {@link ExamRoomDistributionResource}.
  */
@@ -107,7 +113,7 @@ public class ExamRoomManagementResource {
      * @return a response entity with status 200 and a summary of the deletion process.
      */
     @DeleteMapping("outdated-and-unused")
-    @EnforceAtLeastInstructor
+    @EnforceAdmin
     public ResponseEntity<ExamRoomDeletionSummaryDTO> deleteAllOutdatedAndUnusedExamRooms() {
         log.debug("REST request to delete all outdated and unused exam rooms");
 

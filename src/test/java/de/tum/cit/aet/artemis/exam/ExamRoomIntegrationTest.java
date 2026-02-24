@@ -358,7 +358,7 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
     void testDeleteOutdatedAndUnusedExamRoomsAsInstructor() throws Exception {
-        request.delete("/api/exam/rooms/outdated-and-unused", HttpStatus.OK);
+        request.delete("/api/exam/rooms/outdated-and-unused", HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -373,7 +373,7 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void testDeleteOutdatedAndUnusedExamRoomsEmpty() throws Exception {
         var deletionSummary = request.delete("/api/exam/rooms/outdated-and-unused", new LinkedMultiValueMap<>(), null, ExamRoomDeletionSummaryDTO.class, HttpStatus.OK);
 
@@ -382,7 +382,7 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void testDeleteOutdatedAndUnusedRealisticRoomDataNothingToDelete() throws Exception {
         request.postMultipartFileOnly("/api/exam/rooms/upload", ExamRoomZipFiles.zipFileRealisticScenario, HttpStatus.OK);
         assertThat(examRoomRepository.count()).isPositive();
@@ -393,7 +393,7 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void testDeleteOutdatedAndUnusedTonsOfExamRoomData() throws Exception {
         final int ITERATIONS = 10;
         for (int i = 0; i < ITERATIONS; i++) {

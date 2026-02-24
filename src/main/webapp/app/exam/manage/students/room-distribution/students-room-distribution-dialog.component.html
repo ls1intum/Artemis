@@ -99,11 +99,12 @@
                     id="examRoomManagementLink"
                     routerLink="/exams/rooms"
                     target="_blank"
+                    rel="noopener noreferrer"
                     class="text-primary text-decoration-underline"
                     jhiTranslate="artemisApp.examRooms.management.openButtonTitle"
                 ></a>
             </p>
-            <div class="p-d-flex p-ai-center p-gap-2">
+            <div class="distribution-footer-buttons">
                 <button id="cancel-button" type="button" class="btn btn-secondary cancel" (click)="closeDialog()">
                     <fa-icon [icon]="faBan" />
                     <span jhiTranslate="entity.action.cancel" class="m-1"></span>

@@ -29,6 +29,7 @@
                 "fileSizeTooBig": "File size cannot exceed {{ MAX_FILE_SIZE }} MB",
                 "noZipFile": "Only .zip files are accepted",
                 "deleteExamRoomsSafe": "Delete outdated and unused exam room versions",
+                "deleteExamRoomsSafeTooltip": "Admin only. Removes those exam room versions that are not the most recent version of each room, and that are not used in any exam anymore.",
                 "uploadError": "An error occurred while processing the rooms",
                 "deleting": "Deleting...",
                 "deletionError": "An error occurred while deleting the rooms",

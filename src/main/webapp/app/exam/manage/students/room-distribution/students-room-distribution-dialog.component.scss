@@ -18,3 +18,9 @@
     justify-content: space-between;
     align-items: center;
 }
+
+.distribution-footer-buttons {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem; // equivalent of PrimeFlex p-gap-2
+}
