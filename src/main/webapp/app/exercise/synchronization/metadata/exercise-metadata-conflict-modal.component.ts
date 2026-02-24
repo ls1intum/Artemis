@@ -1,18 +1,20 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { NgClass } from '@angular/common';
 import dayjs from 'dayjs/esm';
-import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { CheckboxModule } from 'primeng/checkbox';
 import { ButtonModule } from 'primeng/button';
+import { TableModule } from 'primeng/table';
+import { TranslateService } from '@ngx-translate/core';
 
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
-import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
+import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
+import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { normalizeCategoryArray, normalizeCategoryEntry } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot-shared.mapper';
 
 /**
@@ -55,11 +57,12 @@ export interface ExerciseMetadataConflictModalData {
     selector: 'jhi-exercise-metadata-conflict-modal',
     templateUrl: './exercise-metadata-conflict-modal.component.html',
     styleUrls: ['./exercise-metadata-conflict-modal.component.scss'],
-    imports: [FormsModule, TranslateDirective, CustomExerciseCategoryBadgeComponent, CheckboxModule, ButtonModule],
+    imports: [NgClass, TranslateDirective, CustomExerciseCategoryBadgeComponent, ButtonModule, TableModule],
 })
 export class ExerciseMetadataConflictModalComponent implements OnInit {
     private readonly dialogRef = inject(DynamicDialogRef);
     private readonly dialogConfig = inject(DynamicDialogConfig);
+    private readonly translateService = inject(TranslateService);
 
     readonly conflicts = signal<ExerciseMetadataConflictItem[]>([]);
     readonly author = signal<UserPublicInfoDTO | undefined>(undefined);
@@ -77,7 +80,23 @@ export class ExerciseMetadataConflictModalComponent implements OnInit {
         return author.name ?? (fullName || author.login || '');
     });
 
-    readonly faExclamationTriangle = faExclamationTriangle;
+    readonly allLocal = computed(() => {
+        const d = this.decisions();
+        const conflicts = this.conflicts();
+        if (conflicts.length === 0) {
+            return true;
+        }
+        return conflicts.every((conflict) => d[conflict.field] === false);
+    });
+
+    readonly allIncoming = computed(() => {
+        const d = this.decisions();
+        const conflicts = this.conflicts();
+        if (conflicts.length === 0) {
+            return false;
+        }
+        return conflicts.every((conflict) => d[conflict.field] === true);
+    });
 
     ngOnInit(): void {
         const data = this.dialogConfig.data as ExerciseMetadataConflictModalData | undefined;
@@ -103,7 +122,18 @@ export class ExerciseMetadataConflictModalComponent implements OnInit {
     }
 
     /**
-     * Updates the checkbox decision state for a single field.
+     * Sets all conflict decisions to the given value.
+     */
+    setAllDecisions(useIncoming: boolean): void {
+        const updated: Record<string, boolean> = {};
+        for (const conflict of this.conflicts()) {
+            updated[conflict.field] = useIncoming;
+        }
+        this.decisions.set(updated);
+    }
+
+    /**
+     * Updates the decision state for a single field.
      */
     updateDecision(field: string, value: boolean): void {
         const updated = Object.assign({}, this.decisions());
@@ -134,14 +164,7 @@ export class ExerciseMetadataConflictModalComponent implements OnInit {
     }
 
     /**
-     * Dismisses the modal without applying changes.
-     */
-    close(): void {
-        this.dialogRef.close();
-    }
-
-    /**
-     * Formats values for display in the conflict table.
+     * Formats values for display in the conflict tiles.
      */
     formatValue(value: unknown): string {
         if (value === undefined || value === null) {
@@ -158,7 +181,7 @@ export class ExerciseMetadataConflictModalComponent implements OnInit {
             }
         }
         if (typeof value === 'string') {
-            return value;
+            return this.formatIncludedInOverallScore(value) ?? value;
         }
         if (typeof value === 'number' || typeof value === 'boolean') {
             return String(value);
@@ -192,11 +215,31 @@ export class ExerciseMetadataConflictModalComponent implements OnInit {
     }
 
     /**
-     * Maps build config snapshots into a grid-friendly list of entries.
+     * Returns true when the conflict field represents grading criteria.
      */
-    getBuildConfigEntries(currentValue: unknown, incomingValue: unknown): Array<{ labelKey: string; current: unknown; incoming: unknown }> {
-        const current = (currentValue as ProgrammingExerciseBuildConfig | undefined) ?? undefined;
-        const incoming = (incomingValue as ProgrammingExerciseBuildConfig | undefined) ?? undefined;
+    isGradingCriteriaField(field: string): boolean {
+        return field === 'gradingCriteria';
+    }
+
+    /**
+     * Maps grading criteria values into a display-friendly structure.
+     */
+    toGradingCriteriaDisplay(value: unknown): Array<{ title: string; instructions: GradingInstruction[] }> {
+        const criteria = value as GradingCriterion[] | undefined;
+        if (!criteria || !Array.isArray(criteria)) {
+            return [];
+        }
+        return criteria.map((criterion) => ({
+            title: criterion.title || this.translateService.instant('artemisApp.exercise.metadataSync.untitledCriterion'),
+            instructions: criterion.structuredGradingInstructions ?? [],
+        }));
+    }
+
+    /**
+     * Maps build config values into a list of entries for each tile.
+     */
+    getBuildConfigValues(configValue: unknown): Array<{ labelKey: string; value: unknown }> {
+        const config = (configValue as ProgrammingExerciseBuildConfig | undefined) ?? undefined;
         const entries = [
             { labelKey: 'artemisApp.exercise.metadataSync.fields.buildConfig.sequentialTestRuns', key: 'sequentialTestRuns' },
             { labelKey: 'artemisApp.exercise.metadataSync.fields.buildConfig.buildPlanConfiguration', key: 'buildPlanConfiguration' },
@@ -214,8 +257,7 @@ export class ExerciseMetadataConflictModalComponent implements OnInit {
 
         return entries.map((entry) => ({
             labelKey: entry.labelKey,
-            current: current ? current[entry.key as keyof ProgrammingExerciseBuildConfig] : undefined,
-            incoming: incoming ? incoming[entry.key as keyof ProgrammingExerciseBuildConfig] : undefined,
+            value: config ? config[entry.key as keyof ProgrammingExerciseBuildConfig] : undefined,
         }));
     }
 
@@ -258,5 +300,21 @@ export class ExerciseMetadataConflictModalComponent implements OnInit {
                 weight: link.weight,
             }))
             .filter((entry) => entry.title);
+    }
+
+    /**
+     * Translates IncludedInOverallScore enum values to user-friendly labels.
+     */
+    private formatIncludedInOverallScore(value: string): string | undefined {
+        switch (value) {
+            case IncludedInOverallScore.INCLUDED_COMPLETELY:
+                return this.translateService.instant('artemisApp.exercise.yes');
+            case IncludedInOverallScore.INCLUDED_AS_BONUS:
+                return this.translateService.instant('artemisApp.exercise.bonus');
+            case IncludedInOverallScore.NOT_INCLUDED:
+                return this.translateService.instant('artemisApp.exercise.no');
+            default:
+                return undefined;
+        }
     }
 }

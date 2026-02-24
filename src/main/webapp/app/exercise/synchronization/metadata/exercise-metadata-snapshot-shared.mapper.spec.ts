@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { Competency, CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
+import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
+import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { toCompetencyLinks, toTeamAssignmentConfig } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot-shared.mapper';
+import { toCompetencyLinks, toGradingCriteria, toTeamAssignmentConfig } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot-shared.mapper';
 
 import { CompetencyExerciseLinkSnapshotDTO, TeamAssignmentConfigSnapshot } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot.dto';
 
@@ -100,5 +102,81 @@ describe('ExerciseMetadataSnapshotSharedMapper', () => {
         const mapped = toCompetencyLinks(exercise, snapshot);
 
         expect(mapped).toEqual([]);
+    });
+
+    it('returns undefined when grading criteria snapshot is undefined', () => {
+        expect(toGradingCriteria(undefined)).toBeUndefined();
+    });
+
+    it('converts plain grading criteria DTOs to GradingCriterion class instances', () => {
+        const dtos = [
+            {
+                id: 1,
+                title: 'Criterion 1',
+                structuredGradingInstructions: [{ id: 10, credits: 1.5, gradingScale: 'Good', instructionDescription: 'Well done', feedback: 'Great work', usageCount: 0 }],
+            },
+        ];
+
+        const result = toGradingCriteria(dtos);
+
+        expect(result).toHaveLength(1);
+        expect(result![0]).toBeInstanceOf(GradingCriterion);
+        expect(result![0].id).toBe(1);
+        expect(result![0].title).toBe('Criterion 1');
+        expect(result![0].structuredGradingInstructions).toHaveLength(1);
+        expect(result![0].structuredGradingInstructions[0]).toBeInstanceOf(GradingInstruction);
+        expect(result![0].structuredGradingInstructions[0].credits).toBe(1.5);
+        expect(result![0].structuredGradingInstructions[0].gradingScale).toBe('Good');
+        expect(result![0].structuredGradingInstructions[0].instructionDescription).toBe('Well done');
+        expect(result![0].structuredGradingInstructions[0].feedback).toBe('Great work');
+        expect(result![0].structuredGradingInstructions[0].usageCount).toBe(0);
+    });
+
+    it('handles grading criteria with empty instructions array', () => {
+        const dtos = [{ id: 2, title: 'Empty', structuredGradingInstructions: [] }];
+
+        const result = toGradingCriteria(dtos);
+
+        expect(result).toHaveLength(1);
+        expect(result![0].structuredGradingInstructions).toEqual([]);
+    });
+
+    it('handles grading criteria with missing instructions property', () => {
+        const dtos = [{ id: 3, title: 'No Instructions' }];
+
+        const result = toGradingCriteria(dtos);
+
+        expect(result).toHaveLength(1);
+        expect(result![0]).toBeInstanceOf(GradingCriterion);
+        expect(result![0].structuredGradingInstructions).toEqual([]);
+    });
+
+    it('sorts grading criteria by ID for deterministic order', () => {
+        const dtos = [
+            { id: 3, title: 'Third' },
+            { id: 1, title: 'First' },
+            { id: 2, title: 'Second' },
+        ];
+
+        const result = toGradingCriteria(dtos);
+
+        expect(result).toHaveLength(3);
+        expect(result!.map((c) => c.id)).toEqual([1, 2, 3]);
+        expect(result!.map((c) => c.title)).toEqual(['First', 'Second', 'Third']);
+    });
+
+    it('defaults missing grading criteria fields to safe values', () => {
+        const dtos = [{ structuredGradingInstructions: [{}] }];
+
+        const result = toGradingCriteria(dtos);
+
+        expect(result).toHaveLength(1);
+        expect(result![0].title).toBe('');
+        expect(result![0].id).toBeUndefined();
+        const instruction = result![0].structuredGradingInstructions[0];
+        expect(instruction.credits).toBe(0);
+        expect(instruction.gradingScale).toBe('');
+        expect(instruction.instructionDescription).toBe('');
+        expect(instruction.feedback).toBe('');
     });
 });

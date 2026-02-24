@@ -234,8 +234,11 @@
                 "useCurrentValue": "Use current value",
                 "yourValue": "Your value",
                 "incomingValue": "Incoming value",
-                "keepLocal": "Keep my changes",
+                "keepLocal": "Ignore incoming and continue",
+                "keepAllLocal": "Keep all my values",
+                "applyAllIncoming": "Apply all incoming values",
                 "applySelections": "Apply selections",
+                "untitledCriterion": "Untitled Criterion",
                 "snapshotFetchFailed": "Could not fetch the latest exercise version. Please refresh the page to see the most recent changes.",
                 "fields": {
                     "buildConfig": {

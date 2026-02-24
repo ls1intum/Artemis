@@ -8,53 +8,78 @@
         }
     </p>
 
+    <div class="global-toggle d-flex gap-2 mb-3">
+        <p-button class="flex-fill" [outlined]="!allLocal()" (onClick)="setAllDecisions(false)" styleClass="w-100">
+            <span jhiTranslate="artemisApp.exercise.metadataSync.keepAllLocal"></span>
+        </p-button>
+        <p-button class="flex-fill" [outlined]="!allIncoming()" (onClick)="setAllDecisions(true)" styleClass="w-100">
+            <span jhiTranslate="artemisApp.exercise.metadataSync.applyAllIncoming"></span>
+        </p-button>
+    </div>
+
     <div class="conflict-list d-flex flex-column gap-3">
         @for (conflict of conflicts(); track conflict.field) {
             <div class="conflict-item border rounded-3 p-3">
-                <div class="conflict-header d-flex align-items-center gap-2">
-                    <p-checkbox
-                        [inputId]="'conflict-' + conflict.field"
-                        [ngModel]="decisions()[conflict.field]"
-                        (ngModelChange)="updateDecision(conflict.field, $event)"
-                        [binary]="true"
-                    />
-                    <label [for]="'conflict-' + conflict.field">
-                        <span jhiTranslate="artemisApp.exercise.metadataSync.useIncoming"></span>
-                        <span class="fw-semibold ms-2" [jhiTranslate]="conflict.labelKey"></span>
-                    </label>
+                <div class="conflict-header mb-2">
+                    <span class="fw-semibold" [jhiTranslate]="conflict.labelKey"></span>
                 </div>
 
                 @if (isBuildConfigField(conflict.field)) {
-                    <div class="conflict-build-config mt-3 border rounded-3 p-3">
-                        <div class="d-flex gap-3 small text-body-secondary mb-2">
-                            <span class="flex-fill" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></span>
-                            <span class="flex-fill" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></span>
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <div
+                                class="conflict-tile rounded-3 p-3 h-100"
+                                [ngClass]="{ 'conflict-tile--selected bg-light': !decisions()[conflict.field] }"
+                                (click)="updateDecision(conflict.field, false)"
+                            >
+                                <div class="small text-body-secondary mb-2" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
+                                @for (entry of getBuildConfigValues(conflict.currentValue); track entry.labelKey) {
+                                    <div class="d-flex justify-content-between gap-2 small mb-1">
+                                        <span class="fw-semibold" [jhiTranslate]="entry.labelKey"></span>
+                                        <span class="text-break text-end">{{ formatValue(entry.value) }}</span>
+                                    </div>
+                                }
+                            </div>
                         </div>
-                        <div class="build-config-grid">
-                            @for (entry of getBuildConfigEntries(conflict.currentValue, conflict.incomingValue); track entry.labelKey) {
-                                <div class="build-config-label fw-semibold small" [jhiTranslate]="entry.labelKey"></div>
-                                <div class="build-config-value small text-break">{{ formatValue(entry.current) }}</div>
-                                <div class="build-config-value small text-break">{{ formatValue(entry.incoming) }}</div>
-                            }
+                        <div class="col-12 col-md-6">
+                            <div
+                                class="conflict-tile rounded-3 p-3 h-100"
+                                [ngClass]="{ 'conflict-tile--selected bg-light': decisions()[conflict.field] }"
+                                (click)="updateDecision(conflict.field, true)"
+                            >
+                                <div class="small text-body-secondary mb-2" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
+                                @for (entry of getBuildConfigValues(conflict.incomingValue); track entry.labelKey) {
+                                    <div class="d-flex justify-content-between gap-2 small mb-1">
+                                        <span class="fw-semibold" [jhiTranslate]="entry.labelKey"></span>
+                                        <span class="text-break text-end">{{ formatValue(entry.value) }}</span>
+                                    </div>
+                                }
+                            </div>
                         </div>
                     </div>
                 } @else if (isCategoriesField(conflict.field)) {
-                    <div class="conflict-categories mt-3 border rounded-3 p-3">
-                        <div class="d-none d-md-flex row g-3 small text-body-secondary mb-2">
-                            <span class="col-6" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></span>
-                            <span class="col-6" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></span>
-                        </div>
-                        <div class="row g-3">
-                            <div class="col-12 col-md-6">
-                                <div class="small text-body-secondary mb-1 d-md-none" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <div
+                                class="conflict-tile rounded-3 p-3 h-100"
+                                [ngClass]="{ 'conflict-tile--selected bg-light': !decisions()[conflict.field] }"
+                                (click)="updateDecision(conflict.field, false)"
+                            >
+                                <div class="small text-body-secondary mb-1" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
                                 <div class="d-flex flex-wrap gap-2">
                                     @for (category of toCategoryEntries(conflict.currentValue); track category.category) {
                                         <jhi-custom-exercise-category-badge [category]="category" [fontSize]="'small'" />
                                     }
                                 </div>
                             </div>
-                            <div class="col-12 col-md-6">
-                                <div class="small text-body-secondary mb-1 d-md-none" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <div
+                                class="conflict-tile rounded-3 p-3 h-100"
+                                [ngClass]="{ 'conflict-tile--selected bg-light': decisions()[conflict.field] }"
+                                (click)="updateDecision(conflict.field, true)"
+                            >
+                                <div class="small text-body-secondary mb-1" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
                                 <div class="d-flex flex-wrap gap-2">
                                     @for (category of toCategoryEntries(conflict.incomingValue); track category.category) {
                                         <jhi-custom-exercise-category-badge [category]="category" [fontSize]="'small'" />
@@ -64,42 +89,131 @@
                         </div>
                     </div>
                 } @else if (isCompetencyLinksField(conflict.field)) {
-                    <div class="conflict-competencies mt-3 border rounded-3 p-3">
-                        <div class="d-none d-md-flex row g-3 small text-body-secondary mb-2">
-                            <span class="col-6" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></span>
-                            <span class="col-6" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></span>
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <div
+                                class="conflict-tile rounded-3 p-3 h-100"
+                                [ngClass]="{ 'conflict-tile--selected bg-light': !decisions()[conflict.field] }"
+                                (click)="updateDecision(conflict.field, false)"
+                            >
+                                <div class="small text-body-secondary mb-1" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
+                                <div class="d-flex flex-column gap-2">
+                                    @for (entry of toCompetencyDisplay(conflict.currentValue); track entry.title) {
+                                        <div class="d-flex justify-content-between gap-2 px-2 py-1 rounded-3 bg-secondary-subtle small">
+                                            <span class="fw-semibold">{{ entry.title }}</span>
+                                            <span>{{ formatValue(entry.weight) }}</span>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
                         </div>
-                        <div class="row g-3">
-                            <div class="col-12 col-md-6 d-flex flex-column gap-2">
-                                <div class="small text-body-secondary mb-1 d-md-none" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
-                                @for (entry of toCompetencyDisplay(conflict.currentValue); track entry.title) {
-                                    <div class="d-flex justify-content-between gap-2 px-2 py-1 rounded-3 bg-secondary-subtle small">
-                                        <span class="fw-semibold">{{ entry.title }}</span>
-                                        <span>{{ formatValue(entry.weight) }}</span>
+                        <div class="col-12 col-md-6">
+                            <div
+                                class="conflict-tile rounded-3 p-3 h-100"
+                                [ngClass]="{ 'conflict-tile--selected bg-light': decisions()[conflict.field] }"
+                                (click)="updateDecision(conflict.field, true)"
+                            >
+                                <div class="small text-body-secondary mb-1" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
+                                <div class="d-flex flex-column gap-2">
+                                    @for (entry of toCompetencyDisplay(conflict.incomingValue); track entry.title) {
+                                        <div class="d-flex justify-content-between gap-2 px-2 py-1 rounded-3 bg-secondary-subtle small">
+                                            <span class="fw-semibold">{{ entry.title }}</span>
+                                            <span>{{ formatValue(entry.weight) }}</span>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                } @else if (isGradingCriteriaField(conflict.field)) {
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <div
+                                class="conflict-tile rounded-3 p-3 h-100"
+                                [ngClass]="{ 'conflict-tile--selected bg-light': !decisions()[conflict.field] }"
+                                (click)="updateDecision(conflict.field, false)"
+                            >
+                                <div class="small text-body-secondary mb-2" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
+                                @for (criterion of toGradingCriteriaDisplay(conflict.currentValue); track criterion.title) {
+                                    <div class="mb-2">
+                                        <div class="fw-semibold small mb-1">{{ criterion.title }}</div>
+                                        @if (criterion.instructions.length > 0) {
+                                            <p-table [value]="criterion.instructions" styleClass="p-datatable-sm p-datatable-gridlines" class="small">
+                                                <ng-template #header>
+                                                    <tr>
+                                                        <th jhiTranslate="artemisApp.exercise.credits"></th>
+                                                        <th jhiTranslate="artemisApp.exercise.gradingScale"></th>
+                                                        <th jhiTranslate="artemisApp.exercise.instructionDescription"></th>
+                                                        <th jhiTranslate="artemisApp.exercise.feedback"></th>
+                                                    </tr>
+                                                </ng-template>
+                                                <ng-template #body let-instr>
+                                                    <tr>
+                                                        <td>{{ instr.credits }}</td>
+                                                        <td>{{ instr.gradingScale }}</td>
+                                                        <td class="text-break">{{ instr.instructionDescription }}</td>
+                                                        <td class="text-break">{{ instr.feedback }}</td>
+                                                    </tr>
+                                                </ng-template>
+                                            </p-table>
+                                        }
                                     </div>
                                 }
                             </div>
-                            <div class="col-12 col-md-6 d-flex flex-column gap-2">
-                                <div class="small text-body-secondary mb-1 d-md-none" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
-                                @for (entry of toCompetencyDisplay(conflict.incomingValue); track entry.title) {
-                                    <div class="d-flex justify-content-between gap-2 px-2 py-1 rounded-3 bg-secondary-subtle small">
-                                        <span class="fw-semibold">{{ entry.title }}</span>
-                                        <span>{{ formatValue(entry.weight) }}</span>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <div
+                                class="conflict-tile rounded-3 p-3 h-100"
+                                [ngClass]="{ 'conflict-tile--selected bg-light': decisions()[conflict.field] }"
+                                (click)="updateDecision(conflict.field, true)"
+                            >
+                                <div class="small text-body-secondary mb-2" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
+                                @for (criterion of toGradingCriteriaDisplay(conflict.incomingValue); track criterion.title) {
+                                    <div class="mb-2">
+                                        <div class="fw-semibold small mb-1">{{ criterion.title }}</div>
+                                        @if (criterion.instructions.length > 0) {
+                                            <p-table [value]="criterion.instructions" styleClass="p-datatable-sm p-datatable-gridlines" class="small">
+                                                <ng-template #header>
+                                                    <tr>
+                                                        <th jhiTranslate="artemisApp.exercise.credits"></th>
+                                                        <th jhiTranslate="artemisApp.exercise.gradingScale"></th>
+                                                        <th jhiTranslate="artemisApp.exercise.instructionDescription"></th>
+                                                        <th jhiTranslate="artemisApp.exercise.feedback"></th>
+                                                    </tr>
+                                                </ng-template>
+                                                <ng-template #body let-instr>
+                                                    <tr>
+                                                        <td>{{ instr.credits }}</td>
+                                                        <td>{{ instr.gradingScale }}</td>
+                                                        <td class="text-break">{{ instr.instructionDescription }}</td>
+                                                        <td class="text-break">{{ instr.feedback }}</td>
+                                                    </tr>
+                                                </ng-template>
+                                            </p-table>
+                                        }
                                     </div>
                                 }
                             </div>
                         </div>
                     </div>
                 } @else {
-                    <div class="row g-3 mt-2">
+                    <div class="row g-3">
                         <div class="col-12 col-md-6">
-                            <div class="border rounded-3 p-2 px-3 h-100">
+                            <div
+                                class="conflict-tile rounded-3 p-2 px-3 h-100"
+                                [ngClass]="{ 'conflict-tile--selected bg-light': !decisions()[conflict.field] }"
+                                (click)="updateDecision(conflict.field, false)"
+                            >
                                 <div class="small text-body-secondary mb-1" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
                                 <div class="text-break">{{ formatValue(conflict.currentValue) }}</div>
                             </div>
                         </div>
                         <div class="col-12 col-md-6">
-                            <div class="border rounded-3 p-2 px-3 h-100">
+                            <div
+                                class="conflict-tile rounded-3 p-2 px-3 h-100"
+                                [ngClass]="{ 'conflict-tile--selected bg-light': decisions()[conflict.field] }"
+                                (click)="updateDecision(conflict.field, true)"
+                            >
                                 <div class="small text-body-secondary mb-1" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
                                 <div class="text-break">{{ formatValue(conflict.incomingValue) }}</div>
                             </div>

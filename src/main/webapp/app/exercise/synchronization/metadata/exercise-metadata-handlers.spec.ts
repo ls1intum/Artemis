@@ -3,6 +3,8 @@ import dayjs from 'dayjs/esm';
 import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
+import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { createBaseHandlers, createExerciseMetadataHandlers } from 'app/exercise/synchronization/metadata/exercise-metadata-handlers';
 import { ExerciseSnapshotDTO } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot.dto';
@@ -261,6 +263,60 @@ describe('ExerciseMetadataHandlers', () => {
 
         expect(exercise.categories?.map((category) => category.category)).toEqual(['alpha', 'beta']);
         expect(exercise.categories?.map((category) => category.color)).toEqual(['#123456', '#abcdef']);
+    });
+
+    it('converts snapshot grading criteria DTOs to GradingCriterion class instances via getIncomingValue', () => {
+        const handlers = createExerciseMetadataHandlers(ExerciseType.PROGRAMMING);
+        const gradingCriteriaHandler = handlers.find((handler) => handler.key === 'gradingCriteria')!;
+
+        const snapshot: ExerciseSnapshotDTO = {
+            id: 1,
+            gradingCriteria: [
+                {
+                    id: 1,
+                    title: 'Test Criterion',
+                    structuredGradingInstructions: [{ id: 10, credits: 2.0, gradingScale: 'Good', instructionDescription: 'Well done', feedback: 'Great', usageCount: 0 }],
+                },
+            ],
+        };
+
+        const incoming = gradingCriteriaHandler.getIncomingValue(snapshot) as GradingCriterion[];
+
+        expect(incoming).toHaveLength(1);
+        expect(incoming[0]).toBeInstanceOf(GradingCriterion);
+        expect(incoming[0].title).toBe('Test Criterion');
+        expect(incoming[0].structuredGradingInstructions).toHaveLength(1);
+        expect(incoming[0].structuredGradingInstructions[0]).toBeInstanceOf(GradingInstruction);
+        expect(incoming[0].structuredGradingInstructions[0].credits).toBe(2.0);
+    });
+
+    it('updates grading criteria in place to keep existing references synchronized', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        const criterion = new GradingCriterion();
+        criterion.id = 1;
+        criterion.title = 'Local';
+        criterion.structuredGradingInstructions = [];
+        exercise.gradingCriteria = [criterion];
+        const gradingCriteriaReference = exercise.gradingCriteria;
+
+        const handlers = createExerciseMetadataHandlers(ExerciseType.PROGRAMMING);
+        const gradingCriteriaHandler = handlers.find((handler) => handler.key === 'gradingCriteria')!;
+
+        const newCriterion = new GradingCriterion();
+        newCriterion.id = 2;
+        newCriterion.title = 'Incoming';
+        newCriterion.structuredGradingInstructions = [];
+
+        gradingCriteriaHandler.applyValue(exercise, [newCriterion] as any);
+
+        expect(exercise.gradingCriteria).toBe(gradingCriteriaReference);
+        expect(exercise.gradingCriteria).toHaveLength(1);
+        expect(exercise.gradingCriteria![0].title).toBe('Incoming');
+
+        gradingCriteriaHandler.applyValue(exercise, [] as any);
+
+        expect(exercise.gradingCriteria).toBe(gradingCriteriaReference);
+        expect(exercise.gradingCriteria).toEqual([]);
     });
 
     it('updates auxiliary repositories by assigning a fresh array', () => {

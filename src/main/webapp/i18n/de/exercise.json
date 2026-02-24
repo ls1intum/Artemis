@@ -234,8 +234,11 @@
                 "useCurrentValue": "Aktuellen Wert verwenden",
                 "yourValue": "Dein Wert",
                 "incomingValue": "Eingehender Wert",
-                "keepLocal": "Meine Änderungen behalten",
+                "keepLocal": "Eingehende Änderungen ignorieren und fortfahren",
+                "keepAllLocal": "Alle meine Werte behalten",
+                "applyAllIncoming": "Alle eingehenden Werte übernehmen",
                 "applySelections": "Auswahl übernehmen",
+                "untitledCriterion": "Unbenanntes Kriterium",
                 "snapshotFetchFailed": "Die neueste Übungsversion konnte nicht geladen werden. Bitte lade die Seite neu, um die aktuellen Änderungen zu sehen.",
                 "fields": {
                     "buildConfig": {

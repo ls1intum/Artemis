@@ -8,6 +8,9 @@ import { Subject } from 'rxjs';
 
 import { Competency, CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
+import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import {
     ExerciseMetadataConflictItem,
     ExerciseMetadataConflictModalComponent,
@@ -69,6 +72,61 @@ describe('ExerciseMetadataConflictModalComponent', () => {
         });
     });
 
+    it('sets all decisions to incoming via setAllDecisions(true)', () => {
+        component.setConflicts([createConflict('title'), createConflict('shortName'), createConflict('maxPoints')]);
+
+        component.setAllDecisions(true);
+
+        expect(component.decisions()).toEqual({
+            title: true,
+            shortName: true,
+            maxPoints: true,
+        });
+    });
+
+    it('sets all decisions to local via setAllDecisions(false)', () => {
+        component.setConflicts([createConflict('title'), createConflict('shortName')]);
+        component.updateDecision('title', true);
+        component.updateDecision('shortName', true);
+
+        component.setAllDecisions(false);
+
+        expect(component.decisions()).toEqual({
+            title: false,
+            shortName: false,
+        });
+    });
+
+    it('allLocal returns true when all decisions are false', () => {
+        component.setConflicts([createConflict('title'), createConflict('shortName')]);
+
+        expect(component.allLocal()).toBe(true);
+        expect(component.allIncoming()).toBe(false);
+    });
+
+    it('allIncoming returns true when all decisions are true', () => {
+        component.setConflicts([createConflict('title'), createConflict('shortName')]);
+        component.setAllDecisions(true);
+
+        expect(component.allIncoming()).toBe(true);
+        expect(component.allLocal()).toBe(false);
+    });
+
+    it('neither allLocal nor allIncoming when decisions are mixed', () => {
+        component.setConflicts([createConflict('title'), createConflict('shortName')]);
+        component.updateDecision('shortName', true);
+
+        expect(component.allLocal()).toBe(false);
+        expect(component.allIncoming()).toBe(false);
+    });
+
+    it('allLocal returns true and allIncoming returns false for empty conflicts', () => {
+        component.setConflicts([]);
+
+        expect(component.allLocal()).toBe(true);
+        expect(component.allIncoming()).toBe(false);
+    });
+
     it('applies selections and closes modal with mapped decisions', () => {
         component.setConflicts([createConflict('title'), createConflict('shortName')]);
         component.updateDecision('shortName', true);
@@ -96,12 +154,6 @@ describe('ExerciseMetadataConflictModalComponent', () => {
                 { field: 'shortName', useIncoming: false },
             ],
         } satisfies ExerciseMetadataConflictModalResult);
-    });
-
-    it('dismisses modal on close()', () => {
-        component.close();
-
-        expect(dialogRefCloseSpy).toHaveBeenCalledOnce();
     });
 
     it('builds authorName from name/fullName/login', () => {
@@ -150,6 +202,12 @@ describe('ExerciseMetadataConflictModalComponent', () => {
         expect(component.formatValue(circular)).toContain('[object Object]');
     });
 
+    it('formats IncludedInOverallScore enum values via translation', () => {
+        expect(component.formatValue(IncludedInOverallScore.INCLUDED_COMPLETELY)).toBe('artemisApp.exercise.yes');
+        expect(component.formatValue(IncludedInOverallScore.INCLUDED_AS_BONUS)).toBe('artemisApp.exercise.bonus');
+        expect(component.formatValue(IncludedInOverallScore.NOT_INCLUDED)).toBe('artemisApp.exercise.no');
+    });
+
     it('formats dayjs-like objects that fail isDayjs via duck-typing fallback', () => {
         const fakeDayjs = { format: (fmt: string) => `formatted:${fmt}` };
 
@@ -163,25 +221,28 @@ describe('ExerciseMetadataConflictModalComponent', () => {
         expect(component.isCategoriesField('title')).toBe(false);
         expect(component.isCompetencyLinksField('competencyLinks')).toBe(true);
         expect(component.isCompetencyLinksField('title')).toBe(false);
+        expect(component.isGradingCriteriaField('gradingCriteria')).toBe(true);
+        expect(component.isGradingCriteriaField('title')).toBe(false);
     });
 
-    it('maps build config entries with current and incoming values', () => {
-        const entries = component.getBuildConfigEntries(
-            {
-                sequentialTestRuns: true,
-                timeoutSeconds: 30,
-                branchRegex: 'feature/.*',
-            },
-            {
-                sequentialTestRuns: false,
-                timeoutSeconds: 60,
-                branchRegex: 'main',
-            },
-        );
+    it('maps build config values for a single config object', () => {
+        const entries = component.getBuildConfigValues({
+            sequentialTestRuns: true,
+            timeoutSeconds: 30,
+            branchRegex: 'feature/.*',
+        });
 
         expect(entries).toHaveLength(12);
-        expect(entries.find((entry) => entry.labelKey.endsWith('sequentialTestRuns'))).toEqual(expect.objectContaining({ current: true, incoming: false }));
-        expect(entries.find((entry) => entry.labelKey.endsWith('timeoutSeconds'))).toEqual(expect.objectContaining({ current: 30, incoming: 60 }));
+        expect(entries.find((entry) => entry.labelKey.endsWith('sequentialTestRuns'))).toEqual(expect.objectContaining({ value: true }));
+        expect(entries.find((entry) => entry.labelKey.endsWith('timeoutSeconds'))).toEqual(expect.objectContaining({ value: 30 }));
+        expect(entries.find((entry) => entry.labelKey.endsWith('branchRegex'))).toEqual(expect.objectContaining({ value: 'feature/.*' }));
+    });
+
+    it('returns undefined values for missing build config', () => {
+        const entries = component.getBuildConfigValues(undefined);
+
+        expect(entries).toHaveLength(12);
+        expect(entries.every((entry) => entry.value === undefined)).toBe(true);
     });
 
     it('normalizes categories from arrays, strings and objects', () => {
@@ -225,7 +286,35 @@ describe('ExerciseMetadataConflictModalComponent', () => {
         expect(component.toCompetencyDisplay({})).toEqual([]);
     });
 
-    it('renders conflicts and toggles decision via checkbox interaction', () => {
+    it('maps grading criteria to display format', () => {
+        const instruction = new GradingInstruction();
+        instruction.credits = 1.5;
+        instruction.gradingScale = 'Good';
+        instruction.instructionDescription = 'Well structured';
+        instruction.feedback = 'Nice work';
+
+        const criterion = new GradingCriterion();
+        criterion.title = 'Code Quality';
+        criterion.structuredGradingInstructions = [instruction];
+
+        const emptyTitleCriterion = new GradingCriterion();
+        emptyTitleCriterion.title = '';
+        emptyTitleCriterion.structuredGradingInstructions = [];
+
+        const result = component.toGradingCriteriaDisplay([criterion, emptyTitleCriterion]);
+        expect(result).toHaveLength(2);
+        expect(result[0].title).toBe('Code Quality');
+        expect(result[0].instructions).toHaveLength(1);
+        expect(result[0].instructions[0].credits).toBe(1.5);
+        // Empty title falls back to translation key
+        expect(result[1].title).toBe('artemisApp.exercise.metadataSync.untitledCriterion');
+        expect(result[1].instructions).toHaveLength(0);
+
+        expect(component.toGradingCriteriaDisplay(undefined)).toEqual([]);
+        expect(component.toGradingCriteriaDisplay(null)).toEqual([]);
+    });
+
+    it('renders conflict tiles with left tile selected by default', () => {
         const config = TestBed.inject(DynamicDialogConfig);
         config.data = {
             conflicts: [createConflict('title'), createConflict('categories', ['a'], ['b'])],
@@ -239,5 +328,28 @@ describe('ExerciseMetadataConflictModalComponent', () => {
         expect(items).toHaveLength(2);
         expect(fixture.nativeElement.textContent).toContain('Ada Lovelace');
         expect(fixture.nativeElement.textContent).toContain('#3');
+
+        const tiles = fixture.nativeElement.querySelectorAll('.conflict-tile');
+        expect(tiles.length).toBeGreaterThanOrEqual(4);
+
+        // Left tiles (your value) should be selected by default
+        const selectedTiles = fixture.nativeElement.querySelectorAll('.conflict-tile--selected');
+        expect(selectedTiles.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('renders global toggle buttons', () => {
+        const config = TestBed.inject(DynamicDialogConfig);
+        config.data = {
+            conflicts: [createConflict('title')],
+            author: { login: 'test' },
+            versionId: 1,
+        };
+        component.ngOnInit();
+        fixture.detectChanges();
+
+        const globalToggle = fixture.nativeElement.querySelector('.global-toggle');
+        expect(globalToggle).toBeTruthy();
+        const buttons = globalToggle.querySelectorAll('button');
+        expect(buttons).toHaveLength(2);
     });
 });

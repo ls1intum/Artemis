@@ -3,9 +3,19 @@
     overflow-y: auto;
 }
 
-.build-config-grid {
-    display: grid;
-    // label column fits content, value columns share remaining space equally
-    grid-template-columns: auto 1fr 1fr;
-    gap: 0.5rem 1rem;
+.conflict-tile {
+    cursor: pointer;
+    border: 1px solid var(--border-color);
+    transition:
+        border-color 0.15s ease-in-out,
+        border-width 0.15s ease-in-out,
+        background-color 0.15s ease-in-out;
+
+    &:hover:not(.conflict-tile--selected) {
+        border-color: var(--primary);
+    }
+
+    &--selected {
+        border: 1px solid var(--primary);
+    }
 }

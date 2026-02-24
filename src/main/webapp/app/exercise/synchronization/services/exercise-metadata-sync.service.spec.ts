@@ -488,6 +488,29 @@ describe('ExerciseMetadataSyncService', () => {
         expect(metadataValuesEqual(dayjs('invalid'), undefined)).toBe(true);
     });
 
+    it('compares grading criteria arrays in order-independent fashion', () => {
+        const criterionA = { id: 1, title: 'A', structuredGradingInstructions: [{ id: 10, credits: 1 }] };
+        const criterionB = { id: 2, title: 'B', structuredGradingInstructions: [{ id: 20, credits: 2 }] };
+
+        // Same content, different order → equal
+        expect(metadataValuesEqual([criterionA, criterionB], [criterionB, criterionA])).toBe(true);
+
+        // Different content → not equal
+        const criterionC = { id: 1, title: 'A', structuredGradingInstructions: [{ id: 10, credits: 5 }] };
+        expect(metadataValuesEqual([criterionA], [criterionC])).toBe(false);
+    });
+
+    it('compares grading criteria with instructions in different order', () => {
+        const criterion1 = { id: 1, title: 'C', structuredGradingInstructions: [{ id: 10 }, { id: 20 }] };
+        const criterion2 = { id: 1, title: 'C', structuredGradingInstructions: [{ id: 20 }, { id: 10 }] };
+
+        expect(metadataValuesEqual([criterion1], [criterion2])).toBe(true);
+    });
+
+    it('treats empty grading criteria arrays as equal', () => {
+        expect(metadataValuesEqual([], [])).toBe(true);
+    });
+
     it('applies snapshot to baseline only for changed fields, leaving others unchanged', async () => {
         currentExercise.title = 'baseline-title';
         currentExercise.maxPoints = 10;

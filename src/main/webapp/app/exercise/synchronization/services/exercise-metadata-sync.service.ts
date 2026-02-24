@@ -53,6 +53,9 @@ const METADATA_SYNC_EXCLUDED_FIELDS = new Set(['problemStatement']);
  * field handlers, so false positives from unrelated object shapes are not a concern.
  */
 const isCompetencyLinkArray = (value: unknown): value is Array<{ competency?: { id?: number }; weight?: number }> => {
+    // Empty arrays return false because Array.every() is vacuously true, which would
+    // incorrectly narrow [] to a typed array. Empty arrays fall through to isEqual,
+    // which handles [] vs [] (equal) and [] vs [{...}] (not equal) correctly.
     if (!Array.isArray(value) || value.length === 0) {
         return false;
     }
@@ -85,6 +88,44 @@ const normalizeCompetencyLinks = (value: unknown): Array<{ competencyId?: number
 };
 
 /**
+ * Type guard for grading criteria arrays. Relies on the presence of the
+ * `structuredGradingInstructions` property, which is specific to GradingCriterion objects.
+ */
+const isGradingCriteriaArray = (value: unknown): value is Array<{ id?: number; title?: string; structuredGradingInstructions?: unknown[] }> => {
+    // See isCompetencyLinkArray for rationale on the empty-array guard.
+    if (!Array.isArray(value) || value.length === 0) {
+        return false;
+    }
+    return value.every((entry) => entry && typeof entry === 'object' && 'structuredGradingInstructions' in entry);
+};
+
+/**
+ * Normalizes grading criteria for order-independent comparison.
+ * Sorts criteria by ID, and for each criterion sorts its grading instructions by ID.
+ */
+const normalizeGradingCriteria = (value: unknown): unknown[] | undefined => {
+    if (!Array.isArray(value)) {
+        return undefined;
+    }
+    return value
+        .filter((entry) => entry && typeof entry === 'object')
+        .map((entry) => {
+            const criterion = entry as { id?: number; title?: string; structuredGradingInstructions?: unknown[] };
+            const instructions = Array.isArray(criterion.structuredGradingInstructions)
+                ? [...criterion.structuredGradingInstructions]
+                      .filter((i) => i && typeof i === 'object')
+                      .sort((a, b) => ((a as { id?: number }).id ?? -1) - ((b as { id?: number }).id ?? -1))
+                : [];
+            return {
+                id: criterion.id,
+                title: criterion.title,
+                structuredGradingInstructions: instructions,
+            };
+        })
+        .sort((a, b) => (a.id ?? -1) - (b.id ?? -1));
+};
+
+/**
  * Compares values including dayjs timestamps with normalized server dates.
  * Exported for direct testing.
  */
@@ -96,6 +137,9 @@ export const metadataValuesEqual = (value: unknown, otherValue: unknown): boolea
     }
     if (isCompetencyLinkArray(value) || isCompetencyLinkArray(otherValue)) {
         return isEqual(normalizeCompetencyLinks(value), normalizeCompetencyLinks(otherValue));
+    }
+    if (isGradingCriteriaArray(value) || isGradingCriteriaArray(otherValue)) {
+        return isEqual(normalizeGradingCriteria(value), normalizeGradingCriteria(otherValue));
     }
     if (dayjs.isDayjs(value) || dayjs.isDayjs(otherValue)) {
         const normalizedLeft = dayjs.isDayjs(value) ? value : typeof value === 'string' ? dayjs(value) : undefined;
@@ -281,6 +325,9 @@ export class ExerciseMetadataSyncService {
 
         const conflicts = this.collectConflicts(context, snapshot, applicableHandlers);
         this.applyNonConflictingChanges(context, snapshot, applicableHandlers, conflicts);
+        // Baseline is updated BEFORE the conflict modal so it reflects the server's latest
+        // state regardless of the user's decision. If the user keeps local values, their
+        // divergence from the new baseline is preserved and correctly detected on the next alert.
         this.applySnapshotToBaseline(context, snapshot, handlers, effectiveFields);
 
         if (conflicts.length === 0) {

@@ -1,8 +1,15 @@
 import { CompetencyExerciseLink, CourseCompetency, MEDIUM_COMPETENCY_LINK_WEIGHT } from 'app/atlas/shared/entities/competency.model';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
+import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
-import { CompetencyExerciseLinkSnapshotDTO, TeamAssignmentConfigSnapshot } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot.dto';
+import {
+    CompetencyExerciseLinkSnapshotDTO,
+    GradingCriterionSnapshotDTO,
+    GradingInstructionSnapshotDTO,
+    TeamAssignmentConfigSnapshot,
+} from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot.dto';
 
 export const toTeamAssignmentConfig = (snapshot?: TeamAssignmentConfigSnapshot): TeamAssignmentConfig | undefined => {
     if (!snapshot) {
@@ -104,4 +111,45 @@ export const toCompetencyLinks = (exercise: Exercise, snapshotLinks: CompetencyE
         mapped.push(new CompetencyExerciseLink(competency, exercise, link.weight ?? MEDIUM_COMPETENCY_LINK_WEIGHT));
     }
     return mapped;
+};
+
+/**
+ * Converts a grading instruction snapshot DTO (plain JSON) into a GradingInstruction class instance.
+ */
+const toGradingInstruction = (dto: GradingInstructionSnapshotDTO): GradingInstruction => {
+    const instruction = new GradingInstruction();
+    instruction.id = dto.id;
+    instruction.credits = dto.credits ?? 0;
+    instruction.gradingScale = dto.gradingScale ?? '';
+    instruction.instructionDescription = dto.instructionDescription ?? '';
+    instruction.feedback = dto.feedback ?? '';
+    instruction.usageCount = dto.usageCount;
+    return instruction;
+};
+
+/**
+ * Converts a grading criterion snapshot DTO (plain JSON) into a GradingCriterion class instance
+ * with nested GradingInstruction instances.
+ */
+const toGradingCriterionEntry = (dto: GradingCriterionSnapshotDTO): GradingCriterion => {
+    const criterion = new GradingCriterion();
+    criterion.id = dto.id;
+    criterion.title = dto.title ?? '';
+    criterion.structuredGradingInstructions = (dto.structuredGradingInstructions ?? []).map(toGradingInstruction);
+    return criterion;
+};
+
+/**
+ * Converts grading criteria from snapshot DTO format to proper GradingCriterion class instances.
+ * The server sends {@code Set<GradingCriterionDTO>} which arrives as plain JSON objects after
+ * deserialization; this mapper creates proper class instances expected by the exercise model.
+ */
+export const toGradingCriteria = (snapshotCriteria: GradingCriterionSnapshotDTO[] | undefined): GradingCriterion[] | undefined => {
+    if (!snapshotCriteria) {
+        return undefined;
+    }
+    // Sort by ID for a deterministic order — the server collects criteria into a Set
+    // (unordered), so without sorting the incoming side can appear in a different order
+    // than the user's local criteria in the conflict modal.
+    return snapshotCriteria.map(toGradingCriterionEntry).sort((a, b) => (a.id ?? -1) - (b.id ?? -1));
 };

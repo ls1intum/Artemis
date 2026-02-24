@@ -10,7 +10,12 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
 import { ExerciseSnapshotDTO, TeamAssignmentConfigSnapshot } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot.dto';
-import { normalizeCategoryArray, toCompetencyLinks, toTeamAssignmentConfig } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot-shared.mapper';
+import {
+    normalizeCategoryArray,
+    toCompetencyLinks,
+    toGradingCriteria,
+    toTeamAssignmentConfig,
+} from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot-shared.mapper';
 import { toAuxiliaryRepositories, toBuildConfig } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot-programming.mapper';
 
 /**
@@ -34,6 +39,8 @@ const normalizeCategories = (value: unknown): ExerciseCategory[] | undefined => 
     return normalizeCategoryArray(value);
 };
 
+// Mutates the array in-place so that external references (e.g. the separate
+// `exerciseCategories` binding in ProgrammingExerciseUpdateComponent) stay in sync.
 const applyCategories = (exercise: Exercise, value: unknown): void => {
     const incomingCategories = normalizeCategories(value);
     const existingCategories = exercise.categories;
@@ -49,6 +56,23 @@ const applyCategories = (exercise: Exercise, value: unknown): void => {
     exercise.categories = incomingCategories;
 };
 
+const applyGradingCriteria = (exercise: Exercise, value: unknown): void => {
+    const incomingCriteria = value as GradingCriterion[] | undefined;
+    const existingCriteria = exercise.gradingCriteria;
+
+    if (existingCriteria) {
+        existingCriteria.length = 0;
+        if (incomingCriteria) {
+            existingCriteria.push(...incomingCriteria);
+        }
+        return;
+    }
+
+    exercise.gradingCriteria = incomingCriteria;
+};
+
+// Simple reference replacement is sufficient here — unlike categories, auxiliary repositories
+// are not bound to a separate reference in the update component.
 const applyAuxiliaryRepositories = (exercise: ProgrammingExercise, value: unknown): void => {
     exercise.auxiliaryRepositories = (value as AuxiliaryRepository[] | undefined) ?? [];
 };
@@ -245,12 +269,14 @@ export const createBaseHandlers = (resolveExercise?: ExerciseResolver): Exercise
             (exercise) => exercise.feedbackSuggestionModule,
             (exercise, value) => (exercise.feedbackSuggestionModule = value as string | undefined),
         ),
-        baseHandler(
-            'gradingCriteria',
-            'artemisApp.assessmentInstructions.structuredGradingInstructions',
-            (exercise) => exercise.gradingCriteria,
-            (exercise, value) => (exercise.gradingCriteria = value as GradingCriterion[] | undefined),
-        ),
+        {
+            key: 'gradingCriteria',
+            labelKey: 'artemisApp.assessmentInstructions.structuredGradingInstructions',
+            getCurrentValue: (exercise) => exercise.gradingCriteria,
+            getBaselineValue: (exercise) => exercise.gradingCriteria,
+            getIncomingValue: (snapshot) => toGradingCriteria(snapshot.gradingCriteria),
+            applyValue: (exercise, value) => applyGradingCriteria(exercise, value),
+        },
         baseHandler(
             'plagiarismDetectionConfig',
             'artemisApp.plagiarism.plagiarismDetection',

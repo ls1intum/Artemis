@@ -1,6 +1,5 @@
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { DifficultyLevel, ExerciseMode, IncludedInOverallScore, PlagiarismDetectionConfig } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { StaticCodeAnalysisCategoryState } from 'app/programming/shared/entities/static-code-analysis-category.model';
 import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
@@ -31,7 +30,7 @@ export interface ExerciseSnapshotDTO {
     presentationScoreEnabled?: boolean;
     secondCorrectionEnabled?: boolean;
     feedbackSuggestionModule?: string;
-    gradingCriteria?: GradingCriterion[];
+    gradingCriteria?: GradingCriterionSnapshotDTO[];
     plagiarismDetectionConfig?: PlagiarismDetectionConfig;
     programmingData?: ProgrammingExerciseSnapshotDTO;
 }
@@ -144,4 +143,24 @@ export interface ProgrammingExerciseBuildConfigSnapshotDTO {
     theiaImage?: string;
     allowBranching?: boolean;
     branchRegex?: string;
+}
+
+/**
+ * Matches the server's {@code GradingCriterionDTO} record shape.
+ * The server sends {@code Set<GradingCriterionDTO>} which arrives as plain JSON objects;
+ * use {@link toGradingCriteria} from the shared mapper to convert to class instances.
+ */
+export interface GradingCriterionSnapshotDTO {
+    id?: number;
+    title?: string;
+    structuredGradingInstructions?: GradingInstructionSnapshotDTO[];
+}
+
+export interface GradingInstructionSnapshotDTO {
+    id?: number;
+    credits?: number;
+    gradingScale?: string;
+    instructionDescription?: string;
+    feedback?: string;
+    usageCount?: number;
 }
