@@ -161,10 +161,10 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
                     const actualRoom: string = examUser.actualRoom ?? '';
 
                     if (plannedRoom && plannedRoom in aliases) {
-                        examUser.plannedRoom = aliases[plannedRoom];
+                        examUser.plannedRoomAlias = aliases[plannedRoom];
                     }
                     if (actualRoom && actualRoom in aliases) {
-                        examUser.actualRoom = aliases[actualRoom];
+                        examUser.actualRoomAlias = aliases[actualRoom];
                     }
                 });
             },

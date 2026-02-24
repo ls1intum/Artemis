@@ -254,7 +254,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         });
 
         Map<String, String> aliasesByRoomNumber = examRoomExamAssignmentRepository.findAllByExamId(exam1.getId()).stream()
-                .collect(Collectors.toMap(assignment -> assignment.getExamRoom().getRoomNumber(), Objects.requireNonNull(ExamRoomExamAssignment::getRoomAlias)));
+                .collect(Collectors.toMap(assignment -> assignment.getExamRoom().getRoomNumber(), assignment -> Objects.requireNonNull(assignment.getRoomAlias())));
 
         assertThat(aliasesByRoomNumber).allSatisfy((roomNumber, alias) -> assertThat(alias).isEqualTo("Alias-" + roomNumber));
     }

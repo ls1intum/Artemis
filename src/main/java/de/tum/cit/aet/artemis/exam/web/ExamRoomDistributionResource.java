@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.exam.web;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -15,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -73,13 +75,12 @@ public class ExamRoomDistributionResource {
         this.examUserService = examUserService;
     }
 
-    // This method can modify the input parameter
-    // Re-assign the input parameter to this method's return value before further operations
     private Map<Long, String> trimAndVerifyExamRoomAliases(@Nullable Map<Long, String> examRoomAliases) {
         if (examRoomAliases == null) {
             return Map.of();
         }
 
+        examRoomAliases = new HashMap<>(examRoomAliases); // preemptive guard against a potential unmodifiable input map
         examRoomAliases.replaceAll((_, alias) -> alias != null ? alias.trim() : null);
         examRoomAliases.values().removeIf(alias -> alias == null || alias.isEmpty());
 
@@ -301,7 +302,7 @@ public class ExamRoomDistributionResource {
     }
 
     /**
-     * POST courses/{courseId}/exams/{examId}/set-room-aliases : Updates the exam room aliases of all rooms associated
+     * PUT courses/{courseId}/exams/{examId}/room-aliases : Updates the exam room aliases of all rooms associated
      * with the given exam.
      *
      * @param courseId        the id of the course
@@ -310,7 +311,7 @@ public class ExamRoomDistributionResource {
      *
      * @return 200 (OK) on success
      */
-    @PostMapping("courses/{courseId}/exams/{examId}/set-room-aliases")
+    @PutMapping("courses/{courseId}/exams/{examId}/room-aliases")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> updateRoomAliases(@PathVariable long courseId, @PathVariable long examId, @RequestBody Map<Long, String> examRoomAliases) {
         log.debug("REST request to update room aliases for exam: {}", examId);
