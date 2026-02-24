@@ -108,7 +108,7 @@ public class ExamAccessService {
 
     /**
      * TODO: we should distinguish the whole method between test exam and real exam to improve the readability of the code
-     * Real Exams: Checks if the current user is allowed to see the requested exam. If he is allowed the student exam will be returned (Fallback: create a new one)
+     * Real Exams: Checks if the current user is allowed to see the requested exam. If they are allowed the student exam will be returned (Fallback: create a new one)
      * Test Exams: Either retrieves an existing StudentExam from the Database or generates a new StudentExam
      *
      * @param courseId The id of the course
