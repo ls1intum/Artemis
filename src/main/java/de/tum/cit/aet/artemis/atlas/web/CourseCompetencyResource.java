@@ -33,8 +33,10 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyContributionDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolPairDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyProgressDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CourseCompetencyResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.UpdateCourseCompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
@@ -42,6 +44,7 @@ import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyJolService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyRelationService;
+import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyWithTailRelation;
 import de.tum.cit.aet.artemis.atlas.service.competency.CourseCompetencyService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -149,7 +152,7 @@ public class CourseCompetencyResource {
      */
     @GetMapping("courses/{courseId}/course-competencies/{competencyId}")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<CourseCompetency> getCourseCompetency(@PathVariable long competencyId, @PathVariable long courseId) {
+    public ResponseEntity<CourseCompetencyResponseDTO> getCourseCompetency(@PathVariable long competencyId, @PathVariable long courseId) {
         log.info("REST request to get Competency : {}", competencyId);
         var currentUser = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
@@ -158,7 +161,7 @@ public class CourseCompetencyResource {
 
         courseCompetencyService.filterOutLearningObjectsThatUserShouldNotSee(competency, currentUser);
 
-        return ResponseEntity.ok(competency);
+        return ResponseEntity.ok(CourseCompetencyResponseDTO.ofWithLearningObjects(competency));
     }
 
     /**
@@ -170,11 +173,11 @@ public class CourseCompetencyResource {
      */
     @GetMapping("courses/{courseId}/course-competencies")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<List<CourseCompetency>> getCourseCompetenciesWithProgress(@PathVariable long courseId, @RequestParam(defaultValue = "false") boolean filter) {
+    public ResponseEntity<List<CourseCompetencyResponseDTO>> getCourseCompetenciesWithProgress(@PathVariable long courseId, @RequestParam(defaultValue = "false") boolean filter) {
         log.debug("REST request to get competencies for course with id: {}", courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         final var competencies = courseCompetencyService.findCourseCompetenciesWithProgressForUserByCourseId(courseId, user.getId(), filter);
-        return ResponseEntity.ok(competencies);
+        return ResponseEntity.ok(competencies.stream().map(CourseCompetencyResponseDTO::of).toList());
     }
 
     /**
@@ -187,7 +190,7 @@ public class CourseCompetencyResource {
      */
     @GetMapping("courses/{courseId}/course-competencies/{competencyId}/student-progress")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<CompetencyProgress> getCompetencyStudentProgress(@PathVariable long courseId, @PathVariable long competencyId,
+    public ResponseEntity<CompetencyProgressDTO> getCompetencyStudentProgress(@PathVariable long courseId, @PathVariable long competencyId,
             @RequestParam(defaultValue = "false") boolean refresh) {
         log.debug("REST request to get student progress for competency: {}", competencyId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -203,7 +206,8 @@ public class CourseCompetencyResource {
             studentProgress = competencyProgressRepository.findEagerByCompetencyIdAndUserId(competencyId, user.getId()).orElse(null);
         }
 
-        return ResponseEntity.ok(studentProgress);
+        var progressDto = studentProgress == null ? null : CompetencyProgressDTO.of(studentProgress);
+        return ResponseEntity.ok(progressDto);
     }
 
     /**
@@ -233,9 +237,11 @@ public class CourseCompetencyResource {
      */
     @GetMapping("course-competencies/for-import")
     @EnforceAtLeastEditor
-    public ResponseEntity<SearchResultPageDTO<CourseCompetency>> getCompetenciesForImport(CompetencyPageableSearchDTO search) {
+    public ResponseEntity<SearchResultPageDTO<CourseCompetencyResponseDTO>> getCompetenciesForImport(CompetencyPageableSearchDTO search) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
-        return ResponseEntity.ok(courseCompetencyService.getOnPageWithSizeForImport(search, user));
+        var result = courseCompetencyService.getOnPageWithSizeForImport(search, user);
+        var resultDto = new SearchResultPageDTO<>(result.getResultsOnPage().stream().map(CourseCompetencyResponseDTO::ofWithCourse).toList(), result.getNumberOfPages());
+        return ResponseEntity.ok(resultDto);
     }
 
     /**
@@ -263,9 +269,10 @@ public class CourseCompetencyResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, sourceCourse, null);
 
         var competencies = courseCompetencyRepository.findAllForCourseWithExercisesAndLectureUnitsAndLecturesAndAttachments(sourceCourse.getId());
-        Set<CompetencyWithTailRelationDTO> importedCompetencies = courseCompetencyService.importCourseCompetencies(targetCourse, competencies, importOptions);
+        Set<CompetencyWithTailRelation> importedCompetencies = courseCompetencyService.importCourseCompetencies(targetCourse, competencies, importOptions);
 
-        return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/competencies/")).body(importedCompetencies);
+        return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/competencies/")).body(importedCompetencies.stream()
+                .map(imported -> new CompetencyWithTailRelationDTO(CourseCompetencyResponseDTO.of(imported.competency()), imported.tailRelations())).collect(Collectors.toSet()));
     }
 
     // Competency Relation Endpoints

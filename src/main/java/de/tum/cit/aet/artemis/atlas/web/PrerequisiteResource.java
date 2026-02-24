@@ -4,6 +4,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+
+import jakarta.validation.Valid;
 
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
@@ -27,8 +30,11 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CourseCompetencyRequestDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CourseCompetencyResponseDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.PrerequisiteRepository;
+import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyWithTailRelation;
 import de.tum.cit.aet.artemis.atlas.service.competency.CourseCompetencyService;
 import de.tum.cit.aet.artemis.atlas.service.competency.PrerequisiteService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -93,11 +99,11 @@ public class PrerequisiteResource {
      */
     @GetMapping("courses/{courseId}/prerequisites")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<Prerequisite>> getPrerequisitesWithProgress(@PathVariable long courseId) {
+    public ResponseEntity<List<CourseCompetencyResponseDTO>> getPrerequisitesWithProgress(@PathVariable long courseId) {
         log.debug("REST request to get prerequisites for course with id: {}", courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         final var prerequisites = prerequisiteService.findPrerequisitesWithProgressForUserByCourseId(courseId, user.getId());
-        return ResponseEntity.ok(prerequisites);
+        return ResponseEntity.ok(prerequisites.stream().map(CourseCompetencyResponseDTO::of).toList());
     }
 
     /**
@@ -110,7 +116,7 @@ public class PrerequisiteResource {
      */
     @GetMapping("courses/{courseId}/prerequisites/{prerequisiteId}")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<Prerequisite> getPrerequisite(@PathVariable long prerequisiteId, @PathVariable long courseId) {
+    public ResponseEntity<CourseCompetencyResponseDTO> getPrerequisite(@PathVariable long prerequisiteId, @PathVariable long courseId) {
         log.info("REST request to get Prerequisite : {}", prerequisiteId);
         var currentUser = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
@@ -119,28 +125,31 @@ public class PrerequisiteResource {
 
         courseCompetencyService.filterOutLearningObjectsThatUserShouldNotSee(prerequisite, currentUser);
 
-        return ResponseEntity.ok(prerequisite);
+        return ResponseEntity.ok(CourseCompetencyResponseDTO.of(prerequisite));
     }
 
     /**
      * POST courses/:courseId/prerequisites : creates a new prerequisite.
      *
-     * @param courseId     the id of the course to which the prerequisite should be added
-     * @param prerequisite the prerequisite that should be created
+     * @param courseId            the id of the course to which the prerequisite should be added
+     * @param prerequisiteRequest the prerequisite data that should be created
      * @return the ResponseEntity with status 201 (Created) and with body the new prerequisite
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/prerequisites")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<Prerequisite> createPrerequisite(@PathVariable long courseId, @RequestBody Prerequisite prerequisite) throws URISyntaxException {
-        log.debug("REST request to create Prerequisite : {}", prerequisite);
+    public ResponseEntity<CourseCompetencyResponseDTO> createPrerequisite(@PathVariable long courseId, @Valid @RequestBody CourseCompetencyRequestDTO prerequisiteRequest)
+            throws URISyntaxException {
+        log.debug("REST request to create Prerequisite : {}", prerequisiteRequest);
+        Prerequisite prerequisite = toPrerequisite(prerequisiteRequest);
         checkPrerequisitesAttributesForCreation(prerequisite);
 
         var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
 
         final var persistedPrerequisite = prerequisiteService.createCourseCompetency(prerequisite, course);
 
-        return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/prerequisites/" + persistedPrerequisite.getId())).body(persistedPrerequisite);
+        return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/prerequisites/" + persistedPrerequisite.getId()))
+                .body(CourseCompetencyResponseDTO.of(persistedPrerequisite));
     }
 
     /**
@@ -153,16 +162,19 @@ public class PrerequisiteResource {
      */
     @PostMapping("courses/{courseId}/prerequisites/bulk")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<List<Prerequisite>> createPrerequisite(@PathVariable Long courseId, @RequestBody List<Prerequisite> prerequisites) throws URISyntaxException {
+    public ResponseEntity<List<CourseCompetencyResponseDTO>> createPrerequisite(@PathVariable Long courseId, @Valid @RequestBody List<CourseCompetencyRequestDTO> prerequisites)
+            throws URISyntaxException {
         log.debug("REST request to create Prerequisites : {}", prerequisites);
-        for (Prerequisite prerequisite : prerequisites) {
+        var prerequisiteEntities = prerequisites.stream().map(this::toPrerequisite).toList();
+        for (Prerequisite prerequisite : prerequisiteEntities) {
             checkPrerequisitesAttributesForCreation(prerequisite);
         }
         var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
 
-        var createdPrerequisites = prerequisiteService.createPrerequisites(prerequisites, course);
+        var createdPrerequisites = prerequisiteService.createPrerequisites(prerequisiteEntities, course);
 
-        return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/prerequisites/")).body(createdPrerequisites);
+        return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/prerequisites/"))
+                .body(createdPrerequisites.stream().map(CourseCompetencyResponseDTO::of).toList());
     }
 
     /**
@@ -175,7 +187,8 @@ public class PrerequisiteResource {
      */
     @PostMapping("courses/{courseId}/prerequisites/import")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<Prerequisite> importPrerequisite(@PathVariable long courseId, @RequestBody CompetencyImportOptionsDTO importOptions) throws URISyntaxException {
+    public ResponseEntity<CourseCompetencyResponseDTO> importPrerequisite(@PathVariable long courseId, @RequestBody CompetencyImportOptionsDTO importOptions)
+            throws URISyntaxException {
         log.info("REST request to import a prerequisite: {}", importOptions.competencyIds());
 
         if (importOptions.competencyIds() == null || importOptions.competencyIds().size() != 1) {
@@ -191,10 +204,11 @@ public class PrerequisiteResource {
             throw new BadRequestAlertException("The prerequisite is already added to this course", ENTITY_NAME, "prerequisiteCycle");
         }
 
-        Set<CompetencyWithTailRelationDTO> createdPrerequisites = prerequisiteService.importPrerequisites(course, Set.of(prerequisiteToImport), importOptions);
+        Set<CompetencyWithTailRelation> createdPrerequisites = prerequisiteService.importPrerequisites(course, Set.of(prerequisiteToImport), importOptions);
         Prerequisite createdPrerequisite = (Prerequisite) createdPrerequisites.iterator().next().competency();
 
-        return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/prerequisites/" + createdPrerequisite.getId())).body(createdPrerequisite);
+        return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/prerequisites/" + createdPrerequisite.getId()))
+                .body(CourseCompetencyResponseDTO.of(createdPrerequisite));
     }
 
     /**
@@ -227,9 +241,10 @@ public class PrerequisiteResource {
             }
         });
 
-        Set<CompetencyWithTailRelationDTO> importedPrerequisites = prerequisiteService.importPrerequisites(course, prerequisitesToImport, importOptions);
+        Set<CompetencyWithTailRelation> importedPrerequisites = prerequisiteService.importPrerequisites(course, prerequisitesToImport, importOptions);
 
-        return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/prerequisites/")).body(importedPrerequisites);
+        return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/prerequisites/")).body(importedPrerequisites.stream()
+                .map(imported -> new CompetencyWithTailRelationDTO(CourseCompetencyResponseDTO.of(imported.competency()), imported.tailRelations())).collect(Collectors.toSet()));
     }
 
     /**
@@ -257,9 +272,10 @@ public class PrerequisiteResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, sourceCourse, null);
 
         var prerequisites = prerequisiteRepository.findAllForCourseWithExercisesAndLectureUnitsAndLecturesAndAttachments(sourceCourse.getId());
-        Set<CompetencyWithTailRelationDTO> importedPrerequisites = prerequisiteService.importPrerequisites(targetCourse, prerequisites, importOptions);
+        Set<CompetencyWithTailRelation> importedPrerequisites = prerequisiteService.importPrerequisites(targetCourse, prerequisites, importOptions);
 
-        return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/prerequisites/")).body(importedPrerequisites);
+        return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/prerequisites/")).body(importedPrerequisites.stream()
+                .map(imported -> new CompetencyWithTailRelationDTO(CourseCompetencyResponseDTO.of(imported.competency()), imported.tailRelations())).collect(Collectors.toSet()));
     }
 
     /**
@@ -286,14 +302,15 @@ public class PrerequisiteResource {
     /**
      * PUT courses/:courseId/prerequisites : Updates an existing prerequisite.
      *
-     * @param courseId     the id of the course to which the prerequisite belongs
-     * @param prerequisite the prerequisite to update
+     * @param courseId            the id of the course to which the prerequisite belongs
+     * @param prerequisiteRequest the prerequisite data to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated prerequisite
      */
     @PutMapping("courses/{courseId}/prerequisites")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<Prerequisite> updatePrerequisite(@PathVariable long courseId, @RequestBody Prerequisite prerequisite) {
-        log.debug("REST request to update Prerequisite : {}", prerequisite);
+    public ResponseEntity<CourseCompetencyResponseDTO> updatePrerequisite(@PathVariable long courseId, @Valid @RequestBody CourseCompetencyRequestDTO prerequisiteRequest) {
+        log.debug("REST request to update Prerequisite : {}", prerequisiteRequest);
+        Prerequisite prerequisite = toPrerequisite(prerequisiteRequest);
         checkPrerequisitesAttributesForUpdate(prerequisite);
 
         var course = courseRepository.findByIdElseThrow(courseId);
@@ -302,7 +319,7 @@ public class PrerequisiteResource {
 
         var persistedPrerequisite = prerequisiteService.updateCourseCompetency(existingPrerequisite, prerequisite);
 
-        return ResponseEntity.ok(persistedPrerequisite);
+        return ResponseEntity.ok(CourseCompetencyResponseDTO.of(persistedPrerequisite));
     }
 
     /**
@@ -344,6 +361,18 @@ public class PrerequisiteResource {
         if (prerequisite.getTitle() == null || prerequisite.getTitle().trim().isEmpty() || prerequisite.getMasteryThreshold() < 1 || prerequisite.getMasteryThreshold() > 100) {
             throw new BadRequestAlertException("The attributes of the competency are invalid!", ENTITY_NAME, "invalidPrerequisiteAttributes");
         }
+    }
+
+    private Prerequisite toPrerequisite(CourseCompetencyRequestDTO prerequisiteRequest) {
+        Prerequisite prerequisite = new Prerequisite();
+        prerequisite.setId(prerequisiteRequest.id());
+        prerequisite.setTitle(prerequisiteRequest.title());
+        prerequisite.setDescription(prerequisiteRequest.description());
+        prerequisite.setSoftDueDate(prerequisiteRequest.softDueDate());
+        prerequisite.setMasteryThreshold(prerequisiteRequest.masteryThreshold() != null ? prerequisiteRequest.masteryThreshold() : CourseCompetency.DEFAULT_MASTERY_THRESHOLD);
+        prerequisite.setTaxonomy(prerequisiteRequest.taxonomy());
+        prerequisite.setOptional(Boolean.TRUE.equals(prerequisiteRequest.optional()));
+        return prerequisite;
     }
 
     /**
