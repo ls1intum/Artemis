@@ -9,14 +9,12 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LDAP;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_THEIA;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.URI;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -24,8 +22,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,10 +35,6 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.Network;
-import org.testcontainers.containers.wait.strategy.Wait;
-import org.testcontainers.weaviate.WeaviateContainer;
 
 import com.github.dockerjava.api.DockerClient;
 
@@ -55,6 +47,7 @@ import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
+import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService;
@@ -88,7 +81,7 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 // NOTE: in a "single node" environment, PROFILE_BUILDAGENT must be before PROFILE_CORE to avoid issues
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_BUILDAGENT, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_LOCALCI, PROFILE_LOCALVC, PROFILE_LDAP, PROFILE_AEOLUS,
-        PROFILE_THEIA, PROFILE_ATHENA })
+        PROFILE_ATHENA })
 // Note: the server.port property must correspond to the port used in the artemis.version-control.url property.
 @TestPropertySource(properties = { "artemis.user-management.use-external=false", "artemis.sharing.enabled=true", "artemis.continuous-integration.specify-concurrent-builds=true",
         "artemis.continuous-integration.concurrent-build-size=1", "artemis.continuous-integration.asynchronous=false",
@@ -103,31 +96,17 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 @ContextConfiguration(classes = TestBuildAgentConfiguration.class)
 public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends AbstractArtemisIntegrationTest {
 
-    private static final Logger log = LoggerFactory.getLogger(AbstractSpringIntegrationLocalCILocalVCTest.class);
-
     private static final int serverPort;
 
     private static final int sshPort;
 
     private static final int hazelcastPort;
 
-    // Weaviate Testcontainers: uses a lightweight transformer model for text2vec-transformers module
-    private static final String WEAVIATE_DOCKER_IMAGE = "cr.weaviate.io/semitechnologies/weaviate:1.34.10";
-
-    private static final String TRANSFORMER_DOCKER_IMAGE = "cr.weaviate.io/semitechnologies/transformers-inference:sentence-transformers-multi-qa-MiniLM-L6-cos-v1";
-
-    private static final int WEAVIATE_HTTP_PORT = 8080;
-
-    private static final int WEAVIATE_GRPC_PORT = 50051;
-
-    protected static WeaviateContainer weaviateContainer;
-
-    // Static initializer runs before @DynamicPropertySource, ensuring ports and containers are available when Spring context starts
+    // Static initializer runs before @DynamicPropertySource, ensuring ports are available when Spring context starts
     static {
         serverPort = findAvailableTcpPort();
         sshPort = findAvailableTcpPort();
         hazelcastPort = findAvailableTcpPort();
-        startWeaviateContainers();
     }
 
     @DynamicPropertySource
@@ -137,39 +116,6 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         registry.add("artemis.version-control.ssh-port", () -> sshPort);
         registry.add("artemis.version-control.ssh-template-clone-url", () -> "ssh://git@localhost:" + sshPort + "/");
         registry.add("spring.hazelcast.port", () -> hazelcastPort);
-        registerWeaviateProperties(registry);
-    }
-
-    private static void startWeaviateContainers() {
-        try {
-            Network network = Network.newNetwork();
-
-            var transformerContainer = new GenericContainer<>(TRANSFORMER_DOCKER_IMAGE).withNetwork(network).withNetworkAliases("t2v-transformers").withExposedPorts(8080)
-                    .withEnv("ENABLE_CUDA", "0").waitingFor(Wait.forHttp("/.well-known/ready").forPort(8080).withStartupTimeout(Duration.ofMinutes(5)));
-            transformerContainer.start();
-
-            weaviateContainer = new WeaviateContainer(WEAVIATE_DOCKER_IMAGE).withNetwork(network).withEnv("ENABLE_MODULES", "text2vec-transformers")
-                    .withEnv("DEFAULT_VECTORIZER_MODULE", "text2vec-transformers").withEnv("TRANSFORMERS_INFERENCE_API", "http://t2v-transformers:8080")
-                    .withEnv("AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED", "true");
-            weaviateContainer.start();
-
-            log.info("Weaviate Testcontainers started successfully (HTTP: {}, gRPC: {})", weaviateContainer.getMappedPort(WEAVIATE_HTTP_PORT),
-                    weaviateContainer.getMappedPort(WEAVIATE_GRPC_PORT));
-        }
-        catch (Exception e) {
-            log.warn("Could not start Weaviate Testcontainers (Docker not available?). Weaviate integration tests will be skipped.", e);
-            weaviateContainer = null;
-        }
-    }
-
-    private static void registerWeaviateProperties(DynamicPropertyRegistry registry) {
-        if (weaviateContainer != null && weaviateContainer.isRunning()) {
-            registry.add("artemis.weaviate.enabled", () -> "true");
-            registry.add("artemis.weaviate.host", weaviateContainer::getHost);
-            registry.add("artemis.weaviate.port", () -> weaviateContainer.getMappedPort(WEAVIATE_HTTP_PORT));
-            registry.add("artemis.weaviate.grpc-port", () -> weaviateContainer.getMappedPort(WEAVIATE_GRPC_PORT));
-            registry.add("artemis.weaviate.schema-validation.enabled", () -> "false");
-        }
     }
 
     private static int findAvailableTcpPort() {
@@ -247,6 +193,9 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     protected IrisCourseChatSessionService irisCourseChatSessionService;
 
     @MockitoSpyBean
+    protected IrisCitationService irisCitationService;
+
+    @MockitoSpyBean
     protected CompetencyJolService competencyJolService;
 
     @MockitoSpyBean
@@ -316,7 +265,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @Override
     protected void resetSpyBeans() {
         Mockito.reset(gitServiceSpy, continuousIntegrationService, localCITriggerService, buildAgentConfiguration, resourceLoaderService, programmingMessagingService,
-                competencyProgressService, competencyProgressApi);
+                competencyProgressService, competencyProgressApi, irisCitationService);
         super.resetSpyBeans();
     }
 

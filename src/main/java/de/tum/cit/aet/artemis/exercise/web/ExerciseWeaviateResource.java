@@ -22,7 +22,6 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.dto.ProgrammingExerciseWeaviateDTO;
-import de.tum.cit.aet.artemis.exercise.service.ExerciseWeaviateService;
 
 /**
  * REST controller for Weaviate-based exercise search operations.

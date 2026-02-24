@@ -1,10 +1,8 @@
 package de.tum.cit.aet.artemis.programming.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_THEIA;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -12,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -31,12 +28,12 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
 import de.tum.cit.aet.artemis.core.service.course.CourseService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
-import de.tum.cit.aet.artemis.exercise.service.ExerciseWeaviateService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -59,7 +56,7 @@ public class ProgrammingExerciseUpdateResource {
 
     private static final String ENTITY_NAME = "programmingExercise";
 
-    private final Environment environment;
+    private final ModuleFeatureService moduleFeatureService;
 
     private final CourseService courseService;
 
@@ -85,13 +82,11 @@ public class ProgrammingExerciseUpdateResource {
 
     private final ExerciseVersionService exerciseVersionService;
 
-    private final ExerciseWeaviateService exerciseWeaviateService;
-
     public ProgrammingExerciseUpdateResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ExerciseService exerciseService, ProgrammingExerciseValidationService programmingExerciseValidationService,
             ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService, ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
-            AuxiliaryRepositoryService auxiliaryRepositoryService, Optional<AthenaApi> athenaApi, Environment environment, Optional<SlideApi> slideApi,
-            ExerciseVersionService exerciseVersionService, ExerciseWeaviateService exerciseWeaviateService) {
+            AuxiliaryRepositoryService auxiliaryRepositoryService, Optional<AthenaApi> athenaApi, ModuleFeatureService moduleFeatureService, Optional<SlideApi> slideApi,
+            ExerciseVersionService exerciseVersionService) {
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -102,10 +97,9 @@ public class ProgrammingExerciseUpdateResource {
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.auxiliaryRepositoryService = auxiliaryRepositoryService;
         this.athenaApi = athenaApi;
-        this.environment = environment;
+        this.moduleFeatureService = moduleFeatureService;
         this.slideApi = slideApi;
         this.exerciseVersionService = exerciseVersionService;
-        this.exerciseWeaviateService = exerciseWeaviateService;
     }
 
     /**
@@ -148,8 +142,8 @@ public class ProgrammingExerciseUpdateResource {
         if (!Objects.equals(programmingExerciseBeforeUpdate.isStaticCodeAnalysisEnabled(), updatedProgrammingExercise.isStaticCodeAnalysisEnabled())) {
             throw new BadRequestAlertException("Static code analysis enabled flag must not be changed", ENTITY_NAME, "staticCodeAnalysisCannotChange");
         }
-        // Check if theia Profile is enabled
-        if (Arrays.asList(this.environment.getActiveProfiles()).contains(PROFILE_THEIA)) {
+        // Check if Theia is enabled
+        if (moduleFeatureService.isTheiaEnabled()) {
             // Require 1 / 3 participation modes to be enabled
             if (!Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOnlineEditor()) && !Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOfflineIde())
                     && !updatedProgrammingExercise.isAllowOnlineIde()) {
@@ -216,10 +210,6 @@ public class ProgrammingExerciseUpdateResource {
         exerciseService.updatePointsInRelatedParticipantScores(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
         slideApi.ifPresent(api -> api.handleDueDateChange(programmingExerciseBeforeUpdate, updatedProgrammingExercise));
         exerciseVersionService.createExerciseVersion(updatedProgrammingExercise, user);
-
-        // Update exercise metadata in Weaviate for global search
-        exerciseWeaviateService.updateExercise(savedProgrammingExercise);
-
         return ResponseEntity.ok(savedProgrammingExercise);
     }
 
