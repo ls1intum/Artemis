@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
     Competency,
@@ -98,19 +98,16 @@ export class CompetencyService extends CourseCompetencyService {
 
     importBulk(courseCompetencies: CourseCompetency[], courseId: number, importRelations: boolean) {
         const courseCompetencyIds = courseCompetencies.map((competency) => competency.id);
-        const params = new HttpParams().set('importRelations', importRelations);
         return this.httpClient
             .post<Array<CompetencyWithTailRelationResponseDTO>>(
                 `${this.resourceURL}/courses/${courseId}/competencies/import/bulk`,
                 {
-                    sourceCourseId: courseId,
                     importRelations: importRelations,
                     importExercises: false,
                     importLectures: false,
                     competencyIds: courseCompetencyIds,
                 } as CourseCompetencyImportOptionsDTO,
                 {
-                    params: params,
                     observe: 'response',
                 },
             )
@@ -159,7 +156,9 @@ export class CompetencyService extends CourseCompetencyService {
 
     private mapCompetencyArrayResponse(res: EntityArrayResponseDTOType): EntityArrayResponseType {
         const body = res.body ? res.body.map((dto) => toCompetency(dto)) : [];
-        body.forEach((competency) => this.postProcessCompetency(competency));
+        body.forEach((competency) => {
+            this.postProcessCompetency(competency);
+        });
         return res.clone({ body });
     }
 

@@ -35,7 +35,7 @@ describe('StandardizedCompetencyService', () => {
     it('should get competency', () => {
         let actualCompetency = new HttpResponse<StandardizedCompetencyDTO>();
         const expectedCompetency = defaultStandardizedCompetency;
-        const returnedFromService: StandardizedCompetencyDTO = { ...expectedCompetency };
+        const returnedFromService: StandardizedCompetencyDTO = Object.assign({}, expectedCompetency);
 
         standardizedCompetencyService
             .getStandardizedCompetency(1)
