@@ -86,8 +86,10 @@ public class WeaviateService {
             log.info("Creating collection '{}'...", collectionName);
 
             client.collections.create(collectionName, collection -> {
-                // Explicitly disable vectorization; text2vec-transformers will be added in a separate PR
-                // In a follow-up PR we will configure text2vec-transformers vectorizer for automatic embeddings
+                // Collections use self-provided vectors (manual vectorization)
+                // Note: The embedding infrastructure (text2vec-transformers with embeddinggemma-300m)
+                // is available via docker/weaviate-embeddings.yml but not yet integrated here.
+                // Automatic vectorization will be enabled in a future update when semantic search is implemented.
                 collection.vectorConfig(VectorConfig.selfProvided());
 
                 // Add properties
