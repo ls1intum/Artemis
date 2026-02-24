@@ -329,7 +329,13 @@ describe('BonusComponent', () => {
 
         expect(component.isLoading).toBe(false);
         expect(component.bonus.sourceGradingScale).toEqual(sourceGradingScale);
-        expect(component.sourceGradingScales).toEqual(searchResult.resultsOnPage);
+        expect(component.sourceGradingScales).toHaveLength(1);
+
+        const actual = component.sourceGradingScales[0];
+
+        expect(actual.id).toBe(7);
+        expect(actual.gradeType).toBe(GradeType.BONUS);
+        expect(actual.gradeSteps).toHaveLength(6);
 
         expect(sortGradeStepsSpy).toHaveBeenCalledTimes(1);
         expect(sortGradeStepsSpy).toHaveBeenCalledWith(examGradeSteps.gradeSteps);

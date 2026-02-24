@@ -39,7 +39,7 @@ export function toRequestDTO(gradingScale: GradingScale): GradingScaleRequestDTO
         noParticipationGrade: gradingScale.noParticipationGrade,
         presentationsNumber: gradingScale.presentationsNumber,
         presentationsWeight: gradingScale.presentationsWeight,
-        gradeSteps: gradingScale.gradeSteps.map((step) => ({
+        gradeSteps: (gradingScale.gradeSteps ?? []).map((step) => ({
             lowerBoundPercentage: step.lowerBoundPercentage,
             lowerBoundInclusive: step.lowerBoundInclusive,
             upperBoundPercentage: step.upperBoundPercentage,

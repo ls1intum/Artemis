@@ -12,7 +12,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.Bonus;
 import de.tum.cit.aet.artemis.assessment.domain.BonusStrategy;
-import de.tum.cit.aet.artemis.assessment.domain.GradeStep;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
@@ -64,11 +63,13 @@ public record GradingScaleDTO(Long id, @NotNull GradeStepsDTO gradeSteps, BonusS
     public static GradingScaleDTO of(GradingScale scale) {
         Objects.requireNonNull(scale, "grading scale must exist");
 
-        Set<GradeStep> gradeSteps = Set.of();
+        Set<GradingScaleRequestDTO.GradeStepDTO> gradeSteps = Set.of();
         if (Hibernate.isInitialized(scale.getGradeSteps()) && scale.getGradeSteps() != null) {
-            gradeSteps = scale.getGradeSteps();
+            gradeSteps = scale.getGradeSteps().stream()
+                    .map(gradeStep -> new GradingScaleRequestDTO.GradeStepDTO(gradeStep.getLowerBoundPercentage(), gradeStep.isLowerBoundInclusive(),
+                            gradeStep.getUpperBoundPercentage(), gradeStep.isUpperBoundInclusive(), gradeStep.getGradeName(), gradeStep.getIsPassingGrade()))
+                    .collect(Collectors.toSet());
         }
-
         GradeStepsDTO steps = new GradeStepsDTO(scale.getTitle(), scale.getGradeType(), gradeSteps, scale.getMaxPoints(), scale.getPlagiarismGrade(),
                 scale.getNoParticipationGrade(), scale.getPresentationsNumber(), scale.getPresentationsWeight());
 

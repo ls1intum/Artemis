@@ -542,7 +542,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
      * @param gradeStepToTest the grade step
      * @return true if it is contained and false otherwise
      */
-    private static boolean isGradeStepInSet(Set<GradeStep> gradeSteps, GradeStep gradeStepToTest) {
+    private static boolean isGradeStepInSet(Set<GradeStep> gradeSteps, GradingScaleRequestDTO.GradeStepDTO gradeStepToTest) {
         for (GradeStep gradeStep : gradeSteps) {
             if (equalGradeSteps(gradeStep, gradeStepToTest)) {
                 return true;
@@ -558,10 +558,10 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
      * @param gradeStep2 the second grade step
      * @return true if grade steps are equal and false otherwise
      */
-    private static boolean equalGradeSteps(GradeStep gradeStep1, GradeStep gradeStep2) {
-        return gradeStep1.getIsPassingGrade() == gradeStep2.getIsPassingGrade() && gradeStep1.isLowerBoundInclusive() == gradeStep2.isLowerBoundInclusive()
-                && gradeStep1.isUpperBoundInclusive() == gradeStep2.isUpperBoundInclusive() && gradeStep1.getLowerBoundPercentage() == gradeStep2.getLowerBoundPercentage()
-                && gradeStep1.getUpperBoundPercentage() == gradeStep2.getUpperBoundPercentage() && gradeStep1.getGradeName().equals(gradeStep2.getGradeName());
+    private static boolean equalGradeSteps(GradeStep gradeStep1, GradingScaleRequestDTO.GradeStepDTO gradeStep2) {
+        return gradeStep1.getIsPassingGrade() == gradeStep2.isPassingGrade() && gradeStep1.isLowerBoundInclusive() == gradeStep2.lowerBoundInclusive()
+                && gradeStep1.isUpperBoundInclusive() == gradeStep2.upperBoundInclusive() && gradeStep1.getLowerBoundPercentage() == gradeStep2.lowerBoundPercentage()
+                && gradeStep1.getUpperBoundPercentage() == gradeStep2.upperBoundPercentage() && gradeStep1.getGradeName().equals(gradeStep2.gradeName());
     }
 
 }

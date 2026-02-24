@@ -14,8 +14,12 @@ export interface GradingScaleDTO {
     bonusFrom?: BonusDTO[];
 }
 
+/**
+ * Converts a GradingScale DTO to an entity.
+ */
 export function toEntity(dto: GradingScaleDTO, course?: Course, exam?: Exam): GradingScale {
-    const entity = new GradingScale(dto.gradeSteps.gradeType, dto.gradeSteps.gradeSteps);
+    const entity = new GradingScale(dto.gradeSteps.gradeType, dto.gradeSteps.gradeSteps?.map((step) => ({ ...step })) ?? []);
+
     entity.id = dto.id;
     entity.plagiarismGrade = dto.gradeSteps.plagiarismGrade;
     entity.noParticipationGrade = dto.gradeSteps.noParticipationGrade;
@@ -28,6 +32,9 @@ export function toEntity(dto: GradingScaleDTO, course?: Course, exam?: Exam): Gr
     return entity;
 }
 
+/**
+ * Converts a GradingScale to a response DTO.
+ */
 export function toGradingScaleDTO(entity?: GradingScale): GradingScaleDTO {
     if (!entity) {
         throw new Error('GradingScale must be defined when converting to DTO');
@@ -36,7 +43,7 @@ export function toGradingScaleDTO(entity?: GradingScale): GradingScaleDTO {
     const gradeStepsDTO: GradeStepsDTO = {
         title: entity.exam?.title ?? entity.course?.title ?? '',
         gradeType: entity.gradeType,
-        gradeSteps: entity.gradeSteps ?? [],
+        gradeSteps: entity.gradeSteps?.map((step) => ({ ...step })) ?? [],
         maxPoints: entity.exam?.examMaxPoints ?? entity.course?.maxPoints ?? 0,
         plagiarismGrade: entity.plagiarismGrade ?? GradingScale.DEFAULT_PLAGIARISM_GRADE,
         noParticipationGrade: entity.noParticipationGrade ?? GradingScale.DEFAULT_NO_PARTICIPATION_GRADE,

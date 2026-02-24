@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +21,7 @@ import de.tum.cit.aet.artemis.assessment.domain.GradeStep;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.dto.GradeDTO;
 import de.tum.cit.aet.artemis.assessment.dto.GradeStepsDTO;
+import de.tum.cit.aet.artemis.assessment.dto.GradingScaleRequestDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradeStepRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -129,7 +131,12 @@ public class GradeStepResource {
         for (GradeStep gradeStep : gradeSteps) {
             gradeStep.setGradingScale(null);
         }
-        return new GradeStepsDTO(title, gradingScale.getGradeType(), gradeSteps, maxPoints, gradingScale.getPlagiarismGradeOrDefault(),
+        var newGradeSteps = gradeSteps.stream()
+                .map(gradeStep -> new GradingScaleRequestDTO.GradeStepDTO(gradeStep.getLowerBoundPercentage(), gradeStep.isLowerBoundInclusive(),
+                        gradeStep.getUpperBoundPercentage(), gradeStep.isUpperBoundInclusive(), gradeStep.getGradeName(), gradeStep.getIsPassingGrade()))
+                .collect(Collectors.toSet());
+
+        return new GradeStepsDTO(title, gradingScale.getGradeType(), newGradeSteps, maxPoints, gradingScale.getPlagiarismGradeOrDefault(),
                 gradingScale.getNoParticipationGradeOrDefault(), gradingScale.getPresentationsNumber(), gradingScale.getPresentationsWeight());
     }
 

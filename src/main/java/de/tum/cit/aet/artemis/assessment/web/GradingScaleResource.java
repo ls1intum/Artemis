@@ -153,7 +153,7 @@ public class GradingScaleResource {
         // Apply DTO values to the course before validation so that presentation config is validated correctly
         applyCourseValuesFromDTO(gradingScaleDto, course);
         validatePresentationsConfiguration(gradingScale);
-        saveCourseIfChanged(gradingScaleDto, course);
+        courseRepository.save(course);
 
         GradingScale savedGradingScale = gradingScaleService.saveGradingScale(gradingScale);
         return ResponseEntity.created(new URI("/api/assessment/courses/" + courseId + "/grading-scale/"))
@@ -222,7 +222,7 @@ public class GradingScaleResource {
         // Apply DTO values to the course before validation so that presentation config is validated correctly
         applyCourseValuesFromDTO(gradingScaleDto, course);
         validatePresentationsConfiguration(existingGradingScale);
-        saveCourseIfChanged(gradingScaleDto, course);
+        courseRepository.save(course);
 
         GradingScale savedGradingScale = gradingScaleService.saveGradingScale(existingGradingScale);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(GradingScaleDTO.of(savedGradingScale));
@@ -373,21 +373,6 @@ public class GradingScaleResource {
         }
         if (dto.coursePresentationScore() != null) {
             course.setPresentationScore(dto.coursePresentationScore());
-        }
-    }
-
-    /**
-     * Saves the course if it was modified by DTO values.
-     * Should be called after validation succeeds.
-     */
-    private void saveCourseIfChanged(GradingScaleRequestDTO dto, Course course) {
-        if (dto == null || course == null) {
-            return;
-        }
-
-        if ((dto.courseMaxPoints() != null && !dto.courseMaxPoints().equals(course.getMaxPoints()))
-                || (dto.coursePresentationScore() != null && !dto.coursePresentationScore().equals(course.getPresentationScore()))) {
-            courseRepository.save(course);
         }
     }
 }
