@@ -241,9 +241,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         if (this.standardizedCompetencySubscription) {
             this.standardizedCompetencySubscription.unsubscribe();
         }
-        if (this.globalSearchSubscription) {
-            this.globalSearchSubscription.unsubscribe();
-        }
+        this.globalSearchSubscription?.unsubscribe();
         this.queryParamsSubscription?.unsubscribe();
         this.examStartedSubscription?.unsubscribe();
     }

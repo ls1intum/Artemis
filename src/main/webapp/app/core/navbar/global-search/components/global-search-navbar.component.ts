@@ -14,8 +14,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 })
 export class GlobalSearchNavbarComponent {
     protected readonly faSearch = faSearch;
-    private osDetector = inject(OsDetectorService);
-    private searchOverlay = inject(SearchOverlayService);
+    private readonly osDetector = inject(OsDetectorService);
+    private readonly searchOverlay = inject(SearchOverlayService);
     protected actionKeyLabel = this.osDetector.actionKeyLabel;
     protected isMac = this.osDetector.isMac;
 
