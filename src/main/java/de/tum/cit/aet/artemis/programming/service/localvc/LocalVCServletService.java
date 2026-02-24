@@ -176,16 +176,9 @@ public class LocalVCServletService {
         // Sanitize once for all log statements to prevent CRLF injection
         String sanitizedPath = repositoryPath.replaceAll("[\\r\\n]", "_");
 
-        // Reject path traversal sequences before using the path in any filesystem operation
-        Path requestedPath = Path.of(repositoryPath).normalize();
-        if (requestedPath.isAbsolute() || requestedPath.startsWith("..")) {
-            log.error("Blocked path traversal attempt for repository path: {}", sanitizedPath);
-            throw new RepositoryNotFoundException(repositoryPath);
-        }
-
         // Find the local repository depending on the name.
         Path normalizedBasePath = localVCBasePath.normalize();
-        Path repositoryDir = normalizedBasePath.resolve(requestedPath);
+        Path repositoryDir = normalizedBasePath.resolve(repositoryPath).normalize();
 
         // Prevent path traversal attacks by ensuring the resolved path stays within the base path
         if (!repositoryDir.startsWith(normalizedBasePath)) {
