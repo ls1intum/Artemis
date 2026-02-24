@@ -33,8 +33,7 @@ public class FeatureToggleService {
     @Value("${artemis.science.event-logging.enable:false}")
     private boolean scienceEnabledOnStart;
 
-    @Value("${artemis.global-search.enable:false}")
-    private boolean globalSearchEnabledOnStart;
+    private final boolean globalSearchEnabledOnStart;
 
     private final RateLimitConfigurationService rateLimitConfigurationService;
 
@@ -47,11 +46,13 @@ public class FeatureToggleService {
     private Map<Feature, Boolean> features;
 
     public FeatureToggleService(WebsocketMessagingService websocketMessagingService, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance,
-            ProfileService profileService, RateLimitConfigurationService rateLimitConfigurationService) {
+            ProfileService profileService, RateLimitConfigurationService rateLimitConfigurationService,
+            @Value("${artemis.global-search.enable:false}") boolean globalSearchEnabledOnStart) {
         this.websocketMessagingService = websocketMessagingService;
         this.hazelcastInstance = hazelcastInstance;
         this.profileService = profileService;
         this.rateLimitConfigurationService = rateLimitConfigurationService;
+        this.globalSearchEnabledOnStart = globalSearchEnabledOnStart;
     }
 
     private Optional<Map<Feature, Boolean>> getFeatures() {
