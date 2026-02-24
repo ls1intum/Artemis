@@ -116,6 +116,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
                 model: umlModel,
                 mode: ApollonMode.Modelling,
                 readonly: this.readOnly(),
+                scrollLock: true,
                 type: this.diagramType() || UMLDiagramType.ClassDiagram,
                 scale: 0.8,
             });
