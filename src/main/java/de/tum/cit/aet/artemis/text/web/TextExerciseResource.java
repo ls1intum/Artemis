@@ -270,8 +270,8 @@ public class TextExerciseResource {
                 }
 
                 // Use specific result if resultId is provided, otherwise use latest
-                Result result = (resultId != null) ? textSubmission.getResults().stream().filter(r -> r.getId().equals(resultId)).findFirst()
-                        .orElseThrow(() -> new EntityNotFoundException("Result", resultId)) : textSubmission.getLatestResult();
+                Result result = (resultId != null) ? textSubmission.getResults().stream().filter(r -> r.getId().equals(resultId)).findFirst().orElse(null)
+                        : textSubmission.getLatestResult();
                 if (result != null) {
                     // Load TextBlocks for the Submission. They are needed to display the Feedback in the client.
                     final var textBlocks = textBlockRepository.findAllBySubmissionId(textSubmission.getId());
