@@ -1,10 +1,5 @@
 // Override PrimeNG dialog structure
 ::ng-deep .global-search-dialog.p-dialog {
-    width: 100%;
-    max-width: 700px;
-    height: 60vh;
-    max-height: 600px;
-    margin-top: 15vh;
     overflow: hidden;
     background: var(--module-bg);
 }
