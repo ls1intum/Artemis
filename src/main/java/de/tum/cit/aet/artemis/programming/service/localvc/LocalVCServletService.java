@@ -174,7 +174,15 @@ public class LocalVCServletService {
 
         long timeNanoStart = System.nanoTime();
         // Find the local repository depending on the name.
-        Path repositoryDir = localVCBasePath.resolve(repositoryPath);
+        Path normalizedBasePath = localVCBasePath.normalize();
+        Path repositoryDir = normalizedBasePath.resolve(repositoryPath).normalize();
+
+        // Prevent path traversal attacks by ensuring the resolved path stays within the base path
+        if (!repositoryDir.startsWith(normalizedBasePath)) {
+            String sanitizedPath = repositoryPath.replaceAll("[\\r\\n]", "_");
+            log.error("Blocked path traversal attempt for repository path: {}", sanitizedPath);
+            throw new RepositoryNotFoundException(repositoryPath);
+        }
 
         log.debug("Path to resolve repository from: {}", repositoryDir);
         if (!Files.exists(repositoryDir)) {
