@@ -8,25 +8,27 @@
     id="file-browser-file"
 >
     <fa-icon aria-hidden="true" [icon]="faFile" [fixedWidth]="true" />
-    @if (!isBeingRenamed()) {
-        <span class="ms-1 list-group-item__fileName" [ngClass]="item().checked ? 'text-white' : 'primary'">{{ item().text }}</span>
-    }
-    <!-- Renaming file tree item -->
-    @if (isBeingRenamed()) {
-        <span class="ms-1"
-            ><input
-                #renamingInput
-                value="{{ item().text }}"
-                (keyup.enter)="renameNode($event)"
-                (focusout)="renameNode($event)"
-                (keyup.esc)="clearRenamingNode($event)"
-                class="list-group-item__input"
-        /></span>
-    }
-    <!-- File badges -->
-    @for (badge of badges(); track badges().indexOf(badge)) {
-        <jhi-file-browser-badge [badge]="badge" [onColoredBackground]="item().checked || hasError() || hasChanges()" />
-    }
+    <span class="file-label-group">
+        @if (!isBeingRenamed()) {
+            <span class="ms-1 list-group-item__fileName" [ngClass]="item().checked ? 'text-white' : 'primary'">{{ item().text }}</span>
+        }
+        <!-- Renaming file tree item -->
+        @if (isBeingRenamed()) {
+            <span class="ms-1"
+                ><input
+                    #renamingInput
+                    value="{{ item().text }}"
+                    (keyup.enter)="renameNode($event)"
+                    (focusout)="renameNode($event)"
+                    (keyup.esc)="clearRenamingNode($event)"
+                    class="list-group-item__input"
+            /></span>
+        }
+        <!-- File badges -->
+        @for (badge of badges(); track badges().indexOf(badge)) {
+            <jhi-file-browser-badge [badge]="badge" [onColoredBackground]="item().checked || hasError() || hasChanges()" />
+        }
+    </span>
     <!-- File level actions -->
     @if (!disableActions()) {
         <span class="file-icons" [ngClass]="item().checked ? 'text-white' : 'primary'">

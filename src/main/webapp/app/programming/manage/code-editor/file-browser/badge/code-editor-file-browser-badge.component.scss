@@ -1,7 +1,7 @@
 :host {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    margin-left: auto;
+    flex: 0 0 auto;
     cursor: default;
 }
 

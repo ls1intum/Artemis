@@ -35,6 +35,7 @@ File browser tree
                 margin-bottom: 2px;
                 border: none;
                 display: flex;
+                align-items: center;
                 background: transparent;
 
                 &--folder {
@@ -53,6 +54,14 @@ File browser tree
                     background: var(--code-editor-file-browser-input-background);
                     color: var(--code-editor-file-browser-input-color);
                 }
+            }
+
+            .file-label-group {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.35rem;
+                min-width: 0;
+                flex: 0 1 auto;
             }
 
             .list-group-item:hover {
