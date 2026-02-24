@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, inject, viewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, inject, input, output, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ApollonEditor, ApollonMode, Locale, UMLModel } from '@tumaet/apollon';
 import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -38,11 +38,11 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     readonly editorContainer = viewChild.required<ElementRef>('editorContainer');
     readonly titleField = viewChild<NgModel>('titleField');
 
-    @Input() courseId: number;
-    @Input() apollonDiagramId: number;
+    courseId = input.required<number>();
+    apollonDiagramId = input.required<number>();
 
-    @Output() closeEdit = new EventEmitter<DragAndDropQuestion | undefined>();
-    @Output() closeModal = new EventEmitter();
+    closeEdit = output<DragAndDropQuestion | undefined>();
+    closeModal = output<void>();
 
     course = signal<Course>(undefined!);
 
@@ -103,10 +103,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
      */
     ngOnInit() {
         this.route.params.subscribe((params) => {
-            this.apollonDiagramId ??= Number(params['id']);
-            this.courseId ??= Number(params['courseId']);
-
-            this.courseService.find(this.courseId).subscribe({
+            this.courseService.find(this.courseId()).subscribe({
                 next: (response) => {
                     this.course.set(response.body!);
                 },
@@ -115,7 +112,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
                 },
             });
 
-            this.apollonDiagramService.find(this.apollonDiagramId, this.courseId).subscribe({
+            this.apollonDiagramService.find(this.apollonDiagramId(), this.courseId()).subscribe({
                 next: (response) => {
                     const diagram = response.body!;
 
@@ -176,7 +173,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
             jsonRepresentation: JSON.stringify(umlModel),
         };
 
-        const result = await lastValueFrom(this.apollonDiagramService.update(updatedDiagram, this.courseId));
+        const result = await lastValueFrom(this.apollonDiagramService.update(updatedDiagram, this.courseId()));
         if (result?.ok) {
             this.alertService.success('artemisApp.apollonDiagram.updated', { title: this.apollonDiagram()?.title });
             this.isSaved = true;
@@ -213,7 +210,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         if (closeModal) {
             this.closeModal.emit();
         } else {
-            this.closeEdit.emit();
+            this.closeEdit.emit(undefined);
         }
     }
 
