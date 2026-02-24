@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, ElementRef, NgZone, OnDestroy, OnInit, Renderer2, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { MonacoTextEditorAdapter } from 'app/shared/monaco-editor/model/actions/adapter/monaco-text-editor.adapter';
-import { Disposable, EditorPosition, EditorRange, MonacoEditorTextModel } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { Disposable, EditorPosition, EditorRange, MonacoEditorDiffText, MonacoEditorTextModel } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { MonacoEditorBuildAnnotation, MonacoEditorBuildAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-build-annotation.model';
 import { MonacoEditorLineWidget } from 'app/shared/monaco-editor/model/monaco-editor-inline-widget.model';
@@ -15,8 +15,11 @@ import { EmojiConvertor } from 'emoji-js';
 import * as monaco from 'monaco-editor';
 import { MonacoEditorLineDecorationsHoverButton } from './model/monaco-editor-line-decorations-hover-button.model';
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import { LineChange, convertMonacoLineChanges } from 'app/programming/shared/utils/diff.utils';
 
 export const MAX_TAB_SIZE = 8;
+
+export type MonacoEditorMode = 'normal' | 'diff';
 
 @Component({
     selector: 'jhi-monaco-editor',
@@ -33,9 +36,13 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private static readonly DEFAULT_LINE_DECORATION_BUTTON_WIDTH = '2.3ch';
     private static readonly SHRINK_TO_FIT_CLASS = 'monaco-shrink-to-fit';
 
-    private readonly _editor: monaco.editor.IStandaloneCodeEditor;
-    private readonly textEditorAdapter: MonacoTextEditorAdapter;
-    private readonly monacoEditorContainerElement: HTMLElement;
+    private _editor: monaco.editor.IStandaloneCodeEditor;
+    private _diffEditor?: monaco.editor.IStandaloneDiffEditor;
+
+    private textEditorAdapter: MonacoTextEditorAdapter;
+    private monacoEditorContainerElement: HTMLElement;
+    private diffEditorContainerElement: HTMLElement;
+
     private readonly emojiConvertor = new EmojiConvertor();
 
     /*
@@ -47,6 +54,16 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     lineHighlights: MonacoEditorLineHighlight[] = [];
     actions: TextEditorAction[] = [];
     lineDecorationsHoverButton?: MonacoEditorLineDecorationsHoverButton;
+    private lineDecorationsFoldingBeforeHoverButton?: boolean;
+    private lineDecorationsWidthBeforeHoverButton?: string | number;
+
+    /*
+     * Diff/editor switching state.
+     */
+
+    private diffSnapshotModel?: monaco.editor.ITextModel;
+    private diffListenersAttached = false;
+    private resizeObserver?: ResizeObserver;
 
     /*
      * Inputs and outputs.
@@ -60,6 +77,11 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     contentHeightChanged = output<number>();
     onBlurEditor = output<void>();
 
+    mode = input<MonacoEditorMode>('normal');
+    private lastMode: MonacoEditorMode = 'normal';
+    renderSideBySide = input<boolean>(true);
+    diffChanged = output<{ ready: boolean; lineChange: LineChange }>();
+
     /*
      * Disposable listeners, subscriptions, and timeouts.
      */
@@ -67,8 +89,12 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private textChangedListener?: Disposable;
     private blurEditorWidgetListener?: Disposable;
     private focusEditorTextListener?: Disposable;
+    private lastEditableEditor?: monaco.editor.IStandaloneCodeEditor;
+
     private textChangedEmitTimeouts = new Map<string, NodeJS.Timeout>();
     private customBackspaceCommandId: string | undefined;
+
+    private diffUpdateListener?: Disposable;
 
     /*
      * Injected services and elements.
@@ -85,31 +111,82 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
          * This makes the editor available immediately (not just after ngOnInit), preventing errors when the methods
          * of this component are called.
          */
-        this.monacoEditorContainerElement = this.renderer.createElement('div');
-        this.renderer.addClass(this.monacoEditorContainerElement, 'monaco-editor-container');
-        this.renderer.addClass(this.monacoEditorContainerElement, MonacoEditorComponent.SHRINK_TO_FIT_CLASS);
-        this._editor = this.monacoEditorService.createStandaloneCodeEditor(this.monacoEditorContainerElement);
-        this.textEditorAdapter = new MonacoTextEditorAdapter(this._editor);
-        this.renderer.appendChild(this.elementRef.nativeElement, this.monacoEditorContainerElement);
+        this.initializeMonacoEditor();
+        /*
+         * Diff editor: create container once in constructor (hidden by default) but init editor lazily.
+         */
+        this.initializeDiffEditorContainer();
 
         this.emojiConvertor.replace_mode = 'unified';
         this.emojiConvertor.allow_native = true;
 
         effect(() => {
             // TODO: The CSS class below allows the editor to shrink in the CodeEditorContainerComponent. We should eventually remove this class and handle the editor size differently in the code editor grid.
-            if (this.shrinkToFit()) {
+            const enabled = this.shrinkToFit();
+            if (enabled) {
                 this.renderer.addClass(this.monacoEditorContainerElement, MonacoEditorComponent.SHRINK_TO_FIT_CLASS);
+                this.renderer.addClass(this.diffEditorContainerElement, MonacoEditorComponent.SHRINK_TO_FIT_CLASS);
             } else {
                 this.renderer.removeClass(this.monacoEditorContainerElement, MonacoEditorComponent.SHRINK_TO_FIT_CLASS);
+                this.renderer.removeClass(this.diffEditorContainerElement, MonacoEditorComponent.SHRINK_TO_FIT_CLASS);
             }
         });
 
         effect(() => {
+            const stickyScrollEnabled = this.stickyScroll();
+            const isReadOnly = this.readOnly();
+            const renderSideBySide = this.renderSideBySide();
+
             this._editor.updateOptions({
-                stickyScroll: { enabled: this.stickyScroll() },
-                readOnly: this.readOnly(),
+                stickyScroll: { enabled: stickyScrollEnabled },
+                readOnly: isReadOnly,
+            });
+
+            this._diffEditor?.updateOptions({
+                readOnly: isReadOnly,
+                originalEditable: false,
+                renderSideBySide,
             });
         });
+
+        // Mode switching.
+        effect(() => {
+            const nextMode = this.mode();
+            if (this.lastMode === nextMode) {
+                return;
+            }
+            const prevMode = this.lastMode;
+            this.lastMode = nextMode;
+            if (nextMode === 'diff') {
+                // only do expensive work if we're actually switching into diff
+                this.enterDiffMode(prevMode);
+            } else {
+                this.leaveDiffMode(prevMode);
+            }
+        });
+    }
+
+    /**
+     * Initializes the normal Monaco Editor and its container.
+     */
+    private initializeMonacoEditor(): void {
+        this.monacoEditorContainerElement = this.renderer.createElement('div');
+        this.renderer.addClass(this.monacoEditorContainerElement, 'monaco-editor-container');
+        this.renderer.addClass(this.monacoEditorContainerElement, MonacoEditorComponent.SHRINK_TO_FIT_CLASS);
+        this._editor = this.monacoEditorService.createStandaloneCodeEditor(this.monacoEditorContainerElement);
+        this.renderer.appendChild(this.elementRef.nativeElement, this.monacoEditorContainerElement);
+    }
+
+    /**
+     * Initializes the Diff Editor container (hidden by default).
+     */
+    private initializeDiffEditorContainer(): void {
+        this.diffEditorContainerElement = this.renderer.createElement('div');
+        this.renderer.addClass(this.diffEditorContainerElement, 'monaco-diff-editor-container');
+        this.renderer.addClass(this.diffEditorContainerElement, MonacoEditorComponent.SHRINK_TO_FIT_CLASS);
+        this.renderer.setStyle(this.diffEditorContainerElement, 'display', 'none');
+        // Dimensions are set in enterDiffMode() when the normal editor container is laid out.
+        this.renderer.appendChild(this.elementRef.nativeElement, this.diffEditorContainerElement);
     }
 
     /**
@@ -129,11 +206,11 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     public onDidChangeModelContent(listener: (event: monaco.editor.IModelContentChangedEvent) => void): monaco.IDisposable {
-        return this._editor.onDidChangeModelContent(listener);
+        return this.getActiveEditor().onDidChangeModelContent(listener);
     }
 
     public getModel() {
-        return this._editor.getModel();
+        return this.getActiveEditor().getModel();
     }
 
     public getEditor() {
@@ -141,21 +218,22 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     public getLineContent(lineNumber: number): string {
-        const model = this._editor.getModel();
+        const model = this.getActiveEditor().getModel();
         return model ? model.getLineContent(lineNumber) : '';
     }
 
     ngOnInit(): void {
-        const resizeObserver = new ResizeObserver(() => {
-            this._editor.layout();
+        this.resizeObserver = new ResizeObserver(() => {
+            if (this.mode() === 'diff' && this._diffEditor) {
+                this._diffEditor.layout();
+            } else {
+                this._editor.layout();
+            }
         });
-        resizeObserver.observe(this.monacoEditorContainerElement);
+        this.resizeObserver.observe(this.monacoEditorContainerElement);
+        this.resizeObserver.observe(this.diffEditorContainerElement);
 
         this.ngZone.runOutsideAngular(() => {
-            this.textChangedListener = this._editor.onDidChangeModelContent(() => {
-                this.ngZone.run(() => this.emitTextChangeEvent());
-            }, this);
-
             this.contentHeightListener = this._editor.onDidContentSizeChange((event) => {
                 if (event.contentHeightChanged) {
                     this.ngZone.run(() => this.contentHeightChanged.emit(event.contentHeight + this._editor.getOption(monaco.editor.EditorOption.lineHeight)));
@@ -170,26 +248,219 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                 }
                 this.ngZone.run(() => this.onBlurEditor.emit());
             });
-
-            this.focusEditorTextListener = this._editor.onDidFocusEditorText(() => {
-                this.ngZone.run(() => this.registerCustomBackspaceAction(this._editor));
-            });
         });
 
-        this.registerCustomBackspaceAction(this._editor);
+        // Wire listeners that depend on the "editable" editor (normal or diff modified).
+        this.setActiveEditorContext();
     }
 
     ngOnDestroy() {
+        this.resizeObserver?.disconnect();
         this.reset();
         this._editor.dispose();
+        this._diffEditor?.dispose();
         this.textChangedListener?.dispose();
         this.contentHeightListener?.dispose();
         this.blurEditorWidgetListener?.dispose();
         this.focusEditorTextListener?.dispose();
+        this.diffUpdateListener?.dispose();
+
+        // Dispose snapshot model if present
+        this.disposeDiffSnapshotModel();
 
         // Clean up all per-model debounce timeouts
-        this.textChangedEmitTimeouts.forEach((timeout) => clearTimeout(timeout));
+        this.textChangedEmitTimeouts.forEach((timeout) => {
+            clearTimeout(timeout);
+        });
         this.textChangedEmitTimeouts.clear();
+    }
+
+    private enterDiffMode(prevMode: MonacoEditorMode | undefined): void {
+        const rect = this.monacoEditorContainerElement.getBoundingClientRect();
+        const width = `${rect.width}px`;
+        const height = `${rect.height}px`;
+
+        if (!this._diffEditor) {
+            this._diffEditor = this.monacoEditorService.createStandaloneDiffEditor(this.diffEditorContainerElement, this.readOnly());
+            this._diffEditor.updateOptions({
+                originalEditable: false,
+                renderSideBySide: this.renderSideBySide(),
+            });
+        }
+
+        this.renderer.setStyle(this.diffEditorContainerElement, 'width', width);
+        this.renderer.setStyle(this.diffEditorContainerElement, 'height', height);
+        this.setContainersVisibility('diff');
+
+        if (prevMode !== 'diff') {
+            this.ensureDiffModelWired();
+        }
+        this.setActiveEditorContext();
+    }
+
+    private leaveDiffMode(prevMode: MonacoEditorMode | undefined): void {
+        if (prevMode !== 'diff') {
+            this.setContainersVisibility('normal');
+            this.setActiveEditorContext();
+            return;
+        }
+
+        // Dispose listener before the editor to prevent the onDidUpdateDiff callback
+        // from firing synchronously during _diffEditor.dispose() and accessing a disposed editor.
+        this.diffUpdateListener?.dispose();
+        this.diffUpdateListener = undefined;
+        this.diffListenersAttached = false;
+
+        if (this._diffEditor) {
+            // Clear cached editor before disposing to prevent race conditions
+            // (e.g., ResizeObserver callback reading mode() as 'diff' during transition)
+            this.lastEditableEditor = undefined;
+            this._diffEditor.dispose();
+            this._diffEditor = undefined;
+        }
+
+        this.disposeDiffSnapshotModel();
+
+        this.setContainersVisibility('normal');
+        this.setActiveEditorContext();
+
+        this.emitTextChangeEvent();
+    }
+
+    private setContainersVisibility(mode: MonacoEditorMode): void {
+        this.renderer.setStyle(this.monacoEditorContainerElement, 'display', mode === 'normal' ? 'block' : 'none');
+        this.renderer.setStyle(this.diffEditorContainerElement, 'display', mode === 'diff' ? 'block' : 'none');
+    }
+
+    private ensureDiffModelWired(): void {
+        if (!this._diffEditor) return;
+
+        const currentModel = this._editor.getModel();
+        const currentContent = currentModel?.getValue() ?? '';
+        const currentLanguage = currentModel?.getLanguageId() ?? 'markdown';
+
+        // Recreate snapshot on every diff entry
+        this.disposeDiffSnapshotModel();
+
+        const snapshotUri = monaco.Uri.parse(`inmemory://model/snapshot-${this._editor.getId()}`);
+        this.diffSnapshotModel = monaco.editor.createModel(currentContent, currentLanguage, snapshotUri);
+
+        if (currentModel) {
+            this._diffEditor.setModel({
+                original: this.diffSnapshotModel,
+                modified: currentModel,
+            });
+        }
+
+        this._diffEditor.layout();
+        this.ensureDiffListeners();
+    }
+
+    private disposeDiffSnapshotModel(): void {
+        if (!this.diffSnapshotModel) return;
+
+        this.diffSnapshotModel.dispose();
+        this.diffSnapshotModel = undefined;
+    }
+
+    private ensureDiffListeners(): void {
+        if (this.diffListenersAttached || !this._diffEditor) return;
+        this.diffListenersAttached = true;
+
+        this.ngZone.runOutsideAngular(() => {
+            this.diffUpdateListener = this._diffEditor!.onDidUpdateDiff(() => {
+                const monacoLineChanges = this._diffEditor!.getLineChanges() ?? [];
+                const lineChange = convertMonacoLineChanges(monacoLineChanges);
+                this.ngZone.run(() => {
+                    this.diffChanged.emit({ ready: true, lineChange });
+                });
+            });
+        });
+    }
+
+    private setActiveEditorContext(): void {
+        const editor = this.getEditableEditor();
+        if (editor === this.lastEditableEditor) {
+            return;
+        }
+        this.lastEditableEditor = editor;
+        this.textEditorAdapter = new MonacoTextEditorAdapter(editor);
+        this.attachEditableEditorListeners(editor);
+        this.reRegisterActions();
+    }
+
+    private getEditableEditor(): monaco.editor.IStandaloneCodeEditor {
+        // If we are in diff mode but _diffEditor is not initialized for some reason, fallback to _editor.
+        // This prevents crashes, though in practice enterDiffMode should have created it.
+        return this.mode() === 'diff' && this._diffEditor ? this._diffEditor.getModifiedEditor() : this._editor;
+    }
+
+    private attachEditableEditorListeners(editor: monaco.editor.IStandaloneCodeEditor): void {
+        this.ngZone.runOutsideAngular(() => {
+            this.textChangedListener?.dispose();
+            this.textChangedListener = editor.onDidChangeModelContent(() => {
+                this.ngZone.run(() => this.emitTextChangeEvent());
+            });
+
+            this.focusEditorTextListener?.dispose();
+            this.focusEditorTextListener = editor.onDidFocusEditorText(() => {
+                this.ngZone.run(() => this.registerCustomBackspaceAction(editor));
+            });
+        });
+
+        this.registerCustomBackspaceAction(editor);
+    }
+
+    applyDiffContent(newContent: string): void {
+        if (!this.isDiffMode()) {
+            return;
+        }
+
+        // Emit not ready state while diff is being computed
+        this.diffChanged.emit({ ready: false, lineChange: { addedLineCount: 0, removedLineCount: 0 } });
+
+        this._diffEditor!.getModifiedEditor().setValue(newContent);
+        this._diffEditor!.layout();
+    }
+
+    revertAll(): void {
+        if (!this.isDiffMode() || !this.diffSnapshotModel) {
+            return;
+        }
+        const snapshotContent = this.diffSnapshotModel.getValue();
+        this._diffEditor!.getModifiedEditor().setValue(snapshotContent);
+    }
+
+    getDiffText(): MonacoEditorDiffText | undefined {
+        if (!this.isDiffMode()) {
+            return undefined;
+        }
+
+        return {
+            original: this._diffEditor!.getOriginalEditor().getValue(),
+            modified: this._diffEditor!.getModifiedEditor().getValue(),
+        };
+    }
+
+    getModifiedEditor(): monaco.editor.IStandaloneCodeEditor | undefined {
+        if (this.mode() !== 'diff' || !this._diffEditor) {
+            return undefined;
+        }
+        return this._diffEditor.getModifiedEditor();
+    }
+
+    /**
+     * Gets the active editor: the normal editor in normal mode, or the modified editor in diff mode.
+     */
+    getActiveEditor(): monaco.editor.IStandaloneCodeEditor {
+        return this.isDiffMode() ? this._diffEditor!.getModifiedEditor() : this._editor;
+    }
+
+    /**
+     * Checks if the editor is currently in diff mode with an active diff editor.
+     */
+    private isDiffMode(): boolean {
+        return this.mode() === 'diff' && !!this._diffEditor;
     }
 
     private emitTextChangeEvent() {
@@ -232,36 +503,44 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         return parts.slice(1).join('/') || parts[parts.length - 1] || '';
     }
 
+    getScrolledVisiblePosition(position: EditorPosition): { top: number; left: number; height: number } | null {
+        return this.getActiveEditor().getScrolledVisiblePosition(position);
+    }
+
+    getDomNode(): HTMLElement | null {
+        return this.getActiveEditor().getDomNode();
+    }
+
     getPosition(): EditorPosition {
-        return this._editor.getPosition() ?? { column: 0, lineNumber: 0 };
+        return this.getActiveEditor().getPosition() ?? { column: 0, lineNumber: 0 };
     }
 
     revealLine(lineNumber: number, scrollType: monaco.editor.ScrollType): void {
-        this._editor.revealLineNearTop(lineNumber, scrollType);
+        this.getActiveEditor().revealLineNearTop(lineNumber, scrollType);
     }
 
     setPosition(position: EditorPosition) {
-        this._editor.setPosition(position);
+        this.getActiveEditor().setPosition(position);
     }
 
     getScrollTop(): number {
-        return this._editor.getScrollTop();
+        return this.getActiveEditor().getScrollTop();
     }
 
     setScrollTop(scrollTop: number) {
-        this._editor.setScrollTop(scrollTop);
+        this.getActiveEditor().setScrollTop(scrollTop);
     }
 
     setSelection(range: EditorRange): void {
-        this._editor.setSelection(range);
+        this.getActiveEditor().setSelection(range);
     }
 
     getText(): string {
-        return this._editor.getValue();
+        return this.getActiveEditor().getValue();
     }
 
     getContentHeight(): number {
-        return this._editor.getContentHeight() + this._editor.getOption(monaco.editor.EditorOption.lineHeight);
+        return this.getActiveEditor().getContentHeight() + this.getActiveEditor().getOption(monaco.editor.EditorOption.lineHeight);
     }
 
     isConvertedToEmoji(originalText: string, convertedText: string): boolean {
@@ -270,12 +549,16 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
     setText(text: string): void {
         const convertedText = this.convertTextToEmoji(text);
+        const activeEditor = this.getActiveEditor();
         if (this.isConvertedToEmoji(text, convertedText)) {
-            this._editor.setValue(convertedText);
-            this.setPosition({ column: this.getPosition().column + convertedText.length + text.length, lineNumber: this.getPosition().lineNumber });
+            activeEditor.setValue(convertedText);
+            this.setPosition({
+                column: this.getPosition().column + convertedText.length + text.length,
+                lineNumber: this.getPosition().lineNumber,
+            });
         }
         if (this.getText() !== convertedText) {
-            this._editor.setValue(convertedText);
+            activeEditor.setValue(convertedText);
         }
     }
 
@@ -284,19 +567,19 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * @param text The text to type.
      */
     triggerKeySequence(text: string): void {
-        this._editor.trigger('MonacoEditorComponent::triggerKeySequence', 'type', { text });
+        this.getActiveEditor().trigger('MonacoEditorComponent::triggerKeySequence', 'type', { text });
     }
 
     focus(): void {
-        this._editor.focus();
+        this.getActiveEditor().focus();
     }
 
     getNumberOfLines(): number {
-        return this._editor.getModel()?.getLineCount() ?? 0;
+        return this.getActiveEditor().getModel()?.getLineCount() ?? 0;
     }
 
     isReadOnly(): boolean {
-        return this._editor.getOption(monaco.editor.EditorOption.readOnly);
+        return this.getActiveEditor().getOption(monaco.editor.EditorOption.readOnly);
     }
 
     /**
@@ -331,7 +614,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * @param indentSize The size of the indentation in spaces.
      */
     updateModelIndentationSize(indentSize: number): void {
-        this._editor.getModel()?.updateOptions({ indentSize });
+        this.getActiveEditor().getModel()?.updateOptions({ indentSize });
     }
 
     disposeModels() {
@@ -359,39 +642,54 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * @param listener The callback to invoke on keydown events while the editor is focused.
      */
     onKeyDown(listener: (event: monaco.IKeyboardEvent) => void): Disposable {
-        return this._editor.onKeyDown(listener);
+        return this.getActiveEditor().onKeyDown(listener);
     }
 
-    disposeWidgets() {
-        this.lineWidgets.forEach((i) => {
-            i.dispose();
+    private disposeAndClear<T extends Disposable>(items: T[]): void {
+        items.forEach((item) => {
+            item.dispose();
         });
-        this.lineWidgets = [];
+        items.length = 0;
     }
 
-    disposeAnnotations() {
-        this.buildAnnotations.forEach((o) => {
-            o.dispose();
-        });
-        this.buildAnnotations = [];
+    disposeWidgets(): void {
+        this.disposeAndClear(this.lineWidgets);
+    }
+
+    /**
+     * Dispose all line widgets whose IDs start with the given prefix.
+     * This allows selective widget updates without clearing unrelated widgets.
+     */
+    disposeWidgetsByPrefix(prefix: string): void {
+        const remaining: MonacoEditorLineWidget[] = [];
+        for (const widget of this.lineWidgets) {
+            if (widget.getId().startsWith(prefix)) {
+                widget.dispose();
+            } else {
+                remaining.push(widget);
+            }
+        }
+        this.lineWidgets = remaining;
+    }
+
+    disposeAnnotations(): void {
+        this.disposeAndClear(this.buildAnnotations);
     }
 
     disposeLineHighlights(): void {
-        this.lineHighlights.forEach((o) => {
-            o.dispose();
-        });
-        this.lineHighlights = [];
+        this.disposeAndClear(this.lineHighlights);
     }
 
     disposeActions(): void {
-        this.actions.forEach((a) => {
-            a.dispose();
-        });
-        this.actions = [];
+        this.disposeAndClear(this.actions);
     }
 
     layout(): void {
-        this._editor.layout();
+        if (this.isDiffMode()) {
+            this._diffEditor!.layout();
+        } else {
+            this._editor.layout();
+        }
     }
 
     /**
@@ -401,7 +699,15 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * @param height The new height of the editor.
      */
     layoutWithFixedSize(width: number, height: number): void {
-        this._editor.layout({ width, height });
+        if (this.isDiffMode()) {
+            // Explicitly set the container style. The Diff Editor requires its container to match the layout dimensions
+            // exactly to render its internal split-view correctly.
+            this.renderer.setStyle(this.diffEditorContainerElement, 'width', `${width}px`);
+            this.renderer.setStyle(this.diffEditorContainerElement, 'height', `${height}px`);
+            this._diffEditor!.layout({ width, height });
+        } else {
+            this._editor.layout({ width, height });
+        }
     }
 
     /**
@@ -415,7 +721,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         for (const annotation of annotations) {
             const lineNumber = annotation.row + 1;
             const editorBuildAnnotation = new MonacoEditorBuildAnnotation(
-                this._editor,
+                this.getActiveEditor(),
                 `${annotation.fileName}:${lineNumber}:${annotation.text}`,
                 lineNumber,
                 annotation.text,
@@ -434,7 +740,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * @param domNode The content to display in the editor.
      */
     addLineWidget(lineNumber: number, id: string, domNode: HTMLElement) {
-        const lineWidget = new MonacoEditorLineWidget(this._editor, id, domNode, lineNumber);
+        const lineWidget = new MonacoEditorLineWidget(this.getActiveEditor(), id, domNode, lineNumber);
         lineWidget.addToEditor();
         this.lineWidgets.push(lineWidget);
     }
@@ -446,18 +752,48 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * @param clickCallback The callback to invoke when the button is clicked. The line number is passed as an argument.
      */
     setLineDecorationsHoverButton(className: string, clickCallback: (lineNumber: number) => void): void {
+        if (!this.lineDecorationsHoverButton) {
+            this.lineDecorationsFoldingBeforeHoverButton = this._editor.getOption(monaco.editor.EditorOption.folding);
+            this.lineDecorationsWidthBeforeHoverButton = this._editor.getOption(monaco.editor.EditorOption.lineDecorationsWidth) as string | number;
+        }
         this.lineDecorationsHoverButton?.dispose();
         this.lineDecorationsHoverButton = new MonacoEditorLineDecorationsHoverButton(
-            this._editor,
-            `line-decorations-hover-button-${this._editor.getId()}`,
+            this.getActiveEditor(),
+            `line-decorations-hover-button-${this.getActiveEditor().getId()}`,
             className,
             clickCallback,
         );
         // Make room for the hover button in the line decorations.
-        this._editor.updateOptions({
+        this.getActiveEditor().updateOptions({
             folding: false,
             lineDecorationsWidth: MonacoEditorComponent.DEFAULT_LINE_DECORATION_BUTTON_WIDTH,
         });
+    }
+
+    /**
+     * Removes the line decorations hover button and restores the editor options from before the button was added.
+     */
+    clearLineDecorationsHoverButton(): void {
+        const hadHoverButton = !!this.lineDecorationsHoverButton;
+        this.lineDecorationsHoverButton?.dispose();
+        this.lineDecorationsHoverButton = undefined;
+        if (!hadHoverButton) {
+            return;
+        }
+
+        const optionsToRestore: monaco.editor.IEditorOptions = {};
+        if (this.lineDecorationsFoldingBeforeHoverButton !== undefined) {
+            optionsToRestore.folding = this.lineDecorationsFoldingBeforeHoverButton;
+        }
+        if (this.lineDecorationsWidthBeforeHoverButton !== undefined) {
+            optionsToRestore.lineDecorationsWidth = this.lineDecorationsWidthBeforeHoverButton;
+        }
+        if (Object.keys(optionsToRestore).length > 0) {
+            this._editor.updateOptions(optionsToRestore);
+        }
+
+        this.lineDecorationsFoldingBeforeHoverButton = undefined;
+        this.lineDecorationsWidthBeforeHoverButton = undefined;
     }
 
     /**
@@ -468,7 +804,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * @param marginClassName The CSS class to use for highlighting the margin, or undefined if none should be used.
      */
     highlightLines(startLine: number, endLine: number, className?: string, marginClassName?: string) {
-        const highlight = new MonacoEditorLineHighlight(this._editor, 'line-highlight', startLine, endLine, className, marginClassName);
+        const highlight = new MonacoEditorLineHighlight(this.getActiveEditor(), 'line-highlight', startLine, endLine, className, marginClassName);
         highlight.addToEditor();
         this.lineHighlights.push(highlight);
     }
@@ -486,8 +822,25 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.actions.push(action);
     }
 
+    /**
+     * Re-registers all actions in the editor. This is necessary when the editor is disposed and re-created.
+     * @private
+     */
+    private reRegisterActions(): void {
+        for (const action of this.actions) {
+            try {
+                action.dispose();
+                action.register(this.textEditorAdapter, this.translateService);
+            } catch (error) {
+                // Some actions may fail if no model is attached yet.
+                // eslint-disable-next-line no-undef
+                console.warn('Failed to re-register Monaco action', action.id, error);
+            }
+        }
+    }
+
     setWordWrap(value: boolean): void {
-        this._editor.updateOptions({
+        this.getActiveEditor().updateOptions({
             wordWrap: value ? 'on' : 'off',
         });
     }
@@ -497,7 +850,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * @param startLineNumber The line number to start counting from (starting at 1).
      */
     setStartLineNumber(startLineNumber: number): void {
-        this._editor.updateOptions({
+        this.getActiveEditor().updateOptions({
             lineNumbers: (number) => `${startLineNumber + number - 1}`,
         });
     }
@@ -507,7 +860,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * @param options The options to apply.
      */
     applyOptionPreset(options: MonacoEditorOptionPreset): void {
-        options.apply(this._editor);
+        options.apply(this.getActiveEditor());
     }
 
     public getCustomBackspaceCommandId(): string | undefined {
@@ -562,7 +915,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                         () => [new monaco.Selection(lineNumber, deleteStartColumn, lineNumber, deleteStartColumn)],
                     );
                 },
-                'editorTextFocus && !findWidgetVisible',
+                'editorTextFocus && !findWidgetVisible && !editorReadonly',
             ) || undefined;
     }
 }

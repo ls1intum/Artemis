@@ -56,7 +56,7 @@ import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
  * via patterns for every field in the SAML2 configuration.
  * <p>
  * The service creates a {@link UsernamePasswordAuthenticationToken} which can then be used by the client to authenticate.
- * This is needed, since the client "does not know" that he is already authenticated via SAML2.
+ * This is needed, since the client "does not know" that they are already authenticated via SAML2.
  */
 @Lazy
 @Service

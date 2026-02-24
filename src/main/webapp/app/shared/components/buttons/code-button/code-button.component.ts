@@ -8,7 +8,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { PROFILE_THEIA } from 'app/app.constants';
+import { MODULE_FEATURE_THEIA } from 'app/app.constants';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import dayjs from 'dayjs/esm';
 import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -435,7 +435,7 @@ export class CodeButtonComponent implements OnInit {
     }
 
     private initTheia(profileInfo: ProfileInfo) {
-        if (this.profileService.isProfileActive(PROFILE_THEIA) && this.exercise()) {
+        if (this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA) && this.exercise()) {
             const exercise = this.exercise()!;
             // Theia requires the Build Config of the programming exercise to be set
             this.programmingExerciseService.getTheiaConfig(exercise.id!).subscribe((theiaConfig) => {

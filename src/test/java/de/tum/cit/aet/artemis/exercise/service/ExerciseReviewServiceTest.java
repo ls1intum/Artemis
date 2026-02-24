@@ -22,7 +22,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
@@ -107,26 +106,6 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void shouldReturnThreadsWhenInstructorRequestsByExerciseId() {
-        CommentThread thread = persistThread(programmingExercise);
-        Course otherCourse = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
-        ProgrammingExercise otherExercise = ExerciseUtilService.getFirstExerciseWithType(otherCourse, ProgrammingExercise.class);
-        persistThread(otherExercise);
-
-        List<CommentThread> threads = exerciseReviewService.findThreadsByExerciseId(programmingExercise.getId());
-
-        assertThat(threads).hasSize(1);
-        assertThat(threads.getFirst().getId()).isEqualTo(thread.getId());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void shouldThrowForbiddenWhenStudentRequestsThreads() {
-        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> exerciseReviewService.findThreadsByExerciseId(programmingExercise.getId()));
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldReturnThreadsWithCommentsWhenRequested() {
         CommentThread thread = persistThread(programmingExercise);
         Comment comment = buildUserCommentEntity("First");
@@ -138,26 +117,6 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         assertThat(threads).hasSize(1);
         CommentThread loaded = threads.iterator().next();
         assertThat(loaded.getComments()).hasSize(1);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void shouldReturnCommentsOrderedByCreatedDate() {
-        CommentThread thread = persistThread(programmingExercise);
-
-        Comment first = buildUserCommentEntity("First");
-        first.setThread(thread);
-        first.setCreatedDate(Instant.now().minusSeconds(10));
-        Comment second = buildUserCommentEntity("Second");
-        second.setThread(thread);
-        second.setCreatedDate(Instant.now());
-        commentRepository.save(first);
-        commentRepository.save(second);
-
-        List<Comment> comments = exerciseReviewService.findCommentsByThreadId(thread.getId());
-
-        assertThat(comments).hasSize(2);
-        assertThat(comments.getFirst().getContent()).isEqualTo(first.getContent());
     }
 
     @Test
@@ -224,7 +183,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         exerciseReviewService.deleteComment(programmingExercise.getId(), first.getId());
 
         assertThat(commentThreadRepository.findById(thread.getId())).isPresent();
-        assertThat(commentRepository.findByThreadIdOrderByCreatedDateAsc(thread.getId())).hasSize(2);
+        assertThat(commentThreadRepository.findWithCommentsById(thread.getId()).orElseThrow().getComments()).hasSize(2);
     }
 
     @Test
@@ -234,7 +193,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         exerciseReviewService.createUserComment(programmingExercise.getId(), thread.getId(), buildUserCommentContent("First"));
         exerciseReviewService.createUserComment(programmingExercise.getId(), thread.getId(), buildUserCommentContent("Second"));
 
-        long count = commentRepository.findByThreadIdOrderByCreatedDateAsc(thread.getId()).size();
+        long count = commentThreadRepository.findWithCommentsById(thread.getId()).orElseThrow().getComments().size();
 
         assertThat(count).isEqualTo(3);
     }
@@ -840,7 +799,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
 
         exerciseReviewService.updateThreadsForVersionChange(previous, current);
 
-        assertThat(commentThreadRepository.findByExerciseId(programmingExercise.getId())).isEmpty();
+        assertThat(commentThreadRepository.findWithCommentsByExerciseId(programmingExercise.getId())).isEmpty();
     }
 
     private CommentThread buildThreadEntity() {

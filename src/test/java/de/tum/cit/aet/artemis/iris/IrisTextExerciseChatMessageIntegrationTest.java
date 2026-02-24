@@ -349,6 +349,23 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
         assertThat(irisSessionFromDb.getTitle()).isEqualTo(expectedTitle);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendOneMessage_invokesIrisCitationService() throws Exception {
+        var irisSession = createSessionForUser("student1");
+        var messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
+
+        irisRequestMockProvider.mockTextExerciseChatResponse(dto -> {
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", dto.initialStages(), null));
+            pipelineDone.set(true);
+        });
+
+        request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, HttpStatus.CREATED);
+        await().until(pipelineDone::get);
+
+        verify(irisCitationService).resolveCitationInfo(any());
+    }
+
     private void sendStatus(String jobId, String result, List<PyrisStageDTO> stages, String sessionTitle) throws Exception {
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
         request.postWithoutResponseBody("/api/iris/internal/pipelines/text-exercise-chat/runs/" + jobId + "/status",

@@ -12,6 +12,7 @@ import {
     SimpleChanges,
     inject,
     input,
+    output,
 } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -75,6 +76,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
     @Output() isBuildingChange = new EventEmitter<boolean>();
     @Output() onSavedFiles = new EventEmitter<{ [fileName: string]: string | undefined }>();
     @Output() onRefreshFiles = new EventEmitter();
+    readonly onCommit = output<void>();
     @Output() onError = new EventEmitter<string>();
 
     private _isBuilding: boolean;
@@ -299,6 +301,9 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
                         // Note: this is not 100% clean, but not setting it here would complicate the state model.
                         this.isBuilding = true;
                     }
+                }),
+                tap(() => {
+                    this.onCommit.emit();
                 }),
             )
             .subscribe({
