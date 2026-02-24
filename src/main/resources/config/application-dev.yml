@@ -152,6 +152,7 @@ artemis:
         grpc-port: 50051                  # Weaviate gRPC port for better performance
         scheme: http                      # http scheme for development (https should be used in production environments)
         collection-prefix: Artemis_       # Prefix for all Weaviate collection names to avoid naming conflicts (e.g. with Pyris)
+        vectorizer-module: none           # Vectorizer module: "none" (docker/weaviate.yml) or "text2vec-transformers" (docker/weaviate-embeddings.yml)
 
 # Needs to be provided so Sentry's LogbackAppender picks up a sensible configuration
 sentry:

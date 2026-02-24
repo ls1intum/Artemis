@@ -248,7 +248,26 @@ artemis:
         grpc-port: 50051                  # Weaviate gRPC port for better performance
         scheme: http                      # http scheme for development (https should be used in production environments)
         collection-prefix: Artemis_       # Prefix for all Weaviate collection names to avoid naming conflicts (e.g. with Pyris, or allowing different prefixes for a shared Weaviate instance for test servers)
+        vectorizer-module: none           # Vectorizer module: "none" for self-provided vectors or "text2vec-transformers" for automatic embeddings
 ```
+
+### Vectorizer Configuration
+
+The `vectorizer-module` setting determines how vectors (embeddings) are generated:
+
+- **`none` (default)**: Use self-provided vectors. Choose this when:
+  - Using `docker/weaviate.yml` (basic setup)
+  - Embeddings are generated externally (e.g., by Pyris)
+  - You're developing features that don't require semantic search
+
+- **`text2vec-transformers`**: Automatic embedding generation. Choose this when:
+  - Using `docker/weaviate-embeddings.yml` (embeddings setup)
+  - Developing or testing semantic search features
+  - You want Weaviate to automatically generate embeddings for text content
+
+<Callout variant={CalloutVariant.warning}>
+  <p>The <code>vectorizer-module</code> setting must match your Docker setup. Using <code>text2vec-transformers</code> requires the transformer service from <code>weaviate-embeddings.yml</code> to be running, otherwise collection creation will fail.</p>
+</Callout>
 
 Ensure that Weaviate is running before starting Artemis.
 Artemis will connect to Weaviate to store and retrieve embeddings and metadata for global search functionality, e.g., retrieving lecture content.

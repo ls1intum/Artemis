@@ -18,16 +18,23 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  * @param grpcPort         the Weaviate gRPC port
  * @param scheme           the HTTP scheme (http/https) - determines secure connection type
  * @param collectionPrefix prefix prepended to all Weaviate collection names to avoid naming conflicts (e.g. with Pyris collections)
+ * @param vectorizerModule the vectorizer module to use: "none" for self-provided vectors, "text2vec-transformers" for automatic embeddings
  */
 @ConfigurationProperties(prefix = "artemis.weaviate")
 public record WeaviateConfigurationProperties(boolean enabled, String httpHost, @DefaultValue(DEFAULT_HTTP_PORT) int httpPort, @DefaultValue(DEFAULT_GRPC_PORT) int grpcPort,
-        String scheme, @DefaultValue(DEFAULT_COLLECTION_PREFIX) String collectionPrefix) {
+        String scheme, @DefaultValue(DEFAULT_COLLECTION_PREFIX) String collectionPrefix, @DefaultValue(DEFAULT_VECTORIZER_MODULE) String vectorizerModule) {
 
     public static final String DEFAULT_HTTP_PORT = "8001";
 
     public static final String DEFAULT_GRPC_PORT = "50051";
 
     public static final String DEFAULT_COLLECTION_PREFIX = "";
+
+    public static final String DEFAULT_VECTORIZER_MODULE = "none";
+
+    public static final String VECTORIZER_NONE = "none";
+
+    public static final String VECTORIZER_TEXT2VEC_TRANSFORMERS = "text2vec-transformers";
 
     /**
      * Returns whether secure connections should be used based on the scheme.
