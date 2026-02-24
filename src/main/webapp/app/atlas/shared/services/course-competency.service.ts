@@ -94,7 +94,7 @@ export class CourseCompetencyService {
                 map((res: EntityArrayResponseDTOType) => {
                     const competencies = res.body?.map((dto) => this.toCourseCompetency(dto)) ?? [];
                     competencies.forEach((competency) => this.postProcessCompetency(competency));
-                    return new HttpResponse({ body: competencies, headers: res.headers, status: res.status, url: res.url });
+                    return new HttpResponse({ body: competencies, headers: res.headers, status: res.status, url: res.url ?? undefined });
                 }),
                 tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
             );
@@ -114,7 +114,7 @@ export class CourseCompetencyService {
                               confidenceReason: res.body.confidenceReason,
                           } as CompetencyProgress)
                         : undefined;
-                    return new HttpResponse({ body, headers: res.headers, status: res.status, url: res.url });
+                    return new HttpResponse({ body, headers: res.headers, status: res.status, url: res.url ?? undefined });
                 }),
             );
     }
@@ -131,7 +131,7 @@ export class CourseCompetencyService {
                 const competency = res.body ? this.toCourseCompetency(res.body) : undefined;
                 this.postProcessCompetency(competency);
                 this.sendTitlesToEntityTitleService(competency);
-                return new HttpResponse({ body: competency, headers: res.headers, status: res.status, url: res.url });
+                return new HttpResponse({ body: competency, headers: res.headers, status: res.status, url: res.url ?? undefined });
             }),
         );
     }
@@ -166,7 +166,7 @@ export class CourseCompetencyService {
                         competency: entry.competency ? this.toCourseCompetency(entry.competency) : undefined,
                         tailRelations: entry.tailRelations,
                     })) as CompetencyWithTailRelationDTO[] | undefined;
-                    return new HttpResponse({ body, headers: res.headers, status: res.status, url: res.url });
+                    return new HttpResponse({ body, headers: res.headers, status: res.status, url: res.url ?? undefined });
                 }),
             );
     }
