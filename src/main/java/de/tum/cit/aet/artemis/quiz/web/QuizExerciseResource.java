@@ -214,7 +214,7 @@ public class QuizExerciseResource {
 
         // notify websocket channel of changes to the quiz exercise
         quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, quizBatch, action);
-        exerciseVersionService.createExerciseVersion(quizExercise, user);
+        exerciseVersionService.createExerciseVersionAndUpdateMetadata(quizExercise, user);
         if (quizBatch != null && quizBatch.getStartTime() != null) {
             // Set the start date from the batch to the quiz exercise DTO
             quizExercise.setStartDate(quizBatch.getStartTime());

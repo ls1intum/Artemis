@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.globalsearch.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
@@ -202,16 +203,34 @@ public final class WeaviateTestUtil {
 
     /**
      * Asserts that a Weaviate date property matches the expected ZonedDateTime value.
-     * Compares by converting both dates to UTC before comparison since Weaviate stores dates in UTC.
+     * Compares by converting both dates to UTC before comparison.
      */
     private static void assertDateProperty(Map<String, Object> properties, String propertyName, ZonedDateTime expected) {
         if (expected == null) {
             return;
         }
-        // Convert expected to UTC for comparison since Weaviate stores dates in UTC (RFC3339 format with Z suffix)
+        // Convert expected to UTC for comparison
         String expectedUTC = expected.withZoneSameInstant(java.time.ZoneOffset.UTC).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+
+        // Handle both OffsetDateTime (newer Weaviate client) and String (older versions)
+        Object actualValue = properties.get(propertyName);
+        String actualUTC;
+
+        if (actualValue instanceof OffsetDateTime offsetDateTime) {
+            // Convert OffsetDateTime to UTC
+            actualUTC = offsetDateTime.atZoneSameInstant(java.time.ZoneOffset.UTC).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+        }
+        else if (actualValue instanceof String actualStr) {
+            // Parse string date and convert to UTC
+            ZonedDateTime actualDateTime = ZonedDateTime.parse(actualStr, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+            actualUTC = actualDateTime.withZoneSameInstant(java.time.ZoneOffset.UTC).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+        }
+        else {
+            throw new AssertionError("Property " + propertyName + " has unexpected type: " + (actualValue != null ? actualValue.getClass() : "null"));
+        }
+
         // Compare first 19 chars (YYYY-MM-DDTHH:MM:SS) to avoid millisecond precision differences
-        assertThat(properties.get(propertyName)).as("Property %s should match expected date", propertyName).asString().startsWith(expectedUTC.substring(0, 19));
+        assertThat(actualUTC).as("Property %s should match expected date", propertyName).startsWith(expectedUTC.substring(0, 19));
     }
 
     /**
