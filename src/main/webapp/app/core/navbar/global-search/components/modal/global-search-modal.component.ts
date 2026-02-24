@@ -46,9 +46,4 @@ export class GlobalSearchModalComponent implements OnDestroy {
             this.overlay.close();
         }
     }
-
-    protected handleSearch(query: string) {
-        // TODO: Implement search functionality
-        this.overlay.close();
-    }
 }
