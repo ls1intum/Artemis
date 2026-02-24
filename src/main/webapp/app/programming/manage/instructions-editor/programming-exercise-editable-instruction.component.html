@@ -5,6 +5,7 @@
              Set to false when using an external preview component (e.g., in the code editor view). -->
         <jhi-markdown-editor-monaco
             class="overflow-hidden flex-grow-1"
+            [mode]="mode()"
             [domainActions]="domainActions"
             [artemisIntelligenceActions]="artemisIntelligenceActions()"
             [initialEditorHeight]="initialEditorHeight()"
@@ -15,10 +16,14 @@
             [showDefaultPreview]="false"
             [showPreviewButton]="showPreview()"
             [showEditButton]="showPreview()"
+            [isReadOnly]="isGeneratingOrRefining()"
+            [isAiLoading]="isAiApplying()"
+            [renderSideBySide]="renderSideBySide()"
             [consistencyIssues]="consistencyIssues()"
             [enableExerciseReviewComments]="enableExerciseReviewComments()"
             [showLocationWarning]="unsavedChangesValue"
             (markdownChange)="updateProblemStatement($event)"
+            (diffLineChange)="diffLineChange.emit($event)"
         >
             <!-- Custom preview using ProgrammingExerciseInstructionComponent for proper rendering
                  of programming-specific syntax (task markers, PlantUML, test case status, etc.).

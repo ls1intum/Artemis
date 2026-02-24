@@ -1,20 +1,19 @@
 package de.tum.cit.aet.artemis.core.config;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_THEIA;
-
 import java.util.Map;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.theia.TheiaEnabled;
 
-@Profile(PROFILE_THEIA)
+@Conditional(TheiaEnabled.class)
 @Configuration
 @Lazy
-@ConfigurationProperties(prefix = "theia")
+@ConfigurationProperties(prefix = "artemis.theia")
 public class TheiaConfiguration {
 
     private Map<ProgrammingLanguage, Map<String, String>> images;
