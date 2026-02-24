@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -614,4 +615,85 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         examRoomDistributionService.distributeRegisteredStudents(exam1.getId(), ids, aliasById, true, 0.0);
     }
 
+    /* Tests for the PUT /api/exam/courses/{courseId}/exams/{examId}/room-aliases endpoint */
+
+    @Test
+    @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+    void testUpdateRoomAliasesAsStudentForbidden() throws Exception {
+        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/room-aliases", Map.of(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+    void testUpdateRoomAliasesAsTutorForbidden() throws Exception {
+        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/room-aliases", Map.of(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    void testUpdateRoomAliasesAsEditorForbidden() throws Exception {
+        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/room-aliases", Map.of(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    void testUpdateRoomAliasesAsInstructor() throws Exception {
+        uploadFourRoomsAndDistributeStudentsInExam1(NUMBER_OF_STUDENTS);
+
+        Set<ExamRoomExamAssignment> assignments = examRoomExamAssignmentRepository.findAllByExamId(exam1.getId());
+
+        Map<Long, String> newAliases = assignments.stream()
+                .collect(Collectors.toMap(assignment -> assignment.getExamRoom().getId(), assignment -> "NEW-" + assignment.getExamRoom().getRoomNumber()));
+
+        request.putWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/room-aliases", newAliases, HttpStatus.OK);
+
+        Set<ExamRoomExamAssignment> updatedAssignments = examRoomExamAssignmentRepository.findAllByExamId(exam1.getId());
+
+        assertThat(updatedAssignments).allSatisfy(assignment -> {
+            String expectedAlias = "NEW-" + assignment.getExamRoom().getRoomNumber();
+            assertThat(assignment.getRoomAlias()).isEqualTo(expectedAlias);
+        });
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    void testUpdateRoomAliasesPartialUpdate() throws Exception {
+        uploadFourRoomsAndDistributeStudentsInExam1(NUMBER_OF_STUDENTS);
+
+        Set<ExamRoomExamAssignment> assignments = examRoomExamAssignmentRepository.findAllByExamId(exam1.getId());
+
+        Optional<ExamRoomExamAssignment> assignmentToUpdate = assignments.stream().findAny();
+        assertThat(assignmentToUpdate).isPresent();
+
+        Map<Long, String> update = Map.of(assignmentToUpdate.get().getExamRoom().getId(), "SPECIAL-ALIAS");
+
+        request.putWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/room-aliases", update, HttpStatus.OK);
+
+        Set<ExamRoomExamAssignment> updatedAssignments = examRoomExamAssignmentRepository.findAllByExamId(exam1.getId());
+
+        for (var assignment : updatedAssignments) {
+            if (assignment.getExamRoom().getId().equals(assignmentToUpdate.get().getExamRoom().getId())) {
+                assertThat(assignment.getRoomAlias()).isEqualTo("SPECIAL-ALIAS");
+            }
+        }
+    }
+
+    /* Test the alias trimming and verification */
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    void testUpdateRoomAliasesTrimsInput() throws Exception {
+        uploadFourRoomsAndDistributeStudentsInExam1(NUMBER_OF_STUDENTS);
+
+        ExamRoomExamAssignment assignment = examRoomExamAssignmentRepository.findAllByExamId(exam1.getId()).stream().findAny().orElseThrow();
+
+        Map<Long, String> update = Map.of(assignment.getExamRoom().getId(), "   TRIMMED-ALIAS   ");
+
+        request.putWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/room-aliases", update, HttpStatus.OK);
+
+        ExamRoomExamAssignment updated = examRoomExamAssignmentRepository.findAllByExamId(exam1.getId()).stream()
+                .filter(a -> a.getExamRoom().getId().equals(assignment.getExamRoom().getId())).findFirst().orElseThrow();
+
+        assertThat(updated.getRoomAlias()).isEqualTo("TRIMMED-ALIAS");
+    }
 }
