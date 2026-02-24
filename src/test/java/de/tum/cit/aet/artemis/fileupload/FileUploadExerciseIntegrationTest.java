@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.util.TestResourceUtils.HalfSecond;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertExerciseNotInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertFileUploadExerciseExistsInWeaviate;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -11,6 +12,7 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -163,7 +165,8 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
 
         assertThat(channelFromDB).isNotNull();
         assertThat(channelFromDB.getName()).isEqualTo("exercise-new-fileupload-exerci");
-        assertFileUploadExerciseExistsInWeaviate(weaviateService, receivedFileUploadExercise);
+
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertFileUploadExerciseExistsInWeaviate(weaviateService, receivedFileUploadExercise));
     }
 
     @Test

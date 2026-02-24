@@ -202,14 +202,16 @@ public final class WeaviateTestUtil {
 
     /**
      * Asserts that a Weaviate date property matches the expected ZonedDateTime value.
-     * Compares by converting both the stored value and expected value to RFC3339 format.
+     * Compares by converting both dates to UTC before comparison since Weaviate stores dates in UTC.
      */
     private static void assertDateProperty(Map<String, Object> properties, String propertyName, ZonedDateTime expected) {
         if (expected == null) {
             return;
         }
-        String expectedFormatted = expected.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-        assertThat(properties.get(propertyName)).as("Property %s should match expected date", propertyName).asString().startsWith(expectedFormatted.substring(0, 19));
+        // Convert expected to UTC for comparison since Weaviate stores dates in UTC (RFC3339 format with Z suffix)
+        String expectedUTC = expected.withZoneSameInstant(java.time.ZoneOffset.UTC).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+        // Compare first 19 chars (YYYY-MM-DDTHH:MM:SS) to avoid millisecond precision differences
+        assertThat(properties.get(propertyName)).as("Property %s should match expected date", propertyName).asString().startsWith(expectedUTC.substring(0, 19));
     }
 
     /**
