@@ -67,7 +67,7 @@ export class OrganizationManagementComponent {
     loadOrganizations(event: TableLazyLoadEvent): void {
         this.isLoading.set(true);
         const query = buildDbQueryFromLazyEvent(event);
-        this.organizationService.getOrganizations(query).subscribe({
+        this.organizationService.getOrganizations(query, true).subscribe({
             next: (response) => {
                 this.organizations.set(response.content);
                 this.totalCount.set(response.totalElements);

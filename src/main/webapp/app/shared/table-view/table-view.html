@@ -12,7 +12,7 @@
     [currentPageReportTemplate]="'global.item-count' | artemisTranslate: { first: itemRangeBegin(), second: itemRangeEnd(), total: totalRows() }"
     (onPage)="pageChange($event)"
     [loading]="loading()"
-    selectionMode="single"
+    [selectionMode]="selectionMode()"
     [(selection)]="selectedRow"
     dataKey="id"
     (onRowSelect)="onRowSelect.emit($event.data)"
@@ -53,7 +53,9 @@
         <tr [pSelectableRow]="rowData">
             @for (col of columns; track col) {
                 <td>
-                    @if (col?.cellRenderer) {
+                    @if (col?.templateRef) {
+                        <ng-container [ngTemplateOutlet]="col.templateRef" [ngTemplateOutletContext]="{ $implicit: buildRendererParams(rowData, col, rowIndex) }" />
+                    } @else if (col?.cellRenderer) {
                         <ng-container *ngComponentOutlet="col.cellRenderer; inputs: { params: buildRendererParams(rowData, col, rowIndex) }" />
                     } @else {
                         {{ rowData?.[col?.field] }}

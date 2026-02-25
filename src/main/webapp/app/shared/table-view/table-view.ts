@@ -14,6 +14,8 @@ export interface ColumnDef<T> {
     sort?: boolean;
     filter?: boolean;
     filterType?: string;
+    /** Render the cell using a parent-defined template. Receives {@link CellRendererParams} as `$implicit`. Takes priority over `cellRenderer`. */
+    templateRef?: TemplateRef<{ $implicit: CellRendererParams<T> }>;
     cellRenderer?: Type<unknown>;
 }
 
@@ -41,6 +43,7 @@ export class TableView<T> {
     rowActions = input<TemplateRef<{ $implicit: T }> | null>(null);
     loading = input(false);
     emptyMessageTranslation = input<string>('artemisApp.dataTable.search.noResults');
+    selectionMode = input<'single' | 'multiple' | undefined>(undefined);
     selectedRow: T | undefined;
 
     onLazyLoad = output<TableLazyLoadEvent>();

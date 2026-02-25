@@ -296,19 +296,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
     }
 
     /**
-     * Test get all organizations without pagination
-     */
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testGetAllOrganizations() throws Exception {
-        Organization organization = organizationUtilService.createOrganization();
-        Organization organization2 = organizationUtilService.createOrganization();
-
-        List<Organization> result = request.getList("/api/core/admin/organizations/all", HttpStatus.OK, Organization.class);
-        assertThat(result).contains(organization, organization2);
-    }
-
-    /**
      * Test get organizations with pagination
      */
     @Test
@@ -396,7 +383,9 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         userTestRepository.addOrganizationToUser(student2.getId(), orgWithUsers);
 
         SearchTermPageableSearchDTO<String> search = buildSearch(prefix, 0, 10, "numberOfUsers", SortingOrder.DESCENDING);
-        List<OrganizationDTO> result = request.getList("/api/core/admin/organizations", HttpStatus.OK, OrganizationDTO.class, pageableSearchUtilService.searchMapping(search));
+        var params = pageableSearchUtilService.searchMapping(search);
+        params.add("withCounts", "true");
+        List<OrganizationDTO> result = request.getList("/api/core/admin/organizations", HttpStatus.OK, OrganizationDTO.class, params);
 
         assertThat(result).hasSize(2);
         assertThat(result.get(0).id()).isEqualTo(orgWithUsers.getId());
@@ -424,13 +413,40 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         userTestRepository.addOrganizationToUser(student.getId(), organization);
 
         SearchTermPageableSearchDTO<String> search = buildSearch(uniqueName);
-        List<OrganizationDTO> result = request.getList("/api/core/admin/organizations", HttpStatus.OK, OrganizationDTO.class, pageableSearchUtilService.searchMapping(search));
+        var params = pageableSearchUtilService.searchMapping(search);
+        params.add("withCounts", "true");
+        List<OrganizationDTO> result = request.getList("/api/core/admin/organizations", HttpStatus.OK, OrganizationDTO.class, params);
 
         assertThat(result).hasSize(1);
         OrganizationDTO dto = result.get(0);
         assertThat(dto.id()).isEqualTo(organization.getId());
         assertThat(dto.numberOfUsers()).isEqualTo(1);
         assertThat(dto.numberOfCourses()).isEqualTo(1);
+    }
+
+    /**
+     * Test that the paginated endpoint omits count fields by default (withCounts defaults to false)
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testGetOrganizationsPaginated_withoutCounts() throws Exception {
+        String uniqueName = "withoutCountsTest";
+        Organization organization = organizationUtilService.createOrganization(uniqueName, "shortname", "url", "desc", null, "emailpattern");
+
+        User student = userUtilService.createAndSaveUser(TEST_PREFIX + "wcUser");
+        userTestRepository.addOrganizationToUser(student.getId(), organization);
+
+        // No withCounts param — verifies the default is false
+        List<OrganizationDTO> result = request.getList("/api/core/admin/organizations", HttpStatus.OK, OrganizationDTO.class,
+                pageableSearchUtilService.searchMapping(buildSearch(uniqueName)));
+
+        assertThat(result).hasSize(1);
+        OrganizationDTO dto = result.get(0);
+        assertThat(dto.id()).isEqualTo(organization.getId());
+        assertThat(dto.name()).isEqualTo(uniqueName);
+        // counts must be absent (null) by default
+        assertThat(dto.numberOfUsers()).isNull();
+        assertThat(dto.numberOfCourses()).isNull();
     }
 
     /**

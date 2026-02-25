@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -191,27 +192,16 @@ public class AdminOrganizationResource {
     }
 
     /**
-     * GET organizations/all : Get all organizations without pagination
-     *
-     * @return ResponseEntity containing a list of all organizations with status 200 (OK)
-     */
-    @GetMapping("organizations/all")
-    public ResponseEntity<List<Organization>> getAllOrganizations() {
-        log.debug("REST request to get all organizations");
-        // TODO: we should avoid findAll() and instead load batches of organizations
-        List<Organization> organizations = organizationRepository.findAll();
-        return new ResponseEntity<>(organizations, HttpStatus.OK);
-    }
-
-    /**
      * GET organizations : Get a paginated, filtered, and sorted list of organizations
      *
-     * @param search the search criteria containing the search term and pagination/sorting info
+     * @param search     the search criteria containing the search term and pagination/sorting info
+     * @param withCounts whether to include aggregated user and course counts (default: {@code false});
+     *                       pass {@code true} to load counts via JOIN aggregation
      * @return ResponseEntity containing a page of organization DTOs with status 200 (OK)
      */
     @GetMapping("organizations")
-    public ResponseEntity<List<OrganizationDTO>> getOrganizations(SearchTermPageableSearchDTO<String> search) {
-        final Page<OrganizationDTO> page = organizationRepository.getAllOrganizations(search);
+    public ResponseEntity<List<OrganizationDTO>> getOrganizations(SearchTermPageableSearchDTO<String> search, @RequestParam(defaultValue = "false") boolean withCounts) {
+        final Page<OrganizationDTO> page = organizationRepository.getAllOrganizations(search, withCounts);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }

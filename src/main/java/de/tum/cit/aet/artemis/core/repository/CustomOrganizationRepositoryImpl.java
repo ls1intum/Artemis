@@ -32,8 +32,7 @@ import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 
 /**
- * Implementation of organization repository fragment with advanced filtering
- * and aggregation
+ * Implementation of organization repository fragment with advanced filtering and aggregation
  */
 public class CustomOrganizationRepositoryImpl implements CustomOrganizationRepository {
 
@@ -44,16 +43,15 @@ public class CustomOrganizationRepositoryImpl implements CustomOrganizationRepos
     }
 
     @Override
-    public Page<OrganizationDTO> getAllOrganizations(SearchTermPageableSearchDTO<String> search) {
+    public Page<OrganizationDTO> getAllOrganizations(SearchTermPageableSearchDTO<String> search, boolean withCounts) {
         final String searchTerm = search.getSearchTerm();
         final int page = search.getPage();
         final int pageSize = search.getPageSize();
         final String sortedColumn = search.getSortedColumn();
         final SortingOrder sortOrder = search.getSortingOrder();
 
-        // Pageable here is only used for offset/limit (sorting is applied in
-        // CriteriaQuery directly,
-        // because we also support sorting by aggregated counts).
+        // Pageable is only used for offset/limit; sorting is applied directly in the CriteriaQuery
+        // because we also support sorting by aggregated counts.
         final Pageable pageable = PageRequest.of(page, pageSize);
 
         Specification<Organization> specification = null;
@@ -61,72 +59,69 @@ public class CustomOrganizationRepositoryImpl implements CustomOrganizationRepos
             specification = getSearchTermSpecification(searchTerm);
         }
 
-        return findAllWithAggregationAndSpecification(specification, pageable, sortedColumn, sortOrder);
+        return findOrganizationsPage(specification, pageable, sortedColumn, sortOrder, withCounts);
     }
 
     /**
-     * Find all organizations with aggregated counts of users and courses, applying
-     * filtering and sorting (including aggregated sort fields).
+     * Executes the paginated organization query.
+     * When {@code withCounts} is {@code true}, LEFT JOINs on users and courses are added and counts
+     * are aggregated via GROUP BY. When {@code false}, those joins are omitted for a simpler and faster query.
      */
-    private Page<OrganizationDTO> findAllWithAggregationAndSpecification(Specification<Organization> specification, Pageable pageable, String sortedColumn,
-            SortingOrder sortOrder) {
+    private Page<OrganizationDTO> findOrganizationsPage(Specification<Organization> specification, Pageable pageable, String sortedColumn, SortingOrder sortOrder,
+            boolean withCounts) {
 
         CriteriaBuilder builder = entityManager.getCriteriaBuilder();
-
         CriteriaQuery<OrganizationDTO> query = builder.createQuery(OrganizationDTO.class);
         Root<Organization> root = query.from(Organization.class);
 
-        // Single set of joins reused for both select and sorting
-        Join<Organization, User> userJoin = root.join(Organization_.USERS, JoinType.LEFT);
-        Join<Organization, Course> courseJoin = root.join(Organization_.COURSES, JoinType.LEFT);
+        Expression<Long> userCountExpr;
+        Expression<Long> courseCountExpr;
 
-        Expression<Long> userCountExpr = builder.countDistinct(userJoin.get(User_.ID));
-        Expression<Long> courseCountExpr = builder.countDistinct(courseJoin.get(Course_.ID));
+        if (withCounts) {
+            Join<Organization, User> userJoin = root.join(Organization_.USERS, JoinType.LEFT);
+            Join<Organization, Course> courseJoin = root.join(Organization_.COURSES, JoinType.LEFT);
+            userCountExpr = builder.countDistinct(userJoin.get(User_.ID));
+            courseCountExpr = builder.countDistinct(courseJoin.get(Course_.ID));
+            // Group by exactly the non-aggregated selected fields (portable JPQL/Criteria behavior)
+            query.groupBy(root.get(Organization_.ID), root.get(Organization_.NAME), root.get(Organization_.SHORT_NAME), root.get(Organization_.EMAIL_PATTERN),
+                    root.get(Organization_.LOGO_URL));
+        }
+        else {
+            userCountExpr = builder.nullLiteral(Long.class);
+            courseCountExpr = builder.nullLiteral(Long.class);
+        }
 
-        // DTO projection
         query.select(builder.construct(OrganizationDTO.class, root.get(Organization_.ID), root.get(Organization_.NAME), root.get(Organization_.SHORT_NAME),
-                root.get(Organization_.EMAIL_PATTERN), userCountExpr, courseCountExpr));
+                root.get(Organization_.EMAIL_PATTERN), root.get(Organization_.LOGO_URL), userCountExpr, courseCountExpr));
 
         // Filtering
-        Predicate predicate = null;
         if (specification != null) {
-            predicate = specification.toPredicate(root, query, builder);
-        }
-        if (predicate != null) {
-            query.where(predicate);
+            Predicate predicate = specification.toPredicate(root, query, builder);
+            if (predicate != null) {
+                query.where(predicate);
+            }
         }
 
-        // Group by exactly the non-aggregated selected fields (portable JPQL/Criteria
-        // behavior)
-        query.groupBy(root.get(Organization_.ID), root.get(Organization_.NAME), root.get(Organization_.SHORT_NAME), root.get(Organization_.EMAIL_PATTERN));
-
-        // Sorting
+        // Sorting — aggregate sort fields fall back to id when counts are not loaded
         Expression<?> sortExpr = switch (sortedColumn) {
             case "name" -> root.get(Organization_.NAME);
             case "shortName" -> root.get(Organization_.SHORT_NAME);
             case "emailPattern" -> root.get(Organization_.EMAIL_PATTERN);
-            case "numberOfUsers" -> userCountExpr;
-            case "numberOfCourses" -> courseCountExpr;
-            case "id" -> root.get(Organization_.ID);
+            case "numberOfUsers" -> withCounts ? userCountExpr : root.get(Organization_.ID);
+            case "numberOfCourses" -> withCounts ? courseCountExpr : root.get(Organization_.ID);
             default -> root.get(Organization_.ID);
         };
 
-        Order primaryOrder = (sortOrder != null && sortOrder == SortingOrder.DESCENDING) ? builder.desc(sortExpr) : builder.asc(sortExpr);
-
-        // Tie-breaker for stable pagination (especially when many orgs share same
-        // count)
+        Order primaryOrder = (sortOrder == SortingOrder.DESCENDING) ? builder.desc(sortExpr) : builder.asc(sortExpr);
+        // Tie-breaker for stable pagination (especially when many orgs share the same count)
         Order tieBreaker = builder.asc(root.get(Organization_.ID));
-
         query.orderBy(primaryOrder, tieBreaker);
 
-        // Execute with pagination
         TypedQuery<OrganizationDTO> typedQuery = entityManager.createQuery(query);
         typedQuery.setFirstResult((int) pageable.getOffset());
         typedQuery.setMaxResults(pageable.getPageSize());
 
         List<OrganizationDTO> results = typedQuery.getResultList();
-
-        // Total count (no joins; fast)
         long total = countWithSpecification(builder, specification);
 
         return new PageImpl<>(results, pageable, total);
@@ -141,12 +136,11 @@ public class CustomOrganizationRepositoryImpl implements CustomOrganizationRepos
 
         countQuery.select(builder.countDistinct(countRoot.get(Organization_.ID)));
 
-        Predicate predicate = null;
         if (specification != null) {
-            predicate = specification.toPredicate(countRoot, countQuery, builder);
-        }
-        if (predicate != null) {
-            countQuery.where(predicate);
+            Predicate predicate = specification.toPredicate(countRoot, countQuery, builder);
+            if (predicate != null) {
+                countQuery.where(predicate);
+            }
         }
 
         return entityManager.createQuery(countQuery).getSingleResult();

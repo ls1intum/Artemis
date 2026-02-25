@@ -15,19 +15,14 @@ export class OrganizationManagementService {
     public adminResourceUrl = 'api/core/admin/organizations';
 
     /**
-     * Send GET request to retrieve all organizations
-     */
-    getAllOrganizations(): Observable<Organization[]> {
-        return this.http.get<Organization[]>(`${this.adminResourceUrl}/all`).pipe(tap((orgs) => orgs?.forEach(this.sendTitlesToEntityTitleService.bind(this))));
-    }
-
-    /**
      * Send GET request to retrieve a paginated and filtered list of organizations
-     * @param params the search and pagination parameters including search term, page, and page size
+     * @param params     the search and pagination parameters including search term, page, and page size
+     * @param withCounts whether to include aggregated user/course counts (default: true);
+     *                   pass false for lightweight queries that do not need count data
      * @returns an observable emitting a pageable result containing the matching organizations and total element count
      */
-    getOrganizations(params: SearchTermPageableSearch): Observable<PageableResult<Organization>> {
-        return this.http.get<Organization[]>(this.adminResourceUrl, { params: { ...params }, observe: 'response' }).pipe(
+    getOrganizations(params: SearchTermPageableSearch, withCounts = false): Observable<PageableResult<Organization>> {
+        return this.http.get<Organization[]>(this.adminResourceUrl, { params: { ...params, withCounts }, observe: 'response' }).pipe(
             tap((res) => res.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
             map((res) => ({
                 content: res.body ?? [],
