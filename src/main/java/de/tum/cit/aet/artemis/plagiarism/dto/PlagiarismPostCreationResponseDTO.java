@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.communication.dto.AuthorDTO;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PlagiarismPostCreationResponseDTO(@NotNull(message = "The post must have an id.") Long id, @NotNull(message = "The post must have contents.") String content,
-        @NotNull(message = "The post must have a title.") String title, Boolean visibleForStudents, @NotNull ZonedDateTime creationDate, @NotNull AuthorDTO authorDTO,
+        @NotNull(message = "The post must have a title.") String title, Boolean visibleForStudents, @NotNull ZonedDateTime creationDate, @NotNull AuthorDTO author,
         @NotNull UserRole authorRole, boolean resolved, DisplayPriority displayPriority,
         @NotNull(message = "The post must be associated with a plagiarism case.") PlagiarismCaseDTO plagiarismCase) {
 
