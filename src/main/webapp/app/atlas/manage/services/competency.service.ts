@@ -91,8 +91,14 @@ export class CompetencyService extends CourseCompetencyService {
     }
 
     import(courseCompetency: CourseCompetency, courseId: number): Observable<EntityResponseType> {
+        const payload: CourseCompetencyImportOptionsDTO = {
+            competencyIds: courseCompetency.id ? [courseCompetency.id] : [],
+            importRelations: false,
+            importExercises: false,
+            importLectures: false,
+        };
         return this.httpClient
-            .post<CourseCompetencyResponseDTO>(`${this.resourceURL}/courses/${courseId}/competencies/import`, courseCompetency.id, { observe: 'response' })
+            .post<CourseCompetencyResponseDTO>(`${this.resourceURL}/courses/${courseId}/competencies/import`, payload, { observe: 'response' })
             .pipe(map((res: EntityResponseDTOType) => this.mapCompetencyResponse(res)));
     }
 
