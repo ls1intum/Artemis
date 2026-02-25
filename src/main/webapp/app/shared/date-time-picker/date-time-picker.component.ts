@@ -164,5 +164,13 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
         this.updateSignals();
     }
 
+    /**
+     * Set the datepicker value to the current date and time.
+     */
+    setNow() {
+        const now = dayjs();
+        this.updateField(now);
+    }
+
     protected readonly DateTimePickerType = DateTimePickerType;
 }

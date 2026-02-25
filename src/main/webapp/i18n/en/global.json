@@ -409,7 +409,9 @@
         "startDateError": "'Start of working time' should be between 'Visible from' and 'End of working time'",
         "endDateError": "'End of working time' should be later than 'Start of working time'",
         "visibleDateWarningError": "'Visible from' is set too early. We recommend setting it within 4 hours before the 'Start of working time'.",
-        "visibleDateWarningToolTip": "Setting the date too early may cause confusion and lead to premature access to exam materials. It is recommended to make the exam visible only a few hours before the start time."
+        "visibleDateWarningToolTip": "Setting the date too early may cause confusion and lead to premature access to exam materials. It is recommended to make the exam visible only a few hours before the start time.",
+        "now": "Now",
+        "setNowTooltip": "Set to current date and time"
     },
     "aboutUs": "About",
     "contact": "Contact us",

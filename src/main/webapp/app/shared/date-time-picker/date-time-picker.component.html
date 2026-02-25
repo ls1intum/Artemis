@@ -46,6 +46,17 @@
             <fa-icon [icon]="icon" />
         </button>
     </ng-template>
+    @if (pickerType() === DateTimePickerType.DEFAULT && !disabled()) {
+        <div class="position-relative">
+            <button
+                class="btn btn-now position-absolute"
+                type="button"
+                (click)="setNow()"
+                ngbTooltip="{{ 'entity.setNowTooltip' | artemisTranslate }}"
+                jhiTranslate="entity.now"
+            ></button>
+        </div>
+    }
     <div class="position-relative">
         <button class="btn position-absolute" type="button" style="right: 0" (click)="clearDate()">
             <fa-icon [icon]="faCircleXmark" />

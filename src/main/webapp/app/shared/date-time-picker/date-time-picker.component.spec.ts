@@ -2,9 +2,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import dayjs from 'dayjs/esm';
-import { MockModule, MockPipe } from 'ng-mocks';
+import { MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('FormDateTimePickerComponent', () => {
     let component: FormDateTimePickerComponent;
@@ -15,7 +16,7 @@ describe('FormDateTimePickerComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(OwlDateTimeModule), MockPipe(ArtemisTranslatePipe), MockModule(NgbTooltipModule)],
+            imports: [MockModule(OwlDateTimeModule), MockPipe(ArtemisTranslatePipe), MockModule(NgbTooltipModule), MockDirective(TranslateDirective)],
             declarations: [FormDateTimePickerComponent],
         })
             .compileComponents()
@@ -123,5 +124,18 @@ describe('FormDateTimePickerComponent', () => {
 
         expect(resetSpy).toHaveBeenCalledWith(undefined);
         expect(updateSignalsSpy).toHaveBeenCalled();
+    });
+
+    it('should set the datepicker value to now', () => {
+        const updateFieldSpy = jest.spyOn(component, 'updateField').mockImplementation();
+
+        const beforeCall = dayjs();
+        component.setNow();
+        const afterCall = dayjs();
+
+        expect(updateFieldSpy).toHaveBeenCalledOnce();
+        const calledWith = updateFieldSpy.mock.calls[0][0];
+        expect(calledWith.isAfter(beforeCall.subtract(1, 'second'))).toBeTrue();
+        expect(calledWith.isBefore(afterCall.add(1, 'second'))).toBeTrue();
     });
 });

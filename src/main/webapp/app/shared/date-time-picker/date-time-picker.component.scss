@@ -14,3 +14,14 @@
 .border-warning {
     border-color: var(--warning) !important;
 }
+
+.btn-now {
+    right: 1.75rem;
+    font-size: 0.75rem;
+    padding: 0.35rem 0.4rem;
+    color: var(--bs-primary);
+
+    &:hover {
+        color: var(--bs-primary-text-emphasis);
+    }
+}
