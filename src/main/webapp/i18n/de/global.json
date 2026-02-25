@@ -39,7 +39,9 @@
             "placeholder": "Suchen oder Frage stellen...",
             "noResultsFound": "Keine Ergebnisse gefunden",
             "toNavigate": "zum Navigieren",
-            "toClose": "zum Schließen"
+            "toClose": "zum Schließen",
+            "searchLectureContent": "Vorlesungsinhalt suchen",
+            "searchLectureContentDescription": "Semantische Suche durch Transkripte und Materialien"
         },
         "menu": {
             "home": "Startseite",

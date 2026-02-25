@@ -39,7 +39,9 @@
             "placeholder": "Search or ask a question...",
             "noResultsFound": "No results found",
             "toNavigate": "to navigate",
-            "toClose": "to close"
+            "toClose": "to close",
+            "searchLectureContent": "Search Lecture Content",
+            "searchLectureContentDescription": "Deep semantic search through transcripts and materials"
         },
         "menu": {
             "home": "Home",
