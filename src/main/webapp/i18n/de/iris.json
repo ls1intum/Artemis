@@ -139,6 +139,9 @@
             "chat": {
                 "helpOffer": "Wie kann ich Dir helfen?"
             },
+            "citation": {
+                "inLecture": "in"
+            },
             "tutorSuggestion": {
                 "loading": "Lade Vorschläge...",
                 "noIris": "Iris ist derzeit nicht verfügbar."
@@ -191,6 +194,31 @@
                 "deleteSessionSuccess": "Chat-Sitzung gelöscht.",
                 "deleteSessionError": "Chat-Sitzung konnte nicht gelöscht werden.",
                 "sessionMenuAriaLabel": "Chat-Sitzungsaktionen"
+            },
+            "aboutIrisModal": {
+                "meetIris": "Lern Iris kennen",
+                "subtitle": "Dein KI-Tutor, direkt in Artemis integriert.",
+                "description": "Als Teil der EduTelligence-Suite von KI-Funktionen in Artemis hilft Iris bei kursbezogenen Programmierfragen und Vorlesungsinhalten unter Verwendung deines aktuellen Kontexts.",
+                "whatIrisCanDo": "Was Iris kann",
+                "whatToExpect": "Was du von Iris erwarten kannst",
+                "contextAwareTitle": "Kontextbewusst",
+                "contextAwareDesc": "Iris kann deine Aufgabenstellung, deinen Code und Build-Ergebnisse berücksichtigen – kein Kopieren und Einfügen nötig.",
+                "guidedLearningTitle": "Geführtes Lernen",
+                "guidedLearningDesc": "Iris gibt Hinweise und Erklärungen, damit du Probleme eigenständig lösen kannst.",
+                "feedbackHelpsTitle": "Feedback hilft",
+                "feedbackHelpsDesc": "Bewerte Antworten und Gespräche, um die Qualität von Iris mit der Zeit zu verbessern.",
+                "guideNotSolveTitle": "Anleiten, nicht lösen",
+                "guideNotSolveDesc": "Iris liefert keine vollständigen Lösungen. Es unterstützt deinen Problemlösungsprozess.",
+                "stayOnTopicTitle": "Beim Thema bleiben",
+                "stayOnTopicDesc": "Iris beantwortet nur Fragen zu Kursinhalten und Programmierungsthemen. Themenfremde Anfragen oder Organisationsfragen werden nicht bearbeitet.",
+                "ownYourWorkTitle": "Eigene Arbeit",
+                "ownYourWorkDesc": "Nutze Iris als Lernhilfe und wahre dabei die akademische Integrität. Deine Abgaben müssen dein eigenes Verständnis und deinen eigenen Einsatz widerspiegeln.",
+                "privacyTitle": "Datenschutz",
+                "privacyDesc": "Iris verarbeitet Interaktionen in europäischen Rechenzentren. Die Datenverarbeitung erfolgt gemäß den geltenden europäischen Datenschutzanforderungen.",
+                "privacyDescLocal": "Iris verarbeitet Interaktionen vollständig auf der eigenen Infrastruktur deiner Einrichtung. Es werden keine Daten an externe Server gesendet.",
+                "privacyDisclaimer": "Lies die Datenschutzerklärung deiner Einrichtung für Details.",
+                "tryIris": "Iris ausprobieren",
+                "close": "Schließen"
             },
             "memories": {
                 "title": "Erinnerungen",
