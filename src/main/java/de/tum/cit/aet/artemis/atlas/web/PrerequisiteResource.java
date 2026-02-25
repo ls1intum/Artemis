@@ -125,7 +125,7 @@ public class PrerequisiteResource {
 
         courseCompetencyService.filterOutLearningObjectsThatUserShouldNotSee(prerequisite, currentUser);
 
-        return ResponseEntity.ok(CourseCompetencyResponseDTO.of(prerequisite));
+        return ResponseEntity.ok(CourseCompetencyResponseDTO.ofWithLearningObjects(prerequisite));
     }
 
     /**

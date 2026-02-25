@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import org.hibernate.Hibernate;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -26,7 +27,10 @@ public record CourseCompetencyResponseDTO(long id, String title, @Nullable Strin
      * @return the DTO
      */
     public static CourseCompetencyResponseDTO of(CourseCompetency competency) {
-        var progress = Optional.ofNullable(competency.getUserProgress()).orElse(Collections.emptySet()).stream().map(CompetencyProgressDTO::of).toList();
+        List<CompetencyProgressDTO> progress = Collections.emptyList();
+        if (Hibernate.isInitialized(competency.getUserProgress())) {
+            progress = Optional.ofNullable(competency.getUserProgress()).orElse(Collections.emptySet()).stream().map(CompetencyProgressDTO::of).toList();
+        }
         StandardizedCompetency linkedStandardizedCompetency = competency.getLinkedStandardizedCompetency();
         Long linkedStandardizedCompetencyId = linkedStandardizedCompetency != null ? linkedStandardizedCompetency.getId() : null;
         return new CourseCompetencyResponseDTO(competency.getId(), competency.getTitle(), competency.getDescription(), competency.getTaxonomy(), competency.getSoftDueDate(),

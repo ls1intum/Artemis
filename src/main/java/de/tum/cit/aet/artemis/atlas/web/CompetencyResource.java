@@ -131,7 +131,7 @@ public class CompetencyResource {
 
         courseCompetencyService.filterOutLearningObjectsThatUserShouldNotSee(competency, currentUser);
 
-        return ResponseEntity.ok(CourseCompetencyResponseDTO.of(competency));
+        return ResponseEntity.ok(CourseCompetencyResponseDTO.ofWithLearningObjects(competency));
     }
 
     /**
