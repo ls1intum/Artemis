@@ -6,6 +6,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -46,7 +47,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record TutorialGroupConfigurationDTO(Long id, @NotBlank String tutorialPeriodStartInclusive, @NotBlank String tutorialPeriodEndInclusive,
-        @NotNull Boolean useTutorialGroupChannels, @NotNull Boolean usePublicTutorialGroupChannels, Set<TutorialGroupFreePeriodDTO> tutorialGroupFreePeriods) {
+        @NotNull Boolean useTutorialGroupChannels, @NotNull Boolean usePublicTutorialGroupChannels, @Valid Set<TutorialGroupFreePeriodDTO> tutorialGroupFreePeriods) {
 
     private static final String TUTORIAL_FREE_PERIOD_ENTITY_NAME = "tutorialGroupFreePeriod";
 
