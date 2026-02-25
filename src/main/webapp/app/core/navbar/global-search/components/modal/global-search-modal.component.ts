@@ -1,16 +1,18 @@
-import { Component, ElementRef, HostListener, OnDestroy, inject, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, HostListener, OnDestroy, inject, viewChild } from '@angular/core';
 import { SearchOverlayService } from '../../services/search-overlay.service';
 import { OsDetectorService } from '../../services/os-detector.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faArrowDown, faArrowUp, faSearch } from '@fortawesome/free-solid-svg-icons';
+import { faArrowDown, faArrowUp, faFileLines, faSearch } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DialogModule } from 'primeng/dialog';
+import { GlobalSearchActionItemComponent } from 'app/core/navbar/global-search/components/action-item/global-search-action-item.component';
 
 @Component({
     selector: 'jhi-global-search-modal',
     standalone: true,
-    imports: [DialogModule, FaIconComponent, ArtemisTranslatePipe],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [DialogModule, FaIconComponent, ArtemisTranslatePipe, GlobalSearchActionItemComponent],
     templateUrl: './global-search-modal.component.html',
     styleUrls: ['./global-search-modal.component.scss'],
 })
@@ -22,7 +24,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
     protected readonly faSearch = faSearch;
     protected readonly faArrowUp = faArrowUp;
     protected readonly faArrowDown = faArrowDown;
-
+    protected readonly faFileLines = faFileLines;
     protected searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
 
     protected focusInput() {
