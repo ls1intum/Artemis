@@ -14,7 +14,7 @@ import org.springframework.security.web.webauthn.api.PublicKeyCredentialRequestO
 import org.springframework.security.web.webauthn.authentication.PublicKeyCredentialRequestOptionsRepository;
 import org.springframework.stereotype.Repository;
 
-import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
+import de.tum.cit.aet.artemis.core.security.passkey.DistributedPasskeyMapAccess;
 
 /**
  * A distributed implementation of {@link PublicKeyCredentialRequestOptionsRepository} using Hazelcast
@@ -48,15 +48,15 @@ public class DistributedPublicKeyCredentialRequestOptionsRepository implements P
     /** Session attribute name used internally */
     private final String attrName = DEFAULT_ATTR_NAME;
 
-    private final DistributedDataAccessService distributedDataAccessService;
+    private final DistributedPasskeyMapAccess passkeyMapAccess;
 
     /**
      * Constructs the repository using the injected DistributedDataAccessService.
      *
      * @param distributedDataAccessService the shared distributed data access service
      */
-    public DistributedPublicKeyCredentialRequestOptionsRepository(DistributedDataAccessService distributedDataAccessService) {
-        this.distributedDataAccessService = distributedDataAccessService;
+    public DistributedPublicKeyCredentialRequestOptionsRepository(DistributedPasskeyMapAccess passkeyMapAccess) {
+        this.passkeyMapAccess = passkeyMapAccess;
     }
 
     /**
@@ -77,10 +77,10 @@ public class DistributedPublicKeyCredentialRequestOptionsRepository implements P
         session.setAttribute(this.attrName, options);
 
         if (options != null) {
-            distributedDataAccessService.getDistributedPasskeyAuthOptionsMap().put(session.getId(), options, 2, java.util.concurrent.TimeUnit.MINUTES);
+            passkeyMapAccess.getDistributedPasskeyAuthOptionsMap().put(session.getId(), options, 2, java.util.concurrent.TimeUnit.MINUTES);
         }
         else {
-            distributedDataAccessService.getDistributedPasskeyAuthOptionsMap().remove(session.getId());
+            passkeyMapAccess.getDistributedPasskeyAuthOptionsMap().remove(session.getId());
         }
     }
 
@@ -99,6 +99,6 @@ public class DistributedPublicKeyCredentialRequestOptionsRepository implements P
             return null;
         }
 
-        return distributedDataAccessService.getPasskeyAuthOptionsMap().get(sessionId);
+        return passkeyMapAccess.getPasskeyAuthOptionsMap().get(sessionId);
     }
 }

@@ -20,7 +20,7 @@ import org.springframework.stereotype.Repository;
 import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.core.dto.passkey.PublicKeyCredentialCreationOptionsDTO;
-import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
+import de.tum.cit.aet.artemis.core.security.passkey.DistributedPasskeyMapAccess;
 
 /**
  * A distributed implementation of {@link PublicKeyCredentialCreationOptionsRepository} using Hazelcast
@@ -52,7 +52,7 @@ public class DistributedHttpSessionPublicKeyCredentialCreationOptionsRepository 
 
     private final String attrName = DEFAULT_ATTR_NAME;
 
-    private final DistributedDataAccessService distributedDataAccessService;
+    private final DistributedPasskeyMapAccess passkeyMapAccess;
 
     @Nullable
     private IMap<String, PublicKeyCredentialCreationOptionsDTO> creationOptionsMap;
@@ -60,10 +60,10 @@ public class DistributedHttpSessionPublicKeyCredentialCreationOptionsRepository 
     /**
      * Constructs the repository using the injected distributed data access service.
      *
-     * @param distributedDataAccessService the distributed data access service providing Hazelcast instance
+     * @param passkeyMapAccess the access wrapper for distributed maps related to passkey operations
      */
-    public DistributedHttpSessionPublicKeyCredentialCreationOptionsRepository(DistributedDataAccessService distributedDataAccessService) {
-        this.distributedDataAccessService = distributedDataAccessService;
+    public DistributedHttpSessionPublicKeyCredentialCreationOptionsRepository(DistributedPasskeyMapAccess passkeyMapAccess) {
+        this.passkeyMapAccess = passkeyMapAccess;
     }
 
     private static final int REGISTRATION_OPTIONS_TIME_TO_LIVE_SECONDS = 60 * 5; // 5 minutes
@@ -95,11 +95,11 @@ public class DistributedHttpSessionPublicKeyCredentialCreationOptionsRepository 
         }
 
         if (options != null) {
-            distributedDataAccessService.getDistributedPasskeyCreationOptionsMap().put(userId,
+            passkeyMapAccess.getDistributedPasskeyCreationOptionsMap().put(userId,
                     PublicKeyCredentialCreationOptionsDTO.publicKeyCredentialCreationOptionsToDTO(options), REGISTRATION_OPTIONS_TIME_TO_LIVE_SECONDS, TimeUnit.SECONDS);
         }
         else {
-            distributedDataAccessService.getDistributedPasskeyCreationOptionsMap().remove(userId);
+            passkeyMapAccess.getDistributedPasskeyCreationOptionsMap().remove(userId);
         }
     }
 
@@ -117,7 +117,7 @@ public class DistributedHttpSessionPublicKeyCredentialCreationOptionsRepository 
             return null;
         }
 
-        PublicKeyCredentialCreationOptionsDTO creationOptions = distributedDataAccessService.getPasskeyCreationOptionsMap().get(userId);
+        PublicKeyCredentialCreationOptionsDTO creationOptions = passkeyMapAccess.getPasskeyCreationOptionsMap().get(userId);
         if (creationOptions == null) {
             log.warn("No cached PublicKeyCredentialCreationOptions found for user '{}'", userId);
             return null;

@@ -28,7 +28,7 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.LifecycleListener;
 
-import de.tum.cit.aet.artemis.core.config.LocalCIBuildAgentHazelcastDataCondition;
+import de.tum.cit.aet.artemis.core.config.HazelcastDataCondition;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.DistributedQueue;
@@ -37,7 +37,7 @@ import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.topic.
 
 @Lazy
 @Service
-@Conditional(LocalCIBuildAgentHazelcastDataCondition.class)
+@Conditional(HazelcastDataCondition.class)
 public class HazelcastDistributedDataProviderService implements DistributedDataProvider {
 
     private static final Logger log = LoggerFactory.getLogger(HazelcastDistributedDataProviderService.class);

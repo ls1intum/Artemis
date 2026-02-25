@@ -1,9 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service.localci;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.HAZELCAST_ACTIVE_PLAGIARISM_CHECKS_PER_COURSE_CACHE;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
-
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -17,7 +14,6 @@ import java.util.function.Consumer;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.web.webauthn.api.PublicKeyCredentialRequestOptions;
 import org.springframework.stereotype.Service;
@@ -793,7 +789,7 @@ public class DistributedDataAccessService {
 
     // TODO
 
-    public DistributedMap<Object, Object> getDistributedMap(String mapName) {
+    public <K, V> DistributedMap<K, V> getDistributedMap(String mapName) {
         return this.distributedDataProvider.getMap(mapName);
     }
 

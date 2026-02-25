@@ -95,6 +95,7 @@ import de.tum.cit.aet.artemis.core.config.StaticResourcesConfiguration;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.programming.service.GitService;
+import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryResource;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisIntegrationTest;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTestBase;
@@ -290,7 +291,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
     void ensureSpringComponentsAreProfileOrConditionalAnnotated() {
         ArchRule rule = classes().that().areAnnotatedWith(Controller.class).or().areAnnotatedWith(RestController.class).or().areAnnotatedWith(Repository.class).or()
                 .areAnnotatedWith(Service.class).or().areAnnotatedWith(Component.class).or().areAnnotatedWith(Configuration.class).and()
-                .doNotBelongToAnyOf(ApplicationConfiguration.class, ConditionalMetricsExclusionConfiguration.class).should(beProfileOrConditionalAnnotated())
+                .doNotBelongToAnyOf(ApplicationConfiguration.class, ConditionalMetricsExclusionConfiguration.class, DistributedDataAccessService.class)
+                .should(beProfileOrConditionalAnnotated())
                 .because("we want to be able to exclude these classes from application startup by specifying profiles");
 
         rule.check(productionClasses);
