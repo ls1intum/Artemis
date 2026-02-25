@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
 import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
 
 /**
  * The PyrisJobService class is responsible for managing Pyris jobs in the Artemis system.
@@ -37,7 +38,11 @@ import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessS
 @Conditional(IrisEnabled.class)
 public class PyrisJobService {
 
+    private static final String PYRIS_JOB_MAP_NAME = "pyris-job-map";
+
     private final DistributedDataAccessService distributedDataAccessService;
+
+    private DistributedMap<String, PyrisJob> pyrisJobMap;
 
     @Value("${server.url}")
     private String serverUrl;
@@ -140,7 +145,7 @@ public class PyrisJobService {
      * @param job the job to remove
      */
     public void removeJob(PyrisJob job) {
-        distributedDataAccessService.getDistributedPyrisJobMap().remove(job.jobId());
+        getPyrisJobMap().remove(job.jobId());
     }
 
     /**
@@ -158,7 +163,7 @@ public class PyrisJobService {
      * @return the all current jobs
      */
     public Collection<PyrisJob> currentJobs() {
-        return distributedDataAccessService.getPyrisJobMap().values();
+        return getPyrisJobMap().values();
     }
 
     /**
@@ -168,7 +173,7 @@ public class PyrisJobService {
      * @return the job
      */
     public PyrisJob getJob(String token) {
-        return distributedDataAccessService.getPyrisJobMap().get(token);
+        return getPyrisJobMap().get(token);
     }
 
     /**
@@ -233,7 +238,14 @@ public class PyrisJobService {
     }
 
     private void storeJobWithTimeout(PyrisJob job) {
-        distributedDataAccessService.getDistributedPyrisJobMap().put(job.jobId(), job, resolveJobTimeout(job), TimeUnit.SECONDS);
+        getPyrisJobMap().put(job.jobId(), job, resolveJobTimeout(job), TimeUnit.SECONDS);
+    }
+
+    private DistributedMap<String, PyrisJob> getPyrisJobMap() {
+        if (pyrisJobMap == null) {
+            pyrisJobMap = distributedDataAccessService.getDistributedMap(PYRIS_JOB_MAP_NAME);
+        }
+        return pyrisJobMap;
     }
 
     private int resolveJobTimeout(PyrisJob job) {

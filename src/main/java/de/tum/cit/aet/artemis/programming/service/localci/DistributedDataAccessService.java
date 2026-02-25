@@ -26,7 +26,6 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.dto.passkey.PublicKeyCredentialCreationOptionsDTO;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.DistributedQueue;
@@ -62,8 +61,6 @@ public class DistributedDataAccessService {
     private DistributedMap<Feature, Boolean> features;
 
     private DistributedSet<Long> activePlagiarismChecksPerCourse;
-
-    private DistributedMap<String, PyrisJob> pyrisJobMap;
 
     private DistributedMap<String, PublicKeyCredentialCreationOptionsDTO> passkeyCreationOptionsMap;
 
@@ -577,31 +574,6 @@ public class DistributedDataAccessService {
     public Set<Long> getActivePlagiarismChecksPerCourse() {
         // NOTE: we should not use streams with IQueue directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
         return getDistributedActivePlagiarismChecksPerCourse().getSetCopy();
-    }
-
-    /**
-     * This method is used to get the distributed map of pyris jobs. This should only be used in special cases like writing to the map or adding a listener.
-     * In general, the map should be accessed via the {@link DistributedDataAccessService#getPyrisJobMap()} method.
-     * The map is initialized lazily the first time this method is called if it is still null.
-     *
-     * @return the distributed map of pyris jobs
-     */
-    public DistributedMap<String, PyrisJob> getDistributedPyrisJobMap() {
-        if (this.pyrisJobMap == null) {
-            this.pyrisJobMap = this.distributedDataProvider.getMap("pyris-job-map");
-        }
-        return this.pyrisJobMap;
-    }
-
-    /**
-     * This method is used to get a Map containing pyris jobs. This should be used for reading the map.
-     * If you want to write to the map or add a listener, use {@link DistributedDataAccessService#getDistributedPyrisJobMap()} instead.
-     *
-     * @return a map of pyris jobs
-     */
-    public Map<String, PyrisJob> getPyrisJobMap() {
-        // NOTE: we should not use streams with IMap directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
-        return getDistributedPyrisJobMap().getMapCopy();
     }
 
     /**
