@@ -7,12 +7,14 @@ import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.CONFIRME
 import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.DENIED;
 import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.NONE;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
+import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -270,7 +272,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(newTextExercise.getCourseViaExerciseGroupOrCourseMember().getId()).as("exerciseGroupId was set correctly").isEqualTo(course.getId());
         assertThat(channel).as("channel was created").isNotNull();
         assertThat(channel.getName()).as("channel name was set correctly").isEqualTo("exercise-new-text-exercise");
-        assertExerciseExistsInWeaviate(weaviateService, newTextExercise);
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertExerciseExistsInWeaviate(weaviateService, newTextExercise));
     }
 
     @Test
@@ -524,7 +526,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         verify(examLiveEventsService, never()).createAndSendProblemStatementUpdateEvent(any(), any(), any());
         verify(groupNotificationScheduleService, timeout(2000).times(1)).checkAndCreateAppropriateNotificationsWhenUpdatingExercise(any(), any(), any(), any());
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(textExercise), eq(Optional.of(textExercise)));
-        assertExerciseExistsInWeaviate(weaviateService, updatedTextExercise);
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertExerciseExistsInWeaviate(weaviateService, updatedTextExercise));
     }
 
     @Test
@@ -688,7 +690,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         Channel channel = channelRepository.findChannelByExerciseId(newTextExercise.getId());
         assertThat(channel).isNotNull();
         verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(newTextExercise));
-        assertExerciseExistsInWeaviate(weaviateService, newTextExercise);
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertExerciseExistsInWeaviate(weaviateService, newTextExercise));
     }
 
     @Test
