@@ -17,13 +17,13 @@ public record LectureUnitForCompetencyDTO(Long id, LectureReferenceDTO lecture, 
         String type, @Nullable String description, @Nullable String source, @Nullable String content, @Nullable AttachmentForCompetencyDTO attachment,
         @Nullable String videoSource) {
 
-    @Nullable
     /**
      * Maps a lecture unit to a competency lecture unit DTO.
      *
      * @param lectureUnit the lecture unit to map
      * @return the DTO or null if the lecture unit is null
      */
+    @Nullable
     public static LectureUnitForCompetencyDTO of(@Nullable LectureUnit lectureUnit) {
         if (lectureUnit == null) {
             return null;

@@ -10,13 +10,13 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 public record CourseInfoDTO(Long id, String title, String semester, String studentGroupName, String teachingAssistantGroupName, String editorGroupName,
         String instructorGroupName) {
 
-    @Nullable
     /**
      * Maps a course to a course info DTO.
      *
      * @param course the course to map
      * @return the DTO or null if the course is null
      */
+    @Nullable
     public static CourseInfoDTO of(@Nullable Course course) {
         if (course == null) {
             return null;
