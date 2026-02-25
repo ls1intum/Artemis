@@ -164,6 +164,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     @Autowired(required = false)
     private WeaviateService weaviateService;
 
+    @Autowired(required = false)
     private ExerciseWeaviateService exerciseWeaviateService;
 
     private static List<Arguments> testPerformJoin_args() {
