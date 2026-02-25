@@ -98,36 +98,30 @@ export class CompetencyService extends CourseCompetencyService {
 
     importBulk(courseCompetencies: CourseCompetency[], courseId: number, importRelations: boolean) {
         const courseCompetencyIds = courseCompetencies.map((competency) => competency.id);
+        const payload: CourseCompetencyImportOptionsDTO = {
+            importRelations: importRelations,
+            importExercises: false,
+            importLectures: false,
+            competencyIds: courseCompetencyIds,
+        };
         return this.httpClient
-            .post<Array<CompetencyWithTailRelationResponseDTO>>(
-                `${this.resourceURL}/courses/${courseId}/competencies/import/bulk`,
-                {
-                    importRelations: importRelations,
-                    importExercises: false,
-                    importLectures: false,
-                    competencyIds: courseCompetencyIds,
-                } as CourseCompetencyImportOptionsDTO,
-                {
-                    observe: 'response',
-                },
-            )
+            .post<Array<CompetencyWithTailRelationResponseDTO>>(`${this.resourceURL}/courses/${courseId}/competencies/import/bulk`, payload, {
+                observe: 'response',
+            })
             .pipe(map((res: HttpResponse<Array<CompetencyWithTailRelationResponseDTO>>) => this.mapCompetencyImportResponse(res)));
     }
 
     importAll(courseId: number, sourceCourseId: number, importRelations: boolean) {
+        const payload: CourseCompetencyImportOptionsDTO = {
+            importExercises: false,
+            importRelations: importRelations,
+            sourceCourseId: sourceCourseId,
+            importLectures: false,
+        };
         return this.httpClient
-            .post<Array<CompetencyWithTailRelationResponseDTO>>(
-                `${this.resourceURL}/courses/${courseId}/competencies/import-all`,
-                {
-                    importExercises: false,
-                    importRelations: importRelations,
-                    sourceCourseId: sourceCourseId,
-                    importLectures: false,
-                } as CourseCompetencyImportOptionsDTO,
-                {
-                    observe: 'response',
-                },
-            )
+            .post<Array<CompetencyWithTailRelationResponseDTO>>(`${this.resourceURL}/courses/${courseId}/competencies/import-all`, payload, {
+                observe: 'response',
+            })
             .pipe(map((res: HttpResponse<Array<CompetencyWithTailRelationResponseDTO>>) => this.mapCompetencyImportResponse(res)));
     }
 
