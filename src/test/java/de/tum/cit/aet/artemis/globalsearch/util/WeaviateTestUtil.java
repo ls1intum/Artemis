@@ -1,7 +1,9 @@
 package de.tum.cit.aet.artemis.globalsearch.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -81,19 +83,21 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        var properties = queryExerciseProperties(weaviateService, exercise.getId());
-        assertThat(properties).as("Exercise %d should exist in Weaviate", exercise.getId()).isNotNull();
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            var properties = queryExerciseProperties(weaviateService, exercise.getId());
+            assertThat(properties).as("Exercise %d should exist in Weaviate", exercise.getId()).isNotNull();
 
-        assertThat(properties.get(ExerciseSchema.Properties.TITLE)).isEqualTo(exercise.getTitle());
-        assertThat(properties.get(ExerciseSchema.Properties.EXERCISE_TYPE)).isEqualTo(exercise.getExerciseType().name());
-        assertThat(((Number) properties.get(ExerciseSchema.Properties.EXERCISE_ID)).longValue()).isEqualTo(exercise.getId());
+            assertThat(properties.get(ExerciseSchema.Properties.TITLE)).isEqualTo(exercise.getTitle());
+            assertThat(properties.get(ExerciseSchema.Properties.EXERCISE_TYPE)).isEqualTo(exercise.getExerciseType().name());
+            assertThat(((Number) properties.get(ExerciseSchema.Properties.EXERCISE_ID)).longValue()).isEqualTo(exercise.getId());
 
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        assertThat(((Number) properties.get(ExerciseSchema.Properties.COURSE_ID)).longValue()).isEqualTo(course.getId());
+            Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+            assertThat(((Number) properties.get(ExerciseSchema.Properties.COURSE_ID)).longValue()).isEqualTo(course.getId());
 
-        assertDateProperty(properties, ExerciseSchema.Properties.RELEASE_DATE, exercise.getReleaseDate());
-        assertDateProperty(properties, ExerciseSchema.Properties.START_DATE, exercise.getStartDate());
-        assertDateProperty(properties, ExerciseSchema.Properties.DUE_DATE, exercise.getDueDate());
+            assertDateProperty(properties, ExerciseSchema.Properties.RELEASE_DATE, exercise.getReleaseDate());
+            assertDateProperty(properties, ExerciseSchema.Properties.START_DATE, exercise.getStartDate());
+            assertDateProperty(properties, ExerciseSchema.Properties.DUE_DATE, exercise.getDueDate());
+        });
     }
 
     /**
@@ -108,14 +112,16 @@ public final class WeaviateTestUtil {
         }
         assertExerciseExistsInWeaviate(weaviateService, programmingExercise);
 
-        var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
-        assertThat(properties).isNotNull();
-        if (programmingExercise.getProgrammingLanguage() != null) {
-            assertThat(properties.get(ExerciseSchema.Properties.PROGRAMMING_LANGUAGE)).isEqualTo(programmingExercise.getProgrammingLanguage().name());
-        }
-        if (programmingExercise.getProjectType() != null) {
-            assertThat(properties.get(ExerciseSchema.Properties.PROJECT_TYPE)).isEqualTo(programmingExercise.getProjectType().name());
-        }
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
+            assertThat(properties).isNotNull();
+            if (programmingExercise.getProgrammingLanguage() != null) {
+                assertThat(properties.get(ExerciseSchema.Properties.PROGRAMMING_LANGUAGE)).isEqualTo(programmingExercise.getProgrammingLanguage().name());
+            }
+            if (programmingExercise.getProjectType() != null) {
+                assertThat(properties.get(ExerciseSchema.Properties.PROJECT_TYPE)).isEqualTo(programmingExercise.getProjectType().name());
+            }
+        });
     }
 
     /**
@@ -130,11 +136,13 @@ public final class WeaviateTestUtil {
         }
         assertExerciseExistsInWeaviate(weaviateService, modelingExercise);
 
-        var properties = queryExerciseProperties(weaviateService, modelingExercise.getId());
-        assertThat(properties).isNotNull();
-        if (modelingExercise.getDiagramType() != null) {
-            assertThat(properties.get(ExerciseSchema.Properties.DIAGRAM_TYPE)).isEqualTo(modelingExercise.getDiagramType().name());
-        }
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            var properties = queryExerciseProperties(weaviateService, modelingExercise.getId());
+            assertThat(properties).isNotNull();
+            if (modelingExercise.getDiagramType() != null) {
+                assertThat(properties.get(ExerciseSchema.Properties.DIAGRAM_TYPE)).isEqualTo(modelingExercise.getDiagramType().name());
+            }
+        });
     }
 
     /**
@@ -149,14 +157,16 @@ public final class WeaviateTestUtil {
         }
         assertExerciseExistsInWeaviate(weaviateService, quizExercise);
 
-        var properties = queryExerciseProperties(weaviateService, quizExercise.getId());
-        assertThat(properties).isNotNull();
-        if (quizExercise.getQuizMode() != null) {
-            assertThat(properties.get(ExerciseSchema.Properties.QUIZ_MODE)).isEqualTo(quizExercise.getQuizMode().name());
-        }
-        if (quizExercise.getDuration() != null) {
-            assertThat(((Number) properties.get(ExerciseSchema.Properties.QUIZ_DURATION)).intValue()).isEqualTo(quizExercise.getDuration());
-        }
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            var properties = queryExerciseProperties(weaviateService, quizExercise.getId());
+            assertThat(properties).isNotNull();
+            if (quizExercise.getQuizMode() != null) {
+                assertThat(properties.get(ExerciseSchema.Properties.QUIZ_MODE)).isEqualTo(quizExercise.getQuizMode().name());
+            }
+            if (quizExercise.getDuration() != null) {
+                assertThat(((Number) properties.get(ExerciseSchema.Properties.QUIZ_DURATION)).intValue()).isEqualTo(quizExercise.getDuration());
+            }
+        });
     }
 
     /**
@@ -171,11 +181,13 @@ public final class WeaviateTestUtil {
         }
         assertExerciseExistsInWeaviate(weaviateService, fileUploadExercise);
 
-        var properties = queryExerciseProperties(weaviateService, fileUploadExercise.getId());
-        assertThat(properties).isNotNull();
-        if (fileUploadExercise.getFilePattern() != null) {
-            assertThat(properties.get(ExerciseSchema.Properties.FILE_PATTERN)).isEqualTo(fileUploadExercise.getFilePattern());
-        }
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            var properties = queryExerciseProperties(weaviateService, fileUploadExercise.getId());
+            assertThat(properties).isNotNull();
+            if (fileUploadExercise.getFilePattern() != null) {
+                assertThat(properties.get(ExerciseSchema.Properties.FILE_PATTERN)).isEqualTo(fileUploadExercise.getFilePattern());
+            }
+        });
     }
 
     /**
@@ -190,15 +202,17 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        var properties = queryExerciseProperties(weaviateService, exerciseId);
-        assertThat(properties).as("Exercise %d should exist in Weaviate", exerciseId).isNotNull();
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            var properties = queryExerciseProperties(weaviateService, exerciseId);
+            assertThat(properties).as("Exercise %d should exist in Weaviate", exerciseId).isNotNull();
 
-        assertThat(properties.get(ExerciseSchema.Properties.IS_EXAM_EXERCISE)).isEqualTo(true);
-        assertThat(((Number) properties.get(ExerciseSchema.Properties.EXAM_ID)).longValue()).isEqualTo(exam.getId());
+            assertThat(properties.get(ExerciseSchema.Properties.IS_EXAM_EXERCISE)).isEqualTo(true);
+            assertThat(((Number) properties.get(ExerciseSchema.Properties.EXAM_ID)).longValue()).isEqualTo(exam.getId());
 
-        assertDateProperty(properties, ExerciseSchema.Properties.EXAM_VISIBLE_DATE, exam.getVisibleDate());
-        assertDateProperty(properties, ExerciseSchema.Properties.EXAM_START_DATE, exam.getStartDate());
-        assertDateProperty(properties, ExerciseSchema.Properties.EXAM_END_DATE, exam.getEndDate());
+            assertDateProperty(properties, ExerciseSchema.Properties.EXAM_VISIBLE_DATE, exam.getVisibleDate());
+            assertDateProperty(properties, ExerciseSchema.Properties.EXAM_START_DATE, exam.getStartDate());
+            assertDateProperty(properties, ExerciseSchema.Properties.EXAM_END_DATE, exam.getEndDate());
+        });
     }
 
     /**
@@ -244,7 +258,9 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        var properties = queryExerciseProperties(weaviateService, exerciseId);
-        assertThat(properties).as("Exercise %d should not exist in Weaviate", exerciseId).isNull();
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            var properties = queryExerciseProperties(weaviateService, exerciseId);
+            assertThat(properties).as("Exercise %d should not exist in Weaviate", exerciseId).isNull();
+        });
     }
 }

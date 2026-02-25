@@ -717,7 +717,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         Exercise exercise = fetchedExam.getExerciseGroups().getFirst().getExercises().stream().findFirst().orElseThrow();
         assertThat(exercise.isExampleSolutionPublished()).isTrue();
 
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> WeaviateTestUtil.assertExerciseExamDatesInWeaviate(weaviateService, modelingExercise.getId(), fetchedExam));
+        WeaviateTestUtil.assertExerciseExamDatesInWeaviate(weaviateService, modelingExercise.getId(), fetchedExam);
     }
 
     @Test
@@ -730,9 +730,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         if (exerciseWeaviateService != null) {
             exerciseWeaviateService.insertExerciseAsync(modelingExercise);
 
-            await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> WeaviateTestUtil.assertExerciseExamDatesInWeaviate(weaviateService, modelingExercise.getId(), exam));
+            WeaviateTestUtil.assertExerciseExamDatesInWeaviate(weaviateService, modelingExercise.getId(), exam);
         }
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> WeaviateTestUtil.assertExerciseExamDatesInWeaviate(weaviateService, modelingExercise.getId(), exam));
+        WeaviateTestUtil.assertExerciseExamDatesInWeaviate(weaviateService, modelingExercise.getId(), exam);
 
         // Update the exam visible, start and end dates
         ZonedDateTime newVisibleDate = now().minusHours(10);
@@ -743,7 +743,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         request.put("/api/exam/courses/" + exam.getCourse().getId() + "/exams", exam, HttpStatus.OK);
 
         Exam fetchedExam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> WeaviateTestUtil.assertExerciseExamDatesInWeaviate(weaviateService, modelingExercise.getId(), fetchedExam));
+        WeaviateTestUtil.assertExerciseExamDatesInWeaviate(weaviateService, modelingExercise.getId(), fetchedExam);
     }
 
     @Test
@@ -869,7 +869,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         if (exerciseWeaviateService != null) {
             exerciseWeaviateService.insertExerciseAsync(textExercise);
 
-            await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> WeaviateTestUtil.assertExerciseExistsInWeaviate(weaviateService, textExercise));
+            WeaviateTestUtil.assertExerciseExistsInWeaviate(weaviateService, textExercise);
         }
         WeaviateTestUtil.assertExerciseExistsInWeaviate(weaviateService, textExercise);
 
