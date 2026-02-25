@@ -4,12 +4,14 @@ import static de.tum.cit.aet.artemis.core.util.TestResourceUtils.HalfSecond;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertExerciseNotInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertModelingExerciseExistsInWeaviate;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -219,7 +221,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         assertThat(channelFromDB).isNotNull();
         assertThat(channelFromDB.getName()).isEqualTo("exercise-new-modeling-exercise");
 
-        assertModelingExerciseExistsInWeaviate(weaviateService, receivedModelingExercise);
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertModelingExerciseExistsInWeaviate(weaviateService, receivedModelingExercise));
 
         modelingExercise = ModelingExerciseFactory.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId(), 1L);
         request.post("/api/modeling/modeling-exercises", modelingExercise, HttpStatus.BAD_REQUEST);
@@ -260,7 +262,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         verify(examLiveEventsService, never()).createAndSendProblemStatementUpdateEvent(eq(returnedModelingExercise), eq(notificationText));
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(createdModelingExercise), eq(Optional.of(createdModelingExercise)));
 
-        assertModelingExerciseExistsInWeaviate(weaviateService, returnedModelingExercise);
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertModelingExerciseExistsInWeaviate(weaviateService, returnedModelingExercise));
     }
 
     @Test
@@ -425,7 +427,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         long exerciseId = classExercise.getId();
         request.delete("/api/modeling/modeling-exercises/" + exerciseId, HttpStatus.OK);
         assertThat(modelingExerciseTestRepository.findById(exerciseId)).as("exercise was deleted").isEmpty();
-        assertExerciseNotInWeaviate(weaviateService, exerciseId);
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertExerciseNotInWeaviate(weaviateService, exerciseId));
         request.delete("/api/modeling/modeling-exercises/" + exerciseId, HttpStatus.NOT_FOUND);
     }
 
@@ -510,7 +512,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         assertThat(channelFromDB.getName()).isEqualTo(uniqueChannelName);
         verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(importedExercise));
 
-        assertModelingExerciseExistsInWeaviate(weaviateService, importedExercise);
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertModelingExerciseExistsInWeaviate(weaviateService, importedExercise));
     }
 
     @Test
