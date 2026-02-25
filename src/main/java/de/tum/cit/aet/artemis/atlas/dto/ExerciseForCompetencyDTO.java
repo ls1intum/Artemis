@@ -23,6 +23,12 @@ public record ExerciseForCompetencyDTO(long id, String title, String shortName, 
         @Nullable Set<String> categories, boolean teamMode, @Nullable Long studentAssignedTeamId, boolean studentAssignedTeamIdComputed, @Nullable Boolean allowOnlineEditor,
         @Nullable Boolean allowOfflineIde, @Nullable Boolean quizStarted, @Nullable Boolean quizEnded) {
 
+    /**
+     * Maps an exercise to a competency exercise DTO.
+     *
+     * @param exercise the exercise to map
+     * @return the DTO or null if the exercise is null
+     */
     public static @Nullable ExerciseForCompetencyDTO of(@Nullable Exercise exercise) {
         if (exercise == null) {
             return null;
