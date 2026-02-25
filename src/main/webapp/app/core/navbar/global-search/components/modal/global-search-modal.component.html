@@ -25,7 +25,16 @@
         />
     </div>
     <!-- Results Area -->
-    <div class="results-container text-center text-secondary">{{ 'global.search.noResultsFound' | artemisTranslate }}</div>
+    <div class="results-container">
+        <jhi-global-search-action-item
+            [title]="'global.search.searchLectureContent' | artemisTranslate"
+            [description]="'global.search.searchLectureContentDescription' | artemisTranslate"
+            accentColor="var(--global-search-lecture-accent)"
+            secondaryAccentColor="var(--bs-primary)"
+        >
+            <fa-icon slot="icon" [icon]="faFileLines" />
+        </jhi-global-search-action-item>
+    </div>
     <!-- Keyboard hints footer -->
     <div class="search-footer flex-shrink-0 text-start">
         <div class="keyboard-hints d-flex align-items-center justify-content-between text-secondary w-100 gap-3">
