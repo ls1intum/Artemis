@@ -849,6 +849,13 @@
                     "suggestedFix": "Suggested fix:",
                     "fixAll": "Fix All Issues",
                     "fixIssue": "Apply AI fix for this issue",
+                    "fixSelected": "Fix Selected",
+                    "discardIssue": "Discard this issue",
+                    "discardSelected": "Discard Selected",
+                    "discarded": "Issue discarded.",
+                    "discardedMultiple": "{{ count }} issues discarded.",
+                    "selectAll": "Select all",
+                    "deselectAll": "Deselect all",
                     "radarChartLabel": "Quality scores radar chart"
                 },
                 "actions": {

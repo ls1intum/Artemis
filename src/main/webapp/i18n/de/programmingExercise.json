@@ -849,6 +849,13 @@
                     "suggestedFix": "Vorgeschlagene Lösung:",
                     "fixAll": "Alle Probleme beheben",
                     "fixIssue": "KI-Lösung für dieses Problem anwenden",
+                    "fixSelected": "Ausgewählte beheben",
+                    "discardIssue": "Dieses Problem verwerfen",
+                    "discardSelected": "Ausgewählte verwerfen",
+                    "discarded": "Problem verworfen.",
+                    "discardedMultiple": "{{ count }} Probleme verworfen.",
+                    "selectAll": "Alle auswählen",
+                    "deselectAll": "Alle abwählen",
                     "radarChartLabel": "Radar-Diagramm der Qualitätsbewertung"
                 },
                 "actions": {
