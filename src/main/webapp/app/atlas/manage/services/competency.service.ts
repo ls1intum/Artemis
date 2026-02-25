@@ -97,7 +97,7 @@ export class CompetencyService extends CourseCompetencyService {
     }
 
     importBulk(courseCompetencies: CourseCompetency[], courseId: number, importRelations: boolean) {
-        const courseCompetencyIds = courseCompetencies.map((competency) => competency.id);
+        const courseCompetencyIds = courseCompetencies.map((competency) => competency.id).filter((id): id is number => id !== undefined);
         const payload: CourseCompetencyImportOptionsDTO = {
             importRelations: importRelations,
             importExercises: false,
@@ -117,6 +117,7 @@ export class CompetencyService extends CourseCompetencyService {
             importRelations: importRelations,
             sourceCourseId: sourceCourseId,
             importLectures: false,
+            competencyIds: [],
         };
         return this.httpClient
             .post<Array<CompetencyWithTailRelationResponseDTO>>(`${this.resourceURL}/courses/${courseId}/competencies/import-all`, payload, {
