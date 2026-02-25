@@ -25,12 +25,11 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
-import com.hazelcast.spring.cache.HazelcastCacheManager;
+import org.springframework.cache.CacheManager;
 
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
 
 @ExtendWith(MockitoExtension.class)
 class CourseNotificationCacheServiceTest {
@@ -38,10 +37,13 @@ class CourseNotificationCacheServiceTest {
     private CourseNotificationCacheService courseNotificationCacheService;
 
     @Mock
-    private HazelcastInstance hazelcastInstance;
+    private CacheManager cacheManager;
 
     @Mock
-    private IMap<Object, Object> cacheMap;
+    private DistributedDataAccessService distributedDataAccessService;
+
+    @Mock
+    private DistributedMap<Object, Object> cacheMap;
 
     private static final String CACHE_NAME = CourseNotificationCacheService.USER_COURSE_NOTIFICATION_CACHE;
 
@@ -49,14 +51,12 @@ class CourseNotificationCacheServiceTest {
 
     @BeforeEach
     void setUp() {
-        HazelcastCacheManager realHazelcastCacheManager = new HazelcastCacheManager(hazelcastInstance);
-
-        courseNotificationCacheService = new CourseNotificationCacheService(realHazelcastCacheManager);
+        courseNotificationCacheService = new CourseNotificationCacheService(cacheManager, distributedDataAccessService);
     }
 
     @Test
     void shouldInvalidateCacheForUserWhenCacheIsSet() {
-        when(hazelcastInstance.getMap(anyString())).thenReturn(cacheMap);
+        when(distributedDataAccessService.getDistributedMap(anyString())).thenReturn(cacheMap);
 
         User user = createUserWithId(1L);
         Set<User> users = Set.of(user);
@@ -66,10 +66,10 @@ class CourseNotificationCacheServiceTest {
         courseNotificationCacheService.invalidateCourseNotificationCacheForUsers(users, COURSE_ID);
 
         Awaitility.await().atMost(1, TimeUnit.SECONDS).untilAsserted(() -> {
-            verify(hazelcastInstance, times(2)).getMap(CACHE_NAME);
+            verify(distributedDataAccessService, times(2)).getDistributedMap(CACHE_NAME);
 
             ArgumentCaptor<Object> keyCaptor = ArgumentCaptor.forClass(Object.class);
-            verify(cacheMap, atLeastOnce()).delete(keyCaptor.capture());
+            verify(cacheMap, atLeastOnce()).remove(keyCaptor.capture());
 
             assertThat(keyCaptor.getAllValues()).anyMatch(key -> key.toString().startsWith("user_course_notification_1_123"));
 
@@ -79,7 +79,7 @@ class CourseNotificationCacheServiceTest {
 
     @Test
     void shouldInvalidateCacheForMultipleUsersWhenAllUsersHaveCachedEntries() {
-        when(hazelcastInstance.getMap(anyString())).thenReturn(cacheMap);
+        when(distributedDataAccessService.getDistributedMap(anyString())).thenReturn(cacheMap);
 
         User user1 = createUserWithId(1L);
         User user2 = createUserWithId(2L);
@@ -93,10 +93,10 @@ class CourseNotificationCacheServiceTest {
         courseNotificationCacheService.invalidateCourseNotificationCacheForUsers(users, COURSE_ID);
 
         Awaitility.await().atMost(1, TimeUnit.SECONDS).untilAsserted(() -> {
-            verify(hazelcastInstance, times(4)).getMap(CACHE_NAME);
+            verify(distributedDataAccessService, times(4)).getDistributedMap(CACHE_NAME);
 
             ArgumentCaptor<Object> keyCaptor = ArgumentCaptor.forClass(Object.class);
-            verify(cacheMap, atLeast(4)).delete(keyCaptor.capture());
+            verify(cacheMap, atLeast(4)).remove(keyCaptor.capture());
 
             assertThat(keyCaptor.getAllValues()).anyMatch(key -> key.toString().startsWith("user_course_notification_1_123"))
                     .anyMatch(key -> key.toString().startsWith("user_course_notification_2_123")).anyMatch(key -> key.toString().equals("user_course_notification_count_1_123"))
@@ -122,15 +122,15 @@ class CourseNotificationCacheServiceTest {
         courseNotificationCacheService.invalidateCourseNotificationCacheForUsers(emptyUsers, COURSE_ID);
 
         Awaitility.await().atMost(1, TimeUnit.SECONDS).untilAsserted(() -> {
-            verify(hazelcastInstance, never()).getMap(anyString());
-            verify(cacheMap, never()).delete(any());
+            verify(distributedDataAccessService, never()).getDistributedMap(anyString());
+            verify(cacheMap, never()).remove(any());
         });
     }
 
     @ParameterizedTest
     @ValueSource(longs = { 0L, 1L, 999L })
     void shouldInvalidateCacheForDifferentCourseIdsWhenUserHasId(long courseId) {
-        when(hazelcastInstance.getMap(anyString())).thenReturn(cacheMap);
+        when(distributedDataAccessService.getDistributedMap(anyString())).thenReturn(cacheMap);
         User user = createUserWithId(1L);
         Set<User> users = Set.of(user);
         Set<Object> cacheKeys = createMockCacheKeys(user.getId(), courseId);
@@ -139,10 +139,10 @@ class CourseNotificationCacheServiceTest {
         courseNotificationCacheService.invalidateCourseNotificationCacheForUsers(users, courseId);
 
         Awaitility.await().atMost(1, TimeUnit.SECONDS).untilAsserted(() -> {
-            verify(hazelcastInstance, times(2)).getMap(CACHE_NAME);
+            verify(distributedDataAccessService, times(2)).getDistributedMap(CACHE_NAME);
 
             ArgumentCaptor<Object> keyCaptor = ArgumentCaptor.forClass(Object.class);
-            verify(cacheMap, atLeastOnce()).delete(keyCaptor.capture());
+            verify(cacheMap, atLeastOnce()).remove(keyCaptor.capture());
 
             assertThat(keyCaptor.getAllValues()).anyMatch(key -> key.toString().contains("_" + courseId));
         });
@@ -150,19 +150,19 @@ class CourseNotificationCacheServiceTest {
 
     @Test
     void shouldHandleExceptionsWhenDeletingCacheEntries() {
-        when(hazelcastInstance.getMap(anyString())).thenReturn(cacheMap);
+        when(distributedDataAccessService.getDistributedMap(anyString())).thenReturn(cacheMap);
         User user = createUserWithId(1L);
         Set<User> users = Set.of(user);
         Set<Object> cacheKeys = createMockCacheKeys(user.getId(), COURSE_ID);
         when(cacheMap.keySet()).thenReturn(cacheKeys);
 
-        doThrow(new ClassCastException("Test exception")).when(cacheMap).delete(any());
+        doThrow(new ClassCastException("Test exception")).when(cacheMap).remove(any());
 
         courseNotificationCacheService.invalidateCourseNotificationCacheForUsers(users, COURSE_ID);
 
         Awaitility.await().atMost(1, TimeUnit.SECONDS).untilAsserted(() -> {
-            verify(hazelcastInstance, times(2)).getMap(CACHE_NAME);
-            verify(cacheMap, atLeastOnce()).delete(any());
+            verify(distributedDataAccessService, times(2)).getDistributedMap(CACHE_NAME);
+            verify(cacheMap, atLeastOnce()).remove(any());
         });
     }
 

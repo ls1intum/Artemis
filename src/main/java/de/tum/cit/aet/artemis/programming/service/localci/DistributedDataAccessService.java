@@ -43,7 +43,6 @@ import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.topic.
  */
 @Lazy
 @Service
-@Profile({ PROFILE_LOCALCI, PROFILE_BUILDAGENT })
 public class DistributedDataAccessService {
 
     private final DistributedDataProvider distributedDataProvider;
