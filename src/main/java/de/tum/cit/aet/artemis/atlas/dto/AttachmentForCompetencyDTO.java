@@ -14,6 +14,12 @@ public record AttachmentForCompetencyDTO(Long id, String name, String link, @Nul
         @Nullable AttachmentType attachmentType, @Nullable String studentVersion) {
 
     @Nullable
+    /**
+     * Maps an attachment to a competency attachment DTO.
+     *
+     * @param attachment the attachment to map
+     * @return the DTO or null if the attachment is null
+     */
     public static AttachmentForCompetencyDTO of(@Nullable Attachment attachment) {
         if (attachment == null) {
             return null;
