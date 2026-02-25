@@ -49,7 +49,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 public record TutorialGroupConfigurationDTO(Long id, @NotBlank String tutorialPeriodStartInclusive, @NotBlank String tutorialPeriodEndInclusive,
         @NotNull Boolean useTutorialGroupChannels, @NotNull Boolean usePublicTutorialGroupChannels, @Valid Set<TutorialGroupFreePeriodDTO> tutorialGroupFreePeriods) {
 
-    private static final String TUTORIAL_FREE_PERIOD_ENTITY_NAME = "tutorialGroupFreePeriod";
+    public static final String TUTORIAL_FREE_PERIOD_ENTITY_NAME = "tutorialGroupFreePeriod";
 
     /**
      * If the field is omitted during JSON deserialization, it is replaced

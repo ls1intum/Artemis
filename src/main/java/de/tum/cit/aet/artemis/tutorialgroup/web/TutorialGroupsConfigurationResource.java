@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.tutorialgroup.web;
 
 import static de.tum.cit.aet.artemis.core.util.DateUtil.isIso8601DateString;
+import static de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupConfigurationDTO.TUTORIAL_FREE_PERIOD_ENTITY_NAME;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -31,6 +32,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupConfigurationDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
@@ -142,7 +144,7 @@ public class TutorialGroupsConfigurationResource {
         var course = configurationFromDatabase.getCourse();
         checkCourseTimeZone(course);
 
-        checkEntityIdMatchesPathIds(configurationFromDatabase, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupsConfigurationId));
+        checkEntityIdMatchesPathIds(configurationFromDatabase, Optional.ofNullable(courseId), Optional.of(tutorialGroupsConfigurationId));
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, configurationFromDatabase.getCourse(), null);
 
         // Use full DTO mapping from() for validation purposes.
@@ -188,8 +190,33 @@ public class TutorialGroupsConfigurationResource {
                 || !isIso8601DateString(tutorialGroupsConfiguration.getTutorialPeriodEndInclusive())) {
             throw new BadRequestAlertException("Tutorial period start date and end date must be valid ISO 8601 date strings.", ENTITY_NAME, "tutorialPeriodInvalidFormat");
         }
-        if (LocalDate.parse(tutorialGroupsConfiguration.getTutorialPeriodStartInclusive()).isAfter(LocalDate.parse(tutorialGroupsConfiguration.getTutorialPeriodEndInclusive()))) {
+
+        LocalDate tutorialStart = LocalDate.parse(tutorialGroupsConfiguration.getTutorialPeriodStartInclusive());
+        LocalDate tutorialEnd = LocalDate.parse(tutorialGroupsConfiguration.getTutorialPeriodEndInclusive());
+        if (tutorialStart.isAfter(tutorialEnd)) {
             throw new BadRequestAlertException("Tutorial period start date must be before tutorial period end date.", ENTITY_NAME, "tutorialPeriodInvalidOrder");
+        }
+        if (tutorialGroupsConfiguration.getTutorialGroupFreePeriods() != null) {
+            for (TutorialGroupFreePeriod freePeriod : tutorialGroupsConfiguration.getTutorialGroupFreePeriods()) {
+                if (freePeriod.getStart() == null) {
+                    throw new BadRequestAlertException("Tutorial group free period start date must be set.", TUTORIAL_FREE_PERIOD_ENTITY_NAME,
+                            "tutorialFreePeriodStartDateMissing");
+                }
+                if (freePeriod.getEnd() == null) {
+                    throw new BadRequestAlertException("Tutorial group free period end date must be set.", TUTORIAL_FREE_PERIOD_ENTITY_NAME, "tutorialFreePeriodEndDateMissing");
+                }
+                if (freePeriod.getStart().isAfter(freePeriod.getEnd())) {
+                    throw new BadRequestAlertException("Tutorial group free period start date must be before tutorial group free period end date.",
+                            TUTORIAL_FREE_PERIOD_ENTITY_NAME, "tutorialFreePeriodInvalidOrder");
+                }
+
+                LocalDate freeStartDate = freePeriod.getStart().toLocalDate();
+                LocalDate freeEndDate = freePeriod.getEnd().toLocalDate();
+
+                if (freeStartDate.isBefore(tutorialStart) || freeEndDate.isAfter(tutorialEnd)) {
+                    throw new BadRequestAlertException("Tutorial group free periods must lie within the tutorial period.", ENTITY_NAME, "tutorialFreePeriodOutOfBounds");
+                }
+            }
         }
     }
 

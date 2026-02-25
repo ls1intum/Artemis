@@ -244,20 +244,22 @@
         "tutorialGroupsConfiguration": {
             "idExists": "Eine neue Tutoriengruppen-Konfiguration darf noch keine ID besitzen.",
             "alreadyExists": "Für diesen Kurs existiert bereits eine Tutoriengruppen-Konfiguration.",
-            "courseHasNoTimeZone": "Der Kurs hat keine konfigurierte Zeitzone.",
+            "courseHasNoTimeZone": "Für diesen Kurs ist keine Zeitzone konfiguriert.",
             "idNull": "Eine Tutoriengruppen-Konfiguration kann nicht ohne ID aktualisiert werden.",
 
-            "tutorialPeriodMissing": "Das Startdatum und das Enddatum des Tutorienzeitraums müssen gesetzt sein.",
-            "tutorialPeriodInvalidFormat": "Das Startdatum und das Enddatum des Tutorienzeitraums müssen gültige ISO-8601-Datumsangaben sein.",
+            "tutorialPeriodMissing": "Das Start- und Enddatum des Tutorienzeitraums müssen gesetzt sein.",
+            "tutorialPeriodInvalidFormat": "Das Start- und Enddatum des Tutorienzeitraums müssen gültige ISO-8601-Datumsangaben sein.",
             "tutorialPeriodInvalidOrder": "Das Startdatum des Tutorienzeitraums muss vor dem Enddatum liegen.",
 
             "courseIdMismatch": "Die Kurs-ID im Pfad stimmt nicht mit dem Kurs der Tutoriengruppen-Konfiguration überein.",
             "tutorialGroupConfigurationIdMismatch": "Die ID der Tutoriengruppen-Konfiguration im Pfad stimmt nicht mit der zu aktualisierenden Konfiguration überein."
         },
         "tutorialGroupFreePeriod": {
-            "tutorialFreePeriodStartDateMissing": "Das Startdatum der Tutoriums-Freiphase muss angegeben werden.",
-            "tutorialFreePeriodEndDateMissing": "Das Enddatum der Tutoriums-Freiphase muss angegeben werden.",
-            "tutorialFreePeriodInvalidFormat": "Das Startdatum und das Enddatum der Tutoriums-Freiphase müssen gültige ISO-8601-Datumsangaben sein."
+            "tutorialFreePeriodStartDateMissing": "Das Startdatum des freien Zeitraums der Tutoriengruppe muss angegeben werden.",
+            "tutorialFreePeriodEndDateMissing": "Das Enddatum des freien Zeitraums der Tutoriengruppe muss angegeben werden.",
+            "tutorialFreePeriodInvalidFormat": "Das Start- und Enddatum des freien Zeitraums der Tutoriengruppe müssen gültige ISO-8601-Datumsangaben sein.",
+            "tutorialFreePeriodInvalidOrder": "Das Startdatum des freien Zeitraums der Tutoriengruppe muss vor dem Enddatum liegen.",
+            "tutorialFreePeriodOutOfBounds": "Freie Zeiträume der Tutoriengruppe müssen innerhalb des Tutorienzeitraums liegen."
         }
     }
 }

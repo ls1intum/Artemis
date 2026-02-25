@@ -255,7 +255,9 @@
         "tutorialGroupFreePeriod": {
             "tutorialFreePeriodStartDateMissing": "Tutorial group free period start date must be set.",
             "tutorialFreePeriodEndDateMissing": "Tutorial group free period end date must be set.",
-            "tutorialFreePeriodInvalidFormat": "Tutorial group free period start date and end date must be valid ISO 8601 date strings."
+            "tutorialFreePeriodInvalidFormat": "Tutorial group free period start date and end date must be valid ISO 8601 date strings.",
+            "tutorialFreePeriodInvalidOrder": "Tutorial group free period start date must be before tutorial group free period end date.",
+            "tutorialFreePeriodOutOfBounds": "Tutorial group free periods must lie within the tutorial period."
         }
     }
 }
