@@ -81,11 +81,13 @@ describe('CourseCompetencyService', () => {
     });
 
     it('should import all competencies of a course', () => {
-        const competencyDTO = new CompetencyWithTailRelationDTO();
-        competencyDTO.competency = toCompetency(defaultCompetencies.first()!);
-        competencyDTO.tailRelations = [];
         const returnedFromService: CompetencyWithTailRelationResponseDTO[] = [{ competency: Object.assign({}, defaultCompetencies.first()!, { id: 1 }), tailRelations: [] }];
-        const expected = [competencyDTO];
+        const expected = returnedFromService.map((entry) => {
+            const mapped = new CompetencyWithTailRelationDTO();
+            mapped.competency = entry.competency ? toCompetency(entry.competency) : undefined;
+            mapped.tailRelations = entry.tailRelations;
+            return mapped;
+        });
 
         courseCompetencyService
             .importAll(1, 2, true)

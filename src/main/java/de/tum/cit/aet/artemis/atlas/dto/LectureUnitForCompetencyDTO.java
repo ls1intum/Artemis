@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.dto;
 
 import java.time.ZonedDateTime;
+import java.util.Objects;
 
 import org.jspecify.annotations.Nullable;
 
@@ -41,7 +42,8 @@ public record LectureUnitForCompetencyDTO(Long id, LectureReferenceDTO lecture, 
             content = textUnit.getContent();
         }
 
-        return new LectureUnitForCompetencyDTO(lectureUnit.getId(), LectureReferenceDTO.of(lectureUnit.getLecture()), lectureUnit.getName(), lectureUnit.getReleaseDate(),
-                lectureUnit.isCompleted(), lectureUnit.isVisibleToStudents(), lectureUnit.getType(), description, source, content, attachment, videoSource);
+        return new LectureUnitForCompetencyDTO(lectureUnit.getId(), LectureReferenceDTO.of(Objects.requireNonNull(lectureUnit.getLecture())), lectureUnit.getName(),
+                lectureUnit.getReleaseDate(), lectureUnit.isCompleted(), lectureUnit.isVisibleToStudents(), lectureUnit.getType(), description, source, content, attachment,
+                videoSource);
     }
 }

@@ -65,7 +65,8 @@ export class CourseCompetencyService {
             map((resp) => {
                 const body = resp.body;
                 if (!body) {
-                    return { resultsOnPage: [], numberOfPages: 0 } as SearchResult<CourseCompetency>;
+                    const emptyResult: SearchResult<CourseCompetency> = { resultsOnPage: [], numberOfPages: 0 };
+                    return emptyResult;
                 }
                 return Object.assign({}, body, {
                     resultsOnPage: body.resultsOnPage.map((dto) => this.toCourseCompetency(dto)),
@@ -175,10 +176,13 @@ export class CourseCompetencyService {
             )
             .pipe(
                 map((res) => {
-                    const body = res.body?.map((entry) => ({
-                        competency: entry.competency ? this.toCourseCompetency(entry.competency) : undefined,
-                        tailRelations: entry.tailRelations,
-                    })) as CompetencyWithTailRelationDTO[] | undefined;
+                    const body: CompetencyWithTailRelationDTO[] | undefined = res.body?.map((entry) => {
+                        const competency = entry.competency ? this.postProcessCompetency(this.toCourseCompetency(entry.competency)) : undefined;
+                        return {
+                            competency: competency,
+                            tailRelations: entry.tailRelations,
+                        };
+                    });
                     return new HttpResponse({ body, headers: res.headers, status: res.status, url: res.url ?? undefined });
                 }),
             );
