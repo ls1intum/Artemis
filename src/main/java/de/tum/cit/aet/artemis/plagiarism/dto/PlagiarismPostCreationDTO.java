@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.plagiarism.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -12,7 +13,7 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
  * DTO for creating a PlagiarismPost with only the necessary fields.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PlagiarismPostCreationDTO(@NotNull(message = "The post must have contents.") String content, @NotNull(message = "The post must have a title.") String title,
+public record PlagiarismPostCreationDTO(@NotBlank(message = "The post must have contents.") String content, @NotBlank(message = "The post must have a title.") String title,
         @NotNull Boolean visibleForStudents, @NotNull Boolean hasForwardedMessages,
         @NotNull(message = "The post must be associated with a plagiarism case.") Long plagiarismCaseId) {
 
