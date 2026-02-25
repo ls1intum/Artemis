@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.lti.config;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
-
 import java.net.URI;
 import java.security.KeyPair;
 import java.time.Instant;
@@ -13,8 +11,8 @@ import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -45,7 +43,7 @@ import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
  */
 @Component
 @Lazy
-@Profile(PROFILE_LTI)
+@Conditional(LtiEnabled.class)
 public class Lti13TokenRetriever {
 
     private final OAuth2JWKSService oAuth2JWKSService;

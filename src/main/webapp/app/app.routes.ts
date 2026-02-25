@@ -49,6 +49,18 @@ const routes: Routes = [
         },
     },
     {
+        path: 'ai-experience-info',
+        loadComponent: () => import('./logos/llm-selection-info.component').then((m) => m.LlmSelectionInfoComponent),
+        data: {
+            pageTitle: 'artemisApp.aiExperienceInfo.pageTitle',
+        },
+    },
+    {
+        path: 'llm-selection',
+        redirectTo: 'ai-experience-info',
+        pathMatch: 'full',
+    },
+    {
         path: 'privacy/data-exports',
         loadComponent: () => import('app/core/legal/data-export/data-export.component').then((m) => m.DataExportComponent),
         data: {
@@ -233,15 +245,6 @@ const routes: Routes = [
     {
         path: 'lti',
         loadChildren: () => import('./lti/shared/lti.route').then((m) => m.ltiLaunchRoutes),
-    },
-    {
-        path: 'about-iris',
-        pathMatch: 'full',
-        loadComponent: () => import('app/iris/overview/about-iris/about-iris.component').then((m) => m.AboutIrisComponent),
-        data: {
-            pageTitle: 'artemisApp.exerciseChatbot.title',
-            usesModuleBackground: true,
-        },
     },
     // ===== SHARING =====
     {

@@ -1,13 +1,11 @@
 package de.tum.cit.aet.artemis.iris.config;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
-
 import java.io.IOException;
 
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.client.ClientHttpRequestExecution;
@@ -17,7 +15,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Lazy
-@Profile(PROFILE_IRIS)
+@Conditional(IrisEnabled.class)
 public class PyrisAuthorizationInterceptor implements ClientHttpRequestInterceptor {
 
     @Value("${artemis.iris.secret-token}")

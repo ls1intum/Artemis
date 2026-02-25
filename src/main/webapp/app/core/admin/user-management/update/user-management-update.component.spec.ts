@@ -228,11 +228,11 @@ describe('UserManagementUpdateComponent', () => {
             expect(component.authorities()).toEqual([Authority.STUDENT, Authority.ADMIN, Authority.SUPER_ADMIN]);
         });
 
-        it('should filter out SUPER_ADMIN authority when current user is not a super admin', () => {
+        it('should filter out SUPER_ADMIN and ADMIN authority when current user is not a super admin', () => {
             // GIVEN
             const accountService = TestBed.inject(AccountService);
             vi.spyOn(accountService, 'isSuperAdmin').mockReturnValue(false);
-            vi.spyOn(adminUserService, 'authorities').mockReturnValue(of([Authority.STUDENT, Authority.ADMIN, Authority.SUPER_ADMIN]));
+            vi.spyOn(adminUserService, 'authorities').mockReturnValue(of([Authority.STUDENT, Authority.ADMIN, Authority.SUPER_ADMIN, Authority.INSTRUCTOR]));
             vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: ['jenkins'] } as ProfileInfo);
 
             // WHEN
@@ -241,8 +241,9 @@ describe('UserManagementUpdateComponent', () => {
             // THEN
             expect(adminUserService.authorities).toHaveBeenCalledOnce();
             expect(accountService.isSuperAdmin).toHaveBeenCalledOnce();
-            expect(component.authorities()).toEqual([Authority.STUDENT, Authority.ADMIN]);
+            expect(component.authorities()).toEqual([Authority.STUDENT, Authority.INSTRUCTOR]);
             expect(component.authorities()).not.toContain(Authority.SUPER_ADMIN);
+            expect(component.authorities()).not.toContain(Authority.ADMIN);
         });
     });
 

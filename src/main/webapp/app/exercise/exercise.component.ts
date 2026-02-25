@@ -45,9 +45,9 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
      */
     ngOnInit(): void {
         this.showHeading = this.embedded;
+        this.filter = new ExerciseFilter();
         this.load();
         this.registerChangeInExercises();
-        this.filter = new ExerciseFilter();
     }
 
     /**

@@ -11,7 +11,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockProvider } from 'ng-mocks';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
-import dayjs from 'dayjs/esm';
 import {
     mockClientMessage,
     mockConversation,
@@ -34,6 +33,7 @@ import { IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat
 import { IrisStageDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { User } from 'app/core/user/user.model';
+import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 
 describe('IrisChatService', () => {
     setupTestBed({ zoneless: true });
@@ -80,7 +80,7 @@ describe('IrisChatService', () => {
         wsMock = TestBed.inject(IrisWebsocketService);
         accountService = TestBed.inject(AccountService);
 
-        accountService.userIdentity.set({ externalLLMUsageAccepted: dayjs() } as User);
+        accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
 
         service.setCourseId(courseId);
     });
@@ -350,8 +350,8 @@ describe('IrisChatService', () => {
         });
 
         it('should switch if LLM usage is not required for the mode', async () => {
-            accountService.userIdentity.set({ externalLLMUsageAccepted: undefined } as User);
-            service['hasJustAcceptedExternalLLMUsage'] = false;
+            accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
+            service['hasJustAcceptedLLMUsage'] = false;
             service['sessionCreationIdentifier'] = 'tutor-suggestion/1';
 
             const newSession = { id: 12, chatMode: ChatServiceMode.TUTOR_SUGGESTION, creationDate: new Date(), entityId: 1 } as IrisSessionDTO;
@@ -373,8 +373,8 @@ describe('IrisChatService', () => {
         });
 
         it('should switch if user has just accepted LLM usage', async () => {
-            accountService.userIdentity.set({ externalLLMUsageAccepted: undefined } as User);
-            service['hasJustAcceptedExternalLLMUsage'] = true;
+            accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
+            service['hasJustAcceptedLLMUsage'] = true;
             service['sessionCreationIdentifier'] = 'course/1';
 
             const newSession = { id: 12, chatMode: ChatServiceMode.COURSE, creationDate: new Date(), entityId: 1 } as IrisSessionDTO;
@@ -427,6 +427,76 @@ describe('IrisChatService', () => {
 
             expect(getChatSessionsSpy).toHaveBeenCalledWith(courseId);
             expect(nextSpy).toHaveBeenCalledWith([]);
+        });
+    });
+
+    describe('deleteSession', () => {
+        it('should delete a non-active session and remove it from the list', async () => {
+            const sessions = [
+                { id: 1, creationDate: new Date(), chatMode: ChatServiceMode.COURSE, entityId: 1, entityName: 'C1' } as IrisSessionDTO,
+                { id: 2, creationDate: new Date(), chatMode: ChatServiceMode.COURSE, entityId: 1, entityName: 'C1' } as IrisSessionDTO,
+            ];
+            service.chatSessions.next(sessions);
+            service.sessionId = 1;
+
+            vi.spyOn(httpService, 'deleteSession').mockReturnValue(of(new HttpResponse<void>({ status: 204 })));
+            const closeSpy = vi.spyOn(service as any, 'close');
+
+            await firstValueFrom(service.deleteSession(2));
+
+            const remaining = service.chatSessions.getValue();
+            expect(remaining).toHaveLength(1);
+            expect(remaining[0].id).toBe(1);
+            expect(closeSpy).not.toHaveBeenCalled();
+        });
+
+        it('should delete the active session and switch to the next available session', async () => {
+            const sessions = [
+                { id: 1, creationDate: new Date(), chatMode: ChatServiceMode.COURSE, entityId: 1, entityName: 'C1' } as IrisSessionDTO,
+                { id: 2, creationDate: new Date(), chatMode: ChatServiceMode.COURSE, entityId: 1, entityName: 'C1' } as IrisSessionDTO,
+            ];
+            service.chatSessions.next(sessions);
+            service.sessionId = 1;
+
+            vi.spyOn(httpService, 'deleteSession').mockReturnValue(of(new HttpResponse<void>({ status: 204 })));
+            // switchToSession internally calls getChatSessionById, so we need to mock it
+            vi.spyOn(httpService, 'getChatSessionById').mockReturnValue(of({ ...mockConversation, id: 2 }));
+            vi.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
+            const switchSpy = vi.spyOn(service, 'switchToSession');
+
+            await firstValueFrom(service.deleteSession(1));
+
+            expect(switchSpy).toHaveBeenCalledWith(expect.objectContaining({ id: 2 }));
+        });
+
+        it('should delete the last remaining session and stay in closed state', async () => {
+            const sessions = [{ id: 1, creationDate: new Date(), chatMode: ChatServiceMode.COURSE, entityId: 1, entityName: 'C1' } as IrisSessionDTO];
+            service.chatSessions.next(sessions);
+            service.sessionId = 1;
+
+            vi.spyOn(httpService, 'deleteSession').mockReturnValue(of(new HttpResponse<void>({ status: 204 })));
+            const clearChatSpy = vi.spyOn(service, 'clearChat');
+            const switchSpy = vi.spyOn(service, 'switchToSession');
+
+            await firstValueFrom(service.deleteSession(1));
+
+            expect(clearChatSpy).not.toHaveBeenCalled();
+            expect(switchSpy).not.toHaveBeenCalled();
+            expect(service.chatSessions.getValue()).toHaveLength(0);
+            expect(service.sessionId).toBeUndefined();
+        });
+
+        it('should clear latestStartedSession if the deleted session matches', async () => {
+            const session = { id: 5, creationDate: new Date(), chatMode: ChatServiceMode.COURSE, entityId: 1, entityName: 'C1' } as IrisSessionDTO;
+            service.chatSessions.next([session]);
+            service.latestStartedSession = session;
+            service.sessionId = 99; // different from 5
+
+            vi.spyOn(httpService, 'deleteSession').mockReturnValue(of(new HttpResponse<void>({ status: 204 })));
+
+            await firstValueFrom(service.deleteSession(5));
+
+            expect(service.latestStartedSession).toBeUndefined();
         });
     });
 

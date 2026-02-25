@@ -1,6 +1,7 @@
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../../src/components/Image/Image";
+import TumLiveVideo from "../../../src/components/TumLiveVideo/TumLiveVideo";
 
 import courseManagement from './assets/general/course-management.png';
 import courseDashboard from './assets/quiz/course-dashboard.png';
@@ -93,9 +94,7 @@ This kind of question is composed of a problem statement with multiple options.
 - **Preview View**: Enables the student view
 - **Visual View**: This view shows the question from the Edit view as a rendered question. The different parts of the question are editable and answer options can be added and removed. It is possible to toggle between the Visual and the Edit view at all times and changes to the question will be respected
 
-<iframe src="https://live.rbg.tum.de/w/artemisintro/26851?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
-  Watch this video on TUM-Live.
-</iframe>
+<TumLiveVideo src="https://live.rbg.tum.de/w/artemisintro/26851" title="Creating Quiz Exercises" height={400} />
 
 <Callout variant={CalloutVariant.info}>
   <p>The Visual view provides an intuitive interface for creating quiz questions. You can switch between Visual and Edit views while maintaining all your changes.</p>

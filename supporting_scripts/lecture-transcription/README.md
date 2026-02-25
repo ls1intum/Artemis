@@ -4,7 +4,7 @@ This script extracts audio from a video file, transcribes it using OpenAI's Whis
 
 ## Requirements
 
-- Python 3.13 (tested with this version)
+- Python 3.14 (tested with this version)
 - `ffmpeg` (must be installed and accessible via command line)
 - The dependencies listed in `requirements.txt`
 

@@ -123,10 +123,16 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
         var submission = submissionOptional.get();
 
         // save result and transmit it over websockets to notify the client about the status
-        var automaticResult = this.submissionService.saveNewEmptyResult(submission);
+        Result automaticResult = this.submissionService.saveNewEmptyResult(submission);
         automaticResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
-        automaticResult.setRated(true); // we want to use this feedback to give the grade in the future
-        automaticResult.setScore(100.0);
+        automaticResult.setRated(true);
+        Result firstResult = submission.getFirstResult();
+        if (firstResult != null && firstResult.getScore() != null) {
+            automaticResult.setScore(firstResult.getScore());
+        }
+        else {
+            automaticResult.setScore(0.0);
+        }
         automaticResult.setSuccessful(null);
         automaticResult.setCompletionDate(ZonedDateTime.now().plusMinutes(5)); // we do not want to show dates without a completion date, but we want the students to know their
                                                                                // feedback request is in work

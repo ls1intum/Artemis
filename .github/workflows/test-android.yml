@@ -8,7 +8,7 @@ on:
       - 'CONTRIBUTING.md'
       - 'LICENSE'
       - 'SECURITY.md'
-      - 'docs/**'
+      - 'documentation/**'
       - '.github/**'
       - '!.github/workflows/test-android.yml'
   push:
@@ -23,7 +23,7 @@ on:
       - 'CONTRIBUTING.md'
       - 'LICENSE'
       - 'SECURITY.md'
-      - 'docs/**'
+      - 'documentation/**'
       - '.github/**'
       - '!.github/workflows/test-android.yml'
   release:
@@ -49,7 +49,7 @@ jobs:
           path: android-repo
 
       - name: Gradle Wrapper Verification
-        uses: gradle/actions/wrapper-validation@v4
+        uses: gradle/actions/wrapper-validation@v5
 
         # sanity cleanup
       - name: Stop mysql server

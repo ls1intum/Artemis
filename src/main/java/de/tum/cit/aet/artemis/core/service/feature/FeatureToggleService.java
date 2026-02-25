@@ -74,7 +74,7 @@ public class FeatureToggleService {
         DistributedMap<Feature, Boolean> features = distributedDataAccessService.getDistributedFeatures();
 
         // Features that are neither enabled nor disabled should be enabled by default
-        // This ensures that all features (except the Science API, TutorSuggestions, AtlasML, Memiris and AtlasAgent) are enabled once the system starts up
+        // This ensures that all features (except the Science API, TutorSuggestions, AtlasML, Memiris, AtlasAgent, and RateLimit) are enabled once the system starts up
         for (Feature feature : Feature.values()) {
             if (!features.containsKey(feature) && feature != Feature.Science && feature != Feature.TutorSuggestions && feature != Feature.AtlasML && feature != Feature.Memiris
                     && feature != Feature.AtlasAgent && feature != Feature.RateLimit) {

@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { SystemNotification } from 'app/core/shared/entities/system-notification.model';
@@ -17,12 +17,24 @@ export class AdminSystemNotificationService {
     /**
      * Create a notification on the server using a POST request.
      * @param notification The notification to create.
+     * @param sendMaintenanceEmail Whether to send maintenance email to instructors of ongoing courses.
      */
-    create(notification: SystemNotification): Observable<EntityResponseType> {
+    create(notification: SystemNotification, sendMaintenanceEmail = false): Observable<EntityResponseType> {
         const copy = this.systemNotificationService.convertSystemNotificationDatesFromClient(notification);
+        let params = new HttpParams();
+        if (sendMaintenanceEmail) {
+            params = params.set('sendMaintenanceEmail', 'true');
+        }
         return this.http
-            .post<SystemNotification>(this.resourceUrl, copy, { observe: 'response' })
+            .post<SystemNotification>(this.resourceUrl, copy, { observe: 'response', params })
             .pipe(map((res: EntityResponseType) => this.systemNotificationService.convertSystemNotificationResponseDatesFromServer(res)));
+    }
+
+    /**
+     * Get the count of instructors who would receive a maintenance email.
+     */
+    getMaintenanceRecipientsCount(): Observable<number> {
+        return this.http.get<number>(`${this.resourceUrl}/maintenance-recipients-count`);
     }
 
     /**

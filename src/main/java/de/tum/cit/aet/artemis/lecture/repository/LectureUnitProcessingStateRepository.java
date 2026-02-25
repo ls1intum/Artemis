@@ -87,6 +87,19 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
     List<LectureUnitProcessingState> findByCourseId(@Param("courseId") Long courseId);
 
     /**
+     * Find all processing states for a lecture.
+     *
+     * @param lectureId the ID of the lecture
+     * @return list of processing states for all units in the lecture
+     */
+    @Query("""
+            SELECT ps FROM LectureUnitProcessingState ps
+            JOIN FETCH ps.lectureUnit lu
+            WHERE lu.lecture.id = :lectureId
+            """)
+    List<LectureUnitProcessingState> findByLectureId(@Param("lectureId") Long lectureId);
+
+    /**
      * Count processing states currently in active processing phases (TRANSCRIBING or INGESTING).
      * Used to limit the number of concurrent processing jobs.
      *

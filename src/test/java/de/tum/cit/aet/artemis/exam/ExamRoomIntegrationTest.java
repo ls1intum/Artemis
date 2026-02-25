@@ -314,14 +314,9 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void testGetAdminOverviewSingleRoomRepeated() throws Exception {
-        final int ITERATIONS = 3;
-        for (int i = 0; i < ITERATIONS; i++) {
-            request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileSingleExamRoomRepeated, HttpStatus.OK);
-        }
-
-        var adminOverview = request.get("/api/exam/admin/exam-rooms/admin-overview", HttpStatus.OK, ExamRoomAdminOverviewDTO.class);
-        validateAdminOverview(adminOverview, ITERATIONS, 528 * ITERATIONS, 4 * ITERATIONS, ExamRoomZipFiles.singleExamRoomName);
+    void testUploadSingleRoomRepeatedDuplicatesRejected() throws Exception {
+        // The zip file contains the same room duplicated in nested directories, which should trigger a BadRequest
+        request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileSingleExamRoomRepeated, HttpStatus.BAD_REQUEST);
     }
 
     @Test

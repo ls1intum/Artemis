@@ -235,16 +235,18 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         };
 
         // Initialize component and children
+        const feedbackLoaded = firstValueFrom(comp.onFeedbackLoaded);
         fixture.detectChanges();
         // wait until data is loaded from CodeEditorTutorAssessmentContainer
-        await firstValueFrom(comp.onFeedbackLoaded);
+        await feedbackLoaded;
         fixture.changeDetectorRef.detectChanges();
 
         // Setup tree for file browser
         const codeEditorFileBrowserComp = fixture.debugElement.query(By.directive(CodeEditorFileBrowserComponent)).componentInstance;
         codeEditorFileBrowserComp.filesTreeViewItem = treeItems;
         codeEditorFileBrowserComp.repositoryFiles = repositoryFiles;
-        codeEditorFileBrowserComp.selectedFile = 'folder/file1';
+        fixture.changeDetectorRef.detectChanges();
+        codeEditorFileBrowserComp.selectedFileChange.emit('folder/file1');
         fixture.changeDetectorRef.detectChanges();
         codeEditorFileBrowserComp.isLoadingFiles = false;
         fixture.changeDetectorRef.detectChanges();

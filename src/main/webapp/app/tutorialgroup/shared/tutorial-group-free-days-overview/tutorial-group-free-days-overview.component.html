@@ -3,14 +3,14 @@
         <div class="col-12">
             <ul class="list-group">
                 @for (freeDay of tutorialGroupFreeDays(); track freeDay) {
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span [ngClass]="{ 'opacity-50': isInThePast(freeDay) }">
+                    <li class="list-group-item">
+                        <span class="date-text" [ngClass]="{ 'opacity-50': isInThePast(freeDay) }">
                             {{ freeDay.start | artemisDate: 'long-date' : false : timeZone() : true }}
                         </span>
                         @if (freeDay.reason && freeDay.reason.trim().length > 0) {
                             <button
                                 type="button"
-                                class="btn btn-outline-secondary me-2"
+                                class="btn btn-outline-secondary reason-button"
                                 [ngClass]="{ 'opacity-50': isInThePast(freeDay) }"
                                 placement="top"
                                 [ngbPopover]="freeDay.reason.trim()"

@@ -1,4 +1,4 @@
-import { Component, HostBinding, Input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -9,27 +9,27 @@ import { NgClass } from '@angular/common';
     templateUrl: './exercise-action-button.component.html',
     styleUrls: ['../../../../core/course/overview/course-overview/course-overview.scss'],
     imports: [FaIconComponent, NgClass],
+    host: {
+        '[class.btn]': 'true',
+        '[class.btn-outline-primary]': 'outlined()',
+        '[class.btn-sm]': 'smallButton()',
+        '[class.btn-primary]': 'isPrimary()',
+        '[disabled]': 'isDisabled()',
+    },
 })
 export class ExerciseActionButtonComponent {
-    @Input() buttonIcon: IconProp;
-    @Input() buttonLabel: string;
-    @Input() hideLabelMobile = true;
-    @Input() overwriteDisabled = false;
-    @Input() buttonLoading = false;
+    // Inputs
+    buttonIcon = input<IconProp | undefined>(undefined);
+    buttonLabel = input<string | undefined>(undefined);
+    hideLabelMobile = input(true);
+    overwriteDisabled = input(false);
+    buttonLoading = input(false);
+    outlined = input(false);
+    smallButton = input(false);
 
-    @HostBinding('class.btn-outline-primary') @Input() outlined = false;
-    @HostBinding('class.btn-sm') @Input() smallButton = false;
-    @HostBinding('class.btn') isButton = true;
+    protected isPrimary = computed(() => !this.outlined());
 
-    @HostBinding('class.btn-primary')
-    public get btnPrimary(): boolean {
-        return !this.outlined;
-    }
-
-    @HostBinding('disabled')
-    get disabled(): boolean {
-        return this.buttonLoading || this.overwriteDisabled;
-    }
+    protected isDisabled = computed(() => this.buttonLoading() || this.overwriteDisabled());
 
     // Icons
     faCircleNotch = faCircleNotch;

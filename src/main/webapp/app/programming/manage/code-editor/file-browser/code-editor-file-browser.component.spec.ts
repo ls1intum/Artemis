@@ -4,7 +4,6 @@ import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
 import { Subject, of } from 'rxjs';
 import { CommitState, FileBadge, FileBadgeType, FileType, GitConflictState, PROBLEM_STATEMENT_IDENTIFIER } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { triggerChanges } from 'test/helpers/utils/general-test.utils';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/services/code-editor-conflict-state.service';
 import { CodeEditorFileBrowserFolderComponent } from 'app/programming/manage/code-editor/file-browser/folder/code-editor-file-browser-folder.component';
@@ -69,6 +68,20 @@ describe('CodeEditorFileBrowserComponent', () => {
                 getRepositoryContentStub = jest.spyOn(codeEditorRepositoryFileService, 'getRepositoryContent');
                 createFileStub = jest.spyOn(codeEditorRepositoryFileService, 'createFile').mockReturnValue(of(undefined));
                 renameFileStub = jest.spyOn(codeEditorRepositoryFileService, 'renameFile').mockReturnValue(of(undefined));
+                let lastCommitState: CommitState | undefined;
+                comp.commitStateChange.subscribe((state) => {
+                    if (state !== lastCommitState) {
+                        lastCommitState = state;
+                        fixture.componentRef.setInput('commitState', state);
+                    }
+                });
+                let lastSelectedFile: string | undefined;
+                comp.selectedFileChange.subscribe((file) => {
+                    if (file !== lastSelectedFile) {
+                        lastSelectedFile = file;
+                        fixture.componentRef.setInput('selectedFile', file);
+                    }
+                });
             });
     });
 
@@ -91,7 +104,8 @@ describe('CodeEditorFileBrowserComponent', () => {
     });
 
     it('returns [] for getFolderBadges on unknown folder', () => {
-        comp.fileBadges = { 'known/file': [] };
+        fixture.componentRef.setInput('fileBadges', { 'known/file': [] });
+        fixture.detectChanges();
         const result = comp.getFolderBadges({ value: 'unknown', collapsed: true } as TreeViewItem<string>);
         expect(result).toEqual([]);
     });
@@ -204,9 +218,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         const repositoryContent: { [fileName: string]: string } = {};
         getRepositoryContentStub.mockReturnValue(of(repositoryContent));
         getStatusStub.mockReturnValue(of({ repositoryStatus: CommitState.CLEAN }));
-        comp.commitState = CommitState.UNDEFINED;
-
-        triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
+        fixture.componentRef.setInput('commitState', CommitState.UNDEFINED);
         fixture.detectChanges();
 
         expect(comp.isLoadingFiles).toBeFalse();
@@ -236,7 +248,7 @@ describe('CodeEditorFileBrowserComponent', () => {
 
         const item = { value: 'folder', text: 'folder' } as unknown as TreeViewItem<string>;
         const modalRef = {
-            componentInstance: { parent: undefined, fileNameToDelete: undefined, fileType: undefined },
+            componentInstance: { setInputs: jest.fn() },
         } as any;
 
         const openSpy = jest.spyOn(comp.modalService, 'open').mockReturnValue(modalRef);
@@ -244,18 +256,18 @@ describe('CodeEditorFileBrowserComponent', () => {
         comp.openDeleteFileModal(item);
 
         expect(openSpy).toHaveBeenCalledOnce();
-        expect(modalRef.componentInstance.parent).toBe(comp);
-        expect(modalRef.componentInstance.fileNameToDelete).toBe('folder');
-        expect(modalRef.componentInstance.fileType).toBe(FileType.FOLDER);
+        expect(modalRef.componentInstance.setInputs).toHaveBeenCalledWith({
+            parent: comp,
+            fileNameToDelete: 'folder',
+            fileType: FileType.FOLDER,
+        });
     });
 
     it('should create treeviewItems if getRepositoryContent returns files', () => {
         const repositoryContent: { [fileName: string]: string } = { file: 'FILE', folder: 'FOLDER' };
         getRepositoryContentStub.mockReturnValue(of(repositoryContent));
         getStatusStub.mockReturnValue(of({ repositoryStatus: CommitState.CLEAN }));
-        comp.commitState = CommitState.UNDEFINED;
-
-        triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
+        fixture.componentRef.setInput('commitState', CommitState.UNDEFINED);
         fixture.detectChanges();
         expect(comp.isLoadingFiles).toBeFalse();
         expect(comp.repositoryFiles).toEqual({
@@ -394,8 +406,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         };
         getRepositoryContentStub.mockReturnValue(of(repositoryContent));
         getStatusStub.mockReturnValue(of({ repositoryStatus: CommitState.CLEAN }));
-        comp.commitState = CommitState.UNDEFINED;
-        triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
+        fixture.componentRef.setInput('commitState', CommitState.UNDEFINED);
         fixture.detectChanges();
         expect(comp.isLoadingFiles).toBeFalse();
         expect(comp.repositoryFiles).toEqual({
@@ -445,15 +456,14 @@ describe('CodeEditorFileBrowserComponent', () => {
         const onErrorSpy = jest.spyOn(comp.onError, 'emit');
         const loadFilesSpy = jest.spyOn(comp, 'loadFiles');
         getStatusStub.mockReturnValue(isCleanSubject);
-        comp.commitState = CommitState.UNDEFINED;
-        triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
+        fixture.componentRef.setInput('commitState', CommitState.UNDEFINED);
         fixture.detectChanges();
         expect(comp.isLoadingFiles).toBeTrue();
-        expect(comp.commitState).toEqual(CommitState.UNDEFINED);
+        expect(comp.commitState()).toEqual(CommitState.UNDEFINED);
         isCleanSubject.error('fatal error');
 
         fixture.detectChanges();
-        expect(comp.commitState).toEqual(CommitState.COULD_NOT_BE_RETRIEVED);
+        expect(comp.commitState()).toEqual(CommitState.COULD_NOT_BE_RETRIEVED);
         expect(comp.isLoadingFiles).toBeFalse();
 
         // PS is still present
@@ -481,11 +491,10 @@ describe('CodeEditorFileBrowserComponent', () => {
         const onErrorSpy = jest.spyOn(comp.onError, 'emit');
         getStatusStub.mockReturnValue(isCleanSubject);
         getRepositoryContentStub.mockReturnValue(getRepositoryContentSubject);
-        comp.commitState = CommitState.UNDEFINED;
-        triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
+        fixture.componentRef.setInput('commitState', CommitState.UNDEFINED);
         fixture.detectChanges();
         expect(comp.isLoadingFiles).toBeTrue();
-        expect(comp.commitState).toEqual(CommitState.UNDEFINED);
+        expect(comp.commitState()).toEqual(CommitState.UNDEFINED);
         isCleanSubject.next({ isClean: true });
         getRepositoryContentSubject.error('fatal error');
 
@@ -528,17 +537,19 @@ describe('CodeEditorFileBrowserComponent', () => {
                 children: [],
             }),
         ];
-        comp.selectedFile = undefined;
+        fixture.componentRef.setInput('selectedFile', undefined);
+        fixture.detectChanges();
+        const selectedFileChangeSpy = jest.spyOn(comp.selectedFileChange, 'emit');
         const nodeFirstFile = comp.filesTreeViewItem[0];
         comp.handleNodeSelected(nodeFirstFile);
         expect(nodeFirstFile.checked).toBeTrue();
-        expect(comp.selectedFile).toBe(fileToSelect);
+        expect(selectedFileChangeSpy).toHaveBeenCalledWith(fileToSelect);
         // Deselect the current file.
         const nodeSecondFile = comp.filesTreeViewItem[1];
         comp.handleNodeSelected(nodeSecondFile);
         expect(nodeFirstFile.checked).toBeFalse();
         expect(nodeSecondFile.checked).toBeTrue();
-        expect(comp.selectedFile).toBe(otherFile);
+        expect(selectedFileChangeSpy).toHaveBeenCalledWith(otherFile);
     });
 
     it('should set node to checked if its file gets selected and update ui', () => {
@@ -549,27 +560,11 @@ describe('CodeEditorFileBrowserComponent', () => {
             folder2: FileType.FOLDER,
             'folder/file2': FileType.FILE,
         };
-        comp.filesTreeViewItem = [
-            new TreeViewItem({
-                internalDisabled: false,
-                internalChecked: false,
-                internalCollapsed: false,
-                text: selectedFile,
-                value: 'file1',
-            } as any),
-            new TreeViewItem({
-                internalDisabled: false,
-                internalChecked: false,
-                internalCollapsed: false,
-                text: 'folder2/file2',
-                value: 'file2',
-            } as any),
-        ];
         comp.repositoryFiles = repositoryFiles;
-        comp.selectedFile = selectedFile;
-        triggerChanges(comp, { property: 'selectedFile', currentValue: 'folder/file2', firstChange: false });
         fixture.detectChanges();
-        expect(comp.selectedFile).toEqual(selectedFile);
+        fixture.componentRef.setInput('selectedFile', selectedFile);
+        fixture.detectChanges();
+        expect(comp.selectedFile()).toEqual(selectedFile);
         const selectedTreeItem = comp.filesTreeViewItem.find(({ value }) => value === 'folder')!.children.find(({ value }) => value === selectedFile)!;
         expect(selectedTreeItem).toBeDefined();
         expect(selectedTreeItem.checked).toBeTrue();
@@ -1032,12 +1027,10 @@ describe('CodeEditorFileBrowserComponent', () => {
         const repositoryContent: { [fileName: string]: string } = {};
         getStatusStub.mockReturnValue(of({ repositoryStatus: CommitState.CONFLICT }));
         getRepositoryContentStub.mockReturnValue(of(repositoryContent));
-        comp.commitState = CommitState.UNDEFINED;
-
-        triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
+        fixture.componentRef.setInput('commitState', CommitState.UNDEFINED);
         fixture.detectChanges();
 
-        expect(comp.commitState).toEqual(CommitState.CONFLICT);
+        expect(comp.commitState()).toEqual(CommitState.CONFLICT);
 
         expect(debugElement.query(By.css(createFileRoot)).nativeElement.disabled).toBeTrue();
         expect(debugElement.query(By.css(createFolderRoot)).nativeElement.disabled).toBeTrue();
@@ -1047,19 +1040,17 @@ describe('CodeEditorFileBrowserComponent', () => {
         conflictService.notifyConflictState(GitConflictState.OK);
         getStatusStub.mockReturnValue(of({ repositoryStatus: CommitState.CLEAN }));
 
-        comp.commitState = CommitState.UNDEFINED;
-
-        triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
+        fixture.componentRef.setInput('commitState', CommitState.UNDEFINED);
         fixture.detectChanges();
 
-        expect(comp.commitState).toEqual(CommitState.CLEAN);
+        expect(comp.commitState()).toEqual(CommitState.CLEAN);
 
         expect(debugElement.query(By.css(createFileRoot)).nativeElement.disabled).toBeFalse();
         expect(debugElement.query(By.css(createFolderRoot)).nativeElement.disabled).toBeFalse();
         expect(debugElement.query(By.css(compressTree)).nativeElement.disabled).toBeFalse();
 
         expect(getRepositoryContentStub).toHaveBeenCalledOnce();
-        expect(comp.selectedFile).toBeUndefined();
+        expect(comp.selectedFile()).toBeUndefined();
     });
 
     it('should load information about changed files', fakeAsync(() => {
@@ -1095,13 +1086,15 @@ describe('CodeEditorFileBrowserComponent', () => {
             folder: FileType.FOLDER,
         };
         const item = { value: 'folder/file1', text: 'file1' } as TreeViewItem<string>;
-        const modalRef = { componentInstance: { parent: undefined, fileNameToDelete: undefined, fileType: undefined } } as NgbModalRef;
+        const modalRef = { componentInstance: { setInputs: jest.fn() } } as NgbModalRef;
         const openModalStub = jest.spyOn(comp.modalService, 'open').mockReturnValue(modalRef);
         comp.openDeleteFileModal(item);
         expect(openModalStub).toHaveBeenCalledOnce();
-        expect(modalRef.componentInstance.parent).toBe(comp);
-        expect(modalRef.componentInstance.fileNameToDelete).toBe('folder/file1');
-        expect(modalRef.componentInstance.fileType).toBe(FileType.FILE);
+        expect(modalRef.componentInstance.setInputs).toHaveBeenCalledWith({
+            parent: comp,
+            fileNameToDelete: 'folder/file1',
+            fileType: FileType.FILE,
+        });
     });
 
     describe('getFolderBadges', () => {
@@ -1113,7 +1106,8 @@ describe('CodeEditorFileBrowserComponent', () => {
         };
 
         beforeEach(() => {
-            comp.fileBadges = mockFileBadges;
+            fixture.componentRef.setInput('fileBadges', mockFileBadges);
+            fixture.detectChanges();
         });
 
         it('should return an empty array if folder is not collapsed', () => {

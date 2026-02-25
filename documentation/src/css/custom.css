@@ -35,13 +35,24 @@
     --tum-accent-blue: #64A0C8;
 }
 
-/* Dark mode: use lighter blues for accessibility */
+/* Dark mode: use Artemis blue tones */
 [data-theme='dark'] {
-    --ifm-color-primary: var(--tum-accent-light-blue);
-    --ifm-color-primary-dark: var(--tum-accent-blue);
-    --ifm-color-primary-darker: var(--tum-color-blue);
-    --ifm-color-primary-light: var(--tum-accent-beige);
-    --ifm-color-primary-lighter: var(--tum-accent-orange);
-    --ifm-color-primary-lightest: var(--tum-accent-green);
+    --ifm-color-primary: #3e8acc;
+    --ifm-color-primary-dark: #3579b5;
+    --ifm-color-primary-darker: #2d6a9e;
+    --ifm-color-primary-darkest: #1f4a6e;
+    --ifm-color-primary-light: #5a9ed6;
+    --ifm-color-primary-lighter: #76b2e0;
+    --ifm-color-primary-lightest: #98c6ea;
     --docusaurus-highlighted-code-line-bg: var(--tum-gray-80);
+}
+
+/* Dark mode - Landing page hero section */
+[data-theme='dark'] .hero--primary {
+    background-color: #1a2a3a;
+}
+
+[data-theme='dark'] .hero__title,
+[data-theme='dark'] .hero__subtitle {
+    color: #fff;
 }

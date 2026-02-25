@@ -1,94 +1,58 @@
 <div class="mb-4">
-    <div class="d-flex justify-content-between align-items-center border-bottom mb-3">
-        <div class="d-flex align-items-center gap-2">
-            <h3 id="build-queue-overview" jhiTranslate="artemisApp.buildQueue.statistics.title"></h3>
-            @if (displaySpanSelector) {
-                <jhi-help-icon class="ps-1 mb-2" text="artemisApp.buildQueue.statistics.titleTooltip" />
-                <div class="col-md-9 btn-group btn-group-toggle mb-2 ml-2" data-toggle="buttons" [hidden]="isCollapsed">
-                    <label class="btn btn-secondary" [class.active]="currentSpan === SpanType.DAY">
-                        <input type="radio" name="options" id="option1" (click)="onTabChange(SpanType.DAY)" />
-                        <span jhiTranslate="artemisApp.buildQueue.statistics.daySpan"></span>
-                    </label>
-                    <label class="btn btn-secondary" [class.active]="currentSpan === SpanType.WEEK">
-                        <input type="radio" name="options" id="option2" checked (click)="onTabChange(SpanType.WEEK)" />
-                        <span jhiTranslate="artemisApp.buildQueue.statistics.weekSpan"></span>
-                    </label>
-                    <label class="btn btn-secondary" [class.active]="currentSpan === SpanType.MONTH">
-                        <input type="radio" name="options" id="option3" (click)="onTabChange(SpanType.MONTH)" />
-                        <span jhiTranslate="artemisApp.buildQueue.statistics.monthSpan"></span>
-                    </label>
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <h5 id="build-queue-overview" class="mb-0" jhiTranslate="artemisApp.buildQueue.statistics.title"></h5>
+        @if (displaySpanSelector) {
+            <jhi-help-icon class="ps-1" text="artemisApp.buildQueue.statistics.titleTooltip" />
+            <div class="btn-group btn-group-toggle btn-group-sm ms-2" data-toggle="buttons">
+                <label class="btn btn-secondary" [class.active]="currentSpan === SpanType.DAY">
+                    <input type="radio" name="options" (click)="onTabChange(SpanType.DAY)" />
+                    <span jhiTranslate="artemisApp.buildQueue.statistics.daySpan"></span>
+                </label>
+                <label class="btn btn-secondary" [class.active]="currentSpan === SpanType.WEEK">
+                    <input type="radio" name="options" checked (click)="onTabChange(SpanType.WEEK)" />
+                    <span jhiTranslate="artemisApp.buildQueue.statistics.weekSpan"></span>
+                </label>
+                <label class="btn btn-secondary" [class.active]="currentSpan === SpanType.MONTH">
+                    <input type="radio" name="options" (click)="onTabChange(SpanType.MONTH)" />
+                    <span jhiTranslate="artemisApp.buildQueue.statistics.monthSpan"></span>
+                </label>
+            </div>
+        }
+    </div>
+    <div class="d-flex align-items-center flex-wrap gap-3">
+        <ngx-charts-pie-chart class="chart-container" [view]="[80, 80]" [results]="pieChartData()" [scheme]="pieChartColorScheme" [doughnut]="true" [arcWidth]="0.4" />
+        <div class="d-flex flex-wrap gap-2 stats-container">
+            <div class="stats-item">
+                <span class="stats-label" jhiTranslate="artemisApp.buildQueue.statistics.totalBuilds"></span>
+                <span class="stats-value">{{ buildJobStatistics().totalBuilds }}</span>
+            </div>
+            <div class="stats-item">
+                <span class="stats-label" jhiTranslate="artemisApp.buildQueue.statistics.successfulBuildsWithColon"></span>
+                <span class="stats-value">{{ buildJobStatistics().successfulBuilds }}</span>
+                <span class="stats-percentage">({{ successfulBuildsPercentage() }})</span>
+            </div>
+            <div class="stats-item">
+                <span class="stats-label" jhiTranslate="artemisApp.buildQueue.statistics.failedBuilds"></span>
+                <span class="stats-value">{{ buildJobStatistics().failedBuilds }}</span>
+                <span class="stats-percentage">({{ failedBuildsPercentage() }})</span>
+            </div>
+            <div class="stats-item">
+                <span class="stats-label" jhiTranslate="artemisApp.buildQueue.statistics.cancelledBuilds"></span>
+                <span class="stats-value">{{ buildJobStatistics().cancelledBuilds }}</span>
+                <span class="stats-percentage">({{ cancelledBuildsPercentage() }})</span>
+            </div>
+            <div class="stats-item">
+                <span class="stats-label" jhiTranslate="artemisApp.buildQueue.statistics.timeoutBuilds"></span>
+                <span class="stats-value">{{ buildJobStatistics().timeOutBuilds }}</span>
+                <span class="stats-percentage">({{ timeoutBuildsPercentage() }})</span>
+            </div>
+            @if (displayMissingBuilds) {
+                <div class="stats-item">
+                    <span class="stats-label" jhiTranslate="artemisApp.buildQueue.statistics.missingBuilds"></span>
+                    <span class="stats-value">{{ buildJobStatistics().missingBuilds }}</span>
+                    <span class="stats-percentage">({{ missingBuildsPercentage() }})</span>
                 </div>
             }
-        </div>
-        <button class="btn" (click)="isCollapsed = !isCollapsed" [attr.aria-expanded]="!isCollapsed" [attr.aria-controls]="'collapseQuestion'">
-            <fa-icon size="2x" [icon]="isCollapsed ? faAngleRight : faAngleDown" />
-        </button>
-    </div>
-    <div [ngbCollapse]="isCollapsed">
-        <div class="d-flex gap-4">
-            <div class="d-flex gap-4">
-                <div class="p-2 border border-primary-subtle border-1 rounded-3 result-card">
-                    <div class="d-flex flex-column justify-content-evenly w-100 h-100 align-items-center">
-                        <h2 class="m-0">{{ successfulBuildsPercentage() }}</h2>
-                        <p class="m-0 text-center" jhiTranslate="artemisApp.buildQueue.statistics.successfulBuilds"></p>
-                    </div>
-                </div>
-                <div class="d-flex flex-column gap-3 justify-content-around stats-column">
-                    <div>
-                        <span class="bold" jhiTranslate="artemisApp.buildQueue.statistics.totalBuilds"></span>
-                        <span>{{ buildJobStatistics().totalBuilds }}</span>
-                    </div>
-                    <div>
-                        <span class="bold" jhiTranslate="artemisApp.buildQueue.statistics.successfulBuildsWithColon"></span>
-                        <span>{{ buildJobStatistics().successfulBuilds }}</span>
-                    </div>
-                </div>
-                <div class="d-flex flex-column gap-3 justify-content-around stats-column">
-                    <div>
-                        <span class="bold" jhiTranslate="artemisApp.buildQueue.statistics.failedBuildsPercentage"></span>
-                        <span>{{ failedBuildsPercentage() }}</span>
-                    </div>
-                    <div>
-                        <span class="bold" jhiTranslate="artemisApp.buildQueue.statistics.failedBuilds"></span>
-                        <span>{{ buildJobStatistics().failedBuilds }}</span>
-                    </div>
-                </div>
-                <div class="d-flex flex-column gap-3 justify-content-around stats-column">
-                    <div>
-                        <span class="bold" jhiTranslate="artemisApp.buildQueue.statistics.cancelledBuildsPercentage"></span>
-                        <span>{{ cancelledBuildsPercentage() }}</span>
-                    </div>
-                    <div>
-                        <span class="bold" jhiTranslate="artemisApp.buildQueue.statistics.cancelledBuilds"></span>
-                        <span>{{ buildJobStatistics().cancelledBuilds }}</span>
-                    </div>
-                </div>
-                <div class="d-flex flex-column gap-3 justify-content-around stats-column">
-                    <div>
-                        <span class="bold" jhiTranslate="artemisApp.buildQueue.statistics.timeoutBuildsPercentage"></span>
-                        <span>{{ timeoutBuildsPercentage() }}</span>
-                    </div>
-                    <div>
-                        <span class="bold" jhiTranslate="artemisApp.buildQueue.statistics.timeoutBuilds"></span>
-                        <span>{{ buildJobStatistics().timeOutBuilds }}</span>
-                    </div>
-                </div>
-                @if (displayMissingBuilds) {
-                    <div class="d-flex flex-column gap-3 justify-content-around stats-column">
-                        <div>
-                            <span class="bold" jhiTranslate="artemisApp.buildQueue.statistics.missingBuildsPercentage"></span>
-                            <span>{{ missingBuildsPercentage() }}</span>
-                        </div>
-                        <div>
-                            <span class="bold" jhiTranslate="artemisApp.buildQueue.statistics.missingBuilds"></span>
-                            <span>{{ buildJobStatistics().missingBuilds }}</span>
-                        </div>
-                    </div>
-                }
-            </div>
-            <div>
-                <ngx-charts-pie-chart [view]="[100, 100]" [results]="pieChartData()" [scheme]="pieChartColorScheme" [doughnut]="true" />
-            </div>
         </div>
     </div>
 </div>

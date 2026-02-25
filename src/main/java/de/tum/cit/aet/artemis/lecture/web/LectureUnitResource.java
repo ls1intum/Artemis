@@ -1,6 +1,10 @@
 package de.tum.cit.aet.artemis.lecture.web;
 
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toMap;
+
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -36,11 +40,15 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitCombinedStatusDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitForLearningPathNodeDetailsDTO;
-import de.tum.cit.aet.artemis.lecture.dto.LectureUnitProcessingStatusDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureContentProcessingService;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
@@ -70,15 +78,21 @@ public class LectureUnitResource {
 
     private final Optional<LectureContentProcessingService> lectureContentProcessingService;
 
+    private final LectureUnitProcessingStateRepository processingStateRepository;
+
+    private final LectureTranscriptionRepository transcriptionRepository;
+
     public LectureUnitResource(UserRepository userRepository, LectureRepository lectureRepository, LectureUnitRepository lectureUnitRepository,
-            LectureUnitService lectureUnitService, Optional<CompetencyProgressApi> competencyProgressApi,
-            Optional<LectureContentProcessingService> lectureContentProcessingService) {
+            LectureUnitService lectureUnitService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<LectureContentProcessingService> lectureContentProcessingService,
+            LectureUnitProcessingStateRepository processingStateRepository, LectureTranscriptionRepository transcriptionRepository) {
         this.userRepository = userRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.lectureUnitService = lectureUnitService;
         this.competencyProgressApi = competencyProgressApi;
         this.lectureContentProcessingService = lectureContentProcessingService;
+        this.processingStateRepository = processingStateRepository;
+        this.transcriptionRepository = transcriptionRepository;
     }
 
     /**
@@ -208,30 +222,43 @@ public class LectureUnitResource {
     }
 
     /**
-     * GET /lectures/:lectureId/lecture-units/:lectureUnitId/processing-status
-     * Gets the processing status of a lecture unit.
+     * GET /lectures/:lectureId/lecture-units/statuses
+     * Gets the combined processing and transcription status for all attachment video units in a lecture.
+     * This bulk endpoint reduces the number of HTTP requests from 2N to 1 when loading the lecture unit management view.
      *
-     * @param lectureId     the id of the lecture to which the unit belongs
-     * @param lectureUnitId the id of the lecture unit
-     * @return the ResponseEntity with status 200 (OK) and the processing status
+     * @param lectureId the id of the lecture
+     * @return the ResponseEntity with status 200 (OK) and the list of combined statuses
      */
-    @GetMapping("lectures/{lectureId}/lecture-units/{lectureUnitId}/processing-status")
+    @GetMapping("lectures/{lectureId}/lecture-units/statuses")
     @EnforceAtLeastEditorInLecture
-    public ResponseEntity<LectureUnitProcessingStatusDTO> getProcessingStatus(@PathVariable Long lectureId, @PathVariable Long lectureUnitId) {
-        log.debug("REST request to get processing status of lecture unit: {}", lectureUnitId);
-        LectureUnit lectureUnit = lectureUnitRepository.findByIdElseThrow(lectureUnitId);
+    public ResponseEntity<List<LectureUnitCombinedStatusDTO>> getUnitStatuses(@PathVariable Long lectureId) {
+        log.debug("REST request to get combined statuses for all lecture units in lecture: {}", lectureId);
 
-        if (lectureUnit.getLecture() == null || !lectureUnit.getLecture().getId().equals(lectureId)) {
-            throw new BadRequestAlertException("Requested lecture unit is not part of the specified lecture", ENTITY_NAME, "lectureIdMismatch");
-        }
-
+        // If processing is not enabled (Iris/Nebula disabled), return empty list
+        // This prevents the UI from showing "Awaiting Processing" when processing will never happen
         if (lectureContentProcessingService.isEmpty()) {
-            throw new AccessForbiddenException("Lecture content processing is not enabled");
+            return ResponseEntity.ok(List.of());
         }
 
-        var status = lectureContentProcessingService.get().getProcessingState(lectureUnitId).map(LectureUnitProcessingStatusDTO::of)
-                .orElse(LectureUnitProcessingStatusDTO.idle(lectureUnitId));
-        return ResponseEntity.ok(status);
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
+
+        // Bulk fetch processing states for all units in the lecture
+        List<LectureUnitProcessingState> processingStates = processingStateRepository.findByLectureId(lectureId);
+        Map<Long, LectureUnitProcessingState> stateByUnitId = processingStates.stream().collect(toMap(s -> s.getLectureUnit().getId(), identity(), (a, b) -> a));
+
+        // Bulk fetch transcriptions for all units in the lecture
+        List<LectureTranscription> transcriptions = transcriptionRepository.findByLectureId(lectureId);
+        Map<Long, LectureTranscription> transcriptionByUnitId = transcriptions.stream().collect(toMap(t -> t.getLectureUnit().getId(), identity(), (a, b) -> a));
+
+        // Build status list for attachment video units only
+        List<LectureUnitCombinedStatusDTO> statuses = lecture.getLectureUnits().stream().filter(AttachmentVideoUnit.class::isInstance).map(unit -> {
+            var processingState = stateByUnitId.get(unit.getId());
+            var transcription = transcriptionByUnitId.get(unit.getId());
+            var transcriptionStatus = transcription != null ? transcription.getTranscriptionStatus() : null;
+            return LectureUnitCombinedStatusDTO.of(unit.getId(), processingState, transcriptionStatus);
+        }).toList();
+
+        return ResponseEntity.ok(statuses);
     }
 
     /**
@@ -240,11 +267,11 @@ public class LectureUnitResource {
      *
      * @param lectureId     the id of the lecture to which the unit belongs
      * @param lectureUnitId the id of the lecture unit to retry processing for
-     * @return the ResponseEntity with status 200 (OK)
+     * @return the ResponseEntity with status 200 (OK) and the updated combined status
      */
     @PostMapping("lectures/{lectureId}/lecture-units/{lectureUnitId}/retry-processing")
     @EnforceAtLeastEditorInLectureUnit
-    public ResponseEntity<Void> retryProcessing(@PathVariable Long lectureId, @PathVariable Long lectureUnitId) {
+    public ResponseEntity<LectureUnitCombinedStatusDTO> retryProcessing(@PathVariable Long lectureId, @PathVariable Long lectureUnitId) {
         log.info("REST request to retry processing of lecture unit: {}", lectureUnitId);
         LectureUnit lectureUnit = lectureUnitRepository.findByIdElseThrow(lectureUnitId);
 
@@ -262,12 +289,18 @@ public class LectureUnitResource {
 
         // Check that the unit is in a failed state
         var currentState = lectureContentProcessingService.get().getProcessingState(lectureUnitId);
-        if (currentState.isPresent() && currentState.get().getPhase() != ProcessingPhase.FAILED) {
+        if (currentState.isEmpty() || currentState.get().getPhase() != ProcessingPhase.FAILED) {
             throw new BadRequestAlertException("Cannot retry processing for a unit that is not in failed state", ENTITY_NAME, "notInFailedState");
         }
 
-        lectureContentProcessingService.get().retryProcessing(attachmentVideoUnit);
-        return ResponseEntity.ok().build();
+        // Retry processing - creates initial state synchronously
+        var newState = lectureContentProcessingService.get().retryProcessing(attachmentVideoUnit);
+
+        // Return the new state, or the existing failed state if preflight failed (services unavailable)
+        var transcription = transcriptionRepository.findByLectureUnit_Id(lectureUnitId).orElse(null);
+        var transcriptionStatus = transcription != null ? transcription.getTranscriptionStatus() : null;
+        var stateToReturn = newState != null ? newState : currentState.get();
+        return ResponseEntity.ok(LectureUnitCombinedStatusDTO.of(lectureUnitId, stateToReturn, transcriptionStatus));
     }
 
 }

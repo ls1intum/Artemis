@@ -23,12 +23,12 @@
             "text4_1": "<b>Flexible Positionierung:</b> Klicke und ziehe das Chat-Widget, um es auf deinem Bildschirm zu bewegen und optimal zu positionieren, während du an Übungen arbeitest.",
             "text4_2": "<b>Größenverstellbares Fenster:</b> Passe die Widget-Größe an, indem du seine Ränder ziehst, um es an deinen Arbeitsbereich und deine Vorlieben anzupassen.",
             "text4_3": "<b>Vollbildmodus:</b> Erweitere das Widget auf Vollbild für detailliertere Gespräche und bessere Lesbarkeit.",
-            "text4_4": "<b>Sitzungsverwaltung:</b> Lösche deinen Chat-Verlauf jederzeit mit dem Mülleimer-Button, um neue Gespräche zu beginnen.",
+            "text4_4": "<b>Sitzungsverwaltung:</b> Starte jederzeit eine neue Konversation über den ‚Neu'-Button. Frühere Konversationen bleiben in deinem Chat-Verlauf erhalten.",
             "text4_5": "<b>Persistenter Verlauf:</b> Dein Gesprächsverlauf wird über Sitzungen hinweg beibehalten, sodass du vorherige Diskussionen fortsetzen kannst.",
             "supportText": "(Bei technischen Problemen oder Feedback zu Iris wende dich bitte an deine Kursleiter oder erstelle ein Issue auf GitHub: https://github.com/ls1intum/Artemis.)",
             "clearSession": {
-                "title": "Chatverlauf löschen",
-                "text": "Bist du sicher, dass du den Chatverlauf löschen möchtest?",
+                "title": "Neue Konversation",
+                "text": "Bist du sicher, dass du eine neue Konversation starten möchtest?",
                 "submit": "Bestätigen"
             },
             "errors": {
@@ -49,16 +49,20 @@
                 "parseResponse": "Ein Fehler ist beim Parsen der Antwort von Iris aufgetreten. Ursache: {{ cause }}",
                 "technicalError": "Es ist ein technischer Fehler aufgetreten. Bitte wende dich an Artemis Administratoren sollte der Fehler weiterhin zu sehen sein.",
                 "irisNotAvailable": "Iris antwortet nicht. Bitte versuche es später!",
-                "rateLimitExceeded": "Du hast die maximale Anzahl von Nachrichten, die du in einem {{ hours }}-Stunden-Zeitfenster an Iris senden kannst, erreicht. Bitte versuche es später erneut!"
+                "rateLimitExceeded": "Du hast die maximale Anzahl von Nachrichten, die du in einem {{ hours }}-Stunden-Zeitfenster an Iris senden kannst, erreicht. Bitte versuche es später erneut!",
+                "aiUsageDeclined": "Du hast der Verwendung von AI explizit widersprochen. Stimme der Verwendung von AI-Tools in den Einstellungen zu, um Iris nutzen zu können."
             },
             "disclaimer": "Iris kann Fehler machen. Überprüfe wichtige Informationen.",
             "disclaimerGPT": "ChatGPT kann Fehler machen. Überprüfe wichtige Informationen.",
-            "tutorFirstMessage": "Hallo, ich bin Iris! Ich kann dir bei deiner Programmieraufgabe helfen. Du kannst <a href='/about-iris' target='_blank'>hier</a> mehr über mich erfahren.",
-            "codeEditorFirstMessage": "Hallo, ich bin Iris! Ich kann dir bei der Bearbeitung von Programmieraufgaben helfen. Ich kann zum Beispiel: <ul><li>eine neue Aufgabe erstellen</li><li><a href='/' target='_blank'>eine Variante von einer bestehenden Aufgabe erstellen</a></li><li>eine bestehende Aufgabe neuen Anforderungen anpassen</li></ul> Du kannst <a href='/about-iris' target='_blank'>hier</a> mehr über mich erfahren.",
             "rateLimitTooltip": "Dies ist die maximale Anzahl von Nachrichten, die du in einem {{ hours }}-Stunden-Zeitfenster an Iris senden kannst.",
             "goToRelatedEntityButton": {
                 "exerciseLabel": "Zugehörige Aufgabe",
                 "lectureLabel": "Zugehörige Vorlesung"
+            },
+            "actions": {
+                "copy": "Kopieren",
+                "goodResponse": "Gute Antwort",
+                "badResponse": "Schlechte Antwort"
             }
         }
     }

@@ -20,7 +20,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.13'
+          python-version: '3.14'
 
       - name: Query quality check
         run: |
@@ -179,8 +179,8 @@ jobs:
             echo ""
             echo "Need more help?"
             echo "==============="
-            echo "- Check our performance guidelines: https://docs.artemis.cit.tum.de/dev/guidelines/performance.html"
-            echo "- Check our best practices in the database section of the developer docs: https://docs.artemis.cit.tum.de/dev/guidelines/database.html"
+            echo "- Check our performance guidelines: https://docs.artemis.tum.de/developer/guidelines/performance"
+            echo "- Check our best practices in the database section of the developer docs: https://docs.artemis.tum.de/developer/guidelines/database"
             echo "- Monitor query execution time with logging"
             echo ""
             echo "Remember: The goal is to fetch only the data you actually need, when you need it!"

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 
 /**
@@ -62,6 +63,34 @@ public class LocalCIQueueWebsocketService {
     }
 
     /**
+     * Sends a single build job update over websocket.
+     * This is used for the build job detail page to receive live updates.
+     *
+     * @param buildJob the build job to send the update for
+     */
+    void sendBuildJobUpdateOverWebsocket(BuildJobQueueItem buildJob) {
+        if (buildJob == null) {
+            return;
+        }
+        localCIWebsocketMessagingService.sendBuildJobUpdate(buildJob);
+    }
+
+    /**
+     * Sends a finished build job update over websocket.
+     * This notifies clients that a new finished build job is available.
+     *
+     * @param finishedBuildJob the finished build job DTO to send
+     */
+    void sendFinishedBuildJobOverWebsocket(FinishedBuildJobDTO finishedBuildJob) {
+        if (finishedBuildJob == null) {
+            return;
+        }
+        localCIWebsocketMessagingService.sendFinishedBuildJobUpdate(finishedBuildJob);
+        // Also send to the individual build job topic for the build job detail page
+        localCIWebsocketMessagingService.sendFinishedBuildJobDetailUpdate(finishedBuildJob);
+    }
+
+    /**
      * Sends build agent information over websocket. This method is called when a new build agent is added or removed.
      *
      * @param agentName the name of the build agent
@@ -71,7 +100,11 @@ public class LocalCIQueueWebsocketService {
         sendBuildAgentDetailsOverWebsocket(agentName);
     }
 
-    private void sendBuildAgentSummaryOverWebsocket() {
+    /**
+     * Sends the build agent summary over websocket to update the admin build agents page.
+     * This is called when build agent information changes or when processing jobs are added/removed.
+     */
+    void sendBuildAgentSummaryOverWebsocket() {
         var buildAgentSummary = removeUnnecessaryInformationFromBuildAgentInformation(distributedDataAccessService.getBuildAgentInformation());
         localCIWebsocketMessagingService.sendBuildAgentSummary(buildAgentSummary);
     }

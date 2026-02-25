@@ -39,7 +39,7 @@ class TopicSubscriptionInterceptorTest extends AbstractSpringIntegrationIndepend
 
     @Test
     void testAllowSubscription() {
-        userUtilService.addUsers(TEST_PREFIX, 1, 0, 1, 1);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
         var course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, false);
         var exercise = course.getExercises().stream().findFirst().orElseThrow();
         var participation = exercise.getStudentParticipations().stream().findFirst().orElseThrow();
@@ -111,6 +111,25 @@ class TopicSubscriptionInterceptorTest extends AbstractSpringIntegrationIndepend
             when(principalMock.getName()).thenReturn(TEST_PREFIX + "editor1");
             returnedValue = interceptor.preSend(msgMock, channel);
             assertThat(returnedValue).isNull();
+
+            when(principalMock.getName()).thenReturn(TEST_PREFIX + "student1");
+            returnedValue = interceptor.preSend(msgMock, channel);
+            assertThat(returnedValue).isNull();
+
+            // Exercise synchronization destination
+            when(headerAccessorMock.getDestination()).thenReturn("/topic/exercises/" + exercise.getId() + "/synchronization");
+
+            when(principalMock.getName()).thenReturn(TEST_PREFIX + "instructor1");
+            returnedValue = interceptor.preSend(msgMock, channel);
+            assertThat(returnedValue).isEqualTo(msgMock);
+
+            when(principalMock.getName()).thenReturn(TEST_PREFIX + "editor1");
+            returnedValue = interceptor.preSend(msgMock, channel);
+            assertThat(returnedValue).isEqualTo(msgMock);
+
+            when(principalMock.getName()).thenReturn(TEST_PREFIX + "tutor1");
+            returnedValue = interceptor.preSend(msgMock, channel);
+            assertThat(returnedValue).isEqualTo(msgMock);
 
             when(principalMock.getName()).thenReturn(TEST_PREFIX + "student1");
             returnedValue = interceptor.preSend(msgMock, channel);

@@ -92,7 +92,7 @@ public class ExamRoomService {
             ZipEntry entry;
 
             while ((entry = zis.getNextEntry()) != null) {
-                String entryName = FileUtil.sanitizeFilename(entry.getName());
+                String entryName = entry.getName();
 
                 // validate file type
                 if (entry.isDirectory() || !entryName.endsWith(".json")) {
@@ -103,7 +103,7 @@ public class ExamRoomService {
                 // Math.max(0, entryName.lastIndexOf('/') + 1); === entryName.lastIndexOf('/') + 1;
                 int roomNumberStartIndex = entryName.lastIndexOf('/') + 1;
                 int roomNumberEndIndex = entryName.lastIndexOf(".json");
-                String roomNumber = entryName.substring(roomNumberStartIndex, roomNumberEndIndex);
+                String roomNumber = FileUtil.sanitizeFilename(entryName.substring(roomNumberStartIndex, roomNumberEndIndex));
                 if (roomNumber.isBlank()) {
                     throw new BadRequestAlertException("Invalid room file name: missing room number", ENTITY_NAME, "room.missingRoomNumber");
                 }
@@ -583,4 +583,22 @@ public class ExamRoomService {
         return examRoomRepository.existsByRoomNumberAndIsConnectedToExam(roomNumber, examId);
     }
 
+    /**
+     * Formats the metadata of an exam room into a human-readable format
+     *
+     * @param room The exam room
+     */
+    protected String humanReadableFormat(ExamRoom room) {
+        String namePart = room.getName();
+        if (room.getAlternativeName() != null) {
+            namePart += " (" + room.getAlternativeName() + ")";
+        }
+
+        String numberPart = room.getRoomNumber();
+        if (room.getAlternativeRoomNumber() != null) {
+            numberPart += " (" + room.getAlternativeRoomNumber() + ")";
+        }
+
+        return namePart + " - " + numberPart + " - [" + room.getBuilding() + "]";
+    }
 }

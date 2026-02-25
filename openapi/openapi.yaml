@@ -2,11 +2,52 @@ openapi: 3.1.0
 info:
   title: Artemis Application Server API
   contact: {name: Stephan Krusche, email: krusche@tum.de}
-  version: 8.5.1
+  version: 8.8.2
 servers:
 - {url: 'http://localhost:8080', description: Generated server url}
 paths:
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}:
+    get:
+      tags: [tutorial-group]
+      operationId: getOneOfCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: tutorialGroupId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TutorialGroup'}
+    put:
+      tags: [tutorial-group]
+      operationId: update
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: tutorialGroupId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/TutorialGroupUpdate'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TutorialGroup'}
     delete:
       tags: [tutorial-group]
       operationId: delete
@@ -73,7 +114,28 @@ paths:
           description: OK
           content:
             application/json:
-              schema: {type: array}
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/TutorialGroup'}
+    post:
+      tags: [tutorial-group]
+      operationId: create
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/TutorialGroup'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TutorialGroup'}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/register/{studentLogin}:
     post:
       tags: [tutorial-group]
@@ -163,6 +225,26 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/ConsistencyCheckResponse'}
+  /api/hyperion/programming-exercises/{exerciseId}/generate-code:
+    post:
+      tags: [hyperion-code-generation]
+      operationId: generateCode
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CodeGenerationRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CodeGenerationJobStart'}
   /api/hyperion/courses/{courseId}/problem-statements/rewrite:
     post:
       tags: [hyperion-problem-statement]
@@ -183,6 +265,26 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/ProblemStatementRewriteResponse'}
+  /api/hyperion/courses/{courseId}/problem-statements/refine/global:
+    post:
+      tags: [hyperion-problem-statement]
+      operationId: refineProblemStatementGlobally
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ProblemStatementGlobalRefinementRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ProblemStatementRefinementResponse'}
   /api/hyperion/courses/{courseId}/problem-statements/generate:
     post:
       tags: [hyperion-problem-statement]
@@ -202,27 +304,27 @@ paths:
           description: OK
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/ProblemStatementGenerationResponse'}  
-  /api/hyperion/programming-exercises/{exerciseId}/generate-code:
+              schema: {$ref: '#/components/schemas/ProblemStatementGenerationResponse'}
+  /api/hyperion/courses/{courseId}/faq/rewrite:
     post:
-      tags: [hyperion-code-generation]
-      operationId: generateCode
+      tags: [hyperion-faq]
+      operationId: rewriteFaq
       parameters:
-      - name: exerciseId
+      - name: courseId
         in: path
         required: true
         schema: {type: integer, format: int64}
       requestBody:
         content:
           application/json:
-            schema: {$ref: '#/components/schemas/CodeGenerationRequestDTO'}
+            schema: {$ref: '#/components/schemas/RewriteFaqRequest'}
         required: true
       responses:
         '200':
           description: OK
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/CodeGenerationJobStartDTO'}
+              schema: {$ref: '#/components/schemas/RewriteFaqResponse'}
   /api/tutorialgroup/tutorial-groups/{tutorialGroupId}/title:
     get:
       tags: [tutorial-group]
@@ -358,6 +460,124 @@ paths:
         '200': {description: OK}
 components:
   schemas:
+    Costs:
+      type: object
+      description: Response containing consistency check costs
+      properties:
+        promptEur: {type: number, format: double, description: Prompt costs in EUR,
+          example: 0.011224}
+        completionEur: {type: number, format: double, description: Completion costs
+            in EUR, example: 0.016513}
+        totalEur: {type: number, format: double, description: Total costs in EUR,
+          example: 0.027738}
+    TutorialGroup:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string, maxLength: 19, minLength: 1}
+        teachingAssistant: {$ref: '#/components/schemas/TeachingAssistant'}
+        additionalInformation: {type: string}
+        capacity: {type: integer, format: int32}
+        isOnline: {type: boolean}
+        language: {type: string}
+        campus: {type: string}
+    TutorialGroupStatus:
+      type: object
+      properties:
+        status_explanation: {type: string}
+    ProblemStatementGenerationResponse:
+      type: object
+      description: Response containing generated problem statement
+      properties:
+        draftProblemStatement: {type: string, description: Draft problem statement
+            text}
+    CodeGenerationRequest:
+      type: object
+      properties:
+        repositoryType:
+          type: string
+          enum: [exercise, solution, tests, auxiliary, user]
+        checkOnly: {type: boolean}
+    TutorialGroupDetailSession:
+      type: object
+      properties:
+        start: {type: string, format: date-time}
+        end: {type: string, format: date-time}
+        location: {type: string}
+        isCancelled: {type: boolean}
+        locationChanged: {type: boolean}
+        timeChanged: {type: boolean}
+        dateChanged: {type: boolean}
+        attendanceCount: {type: integer, format: int32}
+      required: [end, location, start]
+    CodeGenerationJobStart:
+      type: object
+      properties:
+        jobId: {type: string}
+    ConsistencyIssue:
+      type: object
+      description: Individual consistency issue details
+      properties:
+        severity:
+          type: string
+          description: Severity of the issue
+          enum: [LOW, MEDIUM, HIGH]
+          example: HIGH
+        category:
+          type: string
+          description: Category of the issue
+          enum: [METHOD_RETURN_TYPE_MISMATCH, METHOD_PARAMETER_MISMATCH, CONSTRUCTOR_PARAMETER_MISMATCH,
+            ATTRIBUTE_TYPE_MISMATCH, VISIBILITY_MISMATCH, IDENTIFIER_NAMING_INCONSISTENCY]
+          example: METHOD_RETURN_TYPE_MISMATCH
+        description: {type: string, description: Detailed description of the issue,
+          example: Problem statement does not match test cases}
+        suggestedFix: {type: string, description: Suggested fix for the issue, example: Update
+            problem statement to clarify expected behavior}
+        relatedLocations:
+          type: array
+          description: Related locations across artifacts
+          items: {$ref: '#/components/schemas/ArtifactLocation'}
+      required: [category, description, relatedLocations, severity, suggestedFix]
+    ProblemStatementRewriteRequest:
+      type: object
+      description: Request to rewrite a problem statement
+      properties:
+        problemStatementText: {type: string, description: Original problem statement
+            text to be improved, minLength: 1}
+      required: [problemStatementText]
+    TutorialGroupDetailGroup:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        language: {type: string}
+        isOnline: {type: boolean}
+        teachingAssistantName: {type: string}
+        teachingAssistantLogin: {type: string}
+        teachingAssistantImageUrl: {type: string}
+        capacity: {type: integer, format: int32}
+        campus: {type: string}
+        groupChannelId: {type: integer, format: int64}
+        tutorChatId: {type: integer, format: int64}
+        sessions:
+          type: array
+          items: {$ref: '#/components/schemas/TutorialGroupDetailSession'}
+      required: [language, sessions, teachingAssistantLogin, teachingAssistantName,
+        title]
+    Tokens:
+      type: object
+      description: Response containing consistency check tokens
+      properties:
+        prompt: {type: integer, format: int64, description: Prompt token length, example: 10204}
+        completion: {type: integer, format: int64, description: Completion token length,
+          example: 3753}
+        total: {type: integer, format: int64, description: Total token length, example: 13957}
+    ProblemStatementRefinementResponse:
+      type: object
+      description: Response containing refined problem statement
+      properties:
+        refinedProblemStatement: {type: string, description: Refined problem statement
+            text}
     ProblemStatementGenerationRequest:
       type: object
       description: Request to generate a problem statement
@@ -405,10 +625,6 @@ components:
           enum: [general, exercise, lecture, exam, feedbackDiscussion]
         subTypeReferenceId: {type: integer, format: int64}
         subTypeWithReferenceFromChannel: {$ref: '#/components/schemas/Channel', writeOnly: true}
-    TutorialGroupStatus:
-      type: object
-      properties:
-        status_explanation: {type: string}
     TutorialGroupRegistrationImport:
       type: object
       properties:
@@ -423,18 +639,6 @@ components:
         language: {type: string}
         additionalInformation: {type: string}
         isOnline: {type: boolean}
-    CodeGenerationJobStartDTO:
-      type: object
-      properties:
-        jobId: {type: string}
-      required: [jobId]
-    ProblemStatementGenerationResponse:
-      type: object
-      description: Response containing generated problem statement
-      properties:
-        draftProblemStatement: {type: string, description: Draft problem statement
-            text}
-        error: {type: string, description: Error message if generation failed}
     Student:
       type: object
       properties:
@@ -446,6 +650,7 @@ components:
     TutorialGroupUpdate:
       type: object
       properties:
+        tutorialGroup: {$ref: '#/components/schemas/TutorialGroup'}
         notificationText: {type: string, maxLength: 1000, minLength: 1}
         updateTutorialGroupChannelName: {type: boolean}
       required: [tutorialGroup]
@@ -463,23 +668,21 @@ components:
       type: object
       description: Response containing consistency check results
       properties:
+        timestamp: {type: string, format: date-time, description: Timestamp of the
+            response generation}
         issues:
           type: array
           description: List of consistency issues found
           items: {$ref: '#/components/schemas/ConsistencyIssue'}
-      required: [issues]
-    TutorialGroupDetailSession:
+        timing: {$ref: '#/components/schemas/Timing', description: Execution timing
+            details}
+        tokens: {$ref: '#/components/schemas/Tokens', description: Token usage statistics}
+        costs: {$ref: '#/components/schemas/Costs', description: Costs statistics}
+      required: [issues, timestamp]
+    TeachingAssistant:
       type: object
       properties:
-        start: {type: string, format: date-time}
-        end: {type: string, format: date-time}
-        location: {type: string}
-        isCancelled: {type: boolean}
-        locationChanged: {type: boolean}
-        timeChanged: {type: boolean}
-        dateChanged: {type: boolean}
-        attendanceCount: {type: integer, format: int32}
-      required: [end, location, start]
+        login: {type: string}
     TutorialGroupFreePeriodRequest:
       type: object
       properties:
@@ -501,30 +704,19 @@ components:
         startLine: {type: integer, format: int32, description: Start line number (1-based)}
         endLine: {type: integer, format: int32, description: End line number (1-based)}
       required: [endLine, filePath, startLine, type]
-    ConsistencyIssue:
+    RewriteFaqResponse:
       type: object
-      description: Individual consistency issue details
+      description: Response containing rewritten FAQ
       properties:
-        severity:
-          type: string
-          description: Severity of the issue
-          enum: [LOW, MEDIUM, HIGH]
-          example: HIGH
-        category:
-          type: string
-          description: Category of the issue
-          enum: [METHOD_RETURN_TYPE_MISMATCH, METHOD_PARAMETER_MISMATCH, CONSTRUCTOR_PARAMETER_MISMATCH,
-            ATTRIBUTE_TYPE_MISMATCH, VISIBILITY_MISMATCH, IDENTIFIER_NAMING_INCONSISTENCY]
-          example: METHOD_RETURN_TYPE_MISMATCH
-        description: {type: string, description: Detailed description of the issue,
-          example: Problem statement does not match test cases}
-        suggestedFix: {type: string, description: Suggested fix for the issue, example: Update
-            problem statement to clarify expected behavior}
-        relatedLocations:
+        rewrittenText: {type: string}
+        inconsistencies:
           type: array
-          description: Related locations across artifacts
-          items: {$ref: '#/components/schemas/ArtifactLocation'}
-      required: [category, description, relatedLocations, severity, suggestedFix]
+          items: {type: string}
+        suggestions:
+          type: array
+          items: {type: string}
+        improvement: {type: string}
+      required: [improvement, inconsistencies, rewrittenText, suggestions]
     TutorialGroupExport:
       type: object
       properties:
@@ -542,6 +734,20 @@ components:
         students:
           type: array
           items: {$ref: '#/components/schemas/StudentExport'}
+    Timing:
+      type: object
+      description: Response containing consistency check timing
+      properties:
+        startTime: {type: string, description: Starting time, example: !!timestamp '2025-07-27T07:17:05.500Z'}
+        endTime: {type: string, description: Ending time, example: !!timestamp '2025-07-27T07:17:05.500Z'}
+        durationS: {type: number, format: double, description: Duration of consistency
+            check, example: 27.765}
+    RewriteFaqRequest:
+      type: object
+      description: Request to rewrite a FAQ
+      properties:
+        faqText: {type: string, minLength: 1}
+      required: [faqText]
     ConversationUser:
       type: object
       properties:
@@ -564,45 +770,18 @@ components:
         startTime: {type: string}
         endTime: {type: string}
         location: {type: string, maxLength: 2000, minLength: 1}
-      required: [date, endTime, startTime]
-    ProblemStatementRewriteRequest:
-      type: object
-      description: Request to rewrite a problem statement
-      properties:
-        problemStatementText: {type: string, description: Original problem statement
-            text to be improved, minLength: 1}
-      required: [problemStatementText]
-    TutorialGroupDetailGroup:
-      type: object
-      properties:
-        id: {type: integer, format: int64}
-        title: {type: string}
-        language: {type: string}
-        isOnline: {type: boolean}
-        teachingAssistantName: {type: string}
-        teachingAssistantLogin: {type: string}
-        teachingAssistantImageUrl: {type: string}
-        capacity: {type: integer, format: int32}
-        campus: {type: string}
-        groupChannelId: {type: integer, format: int64}
-        tutorChatId: {type: integer, format: int64}
-        sessions:
-          type: array
-          items: {$ref: '#/components/schemas/TutorialGroupDetailSession'}
-      required: [language, sessions, teachingAssistantLogin, teachingAssistantName,
-        title]
     StudentExport:
       type: object
       properties:
         registrationNumber: {type: string}
         firstName: {type: string}
         lastName: {type: string}
-    CodeGenerationRequestDTO:
+    ProblemStatementGlobalRefinementRequest:
       type: object
-      description: Request DTO for code generation
+      description: Request to refine a problem statement globally using a user prompt
       properties:
-        repositoryType:
-          type: string
-          description: Type of repository to generate code for
-          enum: [TEMPLATE, SOLUTION, TESTS]
-          example: SOLUTION
+        problemStatementText: {type: string, description: 'Original problem statement
+            text to be refined (max 50,000 chars)', maxLength: 50000, minLength: 1}
+        userPrompt: {type: string, description: User prompt for global refinement,
+          maxLength: 1000, minLength: 1}
+      required: [problemStatementText, userPrompt]

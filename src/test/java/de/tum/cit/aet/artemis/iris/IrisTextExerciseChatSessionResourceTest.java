@@ -1,8 +1,11 @@
 package de.tum.cit.aet.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -37,7 +41,12 @@ class IrisTextExerciseChatSessionResourceTest extends AbstractIrisIntegrationTes
 
     @BeforeEach
     void initTestCase() {
-        userUtilService.addUsers(TEST_PREFIX, 3, 1, 0, 1);
+        List<User> users = userUtilService.addUsers(TEST_PREFIX, 3, 1, 0, 1);
+        for (User user : users) {
+            user.setSelectedLLMUsageTimestamp(ZonedDateTime.parse("2025-12-11T00:00:00Z"));
+            user.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
+            userTestRepository.save(user);
+        }
 
         course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         textExercise = (TextExercise) course.getExercises().iterator().next();
@@ -197,5 +206,17 @@ class IrisTextExerciseChatSessionResourceTest extends AbstractIrisIntegrationTes
         // Verify the session is in the database with correct exercise ID
         var sessionFromDb = irisTextExerciseChatSessionRepository.findById(response.getId()).orElseThrow();
         assertThat(sessionFromDb.getExerciseId()).isEqualTo(textExercise.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCurrentSessionOrCreateIfNotExists_invokesIrisCitationService() throws Exception {
+        // Given: User already has an existing session so the "get existing" path is taken
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        irisTextExerciseChatSessionRepository.save(new IrisTextExerciseChatSession(textExercise, user));
+
+        request.postWithResponseBody("/api/iris/text-exercise-chat/" + textExercise.getId() + "/sessions/current", null, IrisTextExerciseChatSession.class, HttpStatus.OK);
+
+        verify(irisCitationService).enrichSessionWithCitationInfo(any());
     }
 }

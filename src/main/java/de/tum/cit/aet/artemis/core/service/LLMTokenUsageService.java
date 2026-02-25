@@ -3,14 +3,17 @@ package de.tum.cit.aet.artemis.core.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.config.LLMModelCostConfiguration;
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.LLMTokenUsageRequest;
@@ -19,20 +22,47 @@ import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageRequestRepository;
 import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageTraceRepository;
 
 /**
- * Service for managing the LLMTokenUsage by all LLMs in Artemis
+ * Service for managing the LLMTokenUsage by all LLMs in Artemis.
  */
 @Profile(PROFILE_CORE)
 @Lazy
 @Service
 public class LLMTokenUsageService {
 
+    private static final Pattern DATE_SUFFIX_PATTERN = Pattern.compile("-\\d{4}-\\d{2}-\\d{2}$");
+
     private final LLMTokenUsageTraceRepository llmTokenUsageTraceRepository;
 
     private final LLMTokenUsageRequestRepository llmTokenUsageRequestRepository;
 
-    public LLMTokenUsageService(LLMTokenUsageTraceRepository llmTokenUsageTraceRepository, LLMTokenUsageRequestRepository llmTokenUsageRequestRepository) {
+    private final Map<String, ModelCost> costs;
+
+    public LLMTokenUsageService(LLMTokenUsageTraceRepository llmTokenUsageTraceRepository, LLMTokenUsageRequestRepository llmTokenUsageRequestRepository,
+            LLMModelCostConfiguration costConfiguration) {
         this.llmTokenUsageTraceRepository = llmTokenUsageTraceRepository;
         this.llmTokenUsageRequestRepository = llmTokenUsageRequestRepository;
+        this.costs = costConfiguration.getModelCosts().entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> new ModelCost(e.getValue().getInputCostPerMillionEur(), e.getValue().getOutputCostPerMillionEur())));
+    }
+
+    /**
+     * Build an LLMRequest with automatic cost lookup from configuration.
+     *
+     * @param model        model identifier
+     * @param inputTokens  number of input tokens
+     * @param outputTokens number of output tokens
+     * @param pipelineId   pipeline identifier
+     * @return LLMRequest with costs from configuration
+     */
+    public LLMRequest buildLLMRequest(String model, int inputTokens, int outputTokens, String pipelineId) {
+        String normalized = model != null ? DATE_SUFFIX_PATTERN.matcher(model).replaceAll("") : "";
+        ModelCost cost = costs.getOrDefault(normalized, ModelCost.ZERO);
+        return new LLMRequest(model, inputTokens, cost.input(), outputTokens, cost.output(), pipelineId);
+    }
+
+    private record ModelCost(float input, float output) {
+
+        static final ModelCost ZERO = new ModelCost(0f, 0f);
     }
 
     /**

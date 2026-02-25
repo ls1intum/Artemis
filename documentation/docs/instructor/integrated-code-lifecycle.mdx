@@ -5,6 +5,7 @@ sidebar_label: Integrated Code Lifecycle
 ---
 
 import Image, {ImageSize} from "../../src/components/Image/Image";
+import TumLiveVideo from "../../src/components/TumLiveVideo/TumLiveVideo";
 
 import buildAgentSummaryImg from "./assets/integrated-code-lifecycle/build-agent-summary.png";
 import buildAgentDetailsImg from "./assets/integrated-code-lifecycle/build-agent-details.png";
@@ -80,13 +81,7 @@ The course ID links to the course management page. A search function and filteri
 
 <Image src={buildAgentDetailsImg} alt={"Build Agent Details"} size={ImageSize.large} />
 
-<iframe
-    src="https://live.rbg.tum.de/w/artemisintro/46914?video_only=1&t=0"
-    allowFullScreen="1"
-    frameBorder="0"
-    width="600"
-    height="400"
-/>
+<TumLiveVideo src="https://live.rbg.tum.de/w/artemisintro/46914" title="Build Agent View" height={400} />
 
 ### Build Overview View
 
@@ -128,13 +123,7 @@ The table provides the following information:
 
 <Image src={finishedBuildJobsImg} alt={"Finished Build Jobs"} size={ImageSize.large} />
 
-<iframe
-    src="https://live.rbg.tum.de/w/artemisintro/46947?video_only=1&t=0"
-    allowFullScreen="1"
-    frameBorder="0"
-    width="600"
-    height="400"
-/>
+<TumLiveVideo src="https://live.rbg.tum.de/w/artemisintro/46947" title="Build Overview View" height={400} />
 
 ---
 

@@ -9,6 +9,7 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -121,6 +122,9 @@ public class BuildAgentDockerService {
     @Value("${artemis.continuous-integration.image-architecture:amd64}")
     private String imageArchitecture;
 
+    @Value("${artemis.continuous-integration.build-agent.short-name}")
+    private String buildAgentShortName;
+
     private static final String AMD64_ARCHITECTURE = "amd64";
 
     private static final String ARM64_ARCHITECTURE = "arm64";
@@ -177,11 +181,10 @@ public class BuildAgentDockerService {
             }
             catch (Exception ex) {
                 if (DockerUtil.isDockerNotAvailable(ex)) {
-                    log.error("Cannot connect to Docker Host. Make sure Docker is running and configured properly! Error while listing containers for cleanup: {}",
-                            ex.getMessage());
+                    log.debug("Docker is not available. Skipping container cleanup: {}", ex.getMessage());
                     return;
                 }
-                log.error("Make sure Docker is running and configured properly! Error while listing containers for cleanup: {}", ex.getMessage(), ex);
+                log.error("Error while listing containers for cleanup: {}", ex.getMessage(), ex);
                 return;
             }
             finally {
@@ -198,11 +201,15 @@ public class BuildAgentDockerService {
 
             try {
                 danglingBuildContainers = dockerClient.listContainersCmd().withShowAll(true).exec().stream()
-                        .filter(container -> container.getNames()[0].startsWith("/" + buildContainerPrefix)).filter(container -> (now - container.getCreated()) > ageThreshold)
-                        .toList();
+                        .filter(container -> container.getNames() != null && container.getNames().length > 0 && container.getNames()[0].startsWith("/" + buildContainerPrefix))
+                        .filter(container -> (now - container.getCreated()) > ageThreshold).toList();
             }
             catch (Exception ex) {
-                log.error("Make sure Docker is running! Error while listing containers for cleanup: {}", ex.getMessage(), ex);
+                if (DockerUtil.isDockerNotAvailable(ex)) {
+                    log.debug("Docker is not available. Skipping container cleanup: {}", ex.getMessage());
+                    return;
+                }
+                log.error("Error while listing containers for cleanup: {}", ex.getMessage(), ex);
                 return;
             }
         }
@@ -255,8 +262,11 @@ public class BuildAgentDockerService {
      * @throws LocalCIException if the image pull is interrupted or fails due to other exceptions.
      */
     public void pullDockerImage(BuildJobQueueItem buildJob, BuildLogsMap buildLogsMap) {
-        DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
         final String imageName = buildJob.buildConfig().dockerImage();
+        if (dockerClientNotAvailable("Cannot pull Docker image.")) {
+            throw new LocalCIException("Docker is not available. Cannot pull image " + imageName);
+        }
+        DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
         try (var inspectImageCommand = dockerClient.inspectImageCmd(imageName)) {
             // First check if the image is already available
             String msg = "~~~~~~~~~~~~~~~~~~~~ Inspecting docker image " + imageName + " ~~~~~~~~~~~~~~~~~~~~";
@@ -330,10 +340,10 @@ public class BuildAgentDockerService {
             }
             catch (Exception ex) {
                 if (DockerUtil.isDockerNotAvailable(ex)) {
-                    log.error("Cannot connect to Docker Host. Make sure Docker is running and configured properly! Error while inspecting image: {}", ex.getMessage());
+                    log.warn("Docker is not available. Error while inspecting image {}: {}", imageName, ex.getMessage());
+                    throw new LocalCIException("Docker is not available. Cannot pull image " + imageName, ex);
                 }
-                throw new LocalCIException("Cannot connect to Docker Host. Make sure Docker is running and configured properly!", ex);
-                // Do not proceed if Docker is not running
+                throw new LocalCIException("Error while inspecting image " + imageName, ex);
             }
             finally {
                 lock.unlock();
@@ -393,6 +403,10 @@ public class BuildAgentDockerService {
     public void deleteOldDockerImages() {
         if (!imageCleanupEnabled) {
             log.info("Docker image cleanup is disabled");
+            return;
+        }
+
+        if (dockerClientNotAvailable("Cannot delete old Docker images.")) {
             return;
         }
 
@@ -474,7 +488,7 @@ public class BuildAgentDockerService {
                     }
                 }
                 mutableSortedImagesByLastBuildDate.remove(oldestImage);
-                oldestImage = mutableSortedImagesByLastBuildDate.getFirst();
+                oldestImage = mutableSortedImagesByLastBuildDate.isEmpty() ? null : mutableSortedImagesByLastBuildDate.getFirst();
                 totalAttempts--;
             }
         }
@@ -489,10 +503,8 @@ public class BuildAgentDockerService {
      * @return a set of image names that are not associated with any running containers.
      */
     private Set<String> getUnusedDockerImages() {
+        // Callers (deleteOldDockerImages, checkUsableDiskSpaceThenCleanUp) already check dockerClientNotAvailable()
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
-        if (dockerClientNotAvailable("Cannot get unused Docker images")) {
-            return Set.of();
-        }
 
         // Get list of all running containers
         List<Container> containers = dockerClient.listContainersCmd().exec();
@@ -524,12 +536,16 @@ public class BuildAgentDockerService {
     private boolean dockerClientNotAvailable(String additionalLogInfo) {
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
         if (dockerClient == null) {
-            BuildAgentStatus status = distributedDataAccessService.getLocalBuildAgentStatus();
+            BuildAgentStatus status = distributedDataAccessService.getBuildAgentStatus(buildAgentShortName);
             if ((status == BuildAgentStatus.PAUSED || status == BuildAgentStatus.SELF_PAUSED)) {
                 log.info("Docker client is not available because the build agent is paused. {} This is expected behavior.", additionalLogInfo);
                 return true;
             }
             log.error("Docker client is not available. {}", additionalLogInfo);
+            return true;
+        }
+        if (!buildAgentConfiguration.isDockerAvailable()) {
+            log.debug("Docker is not available. {}", additionalLogInfo);
             return true;
         }
         return false;
@@ -554,8 +570,9 @@ public class BuildAgentDockerService {
      * @return true if the exception indicates a missing platform manifest, false otherwise
      */
     private boolean isNoMatchingManifestError(Exception ex) {
+        Set<Throwable> visited = Collections.newSetFromMap(new IdentityHashMap<>());
         Throwable cause = ex;
-        while (cause != null) {
+        while (cause != null && visited.add(cause)) {
             String message = cause.getMessage();
             if (message != null && message.contains("no matching manifest")) {
                 return true;

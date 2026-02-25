@@ -44,7 +44,7 @@ Your score is calculated immediately after the quiz ends.`,
             questionAnswer: `You can reach your tutor through several channels:
 
 1. **Tutorial Group Channel**: Use the messaging feature in your tutorial group
-2. **Course Communication**: Post questions in the course discussion forum
+2. **Course Communication**: Post questions in the course chat
 3. **Office Hours**: Attend scheduled office hours (check the course schedule)
 4. **Direct Messages**: Send a direct message through the platform
 

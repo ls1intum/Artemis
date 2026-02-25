@@ -27,25 +27,13 @@
                 "description": "Enable or disable features for all users. Changes take effect immediately without server restart."
             },
             "profiles": {
-                "iris": {
-                    "name": "Iris (AI Assistant)",
-                    "description": "Enables the Iris AI virtual tutor powered by LLMs for personalized student support and code assistance."
-                },
                 "athena": {
                     "name": "Athena (AI Assessment)",
                     "description": "Enables Athena ML-based automated feedback suggestions for text and programming exercises."
                 },
-                "lti": {
-                    "name": "LTI Integration",
-                    "description": "Enables Learning Tools Interoperability (LTI) for integration with external learning management systems."
-                },
                 "apollon": {
                     "name": "Apollon (Modeling)",
                     "description": "Enables the Apollon UML modeling editor for creating and editing diagrams in modeling exercises."
-                },
-                "theia": {
-                    "name": "Theia (Online IDE)",
-                    "description": "Enables the Theia cloud-based IDE for programming exercises, allowing students to code in the browser."
                 },
                 "ldap": {
                     "name": "LDAP Authentication",
@@ -73,6 +61,10 @@
                 }
             },
             "modules": {
+                "iris": {
+                    "name": "Iris (AI Assistant)",
+                    "description": "Enables the Iris AI virtual tutor powered by LLMs for personalized student support and code assistance."
+                },
                 "atlas": {
                     "name": "Atlas (Adaptive Learning)",
                     "description": "Enables competency-based learning features including learning paths, competency tracking, and analytics."
@@ -113,9 +105,17 @@
                     "name": "Nebula (Video Processing)",
                     "description": "Enables lecture video processing and transcription for AI-enhanced content understanding."
                 },
+                "theia": {
+                    "name": "Theia (Online IDE)",
+                    "description": "Enables the Theia cloud-based IDE for programming exercises, allowing students to code in the browser."
+                },
                 "sharing": {
                     "name": "Exercise Sharing",
                     "description": "Enables sharing and importing of programming exercises between courses and institutions."
+                },
+                "lti": {
+                    "name": "LTI Integration",
+                    "description": "Enables Learning Tools Interoperability (LTI) for integration with external learning management systems."
                 },
                 "passkey": {
                     "name": "Passkey Authentication",

@@ -1,5 +1,15 @@
 <form name="editForm" role="form" novalidate>
     <h5 *adminTitleBarTitle id="lti-configuration-heading" class="mb-0" jhiTranslate="artemisApp.lti.version13Configuration"></h5>
+    <div class="alert alert-info mt-3">
+        <span jhiTranslate="artemisApp.lti.edit.documentationLink"></span>
+        <a
+            href="https://docs.artemis.tum.de/instructor/lti-configuration/"
+            target="_blank"
+            rel="external noopener noreferrer"
+            jhiTranslate="artemisApp.lti.edit.documentationLinkText"
+        ></a
+        >.
+    </div>
     <nav ngbNav #nav="ngbNav" [activeId]="activeTab()" (activeIdChange)="activeTab.set($event)" class="nav-tabs mt-4">
         <ng-container ngbNavItem [ngbNavItem]="1">
             <a ngbNavLink jhiTranslate="artemisApp.lti.platformRegistration"></a>

@@ -6,7 +6,7 @@ import { Response } from 'app/iris/overview/services/iris-chat-http.service';
 import { IrisStatusDTO } from 'app/iris/shared/entities/iris-health.model';
 import { IrisRateLimitInformation } from 'app/iris/shared/entities/iris-ratelimit-info.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { PROFILE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 
 /**
  * The `IrisStatusService` is responsible for monitoring the health status of Iris.
@@ -36,7 +36,7 @@ export class IrisStatusService implements OnDestroy {
      * Creates an instance of IrisStatusService.
      */
     constructor() {
-        if (!this.profileService.isProfileActive(PROFILE_IRIS)) {
+        if (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS)) {
             return;
         }
 
