@@ -11,6 +11,12 @@ public record CourseInfoDTO(Long id, String title, String semester, String stude
         String instructorGroupName) {
 
     @Nullable
+    /**
+     * Maps a course to a course info DTO.
+     *
+     * @param course the course to map
+     * @return the DTO or null if the course is null
+     */
     public static CourseInfoDTO of(@Nullable Course course) {
         if (course == null) {
             return null;

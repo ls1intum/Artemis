@@ -19,6 +19,12 @@ public record CourseCompetencyResponseDTO(long id, String title, @Nullable Strin
         List<CompetencyProgressDTO> userProgress, @Nullable CourseInfoDTO course, List<CompetencyExerciseLinkResponseDTO> exerciseLinks,
         List<CompetencyLectureUnitLinkResponseDTO> lectureUnitLinks) {
 
+    /**
+     * Maps a course competency to a response DTO without learning objects or course info.
+     *
+     * @param competency the competency to map
+     * @return the DTO
+     */
     public static CourseCompetencyResponseDTO of(CourseCompetency competency) {
         var progress = Optional.ofNullable(competency.getUserProgress()).orElse(Collections.emptySet()).stream().map(CompetencyProgressDTO::of).toList();
         StandardizedCompetency linkedStandardizedCompetency = competency.getLinkedStandardizedCompetency();
@@ -28,12 +34,24 @@ public record CourseCompetencyResponseDTO(long id, String title, @Nullable Strin
                 linkedStandardizedCompetencyId, progress, null, null, null);
     }
 
+    /**
+     * Maps a course competency to a response DTO including course info.
+     *
+     * @param competency the competency to map
+     * @return the DTO
+     */
     public static CourseCompetencyResponseDTO ofWithCourse(CourseCompetency competency) {
         var base = of(competency);
         return new CourseCompetencyResponseDTO(base.id(), base.title(), base.description(), base.taxonomy(), base.softDueDate(), base.masteryThreshold(), base.optional(),
                 base.type(), base.linkedCourseCompetency(), base.linkedStandardizedCompetencyId(), base.userProgress(), CourseInfoDTO.of(competency.getCourse()), null, null);
     }
 
+    /**
+     * Maps a course competency to a response DTO including learning object links.
+     *
+     * @param competency the competency to map
+     * @return the DTO
+     */
     public static CourseCompetencyResponseDTO ofWithLearningObjects(CourseCompetency competency) {
         var base = of(competency);
         var exerciseLinks = Optional.ofNullable(competency.getExerciseLinks()).orElse(Collections.emptySet()).stream().map(CompetencyExerciseLinkResponseDTO::of).toList();
