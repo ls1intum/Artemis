@@ -1151,6 +1151,171 @@ describe('IrisBaseChatbotComponent', () => {
         });
     });
 
+    describe('Session switcher (widget layout)', () => {
+        const mockDate = new Date('2025-10-06T12:00:00.000Z');
+        const exerciseSession1: IrisSessionDTO = {
+            id: 10,
+            title: 'Help with recursion',
+            creationDate: new Date('2025-10-06T09:00:00.000Z'),
+            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+            entityId: 42,
+            entityName: 'Exercise 1',
+        };
+        const exerciseSession2: IrisSessionDTO = {
+            id: 11,
+            title: 'Array sorting question',
+            creationDate: new Date('2025-10-05T09:00:00.000Z'),
+            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+            entityId: 42,
+            entityName: 'Exercise 1',
+        };
+        const otherEntitySession: IrisSessionDTO = {
+            id: 12,
+            title: 'Other exercise chat',
+            creationDate: new Date('2025-10-06T08:00:00.000Z'),
+            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+            entityId: 99,
+            entityName: 'Exercise 2',
+        };
+        const lectureSession: IrisSessionDTO = {
+            id: 13,
+            title: 'Lecture question',
+            creationDate: new Date('2025-10-06T07:00:00.000Z'),
+            chatMode: ChatServiceMode.LECTURE,
+            entityId: 42,
+            entityName: 'Lecture 1',
+        };
+
+        beforeAll(() => {
+            vi.useFakeTimers();
+            vi.setSystemTime(mockDate);
+        });
+
+        afterAll(() => {
+            vi.useRealTimers();
+        });
+
+        beforeEach(() => {
+            vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([exerciseSession1, exerciseSession2, otherEntitySession, lectureSession]));
+            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
+            vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(42));
+            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(10));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.componentRef.setInput('layout', 'widget');
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+        });
+
+        it('should display current session title', () => {
+            expect(component.currentSessionTitle()).toBe('Help with recursion');
+        });
+
+        it('should display "New Chat" when current session id is undefined', () => {
+            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(undefined));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.componentRef.setInput('layout', 'widget');
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            // MockTranslateService returns the key as the translation
+            expect(component.currentSessionTitle()).toBe('artemisApp.iris.chatHistory.newChat');
+        });
+
+        it('should filter context sessions to matching chatMode and entityId', () => {
+            const contextSessions = component.contextSessions();
+            expect(contextSessions).toHaveLength(2);
+            expect(contextSessions.map((s) => s.id)).toEqual([10, 11]);
+        });
+
+        it('should render session title trigger in widget layout', () => {
+            const trigger = fixture.nativeElement.querySelector('.session-title-trigger');
+            expect(trigger).not.toBeNull();
+        });
+
+        it('should not render session title trigger in client layout', () => {
+            fixture.componentRef.setInput('layout', 'client');
+            fixture.detectChanges();
+
+            const trigger = fixture.nativeElement.querySelector('.session-title-trigger');
+            expect(trigger).toBeNull();
+        });
+
+        it('should build menu items with New Chat and context sessions on toggle', () => {
+            const mockEvent = new MouseEvent('click');
+            component.toggleSessionMenu(mockEvent);
+
+            expect(component.sessionMenuItems()).toHaveLength(3); // New Chat + 2 context sessions
+            expect(component.sessionMenuItems()[0].data?.isActive).toBe(false); // New Chat not active
+            expect(component.sessionMenuItems()[1].label).toBe('Help with recursion');
+            expect(component.sessionMenuItems()[1].data?.isActive).toBe(true); // Current session
+            expect(component.sessionMenuItems()[2].label).toBe('Array sorting question');
+            expect(component.sessionMenuItems()[2].data?.isActive).toBe(false);
+        });
+
+        it('should mark New Chat as active when current session id is undefined', () => {
+            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(undefined));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.componentRef.setInput('layout', 'widget');
+            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
+            vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(42));
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            const mockEvent = new MouseEvent('click');
+            component.toggleSessionMenu(mockEvent);
+
+            expect(component.sessionMenuItems()[0].data?.isActive).toBe(true);
+        });
+
+        it('should call openNewSession when New Chat menu item is clicked', () => {
+            vi.spyOn(chatService, 'clearChat').mockImplementation(() => {});
+            const openNewSessionSpy = vi.spyOn(component, 'openNewSession');
+            const mockEvent = new MouseEvent('click');
+            component.toggleSessionMenu(mockEvent);
+
+            component.sessionMenuItems()[0].command!({} as any);
+
+            expect(openNewSessionSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should call onSessionClick when a session menu item is clicked', () => {
+            vi.spyOn(chatService, 'switchToSession').mockImplementation(() => {});
+            const onSessionClickSpy = vi.spyOn(component, 'onSessionClick');
+            const mockEvent = new MouseEvent('click');
+            component.toggleSessionMenu(mockEvent);
+
+            component.sessionMenuItems()[2].command!({} as any);
+
+            expect(onSessionClickSpy).toHaveBeenCalledWith(exerciseSession2);
+        });
+
+        it('should set sessionMenuOpen on show/hide', () => {
+            expect(component.sessionMenuOpen()).toBe(false);
+
+            component.onSessionMenuShow();
+            expect(component.sessionMenuOpen()).toBe(true);
+
+            component.onSessionMenuHide();
+            expect(component.sessionMenuOpen()).toBe(false);
+        });
+
+        it('should have hasHeaderContent true for widget layout', () => {
+            expect(component.hasHeaderContent()).toBe(true);
+        });
+
+        it('should have proper aria attributes on the trigger button', () => {
+            const trigger = fixture.nativeElement.querySelector('.session-title-trigger');
+            expect(trigger.getAttribute('aria-haspopup')).toBe('menu');
+            expect(trigger.getAttribute('aria-expanded')).toBe('false');
+        });
+    });
+
     describe('processMessages newline handling', () => {
         it('should not apply newline doubling to any messages', () => {
             const tableMarkdown = '| Item | Details |\n|------|--------|\n| Lang | Java |';

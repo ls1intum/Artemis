@@ -157,6 +157,55 @@
     }
 }
 
+.session-title-trigger {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: var(--bs-border-radius-lg);
+    color: var(--bs-body-color);
+    font-size: 14px;
+    font-weight: 500;
+    max-width: 250px;
+
+    &:hover {
+        background-color: var(--iris-secondary-background);
+    }
+}
+
+.session-title-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.session-title-chevron {
+    font-size: 12px;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+    color: var(--iris-label-color);
+
+    &.rotated {
+        transform: rotate(180deg);
+    }
+}
+
+.session-switcher-inline-menu {
+    position: absolute;
+    top: 40px;
+    left: 8px;
+    z-index: 12000;
+    min-width: 260px;
+
+    ::ng-deep .session-switcher-menu {
+        border-radius: var(--bs-border-radius-lg);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    }
+}
+
 .related-entity-button {
     background-color: var(--iris-secondary-background);
     display: flex;
@@ -322,8 +371,10 @@ pre {
     .chat-header {
         background-color: var(--iris-primary-background);
         border-radius: 0.25rem 0.25rem 0 0;
+        position: relative;
         display: flex;
         justify-content: flex-end;
+        align-items: center;
         font-weight: bold;
         padding: 4px;
         height: 40px;
@@ -333,6 +384,10 @@ pre {
         &.has-content {
             box-shadow: 0 10px 10px -15px rgba(0, 0, 0, 0.3);
             border-bottom: 1px solid var(--bs-border-color);
+        }
+
+        &:has(.session-title-trigger) {
+            justify-content: space-between;
         }
 
         button {

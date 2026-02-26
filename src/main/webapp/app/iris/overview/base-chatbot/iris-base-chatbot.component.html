@@ -150,6 +150,23 @@
         <!-- client -->
         @if (!isEmbeddedChat()) {
             <div class="chat-header" [class.has-content]="hasHeaderContent()">
+                @if (layout() === 'widget') {
+                    <button
+                        class="session-title-trigger"
+                        (click)="toggleSessionMenu($event)"
+                        [attr.aria-expanded]="sessionMenuOpen()"
+                        aria-haspopup="menu"
+                        [attr.aria-label]="'artemisApp.iris.chatHistory.switchSession' | artemisTranslate"
+                    >
+                        <span class="session-title-text">{{ currentSessionTitle() }}</span>
+                        <fa-icon [icon]="faChevronDown" class="session-title-chevron" [class.rotated]="sessionMenuOpen()" />
+                    </button>
+                    @if (sessionMenuOpen()) {
+                        <div class="session-switcher-inline-menu" (click)="$event.stopPropagation()">
+                            <p-menu [model]="sessionMenuItems()" styleClass="session-switcher-menu" />
+                        </div>
+                    }
+                }
                 <div class="d-flex gap-2">
                     @if (relatedEntityRoute() && relatedEntityLinkButtonLabel() && isChatHistoryAvailable()) {
                         <div class="toolbox">

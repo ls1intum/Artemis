@@ -218,7 +218,8 @@
                 "privacyDescLocal": "Iris processes interactions entirely on your institution's own infrastructure. No data is sent to external servers.",
                 "privacyDisclaimer": "Review your institution's privacy policy for details.",
                 "tryIris": "Try Iris",
-                "close": "Close"
+                "close": "Close",
+                "switchSession": "Switch chat session"
             },
             "memories": {
                 "title": "Memories",

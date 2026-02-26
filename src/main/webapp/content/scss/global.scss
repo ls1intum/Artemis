@@ -1235,3 +1235,43 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
         padding: 0;
     }
 }
+
+// Iris session switcher portal menu (appended to body by PrimeNG)
+.session-switcher-menu {
+    width: 300px;
+    z-index: 1100 !important;
+
+    .p-menu-list {
+        padding: 8px;
+    }
+
+    .session-menu-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px;
+        border-radius: var(--bs-border-radius-lg);
+        font-size: 14px;
+        color: var(--bs-body-color);
+
+        &.active {
+            background-color: var(--iris-tertiary-background);
+        }
+
+        &:hover:not(.active) {
+            background-color: var(--iris-accent-background);
+        }
+    }
+
+    .session-menu-item-label {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .session-menu-check {
+        flex-shrink: 0;
+        font-size: 12px;
+    }
+}

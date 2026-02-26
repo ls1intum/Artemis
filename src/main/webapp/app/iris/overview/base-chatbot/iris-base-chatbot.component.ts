@@ -1,6 +1,7 @@
 import {
     faArrowDown,
     faCheck,
+    faChevronDown,
     faCircleInfo,
     faCircleNotch,
     faCompress,
@@ -44,6 +45,8 @@ import { AsPipe } from 'app/shared/pipes/as.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ChatHistoryItemComponent } from './chat-history-item/chat-history-item.component';
 import { NgClass, formatDate } from '@angular/common';
+import { MenuModule } from 'primeng/menu';
+import { MenuItem } from 'primeng/api';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
@@ -90,6 +93,7 @@ const COPY_FEEDBACK_DURATION_MS = 1500;
         SearchFilterComponent,
         IrisCitationTextComponent,
         ConfirmDialogModule,
+        MenuModule,
     ],
     providers: [ConfirmationService],
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -128,6 +132,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faCopy = faCopy;
     protected readonly faCheck = faCheck;
+    protected readonly faChevronDown = faChevronDown;
 
     // Types
     protected readonly IrisLogoSize = IrisLogoSize;
@@ -168,7 +173,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         const hasClearButton = !this.isChatHistoryAvailable() && this.messages().length >= 1;
         const hasSizeToggle = this.fullSize() !== undefined;
         const hasCloseButton = this.showCloseButton();
-        return hasRelatedEntity || hasRateLimitInfo || hasClearButton || hasSizeToggle || hasCloseButton;
+        const hasSessionSwitcher = this.layout() === 'widget';
+        return hasRelatedEntity || hasRateLimitInfo || hasClearButton || hasSizeToggle || hasCloseButton || hasSessionSwitcher;
     });
 
     // UI state signals
@@ -237,6 +243,39 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly scrollArrow = viewChild<ElementRef>('scrollArrow');
     readonly messageTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('messageTextarea');
     readonly acceptButton = viewChild<ElementRef<HTMLButtonElement>>('acceptButton');
+
+    // Session switcher (widget layout)
+    readonly sessionMenuItems = signal<MenuItem[]>([]);
+    readonly sessionMenuOpen = signal(false);
+    readonly currentSessionTitle = computed(() => {
+        const currentId = this.currentSessionId();
+        const sessions = this.chatSessions();
+        if (currentId === undefined) {
+            return this.newChatTitle() || '';
+        }
+        const session = sessions.find((s) => s.id === currentId);
+        if (!session || !session.title || this.isNewChatSession(session)) {
+            return this.newChatTitle() || '';
+        }
+        return session.title;
+    });
+    readonly contextSessions = computed(() => {
+        let chatMode = this.currentChatMode();
+        let entityId = this.currentRelatedEntityId();
+
+        // Fallback to active session context when service context signals are not initialized yet
+        if (chatMode === undefined || entityId === undefined) {
+            const activeSession = this.chatSessions().find((s) => s.id === this.currentSessionId());
+            chatMode = activeSession?.chatMode;
+            entityId = activeSession?.entityId;
+        }
+        if (chatMode === undefined || entityId === undefined) {
+            return [];
+        }
+        return this.chatSessions()
+            .filter((s) => s.chatMode === chatMode && s.entityId === entityId)
+            .sort((a, b) => new Date(b.creationDate).getTime() - new Date(a.creationDate).getTime());
+    });
 
     constructor() {
         // Initialize user acceptance state
@@ -744,6 +783,38 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         return filtered.sort((a, b) => new Date(b.creationDate).getTime() - new Date(a.creationDate).getTime());
     }
 
+    toggleSessionMenu(event: Event) {
+        event.stopPropagation();
+        const currentId = this.currentSessionId();
+        const newChatLabel = this.newChatTitle() || 'New chat';
+        const newChatItem: MenuItem = {
+            label: newChatLabel,
+            data: { isActive: currentId === undefined },
+            command: () => {
+                this.openNewSession();
+                this.onSessionMenuHide();
+            },
+        };
+        const sessionItems: MenuItem[] = this.contextSessions().map((session) => ({
+            label: this.getSessionMenuLabel(session, newChatLabel),
+            data: { isActive: session.id === currentId },
+            command: () => {
+                this.onSessionClick(session);
+                this.onSessionMenuHide();
+            },
+        }));
+        this.sessionMenuItems.set([newChatItem, ...sessionItems]);
+        this.sessionMenuOpen.update((open) => !open);
+    }
+
+    onSessionMenuShow() {
+        this.sessionMenuOpen.set(true);
+    }
+
+    onSessionMenuHide() {
+        this.sessionMenuOpen.set(false);
+    }
+
     openNewSession() {
         this.chatService.clearChat();
     }
@@ -764,6 +835,14 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     setSearchValue(searchValue: string) {
         this.searchValue.set(searchValue.trim().toLowerCase());
+    }
+
+    private getSessionMenuLabel(session: IrisSessionDTO, newChatLabel: string): string {
+        if (session.title && !this.isNewChatSession(session)) {
+            return session.title;
+        }
+        const creationLabel = formatDate(session.creationDate, 'dd.MM.yy HH:mm', 'en');
+        return `${newChatLabel} (${creationLabel})`;
     }
 
     /**

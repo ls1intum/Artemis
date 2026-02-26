@@ -218,7 +218,8 @@
                 "privacyDescLocal": "Iris verarbeitet Interaktionen vollständig auf der eigenen Infrastruktur deiner Einrichtung. Es werden keine Daten an externe Server gesendet.",
                 "privacyDisclaimer": "Lies die Datenschutzerklärung deiner Einrichtung für Details.",
                 "tryIris": "Iris ausprobieren",
-                "close": "Schließen"
+                "close": "Schließen",
+                "switchSession": "Chat-Sitzung wechseln"
             },
             "memories": {
                 "title": "Erinnerungen",
