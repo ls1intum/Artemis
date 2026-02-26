@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
+import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionProgrammingExerciseContextRendererService;
@@ -44,10 +45,11 @@ public class HyperionTestRepositoryService extends HyperionCodeGenerationService
      * @param templates                     service for rendering prompt templates
      * @param gitService                    service for Git operations
      * @param contextRenderer               service for rendering programming exercise context
+     * @param llmTokenUsageService          service for persisting LLM token usage telemetry
      */
     public HyperionTestRepositoryService(ProgrammingExerciseRepository programmingExerciseRepository, ChatClient chatClient, HyperionPromptTemplateService templates,
-            GitService gitService, HyperionProgrammingExerciseContextRendererService contextRenderer) {
-        super(programmingExerciseRepository, chatClient, templates);
+            GitService gitService, HyperionProgrammingExerciseContextRendererService contextRenderer, LLMTokenUsageService llmTokenUsageService) {
+        super(programmingExerciseRepository, chatClient, templates, llmTokenUsageService);
         this.gitService = gitService;
         this.contextRenderer = contextRenderer;
     }
@@ -67,7 +69,7 @@ public class HyperionTestRepositoryService extends HyperionCodeGenerationService
         templateVariables.put("problemStatement", exercise.getProblemStatement());
         templateVariables.put("solutionCode", solutionCode);
         templateVariables.put("previousBuildLogs", previousBuildLogs != null ? previousBuildLogs : "");
-        return callChatClient("/prompts/hyperion/test/1_plan.st", templateVariables);
+        return callChatClient(user, exercise, "/prompts/hyperion/test/1_plan.st", templateVariables);
     }
 
     /**
@@ -81,7 +83,7 @@ public class HyperionTestRepositoryService extends HyperionCodeGenerationService
             throws NetworkingException {
         Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, consistencyIssues);
         templateVariables.put("solutionPlan", solutionPlan);
-        return callChatClient("/prompts/hyperion/test/2_file_structure.st", templateVariables);
+        return callChatClient(user, exercise, "/prompts/hyperion/test/2_file_structure.st", templateVariables);
     }
 
     /**
@@ -97,7 +99,7 @@ public class HyperionTestRepositoryService extends HyperionCodeGenerationService
         Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, consistencyIssues);
         templateVariables.put("solutionPlan", solutionPlan);
         templateVariables.put("fileStructure", fileStructure.getFiles());
-        return callChatClient("/prompts/hyperion/test/3_headers.st", templateVariables);
+        return callChatClient(user, exercise, "/prompts/hyperion/test/3_headers.st", templateVariables);
     }
 
     /**
@@ -113,7 +115,7 @@ public class HyperionTestRepositoryService extends HyperionCodeGenerationService
         Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, consistencyIssues);
         templateVariables.put("solutionPlan", solutionPlan);
         templateVariables.put("filesWithHeaders", headers.getFiles());
-        return callChatClient("/prompts/hyperion/test/4_logic.st", templateVariables);
+        return callChatClient(user, exercise, "/prompts/hyperion/test/4_logic.st", templateVariables);
     }
 
     @Override

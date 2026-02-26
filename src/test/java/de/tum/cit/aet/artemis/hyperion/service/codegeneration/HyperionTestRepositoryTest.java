@@ -24,6 +24,7 @@ import org.springframework.ai.retry.NonTransientAiException;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
+import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionProgrammingExerciseContextRendererService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
@@ -50,6 +51,9 @@ class HyperionTestRepositoryServiceTest {
     @Mock
     private HyperionProgrammingExerciseContextRendererService contextRenderer;
 
+    @Mock
+    private LLMTokenUsageService llmTokenUsageService;
+
     private HyperionTestRepositoryService testRepository;
 
     private User user;
@@ -60,7 +64,7 @@ class HyperionTestRepositoryServiceTest {
     void setup() {
         MockitoAnnotations.openMocks(this);
         ChatClient chatClient = ChatClient.create(chatModel);
-        this.testRepository = new HyperionTestRepositoryService(programmingExerciseRepository, chatClient, templates, gitService, contextRenderer);
+        this.testRepository = new HyperionTestRepositoryService(programmingExerciseRepository, chatClient, templates, gitService, contextRenderer, llmTokenUsageService);
 
         this.user = new User();
         user.setLogin("testuser");
@@ -150,8 +154,8 @@ class HyperionTestRepositoryServiceTest {
         when(templates.renderObject(any(String.class), anyMap())).thenReturn("rendered");
         when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("Repository access failed"));
 
-        assertThatThrownBy(() -> testRepository.generateSolutionPlan(user, exercise, "logs", "structure", "consistency issues")).isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Repository access failed");
+        assertThatThrownBy(() -> testRepository.generateSolutionPlan(user, exercise, "logs", "structure", "consistency issues")).isInstanceOf(NetworkingException.class)
+                .hasMessageContaining("AI request failed due to an internal processing error. Please contact support.").hasRootCauseMessage("Repository access failed");
     }
 
     @Test
