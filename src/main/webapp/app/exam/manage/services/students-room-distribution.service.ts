@@ -160,8 +160,8 @@ export class StudentsRoomDistributionService {
      * @param examRoomAliases mapping of exam room id to an alias
      */
     updateAliases(courseId: number, examId: number, examRoomAliases: Record<number, string>): Observable<void> {
-        const requestUrl = `${this.BASE_URL}/courses/${courseId}/exams/${examId}/set-room-aliases`;
+        const requestUrl = `${this.BASE_URL}/courses/${courseId}/exams/${examId}/room-aliases`;
 
-        return this.http.post<void>(requestUrl, examRoomAliases);
+        return this.http.put<void>(requestUrl, examRoomAliases);
     }
 }

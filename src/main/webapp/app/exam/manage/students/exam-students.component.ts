@@ -148,14 +148,15 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
                 }) || [];
         }
 
-        this.exchangeRoomsForAliasesIfPossible();
-        this.isTestExam = this.exam.testExam!;
-        this.isLoading = false;
+        this.exchangeRoomsForAliasesIfPossible().subscribe(() => {
+            this.isTestExam = this.exam.testExam!;
+            this.isLoading = false;
+        });
     }
 
-    private exchangeRoomsForAliasesIfPossible(): void {
-        this.studentsRoomDistributionService.getAliases(this.courseId, this.exam.id!).subscribe({
-            next: (aliases: Record<string, string>) => {
+    private exchangeRoomsForAliasesIfPossible(): Observable<void> {
+        return this.studentsRoomDistributionService.getAliases(this.courseId, this.exam.id!).pipe(
+            tap((aliases: Record<string, string>) => {
                 this.allRegisteredUsers.forEach((examUser) => {
                     const plannedRoom: string = examUser.plannedRoom ?? '';
                     const actualRoom: string = examUser.actualRoom ?? '';
@@ -167,11 +168,13 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
                         examUser.actualRoomAlias = aliases[actualRoom];
                     }
                 });
-            },
-            error: () => {
+            }),
+            catchError(() => {
                 // Aliases are optional; room numbers remain as-is on failure
-            },
-        });
+                return of();
+            }),
+            map(() => undefined),
+        );
     }
 
     ngOnDestroy() {

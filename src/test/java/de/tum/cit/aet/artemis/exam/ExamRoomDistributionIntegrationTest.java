@@ -140,9 +140,9 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 200);
         request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileSingleExamRoom, HttpStatus.OK);
 
-        var ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001"));
-        request.post("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/distribute-registered-students",
-                new ExamRoomDistributionRequestBodyDTO(List.of(), Map.of()), HttpStatus.BAD_REQUEST);
+        List<Long> ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001")).stream().toList();
+        request.post("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/distribute-registered-students", new ExamRoomDistributionRequestBodyDTO(ids, Map.of()),
+                HttpStatus.BAD_REQUEST);
 
         verifyAllUsersAreNotDistributed(exam);
     }
@@ -168,7 +168,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
             encounteredRoomsAndSeats.add(roomAndSeat);
         });
 
-        var usedRooms = storedExam.getExamUsers().stream().map(ExamUser::getPlannedRoom).collect(Collectors.toSet());
+        Set<String> usedRooms = storedExam.getExamUsers().stream().map(ExamUser::getPlannedRoom).collect(Collectors.toSet());
         assertThat(usedRooms).containsExactlyInAnyOrder(roomNumbers);
     }
 
@@ -180,9 +180,9 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 200);
         request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileFourExamRooms, HttpStatus.OK);
 
-        var ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001", "0101.02.179")).stream().toList();
+        List<Long> ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001", "0101.02.179")).stream().toList();
         request.postWithoutResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/distribute-registered-students",
-                new ExamRoomDistributionRequestBodyDTO(ids.stream().toList(), Map.of()), HttpStatus.OK);
+                new ExamRoomDistributionRequestBodyDTO(ids, Map.of()), HttpStatus.OK);
 
         verifyAllUsersAreDistributedAcrossExactly(exam, "5602.EG.001", "0101.02.179");
     }
@@ -195,7 +195,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 200);
 
         examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileFourExamRooms);
-        var ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001", "0101.02.179")).stream().toList();
+        List<Long> ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001", "0101.02.179")).stream().toList();
         request.postWithoutResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/distribute-registered-students",
                 new ExamRoomDistributionRequestBodyDTO(ids, Map.of()), HttpStatus.OK);
 
@@ -210,7 +210,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 200);
 
         examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileFourExamRooms);
-        var ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001")).stream().toList();
+        List<Long> ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001")).stream().toList();
         request.postWithoutResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/distribute-registered-students?useOnlyDefaultLayouts=false",
                 new ExamRoomDistributionRequestBodyDTO(ids, Map.of()), HttpStatus.OK);
 
@@ -225,7 +225,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 200);
 
         examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileFourExamRooms);
-        var ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("0101.02.179"));
+        Set<Long> ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("0101.02.179"));
         request.postWithoutResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/distribute-registered-students?useOnlyDefaultLayouts=false", ids,
                 HttpStatus.BAD_REQUEST);
 
@@ -238,7 +238,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, NUMBER_OF_STUDENTS);
         examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileFourExamRooms);
 
-        var rooms = examRoomRepository.findAllNewestExamRoomVersions();
+        Set<ExamRoom> rooms = examRoomRepository.findAllNewestExamRoomVersions();
 
         Map<Long, String> aliasesById = rooms.stream().collect(Collectors.toMap(ExamRoom::getId, room -> "Alias-" + room.getRoomNumber()));
 
@@ -674,6 +674,9 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         for (var assignment : updatedAssignments) {
             if (assignment.getExamRoom().getId().equals(assignmentToUpdate.get().getExamRoom().getId())) {
                 assertThat(assignment.getRoomAlias()).isEqualTo("SPECIAL-ALIAS");
+            }
+            else {
+                assertThat(assignment.getRoomAlias()).isNull();
             }
         }
     }
