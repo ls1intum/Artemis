@@ -25,6 +25,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { StudentsRoomDistributionService } from 'app/exam/manage/services/students-room-distribution.service';
+import { MockStudentsRoomDistributionService } from 'test/helpers/mocks/service/mock-students-room-distribution.service';
 
 // Stub component for UsersImportButtonComponent to avoid signal viewChild issues with ng-mocks
 @Component({
@@ -54,7 +55,7 @@ describe('ExamStudentsComponent', () => {
         course,
         id: 2,
         examUsers: [
-            { ...examUser1, ...user1 },
+            { ...examUser1, ...user1, plannedRoom: 'R1', actualRoom: 'R2' },
             { ...examUser2, ...user2 },
         ],
     } as Exam;
@@ -87,6 +88,7 @@ describe('ExamStudentsComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: StudentsRoomDistributionService, useClass: MockStudentsRoomDistributionService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -104,8 +106,9 @@ describe('ExamStudentsComponent', () => {
         fixture.destroy();
     });
 
-    it('should initialize', () => {
+    it('should initialize', async () => {
         fixture.detectChanges();
+        await fixture.whenStable();
         expect(component).not.toBeNull();
         expect(component.courseId).toEqual(course.id);
         expect(component.exam).toEqual(examWithCourse);
@@ -265,7 +268,8 @@ describe('ExamStudentsComponent', () => {
     });
 
     describe('room alias handling', () => {
-        it('should set aliases for plannedRoom and actualRoom', () => {
+        it('should set aliases for plannedRoom and actualRoom', async () => {
+            examWithCourse.examUsers = [examWithCourse.examUsers![0]];
             const aliasMap = {
                 R1: 'Main Hall',
                 R2: 'Side Room',
@@ -274,26 +278,17 @@ describe('ExamStudentsComponent', () => {
             jest.spyOn(studentsRoomDistributionService, 'getAliases').mockReturnValue(of(aliasMap));
 
             fixture.detectChanges();
+            await fixture.whenStable();
 
-            component.allRegisteredUsers = [
-                {
-                    ...examUser1,
-                    plannedRoom: 'R1',
-                    actualRoom: 'R2',
-                    user: user1,
-                },
-            ] as ExamUser[];
-
-            (component as any).exchangeRoomsForAliasesIfPossible();
-
-            expect(studentsRoomDistributionService.getAliases).toHaveBeenCalledWith(course.id, examWithCourse.id);
+            expect(studentsRoomDistributionService.getAliases).toHaveBeenCalledExactlyOnceWith(course.id, examWithCourse.id);
             expect(component.allRegisteredUsers[0].plannedRoom).toBe('R1');
             expect(component.allRegisteredUsers[0].actualRoom).toBe('R2');
             expect(component.allRegisteredUsers[0].plannedRoomAlias).toBe('Main Hall');
             expect(component.allRegisteredUsers[0].actualRoomAlias).toBe('Side Room');
         });
 
-        it('should leave rooms unchanged if no alias exists', () => {
+        it('should leave rooms unchanged if no alias exists', async () => {
+            examWithCourse.examUsers = [examWithCourse.examUsers![0]];
             const aliasMap = {
                 R1: 'Main Hall',
             };
@@ -301,39 +296,25 @@ describe('ExamStudentsComponent', () => {
             jest.spyOn(studentsRoomDistributionService, 'getAliases').mockReturnValue(of(aliasMap));
 
             fixture.detectChanges();
+            await fixture.whenStable();
 
-            component.allRegisteredUsers = [
-                {
-                    ...examUser1,
-                    plannedRoom: 'UNKNOWN',
-                    actualRoom: 'R1',
-                    user: user1,
-                },
-            ] as ExamUser[];
-
-            (component as any).exchangeRoomsForAliasesIfPossible();
-
-            expect(component.allRegisteredUsers[0].plannedRoom).toBe('UNKNOWN');
-            expect(component.allRegisteredUsers[0].actualRoom).toBe('R1');
-            expect(component.allRegisteredUsers[0].plannedRoomAlias).toBeUndefined();
-            expect(component.allRegisteredUsers[0].actualRoomAlias).toBe('Main Hall');
+            expect(component.allRegisteredUsers[0].plannedRoom).toBe('R1');
+            expect(component.allRegisteredUsers[0].actualRoom).toBe('R2');
+            expect(component.allRegisteredUsers[0].plannedRoomAlias).toBe('Main Hall');
+            expect(component.allRegisteredUsers[0].actualRoomAlias).toBeUndefined();
         });
 
-        it('should handle users without rooms gracefully', () => {
-            jest.spyOn(studentsRoomDistributionService, 'getAliases').mockReturnValue(of({}));
-
-            fixture.detectChanges();
-
-            component.allRegisteredUsers = [
+        it('should handle users without rooms gracefully', async () => {
+            examWithCourse.examUsers = [
                 {
-                    ...examUser1,
+                    ...examWithCourse.examUsers![0],
                     plannedRoom: undefined,
                     actualRoom: undefined,
-                    user: user1,
                 },
-            ] as ExamUser[];
+            ];
 
-            (component as any).exchangeRoomsForAliasesIfPossible();
+            fixture.detectChanges();
+            await fixture.whenStable();
 
             expect(component.allRegisteredUsers[0].plannedRoom).toBeUndefined();
             expect(component.allRegisteredUsers[0].actualRoom).toBeUndefined();
