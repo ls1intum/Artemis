@@ -10,10 +10,11 @@ package de.tum.cit.aet.artemis.communication.domain;
  * <li>{@link #NEW_PASSKEY_ADDED} - Triggered when a new passkey is added to the user account.</li>
  * <li>{@link #VCS_TOKEN_EXPIRED} - Triggered when the user's version control system (VCS) access token has expired.</li>
  * <li>{@link #SSH_KEY_EXPIRED} - Triggered when a previously registered SSH key has expired.</li>
+ * <li>{@link #MAINTENANCE} - Triggered when a planned maintenance notification is created by an admin.</li>
  * </ul>
  *
  * These notification types are used in user settings to control which email alerts the system should send.
  */
 public enum GlobalNotificationType {
-    NEW_LOGIN, NEW_PASSKEY_ADDED, VCS_TOKEN_EXPIRED, SSH_KEY_EXPIRED
+    NEW_LOGIN, NEW_PASSKEY_ADDED, VCS_TOKEN_EXPIRED, SSH_KEY_EXPIRED, MAINTENANCE
 }

@@ -14,9 +14,13 @@ import {
     faThumbsUp,
     faXmark,
 } from '@fortawesome/free-solid-svg-icons';
+import { AlertService } from 'app/shared/service/alert.service';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ConfirmationService } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
@@ -29,6 +33,8 @@ import { IrisMessageContentType, IrisTextMessageContent } from 'app/iris/shared/
 import { AccountService } from 'app/core/auth/account.service';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import * as _ from 'lodash-es';
+import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
+import { IrisCitationTextComponent } from 'app/iris/overview/citation-text/iris-citation-text.component';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -37,12 +43,13 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AsPipe } from 'app/shared/pipes/as.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ChatHistoryItemComponent } from './chat-history-item/chat-history-item.component';
-import { NgClass } from '@angular/common';
+import { NgClass, formatDate } from '@angular/common';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
+import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
 
 // Session history time bucket boundaries (in days ago)
 const YESTERDAY_OFFSET = 1;
@@ -81,15 +88,24 @@ const COPY_FEEDBACK_DURATION_MS = 1500;
         ChatHistoryItemComponent,
         NgClass,
         SearchFilterComponent,
+        IrisCitationTextComponent,
+        ConfirmDialogModule,
     ],
+    providers: [ConfirmationService],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisBaseChatbotComponent implements AfterViewInit {
     protected accountService = inject(AccountService);
     protected translateService = inject(TranslateService);
+    private readonly dialogService = inject(DialogService);
+    private aboutIrisDialogRef: DynamicDialogRef<AboutIrisModalComponent> | undefined;
+    private readonly alertService = inject(AlertService);
+    private readonly confirmationService = inject(ConfirmationService);
 
-    // Reactive signal for the localized "new chat" title
-    private readonly newChatTitle = toSignal(this.translateService.stream('artemisApp.iris.chatHistory.newChat'), { initialValue: '' });
+    // Known "new chat" titles from all languages (server-side: messages*.properties, client-side: iris.json).
+    // Must match the values in src/main/resources/i18n/messages*.properties (iris.chat.session.newChatTitle)
+    // and src/main/webapp/i18n/*/iris.json (artemisApp.iris.chatHistory.newChat).
+    private static readonly NEW_CHAT_TITLES = new Set(['new chat', 'neuer chat']);
     protected statusService = inject(IrisStatusService);
     protected chatService = inject(IrisChatService);
     protected route = inject(ActivatedRoute);
@@ -136,6 +152,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly numNewMessages = toSignal(this.chatService.currentNumNewMessages(), { initialValue: 0 });
     readonly rateLimitInfo = toSignal(this.statusService.currentRatelimitInfo(), { requireSync: true });
     readonly active = toSignal(this.statusService.getActiveStatus(), { initialValue: true });
+    readonly citationInfo = toSignal(this.chatService.currentCitationInfo(), { initialValue: [] as IrisCitationMetaDTO[] });
 
     // Messages with processing
     private readonly rawMessages = toSignal(this.chatService.currentMessages(), { initialValue: [] as IrisMessage[] });
@@ -331,6 +348,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
                 clearInterval(this.dayTickIntervalId);
             }
         });
+        this.destroyRef.onDestroy(() => this.aboutIrisDialogRef?.close());
     }
 
     /**
@@ -648,6 +666,31 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         this.chatService.switchToSession(session);
     }
 
+    onDeleteSession(session: IrisSessionDTO) {
+        const title = session.title || formatDate(session.creationDate, 'dd.MM.yy HH:mm', 'en');
+        this.confirmationService.confirm({
+            header: this.translateService.instant('artemisApp.iris.chatHistory.deleteSessionHeader'),
+            message: this.translateService.instant('artemisApp.iris.chatHistory.deleteSessionQuestion', { title }),
+            acceptLabel: this.translateService.instant('entity.action.delete'),
+            rejectLabel: this.translateService.instant('entity.action.cancel'),
+            acceptButtonStyleClass: 'p-button-danger',
+            rejectButtonStyleClass: 'p-button-secondary',
+            accept: () => {
+                this.chatService
+                    .deleteSession(session.id)
+                    .pipe(takeUntilDestroyed(this.destroyRef))
+                    .subscribe({
+                        next: () => {
+                            this.alertService.success('artemisApp.iris.chatHistory.deleteSessionSuccess');
+                        },
+                        error: () => {
+                            this.alertService.error('artemisApp.iris.chatHistory.deleteSessionError');
+                        },
+                    });
+            },
+        });
+    }
+
     setChatHistoryVisibility(isOpen: boolean) {
         this.isChatHistoryOpen.set(isOpen);
         if (!isOpen) {
@@ -657,8 +700,10 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     private isNewChatSession(session: IrisSessionDTO): boolean {
         const title = session.title?.trim().toLowerCase();
-        const translatedNewChat = this.newChatTitle()?.trim().toLowerCase();
-        return !!title && !!translatedNewChat && title === translatedNewChat;
+        if (!title) {
+            return false;
+        }
+        return IrisBaseChatbotComponent.NEW_CHAT_TITLES.has(title);
     }
 
     /**
@@ -701,6 +746,20 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     openNewSession() {
         this.chatService.clearChat();
+    }
+
+    openAboutIrisModal(): void {
+        this.aboutIrisDialogRef?.close();
+        this.aboutIrisDialogRef =
+            this.dialogService.open(AboutIrisModalComponent, {
+                modal: true,
+                closable: false,
+                showHeader: false,
+                styleClass: 'about-iris-dialog',
+                maskStyleClass: 'about-iris-dialog',
+                width: '40rem',
+                breakpoints: { '640px': '95vw' },
+            }) ?? undefined;
     }
 
     setSearchValue(searchValue: string) {

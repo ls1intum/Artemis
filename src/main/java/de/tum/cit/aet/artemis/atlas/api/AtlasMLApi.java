@@ -82,4 +82,15 @@ public class AtlasMLApi extends AbstractAtlasApi {
     public SuggestCompetencyRelationsResponseDTO suggestCompetencyRelations(Long courseId) {
         return atlasMLService.suggestCompetencyRelations(courseId);
     }
+
+    /**
+     * Maps a competency to another competency in AtlasML (bidirectional relationship).
+     *
+     * @param sourceCompetencyId the source competency ID
+     * @param targetCompetencyId the target competency ID
+     * @return true if successful, false otherwise
+     */
+    public boolean mapCompetencyToCompetency(Long sourceCompetencyId, Long targetCompetencyId) {
+        return atlasMLService.mapCompetencyToCompetency(sourceCompetencyId, targetCompetencyId);
+    }
 }

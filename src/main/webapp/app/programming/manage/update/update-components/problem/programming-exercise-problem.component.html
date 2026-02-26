@@ -2,34 +2,87 @@
     <h3 jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle" id="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle"></h3>
     <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepMessage"></p>
     <!-- User Prompt Input -->
-    @if (!programmingExercise()?.id && hyperionEnabled) {
-        <div class="mb-4">
-            <label for="userPrompt" class="form-label" jhiTranslate="artemisApp.programmingExercise.problemStatement.yourRequirements"></label>
-            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.problemStatement.generateDraftDescription" />
-            <textarea
-                id="userPrompt"
-                [(ngModel)]="userPrompt"
-                class="form-control"
-                rows="4"
-                [placeholder]="isGenerating ? userPrompt : getTranslatedPlaceholder()"
-                [disabled]="isGenerating"
-            >
-            </textarea>
+    @if (hyperionEnabled) {
+        <div class="mb-3">
+            <div class="d-flex align-items-center mb-2">
+                <label for="userPrompt" class="form-label mb-0" jhiTranslate="artemisApp.programmingExercise.problemStatement.yourRequirements"></label>
+                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.problemStatement.generateDraftDescription" />
+            </div>
+            <div class="textarea-counter-wrapper">
+                <textarea
+                    id="userPrompt"
+                    [ngModel]="userPrompt()"
+                    (ngModelChange)="userPrompt.set($event)"
+                    pTextarea
+                    fluid
+                    rows="4"
+                    [placeholder]="getTranslatedPlaceholder()"
+                    [disabled]="isAiApplying()"
+                    [maxlength]="MAX_USER_PROMPT_LENGTH"
+                    class="textarea-with-counter"
+                ></textarea>
+                <span class="textarea-char-count" [class.text-danger]="isPromptNearLimit()">{{ userPrompt()?.length || 0 }}/{{ MAX_USER_PROMPT_LENGTH }}</span>
+            </div>
         </div>
-        <div class="d-flex justify-content-start gap-2">
-            <button class="btn btn-outline-primary" type="button" [disabled]="!userPrompt?.trim() || isGenerating" (click)="generateProblemStatement()">
-                @if (isGenerating) {
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <button pButton type="button" severity="primary" outlined [disabled]="!userPrompt()?.trim() || isAiApplying()" (click)="handleProblemStatementAction()">
+                @if (isAiApplying()) {
                     <fa-icon [icon]="faSpinner" animation="spin" />
                 } @else {
                     <fa-icon [icon]="facArtemisIntelligence" />
                 }
-                <span class="ms-2" jhiTranslate="artemisApp.programmingExercise.problemStatement.generationAssistance"></span>
+                @if (shouldShowGenerateButton()) {
+                    <span class="ms-2" jhiTranslate="artemisApp.programmingExercise.problemStatement.generationAssistance"></span>
+                } @else {
+                    <span class="ms-2" jhiTranslate="artemisApp.programmingExercise.problemStatement.refinementAssistance"></span>
+                }
             </button>
-            <button type="button" id="cancel-generation" class="btn btn-sm btn-secondary" (click)="cancelGeneration()">
-                <fa-icon [fixedWidth]="true" [icon]="faBan" class="sm" />
-                <span class="d-none d-sm-inline" jhiTranslate="entity.action.cancel"></span>
+            <button pButton type="button" id="cancel-generation" severity="secondary" outlined (click)="cancelAiOperation()" [disabled]="!isGeneratingOrRefining()">
+                <fa-icon [icon]="faBan" class="me-1" />
+                <span jhiTranslate="entity.action.cancel"></span>
             </button>
         </div>
+    }
+    @if (isGeneratingOrRefining()) {
+        <p-message severity="info" styleClass="w-100 mb-3" [closable]="false">
+            <fa-icon [icon]="faSpinner" animation="spin" class="me-2" />
+            <span jhiTranslate="artemisApp.programmingExercise.problemStatement.aiRefining"></span>
+        </p-message>
+    }
+    @if (showDiff()) {
+        <p-message severity="info" styleClass="w-100 mb-3" [closable]="false">
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <strong class="small" jhiTranslate="artemisApp.programmingExercise.problemStatement.reviewChanges"></strong>
+                <span class="text-muted small" jhiTranslate="artemisApp.programmingExercise.problemStatement.reviewChangesDescription"></span>
+                <button
+                    pButton
+                    type="button"
+                    severity="primary"
+                    size="small"
+                    [pTooltip]="'artemisApp.programmingExercise.diffReport.splitView.tooltip' | artemisTranslate"
+                    tooltipPosition="bottom"
+                    (click)="allowSplitView.set(!allowSplitView())"
+                >
+                    <fa-icon [icon]="faTableColumns" class="me-1" />
+                    <span [jhiTranslate]="'artemisApp.programmingExercise.diffReport.splitView.' + (allowSplitView() ? 'disable' : 'enable')"></span>
+                </button>
+                <button pButton type="button" severity="secondary" size="small" [disabled]="isAiApplying()" (click)="revertAllChanges()">
+                    <fa-icon [icon]="faBan" class="me-1" />
+                    <span jhiTranslate="artemisApp.programmingExercise.problemStatement.revertAll"></span>
+                </button>
+                <jhi-git-diff-line-stat
+                    class="fw-bold mx-1"
+                    [addedLineCount]="addedLineCount()"
+                    [removedLineCount]="removedLineCount()"
+                    [pTooltip]="'artemisApp.programmingExercise.problemStatement.diffLineStatTooltip' | artemisTranslate"
+                    tooltipPosition="bottom"
+                />
+                <button pButton type="button" severity="success" size="small" [disabled]="isAiApplying()" (click)="closeDiffView()">
+                    <fa-icon [icon]="faSave" class="me-1" />
+                    <span jhiTranslate="artemisApp.programmingExercise.problemStatement.doneReviewing"></span>
+                </button>
+            </div>
+        </p-message>
     }
     @if (isEditFieldDisplayedRecord()?.problemStatement) {
         <div class="form-group" id="field_problemStatement" name="problemStatement">
@@ -48,10 +101,10 @@
                     ></span>
                 </ngb-alert>
             }
-            @if (programmingExerciseCreationConfig().isImportFromExistingExercise) {
+            @if (programmingExerciseCreationConfig().isImportFromExistingExercise && programmingExercise()?.templateParticipation) {
                 <jhi-programming-exercise-instructions
                     [exercise]="programmingExercise()!"
-                    [participation]="programmingExercise()?.templateParticipation!"
+                    [participation]="programmingExercise()!.templateParticipation!"
                     [personalParticipation]="false"
                 />
             }
@@ -60,13 +113,19 @@
                 programmingExerciseCreationConfig().templateParticipationResultLoaded &&
                 !programmingExerciseCreationConfig().isImportFromExistingExercise
             ) {
+                <!-- Single Unified Editor - switches between normal and diff modes -->
                 <jhi-programming-exercise-editable-instructions
+                    #editableInstructions
                     [exercise]="programmingExercise()!"
                     (instructionChange)="onInstructionChange($event)"
                     [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
                     [showStatus]="!!programmingExercise()?.id"
                     [editMode]="!!programmingExercise()?.id"
+                    [isGeneratingOrRefining]="isGeneratingOrRefining()"
                     (hasUnsavedChanges)="programmingExerciseCreationConfig().hasUnsavedChanges = $event"
+                    [mode]="showDiff() ? 'diff' : 'normal'"
+                    [renderSideBySide]="allowSplitView()"
+                    (diffLineChange)="onDiffLineChange($event)"
                     [forceRender]="programmingExerciseCreationConfig().rerenderSubject"
                     class="form__editable-instructions"
                 />
