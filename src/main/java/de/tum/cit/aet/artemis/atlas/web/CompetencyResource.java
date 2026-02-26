@@ -430,15 +430,7 @@ public class CompetencyResource {
     }
 
     private Competency toCompetency(CourseCompetencyRequestDTO competencyRequest) {
-        Competency competency = new Competency();
-        competency.setId(competencyRequest.id());
-        competency.setTitle(competencyRequest.title());
-        competency.setDescription(competencyRequest.description());
-        competency.setSoftDueDate(competencyRequest.softDueDate());
-        competency.setMasteryThreshold(competencyRequest.masteryThreshold() != null ? competencyRequest.masteryThreshold() : CourseCompetency.DEFAULT_MASTERY_THRESHOLD);
-        competency.setTaxonomy(competencyRequest.taxonomy());
-        competency.setOptional(Boolean.TRUE.equals(competencyRequest.optional()));
-        return competency;
+        return CourseCompetencyRequestDTO.toEntity(competencyRequest, Competency::new);
     }
 
     /**

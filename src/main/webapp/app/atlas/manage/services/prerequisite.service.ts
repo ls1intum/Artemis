@@ -54,13 +54,19 @@ export class PrerequisiteService extends CourseCompetencyService {
     }
 
     import(courseCompetency: CourseCompetency, courseId: number): Observable<EntityResponseType> {
+        const payload: CourseCompetencyImportOptionsDTO = {
+            competencyIds: courseCompetency.id ? [courseCompetency.id] : [],
+            importRelations: false,
+            importExercises: false,
+            importLectures: false,
+        };
         return this.httpClient
-            .post<CourseCompetencyResponseDTO>(`${this.resourceURL}/courses/${courseId}/prerequisites/import`, courseCompetency.id, { observe: 'response' })
+            .post<CourseCompetencyResponseDTO>(`${this.resourceURL}/courses/${courseId}/prerequisites/import`, payload, { observe: 'response' })
             .pipe(map((res: EntityResponseDTOType) => this.mapPrerequisiteResponse(res)));
     }
 
     importBulk(courseCompetencies: CourseCompetency[], courseId: number, importRelations: boolean) {
-        const courseCompetencyIds = courseCompetencies.map((competency) => competency.id);
+        const courseCompetencyIds = courseCompetencies.map((competency) => competency.id).filter((id): id is number => id !== undefined);
         return this.httpClient
             .post<Array<CompetencyWithTailRelationResponseDTO>>(
                 `${this.resourceURL}/courses/${courseId}/prerequisites/import/bulk`,
