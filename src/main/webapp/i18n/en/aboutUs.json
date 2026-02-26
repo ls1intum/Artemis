@@ -57,7 +57,7 @@
                 "text": "<a href={{ tutorialGroupsUrl }}>Tutorial Groups:</a> Manage the tutorial groups of a course. Plan the sessions, assign responsible tutors, register students and track the attendance."
             },
             "iris": {
-                "text": "<a href={{ irisUrl }}>Iris:</a> Artemis integrates Iris, a chatbot that supports students and instructors with common questions and tasks."
+                "text": "<strong>Iris:</strong> Artemis integrates Iris, a chatbot that supports students and instructors with common questions and tasks."
             },
             "scalable": {
                 "text": "<a href={{ scalingUrl }}>Scalable</a> to multiple courses with thousands of students. Configure additional build agents in the continuous integration environment."

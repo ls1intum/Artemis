@@ -4,11 +4,12 @@ import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Overlay } from '@angular/cdk/overlay';
 import { ActivatedRoute, Params } from '@angular/router';
 import { IrisChatbotWidgetComponent } from 'app/iris/overview/exercise-chatbot/widget/chatbot-widget.component';
-import { EMPTY, filter, of, switchMap } from 'rxjs';
+import { EMPTY, filter, map, of, switchMap } from 'rxjs';
 import { faArrowRight, faChevronDown, faCircle } from '@fortawesome/free-solid-svg-icons';
 import { IrisLogoLookDirection, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { isTextContent } from 'app/iris/shared/entities/iris-content-type.model';
+import { removeCitationBlocks } from 'app/iris/overview/citation-text/iris-citation-text.util';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
@@ -60,6 +61,7 @@ export class IrisExerciseChatbotButtonComponent {
                 }
                 return EMPTY;
             }),
+            map((textContent) => removeCitationBlocks(textContent)),
         ),
         { initialValue: undefined },
     );

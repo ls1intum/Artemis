@@ -3,7 +3,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ProgrammingExerciseParticipationType } from 'app/programming/shared/entities/programming-exercise-participation.model';
 import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exercise.utils';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
-import { PROFILE_LOCALCI, PROFILE_THEIA } from 'app/app.constants';
+import { MODULE_FEATURE_THEIA, PROFILE_LOCALCI } from 'app/app.constants';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -36,7 +36,7 @@ export class ProgrammingExerciseGroupCellComponent implements OnInit {
 
     ngOnInit(): void {
         this.localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
-        this.onlineIdeEnabled = this.profileService.isProfileActive(PROFILE_THEIA);
+        this.onlineIdeEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA);
 
         const projectKey = this.exercise()?.projectKey;
         if (projectKey && !this.localCIEnabled) {
