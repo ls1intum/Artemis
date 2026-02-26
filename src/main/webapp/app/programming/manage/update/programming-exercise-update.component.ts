@@ -549,7 +549,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.customBuildPlansSupported = PROFILE_AEOLUS;
         }
 
-        this.theiaEnabled = this.profileService.isProfileActive(PROFILE_THEIA);
+        this.theiaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA);
         this.plagiarismEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM);
         this.hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
         this.defineSupportedProgrammingLanguages();

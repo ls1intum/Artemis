@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.exercise.domain.review.Comment;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThread;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThreadGroup;
@@ -59,7 +59,7 @@ public class ExerciseReviewResource {
      * @return the created thread with its initial comment
      */
     @PostMapping("exercises/{exerciseId}/review-threads")
-    @EnforceAtLeastInstructorInExercise
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<CommentThreadDTO> createThread(@PathVariable long exerciseId, @Valid @NotNull @RequestBody CreateCommentThreadDTO createCommentThreadDTO)
             throws URISyntaxException {
         log.debug("REST request to create exercise review thread for exercise {}", exerciseId);
@@ -77,7 +77,7 @@ public class ExerciseReviewResource {
      * @return list of comment threads with comments
      */
     @GetMapping("exercises/{exerciseId}/review-threads")
-    @EnforceAtLeastInstructorInExercise
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<List<CommentThreadDTO>> getThreads(@PathVariable long exerciseId) {
         log.debug("REST request to get exercise review threads for exercise {}", exerciseId);
         List<CommentThreadDTO> threads = exerciseReviewService.findThreadsWithCommentsByExerciseId(exerciseId).stream()
@@ -94,7 +94,7 @@ public class ExerciseReviewResource {
      * @return the created group
      */
     @PostMapping("exercises/{exerciseId}/review-thread-groups")
-    @EnforceAtLeastInstructorInExercise
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<CommentThreadGroupDTO> createThreadGroup(@PathVariable long exerciseId,
             @Valid @NotNull @RequestBody CreateCommentThreadGroupDTO createCommentThreadGroupDTO) throws URISyntaxException {
         log.debug("REST request to create exercise review thread group for exercise {}", exerciseId);
@@ -110,7 +110,7 @@ public class ExerciseReviewResource {
      * @return 204 No Content
      */
     @DeleteMapping("exercises/{exerciseId}/review-thread-groups/{groupId}")
-    @EnforceAtLeastInstructorInExercise
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<Void> deleteThreadGroup(@PathVariable long exerciseId, @PathVariable long groupId) {
         log.debug("REST request to delete exercise review thread group {} for exercise {}", groupId, exerciseId);
         exerciseReviewService.deleteGroup(exerciseId, groupId);
@@ -126,7 +126,7 @@ public class ExerciseReviewResource {
      * @return the created comment
      */
     @PostMapping("exercises/{exerciseId}/review-threads/{threadId}/comments")
-    @EnforceAtLeastInstructorInExercise
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<CommentDTO> createUserComment(@PathVariable long exerciseId, @PathVariable long threadId, @Valid @NotNull @RequestBody UserCommentContentDTO content)
             throws URISyntaxException {
         log.debug("REST request to create exercise review comment for thread {}", threadId);
@@ -142,7 +142,7 @@ public class ExerciseReviewResource {
      * @return 204 No Content
      */
     @DeleteMapping("exercises/{exerciseId}/review-comments/{commentId}")
-    @EnforceAtLeastInstructorInExercise
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<Void> deleteComment(@PathVariable long exerciseId, @PathVariable long commentId) {
         log.debug("REST request to delete comment {} for exercise {}", commentId, exerciseId);
         exerciseReviewService.deleteComment(exerciseId, commentId);
@@ -158,7 +158,7 @@ public class ExerciseReviewResource {
      * @return the updated thread
      */
     @PutMapping("exercises/{exerciseId}/review-threads/{threadId}/resolved")
-    @EnforceAtLeastInstructorInExercise
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<CommentThreadDTO> updateThreadResolvedState(@PathVariable long exerciseId, @PathVariable long threadId,
             @Valid @NotNull @RequestBody UpdateThreadResolvedStateDTO dto) {
         log.debug("REST request to update resolved state of thread {} for exercise {}", threadId, exerciseId);
@@ -175,7 +175,7 @@ public class ExerciseReviewResource {
      * @return the updated comment
      */
     @PutMapping("exercises/{exerciseId}/review-comments/{commentId}")
-    @EnforceAtLeastInstructorInExercise
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<CommentDTO> updateUserCommentContent(@PathVariable long exerciseId, @PathVariable long commentId,
             @Valid @NotNull @RequestBody UserCommentContentDTO dto) {
         log.debug("REST request to update content of comment {} for exercise {}", commentId, exerciseId);
