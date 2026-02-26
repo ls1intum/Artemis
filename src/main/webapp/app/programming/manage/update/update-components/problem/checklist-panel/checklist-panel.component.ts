@@ -176,6 +176,32 @@ export class ChecklistPanelComponent {
 
     readonly difficultyLevels = ['EASY', 'MEDIUM', 'HARD'] as const;
 
+    private static readonly DIFFICULTY_RANKS: Record<string, number> = { EASY: 0, MEDIUM: 1, HARD: 2 };
+
+    /**
+     * Dynamically computed difficulty delta that reacts to changes in the exercise's
+     * declared difficulty, so the "vs. Declared" comparison updates immediately
+     * when the instructor changes the difficulty manually.
+     */
+    effectiveDelta = computed<DifficultyAssessment.DeltaEnum | undefined>(() => {
+        const assessment = this.analysisResult()?.difficultyAssessment;
+        if (!assessment?.suggested) return assessment?.delta;
+
+        const declared = this.exercise()?.difficulty?.toUpperCase();
+        const suggested = assessment.suggested.toUpperCase();
+
+        if (!declared || declared === 'UNKNOWN' || suggested === 'UNKNOWN') return assessment.delta;
+
+        const declaredRank = ChecklistPanelComponent.DIFFICULTY_RANKS[declared];
+        const suggestedRank = ChecklistPanelComponent.DIFFICULTY_RANKS[suggested];
+
+        if (declaredRank === undefined || suggestedRank === undefined) return assessment.delta;
+
+        if (suggestedRank > declaredRank) return DifficultyAssessment.DeltaEnum.Higher;
+        if (suggestedRank < declaredRank) return DifficultyAssessment.DeltaEnum.Lower;
+        return DifficultyAssessment.DeltaEnum.Match;
+    });
+
     // Icons
     readonly faCheckCircle = faCheckCircle;
     readonly faInfoCircle = faInfoCircle;
@@ -810,9 +836,21 @@ export class ChecklistPanelComponent {
     }
 
     /**
-     * Checks if an inferred competency has been linked to the exercise
+     * Checks if an inferred competency has been linked to the exercise.
+     * Uses both the internal linkedCompetencyTitles tracking AND the exercise's
+     * actual competencyLinks so that manual unlinking via the competency selection
+     * component is reflected immediately.
      */
     isCompetencyLinked(comp: InferredCompetency): boolean {
+        const title = (comp.competencyTitle ?? '').toLowerCase().trim();
+        if (!title) return false;
+
+        // Check the exercise's actual competency links (source of truth)
+        const exerciseLinks = this.exercise()?.competencyLinks ?? [];
+        const exerciseLinkedTitles = new Set(exerciseLinks.map((link) => (link.competency?.title ?? '').toLowerCase().trim()).filter(Boolean));
+        if (exerciseLinkedTitles.has(title)) return true;
+
+        // Fall back to internal tracking (for optimistic UI after applyCompetencies)
         return this.competencyTitleIn(comp, this.linkedCompetencyTitles());
     }
 

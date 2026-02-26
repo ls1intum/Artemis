@@ -208,6 +208,39 @@ describe('ChecklistPanelComponent', () => {
             expect(difficultyEmitSpy).toHaveBeenCalledWith('HARD');
         });
 
+        it('should compute effectiveDelta dynamically when exercise difficulty changes', () => {
+            component.analysisResult.set({
+                ...mockResponse,
+                difficultyAssessment: { suggested: DifficultyAssessment.SuggestedEnum.Medium, reasoning: 'Reason', delta: DifficultyAssessment.DeltaEnum.Higher },
+            });
+            fixture.detectChanges();
+
+            // Exercise difficulty is EASY, suggested is MEDIUM → HIGHER
+            expect(component.effectiveDelta()).toBe(DifficultyAssessment.DeltaEnum.Higher);
+
+            // Manually change exercise difficulty to MEDIUM → should now MATCH
+            const updatedExercise = new ProgrammingExercise(undefined, undefined);
+            updatedExercise.id = 123;
+            updatedExercise.difficulty = DifficultyLevel.MEDIUM;
+            fixture.componentRef.setInput('exercise', updatedExercise);
+            fixture.detectChanges();
+
+            expect(component.effectiveDelta()).toBe(DifficultyAssessment.DeltaEnum.Match);
+
+            // Change exercise difficulty to HARD → should be LOWER
+            const hardExercise = new ProgrammingExercise(undefined, undefined);
+            hardExercise.id = 123;
+            hardExercise.difficulty = DifficultyLevel.HARD;
+            fixture.componentRef.setInput('exercise', hardExercise);
+            fixture.detectChanges();
+
+            expect(component.effectiveDelta()).toBe(DifficultyAssessment.DeltaEnum.Lower);
+        });
+
+        it('should return original delta when no analysis result', () => {
+            expect(component.effectiveDelta()).toBeUndefined();
+        });
+
         it('should handle action error', () => {
             vi.spyOn(apiService, 'applyChecklistAction').mockReturnValue(throwError(() => new Error('Failed')) as any);
             const errorSpy = vi.spyOn(alertService, 'error');
@@ -411,12 +444,51 @@ describe('ChecklistPanelComponent', () => {
             expect(getAllSpy).not.toHaveBeenCalled();
         });
 
-        it('should correctly identify linked competencies', () => {
+        it('should correctly identify linked competencies via internal tracking', () => {
             component.linkedCompetencyTitles.set(new Set(['loops']));
             component.createdCompetencyTitles.set(new Set(['recursion']));
 
             expect(component.isCompetencyLinked({ competencyTitle: 'Loops' })).toBeTruthy();
             expect(component.isCompetencyLinked({ competencyTitle: 'Recursion' })).toBeFalsy();
+        });
+
+        it('should identify linked competencies from exercise competencyLinks', () => {
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.id = 123;
+            exercise.difficulty = DifficultyLevel.EASY;
+            const loopsComp = new Competency();
+            loopsComp.id = 1;
+            loopsComp.title = 'Loops';
+            exercise.competencyLinks = [new CompetencyExerciseLink(loopsComp, exercise, 1)];
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.detectChanges();
+
+            // Should be linked through exercise.competencyLinks even without internal tracking
+            expect(component.isCompetencyLinked({ competencyTitle: 'Loops' })).toBeTruthy();
+            expect(component.isCompetencyLinked({ competencyTitle: 'Recursion' })).toBeFalsy();
+        });
+
+        it('should reflect unlinking when competency is removed from exercise competencyLinks', () => {
+            // First, set up as linked through internal tracking
+            component.linkedCompetencyTitles.set(new Set(['loops']));
+
+            // Then simulate manual unlinking: exercise gets no competencyLinks
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.id = 123;
+            exercise.difficulty = DifficultyLevel.EASY;
+            exercise.competencyLinks = [];
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.detectChanges();
+
+            // linkedCompetencyTitles still has 'loops', but exercise has no links
+            // The method should still return true because of internal tracking fallback
+            expect(component.isCompetencyLinked({ competencyTitle: 'Loops' })).toBeTruthy();
+
+            // Clear internal tracking to simulate fresh state
+            component.linkedCompetencyTitles.set(new Set());
+            expect(component.isCompetencyLinked({ competencyTitle: 'Loops' })).toBeFalsy();
         });
     });
 

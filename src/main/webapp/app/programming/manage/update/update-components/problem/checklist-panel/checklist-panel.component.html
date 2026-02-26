@@ -469,9 +469,9 @@
                                 </div>
                                 <div>
                                     <span class="fw-bold me-2" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.difficulty.vsDeclared">vs. Declared:</span>
-                                    <fa-icon [icon]="getDeltaIcon(result.difficultyAssessment.delta)" [ngClass]="getDeltaClass(result.difficultyAssessment.delta)" />
-                                    <span class="ms-1" [ngClass]="getDeltaClass(result.difficultyAssessment.delta)">
-                                        {{ getDeltaLabel(result.difficultyAssessment.delta) }}
+                                    <fa-icon [icon]="getDeltaIcon(effectiveDelta())" [ngClass]="getDeltaClass(effectiveDelta())" />
+                                    <span class="ms-1" [ngClass]="getDeltaClass(effectiveDelta())">
+                                        {{ getDeltaLabel(effectiveDelta()) }}
                                     </span>
                                 </div>
                             </div>

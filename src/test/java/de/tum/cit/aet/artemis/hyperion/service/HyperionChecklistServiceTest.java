@@ -125,13 +125,13 @@ class HyperionChecklistServiceTest {
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> {
             Prompt p = invocation.getArgument(0);
             String text = p.getContents();
-            if (text.contains("1 to 5 most relevant competencies")) {
+            if (text.contains("1 to 5 most relevant learning goals")) {
                 return new ChatResponse(List.of(new Generation(new AssistantMessage(competenciesJson))));
             }
             else if (text.contains("suggest the appropriate difficulty level")) {
                 return new ChatResponse(List.of(new Generation(new AssistantMessage(difficultyJson))));
             }
-            else if (text.contains("quality issues related to CLARITY")) {
+            else if (text.contains("problem statement for quality issues")) {
                 return new ChatResponse(List.of(new Generation(new AssistantMessage(qualityJson))));
             }
             throw new AssertionError("Unexpected prompt: " + text);
@@ -165,13 +165,13 @@ class HyperionChecklistServiceTest {
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> {
             Prompt p = invocation.getArgument(0);
             String text = p.getContents();
-            if (text.contains("1 to 5 most relevant competencies")) {
+            if (text.contains("1 to 5 most relevant learning goals")) {
                 return new ChatResponse(List.of(new Generation(new AssistantMessage(competenciesJson))));
             }
             else if (text.contains("suggest the appropriate difficulty level")) {
                 throw new RuntimeException("AI error");
             }
-            else if (text.contains("quality issues related to CLARITY")) {
+            else if (text.contains("problem statement for quality issues")) {
                 return new ChatResponse(List.of(new Generation(new AssistantMessage(qualityJson))));
             }
             throw new AssertionError("Unexpected prompt: " + text);
@@ -213,7 +213,7 @@ class HyperionChecklistServiceTest {
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> {
             Prompt p = invocation.getArgument(0);
             String text = p.getContents();
-            if (text.contains("1 to 5 most relevant competencies")) {
+            if (text.contains("1 to 5 most relevant learning goals")) {
                 return new ChatResponse(List.of(new Generation(new AssistantMessage(competenciesJson))));
             }
             else if (text.contains("suggest the appropriate difficulty level")) {
