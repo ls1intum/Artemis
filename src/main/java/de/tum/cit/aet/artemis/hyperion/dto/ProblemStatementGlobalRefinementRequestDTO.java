@@ -11,7 +11,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * DTO for global problem statement refinement requests.
  * Used when applying a user prompt to the entire problem statement.
  * <p>
- * Note: Size constraints here mirror those in {@code HyperionPromptSanitizer} intentionally
+ * Note: Size constraints here mirror those in {@code HyperionUtils} intentionally
  * for defense-in-depth. The service layer re-validates after sanitization.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

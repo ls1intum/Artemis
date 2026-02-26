@@ -265,6 +265,26 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/ProblemStatementRewriteResponse'}
+  /api/hyperion/courses/{courseId}/problem-statements/refine/targeted:
+    post:
+      tags: [hyperion-problem-statement]
+      operationId: refineProblemStatementTargeted
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ProblemStatementTargetedRefinementRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ProblemStatementRefinementResponse'}
   /api/hyperion/courses/{courseId}/problem-statements/refine/global:
     post:
       tags: [hyperion-problem-statement]
@@ -325,6 +345,72 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/RewriteFaqResponse'}
+  /api/hyperion/courses/{courseId}/checklist-analysis:
+    post:
+      tags: [hyperion-problem-statement]
+      operationId: analyzeChecklist
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ChecklistAnalysisRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ChecklistAnalysisResponse'}
+  /api/hyperion/courses/{courseId}/checklist-analysis/sections/{section}:
+    post:
+      tags: [hyperion-problem-statement]
+      operationId: analyzeChecklistSection
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: section
+        in: path
+        required: true
+        schema:
+          type: string
+          enum: [COMPETENCIES, DIFFICULTY, QUALITY]
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ChecklistAnalysisRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ChecklistAnalysisResponse'}
+  /api/hyperion/courses/{courseId}/checklist-actions:
+    post:
+      tags: [hyperion-problem-statement]
+      operationId: applyChecklistAction
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ChecklistActionRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ChecklistActionResponse'}
   /api/tutorialgroup/tutorial-groups/{tutorialGroupId}/title:
     get:
       tags: [tutorial-group]
@@ -460,6 +546,20 @@ paths:
         '200': {description: OK}
 components:
   schemas:
+    DifficultyAssessment:
+      type: object
+      properties:
+        suggested:
+          type: string
+          enum: [EASY, MEDIUM, HARD, UNKNOWN]
+        confidence: {type: number, format: double}
+        reasoning: {type: string}
+        matchesDeclared: {type: boolean}
+        delta:
+          type: string
+          enum: [LOWER, MATCH, HIGHER, UNKNOWN]
+        taskCount: {type: integer, format: int32}
+        testCount: {type: integer, format: int32}
     Costs:
       type: object
       description: Response containing consistency check costs
@@ -481,6 +581,30 @@ components:
         isOnline: {type: boolean}
         language: {type: string}
         campus: {type: string}
+    ChecklistAnalysisRequest:
+      type: object
+      properties:
+        problemStatementMarkdown: {type: string, maxLength: 50000, minLength: 0}
+        declaredDifficulty: {type: string, pattern: ^(EASY|MEDIUM|HARD)$}
+        language: {type: string, maxLength: 50, minLength: 0}
+        exerciseId: {type: integer, format: int64}
+      required: [problemStatementMarkdown]
+    ChecklistActionRequest:
+      type: object
+      description: Request to apply an AI-powered checklist action to the problem
+        statement
+      properties:
+        actionType:
+          type: string
+          description: Type of action to apply
+          enum: [FIX_QUALITY_ISSUE, FIX_ALL_QUALITY_ISSUES, ADAPT_DIFFICULTY]
+        problemStatementMarkdown: {type: string, description: Current problem statement
+            markdown, maxLength: 50000, minLength: 0}
+        context:
+          type: object
+          additionalProperties: {type: string}
+          description: Action-specific context parameters
+      required: [actionType, problemStatementMarkdown]
     TutorialGroupStatus:
       type: object
       properties:
@@ -491,6 +615,47 @@ components:
       properties:
         draftProblemStatement: {type: string, description: Draft problem statement
             text}
+        error: {type: string, description: Error message if generation failed}
+    ChecklistAnalysisResponse:
+      type: object
+      properties:
+        inferredCompetencies:
+          type: array
+          items: {$ref: '#/components/schemas/InferredCompetency'}
+        bloomRadar: {$ref: '#/components/schemas/BloomRadar'}
+        difficultyAssessment: {$ref: '#/components/schemas/DifficultyAssessment'}
+        qualityIssues:
+          type: array
+          items: {$ref: '#/components/schemas/QualityIssue'}
+    ChecklistActionResponse:
+      type: object
+      description: Response from applying a checklist action to the problem statement
+      properties:
+        updatedProblemStatement: {type: string, description: The updated problem statement
+            markdown}
+        applied: {type: boolean, description: Whether the action was successfully
+            applied}
+        summary: {type: string, description: Short summary of what was changed}
+    ProblemStatementTargetedRefinementRequest:
+      type: object
+      description: Request to refine a problem statement using targeted selection-based
+        instructions
+      properties:
+        problemStatementText: {type: string, description: 'Original problem statement
+            text to be refined (max 50,000 chars)', maxLength: 50000, minLength: 0}
+        startLine: {type: integer, format: int32, description: Start line number (1-indexed),
+          maximum: 10000, minimum: 1}
+        endLine: {type: integer, format: int32, description: 'End line number (1-indexed,
+            inclusive)', maximum: 10000, minimum: 1}
+        startColumn: {type: integer, format: int32, description: 'Start column within
+            start line (1-indexed, optional for character-level targeting)', maximum: 10000,
+          minimum: 1}
+        endColumn: {type: integer, format: int32, description: 'End column within
+            end line (1-indexed, exclusive — points after the last selected character,
+            optional for character-level targeting)', maximum: 10000, minimum: 1}
+        instruction: {type: string, description: Instruction describing what should
+            change, maxLength: 500, minLength: 0}
+      required: [endLine, instruction, problemStatementText, startLine]
     CodeGenerationRequest:
       type: object
       properties:
@@ -510,6 +675,15 @@ components:
         dateChanged: {type: boolean}
         attendanceCount: {type: integer, format: int32}
       required: [end, location, start]
+    BloomRadar:
+      type: object
+      properties:
+        REMEMBER: {type: number, format: double}
+        UNDERSTAND: {type: number, format: double}
+        APPLY: {type: number, format: double}
+        ANALYZE: {type: number, format: double}
+        EVALUATE: {type: number, format: double}
+        CREATE: {type: number, format: double}
     CodeGenerationJobStart:
       type: object
       properties:
@@ -538,6 +712,25 @@ components:
           description: Related locations across artifacts
           items: {$ref: '#/components/schemas/ArtifactLocation'}
       required: [category, description, relatedLocations, severity, suggestedFix]
+    InferredCompetency:
+      type: object
+      properties:
+        knowledgeAreaShortTitle: {type: string}
+        competencyTitle: {type: string}
+        competencyVersion: {type: string}
+        catalogSourceId: {type: integer, format: int64}
+        taxonomyLevel: {type: string}
+        confidence: {type: number, format: double}
+        rank: {type: integer, format: int32}
+        evidence:
+          type: array
+          items: {type: string}
+        whyThisMatches: {type: string}
+        isLikelyPrimary: {type: boolean}
+        relatedTaskNames:
+          type: array
+          items: {type: string}
+        matchedCourseCompetencyId: {type: integer, format: int64}
     ProblemStatementRewriteRequest:
       type: object
       description: Request to rewrite a problem statement
@@ -639,6 +832,19 @@ components:
         language: {type: string}
         additionalInformation: {type: string}
         isOnline: {type: boolean}
+    QualityIssue:
+      type: object
+      properties:
+        category:
+          type: string
+          enum: [CLARITY, COHERENCE, COMPLETENESS]
+        severity:
+          type: string
+          enum: [LOW, MEDIUM, HIGH]
+        description: {type: string}
+        location: {$ref: '#/components/schemas/QualityIssueLocation'}
+        suggestedFix: {type: string}
+        impactOnLearners: {type: string}
     Student:
       type: object
       properties:
@@ -683,6 +889,11 @@ components:
       type: object
       properties:
         login: {type: string}
+    QualityIssueLocation:
+      type: object
+      properties:
+        startLine: {type: integer, format: int32}
+        endLine: {type: integer, format: int32}
     TutorialGroupFreePeriodRequest:
       type: object
       properties:

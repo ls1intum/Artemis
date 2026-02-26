@@ -21,7 +21,8 @@ import {
     signal,
     untracked,
 } from '@angular/core';
-import { MonacoEditorComponent, MonacoEditorMode } from 'app/shared/monaco-editor/monaco-editor.component';
+import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { MonacoEditorMode } from 'app/shared/monaco-editor/model/monaco-editor.types';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
 import {
     NgbDropdown,
@@ -88,6 +89,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { CommentThread, CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-widget-manager';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+import { EditorSelectionWithPosition, InstructionSelectionPosition } from 'app/programming/manage/shared/problem-statement.utils';
+
+/** Cached selection with Monaco-compatible data used by scroll re-positioning. */
+type CachedSelectionWithText = InstructionSelectionPosition & { selectedText: string };
 
 export enum MarkdownEditorHeight {
     INLINE = 125,
@@ -123,6 +128,9 @@ const BORDER_WIDTH_OFFSET = 3;
 const BORDER_HEIGHT_OFFSET = 2;
 const PROBLEM_STATEMENT_FILE_PATH = 'problem_statement.md';
 const REVIEW_COMMENT_HOVER_BUTTON_CLASS = 'monaco-add-review-comment-button';
+
+/** Vertical offset (in px) applied below the selection end position for the floating action button. */
+const FLOATING_BUTTON_VERTICAL_OFFSET = 5;
 
 @Component({
     selector: 'jhi-markdown-editor-monaco',
@@ -319,12 +327,24 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     onLeaveVisualTab = new EventEmitter<void>();
 
     readonly onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
+
+    /** Emits when user selects lines in the editor (includes selectedText, position, and column info for inline refinement) */
+    readonly onSelectionChange = output<EditorSelectionWithPosition | undefined>();
+
     defaultPreviewHtml: SafeHtml | undefined;
     inPreviewMode = false;
     inVisualMode = false;
     inEditMode = true;
     uniqueMarkdownEditorId: string;
     resizeObserver?: ResizeObserver;
+    /** Disposable for the selection change listener */
+    private selectionChangeDisposable?: { dispose: () => void };
+    /** Disposable for the scroll change listener used to reposition the inline refinement button */
+    private scrollChangeDisposable?: { dispose: () => void };
+    /** Cached model selection used to re-compute screen position after scroll */
+    private cachedSelection?: CachedSelectionWithText;
+    /** Guards requestAnimationFrame scheduling so at most one rAF per scroll burst fires */
+    private pendingScrollRaf = false;
     targetWrapperHeight?: number;
     minWrapperHeight?: number;
     constrainDragPositionFn?: (pointerPosition: Point) => Point;
@@ -529,8 +549,84 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         if (this.useDefaultMarkdownEditorOptions) {
             this.monacoEditor.applyOptionPreset(DEFAULT_MARKDOWN_EDITOR_OPTIONS);
         }
-        this.renderEditorWidgets();
-        this.updateReviewCommentButton();
+        // Set up selection change listener for inline comments/refinement
+        this.selectionChangeDisposable = this.monacoEditor.onSelectionChange((selection) => {
+            if (selection) {
+                // Get selected text for inline refinement
+                const model = this.monacoEditor.getModel();
+                const selectedText = model ? model.getValueInRange(selection) : '';
+
+                // Only emit if there's actual text selected (not just cursor movement)
+                if (selectedText.trim().length === 0) {
+                    this.cachedSelection = undefined;
+                    this.onSelectionChange.emit(undefined);
+                    return;
+                }
+
+                // Cache the selection so scroll events can re-compute position
+                this.cachedSelection = {
+                    startLine: selection.startLineNumber,
+                    endLine: selection.endLineNumber,
+                    startColumn: selection.startColumn,
+                    endColumn: selection.endColumn,
+                    selectedText,
+                };
+
+                this.emitSelectionWithScreenPosition();
+            } else {
+                this.cachedSelection = undefined;
+                this.onSelectionChange.emit(undefined);
+            }
+        });
+
+        // Subscribe to scroll changes to reposition the inline refinement button
+        // when the selection scrolls back into view.
+        // Throttled via requestAnimationFrame so at most one reposition per frame fires.
+        this.scrollChangeDisposable = this.monacoEditor.getEditor()?.onDidScrollChange(() => {
+            if (this.cachedSelection && !this.pendingScrollRaf) {
+                this.pendingScrollRaf = true;
+                requestAnimationFrame(() => {
+                    this.pendingScrollRaf = false;
+                    if (this.cachedSelection) {
+                        this.emitSelectionWithScreenPosition();
+                    }
+                });
+            }
+        });
+    }
+
+    /**
+     * Computes the screen position from the cached selection and emits the selection event.
+     * If the selection end is scrolled off-screen (coords are null), emits undefined to hide the button.
+     */
+    private emitSelectionWithScreenPosition(): void {
+        if (!this.cachedSelection) {
+            return;
+        }
+
+        const endPosition = { lineNumber: this.cachedSelection.endLine, column: this.cachedSelection.endColumn };
+        const coords = this.monacoEditor.getScrolledVisiblePosition(endPosition);
+        const editorDom = this.monacoEditor.getDomNode();
+
+        if (!coords || !editorDom) {
+            this.onSelectionChange.emit(undefined);
+            return;
+        }
+
+        const editorRect = editorDom.getBoundingClientRect();
+        const screenPosition = {
+            top: editorRect.top + coords.top + coords.height + FLOATING_BUTTON_VERTICAL_OFFSET,
+            left: editorRect.left + coords.left,
+        };
+
+        this.onSelectionChange.emit({
+            startLine: this.cachedSelection.startLine,
+            endLine: this.cachedSelection.endLine,
+            startColumn: this.cachedSelection.startColumn,
+            endColumn: this.cachedSelection.endColumn,
+            selectedText: this.cachedSelection.selectedText,
+            screenPosition,
+        });
     }
 
     /**
@@ -550,6 +646,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     ngOnDestroy(): void {
         this.resizeObserver?.disconnect();
+        this.selectionChangeDisposable?.dispose();
+        this.scrollChangeDisposable?.dispose();
         this.reviewCommentManager?.disposeAll();
         this.monacoEditor?.clearLineDecorationsHoverButton();
     }
@@ -839,6 +937,26 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     private getProblemStatementThreadLine(thread: CommentThread): number {
         return (thread.lineNumber ?? thread.initialLineNumber ?? 1) - 1;
+    }
+
+    /**
+     * Gets the current selection in the editor.
+     * @returns The current selection or undefined.
+     */
+    getSelection(): { startLine: number; endLine: number; startColumn: number; endColumn: number } | undefined {
+        if (!this.monacoEditor) {
+            return undefined;
+        }
+        const sel = this.monacoEditor.getSelection();
+        if (!sel) {
+            return undefined;
+        }
+        return {
+            startLine: sel.startLineNumber,
+            endLine: sel.endLineNumber,
+            startColumn: sel.startColumn,
+            endColumn: sel.endColumn,
+        };
     }
 
     /**

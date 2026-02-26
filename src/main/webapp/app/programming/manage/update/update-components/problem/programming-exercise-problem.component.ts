@@ -1,9 +1,11 @@
 import { Component, DestroyRef, Injector, OnDestroy, OnInit, afterNextRender, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faBan, faSave, faSpinner, faTableColumns } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
+import { CompetencyExerciseLink, CompetencyLearningObjectLink } from 'app/atlas/shared/entities/competency.model';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
@@ -19,17 +21,18 @@ import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { Subscription } from 'rxjs';
 import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
-import { MAX_USER_PROMPT_LENGTH, PROMPT_LENGTH_WARNING_THRESHOLD, isTemplateOrEmpty } from 'app/programming/manage/shared/problem-statement.utils';
+import { InlineRefinementEvent, MAX_USER_PROMPT_LENGTH, PROMPT_LENGTH_WARNING_THRESHOLD, isTemplateOrEmpty } from 'app/programming/manage/shared/problem-statement.utils';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { TranslateService } from '@ngx-translate/core';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ChecklistPanelComponent } from './checklist-panel/checklist-panel.component';
 import { AlertService } from 'app/shared/service/alert.service';
 
-import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
+import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 
 @Component({
     selector: 'jhi-programming-exercise-problem',
@@ -48,6 +51,7 @@ import { LineChange } from 'app/programming/shared/utils/diff.utils';
         ButtonModule,
         FaIconComponent,
         HelpIconComponent,
+        ChecklistPanelComponent,
         GitDiffLineStatComponent,
         MessageModule,
     ],
@@ -70,6 +74,10 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     private profileService = inject(ProfileService);
     hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
 
+    // Child component reference for refreshing competency selection
+    private competencySelectionComponent = viewChild(CompetencySelectionComponent);
+
+    // icons
     facArtemisIntelligence = facArtemisIntelligence;
     faSpinner = faSpinner;
 
@@ -277,14 +285,86 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Handles changes to competency links
+     * Handles changes to competency links from either the checklist panel or the competency selection.
+     * Also refreshes the CompetencySelectionComponent to reflect changes (e.g., newly created/linked competencies).
      */
-    onCompetencyLinksChange(competencyLinks: ProgrammingExercise['competencyLinks']): void {
+    onCompetencyLinksChange(competencyLinks: CompetencyExerciseLink[] | CompetencyLearningObjectLink[] | undefined): void {
+        if (!competencyLinks || this.programmingExerciseCreationConfig().isExamMode) return;
         const exercise = this.programmingExercise();
         if (exercise) {
-            exercise.competencyLinks = competencyLinks;
+            // CompetencyExerciseLink extends CompetencyLearningObjectLink, so the assignment is safe.
+            exercise.competencyLinks = competencyLinks.map((link) =>
+                link instanceof CompetencyExerciseLink ? link : new CompetencyExerciseLink(link.competency, exercise, link.weight),
+            );
+            this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
+            this.programmingExerciseChange.emit(exercise);
+            this.refreshCompetencySelection(competencyLinks);
+        }
+    }
+
+    /**
+     * Refreshes the CompetencySelectionComponent so newly linked/created competencies are visible.
+     */
+    private refreshCompetencySelection(competencyLinks: CompetencyExerciseLink[] | CompetencyLearningObjectLink[]): void {
+        const selection = this.competencySelectionComponent();
+        if (!selection) return;
+
+        selection.refreshWithLinks(competencyLinks);
+    }
+
+    onDifficultyChange(difficulty: string): void {
+        const exercise = this.programmingExercise();
+        if (exercise) {
+            const level = DifficultyLevel[difficulty as keyof typeof DifficultyLevel];
+            if (level === undefined) {
+                return;
+            }
+            exercise.difficulty = level;
+            this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
             this.programmingExerciseChange.emit(exercise);
         }
+    }
+
+    /**
+     * Handles inline refinement request from editor selection.
+     * Calls the Hyperion API with the selected text and instruction, then applies changes directly.
+     */
+    onInlineRefinement(event: InlineRefinementEvent): void {
+        const exercise = this.programmingExercise();
+        const currentContent = this.editableInstructions()?.getCurrentContent() ?? exercise?.problemStatement;
+
+        if (!currentContent?.trim()) {
+            return;
+        }
+
+        this.currentAiOperationSubscription?.unsubscribe();
+        const requestId = ++this.refinementRequestId;
+        this.currentAiOperationSubscription = this.problemStatementService
+            .refineTargeted(exercise, currentContent, event, (v) => this.isGeneratingOrRefining.set(v))
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (result) => {
+                    if (result.success && result.content) {
+                        this.showDiff.set(true);
+                        const refinedContent = result.content;
+                        afterNextRender(
+                            () => {
+                                if (requestId === this.refinementRequestId && this.showDiff()) {
+                                    this.editableInstructions()?.applyRefinedContent(refinedContent);
+                                }
+                            },
+                            { injector: this.injector },
+                        );
+                    } else if (!result.errorHandled) {
+                        this.alertService.error('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
+                    }
+                    this.currentAiOperationSubscription = undefined;
+                },
+                error: () => {
+                    this.alertService.error('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
+                    this.currentAiOperationSubscription = undefined;
+                },
+            });
     }
 
     onDiffLineChange(event: { ready: boolean; lineChange: LineChange }): void {
@@ -292,14 +372,32 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
         this.removedLineCount.set(event.lineChange.removedLineCount);
     }
 
-    onInstructionChange(problemStatement: string) {
+    /**
+     * Opens the diff view to show changes proposed by a checklist AI action.
+     * Uses the same diff review flow as refineProblemStatement().
+     */
+    onChecklistActionDiffRequest(proposedContent: string): void {
+        this.showDiff.set(true);
+        const requestId = ++this.refinementRequestId;
+        afterNextRender(
+            () => {
+                if (requestId === this.refinementRequestId && this.showDiff()) {
+                    this.editableInstructions()?.applyRefinedContent(proposedContent);
+                }
+            },
+            { injector: this.injector },
+        );
+    }
+
+    onInstructionChange(problemStatement: string): void {
         const exercise = this.programmingExercise();
         const previousContent = this.currentProblemStatement();
         this.currentProblemStatement.set(problemStatement);
-        if (problemStatement !== previousContent) {
+        const changed = problemStatement !== previousContent;
+        if (changed) {
             this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
         }
-        if (exercise) {
+        if (exercise && changed) {
             exercise.problemStatement = problemStatement;
             this.programmingExerciseChange.emit(exercise);
         }
