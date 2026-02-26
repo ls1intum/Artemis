@@ -135,8 +135,6 @@ public class ExerciseMappingToolsService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    private static final ThreadLocal<String> currentSessionId = ThreadLocal.withInitial(() -> null);
-
     public ExerciseMappingToolsService(ExerciseRepository exerciseRepository, CourseCompetencyRepository courseCompetencyRepository,
             CompetencyExerciseLinkRepository competencyExerciseLinkRepository, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService,
             UserRepository userRepository) {
@@ -146,23 +144,6 @@ public class ExerciseMappingToolsService {
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
-    }
-
-    /**
-     * Set the current session ID for this request.
-     * Called by AtlasAgentService before routing to Exercise Mapper.
-     *
-     * @param sessionId the session ID
-     */
-    public static void setCurrentSessionId(String sessionId) {
-        currentSessionId.set(sessionId);
-    }
-
-    /**
-     * Clear the current session ID after request completes.
-     */
-    public static void clearCurrentSessionId() {
-        currentSessionId.remove();
     }
 
     /**
