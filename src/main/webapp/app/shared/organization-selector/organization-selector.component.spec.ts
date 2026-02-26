@@ -70,7 +70,8 @@ describe('OrganizationSelectorComponent', () => {
         component.loadOrganizations({} as TableLazyLoadEvent);
 
         // No second argument means the service default (false) is used — no counts requested
-        expect(spy).toHaveBeenCalledWith(expect.anything());
+        expect(spy).toHaveBeenCalledOnce();
+        expect(spy.mock.calls[0]).toHaveLength(1);
     });
 
     it('should mark already-assigned organizations as disabled', () => {

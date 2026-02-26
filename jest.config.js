@@ -103,6 +103,8 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/atlas/**',          // atlas module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/iris/**',           // iris module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/core/course/manage/**', // core course manage module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/shared/table-view/**',          // table view module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/shared/components/buttons/**',  // buttons module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exercise/review/**', // review comment module uses Vitest (see vitest.config.ts)
     ],
     coveragePathIgnorePatterns: [

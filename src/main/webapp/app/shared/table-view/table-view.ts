@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, TemplateRef, Type, computed, input, model, output, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, TemplateRef, Type, computed, inject, input, model, output, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -52,6 +52,10 @@ export class TableView<T> {
     dt = viewChild.required<Table>('dt');
 
     private debounceTimer: ReturnType<typeof setTimeout> | undefined;
+
+    constructor() {
+        inject(DestroyRef).onDestroy(() => clearTimeout(this.debounceTimer));
+    }
 
     private currentFirst = signal(0);
 

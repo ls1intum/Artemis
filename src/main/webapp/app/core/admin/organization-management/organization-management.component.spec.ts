@@ -10,9 +10,11 @@ import { ActivatedRoute } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
 import { TableLazyLoadEvent } from 'primeng/table';
+import { MockProvider } from 'ng-mocks';
 
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { OrganizationManagementComponent } from 'app/core/admin/organization-management/organization-management.component';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { Organization } from 'app/core/shared/entities/organization.model';
@@ -34,6 +36,7 @@ describe('OrganizationManagementComponent', () => {
                 { provide: Router, useValue: { navigate: vi.fn() } },
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                MockProvider(AlertService),
             ],
         })
             .overrideTemplate(OrganizationManagementComponent, '')

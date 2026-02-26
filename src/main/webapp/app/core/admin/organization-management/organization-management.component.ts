@@ -1,19 +1,20 @@
 import { Component, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Organization } from 'app/core/shared/entities/organization.model';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { Subject } from 'rxjs';
 import { faPlus, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { TableLazyLoadEvent } from 'primeng/table';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title-bar-actions.directive';
 import { ColumnDef, TableView } from 'app/shared/table-view/table-view';
 import { buildDbQueryFromLazyEvent } from 'app/shared/table-view/request-builder';
+import { AlertService } from 'app/shared/service/alert.service';
+import { onError } from 'app/shared/util/global.utils';
 
 /**
  * Component for managing organizations.
@@ -28,6 +29,7 @@ export class OrganizationManagementComponent {
     private readonly organizationService = inject(OrganizationManagementService);
     private readonly router = inject(Router);
     private readonly route = inject(ActivatedRoute);
+    private readonly alertService = inject(AlertService);
 
     organizations = signal<Organization[]>([]);
     totalCount = signal(0);
@@ -73,10 +75,11 @@ export class OrganizationManagementComponent {
                 this.totalCount.set(response.totalElements);
                 this.isLoading.set(false);
             },
-            error: () => {
+            error: (error: HttpErrorResponse) => {
                 this.organizations.set([]);
                 this.totalCount.set(0);
                 this.isLoading.set(false);
+                onError(this.alertService, error);
             },
         });
     }

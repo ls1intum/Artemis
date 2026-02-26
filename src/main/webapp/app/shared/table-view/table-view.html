@@ -45,7 +45,9 @@
                     </div>
                 </th>
             }
-            <th></th>
+            @if (rowActions()) {
+                <th></th>
+            }
         </tr>
     </ng-template>
 

@@ -17,8 +17,8 @@ export class OrganizationManagementService {
     /**
      * Send GET request to retrieve a paginated and filtered list of organizations
      * @param params     the search and pagination parameters including search term, page, and page size
-     * @param withCounts whether to include aggregated user/course counts (default: true);
-     *                   pass false for lightweight queries that do not need count data
+     * @param withCounts whether to include aggregated user/course counts (default: false);
+     *                   pass true to include user/course count data
      * @returns an observable emitting a pageable result containing the matching organizations and total element count
      */
     getOrganizations(params: SearchTermPageableSearch, withCounts = false): Observable<PageableResult<Organization>> {
