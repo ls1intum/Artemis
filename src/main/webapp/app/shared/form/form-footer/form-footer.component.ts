@@ -1,6 +1,7 @@
-import { Component, EventEmitter, Input, Output, computed, input } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faBan, faExclamationCircle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { facArtemisIntelligence } from 'app/shared/icons/icons';
 import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { SwitchEditModeButtonComponent } from 'app/programming/manage/update/switch-edit-mode-button/switch-edit-mode-button.component';
@@ -31,20 +32,28 @@ export class FormFooterComponent {
     protected readonly faSave = faSave;
     protected readonly faBan = faBan;
     protected readonly faExclamationCircle = faExclamationCircle;
+    protected readonly facArtemisIntelligence = facArtemisIntelligence;
 
-    @Input() isSaving = false;
-    @Input() isDisabled = false;
-    @Input() invalidReasons: ValidationReason[] = [];
-    @Input() notificationText?: string;
-    @Input() switchEditMode?: () => void;
+    isSaving = input(false);
+    isDisabled = input(false);
+    invalidReasons = input<ValidationReason[]>([]);
+    showGenerateWithAi = input(false);
+    isGeneratingWithAi = input(false);
+    notificationText = input<string | undefined>();
+    switchEditMode = input<(() => void) | undefined>();
     isImport = input<boolean>();
     isCreation = input<boolean>();
     isSimpleMode = input<boolean>();
     areAuxiliaryRepositoriesValid = input<boolean>(true);
 
-    @Output() notificationTextChange = new EventEmitter<string>();
-    @Output() save = new EventEmitter<void>();
-    @Output() onCancel = new EventEmitter<void>();
+    notificationTextChange = output<string>();
+    save = output<void>();
+    generateWithAi = output<void>();
+    onCancel = output<void>();
 
     saveTitle = computed<string>(() => (this.isImport() ? 'entity.action.import' : this.isCreation() ? 'entity.action.generate' : 'entity.action.save'));
+
+    onSwitchEditMode() {
+        this.switchEditMode()?.();
+    }
 }

@@ -102,15 +102,77 @@ public class ProgrammingExerciseRepositoryService {
      * @param exerciseCreator     the User that performed the action (used as Git commit author)
      */
     void setupExerciseTemplate(final ProgrammingExercise programmingExercise, final User exerciseCreator) throws GitAPIException {
+        setupExerciseTemplate(programmingExercise, exerciseCreator, false);
+    }
+
+    /**
+     * Set up the exercise template by determining the files needed for the template and copying them. Commit and push the changes to all repositories for this programming
+     * exercise.
+     *
+     * @param programmingExercise the programming exercise that should be set up
+     * @param exerciseCreator     the User that performed the action (used as Git commit author)
+     * @param emptyRepositories   if true, clear sources in template, solution, and test repositories after setup
+     */
+    void setupExerciseTemplate(final ProgrammingExercise programmingExercise, final User exerciseCreator, boolean emptyRepositories) throws GitAPIException {
+        if (programmingExercise == null) {
+            throw new IllegalArgumentException("ProgrammingExercise must not be null");
+        }
+        if (exerciseCreator == null) {
+            throw new IllegalArgumentException("Exercise creator must not be null");
+        }
         final RepositoryResources exerciseResources = getRepositoryResources(programmingExercise, RepositoryType.TEMPLATE);
         final RepositoryResources solutionResources = getRepositoryResources(programmingExercise, RepositoryType.SOLUTION);
         final RepositoryResources testResources = getRepositoryResources(programmingExercise, RepositoryType.TESTS);
 
         setupRepositories(programmingExercise, exerciseCreator, exerciseResources, solutionResources, testResources);
+
+        if (emptyRepositories) {
+            clearRepositoriesForAiGenerationKeepingTests(exerciseResources.repository, solutionResources.repository, exerciseCreator);
+        }
+    }
+
+    private void clearRepositoriesForAiGenerationKeepingTests(final Repository templateRepository, final Repository solutionRepository, final User exerciseCreator)
+            throws GitAPIException {
+        clearRepositorySources(templateRepository, RepositoryType.TEMPLATE, exerciseCreator);
+        clearRepositorySources(solutionRepository, RepositoryType.SOLUTION, exerciseCreator);
     }
 
     private record RepositoryResources(Repository repository, Resource[] resources, Path prefix, Resource[] projectTypeResources, Path projectTypePrefix,
             Resource[] staticCodeAnalysisResources, Path staticCodeAnalysisPrefix) {
+    }
+
+    /**
+     * Clears the repository sources while keeping build scaffolding in place.
+     *
+     * @param repository      the repository to clean
+     * @param repositoryType  the repository type for logging and commit message
+     * @param exerciseCreator the user performing the cleanup
+     */
+    void clearRepositorySources(final Repository repository, final RepositoryType repositoryType, final User exerciseCreator) throws GitAPIException {
+        final String repositoryLabel = repositoryType.name().toLowerCase(Locale.ROOT);
+        Path sourcePath = repository.getLocalPath().resolve("src");
+        if (!Files.exists(sourcePath)) {
+            throw new IllegalStateException(
+                    "Cannot clear sources for AI generation: no src directory found in " + repositoryLabel + " repository " + repository.getRemoteRepositoryUri());
+        }
+        try {
+            FileUtils.cleanDirectory(sourcePath.toFile());
+            Path keepFile = sourcePath.resolve(".gitkeep");
+            if (!Files.exists(keepFile)) {
+                try (var outputStream = FileUtils.openOutputStream(keepFile.toFile())) {
+                    outputStream.write(new byte[0]);
+                }
+            }
+            commitAndPushRepository(repository, "Cleared " + repositoryLabel + " sources for AI generation", true, exerciseCreator);
+        }
+        catch (IOException ex) {
+            log.error("Failed to clean {} sources for AI generation", repositoryLabel, ex);
+            String message = String.format("Failed to clean %s sources for AI generation: %s", repositoryLabel, ex.getMessage());
+            GitAPIException exception = new GitAPIException(message) {
+            };
+            exception.initCause(ex);
+            throw exception;
+        }
     }
 
     /**

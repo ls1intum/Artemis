@@ -268,6 +268,7 @@
             "codeGeneration": {
                 "creationAssistance": "Creation Assistance",
                 "generateCode": "Generate Code",
+                "generateWithAi": "Generate with AI",
                 "generating": "Generating...",
                 "runningTitle": "Code generation in progress",
                 "runningText": "Code generation is currently running for this exercise by another user. Please try again later.",

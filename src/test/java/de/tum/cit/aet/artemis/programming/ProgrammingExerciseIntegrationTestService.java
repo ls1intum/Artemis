@@ -1096,6 +1096,19 @@ public class ProgrammingExerciseIntegrationTestService {
         request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
+    void createProgrammingExercise_emptyRepositoriesUnsupportedLanguage_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.PYTHON);
+        programmingExercise.setProjectType(null);
+        programmingExercise.setStaticCodeAnalysisEnabled(false);
+        programmingExercise.setMaxStaticCodeAnalysisPenalty(null);
+        programmingExercise.getBuildConfig().setCheckoutSolutionRepository(false);
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("emptyRepositories", "true");
+        request.postWithResponseBody("/api/programming/programming-exercises/setup", programmingExercise, ProgrammingExercise.class, params, HttpStatus.BAD_REQUEST);
+    }
+
     void createProgrammingExercise_sameShortNameInCourse_badRequest() throws Exception {
         programmingExerciseInExam.setId(null);
         programmingExercise.setTitle("New title");

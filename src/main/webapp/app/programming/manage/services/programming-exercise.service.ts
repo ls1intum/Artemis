@@ -40,6 +40,11 @@ export type ProgrammingExerciseResetOptions = {
     recreateBuildPlans: boolean;
 };
 
+enum EmptyRepositoriesQueryParam {
+    Enabled = 'true',
+    Disabled = 'false',
+}
+
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseService {
     private http = inject(HttpClient);
@@ -49,15 +54,19 @@ export class ProgrammingExerciseService {
     public resourceUrl = 'api/programming/programming-exercises';
 
     /**
-     * Sets a new programming exercise up
+     * Sets a new programming exercise up.
+     *
      * @param programmingExercise which should be setup
+     * @param emptyRepositories if true, clear sources in template, solution, and test repositories after setup
      */
-    automaticSetup(programmingExercise: ProgrammingExercise): Observable<EntityResponseType> {
+    automaticSetup(programmingExercise: ProgrammingExercise, emptyRepositories = false): Observable<EntityResponseType> {
         let copy = this.convertDataFromClient(programmingExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        const emptyRepositoriesParam = emptyRepositories ? EmptyRepositoriesQueryParam.Enabled : EmptyRepositoriesQueryParam.Disabled;
+        const params = new HttpParams().set('emptyRepositories', emptyRepositoriesParam);
         return this.http
-            .post<ProgrammingExercise>(this.resourceUrl + '/setup', copy, { observe: 'response' })
+            .post<ProgrammingExercise>(this.resourceUrl + '/setup', copy, { observe: 'response', params })
             .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)));
     }
 
