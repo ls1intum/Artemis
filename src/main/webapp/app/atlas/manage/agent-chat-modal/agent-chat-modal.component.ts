@@ -129,7 +129,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                 this.isAgentTyping.set(false);
 
                 this.addMessage(
-                    response.message || this.translateService.instant('artemisApp.agent.chat.error'),
+                    response.message || this.translateService.instant('artemisApp.agent.chat.error.general'),
                     false,
                     response.competencyPreviews,
                     response.relationPreviews,
@@ -145,7 +145,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             },
             error: () => {
                 this.isAgentTyping.set(false);
-                this.addMessage(this.translateService.instant('artemisApp.agent.chat.error'), false);
+                this.addMessage(this.translateService.instant('artemisApp.agent.chat.error.general'), false);
                 // Restore focus to input after error
                 setTimeout(() => this.messageInput()?.nativeElement?.focus(), this.INPUT_FOCUS_DELAY_MS);
             },
@@ -345,7 +345,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         this.agentChatService.sendMessage(this.translateService.instant('artemisApp.agent.chat.planApproval'), this.courseId()).subscribe({
             next: (response) => {
                 this.isAgentTyping.set(false);
-                this.addMessage(response.message || this.translateService.instant('artemisApp.agent.chat.error'), false, response.competencyPreviews);
+                this.addMessage(response.message || this.translateService.instant('artemisApp.agent.chat.error.general'), false, response.competencyPreviews);
 
                 if (response.competenciesModified) {
                     this.competencyChanged.emit();
@@ -355,7 +355,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             },
             error: () => {
                 this.isAgentTyping.set(false);
-                this.addMessage(this.translateService.instant('artemisApp.agent.chat.error'), false);
+                this.addMessage(this.translateService.instant('artemisApp.agent.chat.error.general'), false);
                 setTimeout(() => this.messageInput()?.nativeElement?.focus(), this.INPUT_FOCUS_DELAY_MS);
             },
         });

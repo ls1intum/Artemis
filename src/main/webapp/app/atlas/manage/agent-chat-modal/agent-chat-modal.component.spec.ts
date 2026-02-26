@@ -420,7 +420,7 @@ describe('AgentChatModalComponent', () => {
             sendButton.click();
             const messages = component.messages();
             expect(component.isAgentTyping()).toBeFalsy();
-            expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.error');
+            expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.error.general');
             expect(messages).toHaveLength(3); // Welcome + user message + error message
             expect(messages[2].content).toBe(errorMessage);
             expect(messages[2].isUser).toBeFalsy();
@@ -804,7 +804,7 @@ describe('AgentChatModalComponent', () => {
 
                 const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
                 sendButton.click();
-                expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.error');
+                expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.error.general');
             });
 
             it('should handle null response message from service', () => {
@@ -825,7 +825,7 @@ describe('AgentChatModalComponent', () => {
                 const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
                 sendButton.click();
 
-                expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.error');
+                expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.error.general');
             });
         });
 
@@ -1219,7 +1219,7 @@ describe('AgentChatModalComponent', () => {
                     component['onApprovePlan'](message);
 
                     expect(component.isAgentTyping()).toBeFalsy();
-                    expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.error');
+                    expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.error.general');
                 });
             });
 
