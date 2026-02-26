@@ -1,0 +1,37 @@
+---
+title: System Notifications
+sidebar_label: System Notifications
+---
+
+# System Notifications
+
+System notifications allow administrators to inform all users about important events such as planned maintenance windows. Notifications appear as banners in the Artemis UI for all connected users.
+
+## Creating a System Notification
+
+1. Navigate to **Administration > System Notifications**.
+2. Click **Create a new system notification**.
+3. Fill in the form:
+   - **Title**: A short descriptive title (required, max 50 characters).
+   - **Text**: Additional details about the notification.
+   - **Type**: `INFO` or `WARNING` (determines the banner style).
+   - **Notification Date**: When the banner should start appearing.
+   - **Expiration Date**: When the banner should disappear (must be after the notification date).
+
+## Maintenance Email Announcements
+
+When creating a new system notification, administrators can optionally send an email to all instructors of ongoing courses:
+
+1. Check the **Announce maintenance to all instructors via email** checkbox.
+2. The form displays the number of instructors who will receive the email.
+3. Upon saving, each instructor receives a localized email with the maintenance window details.
+
+### Who receives the email?
+
+- All users who belong to an **instructor group** of an **ongoing course** (a course whose start date is in the past or unset, and whose end date is in the future or unset).
+- Users who have **not opted out** of maintenance notifications in their user settings.
+- Only users with a valid email address.
+
+### Opting out
+
+Instructors can disable maintenance email notifications in **User Settings > Notifications** by toggling the **Planned Maintenance Announcements** option.
