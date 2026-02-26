@@ -1,0 +1,15 @@
+<div
+    class="entity-group-header"
+    role="button"
+    tabindex="0"
+    (click)="toggleExpanded.emit()"
+    (keydown.enter)="toggleExpanded.emit()"
+    (keydown.space)="toggleExpanded.emit()"
+    [attr.aria-expanded]="expanded()"
+>
+    <a class="entity-icon-link" [routerLink]="entityRoute()" [queryParamsHandling]="'preserve'" [ngbTooltip]="tooltipKey() | artemisTranslate" (click)="$event.stopPropagation()">
+        <fa-icon [icon]="icon()" />
+    </a>
+    <span class="entity-name">{{ entityName() }}</span>
+    <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [ngClass]="{ rotated: expanded() }" />
+</div>

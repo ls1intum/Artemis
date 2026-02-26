@@ -6,9 +6,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChatHistoryItemComponent } from './chat-history-item.component';
 import { By } from '@angular/platform-browser';
 import { DatePipe } from '@angular/common';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { faChalkboardUser, faKeyboard } from '@fortawesome/free-solid-svg-icons';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -99,41 +96,6 @@ describe('ChatHistoryItemComponent', () => {
 
         const itemDiv: HTMLElement = fixture.nativeElement.querySelector('.chat-history-item');
         expect(itemDiv.classList).not.toContain('chat-history-item-selected');
-    });
-
-    function testSessionRendering(session: IrisSessionDTO, expectedIcon: IconProp, expectedTooltipKey: string, expectedEntityName: string) {
-        fixture.componentRef.setInput('session', session);
-        fixture.detectChanges();
-        const iconDebugEl = fixture.debugElement.query(By.css('.related-entity-info fa-icon'));
-        const iconInstance = iconDebugEl.componentInstance as FaIconComponent;
-        const entityNameEl = fixture.debugElement.query(By.css('.related-entity-name')).nativeElement;
-        expect(iconInstance.icon()).toBe(expectedIcon);
-        expect(component.tooltipKey()).toBe(expectedTooltipKey);
-        expect(entityNameEl.textContent).toContain(expectedEntityName);
-    }
-
-    it('should render correct icon with correct tooltip and entity name for lecture session', () => {
-        const session: IrisSessionDTO = {
-            id: 1,
-            title: 'New chat',
-            creationDate: new Date(),
-            chatMode: ChatServiceMode.LECTURE,
-            entityId: 42,
-            entityName: 'Lecture 1',
-        };
-        testSessionRendering(session, faChalkboardUser, 'artemisApp.iris.chatHistory.relatedEntityTooltip.lecture', 'Lecture 1');
-    });
-
-    it('should render correct icon with correct tooltip and entity name for programming exercise session', () => {
-        const session: IrisSessionDTO = {
-            id: 2,
-            title: 'New chat',
-            creationDate: new Date(),
-            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
-            entityId: 77,
-            entityName: 'Exercise 1',
-        };
-        testSessionRendering(session, faKeyboard, 'artemisApp.iris.chatHistory.relatedEntityTooltip.programmingExercise', 'Exercise 1');
     });
 
     it('should detect new chat session with English title', async () => {
@@ -312,24 +274,5 @@ describe('ChatHistoryItemComponent', () => {
         vi.spyOn(translateService, 'instant').mockReturnValue('Löschen');
         component.onMenuToggle(mockEvent);
         expect(component.menuItems[0].label).toBe('Löschen');
-    });
-
-    it('should not render an icon and entity name for course session', async () => {
-        const session: IrisSessionDTO = {
-            id: 3,
-            title: 'Course chat',
-            creationDate: new Date(),
-            chatMode: ChatServiceMode.COURSE,
-            entityId: 123,
-            entityName: 'Course 1',
-        };
-
-        fixture.componentRef.setInput('session', session);
-        await fixture.whenStable();
-
-        const iconDebugEl = fixture.debugElement.query(By.css('.related-entity-info fa-icon'));
-
-        expect(iconDebugEl).toBeNull();
-        expect(fixture.debugElement.query(By.css('.related-entity-name'))).toBeFalsy();
     });
 });

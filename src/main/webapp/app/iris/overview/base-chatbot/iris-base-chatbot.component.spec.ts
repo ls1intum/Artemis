@@ -16,7 +16,7 @@ import { IrisStatusService } from 'app/iris/overview/services/iris-status.servic
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.service';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import {
@@ -1228,6 +1228,320 @@ describe('IrisBaseChatbotComponent', () => {
 
             const suggestionButtons = fixture.nativeElement.querySelectorAll('.iris-suggestion-buttons');
             expect(suggestionButtons).toHaveLength(0);
+        });
+    });
+
+    describe('entity grouping', () => {
+        const mockDate = new Date('2025-10-06T12:00:00.000Z');
+
+        const exerciseSession1: IrisSessionDTO = {
+            id: 101,
+            title: 'Help with loops',
+            creationDate: new Date('2025-10-06T10:00:00.000Z'),
+            lastActivityDate: new Date('2025-10-06T10:00:00.000Z'),
+            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+            entityId: 42,
+            entityName: 'Exercise A',
+        };
+
+        const exerciseSession2: IrisSessionDTO = {
+            id: 102,
+            title: 'Help with arrays',
+            creationDate: new Date('2025-10-05T10:00:00.000Z'),
+            lastActivityDate: new Date('2025-10-05T10:00:00.000Z'),
+            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+            entityId: 42,
+            entityName: 'Exercise A',
+        };
+
+        const lectureSession: IrisSessionDTO = {
+            id: 103,
+            title: 'Lecture question',
+            creationDate: new Date('2025-10-04T10:00:00.000Z'),
+            lastActivityDate: new Date('2025-10-04T10:00:00.000Z'),
+            chatMode: ChatServiceMode.LECTURE,
+            entityId: 55,
+            entityName: 'Lecture 1',
+        };
+
+        const courseSession: IrisSessionDTO = {
+            id: 104,
+            title: 'Course question',
+            creationDate: new Date('2025-10-06T09:00:00.000Z'),
+            lastActivityDate: new Date('2025-10-06T09:00:00.000Z'),
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 1,
+            entityName: 'Course 1',
+        };
+
+        beforeAll(() => {
+            vi.useFakeTimers();
+            vi.setSystemTime(mockDate);
+        });
+
+        afterAll(() => {
+            vi.useRealTimers();
+        });
+
+        beforeEach(() => {
+            vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([exerciseSession1, exerciseSession2, lectureSession, courseSession]));
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+        });
+
+        it('should group sessions by chatMode+entityId', () => {
+            const groups = component.entityGroups();
+            expect(groups).toHaveLength(2);
+
+            const exerciseGroup = groups.find((g) => g.chatMode === ChatServiceMode.PROGRAMMING_EXERCISE && g.entityId === 42);
+            expect(exerciseGroup).toBeDefined();
+            expect(exerciseGroup!.sessions).toHaveLength(2);
+
+            const lectureGroup = groups.find((g) => g.chatMode === ChatServiceMode.LECTURE && g.entityId === 55);
+            expect(lectureGroup).toBeDefined();
+            expect(lectureGroup!.sessions).toHaveLength(1);
+        });
+
+        it('should exclude PROGRAMMING_EXERCISE and LECTURE from ungrouped sessions', () => {
+            const ungrouped = component.ungroupedSessions();
+            expect(ungrouped).toHaveLength(1);
+            expect(ungrouped[0].id).toBe(courseSession.id);
+        });
+
+        it('should sort entity groups by most recent activity descending', () => {
+            const groups = component.entityGroups();
+            expect(groups[0].chatMode).toBe(ChatServiceMode.PROGRAMMING_EXERCISE);
+            expect(groups[1].chatMode).toBe(ChatServiceMode.LECTURE);
+        });
+
+        it('should collapse all groups by default', () => {
+            const groups = component.entityGroups();
+            const key0 = component.getGroupKey(groups[0]);
+            const key1 = component.getGroupKey(groups[1]);
+            expect(component.isGroupExpanded(key0)).toBe(false);
+            expect(component.isGroupExpanded(key1)).toBe(false);
+        });
+
+        it('should expand all groups when search is active', () => {
+            // First, get the second group key before filtering changes the group list
+            const groupsBefore = component.entityGroups();
+            expect(groupsBefore).toHaveLength(2);
+            const lectureGroupKey = component.getGroupKey(groupsBefore[1]);
+
+            // Without search, second group is collapsed by default
+            expect(component.isGroupExpanded(lectureGroupKey)).toBe(false);
+
+            // With search active, all groups should be expanded regardless of index
+            component.setSearchValue('l');
+            expect(component.isGroupExpanded(lectureGroupKey)).toBe(true);
+        });
+
+        it('should toggle group collapse state', () => {
+            const groups = component.entityGroups();
+            const key0 = component.getGroupKey(groups[0]);
+
+            expect(component.isGroupExpanded(key0)).toBe(false);
+            component.toggleGroupCollapse(key0);
+            expect(component.isGroupExpanded(key0)).toBe(true);
+            component.toggleGroupCollapse(key0);
+            expect(component.isGroupExpanded(key0)).toBe(false);
+        });
+
+        it('should only include ungrouped sessions in time buckets', () => {
+            const recentBucket = component.recentSessions();
+            expect(recentBucket.every((s) => s.chatMode === ChatServiceMode.COURSE)).toBe(true);
+        });
+
+        it('should return correct entity group route for programming exercise', () => {
+            const groups = component.entityGroups();
+            const exerciseGroup = groups.find((g) => g.chatMode === ChatServiceMode.PROGRAMMING_EXERCISE)!;
+            expect(component.getEntityGroupRoute(exerciseGroup)).toBe('../exercises/42');
+        });
+
+        it('should return correct entity group route for lecture', () => {
+            const groups = component.entityGroups();
+            const lectureGroup = groups.find((g) => g.chatMode === ChatServiceMode.LECTURE)!;
+            expect(component.getEntityGroupRoute(lectureGroup)).toBe('../lectures/55');
+        });
+
+        describe('see more popup menu for entity groups', () => {
+            let groupedSessions$: BehaviorSubject<IrisSessionDTO[]>;
+
+            const createManyGroups = () => {
+                const sessions: IrisSessionDTO[] = [];
+                for (let i = 0; i < 7; i++) {
+                    sessions.push({
+                        id: 200 + i,
+                        title: `Exercise ${i} question`,
+                        creationDate: new Date(`2025-10-0${6 - Math.min(i, 5)}T10:00:00.000Z`),
+                        lastActivityDate: new Date(`2025-10-0${6 - Math.min(i, 5)}T10:00:00.000Z`),
+                        chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+                        entityId: 100 + i,
+                        entityName: `Exercise ${i}`,
+                    });
+                }
+                // Add one course session (ungrouped)
+                sessions.push({
+                    id: 300,
+                    title: 'Course question',
+                    creationDate: new Date('2025-10-06T09:00:00.000Z'),
+                    lastActivityDate: new Date('2025-10-06T09:00:00.000Z'),
+                    chatMode: ChatServiceMode.COURSE,
+                    entityId: 1,
+                    entityName: 'Course 1',
+                });
+                return sessions;
+            };
+
+            beforeEach(() => {
+                groupedSessions$ = new BehaviorSubject(createManyGroups());
+                vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(groupedSessions$.asObservable());
+                fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+                component = fixture.componentInstance;
+                fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+                fixture.detectChanges();
+            });
+
+            it('should have more than 3 entity groups', () => {
+                expect(component.entityGroups().length).toBe(7);
+                expect(component.hasMoreEntityGroups()).toBe(true);
+            });
+
+            it('should show only 3 entity groups initially', () => {
+                expect(component.visibleEntityGroups().length).toBe(3);
+                expect(component.seeMoreRevealedGroup()).toBeUndefined();
+            });
+
+            it('should build menu items from overflow groups when openSeeMoreMenu is called', () => {
+                const mockEvent = new MouseEvent('click');
+                component.openSeeMoreMenu(mockEvent);
+
+                expect(component.seeMoreMenuItems).toHaveLength(4);
+                expect(component.seeMoreMenuItems[0].label).toBe('Exercise 3');
+                expect(component.seeMoreMenuItems[1].label).toBe('Exercise 4');
+                expect(component.seeMoreMenuItems[2].label).toBe('Exercise 5');
+                expect(component.seeMoreMenuItems[3].label).toBe('Exercise 6');
+                expect(component.seeMoreMenuOpen()).toBe(true);
+            });
+
+            it('should reveal a single group when menu item is clicked and replace on second click', () => {
+                const hiddenGroup1 = component.entityGroups()[3];
+                const hiddenGroup2 = component.entityGroups()[4];
+
+                // Click first hidden group
+                component.onSeeMoreMenuItemClick(hiddenGroup1);
+
+                expect(component.seeMoreRevealedGroup()).toBe(hiddenGroup1);
+                expect(component.visibleEntityGroups().length).toBe(3);
+                expect(component.hasMoreEntityGroups()).toBe(true);
+
+                // Group should remain collapsed (default)
+                const groupKey = component.getGroupKey(hiddenGroup1);
+                expect(component.isGroupExpanded(groupKey)).toBe(false);
+
+                // Click second hidden group — replaces the first
+                component.onSeeMoreMenuItemClick(hiddenGroup2);
+
+                expect(component.seeMoreRevealedGroup()).toBe(hiddenGroup2);
+                // Still has more because hiddenGroup1 is now back in the hidden pool
+                expect(component.hasMoreEntityGroups()).toBe(true);
+            });
+
+            it('should force overflow group to collapsed state when selected from see-more menu', () => {
+                const hiddenGroup = component.entityGroups()[3];
+                const groupKey = component.getGroupKey(hiddenGroup);
+
+                // Simulate user previously expanding this group
+                component.toggleGroupCollapse(groupKey);
+                expect(component.isGroupExpanded(groupKey)).toBe(true);
+
+                // Select the group from the see-more menu
+                component.onSeeMoreMenuItemClick(hiddenGroup);
+
+                // Group should now be collapsed
+                expect(component.isGroupExpanded(groupKey)).toBe(false);
+            });
+
+            it('should only show non-revealed groups in the see-more menu after revealing one', () => {
+                const hiddenGroup1 = component.entityGroups()[3];
+                component.onSeeMoreMenuItemClick(hiddenGroup1);
+
+                const mockEvent = new MouseEvent('click');
+                component.openSeeMoreMenu(mockEvent);
+
+                // hiddenGroup1 is revealed, so the remaining hidden groups should be in the menu
+                expect(component.seeMoreMenuItems).toHaveLength(3);
+                expect(component.seeMoreMenuItems[0].label).toBe('Exercise 4');
+                expect(component.seeMoreMenuItems[1].label).toBe('Exercise 5');
+                expect(component.seeMoreMenuItems[2].label).toBe('Exercise 6');
+            });
+
+            it('should clear revealed group when clicking a session outside the group', () => {
+                const hiddenGroup = component.entityGroups()[3];
+                component.onSeeMoreMenuItemClick(hiddenGroup);
+                expect(component.seeMoreRevealedGroup()).toBe(hiddenGroup);
+
+                // Click a session from a different group (group index 0)
+                const differentSession = component.entityGroups()[0].sessions[0];
+                vi.spyOn(chatService, 'switchToSession').mockImplementation(() => {});
+                component.onSessionClick(differentSession);
+
+                expect(component.seeMoreRevealedGroup()).toBeUndefined();
+            });
+
+            it('should keep revealed group when clicking a session within the same group', () => {
+                const hiddenGroup = component.entityGroups()[3];
+                component.onSeeMoreMenuItemClick(hiddenGroup);
+                expect(component.seeMoreRevealedGroup()).toBe(hiddenGroup);
+
+                // Click a session from the same revealed group
+                const sameSession = hiddenGroup.sessions[0];
+                vi.spyOn(chatService, 'switchToSession').mockImplementation(() => {});
+                component.onSessionClick(sameSession);
+
+                expect(component.seeMoreRevealedGroup()).toBe(hiddenGroup);
+            });
+
+            it('should clear revealed group when it becomes one of the 3 most recent groups', () => {
+                const revealedHiddenGroup = component.entityGroups()[3];
+                component.onSeeMoreMenuItemClick(revealedHiddenGroup);
+                expect(component.seeMoreRevealedGroup()).toBe(revealedHiddenGroup);
+
+                // Simulate new activity in the revealed hidden group so it is sorted to the top.
+                groupedSessions$.next(
+                    groupedSessions$.value.map((session) =>
+                        session.entityId === revealedHiddenGroup.entityId
+                            ? {
+                                  ...session,
+                                  lastActivityDate: new Date('2025-10-10T10:00:00.000Z'),
+                              }
+                            : { ...session },
+                    ),
+                );
+                fixture.detectChanges();
+
+                expect(component.seeMoreRevealedGroup()).toBeUndefined();
+                expect(component.visibleEntityGroups()[0].entityId).toBe(revealedHiddenGroup.entityId);
+
+                component.openSeeMoreMenu(new MouseEvent('click'));
+                const menuLabels = component.seeMoreMenuItems.map((item) => item.label);
+                expect(menuLabels).toContain('Exercise 2');
+                expect(menuLabels).toContain('Exercise 4');
+                expect(menuLabels).toContain('Exercise 5');
+                expect(menuLabels).toContain('Exercise 6');
+                expect(menuLabels).not.toContain(revealedHiddenGroup.entityName);
+            });
+
+            it('should set seeMoreMenuOpen to false when menu hides', () => {
+                const mockEvent = new MouseEvent('click');
+                component.openSeeMoreMenu(mockEvent);
+                expect(component.seeMoreMenuOpen()).toBe(true);
+
+                component.onSeeMoreMenuHide();
+                expect(component.seeMoreMenuOpen()).toBe(false);
+            });
         });
     });
 

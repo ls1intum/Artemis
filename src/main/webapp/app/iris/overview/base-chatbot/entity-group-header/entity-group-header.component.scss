@@ -1,0 +1,37 @@
+.entity-group-header {
+    display: flex;
+    align-items: center;
+    padding: 6px 8px;
+    gap: 6px;
+    cursor: pointer;
+    border-radius: 6px;
+
+    &:hover {
+        background-color: var(--iris-accent-background);
+    }
+}
+
+.entity-icon-link {
+    color: var(--bs-body-color);
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+
+    &:hover {
+        color: var(--primary);
+    }
+}
+
+.entity-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.875rem;
+}
+
+.chevron-position {
+    margin-left: auto;
+    font-size: 0.65rem;
+    color: var(--iris-label-color);
+}

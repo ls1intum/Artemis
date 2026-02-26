@@ -439,6 +439,7 @@ pre {
         &:disabled {
             opacity: 0.25;
             cursor: not-allowed;
+            background-color: transparent !important;
         }
     }
 
@@ -464,15 +465,14 @@ pre {
 }
 
 .new-chat-button {
-    padding: 8px;
-    margin: 0 8px;
+    padding: 6px 8px;
     cursor: pointer;
     border-radius: var(--bs-border-radius-lg);
 
     &:hover {
         background-color: var(--iris-accent-background);
         border-radius: 6px;
-        padding: 8px;
+        padding: 6px 8px;
     }
 }
 
@@ -482,6 +482,7 @@ pre {
     border-right: 0.5px solid var(--border-color);
     width: 40px;
     height: 100%;
+    padding: 0 8px;
     flex-shrink: 0;
     overflow-x: hidden;
     transition:
@@ -514,6 +515,9 @@ pre {
         overflow-y: auto;
         scrollbar-width: thin;
         scrollbar-color: var(--bs-border-color) transparent;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
 
         &::-webkit-scrollbar {
             width: 4px;
@@ -532,7 +536,7 @@ pre {
     &-info-link {
         display: flex;
         justify-content: flex-start;
-        padding: 0 8px 8px;
+        padding: 0 0 8px;
 
         .info-button {
             cursor: pointer;
@@ -544,19 +548,55 @@ pre {
 
     &-label p {
         color: var(--iris-label-color);
-        font-size: 0.8rem;
-        margin: 0.5rem 0;
-        padding-left: 1rem;
+        font-size: 12px;
+        margin: 8px 0 4px;
+        padding-left: 8px;
+    }
+
+    &-label.section-header p {
+        font-size: 14px;
+    }
+
+    &-label.grouped-label p {
+        padding-left: 32px;
+    }
+
+    &-grouped jhi-chat-history-item {
+        border-radius: 6px;
+        display: block;
+        padding-left: 24px;
+    }
+
+    .see-more-button {
+        background: none;
+        border: none;
+        color: var(--bs-body-color);
+        font-size: 14px;
+        cursor: pointer;
+        padding: 6px 8px;
+        width: 100%;
+        text-align: left;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+
+        &.active,
+        &:hover {
+            background-color: var(--iris-accent-background);
+            border-radius: 6px;
+            color: var(--bs-body-color);
+        }
     }
 
     &-divider {
         height: 1px;
         background-color: var(--bs-border-color);
-        margin: 0.5rem 0.75rem;
+        margin: 0.5rem 0;
     }
 
     .collapsed-icon-button {
-        padding: 4px 8px;
+        padding: 4px 6px;
         cursor: pointer;
         border-radius: var(--bs-border-radius-lg);
         display: flex;
@@ -581,7 +621,8 @@ pre {
 
         .new-chat-button {
             margin: 0;
-            padding: 6px 8px;
+            padding: 4px 6px;
+            border-radius: var(--bs-border-radius-lg);
             display: flex;
             align-items: center;
             justify-content: center;

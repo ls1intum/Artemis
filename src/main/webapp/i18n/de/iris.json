@@ -179,10 +179,7 @@
                 "newChat": "Neuer Chat",
                 "openChatHistory": "Chatverlauf öffnen",
                 "aboutIris": "Über Iris",
-                "today": "Heute",
-                "yesterday": "Gestern",
-                "last7Days": "Letzten 7 Tage",
-                "last30Days": "Letzten 30 Tage",
+                "recent": "Neueste",
                 "older": "Älter",
                 "relatedEntityTooltip": {
                     "programmingExercise": "Diese Konversation bezieht sich auf eine Programmieraufgabe.",
@@ -193,7 +190,10 @@
                 "deleteSessionQuestion": "Bist du sicher, dass du die Chat-Sitzung \"{{title}}\" löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.",
                 "deleteSessionSuccess": "Chat-Sitzung gelöscht.",
                 "deleteSessionError": "Chat-Sitzung konnte nicht gelöscht werden.",
-                "sessionMenuAriaLabel": "Chat-Sitzungsaktionen"
+                "sessionMenuAriaLabel": "Chat-Sitzungsaktionen",
+                "relatedContent": "Kurskontext-Chats",
+                "generalChat": "Allgemeine Chats",
+                "seeMore": "Mehr anzeigen"
             },
             "aboutIrisModal": {
                 "meetIris": "Lern Iris kennen",
