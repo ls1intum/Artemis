@@ -160,8 +160,3 @@ sentry:
 helios:
   status:
     enabled: false
-
-atlas:
-    atlasml:
-        base-url: http://127.0.0.1:8000 # Address of local testing server
-        auth-token: local-secret # The default secret used to authenticate Artemis against a local testing server
