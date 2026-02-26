@@ -26,9 +26,15 @@
                     "updated": "{{count}} Kompetenz(en) erfolgreich aktualisiert!",
                     "created": "{{count}} Kompetenz(en) erfolgreich erstellt!",
                     "updatedSingle": "Kompetenz erfolgreich aktualisiert!",
-                    "createdSingle": "Kompetenz erfolgreich erstellt!"
+                    "createdSingle": "Kompetenz erfolgreich erstellt!",
+                    "relationCreated": "Kompetenzbeziehung erfolgreich erstellt!"
                 },
-                "authentication": "Du musst authentifiziert sein, um den Agenten-Chat zu nutzen."
+                "failure": {
+                    "relationMappingFailed": "Fehler beim Erstellen der Kompetenzbeziehung. Bitte versuch es erneut."
+                },
+                "authentication": "Du musst authentifiziert sein, um den Agenten-Chat zu nutzen.",
+                "map": "Verknüpfen",
+                "mapped": "Verknüpft"
             }
         }
     }
