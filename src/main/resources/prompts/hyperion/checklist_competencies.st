@@ -29,6 +29,13 @@ Match **semantically**, not by exact title. Two competencies match when their co
 
 **Bias toward matching**: When in doubt, prefer matching to an existing course competency over leaving `null`. Duplicates are far worse than overly broad matches. The instructor can always unlink later, but unnecessary new competencies clutter the course.
 
+**One-to-one matching (critical)**: Each inferred learning goal should map to a DIFFERENT course competency. Do NOT assign the same `matchedCourseCompetencyId` to multiple inferred learning goals.
+- Before finalizing, check for duplicates: if two or more inferred learning goals share the same `matchedCourseCompetencyId`, you MUST resolve the conflict:
+  1. **Re-examine the weaker match**: Perhaps one of them actually fits a different course competency better — re-read the full list.
+  2. **Merge if redundant**: If two inferred learning goals are actually the same concept, merge them into a single learning goal instead of returning both.
+  3. **Leave null only as a last resort**: If after steps 1 and 2 there is truly no other course competency for the weaker match and the two learning goals are genuinely distinct, set the weaker match's `matchedCourseCompetencyId` to `null` so a new competency can be created.
+- The goal is to spread matches across the available course competencies. Funneling multiple distinct learning goals to one competency prevents proper competency tracking.
+
 Consider the `description` and `taxonomy` fields as additional context — a course competency may match even when its title alone does not obviously relate.
 
 ## Task
@@ -61,6 +68,7 @@ The following tasks are defined in the exercise: {{task_names}}
 - Short evidence bullets only - no long verbatim copying
 - Do NOT pad with low-confidence filler learning goals just to reach 5
 - **Matching self-check**: Before finalizing your response, re-read the course competencies list one more time. For EACH inferred learning goal where `matchedCourseCompetencyId` is `null`, verify there truly is no existing course competency that covers it. If you find a match you missed, update the `matchedCourseCompetencyId` before returning.
+- **Duplicate-match self-check**: Scan your final list for any two learning goals sharing the same `matchedCourseCompetencyId`. If found, resolve the conflict following the one-to-one matching rules above (re-examine, merge, or set the weaker match to null).
 - **Never return `null` for `matchedCourseCompetencyId` without justification**: If you set it to `null`, your `whyThisMatches` field MUST include a brief note like "No existing course competency covers [concept]."
 
 ## Problem Statement

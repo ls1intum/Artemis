@@ -843,13 +843,8 @@ export class ChecklistPanelComponent {
                     newlyLinked.add(courseTitle);
                 }
             } else if (courseComp?.id && initiallyLinkedIds.has(courseComp.id)) {
-                // This course competency was already linked before this apply → skip linking
-                // but still track the title so isCompetencyLinked shows the "Linked" badge
-                newlyLinked.add(normalizedTitle);
-                const courseTitle = courseComp.title?.toLowerCase().trim();
-                if (courseTitle && courseTitle !== normalizedTitle) {
-                    newlyLinked.add(courseTitle);
-                }
+                // This course competency was already linked before this apply → skip.
+                // isCompetencyLinked() detects it via exercise.competencyLinks, no tracking needed.
             } else if (!courseComp || (courseComp?.id && linkedIds.has(courseComp.id) && !initiallyLinkedIds.has(courseComp.id))) {
                 // Either no existing competency found, or the AI mapped multiple distinct
                 // inferred competencies to the same course competency (newly linked earlier
