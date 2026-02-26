@@ -154,25 +154,21 @@ public class AtlasAgentService {
             CompetencyExpertToolsService.setCurrentSessionId(sessionId);
             resetCompetencyModifiedFlag();
 
-            // Check for cancel command when plan is active
             if (isCancelCommand(message) && executionPlanStateManager.hasPlan(sessionId)) {
                 executionPlanStateManager.cancelPlan(sessionId);
                 return new AtlasAgentChatResponseDTO("Plan cancelled.", ZonedDateTime.now(), false, null, null, null, null);
             }
 
-            // Check if this is an approval message for competencies
-            if (message.equals(CREATE_APPROVED_COMPETENCY)) {
-                return handleCompetencyApproval(sessionId, courseId);
-            }
-
-            // Check if this is an approval message for relations
-            if (message.equals(CREATE_APPROVED_RELATION)) {
-                return handleRelationApproval(sessionId, courseId);
-            }
-
-            // Check if this message contains exercise mapping approval
-            if (message.contains(CREATE_APPROVED_EXERCISE_MAPPING)) {
-                return handleExerciseMappingApproval(sessionId, courseId, message);
+            switch (message) {
+                case CREATE_APPROVED_COMPETENCY -> {
+                    return handleCompetencyApproval(sessionId, courseId);
+                }
+                case CREATE_APPROVED_RELATION -> {
+                    return handleRelationApproval(sessionId, courseId);
+                }
+                case CREATE_APPROVED_EXERCISE_MAPPING -> {
+                    return handleExerciseMappingApproval(sessionId, courseId, message);
+                }
             }
 
             String response = delegateToAgent(AgentType.MAIN_AGENT, message, courseId, sessionId);
@@ -467,7 +463,7 @@ public class AtlasAgentService {
                         || (text.contains("REQUIREMENTS:") && text.contains("CONSTRAINTS:") && text.contains("CONTEXT:"));
                 boolean isDelegationMarker = text.contains(DELEGATE_TO_COMPETENCY_EXPERT) || text.contains(DELEGATE_TO_COMPETENCY_MAPPER)
                         || text.contains(DELEGATE_TO_EXERCISE_MAPPER) || text.contains(RETURN_TO_MAIN_AGENT);
-                boolean isActionConfirmation = text.equals(CREATE_APPROVED_RELATION) || text.equals(CREATE_APPROVED_COMPETENCY) || text.contains(CREATE_APPROVED_EXERCISE_MAPPING);
+                boolean isActionConfirmation = text.equals(CREATE_APPROVED_RELATION) || text.equals(CREATE_APPROVED_COMPETENCY) || text.equals(CREATE_APPROVED_EXERCISE_MAPPING);
                 boolean isPlanContinuation = text.startsWith("MULTI-STEP PLAN CONTINUATION");
 
                 if (isBriefing || isDelegationMarker || isActionConfirmation || isPlanContinuation) {
@@ -798,8 +794,8 @@ public class AtlasAgentService {
      */
     private boolean isCancelCommand(String message) {
         String lowerMessage = message.toLowerCase().trim();
-        return lowerMessage.equals("cancel") || lowerMessage.equals("stop") || lowerMessage.equals("abort") || lowerMessage.startsWith("cancel ")
-                || lowerMessage.startsWith("stop ");
+        return lowerMessage.equals("cancel") || lowerMessage.equals("stop") || lowerMessage.equals("abort") || lowerMessage.equals("cancel plan")
+                || lowerMessage.equals("stop plan") || lowerMessage.equals("cancel workflow") || lowerMessage.equals("stop workflow");
     }
 
     /**

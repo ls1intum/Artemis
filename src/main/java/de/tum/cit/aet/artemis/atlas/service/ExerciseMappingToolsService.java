@@ -7,6 +7,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
@@ -257,28 +258,17 @@ public class ExerciseMappingToolsService {
             List<CompetencyExerciseLink> existingLinks = competencyExerciseLinkRepository.findByExerciseIdWithCompetency(exerciseId);
             Set<Long> existingCompetencyIds = existingLinks.stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
 
-            for (ExerciseCompetencyMappingOperation mapping : mappings) {
-                if (existingCompetencyIds.contains(mapping.getCompetencyId())) {
-                    mapping.setAlreadyMapped(true);
-                }
-            }
-
             ExerciseCompetencyMappingDTO preview = new ExerciseCompetencyMappingDTO(exercise.getId(), exercise.getTitle(),
                     mappings.stream()
                             .map(op -> new ExerciseCompetencyMappingDTO.CompetencyMappingOption(op.getCompetencyId(), getCompetencyTitle(op.getCompetencyId()), op.getWeight(),
-                                    op.getAlreadyMapped() != null && op.getAlreadyMapped(), op.getSuggested() != null && op.getSuggested()))
+                                    existingCompetencyIds.contains(op.getCompetencyId()), op.getSuggested() != null && op.getSuggested()))
                             .collect(Collectors.toList()),
                     viewOnly != null && viewOnly);
 
             exerciseMappingPreview.set(preview);
 
-            String json = objectMapper.writeValueAsString(preview);
-            return success("Preview generated successfully. Mappings: " + json);
+            return success("Preview generated successfully for exercise-to-competency mapping.");
 
-        }
-        catch (JsonProcessingException e) {
-            log.error("Failed to serialize preview", e);
-            return error("Failed to serialize preview data: " + e.getMessage());
         }
         catch (Exception e) {
             log.error("Error generating preview for exercise {}", exerciseId, e);
@@ -296,6 +286,7 @@ public class ExerciseMappingToolsService {
      * @param mappings   List of competency mappings to save
      * @return Success or error message
      */
+    @Transactional
     @Tool(description = """
             Saves exercise-to-competency mappings to the database.
             Creates new links for newly checked competencies.
@@ -403,7 +394,12 @@ public class ExerciseMappingToolsService {
      * @return Formatted JSON success response
      */
     private String success(String message) {
-        return String.format("{\"success\": true, \"message\": \"%s\"}", message.replace("\"", "\\\""));
+        try {
+            return objectMapper.writeValueAsString(Map.of("success", true, "message", message));
+        }
+        catch (JsonProcessingException e) {
+            return "{\"success\": true, \"message\": \"Operation completed\"}";
+        }
     }
 
     /**
@@ -413,7 +409,12 @@ public class ExerciseMappingToolsService {
      * @return Formatted JSON error response
      */
     private String error(String message) {
-        return String.format("{\"success\": false, \"error\": \"%s\"}", message.replace("\"", "\\\""));
+        try {
+            return objectMapper.writeValueAsString(Map.of("success", false, "error", message));
+        }
+        catch (JsonProcessingException e) {
+            return "{\"success\": false, \"error\": \"Operation failed\"}";
+        }
     }
 
     /**

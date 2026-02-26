@@ -34,7 +34,17 @@
                 },
                 "authentication": "You must be authenticated to use agent chat",
                 "map": "Map",
-                "mapped": "Mapped"
+                "mapped": "Mapped",
+                "exerciseMapping": {
+                    "selectHint": "Select competencies and adjust weights",
+                    "existing": "Existing",
+                    "aiSuggested": "AI Suggested",
+                    "weightLow": "LOW",
+                    "weightMedium": "MEDIUM",
+                    "weightHigh": "HIGH",
+                    "saveMappings": "Save Mappings",
+                    "currentMappings": "Current Mappings"
+                }
             }
         }
     }

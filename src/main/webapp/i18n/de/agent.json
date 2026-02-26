@@ -34,7 +34,17 @@
                 },
                 "authentication": "Du musst authentifiziert sein, um den Agenten-Chat zu nutzen.",
                 "map": "Verknüpfen",
-                "mapped": "Verknüpft"
+                "mapped": "Verknüpft",
+                "exerciseMapping": {
+                    "selectHint": "Kompetenzen auswählen und Gewichtungen anpassen",
+                    "existing": "Vorhanden",
+                    "aiSuggested": "KI-Vorschlag",
+                    "weightLow": "NIEDRIG",
+                    "weightMedium": "MITTEL",
+                    "weightHigh": "HOCH",
+                    "saveMappings": "Zuordnungen speichern",
+                    "currentMappings": "Aktuelle Zuordnungen"
+                }
             }
         }
     }

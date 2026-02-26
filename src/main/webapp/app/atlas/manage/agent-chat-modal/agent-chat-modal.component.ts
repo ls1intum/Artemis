@@ -14,6 +14,8 @@ import { Competency, CompetencyRelationDTO, CompetencyRelationType, CourseCompet
 import { RelationGraphPreview } from 'app/atlas/shared/entities/chat-message.model';
 import { CourseCompetenciesRelationGraphComponent } from 'app/atlas/manage/course-competencies-relation-graph/course-competencies-relation-graph.component';
 import { ButtonModule } from 'primeng/button';
+import { CheckboxModule } from 'primeng/checkbox';
+import { SelectModule } from 'primeng/select';
 
 @Component({
     selector: 'jhi-agent-chat-modal',
@@ -27,6 +29,8 @@ import { ButtonModule } from 'primeng/button';
         CompetencyCardComponent,
         CourseCompetenciesRelationGraphComponent,
         ButtonModule,
+        CheckboxModule,
+        SelectModule,
     ],
     templateUrl: './agent-chat-modal.component.html',
     styleUrl: './agent-chat-modal.component.scss',
@@ -52,6 +56,14 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     selectedRelationId = signal<number | undefined>(undefined);
 
     exerciseMappingCheckboxStates = new Map<string, Map<number, boolean>>();
+
+    get weightOptions() {
+        return [
+            { label: this.translateService.instant('artemisApp.agent.chat.exerciseMapping.weightLow'), value: 0.25 },
+            { label: this.translateService.instant('artemisApp.agent.chat.exerciseMapping.weightMedium'), value: 0.5 },
+            { label: this.translateService.instant('artemisApp.agent.chat.exerciseMapping.weightHigh'), value: 1.0 },
+        ];
+    }
 
     // Event emitted when agent likely created/modified competencies
     competencyChanged = output<void>();
@@ -254,10 +266,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
 
         this.isAgentTyping.set(true);
 
-        const mappingsJson = JSON.stringify(selected);
-        const saveMessage = `Save these exercise mappings: ${mappingsJson}. [CREATE_APPROVED_EXERCISE_MAPPING]`;
-
-        this.agentChatService.sendMessage(saveMessage, this.courseId()).subscribe({
+        this.agentChatService.sendMessage('[CREATE_APPROVED_EXERCISE_MAPPING]', this.courseId()).subscribe({
             next: (response) => {
                 this.isAgentTyping.set(false);
 

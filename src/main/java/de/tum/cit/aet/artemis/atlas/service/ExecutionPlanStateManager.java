@@ -289,6 +289,12 @@ public class ExecutionPlanStateManager {
             return Optional.empty();
         }
 
+        PlanStep currentStep = plan.getCurrentStep();
+        if (currentStep == null || currentStep.getStatus() != StepStatus.ACTIVE) {
+            log.warn("Ignoring duplicate or out-of-order completion for session {}. Step status: {}", sessionId, currentStep != null ? currentStep.getStatus() : "null");
+            return Optional.empty();
+        }
+
         plan.markCurrentStepDone(result);
 
         if (plan.hasNextStep()) {
