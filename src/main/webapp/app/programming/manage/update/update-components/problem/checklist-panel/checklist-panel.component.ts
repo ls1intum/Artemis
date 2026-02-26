@@ -840,8 +840,11 @@ export class ChecklistPanelComponent {
                 if (courseTitle && courseTitle !== normalizedTitle) {
                     newlyLinked.add(courseTitle);
                 }
-            } else if (!courseComp) {
-                // No existing competency found by ID or title → queue for creation
+            } else if (!courseComp || linkedIds.has(courseComp.id!)) {
+                // Either no existing competency found, or the AI mapped multiple distinct
+                // inferred competencies to the same course competency (already linked).
+                // In the latter case, the inferred competency represents a genuinely different
+                // learning goal, so queue it for creation instead of silently skipping it.
                 if (!reconciledCreated.has(normalizedTitle)) {
                     const newComp = new Competency();
                     newComp.title = title;
@@ -851,7 +854,6 @@ export class ChecklistPanelComponent {
                     toCreateInferred.push(comp);
                 }
             }
-            // else: courseComp found but already linked → skip (correct)
         }
 
         return { allLinks, newlyLinked, toCreate, toCreateInferred, linkedIds };

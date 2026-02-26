@@ -367,6 +367,68 @@ describe('ChecklistPanelComponent', () => {
             expect(component.isSyncingCompetencies()).toBeFalsy();
         });
 
+        it('should create new competencies when AI maps multiple distinct inferred competencies to the same course competency', async () => {
+            // AI incorrectly maps all 3 inferred competencies to the same course competency (id=1)
+            const responseAllSameMatch: ChecklistAnalysisResponse = {
+                inferredCompetencies: [
+                    {
+                        competencyTitle: 'Implementing comparison-based sorting',
+                        taxonomyLevel: 'APPLY',
+                        confidence: 0.9,
+                        whyThisMatches: 'Sorting implementations',
+                        rank: 1,
+                        matchedCourseCompetencyId: 1,
+                        isLikelyPrimary: true,
+                    },
+                    {
+                        competencyTitle: 'Applying the Strategy pattern',
+                        taxonomyLevel: 'CREATE',
+                        confidence: 0.8,
+                        whyThisMatches: 'Strategy design pattern',
+                        rank: 2,
+                        matchedCourseCompetencyId: 1, // same ID — AI error
+                    },
+                    {
+                        competencyTitle: 'Policy-based algorithm selection',
+                        taxonomyLevel: 'ANALYZE',
+                        confidence: 0.7,
+                        whyThisMatches: 'Policy-driven runtime selection',
+                        rank: 3,
+                        matchedCourseCompetencyId: 1, // same ID — AI error
+                    },
+                ],
+                difficultyAssessment: { suggested: DifficultyAssessment.SuggestedEnum.Medium, reasoning: 'Reason', matchesDeclared: true },
+                qualityIssues: [],
+            };
+            component.analysisResult.set(responseAllSameMatch);
+            vi.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [mockCourseCompetency] })) as any);
+
+            let createCallCount = 0;
+            vi.spyOn(competencyService, 'create').mockImplementation((comp: Competency) => {
+                createCallCount++;
+                const created = Object.assign(new Competency(), { id: 100 + createCallCount, title: comp.title, taxonomy: comp.taxonomy });
+                return of(new HttpResponse({ body: created })) as any;
+            });
+            const emitSpy = vi.spyOn(component.competencyLinksChange, 'emit');
+
+            component.applyCompetencies();
+            await new Promise<void>((resolve) => setTimeout(resolve));
+
+            // First competency linked to existing (id=1), other two should be CREATED as new competencies
+            expect(createCallCount).toBe(2);
+            expect(competencyService.create).toHaveBeenCalledWith(expect.objectContaining({ title: 'Applying the Strategy pattern' }), courseId);
+            expect(competencyService.create).toHaveBeenCalledWith(expect.objectContaining({ title: 'Policy-based algorithm selection' }), courseId);
+            expect(emitSpy).toHaveBeenCalled();
+            const emittedLinks = emitSpy.mock.calls[0][0] as CompetencyExerciseLink[];
+            // All 3 should be in emitted links: 1 linked + 2 created
+            expect(emittedLinks).toHaveLength(3);
+            expect(emittedLinks.map((l) => l.competency?.title).sort()).toEqual([
+                'Applying the Strategy pattern',
+                'Implementing comparison-based sorting',
+                'Policy-based algorithm selection',
+            ]);
+        });
+
         it('should assign LOW relevance weight to low-confidence non-primary competencies', async () => {
             const lowConfidenceResponse: ChecklistAnalysisResponse = {
                 inferredCompetencies: [
