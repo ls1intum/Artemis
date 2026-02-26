@@ -698,7 +698,8 @@ export class ChecklistPanelComponent {
      *
      * Matching strategy (per inferred competency):
      *   1. Use AI-provided matchedCourseCompetencyId if available and still exists
-     *   2. If unmatched, create a new course competency and link it
+     *   2. Fallback: match by normalized title against existing course competencies
+     *   3. If still unmatched, create a new course competency and link it
      */
     applyCompetencies(): void {
         if (this.isSyncingCompetencies()) return;
@@ -787,13 +788,21 @@ export class ChecklistPanelComponent {
     /**
      * Reconciles inferred competencies against existing course competencies.
      * Links matching competencies and queues unmatched ones for creation.
+     *
+     * Matching strategy per inferred competency:
+     *   1. Try AI-provided matchedCourseCompetencyId
+     *   2. Fallback: normalized title match against course competencies
+     *   3. If still unmatched, queue for creation (unless previously created)
      */
     private reconcileCompetencies(inferred: InferredCompetency[], exercise: ProgrammingExercise) {
         const courseComps = this.courseCompetencies();
         const competencyById = new Map(courseComps.filter((c) => c.id != null).map((c) => [c.id!, c]));
         const existingCompIds = new Set(courseComps.filter((c) => c.id != null).map((c) => c.id!));
 
-        const existingTitles = new Set(courseComps.map((c) => c.title?.toLowerCase().trim()).filter((t): t is string => !!t));
+        // Build a title→competency map for fallback title-based matching
+        const competencyByTitle = new Map(courseComps.filter((c) => c.title && c.id != null).map((c) => [c.title!.toLowerCase().trim(), c]));
+
+        const existingTitles = new Set(competencyByTitle.keys());
         const reconciledCreated = new Set([...this.createdCompetencyTitles()].filter((t) => existingTitles.has(t)));
         this.createdCompetencyTitles.set(reconciledCreated);
 
@@ -807,25 +816,42 @@ export class ChecklistPanelComponent {
         for (const comp of inferred) {
             const title = comp.competencyTitle?.trim();
             if (!title) continue;
+            const normalizedTitle = title.toLowerCase();
 
             let courseComp: CourseCompetency | undefined;
+
+            // Step 1: Try AI-provided matchedCourseCompetencyId
             const matchId = comp.matchedCourseCompetencyId;
             if (matchId != null && matchId > 0 && existingCompIds.has(matchId)) {
                 courseComp = competencyById.get(matchId);
             }
 
+            // Step 2: Fallback to title-based matching if AI didn't provide a valid match
+            if (!courseComp) {
+                courseComp = competencyByTitle.get(normalizedTitle);
+            }
+
             if (courseComp?.id && !linkedIds.has(courseComp.id)) {
                 allLinks.push(new CompetencyExerciseLink(courseComp, exercise, this.computeRelevanceWeight(comp)));
                 linkedIds.add(courseComp.id);
-                newlyLinked.add(title.toLowerCase());
-            } else if (!courseComp && !reconciledCreated.has(title.toLowerCase())) {
-                const newComp = new Competency();
-                newComp.title = title;
-                newComp.description = comp.whyThisMatches ?? `Inferred from problem statement analysis. Evidence: ${(comp.evidence ?? []).join('; ')}`;
-                newComp.taxonomy = this.mapTaxonomy(comp.taxonomyLevel);
-                toCreate.push(newComp);
-                toCreateInferred.push(comp);
+                newlyLinked.add(normalizedTitle);
+                // Also track the course competency's own title for robust isCompetencyLinked checks
+                const courseTitle = courseComp.title?.toLowerCase().trim();
+                if (courseTitle && courseTitle !== normalizedTitle) {
+                    newlyLinked.add(courseTitle);
+                }
+            } else if (!courseComp) {
+                // No existing competency found by ID or title → queue for creation
+                if (!reconciledCreated.has(normalizedTitle)) {
+                    const newComp = new Competency();
+                    newComp.title = title;
+                    newComp.description = comp.whyThisMatches ?? `Inferred from problem statement analysis. Evidence: ${(comp.evidence ?? []).join('; ')}`;
+                    newComp.taxonomy = this.mapTaxonomy(comp.taxonomyLevel);
+                    toCreate.push(newComp);
+                    toCreateInferred.push(comp);
+                }
             }
+            // else: courseComp found but already linked → skip (correct)
         }
 
         return { allLinks, newlyLinked, toCreate, toCreateInferred, linkedIds };

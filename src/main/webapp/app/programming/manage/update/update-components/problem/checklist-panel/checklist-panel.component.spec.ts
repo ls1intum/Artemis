@@ -444,6 +444,110 @@ describe('ChecklistPanelComponent', () => {
             expect(getAllSpy).not.toHaveBeenCalled();
         });
 
+        it('should link by title fallback when AI does not provide matchedCourseCompetencyId', async () => {
+            // AI infers 'Loops' but does NOT provide matchedCourseCompetencyId
+            const responseNoMatchId: ChecklistAnalysisResponse = {
+                inferredCompetencies: [
+                    {
+                        competencyTitle: 'Loops',
+                        taxonomyLevel: 'APPLY',
+                        confidence: 0.9,
+                        whyThisMatches: 'Uses loop constructs',
+                        rank: 1,
+                        isLikelyPrimary: true,
+                        // matchedCourseCompetencyId intentionally omitted
+                    },
+                ],
+                difficultyAssessment: { suggested: DifficultyAssessment.SuggestedEnum.Easy, reasoning: 'Reason', matchesDeclared: true, taskCount: 5, testCount: 10 },
+                qualityIssues: [],
+            };
+            component.analysisResult.set(responseNoMatchId);
+            // Course has a competency titled 'Loops' with id=1
+            vi.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [mockCourseCompetency] })) as any);
+            const createSpy = vi.spyOn(competencyService, 'create');
+            const emitSpy = vi.spyOn(component.competencyLinksChange, 'emit');
+
+            component.applyCompetencies();
+            await new Promise<void>((resolve) => setTimeout(resolve));
+
+            // Should link to existing 'Loops' (id=1) via title fallback, NOT create a new one
+            expect(createSpy).not.toHaveBeenCalled();
+            expect(emitSpy).toHaveBeenCalled();
+            const emittedLinks = emitSpy.mock.calls[0][0] as CompetencyExerciseLink[];
+            expect(emittedLinks).toHaveLength(1);
+            expect(emittedLinks[0].competency?.id).toBe(1);
+            expect(emittedLinks[0].competency?.title).toBe('Loops');
+        });
+
+        it('should link by title fallback when AI provides an invalid matchedCourseCompetencyId', async () => {
+            // AI provides a matchedCourseCompetencyId that doesn't exist in course competencies
+            const responseWrongMatchId: ChecklistAnalysisResponse = {
+                inferredCompetencies: [
+                    {
+                        competencyTitle: 'Loops',
+                        taxonomyLevel: 'APPLY',
+                        confidence: 0.9,
+                        whyThisMatches: 'Uses loop constructs',
+                        rank: 1,
+                        matchedCourseCompetencyId: 999, // does not exist
+                        isLikelyPrimary: true,
+                    },
+                ],
+                difficultyAssessment: { suggested: DifficultyAssessment.SuggestedEnum.Easy, reasoning: 'Reason', matchesDeclared: true, taskCount: 5, testCount: 10 },
+                qualityIssues: [],
+            };
+            component.analysisResult.set(responseWrongMatchId);
+            vi.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [mockCourseCompetency] })) as any);
+            const createSpy = vi.spyOn(competencyService, 'create');
+            const emitSpy = vi.spyOn(component.competencyLinksChange, 'emit');
+
+            component.applyCompetencies();
+            await new Promise<void>((resolve) => setTimeout(resolve));
+
+            // Should fall back to title matching and link to existing 'Loops' (id=1)
+            expect(createSpy).not.toHaveBeenCalled();
+            expect(emitSpy).toHaveBeenCalled();
+            const emittedLinks = emitSpy.mock.calls[0][0] as CompetencyExerciseLink[];
+            expect(emittedLinks).toHaveLength(1);
+            expect(emittedLinks[0].competency?.id).toBe(1);
+        });
+
+        it('should track both inferred and course competency titles when they differ', async () => {
+            // Course competency has a different title than the inferred one
+            const courseCompDifferentTitle: CourseCompetency = Object.assign(new Competency(), {
+                id: 5,
+                title: 'Loop Constructs and Iteration',
+                taxonomy: CompetencyTaxonomy.APPLY,
+            });
+            const responseWithMatchId: ChecklistAnalysisResponse = {
+                inferredCompetencies: [
+                    {
+                        competencyTitle: 'Using Loops Effectively',
+                        taxonomyLevel: 'APPLY',
+                        confidence: 0.9,
+                        whyThisMatches: 'Uses loop constructs',
+                        rank: 1,
+                        matchedCourseCompetencyId: 5,
+                        isLikelyPrimary: true,
+                    },
+                ],
+                difficultyAssessment: { suggested: DifficultyAssessment.SuggestedEnum.Easy, reasoning: 'Reason', matchesDeclared: true },
+                qualityIssues: [],
+            };
+            component.analysisResult.set(responseWithMatchId);
+            vi.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [courseCompDifferentTitle] })) as any);
+            const successSpy = vi.spyOn(alertService, 'success');
+
+            component.applyCompetencies();
+            await new Promise<void>((resolve) => setTimeout(resolve));
+
+            expect(successSpy).toHaveBeenCalled();
+            // Both the inferred title and course competency title should be tracked
+            const linked = component.linkedCompetencyTitles();
+            expect(linked.has('using loops effectively')).toBeTruthy();
+            expect(linked.has('loop constructs and iteration')).toBeTruthy();
+        });
+
         it('should correctly identify linked competencies via internal tracking', () => {
             component.linkedCompetencyTitles.set(new Set(['loops']));
             component.createdCompetencyTitles.set(new Set(['recursion']));
