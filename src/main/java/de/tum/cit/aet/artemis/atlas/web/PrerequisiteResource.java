@@ -364,15 +364,7 @@ public class PrerequisiteResource {
     }
 
     private Prerequisite toPrerequisite(CourseCompetencyRequestDTO prerequisiteRequest) {
-        Prerequisite prerequisite = new Prerequisite();
-        prerequisite.setId(prerequisiteRequest.id());
-        prerequisite.setTitle(prerequisiteRequest.title());
-        prerequisite.setDescription(prerequisiteRequest.description());
-        prerequisite.setSoftDueDate(prerequisiteRequest.softDueDate());
-        prerequisite.setMasteryThreshold(prerequisiteRequest.masteryThreshold() != null ? prerequisiteRequest.masteryThreshold() : CourseCompetency.DEFAULT_MASTERY_THRESHOLD);
-        prerequisite.setTaxonomy(prerequisiteRequest.taxonomy());
-        prerequisite.setOptional(Boolean.TRUE.equals(prerequisiteRequest.optional()));
-        return prerequisite;
+        return CourseCompetencyRequestDTO.toEntity(prerequisiteRequest, Prerequisite::new);
     }
 
     /**
