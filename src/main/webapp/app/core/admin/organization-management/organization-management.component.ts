@@ -85,7 +85,7 @@ export class OrganizationManagementComponent {
     }
 
     onOrganizationSelect(organization: Organization | Organization[] | undefined): void {
-        if (organization && !Array.isArray(organization)) {
+        if (!Array.isArray(organization) && organization?.id) {
             this.router.navigate([organization.id], { relativeTo: this.route });
         }
     }

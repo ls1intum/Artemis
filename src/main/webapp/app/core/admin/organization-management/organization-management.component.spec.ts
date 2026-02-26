@@ -66,6 +66,8 @@ describe('OrganizationManagementComponent', () => {
         vi.spyOn(organizationService, 'getOrganizations').mockReturnValue(of({ content: [organization1, organization2], totalElements: 2 }));
 
         component.loadOrganizations({} as TableLazyLoadEvent);
+
+        expect(organizationService.getOrganizations).toHaveBeenCalledWith(expect.anything(), true);
         expect(component).not.toBeNull();
         expect(component.isLoading()).toBe(false);
         expect(component.totalCount()).toBe(2);

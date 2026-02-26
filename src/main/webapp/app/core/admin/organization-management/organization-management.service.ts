@@ -22,13 +22,25 @@ export class OrganizationManagementService {
      * @returns an observable emitting a pageable result containing the matching organizations and total element count
      */
     getOrganizations(params: SearchTermPageableSearch, withCounts = false): Observable<PageableResult<Organization>> {
-        return this.http.get<Organization[]>(this.adminResourceUrl, { params: { ...params, withCounts }, observe: 'response' }).pipe(
-            tap((res) => res.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
-            map((res) => ({
-                content: res.body ?? [],
-                totalElements: Number(res.headers.get('X-Total-Count') ?? 0),
-            })),
-        );
+        return this.http
+            .get<Organization[]>(this.adminResourceUrl, {
+                params: {
+                    page: params.page,
+                    pageSize: params.pageSize,
+                    sortingOrder: params.sortingOrder,
+                    sortedColumn: params.sortedColumn,
+                    searchTerm: params.searchTerm,
+                    withCounts,
+                },
+                observe: 'response',
+            })
+            .pipe(
+                tap((res) => res.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
+                map((res) => ({
+                    content: res.body ?? [],
+                    totalElements: Number(res.headers.get('X-Total-Count') ?? 0),
+                })),
+            );
     }
 
     /**

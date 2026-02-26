@@ -1,5 +1,5 @@
-import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, TemplateRef, Type, computed, inject, input, model, output, signal, viewChild } from '@angular/core';
+import { NgComponentOutlet, NgTemplateOutlet } from '@angular/common';
+import { Component, DestroyRef, TemplateRef, Type, ViewEncapsulation, computed, inject, input, model, output, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -28,9 +28,10 @@ export interface CellRendererParams<T> {
 
 @Component({
     selector: 'jhi-table-view',
-    imports: [CommonModule, FormsModule, TableModule, TranslateDirective, ArtemisTranslatePipe, SearchFilterComponent],
+    imports: [NgComponentOutlet, NgTemplateOutlet, FormsModule, TableModule, TranslateDirective, ArtemisTranslatePipe, SearchFilterComponent],
     templateUrl: './table-view.html',
     styleUrl: './table-view.scss',
+    encapsulation: ViewEncapsulation.None,
 })
 export class TableView<T> {
     private static readonly SEARCH_DEBOUNCE_MS = 300;
