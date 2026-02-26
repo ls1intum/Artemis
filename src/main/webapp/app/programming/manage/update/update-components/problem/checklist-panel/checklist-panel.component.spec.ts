@@ -424,7 +424,7 @@ describe('ChecklistPanelComponent', () => {
             expect(emittedLinks).toHaveLength(3);
             expect(emittedLinks.map((l) => l.competency?.title).sort()).toEqual([
                 'Applying the Strategy pattern',
-                'Implementing comparison-based sorting',
+                'Loops', // The first inferred competency links to the existing course competency (title: 'Loops')
                 'Policy-based algorithm selection',
             ]);
         });

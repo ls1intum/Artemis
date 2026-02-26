@@ -807,7 +807,8 @@ export class ChecklistPanelComponent {
         this.createdCompetencyTitles.set(reconciledCreated);
 
         const existingLinks = exercise?.competencyLinks ?? [];
-        const linkedIds = new Set(existingLinks.map((link) => link.competency?.id).filter((id): id is number => id != null));
+        const initiallyLinkedIds = new Set(existingLinks.map((link) => link.competency?.id).filter((id): id is number => id != null));
+        const linkedIds = new Set(initiallyLinkedIds);
         const allLinks: CompetencyExerciseLink[] = [...existingLinks];
         const newlyLinked = new Set<string>();
         const toCreate: Competency[] = [];
@@ -832,6 +833,7 @@ export class ChecklistPanelComponent {
             }
 
             if (courseComp?.id && !linkedIds.has(courseComp.id)) {
+                // Matched to a course competency that hasn't been linked yet → link it
                 allLinks.push(new CompetencyExerciseLink(courseComp, exercise, this.computeRelevanceWeight(comp)));
                 linkedIds.add(courseComp.id);
                 newlyLinked.add(normalizedTitle);
@@ -840,11 +842,19 @@ export class ChecklistPanelComponent {
                 if (courseTitle && courseTitle !== normalizedTitle) {
                     newlyLinked.add(courseTitle);
                 }
-            } else if (!courseComp || linkedIds.has(courseComp.id!)) {
+            } else if (courseComp?.id && initiallyLinkedIds.has(courseComp.id)) {
+                // This course competency was already linked before this apply → skip linking
+                // but still track the title so isCompetencyLinked shows the "Linked" badge
+                newlyLinked.add(normalizedTitle);
+                const courseTitle = courseComp.title?.toLowerCase().trim();
+                if (courseTitle && courseTitle !== normalizedTitle) {
+                    newlyLinked.add(courseTitle);
+                }
+            } else if (!courseComp || (courseComp?.id && linkedIds.has(courseComp.id) && !initiallyLinkedIds.has(courseComp.id))) {
                 // Either no existing competency found, or the AI mapped multiple distinct
-                // inferred competencies to the same course competency (already linked).
-                // In the latter case, the inferred competency represents a genuinely different
-                // learning goal, so queue it for creation instead of silently skipping it.
+                // inferred competencies to the same course competency (newly linked earlier
+                // in this loop). In the latter case, this is a genuinely different learning
+                // goal, so queue it for creation.
                 if (!reconciledCreated.has(normalizedTitle)) {
                     const newComp = new Competency();
                     newComp.title = title;
@@ -877,6 +887,13 @@ export class ChecklistPanelComponent {
         const exerciseLinks = this.exercise()?.competencyLinks ?? [];
         const exerciseLinkedTitles = new Set(exerciseLinks.map((link) => (link.competency?.title ?? '').toLowerCase().trim()).filter(Boolean));
         if (exerciseLinkedTitles.has(title)) return true;
+
+        // Also check by matchedCourseCompetencyId (handles title mismatch between inferred and course competency)
+        const matchId = comp.matchedCourseCompetencyId;
+        if (matchId != null && matchId > 0) {
+            const exerciseLinkedIds = new Set(exerciseLinks.map((link) => link.competency?.id).filter((id): id is number => id != null));
+            if (exerciseLinkedIds.has(matchId)) return true;
+        }
 
         // Fall back to internal tracking (for optimistic UI after applyCompetencies)
         return this.competencyTitleIn(comp, this.linkedCompetencyTitles());

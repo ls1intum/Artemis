@@ -324,7 +324,7 @@
                     @if (sectionExpanded['competencies']()) {
                         <div class="section-body p-0">
                             @if (!result.inferredCompetencies || result.inferredCompetencies.length === 0) {
-                                <div class="p-3 text-muted" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.empty">No competencies inferred.</div>
+                                <div class="p-3 text-muted" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.empty">No learning goals inferred.</div>
                             }
                             @if (result.inferredCompetencies && result.inferredCompetencies.length > 0) {
                                 <div class="competency-list">
@@ -413,7 +413,7 @@
                                             } @else {
                                                 <fa-icon [icon]="faLink" size="xs" class="me-1" />
                                             }
-                                            <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.applyCompetencies">Apply Competencies</span>
+                                            <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.applyCompetencies">Link Competencies</span>
                                         </button>
                                     </div>
                                     <small class="text-muted mt-1 d-block" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.applyHint">
