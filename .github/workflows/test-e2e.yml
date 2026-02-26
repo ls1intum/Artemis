@@ -132,49 +132,10 @@ jobs:
           check-name: "Phase 1: E2E Test Report"
           commit-sha: ${{ github.event.workflow_run.head_sha }}
 
-      - name: Find PR number
-        id: find-pr
+      - name: Find E2E PR comment
+        id: find-e2e-comment
         if: (success() || failure()) && github.event.workflow_run.event == 'pull_request'
-        uses: actions/github-script@v8
-        continue-on-error: true
-        with:
-          script: |
-            const branch = '${{ github.event.workflow_run.head_branch }}';
-            const { data: prs } = await github.rest.pulls.list({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              head: `${{ github.repository_owner }}:${branch}`,
-              state: 'open'
-            });
-            if (!prs.length) {
-              console.log(`No open PR found for branch ${branch}`);
-              return '';
-            }
-            return String(prs[0].number);
-
-      - name: Find existing E2E comment
-        id: find-comment
-        if: (success() || failure()) && steps.find-pr.outputs.result != ''
-        uses: actions/github-script@v8
-        continue-on-error: true
-        with:
-          script: |
-            const prNumber = Number('${{ steps.find-pr.outputs.result }}');
-            const marker = '<!-- E2E Test Results -->';
-            const MAX_PAGES = 50;
-            for (let page = 1; page <= MAX_PAGES; page++) {
-              const { data: comments } = await github.rest.issues.listComments({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: prNumber,
-                per_page: 100,
-                page: page
-              });
-              if (!comments.length) break;
-              const found = comments.find(c => c.body && c.body.includes(marker));
-              if (found) return String(found.id);
-            }
-            return '';
+        uses: ./.github/actions/find-e2e-comment
 
       - name: Post E2E comment (Phase 1)
         if: (success() || failure()) && github.event.workflow_run.event == 'pull_request'
@@ -182,9 +143,9 @@ jobs:
         continue-on-error: true
         with:
           script: |
-            const prNumber = Number('${{ steps.find-pr.outputs.result }}');
+            const prNumber = Number('${{ steps.find-e2e-comment.outputs.pr-number }}');
             if (!prNumber) return;
-            const existingCommentId = Number('${{ steps.find-comment.outputs.result }}') || null;
+            const existingCommentId = Number('${{ steps.find-e2e-comment.outputs.comment-id }}') || null;
 
             const testOutcome = '${{ steps.run-tests-phase1.outcome }}';
             const jobStatus = '${{ job.status }}';
@@ -320,49 +281,10 @@ jobs:
           check-name: "Phase 2: E2E Test Report"
           commit-sha: ${{ github.event.workflow_run.head_sha }}
 
-      - name: Find PR number
-        id: find-pr
+      - name: Find E2E PR comment
+        id: find-e2e-comment
         if: (success() || failure()) && github.event.workflow_run.event == 'pull_request'
-        uses: actions/github-script@v8
-        continue-on-error: true
-        with:
-          script: |
-            const branch = '${{ github.event.workflow_run.head_branch }}';
-            const { data: prs } = await github.rest.pulls.list({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              head: `${{ github.repository_owner }}:${branch}`,
-              state: 'open'
-            });
-            if (!prs.length) {
-              console.log(`No open PR found for branch ${branch}`);
-              return '';
-            }
-            return String(prs[0].number);
-
-      - name: Find existing E2E comment
-        id: find-comment
-        if: (success() || failure()) && steps.find-pr.outputs.result != ''
-        uses: actions/github-script@v8
-        continue-on-error: true
-        with:
-          script: |
-            const prNumber = Number('${{ steps.find-pr.outputs.result }}');
-            const marker = '<!-- E2E Test Results -->';
-            const MAX_PAGES = 50;
-            for (let page = 1; page <= MAX_PAGES; page++) {
-              const { data: comments } = await github.rest.issues.listComments({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: prNumber,
-                per_page: 100,
-                page: page
-              });
-              if (!comments.length) break;
-              const found = comments.find(c => c.body && c.body.includes(marker));
-              if (found) return String(found.id);
-            }
-            return '';
+        uses: ./.github/actions/find-e2e-comment
 
       - name: Update E2E comment (Phase 2)
         id: update-comment
@@ -371,9 +293,9 @@ jobs:
         continue-on-error: true
         with:
           script: |
-            const prNumber = Number('${{ steps.find-pr.outputs.result }}');
+            const prNumber = Number('${{ steps.find-e2e-comment.outputs.pr-number }}');
             if (!prNumber) return;
-            const existingCommentId = Number('${{ steps.find-comment.outputs.result }}') || null;
+            const existingCommentId = Number('${{ steps.find-e2e-comment.outputs.comment-id }}') || null;
 
             const testOutcome = '${{ steps.run-tests-phase2.outcome }}';
             const jobStatus = '${{ job.status }}';
@@ -522,49 +444,10 @@ jobs:
           include_time_in_summary: true
           report_paths: 'all-test-results/results.xml'
 
-      - name: Find PR number
-        id: find-pr
+      - name: Find E2E PR comment
+        id: find-e2e-comment
         if: success() || failure()
-        uses: actions/github-script@v8
-        continue-on-error: true
-        with:
-          script: |
-            const branch = '${{ github.event.workflow_run.head_branch }}';
-            const { data: prs } = await github.rest.pulls.list({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              head: `${{ github.repository_owner }}:${branch}`,
-              state: 'open'
-            });
-            if (!prs.length) {
-              console.log(`No open PR found for branch ${branch}`);
-              return '';
-            }
-            return String(prs[0].number);
-
-      - name: Find existing E2E comment
-        id: find-comment
-        if: (success() || failure()) && steps.find-pr.outputs.result != ''
-        uses: actions/github-script@v8
-        continue-on-error: true
-        with:
-          script: |
-            const prNumber = Number('${{ steps.find-pr.outputs.result }}');
-            const marker = '<!-- E2E Test Results -->';
-            const MAX_PAGES = 50;
-            for (let page = 1; page <= MAX_PAGES; page++) {
-              const { data: comments } = await github.rest.issues.listComments({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: prNumber,
-                per_page: 100,
-                page: page
-              });
-              if (!comments.length) break;
-              const found = comments.find(c => c.body && c.body.includes(marker));
-              if (found) return String(found.id);
-            }
-            return '';
+        uses: ./.github/actions/find-e2e-comment
 
       - name: Post E2E comment (All Tests)
         if: success() || failure()
@@ -572,9 +455,9 @@ jobs:
         continue-on-error: true
         with:
           script: |
-            const prNumber = Number('${{ steps.find-pr.outputs.result }}');
+            const prNumber = Number('${{ steps.find-e2e-comment.outputs.pr-number }}');
             if (!prNumber) return;
-            const existingCommentId = Number('${{ steps.find-comment.outputs.result }}') || null;
+            const existingCommentId = Number('${{ steps.find-e2e-comment.outputs.comment-id }}') || null;
 
             const testOutcome = '${{ steps.run-tests-all-pr.outcome }}';
             const jobStatus = '${{ job.status }}';
@@ -767,49 +650,19 @@ jobs:
             "${{ env.STATUSES_REQUEST_URL }}" \
             -d "$JSON_PAYLOAD"
 
-      - name: Find PR number
-        id: find-pr
+      - name: Checkout repository for local actions
         if: always() && github.event.workflow_run.event == 'pull_request'
-        uses: actions/github-script@v8
-        continue-on-error: true
+        uses: actions/checkout@v6
         with:
-          script: |
-            const branch = '${{ github.event.workflow_run.head_branch }}';
-            const { data: prs } = await github.rest.pulls.list({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              head: `${{ github.repository_owner }}:${branch}`,
-              state: 'open'
-            });
-            if (!prs.length) {
-              console.log(`No open PR found for branch ${branch}`);
-              return '';
-            }
-            return String(prs[0].number);
+          repository: ${{ github.repository }}
+          ref: ${{ github.event.workflow_run.head_branch }}
+          sparse-checkout: .github/actions
+          fetch-depth: 1
 
-      - name: Find existing E2E comment
-        id: find-comment
-        if: steps.find-pr.outputs.result != ''
-        uses: actions/github-script@v8
-        continue-on-error: true
-        with:
-          script: |
-            const prNumber = Number('${{ steps.find-pr.outputs.result }}');
-            const marker = '<!-- E2E Test Results -->';
-            const MAX_PAGES = 50;
-            for (let page = 1; page <= MAX_PAGES; page++) {
-              const { data: comments } = await github.rest.issues.listComments({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: prNumber,
-                per_page: 100,
-                page: page
-              });
-              if (!comments.length) break;
-              const found = comments.find(c => c.body && c.body.includes(marker));
-              if (found) return String(found.id);
-            }
-            return '';
+      - name: Find E2E PR comment
+        id: find-e2e-comment
+        if: always() && github.event.workflow_run.event == 'pull_request'
+        uses: ./.github/actions/find-e2e-comment
 
       - name: Update E2E comment with overall status
         if: always() && github.event.workflow_run.event == 'pull_request'
@@ -817,9 +670,9 @@ jobs:
         continue-on-error: true
         with:
           script: |
-            const prNumber = Number('${{ steps.find-pr.outputs.result }}');
+            const prNumber = Number('${{ steps.find-e2e-comment.outputs.pr-number }}');
             if (!prNumber) return;
-            const existingCommentId = Number('${{ steps.find-comment.outputs.result }}') || null;
+            const existingCommentId = Number('${{ steps.find-e2e-comment.outputs.comment-id }}') || null;
 
             const status = `${{ steps.overall-status.outputs.status }}`;
             const description = `${{ steps.overall-status.outputs.description }}`;
