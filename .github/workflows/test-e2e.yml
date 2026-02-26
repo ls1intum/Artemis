@@ -292,7 +292,7 @@ jobs:
 
       - name: All Tests Report (PR)
         id: test-report
-        uses: mikepenz/action-junit-report@v5.6.2
+        uses: mikepenz/action-junit-report@v6.3.0
         if: success() || failure()
         with:
           commit: ${{ github.event.workflow_run.head_sha }}
@@ -419,7 +419,7 @@ jobs:
           path: all-test-results
 
       - name: All Tests Report (Non-PR)
-        uses: mikepenz/action-junit-report@v5.6.2
+        uses: mikepenz/action-junit-report@v6.3.0
         if: success() || failure()
         with:
           commit: ${{ github.event.workflow_run.head_sha }}
@@ -446,12 +446,12 @@ jobs:
           REMAINING_RESULT="${{ needs.run-e2e-remaining.result }}"
           ALL_PR_RESULT="${{ needs.run-e2e-all-pr.result }}"
           ALL_NON_PR_RESULT="${{ needs.run-e2e-all-non-pr.result }}"
-          
+
           echo "Phase 1 (relevant): $RELEVANT_RESULT"
           echo "Phase 2 (remaining): $REMAINING_RESULT"
           echo "All tests (PR): $ALL_PR_RESULT"
           echo "All tests (Non-PR): $ALL_NON_PR_RESULT"
-          
+
           # Determine the overall status
           if [ "$ALL_NON_PR_RESULT" = "success" ]; then
             echo "status=success" >> $GITHUB_OUTPUT
