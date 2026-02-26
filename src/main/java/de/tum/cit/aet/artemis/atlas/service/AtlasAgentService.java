@@ -4,8 +4,15 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.azure.openai.AzureOpenAiChatOptions;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.ChatClient.ChatClientRequestSpec;
@@ -16,7 +23,6 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -26,13 +32,16 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentChatResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentHistoryMessageDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.BatchRelationPreviewResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyPreviewDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyRelationPreviewDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.ExerciseCompetencyMappingDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.RelationGraphPreviewDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.SingleRelationPreviewResponseDTO;
+import de.tum.cit.aet.artemis.atlas.service.CompetencyExpertToolsService.CompetencyOperation;
 
 /**
  * Service for Atlas Agent functionality with Azure OpenAI integration.
@@ -44,19 +53,27 @@ import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.SingleRelationPreviewResponse
 @Conditional(AtlasEnabled.class)
 public class AtlasAgentService {
 
+    private static final Logger log = LoggerFactory.getLogger(AtlasAgentService.class);
+
     private enum AgentType {
-        MAIN_AGENT, COMPETENCY_EXPERT, COMPETENCY_MAPPER
+        MAIN_AGENT, COMPETENCY_EXPERT, COMPETENCY_MAPPER, EXERCISE_MAPPER
     }
 
     private static final String DELEGATE_TO_COMPETENCY_EXPERT = "%%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%";
 
     private static final String DELEGATE_TO_COMPETENCY_MAPPER = "%%ARTEMIS_DELEGATE_TO_COMPETENCY_MAPPER%%";
 
+    private static final String DELEGATE_TO_EXERCISE_MAPPER = "%%ARTEMIS_DELEGATE_TO_EXERCISE_MAPPER%%";
+
     private static final String CREATE_APPROVED_COMPETENCY = "[CREATE_APPROVED_COMPETENCY]";
 
     private static final String CREATE_APPROVED_RELATION = "[CREATE_APPROVED_RELATION]";
 
+    private static final String CREATE_APPROVED_EXERCISE_MAPPING = "[CREATE_APPROVED_EXERCISE_MAPPING]";
+
     private static final String RETURN_TO_MAIN_AGENT = "%%ARTEMIS_RETURN_TO_MAIN_AGENT%%";
+
+    private static final Pattern PLAN_MARKER_PATTERN = Pattern.compile("%%ARTEMIS_PLAN:([A-Z_]+)%%");
 
     private static final String PREVIEW_DATA_START_MARKER = "%%PREVIEW_DATA_START%%";
 
@@ -71,6 +88,8 @@ public class AtlasAgentService {
     private final ToolCallbackProvider competencyExpertToolCallbackProvider;
 
     private final ToolCallbackProvider competencyMapperToolCallbackProvider;
+
+    private final ToolCallbackProvider exerciseMapperToolCallbackProvider;
 
     private final ChatMemory chatMemory;
 
@@ -94,18 +113,26 @@ public class AtlasAgentService {
 
     private static final ThreadLocal<Boolean> competencyModifiedInCurrentRequest = ThreadLocal.withInitial(() -> false);
 
-    public AtlasAgentService(@Autowired(required = false) ChatClient chatClient, AtlasPromptTemplateService templateService,
-            @Autowired(required = false) ToolCallbackProvider mainAgentToolCallbackProvider, @Autowired(required = false) ToolCallbackProvider competencyExpertToolCallbackProvider,
-            @Autowired(required = false) ToolCallbackProvider competencyMapperToolCallbackProvider, @Autowired(required = false) ChatMemory chatMemory,
-            @Value("${atlas.chat-model:gpt-4o}") String deploymentName, @Value("${atlas.chat-temperature:0.2}") double temperature) {
+    private final AtlasAgentSessionCacheService atlasAgentSessionCacheService;
+
+    private final ExecutionPlanStateManager executionPlanStateManager;
+
+    public AtlasAgentService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, @Nullable ToolCallbackProvider mainAgentToolCallbackProvider,
+            @Nullable ToolCallbackProvider competencyExpertToolCallbackProvider, @Nullable ToolCallbackProvider competencyMapperToolCallbackProvider,
+            @Nullable ToolCallbackProvider exerciseMapperToolCallbackProvider, @Nullable ChatMemory chatMemory, @Value("${atlas.chat-model:gpt-4o}") String deploymentName,
+            @Value("${atlas.chat-temperature:0.2}") double temperature, ExecutionPlanStateManager executionPlanStateManager,
+            AtlasAgentSessionCacheService atlasAgentSessionCacheService) {
         this.chatClient = chatClient;
         this.templateService = templateService;
         this.mainAgentToolCallbackProvider = mainAgentToolCallbackProvider;
         this.competencyExpertToolCallbackProvider = competencyExpertToolCallbackProvider;
         this.competencyMapperToolCallbackProvider = competencyMapperToolCallbackProvider;
+        this.exerciseMapperToolCallbackProvider = exerciseMapperToolCallbackProvider;
         this.chatMemory = chatMemory;
         this.deploymentName = deploymentName;
         this.temperature = temperature;
+        this.executionPlanStateManager = executionPlanStateManager;
+        this.atlasAgentSessionCacheService = atlasAgentSessionCacheService;
     }
 
     /**
@@ -120,18 +147,43 @@ public class AtlasAgentService {
      */
     public AtlasAgentChatResponseDTO processChatMessage(String message, Long courseId, String sessionId) {
         if (chatClient == null) {
-            return new AtlasAgentChatResponseDTO("Atlas Agent is not available. Please contact your administrator.", ZonedDateTime.now(), false, null, null, null);
+            return new AtlasAgentChatResponseDTO("Atlas Agent is not available. Please contact your administrator.", ZonedDateTime.now(), false, null, null, null, null);
         }
 
         try {
             CompetencyExpertToolsService.setCurrentSessionId(sessionId);
             resetCompetencyModifiedFlag();
 
+            // Check for cancel command when plan is active
+            if (isCancelCommand(message) && executionPlanStateManager.hasPlan(sessionId)) {
+                executionPlanStateManager.cancelPlan(sessionId);
+                return new AtlasAgentChatResponseDTO("Plan cancelled.", ZonedDateTime.now(), false, null, null, null, null);
+            }
+
+            // Check if this is an approval message for competencies
+            if (message.equals(CREATE_APPROVED_COMPETENCY)) {
+                return handleCompetencyApproval(sessionId, courseId);
+            }
+
+            // Check if this is an approval message for relations
+            if (message.equals(CREATE_APPROVED_RELATION)) {
+                return handleRelationApproval(sessionId, courseId);
+            }
+
+            // Check if this message contains exercise mapping approval
+            if (message.contains(CREATE_APPROVED_EXERCISE_MAPPING)) {
+                return handleExerciseMappingApproval(sessionId, courseId, message);
+            }
+
             String response = delegateToAgent(AgentType.MAIN_AGENT, message, courseId, sessionId);
+
+            // Detect and initialize plan if orchestrator output a plan marker
+            detectAndInitializePlan(response, message, sessionId);
 
             if (response.contains(DELEGATE_TO_COMPETENCY_EXPERT)) {
                 String brief = extractBriefFromDelegationMarker(response);
 
+                CompetencyExpertToolsService.setCurrentSessionId(sessionId);
                 String delegationResponse = delegateToAgent(AgentType.COMPETENCY_EXPERT, brief, courseId, sessionId);
 
                 List<CompetencyPreviewDTO> previews = CompetencyExpertToolsService.getAndClearPreviews();
@@ -142,35 +194,7 @@ public class AtlasAgentService {
                 // The MessageChatMemoryAdvisor already added the response, but without preview data
                 updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, delegationResponse);
 
-                return new AtlasAgentChatResponseDTO(delegationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), previews, null, null);
-            }
-            else if (response.contains(CREATE_APPROVED_COMPETENCY)) {
-                String creationResponse = delegateToAgent(AgentType.COMPETENCY_EXPERT, CREATE_APPROVED_COMPETENCY, courseId, sessionId);
-                List<CompetencyPreviewDTO> previews = CompetencyExpertToolsService.getAndClearPreviews();
-                String responseWithEmbeddedData = embedPreviewDataInResponse(creationResponse, previews);
-
-                updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, creationResponse);
-
-                return new AtlasAgentChatResponseDTO(creationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), previews, null, null);
-            }
-            else if (response.contains(CREATE_APPROVED_RELATION) || message.equals(CREATE_APPROVED_RELATION)) {
-                // Set sessionId for tool calls
-                CompetencyMappingToolsService.setCurrentSessionId(sessionId);
-
-                String creationResponse = delegateToAgent(AgentType.COMPETENCY_MAPPER, CREATE_APPROVED_RELATION, courseId, sessionId);
-
-                // Retrieve relation preview data from ThreadLocal
-                SingleRelationPreviewResponseDTO singleRelationPreview = CompetencyMappingToolsService.getSingleRelationPreview();
-                BatchRelationPreviewResponseDTO batchRelationPreview = CompetencyMappingToolsService.getBatchRelationPreview();
-                RelationGraphPreviewDTO relationGraphPreview = CompetencyMappingToolsService.getRelationGraphPreview();
-                // Embed relation preview data in the response
-                String responseWithEmbeddedData = embedRelationPreviewDataInResponse(creationResponse, singleRelationPreview, batchRelationPreview, relationGraphPreview);
-
-                updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, creationResponse);
-
-                // Return with relation preview data (convert to unified list)
-                List<CompetencyRelationPreviewDTO> relationPreviews = convertToRelationPreviewsList(singleRelationPreview, batchRelationPreview);
-                return new AtlasAgentChatResponseDTO(creationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), null, relationPreviews, relationGraphPreview);
+                return new AtlasAgentChatResponseDTO(delegationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), previews, null, null, null);
             }
             else if (response.contains(DELEGATE_TO_COMPETENCY_MAPPER)) {
                 // Extract brief from marker
@@ -195,7 +219,20 @@ public class AtlasAgentService {
                 // Return with relation preview data (convert to unified list)
                 List<CompetencyRelationPreviewDTO> relationPreviews = convertToRelationPreviewsList(singleRelationPreview, batchRelationPreview);
                 return new AtlasAgentChatResponseDTO(delegationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), null, relationPreviews,
-                        relationGraphPreview);
+                        relationGraphPreview, null);
+            }
+            else if (response.contains(DELEGATE_TO_EXERCISE_MAPPER)) {
+                String brief = extractBriefFromDelegationMarker(response);
+
+                ExerciseMappingToolsService.setCurrentSessionId(sessionId);
+                String delegationResponse = delegateToAgent(AgentType.EXERCISE_MAPPER, brief, courseId, sessionId);
+
+                ExerciseCompetencyMappingDTO exerciseMappingPreview = ExerciseMappingToolsService.getExerciseMappingPreview();
+                String responseWithEmbeddedData = embedExerciseMappingPreviewDataInResponse(delegationResponse, exerciseMappingPreview);
+
+                updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, delegationResponse);
+
+                return new AtlasAgentChatResponseDTO(delegationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), null, null, null, exerciseMappingPreview);
             }
             else if (response.contains(RETURN_TO_MAIN_AGENT)) {
                 response = response.replace(RETURN_TO_MAIN_AGENT, "").trim();
@@ -212,15 +249,15 @@ public class AtlasAgentService {
                 // Update chat memory with embedded preview data if previews exist
                 updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, finalResponse);
 
-                return new AtlasAgentChatResponseDTO(finalResponse, ZonedDateTime.now(), competenciesModified, previews, null, null);
+                return new AtlasAgentChatResponseDTO(finalResponse, ZonedDateTime.now(), competenciesModified, previews, null, null, null);
             }
 
             // Default case: return the response as-is
-            return new AtlasAgentChatResponseDTO(response, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), null, null, null);
+            return new AtlasAgentChatResponseDTO(response, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), null, null, null, null);
         }
         catch (Exception e) {
             return new AtlasAgentChatResponseDTO("I apologize, but I'm having trouble processing your request right now. Please try again later.", ZonedDateTime.now(), false, null,
-                    null, null);
+                    null, null, null);
         }
         finally {
             competencyModifiedInCurrentRequest.remove();
@@ -228,6 +265,8 @@ public class AtlasAgentService {
             CompetencyExpertToolsService.getAndClearPreviews();
             CompetencyMappingToolsService.clearCurrentSessionId();
             CompetencyMappingToolsService.clearAllPreviews();
+            ExerciseMappingToolsService.clearCurrentSessionId();
+            ExerciseMappingToolsService.clearExerciseMappingPreview();
         }
 
     }
@@ -235,13 +274,27 @@ public class AtlasAgentService {
     /**
      * Delegate message processing to the specified agent type.
      *
-     * @param agentType the type of agent to use (MAIN_AGENT or COMPETENCY_EXPERT)
+     * @param agentType the type of agent to use
      * @param message   the user's message
      * @param courseId  the course ID for context
      * @param sessionId the session ID for chat memory
      * @return the agent's response
      */
     private String delegateToAgent(AgentType agentType, String message, Long courseId, String sessionId) {
+        return delegateToAgent(agentType, message, courseId, sessionId, true);
+    }
+
+    /**
+     * Delegate message processing to the specified agent type.
+     *
+     * @param agentType    the type of agent to use
+     * @param message      the user's message
+     * @param courseId     the course ID for context
+     * @param sessionId    the session ID for chat memory
+     * @param saveToMemory whether to add message to chat memory
+     * @return the agent's response
+     */
+    private String delegateToAgent(AgentType agentType, String message, Long courseId, String sessionId, boolean saveToMemory) {
         String resourcePath;
         if (agentType.equals(AgentType.MAIN_AGENT)) {
             resourcePath = "/prompts/atlas/agent_system_prompt.st";
@@ -251,6 +304,9 @@ public class AtlasAgentService {
         }
         else if (agentType.equals(AgentType.COMPETENCY_MAPPER)) {
             resourcePath = "/prompts/atlas/competency_mapper_system_prompt.st";
+        }
+        else if (agentType.equals(AgentType.EXERCISE_MAPPER)) {
+            resourcePath = "/prompts/atlas/exercise_mapper_system_prompt.st";
         }
         else {
             resourcePath = "/prompts/atlas/agent_system_prompt.st";
@@ -264,7 +320,7 @@ public class AtlasAgentService {
         // Build chat client with memory advisor for this specific session
         ChatClient.Builder clientBuilder = chatClient.mutate();
         // Add memory advisor only for Atlas with conversation-specific session ID
-        if (chatMemory != null) {
+        if (chatMemory != null && saveToMemory) {
             clientBuilder.defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).conversationId(sessionId).build());
         }
         ChatClient sessionClient = clientBuilder.build();
@@ -286,6 +342,11 @@ public class AtlasAgentService {
         else if (agentType.equals(AgentType.COMPETENCY_MAPPER)) {
             if (competencyMapperToolCallbackProvider != null) {
                 promptSpec = promptSpec.toolCallbacks(competencyMapperToolCallbackProvider);
+            }
+        }
+        else if (agentType.equals(AgentType.EXERCISE_MAPPER)) {
+            if (exerciseMapperToolCallbackProvider != null) {
+                promptSpec = promptSpec.toolCallbacks(exerciseMapperToolCallbackProvider);
             }
         }
 
@@ -319,6 +380,7 @@ public class AtlasAgentService {
      * Expected format:
      * %%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%:TOPIC/TOPICS: ...\\nREQUIREMENTS: ...\\nCONSTRAINTS: ...\\nCONTEXT: ...
      * %%ARTEMIS_DELEGATE_TO_COMPETENCY_MAPPER%%:TOPIC/TOPICS: ...\\nREQUIREMENTS: ...\\nCONSTRAINTS: ...\\nCONTEXT: ...
+     * %%ARTEMIS_DELEGATE_TO_EXERCISE_MAPPER%%:TOPIC/TOPICS: ...\\nREQUIREMENTS: ...\\nCONSTRAINTS: ...\\nCONTEXT: ...
      *
      * @param response the response containing the delegation marker
      * @return the extracted brief content
@@ -329,6 +391,11 @@ public class AtlasAgentService {
         if (startIndex == -1) {
             startIndex = response.indexOf(DELEGATE_TO_COMPETENCY_MAPPER);
             marker = DELEGATE_TO_COMPETENCY_MAPPER;
+        }
+
+        if (startIndex == -1) {
+            startIndex = response.indexOf(DELEGATE_TO_EXERCISE_MAPPER);
+            marker = DELEGATE_TO_EXERCISE_MAPPER;
         }
 
         if (startIndex == -1) {
@@ -395,18 +462,21 @@ public class AtlasAgentService {
                 String text = message.getText();
                 boolean isUser = message.getMessageType() == MessageType.USER;
 
-                // Skip internal system messages (delegation markers, briefings, and action confirmations)
+                // Skip internal system messages (delegation markers, briefings, action confirmations, and plan continuations)
                 boolean isBriefing = text.startsWith("TOPIC:") || text.startsWith("TOPICS:") || text.startsWith("ACTION:")
                         || (text.contains("REQUIREMENTS:") && text.contains("CONSTRAINTS:") && text.contains("CONTEXT:"));
-                boolean isDelegationMarker = text.contains(DELEGATE_TO_COMPETENCY_EXPERT) || text.contains(DELEGATE_TO_COMPETENCY_MAPPER) || text.contains(RETURN_TO_MAIN_AGENT);
-                boolean isActionConfirmation = text.equals(CREATE_APPROVED_RELATION) || text.equals(CREATE_APPROVED_COMPETENCY);
+                boolean isDelegationMarker = text.contains(DELEGATE_TO_COMPETENCY_EXPERT) || text.contains(DELEGATE_TO_COMPETENCY_MAPPER)
+                        || text.contains(DELEGATE_TO_EXERCISE_MAPPER) || text.contains(RETURN_TO_MAIN_AGENT);
+                boolean isActionConfirmation = text.equals(CREATE_APPROVED_RELATION) || text.equals(CREATE_APPROVED_COMPETENCY) || text.contains(CREATE_APPROVED_EXERCISE_MAPPING);
+                boolean isPlanContinuation = text.startsWith("MULTI-STEP PLAN CONTINUATION");
 
-                if (isBriefing || isDelegationMarker || isActionConfirmation) {
+                if (isBriefing || isDelegationMarker || isActionConfirmation || isPlanContinuation) {
                     continue;
                 }
 
                 PreviewDataResult extracted = extractPreviewDataFromMessage(text);
-                result.add(new AtlasAgentHistoryMessageDTO(extracted.cleanedText(), isUser, extracted.previews(), extracted.relationPreviews(), extracted.relationGraphPreview()));
+                result.add(new AtlasAgentHistoryMessageDTO(extracted.cleanedText(), isUser, extracted.previews(), extracted.relationPreviews(), extracted.relationGraphPreview(),
+                        extracted.exerciseMappingPreview()));
             }
 
             return result;
@@ -476,6 +546,34 @@ public class AtlasAgentService {
     }
 
     /**
+     * Embed exercise mapping preview data as a JSON marker in the response text.
+     * This allows exercise mapping preview data to persist in chat memory and be reconstructed when loading history.
+     *
+     * @param response               The agent's response text
+     * @param exerciseMappingPreview Optional exercise mapping preview
+     * @return The response text with embedded exercise mapping preview data marker
+     */
+    private String embedExerciseMappingPreviewDataInResponse(String response, @Nullable ExerciseCompetencyMappingDTO exerciseMappingPreview) {
+        if (exerciseMappingPreview == null) {
+            return response;
+        }
+
+        try {
+            ExerciseMappingPreviewDataContainer container = new ExerciseMappingPreviewDataContainer(exerciseMappingPreview);
+            String jsonData = objectMapper.writeValueAsString(container);
+
+            // Append marker with JSON data to the response
+            return response + " " + PREVIEW_DATA_START_MARKER + jsonData + PREVIEW_DATA_END_MARKER;
+        }
+        catch (JsonProcessingException e) {
+            return response;
+        }
+    }
+
+    record ExerciseMappingPreviewDataContainer(@Nullable ExerciseCompetencyMappingDTO exerciseMappingPreview) {
+    }
+
+    /**
      * Extract preview data from a message text that contains embedded preview markers.
      * Handles both competency and relation preview data.
      *
@@ -485,12 +583,12 @@ public class AtlasAgentService {
     private PreviewDataResult extractPreviewDataFromMessage(String messageText) {
         int startIndex = messageText.indexOf(PREVIEW_DATA_START_MARKER);
         if (startIndex == -1) {
-            return new PreviewDataResult(messageText, null, null, null);
+            return new PreviewDataResult(messageText, null, null, null, null);
         }
 
         int endIndex = messageText.indexOf(PREVIEW_DATA_END_MARKER, startIndex);
         if (endIndex == -1) {
-            return new PreviewDataResult(messageText, null, null, null);
+            return new PreviewDataResult(messageText, null, null, null, null);
         }
 
         int jsonStart = startIndex + PREVIEW_DATA_START_MARKER.length();
@@ -500,20 +598,27 @@ public class AtlasAgentService {
         String cleanedText = (messageText.substring(0, startIndex) + messageText.substring(endIndex + PREVIEW_DATA_END_MARKER.length())).trim();
 
         try {
-            var node = objectMapper.readTree(jsonData);
-            boolean isRelationPreview = node.has("singleRelationPreview") || node.has("batchRelationPreview") || node.has("relationGraphPreview");
-            if (isRelationPreview) {
-                RelationPreviewDataContainer relationContainer = objectMapper.treeToValue(node, RelationPreviewDataContainer.class);
-                List<CompetencyRelationPreviewDTO> relationPreviews = convertToRelationPreviewsList(relationContainer.singleRelationPreview(),
-                        relationContainer.batchRelationPreview());
-                return new PreviewDataResult(cleanedText, null, relationPreviews, relationContainer.relationGraphPreview());
-            }
-
-            PreviewDataContainer container = objectMapper.treeToValue(node, PreviewDataContainer.class);
-            return new PreviewDataResult(cleanedText, container.previews(), null, null);
+            PreviewDataContainer container = objectMapper.readValue(jsonData, PreviewDataContainer.class);
+            return new PreviewDataResult(cleanedText, container.previews(), null, null, null);
         }
         catch (JsonProcessingException e) {
-            return new PreviewDataResult(cleanedText, null, null, null);
+            // If competency parsing fails, try relation preview
+            try {
+                RelationPreviewDataContainer relationContainer = objectMapper.readValue(jsonData, RelationPreviewDataContainer.class);
+                List<CompetencyRelationPreviewDTO> relationPreviews = convertToRelationPreviewsList(relationContainer.singleRelationPreview(),
+                        relationContainer.batchRelationPreview());
+                return new PreviewDataResult(cleanedText, null, relationPreviews, relationContainer.relationGraphPreview(), null);
+            }
+            catch (JsonProcessingException ex) {
+                // Try exercise mapping preview
+                try {
+                    ExerciseMappingPreviewDataContainer exerciseContainer = objectMapper.readValue(jsonData, ExerciseMappingPreviewDataContainer.class);
+                    return new PreviewDataResult(cleanedText, null, null, null, exerciseContainer.exerciseMappingPreview());
+                }
+                catch (JsonProcessingException exc) {
+                    return new PreviewDataResult(cleanedText, null, null, null, null);
+                }
+            }
         }
     }
 
@@ -539,14 +644,14 @@ public class AtlasAgentService {
     /**
      * Result of extracting preview data from a message.
      */
-    private record PreviewDataResult(String cleanedText, @Nullable List<CompetencyPreviewDTO> previews, @Nullable List<CompetencyRelationPreviewDTO> relationPreviews,
-            @Nullable RelationGraphPreviewDTO relationGraphPreview) {
+    record PreviewDataResult(String cleanedText, @Nullable List<CompetencyPreviewDTO> previews, @Nullable List<CompetencyRelationPreviewDTO> relationPreviews,
+            @Nullable RelationGraphPreviewDTO relationGraphPreview, @Nullable ExerciseCompetencyMappingDTO exerciseMappingPreview) {
     }
 
     /**
      * Container for embedding relation preview data in message text.
      */
-    private record RelationPreviewDataContainer(@Nullable SingleRelationPreviewResponseDTO singleRelationPreview, @Nullable BatchRelationPreviewResponseDTO batchRelationPreview,
+    record RelationPreviewDataContainer(@Nullable SingleRelationPreviewResponseDTO singleRelationPreview, @Nullable BatchRelationPreviewResponseDTO batchRelationPreview,
             @Nullable RelationGraphPreviewDTO relationGraphPreview) {
     }
 
@@ -571,5 +676,354 @@ public class AtlasAgentService {
         }
 
         return result.isEmpty() ? null : result;
+    }
+
+    /**
+     * Adds an assistant message directly to chat memory.
+     * Used for plan continuation responses that are generated with saveToMemory=false.
+     *
+     * @param sessionId the session ID
+     * @param message   the assistant message text
+     */
+    private void addAssistantMessageToMemory(String sessionId, String message) {
+        if (chatMemory != null) {
+            chatMemory.add(sessionId, new AssistantMessage(message));
+        }
+    }
+
+    /**
+     * Handles competency approval (button click or text approval).
+     * Extracted to ensure consistent handling regardless of how approval is triggered.
+     *
+     * @param sessionId the session ID
+     * @param courseId  the course ID
+     * @return the response DTO with potential plan continuation
+     */
+    private AtlasAgentChatResponseDTO handleCompetencyApproval(String sessionId, Long courseId) {
+        log.info("handleCompetencyApproval: starting for session={}, courseId={}", sessionId, courseId);
+        List<CompetencyOperation> cachedData = atlasAgentSessionCacheService.getCachedPendingCompetencyOperations(sessionId);
+
+        String creationResponse = delegateToAgent(AgentType.COMPETENCY_EXPERT, CREATE_APPROVED_COMPETENCY, courseId, sessionId);
+        List<CompetencyPreviewDTO> previews = CompetencyExpertToolsService.getAndClearPreviews();
+        log.info("handleCompetencyApproval: received {} previews, viewOnly statuses: {}", previews.size(), previews.stream().map(p -> p.title() + "=" + p.viewOnly()).toList());
+        String responseWithEmbeddedData = embedPreviewDataInResponse(creationResponse, previews);
+
+        if (cachedData != null && !cachedData.isEmpty()) {
+            atlasAgentSessionCacheService.clearCachedPendingCompetencyOperations(sessionId);
+        }
+
+        updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, creationResponse);
+
+        // Filter out viewOnly=true previews - user already saw these during preview phase
+        List<CompetencyPreviewDTO> actionablePreviews = previews.stream().filter(p -> !Boolean.TRUE.equals(p.viewOnly())).toList();
+        if (actionablePreviews.isEmpty()) {
+            actionablePreviews = null;
+        }
+
+        // Build best-effort StepResult from saved previews
+        ExecutionPlanStateManager.StepResult stepResult = buildStepResultFromPreviews(previews);
+        log.info("handleCompetencyApproval: stepResult={}, hasPlan={}", stepResult != null ? stepResult.summary() + " IDs:" + stepResult.ids() : "null",
+                executionPlanStateManager.hasPlan(sessionId));
+
+        // Attempt plan continuation
+        return handlePlanContinuationAfterApproval(sessionId, courseId, creationResponse, stepResult,
+                new AtlasAgentChatResponseDTO(creationResponse, ZonedDateTime.now(), true, actionablePreviews, null, null, null));
+    }
+
+    /**
+     * Handles relation approval (button click or text approval).
+     * Extracted to ensure consistent handling regardless of how approval is triggered.
+     *
+     * @param sessionId the session ID
+     * @param courseId  the course ID
+     * @return the response DTO with potential plan continuation
+     */
+    private AtlasAgentChatResponseDTO handleRelationApproval(String sessionId, Long courseId) {
+        List<CompetencyRelationDTO> cachedRelationData = atlasAgentSessionCacheService.getCachedRelationData(sessionId);
+
+        CompetencyMappingToolsService.setCurrentSessionId(sessionId);
+
+        String creationResponse = delegateToAgent(AgentType.COMPETENCY_MAPPER, CREATE_APPROVED_RELATION, courseId, sessionId);
+
+        SingleRelationPreviewResponseDTO singleRelationPreview = CompetencyMappingToolsService.getSingleRelationPreview();
+        BatchRelationPreviewResponseDTO batchRelationPreview = CompetencyMappingToolsService.getBatchRelationPreview();
+        RelationGraphPreviewDTO relationGraphPreview = CompetencyMappingToolsService.getRelationGraphPreview();
+        String responseWithEmbeddedData = embedRelationPreviewDataInResponse(creationResponse, singleRelationPreview, batchRelationPreview, relationGraphPreview);
+
+        if (cachedRelationData != null && !cachedRelationData.isEmpty()) {
+            atlasAgentSessionCacheService.clearCachedRelationOperations(sessionId);
+        }
+
+        updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, creationResponse);
+
+        List<CompetencyRelationPreviewDTO> relationPreviews = convertToRelationPreviewsList(singleRelationPreview, batchRelationPreview);
+
+        ExecutionPlanStateManager.StepResult stepResult = buildStepResultFromRelationPreviews(relationPreviews);
+
+        return handlePlanContinuationAfterApproval(sessionId, courseId, creationResponse, stepResult,
+                new AtlasAgentChatResponseDTO(creationResponse, ZonedDateTime.now(), false, null, relationPreviews, relationGraphPreview, null));
+    }
+
+    /**
+     * Handles exercise mapping approval (button click or text approval).
+     * Extracted to ensure consistent handling regardless of how approval is triggered.
+     *
+     * @param sessionId       the session ID
+     * @param courseId        the course ID
+     * @param originalMessage the original message containing the approval
+     * @return the response DTO with potential plan continuation
+     */
+    private AtlasAgentChatResponseDTO handleExerciseMappingApproval(String sessionId, Long courseId, String originalMessage) {
+        ExerciseMappingToolsService.setCurrentSessionId(sessionId);
+
+        String creationResponse = delegateToAgent(AgentType.EXERCISE_MAPPER, originalMessage, courseId, sessionId);
+
+        ExerciseCompetencyMappingDTO exerciseMappingPreview = ExerciseMappingToolsService.getExerciseMappingPreview();
+        String responseWithEmbeddedData = embedExerciseMappingPreviewDataInResponse(creationResponse, exerciseMappingPreview);
+
+        updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, creationResponse);
+
+        ExecutionPlanStateManager.StepResult stepResult = new ExecutionPlanStateManager.StepResult(List.of(), "Exercise mappings saved");
+
+        // Attempt plan continuation
+        return handlePlanContinuationAfterApproval(sessionId, courseId, creationResponse, stepResult,
+                new AtlasAgentChatResponseDTO(creationResponse, ZonedDateTime.now(), false, null, null, null, exerciseMappingPreview));
+    }
+
+    /**
+     * Checks if the user message is a cancel/stop command.
+     *
+     * @param message the user's message
+     * @return true if the message is a cancel command
+     */
+    private boolean isCancelCommand(String message) {
+        String lowerMessage = message.toLowerCase().trim();
+        return lowerMessage.equals("cancel") || lowerMessage.equals("stop") || lowerMessage.equals("abort") || lowerMessage.startsWith("cancel ")
+                || lowerMessage.startsWith("stop ");
+    }
+
+    /**
+     * Delegates to the next agent in the plan and returns the response.
+     *
+     * @param agentType        the type of agent to delegate to
+     * @param brief            the enriched brief for the agent
+     * @param courseId         the course ID
+     * @param sessionId        the session ID
+     * @param previousResponse the response from the previous step (for context)
+     * @return the response DTO from the next agent
+     */
+    private AtlasAgentChatResponseDTO delegateToNextStepAgent(ExecutionPlanStateManager.AgentType agentType, String brief, Long courseId, String sessionId,
+            String previousResponse) {
+
+        log.info("delegateToNextStepAgent: delegating to agent={} for session={}", agentType, sessionId);
+        AgentType internalAgentType = mapPlanAgentToInternal(agentType);
+
+        // Set appropriate session ID for tool calls
+        switch (agentType) {
+            case COMPETENCY_EXPERT -> CompetencyExpertToolsService.setCurrentSessionId(sessionId);
+            case COMPETENCY_MAPPER -> CompetencyMappingToolsService.setCurrentSessionId(sessionId);
+            case EXERCISE_MAPPER -> ExerciseMappingToolsService.setCurrentSessionId(sessionId);
+        }
+
+        // Use saveToMemory=false to prevent internal brief from appearing in chat history
+        String delegationResponse = delegateToAgent(internalAgentType, brief, courseId, sessionId, false);
+        log.info("delegateToNextStepAgent: agent={} responded with {} chars", agentType, delegationResponse != null ? delegationResponse.length() : 0);
+
+        // Manually add the next step's response to chat memory (since saveToMemory was false)
+        String combinedResponse = previousResponse + "\n\n---\n\nContinuing to next step...\n\n" + delegationResponse;
+
+        // Retrieve previews based on agent type and build response
+        switch (agentType) {
+            case COMPETENCY_EXPERT -> {
+                List<CompetencyPreviewDTO> previews = CompetencyExpertToolsService.getAndClearPreviews();
+                log.info("delegateToNextStepAgent: COMPETENCY_EXPERT produced {} previews", previews.size());
+                String responseWithEmbeddedData = embedPreviewDataInResponse(combinedResponse, previews);
+                addAssistantMessageToMemory(sessionId, responseWithEmbeddedData);
+                return new AtlasAgentChatResponseDTO(combinedResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), previews, null, null, null);
+            }
+            case COMPETENCY_MAPPER -> {
+                SingleRelationPreviewResponseDTO singlePreview = CompetencyMappingToolsService.getSingleRelationPreview();
+                BatchRelationPreviewResponseDTO batchPreview = CompetencyMappingToolsService.getBatchRelationPreview();
+                RelationGraphPreviewDTO graphPreview = CompetencyMappingToolsService.getRelationGraphPreview();
+                log.info("delegateToNextStepAgent: COMPETENCY_MAPPER produced singlePreview={}, batchPreview={}, graphPreview={}", singlePreview != null, batchPreview != null,
+                        graphPreview != null);
+                String responseWithEmbeddedData = embedRelationPreviewDataInResponse(combinedResponse, singlePreview, batchPreview, graphPreview);
+                addAssistantMessageToMemory(sessionId, responseWithEmbeddedData);
+                List<CompetencyRelationPreviewDTO> relationPreviews = convertToRelationPreviewsList(singlePreview, batchPreview);
+                log.info("delegateToNextStepAgent: COMPETENCY_MAPPER converted to {} relation previews", relationPreviews != null ? relationPreviews.size() : 0);
+                return new AtlasAgentChatResponseDTO(combinedResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), null, relationPreviews, graphPreview, null);
+            }
+            case EXERCISE_MAPPER -> {
+                ExerciseCompetencyMappingDTO exercisePreview = ExerciseMappingToolsService.getExerciseMappingPreview();
+                log.info("delegateToNextStepAgent: EXERCISE_MAPPER produced exercisePreview={}", exercisePreview != null);
+                String responseWithEmbeddedData = embedExerciseMappingPreviewDataInResponse(combinedResponse, exercisePreview);
+                addAssistantMessageToMemory(sessionId, responseWithEmbeddedData);
+                return new AtlasAgentChatResponseDTO(combinedResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), null, null, null, exercisePreview);
+            }
+            default -> {
+                return new AtlasAgentChatResponseDTO(delegationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), null, null, null, null);
+            }
+        }
+    }
+
+    /**
+     * Maps the ExecutionPlanStateManager.AgentType to the internal AgentType enum.
+     *
+     * @param planAgentType the plan agent type
+     * @return the internal agent type
+     */
+    private AgentType mapPlanAgentToInternal(ExecutionPlanStateManager.AgentType planAgentType) {
+        return switch (planAgentType) {
+            case COMPETENCY_EXPERT -> AgentType.COMPETENCY_EXPERT;
+            case COMPETENCY_MAPPER -> AgentType.COMPETENCY_MAPPER;
+            case EXERCISE_MAPPER -> AgentType.EXERCISE_MAPPER;
+        };
+    }
+
+    /**
+     * Detects and initializes an execution plan from the orchestrator's response.
+     * Looks for %%ARTEMIS_PLAN:TEMPLATE_NAME%% markers in the response.
+     *
+     * @param response  the orchestrator's response
+     * @param userGoal  the original user message (used as plan goal)
+     * @param sessionId the session ID
+     */
+    private void detectAndInitializePlan(String response, String userGoal, String sessionId) {
+        Matcher matcher = PLAN_MARKER_PATTERN.matcher(response);
+        if (matcher.find()) {
+            String templateName = matcher.group(1);
+            ExecutionPlanStateManager.PlanTemplate template = ExecutionPlanStateManager.parseTemplate(templateName);
+            if (template != null) {
+                executionPlanStateManager.initializePlan(sessionId, template, userGoal);
+                log.info("Initialized execution plan for session {}: template={}, userGoal={}", sessionId, template, userGoal);
+            }
+            else {
+                log.warn("detectAndInitializePlan: unknown template name '{}' in response for session={}", templateName, sessionId);
+            }
+        }
+    }
+
+    /**
+     * Handles plan continuation after a successful approval.
+     * If a plan exists, advances to the next step and delegates to the next agent.
+     * If no plan exists or no next step, returns the fallback response.
+     *
+     * @param sessionId        the session ID
+     * @param courseId         the course ID
+     * @param previousResponse the response from the completed step
+     * @param stepResult       best-effort step result (may be null)
+     * @param fallbackResponse the response to return if no plan continuation occurs
+     * @return the response DTO, potentially with next step preview appended
+     */
+    private AtlasAgentChatResponseDTO handlePlanContinuationAfterApproval(String sessionId, Long courseId, String previousResponse,
+            ExecutionPlanStateManager.@Nullable StepResult stepResult, AtlasAgentChatResponseDTO fallbackResponse) {
+        if (!executionPlanStateManager.hasPlan(sessionId)) {
+            log.info("handlePlanContinuation: no plan found for session={}, returning fallback", sessionId);
+            return fallbackResponse;
+        }
+
+        Optional<ExecutionPlanStateManager.NextStepContext> nextStepOpt = executionPlanStateManager.completeStepAndGetNext(sessionId, stepResult);
+        if (nextStepOpt.isEmpty()) {
+            log.info("handlePlanContinuation: no next step for session={} (plan complete or expired), returning fallback", sessionId);
+            return fallbackResponse;
+        }
+
+        ExecutionPlanStateManager.NextStepContext nextStep = nextStepOpt.get();
+        log.info("handlePlanContinuation: advancing to next step for session={}, nextAgent={}, previousResults={}", sessionId, nextStep.agentType(),
+                nextStep.previousResults().size());
+        String enrichedBrief = buildEnrichedBrief(nextStep);
+
+        return delegateToNextStepAgent(nextStep.agentType(), enrichedBrief, courseId, sessionId, previousResponse);
+    }
+
+    /**
+     * Builds an enriched brief for the next agent in the plan.
+     * Includes the user's original goal and results from previous steps.
+     *
+     * @param nextStep the context for the next step
+     * @return the enriched brief string
+     */
+    private String buildEnrichedBrief(ExecutionPlanStateManager.NextStepContext nextStep) {
+        StringBuilder brief = new StringBuilder();
+
+        // Add agent-specific action instruction so the agent knows exactly what to do
+        String actionInstruction = getActionInstructionForAgent(nextStep.agentType());
+        brief.append("ACTION: ").append(actionInstruction).append("\n");
+
+        List<ExecutionPlanStateManager.StepResult> previousResults = nextStep.previousResults();
+        if (!previousResults.isEmpty()) {
+            brief.append("CONTEXT FROM PREVIOUS STEPS:\n");
+            for (ExecutionPlanStateManager.StepResult result : previousResults) {
+                brief.append("- ").append(result.summary());
+                if (!result.ids().isEmpty()) {
+                    brief.append(" (IDs: ").append(result.ids().stream().map(String::valueOf).collect(Collectors.joining(", "))).append(")");
+                }
+                brief.append("\n");
+            }
+        }
+
+        brief.append("ORIGINAL USER REQUEST: ").append(nextStep.userGoal()).append("\n");
+        brief.append("IMPORTANT: Do NOT repeat work from previous steps. Only perform the ACTION specified above.\n");
+
+        log.info("Built enriched brief for session, agent={}, brief={}", nextStep.agentType(), brief);
+        return brief.toString();
+    }
+
+    /**
+     * Returns a clear, specific action instruction for the given agent type
+     * to be used in the enriched brief during plan continuation.
+     * This prevents agents from being confused about what to do.
+     *
+     * @param agentType the type of agent that will receive the brief
+     * @return a specific instruction string for the agent
+     */
+    private String getActionInstructionForAgent(ExecutionPlanStateManager.AgentType agentType) {
+        return switch (agentType) {
+            case COMPETENCY_MAPPER -> "Suggest relation mappings between the competencies from the previous step. "
+                    + "Call getCourseCompetencies first to get the competency IDs, then call suggestRelationMappingsUsingML or "
+                    + "use previewRelationMappings to suggest appropriate relations (ASSUMES, EXTENDS, MATCHES) between them. " + "Set viewOnly=false for the preview.";
+            case EXERCISE_MAPPER -> "Map the competencies from the previous step to exercises in the course. "
+                    + "Call listCourseExercises first to see available exercises. If there is only one exercise, immediately proceed to map it. "
+                    + "If multiple exercises exist, ask which exercise to map. " + "Once the exercise is identified: call getCourseCompetencies to get competency IDs, then call "
+                    + "previewExerciseCompetencyMapping with viewOnly=false to show the interactive preview. "
+                    + "Do NOT ask the user how they want to adjust mappings - the preview UI is interactive and handles that.";
+            case COMPETENCY_EXPERT -> "Create or update competencies as described in the original user request. " + "Use the context from previous steps if available.";
+        };
+    }
+
+    /**
+     * Builds a best-effort StepResult from competency previews.
+     *
+     * @param previews the competency previews (may be null or empty)
+     * @return the step result, or null if no meaningful data
+     */
+    private ExecutionPlanStateManager.@Nullable StepResult buildStepResultFromPreviews(@Nullable List<CompetencyPreviewDTO> previews) {
+        if (previews == null || previews.isEmpty()) {
+            return null;
+        }
+
+        List<Long> ids = previews.stream().map(CompetencyPreviewDTO::competencyId).filter(Objects::nonNull).toList();
+
+        String summary = "Created competencies: " + previews.stream().map(CompetencyPreviewDTO::title).collect(Collectors.joining(", "));
+
+        return new ExecutionPlanStateManager.StepResult(ids, summary);
+    }
+
+    /**
+     * Builds a best-effort StepResult from relation previews.
+     *
+     * @param relationPreviews the relation previews (may be null or empty)
+     * @return the step result, or null if no meaningful data
+     */
+    private ExecutionPlanStateManager.@Nullable StepResult buildStepResultFromRelationPreviews(@Nullable List<CompetencyRelationPreviewDTO> relationPreviews) {
+        if (relationPreviews == null || relationPreviews.isEmpty()) {
+            return null;
+        }
+
+        List<Long> ids = relationPreviews.stream().map(CompetencyRelationPreviewDTO::relationId).filter(Objects::nonNull).toList();
+
+        String summary = "Created " + relationPreviews.size() + " relation(s)";
+
+        return new ExecutionPlanStateManager.StepResult(ids, summary);
     }
 }

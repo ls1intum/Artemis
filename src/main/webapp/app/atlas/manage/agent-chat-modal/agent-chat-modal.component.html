@@ -128,6 +128,58 @@
                                 }
                             </div>
                         }
+                        @if (message.exerciseMappingPreview && !message.exerciseMappingPreview.viewOnly) {
+                            <div class="exercise-mapping-preview-container mt-2 border rounded p-3">
+                                <div class="mb-3">
+                                    <strong>{{ message.exerciseMappingPreview.exerciseTitle }}</strong>
+                                    <small class="text-secondary d-block"> Select competencies and adjust weights </small>
+                                </div>
+
+                                <div class="competency-selection-list">
+                                    @for (competency of message.exerciseMappingPreview.competencies; track competency.competencyId) {
+                                        <div class="competency-item mb-2 p-2 border rounded">
+                                            <div class="d-flex align-items-center">
+                                                <div class="form-check flex-grow-1">
+                                                    <input
+                                                        class="form-check-input"
+                                                        type="checkbox"
+                                                        [id]="'competency-' + message.id + '-' + competency.competencyId"
+                                                        [checked]="getCompetencyCheckboxState(message, competency.competencyId)"
+                                                        (change)="setCompetencyCheckboxState(message, competency.competencyId, $any($event.target).checked)"
+                                                    />
+                                                    <label class="form-check-label" [for]="'competency-' + message.id + '-' + competency.competencyId">
+                                                        {{ competency.competencyTitle }}
+                                                        @if (competency.alreadyMapped) {
+                                                            <span class="badge bg-primary ms-2"><small>Existing</small></span>
+                                                        }
+                                                        @if (competency.suggested && !competency.alreadyMapped) {
+                                                            <span class="badge bg-success ms-2"><small>AI Suggested</small></span>
+                                                        }
+                                                    </label>
+                                                </div>
+
+                                                <div class="ms-3">
+                                                    <select
+                                                        class="form-select form-select-sm"
+                                                        [(ngModel)]="competency.weight"
+                                                        [disabled]="!getCompetencyCheckboxState(message, competency.competencyId)"
+                                                        style="width: 100px"
+                                                    >
+                                                        <option [ngValue]="0.25">LOW</option>
+                                                        <option [ngValue]="0.5">MEDIUM</option>
+                                                        <option [ngValue]="1.0">HIGH</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+
+                                <button type="button" class="btn btn-sm btn-primary mt-3" (click)="onApproveExerciseMapping(message)" [disabled]="isAgentTyping()">
+                                    Save Mappings
+                                </button>
+                            </div>
+                        }
                     </div>
                 </div>
             }

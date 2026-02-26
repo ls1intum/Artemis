@@ -6,12 +6,10 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { firstValueFrom } from 'rxjs';
 import { AgentChatService, CompetencyPreviewResponse, CompetencyRelationPreviewResponse } from '../services/agent-chat.service';
-import { ChatMessage } from 'app/atlas/shared/entities/chat-message.model';
+import { ChatMessage, ExerciseMappingPreview } from 'app/atlas/shared/entities/chat-message.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencyCardComponent } from 'app/atlas/overview/competency-card/competency-card.component';
-import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { Competency, CompetencyRelationDTO, CompetencyRelationType, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
 import { RelationGraphPreview } from 'app/atlas/shared/entities/chat-message.model';
 import { CourseCompetenciesRelationGraphComponent } from 'app/atlas/manage/course-competencies-relation-graph/course-competencies-relation-graph.component';
@@ -44,7 +42,6 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
 
     private readonly activeModal = inject(NgbActiveModal);
     private readonly agentChatService = inject(AgentChatService);
-    private readonly competencyService = inject(CompetencyService);
     private readonly translateService = inject(TranslateService);
 
     courseId = signal<number>(0);
@@ -53,6 +50,8 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     isAgentTyping = signal(false);
     shouldScrollToBottom = signal(false);
     selectedRelationId = signal<number | undefined>(undefined);
+
+    exerciseMappingCheckboxStates = new Map<string, Map<number, boolean>>();
 
     // Event emitted when agent likely created/modified competencies
     competencyChanged = output<void>();
@@ -75,7 +74,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                     this.addMessage(this.translateService.instant('artemisApp.agent.chat.welcome'), false);
                 }
                 history.forEach((msg) => {
-                    this.addMessage(msg.content, msg.isUser, msg.competencyPreviews, msg.relationPreviews, msg.relationGraphPreview);
+                    this.addMessage(msg.content, msg.isUser, msg.competencyPreviews, msg.relationPreviews, msg.relationGraphPreview, msg.exerciseMappingPreview);
                 });
             },
             error: () => {
@@ -123,6 +122,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                     response.competencyPreviews,
                     response.relationPreviews,
                     response.relationGraphPreview,
+                    response.exerciseMappingPreview,
                 );
 
                 if (response.competenciesModified) {
@@ -160,7 +160,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
 
     /**
      * Handles competency creation/update for both single and multiple competencies.
-     * Uses the unified competencyPreviews array.
+     * Sends approval through the agent pipeline so plan continuation is triggered correctly.
      */
     onCreateCompetencies(message: ChatMessage): void {
         if (message.competencyCreated || !message.competencyPreviews || message.competencyPreviews.length === 0) {
@@ -169,59 +169,36 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
 
         this.isAgentTyping.set(true);
 
-        const competencies = message.competencyPreviews.map((preview) => {
-            const competency = new Competency();
-            competency.title = preview.title;
-            competency.description = preview.description;
-            competency.taxonomy = preview.taxonomy;
-            if (preview.competencyId !== undefined) {
-                competency.id = preview.competencyId;
-            }
-            return competency;
-        });
-
-        const promises = competencies.map((competency) => {
-            const isUpdate = competency.id !== undefined;
-            const operation = isUpdate ? this.competencyService.update(competency, this.courseId()) : this.competencyService.create(competency, this.courseId());
-            return firstValueFrom(operation);
-        });
-
-        Promise.all(promises)
-            .then(() => {
+        // Send approval marker through the agent pipeline so that:
+        // 1. The competency expert sub-agent handles persistence via its saveCompetencies tool
+        // 2. Plan continuation is triggered after competency creation
+        this.agentChatService.sendMessage('[CREATE_APPROVED_COMPETENCY]', this.courseId()).subscribe({
+            next: (response) => {
                 this.isAgentTyping.set(false);
 
+                // Mark this message's competencies as created
                 this.messages.update((msgs) => msgs.map((msg) => (msg.id === message.id ? { ...msg, competencyCreated: true } : msg)));
 
-                const count = competencies.length;
-                const hasUpdates = message.competencyPreviews!.some((preview) => preview.competencyId !== undefined);
-                const hasCreates = message.competencyPreviews!.some((preview) => preview.competencyId === undefined);
-
-                let successMessage;
-                if (count === 1) {
-                    // Single competency
-                    const translationKey = hasUpdates ? 'artemisApp.agent.chat.success.updatedSingle' : 'artemisApp.agent.chat.success.createdSingle';
-                    successMessage = this.translateService.instant(translationKey);
-                } else {
-                    if (hasUpdates && hasCreates) {
-                        successMessage = this.translateService.instant('artemisApp.agent.chat.success.processed', { count });
-                    } else if (hasUpdates) {
-                        successMessage = this.translateService.instant('artemisApp.agent.chat.success.updated', { count });
-                    } else {
-                        successMessage = this.translateService.instant('artemisApp.agent.chat.success.created', { count });
-                    }
-                }
-
-                this.addMessage(successMessage, false);
+                // Add agent response message (may include next step preview from plan continuation)
+                this.addMessage(
+                    response.message || this.translateService.instant('artemisApp.agent.chat.success.createdSingle'),
+                    false,
+                    response.competencyPreviews,
+                    response.relationPreviews,
+                    response.relationGraphPreview,
+                    response.exerciseMappingPreview,
+                );
 
                 this.competencyChanged.emit();
 
                 setTimeout(() => this.messageInput()?.nativeElement?.focus(), this.INPUT_FOCUS_DELAY_MS);
-            })
-            .catch(() => {
+            },
+            error: () => {
                 this.isAgentTyping.set(false);
                 this.addMessage(this.translateService.instant('artemisApp.agent.chat.competencyProcessFailure'), false);
                 setTimeout(() => this.messageInput()?.nativeElement?.focus(), this.INPUT_FOCUS_DELAY_MS);
-            });
+            },
+        });
     }
 
     protected onCreateRelation(message: ChatMessage): void {
@@ -265,6 +242,87 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         });
     }
 
+    protected onApproveExerciseMapping(message: ChatMessage): void {
+        if (!message.exerciseMappingPreview || message.exerciseMappingPreview.viewOnly) {
+            return;
+        }
+
+        const selected = this.getSelectedCompetencies(message);
+        if (selected.length === 0) {
+            return;
+        }
+
+        this.isAgentTyping.set(true);
+
+        const mappingsJson = JSON.stringify(selected);
+        const saveMessage = `Save these exercise mappings: ${mappingsJson}. [CREATE_APPROVED_EXERCISE_MAPPING]`;
+
+        this.agentChatService.sendMessage(saveMessage, this.courseId()).subscribe({
+            next: (response) => {
+                this.isAgentTyping.set(false);
+
+                this.addMessage(
+                    response.message || this.translateService.instant('artemisApp.agent.chat.success.exerciseMappingCreated'),
+                    false,
+                    response.competencyPreviews,
+                    response.relationPreviews,
+                    response.relationGraphPreview,
+                    response.exerciseMappingPreview,
+                );
+
+                this.competencyChanged.emit();
+
+                setTimeout(() => this.messageInput()?.nativeElement?.focus(), this.INPUT_FOCUS_DELAY_MS);
+            },
+            error: () => {
+                this.isAgentTyping.set(false);
+                this.addMessage(this.translateService.instant('artemisApp.agent.chat.error.exerciseMappingFailed'), false);
+                setTimeout(() => this.messageInput()?.nativeElement?.focus(), this.INPUT_FOCUS_DELAY_MS);
+            },
+        });
+    }
+
+    /**
+     * Gets the checkbox state for a specific competency in exercise mapping
+     */
+    protected getCompetencyCheckboxState(message: ChatMessage, competencyId: number): boolean {
+        const messageStates = this.exerciseMappingCheckboxStates.get(message.id);
+        return messageStates?.get(competencyId) ?? false;
+    }
+
+    /**
+     * Sets the checkbox state for a specific competency in exercise mapping
+     */
+    protected setCompetencyCheckboxState(message: ChatMessage, competencyId: number, checked: boolean): void {
+        let messageStates = this.exerciseMappingCheckboxStates.get(message.id);
+        if (!messageStates) {
+            messageStates = new Map<number, boolean>();
+            this.exerciseMappingCheckboxStates.set(message.id, messageStates);
+        }
+        messageStates.set(competencyId, checked);
+    }
+
+    /**
+     * Gets the list of selected competencies with their weights for the message
+     */
+    protected getSelectedCompetencies(message: ChatMessage): Array<{ competencyId: number; weight: number }> {
+        if (!message.exerciseMappingPreview) {
+            return [];
+        }
+
+        const messageStates = this.exerciseMappingCheckboxStates.get(message.id);
+        if (!messageStates) {
+            return [];
+        }
+
+        return message.exerciseMappingPreview.competencies
+            .filter((comp) => messageStates.get(comp.competencyId) === true)
+            .map((comp) => ({
+                competencyId: comp.competencyId,
+                weight: comp.weight,
+            }));
+    }
+
     protected onApprovePlan(message: ChatMessage): void {
         if (message.planApproved) {
             return;
@@ -305,6 +363,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         competencyPreviews?: CompetencyPreviewResponse[],
         relationPreviews?: CompetencyRelationPreviewResponse[],
         relationGraphPreview?: RelationGraphPreview,
+        exerciseMappingPreview?: ExerciseMappingPreview,
     ): void {
         const message: ChatMessage = {
             id: this.generateMessageId(),
@@ -342,6 +401,17 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             // Pass message.id to ensure unique edge IDs across multiple graph instances
             message.graphCompetencies = this.convertNodesToCompetencies(relationGraphPreview.nodes);
             message.graphRelations = this.convertEdgesToRelations(relationGraphPreview.edges, message.id);
+        }
+
+        if (exerciseMappingPreview) {
+            message.exerciseMappingPreview = exerciseMappingPreview;
+
+            // Initialize checkbox states: pre-check already-mapped competencies
+            const checkboxStates = new Map<number, boolean>();
+            exerciseMappingPreview.competencies.forEach((comp) => {
+                checkboxStates.set(comp.competencyId, comp.alreadyMapped ?? false);
+            });
+            this.exerciseMappingCheckboxStates.set(message.id, checkboxStates);
         }
 
         this.finalizeMessage(message, isUser);
