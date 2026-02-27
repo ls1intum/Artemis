@@ -225,6 +225,38 @@
                 "title": "Presentation",
                 "description": "If the presentation score is enabled, tutors can enter points for students on the \"Participation\" page of the exercise."
             },
+            "metadataSync": {
+                "conflictTitle": "Exercise metadata conflicts",
+                "conflictIntro": "A new exercise version was saved while you were editing. Select which incoming values to apply.",
+                "conflictAuthor": "Updated by ",
+                "useIncoming": "Use incoming value for",
+                "useIncomingValue": "Use incoming value",
+                "useCurrentValue": "Use current value",
+                "yourValue": "Your value",
+                "incomingValue": "Incoming value",
+                "keepLocal": "Ignore incoming and continue",
+                "keepAllLocal": "Keep all my values",
+                "applyAllIncoming": "Apply all incoming values",
+                "applySelections": "Apply selections",
+                "untitledCriterion": "Untitled Criterion",
+                "snapshotFetchFailed": "Could not fetch the latest exercise version. Please refresh the page to see the most recent changes.",
+                "fields": {
+                    "buildConfig": {
+                        "sequentialTestRuns": "Sequential test runs",
+                        "buildPlanConfiguration": "Build plan configuration",
+                        "buildScript": "Build script",
+                        "checkoutSolutionRepository": "Checkout solution repository",
+                        "testCheckoutPath": "Test checkout path",
+                        "assignmentCheckoutPath": "Assignment checkout path",
+                        "solutionCheckoutPath": "Solution checkout path",
+                        "timeoutSeconds": "Timeout (seconds)",
+                        "dockerFlags": "Docker flags",
+                        "theiaImage": "Theia image",
+                        "allowBranching": "Allow branching",
+                        "branchRegex": "Branch regex"
+                    }
+                }
+            },
             "errors": {
                 "exerciseNotFound": "This exercise was not found",
                 "projectTypeCouldNotBeDetermined": "The project type could not be determined, please switch to the advanced mode to manually define it!",

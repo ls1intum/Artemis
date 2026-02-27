@@ -42,7 +42,7 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
-import { ProblemStatementSyncService } from 'app/programming/manage/services/problem-statement-sync.service';
+import { ProblemStatementSyncService } from 'app/exercise/synchronization/services/problem-statement-sync.service';
 import { editor } from 'test/helpers/mocks/mock-monaco-editor';
 
 describe('ProgrammingExerciseEditableInstructionComponent', () => {
