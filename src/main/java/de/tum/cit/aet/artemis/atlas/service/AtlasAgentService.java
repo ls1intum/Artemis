@@ -154,6 +154,7 @@ public class AtlasAgentService {
             CompetencyExpertToolsService.setCurrentSessionId(sessionId);
             resetCompetencyModifiedFlag();
 
+            // Check for cancel command when plan is active
             if (isCancelCommand(message) && executionPlanStateManager.hasPlan(sessionId)) {
                 executionPlanStateManager.cancelPlan(sessionId);
                 return new AtlasAgentChatResponseDTO("Plan cancelled.", ZonedDateTime.now(), false, null, null, null, null);
@@ -220,7 +221,6 @@ public class AtlasAgentService {
             else if (response.contains(DELEGATE_TO_EXERCISE_MAPPER)) {
                 String brief = extractBriefFromDelegationMarker(response);
 
-                ExerciseMappingToolsService.setCurrentSessionId(sessionId);
                 String delegationResponse = delegateToAgent(AgentType.EXERCISE_MAPPER, brief, courseId, sessionId);
 
                 ExerciseCompetencyMappingDTO exerciseMappingPreview = ExerciseMappingToolsService.getExerciseMappingPreview();
@@ -261,8 +261,6 @@ public class AtlasAgentService {
             CompetencyExpertToolsService.getAndClearPreviews();
             CompetencyMappingToolsService.clearCurrentSessionId();
             CompetencyMappingToolsService.clearAllPreviews();
-            ExerciseMappingToolsService.clearCurrentSessionId();
-            ExerciseMappingToolsService.clearExerciseMappingPreview();
         }
 
     }
@@ -770,8 +768,6 @@ public class AtlasAgentService {
      * @return the response DTO with potential plan continuation
      */
     private AtlasAgentChatResponseDTO handleExerciseMappingApproval(String sessionId, Long courseId, String originalMessage) {
-        ExerciseMappingToolsService.setCurrentSessionId(sessionId);
-
         String creationResponse = delegateToAgent(AgentType.EXERCISE_MAPPER, originalMessage, courseId, sessionId);
 
         ExerciseCompetencyMappingDTO exerciseMappingPreview = ExerciseMappingToolsService.getExerciseMappingPreview();
@@ -818,7 +814,6 @@ public class AtlasAgentService {
         switch (agentType) {
             case COMPETENCY_EXPERT -> CompetencyExpertToolsService.setCurrentSessionId(sessionId);
             case COMPETENCY_MAPPER -> CompetencyMappingToolsService.setCurrentSessionId(sessionId);
-            case EXERCISE_MAPPER -> ExerciseMappingToolsService.setCurrentSessionId(sessionId);
         }
 
         // Use saveToMemory=false to prevent internal brief from appearing in chat history

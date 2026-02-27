@@ -229,16 +229,7 @@ public class ExerciseMappingToolsService {
                 return error("Course not found with ID: " + courseId);
             }
 
-            Optional<Exercise> exerciseOpt = exerciseRepository.findWithCompetenciesById(exerciseId);
-            if (exerciseOpt.isEmpty()) {
-                return error("Exercise not found with ID: " + exerciseId);
-            }
-
-            Exercise exercise = exerciseOpt.get();
-
-            if (!courseId.equals(exercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
-                return error("Exercise " + exerciseId + " does not belong to course " + courseId);
-            }
+            Exercise exercise = loadAndValidateExercise(exerciseId, courseId);
 
             List<CompetencyExerciseLink> existingLinks = competencyExerciseLinkRepository.findByExerciseIdWithCompetency(exerciseId);
             Set<Long> existingCompetencyIds = existingLinks.stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
@@ -293,16 +284,7 @@ public class ExerciseMappingToolsService {
             Course course = courseOpt.get();
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, userRepository.getUser());
 
-            Optional<Exercise> exerciseOpt = exerciseRepository.findWithCompetenciesById(exerciseId);
-            if (exerciseOpt.isEmpty()) {
-                return error("Exercise not found with ID: " + exerciseId);
-            }
-
-            Exercise exercise = exerciseOpt.get();
-
-            if (!courseId.equals(exercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
-                return error("Exercise " + exerciseId + " does not belong to course " + courseId);
-            }
+            Exercise exercise = loadAndValidateExercise(exerciseId, courseId);
 
             List<CompetencyExerciseLink> existingLinks = competencyExerciseLinkRepository.findByExerciseIdWithCompetency(exerciseId);
 
@@ -370,6 +352,24 @@ public class ExerciseMappingToolsService {
      */
     public static void clearExerciseMappingPreview() {
         exerciseMappingPreview.remove();
+    }
+
+    /**
+     * Loads an exercise by ID and validates it belongs to the given course.
+     *
+     * @param exerciseId the exercise ID to load
+     * @param courseId   the expected course ID
+     * @return the validated Exercise
+     * @throws IllegalArgumentException if the exercise is not found or does not belong to the course
+     */
+    private Exercise loadAndValidateExercise(Long exerciseId, Long courseId) {
+        Exercise exercise = exerciseRepository.findWithCompetenciesById(exerciseId).orElseThrow(() -> new IllegalArgumentException("Exercise not found with ID: " + exerciseId));
+
+        if (!courseId.equals(exercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
+            throw new IllegalArgumentException("Exercise " + exerciseId + " does not belong to course " + courseId);
+        }
+
+        return exercise;
     }
 
     /**
