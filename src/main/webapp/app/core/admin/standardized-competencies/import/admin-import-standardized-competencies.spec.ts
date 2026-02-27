@@ -20,7 +20,7 @@ import { ButtonComponent } from 'app/shared/components/buttons/button/button.com
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
-import { KnowledgeAreasForImportDTO } from 'app/atlas/shared/entities/standardized-competency.model';
+import { KnowledgeAreaValidators, KnowledgeAreasForImportDTO } from 'app/atlas/shared/entities/standardized-competency.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { StandardizedCompetencyDetailComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-detail.component';
@@ -120,10 +120,12 @@ describe('AdminImportStandardizedCompetenciesComponent', () => {
             knowledgeAreas: [
                 {
                     title: 'ka1',
+                    shortTitle: 'ka1',
                     children: [
                         {
                             title: 'ka2',
-                            children: [{ title: 'ka3' }],
+                            shortTitle: 'ka2',
+                            children: [{ title: 'ka3', shortTitle: 'ka3' }],
                             competencies: [{ title: 'c4' }, { title: 'c5' }],
                         },
                     ],
@@ -131,6 +133,7 @@ describe('AdminImportStandardizedCompetenciesComponent', () => {
                 },
                 {
                     title: 'ka4',
+                    shortTitle: 'ka4',
                     children: [],
                     competencies: [],
                 },
@@ -139,6 +142,7 @@ describe('AdminImportStandardizedCompetenciesComponent', () => {
                 {
                     id: 1,
                     title: 'any source',
+                    author: 'any author',
                 },
             ],
         };
@@ -178,6 +182,126 @@ describe('AdminImportStandardizedCompetenciesComponent', () => {
         component.toggleCollapse();
 
         expect(component['isCollapsed']()).toBe(true);
+    });
+
+    describe('validateImportData', () => {
+        it('should not set import data for knowledge area missing title', () => {
+            component['fileReader'] = {
+                result: JSON.stringify({
+                    knowledgeAreas: [{ shortTitle: 'KA' }],
+                    sources: [],
+                }),
+            } as FileReader;
+
+            component['setImportDataAndCount']();
+
+            expect(component['importData']()).toBeUndefined();
+            expect(component['validationErrors']()).toHaveLength(1);
+        });
+
+        it('should not set import data for knowledge area with shortTitle too long', () => {
+            component['fileReader'] = {
+                result: JSON.stringify({
+                    knowledgeAreas: [{ title: 'KA', shortTitle: 'A'.repeat(KnowledgeAreaValidators.SHORT_TITLE_MAX + 1) }],
+                    sources: [],
+                }),
+            } as FileReader;
+
+            component['setImportDataAndCount']();
+
+            expect(component['importData']()).toBeUndefined();
+            expect(component['validationErrors']().some((e) => e.includes('shortTitleTooLong'))).toBe(true);
+        });
+
+        it('should not set import data for competency missing title', () => {
+            component['fileReader'] = {
+                result: JSON.stringify({
+                    knowledgeAreas: [{ title: 'KA', shortTitle: 'KA', competencies: [{ description: 'no title' }] }],
+                    sources: [],
+                }),
+            } as FileReader;
+
+            component['setImportDataAndCount']();
+
+            expect(component['importData']()).toBeUndefined();
+            expect(component['validationErrors']().some((e) => e.includes('titleRequired'))).toBe(true);
+        });
+
+        it('should not set import data for invalid taxonomy', () => {
+            component['fileReader'] = {
+                result: JSON.stringify({
+                    knowledgeAreas: [{ title: 'KA', shortTitle: 'KA', competencies: [{ title: 'C', taxonomy: 'INVALID' }] }],
+                    sources: [],
+                }),
+            } as FileReader;
+
+            component['setImportDataAndCount']();
+
+            expect(component['importData']()).toBeUndefined();
+            expect(component['validationErrors']().some((e) => e.includes('taxonomyInvalid'))).toBe(true);
+        });
+
+        it('should not set import data when sourceId does not match any source', () => {
+            component['fileReader'] = {
+                result: JSON.stringify({
+                    knowledgeAreas: [{ title: 'KA', shortTitle: 'KA', competencies: [{ title: 'C', sourceId: 999 }] }],
+                    sources: [{ id: 1, title: 'Source', author: 'Author' }],
+                }),
+            } as FileReader;
+
+            component['setImportDataAndCount']();
+
+            expect(component['importData']()).toBeUndefined();
+            expect(component['validationErrors']().some((e) => e.includes('sourceIdInvalid'))).toBe(true);
+        });
+
+        it('should set import data for valid data with no validation errors', () => {
+            component['fileReader'] = {
+                result: JSON.stringify({
+                    knowledgeAreas: [
+                        {
+                            title: 'KA',
+                            shortTitle: 'KA',
+                            competencies: [{ title: 'C', taxonomy: 'REMEMBER', sourceId: 1 }],
+                        },
+                    ],
+                    sources: [{ id: 1, title: 'Source', author: 'Author' }],
+                }),
+            } as FileReader;
+
+            component['setImportDataAndCount']();
+
+            expect(component['importData']()).toBeDefined();
+            expect(component['validationErrors']()).toHaveLength(0);
+        });
+
+        it('should not set import data when source is missing title', () => {
+            component['fileReader'] = {
+                result: JSON.stringify({
+                    knowledgeAreas: [{ title: 'KA', shortTitle: 'KA' }],
+                    sources: [{ id: 1, author: 'Author' }],
+                }),
+            } as FileReader;
+
+            component['setImportDataAndCount']();
+
+            expect(component['importData']()).toBeUndefined();
+            expect(component['validationErrors']().some((e) => e.includes('sourceTitleRequired'))).toBe(true);
+        });
+
+        it('should not set import data when source is missing author', () => {
+            component['fileReader'] = {
+                result: JSON.stringify({
+                    knowledgeAreas: [{ title: 'KA', shortTitle: 'KA' }],
+                    sources: [{ id: 1, title: 'Source' }],
+                }),
+            } as FileReader;
+
+            component['setImportDataAndCount']();
+
+            expect(component['importData']()).toBeUndefined();
+            expect(component['validationErrors']().some((e) => e.includes('sourceAuthorRequired'))).toBe(true);
+        });
     });
 
     it('should open details', () => {

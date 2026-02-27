@@ -3,8 +3,13 @@ import { faBan, faChevronRight, faFileImport, faQuestionCircle } from '@fortawes
 import {
     KnowledgeAreaDTO,
     KnowledgeAreaForTree,
+    KnowledgeAreaValidators,
     KnowledgeAreasForImportDTO,
+    Source,
+    SourceValidators,
+    StandardizedCompetencyDTO,
     StandardizedCompetencyForTree,
+    StandardizedCompetencyValidators,
     convertToKnowledgeAreaForTree,
     sourceToString,
 } from 'app/atlas/shared/entities/standardized-competency.model';
@@ -16,11 +21,12 @@ import { onError } from 'app/shared/util/global.utils';
 import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatTreeNestedDataSource } from '@angular/material/tree';
-import { getIcon } from 'app/atlas/shared/entities/competency.model';
+import { CompetencyTaxonomy, getIcon } from 'app/atlas/shared/entities/competency.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbCollapse, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { StandardizedCompetencyDetailComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-detail.component';
 import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
@@ -66,8 +72,11 @@ export class AdminImportStandardizedCompetenciesComponent {
     protected readonly importData = signal<KnowledgeAreasForImportDTO | undefined>(undefined);
     /** Count of knowledge areas and competencies to import */
     protected readonly importCount = signal<ImportCount | undefined>(undefined);
+    /** Validation errors found in the parsed import data */
+    protected readonly validationErrors = signal<string[]>([]);
     protected dataSource = new MatTreeNestedDataSource<KnowledgeAreaForTree>();
     private fileReader: FileReader = new FileReader();
+    private readonly validationTranslationBase = 'artemisApp.standardizedCompetency.manage.import.error.validation';
 
     //Icons
     protected readonly faFileImport = faFileImport;
@@ -108,6 +117,7 @@ export class AdminImportStandardizedCompetenciesComponent {
     private adminStandardizedCompetencyService = inject(AdminStandardizedCompetencyService);
     private activatedRoute = inject(ActivatedRoute);
     private router = inject(Router);
+    private translateService = inject(TranslateService);
 
     /**
      * Verifies the file (only .json, smaller than 20 MB) and then tries to read the importData from it
@@ -180,6 +190,7 @@ export class AdminImportStandardizedCompetenciesComponent {
     private setImportDataAndCount(): void {
         this.importData.set(undefined);
         this.importCount.set({ knowledgeAreas: 0, competencies: 0 });
+        this.validationErrors.set([]);
 
         let parsedData: KnowledgeAreasForImportDTO | undefined;
         try {
@@ -196,8 +207,99 @@ export class AdminImportStandardizedCompetenciesComponent {
                 this.dataSource.data = parsedData.knowledgeAreas.map((knowledgeArea) => convertToKnowledgeAreaForTree(knowledgeArea));
             }
         } catch (e) {
+            parsedData = undefined;
             this.importData.set(undefined);
             this.alertService.error('artemisApp.standardizedCompetency.manage.import.error.fileStructure');
+        }
+        if (parsedData) {
+            const errors = this.validateImportData(parsedData);
+            if (errors.length > 0) {
+                this.validationErrors.set(errors);
+                this.importData.set(undefined);
+                this.importCount.set(undefined);
+                this.dataSource.data = [];
+            } else {
+                this.validationErrors.set([]);
+            }
+        }
+    }
+
+    /**
+     * Validates the parsed import data against server-side constraints.
+     * Returns an array of i18n-translated error strings; empty array means valid.
+     */
+    private validateImportData(data: KnowledgeAreasForImportDTO): string[] {
+        const errors: string[] = [];
+        const sourceIds = new Set((data.sources ?? []).map((s) => s.id).filter((id): id is number => id !== undefined));
+        (data.sources ?? []).forEach((source, index) => this.validateSource(source, index + 1, errors));
+        for (const ka of data.knowledgeAreas ?? []) {
+            this.validateKnowledgeArea(ka, errors, sourceIds);
+        }
+        return errors;
+    }
+
+    private validateSource(source: Source, index: number, errors: string[]): void {
+        const title = source.title;
+        if (!title) {
+            errors.push(this.translateService.instant(`${this.validationTranslationBase}.sourceTitleRequired`, { index }));
+        } else {
+            if (title.length > SourceValidators.FIELD_MAX) {
+                errors.push(this.translateService.instant(`${this.validationTranslationBase}.sourceTitleTooLong`, { title, max: SourceValidators.FIELD_MAX }));
+            }
+            if (!source.author) {
+                errors.push(this.translateService.instant(`${this.validationTranslationBase}.sourceAuthorRequired`, { title }));
+            } else if (source.author.length > SourceValidators.FIELD_MAX) {
+                errors.push(this.translateService.instant(`${this.validationTranslationBase}.sourceAuthorTooLong`, { title, max: SourceValidators.FIELD_MAX }));
+            }
+            if (source.uri && source.uri.length > SourceValidators.FIELD_MAX) {
+                errors.push(this.translateService.instant(`${this.validationTranslationBase}.sourceUriTooLong`, { title, max: SourceValidators.FIELD_MAX }));
+            }
+        }
+    }
+
+    private validateKnowledgeArea(ka: KnowledgeAreaDTO, errors: string[], sourceIds: Set<number>, path = 'Knowledge area'): void {
+        const label = ka.title ? `Knowledge area '${ka.title}'` : path;
+        if (!ka.title) {
+            errors.push(this.translateService.instant(`${this.validationTranslationBase}.titleRequired`, { label }));
+        } else if (ka.title.length > KnowledgeAreaValidators.TITLE_MAX) {
+            errors.push(this.translateService.instant(`${this.validationTranslationBase}.titleTooLong`, { label, max: KnowledgeAreaValidators.TITLE_MAX }));
+        }
+        if (!ka.shortTitle) {
+            errors.push(this.translateService.instant(`${this.validationTranslationBase}.shortTitleRequired`, { label }));
+        } else if (ka.shortTitle.length > KnowledgeAreaValidators.SHORT_TITLE_MAX) {
+            errors.push(
+                this.translateService.instant(`${this.validationTranslationBase}.shortTitleTooLong`, { label, value: ka.shortTitle, max: KnowledgeAreaValidators.SHORT_TITLE_MAX }),
+            );
+        }
+        if (ka.description && ka.description.length > KnowledgeAreaValidators.DESCRIPTION_MAX) {
+            errors.push(this.translateService.instant(`${this.validationTranslationBase}.descriptionTooLong`, { label, max: KnowledgeAreaValidators.DESCRIPTION_MAX }));
+        }
+        for (const child of ka.children ?? []) {
+            this.validateKnowledgeArea(child, errors, sourceIds, `Child of ${label}`);
+        }
+        for (const competency of ka.competencies ?? []) {
+            this.validateCompetency(competency, errors, sourceIds, label);
+        }
+    }
+
+    private validateCompetency(competency: StandardizedCompetencyDTO, errors: string[], sourceIds: Set<number>, parentLabel: string): void {
+        const label = competency.title ? `Competency '${competency.title}' in ${parentLabel}` : `Unnamed competency in ${parentLabel}`;
+        if (!competency.title) {
+            errors.push(this.translateService.instant(`${this.validationTranslationBase}.titleRequired`, { label }));
+        } else if (competency.title.length > StandardizedCompetencyValidators.TITLE_MAX) {
+            errors.push(this.translateService.instant(`${this.validationTranslationBase}.titleTooLong`, { label, max: StandardizedCompetencyValidators.TITLE_MAX }));
+        }
+        if (competency.description && competency.description.length > StandardizedCompetencyValidators.DESCRIPTION_MAX) {
+            errors.push(this.translateService.instant(`${this.validationTranslationBase}.descriptionTooLong`, { label, max: StandardizedCompetencyValidators.DESCRIPTION_MAX }));
+        }
+        if (competency.taxonomy && !Object.values(CompetencyTaxonomy).includes(competency.taxonomy)) {
+            errors.push(this.translateService.instant(`${this.validationTranslationBase}.taxonomyInvalid`, { label, value: competency.taxonomy }));
+        }
+        if (competency.version && competency.version.length > StandardizedCompetencyValidators.VERSION_MAX) {
+            errors.push(this.translateService.instant(`${this.validationTranslationBase}.versionTooLong`, { label, max: StandardizedCompetencyValidators.VERSION_MAX }));
+        }
+        if (competency.sourceId !== undefined && competency.sourceId !== null && !sourceIds.has(competency.sourceId)) {
+            errors.push(this.translateService.instant(`${this.validationTranslationBase}.sourceIdInvalid`, { label, value: competency.sourceId }));
         }
     }
 

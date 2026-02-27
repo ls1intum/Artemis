@@ -61,7 +61,24 @@
                         "fileTooBig": "Die Datei ist zu groß. Bitte lade eine Datei mit maximal 20 MB hoch",
                         "fileExtension": "Falscher Dateityp. Bitte lade eine JSON-Datei hoch",
                         "fileSyntax": "Die Datei kann nicht verarbeitet werden. Bitte lade eine Datei mit gültiger JSON-Syntax hoch",
-                        "fileStructure": "Die Datei kann nicht verarbeitet werden. Bitte überprüfe, ob die erforderliche Dateistruktur eingehalten wird"
+                        "fileStructure": "Die Datei kann nicht verarbeitet werden. Bitte überprüfe, ob die erforderliche Dateistruktur eingehalten wird",
+                        "fileValidation": "Die Datei enthält {{count}} Validierungsfehler:",
+                        "validation": {
+                            "titleRequired": "{{label}}: Titel ist erforderlich",
+                            "titleTooLong": "{{label}}: Titel überschreitet {{max}} Zeichen",
+                            "shortTitleRequired": "{{label}}: Kurztitel ist erforderlich",
+                            "shortTitleTooLong": "{{label}}: Kurztitel '{{value}}' überschreitet {{max}} Zeichen",
+                            "descriptionTooLong": "{{label}}: Beschreibung überschreitet {{max}} Zeichen",
+                            "taxonomyInvalid": "{{label}}: Taxonomie '{{value}}' ist ungültig",
+                            "versionTooLong": "{{label}}: Version überschreitet {{max}} Zeichen",
+                            "sourceIdInvalid": "{{label}}: Quell-ID {{value}} entspricht keiner Quelle in der Datei",
+                            "sourceTitleRequired": "Quelle #{{index}}: Titel ist erforderlich",
+                            "sourceTitleTooLong": "Quelle '{{title}}': Titel überschreitet {{max}} Zeichen",
+                            "sourceAuthorRequired": "Quelle '{{title}}': Autor ist erforderlich",
+                            "sourceAuthorTooLong": "Quelle '{{title}}': Autor überschreitet {{max}} Zeichen",
+                            "sourceUriTooLong": "Quelle '{{title}}': URI überschreitet {{max}} Zeichen",
+                            "moreErrors": "... und {{count}} weitere Fehler"
+                        }
                     },
                     "success": "Erfolgreich alle standardisierte Kompetenzen und Wissensgebiete importiert"
                 }

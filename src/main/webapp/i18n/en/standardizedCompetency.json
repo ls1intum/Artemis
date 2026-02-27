@@ -61,7 +61,24 @@
                         "fileTooBig": "The file is too big. The maximum file size is 20 MB",
                         "fileExtension": "Unsupported file extension. Please upload a JSON file",
                         "fileSyntax": "Unable to parse file. Please upload a file with valid JSON syntax",
-                        "fileStructure": "Unable to parse file. Please verify it follows the required file structure"
+                        "fileStructure": "Unable to parse file. Please verify it follows the required file structure",
+                        "fileValidation": "The file contains {{count}} validation error(s):",
+                        "validation": {
+                            "titleRequired": "{{label}}: title is required",
+                            "titleTooLong": "{{label}}: title exceeds {{max}} characters",
+                            "shortTitleRequired": "{{label}}: shortTitle is required",
+                            "shortTitleTooLong": "{{label}}: shortTitle '{{value}}' exceeds {{max}} characters",
+                            "descriptionTooLong": "{{label}}: description exceeds {{max}} characters",
+                            "taxonomyInvalid": "{{label}}: taxonomy '{{value}}' is not valid",
+                            "versionTooLong": "{{label}}: version exceeds {{max}} characters",
+                            "sourceIdInvalid": "{{label}}: sourceId {{value}} does not match any source in the file",
+                            "sourceTitleRequired": "Source #{{index}}: title is required",
+                            "sourceTitleTooLong": "Source '{{title}}': title exceeds {{max}} characters",
+                            "sourceAuthorRequired": "Source '{{title}}': author is required",
+                            "sourceAuthorTooLong": "Source '{{title}}': author exceeds {{max}} characters",
+                            "sourceUriTooLong": "Source '{{title}}': uri exceeds {{max}} characters",
+                            "moreErrors": "... and {{count}} more error(s)"
+                        }
                     },
                     "success": "Successfully imported all knowledge areas and standardized competencies"
                 }

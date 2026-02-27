@@ -52,6 +52,22 @@
     } @else {
         <span jhiTranslate="artemisApp.standardizedCompetency.manage.import.preview.empty"></span>
     }
+    @if (validationErrors().length) {
+        <div class="alert alert-danger mt-2">
+            <strong jhiTranslate="artemisApp.standardizedCompetency.manage.import.error.fileValidation" [translateValues]="{ count: validationErrors().length }"></strong>
+            <ul class="mb-0 mt-1">
+                @for (error of validationErrors().slice(0, 20); track $index) {
+                    <li>{{ error }}</li>
+                }
+            </ul>
+            @if (validationErrors().length > 20) {
+                <span
+                    jhiTranslate="artemisApp.standardizedCompetency.manage.import.error.validation.moreErrors"
+                    [translateValues]="{ count: validationErrors().length - 20 }"
+                ></span>
+            }
+        </div>
+    }
     <div class="mt-3">
         <jhi-button [btnType]="ButtonType.SECONDARY" [title]="'entity.action.cancel'" [icon]="faBan" (onClick)="cancel()" />
         <jhi-button [disabled]="!importData()" [isLoading]="isLoading()" [icon]="faFileImport" [title]="'entity.action.to-import'" (onClick)="importCompetencies()" />

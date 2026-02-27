@@ -48,12 +48,17 @@ export interface Source extends BaseEntity {
 export enum StandardizedCompetencyValidators {
     TITLE_MAX = 255,
     DESCRIPTION_MAX = 2000,
+    VERSION_MAX = 30,
 }
 
 export enum KnowledgeAreaValidators {
     TITLE_MAX = 255,
     SHORT_TITLE_MAX = 10,
     DESCRIPTION_MAX = 2000,
+}
+
+export enum SourceValidators {
+    FIELD_MAX = 255,
 }
 
 /**
