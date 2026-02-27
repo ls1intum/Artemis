@@ -47,6 +47,16 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
+import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
+import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
+import { ProblemStatementSyncService } from 'app/exercise/synchronization/services/problem-statement-sync.service';
+import { DialogService } from 'primeng/dynamicdialog';
+
+jest.mock('y-monaco', () => ({
+    MonacoBinding: jest.fn().mockImplementation(() => ({
+        destroy: jest.fn(),
+    })),
+}));
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -85,6 +95,17 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 MockProvider(CalendarService),
+                MockProvider(ExerciseEditorSyncService),
+                MockProvider(ExerciseMetadataSyncService),
+                {
+                    provide: ProblemStatementSyncService,
+                    useValue: {
+                        init: jest.fn().mockReturnValue({ doc: {}, text: { toString: () => '' }, awareness: {} }),
+                        reset: jest.fn(),
+                        stateReplaced$: of(),
+                    },
+                },
+                MockProvider(DialogService),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);
@@ -1387,6 +1408,28 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         expect(comp.exerciseCategories).toBeUndefined();
         comp.updateCategories(categories);
         expect(comp.exerciseCategories).toBe(categories);
+    }));
+
+    it('keeps exerciseCategories and programmingExercise.categories in sync when initially empty', fakeAsync(() => {
+        const route = TestBed.inject(ActivatedRoute);
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.id = 42;
+        programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+        programmingExercise.categories = undefined;
+
+        route.params = of({ courseId });
+        route.url = of([{ path: 'edit' } as UrlSegment]);
+        route.data = of({ programmingExercise });
+
+        jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+        jest.spyOn(Utils, 'loadCourseExerciseCategories').mockReturnValue(of([]));
+        jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
+
+        comp.ngOnInit();
+        tick();
+
+        expect(comp.exerciseCategories).toEqual([]);
+        expect(comp.programmingExercise.categories).toBe(comp.exerciseCategories);
     }));
 
     it('should validate form sections', () => {
