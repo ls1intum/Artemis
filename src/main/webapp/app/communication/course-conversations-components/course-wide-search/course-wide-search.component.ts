@@ -230,10 +230,10 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     onSelectContext(): void {
         const searchConfig = this.courseWideSearchConfig();
         if (!searchConfig) return;
-        searchConfig.filterToCourseWide = !!this.formGroup.controls.filterToCourseWide?.value;
-        searchConfig.filterToUnresolved = !!this.formGroup.controls.filterToUnresolved?.value;
-        searchConfig.filterToAnsweredOrReacted = !!this.formGroup.controls.filterToAnsweredOrReacted?.value;
-        searchConfig.filterToExcludeDirectMessages = !!this.formGroup.controls.filterToExcludeDirectMessages?.value;
+        searchConfig.filterToCourseWide = this.formGroup.controls.filterToCourseWide.value;
+        searchConfig.filterToUnresolved = this.formGroup.controls.filterToUnresolved.value;
+        searchConfig.filterToAnsweredOrReacted = this.formGroup.controls.filterToAnsweredOrReacted.value;
+        searchConfig.filterToExcludeDirectMessages = this.formGroup.controls.filterToExcludeDirectMessages.value;
         searchConfig.sortingOrder = this.sortingOrder;
         this.commandMetisToFetchPosts(true);
     }
