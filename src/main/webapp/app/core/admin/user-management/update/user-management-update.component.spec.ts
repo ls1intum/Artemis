@@ -656,9 +656,10 @@ describe('UserManagementUpdateComponent', () => {
 
             const emailControl = component.editForm.get('email')!;
 
-            // Valid email should pass validation
+            // Valid email should pass all validators
             emailControl.setValue('user@example.com');
-            expect(emailControl.errors?.email).toBeUndefined();
+            expect(emailControl.valid).toBe(true);
+            expect(emailControl.errors).toBeNull();
 
             // Invalid email without @ should fail validation
             emailControl.setValue('abcde');
