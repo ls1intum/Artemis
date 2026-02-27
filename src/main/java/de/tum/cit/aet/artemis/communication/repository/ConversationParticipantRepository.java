@@ -67,6 +67,11 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
 
     /**
      * Mark a message and all subsequent messages as unread.
+     *
+     * @param conversationId the id of the conversation
+     * @param userId         the id of the user
+     * @param messageDate    the creation date of the target message
+     * @param lastRead       the lastRead timestamp to set (just before messageDate)
      */
     @Transactional
     @Modifying
