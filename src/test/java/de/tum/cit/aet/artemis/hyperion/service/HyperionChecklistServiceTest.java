@@ -25,6 +25,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.StandardizedCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.KnowledgeArea;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.hyperion.domain.ChecklistSection;
 import de.tum.cit.aet.artemis.hyperion.domain.DifficultyDelta;
 import de.tum.cit.aet.artemis.hyperion.domain.QualityIssueCategory;
@@ -55,6 +57,12 @@ class HyperionChecklistServiceTest {
     @Mock
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
+    @Mock
+    private LLMTokenUsageService llmTokenUsageService;
+
+    @Mock
+    private UserRepository userRepository;
+
     private HyperionChecklistService hyperionChecklistService;
 
     @BeforeEach
@@ -71,7 +79,7 @@ class HyperionChecklistServiceTest {
 
         var templateService = new HyperionPromptTemplateService();
         this.hyperionChecklistService = new HyperionChecklistService(chatClient, templateService, ObservationRegistry.NOOP, Optional.of(standardizedCompetencyApi),
-                Optional.of(courseCompetencyApi), taskRepository, programmingExerciseRepository, new ObjectMapper());
+                Optional.of(courseCompetencyApi), taskRepository, programmingExerciseRepository, new ObjectMapper(), llmTokenUsageService, userRepository);
     }
 
     @Test
@@ -333,7 +341,7 @@ class HyperionChecklistServiceTest {
         var request = new ChecklistActionRequestDTO(ChecklistActionRequestDTO.ActionType.FIX_QUALITY_ISSUE, "Original problem statement",
                 Map.of("issueDescription", "Vague instructions", "category", "CLARITY", "suggestedFix", "Be more specific"));
 
-        ChecklistActionResponseDTO response = hyperionChecklistService.applyChecklistAction(request).join();
+        ChecklistActionResponseDTO response = hyperionChecklistService.applyChecklistAction(request, 1L).join();
 
         assertThat(response).isNotNull();
         assertThat(response.applied()).isTrue();
@@ -348,7 +356,7 @@ class HyperionChecklistServiceTest {
         var request = new ChecklistActionRequestDTO(ChecklistActionRequestDTO.ActionType.FIX_QUALITY_ISSUE, "Original problem statement",
                 Map.of("issueDescription", "Vague", "category", "CLARITY"));
 
-        ChecklistActionResponseDTO response = hyperionChecklistService.applyChecklistAction(request).join();
+        ChecklistActionResponseDTO response = hyperionChecklistService.applyChecklistAction(request, 1L).join();
 
         assertThat(response).isNotNull();
         assertThat(response.applied()).isFalse();
