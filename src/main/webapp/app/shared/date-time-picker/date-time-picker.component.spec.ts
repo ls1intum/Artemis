@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import dayjs from 'dayjs/esm';
 import { MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
@@ -265,6 +265,46 @@ describe('FormDateTimePickerComponent', () => {
         expect(containerButtons.querySelector('.owl-dt-now-button')).toBeTruthy();
 
         component.onPickerClose();
+
+        expect(containerButtons.querySelector('.owl-dt-now-button')).toBeFalsy();
+
+        // Clean up
+        document.body.removeChild(containerButtons);
+    }));
+
+    it('should not inject Now button when disabled', fakeAsync(() => {
+        const containerButtons = document.createElement('div');
+        containerButtons.classList.add('owl-dt-container-buttons');
+        const cancelButton = document.createElement('button');
+        containerButtons.appendChild(cancelButton);
+        document.body.appendChild(containerButtons);
+
+        fixture.componentRef.setInput('disabled', true);
+        fixture.detectChanges();
+
+        const mockPicker = { close: jest.fn() } as any;
+        component.onPickerOpen(mockPicker);
+        tick();
+
+        expect(containerButtons.querySelector('.owl-dt-now-button')).toBeFalsy();
+
+        // Clean up
+        document.body.removeChild(containerButtons);
+    }));
+
+    it('should not inject Now button for non-DEFAULT picker types', fakeAsync(() => {
+        const containerButtons = document.createElement('div');
+        containerButtons.classList.add('owl-dt-container-buttons');
+        const cancelButton = document.createElement('button');
+        containerButtons.appendChild(cancelButton);
+        document.body.appendChild(containerButtons);
+
+        fixture.componentRef.setInput('pickerType', DateTimePickerType.CALENDAR);
+        fixture.detectChanges();
+
+        const mockPicker = { close: jest.fn() } as any;
+        component.onPickerOpen(mockPicker);
+        tick();
 
         expect(containerButtons.querySelector('.owl-dt-now-button')).toBeFalsy();
 

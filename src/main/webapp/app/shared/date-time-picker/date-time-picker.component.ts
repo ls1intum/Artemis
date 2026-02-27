@@ -52,7 +52,6 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, OnDest
     private readonly translateService = inject(TranslateService);
 
     @ViewChild('dateInput', { static: false }) dateInput: NgModel;
-    @ViewChild('dtDefault', { static: false }) dtDefault: OwlDateTimeComponent<Date>;
 
     labelName = input<string>();
     hideLabelName = input<boolean>(false);
@@ -186,6 +185,9 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, OnDest
      * when the picker is opened.
      */
     onPickerOpen(picker: OwlDateTimeComponent<Date>): void {
+        if (this.disabled() || this.pickerType() !== DateTimePickerType.DEFAULT) {
+            return;
+        }
         // Use setTimeout to ensure the popup DOM is fully rendered
         this.pickerOpenTimeoutId = setTimeout(() => {
             this.pickerOpenTimeoutId = undefined;
