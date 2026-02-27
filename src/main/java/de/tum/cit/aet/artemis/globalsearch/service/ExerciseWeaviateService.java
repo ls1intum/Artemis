@@ -121,20 +121,22 @@ public class ExerciseWeaviateService {
     }
 
     /**
-     * Asynchronously inserts exercise metadata into Weaviate.
+     * Asynchronously upserts (inserts or updates) exercise metadata in Weaviate.
      * This method executes in a separate thread to avoid blocking the HTTP request thread.
+     * Uses an upsert strategy: if the exercise already exists in Weaviate it will be updated,
+     * otherwise it will be inserted. This makes the operation idempotent.
      * IMPORTANT: The exercise entity must have its course relationship eagerly loaded before calling this method,
      * otherwise a LazyInitializationException will be thrown.
      *
-     * @param exercise the exercise to insert (must have course and exam relationships loaded)
+     * @param exercise the exercise to upsert (must have course and exam relationships loaded)
      * @throws org.hibernate.LazyInitializationException if required relationships are not loaded
      */
     @Async
-    public void insertExerciseAsync(Exercise exercise) {
+    public void upsertExerciseAsync(Exercise exercise) {
         SecurityUtils.setAuthorizationObject();
 
         if (exercise.getId() == null) {
-            log.warn("Cannot insert exercise without an ID");
+            log.warn("Cannot upsert exercise without an ID");
             return;
         }
 
@@ -142,33 +144,10 @@ public class ExerciseWeaviateService {
             // Extract data immediately to fail fast if relationships aren't loaded
             ExerciseWeaviateDTO data = ExerciseWeaviateDTO.fromExercise(exercise);
             upsertExerciseInWeaviate(data);
-            log.debug("Successfully inserted exercise {} '{}' into Weaviate", data.exerciseId(), data.exerciseTitle());
+            log.debug("Successfully upserted exercise {} '{}' in Weaviate", data.exerciseId(), data.exerciseTitle());
         }
         catch (Exception e) {
-            log.error("Failed to insert exercise {} into Weaviate: {}", exercise.getId(), e.getMessage(), e);
-        }
-    }
-
-    /**
-     * Asynchronously updates exercise metadata in Weaviate.
-     * This method executes in a separate thread to avoid blocking the HTTP request thread.
-     * IMPORTANT: The exercise entity must have its course relationship eagerly loaded before calling this method,
-     * otherwise a LazyInitializationException will be thrown.
-     *
-     * @param exercise the exercise to update (must have course and exam relationships loaded)
-     * @throws org.hibernate.LazyInitializationException if required relationships are not loaded
-     */
-    @Async
-    public void updateExerciseAsync(Exercise exercise) {
-        SecurityUtils.setAuthorizationObject();
-
-        try {
-            // Extract data immediately to fail fast if relationships aren't loaded
-            ExerciseWeaviateDTO data = ExerciseWeaviateDTO.fromExercise(exercise);
-            updateExercise(data);
-        }
-        catch (Exception e) {
-            log.error("Failed to extract exercise data for update: {}", e.getMessage(), e);
+            log.error("Failed to upsert exercise {} in Weaviate: {}", exercise.getId(), e.getMessage(), e);
         }
     }
 
@@ -185,8 +164,7 @@ public class ExerciseWeaviateService {
     @EventListener
     @Async
     public void onExerciseVersionCreated(ExerciseVersionCreatedEvent event) {
-        // Delegate to existing upsert logic (insertExerciseAsync uses upsert internally)
-        insertExerciseAsync(event.exercise());
+        upsertExerciseAsync(event.exercise());
     }
 
     /**

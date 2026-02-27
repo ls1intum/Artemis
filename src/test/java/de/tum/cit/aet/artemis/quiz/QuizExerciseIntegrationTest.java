@@ -1209,7 +1209,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
         // Insert the exercise into Weaviate first
         if (exerciseWeaviateService != null) {
-            exerciseWeaviateService.insertExerciseAsync(quizExercise);
+            exerciseWeaviateService.upsertExerciseAsync(quizExercise);
             assertQuizExerciseExistsInWeaviate(weaviateService, quizExercise);
         }
 
@@ -1232,7 +1232,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
         // Insert the exercise into Weaviate first
         if (exerciseWeaviateService != null) {
-            exerciseWeaviateService.insertExerciseAsync(quizExercise);
+            exerciseWeaviateService.upsertExerciseAsync(quizExercise);
 
             assertQuizExerciseExistsInWeaviate(weaviateService, quizExercise);
         }

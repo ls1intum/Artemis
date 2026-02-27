@@ -171,7 +171,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteExerciseGroup_asInstructor() throws Exception {
         if (exerciseWeaviateService != null) {
-            exerciseWeaviateService.insertExerciseAsync(textExercise1);
+            exerciseWeaviateService.upsertExerciseAsync(textExercise1);
 
             await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> WeaviateTestUtil.assertExerciseExistsInWeaviate(weaviateService, textExercise1));
         }
