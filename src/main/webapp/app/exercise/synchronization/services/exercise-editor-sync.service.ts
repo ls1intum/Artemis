@@ -124,25 +124,19 @@ export interface FileRenamedEvent extends ExerciseEditorSyncEventBase {
 /**
  * Event payload indicating a repository commit was pushed.
  */
-export interface ExerciseNewCommitAlertEvent {
+export interface ExerciseNewCommitAlertEvent extends ExerciseEditorSyncEventBase {
     eventType: ExerciseEditorSyncEventType.NEW_COMMIT_ALERT;
-    target: ExerciseEditorSyncTarget;
     auxiliaryRepositoryId?: number;
-    sessionId?: string;
-    timestamp?: number;
 }
 
 /**
  * Event payload indicating a new exercise version (metadata) was saved.
  */
-export interface ExerciseNewVersionAlertEvent {
+export interface ExerciseNewVersionAlertEvent extends ExerciseEditorSyncEventBase {
     eventType: ExerciseEditorSyncEventType.NEW_EXERCISE_VERSION_ALERT;
-    target: ExerciseEditorSyncTarget;
     exerciseVersionId: number;
     author: UserPublicInfoDTO;
     changedFields?: string[];
-    sessionId?: string;
-    timestamp?: number;
 }
 
 /**
@@ -165,8 +159,10 @@ export type ExerciseEditorSyncEvent =
 
 /**
  * Maps a RepositoryType to the corresponding ExerciseEditorSyncTarget.
+ * Returns `undefined` for repository types that do not support synchronization
+ * (e.g. ASSIGNMENT, USER).
  */
-export function repositoryTypeToSyncTarget(repoType: RepositoryType): ExerciseEditorSyncTarget {
+export function repositoryTypeToSyncTarget(repoType: RepositoryType): ExerciseEditorSyncTarget | undefined {
     switch (repoType) {
         case RepositoryType.TEMPLATE:
             return ExerciseEditorSyncTarget.TEMPLATE_REPOSITORY;
@@ -177,7 +173,7 @@ export function repositoryTypeToSyncTarget(repoType: RepositoryType): ExerciseEd
         case RepositoryType.AUXILIARY:
             return ExerciseEditorSyncTarget.AUXILIARY_REPOSITORY;
         default:
-            throw new Error(`No sync target mapping for repository type: ${repoType}`);
+            return undefined;
     }
 }
 

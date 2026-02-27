@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { Observable, Subject, Subscription } from 'rxjs';
 import * as Y from 'yjs';
 import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate } from 'y-protocols/awareness';
@@ -77,9 +77,12 @@ type FileSyncEntry = {
  * `ProblemStatementSyncService`.
  *
  * Provided at the component level (not root) for clean lifecycle per editor session.
+ * Implements OnDestroy as a safety net — Angular calls ngOnDestroy on component-scoped
+ * services when the host component is destroyed. The parent component should still call
+ * reset() explicitly, but this ensures cleanup even if an error interrupts the normal flow.
  */
 @Injectable()
-export class CodeEditorFileSyncService {
+export class CodeEditorFileSyncService implements OnDestroy {
     private syncService = inject(ExerciseEditorSyncService);
     private accountService = inject(AccountService);
 
@@ -108,6 +111,10 @@ export class CodeEditorFileSyncService {
      */
     get stateReplaced$(): Observable<{ filePath: string } & FileSyncState> {
         return this.stateReplacedSubject.asObservable();
+    }
+
+    ngOnDestroy(): void {
+        this.reset();
     }
 
     /**
@@ -475,7 +482,7 @@ export class CodeEditorFileSyncService {
             const update = decodeBase64ToUint8Array(selected.yjsUpdate);
             Y.applyUpdate(entry.doc, update, FileSyncOrigin.Remote);
             entry.activeLeaderTimestamp = selected.leaderTimestamp;
-        } else if (entry.fallbackInitialContent) {
+        } else if (entry.fallbackInitialContent.length > 0) {
             entry.doc.transact(() => {
                 entry.text.insert(0, entry.fallbackInitialContent);
             }, FileSyncOrigin.Seed);

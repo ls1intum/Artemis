@@ -45,7 +45,7 @@ import { HyperionWebsocketService } from 'app/hyperion/services/hyperion-websock
 import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { Observable, Subscription, catchError, of, take, tap } from 'rxjs';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { CodeEditorFileSyncService } from 'app/programming/manage/services/code-editor-file-sync.service';
+import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';

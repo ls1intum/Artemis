@@ -30,7 +30,7 @@ import { KeysPipe } from 'app/shared/pipes/keys.pipe';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { editor } from 'monaco-editor';
-import { CodeEditorFileSyncService } from 'app/programming/manage/services/code-editor-file-sync.service';
+import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 import { Subscription } from 'rxjs';
 import { ExerciseEditorSyncEventType, FileCreatedEvent, FileDeletedEvent, FileRenamedEvent } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 
@@ -252,6 +252,10 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
      * Handle remote file tree change events from the sync service.
      * Delegates to fileBrowser.handleFileChange() which updates repositoryFiles, rebuilds
      * the tree view, and emits onFileChange — mirroring the local file operation flow exactly.
+     *
+     * If fileBrowser is not yet rendered (e.g. during initial load), the event is safely
+     * ignored. This is acceptable because the file browser fetches the full file list from
+     * the server on initialization, so it will already reflect the current state.
      */
     private handleRemoteFileTreeEvent(event: FileCreatedEvent | FileDeletedEvent | FileRenamedEvent): void {
         switch (event.eventType) {

@@ -50,7 +50,7 @@ import {
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
 import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/services/code-editor-conflict-state.service';
 import { findItemInList } from 'app/programming/shared/code-editor/treeview/helpers/tree-view-helper';
-import { CodeEditorFileSyncService } from 'app/programming/manage/services/code-editor-file-sync.service';
+import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 
 export type InteractableEvent = {
     // Click event object; contains target information

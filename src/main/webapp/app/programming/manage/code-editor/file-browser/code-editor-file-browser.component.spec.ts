@@ -28,7 +28,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { TreeViewItem } from 'app/programming/shared/code-editor/treeview/models/tree-view-item';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CodeEditorFileBrowserProblemStatementComponent } from 'app/programming/manage/code-editor/file-browser/problem-statement/code-editor-file-browser-problem-statement.component';
-import { CodeEditorFileSyncService } from 'app/programming/manage/services/code-editor-file-sync.service';
+import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 
 describe('CodeEditorFileBrowserComponent', () => {
     let comp: CodeEditorFileBrowserComponent;

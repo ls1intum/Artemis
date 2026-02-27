@@ -1,8 +1,10 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { Mocked, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Subject } from 'rxjs';
 import * as Y from 'yjs';
 import { Awareness, encodeAwarenessUpdate } from 'y-protocols/awareness';
-import { CodeEditorFileSyncService, FileSyncState } from 'app/programming/manage/services/code-editor-file-sync.service';
+import { CodeEditorFileSyncService, FileSyncState } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 import { AccountService } from 'app/core/auth/account.service';
 import {
     ExerciseEditorSyncEvent,
@@ -16,8 +18,9 @@ import {
 import * as yjsUtils from 'app/exercise/synchronization/services/yjs-utils';
 
 describe('CodeEditorFileSyncService', () => {
+    setupTestBed({ zoneless: true });
     let service: CodeEditorFileSyncService;
-    let syncService: jest.Mocked<ExerciseEditorSyncService>;
+    let syncService: Mocked<ExerciseEditorSyncService>;
     let incomingMessages$: Subject<ExerciseEditorSyncEvent>;
 
     const EXERCISE_ID = 42;
@@ -25,6 +28,7 @@ describe('CodeEditorFileSyncService', () => {
     const FILE_PATH = 'src/Main.java';
 
     beforeEach(() => {
+        vi.useFakeTimers();
         incomingMessages$ = new Subject<ExerciseEditorSyncEvent>();
 
         TestBed.configureTestingModule({
@@ -33,28 +37,29 @@ describe('CodeEditorFileSyncService', () => {
                 {
                     provide: ExerciseEditorSyncService,
                     useValue: {
-                        subscribeToUpdates: jest.fn().mockReturnValue(incomingMessages$.asObservable()),
-                        sendSynchronizationUpdate: jest.fn(),
-                        unsubscribe: jest.fn(),
+                        subscribeToUpdates: vi.fn().mockReturnValue(incomingMessages$.asObservable()),
+                        sendSynchronizationUpdate: vi.fn(),
+                        unsubscribe: vi.fn(),
                         sessionId: 'test-session-id',
                     },
                 },
                 {
                     provide: AccountService,
                     useValue: {
-                        userIdentity: jest.fn().mockReturnValue(undefined),
+                        userIdentity: vi.fn().mockReturnValue(undefined),
                     },
                 },
             ],
         });
 
         service = TestBed.inject(CodeEditorFileSyncService);
-        syncService = TestBed.inject(ExerciseEditorSyncService) as jest.Mocked<ExerciseEditorSyncService>;
+        syncService = TestBed.inject(ExerciseEditorSyncService) as Mocked<ExerciseEditorSyncService>;
     });
 
     afterEach(() => {
         service?.reset();
-        jest.clearAllMocks();
+        vi.useRealTimers();
+        vi.clearAllMocks();
     });
 
     describe('init and reset', () => {
@@ -66,19 +71,19 @@ describe('CodeEditorFileSyncService', () => {
         it('calling init() a second time cleans up the previous state', () => {
             service.init(EXERCISE_ID, TARGET);
             const state = service.openFile(FILE_PATH, 'content')!;
-            const destroySpy = jest.spyOn(state.doc, 'destroy');
+            const destroySpy = vi.spyOn(state.doc, 'destroy');
 
             service.init(EXERCISE_ID, ExerciseEditorSyncTarget.SOLUTION_REPOSITORY);
 
             expect(destroySpy).toHaveBeenCalled();
-            expect(service.isFileOpen(FILE_PATH)).toBeFalse();
+            expect(service.isFileOpen(FILE_PATH)).toBe(false);
         });
 
         it('destroys all docs on reset', () => {
             service.init(EXERCISE_ID, TARGET);
             const state = service.openFile(FILE_PATH, 'content')!;
-            const destroySpy = jest.spyOn(state.doc, 'destroy');
-            const clearStylesSpy = jest.spyOn(yjsUtils, 'clearRemoteSelectionStyles');
+            const destroySpy = vi.spyOn(state.doc, 'destroy');
+            const clearStylesSpy = vi.spyOn(yjsUtils, 'clearRemoteSelectionStyles');
 
             service.reset();
 
@@ -117,22 +122,22 @@ describe('CodeEditorFileSyncService', () => {
         it('closes a file and destroys its doc', () => {
             service.init(EXERCISE_ID, TARGET);
             const state = service.openFile(FILE_PATH, 'content')!;
-            const destroySpy = jest.spyOn(state.doc, 'destroy');
+            const destroySpy = vi.spyOn(state.doc, 'destroy');
 
             service.closeFile(FILE_PATH);
 
             expect(destroySpy).toHaveBeenCalled();
-            expect(service.isFileOpen(FILE_PATH)).toBeFalse();
+            expect(service.isFileOpen(FILE_PATH)).toBe(false);
         });
     });
 
     describe('initial sync protocol', () => {
-        it('seeds fallback content when no peer responds', fakeAsync(() => {
+        it('seeds fallback content when no peer responds', () => {
             service.init(EXERCISE_ID, TARGET);
             const state = service.openFile(FILE_PATH, 'Fallback content')!;
             syncService.sendSynchronizationUpdate.mockClear();
 
-            tick(500);
+            vi.advanceTimersByTime(500);
 
             expect(state.text.toString()).toBe('Fallback content');
             // Seed should NOT be rebroadcast
@@ -142,16 +147,16 @@ describe('CodeEditorFileSyncService', () => {
                     eventType: ExerciseEditorSyncEventType.FILE_SYNC_UPDATE,
                 }),
             );
-        }));
+        });
 
-        it('uses earliest leader response during initial sync', fakeAsync(() => {
+        it('uses earliest leader response during initial sync', () => {
             service.init(EXERCISE_ID, TARGET);
             const state = service.openFile(FILE_PATH, '')!;
 
-            const requestCall = (syncService.sendSynchronizationUpdate as jest.Mock).mock.calls.find(
-                ([, msg]) => msg.eventType === ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_REQUEST && msg.filePath === FILE_PATH,
+            const requestCall = syncService.sendSynchronizationUpdate.mock.calls.find(
+                ([, msg]) => msg.eventType === ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_REQUEST && (msg as any).filePath === FILE_PATH,
             );
-            const requestId = requestCall?.[1].requestId as string;
+            const requestId = (requestCall?.[1] as any).requestId as string;
 
             const laterDoc = new Y.Doc();
             laterDoc.getText('file-content').insert(0, 'Later leader');
@@ -177,11 +182,11 @@ describe('CodeEditorFileSyncService', () => {
                 timestamp: 2,
             });
 
-            tick(500);
+            vi.advanceTimersByTime(500);
             expect(state.text.toString()).toBe('Earlier leader');
-        }));
+        });
 
-        it('buffers incremental updates during initial sync', fakeAsync(() => {
+        it('buffers incremental updates during initial sync', () => {
             service.init(EXERCISE_ID, TARGET);
             const state = service.openFile(FILE_PATH, '')!;
 
@@ -199,12 +204,12 @@ describe('CodeEditorFileSyncService', () => {
             // Before timeout, text should be empty (update is buffered)
             expect(state.text.toString()).toBe('');
 
-            tick(500);
+            vi.advanceTimersByTime(500);
             // After timeout, buffered update should be applied
             expect(state.text.toString()).toBe('Buffered text');
-        }));
+        });
 
-        it('queues full-content requests while initializing and responds after finalize', fakeAsync(() => {
+        it('queues full-content requests while initializing and responds after finalize', () => {
             service.init(EXERCISE_ID, TARGET);
             service.openFile(FILE_PATH, 'Initial');
             syncService.sendSynchronizationUpdate.mockClear();
@@ -220,7 +225,7 @@ describe('CodeEditorFileSyncService', () => {
             // Should not respond while awaiting init
             expect(syncService.sendSynchronizationUpdate).not.toHaveBeenCalled();
 
-            tick(500);
+            vi.advanceTimersByTime(500);
 
             // After init finalized, should respond
             expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
@@ -231,14 +236,14 @@ describe('CodeEditorFileSyncService', () => {
                     filePath: FILE_PATH,
                 }),
             );
-        }));
+        });
     });
 
     describe('incremental sync', () => {
-        it('sends yjs update for local doc changes', fakeAsync(() => {
+        it('sends yjs update for local doc changes', () => {
             service.init(EXERCISE_ID, TARGET);
             const state = service.openFile(FILE_PATH, '')!;
-            tick(500);
+            vi.advanceTimersByTime(500);
             syncService.sendSynchronizationUpdate.mockClear();
 
             state.text.insert(0, 'Local edit');
@@ -252,12 +257,12 @@ describe('CodeEditorFileSyncService', () => {
                     yjsUpdate: expect.any(String),
                 }),
             );
-        }));
+        });
 
-        it('applies incoming yjs updates to the doc', fakeAsync(() => {
+        it('applies incoming yjs updates to the doc', () => {
             service.init(EXERCISE_ID, TARGET);
             const state = service.openFile(FILE_PATH, '')!;
-            tick(500);
+            vi.advanceTimersByTime(500);
 
             const doc = new Y.Doc();
             doc.getText('file-content').insert(0, 'Remote edit');
@@ -270,23 +275,23 @@ describe('CodeEditorFileSyncService', () => {
             });
 
             expect(state.text.toString()).toBe('Remote edit');
-        }));
+        });
     });
 
     describe('late-winning response', () => {
-        it('replaces state when a better leader responds late', fakeAsync(() => {
+        it('replaces state when a better leader responds late', () => {
             service.init(EXERCISE_ID, TARGET);
             const state = service.openFile(FILE_PATH, 'Fallback')!;
 
-            const requestCall = (syncService.sendSynchronizationUpdate as jest.Mock).mock.calls.find(
-                ([, msg]) => msg.eventType === ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_REQUEST && msg.filePath === FILE_PATH,
+            const requestCall = syncService.sendSynchronizationUpdate.mock.calls.find(
+                ([, msg]) => msg.eventType === ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_REQUEST && (msg as any).filePath === FILE_PATH,
             );
-            const requestId = requestCall?.[1].requestId as string;
+            const requestId = (requestCall?.[1] as any).requestId as string;
 
             let replacedState: ({ filePath: string } & FileSyncState) | undefined;
             const sub = service.stateReplaced$.subscribe((s) => (replacedState = s));
 
-            tick(500);
+            vi.advanceTimersByTime(500);
             expect(state.text.toString()).toBe('Fallback');
 
             const lateDoc = new Y.Doc();
@@ -305,16 +310,16 @@ describe('CodeEditorFileSyncService', () => {
             expect(replacedState?.filePath).toBe(FILE_PATH);
             expect(replacedState?.text.toString()).toBe('Late winning content');
             sub.unsubscribe();
-        }));
+        });
     });
 
     describe('awareness', () => {
-        it('applies awareness updates and registers remote styles', fakeAsync(() => {
+        it('applies awareness updates and registers remote styles', () => {
             service.init(EXERCISE_ID, TARGET);
             service.openFile(FILE_PATH, '');
-            tick(500);
+            vi.advanceTimersByTime(500);
 
-            const ensureStyleSpy = jest.spyOn(yjsUtils, 'ensureRemoteSelectionStyle').mockImplementation(() => undefined);
+            const ensureStyleSpy = vi.spyOn(yjsUtils, 'ensureRemoteSelectionStyle').mockImplementation(() => undefined);
 
             const remoteDoc = new Y.Doc();
             const remoteAwareness = new Awareness(remoteDoc);
@@ -331,11 +336,11 @@ describe('CodeEditorFileSyncService', () => {
 
             expect(ensureStyleSpy).toHaveBeenCalledWith(remoteAwareness.clientID, '#abcdef', 'Remote User');
             ensureStyleSpy.mockRestore();
-        }));
+        });
 
         it('updates local awareness name from user identity', () => {
             const accountService = TestBed.inject(AccountService);
-            (accountService.userIdentity as jest.Mock).mockReturnValue({ name: 'Ada Lovelace', login: 'ada' } as any);
+            (accountService.userIdentity as ReturnType<typeof vi.fn>).mockReturnValue({ name: 'Ada Lovelace', login: 'ada' } as any);
 
             service.init(EXERCISE_ID, TARGET);
             const state = service.openFile(FILE_PATH, '')!;
@@ -360,16 +365,16 @@ describe('CodeEditorFileSyncService', () => {
             );
         });
 
-        it('emits FILE_DELETED event and closes local doc', fakeAsync(() => {
+        it('emits FILE_DELETED event and closes local doc', () => {
             service.init(EXERCISE_ID, TARGET);
             const state = service.openFile(FILE_PATH, 'content')!;
-            tick(500);
-            const destroySpy = jest.spyOn(state.doc, 'destroy');
+            vi.advanceTimersByTime(500);
+            const destroySpy = vi.spyOn(state.doc, 'destroy');
 
             service.emitFileDeleted(FILE_PATH, 'FILE');
 
             expect(destroySpy).toHaveBeenCalled();
-            expect(service.isFileOpen(FILE_PATH)).toBeFalse();
+            expect(service.isFileOpen(FILE_PATH)).toBe(false);
             expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
                 EXERCISE_ID,
                 expect.objectContaining({
@@ -378,18 +383,18 @@ describe('CodeEditorFileSyncService', () => {
                     fileType: 'FILE',
                 }),
             );
-        }));
+        });
 
-        it('emits FILE_RENAMED event and remaps doc key', fakeAsync(() => {
+        it('emits FILE_RENAMED event and remaps doc key', () => {
             service.init(EXERCISE_ID, TARGET);
             service.openFile(FILE_PATH, 'content');
-            tick(500);
+            vi.advanceTimersByTime(500);
 
             const newPath = 'src/Renamed.java';
             service.emitFileRenamed(FILE_PATH, newPath, 'FILE');
 
-            expect(service.isFileOpen(FILE_PATH)).toBeFalse();
-            expect(service.isFileOpen(newPath)).toBeTrue();
+            expect(service.isFileOpen(FILE_PATH)).toBe(false);
+            expect(service.isFileOpen(newPath)).toBe(true);
             expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
                 EXERCISE_ID,
                 expect.objectContaining({
@@ -399,7 +404,7 @@ describe('CodeEditorFileSyncService', () => {
                     fileType: 'FILE',
                 }),
             );
-        }));
+        });
 
         it('handles remote FILE_CREATED by emitting on fileTreeChange$', () => {
             service.init(EXERCISE_ID, TARGET);
@@ -420,11 +425,11 @@ describe('CodeEditorFileSyncService', () => {
             sub.unsubscribe();
         });
 
-        it('handles remote FILE_DELETED by closing doc and emitting on fileTreeChange$', fakeAsync(() => {
+        it('handles remote FILE_DELETED by closing doc and emitting on fileTreeChange$', () => {
             service.init(EXERCISE_ID, TARGET);
             const state = service.openFile(FILE_PATH, 'content')!;
-            tick(500);
-            const destroySpy = jest.spyOn(state.doc, 'destroy');
+            vi.advanceTimersByTime(500);
+            const destroySpy = vi.spyOn(state.doc, 'destroy');
 
             let received: FileCreatedEvent | FileDeletedEvent | FileRenamedEvent | undefined;
             const sub = service.fileTreeChange$.subscribe((e) => (received = e));
@@ -440,12 +445,12 @@ describe('CodeEditorFileSyncService', () => {
             expect(destroySpy).toHaveBeenCalled();
             expect(received?.eventType).toBe(ExerciseEditorSyncEventType.FILE_DELETED);
             sub.unsubscribe();
-        }));
+        });
 
-        it('handles remote FILE_RENAMED by remapping key and emitting on fileTreeChange$', fakeAsync(() => {
+        it('handles remote FILE_RENAMED by remapping key and emitting on fileTreeChange$', () => {
             service.init(EXERCISE_ID, TARGET);
             service.openFile(FILE_PATH, 'content');
-            tick(500);
+            vi.advanceTimersByTime(500);
 
             let received: FileCreatedEvent | FileDeletedEvent | FileRenamedEvent | undefined;
             const sub = service.fileTreeChange$.subscribe((e) => (received = e));
@@ -460,32 +465,32 @@ describe('CodeEditorFileSyncService', () => {
                 timestamp: 1,
             });
 
-            expect(service.isFileOpen(FILE_PATH)).toBeFalse();
-            expect(service.isFileOpen(newPath)).toBeTrue();
+            expect(service.isFileOpen(FILE_PATH)).toBe(false);
+            expect(service.isFileOpen(newPath)).toBe(true);
             expect(received?.eventType).toBe(ExerciseEditorSyncEventType.FILE_RENAMED);
             sub.unsubscribe();
-        }));
+        });
     });
 
     describe('rename handling', () => {
-        it('remaps directory keys for all files under the directory', fakeAsync(() => {
+        it('remaps directory keys for all files under the directory', () => {
             service.init(EXERCISE_ID, TARGET);
             service.openFile('src/pkg/A.java', 'A');
             service.openFile('src/pkg/B.java', 'B');
-            tick(500);
+            vi.advanceTimersByTime(500);
 
             service.emitFileRenamed('src/pkg', 'src/newpkg', 'FOLDER');
 
-            expect(service.isFileOpen('src/pkg/A.java')).toBeFalse();
-            expect(service.isFileOpen('src/pkg/B.java')).toBeFalse();
-            expect(service.isFileOpen('src/newpkg/A.java')).toBeTrue();
-            expect(service.isFileOpen('src/newpkg/B.java')).toBeTrue();
-        }));
+            expect(service.isFileOpen('src/pkg/A.java')).toBe(false);
+            expect(service.isFileOpen('src/pkg/B.java')).toBe(false);
+            expect(service.isFileOpen('src/newpkg/A.java')).toBe(true);
+            expect(service.isFileOpen('src/newpkg/B.java')).toBe(true);
+        });
 
-        it('applies late updates on old path via recentRenames', fakeAsync(() => {
+        it('applies late updates on old path via recentRenames', () => {
             service.init(EXERCISE_ID, TARGET);
             service.openFile(FILE_PATH, '');
-            tick(500);
+            vi.advanceTimersByTime(500);
 
             const newPath = 'src/Renamed.java';
             service.emitFileRenamed(FILE_PATH, newPath, 'FILE');
@@ -504,14 +509,14 @@ describe('CodeEditorFileSyncService', () => {
             // openFile returns the existing entry under the new key (remapped by rename)
             const state = service.openFile(newPath, '')!;
             expect(state.text.toString()).toBe('Late update on old path');
-        }));
+        });
     });
 
     describe('responds to full-content requests', () => {
-        it('responds with current document state after init', fakeAsync(() => {
+        it('responds with current document state after init', () => {
             service.init(EXERCISE_ID, TARGET);
             const state = service.openFile(FILE_PATH, '')!;
-            tick(500);
+            vi.advanceTimersByTime(500);
             state.text.insert(0, 'Current content');
             syncService.sendSynchronizationUpdate.mockClear();
 
@@ -535,19 +540,19 @@ describe('CodeEditorFileSyncService', () => {
                 }),
             );
 
-            const response = (syncService.sendSynchronizationUpdate as jest.Mock).mock.calls[0][1] as { yjsUpdate: string };
+            const response = syncService.sendSynchronizationUpdate.mock.calls[0][1] as unknown as { yjsUpdate: string };
             const decoded = yjsUtils.decodeBase64ToUint8Array(response.yjsUpdate);
             const responseDoc = new Y.Doc();
             Y.applyUpdate(responseDoc, decoded);
             expect(responseDoc.getText('file-content').toString()).toBe('Current content');
-        }));
+        });
     });
 
     describe('message filtering', () => {
-        it('ignores messages for a different auxiliary repository id', fakeAsync(() => {
+        it('ignores messages for a different auxiliary repository id', () => {
             service.init(EXERCISE_ID, ExerciseEditorSyncTarget.AUXILIARY_REPOSITORY, 1);
             const state = service.openFile(FILE_PATH, '')!;
-            tick(500);
+            vi.advanceTimersByTime(500);
 
             const doc = new Y.Doc();
             doc.getText('file-content').insert(0, 'Wrong aux repo');
@@ -561,12 +566,12 @@ describe('CodeEditorFileSyncService', () => {
             });
 
             expect(state.text.toString()).toBe('');
-        }));
+        });
 
-        it('ignores messages for a different target', fakeAsync(() => {
+        it('ignores messages for a different target', () => {
             service.init(EXERCISE_ID, TARGET);
             const state = service.openFile(FILE_PATH, '')!;
-            tick(500);
+            vi.advanceTimersByTime(500);
 
             const doc = new Y.Doc();
             doc.getText('file-content').insert(0, 'Wrong target');
@@ -579,6 +584,6 @@ describe('CodeEditorFileSyncService', () => {
             });
 
             expect(state.text.toString()).toBe('');
-        }));
+        });
     });
 });

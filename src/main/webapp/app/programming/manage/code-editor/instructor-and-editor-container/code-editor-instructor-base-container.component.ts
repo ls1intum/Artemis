@@ -22,7 +22,7 @@ import { isExamExercise } from 'app/shared/util/utils';
 import { Subject } from 'rxjs';
 import { debounceTime, shareReplay } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { CodeEditorFileSyncService, FileSyncState } from 'app/programming/manage/services/code-editor-file-sync.service';
+import { CodeEditorFileSyncService, FileSyncState } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 import { ExerciseEditorSyncService, repositoryTypeToSyncTarget } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { MonacoBinding } from 'y-monaco';
 /**
@@ -245,12 +245,10 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
             this.selectedRepository = RepositoryType.TESTS;
         }
         if (this.exercise?.id && this.selectedRepository) {
-            try {
-                const syncTarget = repositoryTypeToSyncTarget(this.selectedRepository);
+            const syncTarget = repositoryTypeToSyncTarget(this.selectedRepository);
+            if (syncTarget) {
                 const auxId = this.selectedRepository === RepositoryType.AUXILIARY ? this.selectedRepositoryId : undefined;
                 this.fileSyncService.init(this.exercise.id, syncTarget, auxId);
-            } catch {
-                // No sync target for this repository type (e.g. ASSIGNMENT/USER)
             }
         }
     }
@@ -437,7 +435,10 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         }
         this.previousSyncedFile = fileName;
 
-        // Clear model content — the MonacoBinding will populate from Y.Text
+        // Clear model content before binding — the MonacoBinding constructor immediately
+        // populates the model from Y.Text content, so the brief empty state is not observable
+        // in the UI. This is required because MonacoBinding diffs the model content against
+        // Y.Text on construction, and starting from an empty model ensures a clean diff.
         model.setValue('');
         this.createFileBinding(syncState, model, editorInstance);
 

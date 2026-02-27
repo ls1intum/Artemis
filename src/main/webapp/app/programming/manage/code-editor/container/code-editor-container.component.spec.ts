@@ -21,7 +21,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { editor } from 'monaco-editor';
 import { Subject } from 'rxjs';
 import { ExerciseEditorSyncEventType, FileCreatedEvent, FileDeletedEvent, FileRenamedEvent } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
-import { CodeEditorFileSyncService } from 'app/programming/manage/services/code-editor-file-sync.service';
+import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 
 class MockFileService {
     updateFileReferences = jest.fn((refs) => refs);
