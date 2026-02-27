@@ -609,6 +609,30 @@ describe('MetisConversationService', () => {
             });
         });
 
+        it('should NOT remove empty one-to-one chat when re-selecting the same conversation', () => {
+            return new Promise((done) => {
+                metisConversationService.setUpConversationService(course).subscribe({
+                    complete: () => {
+                        // Create an empty one-to-one chat (no lastMessageDate)
+                        const emptyOneToOneChat = generateOneToOneChatDTO({ id: 50 } as OneToOneChatDTO);
+                        emptyOneToOneChat.lastMessageDate = undefined;
+
+                        (metisConversationService as any).conversationsOfUser = [groupChat, emptyOneToOneChat, channel];
+                        (metisConversationService as any).activeConversation = emptyOneToOneChat;
+
+                        // Re-select the same empty one-to-one chat
+                        metisConversationService.setActiveConversation(emptyOneToOneChat);
+
+                        // The empty one-to-one chat should still be in the list since we did not navigate away
+                        const conversations = (metisConversationService as any).conversationsOfUser;
+                        expect(conversations).toContainEqual(emptyOneToOneChat);
+                        expect(conversations).toHaveLength(3);
+                        done({});
+                    },
+                });
+            });
+        });
+
         it('should NOT remove group chat or channel when navigating away', () => {
             return new Promise((done) => {
                 metisConversationService.setUpConversationService(course).subscribe({

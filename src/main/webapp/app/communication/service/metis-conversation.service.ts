@@ -118,7 +118,8 @@ export class MetisConversationService implements OnDestroy {
     }
 
     public setActiveConversation(conversationIdentifier: ConversationDTO | number | undefined) {
-        this.removeEmptyOneToOneChatFromList();
+        const nextConversationId = typeof conversationIdentifier === 'number' ? conversationIdentifier : conversationIdentifier?.id;
+        this.removeEmptyOneToOneChatFromList(nextConversationId);
         this.updateLastReadDateAndNumberOfUnreadMessages();
         let cachedConversation: ConversationDTO | undefined = undefined;
         if (conversationIdentifier) {
@@ -185,8 +186,13 @@ export class MetisConversationService implements OnDestroy {
      * (i.e., no messages have been sent yet). This ensures that empty direct message conversations
      * do not persist in the sidebar when the user navigates away without sending a message.
      */
-    private removeEmptyOneToOneChatFromList() {
-        if (this.activeConversation && isOneToOneChatDTO(this.activeConversation) && !this.activeConversation.lastMessageDate) {
+    private removeEmptyOneToOneChatFromList(nextConversationId?: number) {
+        if (
+            this.activeConversation &&
+            isOneToOneChatDTO(this.activeConversation) &&
+            !this.activeConversation.lastMessageDate &&
+            this.activeConversation.id !== nextConversationId
+        ) {
             this.conversationsOfUser = this.conversationsOfUser.filter((c) => c.id !== this.activeConversation!.id);
             this._conversationsOfUser$.next(this.conversationsOfUser);
         }
