@@ -22,6 +22,7 @@ import { isExamExercise } from 'app/shared/util/utils';
 import { Subject } from 'rxjs';
 import { debounceTime, shareReplay } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
+import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 /**
  * Enumeration specifying the loading state
  */
@@ -50,6 +51,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     private problemStatementChanges$ = new Subject<string>();
     protected alertService = inject(AlertService);
     protected translateService = inject(TranslateService);
+    private exerciseEditorSyncService = inject(ExerciseEditorSyncService);
 
     ButtonSize = ButtonSize;
     LOADING_STATE = LOADING_STATE;
@@ -111,6 +113,9 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
                     tap((exercise) => {
                         this.exercise = exercise;
                         this.course = exercise.course! ?? exercise.exerciseGroup!.exam!.course!;
+                        if (exercise.id) {
+                            this.exerciseEditorSyncService.connect(exercise.id);
+                        }
                         // Emit initial markdown to drive the preview after loading the exercise
                         if (exercise.problemStatement != undefined) {
                             this.problemStatementChanges$.next(exercise.problemStatement);
@@ -177,6 +182,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
+        this.exerciseEditorSyncService.disconnect();
     }
 
     /**
