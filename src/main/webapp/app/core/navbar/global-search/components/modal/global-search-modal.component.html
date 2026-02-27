@@ -22,18 +22,28 @@
             [placeholder]="'global.search.placeholder' | artemisTranslate"
             class="search-input border-0 bg-transparent text-body"
             [attr.aria-label]="'global.search.placeholder' | artemisTranslate"
+            (input)="searchQuery.set($any($event.target).value)"
         />
     </div>
     <!-- Results Area -->
     <div class="results-container">
-        <jhi-global-search-action-item
-            [title]="'global.search.searchLectureContent' | artemisTranslate"
-            [description]="'global.search.searchLectureContentDescription' | artemisTranslate"
-            accentColor="var(--global-search-lecture-accent)"
-            secondaryAccentColor="var(--bs-primary)"
-        >
-            <fa-icon slot="icon" [icon]="faFileLines" />
-        </jhi-global-search-action-item>
+        @switch (currentView()) {
+            @case (SearchView.Navigation) {
+                <jhi-global-search-action-item
+                    [title]="'global.search.searchLectureContent' | artemisTranslate"
+                    [description]="'global.search.searchLectureContentDescription' | artemisTranslate"
+                    (clicked)="navigateTo(SearchView.Lecture)"
+                    accentColor="var(--global-search-lecture-accent)"
+                    secondaryAccentColor="var(--bs-primary)"
+                >
+                    <fa-icon slot="icon" [icon]="faFileLines" />
+                </jhi-global-search-action-item>
+            }
+            @case (SearchView.Lecture) {
+                <jhi-global-search-lecture-results (back)="navigateTo(SearchView.Navigation)" [searchQuery]="searchQuery()" />
+            }
+            @case (SearchView.Iris) {}
+        }
     </div>
     <!-- Keyboard hints footer -->
     <div class="search-footer flex-shrink-0 text-start">
