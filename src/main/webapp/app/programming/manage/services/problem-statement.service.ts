@@ -105,6 +105,10 @@ export class ProblemStatementService {
             this.alertService.error('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
             return of({ success: false, errorHandled: true });
         }
+        if (!event.instruction?.trim()) {
+            this.alertService.error('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
+            return of({ success: false, errorHandled: true });
+        }
         if (currentContent.length > MAX_PROBLEM_STATEMENT_LENGTH) {
             this.alertService.error('artemisApp.programmingExercise.problemStatement.problemStatementTooLong');
             return of({ success: false, errorHandled: true });

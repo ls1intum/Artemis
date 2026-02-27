@@ -269,7 +269,9 @@
                     "submitTooltip": "Verfeinerungsanweisung absenden",
                     "success": "Ausgewählter Abschnitt wurde erfolgreich verfeinert.",
                     "error": "Fehler beim Verfeinern des ausgewählten Abschnitts. Bitte versuche es erneut.",
-                    "emptyStatementError": "Eine leere Aufgabenstellung kann nicht verfeinert werden."
+                    "emptyStatementError": "Eine leere Aufgabenstellung kann nicht verfeinert werden.",
+                    "close": "Schließen",
+                    "instructionTooLong": "Die Verfeinerungsanweisung ist zu lang. Bitte kürze sie und versuche es erneut."
                 },
                 "diffLineStatTooltip": "Zeilen, die durch die KI-Verfeinerung hinzugefügt und entfernt wurden."
             },

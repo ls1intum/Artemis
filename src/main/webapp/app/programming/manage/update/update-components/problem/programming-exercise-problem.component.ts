@@ -324,6 +324,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                 },
                 error: () => {
                     this.alertService.error('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
+                    this.isGeneratingOrRefining.set(false);
                     this.currentAiOperationSubscription = undefined;
                 },
             });
