@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.globalsearch.service;
 
+import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -20,6 +21,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.ExerciseSchema;
+import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -68,26 +70,33 @@ public class ExerciseWeaviateService {
      * Performs an upsert operation: queries for existing object and replaces it, or inserts if not found.
      *
      * @param exercise the exercise to upsert
-     * @throws Exception if the operation fails
+     * @throws WeaviateException if the operation fails
      */
-    private void upsertExerciseInWeaviate(Exercise exercise) throws Exception {
-        var collection = weaviateService.getCollection(ExerciseSchema.COLLECTION_NAME);
+    private void upsertExerciseInWeaviate(Exercise exercise) throws WeaviateException {
+        try {
+            var collection = weaviateService.getCollection(ExerciseSchema.COLLECTION_NAME);
 
-        var existingObjectQueryResult = collection.query.fetchObjects(query -> query.filters(Filter.property(ExerciseSchema.Properties.EXERCISE_ID).eq(exercise.getId())).limit(1));
+            var existingObjectQueryResult = collection.query
+                    .fetchObjects(query -> query.filters(Filter.property(ExerciseSchema.Properties.EXERCISE_ID).eq(exercise.getId())).limit(1));
 
-        Map<String, Object> properties = buildExerciseProperties(exercise);
+            Map<String, Object> properties = buildExerciseProperties(exercise);
 
-        if (!existingObjectQueryResult.objects().isEmpty()) {
-            // Object exists - use replace to update it
-            var existingObject = existingObjectQueryResult.objects().getFirst();
-            String uuid = existingObject.uuid();
-            collection.data.replace(uuid, r -> r.properties(properties));
-            log.debug("Replaced existing exercise {} with UUID {}", exercise.getId(), uuid);
+            if (!existingObjectQueryResult.objects().isEmpty()) {
+                // Object exists - use replace to update it
+                var existingObject = existingObjectQueryResult.objects().getFirst();
+                String uuid = existingObject.uuid();
+                collection.data.replace(uuid, r -> r.properties(properties));
+                log.debug("Replaced existing exercise {} with UUID {}", exercise.getId(), uuid);
+            }
+            else {
+                // Object doesn't exist - insert new one
+                collection.data.insert(properties);
+                log.debug("Inserted new exercise {}", exercise.getId());
+            }
         }
-        else {
-            // Object doesn't exist - insert new one
-            collection.data.insert(properties);
-            log.debug("Inserted new exercise {}", exercise.getId());
+        catch (IOException e) {
+            log.error("Failed to upsert exercise {} in Weaviate: {}", exercise.getId(), e.getMessage(), e);
+            throw new WeaviateException("Failed to upsert exercise: " + exercise.getId(), e);
         }
     }
 
