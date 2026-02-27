@@ -24,8 +24,6 @@ export class BuildPhasesEditor {
 
     deletePhase(id: number): void {}
 
-    toggleExpanded(id: number): void {}
-
     moveUp(index: number): void {}
 
     moveDown(index: number): void {}
