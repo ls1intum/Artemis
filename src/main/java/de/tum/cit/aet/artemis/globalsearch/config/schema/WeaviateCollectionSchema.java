@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.globalsearch.config.schema;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Represents a complete Weaviate collection schema definition.
@@ -40,9 +41,9 @@ public record WeaviateCollectionSchema(String collectionName, List<WeaviatePrope
      * Gets a property definition by name.
      *
      * @param name the property name
-     * @return the property definition, or null if not found
+     * @return an Optional containing the property definition, or empty if not found
      */
-    public WeaviatePropertyDefinition getProperty(String name) {
-        return properties.stream().filter(property -> property.name().equals(name)).findFirst().orElse(null);
+    public Optional<WeaviatePropertyDefinition> getProperty(String name) {
+        return properties.stream().filter(property -> property.name().equals(name)).findFirst();
     }
 }

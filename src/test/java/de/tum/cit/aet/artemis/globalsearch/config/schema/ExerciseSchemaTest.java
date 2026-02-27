@@ -53,18 +53,18 @@ class ExerciseSchemaTest {
 
     @Test
     void schema_searchablePropertiesAreCorrect() {
-        assertThat(SCHEMA.getProperty(ExerciseSchema.Properties.TITLE).indexSearchable()).isTrue();
-        assertThat(SCHEMA.getProperty(ExerciseSchema.Properties.COURSE_NAME).indexSearchable()).isTrue();
-        assertThat(SCHEMA.getProperty(ExerciseSchema.Properties.PROBLEM_STATEMENT).indexSearchable()).isTrue();
-        assertThat(SCHEMA.getProperty(ExerciseSchema.Properties.SHORT_NAME).indexSearchable()).isTrue();
+        assertThat(SCHEMA.getProperty(ExerciseSchema.Properties.TITLE).orElseThrow().indexSearchable()).isTrue();
+        assertThat(SCHEMA.getProperty(ExerciseSchema.Properties.COURSE_NAME).orElseThrow().indexSearchable()).isTrue();
+        assertThat(SCHEMA.getProperty(ExerciseSchema.Properties.PROBLEM_STATEMENT).orElseThrow().indexSearchable()).isTrue();
+        assertThat(SCHEMA.getProperty(ExerciseSchema.Properties.SHORT_NAME).orElseThrow().indexSearchable()).isTrue();
     }
 
     @Test
     void schema_filterablePropertiesAreCorrect() {
-        assertThat(SCHEMA.getProperty(ExerciseSchema.Properties.EXERCISE_ID).indexFilterable()).isTrue();
-        assertThat(SCHEMA.getProperty(ExerciseSchema.Properties.COURSE_ID).indexFilterable()).isTrue();
-        assertThat(SCHEMA.getProperty(ExerciseSchema.Properties.EXERCISE_TYPE).indexFilterable()).isTrue();
-        assertThat(SCHEMA.getProperty(ExerciseSchema.Properties.IS_EXAM_EXERCISE).indexFilterable()).isTrue();
+        assertThat(SCHEMA.getProperty(ExerciseSchema.Properties.EXERCISE_ID).orElseThrow().indexFilterable()).isTrue();
+        assertThat(SCHEMA.getProperty(ExerciseSchema.Properties.COURSE_ID).orElseThrow().indexFilterable()).isTrue();
+        assertThat(SCHEMA.getProperty(ExerciseSchema.Properties.EXERCISE_TYPE).orElseThrow().indexFilterable()).isTrue();
+        assertThat(SCHEMA.getProperty(ExerciseSchema.Properties.IS_EXAM_EXERCISE).orElseThrow().indexFilterable()).isTrue();
     }
 
     @Test
@@ -73,8 +73,8 @@ class ExerciseSchemaTest {
     }
 
     private void assertPropertyExists(String propertyName, WeaviateDataType expectedType) {
-        WeaviatePropertyDefinition property = SCHEMA.getProperty(propertyName);
-        assertThat(property).as("Property '%s' should exist", propertyName).isNotNull();
-        assertThat(property.dataType()).as("Property '%s' data type", propertyName).isEqualTo(expectedType);
+        var property = SCHEMA.getProperty(propertyName);
+        assertThat(property).as("Property '%s' should exist", propertyName).isPresent();
+        assertThat(property.orElseThrow().dataType()).as("Property '%s' data type", propertyName).isEqualTo(expectedType);
     }
 }
