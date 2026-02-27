@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * Used by the Exercise Mapper Agent to show which competencies will be linked to an exercise.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExerciseCompetencyMappingDTO(Long exerciseId, String exerciseTitle, List<CompetencyMappingOption> competencies, Boolean viewOnly) {
+public record ExerciseCompetencyMappingDTO(Long exerciseId, String exerciseTitle, List<CompetencyMappingOptionDTO> competencies, Boolean viewOnly) {
 
     /**
      * Represents a single competency that can be mapped to an exercise.
@@ -20,6 +20,7 @@ public record ExerciseCompetencyMappingDTO(Long exerciseId, String exerciseTitle
      * @param alreadyMapped   True if this competency is already mapped to the exercise (different styling)
      * @param suggested       True if this competency was suggested by the AI (green checkbox)
      */
-    public record CompetencyMappingOption(Long competencyId, String competencyTitle, Double weight, Boolean alreadyMapped, Boolean suggested) {
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record CompetencyMappingOptionDTO(Long competencyId, String competencyTitle, Double weight, Boolean alreadyMapped, Boolean suggested) {
     }
 }

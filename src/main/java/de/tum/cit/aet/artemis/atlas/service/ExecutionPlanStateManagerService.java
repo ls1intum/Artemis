@@ -30,9 +30,9 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 @Lazy
 @Service
 @Conditional(AtlasEnabled.class)
-public class ExecutionPlanStateManager {
+public class ExecutionPlanStateManagerService {
 
-    private static final Logger log = LoggerFactory.getLogger(ExecutionPlanStateManager.class);
+    private static final Logger log = LoggerFactory.getLogger(ExecutionPlanStateManagerService.class);
 
     /**
      * Cache name for storing execution plans.
@@ -52,7 +52,7 @@ public class ExecutionPlanStateManager {
 
     private final CacheManager cacheManager;
 
-    public ExecutionPlanStateManager(CacheManager cacheManager) {
+    public ExecutionPlanStateManagerService(CacheManager cacheManager) {
         this.cacheManager = cacheManager;
     }
 

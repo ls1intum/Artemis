@@ -16,7 +16,6 @@ import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -235,10 +234,8 @@ public class ExerciseMappingToolsService {
             Set<Long> existingCompetencyIds = existingLinks.stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
 
             ExerciseCompetencyMappingDTO preview = new ExerciseCompetencyMappingDTO(exercise.getId(), exercise.getTitle(),
-                    mappings.stream()
-                            .map(op -> new ExerciseCompetencyMappingDTO.CompetencyMappingOption(op.getCompetencyId(), getCompetencyTitle(op.getCompetencyId()), op.getWeight(),
-                                    existingCompetencyIds.contains(op.getCompetencyId()), op.getSuggested() != null && op.getSuggested()))
-                            .collect(Collectors.toList()),
+                    mappings.stream().map(op -> new ExerciseCompetencyMappingDTO.CompetencyMappingOptionDTO(op.getCompetencyId(), getCompetencyTitle(op.getCompetencyId()),
+                            op.getWeight(), existingCompetencyIds.contains(op.getCompetencyId()), op.getSuggested() != null && op.getSuggested())).toList(),
                     viewOnly != null && viewOnly);
 
             exerciseMappingPreview.set(preview);
@@ -262,7 +259,6 @@ public class ExerciseMappingToolsService {
      * @param mappings   List of competency mappings to save
      * @return Success or error message
      */
-    @Transactional
     @Tool(description = """
             Saves exercise-to-competency mappings to the database.
             Creates new links for newly checked competencies.
@@ -288,14 +284,12 @@ public class ExerciseMappingToolsService {
 
             List<CompetencyExerciseLink> existingLinks = competencyExerciseLinkRepository.findByExerciseIdWithCompetency(exerciseId);
 
-            Set<Long> newCompetencyIds = mappings.stream().map(ExerciseCompetencyMappingOperation::getCompetencyId).collect(Collectors.toSet());
-            Set<Long> existingCompetencyIds = existingLinks.stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
+            List<Long> newCompetencyIds = mappings.stream().map(ExerciseCompetencyMappingOperation::getCompetencyId).distinct().toList();
+            List<Long> existingCompetencyIds = existingLinks.stream().map(link -> link.getCompetency().getId()).distinct().toList();
 
-            List<CompetencyExerciseLink> linksToDelete = existingLinks.stream().filter(link -> !newCompetencyIds.contains(link.getCompetency().getId()))
-                    .collect(Collectors.toList());
+            List<CompetencyExerciseLink> linksToDelete = existingLinks.stream().filter(link -> !newCompetencyIds.contains(link.getCompetency().getId())).toList();
 
-            Set<Long> missingCompetencyIds = mappings.stream().map(ExerciseCompetencyMappingOperation::getCompetencyId).filter(id -> !existingCompetencyIds.contains(id))
-                    .collect(Collectors.toSet());
+            List<Long> missingCompetencyIds = mappings.stream().map(ExerciseCompetencyMappingOperation::getCompetencyId).filter(id -> !existingCompetencyIds.contains(id)).toList();
 
             Map<Long, CourseCompetency> competencyById = courseCompetencyRepository.findAllById(missingCompetencyIds).stream()
                     .collect(Collectors.toMap(CourseCompetency::getId, c -> c));

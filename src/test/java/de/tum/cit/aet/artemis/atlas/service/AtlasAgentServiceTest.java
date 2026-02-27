@@ -42,12 +42,19 @@ class AtlasAgentServiceTest {
     @Mock
     private ChatMemory chatMemory;
 
+    @Mock
+    private ExecutionPlanStateManagerService executionPlanStateManagerService;
+
+    @Mock
+    private AtlasAgentSessionCacheService atlasAgentSessionCacheService;
+
     private AtlasAgentService atlasAgentService;
 
     @BeforeEach
     void setUp() {
         ChatClient chatClient = ChatClient.create(chatModel);
-        atlasAgentService = new AtlasAgentService(chatClient, templateService, null, null, null, chatMemory, "gpt-4o", 0.2);
+        atlasAgentService = new AtlasAgentService(chatClient, templateService, null, null, null, null, chatMemory, "gpt-4o", 0.2, executionPlanStateManagerService,
+                atlasAgentSessionCacheService);
     }
 
     @Test
@@ -94,7 +101,8 @@ class AtlasAgentServiceTest {
 
     @Test
     void testIsAvailable_WithNullChatClient() {
-        AtlasAgentService serviceWithNullClient = new AtlasAgentService(null, templateService, null, null, null, null, "gpt-4o", 0.2);
+        AtlasAgentService serviceWithNullClient = new AtlasAgentService(null, templateService, null, null, null, null, null, "gpt-4o", 0.2, executionPlanStateManagerService,
+                atlasAgentSessionCacheService);
         boolean available = serviceWithNullClient.isAvailable();
 
         assertThat(available).isFalse();
@@ -103,7 +111,8 @@ class AtlasAgentServiceTest {
     @Test
     void testIsAvailable_WithNullChatMemory() {
         ChatClient chatClient = ChatClient.create(chatModel);
-        AtlasAgentService serviceWithNullMemory = new AtlasAgentService(chatClient, templateService, null, null, null, null, "gpt-4o", 0.2);
+        AtlasAgentService serviceWithNullMemory = new AtlasAgentService(chatClient, templateService, null, null, null, null, null, "gpt-4o", 0.2, executionPlanStateManagerService,
+                atlasAgentSessionCacheService);
 
         boolean available = serviceWithNullMemory.isAvailable();
 
@@ -168,7 +177,8 @@ class AtlasAgentServiceTest {
     @Test
     void testGetConversationHistoryAsDTO_NullChatMemory() {
         String sessionId = "course_456_user_789";
-        AtlasAgentService serviceWithNullMemory = new AtlasAgentService(ChatClient.create(chatModel), templateService, null, null, null, null, "gpt-4o", 0.2);
+        AtlasAgentService serviceWithNullMemory = new AtlasAgentService(ChatClient.create(chatModel), templateService, null, null, null, null, null, "gpt-4o", 0.2,
+                executionPlanStateManagerService, atlasAgentSessionCacheService);
 
         List<AtlasAgentHistoryMessageDTO> result = serviceWithNullMemory.getConversationHistoryAsDTO(sessionId);
 
@@ -272,7 +282,8 @@ class AtlasAgentServiceTest {
 
         @Test
         void shouldHandleCompetencyExpertToolsServiceNull() {
-            AtlasAgentService serviceWithoutTools = new AtlasAgentService(ChatClient.create(chatModel), templateService, null, null, null, null, "gpt-4o", 0.2);
+            AtlasAgentService serviceWithoutTools = new AtlasAgentService(ChatClient.create(chatModel), templateService, null, null, null, null, null, "gpt-4o", 0.2,
+                    executionPlanStateManagerService, atlasAgentSessionCacheService);
 
             String testMessage = "Test message";
             Long courseId = 123L;
@@ -380,18 +391,15 @@ class AtlasAgentServiceTest {
             String responseWithApprovalMarker = "Creating competency [CREATE_APPROVED_COMPETENCY]";
 
             when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
-            // First call returns approval marker, second call (for creation) returns success message
-            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(responseWithApprovalMarker)))))
-                    .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("{\"success\": true, \"created\": 1}")))));
+            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(responseWithApprovalMarker)))));
 
             AtlasAgentChatResponseDTO result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
             assertThat(result).isNotNull();
 
-            // The response should include both the message and creation confirmation
-            assertThat(result.message()).isNotNull();
-            // The marker itself should be removed (but content around it remains)
-            assertThat(result.message()).doesNotContain("[CREATE_APPROVED_COMPETENCY]");
+            // [CREATE_APPROVED_COMPETENCY] in an AI response (not as exact user input) is not a trigger,
+            // so the response is returned as-is
+            assertThat(result.message()).isEqualTo(responseWithApprovalMarker);
         }
     }
 
@@ -402,7 +410,7 @@ class AtlasAgentServiceTest {
 
         @Test
         void shouldSerializeToJsonWhenValidData() throws Exception {
-            AtlasAgentHistoryMessageDTO dto = new AtlasAgentHistoryMessageDTO("Test message content", true, null, null, null);
+            AtlasAgentHistoryMessageDTO dto = new AtlasAgentHistoryMessageDTO("Test message content", true, null, null, null, null);
 
             String actualJson = objectMapper.writeValueAsString(dto);
 
@@ -422,7 +430,7 @@ class AtlasAgentServiceTest {
 
         @Test
         void shouldExcludeContentWhenEmpty() throws Exception {
-            AtlasAgentHistoryMessageDTO dto = new AtlasAgentHistoryMessageDTO("", true, null, null, null);
+            AtlasAgentHistoryMessageDTO dto = new AtlasAgentHistoryMessageDTO("", true, null, null, null, null);
 
             String actualJson = objectMapper.writeValueAsString(dto);
 
@@ -432,7 +440,7 @@ class AtlasAgentServiceTest {
 
         @Test
         void shouldExcludeContentWhenNull() throws Exception {
-            AtlasAgentHistoryMessageDTO dto = new AtlasAgentHistoryMessageDTO(null, false, null, null, null);
+            AtlasAgentHistoryMessageDTO dto = new AtlasAgentHistoryMessageDTO(null, false, null, null, null, null);
 
             String actualJson = objectMapper.writeValueAsString(dto);
 
@@ -687,7 +695,8 @@ class AtlasAgentServiceTest {
 
         @Test
         void shouldReturnUnavailableMessageWhenChatClientIsNull() {
-            AtlasAgentService serviceWithNullClient = new AtlasAgentService(null, templateService, null, null, null, chatMemory, "gpt-4o", 0.2);
+            AtlasAgentService serviceWithNullClient = new AtlasAgentService(null, templateService, null, null, null, null, chatMemory, "gpt-4o", 0.2,
+                    executionPlanStateManagerService, atlasAgentSessionCacheService);
 
             AtlasAgentChatResponseDTO result = serviceWithNullClient.processChatMessage("Test message", 123L, "test_session");
 

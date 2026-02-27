@@ -115,12 +115,12 @@ public class AtlasAgentService {
 
     private final AtlasAgentSessionCacheService atlasAgentSessionCacheService;
 
-    private final ExecutionPlanStateManager executionPlanStateManager;
+    private final ExecutionPlanStateManagerService executionPlanStateManagerService;
 
     public AtlasAgentService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, @Nullable ToolCallbackProvider mainAgentToolCallbackProvider,
             @Nullable ToolCallbackProvider competencyExpertToolCallbackProvider, @Nullable ToolCallbackProvider competencyMapperToolCallbackProvider,
             @Nullable ToolCallbackProvider exerciseMapperToolCallbackProvider, @Nullable ChatMemory chatMemory, @Value("${atlas.chat-model:gpt-4o}") String deploymentName,
-            @Value("${atlas.chat-temperature:0.2}") double temperature, ExecutionPlanStateManager executionPlanStateManager,
+            @Value("${atlas.chat-temperature:0.2}") double temperature, ExecutionPlanStateManagerService executionPlanStateManagerService,
             AtlasAgentSessionCacheService atlasAgentSessionCacheService) {
         this.chatClient = chatClient;
         this.templateService = templateService;
@@ -131,7 +131,7 @@ public class AtlasAgentService {
         this.chatMemory = chatMemory;
         this.deploymentName = deploymentName;
         this.temperature = temperature;
-        this.executionPlanStateManager = executionPlanStateManager;
+        this.executionPlanStateManagerService = executionPlanStateManagerService;
         this.atlasAgentSessionCacheService = atlasAgentSessionCacheService;
     }
 
@@ -155,8 +155,8 @@ public class AtlasAgentService {
             resetCompetencyModifiedFlag();
 
             // Check for cancel command when plan is active
-            if (isCancelCommand(message) && executionPlanStateManager.hasPlan(sessionId)) {
-                executionPlanStateManager.cancelPlan(sessionId);
+            if (isCancelCommand(message) && executionPlanStateManagerService.hasPlan(sessionId)) {
+                executionPlanStateManagerService.cancelPlan(sessionId);
                 return new AtlasAgentChatResponseDTO("Plan cancelled.", ZonedDateTime.now(), false, null, null, null, null);
             }
 
@@ -715,9 +715,9 @@ public class AtlasAgentService {
         }
 
         // Build best-effort StepResult from saved previews
-        ExecutionPlanStateManager.StepResult stepResult = buildStepResultFromPreviews(previews);
+        ExecutionPlanStateManagerService.StepResult stepResult = buildStepResultFromPreviews(previews);
         log.info("handleCompetencyApproval: stepResult={}, hasPlan={}", stepResult != null ? stepResult.summary() + " IDs:" + stepResult.ids() : "null",
-                executionPlanStateManager.hasPlan(sessionId));
+                executionPlanStateManagerService.hasPlan(sessionId));
 
         // Attempt plan continuation
         return handlePlanContinuationAfterApproval(sessionId, courseId, creationResponse, stepResult,
@@ -752,7 +752,7 @@ public class AtlasAgentService {
 
         List<CompetencyRelationPreviewDTO> relationPreviews = convertToRelationPreviewsList(singleRelationPreview, batchRelationPreview);
 
-        ExecutionPlanStateManager.StepResult stepResult = buildStepResultFromRelationPreviews(relationPreviews);
+        ExecutionPlanStateManagerService.StepResult stepResult = buildStepResultFromRelationPreviews(relationPreviews);
 
         return handlePlanContinuationAfterApproval(sessionId, courseId, creationResponse, stepResult,
                 new AtlasAgentChatResponseDTO(creationResponse, ZonedDateTime.now(), false, null, relationPreviews, relationGraphPreview, null));
@@ -775,7 +775,7 @@ public class AtlasAgentService {
 
         updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, creationResponse);
 
-        ExecutionPlanStateManager.StepResult stepResult = new ExecutionPlanStateManager.StepResult(List.of(), "Exercise mappings saved");
+        ExecutionPlanStateManagerService.StepResult stepResult = new ExecutionPlanStateManagerService.StepResult(List.of(), "Exercise mappings saved");
 
         // Attempt plan continuation
         return handlePlanContinuationAfterApproval(sessionId, courseId, creationResponse, stepResult,
@@ -804,7 +804,7 @@ public class AtlasAgentService {
      * @param previousResponse the response from the previous step (for context)
      * @return the response DTO from the next agent
      */
-    private AtlasAgentChatResponseDTO delegateToNextStepAgent(ExecutionPlanStateManager.AgentType agentType, String brief, Long courseId, String sessionId,
+    private AtlasAgentChatResponseDTO delegateToNextStepAgent(ExecutionPlanStateManagerService.AgentType agentType, String brief, Long courseId, String sessionId,
             String previousResponse) {
 
         log.info("delegateToNextStepAgent: delegating to agent={} for session={}", agentType, sessionId);
@@ -863,7 +863,7 @@ public class AtlasAgentService {
      * @param planAgentType the plan agent type
      * @return the internal agent type
      */
-    private AgentType mapPlanAgentToInternal(ExecutionPlanStateManager.AgentType planAgentType) {
+    private AgentType mapPlanAgentToInternal(ExecutionPlanStateManagerService.AgentType planAgentType) {
         return switch (planAgentType) {
             case COMPETENCY_EXPERT -> AgentType.COMPETENCY_EXPERT;
             case COMPETENCY_MAPPER -> AgentType.COMPETENCY_MAPPER;
@@ -883,9 +883,9 @@ public class AtlasAgentService {
         Matcher matcher = PLAN_MARKER_PATTERN.matcher(response);
         if (matcher.find()) {
             String templateName = matcher.group(1);
-            ExecutionPlanStateManager.PlanTemplate template = ExecutionPlanStateManager.parseTemplate(templateName);
+            ExecutionPlanStateManagerService.PlanTemplate template = ExecutionPlanStateManagerService.parseTemplate(templateName);
             if (template != null) {
-                executionPlanStateManager.initializePlan(sessionId, template, userGoal);
+                executionPlanStateManagerService.initializePlan(sessionId, template, userGoal);
                 log.info("Initialized execution plan for session {}: template={}, userGoal={}", sessionId, template, userGoal);
             }
             else {
@@ -907,19 +907,19 @@ public class AtlasAgentService {
      * @return the response DTO, potentially with next step preview appended
      */
     private AtlasAgentChatResponseDTO handlePlanContinuationAfterApproval(String sessionId, Long courseId, String previousResponse,
-            ExecutionPlanStateManager.@Nullable StepResult stepResult, AtlasAgentChatResponseDTO fallbackResponse) {
-        if (!executionPlanStateManager.hasPlan(sessionId)) {
+            ExecutionPlanStateManagerService.@Nullable StepResult stepResult, AtlasAgentChatResponseDTO fallbackResponse) {
+        if (!executionPlanStateManagerService.hasPlan(sessionId)) {
             log.info("handlePlanContinuation: no plan found for session={}, returning fallback", sessionId);
             return fallbackResponse;
         }
 
-        Optional<ExecutionPlanStateManager.NextStepContext> nextStepOpt = executionPlanStateManager.completeStepAndGetNext(sessionId, stepResult);
+        Optional<ExecutionPlanStateManagerService.NextStepContext> nextStepOpt = executionPlanStateManagerService.completeStepAndGetNext(sessionId, stepResult);
         if (nextStepOpt.isEmpty()) {
             log.info("handlePlanContinuation: no next step for session={} (plan complete or expired), returning fallback", sessionId);
             return fallbackResponse;
         }
 
-        ExecutionPlanStateManager.NextStepContext nextStep = nextStepOpt.get();
+        ExecutionPlanStateManagerService.NextStepContext nextStep = nextStepOpt.get();
         log.info("handlePlanContinuation: advancing to next step for session={}, nextAgent={}, previousResults={}", sessionId, nextStep.agentType(),
                 nextStep.previousResults().size());
         String enrichedBrief = buildEnrichedBrief(nextStep);
@@ -934,17 +934,17 @@ public class AtlasAgentService {
      * @param nextStep the context for the next step
      * @return the enriched brief string
      */
-    private String buildEnrichedBrief(ExecutionPlanStateManager.NextStepContext nextStep) {
+    private String buildEnrichedBrief(ExecutionPlanStateManagerService.NextStepContext nextStep) {
         StringBuilder brief = new StringBuilder();
 
         // Add agent-specific action instruction so the agent knows exactly what to do
         String actionInstruction = getActionInstructionForAgent(nextStep.agentType());
         brief.append("ACTION: ").append(actionInstruction).append("\n");
 
-        List<ExecutionPlanStateManager.StepResult> previousResults = nextStep.previousResults();
+        List<ExecutionPlanStateManagerService.StepResult> previousResults = nextStep.previousResults();
         if (!previousResults.isEmpty()) {
             brief.append("CONTEXT FROM PREVIOUS STEPS:\n");
-            for (ExecutionPlanStateManager.StepResult result : previousResults) {
+            for (ExecutionPlanStateManagerService.StepResult result : previousResults) {
                 brief.append("- ").append(result.summary());
                 if (!result.ids().isEmpty()) {
                     brief.append(" (IDs: ").append(result.ids().stream().map(String::valueOf).collect(Collectors.joining(", "))).append(")");
@@ -968,7 +968,7 @@ public class AtlasAgentService {
      * @param agentType the type of agent that will receive the brief
      * @return a specific instruction string for the agent
      */
-    private String getActionInstructionForAgent(ExecutionPlanStateManager.AgentType agentType) {
+    private String getActionInstructionForAgent(ExecutionPlanStateManagerService.AgentType agentType) {
         return switch (agentType) {
             case COMPETENCY_MAPPER -> "Suggest relation mappings between the competencies from the previous step. "
                     + "Call getCourseCompetencies first to get the competency IDs, then call suggestRelationMappingsUsingML or "
@@ -988,7 +988,7 @@ public class AtlasAgentService {
      * @param previews the competency previews (may be null or empty)
      * @return the step result, or null if no meaningful data
      */
-    private ExecutionPlanStateManager.@Nullable StepResult buildStepResultFromPreviews(@Nullable List<CompetencyPreviewDTO> previews) {
+    private ExecutionPlanStateManagerService.@Nullable StepResult buildStepResultFromPreviews(@Nullable List<CompetencyPreviewDTO> previews) {
         if (previews == null || previews.isEmpty()) {
             return null;
         }
@@ -997,7 +997,7 @@ public class AtlasAgentService {
 
         String summary = "Created competencies: " + previews.stream().map(CompetencyPreviewDTO::title).collect(Collectors.joining(", "));
 
-        return new ExecutionPlanStateManager.StepResult(ids, summary);
+        return new ExecutionPlanStateManagerService.StepResult(ids, summary);
     }
 
     /**
@@ -1006,7 +1006,7 @@ public class AtlasAgentService {
      * @param relationPreviews the relation previews (may be null or empty)
      * @return the step result, or null if no meaningful data
      */
-    private ExecutionPlanStateManager.@Nullable StepResult buildStepResultFromRelationPreviews(@Nullable List<CompetencyRelationPreviewDTO> relationPreviews) {
+    private ExecutionPlanStateManagerService.@Nullable StepResult buildStepResultFromRelationPreviews(@Nullable List<CompetencyRelationPreviewDTO> relationPreviews) {
         if (relationPreviews == null || relationPreviews.isEmpty()) {
             return null;
         }
@@ -1015,6 +1015,6 @@ public class AtlasAgentService {
 
         String summary = "Created " + relationPreviews.size() + " relation(s)";
 
-        return new ExecutionPlanStateManager.StepResult(ids, summary);
+        return new ExecutionPlanStateManagerService.StepResult(ids, summary);
     }
 }
