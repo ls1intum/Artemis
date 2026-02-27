@@ -150,7 +150,7 @@
         <!-- client -->
         @if (!isEmbeddedChat()) {
             <div class="chat-header" [class.has-content]="hasHeaderContent()">
-                @if (layout() === 'widget') {
+                @if (layout() === 'widget' && !isEmptyState()) {
                     <button
                         class="session-title-trigger"
                         (click)="toggleSessionMenu($event)"

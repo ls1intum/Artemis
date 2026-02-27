@@ -168,11 +168,10 @@
     border-radius: var(--bs-border-radius-lg);
     color: var(--bs-body-color);
     font-size: 14px;
-    font-weight: 500;
     max-width: 250px;
 
     &:hover {
-        background-color: var(--iris-secondary-background);
+        background-color: var(--iris-tertiary-background);
     }
 }
 
@@ -195,14 +194,67 @@
 
 .session-switcher-inline-menu {
     position: absolute;
-    top: 40px;
-    left: 8px;
+    top: 32px;
+    left: 4px;
     z-index: 12000;
-    min-width: 260px;
+    min-width: 200px;
 
     ::ng-deep .session-switcher-menu {
-        border-radius: var(--bs-border-radius-lg);
+        width: 300px;
+        border-radius: 8px;
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        background-color: var(--iris-secondary-background);
+        font-size: 14px;
+        font-weight: 400;
+
+        // Cap menu height at ~5 visible items to prevent overflow in the widget
+        .p-menu-list {
+            padding: 8px;
+            max-height: 220px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--bs-border-color) transparent;
+
+            &::-webkit-scrollbar {
+                width: 4px;
+            }
+
+            &::-webkit-scrollbar-thumb {
+                background-color: var(--bs-border-color);
+                border-radius: 6px;
+            }
+
+            &::-webkit-scrollbar-track {
+                background: transparent;
+            }
+        }
+
+        // Override global "a:not(.btn):not(.tab-link):hover { text-decoration: underline !important }"
+        a.p-menu-item-link {
+            color: var(--bs-body-color);
+            text-decoration: none !important;
+
+            &:hover {
+                background-color: var(--iris-accent-background);
+                border-radius: 8px;
+                color: inherit;
+                text-decoration: none !important;
+            }
+        }
+
+        .session-menu-item-active {
+            background-color: var(--iris-tertiary-background);
+            border-radius: 8px;
+            color: var(--bs-body-color);
+        }
+
+        .session-menu-group-label {
+            .p-menu-item-label {
+                color: var(--iris-label-color);
+                font-size: 12px;
+                font-weight: 500;
+            }
+        }
     }
 }
 

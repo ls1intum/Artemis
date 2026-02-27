@@ -184,6 +184,7 @@
                 "last7Days": "Last 7 Days",
                 "last30Days": "Last 30 Days",
                 "older": "Older",
+                "recent": "Recent",
                 "relatedEntityTooltip": {
                     "programmingExercise": "This chat is related to a programming exercise.",
                     "lecture": "This chat is related to a lecture."
@@ -193,7 +194,8 @@
                 "deleteSessionQuestion": "Are you sure you want to delete the chat session \"{{title}}\"? This action cannot be undone.",
                 "deleteSessionSuccess": "Chat session deleted.",
                 "deleteSessionError": "Failed to delete chat session.",
-                "sessionMenuAriaLabel": "Chat session actions"
+                "sessionMenuAriaLabel": "Chat session actions",
+                "switchSession": "Switch chat session"
             },
             "aboutIrisModal": {
                 "meetIris": "Meet Iris",
@@ -218,8 +220,7 @@
                 "privacyDescLocal": "Iris processes interactions entirely on your institution's own infrastructure. No data is sent to external servers.",
                 "privacyDisclaimer": "Review your institution's privacy policy for details.",
                 "tryIris": "Try Iris",
-                "close": "Close",
-                "switchSession": "Switch chat session"
+                "close": "Close"
             },
             "memories": {
                 "title": "Memories",
