@@ -292,6 +292,7 @@ public class ExamResource {
         Comparator<ZonedDateTime> comparator = ExamDateUtil.truncatedComparator();
         boolean visibleOrStartDateChanged = comparator.compare(originalExam.getVisibleDate(), updatedExam.getVisibleDate()) != 0
                 || comparator.compare(originalExam.getStartDate(), updatedExam.getStartDate()) != 0;
+        boolean endDateChanged = comparator.compare(originalExam.getEndDate(), updatedExam.getEndDate()) != 0;
         if (visibleOrStartDateChanged) {
             // for all programming exercises in the exam, send their ids for scheduling
             examWithExercises.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).filter(ProgrammingExercise.class::isInstance).map(Exercise::getId)
@@ -305,7 +306,7 @@ public class ExamResource {
             examService.updateStudentExamsAndRescheduleExercises(examWithStudentExams, originalExamDuration, workingTimeChange);
         }
 
-        examService.syncExamExercisesMetadata(originalExam, updatedExam, examWithExercises);
+        examService.syncExamExercisesMetadata(examWithExercises, visibleOrStartDateChanged, endDateChanged);
 
         if (updatedChannel != null) {
             savedExam.setChannelName(updatedExam.getChannelName());

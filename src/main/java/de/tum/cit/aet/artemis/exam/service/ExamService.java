@@ -87,7 +87,6 @@ import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
-import de.tum.cit.aet.artemis.exam.util.ExamDateUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -1571,16 +1570,11 @@ public class ExamService {
     /**
      * Syncs exam exercises with Weaviate if visible date, start date, or end date has changed.
      *
-     * @param originalExam      the original exam before the update
-     * @param updatedExam       the updated exam
-     * @param examWithExercises the exam with exercises loaded
+     * @param examWithExercises         the exam with exercises loaded
+     * @param visibleOrStartDateChanged whether the visible or start date has changed
+     * @param endDateChanged            whether the end date has changed
      */
-    public void syncExamExercisesMetadata(Exam originalExam, Exam updatedExam, Exam examWithExercises) {
-        Comparator<ZonedDateTime> comparator = ExamDateUtil.truncatedComparator();
-        boolean visibleOrStartDateChanged = comparator.compare(originalExam.getVisibleDate(), updatedExam.getVisibleDate()) != 0
-                || comparator.compare(originalExam.getStartDate(), updatedExam.getStartDate()) != 0;
-        boolean endDateChanged = comparator.compare(originalExam.getEndDate(), updatedExam.getEndDate()) != 0;
-
+    public void syncExamExercisesMetadata(Exam examWithExercises, boolean visibleOrStartDateChanged, boolean endDateChanged) {
         if (visibleOrStartDateChanged || endDateChanged) {
             exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.updateExamExercisesAsync(examWithExercises));
         }
