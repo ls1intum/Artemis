@@ -63,6 +63,9 @@ export class TableView<T> {
     itemRangeBegin = computed(() => (this.totalRows() === 0 ? 0 : Math.min(this.totalRows(), this.currentFirst() + 1)));
     itemRangeEnd = computed(() => Math.min(this.totalRows(), this.currentFirst() + this.pageSize()));
 
+    /** Pre-built renderer params for every cell, indexed as [rowIndex][colIndex]. Recomputed only when vals() or cols() change. */
+    renderedRows = computed(() => this.vals().map((data, rowIndex) => this.cols().map((col) => this.buildRendererParams(data, col, rowIndex))));
+
     onGlobalSearch(event: string): void {
         const value = event.trim().toLowerCase();
 

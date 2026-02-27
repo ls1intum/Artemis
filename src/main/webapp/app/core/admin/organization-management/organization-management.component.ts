@@ -59,6 +59,7 @@ export class OrganizationManagementComponent {
             next: () => {
                 this.dialogErrorSource.next('');
                 this.organizations.set(this.organizations().filter((org) => org.id !== organizationId));
+                this.totalCount.set(this.totalCount() - 1);
             },
             error: (error: HttpErrorResponse) => {
                 this.dialogErrorSource.next('An error occurred while removing the organization: ' + error.message);

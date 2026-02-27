@@ -6,7 +6,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TableLazyLoadEvent } from 'primeng/table';
 import { CellRendererParams, ColumnDef, TableView } from 'app/shared/table-view/table-view';
 import { buildDbQueryFromLazyEvent } from 'app/shared/table-view/request-builder';
-import { AlertService } from '../service/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
 
