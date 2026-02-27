@@ -315,24 +315,41 @@ export class IrisCitationTextComponent {
         const summary = citation.querySelector('.iris-citation__summary') as HTMLElement | null;
         if (!summary) return;
 
+        // Different boundaries for horizontal and vertical collision detection
         const bubble = citation.closest('.bubble-left') as HTMLElement | null;
-        const boundary = bubble ?? (citation.closest('jhi-iris-citation-text') as HTMLElement);
+        const messagesDiv = citation.closest('div.messages') as HTMLElement | null;
+        const defaultBoundary = citation.closest('jhi-iris-citation-text') as HTMLElement;
 
-        if (!boundary) return;
+        const horizontalBoundary = bubble ?? defaultBoundary;
+        const verticalBoundary = messagesDiv ?? defaultBoundary;
 
+        if (!horizontalBoundary || !verticalBoundary) return;
+
+        // Reset positioning to get accurate measurements
         citation.style.setProperty('--iris-citation-shift', '0px');
-        const boundaryRect = boundary.getBoundingClientRect();
+        citation.style.setProperty('--iris-citation-vertical-offset', 'calc(-100% - 18px)');
+
+        const horizontalBoundaryRect = horizontalBoundary.getBoundingClientRect();
+        const verticalBoundaryRect = verticalBoundary.getBoundingClientRect();
         const summaryRect = summary.getBoundingClientRect();
 
+        // horizontal collision detection
         let shift = 0;
-        if (summaryRect.left < boundaryRect.left) {
-            shift = boundaryRect.left - summaryRect.left;
-        } else if (summaryRect.right > boundaryRect.right) {
-            shift = boundaryRect.right - summaryRect.right;
+        if (summaryRect.left < horizontalBoundaryRect.left) {
+            shift = horizontalBoundaryRect.left - summaryRect.left;
+        } else if (summaryRect.right > horizontalBoundaryRect.right) {
+            shift = horizontalBoundaryRect.right - summaryRect.right;
         }
-
         if (shift !== 0) {
             citation.style.setProperty('--iris-citation-shift', `${shift}px`);
+        }
+
+        // vertical collision detection
+        if (summaryRect.top < verticalBoundaryRect.top) {
+            citation.style.setProperty('--iris-citation-vertical-offset', '0px');
+            summary.classList.add('iris-citation__summary--flipped');
+        } else {
+            summary.classList.remove('iris-citation__summary--flipped');
         }
     }
 
@@ -349,6 +366,9 @@ export class IrisCitationTextComponent {
         const relatedTarget = event.relatedTarget as HTMLElement | null;
         if (relatedTarget && citation.contains(relatedTarget)) return;
 
-        citation.style.setProperty('--iris-citation-shift', '0px');
+        // Only remove the flipped class - don't reset CSS properties to avoid visual jump during fade-out
+        // Properties will be reset on next mouseover anyway
+        const summary = citation.querySelector('.iris-citation__summary') as HTMLElement | null;
+        summary?.classList.remove('iris-citation__summary--flipped');
     }
 }
