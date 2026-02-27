@@ -1044,9 +1044,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
     it('should delegate global refinement to service and show diff on success', () => {
         (problemStatementService.refineGlobally as jest.Mock).mockReturnValue(of({ success: true, content: 'Refined content' }));
 
-        comp.templateLoaded.set(true);
-        comp.templateProblemStatement.set('Template');
-        comp['currentProblemStatement'].set('Original problem statement');
+        comp.aiOps.templateLoaded.set(true);
+        comp.aiOps.templateProblemStatement.set('Template');
+        comp.aiOps.currentProblemStatement.set('Original problem statement');
         comp.refinementPrompt.set('Improve clarity');
 
         comp.submitRefinement();
