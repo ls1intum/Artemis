@@ -74,6 +74,7 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStu
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
+import de.tum.cit.aet.artemis.shared.WeaviateTestConfiguration;
 import de.tum.cit.aet.artemis.shared.WeaviateTestContainerFactory;
 
 // Must start up an actual web server such that the tests can communicate with the ArtemisGitServlet using JGit.
@@ -110,8 +111,6 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     protected static final WeaviateContainer weaviateContainer;
 
-    private static final String WEAVIATE_COLLECTION_PREFIX = "Test_";
-
     // Static initializer runs before @DynamicPropertySource, ensuring ports and containers are available when Spring context starts
     static {
         serverPort = findAvailableTcpPort();
@@ -128,14 +127,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         registry.add("artemis.version-control.ssh-template-clone-url", () -> "ssh://git@localhost:" + sshPort + "/");
         registry.add("spring.hazelcast.port", () -> hazelcastPort);
 
-        if (weaviateContainer != null && weaviateContainer.isRunning()) {
-            registry.add("artemis.weaviate.enabled", () -> true);
-            registry.add("artemis.weaviate.http-host", weaviateContainer::getHost);
-            registry.add("artemis.weaviate.http-port", () -> weaviateContainer.getMappedPort(8080));
-            registry.add("artemis.weaviate.grpc-port", () -> weaviateContainer.getMappedPort(50051));
-            registry.add("artemis.weaviate.scheme", () -> "http");
-            registry.add("artemis.weaviate.collection-prefix", () -> WEAVIATE_COLLECTION_PREFIX);
-        }
+        WeaviateTestConfiguration.registerWeaviateProperties(registry, weaviateContainer);
     }
 
     private static int findAvailableTcpPort() {

@@ -56,6 +56,7 @@ import de.tum.cit.aet.artemis.nebula.service.TumLiveService;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.shared.WeaviateTestConfiguration;
 import de.tum.cit.aet.artemis.shared.WeaviateTestContainerFactory;
 
 /**
@@ -76,22 +77,13 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
 
     protected static final WeaviateContainer weaviateContainer;
 
-    private static final String WEAVIATE_COLLECTION_PREFIX = "Test";
-
     static {
         weaviateContainer = WeaviateTestContainerFactory.getContainer();
     }
 
     @DynamicPropertySource
     static void registerWeaviateProperties(DynamicPropertyRegistry registry) {
-        if (weaviateContainer != null && weaviateContainer.isRunning()) {
-            registry.add("artemis.weaviate.enabled", () -> true);
-            registry.add("artemis.weaviate.http-host", weaviateContainer::getHost);
-            registry.add("artemis.weaviate.http-port", () -> weaviateContainer.getMappedPort(8080));
-            registry.add("artemis.weaviate.grpc-port", () -> weaviateContainer.getMappedPort(50051));
-            registry.add("artemis.weaviate.scheme", () -> "http");
-            registry.add("artemis.weaviate.collection-prefix", () -> WEAVIATE_COLLECTION_PREFIX);
-        }
+        WeaviateTestConfiguration.registerWeaviateProperties(registry, weaviateContainer);
     }
 
     @MockitoSpyBean
