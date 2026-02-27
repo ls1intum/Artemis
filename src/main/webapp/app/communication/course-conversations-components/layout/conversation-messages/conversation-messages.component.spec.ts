@@ -169,6 +169,9 @@ examples.forEach((activeConversation) => {
             tick();
             expect(fetchNextPageSpy).not.toHaveBeenCalled();
 
+            // Set up state so more posts are available (triggers fetchNextPage)
+            component.posts = [{ id: 1 } as Post, { id: 2 } as Post];
+            component.totalNumberOfPosts = 100;
             const nonExistingScrollPosition = 999;
             component.goToLastSelectedElement(nonExistingScrollPosition, false);
             tick();
@@ -592,10 +595,7 @@ examples.forEach((activeConversation) => {
             const currentUser = { id: 99, internal: false };
             const otherUser = { id: 42, internal: false };
 
-            component._activeConversation = {
-                ...component._activeConversation,
-                lastReadDate,
-            };
+            component._activeConversation = Object.assign({}, component._activeConversation, { lastReadDate });
 
             component.currentUser = currentUser;
 
@@ -614,10 +614,7 @@ examples.forEach((activeConversation) => {
             const currentUser = { id: 99, internal: false };
             const otherUser = { id: 42, internal: false };
 
-            component._activeConversation = {
-                ...component._activeConversation,
-                lastReadDate,
-            };
+            component._activeConversation = Object.assign({}, component._activeConversation, { lastReadDate });
 
             component.currentUser = currentUser;
 
@@ -807,10 +804,7 @@ examples.forEach((activeConversation) => {
             const currentUser = { id: 99, internal: false };
             const otherUser = { id: 42, internal: false };
 
-            component._activeConversation = {
-                ...component._activeConversation,
-                lastReadDate,
-            };
+            component._activeConversation = Object.assign({}, component._activeConversation, { lastReadDate });
             component.currentUser = currentUser;
             component.allPosts = [
                 { id: 1, creationDate: dayjs().subtract(15, 'minutes'), author: otherUser } as Post,
@@ -843,10 +837,7 @@ examples.forEach((activeConversation) => {
         });
 
         it('should scroll to bottom when no saved position and no unread posts', () => {
-            component._activeConversation = {
-                ...component._activeConversation,
-                lastReadDate: dayjs(),
-            };
+            component._activeConversation = Object.assign({}, component._activeConversation, { lastReadDate: dayjs() });
             component.currentUser = { id: 99, internal: false } as any;
             component.allPosts = [{ id: 1, creationDate: dayjs().subtract(15, 'minutes'), author: { id: 99, internal: false } } as Post];
 
@@ -889,7 +880,7 @@ examples.forEach((activeConversation) => {
             (component as any).initialScrollComplete = true;
             component.canStartSaving = true;
 
-            const newConversation = { ...activeConversation, id: 999 };
+            const newConversation = Object.assign({}, activeConversation, { id: 999 });
             jest.spyOn(metisService, 'fetchAllPinnedPosts').mockReturnValue(of([]));
 
             component._activeConversation = newConversation;
@@ -912,6 +903,60 @@ examples.forEach((activeConversation) => {
 
             expect((component as any).initialScrollComplete).toBeTrue();
             expect(component.canStartSaving).toBeTrue();
+        });
+
+        it('should scroll to bottom when currentUser is not yet available in scrollToUnreadOrBottom', () => {
+            component.currentUser = undefined as any;
+            const scrollToBottomSpy = jest.spyOn(component, 'scrollToBottomOfMessages').mockImplementation(() => {});
+
+            (component as any).scrollToUnreadOrBottom();
+
+            expect(scrollToBottomSpy).toHaveBeenCalledOnce();
+            expect(component.canStartSaving).toBeTrue();
+            expect((component as any).initialScrollComplete).toBeTrue();
+        });
+
+        it('should fall back to scrollToUnreadOrBottom when stored post ID is stale and all pages are loaded', async () => {
+            (component as any).initialScrollComplete = false;
+            component.totalNumberOfPosts = 2;
+            component.posts = [{ id: 1 } as Post, { id: 2 } as Post];
+
+            const mockMessages = [
+                { post: { id: 1 }, elementRef: { nativeElement: { offsetTop: 0 } } },
+                { post: { id: 2 }, elementRef: { nativeElement: { offsetTop: 100 } } },
+            ] as unknown as PostingThreadComponent[];
+            component.messages = {
+                toArray: () => mockMessages,
+                find: (fn: any) => mockMessages.find(fn),
+            } as any;
+
+            const scrollToUnreadOrBottomSpy = jest.spyOn(component as any, 'scrollToUnreadOrBottom').mockImplementation(() => {});
+            const fetchNextPageSpy = jest.spyOn(component, 'fetchNextPage');
+
+            await component.goToLastSelectedElement(999, false);
+
+            expect(fetchNextPageSpy).not.toHaveBeenCalled();
+            expect(scrollToUnreadOrBottomSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should fetch next page when stored post ID is stale but more posts are available', async () => {
+            (component as any).initialScrollComplete = false;
+            component.totalNumberOfPosts = 100;
+            component.posts = [{ id: 1 } as Post, { id: 2 } as Post];
+
+            const mockMessages = [
+                { post: { id: 1 }, elementRef: { nativeElement: { offsetTop: 0 } } },
+                { post: { id: 2 }, elementRef: { nativeElement: { offsetTop: 100 } } },
+            ] as unknown as PostingThreadComponent[];
+            component.messages = {
+                toArray: () => mockMessages,
+            } as any;
+
+            const fetchNextPageSpy = jest.spyOn(component, 'fetchNextPage').mockImplementation(() => {});
+
+            await component.goToLastSelectedElement(999, false);
+
+            expect(fetchNextPageSpy).toHaveBeenCalledOnce();
         });
     });
 });

@@ -276,6 +276,12 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
      * Also enables scroll position saving once the initial scroll is complete.
      */
     private scrollToUnreadOrBottom(): void {
+        if (!this.currentUser) {
+            this.scrollToBottomOfMessages();
+            this.canStartSaving = true;
+            this.initialScrollComplete = true;
+            return;
+        }
         this.computeLastReadState();
         this.setFirstUnreadPostId();
         if (this.firstUnreadPostId) {
@@ -693,7 +699,13 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         const element = messageArray.find((message) => message.post.id === lastScrollPosition); // Suchen nach dem Post
 
         if (!element) {
-            this.fetchNextPage();
+            const hasMorePosts = this.posts.length < this.totalNumberOfPosts;
+            if (hasMorePosts) {
+                this.fetchNextPage();
+            } else {
+                this.scrollToUnreadOrBottom();
+            }
+            return;
         } else {
             // We scroll to the element with a slight buffer to ensure its fully visible (-10)
             this.content.nativeElement.scrollTop = Math.max(0, element.elementRef.nativeElement.offsetTop - 10);
