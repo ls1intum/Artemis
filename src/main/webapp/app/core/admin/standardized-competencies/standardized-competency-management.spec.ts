@@ -4,6 +4,20 @@
  * including CRUD operations, tree navigation, and filtering.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('interactjs', () => {
+    const mockOn = vi.fn((eventName: string, callback: (event: any) => void) => {
+        return { on: mockOn };
+    });
+    const mockResizable = vi.fn(() => ({ on: mockOn }));
+    const mockInteract = Object.assign(
+        vi.fn(() => ({ resizable: mockResizable, unset: vi.fn() })),
+        {
+            modifiers: { restrictSize: vi.fn(() => ({})) },
+        },
+    );
+    return { default: mockInteract };
+});
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of } from 'rxjs';
@@ -482,6 +496,21 @@ describe('StandardizedCompetencyManagementComponent', () => {
         const newParent = knowledgeAreaMap.get(newParentId)!;
         expect(newParent.children).toHaveLength(2);
         expect(newParent.children).toContainEqual(expectedKnowledgeAreaInTree);
+    });
+
+    it('should show drag handle when detail panel is visible', () => {
+        component['selectedKnowledgeArea'].set({ id: 1, title: 'test' });
+        componentFixture.detectChanges();
+
+        const dragHandle = componentFixture.debugElement.query(By.css('.draggable-left'));
+        expect(dragHandle).toBeTruthy();
+    });
+
+    it('should not show detail panel when nothing is selected', () => {
+        componentFixture.detectChanges();
+
+        const detailPanel = componentFixture.debugElement.query(By.css('.sc-detail-panel'));
+        expect(detailPanel).toBeNull();
     });
 
     it('should not deactivate with pending changes', () => {

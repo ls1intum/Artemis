@@ -1,5 +1,15 @@
-import { Component, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
-import { faChevronRight, faDownLeftAndUpRightToCenter, faEye, faFileExport, faFileImport, faPlus, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
+import { AfterViewInit, Component, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
+import {
+    faChevronRight,
+    faDownLeftAndUpRightToCenter,
+    faEye,
+    faFileExport,
+    faFileImport,
+    faGripLinesVertical,
+    faPlus,
+    faUpRightAndDownLeftFromCenter,
+} from '@fortawesome/free-solid-svg-icons';
+import interact from 'interactjs';
 import {
     KnowledgeAreaDTO,
     KnowledgeAreaForTree,
@@ -58,7 +68,7 @@ import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title
         AdminTitleBarActionsDirective,
     ],
 })
-export class StandardizedCompetencyManagementComponent extends StandardizedCompetencyFilterPageComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
+export class StandardizedCompetencyManagementComponent extends StandardizedCompetencyFilterPageComponent implements OnInit, AfterViewInit, OnDestroy, ComponentCanDeactivate {
     private adminStandardizedCompetencyService = inject(AdminStandardizedCompetencyService);
     private standardizedCompetencyService = inject(StandardizedCompetencyService);
     private alertService = inject(AlertService);
@@ -87,6 +97,9 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
     private dialogErrorSource = new Subject<string>();
     protected dialogError = this.dialogErrorSource.asObservable();
 
+    /** width of the detail panel in px, persisted across panel switches */
+    protected readonly detailPanelWidth = signal<number | undefined>(undefined);
+
     // Icons
     protected readonly faChevronRight = faChevronRight;
     protected readonly faPlus = faPlus;
@@ -95,6 +108,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
     protected readonly faEye = faEye;
     protected readonly faFileImport = faFileImport;
     protected readonly faFileExport = faFileExport;
+    protected readonly faGripLinesVertical = faGripLinesVertical;
     // Other constants for template
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
@@ -123,8 +137,33 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
         });
     }
 
+    ngAfterViewInit() {
+        interact('.sc-detail-panel')
+            .resizable({
+                edges: { left: '.draggable-left', right: false, bottom: false, top: false },
+                modifiers: [
+                    interact.modifiers!.restrictSize({
+                        min: { width: 250, height: 0 },
+                        max: { width: 1100, height: 2000 },
+                    }),
+                ],
+                inertia: true,
+            })
+            .on('resizestart', function (event: any) {
+                event.target.classList.add('card-resizable');
+            })
+            .on('resizeend', function (event: any) {
+                event.target.classList.remove('card-resizable');
+            })
+            .on('resizemove', (event: any) => {
+                event.target.style.width = event.rect.width + 'px';
+                this.detailPanelWidth.set(event.rect.width);
+            });
+    }
+
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
+        interact('.sc-detail-panel').unset();
     }
 
     exportStandardizedCompetencyCatalog() {
