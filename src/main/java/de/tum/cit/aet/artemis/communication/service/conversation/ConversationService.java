@@ -251,7 +251,8 @@ public class ConversationService {
             throw new BadRequestAlertException("You cannot mark your own message as unread", "post", "cannotMarkOwnAsUnread");
         }
         ZonedDateTime messageDate = post.getCreationDate();
-        ZonedDateTime lastRead = messageDate.minusNanos(1_000_000); // set last read to 1ms before the message date
+        // Subtract 1ms so that lastRead falls just before the target message, ensuring the target message itself appears as unread.
+        ZonedDateTime lastRead = messageDate.minusNanos(1_000_000);
         // Recalculate unread count from this message onwards
         conversationParticipantRepository.markFromMessageAsUnread(conversationId, userId, messageDate, lastRead);
     }

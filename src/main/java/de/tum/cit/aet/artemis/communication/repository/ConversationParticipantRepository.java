@@ -65,7 +65,9 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
             """)
     void updateLastReadAsync(@Param("userId") Long userId, @Param("conversationId") Long conversationId, @Param("now") ZonedDateTime now);
 
-    // Mark a message and all subsequent messages as unread
+    /**
+     * Mark a message and all subsequent messages as unread.
+     */
     @Transactional
     @Modifying
     @Query("""
