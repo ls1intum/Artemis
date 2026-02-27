@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.iris.web;
 
-import java.util.List;
-
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +14,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
-import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryDTO;
+import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryDataDTO;
 import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryWithRelationsDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
 
@@ -27,7 +25,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
 @FeatureToggle(Feature.Memiris)
 @Lazy
 @RestController
-@RequestMapping("api/iris/memories/")
+@RequestMapping("api/iris/")
 public class IrisMemoryResource {
 
     private final UserRepository userRepository;
@@ -40,25 +38,25 @@ public class IrisMemoryResource {
     }
 
     /**
-     * GET iris/memories/user: Retrieve all Memiris memories for the current user.
+     * GET iris/user/memory-data: Retrieve aggregated Memiris memory data for the current user.
      *
-     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and body the list of memories
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and body the aggregated memory data
      */
-    @GetMapping("user")
+    @GetMapping("user/memory-data")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<MemirisMemoryDTO>> listMemories() {
+    public ResponseEntity<MemirisMemoryDataDTO> listMemoryData() {
         var user = userRepository.getUser();
-        var memories = pyrisConnectorService.listMemirisMemories(user.getId());
+        var memories = pyrisConnectorService.listMemirisMemoryData(user.getId());
         return ResponseEntity.ok(memories);
     }
 
     /**
-     * DELETE iris/memories/user/{memoryId}: Delete a specific Memiris memory for the current user.
+     * DELETE iris/user/memory/{memoryId}: Delete a specific Memiris memory for the current user.
      *
      * @param memoryId the id of the memory to delete
      * @return the {@link ResponseEntity} with status {@code 204 (No Content)}
      */
-    @DeleteMapping("user/{memoryId}")
+    @DeleteMapping("user/memory/{memoryId}")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteMemory(@PathVariable String memoryId) {
         var user = userRepository.getUser();
@@ -67,13 +65,13 @@ public class IrisMemoryResource {
     }
 
     /**
-     * GET iris/memories/user/{memoryId}: Retrieve a Memiris memory with its learnings and connections.
+     * GET iris/user/memory/{memoryId}: Retrieve a Memiris memory with its learnings and connections.
      *
      * @param memoryId the id of the memory to retrieve
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and body the flattened memory DTO,
      *         or {@code 404 (Not Found)} if the memory does not exist
      */
-    @GetMapping("user/{memoryId}")
+    @GetMapping("user/memory/{memoryId}")
     @EnforceAtLeastStudent
     public ResponseEntity<MemirisMemoryWithRelationsDTO> getMemoryWithRelations(@PathVariable String memoryId) {
         var user = userRepository.getUser();
