@@ -1,6 +1,6 @@
 import { ProfileInfo, ProgrammingLanguageFeature } from 'app/core/layouts/profiles/profile-info.model';
 import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
-import { PROFILE_APOLLON, PROFILE_ATHENA, PROFILE_JENKINS, PROFILE_PROD } from 'app/app.constants';
+import { MODULE_FEATURE_APOLLON, PROFILE_ATHENA, PROFILE_JENKINS, PROFILE_PROD } from 'app/app.constants';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 
 const programmingLanguageFeatures: ProgrammingLanguageFeature[] = [
@@ -80,8 +80,8 @@ const buildInformation = {
 
 export const expectedProfileInfo: ProfileInfo = {
     localLLMDeploymentEnabled: false,
-    activeModuleFeatures: [],
-    activeProfiles: [PROFILE_PROD, PROFILE_JENKINS, PROFILE_ATHENA, PROFILE_APOLLON],
+    activeModuleFeatures: [MODULE_FEATURE_APOLLON],
+    activeProfiles: [PROFILE_PROD, PROFILE_JENKINS, PROFILE_ATHENA],
     allowedEmailPattern: '([a-zA-Z0-9_\\-\\.\\+]+)@((tum\\.de)|(in\\.tum\\.de)|(mytum\\.de))',
     allowedEmailPatternReadable: '@tum.de, @in.tum.de, @mytum.de',
     build: buildInformation,

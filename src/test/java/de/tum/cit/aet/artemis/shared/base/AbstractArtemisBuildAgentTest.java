@@ -63,7 +63,7 @@ import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessS
         // Use Local data store for tests to ensure isConnectedToCluster() always returns true
         "artemis.continuous-integration.data-store=Local",
         // Build agents should not have Spring AI enabled - override 'local' profile which enables hyperion
-        "artemis.hyperion.enabled=false", "artemis.atlas.enabled=false" })
+        "artemis.hyperion.enabled=false", "artemis.atlas.enabled=false", "artemis.apollon.enabled=false" })
 public abstract class AbstractArtemisBuildAgentTest {
 
     @Autowired

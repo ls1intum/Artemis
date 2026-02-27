@@ -497,17 +497,20 @@ info:
 
 <a href="https://github.com/ls1intum/Apollon_converter">Apollon Converter</a> is needed to convert models from their JSON representation to PDF. Special configuration is required:
 
-#### Enable the apollon Spring profile
-```
---spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,core,local,apollon
+#### Enable Apollon PDF export
+```yaml
+artemis:
+  apollon:
+    enabled: true
 ```
 
 #### Configure API Endpoints
 
 The Apollon conversion service is running on a dedicated machine and is addressed via HTTP. We need to extend the configuration in the file `src/main/resources/config/application-artemis.yml` like so:
 ```yaml
-apollon:
-   conversion-service-url: http://localhost:8080
+artemis:
+  apollon:
+    conversion-service-url: http://localhost:8080
 ```
 
 ---

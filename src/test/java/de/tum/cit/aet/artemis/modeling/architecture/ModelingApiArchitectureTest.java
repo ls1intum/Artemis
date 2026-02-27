@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.modeling.architecture;
 
 import java.util.Set;
 
+import de.tum.cit.aet.artemis.modeling.config.ApollonEnabled;
 import de.tum.cit.aet.artemis.modeling.config.ModelingApiNotPresentException;
 import de.tum.cit.aet.artemis.shared.architecture.module.AbstractModuleAccessArchitectureTest;
 
@@ -14,6 +15,7 @@ class ModelingApiArchitectureTest extends AbstractModuleAccessArchitectureTest {
 
     @Override
     protected Set<Class<?>> getIgnoredClasses() {
-        return Set.of(ModelingApiNotPresentException.class);
+        // ApollonEnabled is used by RestTemplateConfiguration to conditionally create apollon RestTemplate beans
+        return Set.of(ModelingApiNotPresentException.class, ApollonEnabled.class);
     }
 }

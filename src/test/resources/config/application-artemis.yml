@@ -69,6 +69,7 @@ artemis:
         url: http://iris.fake
         secret-token: secret-token
     apollon:
+        enabled: true # Enables PDF export of diagrams via external conversion service (modeling editor works without this)
         conversion-service-url: http://localhost:8080
     telemetry:
         enabled: false
