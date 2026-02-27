@@ -8,6 +8,7 @@ import java.util.HashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -34,7 +35,8 @@ public class StatelessJenkinsCITriggerService implements ContinuousIntegrationTr
 
     private final StatelessJenkinsCIService statelessJenkinsCIService;
 
-    private final String vscAccessToken = "TODO";
+    @Value("${artemis.continuous-integration.vcs-credentials}")
+    private String vscAccessToken;
 
     @Autowired
     private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
@@ -58,30 +60,32 @@ public class StatelessJenkinsCITriggerService implements ContinuousIntegrationTr
             // Prepare the build trigger request DTO
             Long exerciseID = participation.getProgrammingExercise().getId();
             Long participationID = participation.getId();
+            var programmingLanguage = participation.getProgrammingExercise().getProgrammingLanguage();
 
             // Get Build Script
             ProgrammingExerciseBuildConfig buildConfig = programmingExerciseBuildConfigRepository.findByIdElseThrow(exerciseID);
             String buildScript = buildConfig.getBuildScript();
 
             // Create the submission repository DTO
-            var exerciseRepository = new RepositoryDTO(participation.getUserIndependentRepositoryUri(), commitHash, null, vscAccessToken);
+            var exerciseRepository = new RepositoryDTO(participation.getVcsRepositoryUri().toString(), commitHash, null, vscAccessToken);
 
             // Create the test repository DTO based on the corresponding exercise
-            var testRepository = new RepositoryDTO(participation.getProgrammingExercise().getTestRepositoryUri().toString(), null, null, vscAccessToken);
+            var testRepository = new RepositoryDTO(participation.getProgrammingExercise().getTestRepositoryUri(), null, null, vscAccessToken);
+
+            var auxiliaryRepository = new ArrayList<RepositoryDTO>();
 
             // Jenkins uses groovy script
             String scriptType = BuildTriggerRequestDTO.ScriptType.GROOVY.getValue();
 
-            var auxiliaryRepository = new ArrayList<RepositoryDTO>();
             var additionalProperties = new HashMap<String, String>();
+            additionalProperties.put("gitCredentialsKey", vscAccessToken);
 
             // Create the build trigger request DTO
             BuildTriggerRequestDTO buildTriggerRequest = new BuildTriggerRequestDTO(exerciseID, participationID, exerciseRepository, testRepository, auxiliaryRepository,
-                    buildScript, scriptType, participation.getProgrammingExercise().getProgrammingLanguage().toString(), additionalProperties);
+                    buildScript, scriptType, programmingLanguage.toString(), additionalProperties);
 
             // Delegate to connector service
             statelessJenkinsCIService.build(buildTriggerRequest);
-
         }
         catch (Exception e) {
             log.error("Failed to trigger build for participation {}", participation.getId(), e);
