@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
@@ -282,6 +283,9 @@ public class ParticipationService {
      */
     public StudentParticipation startPracticeMode(Exercise exercise, Participant participant, Optional<StudentParticipation> optionalGradedStudentParticipation,
             boolean useGradedParticipation) {
+        if (exercise instanceof FileUploadExercise) {
+            throw new IllegalStateException("File upload exercises do not support practice mode");
+        }
         optionalGradedStudentParticipation.ifPresent(participation -> {
             participation.setInitializationState(InitializationState.FINISHED);
             participationRepository.save(participation);
@@ -323,6 +327,11 @@ public class ParticipationService {
             participation.setAttempt(1);
             if (participation.getInitializationDate() == null) {
                 participation.setInitializationDate(ZonedDateTime.now());
+            }
+            // Initialize a submission for text and modeling exercises
+            // (quiz exercises create their own submissions at submission time)
+            if (!(exercise instanceof QuizExercise) && !submissionRepository.existsByParticipationId(participation.getId())) {
+                submissionRepository.initializeSubmission(participation, exercise, null);
             }
         }
 

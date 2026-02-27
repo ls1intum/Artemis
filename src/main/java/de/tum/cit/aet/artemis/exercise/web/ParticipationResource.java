@@ -202,7 +202,7 @@ public class ParticipationResource {
     public ResponseEntity<Participation> startPracticeParticipation(@PathVariable Long exerciseId,
             @RequestParam(value = "useGradedParticipation", defaultValue = "false") boolean useGradedParticipation) throws URISyntaxException {
         log.debug("REST request to practice Exercise : {}", exerciseId);
-        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId); // TODO ldv enabled for modeling and text only
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Optional<StudentParticipation> optionalGradedStudentParticipation = participationService.findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, user, false);
 
@@ -396,14 +396,14 @@ public class ParticipationResource {
         }
         boolean isDueDateInPast = exerciseDueDate != null && now().isAfter(exerciseDueDate);
         if (isDueDateInPast) {
-            if (exercise instanceof ProgrammingExercise) {
-                // at the moment, only programming exercises offer a dedicated practice mode
-                throw new AccessForbiddenAlertException("Not allowed", ENTITY_NAME, "dueDateOver.participationInPracticeMode");
-            }
-            else {
-                // all other exercise types are not allowed to be started after the due date
+            if (exercise instanceof FileUploadExercise) {
+                // file upload exercises do not support practice mode
                 throw new AccessForbiddenAlertException("The exercise due date is already over, you can no longer participate in this exercise.", ENTITY_NAME,
                         "dueDateOver.noParticipationPossible");
+            }
+            else {
+                // programming, text, modeling, and quiz exercises offer a dedicated practice mode
+                throw new AccessForbiddenAlertException("Not allowed", ENTITY_NAME, "dueDateOver.participationInPracticeMode");
             }
         }
 
