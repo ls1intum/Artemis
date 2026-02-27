@@ -648,6 +648,26 @@ describe('UserManagementUpdateComponent', () => {
 
             expect(component.editForm.get('internal')?.disabled).toBe(true);
         });
+
+        it('should validate email format and reject invalid emails', () => {
+            component.user = new User(); // New user
+            // @ts-ignore - accessing private method for testing
+            component.initializeForm();
+
+            const emailControl = component.editForm.get('email')!;
+
+            // Valid email should pass validation
+            emailControl.setValue('user@example.com');
+            expect(emailControl.errors?.email).toBeUndefined();
+
+            // Invalid email without @ should fail validation
+            emailControl.setValue('abcde');
+            expect(emailControl.errors?.email).toBeTruthy();
+
+            // Invalid email without domain should fail validation
+            emailControl.setValue('user@');
+            expect(emailControl.errors?.email).toBeTruthy();
+        });
     });
 
     describe('authority management', () => {

@@ -58,6 +58,7 @@
         "server.not.reachable": "Server not reachable",
         "url.not.found": "Not found",
         "NotNull": "Field {{ fieldName }} cannot be empty!",
+        "Email": "Field {{ fieldName }} is not a valid email address!",
         "size": "Field {{ fieldName }} does not meet min/max size requirements!",
         "userExists": "Login name already in use!",
         "emailExists": "Email is already in use!",
