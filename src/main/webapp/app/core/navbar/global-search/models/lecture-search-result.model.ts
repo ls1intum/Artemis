@@ -8,4 +8,5 @@ export interface LectureSearchResult {
     courseName: string;
     pageNumber: number;
     baseUrl: string;
+    snippet?: string;
 }
