@@ -134,7 +134,7 @@ public class HyperionChecklistService {
 
         return Mono.fromCallable(() -> {
             List<QualityIssueDTO> issues = runQualityAnalysis(input, capturedParentObs);
-            return new ChecklistAnalysisResponseDTO(null, issues);
+            return new ChecklistAnalysisResponseDTO(BloomRadarDTO.empty(), issues);
         }).subscribeOn(Schedulers.boundedElastic()).timeout(ANALYSIS_TIMEOUT).onErrorResume(e -> {
             log.warn("Section analysis timed out or failed: QUALITY (exerciseId={})", request.exerciseId(), e);
             observation.error(e);

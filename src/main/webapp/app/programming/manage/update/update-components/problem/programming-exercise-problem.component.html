@@ -132,12 +132,11 @@
             }
         </div>
 
-        @if (hyperionEnabled && (programmingExercise()?.course?.id || programmingExercise()?.exerciseGroup?.exam?.course?.id)) {
+        @if (hyperionEnabled && (programmingExercise()?.course?.id ?? programmingExercise()?.exerciseGroup?.exam?.course?.id) !== null) {
             <jhi-checklist-panel
                 [exercise]="programmingExercise()!"
                 [courseId]="(programmingExercise()?.course?.id ?? programmingExercise()?.exerciseGroup?.exam?.course?.id)!"
                 [problemStatement]="programmingExercise()?.problemStatement ?? ''"
-                (problemStatementChange)="onInstructionChange($event)"
                 (problemStatementDiffRequest)="onChecklistActionDiffRequest($event)"
             />
         }

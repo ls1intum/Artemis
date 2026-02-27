@@ -74,7 +74,6 @@ export class ChecklistPanelComponent {
     courseId = input.required<number>();
     problemStatement = input.required<string>();
 
-    problemStatementChange = output<string>();
     problemStatementDiffRequest = output<string>();
 
     analysisResult = signal<ChecklistAnalysisResponse | undefined>(undefined);
