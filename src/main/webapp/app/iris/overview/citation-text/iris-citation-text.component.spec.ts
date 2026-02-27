@@ -126,6 +126,26 @@ describe('IrisCitationTextComponent', () => {
         expect(el.querySelector('.iris-citation__nav')).toBeFalsy();
     });
 
+    it('keeps citation bubble text unchanged when navigating grouped summaries', () => {
+        const citationInfo: IrisCitationMetaDTO[] = [
+            { entityId: 1, lectureTitle: 'L1', lectureUnitTitle: '' },
+            { entityId: 2, lectureTitle: 'L2', lectureUnitTitle: '' },
+        ];
+        const el = render('[cite:L:1:5:::FirstKeyword:S1] [cite:F:2::::SecondKeyword:S2]', citationInfo);
+
+        const group = el.querySelector('.iris-citation-group--has-summary') as HTMLElement;
+        const bubbleText = group.querySelector('.iris-citation__text') as HTMLElement;
+        const navButtons = group.querySelectorAll('.iris-citation__nav-button') as NodeListOf<HTMLElement>;
+
+        const initialText = bubbleText.textContent?.trim();
+
+        navButtons[1].click();
+        expect(bubbleText.textContent?.trim()).toBe(initialText);
+
+        navButtons[0].click();
+        expect(bubbleText.textContent?.trim()).toBe(initialText);
+    });
+
     it('adjusts tooltip shift based on overflow', () => {
         const { el, citation, summary } = setupTooltip();
 
