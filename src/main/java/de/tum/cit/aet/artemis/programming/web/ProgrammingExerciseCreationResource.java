@@ -126,7 +126,7 @@ public class ProgrammingExerciseCreationResource {
                 staticCodeAnalysisService.createDefaultCategories(newProgrammingExercise);
             }
 
-            exerciseVersionService.createExerciseVersionAndSyncMetadata(newProgrammingExercise);
+            exerciseVersionService.createExerciseVersion(newProgrammingExercise);
 
             return ResponseEntity.created(new URI("/api/programming/programming-exercises/" + newProgrammingExercise.getId())).body(newProgrammingExercise);
         }

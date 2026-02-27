@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +18,7 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.event.ExerciseVersionCreatedEvent;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.ExerciseSchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.ExerciseWeaviateDTO;
@@ -168,6 +170,23 @@ public class ExerciseWeaviateService {
         catch (Exception e) {
             log.error("Failed to extract exercise data for update: {}", e.getMessage(), e);
         }
+    }
+
+    /**
+     * Event listener that synchronizes exercise metadata to Weaviate when a version is created.
+     * This method is automatically invoked when an {@link ExerciseVersionCreatedEvent} is published,
+     * decoupling the versioning service from search indexing concerns.
+     * <p>
+     * Uses an upsert strategy (insert if new, update if exists) so no distinction is needed
+     * between new and updated exercises.
+     *
+     * @param event the exercise version created event
+     */
+    @EventListener
+    @Async
+    public void onExerciseVersionCreated(ExerciseVersionCreatedEvent event) {
+        // Delegate to existing upsert logic (insertExerciseAsync uses upsert internally)
+        insertExerciseAsync(event.exercise());
     }
 
     /**
