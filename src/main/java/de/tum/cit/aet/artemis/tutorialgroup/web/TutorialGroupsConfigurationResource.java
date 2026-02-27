@@ -7,6 +7,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -200,8 +201,16 @@ public class TutorialGroupsConfigurationResource {
                 if (freePeriod.end() == null) {
                     throw new BadRequestAlertException("Tutorial group free period end date must be set.", TUTORIAL_FREE_PERIOD_ENTITY_NAME, "tutorialFreePeriodEndDateMissing");
                 }
-                LocalDate freeStartDate = ZonedDateTime.parse(freePeriod.start()).toLocalDate();
-                LocalDate freeEndDate = ZonedDateTime.parse(freePeriod.end()).toLocalDate();
+                LocalDate freeStartDate;
+                LocalDate freeEndDate;
+                try {
+                    freeStartDate = ZonedDateTime.parse(freePeriod.start()).toLocalDate();
+                    freeEndDate = ZonedDateTime.parse(freePeriod.end()).toLocalDate();
+                }
+                catch (DateTimeParseException ex) {
+                    throw new BadRequestAlertException("Tutorial group free period start date and end date must be valid ISO 8601 date strings.", TUTORIAL_FREE_PERIOD_ENTITY_NAME,
+                            "tutorialFreePeriodInvalidFormat");
+                }
                 if (freeStartDate.isAfter(freeEndDate)) {
                     throw new BadRequestAlertException("Tutorial group free period start date must be before tutorial group free period end date.",
                             TUTORIAL_FREE_PERIOD_ENTITY_NAME, "tutorialFreePeriodInvalidOrder");
