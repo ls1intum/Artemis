@@ -48,9 +48,6 @@ describe('OrganizationSelectorComponent', () => {
         fixture = TestBed.createComponent(OrganizationSelectorComponent);
         component = fixture.componentInstance;
         organizationService = TestBed.inject(OrganizationManagementService);
-    });
-
-    beforeEach(() => {
         jest.clearAllMocks();
     });
 
