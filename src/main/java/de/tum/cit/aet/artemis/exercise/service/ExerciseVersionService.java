@@ -3,21 +3,32 @@ package de.tum.cit.aet.artemis.exercise.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
+import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
+import de.tum.cit.aet.artemis.exercise.dto.versioning.ProgrammingExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionRepository;
 import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewService;
 import de.tum.cit.aet.artemis.fileupload.api.FileUploadApi;
@@ -56,14 +67,18 @@ public class ExerciseVersionService {
 
     private final UserRepository userRepository;
 
+    private final ExerciseEditorSyncService exerciseEditorSyncService;
+
+    private final ChannelRepository channelRepository;
+
     private final ExerciseReviewService exerciseReviewService;
 
     private final Optional<ExerciseWeaviateService> exerciseWeaviateService;
 
     public ExerciseVersionService(ExerciseVersionRepository exerciseVersionRepository, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository,
             QuizExerciseRepository quizExerciseRepository, TextExerciseRepository textExerciseRepository, Optional<ModelingRepositoryApi> modelingRepositoryApi,
-            Optional<FileUploadApi> fileUploadApi, UserRepository userRepository, ExerciseReviewService exerciseReviewService,
-            Optional<ExerciseWeaviateService> exerciseWeaviateService) {
+            Optional<FileUploadApi> fileUploadApi, UserRepository userRepository, ExerciseEditorSyncService exerciseEditorSyncService, ChannelRepository channelRepository,
+            ExerciseReviewService exerciseReviewService, Optional<ExerciseWeaviateService> exerciseWeaviateService) {
         this.exerciseVersionRepository = exerciseVersionRepository;
         this.gitService = gitService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -72,17 +87,26 @@ public class ExerciseVersionService {
         this.modelingRepositoryApi = modelingRepositoryApi;
         this.fileUploadApi = fileUploadApi;
         this.userRepository = userRepository;
+        this.exerciseEditorSyncService = exerciseEditorSyncService;
+        this.channelRepository = channelRepository;
         this.exerciseReviewService = exerciseReviewService;
         this.exerciseWeaviateService = exerciseWeaviateService;
     }
 
+    /**
+     * Determines whether a repository type triggers exercise versioning.
+     *
+     * @param repositoryType the repository type
+     * @return true if the repository type is versionable
+     */
     public boolean isRepositoryTypeVersionable(RepositoryType repositoryType) {
         return REPO_TYPES_TRIGGERING_EXERCISE_VERSIONING.contains(repositoryType);
     }
 
     /**
      * Creates an exercise version. This function would fetch the exercise eagerly
-     * that corresponds to its type, and use the currently logged in user from {@link de.tum.cit.aet.artemis.core.security.SecurityUtils}
+     * that corresponds to its type, and use the currently logged in user from
+     * {@link de.tum.cit.aet.artemis.core.security.SecurityUtils}
      * initialize an {@link ExerciseSnapshotDTO} and create a new
      * {@link ExerciseVersion} to persist.
      *
@@ -132,6 +156,8 @@ public class ExerciseVersionService {
             }
             exerciseVersion.setExerciseSnapshot(exerciseSnapshot);
             ExerciseVersion savedExerciseVersion = exerciseVersionRepository.save(exerciseVersion);
+            this.determineSynchronizationForActiveEditors(exercise.getId(), exerciseSnapshot, previousVersion.map(ExerciseVersion::getExerciseSnapshot).orElse(null), author,
+                    savedExerciseVersion.getId());
             log.info("Exercise version {} has been created for exercise {}", savedExerciseVersion.getId(), exercise.getId());
             previousVersion.ifPresent(prev -> {
                 try {
@@ -143,6 +169,9 @@ public class ExerciseVersionService {
             });
         }
         catch (Exception e) {
+            // Intentionally swallowed: exercise version creation is a non-critical side effect
+            // of saving an exercise. Failures here (e.g. serialization issues, DB errors) must
+            // not prevent the exercise save itself from succeeding.
             log.error("Error creating exercise version for exercise with id {}: {}", targetExercise.getId(), e.getMessage(), e);
         }
     }
@@ -202,18 +231,205 @@ public class ExerciseVersionService {
      *         eagerly with versioned fields,
      *         or null if the exercise does not exist
      */
+    @Nullable
     private Exercise fetchExerciseEagerly(Exercise exercise) {
         if (exercise == null || exercise.getId() == null) {
             log.error("fetchExerciseEagerly for versioning is called with null");
             return null;
         }
         ExerciseType exerciseType = exercise.getExerciseType();
-        return switch (exerciseType) {
+        Exercise fetched = switch (exerciseType) {
             case PROGRAMMING -> programmingExerciseRepository.findForVersioningById(exercise.getId()).orElse(null);
             case QUIZ -> quizExerciseRepository.findForVersioningById(exercise.getId()).orElse(null);
             case TEXT -> textExerciseRepository.findForVersioningById(exercise.getId()).orElse(null);
             case MODELING -> modelingRepositoryApi.flatMap(api -> api.findForVersioningById(exercise.getId())).orElse(null);
             case FILE_UPLOAD -> fileUploadApi.flatMap(api -> api.findForVersioningById(exercise.getId())).orElse(null);
         };
+        if (fetched != null) {
+            Channel channel = channelRepository.findChannelByExerciseId(fetched.getId());
+            if (channel != null) {
+                fetched.setChannelName(channel.getName());
+            }
+        }
+        return fetched;
+    }
+
+    /**
+     * Compare two exercise snapshots and broadcast synchronization messages to
+     * active editors.
+     * For repository commits (template, solution, tests, auxiliary), broadcasts a
+     * new commit alert
+     * so clients can display a notification prompting users to refresh.
+     *
+     * @param exerciseId           the exercise id
+     * @param newSnapshot          the new snapshot
+     * @param previousSnapshot     the previous snapshot (optional)
+     * @param author               the author of the new version
+     * @param newExerciseVersionId the id of the new exercise version
+     */
+    private void determineSynchronizationForActiveEditors(Long exerciseId, ExerciseSnapshotDTO newSnapshot, ExerciseSnapshotDTO previousSnapshot, User author,
+            Long newExerciseVersionId) {
+        if (previousSnapshot == null || newSnapshot == null) {
+            return;
+        }
+
+        ProgrammingExerciseSnapshotDTO newProgrammingData = newSnapshot.programmingData();
+        ProgrammingExerciseSnapshotDTO previousProgrammingData = previousSnapshot.programmingData();
+        ExerciseEditorSyncTarget target = null;
+        Long auxiliaryRepositoryId = null;
+
+        // Repository commits cannot change simultaneously because each commit triggers a separate
+        // version creation. The if-else chain intentionally detects only the first changed repository.
+        if (newProgrammingData != null && previousProgrammingData != null) {
+            if (participationCommitChanged(previousProgrammingData.templateParticipation(), newProgrammingData.templateParticipation())) {
+                target = ExerciseEditorSyncTarget.TEMPLATE_REPOSITORY;
+            }
+            else if (participationCommitChanged(previousProgrammingData.solutionParticipation(), newProgrammingData.solutionParticipation())) {
+                target = ExerciseEditorSyncTarget.SOLUTION_REPOSITORY;
+            }
+            else if (!Objects.equals(previousProgrammingData.testsCommitId(), newProgrammingData.testsCommitId())) {
+                target = ExerciseEditorSyncTarget.TESTS_REPOSITORY;
+            }
+            else {
+                Map<Long, String> previousAuxiliaries = Optional.ofNullable(previousProgrammingData.auxiliaryRepositories()).orElseGet(List::of).stream()
+                        .filter(auxiliary -> auxiliary.commitId() != null).collect(Collectors.toMap(ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO::id,
+                                ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO::commitId));
+                for (ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO auxiliary : Optional.ofNullable(newProgrammingData.auxiliaryRepositories())
+                        .orElseGet(List::of)) {
+                    String previousCommitId = previousAuxiliaries.get(auxiliary.id());
+                    if (!Objects.equals(previousCommitId, auxiliary.commitId())) {
+                        target = ExerciseEditorSyncTarget.AUXILIARY_REPOSITORY;
+                        auxiliaryRepositoryId = auxiliary.id();
+                        break;
+                    }
+                }
+            }
+        }
+
+        Set<String> changedFields = collectChangedFields(newSnapshot, previousSnapshot);
+
+        if (target != null) {
+            // For repository commits, send a new commit alert so clients can notify users
+            // to refresh
+            // For problem statement changes, changes are broadcasted via client-to-client
+            // messages.
+            exerciseEditorSyncService.broadcastNewCommitAlert(exerciseId, target, auxiliaryRepositoryId);
+        }
+        if (!changedFields.isEmpty()) {
+            exerciseEditorSyncService.broadcastNewExerciseVersionAlert(exerciseId, newExerciseVersionId, author, changedFields);
+        }
+    }
+
+    /**
+     * Collects the set of changed exercise fields between two snapshots.
+     * <p>
+     * IMPORTANT: When adding new fields to {@link ExerciseSnapshotDTO}, a corresponding
+     * {@code addIfChanged} call must be added here so that metadata sync can detect the change.
+     * {@code ExerciseVersionServiceTest.testCollectChangedFieldsCoversAllExerciseSnapshotFields}
+     * will fail if a new field is not accounted for.
+     *
+     * @param newSnapshot      the new snapshot
+     * @param previousSnapshot the previous snapshot
+     * @return the set of changed field identifiers
+     */
+    private Set<String> collectChangedFields(ExerciseSnapshotDTO newSnapshot, ExerciseSnapshotDTO previousSnapshot) {
+        Set<String> changedFields = new HashSet<>();
+        addIfChanged(changedFields, "title", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::title);
+        addIfChanged(changedFields, "shortName", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::shortName);
+        addIfChanged(changedFields, "channelName", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::channelName);
+        addIfChanged(changedFields, "competencyLinks", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::competencyLinks);
+        addIfChanged(changedFields, "maxPoints", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::maxPoints);
+        addIfChanged(changedFields, "bonusPoints", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::bonusPoints);
+        addIfChanged(changedFields, "assessmentType", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::assessmentType);
+        addIfChanged(changedFields, "releaseDate", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::releaseDate);
+        addIfChanged(changedFields, "startDate", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::startDate);
+        addIfChanged(changedFields, "dueDate", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::dueDate);
+        addIfChanged(changedFields, "assessmentDueDate", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::assessmentDueDate);
+        addIfChanged(changedFields, "exampleSolutionPublicationDate", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::exampleSolutionPublicationDate);
+        addIfChanged(changedFields, "difficulty", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::difficulty);
+        addIfChanged(changedFields, "mode", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::mode);
+        addIfChanged(changedFields, "allowComplaintsForAutomaticAssessments", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::allowComplaintsForAutomaticAssessments);
+        addIfChanged(changedFields, "allowFeedbackRequests", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::allowFeedbackRequests);
+        addIfChanged(changedFields, "includedInOverallScore", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::includedInOverallScore);
+        // problemStatement is excluded: changes are broadcast via Yjs client-to-client synchronization, not metadata sync.
+        addIfChanged(changedFields, "gradingInstructions", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::gradingInstructions);
+        addIfChanged(changedFields, "categories", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::categories);
+        addIfChanged(changedFields, "teamAssignmentConfig", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::teamAssignmentConfig);
+        addIfChanged(changedFields, "presentationScoreEnabled", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::presentationScoreEnabled);
+        addIfChanged(changedFields, "secondCorrectionEnabled", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::secondCorrectionEnabled);
+        addIfChanged(changedFields, "feedbackSuggestionModule", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::feedbackSuggestionModule);
+        addIfChanged(changedFields, "gradingCriteria", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::gradingCriteria);
+        addIfChanged(changedFields, "plagiarismDetectionConfig", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::plagiarismDetectionConfig);
+
+        collectProgrammingChanges(changedFields, newSnapshot.programmingData(), previousSnapshot.programmingData());
+
+        return changedFields;
+    }
+
+    /**
+     * Collects changed fields for programming exercise snapshot data.
+     *
+     * @param changedFields the set to update with changed fields
+     * @param newData       the new programming snapshot data
+     * @param previousData  the previous programming snapshot data
+     */
+    private void collectProgrammingChanges(Set<String> changedFields, ProgrammingExerciseSnapshotDTO newData, ProgrammingExerciseSnapshotDTO previousData) {
+        if (newData == null && previousData == null) {
+            return;
+        }
+        if (newData == null || previousData == null) {
+            changedFields.add("programmingData");
+            return;
+        }
+        // Note: repository URLs, submission policy, programming language, project type, package name,
+        // static code analysis enablement, and project keys are not editable on the exercise edit page.
+        addIfChanged(changedFields, "programmingData.allowOnlineEditor", newData, previousData, ProgrammingExerciseSnapshotDTO::allowOnlineEditor);
+        addIfChanged(changedFields, "programmingData.allowOfflineIde", newData, previousData, ProgrammingExerciseSnapshotDTO::allowOfflineIde);
+        addIfChanged(changedFields, "programmingData.allowOnlineIde", newData, previousData, ProgrammingExerciseSnapshotDTO::allowOnlineIde);
+        addIfChanged(changedFields, "programmingData.maxStaticCodeAnalysisPenalty", newData, previousData, ProgrammingExerciseSnapshotDTO::maxStaticCodeAnalysisPenalty);
+        addIfChanged(changedFields, "programmingData.showTestNamesToStudents", newData, previousData, ProgrammingExerciseSnapshotDTO::showTestNamesToStudents);
+        // Uses the full DTO including commitId and repositoryUri. Git commits may trigger a
+        // false metadata change detection here, but this is harmless: the client-side handler
+        // compares only the editable fields (name, checkoutDirectory, description) so no
+        // conflict will be raised in the UI.
+        addIfChanged(changedFields, "programmingData.auxiliaryRepositories", newData, previousData, ProgrammingExerciseSnapshotDTO::auxiliaryRepositories);
+        addIfChanged(changedFields, "programmingData.buildAndTestStudentSubmissionsAfterDueDate", newData, previousData,
+                ProgrammingExerciseSnapshotDTO::buildAndTestStudentSubmissionsAfterDueDate);
+        addIfChanged(changedFields, "programmingData.releaseTestsWithExampleSolution", newData, previousData, ProgrammingExerciseSnapshotDTO::releaseTestsWithExampleSolution);
+        addIfChanged(changedFields, "programmingData.buildConfig", newData, previousData, ProgrammingExerciseSnapshotDTO::buildConfig);
+    }
+
+    /**
+     * Adds the field identifier to the set if the values differ.
+     *
+     * @param <T>              the snapshot type
+     * @param <V>              the field value type
+     * @param changedFields    the set to update
+     * @param field            the field identifier
+     * @param newSnapshot      the new snapshot
+     * @param previousSnapshot the previous snapshot
+     * @param fieldAccessor    extracts the field value from a snapshot
+     */
+    private <T, V> void addIfChanged(Set<String> changedFields, String field, T newSnapshot, T previousSnapshot, Function<T, V> fieldAccessor) {
+        if (!Objects.equals(fieldAccessor.apply(newSnapshot), fieldAccessor.apply(previousSnapshot))) {
+            changedFields.add(field);
+        }
+    }
+
+    /**
+     * Checks whether the commit id changed for a participation snapshot.
+     *
+     * @param previousParticipation the previous participation snapshot
+     * @param newParticipation      the new participation snapshot
+     * @return true if the commit id changed
+     */
+    private boolean participationCommitChanged(ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO previousParticipation,
+            ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO newParticipation) {
+        if (previousParticipation == null && newParticipation == null) {
+            return false;
+        }
+        String previousCommitId = previousParticipation == null ? null : previousParticipation.commitId();
+        String newCommitId = newParticipation == null ? null : newParticipation.commitId();
+        return !Objects.equals(previousCommitId, newCommitId);
     }
 }
