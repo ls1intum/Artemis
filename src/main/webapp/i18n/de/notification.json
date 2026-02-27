@@ -41,7 +41,9 @@
             },
             "created": "Eine neue Mitteilung wurde mit ID {{ param }} erstellt",
             "updated": "Eine Mitteilung mit ID {{ param }} wurde geändert",
-            "deleted": "Eine Mitteilung mit ID {{ param }} wurde gelöscht"
+            "deleted": "Eine Mitteilung mit ID {{ param }} wurde gelöscht",
+            "sendMaintenanceEmail": "Wartungsankündigung per E-Mail an alle Lehrenden senden",
+            "maintenanceEmailInfo": "Eine E-Mail wird an {{ count }} Lehrende aller laufenden Kurse gesendet."
         },
         "groupNotification": {
             "title": {

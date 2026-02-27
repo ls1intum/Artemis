@@ -110,8 +110,8 @@ export class ExerciseUpdateWarningService {
      */
     checkGradingInstruction(gradingInstruction: GradingInstruction, backupGradingInstruction: GradingInstruction): void {
         // checking whether structured grading instruction credits or usageCount changed
-        this.creditChanged = gradingInstruction.credits !== backupGradingInstruction.credits;
-        this.usageCountChanged = gradingInstruction.usageCount !== backupGradingInstruction.usageCount;
+        this.creditChanged = this.creditChanged || gradingInstruction.credits !== backupGradingInstruction.credits;
+        this.usageCountChanged = this.usageCountChanged || gradingInstruction.usageCount !== backupGradingInstruction.usageCount;
     }
 
     /**
