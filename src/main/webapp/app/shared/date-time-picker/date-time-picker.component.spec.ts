@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import dayjs from 'dayjs/esm';
@@ -6,6 +6,7 @@ import { MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateModule } from '@ngx-translate/core';
 
 describe('FormDateTimePickerComponent', () => {
     let component: FormDateTimePickerComponent;
@@ -16,7 +17,7 @@ describe('FormDateTimePickerComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(OwlDateTimeModule), MockPipe(ArtemisTranslatePipe), MockModule(NgbTooltipModule), MockDirective(TranslateDirective)],
+            imports: [MockModule(OwlDateTimeModule), MockPipe(ArtemisTranslatePipe), MockModule(NgbTooltipModule), MockDirective(TranslateDirective), TranslateModule.forRoot()],
             declarations: [FormDateTimePickerComponent],
         })
             .compileComponents()
@@ -138,4 +139,70 @@ describe('FormDateTimePickerComponent', () => {
         expect(calledWith.isAfter(beforeCall.subtract(1, 'second'))).toBeTrue();
         expect(calledWith.isBefore(afterCall.add(1, 'second'))).toBeTrue();
     });
+
+    it('should inject a Now button into the picker popup on open', fakeAsync(() => {
+        // Create a mock container-buttons element in the DOM
+        const containerButtons = document.createElement('div');
+        containerButtons.classList.add('owl-dt-container-buttons');
+        const cancelButton = document.createElement('button');
+        containerButtons.appendChild(cancelButton);
+        document.body.appendChild(containerButtons);
+
+        const mockPicker = { close: jest.fn() } as any;
+        component.onPickerOpen(mockPicker);
+        tick();
+
+        const nowButton = containerButtons.querySelector('.owl-dt-now-button');
+        expect(nowButton).toBeTruthy();
+        expect(nowButton).toBe(containerButtons.firstChild);
+
+        // Clean up
+        component.onPickerClose();
+        document.body.removeChild(containerButtons);
+    }));
+
+    it('should call setNow and close picker when Now button is clicked', fakeAsync(() => {
+        const containerButtons = document.createElement('div');
+        containerButtons.classList.add('owl-dt-container-buttons');
+        const cancelButton = document.createElement('button');
+        containerButtons.appendChild(cancelButton);
+        document.body.appendChild(containerButtons);
+
+        const mockPicker = { close: jest.fn() } as any;
+        const setNowSpy = jest.spyOn(component, 'setNow').mockImplementation();
+
+        component.onPickerOpen(mockPicker);
+        tick();
+
+        const nowButton = containerButtons.querySelector('.owl-dt-now-button') as HTMLButtonElement;
+        nowButton.click();
+
+        expect(setNowSpy).toHaveBeenCalledOnce();
+        expect(mockPicker.close).toHaveBeenCalledOnce();
+
+        // Clean up
+        component.onPickerClose();
+        document.body.removeChild(containerButtons);
+    }));
+
+    it('should remove the Now button on picker close', fakeAsync(() => {
+        const containerButtons = document.createElement('div');
+        containerButtons.classList.add('owl-dt-container-buttons');
+        const cancelButton = document.createElement('button');
+        containerButtons.appendChild(cancelButton);
+        document.body.appendChild(containerButtons);
+
+        const mockPicker = { close: jest.fn() } as any;
+        component.onPickerOpen(mockPicker);
+        tick();
+
+        expect(containerButtons.querySelector('.owl-dt-now-button')).toBeTruthy();
+
+        component.onPickerClose();
+
+        expect(containerButtons.querySelector('.owl-dt-now-button')).toBeFalsy();
+
+        // Clean up
+        document.body.removeChild(containerButtons);
+    }));
 });

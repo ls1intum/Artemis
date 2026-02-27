@@ -1,13 +1,14 @@
-import { Component, ViewChild, computed, forwardRef, input, model, output, signal } from '@angular/core';
+import { Component, Renderer2, ViewChild, computed, forwardRef, inject, input, model, output, signal } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
 import { faCalendarAlt, faCircleXmark, faClock, faGlobe, faQuestionCircle, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { OwlDateTimeComponent, OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
+import { TranslateService } from '@ngx-translate/core';
 
 export enum DateTimePickerType {
     CALENDAR,
@@ -47,7 +48,11 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     protected readonly faCircleXmark = faCircleXmark;
     protected readonly faTriangleExclamation = faTriangleExclamation;
 
+    private readonly renderer = inject(Renderer2);
+    private readonly translateService = inject(TranslateService);
+
     @ViewChild('dateInput', { static: false }) dateInput: NgModel;
+    @ViewChild('dtDefault', { static: false }) dtDefault: OwlDateTimeComponent<Date>;
 
     labelName = input<string>();
     hideLabelName = input<boolean>(false);
@@ -170,6 +175,63 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     setNow() {
         const now = dayjs();
         this.updateField(now);
+    }
+
+    private nowButtonElement?: HTMLButtonElement;
+    private nowButtonClickListener?: () => void;
+
+    /**
+     * Injects a "Now" button into the owl-date-time picker popup's button row
+     * when the picker is opened.
+     */
+    onPickerOpen(picker: OwlDateTimeComponent<Date>): void {
+        // Use setTimeout to ensure the popup DOM is fully rendered
+        setTimeout(() => {
+            const containerButtons = document.querySelector('.owl-dt-container-buttons');
+            if (!containerButtons || this.nowButtonElement) {
+                return;
+            }
+
+            const nowButton = this.renderer.createElement('button') as HTMLButtonElement;
+            this.renderer.setAttribute(nowButton, 'type', 'button');
+            this.renderer.setAttribute(nowButton, 'tabindex', '0');
+            this.renderer.addClass(nowButton, 'owl-dt-control');
+            this.renderer.addClass(nowButton, 'owl-dt-control-button');
+            this.renderer.addClass(nowButton, 'owl-dt-container-control-button');
+            this.renderer.addClass(nowButton, 'owl-dt-now-button');
+
+            const span = this.renderer.createElement('span');
+            this.renderer.addClass(span, 'owl-dt-control-content');
+            this.renderer.addClass(span, 'owl-dt-control-button-content');
+            this.renderer.setAttribute(span, 'tabindex', '-1');
+            const text = this.renderer.createText(this.translateService.instant('entity.now'));
+            this.renderer.appendChild(span, text);
+            this.renderer.appendChild(nowButton, span);
+
+            // Insert the "Now" button as the first button (before Cancel)
+            this.renderer.insertBefore(containerButtons, nowButton, containerButtons.firstChild);
+
+            this.nowButtonClickListener = this.renderer.listen(nowButton, 'click', (event: Event) => {
+                this.setNow();
+                picker.close();
+            });
+
+            this.nowButtonElement = nowButton;
+        });
+    }
+
+    /**
+     * Cleans up the injected "Now" button when the picker is closed.
+     */
+    onPickerClose(): void {
+        if (this.nowButtonClickListener) {
+            this.nowButtonClickListener();
+            this.nowButtonClickListener = undefined;
+        }
+        if (this.nowButtonElement) {
+            this.nowButtonElement.remove();
+            this.nowButtonElement = undefined;
+        }
     }
 
     protected readonly DateTimePickerType = DateTimePickerType;
