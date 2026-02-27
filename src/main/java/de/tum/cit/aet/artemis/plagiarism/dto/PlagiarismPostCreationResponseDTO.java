@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.plagiarism.dto;
 
 import java.time.ZonedDateTime;
+import java.util.Objects;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -27,7 +28,8 @@ public record PlagiarismPostCreationResponseDTO(@NotNull(message = "The post mus
      * @param post the persisted post-entity
      * @return a DTO containing the relevant plagiarism-related post-data
      */
-    public static PlagiarismPostCreationResponseDTO of(@NotNull Post post) {
+    public static PlagiarismPostCreationResponseDTO of(Post post) {
+        Objects.requireNonNull(post, "The post must be set.");
         return new PlagiarismPostCreationResponseDTO(post.getId(), post.getContent(), post.getTitle(), post.isVisibleForStudents(), post.getCreationDate(),
                 AuthorDTO.fromUser(post.getAuthor()), post.getAuthorRole(), post.isResolved(), post.getDisplayPriority(), PlagiarismCaseDTO.of(post.getPlagiarismCase()));
     }
