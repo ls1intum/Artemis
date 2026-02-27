@@ -188,7 +188,7 @@ class HyperionProblemStatementRefinementServiceTest {
     }
 
     @Test
-    void refineProblemStatement_throwsExceptionWhenResponseIsNull() throws Exception {
+    void refineProblemStatement_throwsExceptionWhenResponseIsNull() {
         String originalStatement = "Original problem statement";
         // AI returns null content
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(null)))));
@@ -203,7 +203,7 @@ class HyperionProblemStatementRefinementServiceTest {
     }
 
     @Test
-    void refineProblemStatement_throwsExceptionWhenResponseIsBlank() throws Exception {
+    void refineProblemStatement_throwsExceptionWhenResponseIsBlank() {
         String originalStatement = "Original problem statement";
         // AI returns blank content
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage("   ")))));
@@ -218,7 +218,7 @@ class HyperionProblemStatementRefinementServiceTest {
     }
 
     @Test
-    void refineProblemStatement_throwsExceptionWhenRefinementUnchanged() throws Exception {
+    void refineProblemStatement_throwsExceptionWhenRefinementUnchanged() {
         String originalStatement = "Original problem statement";
         // AI returns the exact same content
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(originalStatement)))));
