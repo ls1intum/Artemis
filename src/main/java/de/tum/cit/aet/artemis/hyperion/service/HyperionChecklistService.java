@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.domain.ChecklistSection;
 import de.tum.cit.aet.artemis.hyperion.domain.QualityIssueCategory;
 import de.tum.cit.aet.artemis.hyperion.domain.Severity;
 import de.tum.cit.aet.artemis.hyperion.dto.BloomRadarDTO;
@@ -108,10 +109,11 @@ public class HyperionChecklistService {
      *
      * @param request  The request containing the problem statement and metadata
      * @param courseId The ID of the course
-     * @return a future that completes with the analysis response with only quality issues populated
+     * @param section  The section to analyze
+     * @return a future that completes with the analysis response with only the requested section populated
      */
-    public CompletableFuture<ChecklistAnalysisResponseDTO> analyzeSection(ChecklistAnalysisRequestDTO request, long courseId) {
-        log.debug("Performing single-section checklist analysis: QUALITY (exerciseId={})", request.exerciseId());
+    public CompletableFuture<ChecklistAnalysisResponseDTO> analyzeSection(ChecklistAnalysisRequestDTO request, long courseId, ChecklistSection section) {
+        log.debug("Performing single-section checklist analysis: {} (exerciseId={})", section, request.exerciseId());
 
         Observation observation = Observation.createNotStarted("hyperion.checklist.section", observationRegistry).contextualName("checklist section analysis")
                 .lowCardinalityKeyValue(KeyValue.of(AI_SPAN_KEY, AI_SPAN_VALUE)).start();

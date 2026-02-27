@@ -136,7 +136,7 @@
             <jhi-checklist-panel
                 [exercise]="programmingExercise()!"
                 [courseId]="(programmingExercise()?.course?.id ?? programmingExercise()?.exerciseGroup?.exam?.course?.id)!"
-                [problemStatement]="programmingExercise()?.problemStatement || ''"
+                [problemStatement]="programmingExercise()?.problemStatement ?? ''"
                 (problemStatementChange)="onInstructionChange($event)"
                 (problemStatementDiffRequest)="onChecklistActionDiffRequest($event)"
             />

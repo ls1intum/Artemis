@@ -285,8 +285,7 @@
 
                 <!-- Competencies and Difficulty sections will be added in future PRs -->
             </div>
-        }
-        @if (!analysisResult()) {
+        } @else {
             <div class="text-muted text-center p-3" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.defaultMessage">
                 Click "Analyze Problem Statement" to check for competencies, difficulty, and quality issues.
             </div>

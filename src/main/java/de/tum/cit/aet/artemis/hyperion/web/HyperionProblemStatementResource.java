@@ -1,8 +1,5 @@
 package de.tum.cit.aet.artemis.hyperion.web;
 
-import java.beans.PropertyEditorSupport;
-import java.util.Locale;
-
 import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
@@ -10,8 +7,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -80,20 +75,6 @@ public class HyperionProblemStatementResource {
         this.problemStatementGenerationService = problemStatementGenerationService;
         this.checklistService = checklistService;
         this.problemStatementRefinementService = problemStatementRefinementService;
-    }
-
-    @InitBinder
-    void initBinder(WebDataBinder binder) {
-        binder.registerCustomEditor(ChecklistSection.class, new PropertyEditorSupport() {
-
-            @Override
-            public void setAsText(String text) {
-                if (text == null || text.isBlank()) {
-                    throw new IllegalArgumentException("ChecklistSection must not be blank");
-                }
-                setValue(ChecklistSection.valueOf(text.trim().toUpperCase(Locale.ROOT)));
-            }
-        });
     }
 
     /**
@@ -180,7 +161,7 @@ public class HyperionProblemStatementResource {
         log.debug("REST request to Hyperion checklist section analysis [{}] for course [{}]", section, courseId);
         courseRepository.findByIdElseThrow(courseId);
         validateExerciseBelongsToCourse(request.exerciseId(), courseId);
-        var result = checklistService.analyzeSection(request, courseId).join();
+        var result = checklistService.analyzeSection(request, courseId, section).join();
         return ResponseEntity.ok(result);
     }
 
