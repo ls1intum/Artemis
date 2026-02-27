@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges, ViewChild, inject, signal } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, ViewChild, effect, inject, signal, viewChild } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
@@ -10,12 +10,13 @@ import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { BuildPhasesEditor } from 'app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/build-phases-editor';
+import { BuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
 
 @Component({
     selector: 'jhi-programming-exercise-custom-build-plan',
     templateUrl: './programming-exercise-custom-build-plan.component.html',
     styleUrls: ['../../../../shared/programming-exercise-form.scss'],
-    imports: [FormsModule, TranslateDirective, HelpIconComponent, ProgrammingExerciseBuildConfigurationComponent, MonacoEditorComponent, BuildPhasesEditor],
+    imports: [FormsModule, TranslateDirective, HelpIconComponent, ProgrammingExerciseBuildConfigurationComponent, BuildPhasesEditor],
 })
 export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
     private aeolusService = inject(AeolusService);
@@ -36,15 +37,30 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
     code: string = '#!/bin/bash\n\n# Add your custom build plan action here';
     private _editor?: MonacoEditorComponent;
 
-    @ViewChild('editor', { static: false }) set editor(value: MonacoEditorComponent) {
-        this._editor = value;
-        if (this._editor) {
-            this.setupEditor();
-            if (this.programmingExercise.id || this.isImportFromFile) {
-                this.code = this.programmingExercise.buildConfig?.buildScript || '';
+    readonly phaseEditor = viewChild<BuildPhasesEditor>('phase_editor');
+
+    constructor() {
+        effect(() => {
+            const editorInstance = this.phaseEditor();
+
+            if (editorInstance) {
+                if (this.programmingExercise.id || this.isImportFromFile) {
+                    this.code = this.programmingExercise.buildConfig?.buildScript || '';
+                }
+
+                const planFromSingleScript: BuildPlanPhases = {
+                    phases: [
+                        {
+                            name: 'script',
+                            script: this.code,
+                            condition: 'ALWAYS',
+                            resultPaths: [],
+                        },
+                    ],
+                };
+                editorInstance.initialize(planFromSingleScript);
             }
-            this._editor.setText(this.code);
-        }
+        });
     }
 
     ngOnChanges(changes: SimpleChanges) {
@@ -136,16 +152,6 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
         this.code = code;
         this.editor?.setText(code);
         this.programmingExercise.buildConfig!.buildScript = code;
-    }
-
-    /**
-     * Sets up the Monaco editor for the build plan script
-     */
-    setupEditor(): void {
-        if (!this._editor) {
-            return;
-        }
-        this._editor.changeModel('build-plan.sh', '');
     }
 
     setDockerImage(dockerImage: string) {

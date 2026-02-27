@@ -15,7 +15,7 @@
                 [isAeolus]="false"
             />
         }
-        <label jhiTranslate="artemisApp.programmingExercise.script" class="mb-2"></label>
+        <!-- label jhiTranslate="artemisApp.programmingExercise.script" class="mb-2"></label>
         <div class="card p-0" [style.height.px]="editorHeight()">
             <jhi-monaco-editor
                 #editor
@@ -25,7 +25,7 @@
                 (contentHeightChanged)="editorHeight.set($event)"
                 class="h-100"
             />
-        </div>
-        <jhi-build-phases-editor />
+        </div -->
+        <jhi-build-phases-editor #phase_editor />
     }
 </div>

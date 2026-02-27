@@ -12,10 +12,11 @@ export class MonacoEditorFitTextComponent {
 
     private readonly editor = viewChild.required(MonacoEditorComponent);
 
+    // TODO MHT make ctrl/cmd + z work in phase script editor
+
     constructor() {
         effect(() => {
-            const value = this.text();
-            this.editor().setText(value);
+            this.editor().changeModel('', this.text(), 'shell');
         });
     }
 }

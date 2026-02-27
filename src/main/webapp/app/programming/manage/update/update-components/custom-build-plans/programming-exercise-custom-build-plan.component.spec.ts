@@ -94,7 +94,7 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         expect(comp.code).toBe('test');
     });
 
-    it('should accept editor', () => {
+    /*it('should accept editor', () => {
         expect(comp.editor).toBeUndefined();
         comp.editor = TestBed.createComponent(MonacoEditorComponent).componentInstance;
         expect(comp.editor).toBeDefined();
@@ -102,7 +102,7 @@ describe('ProgrammingExercise Custom Build Plan', () => {
 
     it('should not fail if setting up undefined editor', () => {
         comp.setupEditor();
-    });
+    });*/
 
     it('should return false to reload template', () => {
         comp.programmingLanguage = programmingExercise.programmingLanguage;
@@ -221,7 +221,7 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         expect(comp.programmingExercise.buildConfig?.buildScript).toBeUndefined();
     });
 
-    it('should accept editor for existing exercise', () => {
+    /*it('should accept editor for existing exercise', () => {
         comp.programmingExercise.id = 1;
         comp.programmingExercise.buildConfig!.buildScript = 'buildscript';
         const editor = TestBed.createComponent(MonacoEditorComponent).componentInstance;
@@ -232,7 +232,7 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         comp.programmingExercise.buildConfig!.buildScript = undefined;
         comp.editor = TestBed.createComponent(MonacoEditorComponent).componentInstance;
         expect(comp.code).toBe('');
-    });
+    });*/
 
     it('should set docker image correctly', () => {
         comp.programmingExercise.buildConfig!.windfile = windfile;

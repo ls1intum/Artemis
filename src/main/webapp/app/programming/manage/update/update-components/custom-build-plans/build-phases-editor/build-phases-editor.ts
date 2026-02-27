@@ -31,7 +31,11 @@ export class BuildPhasesEditor {
 
     readonly phaseCount = computed(() => this.phases().length);
 
-    addPhase(): void {
+    initialize(loadedPlan: BuildPlanPhases) {
+        this.phases.set(loadedPlan.phases);
+    }
+
+    addPhase() {
         this.phases.update((phases) => [
             ...phases,
             {
@@ -43,15 +47,15 @@ export class BuildPhasesEditor {
         ]);
     }
 
-    deletePhase(index: number): void {
+    deletePhase(index: number) {
         this.phases.update((phases) => phases.filter((_, i) => i !== index));
     }
 
-    updatePhase(index: number, updated: BuildPhase): void {
+    updatePhase(index: number, updated: BuildPhase) {
         this.phases.update((phases) => phases.map((p, i) => (i === index ? updated : p)));
     }
 
-    moveUp(index: number): void {
+    moveUp(index: number) {
         if (index === 0) return;
         this.phases.update((phases) => {
             const updated = [...phases];
@@ -60,7 +64,7 @@ export class BuildPhasesEditor {
         });
     }
 
-    moveDown(index: number): void {
+    moveDown(index: number) {
         this.phases.update((phases) => {
             if (index === phases.length - 1) return phases;
             const updated = [...phases];
