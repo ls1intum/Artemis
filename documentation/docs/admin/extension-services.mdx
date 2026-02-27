@@ -31,322 +31,293 @@ EduTelligence is a comprehensive suite of AI-powered microservices designed to e
 ## Iris & Pyris Setup Guide
 
 <Callout variant={CalloutVariant.info}>
-  <p>Pyris is now part of the EduTelligence suite. Please check the <a href="https://github.com/ls1intum/edutelligence#-artemis-compatibility">compatibility matrix</a> to ensure you're using compatible versions of Artemis and EduTelligence.</p>
+  <p>Pyris is part of the <a href="https://github.com/ls1intum/edutelligence">EduTelligence</a> suite. Always check the <a href="https://github.com/ls1intum/edutelligence#-artemis-compatibility">compatibility matrix</a> to ensure your Artemis version matches the EduTelligence version you deploy.</p>
 </Callout>
 
 ### Overview
 
-Iris is an intelligent virtual tutor integrated into Artemis, providing one-on-one programming assistance, course content support, and competency generation for students. Iris relies on Pyris, an intermediary service from the EduTelligence suite that brokers requests to Large Language Models (LLMs) using FastAPI.
+Iris is an intelligent virtual tutor integrated into Artemis, providing one-on-one programming assistance, course content support, and competency generation for students. It relies on **Pyris**, a FastAPI service from the EduTelligence suite that brokers requests between Artemis and various Large Language Models (LLMs).
 
-This guide consolidates everything you need to configure both Artemis and Pyris so they communicate securely and reliably.
+This guide covers everything needed to get Iris running: configuring Artemis, deploying Pyris, and connecting both.
 
-### Artemis Configuration
+### Step 1: Configure Artemis
 
-#### Prerequisites
+#### 1.1 Enable Iris
 
-- Ensure you have a running instance of Artemis.
-- Have access to the Artemis deployment configuration (e.g., `application-artemis.yml`).
-- Decide on a shared secret that will also be configured in Pyris.
+In your `application-artemis.yml`, enable Iris and point it at your Pyris instance:
 
-#### Enable Iris via configuration
-
-In your `application-artemis.yml`, set:
 ```yaml
 artemis:
   iris:
     enabled: true
-```
-
-#### Configure Pyris API endpoints
-
-The Pyris service is addressed by Artemis via HTTP(s). Extend `src/main/resources/config/application-artemis.yml` like so:
-```yaml
-artemis:
-  # ...
-  iris:
-      url: http://localhost:8000
-      secret: abcdef12345
+    url: https://pyris.your-domain.com   # Or http://localhost:8000 for local development
+    secret-token: your-shared-secret      # Must match the token configured in Pyris
 ```
 
 <Callout variant={CalloutVariant.info}>
-  <p>The value of `secret` must match one of the tokens configured under `api_keys` in your Pyris `application.local.yml`.</p>
+  <p>The `secret-token` value must exactly match one of the tokens under `api_keys` in the Pyris `application.yml`. If they don't match, Artemis will receive 401 errors when calling Pyris.</p>
 </Callout>
 
-For detailed information on deploying and configuring Pyris itself, continue with the next section.
+#### 1.2 Optional: Configure rate limiting
 
-### Pyris Service Setup
-
-#### Prerequisites
-
-- A server/VM or local machine.
-- **Python 3.12**: Ensure that Python 3.12 is installed.
-```bash
-  python --version
+```yaml
+artemis:
+  iris:
+    ratelimit:
+      default-limit: 100             # Max requests per user (-1 for unlimited)
+      default-timeframe-hours: 3     # Time window for the limit
 ```
 
-(Should be 3.12)
+### Step 2: Deploy Pyris
 
-- **Poetry**: Used to manage Python dependencies and the virtual environment.
-- **Docker and Docker Compose**: Required if you want to run Pyris via containers.
+Choose one of the deployment options below depending on your environment.
 
-#### Local Development Setup
+#### Option A: Docker (Recommended for Production)
 
-**1. Clone the EduTelligence Repository**
+This is the recommended approach for production deployments. All Docker Compose files are located in the `iris/docker/` directory of the EduTelligence repository.
 
-Clone the EduTelligence repository (`https://github.com/ls1intum/edutelligence`) onto your machine and switch into the `iris` subdirectory.
+**1. Clone the repository**
+
 ```bash
 git clone https://github.com/ls1intum/edutelligence.git
 cd edutelligence/iris
 ```
 
-**2. Install Dependencies**
+**2. Create configuration files**
 
-Pyris uses Poetry for dependency management. Install all required packages (this also creates the virtual environment):
+Create two configuration files on your server. You can use the provided examples as a starting point:
+
 ```bash
-poetry install
+cp application.example.yml application.yml
+cp llm_config.example.yml llm_config.yml
 ```
 
-<Callout variant={CalloutVariant.info}>
-  <p>Install the repository-wide pre-commit hooks from the EduTelligence root directory with `pre-commit install` if you plan to contribute changes.</p>
-</Callout>
+Edit `application.yml`:
 
-**3. Create Configuration Files**
-
-- **Create an Application Configuration File**
-
-Create an `application.local.yml` file in the `iris` directory, based on the provided example.
-```bash
-  cp application.example.yml application.local.yml
-```
-
-Example `application.local.yml`:
 ```yaml
-  # Token that Artemis will use to access Pyris
-  api_keys:
-    - token: "your-secret-token"
+api_keys:
+  - token: "your-shared-secret"   # Must match artemis.iris.secret-token
 
-  # Weaviate connection
-  weaviate:
-    host: "localhost"
-    port: "8001"
-    grpc_port: "50051"
+weaviate:
+  host: "weaviate"                # Docker service name (not localhost)
+  port: "8001"
+  grpc_port: "50051"
 
-  env_vars:
-```
-
-Make sure the token you define here matches the `secret` configured in Artemis.
-
-- **Create an LLM Config File**
-
-Create an `llm_config.local.yml` file in the `iris` directory.
-```bash
-  cp llm_config.example.yml llm_config.local.yml
+env_vars:
 ```
 
 <Callout variant={CalloutVariant.warning}>
-  <p>The OpenAI configuration examples are intended solely for development and testing purposes and should not be used in production environments. For production use, we recommend configuring a GDPR-compliant solution.</p>
+  <p>When running inside Docker, set `weaviate.host` to `"weaviate"` (the Docker service name), not `"localhost"`. The containers communicate over an internal Docker network.</p>
 </Callout>
 
-**Example OpenAI Configuration**
+Edit `llm_config.yml` with your model configurations. Pyris needs **three types of models**:
+
+- **Chat models** (required) — powers all Iris conversations
+- **Embedding models** (required) — for RAG-based retrieval of course content
+- **Reranker models** (optional) — improves retrieval quality
+
+<Callout variant={CalloutVariant.warning}>
+  <p>The OpenAI examples below are for development and testing only. For production, use a GDPR-compliant provider such as Azure OpenAI.</p>
+</Callout>
+
+**Azure OpenAI chat model example:**
+
 ```yaml
-  - id: "oai-gpt-41-mini"
-    name: "GPT 4.1 Mini"
-    description: "GPT 4.1 Mini on OpenAI"
-    type: "openai_chat"
-    model: "gpt-4.1-mini"
-    api_key: "<your_openai_api_key>"
-    tools: []
-    cost_per_million_input_token: 0.4
-    cost_per_million_output_token: 1.6
+- id: "azure-gpt-41-mini"
+  name: "GPT 4.1 Mini"
+  description: "GPT 4.1 Mini on Azure"
+  type: "azure_chat"
+  endpoint: "<your_azure_endpoint>"
+  api_version: "2024-05-01-preview"
+  azure_deployment: "gpt-41-mini"
+  model: "gpt-4.1-mini"
+  api_key: "<your_azure_api_key>"
+  tools: []
+  cost_per_million_input_token: 0.4
+  cost_per_million_output_token: 1.6
 ```
 
-**Example Azure OpenAI Configuration**
+**Azure embedding model example:**
+
 ```yaml
-  - id: "azure-gpt-4-omni"
-    name: "GPT 4 Omni"
-    description: "GPT 4 Omni on Azure"
-    type: "azure_chat"
-    endpoint: "<your_azure_model_endpoint>"
-    api_version: "2024-02-15-preview"
-    azure_deployment: "gpt4o"
-    model: "gpt4o"
-    api_key: "<your_azure_api_key>"
-    tools: []
-    cost_per_million_input_token: 0.4
-    cost_per_million_output_token: 1.6
+- id: "azure-embedding-large"
+  name: "Embedding Large"
+  description: "Embedding Large 8k Azure"
+  type: "azure_embedding"
+  endpoint: "<your_azure_endpoint>"
+  api_version: "2023-05-15"
+  azure_deployment: "te-3-large"
+  model: "text-embedding-3-large"
+  api_key: "<your_azure_api_key>"
+  cost_per_million_input_token: 0.13
 ```
 
-**Explanation of Configuration Parameters**
+See `llm_config.example.yml` for the complete list of model types, including OpenAI chat models, OpenAI embeddings, and Cohere reranker.
 
-The configuration parameters are used by pipelines in Pyris to select the appropriate model for a given task.
+**Configuration parameter reference:**
 
-  - `api_key`: The API key for the model.
-  - `description`: Additional information about the model.
-  - `id`: Unique identifier for the model across all models.
-  - `model`: The official name of the model as used by the vendor. This value is also used for model selection inside Pyris (e.g., `gpt-4.1` or `gpt-4.1-mini`).
-  - `name`: A human-readable name for the model.
-  - `type`: The model type used to select the appropriate client (e.g., `openai_chat`, `azure_chat`, `ollama`).
-  - `endpoint`: The URL used to connect to the model (if required by the provider).
-  - `api_version`: The API version to use with the model (provider specific).
-  - `azure_deployment`: The deployment name of the model on Azure.
-  - `tools`: Tools supported by the model.
-  - `cost_per_million_input_token` / `cost_per_million_output_token`: Pricing information used for routing when multiple models satisfy the same requirements.
+- `id`: Unique identifier across all configured models.
+- `model`: Official model name as used by the vendor (e.g. `gpt-4.1-mini`, `text-embedding-3-large`). Used internally by Pyris for model selection.
+- `type`: Selects the appropriate client. Supported values: `openai_chat`, `azure_chat`, `ollama`, `openai_embedding`, `azure_embedding`, `cohere_azure`.
+- `api_key`: API key for the model provider.
+- `endpoint`: Provider URL (required for Azure and Cohere).
+- `api_version`: API version (Azure only).
+- `azure_deployment`: Deployment name (Azure only).
+- `tools`: Tools supported by the model (usually `[]`).
+- `cost_per_million_input_token` / `cost_per_million_output_token`: Pricing info used for model routing decisions.
 
 <Callout variant={CalloutVariant.info}>
-  <p>Most existing pipelines currently require the full GPT-5.x model family to be configured. Monitor Pyris logs for warnings about missing models so you can update your `llm_config.local.yml` accordingly.</p>
+  <p>Most Iris pipelines require the GPT-4.1 model family (`gpt-4.1`, `gpt-4.1-mini`, `gpt-4.1-nano`) plus at least one embedding model. Monitor Pyris logs for warnings about missing models.</p>
 </Callout>
 
-**4. Run the Server**
+**3. Choose a Docker Compose profile and start**
 
-Start the Pyris server:
+| File | Use case |
+|------|----------|
+| `docker/pyris-production.yml` | Production with Nginx (SSL termination, reverse proxy) |
+| `docker/pyris-production-internal.yml` | Production without Nginx (e.g. behind an existing reverse proxy) |
+| `docker/pyris-dev.yml` | Local development (builds from source) |
+
+**Production with Nginx** (handles SSL termination):
+
+```bash
+PYRIS_DOCKER_TAG=latest \
+PYRIS_APPLICATION_YML_FILE=$(pwd)/application.yml \
+PYRIS_LLM_CONFIG_YML_FILE=$(pwd)/llm_config.yml \
+NGINX_PROXY_SSL_CERTIFICATE_PATH=/path/to/fullchain.pem \
+NGINX_PROXY_SSL_CERTIFICATE_KEY_PATH=/path/to/priv_key.pem \
+docker compose -f docker/pyris-production.yml up -d
+```
+
+**Production without Nginx** (direct access on configurable port):
+
+```bash
+PYRIS_DOCKER_TAG=latest \
+PYRIS_APPLICATION_YML_FILE=$(pwd)/application.yml \
+PYRIS_LLM_CONFIG_YML_FILE=$(pwd)/llm_config.yml \
+PYRIS_PORT=8000 \
+docker compose -f docker/pyris-production-internal.yml up -d
+```
+
+<Callout variant={CalloutVariant.info}>
+  <p>Instead of passing environment variables inline, you can create a `docker.env` file and use `--env-file docker.env` with `docker compose`. This is the recommended approach for production servers.</p>
+</Callout>
+
+**Environment variable reference:**
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PYRIS_DOCKER_TAG` | `latest` | Docker image tag (e.g. `latest`, `pr-123`, a branch name) |
+| `PYRIS_APPLICATION_YML_FILE` | — | Absolute path to your `application.yml` |
+| `PYRIS_LLM_CONFIG_YML_FILE` | — | Absolute path to your `llm_config.yml` |
+| `PYRIS_PORT` | `8000` | Host port for Pyris (production-internal only) |
+| `WEAVIATE_PORT` | `8001` | Host port for Weaviate REST API |
+| `WEAVIATE_GRPC_PORT` | `50051` | Host port for Weaviate gRPC |
+| `WEAVIATE_VOLUME_MOUNT` | `.docker-data/weaviate-data` | Host path for Weaviate data persistence |
+| `NGINX_PROXY_SSL_CERTIFICATE_PATH` | — | Path to SSL certificate (production with Nginx only) |
+| `NGINX_PROXY_SSL_CERTIFICATE_KEY_PATH` | — | Path to SSL private key (production with Nginx only) |
+
+**4. Verify the deployment**
+
+```bash
+# Check Pyris health
+curl https://pyris.your-domain.com/api/v1/health
+
+# Check Weaviate health (from the server, if ports are not exposed externally)
+curl http://localhost:8001/v1/.well-known/ready
+```
+
+**Managing containers:**
+
+```bash
+# View logs
+docker compose -f docker/pyris-production.yml logs -f pyris-app
+
+# Stop
+docker compose -f docker/pyris-production.yml down
+
+# Pull new image and restart
+PYRIS_DOCKER_TAG=latest docker compose -f docker/pyris-production.yml up -d
+```
+
+#### Option B: Local Development Setup (without Docker)
+
+Use this approach when developing Pyris itself or when you want to run it directly on your machine.
+
+**Prerequisites:** Python 3.12, <a href="https://python-poetry.org/">Poetry</a>, Docker (for Weaviate only).
+
+**1. Clone and install**
+
+```bash
+git clone https://github.com/ls1intum/edutelligence.git
+cd edutelligence/iris
+poetry install
+```
+
+**2. Start Weaviate**
+
+Pyris requires a Weaviate vector database for RAG. Start it using the provided Docker Compose file:
+
+```bash
+docker compose -f docker/weaviate.yml up -d
+```
+
+Verify: `curl http://localhost:8001/v1/.well-known/ready`
+
+**3. Create configuration files**
+
+```bash
+cp application.example.yml application.local.yml
+cp llm_config.example.yml llm_config.local.yml
+```
+
+Edit `application.local.yml`:
+
+```yaml
+api_keys:
+  - token: "secret"             # Must match artemis.iris.secret-token
+
+weaviate:
+  host: "localhost"             # localhost for non-Docker setup
+  port: "8001"
+  grpc_port: "50051"
+
+env_vars:
+```
+
+Edit `llm_config.local.yml` with your API keys. See the model configuration examples above or refer to `llm_config.example.yml`.
+
+**4. Run the server**
+
 ```bash
 APPLICATION_YML_PATH=./application.local.yml \
 LLM_CONFIG_PATH=./llm_config.local.yml \
-uvicorn app.main:app --reload
+poetry run uvicorn iris.main:app --reload
 ```
 
-**5. Access API Documentation**
+The server starts at `http://localhost:8000`. API docs are at `http://localhost:8000/docs`.
 
-Open your browser and navigate to `http://localhost:8000/docs` to access the interactive API documentation.
+### Step 3: Verify End-to-End
 
-#### Using Docker
+Once both Artemis and Pyris are running:
 
-**Prerequisites**
+1. Open Artemis and navigate to a programming exercise.
+2. Open the Iris chat panel.
+3. Send a test message — Iris should respond via Pyris.
 
-- Ensure Docker and Docker Compose are installed on your machine.
-- Clone the EduTelligence repository to your local machine.
-- Create the necessary configuration files as described in the previous section.
+If Iris does not respond, check:
 
-**Docker Compose Files**
+- Artemis logs for HTTP errors when contacting Pyris (401 = secret mismatch, connection refused = wrong URL).
+- Pyris logs for model errors (`No model found for ...` = missing model in `llm_config.yml`).
+- That the `secret-token` in Artemis matches the `api_keys` token in Pyris exactly.
+- That Weaviate is running and reachable from Pyris.
 
-- **Development**: `docker/pyris-dev.yml`
-- **Production with Nginx**: `docker/pyris-production.yml`
-- **Production without Nginx**: `docker/pyris-production-internal.yml`
+### Troubleshooting
 
-**Setup Instructions**
-
-**1. Running the Containers**
-
-You can run Pyris in different environments: development or production.
-
-**Development Environment**
-
-- **Start the Containers**
-```bash
-  docker-compose -f docker/pyris-dev.yml up --build
-```
-
-  - Builds the Pyris application.
-  - Starts Pyris and Weaviate in development mode.
-  - Mounts local configuration files for easy modification.
-
-- **Access the Application**
-
-- Application URL: `http://localhost:8000`
-- API Docs: `http://localhost:8000/docs`
-
-**Production Environment**
-
-**Option 1: With Nginx**
-
-1. **Prepare SSL Certificates**
-
-- Place your SSL certificate (`fullchain.pem`) and private key (`priv_key.pem`) in the specified paths or update the paths in the Docker Compose file.
-
-2. **Start the Containers**
-```bash
-   docker-compose -f docker/pyris-production.yml up -d
-```
-
-   - Pulls the latest Pyris image.
-   - Starts Pyris, Weaviate, and Nginx.
-   - Nginx handles SSL termination and reverse proxying.
-
-3. **Access the Application**
-
-- Application URL: `https://your-domain.com`
-
-**Option 2: Without Nginx**
-
-1. **Start the Containers**
-```bash
-   docker-compose -f docker/pyris-production-internal.yml up -d
-```
-
-   - Pulls the latest Pyris image.
-   - Starts Pyris and Weaviate.
-
-2. **Access the Application**
-
-- Application URL: `http://localhost:8000`
-
-**2. Managing the Containers**
-
-- **Stop the Containers**
-```bash
-  docker-compose -f <compose-file> down
-```
-
-Replace `<compose-file>` with the appropriate Docker Compose file.
-
-- **View Logs**
-```bash
-  docker-compose -f <compose-file> logs -f <service-name>
-```
-
-Example:
-```bash
-  docker-compose -f docker/pyris-dev.yml logs -f pyris-app
-```
-
-- **Rebuild Containers**
-
-If you've made changes to the code or configurations:
-```bash
-  docker-compose -f <compose-file> up --build
-```
-
-**3. Customizing Configuration**
-
-- **Environment Variables**
-
-You can customize settings using environment variables:
-
-- `PYRIS_DOCKER_TAG`: Specifies the Pyris Docker image tag.
-- `PYRIS_APPLICATION_YML_FILE`: Path to your `application.yml` file.
-- `PYRIS_LLM_CONFIG_YML_FILE`: Path to your `llm_config.yml` file.
-- `PYRIS_PORT`: Host port for Pyris application (default is `8000`).
-- `WEAVIATE_PORT`: Host port for Weaviate REST API (default is `8001`).
-- `WEAVIATE_GRPC_PORT`: Host port for Weaviate gRPC interface (default is `50051`).
-
-- **Configuration Files**
-
-Modify configuration files as needed:
-
-- **Pyris Configuration**: Update `application.yml` and `llm_config.yml`.
-- **Weaviate Configuration**: Adjust settings in `weaviate.yml`.
-- **Nginx Configuration**: Modify Nginx settings in `nginx.yml` and related config files.
-
-#### Troubleshooting
-
-- **Port Conflicts**
-
-If you encounter port conflicts, change the host ports using environment variables:
-```bash
-  export PYRIS_PORT=8080
-```
-
-- **Permission Issues**
-
-Ensure you have the necessary permissions for files and directories, especially for SSL certificates.
-
-- **Docker Resources**
-
-If services fail to start, ensure Docker has sufficient resources allocated.
-
-#### Conclusion
-
-With Artemis configured to communicate with Pyris and Pyris deployed locally or via Docker, Iris is ready to support your courses.
+- **Port conflicts**: Change host ports via environment variables (`PYRIS_PORT`, `WEAVIATE_PORT`).
+- **Permission issues**: Ensure correct permissions on SSL certificates and config files.
+- **Docker resources**: Ensure Docker has at least 4 GB of memory allocated.
+- **Missing models**: Check Pyris logs for `No model found for ...` warnings and add the missing model to `llm_config.yml`.
 
 ---
 
