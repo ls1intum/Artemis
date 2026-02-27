@@ -344,7 +344,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     /** Cached model selection used to re-compute screen position after scroll */
     private cachedSelection?: CachedSelectionWithText;
     /** Guards requestAnimationFrame scheduling so at most one rAF per scroll burst fires */
-    private pendingScrollRaf = false;
+    private pendingScrollRafId: number | null = null;
     targetWrapperHeight?: number;
     minWrapperHeight?: number;
     constrainDragPositionFn?: (pointerPosition: Point) => Point;
@@ -583,10 +583,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         // when the selection scrolls back into view.
         // Throttled via requestAnimationFrame so at most one reposition per frame fires.
         this.scrollChangeDisposable = this.monacoEditor.getEditor()?.onDidScrollChange(() => {
-            if (this.cachedSelection && !this.pendingScrollRaf) {
-                this.pendingScrollRaf = true;
-                requestAnimationFrame(() => {
-                    this.pendingScrollRaf = false;
+            if (this.cachedSelection && this.pendingScrollRafId === null) {
+                this.pendingScrollRafId = requestAnimationFrame(() => {
+                    this.pendingScrollRafId = null;
                     if (this.cachedSelection) {
                         this.emitSelectionWithScreenPosition();
                     }
@@ -648,6 +647,11 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.resizeObserver?.disconnect();
         this.selectionChangeDisposable?.dispose();
         this.scrollChangeDisposable?.dispose();
+        if (this.pendingScrollRafId !== null) {
+            window.cancelAnimationFrame(this.pendingScrollRafId);
+            this.pendingScrollRafId = null;
+        }
+        this.cachedSelection = undefined;
         this.reviewCommentManager?.disposeAll();
         this.monacoEditor?.clearLineDecorationsHoverButton();
     }
