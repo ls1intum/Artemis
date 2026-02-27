@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges, ViewChild, inject } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, ViewChild, inject, signal } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
@@ -9,12 +9,13 @@ import { ASSIGNMENT_REPO_NAME, TEST_REPO_NAME } from 'app/shared/constants/input
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { BuildPhasesEditor } from 'app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/build-phases-editor';
 
 @Component({
     selector: 'jhi-programming-exercise-custom-build-plan',
     templateUrl: './programming-exercise-custom-build-plan.component.html',
     styleUrls: ['../../../../shared/programming-exercise-form.scss'],
-    imports: [FormsModule, TranslateDirective, HelpIconComponent, ProgrammingExerciseBuildConfigurationComponent, MonacoEditorComponent],
+    imports: [FormsModule, TranslateDirective, HelpIconComponent, ProgrammingExerciseBuildConfigurationComponent, MonacoEditorComponent, BuildPhasesEditor],
 })
 export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
     private aeolusService = inject(AeolusService);
@@ -23,6 +24,8 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
     @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
 
     @ViewChild(ProgrammingExerciseBuildConfigurationComponent) programmingExerciseDockerImageComponent?: ProgrammingExerciseBuildConfigurationComponent;
+
+    editorHeight = signal(100);
 
     programmingLanguage?: ProgrammingLanguage;
     projectType?: ProjectType;

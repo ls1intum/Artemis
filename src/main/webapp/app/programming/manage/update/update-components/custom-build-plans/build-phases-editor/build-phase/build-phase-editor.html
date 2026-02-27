@@ -1,0 +1,29 @@
+<!-- Phase row -->
+<div class="d-flex align-items-center gap-2 mb-1">
+    <input pInputText [ngModel]="phase().name" (ngModelChange)="updateName($event)" placeholder="phase name" />
+
+    <p-select [options]="conditionOptions" optionLabel="label" optionValue="value" [ngModel]="phase().condition" (ngModelChange)="updateCondition($event)" />
+
+    <button pButton [text]="true" [rounded]="true" size="small" severity="secondary" (click)="toggleExpanded()">
+        <fa-icon [icon]="expanded() ? faChevronDown : faChevronRight" pButtonIcon />
+    </button>
+
+    <button pButton [text]="true" [rounded]="true" size="small" severity="secondary">
+        <fa-icon [icon]="faArrowUp" pButtonIcon />
+    </button>
+
+    <button pButton [text]="true" [rounded]="true" size="small" severity="secondary">
+        <fa-icon [icon]="faArrowDown" pButtonIcon />
+    </button>
+
+    <button pButton [text]="true" [rounded]="true" size="small" severity="danger">
+        <fa-icon [icon]="faTrash" pButtonIcon />
+    </button>
+</div>
+
+<!-- Expanded detail panel -->
+@if (expanded()) {
+    <div class="ms-2 mb-3 ps-2 border-start">
+        <jhi-monaco-editor-fit-text [text]="phase().script" (textChange)="updateScript($event)" />
+    </div>
+}
