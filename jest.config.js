@@ -103,6 +103,7 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/atlas/**',          // atlas module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/iris/**',           // iris module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/core/course/manage/**', // core course manage module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/synchronization/**', // exercise synchronization module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exercise/review/**', // review comment module uses Vitest (see vitest.config.ts)
     ],
     coveragePathIgnorePatterns: [
@@ -123,6 +124,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/iris/',              // iris module uses Vitest
         '<rootDir>/src/main/webapp/app/core/course/manage/', // core course manage module uses Vitest
         '<rootDir>/src/main/webapp/app/shared/components/buttons', // buttons module uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/synchronization/', // exercise synchronization module uses Vitest
         '<rootDir>/src/main/webapp/app/exercise/review/', // review comment module uses Vitest
     ],
     // Global coverage thresholds for Jest. Modules using Vitest (e.g., fileupload) have their own
@@ -170,6 +172,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/iris/',          // iris module
         '<rootDir>/src/main/webapp/app/core/course/manage/', // core course manage module
         '<rootDir>/src/main/webapp/app/shared/components/buttons/', // shared/buttons components
+        '<rootDir>/src/main/webapp/app/exercise/synchronization/', // exercise synchronization module
         '<rootDir>/src/main/webapp/app/exercise/review/', // review comment module
     ],
     testTimeout: 3000,
