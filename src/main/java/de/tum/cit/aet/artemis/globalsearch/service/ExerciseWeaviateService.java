@@ -13,18 +13,14 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.ExerciseSchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.ExerciseWeaviateDTO;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
-import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import io.weaviate.client6.v1.api.collections.query.Filter;
 
 /**
@@ -49,76 +45,75 @@ public class ExerciseWeaviateService {
      * Queries for the existing object by exercise ID, then uses replace if found or insert if not.
      * This avoids the data loss window of delete-then-insert and uses Weaviate's intended update API.
      *
-     * @param exercise the exercise to update
+     * @param exerciseWeaviateDTO the exercise data to update
      */
-    private void updateExercise(Exercise exercise) {
-        if (exercise.getId() == null) {
+    private void updateExercise(ExerciseWeaviateDTO exerciseWeaviateDTO) {
+        if (exerciseWeaviateDTO.exerciseId() == null) {
             log.warn("Cannot update exercise without an ID");
             return;
         }
 
         try {
-            upsertExerciseInWeaviate(exercise);
-            log.debug("Successfully updated exercise {} '{}' in Weaviate", exercise.getId(), exercise.getTitle());
+            upsertExerciseInWeaviate(exerciseWeaviateDTO);
+            log.debug("Successfully updated exercise {} '{}' in Weaviate", exerciseWeaviateDTO.exerciseId(), exerciseWeaviateDTO.exerciseTitle());
         }
         catch (Exception e) {
-            log.error("Failed to update exercise {} in Weaviate: {}", exercise.getId(), e.getMessage(), e);
+            log.error("Failed to update exercise {} in Weaviate: {}", exerciseWeaviateDTO.exerciseId(), e.getMessage(), e);
         }
     }
 
     /**
      * Performs an upsert operation: queries for existing object and replaces it, or inserts if not found.
      *
-     * @param exercise the exercise to upsert
+     * @param exerciseWeaviateDTO the exercise data to upsert
      * @throws WeaviateException if the operation fails
      */
-    private void upsertExerciseInWeaviate(Exercise exercise) throws WeaviateException {
+    private void upsertExerciseInWeaviate(ExerciseWeaviateDTO exerciseWeaviateDTO) throws WeaviateException {
         try {
             var collection = weaviateService.getCollection(ExerciseSchema.COLLECTION_NAME);
 
             var existingObjectQueryResult = collection.query
-                    .fetchObjects(query -> query.filters(Filter.property(ExerciseSchema.Properties.EXERCISE_ID).eq(exercise.getId())).limit(1));
+                    .fetchObjects(query -> query.filters(Filter.property(ExerciseSchema.Properties.EXERCISE_ID).eq(exerciseWeaviateDTO.exerciseId())).limit(1));
 
-            Map<String, Object> properties = buildExerciseProperties(exercise);
+            Map<String, Object> properties = buildExerciseProperties(exerciseWeaviateDTO);
 
             if (!existingObjectQueryResult.objects().isEmpty()) {
                 // Object exists - use replace to update it
                 var existingObject = existingObjectQueryResult.objects().getFirst();
                 String uuid = existingObject.uuid();
                 collection.data.replace(uuid, r -> r.properties(properties));
-                log.debug("Replaced existing exercise {} with UUID {}", exercise.getId(), uuid);
+                log.debug("Replaced existing exercise {} with UUID {}", exerciseWeaviateDTO.exerciseId(), uuid);
             }
             else {
                 // Object doesn't exist - insert new one
                 collection.data.insert(properties);
-                log.debug("Inserted new exercise {}", exercise.getId());
+                log.debug("Inserted new exercise {}", exerciseWeaviateDTO.exerciseId());
             }
         }
         catch (IOException e) {
-            log.error("Failed to upsert exercise {} in Weaviate: {}", exercise.getId(), e.getMessage(), e);
-            throw new WeaviateException("Failed to upsert exercise: " + exercise.getId(), e);
+            log.error("Failed to upsert exercise {} in Weaviate: {}", exerciseWeaviateDTO.exerciseId(), e.getMessage(), e);
+            throw new WeaviateException("Failed to upsert exercise: " + exerciseWeaviateDTO.exerciseId(), e);
         }
     }
 
     /**
      * Builds the complete property map for an exercise.
      *
-     * @param exercise the exercise
+     * @param exerciseWeaviateDTO the exercise data
      * @return the property map ready for Weaviate
      */
-    private Map<String, Object> buildExerciseProperties(Exercise exercise) {
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+    private Map<String, Object> buildExerciseProperties(ExerciseWeaviateDTO exerciseWeaviateDTO) {
         Map<String, Object> properties = new HashMap<>();
 
-        properties.put(ExerciseSchema.Properties.EXERCISE_ID, exercise.getId());
-        properties.put(ExerciseSchema.Properties.COURSE_ID, course.getId());
-        properties.put(ExerciseSchema.Properties.TITLE, exercise.getTitle());
-        properties.put(ExerciseSchema.Properties.EXERCISE_TYPE, exercise.getExerciseType().name());
-        properties.put(ExerciseSchema.Properties.MAX_POINTS, exercise.getMaxPoints() != null ? exercise.getMaxPoints() : 0.0);
+        properties.put(ExerciseSchema.Properties.EXERCISE_ID, exerciseWeaviateDTO.exerciseId());
+        properties.put(ExerciseSchema.Properties.COURSE_ID, exerciseWeaviateDTO.courseId());
+        properties.put(ExerciseSchema.Properties.TITLE, exerciseWeaviateDTO.exerciseTitle());
+        properties.put(ExerciseSchema.Properties.EXERCISE_TYPE, exerciseWeaviateDTO.exerciseType());
+        properties.put(ExerciseSchema.Properties.MAX_POINTS, exerciseWeaviateDTO.maxPoints());
 
-        addSharedExerciseProperties(exercise, course, properties);
-        addExamProperties(exercise, properties);
-        addExerciseTypeSpecificProperties(exercise, properties);
+        addSharedExerciseProperties(exerciseWeaviateDTO, properties);
+        addExamProperties(exerciseWeaviateDTO, properties);
+        addExerciseTypeSpecificProperties(exerciseWeaviateDTO, properties);
 
         return properties;
     }
@@ -126,8 +121,11 @@ public class ExerciseWeaviateService {
     /**
      * Asynchronously inserts exercise metadata into Weaviate.
      * This method executes in a separate thread to avoid blocking the HTTP request thread.
+     * IMPORTANT: The exercise entity must have its course relationship eagerly loaded before calling this method,
+     * otherwise a LazyInitializationException will be thrown.
      *
-     * @param exercise the exercise to insert
+     * @param exercise the exercise to insert (must have course and exam relationships loaded)
+     * @throws org.hibernate.LazyInitializationException if required relationships are not loaded
      */
     @Async
     public void insertExerciseAsync(Exercise exercise) {
@@ -139,8 +137,10 @@ public class ExerciseWeaviateService {
         }
 
         try {
-            upsertExerciseInWeaviate(exercise);
-            log.debug("Successfully inserted exercise {} '{}' into Weaviate", exercise.getId(), exercise.getTitle());
+            // Extract data immediately to fail fast if relationships aren't loaded
+            ExerciseWeaviateDTO data = ExerciseWeaviateDTO.fromExercise(exercise);
+            upsertExerciseInWeaviate(data);
+            log.debug("Successfully inserted exercise {} '{}' into Weaviate", data.exerciseId(), data.exerciseTitle());
         }
         catch (Exception e) {
             log.error("Failed to insert exercise {} into Weaviate: {}", exercise.getId(), e.getMessage(), e);
@@ -150,13 +150,24 @@ public class ExerciseWeaviateService {
     /**
      * Asynchronously updates exercise metadata in Weaviate.
      * This method executes in a separate thread to avoid blocking the HTTP request thread.
+     * IMPORTANT: The exercise entity must have its course relationship eagerly loaded before calling this method,
+     * otherwise a LazyInitializationException will be thrown.
      *
-     * @param exercise the exercise to update
+     * @param exercise the exercise to update (must have course and exam relationships loaded)
+     * @throws org.hibernate.LazyInitializationException if required relationships are not loaded
      */
     @Async
     public void updateExerciseAsync(Exercise exercise) {
         SecurityUtils.setAuthorizationObject();
-        updateExercise(exercise);
+
+        try {
+            // Extract data immediately to fail fast if relationships aren't loaded
+            ExerciseWeaviateDTO data = ExerciseWeaviateDTO.fromExercise(exercise);
+            updateExercise(data);
+        }
+        catch (Exception e) {
+            log.error("Failed to extract exercise data for update: {}", e.getMessage(), e);
+        }
     }
 
     /**
@@ -181,8 +192,11 @@ public class ExerciseWeaviateService {
     /**
      * Asynchronously updates Weaviate metadata for all exercises belonging to an exam.
      * This method executes in a separate thread to avoid blocking the HTTP request thread.
+     * IMPORTANT: The exam must have exercise groups, exercises, and their course relationships eagerly loaded,
+     * otherwise a LazyInitializationException will be thrown.
      *
-     * @param exam the exam whose exercises should be updated (must have exercise groups and exercises loaded)
+     * @param exam the exam whose exercises should be updated (must have exercise groups, exercises, and course relationships loaded)
+     * @throws org.hibernate.LazyInitializationException if required relationships are not loaded
      */
     @Async
     public void updateExamExercisesAsync(Exam exam) {
@@ -194,7 +208,14 @@ public class ExerciseWeaviateService {
 
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
             for (Exercise exercise : exerciseGroup.getExercises()) {
-                updateExercise(exercise);
+                try {
+                    // Extract data immediately to fail fast if relationships aren't loaded
+                    ExerciseWeaviateDTO data = ExerciseWeaviateDTO.fromExercise(exercise);
+                    updateExercise(data);
+                }
+                catch (Exception e) {
+                    log.error("Failed to update exercise {} in exam {}: {}", exercise.getId(), exam.getId(), e.getMessage(), e);
+                }
             }
         }
     }
@@ -202,95 +223,80 @@ public class ExerciseWeaviateService {
     /**
      * Adds properties that are common to all exercise types if their values are present.
      *
-     * @param exercise   the exercise providing optional metadata such as dates or difficulty
-     * @param course     the owning course used for denormalized course metadata
-     * @param properties the property map that will be sent to Weaviate
+     * @param exerciseWeaviateDTO the exercise data providing optional metadata such as dates or difficulty
+     * @param properties          the property map that will be sent to Weaviate
      */
-    private void addSharedExerciseProperties(Exercise exercise, Course course, Map<String, Object> properties) {
-        if (course.getTitle() != null) {
-            properties.put(ExerciseSchema.Properties.COURSE_NAME, course.getTitle());
+    private void addSharedExerciseProperties(ExerciseWeaviateDTO exerciseWeaviateDTO, Map<String, Object> properties) {
+        if (exerciseWeaviateDTO.courseTitle() != null) {
+            properties.put(ExerciseSchema.Properties.COURSE_NAME, exerciseWeaviateDTO.courseTitle());
         }
-        if (exercise.getShortName() != null) {
-            properties.put(ExerciseSchema.Properties.SHORT_NAME, exercise.getShortName());
+        if (exerciseWeaviateDTO.shortName() != null) {
+            properties.put(ExerciseSchema.Properties.SHORT_NAME, exerciseWeaviateDTO.shortName());
         }
-        if (exercise.getProblemStatement() != null) {
-            properties.put(ExerciseSchema.Properties.PROBLEM_STATEMENT, exercise.getProblemStatement());
+        if (exerciseWeaviateDTO.problemStatement() != null) {
+            properties.put(ExerciseSchema.Properties.PROBLEM_STATEMENT, exerciseWeaviateDTO.problemStatement());
         }
-        if (exercise.getReleaseDate() != null) {
-            properties.put(ExerciseSchema.Properties.RELEASE_DATE, formatDate(exercise.getReleaseDate()));
+        if (exerciseWeaviateDTO.releaseDate() != null) {
+            properties.put(ExerciseSchema.Properties.RELEASE_DATE, formatDate(exerciseWeaviateDTO.releaseDate()));
         }
-        if (exercise.getStartDate() != null) {
-            properties.put(ExerciseSchema.Properties.START_DATE, formatDate(exercise.getStartDate()));
+        if (exerciseWeaviateDTO.startDate() != null) {
+            properties.put(ExerciseSchema.Properties.START_DATE, formatDate(exerciseWeaviateDTO.startDate()));
         }
-        if (exercise.getDueDate() != null) {
-            properties.put(ExerciseSchema.Properties.DUE_DATE, formatDate(exercise.getDueDate()));
+        if (exerciseWeaviateDTO.dueDate() != null) {
+            properties.put(ExerciseSchema.Properties.DUE_DATE, formatDate(exerciseWeaviateDTO.dueDate()));
         }
-        if (exercise.getDifficulty() != null) {
-            properties.put(ExerciseSchema.Properties.DIFFICULTY, exercise.getDifficulty().name());
+        if (exerciseWeaviateDTO.difficulty() != null) {
+            properties.put(ExerciseSchema.Properties.DIFFICULTY, exerciseWeaviateDTO.difficulty());
         }
     }
 
     /**
      * Adds exam-related properties, including denormalized exam metadata when the exercise belongs to an exam.
      *
-     * @param exercise   the exercise whose exam details should be added
-     * @param properties the property map that will be sent to Weaviate
+     * @param exerciseWeaviateDTO the exercise data whose exam details should be added
+     * @param properties          the property map that will be sent to Weaviate
      */
-    private void addExamProperties(Exercise exercise, Map<String, Object> properties) {
-        properties.put(ExerciseSchema.Properties.IS_EXAM_EXERCISE, exercise.isExamExercise());
-        if (!exercise.isExamExercise()) {
+    private void addExamProperties(ExerciseWeaviateDTO exerciseWeaviateDTO, Map<String, Object> properties) {
+        properties.put(ExerciseSchema.Properties.IS_EXAM_EXERCISE, exerciseWeaviateDTO.isExamExercise());
+        if (!exerciseWeaviateDTO.isExamExercise()) {
             return;
         }
 
-        Exam exam = exercise.getExam();
-        if (exam == null) {
+        if (exerciseWeaviateDTO.examId() == null) {
             return;
         }
 
-        properties.put(ExerciseSchema.Properties.EXAM_ID, exam.getId());
-        properties.put(ExerciseSchema.Properties.TEST_EXAM, exam.isTestExam());
-        properties.put(ExerciseSchema.Properties.EXAM_VISIBLE_DATE, formatDate(exam.getVisibleDate()));
-        properties.put(ExerciseSchema.Properties.EXAM_START_DATE, formatDate(exam.getStartDate()));
-        properties.put(ExerciseSchema.Properties.EXAM_END_DATE, formatDate(exam.getEndDate()));
+        properties.put(ExerciseSchema.Properties.EXAM_ID, exerciseWeaviateDTO.examId());
+        properties.put(ExerciseSchema.Properties.TEST_EXAM, exerciseWeaviateDTO.isTestExam());
+        properties.put(ExerciseSchema.Properties.EXAM_VISIBLE_DATE, formatDate(exerciseWeaviateDTO.examVisibleDate()));
+        properties.put(ExerciseSchema.Properties.EXAM_START_DATE, formatDate(exerciseWeaviateDTO.examStartDate()));
+        properties.put(ExerciseSchema.Properties.EXAM_END_DATE, formatDate(exerciseWeaviateDTO.examEndDate()));
     }
 
     /**
      * Adds exercise type-specific properties to the Weaviate property map based on the exercise type.
      *
-     * @param exercise   the exercise
-     * @param properties the property map to populate
+     * @param exerciseWeaviateDTO the exercise data
+     * @param properties          the property map to populate
      */
-    private void addExerciseTypeSpecificProperties(Exercise exercise, Map<String, Object> properties) {
-        switch (exercise) {
-            case ProgrammingExercise programmingExercise -> {
-                if (programmingExercise.getProgrammingLanguage() != null) {
-                    properties.put(ExerciseSchema.Properties.PROGRAMMING_LANGUAGE, programmingExercise.getProgrammingLanguage().name());
-                }
-                if (programmingExercise.getProjectType() != null) {
-                    properties.put(ExerciseSchema.Properties.PROJECT_TYPE, programmingExercise.getProjectType().name());
-                }
-            }
-            case ModelingExercise modelingExercise -> {
-                if (modelingExercise.getDiagramType() != null) {
-                    properties.put(ExerciseSchema.Properties.DIAGRAM_TYPE, modelingExercise.getDiagramType().name());
-                }
-            }
-            case QuizExercise quizExercise -> {
-                if (quizExercise.getQuizMode() != null) {
-                    properties.put(ExerciseSchema.Properties.QUIZ_MODE, quizExercise.getQuizMode().name());
-                }
-                if (quizExercise.getDuration() != null) {
-                    properties.put(ExerciseSchema.Properties.QUIZ_DURATION, quizExercise.getDuration());
-                }
-            }
-            case FileUploadExercise fileUploadExercise -> {
-                if (fileUploadExercise.getFilePattern() != null) {
-                    properties.put(ExerciseSchema.Properties.FILE_PATTERN, fileUploadExercise.getFilePattern());
-                }
-            }
-            default -> {
-                // TextExercise and any other types have no additional properties
-            }
+    private void addExerciseTypeSpecificProperties(ExerciseWeaviateDTO exerciseWeaviateDTO, Map<String, Object> properties) {
+        if (exerciseWeaviateDTO.programmingLanguage() != null) {
+            properties.put(ExerciseSchema.Properties.PROGRAMMING_LANGUAGE, exerciseWeaviateDTO.programmingLanguage());
+        }
+        if (exerciseWeaviateDTO.projectType() != null) {
+            properties.put(ExerciseSchema.Properties.PROJECT_TYPE, exerciseWeaviateDTO.projectType());
+        }
+        if (exerciseWeaviateDTO.diagramType() != null) {
+            properties.put(ExerciseSchema.Properties.DIAGRAM_TYPE, exerciseWeaviateDTO.diagramType());
+        }
+        if (exerciseWeaviateDTO.quizMode() != null) {
+            properties.put(ExerciseSchema.Properties.QUIZ_MODE, exerciseWeaviateDTO.quizMode());
+        }
+        if (exerciseWeaviateDTO.quizDuration() != null) {
+            properties.put(ExerciseSchema.Properties.QUIZ_DURATION, exerciseWeaviateDTO.quizDuration());
+        }
+        if (exerciseWeaviateDTO.filePattern() != null) {
+            properties.put(ExerciseSchema.Properties.FILE_PATTERN, exerciseWeaviateDTO.filePattern());
         }
     }
 
