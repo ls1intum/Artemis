@@ -234,7 +234,11 @@
         },
         "ProblemStatementRewrite": {
             "chatClientNotConfigured": "AI rewrite is currently unavailable. Please contact your administrator.",
-            "chatClientNotConfigured_detail": "AI chat client is not configured."
+            "chatClientNotConfigured_detail": "AI chat client is not configured.",
+            "problemStatementEmpty": "The problem statement cannot be empty.",
+            "problemStatementRewriteFailed": "Failed to rewrite problem statement. Please try again later.",
+            "problemStatementRewriteNull": "The AI returned an empty response. Please try again.",
+            "rewrittenProblemStatementTooLong": "The rewritten problem statement is too long. Please try again with a shorter input."
         },
         "noCourse": "An exam must belong to a course.",
         "wrongCourseId": "The course ID does not match the course connected to the exam.",

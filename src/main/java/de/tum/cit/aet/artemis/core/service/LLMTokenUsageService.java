@@ -9,6 +9,12 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.ai.chat.metadata.ChatResponseMetadata;
+import org.springframework.ai.chat.metadata.Usage;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -29,7 +35,14 @@ import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageTraceRepository;
 @Service
 public class LLMTokenUsageService {
 
+    private static final Logger log = LoggerFactory.getLogger(LLMTokenUsageService.class);
+
     private static final Pattern DATE_SUFFIX_PATTERN = Pattern.compile("-\\d{4}-\\d{2}-\\d{2}$");
+
+    /**
+     * Default value used when token-count metadata is missing ({@code null}).
+     */
+    private static final int DEFAULT_TOKEN_COUNT = 0;
 
     private final LLMTokenUsageTraceRepository llmTokenUsageTraceRepository;
 
@@ -111,6 +124,48 @@ public class LLMTokenUsageService {
         var requestSet = requests.stream().map(LLMTokenUsageService::convertLLMRequestToLLMTokenUsageRequest).peek(llmTokenUsageRequest -> llmTokenUsageRequest.setTrace(trace))
                 .collect(Collectors.toSet());
         llmTokenUsageRequestRepository.saveAll(requestSet);
+    }
+
+    /**
+     * Extracts the response text from a {@link ChatResponse}, handling null safety throughout the chain.
+     *
+     * @param chatResponse the chat response from the AI model, may be null
+     * @return the extracted text, or null if any part of the response chain is null
+     */
+    @Nullable
+    public static String extractResponseText(@Nullable ChatResponse chatResponse) {
+        if (chatResponse == null || chatResponse.getResult() == null || chatResponse.getResult().getOutput() == null) {
+            return null;
+        }
+        return chatResponse.getResult().getOutput().getText();
+    }
+
+    /**
+     * Convenience method to track token usage from a {@link ChatResponse}.
+     * Extracts metadata (model, prompt/completion tokens) from the response, builds an {@link LLMRequest},
+     * and persists it. Catches all exceptions so that tracking failures never affect the main operation.
+     *
+     * @param chatResponse    the chat response containing usage metadata, may be null
+     * @param serviceType     the LLM service type (e.g. HYPERION, IRIS)
+     * @param pipelineId      the pipeline identifier for this request
+     * @param builderFunction configures the trace (course, user, exercise, etc.)
+     */
+    public void trackChatResponseTokenUsage(@Nullable ChatResponse chatResponse, LLMServiceType serviceType, String pipelineId,
+            Function<LLMTokenUsageBuilder, LLMTokenUsageBuilder> builderFunction) {
+        try {
+            if (chatResponse == null || chatResponse.getMetadata() == null || chatResponse.getMetadata().getUsage() == null) {
+                return;
+            }
+            ChatResponseMetadata metadata = chatResponse.getMetadata();
+            Usage usage = metadata.getUsage();
+            String model = metadata.getModel() != null ? metadata.getModel() : "";
+            LLMRequest llmRequest = buildLLMRequest(model, usage.getPromptTokens() != null ? usage.getPromptTokens() : DEFAULT_TOKEN_COUNT,
+                    usage.getCompletionTokens() != null ? usage.getCompletionTokens() : DEFAULT_TOKEN_COUNT, pipelineId);
+            saveLLMTokenUsage(List.of(llmRequest), serviceType, builderFunction);
+        }
+        catch (Exception e) {
+            log.warn("Failed to store token usage for pipeline [{}]: {}", pipelineId, e.getMessage(), e);
+        }
     }
 
     /**

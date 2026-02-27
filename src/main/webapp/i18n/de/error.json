@@ -234,7 +234,11 @@
         },
         "ProblemStatementRewrite": {
             "chatClientNotConfigured": "KI-Umschreibung ist derzeit nicht verfügbar. Bitte kontaktiere den Administrator.",
-            "chatClientNotConfigured_detail": "Der KI-Chat-Client ist nicht konfiguriert."
+            "chatClientNotConfigured_detail": "Der KI-Chat-Client ist nicht konfiguriert.",
+            "problemStatementEmpty": "Die Aufgabenbeschreibung darf nicht leer sein.",
+            "problemStatementRewriteFailed": "Fehler beim Umschreiben der Aufgabenstellung. Bitte versuche es später erneut.",
+            "problemStatementRewriteNull": "Die KI hat eine leere Antwort zurückgegeben. Bitte versuche es erneut.",
+            "rewrittenProblemStatementTooLong": "Die umgeschriebene Aufgabenbeschreibung ist zu lang. Bitte versuche es erneut mit einer kürzeren Eingabe."
         },
         "noCourse": "Eine Klausur muss zu einem Kurs gehören.",
         "wrongCourseId": "Die Kurs-ID stimmt nicht mit dem Kurs der Klausur überein.",

@@ -4,6 +4,8 @@ import java.util.regex.Pattern;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 
 /**
  * Shared utility class for sanitizing, validating, and post-processing inputs and
@@ -181,33 +183,60 @@ final class HyperionUtils {
     }
 
     /**
-     * Defensively strips line-number prefixes ({@code "1: "}, {@code "2: "}, \u2026) that an
-     * LLM may have copied from numbered input despite being instructed not to.
+     * Resolves the current user's database ID from the security context.
+     *
+     * @param userRepository the repository used to look up the user ID by login
+     * @return the user ID, or {@code null} if the user is not authenticated or not found
+     */
+    static Long resolveCurrentUserId(UserRepository userRepository) {
+        return SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findIdByLogin).orElse(null);
+    }
+
+    /**
+     * Strips sequential line-number prefixes ({@code "1: "}, {@code "2: "}, …) that
+     * the LLM may have copied from the numbered prompt context.
      * <p>
-     * To avoid false positives on content that legitimately starts with digits followed
-     * by a colon (e.g. numbered lists), stripping is only applied when <em>every non-empty
-     * line</em> carries a sequential prefix starting from 1.
+     * Prefixes are only removed when <em>every</em> non-blank line carries a
+     * sequential prefix starting at 1. If any non-blank line is missing a prefix or
+     * the sequence is not contiguous the text is returned unchanged, so that
+     * legitimate content like numbered lists ({@code "1. "}) is never altered.
      *
      * @param text the raw LLM output, never null
-     * @return the text with line-number prefixes removed if they were consistently present, otherwise unchanged
+     * @return the text with line-number prefixes stripped, or the original text
      */
     static String stripLineNumbers(String text) {
+        if (text.isEmpty()) {
+            return text;
+        }
+
         String[] lines = text.split("\n", -1);
+
+        // Verify every non-blank line has a sequential "N: " prefix starting at 1
         int expectedNumber = 1;
         for (String line : lines) {
-            if (line.isEmpty()) {
-                continue; // skip blank lines \u2014 they won\u2019t have a prefix
+            if (line.isBlank()) {
+                continue;
             }
-            if (!line.startsWith(expectedNumber + ": ")) {
-                return text; // not a consistent line-number pattern \u2192 return unchanged
+            if (!LINE_NUMBER_PREFIX.matcher(line).find()) {
+                return text;
+            }
+            int colonIndex = line.indexOf(": ");
+            int number = Integer.parseInt(line.substring(0, colonIndex));
+            if (number != expectedNumber) {
+                return text;
             }
             expectedNumber++;
         }
 
-        // All non-empty lines matched sequential prefixes \u2014 strip them
+        // All non-blank lines are sequential — strip the prefixes
         StringBuilder result = new StringBuilder();
         for (int i = 0; i < lines.length; i++) {
-            result.append(LINE_NUMBER_PREFIX.matcher(lines[i]).replaceFirst(""));
+            if (lines[i].isBlank()) {
+                result.append(lines[i]);
+            }
+            else {
+                result.append(LINE_NUMBER_PREFIX.matcher(lines[i]).replaceFirst(""));
+            }
             if (i < lines.length - 1) {
                 result.append("\n");
             }

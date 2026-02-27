@@ -16,13 +16,17 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRefinementResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementTargetedRefinementRequestDTO;
@@ -39,6 +43,10 @@ import io.micrometer.observation.annotation.Observed;
 public class HyperionProblemStatementRefinementService {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionProblemStatementRefinementService.class);
+
+    private static final String GLOBAL_REFINEMENT_PIPELINE_ID = "HYPERION_PROBLEM_REFINEMENT_GLOBAL";
+
+    private static final String TARGETED_REFINEMENT_PIPELINE_ID = "HYPERION_PROBLEM_REFINEMENT_TARGETED";
 
     /**
      * Maximum length for displaying selected text in prompts.
@@ -65,15 +73,24 @@ public class HyperionProblemStatementRefinementService {
 
     private final HyperionPromptTemplateService templateService;
 
+    private final LLMTokenUsageService llmTokenUsageService;
+
+    private final UserRepository userRepository;
+
     /**
      * Creates a new HyperionProblemStatementRefinementService.
      *
-     * @param chatClient      the AI chat client for refining problem statements, may be null if AI is not configured
-     * @param templateService the prompt template service for rendering AI prompts
+     * @param chatClient           the AI chat client for refining problem statements, may be null if AI is not configured
+     * @param templateService      the prompt template service for rendering AI prompts
+     * @param llmTokenUsageService service for tracking LLM token usage
+     * @param userRepository       repository for resolving current user
      */
-    public HyperionProblemStatementRefinementService(@Nullable ChatClient chatClient, HyperionPromptTemplateService templateService) {
+    public HyperionProblemStatementRefinementService(@Nullable ChatClient chatClient, HyperionPromptTemplateService templateService, LLMTokenUsageService llmTokenUsageService,
+            UserRepository userRepository) {
         this.chatClient = chatClient;
         this.templateService = templateService;
+        this.llmTokenUsageService = llmTokenUsageService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -108,15 +125,20 @@ public class HyperionProblemStatementRefinementService {
                 getSanitizedCourseDescription(course));
         String userMessage = templateService.render("/prompts/hyperion/refine_problem_statement_user.st", variables.asMap());
 
+        ChatResponse chatResponse;
         String refinedProblemStatementText;
         try {
-            refinedProblemStatementText = chatClient.prompt().system(systemPrompt).user(userMessage).call().content();
+            chatResponse = chatClient.prompt().system(systemPrompt).user(userMessage).call().chatResponse();
+            refinedProblemStatementText = LLMTokenUsageService.extractResponseText(chatResponse);
         }
         catch (Exception e) {
             log.error("Error refining problem statement for course [{}]. Original statement length: {}. Error: {}", course.getId(), originalProblemStatementText.length(),
                     e.getMessage(), e);
             throw new InternalServerErrorAlertException("Failed to refine problem statement", "ProblemStatement", "ProblemStatementRefinement.problemStatementRefinementFailed");
         }
+        Long userId = HyperionUtils.resolveCurrentUserId(userRepository);
+        llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, GLOBAL_REFINEMENT_PIPELINE_ID,
+                builder -> builder.withCourse(course.getId()).withUser(userId));
 
         if (refinedProblemStatementText == null || refinedProblemStatementText.isBlank()) {
             throw new InternalServerErrorAlertException("Refined problem statement is null or empty", "ProblemStatement",
@@ -177,15 +199,20 @@ public class HyperionProblemStatementRefinementService {
         String systemPrompt = templateService.render("/prompts/hyperion/refine_problem_statement_targeted_system.st", Map.of());
         String userMessage = templateService.render("/prompts/hyperion/refine_problem_statement_targeted_user.st", variables.asMap());
 
+        ChatResponse chatResponse;
         String refinedProblemStatementText;
         try {
-            refinedProblemStatementText = chatClient.prompt().system(systemPrompt).user(userMessage).call().content();
+            chatResponse = chatClient.prompt().system(systemPrompt).user(userMessage).call().chatResponse();
+            refinedProblemStatementText = LLMTokenUsageService.extractResponseText(chatResponse);
         }
         catch (Exception e) {
             log.error("Error refining problem statement for course [{}]. Original statement length: {}. Error: {}", course.getId(), request.problemStatementText().length(),
                     e.getMessage(), e);
             throw new InternalServerErrorAlertException("Failed to refine problem statement", "ProblemStatement", "ProblemStatementRefinement.problemStatementRefinementFailed");
         }
+        Long userId = HyperionUtils.resolveCurrentUserId(userRepository);
+        llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, TARGETED_REFINEMENT_PIPELINE_ID,
+                builder -> builder.withCourse(course.getId()).withUser(userId));
 
         if (refinedProblemStatementText == null || refinedProblemStatementText.isBlank()) {
             throw new InternalServerErrorAlertException("Refined problem statement is null or empty", "ProblemStatement",
@@ -370,14 +397,14 @@ public class HyperionProblemStatementRefinementService {
 
     private record GlobalRefinementPromptVariables(String problemStatement, String userPrompt, String courseTitle, String courseDescription) {
 
-        Map<String, String> asMap() {
+        private Map<String, String> asMap() {
             return Map.of("problemStatement", problemStatement, "userPrompt", userPrompt, "courseTitle", courseTitle, "courseDescription", courseDescription);
         }
     }
 
     private record TargetedRefinementPromptVariables(String textWithLineNumbers, String targetedInstructions, String courseTitle, String courseDescription) {
 
-        Map<String, String> asMap() {
+        private Map<String, String> asMap() {
             return Map.of("textWithLineNumbers", textWithLineNumbers, "targetedInstructions", targetedInstructions, "courseTitle", courseTitle, "courseDescription",
                     courseDescription);
         }
