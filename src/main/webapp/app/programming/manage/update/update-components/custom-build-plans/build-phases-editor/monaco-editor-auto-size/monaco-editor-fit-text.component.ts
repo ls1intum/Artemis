@@ -1,4 +1,4 @@
-import { Component, effect, model, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, effect, model, signal, viewChild } from '@angular/core';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 
 @Component({
@@ -6,17 +6,23 @@ import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.co
     templateUrl: './monaco-editor-fit-text.html',
     imports: [MonacoEditorComponent],
 })
-export class MonacoEditorFitTextComponent {
+export class MonacoEditorFitTextComponent implements AfterViewInit {
     readonly text = model<string>('');
     protected readonly editorHeight = signal(0);
 
     private readonly editor = viewChild.required(MonacoEditorComponent);
 
-    // TODO MHT make ctrl/cmd + z work in phase script editor
-
     constructor() {
         effect(() => {
-            this.editor().changeModel('', this.text(), 'shell');
+            const newText = this.text();
+            const editor = this.editor();
+            if (editor.getText() !== newText) {
+                editor.setText(newText);
+            }
         });
+    }
+
+    ngAfterViewInit() {
+        this.editor().changeModel('', this.text(), 'shell');
     }
 }
