@@ -88,7 +88,7 @@ export class TutorialCreateOrEditComponent {
     capacity = signal<number | undefined>(undefined);
     additionalInformation = signal('');
 
-    configureSessionPlan = signal(true);
+    configureSessionPlan = signal(false);
     firstSessionStart = signal<Date | undefined>(undefined);
     firstSessionStartInputTouched = signal(false);
     firstSessionStartValidationResult = computed<Validation>(() => this.computeFirstSessionStartValidation());
@@ -136,6 +136,7 @@ export class TutorialCreateOrEditComponent {
                 this.repetitionFrequency.set(schedule.repetitionFrequency);
                 this.tutorialPeriodEnd.set(dayjs(schedule.tutorialPeriodEnd).toDate());
                 this.location.set(schedule.location);
+                this.configureSessionPlan.set(true);
             }
         });
     }

@@ -54,6 +54,7 @@ export class TutorialSessionCreateOrEditModalComponent {
             this.startTime.set(session.start.toDate());
             this.endTime.set(session.end.toDate());
             this.location.set(session.location);
+            this.attendance.set(session.attendance);
         }
         this.isOpen.set(true);
     }
@@ -84,6 +85,7 @@ export class TutorialSessionCreateOrEditModalComponent {
         this.endTimeInputTouched.set(false);
         this.location.set('');
         this.locationInputTouched.set(false);
+        this.attendance.set(undefined);
     }
 
     private createSession() {
