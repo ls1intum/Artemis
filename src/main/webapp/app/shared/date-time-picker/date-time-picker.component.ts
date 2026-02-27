@@ -1,4 +1,4 @@
-import { Component, Renderer2, ViewChild, computed, forwardRef, inject, input, model, output, signal } from '@angular/core';
+import { Component, OnDestroy, Renderer2, ViewChild, computed, forwardRef, inject, input, model, output, signal } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
 import { faCalendarAlt, faCircleXmark, faClock, faGlobe, faQuestionCircle, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
@@ -40,7 +40,7 @@ export enum DateTimePickerType {
         ArtemisTranslatePipe,
     ],
 })
-export class FormDateTimePickerComponent implements ControlValueAccessor {
+export class FormDateTimePickerComponent implements ControlValueAccessor, OnDestroy {
     protected readonly faCalendarAlt = faCalendarAlt;
     protected readonly faGlobe = faGlobe;
     protected readonly faClock = faClock;
@@ -179,6 +179,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
 
     private nowButtonElement?: HTMLButtonElement;
     private nowButtonClickListener?: () => void;
+    private pickerOpenTimeoutId?: ReturnType<typeof setTimeout>;
 
     /**
      * Injects a "Now" button into the owl-date-time picker popup's button row
@@ -186,7 +187,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      */
     onPickerOpen(picker: OwlDateTimeComponent<Date>): void {
         // Use setTimeout to ensure the popup DOM is fully rendered
-        setTimeout(() => {
+        this.pickerOpenTimeoutId = setTimeout(() => {
             const containerButtons = document.querySelector('.owl-dt-container-buttons');
             if (!containerButtons || this.nowButtonElement) {
                 return;
@@ -211,7 +212,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
             // Insert the "Now" button as the first button (before Cancel)
             this.renderer.insertBefore(containerButtons, nowButton, containerButtons.firstChild);
 
-            this.nowButtonClickListener = this.renderer.listen(nowButton, 'click', (event: Event) => {
+            this.nowButtonClickListener = this.renderer.listen(nowButton, 'click', () => {
                 this.setNow();
                 picker.close();
             });
@@ -232,6 +233,13 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
             this.nowButtonElement.remove();
             this.nowButtonElement = undefined;
         }
+    }
+
+    ngOnDestroy(): void {
+        if (this.pickerOpenTimeoutId) {
+            clearTimeout(this.pickerOpenTimeoutId);
+        }
+        this.onPickerClose();
     }
 
     protected readonly DateTimePickerType = DateTimePickerType;

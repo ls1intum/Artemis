@@ -185,6 +185,48 @@ describe('FormDateTimePickerComponent', () => {
         document.body.removeChild(containerButtons);
     }));
 
+    it('should clean up timeout and button on destroy', fakeAsync(() => {
+        const containerButtons = document.createElement('div');
+        containerButtons.classList.add('owl-dt-container-buttons');
+        const cancelButton = document.createElement('button');
+        containerButtons.appendChild(cancelButton);
+        document.body.appendChild(containerButtons);
+
+        const mockPicker = { close: jest.fn() } as any;
+        component.onPickerOpen(mockPicker);
+
+        // Destroy before setTimeout fires
+        component.ngOnDestroy();
+        tick();
+
+        // The Now button should NOT have been injected since the timeout was cleared
+        expect(containerButtons.querySelector('.owl-dt-now-button')).toBeFalsy();
+
+        // Clean up
+        document.body.removeChild(containerButtons);
+    }));
+
+    it('should clean up existing button on destroy after timeout has fired', fakeAsync(() => {
+        const containerButtons = document.createElement('div');
+        containerButtons.classList.add('owl-dt-container-buttons');
+        const cancelButton = document.createElement('button');
+        containerButtons.appendChild(cancelButton);
+        document.body.appendChild(containerButtons);
+
+        const mockPicker = { close: jest.fn() } as any;
+        component.onPickerOpen(mockPicker);
+        tick();
+
+        expect(containerButtons.querySelector('.owl-dt-now-button')).toBeTruthy();
+
+        component.ngOnDestroy();
+
+        expect(containerButtons.querySelector('.owl-dt-now-button')).toBeFalsy();
+
+        // Clean up
+        document.body.removeChild(containerButtons);
+    }));
+
     it('should remove the Now button on picker close', fakeAsync(() => {
         const containerButtons = document.createElement('div');
         containerButtons.classList.add('owl-dt-container-buttons');
