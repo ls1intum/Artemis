@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Bonus;
 import de.tum.cit.aet.artemis.assessment.domain.GradeStep;
 import de.tum.cit.aet.artemis.assessment.domain.GradeType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
+import de.tum.cit.aet.artemis.assessment.dto.GradeStepDTO;
 import de.tum.cit.aet.artemis.assessment.dto.GradingScaleDTO;
 import de.tum.cit.aet.artemis.assessment.dto.GradingScaleRequestDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
@@ -64,11 +65,11 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
      * Converts a GradingScale entity to a GradingScaleRequestDTO for testing.
      */
     private GradingScaleRequestDTO toRequestDTO(GradingScale gradingScale) {
-        Set<GradingScaleRequestDTO.GradeStepDTO> gradeStepDTOs = new HashSet<>();
+        Set<GradeStepDTO> gradeStepDTOs = new HashSet<>();
         if (gradingScale.getGradeSteps() != null) {
             for (GradeStep step : gradingScale.getGradeSteps()) {
-                gradeStepDTOs.add(new GradingScaleRequestDTO.GradeStepDTO(step.getId(), step.getLowerBoundPercentage(), step.isLowerBoundInclusive(),
-                        step.getUpperBoundPercentage(), step.isUpperBoundInclusive(), step.getGradeName(), step.getIsPassingGrade()));
+                gradeStepDTOs.add(new GradeStepDTO(step.getId(), step.getLowerBoundPercentage(), step.isLowerBoundInclusive(), step.getUpperBoundPercentage(),
+                        step.isUpperBoundInclusive(), step.getGradeName(), step.getIsPassingGrade()));
             }
         }
         return new GradingScaleRequestDTO(gradingScale.getGradeType(), gradingScale.getBonusStrategy(), gradingScale.getPlagiarismGrade(), gradingScale.getNoParticipationGrade(),
@@ -351,7 +352,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateGradingScaleForCourseGradingScaleNotFound() throws Exception {
+    void testUpdateNonExistingGradingScaleForCourseGradingScale_ShouldReturnBadRequests() throws Exception {
         request.put("/api/assessment/courses/" + course.getId() + "/grading-scale", toRequestDTO(courseGradingScale), HttpStatus.BAD_REQUEST);
     }
 
@@ -360,7 +361,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateGradingScaleForCourseInvalidGradeSteps() throws Exception {
+    void testUpdateGradingScaleForCourseInvalidGradeSteps_ShouldReturnBadRequests() throws Exception {
         gradingScaleRepository.save(courseGradingScale);
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, false);
         courseGradingScale.setGradeSteps(gradeSteps);
@@ -391,7 +392,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateGradingScaleForExamGradingScaleNotFound() throws Exception {
+    void testUpdateNonExistingGradingScaleForExamGradingScale_ShouldReturnBadRequests() throws Exception {
         request.put("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", toRequestDTO(examGradingScale), HttpStatus.BAD_REQUEST);
     }
 
@@ -400,7 +401,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateGradingScaleForExamInvalidGradeSteps() throws Exception {
+    void testUpdateGradingScaleForExamInvalidGradeSteps_ShouldReturnBadRequests() throws Exception {
         exam.setExamMaxPoints(null);
         examRepository.save(exam);
         gradingScaleRepository.save(examGradingScale);
@@ -556,7 +557,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
      * @param gradeStepToTest the grade step
      * @return true if it is contained and false otherwise
      */
-    private static boolean isGradeStepInSet(Set<GradeStep> gradeSteps, GradingScaleRequestDTO.GradeStepDTO gradeStepToTest) {
+    private static boolean isGradeStepInSet(Set<GradeStep> gradeSteps, GradeStepDTO gradeStepToTest) {
         for (GradeStep gradeStep : gradeSteps) {
             if (equalGradeSteps(gradeStep, gradeStepToTest)) {
                 return true;
@@ -572,7 +573,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
      * @param gradeStep2 the second grade step
      * @return true if grade steps are equal and false otherwise
      */
-    private static boolean equalGradeSteps(GradeStep gradeStep1, GradingScaleRequestDTO.GradeStepDTO gradeStep2) {
+    private static boolean equalGradeSteps(GradeStep gradeStep1, GradeStepDTO gradeStep2) {
         return gradeStep1.getIsPassingGrade() == gradeStep2.isPassingGrade() && gradeStep1.isLowerBoundInclusive() == gradeStep2.lowerBoundInclusive()
                 && gradeStep1.isUpperBoundInclusive() == gradeStep2.upperBoundInclusive() && gradeStep1.getLowerBoundPercentage() == gradeStep2.lowerBoundPercentage()
                 && gradeStep1.getUpperBoundPercentage() == gradeStep2.upperBoundPercentage() && gradeStep1.getGradeName().equals(gradeStep2.gradeName());

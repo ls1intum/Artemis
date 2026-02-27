@@ -63,10 +63,10 @@ public record GradingScaleDTO(Long id, @NotNull GradeStepsDTO gradeSteps, BonusS
     public static GradingScaleDTO of(GradingScale scale) {
         Objects.requireNonNull(scale, "grading scale must exist");
 
-        Set<GradingScaleRequestDTO.GradeStepDTO> gradeSteps = Set.of();
+        Set<GradeStepDTO> gradeSteps = Set.of();
         if (Hibernate.isInitialized(scale.getGradeSteps()) && scale.getGradeSteps() != null) {
             gradeSteps = scale.getGradeSteps().stream()
-                    .map(gradeStep -> new GradingScaleRequestDTO.GradeStepDTO(gradeStep.getId(), gradeStep.getLowerBoundPercentage(), gradeStep.isLowerBoundInclusive(),
+                    .map(gradeStep -> new GradeStepDTO(gradeStep.getId(), gradeStep.getLowerBoundPercentage(), gradeStep.isLowerBoundInclusive(),
                             gradeStep.getUpperBoundPercentage(), gradeStep.isUpperBoundInclusive(), gradeStep.getGradeName(), gradeStep.getIsPassingGrade()))
                     .collect(Collectors.toSet());
         }
