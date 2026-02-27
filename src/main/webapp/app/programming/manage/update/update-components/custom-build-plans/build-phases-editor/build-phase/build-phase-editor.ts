@@ -1,6 +1,6 @@
 import { Component, signal } from '@angular/core';
 
-import { faArrowDown, faArrowUp, faChevronDown, faChevronRight, faPlus, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faArrowDown, faArrowUp, faChevronDown, faPlus, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { BUILD_PHASE_CONDITION, BuildPhase, BuildPhaseCondition } from 'app/programming/shared/entities/build-plan-phases.model';
 import { FormsModule } from '@angular/forms';
 import { Select } from 'primeng/select';
@@ -16,7 +16,6 @@ import { MonacoEditorFitTextComponent } from 'app/programming/manage/update/upda
 })
 export class BuildPhaseEditor {
     protected readonly faChevronDown = faChevronDown;
-    protected readonly faChevronRight = faChevronRight;
     protected readonly faPlus = faPlus;
     protected readonly faXmark = faXmark;
     protected readonly faTrash = faTrash;
@@ -35,12 +34,6 @@ export class BuildPhaseEditor {
         resultPaths: [],
     });
 
-    readonly expanded = signal<boolean>(false);
-
-    toggleExpanded(): void {
-        this.expanded.update((expanded) => !expanded);
-    }
-
     updateName(name: string): void {
         this.phase.update((phase) => ({ ...phase, name }));
     }
@@ -58,6 +51,9 @@ export class BuildPhaseEditor {
     }
 
     deleteResultPath(deleteIndex: number): void {
-        this.phase.update((phase) => ({ ...phase, resultPaths: (phase.resultPaths ?? []).filter((_, i) => i !== deleteIndex) }));
+        this.phase.update((phase) => ({
+            ...phase,
+            resultPaths: (phase.resultPaths ?? []).filter((_, i) => i !== deleteIndex),
+        }));
     }
 }
