@@ -627,3 +627,6 @@ $global-search-navbar-kbd-bg: #6c757d;
 // Global search modal
 $global-search-modal-footer-bg: rgba($gray-600, 0.03);
 $global-search-lecture-accent: #9333ea;
+$global-search-result-icon-bg: rgba($global-search-lecture-accent, 0.12);
+$global-search-result-hover-border: rgba($global-search-lecture-accent, 0.5);
+$global-search-result-hover-bg: rgba($global-search-lecture-accent, 0.05);
