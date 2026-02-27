@@ -155,6 +155,9 @@ describe('FormDateTimePickerComponent', () => {
         const nowButton = containerButtons.querySelector('.owl-dt-now-button');
         expect(nowButton).toBeTruthy();
         expect(nowButton).toBe(containerButtons.firstChild);
+        expect(nowButton?.getAttribute('title')).toBeTruthy();
+        expect(nowButton?.getAttribute('aria-label')).toBeTruthy();
+        expect(nowButton?.getAttribute('title')).toBe(nowButton?.getAttribute('aria-label'));
 
         // Clean up
         component.onPickerClose();
@@ -221,6 +224,27 @@ describe('FormDateTimePickerComponent', () => {
 
         component.ngOnDestroy();
 
+        expect(containerButtons.querySelector('.owl-dt-now-button')).toBeFalsy();
+
+        // Clean up
+        document.body.removeChild(containerButtons);
+    }));
+
+    it('should clear pending timeout on picker close before it fires', fakeAsync(() => {
+        const containerButtons = document.createElement('div');
+        containerButtons.classList.add('owl-dt-container-buttons');
+        const cancelButton = document.createElement('button');
+        containerButtons.appendChild(cancelButton);
+        document.body.appendChild(containerButtons);
+
+        const mockPicker = { close: jest.fn() } as any;
+        component.onPickerOpen(mockPicker);
+
+        // Close before setTimeout fires
+        component.onPickerClose();
+        tick();
+
+        // The Now button should NOT have been injected since the timeout was cleared by close
         expect(containerButtons.querySelector('.owl-dt-now-button')).toBeFalsy();
 
         // Clean up

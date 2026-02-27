@@ -188,6 +188,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, OnDest
     onPickerOpen(picker: OwlDateTimeComponent<Date>): void {
         // Use setTimeout to ensure the popup DOM is fully rendered
         this.pickerOpenTimeoutId = setTimeout(() => {
+            this.pickerOpenTimeoutId = undefined;
             const containerButtons = document.querySelector('.owl-dt-container-buttons');
             if (!containerButtons || this.nowButtonElement) {
                 return;
@@ -196,6 +197,9 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, OnDest
             const nowButton = this.renderer.createElement('button') as HTMLButtonElement;
             this.renderer.setAttribute(nowButton, 'type', 'button');
             this.renderer.setAttribute(nowButton, 'tabindex', '0');
+            const nowTooltip = this.translateService.instant('entity.setNowTooltip');
+            this.renderer.setAttribute(nowButton, 'title', nowTooltip);
+            this.renderer.setAttribute(nowButton, 'aria-label', nowTooltip);
             this.renderer.addClass(nowButton, 'owl-dt-control');
             this.renderer.addClass(nowButton, 'owl-dt-control-button');
             this.renderer.addClass(nowButton, 'owl-dt-container-control-button');
@@ -225,6 +229,10 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, OnDest
      * Cleans up the injected "Now" button when the picker is closed.
      */
     onPickerClose(): void {
+        if (this.pickerOpenTimeoutId !== undefined) {
+            clearTimeout(this.pickerOpenTimeoutId);
+            this.pickerOpenTimeoutId = undefined;
+        }
         if (this.nowButtonClickListener) {
             this.nowButtonClickListener();
             this.nowButtonClickListener = undefined;
