@@ -123,16 +123,15 @@ Edit `llm_config.yml` with your model configurations. Pyris needs **three types 
 **Azure OpenAI chat model example:**
 
 ```yaml
-- id: "azure-gpt-41-mini"
-  name: "GPT 4.1 Mini"
-  description: "GPT 4.1 Mini on Azure"
+- id: "azure-gpt-5-mini"
+  name: "GPT 5 Mini"
+  description: "GPT 5 Mini on Azure"
   type: "azure_chat"
   endpoint: "<your_azure_endpoint>"
-  api_version: "2024-05-01-preview"
-  azure_deployment: "gpt-41-mini"
-  model: "gpt-4.1-mini"
+  api_version: "2025-04-01-preview"
+  azure_deployment: "gpt-5-mini"
+  model: "gpt-5-mini"
   api_key: "<your_azure_api_key>"
-  tools: []
   cost_per_million_input_token: 0.4
   cost_per_million_output_token: 1.6
 ```
@@ -157,7 +156,7 @@ See `llm_config.example.yml` for the complete list of model types, including Ope
 **Configuration parameter reference:**
 
 - `id`: Unique identifier across all configured models.
-- `model`: Official model name as used by the vendor (e.g. `gpt-4.1-mini`, `text-embedding-3-large`). Used internally by Pyris for model selection.
+- `model`: Official model name as used by the vendor (e.g. `gpt-5-mini`, `text-embedding-3-large`). Used internally by Pyris for model selection.
 - `type`: Selects the appropriate client. Supported values: `openai_chat`, `azure_chat`, `ollama`, `openai_embedding`, `azure_embedding`, `cohere_azure`.
 - `api_key`: API key for the model provider.
 - `endpoint`: Provider URL (required for Azure and Cohere).
@@ -167,7 +166,7 @@ See `llm_config.example.yml` for the complete list of model types, including Ope
 - `cost_per_million_input_token` / `cost_per_million_output_token`: Pricing info used for model routing decisions.
 
 <Callout variant={CalloutVariant.info}>
-  <p>Most Iris pipelines require the GPT-4.1 model family (`gpt-4.1`, `gpt-4.1-mini`, `gpt-4.1-nano`) plus at least one embedding model. Monitor Pyris logs for warnings about missing models.</p>
+  <p>Most Iris pipelines require the GPT-5 model family (`gpt-5.2`, `gpt-5-mini`, `gpt-5-nano`) plus at least one embedding model. Monitor Pyris logs for warnings about missing models.</p>
 </Callout>
 
 **3. Choose a Docker Compose profile and start**
@@ -220,8 +219,11 @@ docker compose -f docker/pyris-production-internal.yml up -d
 **4. Verify the deployment**
 
 ```bash
-# Check Pyris health
+# Check Pyris health (with Nginx profile)
 curl https://pyris.your-domain.com/api/v1/health
+
+# Check Pyris health (production-internal profile)
+curl http://localhost:${PYRIS_PORT:-8000}/api/v1/health
 
 # Check Weaviate health (from the server, if ports are not exposed externally)
 curl http://localhost:8001/v1/.well-known/ready
