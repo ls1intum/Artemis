@@ -269,7 +269,9 @@
                     "submitTooltip": "Submit refinement instruction",
                     "success": "Selected section has been successfully refined.",
                     "error": "Failed to refine the selected section. Please try again.",
-                    "emptyStatementError": "Cannot refine: the problem statement is empty."
+                    "emptyStatementError": "Cannot refine: the problem statement is empty.",
+                    "close": "Close",
+                    "instructionTooLong": "The refinement instruction is too long. Please shorten it and try again."
                 },
                 "diffLineStatTooltip": "Lines added and removed by the AI refinement."
             },

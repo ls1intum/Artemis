@@ -39,6 +39,9 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     private static final String TEST_PREFIX = "hyperionproblemstatementresource";
 
     private long persistedExerciseId;
@@ -382,9 +385,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
 
     // Targeted refinement endpoint tests
 
-    private static final ObjectMapper objectMapper = new ObjectMapper();
-
-    private static String buildTargetedRefinementBody(String problemStatement, int startLine, int endLine, Integer startColumn, Integer endColumn, String instruction)
+    private String buildTargetedRefinementBody(String problemStatement, int startLine, int endLine, Integer startColumn, Integer endColumn, String instruction)
             throws JsonProcessingException {
         ObjectNode node = objectMapper.createObjectNode();
         node.put("problemStatementText", problemStatement);
@@ -494,7 +495,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
-    void shouldReturnBadRequestForTargetedRefineSameLineStartColumnNotLessThanEndColumn() throws Exception {
+    void shouldReturnBadRequestForTargetedRefineSameLineStartColumnGreaterThanEndColumn() throws Exception {
         long courseId = persistedCourseId;
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         courseRepository.findById(courseId).orElseThrow();
@@ -502,10 +503,17 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         String body = buildTargetedRefinementBody("Some problem statement text", 1, 1, 5, 3, "Improve this");
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/refine/targeted", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isBadRequest()).andExpect(jsonPath("$.title").value("Bad Request")).andExpect(jsonPath("$.message").value("error.http.400"));
+    }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void shouldReturnBadRequestForTargetedRefineZeroWidthSelection() throws Exception {
+        long courseId = persistedCourseId;
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        courseRepository.findById(courseId).orElseThrow();
         // same line, startColumn == endColumn (boundary: zero-width selection must also be rejected)
-        String bodyEqual = buildTargetedRefinementBody("Some problem statement text", 1, 1, 3, 3, "Improve this");
-        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/refine/targeted", courseId).contentType(MediaType.APPLICATION_JSON).content(bodyEqual))
+        String body = buildTargetedRefinementBody("Some problem statement text", 1, 1, 3, 3, "Improve this");
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/refine/targeted", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isBadRequest()).andExpect(jsonPath("$.title").value("Bad Request")).andExpect(jsonPath("$.message").value("error.http.400"));
     }
 
