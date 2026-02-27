@@ -21,6 +21,8 @@ env:
   STATUSES_REQUEST_URL: "https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.event.workflow_run.head_sha }}"
   # This is the URL to the workflow run in the GitHub Actions UI.
   TARGET_URL: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+  PLAYWRIGHT_REPORT_SERVER_URL: ${{ vars.PLAYWRIGHT_REPORT_SERVER_URL }}
+  PLAYWRIGHT_REPORT_TOKEN: ${{ secrets.PLAYWRIGHT_REPORT_TOKEN }}
 
 jobs:
   # Job to determine which tests are relevant based on changed files (only for PRs)
@@ -79,8 +81,7 @@ jobs:
       TEST_RETRIES: ${{ vars.TEST_RETRIES }}
       TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
       TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
-      PLAYWRIGHT_REPORT_SERVER_URL: ${{ vars.PLAYWRIGHT_REPORT_SERVER_URL }}
-      PLAYWRIGHT_REPORT_TOKEN: ${{ secrets.PLAYWRIGHT_REPORT_TOKEN }}
+
     outputs:
       phase1_status: ${{ job.status }}
       reporter_failed: ${{ steps.run-tests-phase1.outputs.reporter_failed }}
@@ -234,8 +235,7 @@ jobs:
       TEST_RETRIES: ${{ vars.TEST_RETRIES }}
       TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
       TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
-      PLAYWRIGHT_REPORT_SERVER_URL: ${{ vars.PLAYWRIGHT_REPORT_SERVER_URL }}
-      PLAYWRIGHT_REPORT_TOKEN: ${{ secrets.PLAYWRIGHT_REPORT_TOKEN }}
+
     steps:
       - name: Update status to Phase 2
         run: |
@@ -389,8 +389,7 @@ jobs:
       TEST_RETRIES: ${{ vars.TEST_RETRIES }}
       TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
       TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
-      PLAYWRIGHT_REPORT_SERVER_URL: ${{ vars.PLAYWRIGHT_REPORT_SERVER_URL }}
-      PLAYWRIGHT_REPORT_TOKEN: ${{ secrets.PLAYWRIGHT_REPORT_TOKEN }}
+
     steps:
       - name: Create pending status
         run: |
@@ -528,8 +527,7 @@ jobs:
       TEST_RETRIES: ${{ vars.TEST_RETRIES }}
       TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
       TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
-      PLAYWRIGHT_REPORT_SERVER_URL: ${{ vars.PLAYWRIGHT_REPORT_SERVER_URL }}
-      PLAYWRIGHT_REPORT_TOKEN: ${{ secrets.PLAYWRIGHT_REPORT_TOKEN }}
+
     steps:
       - name: Create pending status
         run: |
