@@ -75,5 +75,6 @@ runs:
       run: |
         echo "Cleaning up old test results from previous runs..."
         rm -rf src/test/playwright/test-reports/*.xml || true
+        rm -rf src/test/playwright/test-reports/blob-* || true
         ls -la src/test/playwright/test-reports/ 2>/dev/null || echo "test-reports directory does not exist yet"
         echo "Test results cleanup complete"

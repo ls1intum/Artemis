@@ -26,6 +26,7 @@ export default defineConfig({
     reporter: [
         ['list'],
         ['junit', { outputFile: process.env.PLAYWRIGHT_TEST_TYPE ? `./test-reports/results-${process.env.PLAYWRIGHT_TEST_TYPE}.xml` : './test-reports/results.xml' }],
+        ['blob', { outputDir: process.env.PLAYWRIGHT_TEST_TYPE ? `./test-reports/blob-${process.env.PLAYWRIGHT_TEST_TYPE}` : './test-reports/blob' }],
         [
             'monocart-reporter',
             {

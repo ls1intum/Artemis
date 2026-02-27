@@ -7,6 +7,9 @@ TEST_PATHS=("$@")
 FAILED=0
 REPORTER_FAILED=0
 
+# Clean up stale marker from previous runs (self-hosted runners have persistent workspaces)
+rm -f ./test-reports/.reporter-failed
+
 if [ ${#TEST_PATHS[@]} -eq 0 ] && [ -n "$PLAYWRIGHT_TEST_PATHS" ]; then
     read -r -a TEST_PATHS <<< "$PLAYWRIGHT_TEST_PATHS"
 fi
@@ -81,6 +84,22 @@ fi
 echo "--- Merging test reports ---"
 npm run merge-junit-reports || true
 npm run merge-coverage-reports || true
+
+# Upload blob reports to Playwright Reports Server
+if [ -n "$PLAYWRIGHT_REPORT_SERVER_URL" ] && [ -n "$PLAYWRIGHT_REPORT_TOKEN" ]; then
+    echo "--- Uploading reports to Playwright Reports Server ---"
+    for blob_dir in ./test-reports/blob-*/; do
+        if [ -f "${blob_dir}report.zip" ]; then
+            test_type=$(basename "$blob_dir" | sed 's/^blob-//')
+            echo "Uploading ${test_type} report..."
+            curl -s -X POST "${PLAYWRIGHT_REPORT_SERVER_URL}/api/result/upload" \
+                -H "Authorization: ${PLAYWRIGHT_REPORT_TOKEN}" \
+                -F "file=@${blob_dir}report.zip" \
+                -F "project=Artemis E2E (${test_type})" \
+                -F "triggerReportGeneration=true" || echo "WARNING: Failed to upload ${test_type} report to server"
+        fi
+    done
+fi
 
 # Write marker file if reporter failed but tests passed (picked up by execute.sh for CI reporting).
 # When tests also fail, the test failure is the primary signal — no need to add reporter noise.

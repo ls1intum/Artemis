@@ -79,6 +79,8 @@ jobs:
       TEST_RETRIES: ${{ vars.TEST_RETRIES }}
       TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
       TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
+      PLAYWRIGHT_REPORT_SERVER_URL: ${{ vars.PLAYWRIGHT_REPORT_SERVER_URL }}
+      PLAYWRIGHT_REPORT_TOKEN: ${{ secrets.PLAYWRIGHT_REPORT_TOKEN }}
     outputs:
       phase1_status: ${{ job.status }}
       reporter_failed: ${{ steps.run-tests-phase1.outputs.reporter_failed }}
@@ -123,22 +125,88 @@ jobs:
           require-tests: error
 
       - name: E2E Test Report
+        id: e2e-report
         if: success() || failure()
         uses: ./.github/actions/e2e-test-report
         with:
-          phase-name: "Phase 1"
           artifact-name: "JUnit Test Results Phase 1"
           download-path: "phase1-test-results"
           check-name: "Phase 1: E2E Test Report"
           commit-sha: ${{ github.event.workflow_run.head_sha }}
-          tests-run: ${{ needs.determine-tests.outputs.relevant_tests }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          repository: ${{ github.repository }}
-          repository-owner: ${{ github.repository_owner }}
-          run-id: ${{ github.run_id }}
-          head-branch: ${{ github.event.workflow_run.head_branch }}
-          is-pr: ${{ github.event.workflow_run.event == 'pull_request' }}
-          reporter-failed: ${{ steps.run-tests-phase1.outputs.reporter_failed }}
+
+      - name: Find E2E PR comment
+        id: find-e2e-comment
+        if: (success() || failure()) && github.event.workflow_run.event == 'pull_request'
+        uses: ./.github/actions/find-e2e-comment
+
+      - name: Post E2E comment (Phase 1)
+        if: (success() || failure()) && github.event.workflow_run.event == 'pull_request'
+        uses: actions/github-script@v8
+        continue-on-error: true
+        with:
+          script: |
+            const prNumber = Number('${{ steps.find-e2e-comment.outputs.pr-number }}');
+            if (!prNumber) return;
+            const existingCommentId = Number('${{ steps.find-e2e-comment.outputs.comment-id }}') || null;
+
+            const testOutcome = '${{ steps.run-tests-phase1.outcome }}';
+            const jobStatus = '${{ job.status }}';
+            const summary = `${{ steps.e2e-report.outputs.summary || '' }}`;
+            const reporterFailed = '${{ steps.run-tests-phase1.outputs.reporter_failed }}';
+            const relevantTests = `${{ needs.determine-tests.outputs.relevant_tests }}`;
+            const remainingTests = `${{ needs.determine-tests.outputs.remaining_tests }}`;
+
+            const phase1Emoji = testOutcome === 'success' ? '✅' : '❌';
+            const phase1Status = testOutcome === 'success' ? 'Passed' : 'Failed';
+            const phase1Details = summary || (testOutcome === 'success' ? 'All tests passed' : 'Tests failed');
+
+            let reporterNote = '';
+            if (reporterFailed === 'true') {
+              reporterNote = '\n\n> **Note:** The test reporter (monocart) failed in Phase 1. Test results were not affected, but coverage data may be incomplete.';
+            }
+
+            let infraNote = '';
+            if (testOutcome === 'success' && jobStatus !== 'success') {
+              infraNote = '\n\n> ⚠️ **Note:** Tests passed but the job encountered an infrastructure issue (e.g., artifact upload failure). See the workflow run linked below for details.';
+            }
+
+            let body = `## End-to-End Test Results\n\n`;
+            body += `| Phase | Status | Details |\n`;
+            body += `|-------|--------|---------|\n`;
+            body += `| **Phase 1** (Relevant) | ${phase1Emoji} ${phase1Status} | ${phase1Details} |\n`;
+            if (remainingTests) {
+              body += `<!-- PHASE2 -->| **Phase 2** (Remaining) | ⏳ Pending... | |<!-- /PHASE2 -->\n`;
+            } else {
+              body += `| **Phase 2** (Remaining) | ⏭ Skipped | No remaining tests |\n`;
+            }
+            body += reporterNote;
+            body += infraNote;
+            body += `\n\n**Test Strategy:** Two-phase execution\n`;
+            body += `- **Phase 1:** \`${relevantTests}\`\n`;
+            body += `- **Phase 2:** \`${remainingTests || 'None'}\`\n`;
+            // <!-- OVERALL --> is a placeholder that the report-results job replaces
+            // with Phase 2 notes (if any) and the final overall status line.
+            body += `<!-- OVERALL -->\n\n`;
+            body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\n`;
+            body += `<!-- E2E Test Results -->`;
+
+            if (existingCommentId) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingCommentId,
+                body: body
+              });
+              console.log(`Updated existing comment ${existingCommentId}`);
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: body
+              });
+              console.log(`Created new comment on PR #${prNumber}`);
+            }
 
   # Phase 2: Run remaining tests only if Phase 1 succeeds
   run-e2e-remaining:
@@ -155,6 +223,7 @@ jobs:
     environment: playwright-e2e-tests
     outputs:
       reporter_failed: ${{ steps.run-tests-phase2.outputs.reporter_failed }}
+      phase2_notes: ${{ steps.update-comment.outputs.phase2_notes }}
     env:
       ARTEMIS_ADMIN_PASSWORD: ${{ secrets.ARTEMIS_ADMIN_PASSWORD }}
       ARTEMIS_ADMIN_USERNAME: ${{ secrets.ARTEMIS_ADMIN_USERNAME }}
@@ -165,6 +234,8 @@ jobs:
       TEST_RETRIES: ${{ vars.TEST_RETRIES }}
       TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
       TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
+      PLAYWRIGHT_REPORT_SERVER_URL: ${{ vars.PLAYWRIGHT_REPORT_SERVER_URL }}
+      PLAYWRIGHT_REPORT_TOKEN: ${{ secrets.PLAYWRIGHT_REPORT_TOKEN }}
     steps:
       - name: Update status to Phase 2
         run: |
@@ -205,22 +276,95 @@ jobs:
           require-tests: error
 
       - name: E2E Test Report
+        id: e2e-report
         if: success() || failure()
         uses: ./.github/actions/e2e-test-report
         with:
-          phase-name: "Phase 2"
           artifact-name: "JUnit Test Results Phase 2"
           download-path: "phase2-test-results"
           check-name: "Phase 2: E2E Test Report"
           commit-sha: ${{ github.event.workflow_run.head_sha }}
-          tests-run: ${{ needs.determine-tests.outputs.remaining_tests }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          repository: ${{ github.repository }}
-          repository-owner: ${{ github.repository_owner }}
-          run-id: ${{ github.run_id }}
-          head-branch: ${{ github.event.workflow_run.head_branch }}
-          is-pr: ${{ github.event.workflow_run.event == 'pull_request' }}
-          reporter-failed: ${{ steps.run-tests-phase2.outputs.reporter_failed }}
+
+      - name: Find E2E PR comment
+        id: find-e2e-comment
+        if: (success() || failure()) && github.event.workflow_run.event == 'pull_request'
+        uses: ./.github/actions/find-e2e-comment
+
+      - name: Update E2E comment (Phase 2)
+        id: update-comment
+        if: (success() || failure()) && github.event.workflow_run.event == 'pull_request'
+        uses: actions/github-script@v8
+        continue-on-error: true
+        with:
+          script: |
+            const prNumber = Number('${{ steps.find-e2e-comment.outputs.pr-number }}');
+            if (!prNumber) return;
+            const existingCommentId = Number('${{ steps.find-e2e-comment.outputs.comment-id }}') || null;
+
+            const testOutcome = '${{ steps.run-tests-phase2.outcome }}';
+            const jobStatus = '${{ job.status }}';
+            const summary = `${{ steps.e2e-report.outputs.summary || '' }}`;
+            const reporterFailed = '${{ steps.run-tests-phase2.outputs.reporter_failed }}';
+
+            const phase2Emoji = testOutcome === 'success' ? '✅' : '❌';
+            const phase2Status = testOutcome === 'success' ? 'Passed' : 'Failed';
+            const phase2Details = summary || (testOutcome === 'success' ? 'All tests passed' : 'Tests failed');
+
+            const phase2Row = `| **Phase 2** (Remaining) | ${phase2Emoji} ${phase2Status} | ${phase2Details} |`;
+
+            // Compute Phase 2 notes and pass them as an output so the report-results
+            // job can insert them alongside the overall status in a single replacement.
+            let reporterNote = '';
+            if (reporterFailed === 'true') {
+              reporterNote = '\n\n> **Note:** The test reporter (monocart) failed in Phase 2. Test results were not affected, but coverage data may be incomplete.';
+            }
+
+            let infraNote = '';
+            if (testOutcome === 'success' && jobStatus !== 'success') {
+              infraNote = '\n\n> ⚠️ **Note:** Tests passed but the job encountered an infrastructure issue (e.g., artifact upload failure). See the workflow run linked below for details.';
+            }
+
+            core.setOutput('phase2_notes', reporterNote + infraNote);
+
+            if (existingCommentId) {
+              let body = (await github.rest.issues.getComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingCommentId
+              })).data.body;
+
+              // Only replace the Phase 2 row placeholder. The <!-- OVERALL --> marker
+              // is left untouched for the report-results job to handle.
+              body = body.replace(/<!-- PHASE2 -->.*<!-- \/PHASE2 -->/s, phase2Row);
+
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingCommentId,
+                body: body
+              });
+              console.log(`Updated comment ${existingCommentId} with Phase 2 results`);
+            } else {
+              // Fallback: create new comment if Phase 1 comment not found.
+              // Notes are omitted here — the report-results job will insert them
+              // when it replaces <!-- OVERALL --> with the final status.
+              let body = `## End-to-End Test Results\n\n`;
+              body += `| Phase | Status | Details |\n`;
+              body += `|-------|--------|---------|\n`;
+              body += `| **Phase 1** (Relevant) | ✅ Passed | *(completed in previous step)* |\n`;
+              body += `${phase2Row}\n`;
+              body += `<!-- OVERALL -->\n\n`;
+              body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\n`;
+              body += `<!-- E2E Test Results -->`;
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: body
+              });
+              console.log(`Created fallback comment on PR #${prNumber}`);
+            }
 
   # Run all tests for PR when run_all_tests is triggered, or when no specific tests detected
   run-e2e-all-pr:
@@ -245,6 +389,8 @@ jobs:
       TEST_RETRIES: ${{ vars.TEST_RETRIES }}
       TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
       TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
+      PLAYWRIGHT_REPORT_SERVER_URL: ${{ vars.PLAYWRIGHT_REPORT_SERVER_URL }}
+      PLAYWRIGHT_REPORT_TOKEN: ${{ secrets.PLAYWRIGHT_REPORT_TOKEN }}
     steps:
       - name: Create pending status
         run: |
@@ -304,58 +450,66 @@ jobs:
           include_time_in_summary: true
           report_paths: 'all-test-results/results.xml'
 
-      - name: Find PR number
+      - name: Find E2E PR comment
+        id: find-e2e-comment
         if: success() || failure()
-        id: find-pr
-        continue-on-error: true
-        run: |
-          BRANCH_NAME=${{ github.event.workflow_run.head_branch }}
-          echo "Checking if PR exists for head ref: $BRANCH_NAME."
+        uses: ./.github/actions/find-e2e-comment
 
-          PR_RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/repos/${{ github.repository }}/pulls?head=${{ github.repository_owner }}:$BRANCH_NAME")
-
-          PR_NUMBER=$(echo "$PR_RESPONSE" | grep -o '"number": [0-9]*,' | head -1 | sed 's/"number": //g' | sed 's/,//g' | tr -d ' \t\n\r')
-
-          if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
-            echo "Found PR: $PR_NUMBER from branch: $BRANCH_NAME."
-            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
-          else
-            echo "No PR found from branch: $BRANCH_NAME."
-          fi
-
-      - name: Post test results comment to PR
-        if: (success() || failure()) && steps.find-pr.outputs.pr_number != ''
+      - name: Post E2E comment (All Tests)
+        if: success() || failure()
         uses: actions/github-script@v8
         continue-on-error: true
         with:
           script: |
-            const prNumber = ${{ steps.find-pr.outputs.pr_number }};
+            const prNumber = Number('${{ steps.find-e2e-comment.outputs.pr-number }}');
+            if (!prNumber) return;
+            const existingCommentId = Number('${{ steps.find-e2e-comment.outputs.comment-id }}') || null;
+
+            const testOutcome = '${{ steps.run-tests-all-pr.outcome }}';
             const jobStatus = '${{ job.status }}';
-            const testSummary = `${{ steps.test-report.outputs.summary || '' }}`;
+            const summary = `${{ steps.test-report.outputs.summary || '' }}`;
             const reporterFailed = '${{ steps.run-tests-all-pr.outputs.reporter_failed }}';
 
-            let statusEmoji = jobStatus === 'success' ? '✅' : '❌';
-            let statusText = jobStatus === 'success' ? 'passed' : 'failed';
+            const emoji = testOutcome === 'success' ? '✅' : '❌';
+            const status = testOutcome === 'success' ? 'Passed' : 'Failed';
+            const details = summary || (testOutcome === 'success' ? 'All tests passed' : 'Tests failed');
 
-            let body = `### All E2E Tests ${statusEmoji}\n\n`;
-            body += `**Status:** Tests ${statusText}\n\n`;
+            let reporterNote = '';
             if (reporterFailed === 'true') {
-              body += `> **Note:** The test reporter (monocart) failed. Test results were not affected, but coverage data may be incomplete.\n\n`;
+              reporterNote = '\n\n> **Note:** The test reporter (monocart) failed. Test results were not affected, but coverage data may be incomplete.';
             }
-            if (testSummary) {
-              body += `${testSummary}\n\n`;
-            }
-            body += `**Details:** Check the [E2E Test Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for detailed results.\n\n`;
-            body += `---\n*This is an automated comment for the E2E test execution (all tests).*`;
 
-            github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: prNumber,
-              body: body
-            });
+            let infraNote = '';
+            if (testOutcome === 'success' && jobStatus !== 'success') {
+              infraNote = '\n\n> ⚠️ **Note:** Tests passed but the job encountered an infrastructure issue (e.g., artifact upload failure). See the workflow run linked below for details.';
+            }
+
+            let body = `## End-to-End Test Results\n\n`;
+            body += `| Phase | Status | Details |\n`;
+            body += `|-------|--------|---------|\n`;
+            body += `| **All Tests** | ${emoji} ${status} | ${details} |\n`;
+            body += reporterNote;
+            body += infraNote;
+            body += `\n\n**Test Strategy:** Running all tests (configuration or infrastructure changes detected)\n`;
+            body += `<!-- OVERALL -->\n\n`;
+            body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\n`;
+            body += `<!-- E2E Test Results -->`;
+
+            if (existingCommentId) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingCommentId,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: body
+              });
+            }
 
   # Run all tests for non-PR events (push to develop, main, release branches)
   run-e2e-all-non-pr:
@@ -374,6 +528,8 @@ jobs:
       TEST_RETRIES: ${{ vars.TEST_RETRIES }}
       TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
       TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
+      PLAYWRIGHT_REPORT_SERVER_URL: ${{ vars.PLAYWRIGHT_REPORT_SERVER_URL }}
+      PLAYWRIGHT_REPORT_TOKEN: ${{ secrets.PLAYWRIGHT_REPORT_TOKEN }}
     steps:
       - name: Create pending status
         run: |
@@ -502,70 +658,84 @@ jobs:
             "${{ env.STATUSES_REQUEST_URL }}" \
             -d "$JSON_PAYLOAD"
 
-      - name: Find PR number
+      - name: Checkout repository for local actions
         if: always() && github.event.workflow_run.event == 'pull_request'
-        id: find-pr
-        continue-on-error: true
-        run: |
-          BRANCH_NAME=${{ github.event.workflow_run.head_branch }}
-          echo "Checking if PR exists for head ref: $BRANCH_NAME."
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ github.repository }}
+          ref: ${{ github.event.workflow_run.head_branch }}
+          sparse-checkout: .github/actions
+          fetch-depth: 1
 
-          PR_RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/repos/${{ github.repository }}/pulls?head=${{ github.repository_owner }}:$BRANCH_NAME")
+      - name: Find E2E PR comment
+        id: find-e2e-comment
+        if: always() && github.event.workflow_run.event == 'pull_request'
+        uses: ./.github/actions/find-e2e-comment
 
-          PR_NUMBER=$(echo "$PR_RESPONSE" | grep -o '"number": [0-9]*,' | head -1 | sed 's/"number": //g' | sed 's/,//g' | tr -d ' \t\n\r')
-
-          if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
-            echo "Found PR: $PR_NUMBER from branch: $BRANCH_NAME."
-            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
-          else
-            echo "No PR found from branch: $BRANCH_NAME."
-          fi
-
-      - name: Add test results comment to PR
-        if: always() && steps.find-pr.outputs.pr_number != ''
+      - name: Update E2E comment with overall status
+        if: always() && github.event.workflow_run.event == 'pull_request'
         uses: actions/github-script@v8
         continue-on-error: true
         with:
           script: |
-            const prNumber = ${{ steps.find-pr.outputs.pr_number }};
+            const prNumber = Number('${{ steps.find-e2e-comment.outputs.pr-number }}');
+            if (!prNumber) return;
+            const existingCommentId = Number('${{ steps.find-e2e-comment.outputs.comment-id }}') || null;
+
             const status = `${{ steps.overall-status.outputs.status }}`;
             const description = `${{ steps.overall-status.outputs.description }}`;
+            const overallEmoji = status === 'success' ? '✅' : '❌';
+            const overallLine = `\n**Overall: ${overallEmoji} ${description}**`;
 
-            const runAllTests = `${{ needs.determine-tests.outputs.run_all_tests || 'unknown' }}`;
-            const relevantTests = `${{ needs.determine-tests.outputs.relevant_tests || '' }}`;
-            const remainingTests = `${{ needs.determine-tests.outputs.remaining_tests || '' }}`;
+            const phase1Result = '${{ needs.run-e2e-relevant.result }}';
+            const phase2Result = '${{ needs.run-e2e-remaining.result }}';
+            const phase2Notes = `${{ needs.run-e2e-remaining.outputs.phase2_notes || '' }}`;
 
-            const phase1ReporterFailed = `${{ needs.run-e2e-relevant.outputs.reporter_failed || '' }}`;
-            const phase2ReporterFailed = `${{ needs.run-e2e-remaining.outputs.reporter_failed || '' }}`;
-            const allPrReporterFailed = `${{ needs.run-e2e-all-pr.outputs.reporter_failed || '' }}`;
+            if (existingCommentId) {
+              let body = (await github.rest.issues.getComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingCommentId
+              })).data.body;
 
-            let phaseInfo = '';
-            if (runAllTests === 'true') {
-              phaseInfo = '**Test Strategy:** Running all tests (configuration or infrastructure changes detected)\n\n';
-            } else if (relevantTests || remainingTests) {
-              phaseInfo = `**Test Strategy:** Two-phase execution\n`;
-              phaseInfo += `- **Phase 1 (Relevant):** ${relevantTests || 'None'}\n`;
-              phaseInfo += `- **Phase 2 (Remaining):** ${remainingTests || 'None'}\n\n`;
+              // If Phase 2 was never run, update the placeholder
+              if (body.includes('<!-- PHASE2 -->')) {
+                let phase2Reason = 'Skipped';
+                if (phase1Result === 'failure') {
+                  phase2Reason = 'Skipped (Phase 1 failed)';
+                } else if (phase2Result === 'skipped') {
+                  phase2Reason = 'Skipped (no remaining tests)';
+                }
+                body = body.replace(
+                  /<!-- PHASE2 -->.*<!-- \/PHASE2 -->/s,
+                  `| **Phase 2** (Remaining) | ⏭ ${phase2Reason} | |`
+                );
+              }
+
+              // Replace <!-- OVERALL --> with Phase 2 notes (if any) and the overall
+              // status line. This is the only place that touches this marker.
+              body = body.replace('<!-- OVERALL -->', phase2Notes + overallLine);
+
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingCommentId,
+                body: body
+              });
+              console.log(`Updated comment ${existingCommentId} with overall status`);
             } else {
-              phaseInfo = '**Test Strategy:** Running all tests\n\n';
-            }
+              // Fallback: create a summary-only comment
+              const marker = '<!-- E2E Test Results -->';
+              let body = `## End-to-End Test Results\n\n`;
+              body += `**Overall: ${overallEmoji} ${description}**\n\n`;
+              body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\n`;
+              body += marker;
 
-            let reporterWarning = '';
-            if (phase1ReporterFailed === 'true' || phase2ReporterFailed === 'true' || allPrReporterFailed === 'true') {
-              const phases = [];
-              if (phase1ReporterFailed === 'true') phases.push('Phase 1');
-              if (phase2ReporterFailed === 'true') phases.push('Phase 2');
-              if (allPrReporterFailed === 'true') phases.push('All Tests');
-              reporterWarning = `> **Note:** The test reporter (monocart) failed in ${phases.join(' and ')}. Test results were not affected, but coverage data may be incomplete.\n\n`;
-            }
-
-            const detailsNote = '**Detailed Results:** Check the individual phase reports in the [workflow run](${{ env.TARGET_URL }}) for test counts, timing, and results.\n\n';
-
-            github.rest.issues.createComment({
+              await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: prNumber,
-                body: `### End-to-End (E2E) Test Results Summary\n\n${phaseInfo}${reporterWarning}**Status:** ${description}\n\n${detailsNote}`
+                body: body
               });
+              console.log(`Created fallback summary comment on PR #${prNumber}`);
+            }
