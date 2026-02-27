@@ -8,10 +8,11 @@ import { InputText } from 'primeng/inputtext';
 import { ButtonDirective, ButtonIcon, ButtonLabel } from 'primeng/button';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MonacoEditorFitTextComponent } from 'app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/monaco-editor-auto-size/monaco-editor-fit-text.component';
+import { Card } from 'primeng/card';
 
 @Component({
     selector: 'jhi-build-phase',
-    imports: [FormsModule, Select, InputText, ButtonDirective, ButtonIcon, FaIconComponent, MonacoEditorFitTextComponent, ButtonLabel],
+    imports: [FormsModule, Select, InputText, ButtonDirective, ButtonIcon, FaIconComponent, MonacoEditorFitTextComponent, ButtonLabel, Card],
     templateUrl: './build-phase-editor.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
