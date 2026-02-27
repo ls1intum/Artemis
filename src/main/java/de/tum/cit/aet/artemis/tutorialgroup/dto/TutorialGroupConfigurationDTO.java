@@ -79,13 +79,8 @@ public record TutorialGroupConfigurationDTO(Long id, @NotBlank String tutorialPe
          */
         public static TutorialGroupFreePeriodDTO of(TutorialGroupFreePeriod freePeriod) {
             Objects.requireNonNull(freePeriod, "tutorialGroupFreePeriod must exist");
-
-            if (freePeriod.getStart() == null) {
-                throw new BadRequestAlertException("Tutorial group free period start date must be set.", TUTORIAL_FREE_PERIOD_ENTITY_NAME, "tutorialFreePeriodStartDateMissing");
-            }
-            if (freePeriod.getEnd() == null) {
-                throw new BadRequestAlertException("Tutorial group free period end date must be set.", TUTORIAL_FREE_PERIOD_ENTITY_NAME, "tutorialFreePeriodEndDateMissing");
-            }
+            Objects.requireNonNull(freePeriod.getStart(), "Tutorial group free period start date must be set.");
+            Objects.requireNonNull(freePeriod.getEnd(), "Tutorial group free period end date must be set.");
             return new TutorialGroupFreePeriodDTO(freePeriod.getId(), freePeriod.getStart().toString(), freePeriod.getEnd().toString(), freePeriod.getReason());
         }
 

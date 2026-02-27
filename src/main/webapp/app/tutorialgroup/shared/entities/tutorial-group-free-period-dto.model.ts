@@ -2,11 +2,11 @@ import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutor
 import { convertDateFromClient } from 'app/shared/util/date.utils';
 import dayjs from 'dayjs/esm';
 
-export class TutorialGroupFreePeriodDTO {
-    public id?: number;
-    public start: string;
-    public end: string;
-    public reason?: string;
+export interface TutorialGroupFreePeriodDTO {
+    id?: number;
+    start: string;
+    end: string;
+    reason?: string;
 }
 
 export function toTutorialGroupFreePeriodDTO(tutorialGroupFreePeriod: TutorialGroupFreePeriod): TutorialGroupFreePeriodDTO {

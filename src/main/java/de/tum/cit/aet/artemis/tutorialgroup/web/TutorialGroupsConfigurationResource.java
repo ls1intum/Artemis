@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupConfiguratio
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -32,7 +33,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
-import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupConfigurationDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
@@ -104,9 +104,8 @@ public class TutorialGroupsConfigurationResource {
             throw new BadRequestAlertException("A tutorial group configuration already exists for this course", ENTITY_NAME, "alreadyExists");
         }
         checkCourseTimeZone(course);
+        validateTutorialGroupConfiguration(tutorialGroupConfigurationDto);
         TutorialGroupsConfiguration configuration = TutorialGroupConfigurationDTO.from(tutorialGroupConfigurationDto);
-
-        validateTutorialGroupConfiguration(configuration);
         configuration.setCourse(course);
         var persistedConfiguration = tutorialGroupsConfigurationRepository.save(configuration);
         course.setTutorialGroupsConfiguration(persistedConfiguration);
@@ -146,21 +145,17 @@ public class TutorialGroupsConfigurationResource {
 
         checkEntityIdMatchesPathIds(configurationFromDatabase, Optional.ofNullable(courseId), Optional.of(tutorialGroupsConfigurationId));
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, configurationFromDatabase.getCourse(), null);
+        validateTutorialGroupConfiguration(updatedTutorialGroupConfigurationDto);
 
-        // Use full DTO mapping from() for validation purposes.
-        // Free periods are converted as well, although only scalar fields are used here
-        // to ensure that all validation annotations on the DTO are properly applied to the incoming data.
-        TutorialGroupsConfiguration tempForValidation = TutorialGroupConfigurationDTO.from(updatedTutorialGroupConfigurationDto);
-        validateTutorialGroupConfiguration(tempForValidation);
-
-        boolean useTutorialGroupChannelSettingChanged = !Objects.equals(configurationFromDatabase.getUseTutorialGroupChannels(), tempForValidation.getUseTutorialGroupChannels());
+        boolean useTutorialGroupChannelSettingChanged = !Objects.equals(configurationFromDatabase.getUseTutorialGroupChannels(),
+                updatedTutorialGroupConfigurationDto.useTutorialGroupChannels());
         boolean usePublicChannelSettingChanged = !Objects.equals(configurationFromDatabase.getUsePublicTutorialGroupChannels(),
-                tempForValidation.getUsePublicTutorialGroupChannels());
+                updatedTutorialGroupConfigurationDto.usePublicTutorialGroupChannels());
 
-        configurationFromDatabase.setTutorialPeriodEndInclusive(tempForValidation.getTutorialPeriodEndInclusive());
-        configurationFromDatabase.setTutorialPeriodStartInclusive(tempForValidation.getTutorialPeriodStartInclusive());
-        configurationFromDatabase.setUseTutorialGroupChannels(tempForValidation.getUseTutorialGroupChannels());
-        configurationFromDatabase.setUsePublicTutorialGroupChannels(tempForValidation.getUsePublicTutorialGroupChannels());
+        configurationFromDatabase.setTutorialPeriodEndInclusive(updatedTutorialGroupConfigurationDto.tutorialPeriodEndInclusive());
+        configurationFromDatabase.setTutorialPeriodStartInclusive(updatedTutorialGroupConfigurationDto.tutorialPeriodStartInclusive());
+        configurationFromDatabase.setUseTutorialGroupChannels(updatedTutorialGroupConfigurationDto.useTutorialGroupChannels());
+        configurationFromDatabase.setUsePublicTutorialGroupChannels(updatedTutorialGroupConfigurationDto.usePublicTutorialGroupChannels());
 
         var persistedConfiguration = tutorialGroupsConfigurationRepository.save(configurationFromDatabase);
 
@@ -182,39 +177,38 @@ public class TutorialGroupsConfigurationResource {
         return ResponseEntity.ok(TutorialGroupConfigurationDTO.of(persistedConfiguration));
     }
 
-    private static void validateTutorialGroupConfiguration(TutorialGroupsConfiguration tutorialGroupsConfiguration) {
-        if (tutorialGroupsConfiguration.getTutorialPeriodStartInclusive() == null || tutorialGroupsConfiguration.getTutorialPeriodEndInclusive() == null) {
+    private static void validateTutorialGroupConfiguration(TutorialGroupConfigurationDTO tutorialGroupsConfigurationDTO) {
+        if (tutorialGroupsConfigurationDTO.tutorialPeriodStartInclusive() == null || tutorialGroupsConfigurationDTO.tutorialPeriodEndInclusive() == null) {
             throw new BadRequestAlertException("Tutorial period start date and end date must be set.", ENTITY_NAME, "tutorialPeriodMissing");
         }
-        if (!isIso8601DateString(tutorialGroupsConfiguration.getTutorialPeriodStartInclusive())
-                || !isIso8601DateString(tutorialGroupsConfiguration.getTutorialPeriodEndInclusive())) {
+        if (!isIso8601DateString(tutorialGroupsConfigurationDTO.tutorialPeriodStartInclusive())
+                || !isIso8601DateString(tutorialGroupsConfigurationDTO.tutorialPeriodEndInclusive())) {
             throw new BadRequestAlertException("Tutorial period start date and end date must be valid ISO 8601 date strings.", ENTITY_NAME, "tutorialPeriodInvalidFormat");
         }
 
-        LocalDate tutorialStart = LocalDate.parse(tutorialGroupsConfiguration.getTutorialPeriodStartInclusive());
-        LocalDate tutorialEnd = LocalDate.parse(tutorialGroupsConfiguration.getTutorialPeriodEndInclusive());
+        LocalDate tutorialStart = LocalDate.parse(tutorialGroupsConfigurationDTO.tutorialPeriodStartInclusive());
+        LocalDate tutorialEnd = LocalDate.parse(tutorialGroupsConfigurationDTO.tutorialPeriodEndInclusive());
         if (tutorialStart.isAfter(tutorialEnd)) {
             throw new BadRequestAlertException("Tutorial period start date must be before tutorial period end date.", ENTITY_NAME, "tutorialPeriodInvalidOrder");
         }
-        if (tutorialGroupsConfiguration.getTutorialGroupFreePeriods() != null) {
-            for (TutorialGroupFreePeriod freePeriod : tutorialGroupsConfiguration.getTutorialGroupFreePeriods()) {
-                if (freePeriod.getStart() == null) {
+        if (tutorialGroupsConfigurationDTO.tutorialGroupFreePeriods() != null) {
+            for (TutorialGroupConfigurationDTO.TutorialGroupFreePeriodDTO freePeriod : tutorialGroupsConfigurationDTO.tutorialGroupFreePeriods()) {
+                if (freePeriod.start() == null) {
                     throw new BadRequestAlertException("Tutorial group free period start date must be set.", TUTORIAL_FREE_PERIOD_ENTITY_NAME,
                             "tutorialFreePeriodStartDateMissing");
                 }
-                if (freePeriod.getEnd() == null) {
+                if (freePeriod.end() == null) {
                     throw new BadRequestAlertException("Tutorial group free period end date must be set.", TUTORIAL_FREE_PERIOD_ENTITY_NAME, "tutorialFreePeriodEndDateMissing");
                 }
-                if (freePeriod.getStart().isAfter(freePeriod.getEnd())) {
+                LocalDate freeStartDate = ZonedDateTime.parse(freePeriod.start()).toLocalDate();
+                LocalDate freeEndDate = ZonedDateTime.parse(freePeriod.end()).toLocalDate();
+                if (freeStartDate.isAfter(freeEndDate)) {
                     throw new BadRequestAlertException("Tutorial group free period start date must be before tutorial group free period end date.",
                             TUTORIAL_FREE_PERIOD_ENTITY_NAME, "tutorialFreePeriodInvalidOrder");
                 }
-
-                LocalDate freeStartDate = freePeriod.getStart().toLocalDate();
-                LocalDate freeEndDate = freePeriod.getEnd().toLocalDate();
-
                 if (freeStartDate.isBefore(tutorialStart) || freeEndDate.isAfter(tutorialEnd)) {
-                    throw new BadRequestAlertException("Tutorial group free periods must lie within the tutorial period.", ENTITY_NAME, "tutorialFreePeriodOutOfBounds");
+                    throw new BadRequestAlertException("Tutorial group free periods must lie within the tutorial period.", TUTORIAL_FREE_PERIOD_ENTITY_NAME,
+                            "tutorialFreePeriodOutOfBounds");
                 }
             }
         }
@@ -234,7 +228,7 @@ public class TutorialGroupsConfigurationResource {
         });
     }
 
-    private void checkCourseTimeZone(Course course) {
+    private static void checkCourseTimeZone(Course course) {
         if (course.getTimeZone() == null) {
             throw new BadRequestAlertException("The course has no configured time zone.", ENTITY_NAME, "courseHasNoTimeZone");
         }
