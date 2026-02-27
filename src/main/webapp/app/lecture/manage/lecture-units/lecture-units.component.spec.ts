@@ -127,8 +127,16 @@ describe('LectureUpdateUnitsComponent', () => {
             ],
         })
             .overrideComponent(LectureUpdateUnitsComponent, {
-                remove: { imports: [PdfDropZoneComponent, TextUnitFormComponent, OnlineUnitFormComponent, AttachmentVideoUnitFormComponent] },
-                add: { imports: [PdfDropZoneStubComponent, TextUnitFormStubComponent, OnlineUnitFormStubComponent, AttachmentVideoUnitFormStubComponent] },
+                remove: { imports: [LectureUnitManagementComponent, PdfDropZoneComponent, TextUnitFormComponent, OnlineUnitFormComponent, AttachmentVideoUnitFormComponent] },
+                add: {
+                    imports: [
+                        MockComponent(LectureUnitManagementComponent),
+                        PdfDropZoneStubComponent,
+                        TextUnitFormStubComponent,
+                        OnlineUnitFormStubComponent,
+                        AttachmentVideoUnitFormStubComponent,
+                    ],
+                },
             })
             .compileComponents();
 

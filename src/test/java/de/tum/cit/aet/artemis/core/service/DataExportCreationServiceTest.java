@@ -36,12 +36,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -74,7 +72,6 @@ import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestR
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
-import de.tum.cit.aet.artemis.modeling.service.apollon.ApollonConversionService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
@@ -130,13 +127,6 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
     private ApollonRequestMockProvider apollonRequestMockProvider;
 
     @Autowired
-    @Qualifier("apollonRestTemplate")
-    private RestTemplate restTemplate;
-
-    @Autowired
-    private ApollonConversionService apollonConversionService;
-
-    @Autowired
     private UserUtilService userUtilService;
 
     @Autowired
@@ -167,8 +157,6 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
     void initTestCase() throws IOException {
         userUtilService.addUsers(TEST_PREFIX, 2, 5, 0, 1);
         userUtilService.adjustUserGroupsToCustomGroups(TEST_PREFIX, "", 2, 5, 0, 1);
-
-        apollonConversionService.setRestTemplate(restTemplate);
 
         apollonRequestMockProvider.enableMockingOfRequests();
 

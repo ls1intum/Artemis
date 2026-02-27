@@ -92,6 +92,7 @@ export class ExerciseAPIRequests {
         assessmentType?: ProgrammingExerciseAssessmentType;
         mode?: ExerciseMode;
         teamAssignmentConfig?: TeamAssignmentConfig;
+        problemStatement?: string;
     }): Promise<ProgrammingExercise> {
         const {
             course,
@@ -107,6 +108,7 @@ export class ExerciseAPIRequests {
             assessmentType = ProgrammingExerciseAssessmentType.AUTOMATIC,
             mode = ExerciseMode.INDIVIDUAL,
             teamAssignmentConfig,
+            problemStatement,
         } = options;
 
         let programmingExerciseTemplate = {};
@@ -128,6 +130,7 @@ export class ExerciseAPIRequests {
             assessmentType: ProgrammingExerciseAssessmentType[assessmentType],
             ...(course ? { course } : {}),
             ...(exerciseGroup ? { exerciseGroup } : {}),
+            ...(problemStatement ? { problemStatement } : {}),
         } as ProgrammingExercise;
 
         if (!exerciseGroup) {

@@ -380,7 +380,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
 
     /**
      * In case user calls for correctionRound 0, but more manual results already exists
-     * and he has not requested a specific result, remove any other results
+     * and they have not requested a specific result, remove any other results
      *
      * @param correctionRound for which not to remove results
      * @param resultId        specific resultId

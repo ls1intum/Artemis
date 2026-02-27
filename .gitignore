@@ -240,7 +240,11 @@ deferredEagerBeanInstantiationViolations.dot
 ######################
 # Claude Code
 ######################
-CLAUDE.md
 .claude
+
+
+######################
+# Others
+######################
 /src/test/playwright/monocart-report
 /venv/

@@ -125,6 +125,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             .pipe(takeUntilDestroyed())
             .subscribe(() => {
                 if (!this.isInitial) {
+                    // Invalidate the render cache since the theme changed (PlantUML diagrams need re-rendering with new colors)
+                    this.lastRenderedProblemStatement = undefined;
                     this.updateMarkdown();
                 }
             });
@@ -171,6 +173,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                         }
                         if (this.generateHtmlEvents) {
                             this.generateHtmlSubscription = this.generateHtmlEvents.subscribe(() => {
+                                // Invalidate the render cache since we are explicitly asked to regenerate HTML
+                                this.lastRenderedProblemStatement = undefined;
                                 this.updateMarkdown();
                             });
                         }
@@ -246,6 +250,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             .subscribe((result: Result) => {
                 this.latestResult = result;
                 this.programmingExercisePlantUmlWrapper.setLatestResult(this.latestResult);
+                // Invalidate the render cache since the result changed (test status colors need updating)
+                this.lastRenderedProblemStatement = undefined;
                 this.updateMarkdown();
             });
     }
@@ -264,7 +270,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         this.destroyTaskComponents();
         // Reset task index to start fresh for this render
         this.taskIndex = 0;
-        this.programmingExercisePlantUmlWrapper.resetIndex();
+        // Set the exercise ID so PlantUML container IDs are scoped per exercise.
+        // This prevents cross-contamination when multiple exercises are on the same page (e.g. in exams).
+        this.programmingExercisePlantUmlWrapper.setExerciseId(this.exercise?.id);
         // make sure that always the correct result is set, before updating markdown
         // looks weird, but in setter of latestResult are setters of sub components invoked
         this.latestResult = this.latestResultValue;

@@ -4,8 +4,10 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { LearningObjectType } from 'app/atlas/shared/entities/learning-path.model';
 import { provideHttpClient } from '@angular/common/http';
 import { SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('LearningPathApiService', () => {
+    setupTestBed({ zoneless: true });
     let httpClient: HttpTestingController;
     let learningPathApiService: LearningPathApiService;
 

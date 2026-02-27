@@ -29,7 +29,7 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
     });
 
     // User preferences (constants)
-    readonly initialWidth = 400;
+    readonly initialWidth = 450;
     readonly initialHeight = 600;
     readonly fullWidthFactor = 0.93;
     readonly fullHeightFactor = 0.85;

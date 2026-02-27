@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
@@ -5,7 +6,6 @@ import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { ImportAllCompetenciesComponent } from 'app/atlas/manage/competency-management/import-all-competencies.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { MockRouter } from 'test/helpers/mocks/mock-router';
 
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -15,37 +15,44 @@ import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testi
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { Subject } from 'rxjs';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ImportAllCompetenciesComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ImportAllCompetenciesComponent>;
     let component: ImportAllCompetenciesComponent;
     let dialogRef: DynamicDialogRef;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         dialogRef = {
-            close: jest.fn(),
+            close: vi.fn(),
             onClose: new Subject<any>(),
         } as unknown as DynamicDialogRef;
 
-        TestBed.configureTestingModule({
-            imports: [ImportAllCompetenciesComponent, MockComponent(NgbPagination), FontAwesomeTestingModule],
-            declarations: [MockRouter, MockComponent(ButtonComponent), MockDirective(SortByDirective), MockDirective(SortDirective)],
+        await TestBed.configureTestingModule({
+            imports: [
+                ImportAllCompetenciesComponent,
+                MockComponent(NgbPagination),
+                FontAwesomeTestingModule,
+                MockComponent(ButtonComponent),
+                MockDirective(SortByDirective),
+                MockDirective(SortDirective),
+            ],
+            declarations: [],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: DynamicDialogRef, useValue: dialogRef },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ImportAllCompetenciesComponent);
-                component = fixture.componentInstance;
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(ImportAllCompetenciesComponent);
+        component = fixture.componentInstance;
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {

@@ -166,7 +166,10 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             });
 
             this.textService.get(participationId!).subscribe({
-                next: (data: StudentParticipation) => this.updateParticipation(data, this.submissionId),
+                next: (data: StudentParticipation) => {
+                    this.updateParticipation(data, this.submissionId);
+                    this.loadIrisSettings();
+                },
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
 
@@ -195,7 +198,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                     }
                 }
                 this.updateParticipation(this.participation);
-                this.loadIrisSettings();
             });
     }
 

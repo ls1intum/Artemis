@@ -11,6 +11,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
+import de.tum.cit.aet.artemis.core.config.valves.HealthCheckValve;
+import de.tum.cit.aet.artemis.core.config.valves.PublicTimeValve;
+
 @Profile(PROFILE_CORE)
 @Configuration
 @Lazy
@@ -23,32 +26,39 @@ public class TomcatConfiguration {
      */
     @Bean
     public WebServerFactoryCustomizer<TomcatServletWebServerFactory> servletContainerCustomizer() {
-        return (TomcatServletWebServerFactory container) -> container.addContextCustomizers((Context context) -> {
+        return (TomcatServletWebServerFactory container) -> {
+            // Add health check valve for ultra-fast /ping responses used by load balancers
+            container.addEngineValves(new HealthCheckValve());
+            // Add time valve for ultra-fast /time responses used by the webapp
+            container.addEngineValves(new PublicTimeValve());
 
-            /*
-             * This configuration addresses a performance issue related to the initial request
-             * to the Spring server taking significantly longer (8 seconds or more) than subsequent
-             * requests (around 100ms). In our case, this happened with the PostContextFilter class
-             * when fetching conversation messages.
-             * The reason for this delay is that Spring needs to introspect the class used as a parameter
-             * for the request handler method. It does so by scanning the classpath with multiple classloaders
-             * to find BeanInfo files.
-             * However, the Tomcat Embedded Classloader has two problems:
-             * 1. It is slow because it searches for JAR files inside other JAR files, which is a
-             * time-consuming operation.
-             * 2. By default, it discards its cache every 15 minutes, causing the performance issue
-             * to reappear later when the search is performed again.
-             * To address these issues, we've customized the TomcatServletWebServerFactory with two
-             * changes:
-             * - Set the context's reloadable attribute to false, preventing Tomcat from discarding
-             * the loaded classes and refreshing.
-             * - Use ExtractingRoot for the context's resources, instructing Tomcat to extract
-             * packages on startup (which requires more disk space) instead of scanning through
-             * un-extracted packages.
-             */
+            container.addContextCustomizers((Context context) -> {
 
-            context.setResources(new ExtractingRoot());
-            context.setReloadable(false);
-        });
+                /*
+                 * This configuration addresses a performance issue related to the initial request
+                 * to the Spring server taking significantly longer (8 seconds or more) than subsequent
+                 * requests (around 100ms). In our case, this happened with the PostContextFilter class
+                 * when fetching conversation messages.
+                 * The reason for this delay is that Spring needs to introspect the class used as a parameter
+                 * for the request handler method. It does so by scanning the classpath with multiple classloaders
+                 * to find BeanInfo files.
+                 * However, the Tomcat Embedded Classloader has two problems:
+                 * 1. It is slow because it searches for JAR files inside other JAR files, which is a
+                 * time-consuming operation.
+                 * 2. By default, it discards its cache every 15 minutes, causing the performance issue
+                 * to reappear later when the search is performed again.
+                 * To address these issues, we've customized the TomcatServletWebServerFactory with two
+                 * changes:
+                 * - Set the context's reloadable attribute to false, preventing Tomcat from discarding
+                 * the loaded classes and refreshing.
+                 * - Use ExtractingRoot for the context's resources, instructing Tomcat to extract
+                 * packages on startup (which requires more disk space) instead of scanning through
+                 * un-extracted packages.
+                 */
+
+                context.setResources(new ExtractingRoot());
+                context.setReloadable(false);
+            });
+        };
     }
 }

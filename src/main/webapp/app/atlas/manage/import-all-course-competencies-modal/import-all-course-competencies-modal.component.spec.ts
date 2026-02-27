@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import '@angular/localize/init';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -8,13 +9,15 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CourseCompetencyImportSettings } from 'app/atlas/manage/import-course-competencies-settings/import-course-competencies-settings.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ImportAllCourseCompetenciesModalComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: ImportAllCourseCompetenciesModalComponent;
     let fixture: ComponentFixture<ImportAllCourseCompetenciesModalComponent>;
 
     let activeModal: NgbActiveModal;
-    let closeModalSpy: jest.SpyInstance;
+    let closeModalSpy: ReturnType<typeof vi.spyOn>;
 
     const courseId = 1;
 
@@ -40,7 +43,7 @@ describe('ImportAllCourseCompetenciesModalComponent', () => {
         }).compileComponents();
 
         activeModal = TestBed.inject(NgbActiveModal);
-        closeModalSpy = jest.spyOn(activeModal, 'close');
+        closeModalSpy = vi.spyOn(activeModal, 'close');
 
         fixture = TestBed.createComponent(ImportAllCourseCompetenciesModalComponent);
         component = fixture.componentInstance;
