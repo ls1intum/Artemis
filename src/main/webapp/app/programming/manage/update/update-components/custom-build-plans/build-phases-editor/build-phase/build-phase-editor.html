@@ -1,20 +1,55 @@
-<!-- Phase row -->
-<div class="d-flex align-items-center gap-2 mb-1">
-    <input pInputText [ngModel]="phase().name" (ngModelChange)="updateName($event)" placeholder="phase name" />
+<div class="p-3 mb-2 border rounded">
+    <!-- Phase controls row -->
+    <div class="d-flex align-items-end gap-2 mb-2">
+        <div class="d-flex flex-column gap-1">
+            <label class="form-label small mb-0">Phase Name</label>
+            <input pInputText [ngModel]="phase().name" (ngModelChange)="updateName($event)" placeholder="e.g. compile" />
+        </div>
 
-    <p-select [options]="conditionOptions" optionLabel="label" optionValue="value" [ngModel]="phase().condition" (ngModelChange)="updateCondition($event)" />
+        <div class="d-flex flex-column gap-1">
+            <label class="form-label small mb-0">Condition</label>
+            <p-select [options]="conditionOptions" optionLabel="label" optionValue="value" [ngModel]="phase().condition" (ngModelChange)="updateCondition($event)" />
+        </div>
 
-    <button pButton [text]="true" [rounded]="true" size="small" severity="secondary">
-        <fa-icon [icon]="faArrowUp" pButtonIcon />
-    </button>
+        <button pButton [text]="true" [rounded]="true" size="small" severity="secondary" [disabled]="isFirst()" (click)="moveUp.emit()">
+            <fa-icon [icon]="faArrowUp" pButtonIcon />
+        </button>
 
-    <button pButton [text]="true" [rounded]="true" size="small" severity="secondary">
-        <fa-icon [icon]="faArrowDown" pButtonIcon />
-    </button>
+        <button pButton [text]="true" [rounded]="true" size="small" severity="secondary" [disabled]="isLast()" (click)="moveDown.emit()">
+            <fa-icon [icon]="faArrowDown" pButtonIcon />
+        </button>
 
-    <button pButton [text]="true" [rounded]="true" size="small" severity="danger">
-        <fa-icon [icon]="faTrash" pButtonIcon />
-    </button>
+        <div class="d-flex gap-1 ms-auto">
+            <button pButton [text]="true" [rounded]="true" size="small" severity="danger" [disabled]="isOnly()" (click)="delete.emit()">
+                <fa-icon [icon]="faTrash" pButtonIcon />
+            </button>
+        </div>
+    </div>
+
+    <!-- Script editor -->
+    <div class="d-flex flex-column gap-1 mb-2">
+        <label class="form-label small mb-0">Script</label>
+        <jhi-monaco-editor-fit-text [text]="phase().script" (textChange)="updateScript($event)" />
+    </div>
+
+    <!-- Result paths -->
+    <div class="d-flex flex-column gap-1">
+        <label class="form-label small mb-0">Result Paths</label>
+
+        @for (path of phase().resultPaths; track $index) {
+            <div class="d-flex align-items-center gap-2">
+                <input pInputText class="flex-grow-1" [ngModel]="path" (ngModelChange)="updateResultPath($index, $event)" placeholder="e.g. **/results/*.xml" />
+                <button pButton [text]="true" [rounded]="true" size="small" severity="danger" (click)="deleteResultPath($index)">
+                    <fa-icon [icon]="faXmark" pButtonIcon />
+                </button>
+            </div>
+        }
+
+        <div>
+            <button pButton [text]="true" size="small" severity="secondary" (click)="addResultPath()">
+                <fa-icon [icon]="faPlus" pButtonIcon />
+                <span pButtonLabel>Add Result Path</span>
+            </button>
+        </div>
+    </div>
 </div>
-
-<jhi-monaco-editor-fit-text [text]="phase().script" (textChange)="updateScript($event)" />

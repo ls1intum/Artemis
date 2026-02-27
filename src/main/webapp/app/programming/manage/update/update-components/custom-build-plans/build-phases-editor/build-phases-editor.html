@@ -1,8 +1,18 @@
 <div class="p-3 border rounded">
     <h6 class="mb-3">Build Phases</h6>
 
-    <!-- have multiple here instead -->
-    <jhi-build-phase />
+    @for (phase of phases(); track $index) {
+        <jhi-build-phase
+            [phase]="phase"
+            [isFirst]="$index === 0"
+            [isLast]="$index === phaseCount() - 1"
+            [isOnly]="phaseCount() === 1"
+            (phaseChange)="updatePhase($index, $event)"
+            (delete)="deletePhase($index)"
+            (moveUp)="moveUp($index)"
+            (moveDown)="moveDown($index)"
+        />
+    }
 
     <button pButton [text]="true" size="small" severity="secondary" (click)="addPhase()">
         <fa-icon [icon]="faPlus" pButtonIcon />

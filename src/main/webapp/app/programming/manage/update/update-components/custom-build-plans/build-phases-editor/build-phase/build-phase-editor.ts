@@ -1,59 +1,67 @@
-import { Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, model, output } from '@angular/core';
 
-import { faArrowDown, faArrowUp, faChevronDown, faPlus, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faArrowDown, faArrowUp, faPlus, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { BUILD_PHASE_CONDITION, BuildPhase, BuildPhaseCondition } from 'app/programming/shared/entities/build-plan-phases.model';
 import { FormsModule } from '@angular/forms';
 import { Select } from 'primeng/select';
 import { InputText } from 'primeng/inputtext';
-import { ButtonDirective, ButtonIcon } from 'primeng/button';
+import { ButtonDirective, ButtonIcon, ButtonLabel } from 'primeng/button';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MonacoEditorFitTextComponent } from 'app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/monaco-editor-auto-size/monaco-editor-fit-text.component';
 
 @Component({
     selector: 'jhi-build-phase',
-    imports: [FormsModule, Select, InputText, ButtonDirective, ButtonIcon, FaIconComponent, MonacoEditorFitTextComponent],
+    imports: [FormsModule, Select, InputText, ButtonDirective, ButtonIcon, FaIconComponent, MonacoEditorFitTextComponent, ButtonLabel],
     templateUrl: './build-phase-editor.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BuildPhaseEditor {
-    protected readonly faChevronDown = faChevronDown;
     protected readonly faPlus = faPlus;
     protected readonly faXmark = faXmark;
     protected readonly faTrash = faTrash;
     protected readonly faArrowDown = faArrowDown;
     protected readonly faArrowUp = faArrowUp;
 
+    readonly phase = model.required<BuildPhase>();
+    readonly isFirst = input<boolean>(false);
+    readonly isLast = input<boolean>(false);
+    readonly isOnly = input<boolean>(false);
+
+    readonly phaseChange = output<BuildPhase>();
+    readonly delete = output<void>();
+    readonly moveUp = output<void>();
+    readonly moveDown = output<void>();
+
     readonly conditionOptions = Object.entries(BUILD_PHASE_CONDITION).map(([key, label]) => ({
         value: key as BuildPhaseCondition,
         label,
     }));
 
-    readonly phase = signal<BuildPhase>({
-        name: 'script',
-        script: '# enter the script of this phase',
-        condition: 'ALWAYS',
-        resultPaths: [],
-    });
-
     updateName(name: string): void {
-        this.phase.update((phase) => ({ ...phase, name }));
+        this.phaseChange.emit({ ...this.phase(), name });
     }
 
     updateScript(script: string): void {
-        this.phase.update((phase) => ({ ...phase, script }));
+        this.phaseChange.emit({ ...this.phase(), script });
     }
 
     updateCondition(condition: BuildPhaseCondition): void {
-        this.phase.update((phase) => ({ ...phase, condition }));
+        this.phaseChange.emit({ ...this.phase(), condition });
+    }
+
+    updateResultPath(index: number, value: string): void {
+        const resultPaths = [...(this.phase().resultPaths ?? [])];
+        resultPaths[index] = value;
+        this.phaseChange.emit({ ...this.phase(), resultPaths });
     }
 
     addResultPath(): void {
-        this.phase.update((phase) => ({ ...phase, resultPaths: [...phase.resultPaths, ''] }));
+        const resultPaths = [...(this.phase().resultPaths ?? []), ''];
+        this.phaseChange.emit({ ...this.phase(), resultPaths });
     }
 
     deleteResultPath(deleteIndex: number): void {
-        this.phase.update((phase) => ({
-            ...phase,
-            resultPaths: (phase.resultPaths ?? []).filter((_, i) => i !== deleteIndex),
-        }));
+        const resultPaths = (this.phase().resultPaths ?? []).filter((_, i) => i !== deleteIndex);
+        this.phaseChange.emit({ ...this.phase(), resultPaths });
     }
 }
