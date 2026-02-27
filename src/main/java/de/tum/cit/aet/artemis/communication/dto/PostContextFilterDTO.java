@@ -9,12 +9,13 @@ import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PostContextFilterDTO(@NotBlank Long courseId, Long plagiarismCaseId, long[] conversationIds, long[] authorIds, String searchText, Boolean filterToCourseWide,
-        Boolean filterToUnresolved, Boolean filterToAnsweredOrReacted, PostSortCriterion postSortCriterion, SortingOrder sortingOrder, Boolean pinnedOnly) {
+        Boolean filterToUnresolved, Boolean filterToAnsweredOrReacted, PostSortCriterion postSortCriterion, SortingOrder sortingOrder, Boolean pinnedOnly,
+        Boolean filterToExcludeDirectMessages) {
 
-    // Overloaded constructor to set pinnedOnly to false by default if not provided.
+    // Overloaded constructor to set pinnedOnly and filterToExcludeDirectMessages to false by default if not provided.
     public PostContextFilterDTO(@NotBlank Long courseId, Long plagiarismCaseId, long[] conversationIds, long[] authorIds, String searchText, Boolean filterToCourseWide,
             Boolean filterToUnresolved, Boolean filterToAnsweredOrReacted, PostSortCriterion postSortCriterion, SortingOrder sortingOrder) {
         this(courseId, plagiarismCaseId, conversationIds, authorIds, searchText, filterToCourseWide, filterToUnresolved, filterToAnsweredOrReacted, postSortCriterion, sortingOrder,
-                false);
+                false, false);
     }
 }

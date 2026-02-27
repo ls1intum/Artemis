@@ -53,6 +53,7 @@ describe('CourseWideSearchComponent', () => {
     courseWideSearchConfig.filterToUnresolved = false;
     courseWideSearchConfig.filterToCourseWide = false;
     courseWideSearchConfig.filterToAnsweredOrReacted = false;
+    courseWideSearchConfig.filterToExcludeDirectMessages = false;
     courseWideSearchConfig.sortingOrder = SortDirection.ASCENDING;
     courseWideSearchConfig.selectedConversations = [];
     courseWideSearchConfig.selectedAuthors = [];
@@ -128,6 +129,7 @@ describe('CourseWideSearchComponent', () => {
             authorIds: [],
             filterToCourseWide: false,
             filterToAnsweredOrReacted: false,
+            filterToExcludeDirectMessages: false,
             page: 0,
             pageSize: 50,
             pagingEnabled: true,
@@ -156,6 +158,7 @@ describe('CourseWideSearchComponent', () => {
             filterToCourseWide: courseWideSearchConfig.filterToCourseWide,
             filterToUnresolved: courseWideSearchConfig.filterToUnresolved,
             filterToAnsweredOrReacted: courseWideSearchConfig.filterToAnsweredOrReacted,
+            filterToExcludeDirectMessages: courseWideSearchConfig.filterToExcludeDirectMessages,
             page: 0,
             pageSize: 50,
             pagingEnabled: true,
@@ -199,6 +202,7 @@ describe('CourseWideSearchComponent', () => {
         expect(component.formGroup.get('filterToCourseWide')?.value).toBeFalse();
         expect(component.formGroup.get('filterToUnresolved')?.value).toBeFalse();
         expect(component.formGroup.get('filterToAnsweredOrReacted')?.value).toBeFalse();
+        expect(component.formGroup.get('filterToExcludeDirectMessages')?.value).toBeFalse();
     }));
 
     it('Should update filter setting when filterToCourseWide checkbox is checked', fakeAsync(() => {
@@ -293,6 +297,54 @@ describe('CourseWideSearchComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         expect(component.courseWideSearchConfig()?.filterToUnresolved).toBeTrue();
         expect(component.courseWideSearchConfig()?.filterToAnsweredOrReacted).toBeTrue();
+    }));
+
+    it('Should update filter setting when filterToExcludeDirectMessages checkbox is checked', fakeAsync(() => {
+        fixture.changeDetectorRef.detectChanges();
+        component.formGroup.patchValue({
+            filterToCourseWide: false,
+            filterToUnresolved: false,
+            filterToAnsweredOrReacted: false,
+            filterToExcludeDirectMessages: true,
+        });
+        const filterExcludeDMsCheckbox = getElement(fixture.debugElement, 'input[name=filterToExcludeDirectMessages]');
+        filterExcludeDMsCheckbox.dispatchEvent(new Event('change'));
+        tick();
+        fixture.changeDetectorRef.detectChanges();
+        expect(component.courseWideSearchConfig()?.filterToExcludeDirectMessages).toBeTrue();
+        expect(component.courseWideSearchConfig()?.filterToCourseWide).toBeFalse();
+        expect(component.courseWideSearchConfig()?.filterToUnresolved).toBeFalse();
+        expect(component.courseWideSearchConfig()?.filterToAnsweredOrReacted).toBeFalse();
+    }));
+
+    it('should disable the filterToExcludeDirectMessages if a conversation is selected', fakeAsync(() => {
+        fixture.changeDetectorRef.detectChanges();
+        component.formGroup.patchValue({
+            filterToExcludeDirectMessages: true,
+        });
+        component.courseWideSearchConfig().selectedConversations = [metisGeneralChannelDTO];
+        component.onSearchConfigSelectionChange();
+        fixture.changeDetectorRef.detectChanges();
+
+        const filterExcludeDMsControl = component.formGroup.get('filterToExcludeDirectMessages')!;
+        expect(filterExcludeDMsControl.disabled).toBeTrue();
+        expect(filterExcludeDMsControl.value).toBeFalse();
+    }));
+
+    it('should re-enable the filterToExcludeDirectMessages if no conversation is selected', fakeAsync(() => {
+        fixture.changeDetectorRef.detectChanges();
+        component.courseWideSearchConfig().selectedConversations = [metisGeneralChannelDTO];
+        component.onSearchConfigSelectionChange();
+        fixture.changeDetectorRef.detectChanges();
+
+        const filterExcludeDMsControl = component.formGroup.get('filterToExcludeDirectMessages')!;
+        expect(filterExcludeDMsControl.disabled).toBeTrue();
+
+        component.courseWideSearchConfig().selectedConversations = [];
+        component.onSearchConfigSelectionChange();
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(filterExcludeDMsControl.disabled).toBeFalse();
     }));
 
     it('should initialize sorting direction correctly', fakeAsync(() => {

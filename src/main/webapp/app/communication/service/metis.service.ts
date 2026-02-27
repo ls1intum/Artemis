@@ -702,6 +702,7 @@ export class MetisService implements OnDestroy {
         const isValidPostContext = !!postConvId && !!this.currentPostContextFilter.conversationIds && this.currentPostContextFilter.conversationIds.length > 0;
         const postIsFromCurrentConversation = isValidPostContext && this.currentPostContextFilter.conversationIds?.includes(postConvId);
         const postIsPrivate = !!this.currentPostContextFilter.filterToCourseWide && !getAsChannelDTO(postDTO.post.conversation)?.isCourseWide;
+        const postIsDirectMessage = !!this.currentPostContextFilter.filterToExcludeDirectMessages && !!getAsOneToOneChatDTO(postDTO.post.conversation);
         const postIsNotFromCurrentPlagiarismCase =
             this.currentPostContextFilter.plagiarismCaseId && postDTO.post.plagiarismCase?.id !== this.currentPostContextFilter.plagiarismCaseId;
 
@@ -709,7 +710,7 @@ export class MetisService implements OnDestroy {
             this.metisConversationService.handleNewMessage(postConvId, postDTO.post.creationDate);
         }
 
-        if (!isValidPostContext || !postIsFromCurrentConversation || postIsNotFromCurrentPlagiarismCase || postIsPrivate) {
+        if (!isValidPostContext || !postIsFromCurrentConversation || postIsNotFromCurrentPlagiarismCase || postIsPrivate || postIsDirectMessage) {
             return;
         }
 

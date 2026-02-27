@@ -164,6 +164,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
             filterToCourseWide: searchConfig.filterToCourseWide,
             filterToUnresolved: searchConfig.filterToUnresolved,
             filterToAnsweredOrReacted: searchConfig.filterToAnsweredOrReacted,
+            filterToExcludeDirectMessages: searchConfig.filterToExcludeDirectMessages,
             sortingOrder: searchConfig.sortingOrder,
             pagingEnabled: true,
             page: this.page - 1,
@@ -202,6 +203,19 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
 
             config.filterToCourseWide = filterToCourseWideControl.value;
         }
+
+        const filterToExcludeDirectMessagesControl = this.formGroup?.get('filterToExcludeDirectMessages');
+        if (filterToExcludeDirectMessagesControl) {
+            if (hasSelectedConversations) {
+                // When conversations are selected, disable the exclude DMs checkbox and set to false
+                filterToExcludeDirectMessagesControl.setValue(false);
+                filterToExcludeDirectMessagesControl.disable();
+            } else {
+                filterToExcludeDirectMessagesControl.enable();
+            }
+
+            config.filterToExcludeDirectMessages = filterToExcludeDirectMessagesControl.value;
+        }
     }
 
     resetFormGroup(): void {
@@ -209,6 +223,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
             filterToCourseWide: false,
             filterToUnresolved: false,
             filterToAnsweredOrReacted: false,
+            filterToExcludeDirectMessages: false,
         });
     }
 
@@ -223,6 +238,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         searchConfig.filterToCourseWide = this.formGroup.get('filterToCourseWide')?.value;
         searchConfig.filterToUnresolved = this.formGroup.get('filterToUnresolved')?.value;
         searchConfig.filterToAnsweredOrReacted = this.formGroup.get('filterToAnsweredOrReacted')?.value;
+        searchConfig.filterToExcludeDirectMessages = this.formGroup.get('filterToExcludeDirectMessages')?.value;
         searchConfig.sortingOrder = this.sortingOrder;
         this.commandMetisToFetchPosts(true);
     }
@@ -239,5 +255,6 @@ export class CourseWideSearchConfig {
     filterToCourseWide: boolean;
     filterToUnresolved: boolean;
     filterToAnsweredOrReacted: boolean;
+    filterToExcludeDirectMessages: boolean;
     sortingOrder: SortDirection;
 }

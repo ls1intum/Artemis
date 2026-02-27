@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.communication.domain.Reaction_;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel_;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation_;
+import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
 import de.tum.cit.aet.artemis.core.domain.Course_;
 import de.tum.cit.aet.artemis.core.domain.User_;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
@@ -140,6 +141,23 @@ public class MessageSpecs {
             // this avoids the creation of sub queries
             final var isChannelPredicate = criteriaBuilder.equal(conversationJoin.type(), criteriaBuilder.literal(Channel.class));
             return criteriaBuilder.and(isInCoursePredicate, isCourseWidePredicate, isChannelPredicate);
+        };
+    }
+
+    /**
+     * Creates a specification to exclude messages belonging to direct message (OneToOneChat) conversations
+     *
+     * @param filterToExcludeDirectMessages whether messages in direct message conversations should be excluded
+     * @return specification used to chain DB operations
+     */
+    @NonNull
+    public static Specification<Post> getExcludeDirectMessagesSpecification(boolean filterToExcludeDirectMessages) {
+        return (root, query, criteriaBuilder) -> {
+            if (!filterToExcludeDirectMessages) {
+                return null;
+            }
+            final var conversationJoin = root.join(Post_.conversation, JoinType.LEFT);
+            return criteriaBuilder.notEqual(conversationJoin.type(), criteriaBuilder.literal(OneToOneChat.class));
         };
     }
 
