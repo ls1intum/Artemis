@@ -592,7 +592,8 @@ describe('MetisConversationService', () => {
             return new Promise((done) => {
                 metisConversationService.setUpConversationService(course).subscribe({
                     complete: () => {
-                        // oneToOneChat has lastMessageDate set (from generateOneToOneChatDTO defaults)
+                        // Explicitly mark as non-empty to avoid depending on helper defaults
+                        oneToOneChat.lastMessageDate = dayjs('2026-01-01T00:00:00.000Z');
                         (metisConversationService as any).conversationsOfUser = [groupChat, oneToOneChat, channel];
                         (metisConversationService as any).activeConversation = oneToOneChat;
 
