@@ -158,7 +158,7 @@ public class SavedPostResource {
         log.debug("DELETE deletePost invoked for post {}", postId);
         long start = System.nanoTime();
 
-        // the user should only be able to delete his/her own saved posts, this is checked in removeSavedPostForCurrentUser
+        // the user should only be able to delete their own saved posts, this is checked in removeSavedPostForCurrentUser
 
         var posting = retrievePostingElseThrow(postId, postingType);
 

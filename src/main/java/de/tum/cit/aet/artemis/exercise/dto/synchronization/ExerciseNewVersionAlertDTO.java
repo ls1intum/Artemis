@@ -7,7 +7,6 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
-import de.tum.cit.aet.artemis.exercise.domain.synchronization.ExerciseEditorSyncTarget;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
@@ -20,6 +19,7 @@ public record ExerciseNewVersionAlertDTO(@Schema(description = "Event type discr
         @Schema(description = "The id of the new exercise version.", requiredMode = Schema.RequiredMode.REQUIRED) Long exerciseVersionId,
         @Schema(description = "The author of the new version.", requiredMode = Schema.RequiredMode.REQUIRED) UserPublicInfoDTO author,
         @Schema(description = "Changed exercise fields compared to the previous version.", requiredMode = Schema.RequiredMode.NOT_REQUIRED) Set<String> changedFields,
-        @Schema(description = "The client session id of the sender.", requiredMode = Schema.RequiredMode.NOT_REQUIRED) @Nullable String sessionId) {
+        @Schema(description = "The client session id of the sender.", requiredMode = Schema.RequiredMode.NOT_REQUIRED) @Nullable String sessionId,
+        @Schema(description = "Event timestamp in milliseconds since epoch.", requiredMode = Schema.RequiredMode.NOT_REQUIRED) @Nullable Long timestamp) {
 
 }

@@ -75,12 +75,17 @@ describe('BrowserFingerprintService', () => {
             expect(sessionStoreSpy).toHaveBeenCalled();
         });
 
-        it('should clear instance when browserFingerprintsEnabled is false', () => {
+        it('should clear instance but still initialize session when browserFingerprintsEnabled is false', () => {
             const removeSpy = vi.spyOn(localStorageService, 'remove');
+            vi.spyOn(sessionStorageService, 'retrieve').mockReturnValue(undefined);
+            const sessionStoreSpy = vi.spyOn(sessionStorageService, 'store');
 
             service.initialize(false);
 
             expect(removeSpy).toHaveBeenCalledWith(BROWSER_INSTANCE_KEY);
+            // Session identifier must always be initialized for message routing
+            expect(service.browserSessionId.value).toBeDefined();
+            expect(sessionStoreSpy).toHaveBeenCalledWith(BROWSER_SESSION_KEY, expect.any(String));
         });
 
         it('should use existing instance identifier from localStorage', () => {

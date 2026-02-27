@@ -478,7 +478,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         // first test should be green (successful), second red (failed)
         const expectedUML = '@startuml\nclass Policy {\n<color:green>+configure()</color>\n<color:red>+testWithParenthesis()</color>}\n@enduml';
-        expect(injectSpy).toHaveBeenCalledWith(expectedUML, 0);
+        expect(injectSpy).toHaveBeenCalledWith(expectedUML, `plantUml-${exercise.id}-0`);
     }));
 
     it('should update the markdown and set the correct problem statement if renderUpdatedProblemStatement is called', () => {
@@ -510,4 +510,291 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(openModalStub).toHaveBeenCalledWith(FeedbackComponent, { keyboard: true, size: 'lg' });
         expect(modalRef).toEqual(expected);
     };
+});
+
+/**
+ * CRITICAL REGRESSION TESTS: PlantUML diagram isolation in exam mode.
+ *
+ * Background:
+ * In exam mode, multiple ProgrammingExerciseInstructionComponent instances coexist
+ * simultaneously in the DOM (hidden via [hidden], NOT destroyed). They all share
+ * a single ProgrammingExercisePlantUmlExtensionWrapper singleton (providedIn: 'root').
+ *
+ * The bug (introduced by commit 756354018b, fixed by scoping IDs per exercise):
+ * - resetIndex() was resetting plantUmlIndex to 0 before each render
+ * - Multiple exercises generated the same container IDs (plantUml-0, plantUml-1, etc.)
+ * - document.getElementById() returned the first match in DOM order (wrong exercise's container)
+ * - Result: (1) diagram from wrong exercise shown, (2) diagram missing entirely
+ *
+ * The fix:
+ * - Container IDs include the exercise ID: plantUml-{exerciseId}-{index}
+ * - setExerciseId(exerciseId) sets the exercise scope before each render
+ * - The per-diagram index comes from the array position (not mutable state)
+ *
+ * These tests simulate the exact exam scenario to prevent this regression.
+ */
+describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation', () => {
+    let plantUmlExtension: ProgrammingExercisePlantUmlExtensionWrapper;
+
+    // Problem statements with multiple PlantUML diagrams, simulating real exam exercises
+    const exerciseA_problemStatement = 'Exercise A:\n@startuml\nclass SortAlgorithm {\n+sort()\n}\n@enduml\nMore text\n@startuml\nclass BubbleSort {\n+sort()\n}\n@enduml';
+    const exerciseB_problemStatement = 'Exercise B:\n@startuml\nclass LinkedList {\n+add()\n+remove()\n}\n@enduml';
+    const exerciseC_problemStatement =
+        'Exercise C:\n@startuml\nclass Stack {\n+push()\n+pop()\n}\n@enduml\nMore\n@startuml\nclass Queue {\n+enqueue()\n+dequeue()\n}\n@enduml\nEven more\n@startuml\nclass PriorityQueue {\n+insert()\n}\n@enduml';
+
+    function createExercise(id: number, problemStatement: string): ProgrammingExercise {
+        return {
+            id,
+            course: { id: 1 },
+            problemStatement,
+            numberOfAssessmentsOfCorrectionRounds: [],
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: false,
+        };
+    }
+
+    function createComponentInstance(): {
+        comp: ProgrammingExerciseInstructionComponent;
+        fixture: ComponentFixture<ProgrammingExerciseInstructionComponent>;
+    } {
+        const fixture = TestBed.createComponent(ProgrammingExerciseInstructionComponent);
+        const comp = fixture.componentInstance;
+        comp.personalParticipation = true;
+        return { comp, fixture };
+    }
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [MockModule(NgbTooltipModule)],
+            declarations: [
+                ProgrammingExerciseInstructionComponent,
+                ProgrammingExerciseInstructionStepWizardComponent,
+                ProgrammingExerciseInstructionTaskStatusComponent,
+                TranslatePipeMock,
+                SafeHtmlPipe,
+            ],
+            providers: [
+                ProgrammingExerciseTaskExtensionWrapper,
+                ProgrammingExercisePlantUmlExtensionWrapper,
+                ProgrammingExerciseInstructionService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                LocalStorageService,
+                { provide: ResultService, useClass: MockResultService },
+                { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
+                { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
+                { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: ProgrammingExerciseGradingService, useValue: { getTestCases: () => of() } },
+                { provide: ProfileService, useClass: MockProfileService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
+        }).compileComponents();
+
+        plantUmlExtension = TestBed.inject(ProgrammingExercisePlantUmlExtensionWrapper);
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    /**
+     * Core exam scenario: 3 programming exercises, each with multiple PlantUML diagrams,
+     * all rendered by separate component instances sharing the same singleton extension.
+     *
+     * This is the EXACT scenario that caused the bug in production exams.
+     *
+     * Note on call counts: The singleton's injectableElementsFoundSubject broadcasts callbacks
+     * to ALL subscribed components. So when Exercise A renders, its injection callback also
+     * appears in Exercise B's and C's callback arrays. This means the total number of
+     * loadAndInjectPlantUml calls exceeds the "ideal" count because callbacks are executed
+     * redundantly by multiple components. With exercise-scoped IDs, this is harmless because
+     * each callback targets the correct container regardless of which component executes it.
+     * The critical invariant is that all targeted IDs are globally unique.
+     */
+    it('should produce globally unique PlantUML container IDs when multiple components render different exercises', fakeAsync(() => {
+        const injectSpy = jest.spyOn(plantUmlExtension as any, 'loadAndInjectPlantUml');
+
+        // Create 3 component instances (simulating 3 programming exercises in an exam)
+        const instanceA = createComponentInstance();
+        const instanceB = createComponentInstance();
+        const instanceC = createComponentInstance();
+
+        // Set up exercises with different numbers of PlantUML diagrams
+        const exerciseA = createExercise(10, exerciseA_problemStatement); // 2 diagrams
+        const exerciseB = createExercise(20, exerciseB_problemStatement); // 1 diagram
+        const exerciseC = createExercise(30, exerciseC_problemStatement); // 3 diagrams
+
+        // Configure each component (simulating what ngOnChanges does)
+        for (const { comp, exercise } of [
+            { comp: instanceA.comp, exercise: exerciseA },
+            { comp: instanceB.comp, exercise: exerciseB },
+            { comp: instanceC.comp, exercise: exerciseC },
+        ]) {
+            comp.exercise = exercise;
+            comp.participation = { id: exercise.id! + 100 };
+            // @ts-ignore - accessing private method for test setup
+            comp.setupMarkdownSubscriptions();
+        }
+
+        // Render all 3 exercises sequentially (simulating student navigating through exam)
+        instanceA.comp.updateMarkdown();
+        instanceB.comp.updateMarkdown();
+        instanceC.comp.updateMarkdown();
+
+        // Flush all pending timers (setTimeout in scheduleContentInjection)
+        flush();
+
+        // Extract all container IDs that were targeted by injection calls
+        const targetedIds: string[] = injectSpy.mock.calls.map((call) => call[1] as string);
+
+        // CRITICAL: Exactly 6 unique IDs must be present (2 + 1 + 3 diagrams)
+        const uniqueIds = new Set(targetedIds);
+        expect(uniqueIds.size).toBe(6);
+
+        // Verify the exact expected IDs for each exercise are present
+        expect(uniqueIds).toContain('plantUml-10-0');
+        expect(uniqueIds).toContain('plantUml-10-1');
+        expect(uniqueIds).toContain('plantUml-20-0');
+        expect(uniqueIds).toContain('plantUml-30-0');
+        expect(uniqueIds).toContain('plantUml-30-1');
+        expect(uniqueIds).toContain('plantUml-30-2');
+
+        // Verify no ID belongs to an unexpected exercise
+        for (const id of uniqueIds) {
+            expect(id).toMatch(/^plantUml-(10|20|30)-\d+$/);
+        }
+
+        // Cleanup
+        instanceA.comp.ngOnDestroy();
+        instanceB.comp.ngOnDestroy();
+        instanceC.comp.ngOnDestroy();
+    }));
+
+    /**
+     * Regression guard: exercises with the SAME number of diagrams.
+     * This is the case most likely to collide if exercise scoping is broken,
+     * because without scoping both exercises would generate plantUml-0, plantUml-1.
+     */
+    it('should NOT produce colliding IDs when two exercises have the same number of diagrams', fakeAsync(() => {
+        const injectSpy = jest.spyOn(plantUmlExtension as any, 'loadAndInjectPlantUml');
+
+        const instanceA = createComponentInstance();
+        const instanceB = createComponentInstance();
+
+        // Both exercises use the same problem statement (same number of diagrams)
+        const exerciseA = createExercise(10, exerciseA_problemStatement); // 2 diagrams
+        const exerciseB = createExercise(20, exerciseA_problemStatement); // same 2 diagrams
+
+        for (const { comp, exercise } of [
+            { comp: instanceA.comp, exercise: exerciseA },
+            { comp: instanceB.comp, exercise: exerciseB },
+        ]) {
+            comp.exercise = exercise;
+            comp.participation = { id: exercise.id! + 100 };
+            // @ts-ignore
+            comp.setupMarkdownSubscriptions();
+        }
+
+        instanceA.comp.updateMarkdown();
+        instanceB.comp.updateMarkdown();
+        flush();
+
+        const targetedIds: string[] = injectSpy.mock.calls.map((call) => call[1] as string);
+        const uniqueIds = new Set(targetedIds);
+
+        // Must have exactly 4 unique IDs (2 per exercise), despite both having same diagram count
+        expect(uniqueIds.size).toBe(4);
+
+        // Exercise A got IDs with prefix 10, Exercise B with prefix 20
+        const exercise10Ids = [...uniqueIds].filter((id) => id.startsWith('plantUml-10-'));
+        const exercise20Ids = [...uniqueIds].filter((id) => id.startsWith('plantUml-20-'));
+        expect(exercise10Ids).toHaveLength(2);
+        expect(exercise20Ids).toHaveLength(2);
+
+        // No overlap between the two sets
+        expect(exercise10Ids).toEqual(['plantUml-10-0', 'plantUml-10-1']);
+        expect(exercise20Ids).toEqual(['plantUml-20-0', 'plantUml-20-1']);
+
+        instanceA.comp.ngOnDestroy();
+        instanceB.comp.ngOnDestroy();
+    }));
+
+    /**
+     * Verify that re-rendering an exercise produces the same IDs,
+     * so that the new SVGs correctly replace old ones in the DOM.
+     */
+    it('should produce stable IDs when re-rendering an exercise after rendering others', fakeAsync(() => {
+        const injectSpy = jest.spyOn(plantUmlExtension as any, 'loadAndInjectPlantUml');
+
+        const instanceA = createComponentInstance();
+        const instanceB = createComponentInstance();
+
+        const exerciseA = createExercise(10, exerciseA_problemStatement);
+        const exerciseB = createExercise(20, exerciseB_problemStatement);
+
+        for (const { comp, exercise } of [
+            { comp: instanceA.comp, exercise: exerciseA },
+            { comp: instanceB.comp, exercise: exerciseB },
+        ]) {
+            comp.exercise = exercise;
+            comp.participation = { id: exercise.id! + 100 };
+            // @ts-ignore
+            comp.setupMarkdownSubscriptions();
+        }
+
+        // First render of exercise A
+        instanceA.comp.updateMarkdown();
+        flush();
+
+        // Extract only exercise A's IDs from this render
+        const firstRenderIds = new Set(injectSpy.mock.calls.map((call) => call[1] as string).filter((id) => id.startsWith('plantUml-10-')));
+        expect(firstRenderIds).toEqual(new Set(['plantUml-10-0', 'plantUml-10-1']));
+
+        injectSpy.mockClear();
+
+        // Render exercise B (different exercise in between)
+        instanceB.comp.updateMarkdown();
+        flush();
+
+        injectSpy.mockClear();
+
+        // Re-render exercise A (e.g. triggered by theme change)
+        // Invalidate cache to allow re-render
+        // @ts-ignore
+        instanceA.comp.lastRenderedProblemStatement = undefined;
+        instanceA.comp.updateMarkdown();
+        flush();
+
+        // Extract only exercise A's IDs from the re-render
+        const secondRenderIds = new Set(injectSpy.mock.calls.map((call) => call[1] as string).filter((id) => id.startsWith('plantUml-10-')));
+
+        // Same exercise must get the same IDs so new SVGs overwrite old DOM containers
+        expect(secondRenderIds).toEqual(new Set(['plantUml-10-0', 'plantUml-10-1']));
+
+        instanceA.comp.ngOnDestroy();
+        instanceB.comp.ngOnDestroy();
+    }));
+
+    /**
+     * Verify that setExerciseId is called with the correct exercise ID.
+     * This is the critical contract between the component and the singleton extension.
+     */
+    it('should call setExerciseId with the exercise ID before each render', fakeAsync(() => {
+        const setExerciseIdSpy = jest.spyOn(plantUmlExtension, 'setExerciseId');
+
+        const instance = createComponentInstance();
+        const exercise = createExercise(42, exerciseA_problemStatement);
+
+        instance.comp.exercise = exercise;
+        instance.comp.participation = { id: 142 };
+        // @ts-ignore
+        instance.comp.setupMarkdownSubscriptions();
+
+        instance.comp.updateMarkdown();
+        flush();
+
+        expect(setExerciseIdSpy).toHaveBeenCalledWith(42);
+
+        instance.comp.ngOnDestroy();
+    }));
 });

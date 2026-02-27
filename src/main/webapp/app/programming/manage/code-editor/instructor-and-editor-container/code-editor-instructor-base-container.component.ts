@@ -23,7 +23,7 @@ import { Subject } from 'rxjs';
 import { debounceTime, shareReplay } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { CodeEditorFileSyncService, FileSyncState } from 'app/programming/manage/services/code-editor-file-sync.service';
-import { repositoryTypeToSyncTarget } from 'app/exercise/services/exercise-editor-sync.service';
+import { ExerciseEditorSyncService, repositoryTypeToSyncTarget } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { MonacoBinding } from 'y-monaco';
 /**
  * Enumeration specifying the loading state
@@ -53,6 +53,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     private problemStatementChanges$ = new Subject<string>();
     protected alertService = inject(AlertService);
     protected translateService = inject(TranslateService);
+    private exerciseEditorSyncService = inject(ExerciseEditorSyncService);
     protected fileSyncService = inject(CodeEditorFileSyncService);
 
     private currentFileBinding?: MonacoBinding;
@@ -120,6 +121,9 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
                     tap((exercise) => {
                         this.exercise = exercise;
                         this.course = exercise.course! ?? exercise.exerciseGroup!.exam!.course!;
+                        if (exercise.id) {
+                            this.exerciseEditorSyncService.connect(exercise.id);
+                        }
                         // Emit initial markdown to drive the preview after loading the exercise
                         if (exercise.problemStatement != undefined) {
                             this.problemStatementChanges$.next(exercise.problemStatement);
@@ -188,6 +192,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         }
         this.teardownFileBinding();
         this.fileSyncService.reset();
+        this.exerciseEditorSyncService.disconnect();
     }
 
     /**

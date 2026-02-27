@@ -38,7 +38,7 @@ import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/su
 import { ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
-import { MODULE_FEATURE_PLAGIARISM, PROFILE_AEOLUS, PROFILE_LOCALCI, PROFILE_THEIA } from 'app/app.constants';
+import { MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_THEIA, PROFILE_AEOLUS, PROFILE_LOCALCI } from 'app/app.constants';
 import { AeolusService } from 'app/programming/shared/services/aeolus.service';
 import { SharingInfo } from 'app/sharing/sharing.model';
 import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/update/update-components/information/programming-exercise-information.component';
@@ -59,7 +59,8 @@ import { FileService } from 'app/shared/service/file.service';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { ExerciseMetadataSyncService } from 'app/exercise/services/exercise-metadata-sync.service';
+import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
+import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
 
@@ -101,6 +102,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly aeolusService = inject(AeolusService);
     private readonly calendarService = inject(CalendarService);
     private readonly localStorageService = inject(LocalStorageService);
+    private readonly exerciseEditorSyncService = inject(ExerciseEditorSyncService);
     private readonly metadataSyncService = inject(ExerciseMetadataSyncService);
 
     private readonly packageNameRegexForJavaKotlin = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN);
@@ -547,7 +549,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.customBuildPlansSupported = PROFILE_AEOLUS;
         }
 
-        this.theiaEnabled = this.profileService.isProfileActive(PROFILE_THEIA);
+        this.theiaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA);
         this.plagiarismEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM);
         this.defineSupportedProgrammingLanguages();
     }
@@ -564,6 +566,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             subscription?.unsubscribe();
         }
         this.metadataSyncService.destroy();
+        this.exerciseEditorSyncService.disconnect();
     }
 
     private setupMetadataSync(): void {
@@ -571,6 +574,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             return;
         }
         this.ensureExerciseCategoriesReference();
+        this.exerciseEditorSyncService.connect(this.programmingExercise.id);
         this.metadataSyncService.initialize({
             exerciseId: this.programmingExercise.id,
             exerciseType: this.programmingExercise.type ?? ExerciseType.PROGRAMMING,
@@ -662,6 +666,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         }
     }
 
+    /**
+     * Ensures that {@link exerciseCategories} and {@link programmingExercise.categories} reference the same array.
+     * This is required for metadata sync: the category handler modifies the array in-place,
+     * so both references must point to the same object for changes to propagate correctly.
+     */
     private ensureExerciseCategoriesReference() {
         this.exerciseCategories = this.programmingExercise.categories ?? this.exerciseCategories ?? [];
         this.programmingExercise.categories = this.exerciseCategories;

@@ -12,8 +12,8 @@ import {
     FileCreatedEvent,
     FileDeletedEvent,
     FileRenamedEvent,
-} from 'app/exercise/services/exercise-editor-sync.service';
-import * as yjsUtils from 'app/programming/manage/services/yjs-utils';
+} from 'app/exercise/synchronization/services/exercise-editor-sync.service';
+import * as yjsUtils from 'app/exercise/synchronization/services/yjs-utils';
 
 describe('CodeEditorFileSyncService', () => {
     let service: CodeEditorFileSyncService;
@@ -60,7 +60,7 @@ describe('CodeEditorFileSyncService', () => {
     describe('init and reset', () => {
         it('subscribes to websocket updates on init', () => {
             service.init(EXERCISE_ID, TARGET);
-            expect(syncService.subscribeToUpdates).toHaveBeenCalledWith(EXERCISE_ID);
+            expect(syncService.subscribeToUpdates).toHaveBeenCalled();
         });
 
         it('calling init() a second time cleans up the previous state', () => {

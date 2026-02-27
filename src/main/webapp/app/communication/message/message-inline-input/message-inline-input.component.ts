@@ -75,17 +75,20 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     createPosting(): void {
-        this.posting.content = this.formGroup.get('content')?.value;
-        this.metisService.createPost(this.posting).subscribe({
-            next: (post: Post) => {
-                this.isLoading = false;
-                this.clearDraft();
-                this.onCreate.emit(post);
-            },
-            error: () => {
-                this.isLoading = false;
-            },
-        });
+        // Wait for the markdown editor's 200ms textChangedEmitDelay to complete
+        setTimeout(() => {
+            this.posting.content = this.formGroup.get('content')?.value;
+            this.metisService.createPost(this.posting).subscribe({
+                next: (post: Post) => {
+                    this.isLoading = false;
+                    this.clearDraft();
+                    this.onCreate.emit(post);
+                },
+                error: () => {
+                    this.isLoading = false;
+                },
+            });
+        }, 250);
     }
 
     /**

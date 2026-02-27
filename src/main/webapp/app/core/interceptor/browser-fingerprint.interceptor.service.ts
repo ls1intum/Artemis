@@ -21,7 +21,7 @@ export class BrowserFingerprintInterceptor implements HttpInterceptor {
     private cachedSessionId?: string;
 
     constructor() {
-        // Subscribe to fingerprint and instance ID updates
+        // Subscribe to fingerprint, instance ID, and session ID updates
         this.browserFingerprintService.browserFingerprint.subscribe((fingerprint) => (this.cachedFingerprint = fingerprint));
         this.browserFingerprintService.browserInstanceId.subscribe((instanceId) => (this.cachedInstanceId = instanceId));
         this.browserFingerprintService.browserSessionId.subscribe((sessionId) => (this.cachedSessionId = sessionId));

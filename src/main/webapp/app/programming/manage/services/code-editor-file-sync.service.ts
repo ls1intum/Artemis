@@ -15,7 +15,7 @@ import {
     FileSyncFullContentRequestEvent,
     FileSyncFullContentResponseEvent,
     FileSyncUpdateEvent,
-} from 'app/exercise/services/exercise-editor-sync.service';
+} from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import {
     AwarenessUpdatePayload,
     clearRemoteSelectionStyles,
@@ -23,7 +23,7 @@ import {
     encodeUint8ArrayToBase64,
     ensureRemoteSelectionStyle,
     getColorForClientId,
-} from 'app/programming/manage/services/yjs-utils';
+} from 'app/exercise/synchronization/services/yjs-utils';
 
 /**
  * Holds the shared Yjs primitives for a single file in the code editor.
@@ -126,7 +126,7 @@ export class CodeEditorFileSyncService {
         this.exerciseId = exerciseId;
         this.currentTarget = target;
         this.auxiliaryRepositoryId = auxiliaryRepositoryId;
-        this.incomingMessageSubscription = this.syncService.subscribeToUpdates(exerciseId).subscribe((message) => this.handleRemoteMessage(message));
+        this.incomingMessageSubscription = this.syncService.subscribeToUpdates().subscribe((message) => this.handleRemoteMessage(message));
     }
 
     /**

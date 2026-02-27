@@ -51,11 +51,14 @@ export class BrowserFingerprintService {
      *                                      to maintain backwards compatibility with older configurations.
      */
     public initialize(browserFingerprintsEnabled: boolean | undefined): void {
+        // Session identifier is always needed for message routing (e.g., self-message filtering
+        // in collaborative editing) and is independent of browser fingerprinting.
+        this.initializeSessionIdentifier();
+
         // Default to enabled for backwards compatibility with older configurations
         if (browserFingerprintsEnabled !== false) {
             this.generateBrowserFingerprint();
             this.initializeInstanceIdentifier();
-            this.initializeSessionIdentifier();
         } else {
             this.clearStoredInstanceData();
         }

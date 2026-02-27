@@ -32,7 +32,7 @@ import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { editor } from 'monaco-editor';
 import { CodeEditorFileSyncService } from 'app/programming/manage/services/code-editor-file-sync.service';
 import { Subscription } from 'rxjs';
-import { ExerciseEditorSyncEventType, FileCreatedEvent, FileDeletedEvent, FileRenamedEvent } from 'app/exercise/services/exercise-editor-sync.service';
+import { ExerciseEditorSyncEventType, FileCreatedEvent, FileDeletedEvent, FileRenamedEvent } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 
 export enum CollapsableCodeEditorElement {
     FileBrowser,
@@ -88,6 +88,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     course = input<Course | undefined>();
     selectedRepository = input<RepositoryType>();
     fileSyncService = input<CodeEditorFileSyncService | undefined>();
+    enableExerciseReviewComments = input<boolean>(false);
+    selectedAuxiliaryRepositoryId = input<number | undefined>();
 
     onCommitStateChange = output<CommitState>();
     onFileChanged = output<void>();
@@ -96,6 +98,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     onAcceptSuggestion = output<Feedback>();
     onDiscardSuggestion = output<Feedback>();
     onEditorLoaded = output<void>();
+    onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
+    onCommit = output<void>();
 
     /** Work in Progress: temporary properties needed to get first prototype working */
 
