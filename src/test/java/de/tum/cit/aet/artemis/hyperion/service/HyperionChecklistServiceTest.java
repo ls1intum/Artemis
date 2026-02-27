@@ -5,13 +5,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
@@ -28,12 +29,15 @@ import de.tum.cit.aet.artemis.hyperion.domain.ChecklistSection;
 import de.tum.cit.aet.artemis.hyperion.domain.DifficultyDelta;
 import de.tum.cit.aet.artemis.hyperion.domain.QualityIssueCategory;
 import de.tum.cit.aet.artemis.hyperion.domain.SuggestedDifficulty;
+import de.tum.cit.aet.artemis.hyperion.dto.ChecklistActionRequestDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ChecklistActionResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ChecklistAnalysisRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ChecklistAnalysisResponseDTO;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTaskTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import io.micrometer.observation.ObservationRegistry;
 
+@ExtendWith(MockitoExtension.class)
 class HyperionChecklistServiceTest {
 
     @Mock
@@ -53,11 +57,8 @@ class HyperionChecklistServiceTest {
 
     private HyperionChecklistService hyperionChecklistService;
 
-    private AutoCloseable mocks;
-
     @BeforeEach
     void setup() {
-        mocks = MockitoAnnotations.openMocks(this);
         ChatClient chatClient = ChatClient.create(chatModel);
 
         // Mock StandardizedCompetencyService to return empty catalog
@@ -71,11 +72,6 @@ class HyperionChecklistServiceTest {
         var templateService = new HyperionPromptTemplateService();
         this.hyperionChecklistService = new HyperionChecklistService(chatClient, templateService, ObservationRegistry.NOOP, Optional.of(standardizedCompetencyApi),
                 Optional.of(courseCompetencyApi), taskRepository, programmingExerciseRepository, new ObjectMapper());
-    }
-
-    @AfterEach
-    void tearDown() throws Exception {
-        mocks.close();
     }
 
     @Test
@@ -327,5 +323,35 @@ class HyperionChecklistServiceTest {
         // Other sections should be null
         assertThat(response.inferredCompetencies()).isNull();
         assertThat(response.difficultyAssessment()).isNull();
+    }
+
+    @Test
+    void applyChecklistAction_fixQualityIssue() {
+        String updatedStatement = "Updated problem statement with fix applied";
+        when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(updatedStatement)))));
+
+        var request = new ChecklistActionRequestDTO(ChecklistActionRequestDTO.ActionType.FIX_QUALITY_ISSUE, "Original problem statement",
+                Map.of("issueDescription", "Vague instructions", "category", "CLARITY", "suggestedFix", "Be more specific"));
+
+        ChecklistActionResponseDTO response = hyperionChecklistService.applyChecklistAction(request).join();
+
+        assertThat(response).isNotNull();
+        assertThat(response.applied()).isTrue();
+        assertThat(response.updatedProblemStatement()).isEqualTo(updatedStatement);
+        assertThat(response.summary()).contains("CLARITY");
+    }
+
+    @Test
+    void applyChecklistAction_handlesFailure() {
+        when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("AI error"));
+
+        var request = new ChecklistActionRequestDTO(ChecklistActionRequestDTO.ActionType.FIX_QUALITY_ISSUE, "Original problem statement",
+                Map.of("issueDescription", "Vague", "category", "CLARITY"));
+
+        ChecklistActionResponseDTO response = hyperionChecklistService.applyChecklistAction(request).join();
+
+        assertThat(response).isNotNull();
+        assertThat(response.applied()).isFalse();
+        assertThat(response.updatedProblemStatement()).isEqualTo("Original problem statement");
     }
 }

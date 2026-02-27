@@ -65,6 +65,15 @@ const SECTION_TO_FIELD: Record<ChecklistSectionType, keyof ChecklistAnalysisResp
     difficulty: 'difficultyAssessment',
 };
 
+/**
+ * Maps client-side section names to the API-level section parameter.
+ */
+const SECTION_TO_API: Record<ChecklistSectionType, 'COMPETENCIES' | 'DIFFICULTY' | 'QUALITY'> = {
+    competencies: 'COMPETENCIES',
+    difficulty: 'DIFFICULTY',
+    quality: 'QUALITY',
+};
+
 /** Default quality score before penalties are applied. */
 const DEFAULT_QUALITY_SCORE = 1.0;
 /** Penalty subtracted per HIGH-severity quality issue. */
@@ -92,7 +101,6 @@ export class ChecklistPanelComponent {
     courseId = input.required<number>();
     problemStatement = input.required<string>();
 
-    problemStatementChange = output<string>();
     problemStatementDiffRequest = output<string>();
     competencyLinksChange = output<CompetencyExerciseLink[]>();
     difficultyChange = output<string>();
@@ -392,7 +400,9 @@ export class ChecklistPanelComponent {
     private markSectionsStale(sections: ChecklistSectionType[]) {
         this.staleSections.update((current) => {
             const n = new Set(current);
-            sections.forEach((s) => n.add(s));
+            for (const s of sections) {
+                n.add(s);
+            }
             return n;
         });
     }
@@ -422,7 +432,7 @@ export class ChecklistPanelComponent {
         };
 
         this.hyperionApiService
-            .analyzeChecklistSection(cId, section.toUpperCase() as 'COMPETENCIES' | 'DIFFICULTY' | 'QUALITY', request)
+            .analyzeChecklistSection(cId, SECTION_TO_API[section], request)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (res: ChecklistAnalysisResponse) => {
@@ -490,7 +500,7 @@ export class ChecklistPanelComponent {
 
     /**
      * Discards a single quality issue from the list without AI action.
-     * The quality radar graph is NOT updated (scores remain unchanged until re-analysis).
+     * The quality radar graph updates reactively since qualityScores is a computed signal.
      */
     discardQualityIssue(index: number) {
         this.updateAnalysisOptimistically((r) => Object.assign({}, r, { qualityIssues: (r.qualityIssues ?? []).filter((_, i) => i !== index) }));
@@ -583,7 +593,7 @@ export class ChecklistPanelComponent {
 
     /**
      * Discards all currently selected quality issues from the list without AI action.
-     * The quality radar graph is NOT updated (scores remain unchanged until re-analysis).
+     * The quality radar graph updates reactively since qualityScores is a computed signal.
      */
     discardSelectedIssues() {
         const selected = this.selectedIssueIndices();
