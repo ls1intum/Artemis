@@ -205,12 +205,12 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
             return false;
         }
         if (hasSelectedConversations) {
-            control.setValue(false);
-            control.disable();
+            control.setValue(false, { emitEvent: false });
+            control.disable({ emitEvent: false });
         } else {
-            control.enable();
+            control.enable({ emitEvent: false });
         }
-        return !!control.value;
+        return control.value;
     }
 
     resetFormGroup(): void {
