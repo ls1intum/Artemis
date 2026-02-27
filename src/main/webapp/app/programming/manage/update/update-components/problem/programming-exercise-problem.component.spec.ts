@@ -100,7 +100,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         // Trigger the generation
         comp.userPrompt.set(userPrompt);
-        comp.generateProblemStatement();
+        comp.aiOps.generateProblemStatement(comp.programmingExercise(), comp.editableInstructions());
 
         // Verify the API was called correctly
         expect(mockHyperionApiService.generateProblemStatement).toHaveBeenCalledWith(courseId, request);
@@ -118,7 +118,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
 
         comp.userPrompt.set('');
-        comp.generateProblemStatement();
+        comp.aiOps.generateProblemStatement(comp.programmingExercise(), comp.editableInstructions());
 
         expect(mockHyperionApiService.generateProblemStatement).not.toHaveBeenCalled();
     });
@@ -129,7 +129,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
 
         comp.userPrompt.set('Test prompt');
-        comp.generateProblemStatement();
+        comp.aiOps.generateProblemStatement(comp.programmingExercise(), comp.editableInstructions());
 
         expect(mockHyperionApiService.generateProblemStatement).not.toHaveBeenCalled();
     });
@@ -142,7 +142,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         mockHyperionApiService.generateProblemStatement.mockReturnValue(throwError(() => new Error('API error')));
 
         comp.userPrompt.set('Test prompt');
-        comp.generateProblemStatement();
+        comp.aiOps.generateProblemStatement(comp.programmingExercise(), comp.editableInstructions());
 
         expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.generationError');
         expect(comp.isGeneratingOrRefining()).toBeFalse();
@@ -156,7 +156,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         mockHyperionApiService.generateProblemStatement.mockReturnValue(of({ draftProblemStatement: '' }));
 
         comp.userPrompt.set('Test prompt');
-        comp.generateProblemStatement();
+        comp.aiOps.generateProblemStatement(comp.programmingExercise(), comp.editableInstructions());
 
         expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.generationError');
     });
@@ -174,7 +174,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         mockHyperionApiService.refineProblemStatementGlobally.mockReturnValue(of(mockResponse));
 
         comp.userPrompt.set('Improve clarity');
-        comp.refineProblemStatement();
+        comp.aiOps.refineProblemStatement(comp.programmingExercise(), comp.editableInstructions());
 
         expect(mockHyperionApiService.refineProblemStatementGlobally).toHaveBeenCalledWith(
             42,
@@ -239,7 +239,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         programmingExercise.problemStatement = ''; // Empty, should trigger generate
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
 
-        const generateSpy = jest.spyOn(comp, 'generateProblemStatement');
+        const generateSpy = jest.spyOn(comp.aiOps, 'generateProblemStatement');
 
         comp.userPrompt.set('Test');
         comp.handleProblemStatementAction();
@@ -255,10 +255,10 @@ describe('ProgrammingExerciseProblemComponent', () => {
         fixture.detectChanges(); // Trigger ngOnInit to set currentProblemStatement signal
 
         // Set templateLoaded so shouldShowGenerateButton returns false for non-template content
-        comp['templateLoaded'].set(true);
-        comp['templateProblemStatement'].set('Different template');
+        comp.aiOps.templateLoaded.set(true);
+        comp.aiOps.templateProblemStatement.set('Different template');
 
-        const refineSpy = jest.spyOn(comp, 'refineProblemStatement');
+        const refineSpy = jest.spyOn(comp.aiOps, 'refineProblemStatement');
 
         comp.userPrompt.set('Improve this');
         comp.handleProblemStatementAction();
@@ -301,8 +301,8 @@ describe('ProgrammingExerciseProblemComponent', () => {
         fixture.detectChanges();
 
         // Set templateLoaded so shouldShowGenerateButton compares against template
-        comp['templateLoaded'].set(true);
-        comp['templateProblemStatement'].set('Different template');
+        comp.aiOps.templateLoaded.set(true);
+        comp.aiOps.templateProblemStatement.set('Different template');
 
         // shouldShowGenerateButton should be false for existing content that differs from template
         expect(comp.shouldShowGenerateButton()).toBeFalse();
@@ -440,7 +440,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         mockHyperionApiService.refineProblemStatementGlobally.mockReturnValue(of(mockResponse));
 
         comp.userPrompt.set('Improve clarity');
-        comp.refineProblemStatement();
+        comp.aiOps.refineProblemStatement(comp.programmingExercise(), comp.editableInstructions());
 
         expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.refinementError');
     });
@@ -454,7 +454,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         mockHyperionApiService.refineProblemStatementGlobally.mockReturnValue(throwError(() => new Error('API error')));
 
         comp.userPrompt.set('Improve clarity');
-        comp.refineProblemStatement();
+        comp.aiOps.refineProblemStatement(comp.programmingExercise(), comp.editableInstructions());
 
         expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.refinementError');
         expect(comp.isGeneratingOrRefining()).toBeFalse();
@@ -467,7 +467,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
 
         comp.userPrompt.set('');
-        comp.refineProblemStatement();
+        comp.aiOps.refineProblemStatement(comp.programmingExercise(), comp.editableInstructions());
 
         expect(mockHyperionApiService.refineProblemStatementGlobally).not.toHaveBeenCalled();
     });
@@ -478,7 +478,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
 
         comp.userPrompt.set('Improve');
-        comp.refineProblemStatement();
+        comp.aiOps.refineProblemStatement(comp.programmingExercise(), comp.editableInstructions());
 
         expect(mockHyperionApiService.refineProblemStatementGlobally).not.toHaveBeenCalled();
     });
@@ -495,24 +495,24 @@ describe('ProgrammingExerciseProblemComponent', () => {
         mockHyperionApiService.generateProblemStatement.mockReturnValue(of(mockResponse));
 
         comp.userPrompt.set('Create exercise');
-        comp.generateProblemStatement();
+        comp.aiOps.generateProblemStatement(comp.programmingExercise(), comp.editableInstructions());
 
         expect(mockHyperionApiService.generateProblemStatement).toHaveBeenCalledWith(99, expect.any(Object));
     });
 
     it('should cancel active subscription on cancelAiOperation', () => {
         const mockSubscription = { unsubscribe: jest.fn() };
-        comp['currentAiOperationSubscription'] = mockSubscription as any;
+        (comp.aiOps as any)['currentAiOperationSubscription'] = mockSubscription as any;
 
         comp.cancelAiOperation();
 
         expect(mockSubscription.unsubscribe).toHaveBeenCalled();
-        expect(comp['currentAiOperationSubscription']).toBeUndefined();
+        expect((comp.aiOps as any)['currentAiOperationSubscription']).toBeUndefined();
     });
 
     it('should unsubscribe on destroy', () => {
         const mockSubscription = { unsubscribe: jest.fn() };
-        comp['currentAiOperationSubscription'] = mockSubscription as any;
+        (comp.aiOps as any)['currentAiOperationSubscription'] = mockSubscription as any;
 
         comp.ngOnDestroy();
 
@@ -526,9 +526,9 @@ describe('ProgrammingExerciseProblemComponent', () => {
         fixture.detectChanges();
 
         // Set the template to match the problem statement
-        comp['templateProblemStatement'].set('Template content');
-        comp['templateLoaded'].set(true);
-        comp['currentProblemStatement'].set('Template content');
+        comp.aiOps.templateProblemStatement.set('Template content');
+        comp.aiOps.templateLoaded.set(true);
+        comp.aiOps.currentProblemStatement.set('Template content');
 
         expect(comp.shouldShowGenerateButton()).toBeTrue();
     });
@@ -539,9 +539,9 @@ describe('ProgrammingExerciseProblemComponent', () => {
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
         fixture.detectChanges();
 
-        comp['templateProblemStatement'].set('Template content');
-        comp['templateLoaded'].set(true);
-        comp['currentProblemStatement'].set('Custom content');
+        comp.aiOps.templateProblemStatement.set('Template content');
+        comp.aiOps.templateLoaded.set(true);
+        comp.aiOps.currentProblemStatement.set('Custom content');
 
         expect(comp.shouldShowGenerateButton()).toBeFalse();
     });
@@ -552,8 +552,8 @@ describe('ProgrammingExerciseProblemComponent', () => {
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
         fixture.detectChanges();
 
-        comp['templateLoaded'].set(false);
-        comp['currentProblemStatement'].set('Existing content');
+        comp.aiOps.templateLoaded.set(false);
+        comp.aiOps.currentProblemStatement.set('Existing content');
 
         expect(comp.shouldShowGenerateButton()).toBeFalse();
     });
