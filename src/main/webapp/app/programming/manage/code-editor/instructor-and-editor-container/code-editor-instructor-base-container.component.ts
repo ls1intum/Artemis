@@ -439,6 +439,8 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         // populates the model from Y.Text content, so the brief empty state is not observable
         // in the UI. This is required because MonacoBinding diffs the model content against
         // Y.Text on construction, and starting from an empty model ensures a clean diff.
+        // Safe: no MonacoBinding exists yet at this point, so the setValue('') cannot propagate
+        // as a Yjs delete. The binding is only created on the next line.
         model.setValue('');
         this.createFileBinding(syncState, model, editorInstance);
 
@@ -471,6 +473,12 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         this.currentFileBinding = binding;
     }
 
+    /**
+     * Tears down the Monaco <-> Yjs binding only (UI concern). Does NOT call closeFile()
+     * because the Yjs document lifecycle is managed by the caller: onFileSyncLoad() closes
+     * the previous file explicitly, while ngOnDestroy() and domain changes call reset()
+     * which bulk-destroys all docs. Keeping these concerns separate is intentional.
+     */
     private teardownFileBinding(): void {
         this.stateReplacedSubscription?.unsubscribe();
         this.stateReplacedSubscription = undefined;

@@ -58,6 +58,7 @@ type FileSyncEntry = {
     awaitingInitialSync: boolean;
     localLeaderTimestamp: number;
     activeLeaderTimestamp: number;
+    activeLeaderSessionId?: string;
     latestRequestId?: string;
     fallbackInitialContent: string;
     queuedFullContentRequests: string[];
@@ -465,11 +466,11 @@ export class CodeEditorFileSyncService implements OnDestroy {
         if (message.responseTo !== entry.latestRequestId) {
             return;
         }
-        if (message.leaderTimestamp >= entry.activeLeaderTimestamp) {
+        if (!this.shouldReplaceWithRemoteLeader(entry, message.leaderTimestamp, message.sessionId)) {
             return;
         }
         const update = decodeBase64ToUint8Array(message.yjsUpdate);
-        this.replaceDocumentWithRemoteState(entry, message.filePath, update, message.leaderTimestamp);
+        this.replaceDocumentWithRemoteState(entry, message.filePath, update, message.leaderTimestamp, message.sessionId);
     }
 
     private finalizeInitialSync(entry: FileSyncEntry, filePath: string): void {
@@ -478,15 +479,27 @@ export class CodeEditorFileSyncService implements OnDestroy {
         }
         const responses = entry.pendingInitialSync.responses;
         if (responses.length) {
-            const selected = responses.reduce((best, next) => (next.leaderTimestamp < best.leaderTimestamp ? next : best));
+            const selected = responses.reduce((best, next) => {
+                // Primary sort: earliest timestamp wins
+                if (next.leaderTimestamp < best.leaderTimestamp) {
+                    return next;
+                }
+                if (next.leaderTimestamp > best.leaderTimestamp) {
+                    return best;
+                }
+                // Tie-breaker: lexicographically smaller sessionId wins for determinism
+                return (next.sessionId ?? '') < (best.sessionId ?? '') ? next : best;
+            });
             const update = decodeBase64ToUint8Array(selected.yjsUpdate);
             Y.applyUpdate(entry.doc, update, FileSyncOrigin.Remote);
             entry.activeLeaderTimestamp = selected.leaderTimestamp;
+            entry.activeLeaderSessionId = selected.sessionId;
         } else if (entry.fallbackInitialContent.length > 0) {
             entry.doc.transact(() => {
                 entry.text.insert(0, entry.fallbackInitialContent);
             }, FileSyncOrigin.Seed);
             entry.activeLeaderTimestamp = entry.localLeaderTimestamp;
+            entry.activeLeaderSessionId = this.syncService.sessionId;
         }
         if (entry.pendingInitialSync.bufferedUpdates.length) {
             entry.pendingInitialSync.bufferedUpdates.forEach((update) => {
@@ -512,7 +525,24 @@ export class CodeEditorFileSyncService implements OnDestroy {
 
     // ── Private: Late-winning replacement ────────────────────────────────
 
-    private replaceDocumentWithRemoteState(oldEntry: FileSyncEntry, filePath: string, update: Uint8Array, leaderTimestamp: number): void {
+    /**
+     * Determine if a remote leader should replace the active local leader.
+     *
+     * Lower leader timestamp wins deterministically. In case of timestamp collision,
+     * lexicographically smaller sessionId wins as a tie-breaker.
+     */
+    private shouldReplaceWithRemoteLeader(entry: FileSyncEntry, remoteLeaderTimestamp: number, remoteSessionId?: string): boolean {
+        if (remoteLeaderTimestamp < entry.activeLeaderTimestamp) {
+            return true;
+        }
+        if (remoteLeaderTimestamp > entry.activeLeaderTimestamp) {
+            return false;
+        }
+        // Tie-breaker: lexicographically smaller sessionId wins for determinism
+        return (remoteSessionId ?? '') < (entry.activeLeaderSessionId ?? '');
+    }
+
+    private replaceDocumentWithRemoteState(oldEntry: FileSyncEntry, filePath: string, update: Uint8Array, leaderTimestamp: number, sessionId?: string): void {
         const key = this.buildKey(filePath);
 
         const doc = new Y.Doc();
@@ -526,6 +556,7 @@ export class CodeEditorFileSyncService implements OnDestroy {
             awaitingInitialSync: false,
             localLeaderTimestamp: oldEntry.localLeaderTimestamp,
             activeLeaderTimestamp: leaderTimestamp,
+            activeLeaderSessionId: sessionId,
             latestRequestId: oldEntry.latestRequestId,
             fallbackInitialContent: oldEntry.fallbackInitialContent,
             queuedFullContentRequests: [],

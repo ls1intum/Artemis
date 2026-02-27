@@ -1,4 +1,5 @@
 import { Mocked, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { WritableSignal, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Subject } from 'rxjs';
@@ -22,6 +23,7 @@ describe('CodeEditorFileSyncService', () => {
     let service: CodeEditorFileSyncService;
     let syncService: Mocked<ExerciseEditorSyncService>;
     let incomingMessages$: Subject<ExerciseEditorSyncEvent>;
+    let userIdentitySignal: WritableSignal<any>;
 
     const EXERCISE_ID = 42;
     const TARGET = ExerciseEditorSyncTarget.TEMPLATE_REPOSITORY;
@@ -30,6 +32,7 @@ describe('CodeEditorFileSyncService', () => {
     beforeEach(() => {
         vi.useFakeTimers();
         incomingMessages$ = new Subject<ExerciseEditorSyncEvent>();
+        userIdentitySignal = signal(undefined);
 
         TestBed.configureTestingModule({
             providers: [
@@ -46,7 +49,7 @@ describe('CodeEditorFileSyncService', () => {
                 {
                     provide: AccountService,
                     useValue: {
-                        userIdentity: vi.fn().mockReturnValue(undefined),
+                        userIdentity: userIdentitySignal,
                     },
                 },
             ],
@@ -278,6 +281,143 @@ describe('CodeEditorFileSyncService', () => {
         });
     });
 
+    describe('sessionId tie-breaking', () => {
+        it('uses sessionId tie-breaker when timestamps are equal during initial sync', () => {
+            service.init(EXERCISE_ID, TARGET);
+            const state = service.openFile(FILE_PATH, '')!;
+
+            const requestCall = syncService.sendSynchronizationUpdate.mock.calls.find(
+                ([, msg]) => msg.eventType === ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_REQUEST && (msg as any).filePath === FILE_PATH,
+            );
+            const requestId = (requestCall?.[1] as any).requestId as string;
+
+            const doc1 = new Y.Doc();
+            doc1.getText('file-content').insert(0, 'Response 1');
+            const doc2 = new Y.Doc();
+            doc2.getText('file-content').insert(0, 'Response 2');
+
+            // Both responses have the same timestamp
+            incomingMessages$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_RESPONSE,
+                target: TARGET,
+                filePath: FILE_PATH,
+                responseTo: requestId,
+                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(doc1)),
+                leaderTimestamp: 100,
+                sessionId: 'session-bbb',
+                timestamp: 1,
+            });
+            incomingMessages$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_RESPONSE,
+                target: TARGET,
+                filePath: FILE_PATH,
+                responseTo: requestId,
+                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(doc2)),
+                leaderTimestamp: 100,
+                sessionId: 'session-aaa', // Lexicographically smaller
+                timestamp: 2,
+            });
+
+            vi.advanceTimersByTime(500);
+            // Should select 'session-aaa' due to tie-breaker
+            expect(state.text.toString()).toBe('Response 2');
+        });
+
+        it('replaces state when late response has better sessionId with same timestamp', () => {
+            service.init(EXERCISE_ID, TARGET);
+            service.openFile(FILE_PATH, 'Fallback')!;
+
+            const requestCall = syncService.sendSynchronizationUpdate.mock.calls.find(
+                ([, msg]) => msg.eventType === ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_REQUEST && (msg as any).filePath === FILE_PATH,
+            );
+            const requestId = (requestCall?.[1] as any).requestId as string;
+
+            // Initial response with higher sessionId
+            const initialDoc = new Y.Doc();
+            initialDoc.getText('file-content').insert(0, 'Initial content');
+            incomingMessages$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_RESPONSE,
+                target: TARGET,
+                filePath: FILE_PATH,
+                responseTo: requestId,
+                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(initialDoc)),
+                leaderTimestamp: 100,
+                sessionId: 'session-zzz',
+                timestamp: 1,
+            });
+
+            vi.advanceTimersByTime(500);
+
+            let replacedState: ({ filePath: string } & FileSyncState) | undefined;
+            const sub = service.stateReplaced$.subscribe((s) => (replacedState = s));
+
+            // Late response with same timestamp but better sessionId
+            const lateDoc = new Y.Doc();
+            lateDoc.getText('file-content').insert(0, 'Late better content');
+            incomingMessages$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_RESPONSE,
+                target: TARGET,
+                filePath: FILE_PATH,
+                responseTo: requestId,
+                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(lateDoc)),
+                leaderTimestamp: 100,
+                sessionId: 'session-aaa', // Lexicographically smaller
+                timestamp: 2,
+            });
+
+            expect(replacedState).toBeDefined();
+            expect(replacedState?.text.toString()).toBe('Late better content');
+            sub.unsubscribe();
+        });
+
+        it('does not replace state when late response has worse sessionId with same timestamp', () => {
+            service.init(EXERCISE_ID, TARGET);
+            const state = service.openFile(FILE_PATH, 'Fallback')!;
+
+            const requestCall = syncService.sendSynchronizationUpdate.mock.calls.find(
+                ([, msg]) => msg.eventType === ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_REQUEST && (msg as any).filePath === FILE_PATH,
+            );
+            const requestId = (requestCall?.[1] as any).requestId as string;
+
+            // Initial response with lower sessionId
+            const initialDoc = new Y.Doc();
+            initialDoc.getText('file-content').insert(0, 'Initial content');
+            incomingMessages$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_RESPONSE,
+                target: TARGET,
+                filePath: FILE_PATH,
+                responseTo: requestId,
+                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(initialDoc)),
+                leaderTimestamp: 100,
+                sessionId: 'session-aaa',
+                timestamp: 1,
+            });
+
+            vi.advanceTimersByTime(500);
+
+            let replacedState: ({ filePath: string } & FileSyncState) | undefined;
+            const sub = service.stateReplaced$.subscribe((s) => (replacedState = s));
+
+            // Late response with same timestamp but worse sessionId
+            const lateDoc = new Y.Doc();
+            lateDoc.getText('file-content').insert(0, 'Should not replace');
+            incomingMessages$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_RESPONSE,
+                target: TARGET,
+                filePath: FILE_PATH,
+                responseTo: requestId,
+                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(lateDoc)),
+                leaderTimestamp: 100,
+                sessionId: 'session-zzz', // Lexicographically larger — should not win
+                timestamp: 2,
+            });
+
+            expect(replacedState).toBeUndefined();
+            expect(state.text.toString()).toBe('Initial content');
+            sub.unsubscribe();
+        });
+    });
+
     describe('late-winning response', () => {
         it('replaces state when a better leader responds late', () => {
             service.init(EXERCISE_ID, TARGET);
@@ -339,8 +479,7 @@ describe('CodeEditorFileSyncService', () => {
         });
 
         it('updates local awareness name from user identity', () => {
-            const accountService = TestBed.inject(AccountService);
-            (accountService.userIdentity as ReturnType<typeof vi.fn>).mockReturnValue({ name: 'Ada Lovelace', login: 'ada' } as any);
+            userIdentitySignal.set({ name: 'Ada Lovelace', login: 'ada' });
 
             service.init(EXERCISE_ID, TARGET);
             const state = service.openFile(FILE_PATH, '')!;
