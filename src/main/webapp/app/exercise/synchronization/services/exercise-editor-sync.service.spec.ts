@@ -1,18 +1,28 @@
+import { Mocked, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { BehaviorSubject, Subject } from 'rxjs';
 
-import { ExerciseEditorSyncEvent, ExerciseEditorSyncEventType, ExerciseEditorSyncService, ExerciseEditorSyncTarget } from 'app/exercise/services/exercise-editor-sync.service';
+import {
+    ExerciseEditorSyncEvent,
+    ExerciseEditorSyncEventType,
+    ExerciseEditorSyncService,
+    ExerciseEditorSyncTarget,
+} from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { ConnectionState, WebsocketService } from 'app/shared/service/websocket.service';
 import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
 
 describe('ExerciseEditorSyncService', () => {
+    setupTestBed({ zoneless: true });
     let service: ExerciseEditorSyncService;
-    let websocketService: jest.Mocked<WebsocketService>;
+    let websocketService: Mocked<WebsocketService>;
     let receiveSubject: Subject<ExerciseEditorSyncEvent>;
+    let browserSessionId: BehaviorSubject<string | undefined>;
     let connectionState$: BehaviorSubject<ConnectionState>;
 
     beforeEach(() => {
         receiveSubject = new Subject<ExerciseEditorSyncEvent>();
+        browserSessionId = new BehaviorSubject<string | undefined>('test-session-123');
         connectionState$ = new BehaviorSubject<ConnectionState>(new ConnectionState(true, true));
 
         TestBed.configureTestingModule({
@@ -21,63 +31,151 @@ describe('ExerciseEditorSyncService', () => {
                 {
                     provide: WebsocketService,
                     useValue: {
-                        subscribe: jest.fn().mockReturnValue(receiveSubject.asObservable()),
-                        send: jest.fn(),
-                        unsubscribe: jest.fn(),
+                        subscribe: vi.fn().mockReturnValue(receiveSubject.asObservable()),
+                        send: vi.fn(),
+                        unsubscribe: vi.fn(),
                         connectionState: connectionState$.asObservable(),
                     },
                 },
                 {
                     provide: BrowserFingerprintService,
                     useValue: {
-                        browserSessionId: new BehaviorSubject<string | undefined>('test-session-456'),
+                        browserSessionId,
                     },
                 },
             ],
         });
 
         service = TestBed.inject(ExerciseEditorSyncService);
-        websocketService = TestBed.inject(WebsocketService) as jest.Mocked<WebsocketService>;
+        websocketService = TestBed.inject(WebsocketService) as Mocked<WebsocketService>;
     });
 
     afterEach(() => {
-        service.unsubscribe();
+        service.disconnect();
     });
 
-    it('subscribes to websocket topic and forwards updates', () => {
+    it('connects to websocket topic and forwards NEW_COMMIT_ALERT updates', () => {
         const received: ExerciseEditorSyncEvent[] = [];
-        service.subscribeToUpdates(5).subscribe((message: ExerciseEditorSyncEvent) => received.push(message));
+        service.connect(5);
+        service.subscribeToUpdates().subscribe((message: ExerciseEditorSyncEvent) => received.push(message));
 
         expect(websocketService.subscribe).toHaveBeenCalledWith('/topic/exercises/5/synchronization');
 
         const synchronizationMessage: ExerciseEditorSyncEvent = {
-            eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
-            target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
-            sessionId: 'other-client',
-            yjsUpdate: 'update',
+            eventType: ExerciseEditorSyncEventType.NEW_COMMIT_ALERT,
+            target: ExerciseEditorSyncTarget.TESTS_REPOSITORY,
+            sessionId: 'other-session',
         };
         receiveSubject.next(synchronizationMessage);
 
         expect(received).toContain(synchronizationMessage);
     });
 
-    it('filters out messages from same session', () => {
+    it('forwards NEW_EXERCISE_VERSION_ALERT updates', () => {
         const received: ExerciseEditorSyncEvent[] = [];
-        service.subscribeToUpdates(5).subscribe((message: ExerciseEditorSyncEvent) => received.push(message));
+        service.connect(5);
+        service.subscribeToUpdates().subscribe((message: ExerciseEditorSyncEvent) => received.push(message));
 
-        const ownMessage: ExerciseEditorSyncEvent = {
+        const metadataAlert: ExerciseEditorSyncEvent = {
+            eventType: ExerciseEditorSyncEventType.NEW_EXERCISE_VERSION_ALERT,
+            target: ExerciseEditorSyncTarget.EXERCISE_METADATA,
+            exerciseVersionId: 7,
+            author: { login: 'editor' },
+            changedFields: ['title'],
+            sessionId: 'other-session',
+        };
+        receiveSubject.next(metadataAlert);
+
+        expect(received).toEqual([metadataAlert]);
+    });
+
+    it('forwards problem-statement synchronization events', () => {
+        const received: ExerciseEditorSyncEvent[] = [];
+        service.connect(5);
+        service.subscribeToUpdates().subscribe((message: ExerciseEditorSyncEvent) => received.push(message));
+
+        const requestEvent: ExerciseEditorSyncEvent = {
+            eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST,
+            target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+            requestId: 'req-1',
+            sessionId: 'other-session',
+        };
+        const responseEvent: ExerciseEditorSyncEvent = {
+            eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_RESPONSE,
+            target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+            responseTo: 'req-1',
+            yjsUpdate: 'full',
+            leaderTimestamp: 123,
+            sessionId: 'other-session',
+        };
+        const updateEvent: ExerciseEditorSyncEvent = {
             eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
             target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
-            sessionId: 'test-session-456', // Same as our session
-            yjsUpdate: 'update',
+            yjsUpdate: 'delta',
+            sessionId: 'other-session',
+        };
+        const awarenessEvent: ExerciseEditorSyncEvent = {
+            eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_AWARENESS_UPDATE,
+            target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+            awarenessUpdate: 'awareness',
+            sessionId: 'other-session',
+        };
+
+        receiveSubject.next(requestEvent);
+        receiveSubject.next(responseEvent);
+        receiveSubject.next(updateEvent);
+        receiveSubject.next(awarenessEvent);
+
+        expect(received).toEqual([requestEvent, responseEvent, updateEvent, awarenessEvent]);
+    });
+
+    it('filters out messages from the same session', () => {
+        const received: ExerciseEditorSyncEvent[] = [];
+        service.connect(5);
+        service.subscribeToUpdates().subscribe((message: ExerciseEditorSyncEvent) => received.push(message));
+
+        const ownMessage: ExerciseEditorSyncEvent = {
+            eventType: ExerciseEditorSyncEventType.NEW_COMMIT_ALERT,
+            target: ExerciseEditorSyncTarget.TESTS_REPOSITORY,
+            sessionId: 'test-session-123',
         };
         receiveSubject.next(ownMessage);
 
         expect(received).toHaveLength(0);
     });
 
+    it('does not filter messages without session ids', () => {
+        const received: ExerciseEditorSyncEvent[] = [];
+        service.connect(5);
+        service.subscribeToUpdates().subscribe((message: ExerciseEditorSyncEvent) => received.push(message));
+
+        const messageWithoutSession: ExerciseEditorSyncEvent = {
+            eventType: ExerciseEditorSyncEventType.NEW_COMMIT_ALERT,
+            target: ExerciseEditorSyncTarget.TESTS_REPOSITORY,
+        };
+        receiveSubject.next(messageWithoutSession);
+
+        expect(received).toEqual([messageWithoutSession]);
+    });
+
+    it('does not filter messages when local session id is undefined', () => {
+        browserSessionId.next(undefined);
+        const received: ExerciseEditorSyncEvent[] = [];
+        service.connect(5);
+        service.subscribeToUpdates().subscribe((message: ExerciseEditorSyncEvent) => received.push(message));
+
+        const sameSessionMessage: ExerciseEditorSyncEvent = {
+            eventType: ExerciseEditorSyncEventType.NEW_COMMIT_ALERT,
+            target: ExerciseEditorSyncTarget.TESTS_REPOSITORY,
+            sessionId: 'test-session-123',
+        };
+        receiveSubject.next(sameSessionMessage);
+
+        expect(received).toEqual([sameSessionMessage]);
+    });
+
     it('sends synchronization update with timestamp and session ID when connected', () => {
-        service.subscribeToUpdates(5);
+        service.connect(5);
 
         const message: ExerciseEditorSyncEvent = {
             eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
@@ -92,24 +190,48 @@ describe('ExerciseEditorSyncService', () => {
             expect.objectContaining({
                 eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
                 target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
-                sessionId: 'test-session-456',
+                sessionId: 'test-session-123',
                 timestamp: expect.any(Number),
             }),
         );
     });
 
-    it('throws error when sending without subscription', () => {
+    it('preserves provided timestamp when sending synchronization update', () => {
+        service.connect(5);
+
+        const message: ExerciseEditorSyncEvent = {
+            eventType: ExerciseEditorSyncEventType.NEW_EXERCISE_VERSION_ALERT,
+            target: ExerciseEditorSyncTarget.EXERCISE_METADATA,
+            exerciseVersionId: 4,
+            author: { login: 'editor' },
+            timestamp: 1337,
+        };
+        service.sendSynchronizationUpdate(5, message);
+
+        expect(websocketService.send).toHaveBeenCalledWith(
+            '/topic/exercises/5/synchronization',
+            expect.objectContaining({
+                eventType: ExerciseEditorSyncEventType.NEW_EXERCISE_VERSION_ALERT,
+                target: ExerciseEditorSyncTarget.EXERCISE_METADATA,
+                exerciseVersionId: 4,
+                timestamp: 1337,
+                sessionId: 'test-session-123',
+            }),
+        );
+    });
+
+    it('throws error when sending without connection', () => {
         const message: ExerciseEditorSyncEvent = {
             eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
             target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
             yjsUpdate: 'update',
         };
 
-        expect(() => service.sendSynchronizationUpdate(5, message)).toThrow('Cannot send synchronization message: not subscribed to websocket topic');
+        expect(() => service.sendSynchronizationUpdate(5, message)).toThrow('Cannot send synchronization message: not connected to websocket topic');
     });
 
     it('throws error when sending to wrong exercise id', () => {
-        service.subscribeToUpdates(5);
+        service.connect(5);
 
         const message: ExerciseEditorSyncEvent = {
             eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
@@ -117,64 +239,68 @@ describe('ExerciseEditorSyncService', () => {
             yjsUpdate: 'update',
         };
 
-        expect(() => service.sendSynchronizationUpdate(6, message)).toThrow('Cannot send synchronization message: exerciseId 6 does not match subscribed exerciseId 5');
+        expect(() => service.sendSynchronizationUpdate(6, message)).toThrow('Cannot send synchronization message: exerciseId 6 does not match connected exerciseId 5');
     });
 
-    it('completes Subject when unsubscribing', () => {
+    it('throws error when subscribing without connection', () => {
+        expect(() => service.subscribeToUpdates()).toThrow('Cannot subscribe to updates: not connected. Call connect(exerciseId) first.');
+    });
+
+    it('completes Subject when disconnecting', () => {
         const received: ExerciseEditorSyncEvent[] = [];
         let completed = false;
 
-        service.subscribeToUpdates(5).subscribe({
+        service.connect(5);
+        service.subscribeToUpdates().subscribe({
             next: (message) => received.push(message),
             complete: () => (completed = true),
         });
 
-        service.unsubscribe();
+        service.disconnect();
 
-        expect(completed).toBeTrue();
+        expect(completed).toBe(true);
     });
 
-    it('stops receiving messages after unsubscribing', () => {
+    it('stops receiving messages after disconnecting', () => {
         const received: ExerciseEditorSyncEvent[] = [];
-        service.subscribeToUpdates(5).subscribe((message: ExerciseEditorSyncEvent) => received.push(message));
+        service.connect(5);
+        service.subscribeToUpdates().subscribe((message: ExerciseEditorSyncEvent) => received.push(message));
 
         const message1: ExerciseEditorSyncEvent = {
-            eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
-            target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
-            sessionId: 'other-client',
-            yjsUpdate: 'update-1',
+            eventType: ExerciseEditorSyncEventType.NEW_COMMIT_ALERT,
+            target: ExerciseEditorSyncTarget.TESTS_REPOSITORY,
+            sessionId: 'other-session',
         };
         receiveSubject.next(message1);
         expect(received).toHaveLength(1);
 
-        service.unsubscribe();
+        service.disconnect();
 
         const message2: ExerciseEditorSyncEvent = {
-            eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
-            target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
-            sessionId: 'other-client',
-            yjsUpdate: 'update-2',
+            eventType: ExerciseEditorSyncEventType.NEW_COMMIT_ALERT,
+            target: ExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
+            sessionId: 'other-session',
         };
         receiveSubject.next(message2);
 
-        expect(received).toHaveLength(1); // Still only has the first message
+        expect(received).toHaveLength(1);
     });
 
     it('reuses same observable for multiple subscribers', () => {
         const received1: ExerciseEditorSyncEvent[] = [];
         const received2: ExerciseEditorSyncEvent[] = [];
 
-        service.subscribeToUpdates(5).subscribe((message: ExerciseEditorSyncEvent) => received1.push(message));
-        service.subscribeToUpdates(5).subscribe((message: ExerciseEditorSyncEvent) => received2.push(message));
+        service.connect(5);
+        service.subscribeToUpdates().subscribe((message: ExerciseEditorSyncEvent) => received1.push(message));
+        service.subscribeToUpdates().subscribe((message: ExerciseEditorSyncEvent) => received2.push(message));
 
         // Should only subscribe to websocket once
         expect(websocketService.subscribe).toHaveBeenCalledOnce();
 
         const message: ExerciseEditorSyncEvent = {
-            eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
-            target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
-            sessionId: 'other-client',
-            yjsUpdate: 'update',
+            eventType: ExerciseEditorSyncEventType.NEW_COMMIT_ALERT,
+            target: ExerciseEditorSyncTarget.TESTS_REPOSITORY,
+            sessionId: 'other-session',
         };
         receiveSubject.next(message);
 
@@ -183,23 +309,26 @@ describe('ExerciseEditorSyncService', () => {
         expect(received2).toEqual([message]);
     });
 
-    it('re-subscribes when exercise id changes', () => {
+    it('reconnects when exercise id changes', () => {
         const firstExerciseMessages = new Subject<ExerciseEditorSyncEvent>();
         const secondExerciseMessages = new Subject<ExerciseEditorSyncEvent>();
         websocketService.subscribe.mockReset();
         websocketService.subscribe.mockReturnValueOnce(firstExerciseMessages.asObservable()).mockReturnValueOnce(secondExerciseMessages.asObservable());
 
+        service.connect(5);
         const firstReceived: ExerciseEditorSyncEvent[] = [];
         let firstCompleted = false;
-        service.subscribeToUpdates(5).subscribe({
+        service.subscribeToUpdates().subscribe({
             next: (message) => firstReceived.push(message),
             complete: () => (firstCompleted = true),
         });
 
+        // Connecting to a different exercise tears down the previous connection
+        service.connect(6);
         const secondReceived: ExerciseEditorSyncEvent[] = [];
-        service.subscribeToUpdates(6).subscribe((message) => secondReceived.push(message));
+        service.subscribeToUpdates().subscribe((message) => secondReceived.push(message));
 
-        expect(firstCompleted).toBeTrue();
+        expect(firstCompleted).toBe(true);
         expect(websocketService.subscribe).toHaveBeenNthCalledWith(1, '/topic/exercises/5/synchronization');
         expect(websocketService.subscribe).toHaveBeenNthCalledWith(2, '/topic/exercises/6/synchronization');
 
@@ -224,7 +353,7 @@ describe('ExerciseEditorSyncService', () => {
     describe('outgoing message buffering', () => {
         it('buffers messages when disconnected and flushes when connected', () => {
             connectionState$.next(new ConnectionState(false, false));
-            service.subscribeToUpdates(5);
+            service.connect(5);
 
             const message: ExerciseEditorSyncEvent = {
                 eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST,
@@ -250,10 +379,10 @@ describe('ExerciseEditorSyncService', () => {
 
         it('flushes buffered messages in FIFO order', () => {
             connectionState$.next(new ConnectionState(false, false));
-            service.subscribeToUpdates(5);
+            service.connect(5);
 
             const sentPayloads: unknown[] = [];
-            websocketService.send.mockImplementation((_topic, payload) => {
+            websocketService.send.mockImplementation((_topic: string, payload: unknown) => {
                 sentPayloads.push(payload);
             });
 
@@ -287,9 +416,9 @@ describe('ExerciseEditorSyncService', () => {
             expect(sentPayloads[2]).toEqual(expect.objectContaining({ awarenessUpdate: 'awareness-1' }));
         });
 
-        it('does not send buffered messages after unsubscribe', () => {
+        it('does not send buffered messages after disconnect', () => {
             connectionState$.next(new ConnectionState(false, false));
-            service.subscribeToUpdates(5);
+            service.connect(5);
 
             const message: ExerciseEditorSyncEvent = {
                 eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST,
@@ -298,24 +427,24 @@ describe('ExerciseEditorSyncService', () => {
             };
             service.sendSynchronizationUpdate(5, message);
 
-            service.unsubscribe();
+            service.disconnect();
 
-            // Connect after unsubscribe — buffered message should NOT be sent
+            // Reconnect after disconnect — buffered message should NOT be sent
             connectionState$.next(new ConnectionState(true, true));
 
             expect(websocketService.send).not.toHaveBeenCalled();
         });
 
         it('throws error when outgoing buffer is not initialized', () => {
-            // Force the state where subscription exists but outgoing$ does not.
-            // This can't happen in normal flow, but the guard should catch it.
+            // Force the state where connection does not exist.
+            // The guard should catch it.
             const message: ExerciseEditorSyncEvent = {
                 eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
                 target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
                 yjsUpdate: 'update',
             };
 
-            expect(() => service.sendSynchronizationUpdate(5, message)).toThrow('Cannot send synchronization message: not subscribed to websocket topic');
+            expect(() => service.sendSynchronizationUpdate(5, message)).toThrow('Cannot send synchronization message: not connected to websocket topic');
         });
     });
 });
