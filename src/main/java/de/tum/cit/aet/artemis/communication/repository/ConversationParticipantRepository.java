@@ -73,7 +73,7 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
      * @param messageDate    the creation date of the target message
      * @param lastRead       the lastRead timestamp to set (just before messageDate)
      */
-    @Transactional
+    @Transactional // ok because of modifying query
     @Modifying
     @Query("""
                 UPDATE ConversationParticipant cp
