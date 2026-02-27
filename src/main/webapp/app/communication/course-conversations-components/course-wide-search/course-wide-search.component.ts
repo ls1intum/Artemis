@@ -1,6 +1,6 @@
 import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewEncapsulation, inject, input, output, viewChild, viewChildren } from '@angular/core';
 import { faChevronLeft, faCircleNotch, faEnvelope, faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -63,7 +63,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     previousScrollDistanceFromTop: number;
     page = 1;
 
-    formGroup: FormGroup;
+    formGroup: FormGroup<SearchFilterControls>;
 
     getAsChannel = getAsChannelDTO;
 
@@ -199,8 +199,8 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
      * Synchronizes a boolean filter control: disables and resets it when conversations are selected,
      * re-enables it otherwise. Returns the current control value.
      */
-    private syncBooleanFilterControl(controlName: string, hasSelectedConversations: boolean): boolean {
-        const control = this.formGroup?.get(controlName);
+    private syncBooleanFilterControl(controlName: keyof SearchFilterControls, hasSelectedConversations: boolean): boolean {
+        const control = this.formGroup?.controls[controlName];
         if (!control) {
             return false;
         }
@@ -214,7 +214,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     }
 
     resetFormGroup(): void {
-        this.formGroup = this.formBuilder.group({
+        this.formGroup = this.formBuilder.nonNullable.group({
             filterToCourseWide: false,
             filterToUnresolved: false,
             filterToAnsweredOrReacted: false,
@@ -230,10 +230,10 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     onSelectContext(): void {
         const searchConfig = this.courseWideSearchConfig();
         if (!searchConfig) return;
-        searchConfig.filterToCourseWide = this.formGroup.get('filterToCourseWide')?.value;
-        searchConfig.filterToUnresolved = this.formGroup.get('filterToUnresolved')?.value;
-        searchConfig.filterToAnsweredOrReacted = this.formGroup.get('filterToAnsweredOrReacted')?.value;
-        searchConfig.filterToExcludeDirectMessages = this.formGroup.get('filterToExcludeDirectMessages')?.value;
+        searchConfig.filterToCourseWide = !!this.formGroup.controls.filterToCourseWide?.value;
+        searchConfig.filterToUnresolved = !!this.formGroup.controls.filterToUnresolved?.value;
+        searchConfig.filterToAnsweredOrReacted = !!this.formGroup.controls.filterToAnsweredOrReacted?.value;
+        searchConfig.filterToExcludeDirectMessages = !!this.formGroup.controls.filterToExcludeDirectMessages?.value;
         searchConfig.sortingOrder = this.sortingOrder;
         this.commandMetisToFetchPosts(true);
     }
@@ -241,6 +241,13 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     protected onTriggerNavigateToPost(post: Posting) {
         this.onNavigateToPost.emit(post);
     }
+}
+
+interface SearchFilterControls {
+    filterToCourseWide: FormControl<boolean>;
+    filterToUnresolved: FormControl<boolean>;
+    filterToAnsweredOrReacted: FormControl<boolean>;
+    filterToExcludeDirectMessages: FormControl<boolean>;
 }
 
 export class CourseWideSearchConfig {

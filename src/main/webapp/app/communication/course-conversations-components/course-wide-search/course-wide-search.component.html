@@ -34,7 +34,7 @@
                                     name="filterToCourseWide"
                                     id="filterToCourseWide"
                                     (change)="onSelectContext()"
-                                    [attr.disabled]="formGroup.get('filterToCourseWide')?.disabled ? '' : null"
+                                    [attr.disabled]="formGroup.controls.filterToCourseWide?.disabled ? '' : null"
                                 />
                                 <label for="filterToCourseWide" class="p-0" jhiTranslate="artemisApp.metis.overview.filterToCourseWide"></label>
                             </div>
@@ -68,7 +68,7 @@
                                     name="filterToExcludeDirectMessages"
                                     id="filterToExcludeDirectMessages"
                                     (change)="onSelectContext()"
-                                    [attr.disabled]="formGroup.get('filterToExcludeDirectMessages')?.disabled ? '' : null"
+                                    [attr.disabled]="formGroup.controls.filterToExcludeDirectMessages?.disabled ? '' : null"
                                 />
                                 <label for="filterToExcludeDirectMessages" class="p-0" jhiTranslate="artemisApp.metis.overview.filterToExcludeDirectMessages"></label>
                             </div>

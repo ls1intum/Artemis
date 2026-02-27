@@ -199,10 +199,10 @@ describe('CourseWideSearchComponent', () => {
         component.ngOnInit();
         tick();
         fixture.changeDetectorRef.detectChanges();
-        expect(component.formGroup.get('filterToCourseWide')?.value).toBeFalse();
-        expect(component.formGroup.get('filterToUnresolved')?.value).toBeFalse();
-        expect(component.formGroup.get('filterToAnsweredOrReacted')?.value).toBeFalse();
-        expect(component.formGroup.get('filterToExcludeDirectMessages')?.value).toBeFalse();
+        expect(component.formGroup.controls.filterToCourseWide?.value).toBeFalse();
+        expect(component.formGroup.controls.filterToUnresolved?.value).toBeFalse();
+        expect(component.formGroup.controls.filterToAnsweredOrReacted?.value).toBeFalse();
+        expect(component.formGroup.controls.filterToExcludeDirectMessages?.value).toBeFalse();
     }));
 
     it('Should update filter setting when filterToCourseWide checkbox is checked', fakeAsync(() => {
@@ -232,7 +232,7 @@ describe('CourseWideSearchComponent', () => {
         component.onSearchConfigSelectionChange();
         fixture.changeDetectorRef.detectChanges();
 
-        const filterResolvedCheckbox = component.formGroup.get('filterToCourseWide')!;
+        const filterResolvedCheckbox = component.formGroup.controls.filterToCourseWide;
         expect(filterResolvedCheckbox.disabled).toBeTrue();
         expect(filterResolvedCheckbox.value).toBeFalse();
     }));
@@ -243,7 +243,7 @@ describe('CourseWideSearchComponent', () => {
         component.onSearchConfigSelectionChange();
         fixture.changeDetectorRef.detectChanges();
 
-        const filterResolvedCheckbox = component.formGroup.get('filterToCourseWide')!;
+        const filterResolvedCheckbox = component.formGroup.controls.filterToCourseWide;
         expect(filterResolvedCheckbox.disabled).toBeTrue();
 
         component.courseWideSearchConfig().selectedConversations = [];
@@ -326,7 +326,7 @@ describe('CourseWideSearchComponent', () => {
         component.onSearchConfigSelectionChange();
         fixture.changeDetectorRef.detectChanges();
 
-        const filterExcludeDMsControl = component.formGroup.get('filterToExcludeDirectMessages')!;
+        const filterExcludeDMsControl = component.formGroup.controls.filterToExcludeDirectMessages;
         expect(filterExcludeDMsControl.disabled).toBeTrue();
         expect(filterExcludeDMsControl.value).toBeFalse();
     }));
@@ -337,7 +337,7 @@ describe('CourseWideSearchComponent', () => {
         component.onSearchConfigSelectionChange();
         fixture.changeDetectorRef.detectChanges();
 
-        const filterExcludeDMsControl = component.formGroup.get('filterToExcludeDirectMessages')!;
+        const filterExcludeDMsControl = component.formGroup.controls.filterToExcludeDirectMessages;
         expect(filterExcludeDMsControl.disabled).toBeTrue();
 
         component.courseWideSearchConfig().selectedConversations = [];
