@@ -323,7 +323,7 @@ public class HyperionProblemStatementRefinementService {
         if (colObj == null) {
             return lineLength;
         }
-        return Math.min(lineLength, colObj - ONE_INDEXED_TO_ZERO_INDEXED_OFFSET);
+        return Math.max(0, Math.min(lineLength, colObj - ONE_INDEXED_TO_ZERO_INDEXED_OFFSET));
     }
 
     /**

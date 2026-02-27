@@ -189,7 +189,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     constructor() {
         super();
         this.aiOps.setChangeHandler({
-            onContentChanged: (content) => {
+            onContentChanged: (content, exercise) => {
+                if (this.exercise?.id && exercise?.id && this.exercise.id !== exercise.id) {
+                    return; // Ignore stale async results from a different exercise
+                }
                 this.onInstructionChanged(content);
             },
         });

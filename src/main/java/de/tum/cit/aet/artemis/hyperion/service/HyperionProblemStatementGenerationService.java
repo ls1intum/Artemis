@@ -105,17 +105,18 @@ public class HyperionProblemStatementGenerationService {
         llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, GENERATION_PIPELINE_ID,
                 builder -> builder.withCourse(course.getId()).withUser(userId));
 
+        // Defensively strip artifacts the LLM may have copied from the prompt template
+        if (generatedProblemStatement != null) {
+            generatedProblemStatement = stripLineNumbers(generatedProblemStatement);
+            generatedProblemStatement = stripWrapperMarkers(generatedProblemStatement);
+            generatedProblemStatement = generatedProblemStatement.trim();
+        }
+
         boolean isEmptyResponse = generatedProblemStatement == null || generatedProblemStatement.isBlank();
         if (isEmptyResponse) {
             throw new InternalServerErrorAlertException("Generated problem statement is null or empty", "ProblemStatement",
                     "ProblemStatementGeneration.problemStatementGenerationNull");
         }
-
-        // Defensively strip artifacts the LLM may have copied from the prompt template
-        generatedProblemStatement = stripLineNumbers(generatedProblemStatement);
-        generatedProblemStatement = stripWrapperMarkers(generatedProblemStatement);
-
-        generatedProblemStatement = generatedProblemStatement.trim();
 
         // Validate response length
         boolean exceedsMaxLength = generatedProblemStatement.length() > MAX_PROBLEM_STATEMENT_LENGTH;
