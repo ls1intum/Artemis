@@ -160,7 +160,7 @@ public class HyperionChecklistService {
 
         AnalysisContext ctx;
         try (var scope = observation.openScope()) {
-            ctx = buildAnalysisContext(request, courseId);
+            ctx = buildAnalysisContext(request, courseId, Set.of(ChecklistSection.COMPETENCIES, ChecklistSection.DIFFICULTY, ChecklistSection.QUALITY));
         }
         catch (Exception e) {
             observation.error(e);
@@ -207,7 +207,7 @@ public class HyperionChecklistService {
 
         AnalysisContext ctx;
         try (var scope = observation.openScope()) {
-            ctx = buildAnalysisContext(request, courseId);
+            ctx = buildAnalysisContext(request, courseId, Set.of(section));
         }
         catch (Exception e) {
             observation.error(e);
@@ -238,8 +238,13 @@ public class HyperionChecklistService {
 
     /**
      * Builds the shared analysis context (input map, parent observation, task names, declared difficulty) used by both full and single-section analysis.
+     * Only loads competency catalog, course competencies, and task names when the COMPETENCIES section is requested.
+     *
+     * @param request  the analysis request
+     * @param courseId the course ID
+     * @param sections the sections that will be analyzed (used to skip unnecessary lookups)
      */
-    private AnalysisContext buildAnalysisContext(ChecklistAnalysisRequestDTO request, long courseId) {
+    private AnalysisContext buildAnalysisContext(ChecklistAnalysisRequestDTO request, long courseId, Set<ChecklistSection> sections) {
         String problemStatement = request.problemStatementMarkdown(); // @NotBlank guarantees non-null after validation
         String rawDifficulty = request.declaredDifficulty();
         String declaredDifficulty = (rawDifficulty == null || rawDifficulty.isBlank()) ? "NOT_DECLARED" : rawDifficulty;
@@ -255,11 +260,10 @@ public class HyperionChecklistService {
             language = DEFAULT_LANGUAGE;
         }
 
-        // Fetch and serialize the competency catalog
-        String catalogJson = serializeCompetencyCatalog();
-
-        // Load and serialize existing course competencies for AI-based matching
-        String courseCompetenciesJson = serializeCourseCompetencies(courseId);
+        // Only fetch competency catalog and course competencies when COMPETENCIES section is requested
+        boolean needsCompetencies = sections.contains(ChecklistSection.COMPETENCIES);
+        String catalogJson = needsCompetencies ? serializeCompetencyCatalog() : "[]";
+        String courseCompetenciesJson = needsCompetencies ? serializeCourseCompetencies(courseId) : "[]";
 
         var input = Map.of("problem_statement", problemStatement, "declared_difficulty", declaredDifficulty, "language", language, "competency_catalog", catalogJson,
                 "course_competencies", courseCompetenciesJson);
@@ -267,9 +271,9 @@ public class HyperionChecklistService {
         // Capture the parent observation on the servlet thread so that child spans created on Reactor's boundedElastic threads can be linked correctly.
         Observation parentObs = observationRegistry.getCurrentObservation();
 
-        // Load task names for the competency prompt (only for existing exercises)
+        // Load task names for the competency prompt (only needed for COMPETENCIES section with existing exercises)
         List<String> taskNames;
-        if (request.exerciseId() != null) {
+        if (needsCompetencies && request.exerciseId() != null) {
             Set<ProgrammingExerciseTask> tasks = taskRepository.findByExerciseIdWithTestCases(request.exerciseId());
             taskNames = tasks.stream().map(ProgrammingExerciseTask::getTaskName).filter(name -> name != null && !name.isBlank()).toList();
         }
