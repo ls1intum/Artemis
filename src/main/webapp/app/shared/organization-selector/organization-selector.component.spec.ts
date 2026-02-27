@@ -9,6 +9,7 @@ import { MockProvider } from 'ng-mocks';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { provideHttpClient } from '@angular/common/http';
 import { TableLazyLoadEvent } from 'primeng/table';
+import { AlertService } from 'app/shared/service/alert.service';
 
 describe('OrganizationSelectorComponent', () => {
     let component: OrganizationSelectorComponent;
@@ -23,12 +24,13 @@ describe('OrganizationSelectorComponent', () => {
     organization2.id = 6;
     organization2.name = 'orgTwo';
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [
                 LocalStorageService,
                 SessionStorageService,
                 MockProvider(DynamicDialogRef),
+                MockProvider(AlertService),
                 {
                     provide: DynamicDialogConfig,
                     useValue: {
@@ -41,12 +43,11 @@ describe('OrganizationSelectorComponent', () => {
             ],
         })
             .overrideTemplate(OrganizationSelectorComponent, '')
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(OrganizationSelectorComponent);
-                component = fixture.componentInstance;
-                organizationService = TestBed.inject(OrganizationManagementService);
-            });
+            .compileComponents();
+
+        fixture = TestBed.createComponent(OrganizationSelectorComponent);
+        component = fixture.componentInstance;
+        organizationService = TestBed.inject(OrganizationManagementService);
     });
 
     beforeEach(() => {
