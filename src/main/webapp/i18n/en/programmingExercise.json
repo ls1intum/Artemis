@@ -838,9 +838,16 @@
                     "title": "Quality Assessment",
                     "empty": "No quality issues found.",
                     "fix": "Fix",
+                    "fixSelected": "Fix Selected",
                     "suggestedFix": "Suggested fix:",
                     "fixAll": "Fix All Issues",
                     "fixIssue": "Apply AI fix for this issue",
+                    "discardIssue": "Dismiss this issue",
+                    "discarded": "Issue dismissed.",
+                    "discardSelected": "Dismiss Selected",
+                    "discardedMultiple": "Selected issues dismissed.",
+                    "selectAll": "Select All",
+                    "deselectAll": "Deselect All",
                     "radarChartLabel": "Quality scores radar chart"
                 },
                 "actions": {

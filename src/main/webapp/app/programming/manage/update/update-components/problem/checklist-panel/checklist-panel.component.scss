@@ -107,13 +107,13 @@
         border-radius: 1rem;
         opacity: 0.75;
 
-        &:hover:not(:disabled) {
-            opacity: 1;
-        }
-
         &:focus-visible {
             outline: 2px solid var(--primary);
             outline-offset: 2px;
+        }
+
+        &:hover:not(:disabled) {
+            opacity: 1;
         }
 
         &--current {

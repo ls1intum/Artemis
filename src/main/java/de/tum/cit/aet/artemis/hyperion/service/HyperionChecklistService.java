@@ -326,7 +326,7 @@ public class HyperionChecklistService {
                 observation.error(e);
                 return ChecklistActionResponseDTO.failed(request.problemStatementMarkdown());
             }
-        }).subscribeOn(Schedulers.boundedElastic()).doOnError(observation::error).doFinally(signal -> observation.stop()).toFuture();
+        }).subscribeOn(Schedulers.boundedElastic()).timeout(ANALYSIS_TIMEOUT).doOnError(observation::error).doFinally(signal -> observation.stop()).toFuture();
     }
 
     /** Builds action-specific instructions for the AI prompt based on action type and pre-sanitized context. */
@@ -492,7 +492,11 @@ public class HyperionChecklistService {
             String json = objectMapper.writeValueAsString(result);
             courseCompetencyCache.put(courseId, new CourseCompetencyCacheEntry(json, Instant.now()));
             while (courseCompetencyCache.size() > MAX_COURSE_CACHE_SIZE) {
+                int sizeBefore = courseCompetencyCache.size();
                 evictStaleCourseCompetencyEntries();
+                if (courseCompetencyCache.size() >= sizeBefore) {
+                    break; // no progress – all entries are within TTL
+                }
             }
             return json;
         }
