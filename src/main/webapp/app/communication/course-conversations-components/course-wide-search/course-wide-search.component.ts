@@ -191,31 +191,26 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
 
         const hasSelectedConversations = config.selectedConversations?.length > 0;
 
-        const filterToCourseWideControl = this.formGroup?.get('filterToCourseWide');
-        if (filterToCourseWideControl) {
-            if (hasSelectedConversations) {
-                // When conversations are selected, disable the courseWide checkbox and set to false
-                filterToCourseWideControl.setValue(false);
-                filterToCourseWideControl.disable();
-            } else {
-                filterToCourseWideControl.enable();
-            }
+        config.filterToCourseWide = this.syncBooleanFilterControl('filterToCourseWide', hasSelectedConversations);
+        config.filterToExcludeDirectMessages = this.syncBooleanFilterControl('filterToExcludeDirectMessages', hasSelectedConversations);
+    }
 
-            config.filterToCourseWide = filterToCourseWideControl.value;
+    /**
+     * Synchronizes a boolean filter control: disables and resets it when conversations are selected,
+     * re-enables it otherwise. Returns the current control value.
+     */
+    private syncBooleanFilterControl(controlName: string, hasSelectedConversations: boolean): boolean {
+        const control = this.formGroup?.get(controlName);
+        if (!control) {
+            return false;
         }
-
-        const filterToExcludeDirectMessagesControl = this.formGroup?.get('filterToExcludeDirectMessages');
-        if (filterToExcludeDirectMessagesControl) {
-            if (hasSelectedConversations) {
-                // When conversations are selected, disable the exclude DMs checkbox and set to false
-                filterToExcludeDirectMessagesControl.setValue(false);
-                filterToExcludeDirectMessagesControl.disable();
-            } else {
-                filterToExcludeDirectMessagesControl.enable();
-            }
-
-            config.filterToExcludeDirectMessages = filterToExcludeDirectMessagesControl.value;
+        if (hasSelectedConversations) {
+            control.setValue(false);
+            control.disable();
+        } else {
+            control.enable();
         }
+        return !!control.value;
     }
 
     resetFormGroup(): void {
