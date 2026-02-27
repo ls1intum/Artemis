@@ -2,13 +2,13 @@
     <!-- Phase controls row -->
     <div class="d-flex align-items-start gap-2 mb-2">
         <div class="d-flex flex-column gap-1">
-            <label class="form-label mb-0">Phase Name</label>
-            <input pInputText [ngModel]="phase().name" (ngModelChange)="updateName($event)" placeholder="e.g. compile" />
+            <label class="form-label mb-0 small">Phase Name</label>
+            <input pInputText pSize="small" [ngModel]="phase().name" (ngModelChange)="updateName($event)" placeholder="e.g. compile" />
         </div>
 
         <div class="d-flex flex-column gap-1">
-            <label class="form-label mb-0">Condition</label>
-            <p-select [options]="conditionOptions" optionLabel="label" optionValue="value" [ngModel]="phase().condition" (ngModelChange)="updateCondition($event)" />
+            <label class="form-label mb-0 small">Condition</label>
+            <p-select size="small" [options]="conditionOptions" optionLabel="label" optionValue="value" [ngModel]="phase().condition" (ngModelChange)="updateCondition($event)" />
         </div>
 
         <div class="d-flex gap-1 ms-auto">
@@ -28,17 +28,17 @@
 
     <!-- Script editor -->
     <div class="d-flex flex-column gap-1 mb-2">
-        <label class="form-label mb-0">Script</label>
+        <label class="form-label mb-0 small">Script</label>
         <jhi-monaco-editor-fit-text [text]="phase().script" (textChange)="updateScript($event)" />
     </div>
 
     <!-- Result paths -->
     <div class="d-flex flex-column gap-1">
-        <label class="form-label mb-0">Result Paths</label>
+        <label class="form-label mb-0 small">Result Paths</label>
 
         @for (path of phase().resultPaths; track $index) {
             <div class="d-flex align-items-center gap-2">
-                <input pInputText [ngModel]="path" (ngModelChange)="updateResultPath($index, $event)" placeholder="e.g. **/results/*.xml" />
+                <input pInputText pSize="small" [ngModel]="path" (ngModelChange)="updateResultPath($index, $event)" placeholder="e.g. **/results/*.xml" />
                 <button pButton [text]="true" [rounded]="true" size="small" severity="danger" (click)="deleteResultPath($index)">
                     <fa-icon [icon]="faXmark" pButtonIcon />
                 </button>
