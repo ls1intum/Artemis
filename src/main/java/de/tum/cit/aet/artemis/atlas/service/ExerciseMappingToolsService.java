@@ -236,6 +236,10 @@ public class ExerciseMappingToolsService {
 
             Exercise exercise = exerciseOpt.get();
 
+            if (!courseId.equals(exercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
+                return error("Exercise " + exerciseId + " does not belong to course " + courseId);
+            }
+
             List<CompetencyExerciseLink> existingLinks = competencyExerciseLinkRepository.findByExerciseIdWithCompetency(exerciseId);
             Set<Long> existingCompetencyIds = existingLinks.stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
 
@@ -296,6 +300,10 @@ public class ExerciseMappingToolsService {
 
             Exercise exercise = exerciseOpt.get();
 
+            if (!courseId.equals(exercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
+                return error("Exercise " + exerciseId + " does not belong to course " + courseId);
+            }
+
             List<CompetencyExerciseLink> existingLinks = competencyExerciseLinkRepository.findByExerciseIdWithCompetency(exerciseId);
 
             Set<Long> newCompetencyIds = mappings.stream().map(ExerciseCompetencyMappingOperation::getCompetencyId).collect(Collectors.toSet());
@@ -304,13 +312,19 @@ public class ExerciseMappingToolsService {
             List<CompetencyExerciseLink> linksToDelete = existingLinks.stream().filter(link -> !newCompetencyIds.contains(link.getCompetency().getId()))
                     .collect(Collectors.toList());
 
+            Set<Long> missingCompetencyIds = mappings.stream().map(ExerciseCompetencyMappingOperation::getCompetencyId).filter(id -> !existingCompetencyIds.contains(id))
+                    .collect(Collectors.toSet());
+
+            Map<Long, CourseCompetency> competencyById = courseCompetencyRepository.findAllById(missingCompetencyIds).stream()
+                    .collect(Collectors.toMap(CourseCompetency::getId, c -> c));
+
             List<CompetencyExerciseLink> linksToCreate = new ArrayList<>();
             for (ExerciseCompetencyMappingOperation mapping : mappings) {
                 if (!existingCompetencyIds.contains(mapping.getCompetencyId())) {
-                    Optional<CourseCompetency> competencyOpt = courseCompetencyRepository.findById(mapping.getCompetencyId());
-                    if (competencyOpt.isPresent()) {
+                    CourseCompetency competency = competencyById.get(mapping.getCompetencyId());
+                    if (competency != null) {
                         CompetencyExerciseLink link = new CompetencyExerciseLink();
-                        link.setCompetency(competencyOpt.get());
+                        link.setCompetency(competency);
                         link.setExercise(exercise);
                         link.setWeight(mapping.getWeight());
                         linksToCreate.add(link);
