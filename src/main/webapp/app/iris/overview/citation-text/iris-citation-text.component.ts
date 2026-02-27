@@ -33,9 +33,6 @@ export class IrisCitationTextComponent {
         'iris-citation--source': faCircleExclamation, // Unknown source citations
     };
 
-    private readonly citationGroupData = new Map<string, { parsed: IrisCitationParsed[]; metas: Array<IrisCitationMetaDTO | undefined> }>();
-    private groupIdCounter = 0;
-
     readonly text = input.required<string>();
     readonly citationInfo = input<IrisCitationMetaDTO[]>([]);
 
@@ -48,9 +45,6 @@ export class IrisCitationTextComponent {
      * Processes text by applying markdown rendering first, then replacing citation markers with HTML.
      */
     private processText(text: string, citationInfo: IrisCitationMetaDTO[]): string {
-        this.citationGroupData.clear();
-        this.groupIdCounter = 0;
-
         // Apply markdown rendering (this converts markdown syntax to HTML)
         const markdownHtml = htmlForMarkdown(text, [], undefined, undefined, true);
 
@@ -114,12 +108,8 @@ export class IrisCitationTextComponent {
                </span>`
             : '';
 
-        const groupId = String(this.groupIdCounter++);
-        this.citationGroupData.set(groupId, { parsed: parsedIrisCitation, metas: metadata });
-
         return `
-            <span class="${groupClasses}"
-                  data-group-id="${groupId}">
+            <span class="${groupClasses}">
                 <span class="iris-citation ${typeClass}">
                     <span class="iris-citation__icon">${iconSvg}</span>
                     <span class="iris-citation__text">${label}</span>
@@ -228,31 +218,6 @@ export class IrisCitationTextComponent {
     }
 
     /**
-     * Updates the citation bubble icon and keyword to match a different citation.
-     * Used when navigating through citation groups.
-     */
-    private updateCitationBubble(citationGroup: HTMLElement, citation: IrisCitationParsed): void {
-        const bubble = citationGroup.querySelector('.iris-citation') as HTMLElement;
-        if (!bubble) return;
-
-        const iconElement = bubble.querySelector('.iris-citation__icon') as HTMLElement;
-        const textElement = bubble.querySelector('.iris-citation__text') as HTMLElement;
-        if (!iconElement || !textElement) return;
-
-        const newTypeClass = resolveCitationTypeClass(citation);
-        const newLabel = formatCitationLabel(citation);
-        const newIconSvg = this.getIconSvg(newTypeClass);
-
-        iconElement.innerHTML = newIconSvg;
-
-        textElement.innerHTML = newLabel;
-
-        const typeClasses = ['iris-citation--slide', 'iris-citation--video', 'iris-citation--faq', 'iris-citation--source'];
-        typeClasses.forEach((cls) => bubble.classList.remove(cls));
-        bubble.classList.add(newTypeClass);
-    }
-
-    /**
      * Handles navigation button clicks using event delegation.
      */
     @HostListener('click', ['$event'])
@@ -287,17 +252,6 @@ export class IrisCitationTextComponent {
         });
         if (counterDisplay) {
             counterDisplay.textContent = `${newIndex + 1} / ${summaryItems.length}`;
-        }
-
-        const activeSummaryItem = summaryItems[newIndex] as HTMLElement;
-        const citationIndex = parseInt(activeSummaryItem.getAttribute('data-citation-index') || '0', 10);
-
-        const groupId = citationGroup.getAttribute('data-group-id');
-        if (groupId !== null) {
-            const citation = this.citationGroupData.get(groupId)?.parsed[citationIndex];
-            if (citation) {
-                this.updateCitationBubble(citationGroup as HTMLElement, citation);
-            }
         }
     }
 

@@ -126,33 +126,6 @@ describe('IrisCitationTextComponent', () => {
         expect(el.querySelector('.iris-citation__nav')).toBeFalsy();
     });
 
-    it('updates bubble when navigating a citation group', () => {
-        const citationInfo: IrisCitationMetaDTO[] = [
-            { entityId: 1, lectureTitle: 'L1', lectureUnitTitle: '' },
-            { entityId: 2, lectureTitle: 'L2', lectureUnitTitle: '' },
-        ];
-        const el = render('[cite:L:1:5:::One:S1] [cite:F:2::::FAQ:S2]', citationInfo);
-
-        const group = el.querySelector('.iris-citation-group') as HTMLElement;
-        const bubble = group.querySelector('.iris-citation') as HTMLElement;
-        const bubbleText = bubble.querySelector('.iris-citation__text') as HTMLElement;
-        const navButtons = group.querySelectorAll('.iris-citation__nav-button') as NodeListOf<HTMLElement>;
-
-        expect(bubbleText.textContent?.trim()).toBe('One');
-        expect(bubble.classList.contains('iris-citation--slide')).toBe(true);
-
-        navButtons[1].click();
-
-        expect(bubbleText.textContent?.trim()).toBe('FAQ');
-        expect(bubble.classList.contains('iris-citation--faq')).toBe(true);
-        expect(bubble.classList.contains('iris-citation--slide')).toBe(false);
-
-        navButtons[0].click();
-
-        expect(bubbleText.textContent?.trim()).toBe('One');
-        expect(bubble.classList.contains('iris-citation--slide')).toBe(true);
-    });
-
     it('adjusts tooltip shift based on overflow', () => {
         const { el, citation, summary } = setupTooltip();
 
