@@ -48,8 +48,8 @@
 }
 
 @mixin dynamic-content-height($extra-height-to-subtract...) {
-    $base: calc(100vh - var(--sidebar-header-footer-combined-height));
-    $base-dvh: calc(100dvh - var(--sidebar-header-footer-combined-height));
+    $base: calc(100vh - var(--sidebar-header-footer-combined-height) - var(--system-notification-height, 0px));
+    $base-dvh: calc(100dvh - var(--sidebar-header-footer-combined-height) - var(--system-notification-height, 0px));
 
     @if length($extra-height-to-subtract) > 0 {
         @each $extra in $extra-height-to-subtract {
