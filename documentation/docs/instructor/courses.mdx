@@ -86,7 +86,7 @@ There are two ways to access user management for a course:
 
 1. **Quick Actions section**: On the course management page, the *Quick Actions* area displays the current count of Students, Tutors, Editors, and Instructors. Clicking on any of these counts navigates directly to the corresponding group management page. The **Add Users** dropdown menu next to the counts also provides direct links to each group.
 
-2. **Direct URL**: Navigate to `/course-management/<courseId>/groups/<groupName>` where `<groupName>` is one of `students`, `tutors`, `editors`, or `instructors`.
+2. **Direct URL**: Navigate to `/course-management/<courseId>/groups/<groupName>` where `<groupName>` is one of `students`, `tutors`, `editors`, or `instructors` (e.g., `/course-management/1/groups/students`).
 
 <Callout variant={CalloutVariant.info}>
     Only Instructors (and Admins) can manage course participants. Editors and Tutors do not have access to user management.
@@ -139,6 +139,10 @@ registrationNumber,login,email,firstName,lastName
 01234567,student1,student1@example.com,Jane,Doe
 02345678,student2,student2@example.com,John,Smith
 ```
+
+<Callout variant={CalloutVariant.warning}>
+    Registration numbers with leading zeros (e.g., `01234567`) may be silently converted to plain numbers by spreadsheet applications like Excel. To prevent this, ensure the registration number column is formatted as **text** before editing, or edit the CSV file in a plain text editor.
+</Callout>
 
 <Callout variant={CalloutVariant.warning}>
     Users that cannot be found in the system based on the provided identifiers will be reported as "not found" after the import. These users must first be registered in Artemis before they can be added to a course.
