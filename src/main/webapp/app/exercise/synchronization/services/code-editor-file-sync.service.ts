@@ -3,11 +3,13 @@ import { Observable, Subject, Subscription } from 'rxjs';
 import * as Y from 'yjs';
 import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate } from 'y-protocols/awareness';
 import { AccountService } from 'app/core/auth/account.service';
+import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import {
     ExerciseEditorSyncEvent,
     ExerciseEditorSyncEventType,
     ExerciseEditorSyncService,
     ExerciseEditorSyncTarget,
+    ExerciseNewCommitAlertEvent,
     FileAwarenessUpdateEvent,
     FileCreatedEvent,
     FileDeletedEvent,
@@ -87,6 +89,7 @@ type FileSyncEntry = {
 export class CodeEditorFileSyncService {
     private syncService = inject(ExerciseEditorSyncService);
     private accountService = inject(AccountService);
+    private alertService = inject(AlertService);
 
     private exerciseId?: number;
     private currentTarget?: ExerciseEditorSyncTarget;
@@ -696,6 +699,16 @@ export class CodeEditorFileSyncService {
         this.fileTreeChangeSubject.next(message);
     }
 
+    // ── Private: Commit alert handler ────────────────────────────────────
+
+    private handleNewCommitAlert(_message: ExerciseNewCommitAlertEvent): void {
+        this.alertService.addAlert({
+            type: AlertType.WARNING,
+            message: 'artemisApp.exercise.codeEditorSync.newCommitAlert',
+            timeout: 0,
+        });
+    }
+
     // ── Private: Message routing ─────────────────────────────────────────
 
     private handleRemoteMessage(message: ExerciseEditorSyncEvent): void {
@@ -733,6 +746,9 @@ export class CodeEditorFileSyncService {
                 break;
             case ExerciseEditorSyncEventType.FILE_RENAMED:
                 this.handleRemoteFileRenamed(message);
+                break;
+            case ExerciseEditorSyncEventType.NEW_COMMIT_ALERT:
+                this.handleNewCommitAlert(message);
                 break;
             default:
                 break;
