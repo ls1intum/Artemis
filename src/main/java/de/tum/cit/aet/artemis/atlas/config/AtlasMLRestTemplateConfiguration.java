@@ -12,7 +12,7 @@ import org.springframework.web.client.RestTemplate;
  * Configuration for AtlasML RestTemplate.
  * Provides RestTemplate beans for communicating with the AtlasML microservice.
  */
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasMLEnabled.class)
 @Configuration
 @Lazy
 public class AtlasMLRestTemplateConfiguration {
@@ -25,10 +25,10 @@ public class AtlasMLRestTemplateConfiguration {
 
     private static final int ATLASML_SHORT_READ_TIMEOUT = 10 * 1000; // 10 seconds
 
-    @Value("${atlas.atlasml.base-url:https://atlasml.aet.cit.tum.de}")
+    @Value("${artemis.atlas.atlasml.base-url}")
     private String atlasmlBaseUrl;
 
-    @Value("${atlas.atlasml.auth-token:}")
+    @Value("${artemis.atlas.atlasml.auth-token}")
     private String atlasmlAuthToken;
 
     /**
