@@ -81,19 +81,25 @@
                                 </div>
 
                                 <!-- Metadata Row -->
-                                @if (result.metadata) {
-                                    <div class="result-metadata d-flex align-items-center gap-3 mb-2 text-secondary small">
+                                @if (result.metadata && (result.metadata['dueDate'] || result.metadata['points'] || result.metadata['difficulty'])) {
+                                    <div class="result-metadata d-flex align-items-center gap-2 mb-2 text-secondary small">
                                         @if (result.metadata['dueDate']) {
                                             <span class="d-flex align-items-center gap-1">
                                                 <fa-icon [icon]="faCalendarAlt" size="sm" aria-hidden="true" />
                                                 <span>Due: {{ result.metadata['dueDate'] }}</span>
                                             </span>
                                         }
+                                        @if (result.metadata['dueDate'] && result.metadata['points']) {
+                                            <span>•</span>
+                                        }
                                         @if (result.metadata['points']) {
                                             <span class="d-flex align-items-center gap-1">
                                                 <fa-icon [icon]="faTrophy" size="sm" aria-hidden="true" />
-                                                <span>{{ result.metadata['points'] }} points</span>
+                                                <span>{{ result.metadata['points'] }} {{ result.metadata['points'] === 1 ? 'point' : 'points' }}</span>
                                             </span>
+                                        }
+                                        @if (result.metadata['difficulty'] && (result.metadata['dueDate'] || result.metadata['points'])) {
+                                            <span>•</span>
                                         }
                                         @if (result.metadata['difficulty']) {
                                             <span class="text-capitalize">{{ result.metadata['difficulty'] }}</span>
