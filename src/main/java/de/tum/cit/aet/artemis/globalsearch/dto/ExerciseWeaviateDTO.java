@@ -45,4 +45,30 @@ public record ExerciseWeaviateDTO(Long exerciseId, Long courseId, String courseT
                 exercise instanceof QuizExercise qe && qe.getQuizMode() != null ? qe.getQuizMode().name() : null, exercise instanceof QuizExercise qe ? qe.getDuration() : null,
                 exercise instanceof FileUploadExercise fue ? fue.getFilePattern() : null);
     }
+
+    /**
+     * Extracts all required data from an Exercise entity, using exam dates from the provided Exam object.
+     * This variant should be used when updating exam exercises where the exam dates may have changed
+     * but the exercise's exam reference might not be updated yet.
+     * MUST be called while the Hibernate session is still active.
+     *
+     * @param exercise the exercise entity (must have course relationship loaded)
+     * @param exam     the exam with current dates (may be null for non-exam exercises)
+     * @return the extracted data safe to use in async context
+     * @throws org.hibernate.LazyInitializationException if required relationships are not loaded
+     */
+    public static ExerciseWeaviateDTO fromExerciseWithExam(Exercise exercise, Exam exam) {
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+
+        return new ExerciseWeaviateDTO(exercise.getId(), course.getId(), course.getTitle(), exercise.getTitle(), exercise.getExerciseType().name(),
+                exercise.getMaxPoints() != null ? exercise.getMaxPoints() : 0.0, exercise.getShortName(), exercise.getProblemStatement(), exercise.getReleaseDate(),
+                exercise.getStartDate(), exercise.getDueDate(), exercise.getDifficulty() != null ? exercise.getDifficulty().name() : null, exercise.isExamExercise(),
+                exam != null ? exam.getId() : null, exam != null ? exam.isTestExam() : null, exam != null ? exam.getVisibleDate() : null, exam != null ? exam.getStartDate() : null,
+                exam != null ? exam.getEndDate() : null,
+                exercise instanceof ProgrammingExercise pe && pe.getProgrammingLanguage() != null ? pe.getProgrammingLanguage().name() : null,
+                exercise instanceof ProgrammingExercise pe && pe.getProjectType() != null ? pe.getProjectType().name() : null,
+                exercise instanceof ModelingExercise me && me.getDiagramType() != null ? me.getDiagramType().name() : null,
+                exercise instanceof QuizExercise qe && qe.getQuizMode() != null ? qe.getQuizMode().name() : null, exercise instanceof QuizExercise qe ? qe.getDuration() : null,
+                exercise instanceof FileUploadExercise fue ? fue.getFilePattern() : null);
+    }
 }

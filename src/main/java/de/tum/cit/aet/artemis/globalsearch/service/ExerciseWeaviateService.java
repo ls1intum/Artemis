@@ -268,17 +268,25 @@ public class ExerciseWeaviateService {
         SecurityUtils.setAuthorizationObject();
 
         if (exam == null || exam.getExerciseGroups() == null) {
+            log.warn("Cannot update exam exercises in Weaviate: exam or exercise groups are null");
             return;
         }
+
+        log.info("Updating {} exercise groups for exam {} in Weaviate", exam.getExerciseGroups().size(), exam.getId());
 
         // Step 1: Collect all exercises and convert to DTOs
         List<ExerciseWeaviateDTO> exerciseDTOs = new ArrayList<>();
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
+            log.debug("Processing exercise group {} with {} exercises", exerciseGroup.getId(), exerciseGroup.getExercises().size());
             for (Exercise exercise : exerciseGroup.getExercises()) {
                 try {
                     // Extract data immediately to fail fast if relationships aren't loaded
-                    ExerciseWeaviateDTO data = ExerciseWeaviateDTO.fromExercise(exercise);
+                    // Use the exam parameter's dates to ensure we have the latest exam dates
+                    log.debug("Converting exercise {} to DTO with exam dates: visible={}, start={}, end={}", exercise.getId(), exam.getVisibleDate(), exam.getStartDate(),
+                            exam.getEndDate());
+                    ExerciseWeaviateDTO data = ExerciseWeaviateDTO.fromExerciseWithExam(exercise, exam);
                     exerciseDTOs.add(data);
+                    log.debug("Successfully converted exercise {} to DTO", exercise.getId());
                 }
                 catch (Exception e) {
                     log.error("Failed to convert exercise {} in exam {}: {}", exercise.getId(), exam.getId(), e.getMessage(), e);
@@ -287,8 +295,11 @@ public class ExerciseWeaviateService {
         }
 
         if (exerciseDTOs.isEmpty()) {
+            log.warn("No exercise DTOs to update for exam {}", exam.getId());
             return;
         }
+
+        log.debug("Created {} DTOs for exam {}", exerciseDTOs.size(), exam.getId());
 
         // Step 2: Batch query to find which exercises already exist
         Map<Long, String> existingExerciseUuids = batchQueryExistingExercises(exerciseDTOs.stream().map(ExerciseWeaviateDTO::exerciseId).toList());
