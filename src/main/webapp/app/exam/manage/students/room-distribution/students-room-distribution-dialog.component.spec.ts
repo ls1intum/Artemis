@@ -13,7 +13,7 @@ import { SessionStorageService } from 'app/shared/service/session-storage.servic
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
-import { Router } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { fakeAsync, tick } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { RoomForDistributionDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
@@ -51,12 +51,13 @@ describe('StudentsRoomDistributionDialogComponent', () => {
                 MockProvider(HttpClient),
                 MockProvider(SessionStorageService),
                 MockProvider(LocalStorageService),
-                MockProvider(Router),
+                provideRouter([]),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: StudentsRoomDistributionService, useClass: MockStudentsRoomDistributionService },
             ],
         }).compileComponents();
+
         fixture = TestBed.createComponent(StudentsRoomDistributionDialogComponent);
         component = fixture.componentInstance;
         fixture.componentRef.setInput('courseId', course.id);
@@ -267,5 +268,15 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         expect(component.selectedRooms()).toHaveLength(2);
         expect(component.selectedRooms()).toContain(rooms[0]);
         expect(component.selectedRooms()).toContain(rooms[1]);
+    });
+
+    it('exam room management link should open in a new tab', () => {
+        fixture.detectChanges();
+
+        const link: HTMLAnchorElement = fixture.debugElement.nativeElement.querySelector('#examRoomManagementLink');
+
+        expect(link).toBeTruthy();
+        expect(link.href).toContain('/exams/rooms');
+        expect(link.target).toBe('_blank');
     });
 });
