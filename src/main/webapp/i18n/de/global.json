@@ -34,6 +34,13 @@
         "importTable": {
             "searchPlaceholder": "Suchen"
         },
+        "search": {
+            "title": "Suchen",
+            "placeholder": "Suchen oder Frage stellen...",
+            "noResultsFound": "Keine Ergebnisse gefunden",
+            "toNavigate": "zum Navigieren",
+            "toClose": "zum Schließen"
+        },
         "menu": {
             "home": "Startseite",
             "overview": "Übersicht",
