@@ -657,6 +657,16 @@ describe('PostingReactionsBarComponent', () => {
         expect(consoleErrorSpy).not.toHaveBeenCalled();
     });
 
+    it('should call markMessageAsUnread on metisService', () => {
+        const testPost = { id: 2, conversation: { id: 1 } } as Posting;
+        fixture.componentRef.setInput('posting', testPost);
+        const markMessageAsUnreadSpy = jest.spyOn(metisService, 'markMessageAsUnread');
+
+        component.markMessageAsUnread();
+
+        expect(markMessageAsUnreadSpy).toHaveBeenCalledWith(testPost);
+    });
+
     it('should handle empty content without logging errors', () => {
         const testPost = { id: 42 } as Posting;
         const testConversation = { id: 1337 } as Conversation;

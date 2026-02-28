@@ -108,6 +108,15 @@ describe('ConversationService', () => {
         req.flush({});
     });
 
+    it('markMessageAsUnread', () => {
+        service
+            .markMessageAsUnread(1, 1, 1)
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).toEqual({}));
+        const req = httpMock.expectOne({ method: 'PATCH' });
+        req.flush({});
+    });
+
     it('acceptCodeOfConduct', () => {
         service
             .acceptCodeOfConduct(1)

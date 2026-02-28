@@ -1,5 +1,8 @@
 import { Validators } from '@angular/forms';
 import { Params } from '@angular/router';
+import dayjs from 'dayjs/esm';
+import { Post } from './shared/entities/post.model';
+import { User } from 'app/core/user/user.model';
 
 export enum PostingEditType {
     CREATE,
@@ -140,3 +143,7 @@ export const PostTitleValidationPattern = Validators.pattern(/^(.)*\S+(.)*$/);
  * whitespace accepted only together with a character including newline character
  * */
 export const PostContentValidationPattern = Validators.pattern(/^(\n|\r|.)*\S+(\n|\r|.)*$/);
+
+export function getUnreadPostsByLastReadDate(user: User, posts: Post[], lastReadDate: dayjs.Dayjs): Post[] {
+    return posts.filter((post) => post.creationDate?.isAfter(lastReadDate) && post.author?.id !== user.id);
+}

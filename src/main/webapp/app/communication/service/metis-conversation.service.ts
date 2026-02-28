@@ -46,6 +46,7 @@ export class MetisConversationService implements OnDestroy {
     _isCodeOfConductPresented$: ReplaySubject<boolean> = new ReplaySubject<boolean>(1);
     private hasUnreadMessages = false;
     _hasUnreadMessages$: Subject<boolean> = new ReplaySubject<boolean>(1);
+    private isMarkedAsUnread = false;
     // Stores the course for which the service is set up -> should not change during the lifetime of the service
     private _course: Course | undefined = undefined;
     // Stores if the service is currently loading data
@@ -118,13 +119,12 @@ export class MetisConversationService implements OnDestroy {
     }
 
     public setActiveConversation(conversationIdentifier: ConversationDTO | number | undefined) {
-        this.updateLastReadDateAndNumberOfUnreadMessages();
         let cachedConversation: ConversationDTO | undefined = undefined;
+        let conversationId: number | undefined = undefined;
         if (conversationIdentifier) {
             const parameterJustId = typeof conversationIdentifier === 'number';
-            cachedConversation = this.conversationsOfUser.find(
-                (conversationInCache) => conversationInCache.id === (parameterJustId ? conversationIdentifier : conversationIdentifier.id),
-            );
+            conversationId = parameterJustId ? conversationIdentifier : conversationIdentifier.id;
+            cachedConversation = this.conversationsOfUser.find((conversationInCache) => conversationInCache.id === conversationId);
         }
         if (!cachedConversation && conversationIdentifier) {
             this.alertService.addAlert({
@@ -132,10 +132,14 @@ export class MetisConversationService implements OnDestroy {
                 message: 'artemisApp.metis.channel.notAMember',
             });
         }
+        if (this.activeConversation?.id !== conversationId) {
+            this.updateConversationAsRead();
+        }
         this.activeConversation = cachedConversation;
         this._activeConversation$.next(this.activeConversation);
         this.isCodeOfConductPresented = false;
         this._isCodeOfConductPresented$.next(this.isCodeOfConductPresented);
+        this.isMarkedAsUnread = false;
     }
 
     public disableConversationService() {
@@ -163,9 +167,26 @@ export class MetisConversationService implements OnDestroy {
         this.hasUnreadMessagesCheck();
     }
 
-    private updateLastReadDateAndNumberOfUnreadMessages() {
-        // update last read date and number of unread messages of the conversation that is currently active before switching to another conversation
-        if (this.activeConversation) {
+    public updateConversationUnreadState(conversationId: number | undefined, lastReadDate: dayjs.Dayjs | undefined, unreadMessagesCount: number | undefined) {
+        if (this.activeConversation && this.activeConversation?.id === conversationId) {
+            this.activeConversation.lastReadDate = lastReadDate;
+            this.activeConversation.unreadMessagesCount = unreadMessagesCount;
+            this.activeConversation.hasUnreadMessage = (unreadMessagesCount ?? 0) > 0;
+            this.isMarkedAsUnread = true;
+        }
+        const indexOfConversationToUpdate = this.conversationsOfUser.findIndex((conversation) => conversation.id === conversationId);
+        if (indexOfConversationToUpdate !== -1) {
+            this.conversationsOfUser[indexOfConversationToUpdate].lastReadDate = lastReadDate;
+            this.conversationsOfUser[indexOfConversationToUpdate].unreadMessagesCount = unreadMessagesCount;
+            this.conversationsOfUser[indexOfConversationToUpdate].hasUnreadMessage = (unreadMessagesCount ?? 0) > 0;
+            this._conversationsOfUser$.next(this.conversationsOfUser);
+            this.hasUnreadMessagesCheck();
+        }
+    }
+
+    private updateConversationAsRead() {
+        // update last read date and number of unread messages of the conversation that is currently active before switching to another conversation if not marked as unread
+        if (this.activeConversation && !this.isMarkedAsUnread) {
             this.activeConversation.lastReadDate = dayjs();
             this.activeConversation.unreadMessagesCount = 0;
             this.activeConversation.hasUnreadMessage = false;
