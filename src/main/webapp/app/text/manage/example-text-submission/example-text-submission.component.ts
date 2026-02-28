@@ -400,7 +400,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     }
 
     /**
-     * After the tutor declared that he read and understood the example submission a corresponding submission will be added to the
+     * After the tutor declared that they read and understood the example submission a corresponding submission will be added to the
      * tutor participation of the exercise. Then a success alert is invoked and the user gets redirected back.
      */
     readAndUnderstood(): void {

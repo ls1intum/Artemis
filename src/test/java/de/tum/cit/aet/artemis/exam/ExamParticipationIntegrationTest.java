@@ -408,7 +408,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         // explicitly set the user again to prevent issues in the following server call due to the use of SecurityUtils.setAuthorizationObject();
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
 
-        // Remove student1 from the exam and his participations
+        // Remove student1 from the exam and their participations
         var params = new LinkedMultiValueMap<String, String>();
         params.add("withParticipationsAndSubmission", "true");
         request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students/" + TEST_PREFIX + "student1", HttpStatus.OK, params);

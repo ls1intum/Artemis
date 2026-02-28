@@ -233,7 +233,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testShouldFireJolEvent() {
-        var irisSession = irisCourseChatSessionService.createSession(course, userUtilService.getUserByLogin(TEST_PREFIX + "student1"), false);
+        var irisSession = irisCourseChatSessionService.createSession(course, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var jolValue = 3;
         irisRequestMockProvider.mockJolEventRunResponse((dto) -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
@@ -387,7 +387,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         String testCourseCustomInstructions = "Test course custom instructions for the AI model";
         configureCourseSettings(course, testCourseCustomInstructions, IrisPipelineVariant.DEFAULT);
 
-        var irisSession = irisCourseChatSessionService.createSession(course, userUtilService.getUserByLogin(TEST_PREFIX + "student1"), false);
+        var irisSession = irisCourseChatSessionService.createSession(course, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
 
         irisRequestMockProvider.mockJolEventRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();

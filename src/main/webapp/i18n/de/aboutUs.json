@@ -57,7 +57,7 @@
                 "text": "<a href={{ tutorialGroupsUrl }}>Übungsgruppen:</a> Verwaltung der Übungsgruppen eines Kurses. Planung der Sitzungen, Zuweisung der verantwortlichen Tutor:innen, Registrierung der Studierenden und Verfolgung der Anwesenheit."
             },
             "iris": {
-                "text": "<a href={{ irisUrl }}>Iris:</a> Artemis integriert Iris, einen Chatbot, der Studierende und Lehrende bei häufig gestellten Fragen und Aufgaben unterstützt."
+                "text": "<strong>Iris:</strong> Artemis integriert Iris, einen Chatbot, der Studierende und Lehrende bei häufig gestellten Fragen und Aufgaben unterstützt."
             },
             "scalable": {
                 "text": "<a href={{ scalingUrl }}>Skalierbar</a> auf mehrere Kurse mit Tausenden von Studierenden. Konfigurieren von zusätzlichen Build-Agenten in der kontinuierlichen Integrationsumgebung."

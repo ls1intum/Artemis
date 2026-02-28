@@ -1,0 +1,241 @@
+.monaco-review-comment-widget {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.1rem 0.75rem 0.5rem;
+    background-color: var(--body-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 0.25rem;
+}
+
+.monaco-review-comment-widget.monaco-review-comment-thread--collapsed {
+    padding-bottom: 0.1rem;
+}
+
+.monaco-review-comment-title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.monaco-review-comment-meta {
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--secondary-text-color);
+    margin-top: 0.1rem;
+    opacity: 0.75;
+    line-height: 1;
+}
+
+.monaco-review-comment-meta-separator {
+    margin: 0 0.35rem;
+}
+
+.monaco-review-comment-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.monaco-review-comment-menu {
+    align-self: center;
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.monaco-review-comment-menu .monaco-review-comment-menu-trigger {
+    width: 1.25rem;
+    height: 1.25rem;
+    padding: 0;
+}
+
+.monaco-review-comment-menu .monaco-review-comment-menu-trigger:focus,
+.monaco-review-comment-menu .monaco-review-comment-menu-trigger:active {
+    outline: none;
+    box-shadow: none;
+}
+
+.monaco-review-comment-menu .monaco-review-comment-menu-trigger:focus-visible {
+    outline: 2px solid var(--link-color);
+    outline-offset: 2px;
+    box-shadow: none;
+}
+
+.monaco-review-comment-menu-overlay {
+    min-width: 8rem;
+}
+
+.monaco-review-comment-menu-overlay .p-menu-list {
+    padding: 0.15rem;
+    margin: 0;
+}
+
+.monaco-review-comment-menu-overlay .p-menu-item {
+    margin: 0;
+}
+
+.monaco-review-comment-menu-overlay .monaco-review-comment-menu-item {
+    display: flex;
+    width: 100%;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.monaco-review-comment-menu-overlay .monaco-review-comment-menu-item-delete,
+.monaco-review-comment-menu-overlay .monaco-review-comment-menu-item-delete .p-button-label,
+.monaco-review-comment-menu-overlay .monaco-review-comment-menu-item-delete .p-button-icon,
+.monaco-review-comment-menu-overlay .monaco-review-comment-menu-item-delete:enabled:hover,
+.monaco-review-comment-menu-overlay .monaco-review-comment-menu-item-delete:enabled:hover .p-button-label,
+.monaco-review-comment-menu-overlay .monaco-review-comment-menu-item-delete:enabled:hover .p-button-icon,
+.monaco-review-comment-menu-overlay .monaco-review-comment-menu-item-delete:enabled:focus,
+.monaco-review-comment-menu-overlay .monaco-review-comment-menu-item-delete:enabled:focus .p-button-label,
+.monaco-review-comment-menu-overlay .monaco-review-comment-menu-item-delete:enabled:focus .p-button-icon,
+.monaco-review-comment-menu-overlay .monaco-review-comment-menu-item-delete:enabled:active,
+.monaco-review-comment-menu-overlay .monaco-review-comment-menu-item-delete:enabled:active .p-button-label,
+.monaco-review-comment-menu-overlay .monaco-review-comment-menu-item-delete:enabled:active .p-button-icon {
+    color: var(--danger) !important;
+}
+
+.monaco-review-comment-textarea {
+    width: 100%;
+    min-height: 5rem;
+    resize: vertical;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.25rem;
+    font-family: inherit;
+}
+
+.monaco-review-comment-textarea.monaco-review-comment-textarea--compact {
+    min-height: 2rem;
+    resize: vertical;
+}
+
+.monaco-review-comment-text {
+    width: 100%;
+    white-space: pre-wrap;
+    word-break: normal;
+    overflow-wrap: anywhere;
+    font-family: inherit;
+    padding-left: 0.5rem;
+}
+
+.monaco-review-comment-reply {
+    margin-top: 0.75rem;
+}
+
+.monaco-review-comment-item + .monaco-review-comment-item {
+    margin-top: 0.75rem;
+}
+
+.monaco-review-comment-thread-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 600;
+    margin: 0;
+}
+
+.monaco-review-comment-thread-divider {
+    border-bottom: 1px solid var(--border-color);
+    margin-top: 0.15rem;
+    margin-bottom: 0.3rem;
+}
+
+.monaco-review-comment-thread-title {
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-width: 0;
+}
+
+.monaco-review-comment-thread-title-text {
+    flex: 0 0 auto;
+}
+
+.monaco-review-comment-thread-tag {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.1rem 0.35rem;
+    line-height: 1.2;
+    border-radius: 999px;
+    background-color: var(--border-color);
+    color: var(--secondary-text-color);
+}
+
+.monaco-review-comment-thread-tag--resolved {
+    background-color: var(--artemis-alert-success-background);
+    color: var(--artemis-alert-success-color);
+}
+
+.monaco-review-comment-thread-tag--outdated {
+    background-color: var(--artemis-alert-neutral-background);
+    color: var(--artemis-alert-neutral-color);
+}
+
+.monaco-review-comment-thread-warning {
+    display: inline-flex;
+    align-items: center;
+    color: var(--warning);
+}
+
+.monaco-review-comment-thread-toggle {
+    text-decoration: none;
+    line-height: 1;
+    border: 0;
+    box-shadow: none;
+    font-size: 1.2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.monaco-review-comment-thread-toggle--collapsed {
+    display: inline-block;
+    transform: rotate(90deg);
+}
+
+.monaco-review-comment-thread-toggle:focus,
+.monaco-review-comment-thread-toggle:active {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.monaco-review-comment-thread-toggle:focus-visible {
+    outline: 2px solid var(--link-color) !important;
+    outline-offset: 2px;
+    box-shadow: none !important;
+}
+
+.monaco-review-comment-thread-toggle-icon {
+    display: inline-block;
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 7px solid currentcolor;
+}
+
+.monaco-review-comment-item--with-divider {
+    border-top: 1px solid var(--border-color);
+    padding-top: 0.75rem;
+}
+
+.monaco-review-comment-separator {
+    border-top: 1px solid var(--border-color);
+    margin-bottom: 0.75rem;
+}
+
+.monaco-review-comment-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}

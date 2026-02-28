@@ -309,7 +309,7 @@ public class ComplaintResponseService {
      * 2. Individual Exercises
      * => Complaints can only be handled by a tutor who is not the original assessor
      * => Complaints of exam test runs can be assessed by instructors. They are identified by the same user being the assessor and student
-     * => More feedback requests are handled by the assessor himself
+     * => More feedback requests are handled by the assessor themself
      *
      * @param complaint Complaint for which to check
      * @param user      user who is trying to create a response to the complaint

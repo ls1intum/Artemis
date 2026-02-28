@@ -89,6 +89,9 @@
 
                     <div class="card-header">
                         <h2 jhiTranslate="artemisApp.llmSelectionPopup.cloud"></h2>
+                        @if (currentSelection === LLMSelectionDecision.CLOUD_AI) {
+                            <span class="badge-current" jhiTranslate="artemisApp.llmSelectionPopup.currentSelection"></span>
+                        }
                         <span class="badge-recommended" jhiTranslate="artemisApp.llmSelectionPopup.recommended"></span>
                     </div>
 
@@ -190,6 +193,9 @@
 
                         <div class="card-header">
                             <h2 jhiTranslate="artemisApp.llmSelectionPopup.onPremise"></h2>
+                            @if (currentSelection === LLMSelectionDecision.LOCAL_AI) {
+                                <span class="badge-current" jhiTranslate="artemisApp.llmSelectionPopup.currentSelection"></span>
+                            }
                             <span class="badge-experimental" jhiTranslate="artemisApp.llmSelectionPopup.experimental"></span>
                         </div>
 
@@ -247,6 +253,9 @@
 
                     <div class="card-header">
                         <h2 jhiTranslate="artemisApp.llmSelectionPopup.noAI"></h2>
+                        @if (currentSelection === LLMSelectionDecision.NO_AI) {
+                            <span class="badge-current" jhiTranslate="artemisApp.llmSelectionPopup.currentSelection"></span>
+                        }
                     </div>
 
                     <p class="description" jhiTranslate="artemisApp.llmSelectionPopup.descriptionNo"></p>

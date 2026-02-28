@@ -2,12 +2,12 @@
     <!-- chat box -->
     <div class="chat-widget">
         <jhi-iris-base-chatbot
+            [layout]="'widget'"
             [fullSize]="fullSize()"
             [showCloseButton]="true"
             [isChatHistoryAvailable]="false"
             (fullSizeToggle)="toggleFullSize()"
             (closeClicked)="closeChat()"
-            (reopenChat)="reopenDialog()"
         />
         <div class="chat-widget-top-resize-area"></div>
     </div>

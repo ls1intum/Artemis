@@ -864,7 +864,12 @@ public class SharedQueueProcessingService {
                 }
                 else {
                     status = BuildStatus.FAILED;
-                    log.error("Error while processing build job: {}", buildJob, ex);
+                    if (DockerUtil.isDockerNotAvailable(ex)) {
+                        log.warn("Docker is not available. Build job {} failed: {}", buildJob.id(), ex.getMessage());
+                    }
+                    else {
+                        log.error("Error while processing build job: {}", buildJob, ex);
+                    }
                     if (!isCausedByImagePullFailedException(ex)) {
                         consecutiveBuildJobFailures.incrementAndGet();
                     }
