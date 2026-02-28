@@ -94,11 +94,10 @@ if [ -n "$PLAYWRIGHT_REPORT_SERVER_URL" ] && [ -n "$PLAYWRIGHT_REPORT_TOKEN" ]; 
             echo "Uploading ${test_type} report..."
             if ! curl --silent --show-error --fail-with-body \
                 --connect-timeout 10 --max-time 120 \
-                -X POST "${PLAYWRIGHT_REPORT_SERVER_URL}/api/result/upload" \
+                --request PUT "${PLAYWRIGHT_REPORT_SERVER_URL}/api/result/upload" \
                 -H "Authorization: ${PLAYWRIGHT_REPORT_TOKEN}" \
                 -F "file=@${blob_dir}report.zip" \
-                -F "project=Artemis E2E (${test_type})" \
-                -F "triggerReportGeneration=true"; then
+                -F "project=Artemis E2E (${test_type})"; then
                 echo "WARNING: Failed to upload ${test_type} report to server"
             fi
         fi
