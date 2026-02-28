@@ -12,6 +12,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceSetting;
+import de.tum.cit.aet.artemis.atlas.dto.ScienceSettingDTO;
 import de.tum.cit.aet.artemis.core.domain.User;
 
 class ScienceSettingsIntegrationTest extends AbstractAtlasIntegrationTest {
@@ -42,26 +43,27 @@ class ScienceSettingsIntegrationTest extends AbstractAtlasIntegrationTest {
         scienceSettingRepository.save(settingA);
         scienceSettingRepository.save(settingB);
 
-        List<ScienceSetting> scienceSettings = request.getList("/api/atlas/science-settings", HttpStatus.OK, ScienceSetting.class);
+        List<ScienceSettingDTO> scienceSettings = request.getList("/api/atlas/science-settings", HttpStatus.OK, ScienceSettingDTO.class);
 
-        assertThat(scienceSettings).as("scienceSetting A with recipient equal to current user is returned").contains(settingA);
-        assertThat(scienceSettings).as("scienceSetting B with recipient equal to current user is returned").contains(settingB);
+        assertThat(scienceSettings).as("scienceSetting A with recipient equal to current user is returned").contains(ScienceSettingDTO.of(settingA));
+        assertThat(scienceSettings).as("scienceSetting B with recipient equal to current user is returned").contains(ScienceSettingDTO.of(settingB));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSaveScienceSettingsForCurrentUser_OK() throws Exception {
-        ScienceSetting[] newlyChangedSettingsToSave = { settingA, settingB };
+        ScienceSettingDTO[] newlyChangedSettingsToSave = { ScienceSettingDTO.of(settingA), ScienceSettingDTO.of(settingB) };
 
-        ScienceSetting[] scienceSettingsResponse = request.putWithResponseBody("/api/atlas/science-settings", newlyChangedSettingsToSave, ScienceSetting[].class, HttpStatus.OK);
+        ScienceSettingDTO[] scienceSettingsResponse = request.putWithResponseBody("/api/atlas/science-settings", newlyChangedSettingsToSave, ScienceSettingDTO[].class,
+                HttpStatus.OK);
 
         boolean foundA = false;
         boolean foundB = false;
-        for (ScienceSetting setting : scienceSettingsResponse) {
-            if (setting.getSettingId().equals(settingA.getSettingId())) {
+        for (ScienceSettingDTO setting : scienceSettingsResponse) {
+            if (setting.settingId().equals(settingA.getSettingId())) {
                 foundA = true;
             }
-            if (setting.getSettingId().equals(settingA.getSettingId())) {
+            if (setting.settingId().equals(settingB.getSettingId())) {
                 foundB = true;
             }
         }
@@ -72,6 +74,6 @@ class ScienceSettingsIntegrationTest extends AbstractAtlasIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSaveScienceSettingsForCurrentUser_BAD_REQUEST() throws Exception {
-        request.putWithResponseBody("/api/atlas/science-settings", null, ScienceSetting[].class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/atlas/science-settings", null, ScienceSettingDTO[].class, HttpStatus.BAD_REQUEST);
     }
 }

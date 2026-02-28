@@ -40,7 +40,7 @@ describe('CourseCompetencyApiService', () => {
             method: 'POST',
             url: `${getBasePath(courseId)}/import-all`,
         });
-        response.flush({});
+        response.flush([]);
         await methodCall;
     });
 
