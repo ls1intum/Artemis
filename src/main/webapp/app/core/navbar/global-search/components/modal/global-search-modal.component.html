@@ -1,4 +1,5 @@
 <p-dialog
+    [attr.aria-label]="'global.search.placeholder' | artemisTranslate"
     [visible]="overlay.isOpen()"
     (visibleChange)="$event ? overlay.open() : overlay.close()"
     (onHide)="overlay.close()"
@@ -22,19 +23,36 @@
             [placeholder]="'global.search.placeholder' | artemisTranslate"
             class="search-input border-0 bg-transparent text-body"
             [attr.aria-label]="'global.search.placeholder' | artemisTranslate"
+            (input)="onSearchInput($event)"
         />
     </div>
     <!-- Results Area -->
-    <div class="results-container text-center text-secondary">{{ 'global.search.noResultsFound' | artemisTranslate }}</div>
+    <div class="results-container">
+        @switch (currentView()) {
+            @case (SearchView.Navigation) {
+                <jhi-global-search-navigation-view [searchQuery]="searchQuery()" [selectedIndex]="selectedIndex()" (viewSelected)="navigateTo($event)" />
+            }
+            @case (SearchView.Lecture) {
+                <jhi-global-search-lecture-results (back)="navigateTo(SearchView.Navigation)" [searchQuery]="searchQuery()" [selectedIndex]="selectedIndex()" />
+            }
+            @case (SearchView.Iris) {}
+        }
+    </div>
     <!-- Keyboard hints footer -->
     <div class="search-footer flex-shrink-0 text-start">
         <div class="keyboard-hints d-flex align-items-center justify-content-between text-secondary w-100 gap-3">
             <span class="d-flex align-items-center gap-1">
                 <span class="d-flex align-items-center gap-1">
-                    <kbd class="key-hint-small d-inline-flex align-items-center font-monospace text-secondary border" aria-label="Up arrow">
+                    <kbd
+                        class="key-hint-small d-inline-flex align-items-center font-monospace text-secondary border"
+                        [attr.aria-label]="'global.search.arrowUpAriaLabel' | artemisTranslate"
+                    >
                         <fa-icon [icon]="faArrowUp" aria-hidden="true" />
                     </kbd>
-                    <kbd class="key-hint-small d-inline-flex align-items-center font-monospace text-secondary border" aria-label="Down arrow">
+                    <kbd
+                        class="key-hint-small d-inline-flex align-items-center font-monospace text-secondary border"
+                        [attr.aria-label]="'global.search.arrowDownAriaLabel' | artemisTranslate"
+                    >
                         <fa-icon [icon]="faArrowDown" aria-hidden="true" />
                     </kbd>
                 </span>

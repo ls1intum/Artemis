@@ -1,6 +1,6 @@
 import { provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ActivatedRoute, DefaultUrlSerializer, Router, UrlSerializer } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { expectedProfileInfo } from 'test/helpers/sample/profile-info-sample-data';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
@@ -12,7 +12,7 @@ import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.dire
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockRouterLinkActiveOptionsDirective, MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
@@ -92,7 +92,6 @@ describe('NavbarComponent', () => {
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                { provide: UrlSerializer, useClass: DefaultUrlSerializer },
                 { provide: AccountService, useClass: MockAccountService },
                 LocalStorageService,
                 SessionStorageService,

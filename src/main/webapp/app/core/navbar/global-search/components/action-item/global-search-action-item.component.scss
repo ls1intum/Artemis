@@ -1,0 +1,37 @@
+.action-item {
+    gap: 0.75rem;
+    padding: 0.625rem 0.75rem;
+    border-radius: 0.5rem;
+    background: linear-gradient(to right, color-mix(in srgb, var(--accent) 7%, var(--module-bg)), color-mix(in srgb, var(--accent-secondary, var(--accent)) 7%, var(--module-bg)));
+
+    &.is-selected,
+    &:hover {
+        background: linear-gradient(
+            to right,
+            color-mix(in srgb, var(--accent) 12%, var(--module-bg)),
+            color-mix(in srgb, var(--accent-secondary, var(--accent)) 12%, var(--module-bg))
+        );
+    }
+}
+
+.action-icon-box {
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 0.4rem;
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+    color: var(--accent);
+    font-size: 0.875rem;
+}
+
+.action-text {
+    gap: 0.1rem;
+    min-width: 0;
+}
+
+.action-title {
+    font-size: 0.875rem;
+}
+
+.action-description {
+    font-size: 0.75rem;
+}

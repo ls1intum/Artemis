@@ -1,0 +1,52 @@
+<button class="back-button btn d-inline-flex align-items-center gap-1 text-secondary text-decoration-none p-1" type="button" (click)="back.emit()">
+    <fa-icon [icon]="faArrowLeft" aria-hidden="true" />
+    {{ 'entity.action.back' | artemisTranslate }}
+</button>
+<div class="lecture-results-list" role="listbox" aria-live="polite" [attr.aria-label]="'global.search.lectureResultsAriaLabel' | artemisTranslate">
+    @if (isLoading()) {
+        @for (_ of skeletonItems; track $index) {
+            <div class="lecture-skeleton-card border p-3" aria-hidden="true">
+                <div class="d-flex align-items-start gap-2 mb-3">
+                    <p-skeleton width="2rem" height="2rem" borderRadius="0.25rem" class="flex-shrink-0" />
+                    <div class="d-flex flex-column flex-grow-1 lecture-card-meta" style="gap: 0.625rem">
+                        <p-skeleton width="35%" height="0.875rem" borderRadius="0.25rem" />
+                        <p-skeleton width="55%" height="0.75rem" borderRadius="0.25rem" />
+                    </div>
+                </div>
+                <div class="skeleton-snippet d-flex flex-column gap-2">
+                    <p-skeleton width="85%" height="0.75rem" borderRadius="0.25rem" />
+                    <p-skeleton width="60%" height="0.75rem" borderRadius="0.25rem" />
+                </div>
+            </div>
+        }
+    } @else if (lectureResults().length === 0) {
+        <span class="d-block text-secondary text-center py-5">{{ 'global.search.noResultsFound' | artemisTranslate }}</span>
+    } @else {
+        @for (result of lectureResults(); track $index) {
+            <a
+                #cardRef
+                class="lecture-result-card border p-3 text-decoration-none d-block"
+                role="option"
+                [attr.aria-selected]="selectedIndex() === $index"
+                [class.is-selected]="selectedIndex() === $index"
+                [routerLink]="result.lectureUnit.link"
+            >
+                <div class="d-flex align-items-start gap-2 mb-2">
+                    <div class="lecture-card-icon-box d-flex align-items-center justify-content-center flex-shrink-0">
+                        <fa-icon [icon]="faFileLines" aria-hidden="true" />
+                    </div>
+                    <div class="d-flex flex-column flex-grow-1 lecture-card-meta">
+                        <span class="d-block fw-medium text-body lecture-card-title">{{ result.lectureUnit.name }}</span>
+                        <div class="lecture-card-unit d-flex align-items-center gap-2">
+                            <span>{{ result.course.name }} › {{ result.lecture.name }}</span>
+                            <span class="lecture-card-page">{{ 'global.search.pageAbbreviation' | artemisTranslate }} {{ result.lectureUnit.pageNumber }}</span>
+                        </div>
+                    </div>
+                </div>
+                @if (result.snippet) {
+                    <div class="lecture-card-content">{{ result.snippet }}</div>
+                }
+            </a>
+        }
+    }
+</div>
