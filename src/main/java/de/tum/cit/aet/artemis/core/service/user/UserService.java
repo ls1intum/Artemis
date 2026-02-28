@@ -790,17 +790,18 @@ public class UserService {
             var optionalStudent = findUser(userDto.registrationNumber(), userDto.login(), userDto.email());
             if (optionalStudent.isEmpty()) {
                 if (!StringUtils.hasText(userDto.login())) {
-                    failedUsers.add(userDto);
+                    failedUsers.add(new StudentDTO(userDto.login(), userDto.firstName(), userDto.lastName(), userDto.registrationNumber(), userDto.email()));
                     continue;
                 }
                 try {
-                    userCreationService.createUser(userDto.login(), userDto.password(), null, userDto.firstName() != null ? userDto.firstName() : "",
+                    String normalizedPassword = StringUtils.hasText(userDto.password()) ? userDto.password() : null;
+                    userCreationService.createUser(userDto.login(), normalizedPassword, null, userDto.firstName() != null ? userDto.firstName() : "",
                             userDto.lastName() != null ? userDto.lastName() : "", userDto.email() != null ? userDto.email() : userDto.login() + "@invalid",
                             userDto.registrationNumber(), "", DEFAULT_LANGUAGE, true);
                 }
                 catch (Exception ex) {
                     log.warn("Failed to create internal user with login '{}': {}", userDto.login(), ex.getMessage());
-                    failedUsers.add(userDto);
+                    failedUsers.add(new StudentDTO(userDto.login(), userDto.firstName(), userDto.lastName(), userDto.registrationNumber(), userDto.email()));
                 }
             }
         }
