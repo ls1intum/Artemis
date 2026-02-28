@@ -7,12 +7,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
@@ -43,92 +40,8 @@ public class ExerciseWeaviateService {
 
     private final WeaviateService weaviateService;
 
-    private final Executor executor;
-
-    public ExerciseWeaviateService(WeaviateService weaviateService, @Qualifier("taskExecutor") Executor executor) {
+    public ExerciseWeaviateService(WeaviateService weaviateService) {
         this.weaviateService = weaviateService;
-        this.executor = executor;
-    }
-
-    /**
-     * Queries Weaviate for existing exercises in parallel batch operations.
-     * Returns a map of exercise ID to Weaviate UUID for exercises that already exist.
-     * Uses parallel queries instead of a single OR filter to work around API limitations.
-     *
-     * @param exerciseIds the list of exercise IDs to query
-     * @return map of exercise ID to Weaviate UUID
-     */
-    private Map<Long, String> batchQueryExistingExercises(List<Long> exerciseIds) {
-        if (exerciseIds.isEmpty()) {
-            return Map.of();
-        }
-
-        try {
-            var collection = weaviateService.getCollection(ExerciseSchema.COLLECTION_NAME);
-
-            // Query all exercises in parallel to build the existence map
-            List<CompletableFuture<Map.Entry<Long, String>>> futures = exerciseIds.stream().map(exerciseId -> CompletableFuture.supplyAsync(() -> {
-                try {
-                    var result = collection.query.fetchObjects(query -> query.filters(Filter.property(ExerciseSchema.Properties.EXERCISE_ID).eq(exerciseId)).limit(1));
-
-                    if (!result.objects().isEmpty()) {
-                        return Map.entry(exerciseId, result.objects().getFirst().uuid());
-                    }
-                }
-                catch (Exception e) {
-                    log.warn("Failed to query exercise {}: {}", exerciseId, e.getMessage());
-                }
-                return null;
-            }, executor)).toList();
-
-            // Collect results
-            Map<Long, String> exerciseUuidMap = new HashMap<>();
-            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-
-            for (var future : futures) {
-                var entry = future.join();
-                if (entry != null) {
-                    exerciseUuidMap.put(entry.getKey(), entry.getValue());
-                }
-            }
-
-            log.debug("Found {} existing exercises out of {} queried", exerciseUuidMap.size(), exerciseIds.size());
-            return exerciseUuidMap;
-        }
-        catch (Exception e) {
-            log.error("Failed to batch query existing exercises: {}", e.getMessage(), e);
-            return Map.of(); // Fall back to treating all as new inserts
-        }
-    }
-
-    /**
-     * Upserts an exercise when we already know whether it exists in Weaviate.
-     * Skips the existence query since we already have that information.
-     *
-     * @param exerciseWeaviateDTO the exercise data to upsert
-     * @param existingUuid        the UUID if the exercise already exists, or null if it doesn't
-     * @throws WeaviateException if the operation fails
-     */
-    private void upsertExerciseWithKnownState(ExerciseWeaviateDTO exerciseWeaviateDTO, String existingUuid) throws WeaviateException {
-        try {
-            var collection = weaviateService.getCollection(ExerciseSchema.COLLECTION_NAME);
-            Map<String, Object> properties = buildExerciseProperties(exerciseWeaviateDTO);
-
-            if (existingUuid != null) {
-                // Exercise exists - update it
-                collection.data.replace(existingUuid, r -> r.properties(properties));
-                log.debug("Replaced existing exercise {} with UUID {}", exerciseWeaviateDTO.exerciseId(), existingUuid);
-            }
-            else {
-                // Exercise doesn't exist - insert new one
-                collection.data.insert(properties);
-                log.debug("Inserted new exercise {}", exerciseWeaviateDTO.exerciseId());
-            }
-        }
-        catch (IOException e) {
-            log.error("Failed to upsert exercise {} in Weaviate: {}", exerciseWeaviateDTO.exerciseId(), e.getMessage(), e);
-            throw new WeaviateException("Failed to upsert exercise: " + exerciseWeaviateDTO.exerciseId(), e);
-        }
     }
 
     /**
