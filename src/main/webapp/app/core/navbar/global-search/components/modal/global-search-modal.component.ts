@@ -158,7 +158,12 @@ export class GlobalSearchModalComponent implements OnDestroy {
                 debounceTime(300),
                 distinctUntilChanged(),
                 switchMap((query) => {
-                    if (!query || query.trim().length < 2) {
+                    const hasFilter = this.activeFilters().length > 0;
+                    const trimmedQuery = query?.trim() || '';
+                    const hasValidQuery = trimmedQuery.length >= 2;
+
+                    // Clear results if no valid query and no filter
+                    if (!hasValidQuery && !hasFilter) {
                         this.results.set([]);
                         this.hasSearched.set(false);
                         this.isLoading.set(false);
@@ -166,8 +171,20 @@ export class GlobalSearchModalComponent implements OnDestroy {
                     }
 
                     this.isLoading.set(true);
-                    const typeFilter = this.activeFilters().length > 0 ? this.activeFilters()[0] : undefined;
-                    return this.searchService.search(query, { type: typeFilter }).pipe(
+                    const typeFilter = hasFilter ? this.activeFilters()[0] : undefined;
+
+                    // If no valid query but has filter, fetch recent items
+                    // Otherwise perform normal search
+                    const searchQuery = hasValidQuery ? trimmedQuery : '';
+                    const options: any = { type: typeFilter };
+
+                    if (!hasValidQuery) {
+                        // Fetching recent items when filter is active but query is empty
+                        options.sortBy = 'dueDate';
+                        options.limit = 10;
+                    }
+
+                    return this.searchService.search(searchQuery, options).pipe(
                         catchError(() => {
                             this.isLoading.set(false);
                             return of([]);
