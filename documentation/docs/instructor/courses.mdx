@@ -126,6 +126,8 @@ The CSV file should contain one user per row with a header row. The following co
 | First Name          | `firstName`, `firstNameOfStudent`, `givenName`, `forename`, `vorname`                         | No       |
 | Last Name           | `familyName`, `lastName`, `familyNameOfStudent`, `surname`, `nachname`, `familienname`, `name`| No       |
 
+*\*At least one of Registration Number, Login, or Email is required per row.*
+
 <Callout variant={CalloutVariant.info}>
     Each row in the CSV file must contain at least one of the following: a registration number, a login, or an email address. Rows missing all three identifiers will be flagged as invalid.
 </Callout>
