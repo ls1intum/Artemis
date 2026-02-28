@@ -293,7 +293,7 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
                 title: 'Progress Test Quiz',
                 releaseDate: dayjs().subtract(1, 'hour').toISOString(),
                 startDate: null,
-                dueDate: dayjs().add(1, 'day').toISOString(),
+                dueDate: dayjs().add(15, 'seconds').toISOString(),
                 difficulty: 'EASY',
                 mode: 'INDIVIDUAL',
                 includedInOverallScore: 'INCLUDED_COMPLETELY',
@@ -302,7 +302,10 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
                 channelName: 'exercise-progress-test-quiz',
                 randomizeQuestionOrder: false,
                 quizMode: 'SYNCHRONIZED',
-                duration: 10, // Very short duration - quiz ends 10 seconds after start
+                // Quiz batch ends after 10s (startTime + duration). Results are calculated
+                // at dueDate + 5s by QuizScheduleService. Setting dueDate to 15s ensures
+                // results are calculated at ~T+20s, enabling competency progress updates.
+                duration: 10,
                 quizBatches: [{ startTime: dayjs().toISOString() }],
                 quizQuestions: [
                     {

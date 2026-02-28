@@ -73,7 +73,7 @@ export class ExamExerciseGroupsPage {
     }
 
     async visitPageViaUrl(courseId: number, examId: number) {
-        await this.page.goto(`course-management/${courseId}/exams/${examId}/exercise-groups`);
+        await this.page.goto(`/course-management/${courseId}/exams/${examId}/exercise-groups`);
     }
 
     async shouldContainExerciseWithTitle(groupID: number, exerciseTitle: string) {
