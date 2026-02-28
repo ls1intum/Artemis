@@ -70,3 +70,35 @@
 .default-font-size {
     font-size: var(--bs-body-font-size);
 }
+
+// Diff view: column headers above the split panes
+.diff-pane-headers {
+    display: flex;
+    border-bottom: 1px solid var(--p-content-border-color);
+
+    .diff-pane-header {
+        display: flex;
+        align-items: center;
+        width: 50%;
+        padding: 0.25rem 0.5rem;
+        background-color: var(--p-content-background);
+
+        &--right {
+            border-left: 1px solid var(--p-content-border-color);
+        }
+    }
+}
+
+.diff-pane-unified-hint {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    border-bottom: 1px solid var(--p-content-border-color);
+    background-color: var(--p-content-background);
+
+    &__text {
+        font-size: 0.78rem;
+        color: var(--p-text-muted-color);
+    }
+}

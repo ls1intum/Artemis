@@ -390,7 +390,16 @@
                                 <fa-icon [icon]="faTableColumns" class="me-1" />
                                 <span [jhiTranslate]="'artemisApp.programmingExercise.diffReport.splitView.' + (allowSplitView() ? 'disable' : 'enable')"></span>
                             </button>
-                            <button pButton type="button" severity="secondary" size="small" [disabled]="isAiApplying() || isGeneratingCode()" (click)="revertAllRefinement()">
+                            <button
+                                pButton
+                                type="button"
+                                severity="secondary"
+                                size="small"
+                                [disabled]="isAiApplying() || isGeneratingCode()"
+                                [pTooltip]="'artemisApp.programmingExercise.problemStatement.revertAllTooltip' | artemisTranslate"
+                                tooltipPosition="bottom"
+                                (click)="revertAllRefinement()"
+                            >
                                 <fa-icon [icon]="faBan" class="me-1" />
                                 <span jhiTranslate="artemisApp.programmingExercise.problemStatement.revertAll"></span>
                             </button>
@@ -401,36 +410,48 @@
                                 [pTooltip]="'artemisApp.programmingExercise.problemStatement.diffLineStatTooltip' | artemisTranslate"
                                 tooltipPosition="bottom"
                             />
-                            <button pButton type="button" severity="success" size="small" [disabled]="isAiApplying() || isGeneratingCode()" (click)="closeDiff()">
+                            <button
+                                pButton
+                                type="button"
+                                severity="success"
+                                size="small"
+                                [disabled]="isAiApplying() || isGeneratingCode()"
+                                [pTooltip]="'artemisApp.programmingExercise.problemStatement.doneReviewingTooltip' | artemisTranslate"
+                                tooltipPosition="bottom"
+                                (click)="closeDiff()"
+                            >
                                 <fa-icon [icon]="faSave" class="me-1" />
                                 <span jhiTranslate="artemisApp.programmingExercise.problemStatement.doneReviewing"></span>
                             </button>
                         </div>
                     </p-message>
                 }
-                @if (isGeneratingOrRefining()) {
-                    <p-message severity="info" styleClass="w-100 mb-2" [closable]="false">
-                        <fa-icon [icon]="faSpinner" animation="spin" class="me-2" />
-                        <span jhiTranslate="artemisApp.programmingExercise.problemStatement.aiRefining"></span>
-                    </p-message>
+                @if (exercise.templateParticipation && selectedParticipation) {
+                    <jhi-programming-exercise-editable-instructions
+                        [exercise]="exercise"
+                        [participation]="selectedParticipation"
+                        [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
+                        [externalHeight]="true"
+                        [enableResize]="false"
+                        [showPreview]="false"
+                        [consistencyIssues]="consistencyIssues()"
+                        [enableExerciseReviewComments]="true"
+                        [isGeneratingOrRefining]="isGeneratingOrRefining()"
+                        [mode]="showDiff() ? 'diff' : 'normal'"
+                        [renderSideBySide]="allowSplitView()"
+                        (diffLineChange)="onDiffLineChange($event)"
+                        class="flex-grow-1 overflow-auto"
+                        (instructionChange)="onInstructionChanged($event)"
+                        (onProblemStatementSaved)="onProblemStatementSaved()"
+                        (onInlineRefinement)="onInlineRefinement($event)"
+                    />
+                } @else {
+                    <!-- Loading state while waiting for templateParticipation -->
+                    <div class="d-flex justify-content-center align-items-center h-100">
+                        <fa-icon [icon]="faCircleNotch" animation="spin" class="me-2" />
+                        <span jhiTranslate="artemisApp.editor.fetchingParticipation"></span>
+                    </div>
                 }
-                <jhi-programming-exercise-editable-instructions
-                    [exercise]="exercise"
-                    [participation]="selectedParticipation!"
-                    [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
-                    [externalHeight]="true"
-                    [enableResize]="false"
-                    [showPreview]="false"
-                    [consistencyIssues]="consistencyIssues()"
-                    [enableExerciseReviewComments]="true"
-                    [isGeneratingOrRefining]="isGeneratingOrRefining()"
-                    [mode]="showDiff() ? 'diff' : 'normal'"
-                    [renderSideBySide]="allowSplitView()"
-                    (diffLineChange)="onDiffLineChange($event)"
-                    class="flex-grow-1 overflow-auto"
-                    (instructionChange)="onInstructionChanged($event)"
-                    (onProblemStatementSaved)="onProblemStatementSaved()"
-                />
             </div>
             <!-- Preview-only component for right sidebar -->
             <jhi-programming-exercise-instructions

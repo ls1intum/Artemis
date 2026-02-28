@@ -16,10 +16,11 @@ import * as monaco from 'monaco-editor';
 import { MonacoEditorLineDecorationsHoverButton } from './model/monaco-editor-line-decorations-hover-button.model';
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { LineChange, convertMonacoLineChanges } from 'app/programming/shared/utils/diff.utils';
+import { MonacoEditorMode } from 'app/shared/monaco-editor/model/monaco-editor.types';
+
+export type { MonacoEditorMode } from 'app/shared/monaco-editor/model/monaco-editor.types';
 
 export const MAX_TAB_SIZE = 8;
-
-export type MonacoEditorMode = 'normal' | 'diff';
 
 @Component({
     selector: 'jhi-monaco-editor',
@@ -36,11 +37,16 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private static readonly DEFAULT_LINE_DECORATION_BUTTON_WIDTH = '2.3ch';
     private static readonly SHRINK_TO_FIT_CLASS = 'monaco-shrink-to-fit';
 
+    /** The primary code editor instance — created once in the constructor. Reassigned only during diff-mode transitions. */
     private _editor: monaco.editor.IStandaloneCodeEditor;
+    /** The diff editor instance — lazily created when entering diff mode, disposed when leaving it. */
     private _diffEditor?: monaco.editor.IStandaloneDiffEditor;
 
+    /** Adapter wrapping the currently active editor for {@link TextEditorAction} registration. Recreated on editor context switches. */
     private textEditorAdapter: MonacoTextEditorAdapter;
+    /** Container element for the primary editor — created in the constructor and never replaced. */
     private monacoEditorContainerElement: HTMLElement;
+    /** Container element for the diff editor — created in the constructor and never replaced. */
     private diffEditorContainerElement: HTMLElement;
 
     private readonly emojiConvertor = new EmojiConvertor();
@@ -60,6 +66,15 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     /*
      * Diff/editor switching state.
      */
+    private selectionChangeListeners: {
+        listener: (selection: EditorRange | undefined) => void;
+        disposable?: Disposable;
+    }[] = [];
+
+    private scrollListeners: {
+        listener: () => void;
+        disposables: Disposable[];
+    }[] = [];
 
     private diffSnapshotModel?: monaco.editor.ITextModel;
     private diffListenersAttached = false;
@@ -101,6 +116,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      */
     private readonly renderer = inject(Renderer2);
     private readonly translateService = inject(TranslateService);
+
     private readonly elementRef = inject(ElementRef);
     private readonly monacoEditorService = inject(MonacoEditorService);
     private readonly ngZone = inject(NgZone);
@@ -265,6 +281,18 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.focusEditorTextListener?.dispose();
         this.diffUpdateListener?.dispose();
 
+        // Dispose selection change listeners
+        for (const listenerEntry of this.selectionChangeListeners) {
+            listenerEntry.disposable?.dispose();
+        }
+        this.selectionChangeListeners = [];
+
+        // Dispose scroll listeners
+        for (const scrollEntry of this.scrollListeners) {
+            scrollEntry.disposables.forEach((d) => d.dispose());
+        }
+        this.scrollListeners = [];
+
         // Dispose snapshot model if present
         this.disposeDiffSnapshotModel();
 
@@ -280,6 +308,12 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         const width = `${rect.width}px`;
         const height = `${rect.height}px`;
 
+        // Make the container visible and sized before creating/updating the diff editor,
+        // so Monaco can measure layout width correctly for word wrapping.
+        this.renderer.setStyle(this.diffEditorContainerElement, 'width', width);
+        this.renderer.setStyle(this.diffEditorContainerElement, 'height', height);
+        this.setContainersVisibility('diff');
+
         if (!this._diffEditor) {
             this._diffEditor = this.monacoEditorService.createStandaloneDiffEditor(this.diffEditorContainerElement, this.readOnly());
             this._diffEditor.updateOptions({
@@ -288,13 +322,17 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             });
         }
 
-        this.renderer.setStyle(this.diffEditorContainerElement, 'width', width);
-        this.renderer.setStyle(this.diffEditorContainerElement, 'height', height);
-        this.setContainersVisibility('diff');
-
         if (prevMode !== 'diff') {
             this.ensureDiffModelWired();
+        } else {
+            this._diffEditor.layout();
         }
+
+        // Apply word wrap to both inner editors after the model is wired and the
+        // container is visible, so Monaco can compute wrapping correctly.
+        this._diffEditor.getOriginalEditor().updateOptions({ wordWrap: 'on' });
+        this._diffEditor.getModifiedEditor().updateOptions({ wordWrap: 'on' });
+
         this.setActiveEditorContext();
     }
 
@@ -384,9 +422,13 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             return;
         }
         this.lastEditableEditor = editor;
+        // The old adapter is a stateless wrapper (no subscriptions or resources to release),
+        // so it can be safely replaced without explicit disposal.
         this.textEditorAdapter = new MonacoTextEditorAdapter(editor);
         this.attachEditableEditorListeners(editor);
         this.reRegisterActions();
+        this.reRegisterSelectionListeners();
+        this.reRegisterScrollListeners();
     }
 
     private getEditableEditor(): monaco.editor.IStandaloneCodeEditor {
@@ -832,17 +874,119 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                 action.dispose();
                 action.register(this.textEditorAdapter, this.translateService);
             } catch (error) {
-                // Some actions may fail if no model is attached yet.
                 // eslint-disable-next-line no-undef
-                console.warn('Failed to re-register Monaco action', action.id, error);
+                console.warn(`Failed to re-register Monaco action '${action.id}'`, error);
             }
         }
     }
 
-    setWordWrap(value: boolean): void {
-        this.getActiveEditor().updateOptions({
-            wordWrap: value ? 'on' : 'off',
+    private reRegisterSelectionListeners(): void {
+        for (const listenerEntry of this.selectionChangeListeners) {
+            listenerEntry.disposable?.dispose();
+            listenerEntry.disposable = this.registerSelectionListenerOnEditor(this.getActiveEditor(), listenerEntry.listener);
+        }
+    }
+
+    private reRegisterScrollListeners(): void {
+        for (const scrollEntry of this.scrollListeners) {
+            scrollEntry.disposables.forEach((d) => d.dispose());
+            scrollEntry.disposables = this.registerScrollListenerOnEditors(scrollEntry.listener);
+        }
+    }
+
+    private registerScrollListenerOnEditors(listener: () => void): Disposable[] {
+        return this.ngZone.runOutsideAngular(() => {
+            const disposables: Disposable[] = [];
+            if (this.mode() === 'diff' && this._diffEditor) {
+                disposables.push(this._diffEditor.getOriginalEditor().onDidScrollChange(() => this.ngZone.run(listener)));
+                disposables.push(this._diffEditor.getModifiedEditor().onDidScrollChange(() => this.ngZone.run(listener)));
+            } else {
+                disposables.push(this._editor.onDidScrollChange(() => this.ngZone.run(listener)));
+            }
+            return disposables;
         });
+    }
+
+    /**
+     * Registers a scroll change listener that fires whenever the visible editor (or either diff pane) scrolls.
+     * Automatically re-binds when the editor switches between normal and diff mode.
+     * @param listener Callback invoked on scroll.
+     * @returns A Disposable that removes the listener.
+     */
+    onScrollChange(listener: () => void): Disposable {
+        const disposables = this.registerScrollListenerOnEditors(listener);
+        const scrollEntry = { listener, disposables };
+        this.scrollListeners.push(scrollEntry);
+
+        return {
+            dispose: () => {
+                scrollEntry.disposables.forEach((d) => d.dispose());
+                const index = this.scrollListeners.indexOf(scrollEntry);
+                if (index !== -1) {
+                    this.scrollListeners.splice(index, 1);
+                }
+            },
+        };
+    }
+
+    private registerSelectionListenerOnEditor(editor: monaco.editor.IStandaloneCodeEditor, listener: (selection: EditorRange | undefined) => void): Disposable {
+        return this.ngZone.runOutsideAngular(() => {
+            return editor.onDidChangeCursorSelection((e) => {
+                const selection = e.selection;
+                if (selection.isEmpty()) {
+                    this.ngZone.run(() => listener(undefined));
+                } else {
+                    this.ngZone.run(() =>
+                        listener({
+                            startLineNumber: selection.startLineNumber,
+                            endLineNumber: selection.endLineNumber,
+                            startColumn: selection.startColumn,
+                            endColumn: selection.endColumn,
+                        }),
+                    );
+                }
+            });
+        });
+    }
+
+    onSelectionChange(listener: (selection: EditorRange | undefined) => void): Disposable {
+        const disposable = this.registerSelectionListenerOnEditor(this.getActiveEditor(), listener);
+        const listenerEntry = { listener, disposable };
+        this.selectionChangeListeners.push(listenerEntry);
+
+        return {
+            dispose: () => {
+                listenerEntry.disposable?.dispose();
+                const index = this.selectionChangeListeners.indexOf(listenerEntry);
+                if (index !== -1) {
+                    this.selectionChangeListeners.splice(index, 1);
+                }
+            },
+        };
+    }
+
+    getSelection(): EditorRange | undefined {
+        const selection = this.getActiveEditor().getSelection();
+        if (!selection || selection.isEmpty()) {
+            return undefined;
+        }
+        return {
+            startLineNumber: selection.startLineNumber,
+            endLineNumber: selection.endLineNumber,
+            startColumn: selection.startColumn,
+            endColumn: selection.endColumn,
+        };
+    }
+
+    setWordWrap(value: boolean): void {
+        const wordWrap = value ? 'on' : 'off';
+
+        if (this.isDiffMode()) {
+            this._diffEditor!.getOriginalEditor().updateOptions({ wordWrap });
+            this._diffEditor!.getModifiedEditor().updateOptions({ wordWrap });
+        } else {
+            this._editor.updateOptions({ wordWrap });
+        }
     }
 
     /**
