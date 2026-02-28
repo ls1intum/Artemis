@@ -7,11 +7,14 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
-import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,16 +54,42 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
     @Autowired
     private AuditingHandler auditingHandler;
 
+    private final List<Path> createdTestFiles = new ArrayList<>();
+
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 1);
         userUtilService.adjustUserGroupsToCustomGroups(TEST_PREFIX, "", 2, 0, 0, 1);
+        createdTestFiles.clear();
+        // Clean up any data exports from previous test runs for these specific users
+        // This is more isolated than deleteAll() which would affect parallel test classes
+        cleanupTestUserDataExports();
+    }
+
+    /**
+     * Deletes data exports only for this test's users, avoiding interference with parallel tests
+     */
+    private void cleanupTestUserDataExports() {
+        var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        var exportsToDelete = dataExportRepository.findAll().stream().filter(export -> export.getUser().equals(student1) || export.getUser().equals(student2)).toList();
+        dataExportRepository.deleteAll(exportsToDelete);
     }
 
     @AfterEach
     void tearDown() {
         // reset to the default
         auditingHandler.setDateTimeProvider(null);
+        // Clean up any test files created during the test
+        for (Path testFile : createdTestFiles) {
+            try {
+                Files.deleteIfExists(testFile);
+            }
+            catch (IOException e) {
+                // Ignore cleanup errors
+            }
+        }
+        createdTestFiles.clear();
     }
 
     @Test
@@ -84,16 +113,23 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         var dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.EMAIL_SENT);
         dataExport.setCreationFinishedDate(ZonedDateTime.now().minusDays(1));
-        // rename file to avoid duplicates in the temp directory
-        var newFilePath = TEST_DATA_EXPORT_BASE_FILE_PATH + ZonedDateTime.now().toEpochSecond();
-        FileUtils.moveFile(Path.of(TEST_DATA_EXPORT_BASE_FILE_PATH).toFile(), Path.of(newFilePath).toFile());
-        dataExport.setFilePath(newFilePath);
+        // Copy file to a unique location to support parallel test execution
+        // Use UUID for guaranteed uniqueness across parallel executions
+        var uniqueFileName = "data-export-" + UUID.randomUUID() + ".zip";
+        var newFilePath = Path.of("target/test-data-exports", uniqueFileName);
+        // Ensure parent directory exists
+        Files.createDirectories(newFilePath.getParent());
+        // Copy instead of move to allow multiple tests to use the same source file
+        Files.copy(Path.of(TEST_DATA_EXPORT_BASE_FILE_PATH), newFilePath);
+        // Track the file for cleanup
+        createdTestFiles.add(newFilePath);
+        dataExport.setFilePath(newFilePath.toString());
         return dataExportRepository.save(dataExport);
     }
 
     private void restoreTestDataInitState(DataExport dataExport) throws IOException {
-        // undo file renaming
-        FileUtils.moveFile(Path.of(dataExport.getFilePath()).toFile(), Path.of(TEST_DATA_EXPORT_BASE_FILE_PATH).toFile());
+        // No-op: files are now cleaned up in tearDown() instead of being moved back
+        // This prevents race conditions when tests run in parallel
     }
 
     @Test
