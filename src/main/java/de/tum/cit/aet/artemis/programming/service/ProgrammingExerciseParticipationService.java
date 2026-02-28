@@ -25,6 +25,8 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
@@ -72,10 +74,12 @@ public class ProgrammingExerciseParticipationService {
 
     private final SubmissionRepository submissionRepository;
 
+    private final UserRepository userRepository;
+
     public ProgrammingExerciseParticipationService(SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, ProgrammingExerciseStudentParticipationRepository studentParticipationRepository,
             ParticipationRepository participationRepository, TeamRepository teamRepository, GitService gitService, Optional<VersionControlService> versionControlService,
-            ResultRepository resultRepository, SubmissionRepository submissionRepository) {
+            ResultRepository resultRepository, SubmissionRepository submissionRepository, UserRepository userRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.solutionParticipationRepository = solutionParticipationRepository;
         this.templateParticipationRepository = templateParticipationRepository;
@@ -85,6 +89,7 @@ public class ProgrammingExerciseParticipationService {
         this.gitService = gitService;
         this.resultRepository = resultRepository;
         this.submissionRepository = submissionRepository;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -243,9 +248,19 @@ public class ProgrammingExerciseParticipationService {
                 FileUtils.copyFile(file, targetRepo.getLocalPath().resolve(file.toPath().getFileName()).toFile());
             }
         }
+        String login = SecurityUtils.getCurrentUserLogin().orElse(null);
+        User coAuthor = login != null ? userRepository.findOneByLogin(login).orElse(null) : null;
+        String commitMessage = "Reset Exercise";
+
+        if (coAuthor != null && coAuthor.getEmail() != null) {
+            String name = coAuthor.getName() != null ? coAuthor.getName() : login;
+            commitMessage += String.format("\n\nCo-authored-by: %s <%s>", name, coAuthor.getEmail());
+        }
 
         gitService.stageAllChanges(targetRepo);
-        gitService.commitAndPush(targetRepo, "Reset Exercise", true, null);
+        gitService.commitAndPush(targetRepo, commitMessage, true, null);
+
+        log.info("Reset repo by {}", login != null ? login : "unknown");
     }
 
     /**

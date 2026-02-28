@@ -421,7 +421,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
             var synchronizationExerciseId = getExerciseIdFromSynchronizationDestination(destination);
             if (synchronizationExerciseId.isPresent()) {
-                return authorizationCheckService.isAtLeastTeachingAssistantInExercise(login, synchronizationExerciseId.get());
+                return authorizationCheckService.isAtLeastEditorInExercise(login, synchronizationExerciseId.get());
             }
 
             return true;
