@@ -1,6 +1,7 @@
 import {
     faArrowDown,
     faCheck,
+    faChevronDown,
     faCircleInfo,
     faCircleNotch,
     faCompress,
@@ -18,7 +19,22 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
+import {
+    AfterViewInit,
+    ChangeDetectionStrategy,
+    Component,
+    DestroyRef,
+    ElementRef,
+    HostListener,
+    computed,
+    effect,
+    inject,
+    input,
+    output,
+    signal,
+    untracked,
+    viewChild,
+} from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Clipboard } from '@angular/cdk/clipboard';
@@ -44,6 +60,8 @@ import { AsPipe } from 'app/shared/pipes/as.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ChatHistoryItemComponent } from './chat-history-item/chat-history-item.component';
 import { NgClass, formatDate } from '@angular/common';
+import { MenuModule } from 'primeng/menu';
+import { MenuItem } from 'primeng/api';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
@@ -90,6 +108,7 @@ const COPY_FEEDBACK_DURATION_MS = 1500;
         SearchFilterComponent,
         IrisCitationTextComponent,
         ConfirmDialogModule,
+        MenuModule,
     ],
     providers: [ConfirmationService],
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -128,6 +147,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faCopy = faCopy;
     protected readonly faCheck = faCheck;
+    protected readonly faChevronDown = faChevronDown;
 
     // Types
     protected readonly IrisLogoSize = IrisLogoSize;
@@ -168,7 +188,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         const hasClearButton = !this.isChatHistoryAvailable() && this.messages().length >= 1;
         const hasSizeToggle = this.fullSize() !== undefined;
         const hasCloseButton = this.showCloseButton();
-        return hasRelatedEntity || hasRateLimitInfo || hasClearButton || hasSizeToggle || hasCloseButton;
+        const hasSessionSwitcher = this.layout() === 'widget' && !this.isEmptyState();
+        return hasRelatedEntity || hasRateLimitInfo || hasClearButton || hasSizeToggle || hasCloseButton || hasSessionSwitcher;
     });
 
     // UI state signals
@@ -222,6 +243,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     public ButtonType = ButtonType;
     readonly copiedMessageKey = signal<number | undefined>(undefined);
 
+    readonly newChatTitle = computed(() => this.translateService.instant('artemisApp.iris.chatHistory.newChat'));
+
     showDeclineButton = input<boolean>(true);
     isChatHistoryAvailable = input<boolean>(false);
     isEmbeddedChat = input<boolean>(false);
@@ -237,6 +260,39 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly scrollArrow = viewChild<ElementRef>('scrollArrow');
     readonly messageTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('messageTextarea');
     readonly acceptButton = viewChild<ElementRef<HTMLButtonElement>>('acceptButton');
+
+    // Session switcher (widget layout)
+    readonly sessionMenuItems = signal<MenuItem[]>([]);
+    readonly sessionMenuOpen = signal(false);
+    readonly currentSessionTitle = computed(() => {
+        const currentId = this.currentSessionId();
+        const sessions = this.chatSessions();
+        if (currentId === undefined) {
+            return this.newChatTitle() || '';
+        }
+        const session = sessions.find((s) => s.id === currentId);
+        if (!session || !session.title || this.isNewChatSession(session)) {
+            return this.newChatTitle() || '';
+        }
+        return session.title;
+    });
+    readonly contextSessions = computed(() => {
+        let chatMode = this.currentChatMode();
+        let entityId = this.currentRelatedEntityId();
+
+        // Fallback to active session context when service context signals are not initialized yet
+        if (chatMode === undefined || entityId === undefined) {
+            const activeSession = this.chatSessions().find((s) => s.id === this.currentSessionId());
+            chatMode = activeSession?.chatMode;
+            entityId = activeSession?.entityId;
+        }
+        if (chatMode === undefined || entityId === undefined) {
+            return [];
+        }
+        return this.chatSessions()
+            .filter((s) => s.chatMode === chatMode && s.entityId === entityId)
+            .sort((a, b) => new Date(b.creationDate).getTime() - new Date(a.creationDate).getTime());
+    });
 
     constructor() {
         // Initialize user acceptance state
@@ -667,7 +723,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     onDeleteSession(session: IrisSessionDTO) {
-        const title = session.title || formatDate(session.creationDate, 'dd.MM.yy HH:mm', 'en');
+        const title = session.title || formatDate(session.creationDate, 'dd.MM.yy HH:mm', this.translateService.currentLang || 'en');
         this.confirmationService.confirm({
             header: this.translateService.instant('artemisApp.iris.chatHistory.deleteSessionHeader'),
             message: this.translateService.instant('artemisApp.iris.chatHistory.deleteSessionQuestion', { title }),
@@ -744,6 +800,81 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         return filtered.sort((a, b) => new Date(b.creationDate).getTime() - new Date(a.creationDate).getTime());
     }
 
+    toggleSessionMenu(event: Event) {
+        event.stopPropagation();
+        const currentId = this.currentSessionId();
+        const newChatLabel = this.newChatTitle();
+
+        const sessions = this.contextSessions();
+        const todaySessions = this.filterSessionsBetween(sessions, 0, 0);
+        const olderSessions = this.filterSessionsBetween(sessions, 1, undefined, true);
+
+        const items: MenuItem[] = [];
+
+        const addGroup = (label: string, groupSessions: IrisSessionDTO[]) => {
+            if (groupSessions.length === 0) {
+                return;
+            }
+            items.push({
+                label,
+                disabled: true,
+                styleClass: 'session-menu-group-label',
+            });
+            for (const session of groupSessions) {
+                const isActive = session.id === currentId;
+                items.push({
+                    label: this.getSessionMenuLabel(session, newChatLabel),
+                    styleClass: isActive ? 'session-menu-item-active' : undefined,
+                    data: { isActive },
+                    command: () => {
+                        this.onSessionClick(session);
+                        this.onSessionMenuHide();
+                    },
+                });
+            }
+        };
+
+        addGroup(this.translateService.instant('artemisApp.iris.chatHistory.today'), todaySessions);
+        addGroup(this.translateService.instant('artemisApp.iris.chatHistory.older'), olderSessions);
+
+        // Fallback: if contextSessions() returned [] (e.g., chatMode/entityId race condition)
+        // but we have an active session, ensure the menu is never empty.
+        // currentSession may be undefined if chatSessions() hasn't been populated yet;
+        // in that case we fall back to newChatLabel for the display text.
+        if (items.length === 0 && currentId !== undefined) {
+            const currentSession = this.chatSessions().find((s) => s.id === currentId);
+            const fallbackLabel = currentSession ? this.getSessionMenuLabel(currentSession, newChatLabel) : newChatLabel;
+            const groupLabel = this.getSessionGroupLabel(currentSession);
+            items.push({
+                label: groupLabel,
+                disabled: true,
+                styleClass: 'session-menu-group-label',
+            });
+            items.push({
+                label: fallbackLabel,
+                styleClass: 'session-menu-item-active',
+                data: { isActive: true },
+                command: () => this.onSessionMenuHide(),
+            });
+        }
+
+        this.sessionMenuItems.set(items);
+        this.sessionMenuOpen.update((open) => !open);
+    }
+
+    onSessionMenuShow() {
+        this.sessionMenuOpen.set(true);
+    }
+
+    onSessionMenuHide() {
+        this.sessionMenuOpen.set(false);
+    }
+
+    @HostListener('document:click')
+    onDocumentClick() {
+        this.onSessionMenuHide();
+    }
+
     openNewSession() {
         this.chatService.clearChat();
     }
@@ -764,6 +895,27 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     setSearchValue(searchValue: string) {
         this.searchValue.set(searchValue.trim().toLowerCase());
+    }
+
+    private getSessionGroupLabel(session: IrisSessionDTO | undefined): string {
+        if (!session) {
+            return this.translateService.instant('artemisApp.iris.chatHistory.today');
+        }
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const created = new Date(session.creationDate).getTime();
+        if (created >= todayStart.getTime()) {
+            return this.translateService.instant('artemisApp.iris.chatHistory.today');
+        }
+        return this.translateService.instant('artemisApp.iris.chatHistory.older');
+    }
+
+    private getSessionMenuLabel(session: IrisSessionDTO, newChatLabel: string): string {
+        if (session.title && !this.isNewChatSession(session)) {
+            return session.title;
+        }
+        const creationLabel = formatDate(session.creationDate, 'dd.MM.yy HH:mm', this.translateService.currentLang || 'en');
+        return `${newChatLabel} (${creationLabel})`;
     }
 
     /**

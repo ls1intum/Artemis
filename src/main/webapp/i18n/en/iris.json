@@ -193,7 +193,8 @@
                 "deleteSessionQuestion": "Are you sure you want to delete the chat session \"{{title}}\"? This action cannot be undone.",
                 "deleteSessionSuccess": "Chat session deleted.",
                 "deleteSessionError": "Failed to delete chat session.",
-                "sessionMenuAriaLabel": "Chat session actions"
+                "sessionMenuAriaLabel": "Chat session actions",
+                "switchSession": "Switch chat session"
             },
             "aboutIrisModal": {
                 "meetIris": "Meet Iris",

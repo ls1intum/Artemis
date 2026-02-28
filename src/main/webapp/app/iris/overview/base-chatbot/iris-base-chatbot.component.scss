@@ -1,3 +1,32 @@
+// Border radius tokens
+$iris-border-radius-sm: 0.25rem; // 4px — buttons, controls, small elements
+$iris-border-radius-md: 0.375rem; // 6px — scrollbar thumbs, subtle rounding
+$iris-border-radius-lg: 0.5rem; // 8px — cards, menus, text areas
+
+// Z-index scale for layered UI within the chat widget
+// z-index: 1    — scroll-to-bottom button, sticky sidebar headers
+// z-index: 10   — chat header (sits above messages)
+// z-index: 1050 — session switcher dropdown (above header, below global modals)
+$iris-z-index-dropdown: 1050;
+
+@mixin custom-scrollbar($width: 6px) {
+    scrollbar-width: thin;
+    scrollbar-color: var(--bs-border-color) transparent;
+
+    &::-webkit-scrollbar {
+        width: $width;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background-color: var(--bs-border-color);
+        border-radius: $iris-border-radius-md;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+}
+
 :host {
     --iris-chat-content-max-width: 800px;
     --iris-chat-content-margin-inline: auto;
@@ -6,7 +35,7 @@
     flex-direction: column;
     flex: 1;
     max-height: 100%;
-    border-radius: var(--bs-border-radius-lg);
+    border-radius: $iris-border-radius-sm;
 }
 
 :host.layout-widget {
@@ -133,7 +162,7 @@
         background-color 0.3s,
         color 0.3s;
     border: 1px solid var(--border-color);
-    border-radius: var(--bs-border-radius-lg);
+    border-radius: $iris-border-radius-sm;
     flex: 1;
 
     &:hover {
@@ -148,13 +177,56 @@
     .header-control {
         background-color: var(--iris-secondary-background);
         border: none;
-        border-radius: var(--bs-border-radius-lg);
+        border-radius: $iris-border-radius-sm;
         color: var(--secondary);
     }
 
     button:hover {
         background-color: var(--iris-accent-background);
     }
+}
+
+.session-title-trigger {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: $iris-border-radius-sm;
+    color: var(--bs-body-color);
+    font-size: 14px;
+    max-width: 250px;
+
+    &:hover {
+        background-color: var(--iris-tertiary-background);
+    }
+}
+
+.session-title-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.session-title-chevron {
+    font-size: 12px;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+    color: var(--iris-label-color);
+
+    &.rotated {
+        transform: rotate(180deg);
+    }
+}
+
+.session-switcher-inline-menu {
+    position: absolute;
+    top: 32px;
+    left: 4px;
+    z-index: $iris-z-index-dropdown;
+    min-width: 200px;
 }
 
 .related-entity-button {
@@ -188,84 +260,12 @@
             conic-gradient(at var(--r) var(--r), #000 75%, #0000 0) calc(var(--r) / -2) calc(var(--r) / -2) padding-box,
             radial-gradient(50% 50%, #000 98%, #0000 101%) 0 0 / var(--r) var(--r) space padding-box;
         overflow-wrap: break-word;
-
-        ::ng-deep {
-            > p,
-            > span > p {
-                margin-bottom: 7px;
-
-                &:last-child {
-                    margin-bottom: 0;
-                }
-            }
-
-            > ol > li,
-            > ul > li,
-            > span > ol > li,
-            > span > ul > li {
-                > p {
-                    margin-bottom: 0;
-                }
-
-                &:not(:last-child) > p {
-                    margin-bottom: 7px;
-                }
-            }
-
-            > ol,
-            > ul,
-            > span > ol,
-            > span > ul {
-                margin-bottom: 7px;
-            }
-
-            h1,
-            h2,
-            h3 {
-                font-weight: bold;
-            }
-
-            h1 {
-                font-size: 1.55rem;
-            }
-
-            h2 {
-                font-size: 1.4rem;
-            }
-
-            h3 {
-                font-size: 1.25rem;
-            }
-
-            pre code {
-                line-height: 1;
-            }
-
-            .table {
-                border-collapse: collapse;
-                font-size: 0.875rem;
-
-                th,
-                td {
-                    border: 1px solid var(--bs-border-color);
-                    padding: 6px 10px;
-                }
-
-                th {
-                    background-color: var(--iris-table-header-background);
-                }
-            }
-
-            > span {
-                display: block;
-                overflow-x: auto;
-            }
-        }
     }
 }
 
 .bubble-left {
     --_d: 0%;
+
     margin-bottom: 8px;
     place-self: center;
     max-width: 100%;
@@ -273,10 +273,11 @@
 
 .bubble-right {
     --_d: 100%;
+
     place-self: end;
     float: right;
     background-color: var(--iris-tertiary-background);
-    border-radius: 8px;
+    border-radius: $iris-border-radius-lg;
     padding: 16px;
     max-width: 90%;
 }
@@ -286,7 +287,7 @@
     color: var(--bs-body-color);
     padding: 4px;
     border-top: 1px solid var(--artemis-alert-danger-border);
-    border-radius: 4px;
+    border-radius: $iris-border-radius-sm;
     display: flex;
     align-content: center;
     justify-content: center;
@@ -312,7 +313,7 @@ pre {
 
 .chat-layout {
     border: 1px solid var(--border-color);
-    border-radius: 4px;
+    border-radius: $iris-border-radius-sm;
 }
 
 .chat-container {
@@ -321,9 +322,11 @@ pre {
 
     .chat-header {
         background-color: var(--iris-primary-background);
-        border-radius: 0.25rem 0.25rem 0 0;
+        border-radius: $iris-border-radius-sm $iris-border-radius-sm 0 0;
+        position: relative;
         display: flex;
         justify-content: flex-end;
+        align-items: center;
         font-weight: bold;
         padding: 4px;
         height: 40px;
@@ -333,6 +336,10 @@ pre {
         &.has-content {
             box-shadow: 0 10px 10px -15px rgba(0, 0, 0, 0.3);
             border-bottom: 1px solid var(--bs-border-color);
+        }
+
+        &:has(.session-title-trigger) {
+            justify-content: space-between;
         }
 
         button {
@@ -382,21 +389,8 @@ pre {
             flex: 1;
             overflow-x: hidden;
             overflow-y: auto;
-            scrollbar-width: auto;
-            scrollbar-color: var(--bs-border-color) transparent;
 
-            &::-webkit-scrollbar {
-                width: 6px;
-            }
-
-            &::-webkit-scrollbar-thumb {
-                background-color: var(--bs-border-color);
-                border-radius: 6px;
-            }
-
-            &::-webkit-scrollbar-track {
-                background: transparent;
-            }
+            @include custom-scrollbar(6px);
 
             > div:first-child {
                 margin-top: 24px;
@@ -423,7 +417,7 @@ pre {
         flex: 1 0 auto;
         padding: 16px 56px 36px 16px;
         resize: none;
-        border-radius: 8px;
+        border-radius: $iris-border-radius-lg;
         min-height: 72px;
         max-height: 200px;
         overflow-y: auto;
@@ -457,18 +451,18 @@ pre {
     padding: 8px;
     margin: 0 8px;
     cursor: pointer;
-    border-radius: var(--bs-border-radius-lg);
+    border-radius: $iris-border-radius-sm;
 
     &:hover {
         background-color: var(--iris-accent-background);
-        border-radius: 6px;
+        border-radius: $iris-border-radius-md;
         padding: 8px;
     }
 }
 
 // chat sidebar on client ui
 .chat-history {
-    border-radius: 0.25rem 0 0 0.25rem;
+    border-radius: $iris-border-radius-sm 0 0 $iris-border-radius-sm;
     border-right: 0.5px solid var(--border-color);
     width: 40px;
     height: 100%;
@@ -502,21 +496,8 @@ pre {
         flex: 1;
         min-height: 0;
         overflow-y: auto;
-        scrollbar-width: thin;
-        scrollbar-color: var(--bs-border-color) transparent;
 
-        &::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        &::-webkit-scrollbar-thumb {
-            background-color: var(--bs-border-color);
-            border-radius: 6px;
-        }
-
-        &::-webkit-scrollbar-track {
-            background: transparent;
-        }
+        @include custom-scrollbar(4px);
     }
 
     &-info-link {
@@ -548,7 +529,7 @@ pre {
     .collapsed-icon-button {
         padding: 4px 8px;
         cursor: pointer;
-        border-radius: var(--bs-border-radius-lg);
+        border-radius: $iris-border-radius-sm;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -596,7 +577,7 @@ pre {
 .p-chat {
     background-color: var(--iris-tertiary-background);
     color: var(--bs-body-color);
-    border-radius: var(--bs-border-radius-lg);
+    border-radius: $iris-border-radius-sm;
     display: flex;
     flex-direction: column;
     align-items: stretch;
@@ -605,8 +586,8 @@ pre {
 
 .message-text {
     padding: 10px;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
+    border-top-left-radius: $iris-border-radius-lg;
+    border-top-right-radius: $iris-border-radius-lg;
     border-bottom: 1px solid var(--bs-border-color);
 }
 
@@ -648,7 +629,7 @@ pre {
 
         &:hover {
             background-color: var(--iris-tertiary-background);
-            border-radius: var(--bs-border-radius-lg);
+            border-radius: $iris-border-radius-sm;
         }
     }
 }
@@ -671,38 +652,6 @@ pre {
     bottom: 8px;
     margin-bottom: 0;
     transform: none;
-
-    ::ng-deep button {
-        border-radius: 8px;
-        padding: 6px 8px;
-        background-color: var(--primary);
-        border-color: var(--primary);
-        color: var(--white);
-        transition:
-            background-color 0.3s ease,
-            border-color 0.3s ease;
-
-        &:hover .svg-inline--fa {
-            transform: rotate(45deg);
-        }
-
-        &:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-    }
-
-    ::ng-deep .svg-inline--fa {
-        transition: transform 0.3s ease;
-    }
-}
-
-::ng-deep ngb-modal-backdrop {
-    z-index: 9999 !important;
-}
-
-::ng-deep ngb-modal-window {
-    z-index: 9999 !important;
 }
 
 cdk-global-scrollblock {
