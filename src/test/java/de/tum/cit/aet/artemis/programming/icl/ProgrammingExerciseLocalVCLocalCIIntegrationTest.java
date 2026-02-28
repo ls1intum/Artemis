@@ -237,9 +237,11 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         if (exerciseWeaviateService != null && weaviateService != null) {
             exerciseWeaviateService.upsertExerciseAsync(programmingExercise);
             // Wait for initial insert to complete before proceeding with update
-            await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
                 var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
                 assertThat(properties).as("Exercise should be initially present in Weaviate before update").isNotNull();
+                Object releaseDateObj = properties.get(ExerciseSchema.Properties.RELEASE_DATE);
+                assertThat(releaseDateObj).as("Initial release date should be set in Weaviate").isNotNull();
             });
         }
 
@@ -254,9 +256,9 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(programmingExercise), eq(Optional.of(programmingExercise)));
 
         if (!WeaviateTestUtil.shouldSkipWeaviateAssertions(weaviateService)) {
-            await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
                 var weaviateProperties = queryExerciseProperties(weaviateService, updatedExercise.getId());
-                assertThat(weaviateProperties).isNotNull();
+                assertThat(weaviateProperties).as("Exercise properties should exist in Weaviate after update").isNotNull();
                 assertThat(weaviateProperties.get(ExerciseSchema.Properties.TITLE)).isEqualTo(updatedExercise.getTitle());
                 assertThat(((Number) weaviateProperties.get(ExerciseSchema.Properties.EXERCISE_ID)).longValue()).isEqualTo(updatedExercise.getId());
                 // Verify that the release date was actually updated in Weaviate
