@@ -13,3 +13,4 @@ artemis:
         result-parser-image: ghcr.io/ls1intum/hades/junit-result-parser:latest
       adapter:
         endpoint: http://host.docker.internal:8083/adapter/test-results
+      auth-key: some-secret-key

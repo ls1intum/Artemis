@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -44,6 +45,9 @@ public class HadesService implements StatelessCIService {
 
     @Value("${artemis.continuous-integration.url}")
     private String hadesServerUrl;
+
+    @Value("${artemis.continuous-integration.hades.auth-key}")
+    private String hadesAuthKey;
 
     @Value("${artemis.continuous-integration.hades.images.clone-image}")
     private String cloneDockerImage;
@@ -105,9 +109,7 @@ public class HadesService implements StatelessCIService {
     }
 
     private UUID build(HadesBuildJobDTO hadesBuildJobDTO) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<HadesBuildJobDTO> request = new HttpEntity<>(hadesBuildJobDTO, headers);
+        HttpEntity<HadesBuildJobDTO> request = new HttpEntity<>(hadesBuildJobDTO, createAuthHeaders());
         ResponseEntity<HadesBuildResponseDTO> response = restTemplate.postForEntity(hadesServerUrl + "/build", request, HadesBuildResponseDTO.class);
 
         if (!response.getStatusCode().is2xxSuccessful()) {
@@ -128,8 +130,9 @@ public class HadesService implements StatelessCIService {
         additionalInfo.put("url", hadesServerUrl);
         ConnectorHealth health;
         try {
-            final var response = restTemplate.getForObject(hadesServerUrl + "/ping", JsonNode.class);
-            final var hadesStatus = response != null ? response.get("message").asText() : null;
+            HttpEntity<Void> request = new HttpEntity<>(createAuthHeaders());
+            final var response = restTemplate.exchange(hadesServerUrl + "/ping", HttpMethod.GET, request, JsonNode.class);
+            final var hadesStatus = response.getBody() != null ? response.getBody().get("message").asText() : null;
             health = new ConnectorHealth("pong".equals(hadesStatus), additionalInfo);
         }
         catch (Exception ex) {
@@ -185,5 +188,12 @@ public class HadesService implements StatelessCIService {
         // Create Hades Job
         var timestamp = java.time.Instant.now().toString();
         return new HadesBuildJobDTO(buildTriggerRequestDTO.participationId().toString(), metadata, timestamp, 1, steps);
+    }
+
+    private HttpHeaders createAuthHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBasicAuth(hadesAuthKey);
+        return headers;
     }
 }
