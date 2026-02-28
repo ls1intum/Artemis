@@ -78,6 +78,7 @@ describe('PostComponent', () => {
             filterToCourseWide: false,
             filterToUnresolved: false,
             filterToAnsweredOrReacted: false,
+            filterToExcludeDirectMessages: false,
             sortingOrder: SortDirection.ASCENDING,
         };
 
@@ -541,6 +542,7 @@ describe('PostComponent', () => {
             filterToCourseWide: false,
             filterToUnresolved: false,
             filterToAnsweredOrReacted: false,
+            filterToExcludeDirectMessages: false,
             sortingOrder: SortDirection.ASCENDING,
         });
         component.showSearchResultInAnswersHint = false;

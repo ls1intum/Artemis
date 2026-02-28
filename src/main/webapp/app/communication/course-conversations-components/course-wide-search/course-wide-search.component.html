@@ -34,7 +34,7 @@
                                     name="filterToCourseWide"
                                     id="filterToCourseWide"
                                     (change)="onSelectContext()"
-                                    [attr.disabled]="formGroup.get('filterToCourseWide')?.disabled ? '' : null"
+                                    [attr.disabled]="formGroup.controls.filterToCourseWide?.disabled ? '' : null"
                                 />
                                 <label for="filterToCourseWide" class="p-0" jhiTranslate="artemisApp.metis.overview.filterToCourseWide"></label>
                             </div>
@@ -59,6 +59,18 @@
                                     (change)="onSelectContext()"
                                 />
                                 <label for="filterToAnsweredOrReacted" class="p-0" jhiTranslate="artemisApp.metis.overview.filterToAnsweredOrReacted"></label>
+                            </div>
+                            <div class="col-auto p-0 ps-2">
+                                <input
+                                    class="form-check-input"
+                                    type="checkbox"
+                                    formControlName="filterToExcludeDirectMessages"
+                                    name="filterToExcludeDirectMessages"
+                                    id="filterToExcludeDirectMessages"
+                                    (change)="onSelectContext()"
+                                    [attr.disabled]="formGroup.controls.filterToExcludeDirectMessages?.disabled ? '' : null"
+                                />
+                                <label for="filterToExcludeDirectMessages" class="p-0" jhiTranslate="artemisApp.metis.overview.filterToExcludeDirectMessages"></label>
                             </div>
                         </div>
                         <!-- sort dropdown -->

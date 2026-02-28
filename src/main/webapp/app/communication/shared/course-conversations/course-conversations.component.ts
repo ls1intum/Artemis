@@ -443,6 +443,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.courseWideSearchConfig.filterToCourseWide = false;
         this.courseWideSearchConfig.filterToUnresolved = false;
         this.courseWideSearchConfig.filterToAnsweredOrReacted = false;
+        this.courseWideSearchConfig.filterToExcludeDirectMessages = false;
         this.courseWideSearchConfig.sortingOrder = SortDirection.ASCENDING;
         this.courseWideSearchConfig.selectedAuthors = [];
         this.courseWideSearchConfig.selectedConversations = [];
