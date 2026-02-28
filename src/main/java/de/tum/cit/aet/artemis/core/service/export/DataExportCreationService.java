@@ -20,6 +20,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import de.tum.cit.aet.artemis.communication.dto.DataExportMailDTO;
+import de.tum.cit.aet.artemis.communication.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
 import de.tum.cit.aet.artemis.core.domain.DataExport;
 import de.tum.cit.aet.artemis.core.domain.DataExportState;
@@ -178,14 +180,7 @@ public class DataExportCreationService {
             return;
         }
 
-        // Create a recipient user object with the configured admin email
-        User adminRecipient = new User();
-        adminRecipient.setEmail(adminEmail);
-        adminRecipient.setLangKey("en");
-        adminRecipient.setLogin("data-export-admin-recipient");
-        adminRecipient.setFirstName("Administrator");
-
-        mailService.sendDataExportEmailFailedEmailToAdmin(adminRecipient, dataExport, emailFailedException);
+        mailService.sendDataExportEmailFailedEmailToAdmin(createAdminRecipient(), DataExportMailDTO.of(dataExport), emailFailedException);
     }
 
     /**
@@ -206,14 +201,7 @@ public class DataExportCreationService {
             return;
         }
 
-        // Create a recipient user object with the configured admin email
-        User adminRecipient = new User();
-        adminRecipient.setEmail(adminEmail);
-        adminRecipient.setLangKey("en");
-        adminRecipient.setLogin("data-export-admin-recipient");
-        adminRecipient.setFirstName("Administrator");
-
-        mailService.sendDataExportFailedEmailToAdmin(adminRecipient, dataExport, exception);
+        mailService.sendDataExportFailedEmailToAdmin(createAdminRecipient(), DataExportMailDTO.of(dataExport), exception);
     }
 
     /**
@@ -228,7 +216,7 @@ public class DataExportCreationService {
         dataExport.setCreationFinishedDate(ZonedDateTime.now());
         dataExport = dataExportRepository.save(dataExport);
         try {
-            mailService.sendDataExportCreatedEmail(dataExport.getUser(), dataExport);
+            mailService.sendDataExportCreatedEmail(MailRecipientDTO.of(dataExport.getUser()), DataExportMailDTO.of(dataExport));
         }
         catch (Exception e) {
             log.error("Failed to send data export created email to user {}", dataExport.getUser().getLogin(), e);
@@ -275,6 +263,10 @@ public class DataExportCreationService {
             printer.printRecord(user.getLogin(), user.getName(), user.getEmail(), user.getRegistrationNumber());
             printer.flush();
         }
+    }
+
+    private MailRecipientDTO createAdminRecipient() {
+        return new MailRecipientDTO("data-export-admin-recipient", adminEmail, "en", "Administrator", null, null, null);
     }
 
     /**

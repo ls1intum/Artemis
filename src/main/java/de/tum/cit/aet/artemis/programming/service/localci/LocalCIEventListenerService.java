@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.communication.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
@@ -289,7 +290,7 @@ public class LocalCIEventListenerService {
         }
         int failures = buildAgentInformation.buildAgentDetails() != null ? buildAgentInformation.buildAgentDetails().consecutiveBuildFailures()
                 : buildAgentInformation.pauseAfterConsecutiveBuildFailures();
-        mailService.sendBuildAgentSelfPausedEmailToAdmin(admin.get(), buildAgentInformation.buildAgent().name(), failures);
+        mailService.sendBuildAgentSelfPausedEmailToAdmin(MailRecipientDTO.of(admin.get()), buildAgentInformation.buildAgent().name(), failures);
     }
 
     private void notifyUserAboutBuildProcessing(long exerciseId, long participationId, String commitHash, ZonedDateTime submissionDate, ZonedDateTime buildStartDate,
