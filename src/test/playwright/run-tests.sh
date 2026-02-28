@@ -97,7 +97,11 @@ if [ -n "$PLAYWRIGHT_REPORT_SERVER_URL" ] && [ -n "$PLAYWRIGHT_REPORT_TOKEN" ]; 
                 --request PUT "${PLAYWRIGHT_REPORT_SERVER_URL}/api/result/upload" \
                 -H "Authorization: ${PLAYWRIGHT_REPORT_TOKEN}" \
                 -F "file=@${blob_dir}report.zip" \
-                -F "project=Artemis E2E (${test_type})"; then
+                -F "project=Artemis E2E (${test_type})" \
+                -F "triggerReportGeneration=true" \
+                -F "shardCurrent=1" \
+                -F "shardTotal=1" \
+                -F "testRun=${GITHUB_RUN_ID:-local}"; then
                 echo "WARNING: Failed to upload ${test_type} report to server"
             fi
         fi
