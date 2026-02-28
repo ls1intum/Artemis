@@ -28,7 +28,7 @@ export class GlobalSearchService {
      * Performs a global search query.
      *
      * @param query - The search query string
-     * @param options - Optional search parameters (type filter, courseId, limit)
+     * @param options - Optional search parameters (type filter, courseId, limit, sortBy)
      * @returns Observable of search results
      */
     search(
@@ -37,6 +37,7 @@ export class GlobalSearchService {
             type?: string;
             courseId?: number;
             limit?: number;
+            sortBy?: string;
         },
     ): Observable<GlobalSearchResult[]> {
         let params = new HttpParams().set('q', query);
@@ -49,6 +50,9 @@ export class GlobalSearchService {
         }
         if (options?.limit !== undefined) {
             params = params.set('limit', options.limit.toString());
+        }
+        if (options?.sortBy) {
+            params = params.set('sortBy', options.sortBy);
         }
 
         return this.http.get<GlobalSearchResult[]>(this.resourceUrl, { params });

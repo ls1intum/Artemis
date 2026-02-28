@@ -119,8 +119,51 @@
                     </div>
                 }
             </div>
+        } @else if (showInitialState()) {
+            <!-- Initial state - show searchable entities -->
+            <div class="entity-list">
+                @for (entity of searchableEntities; track entity.id; let i = $index) {
+                    <div
+                        class="entity-item p-3 cursor-pointer position-relative"
+                        [class.disabled]="!entity.enabled"
+                        [class.selected]="i === selectedIndex()"
+                        (click)="onEntityClick(entity)"
+                        [attr.aria-disabled]="!entity.enabled"
+                        [attr.aria-selected]="i === selectedIndex()"
+                        role="option"
+                    >
+                        <div class="d-flex align-items-start gap-3">
+                            <!-- Icon -->
+                            <div class="entity-icon flex-shrink-0">
+                                <fa-icon [icon]="entity.icon" size="lg" [class.text-primary]="entity.enabled" [class.text-secondary]="!entity.enabled" aria-hidden="true" />
+                            </div>
+
+                            <!-- Content -->
+                            <div class="entity-content flex-grow-1 min-width-0">
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <h6 class="entity-title mb-0">{{ entity.title }}</h6>
+                                    <span class="badge bg-secondary text-white px-2 py-1 small text-capitalize">{{ entity.type }}</span>
+                                </div>
+                                <p class="entity-description mb-0 text-secondary small">
+                                    {{ entity.description }}
+                                </p>
+                                @if (!entity.enabled) {
+                                    <p class="entity-coming-soon mb-0 text-muted small fst-italic mt-1">Coming soon</p>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Navigation hint for enabled items (positioned absolutely) -->
+                        @if (entity.enabled) {
+                            <div class="entity-nav-hint position-absolute text-secondary">
+                                <kbd class="key-hint-small">#</kbd>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
         } @else {
-            <!-- Initial state - show helpful tips -->
+            <!-- Fallback state -->
             <div class="text-center py-5 px-4 text-secondary">
                 <fa-icon [icon]="faSearch" size="2x" class="mb-3" aria-hidden="true" />
                 <p class="mb-2 fw-bold">{{ 'global.search.tipTitle' | artemisTranslate }}</p>

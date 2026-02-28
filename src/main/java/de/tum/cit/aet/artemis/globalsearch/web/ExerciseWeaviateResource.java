@@ -91,7 +91,7 @@ public class ExerciseWeaviateResource {
     // the user's access rights for each course individually when performing a global search. This will ensure that users only see search results from courses they have access to,
     // and that the results are filtered appropriately based on their role in each course.
     /**
-     * GET /search?q=:query&type=:type&courseId=:courseId&limit=:limit : perform unified semantic search across entity types.
+     * GET /search?q=:query&type=:type&courseId=:courseId&limit=:limit&sortBy=:sortBy : perform unified semantic search across entity types.
      * <p>
      * This endpoint provides a unified search interface that can search across multiple entity types
      * (exercises, pages, features, courses, etc.) with a consistent response format.
@@ -99,23 +99,25 @@ public class ExerciseWeaviateResource {
      * <p>
      * When courseId is not specified, the search is performed globally across all courses
      * the authenticated user has access to (as a student, TA, editor, or instructor).
+     * <p>
+     * When query is empty, the endpoint returns recent items (sorted by the sortBy parameter if provided).
      *
-     * @param query    the search query
+     * @param query    the search query (can be empty to get recent items)
      * @param type     optional entity type to filter by (e.g., "exercise", "page", "course")
      * @param courseId optional course ID to filter by (if null, searches across all accessible courses)
      * @param limit    maximum number of results (default: 10, max: 100)
+     * @param sortBy   optional sort field (e.g., "dueDate") - only used when query is empty
      * @return the ResponseEntity with status 200 (OK) and the list of unified search results in body
      */
     @GetMapping("search")
     @EnforceAtLeastStudent
     public ResponseEntity<List<GlobalSearchResultDTO>> globalSearch(@RequestParam("q") String query, @RequestParam(value = "type", required = false) String type,
-            @RequestParam(value = "courseId", required = false) Long courseId, @RequestParam(value = "limit", defaultValue = "10") int limit) {
+            @RequestParam(value = "courseId", required = false) Long courseId, @RequestParam(value = "limit", defaultValue = "10") int limit,
+            @RequestParam(value = "sortBy", required = false) String sortBy) {
 
-        log.debug("REST request for global search with query: '{}', type: {}, courseId: {}, limit: {}", query, type, courseId, limit);
+        log.debug("REST request for global search with query: '{}', type: {}, courseId: {}, limit: {}, sortBy: {}", query, type, courseId, limit, sortBy);
 
-        if (query.trim().isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
+        boolean isEmptyQuery = query == null || query.trim().isEmpty();
 
         // Apply limit bounds: minimum 1, maximum 100
         int effectiveLimit = Math.min(Math.max(limit, 1), 100);
@@ -128,21 +130,51 @@ public class ExerciseWeaviateResource {
                 // Course-specific search: validate access and search within that course
                 Course course = courseRepository.findByIdElseThrow(courseId);
                 authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-                searchResults = exerciseWeaviateService.searchExercises(query, courseId, effectiveLimit);
+
+                if (isEmptyQuery) {
+                    // For empty queries, fetch recent exercises instead of searching
+                    searchResults = exerciseWeaviateService.fetchRecentExercises(courseId, effectiveLimit, sortBy);
+                }
+                else {
+                    searchResults = exerciseWeaviateService.searchExercises(query, courseId, effectiveLimit);
+                }
             }
             else {
                 // Global search: get all courses accessible to the user and search across them
                 User user = userRepository.getUserWithGroupsAndAuthorities();
                 boolean isAdmin = authCheckService.isAdmin(user);
-                List<Course> accessibleCourses = courseRepository.findAllAccessibleCoursesForUser(user.getGroups(), isAdmin);
+
+                log.debug("Global search - User: {}, isAdmin: {}, authorities: {}", user.getLogin(), isAdmin, user.getAuthorities());
+
+                List<Course> accessibleCourses;
+                if (isAdmin) {
+                    // Admins have access to all courses
+                    accessibleCourses = courseRepository.findAll();
+                    log.debug("Admin user - fetched all {} courses", accessibleCourses.size());
+                }
+                else {
+                    // Regular users: get courses based on group memberships
+                    accessibleCourses = courseRepository.findAllAccessibleCoursesForUser(user.getGroups(), isAdmin);
+                    log.debug("Regular user - fetched {} accessible courses based on groups: {}", accessibleCourses.size(), user.getGroups());
+                }
 
                 if (accessibleCourses.isEmpty()) {
                     // User has no accessible courses, return empty results
+                    log.warn("User {} has no accessible courses for global search", user.getLogin());
                     return ResponseEntity.ok(List.of());
                 }
 
                 Set<Long> accessibleCourseIds = accessibleCourses.stream().map(Course::getId).collect(Collectors.toSet());
-                searchResults = exerciseWeaviateService.searchExercisesInCourses(query, accessibleCourseIds, effectiveLimit);
+                log.debug("Searching exercises in {} courses with IDs: {}", accessibleCourseIds.size(), accessibleCourseIds);
+
+                if (isEmptyQuery) {
+                    // For empty queries, fetch recent exercises instead of searching
+                    searchResults = exerciseWeaviateService.fetchRecentExercisesInCourses(accessibleCourseIds, effectiveLimit, sortBy);
+                }
+                else {
+                    searchResults = exerciseWeaviateService.searchExercisesInCourses(query, accessibleCourseIds, effectiveLimit);
+                }
+                log.debug("Found {} search results", searchResults.size());
             }
 
             var resultDTOs = searchResults.stream().map(GlobalSearchResultDTO::fromExerciseProperties).toList();

@@ -485,11 +485,14 @@ public class ExerciseWeaviateService {
      */
     public List<Map<String, Object>> searchExercisesInCourses(String query, Set<Long> courseIds, int limit) {
         try {
+            log.debug("searchExercisesInCourses - query: '{}', courseIds count: {}, limit: {}", query, courseIds != null ? courseIds.size() : 0, limit);
+
             var collection = weaviateService.getCollection(ExerciseSchema.COLLECTION_NAME);
 
             var result = collection.query.hybrid(query, h -> {
                 h.limit(limit);
                 if (courseIds != null && !courseIds.isEmpty()) {
+                    log.debug("Building OR filter for {} course IDs", courseIds.size());
                     // Build OR filter for all course IDs
                     // Start with first course ID
                     var courseIdsList = courseIds.stream().toList();
@@ -502,14 +505,92 @@ public class ExerciseWeaviateService {
 
                     h.filters(filter);
                 }
+                else {
+                    log.debug("No course ID filter applied - searching all courses");
+                }
                 return h;
             });
 
+            int resultCount = result.objects().size();
+            log.debug("Weaviate returned {} objects for query '{}'", resultCount, query);
             return result.objects().stream().map(obj -> obj.properties()).toList();
         }
         catch (Exception e) {
             log.error("Failed to search exercises across courses with query '{}': {}", query, e.getMessage(), e);
             throw new WeaviateException("Failed to search exercises across courses", e);
+        }
+    }
+
+    /**
+     * Fetches recent exercises for a specific course.
+     * Used when the search query is empty to show recent exercises.
+     *
+     * @param courseId optional course ID to filter by
+     * @param limit    maximum number of results
+     * @param sortBy   optional sort field (e.g., "dueDate")
+     * @return list of recent exercise results from Weaviate
+     */
+    public List<Map<String, Object>> fetchRecentExercises(Long courseId, int limit, String sortBy) {
+        try {
+            var collection = weaviateService.getCollection(ExerciseSchema.COLLECTION_NAME);
+
+            var result = collection.query.fetchObjects(q -> {
+                q.limit(limit);
+                if (courseId != null) {
+                    q.filters(Filter.property(ExerciseSchema.Properties.COURSE_ID).eq(courseId));
+                }
+                // Note: Weaviate sorting would require additional configuration
+                // For now, we fetch objects without explicit sorting
+                // Sorting can be implemented client-side or through Weaviate's sorting API
+                return q;
+            });
+
+            return result.objects().stream().map(obj -> obj.properties()).toList();
+        }
+        catch (Exception e) {
+            log.error("Failed to fetch recent exercises for course {}: {}", courseId, e.getMessage(), e);
+            throw new WeaviateException("Failed to fetch recent exercises", e);
+        }
+    }
+
+    /**
+     * Fetches recent exercises across multiple courses.
+     * Used when the search query is empty to show recent exercises globally.
+     *
+     * @param courseIds set of course IDs to filter by (null or empty for no filtering)
+     * @param limit     maximum number of results
+     * @param sortBy    optional sort field (e.g., "dueDate")
+     * @return list of recent exercise results from Weaviate
+     */
+    public List<Map<String, Object>> fetchRecentExercisesInCourses(Set<Long> courseIds, int limit, String sortBy) {
+        try {
+            var collection = weaviateService.getCollection(ExerciseSchema.COLLECTION_NAME);
+
+            var result = collection.query.fetchObjects(q -> {
+                q.limit(limit);
+                if (courseIds != null && !courseIds.isEmpty()) {
+                    // Build OR filter for all course IDs
+                    var courseIdsList = courseIds.stream().toList();
+                    var filter = Filter.property(ExerciseSchema.Properties.COURSE_ID).eq(courseIdsList.getFirst());
+
+                    // Chain OR conditions for remaining course IDs
+                    for (int i = 1; i < courseIdsList.size(); i++) {
+                        filter = filter.or(Filter.property(ExerciseSchema.Properties.COURSE_ID).eq(courseIdsList.get(i)));
+                    }
+
+                    q.filters(filter);
+                }
+                // Note: Weaviate sorting would require additional configuration
+                // For now, we fetch objects without explicit sorting
+                // Sorting can be implemented client-side or through Weaviate's sorting API
+                return q;
+            });
+
+            return result.objects().stream().map(obj -> obj.properties()).toList();
+        }
+        catch (Exception e) {
+            log.error("Failed to fetch recent exercises across courses: {}", e.getMessage(), e);
+            throw new WeaviateException("Failed to fetch recent exercises across courses", e);
         }
     }
 }

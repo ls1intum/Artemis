@@ -3,7 +3,25 @@ import { SearchOverlayService } from '../../services/search-overlay.service';
 import { OsDetectorService } from '../../services/os-detector.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faArrowDown, faArrowUp, faCalendarAlt, faCode, faCube, faFileAlt, faQuestionCircle, faSearch, faTimes, faTrophy, faUpload } from '@fortawesome/free-solid-svg-icons';
+import {
+    faArrowDown,
+    faArrowUp,
+    faBook,
+    faCalendarAlt,
+    faChartBar,
+    faCode,
+    faComments,
+    faCube,
+    faFileAlt,
+    faHashtag,
+    faQuestionCircle,
+    faSearch,
+    faTimes,
+    faTrophy,
+    faUpload,
+    faUsers,
+} from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DialogModule } from 'primeng/dialog';
 import { ChipModule } from 'primeng/chip';
@@ -11,6 +29,16 @@ import { GlobalSearchResult, GlobalSearchService } from '../../services/global-s
 import { Subject, catchError, debounceTime, distinctUntilChanged, of, switchMap } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
+
+export interface SearchableEntity {
+    id: string;
+    title: string;
+    description: string;
+    icon: IconDefinition;
+    type: 'page' | 'feature' | 'course';
+    enabled: boolean;
+    filterTag?: string;
+}
 
 @Component({
     selector: 'jhi-global-search-modal',
@@ -49,12 +77,74 @@ export class GlobalSearchModalComponent implements OnDestroy {
 
     protected searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
 
+    // Searchable entities for initial view
+    protected searchableEntities: SearchableEntity[] = [
+        {
+            id: 'exercises',
+            title: 'Exercises',
+            description: 'View and complete course exercises',
+            icon: faCube,
+            type: 'page',
+            enabled: true,
+            filterTag: 'exercise',
+        },
+        {
+            id: 'lectures',
+            title: 'Lecture Details',
+            description: 'View lecture content and units',
+            icon: faBook,
+            type: 'page',
+            enabled: false,
+        },
+        {
+            id: 'communication',
+            title: 'Communication',
+            description: 'Chat with classmates and instructors',
+            icon: faComments,
+            type: 'page',
+            enabled: false,
+        },
+        {
+            id: 'iris',
+            title: 'Dashboard with Iris',
+            description: 'Chat with Iris AI assistant',
+            icon: faHashtag,
+            type: 'page',
+            enabled: false,
+        },
+        {
+            id: 'users',
+            title: 'User Management',
+            description: 'Manage users and permissions',
+            icon: faUsers,
+            type: 'page',
+            enabled: false,
+        },
+        {
+            id: 'statistics',
+            title: 'Statistics',
+            description: 'View course statistics and analytics',
+            icon: faChartBar,
+            type: 'feature',
+            enabled: false,
+        },
+        {
+            id: 'calendar',
+            title: 'Calendar',
+            description: 'View your schedule and deadlines',
+            icon: faCalendarAlt,
+            type: 'feature',
+            enabled: false,
+        },
+    ];
+
     // Search debouncing
     private searchSubject = new Subject<string>();
 
     // Computed properties
     protected hasResults = computed(() => this.results().length > 0);
     protected showEmptyState = computed(() => this.hasSearched() && !this.isLoading() && !this.hasResults());
+    protected showInitialState = computed(() => !this.searchQuery() && !this.hasSearched() && this.activeFilters().length === 0);
 
     constructor() {
         // Set up search debouncing with RxJS
@@ -127,6 +217,41 @@ export class GlobalSearchModalComponent implements OnDestroy {
         }
     }
 
+    protected onEntityClick(entity: SearchableEntity) {
+        if (!entity.enabled) {
+            return;
+        }
+
+        // Add the filter
+        if (entity.filterTag) {
+            this.addFilter(entity.filterTag);
+        }
+
+        // Load recent items for this entity type
+        this.loadRecentItems(entity.filterTag);
+    }
+
+    private loadRecentItems(type?: string) {
+        if (!type) return;
+
+        this.isLoading.set(true);
+        // Search with empty query but with filter to get recent items
+        this.searchService
+            .search('', { type, sortBy: 'dueDate', limit: 10 })
+            .pipe(
+                catchError(() => {
+                    this.isLoading.set(false);
+                    return of([]);
+                }),
+            )
+            .subscribe((results) => {
+                this.results.set(results);
+                this.selectedIndex.set(0);
+                this.isLoading.set(false);
+                this.hasSearched.set(true);
+            });
+    }
+
     protected navigateToResult(result: GlobalSearchResult) {
         if (result.type === 'exercise' && result.id) {
             // Navigate to exercise detail page
@@ -147,28 +272,39 @@ export class GlobalSearchModalComponent implements OnDestroy {
     }
 
     protected moveSelection(direction: 'up' | 'down') {
-        const currentIndex = this.selectedIndex();
-        const resultsLength = this.results().length;
+        // Determine if we're navigating entities or results
+        const isInitialState = this.showInitialState();
+        const itemCount = isInitialState ? this.searchableEntities.length : this.results().length;
 
-        if (resultsLength === 0) return;
+        if (itemCount === 0) return;
+
+        const currentIndex = this.selectedIndex();
 
         if (direction === 'down') {
-            this.selectedIndex.set((currentIndex + 1) % resultsLength);
+            this.selectedIndex.set((currentIndex + 1) % itemCount);
         } else {
-            this.selectedIndex.set((currentIndex - 1 + resultsLength) % resultsLength);
+            this.selectedIndex.set((currentIndex - 1 + itemCount) % itemCount);
         }
 
         // Scroll selected item into view
-        this.scrollSelectedIntoView();
+        this.scrollSelectedIntoView(isInitialState);
     }
 
-    private scrollSelectedIntoView() {
+    private scrollSelectedIntoView(isEntityList = false) {
         setTimeout(() => {
-            const selectedElement = document.querySelector('.search-result-item.selected');
+            const selector = isEntityList ? '.entity-item.selected' : '.search-result-item.selected';
+            const selectedElement = document.querySelector(selector);
             if (selectedElement) {
                 selectedElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
         }, 0);
+    }
+
+    protected selectEntity(index: number) {
+        const entity = this.searchableEntities[index];
+        if (entity && entity.enabled) {
+            this.onEntityClick(entity);
+        }
     }
 
     protected getIconForType(type: string, badge?: string) {
@@ -227,16 +363,31 @@ export class GlobalSearchModalComponent implements OnDestroy {
         }
 
         // Enter to select
-        if (event.key === 'Enter' && this.hasResults()) {
+        if (event.key === 'Enter') {
             event.preventDefault();
-            this.selectResult(this.selectedIndex());
+            if (this.showInitialState()) {
+                // Select entity in initial state
+                this.selectEntity(this.selectedIndex());
+            } else if (this.hasResults()) {
+                // Select result in search results
+                this.selectResult(this.selectedIndex());
+            }
             return;
         }
 
         // # to add exercise filter
-        if (event.key === '#' && !this.activeFilters().includes('exercise')) {
+        if (event.key === '#') {
             event.preventDefault();
-            this.addFilter('exercise');
+            if (this.showInitialState()) {
+                // If in initial state, select exercises entity
+                const exerciseEntity = this.searchableEntities.find((e) => e.id === 'exercises');
+                if (exerciseEntity) {
+                    this.onEntityClick(exerciseEntity);
+                }
+            } else if (!this.activeFilters().includes('exercise')) {
+                // Otherwise, just add the filter
+                this.addFilter('exercise');
+            }
         }
     }
 
