@@ -21,6 +21,7 @@ import { HelpIconComponent } from '../../components/help-icon/help-icon.componen
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { Student } from 'app/openapi/model/student';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { CheckboxModule } from 'primeng/checkbox';
 import { PrimeTemplate } from 'primeng/api';
 
 const POSSIBLE_REGISTRATION_NUMBER_HEADERS = ['registrationnumber', 'matriculationnumber', 'matrikelnummer', 'number'];
@@ -28,6 +29,7 @@ const POSSIBLE_LOGIN_HEADERS = ['login', 'user', 'username', 'benutzer', 'benutz
 const POSSIBLE_EMAIL_HEADERS = ['email', 'e-mail', 'mail'];
 const POSSIBLE_FIRST_NAME_HEADERS = ['firstname', 'firstnameofstudent', 'givenname', 'forename', 'vorname'];
 const POSSIBLE_LAST_NAME_HEADERS = ['familyname', 'lastname', 'familynameofstudent', 'surname', 'nachname', 'familienname', 'name'];
+const POSSIBLE_PASSWORD_HEADERS = ['password', 'passwort', 'pw'];
 const POSSIBLE_ROOM_HEADERS = ['actualroom', 'actualRoom', 'raum', 'room', 'Room'];
 const POSSIBLE_SEAT_HEADERS = ['actualseat', 'actualSeat', 'sitzplatz', 'sitz', 'seat', 'Seat'];
 
@@ -40,7 +42,7 @@ interface CsvUser {
     templateUrl: './users-import-dialog.component.html',
     styleUrls: ['./users-import-dialog.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [FormsModule, TranslateDirective, FaIconComponent, HelpIconComponent, DialogModule, ArtemisTranslatePipe, PrimeTemplate],
+    imports: [FormsModule, TranslateDirective, FaIconComponent, HelpIconComponent, DialogModule, CheckboxModule, ArtemisTranslatePipe, PrimeTemplate],
 })
 export class UsersImportDialogComponent implements OnDestroy {
     private alertService = inject(AlertService);
@@ -65,6 +67,7 @@ export class UsersImportDialogComponent implements OnDestroy {
     usersToImport: StudentDTO[] = [];
     examUsersToImport: ExamUserDTO[] = [];
     notFoundUsers: Partial<StudentDTO>[] = [];
+    createInternalUsers = false;
 
     isParsing = false;
     validationError?: string;
@@ -92,6 +95,7 @@ export class UsersImportDialogComponent implements OnDestroy {
         this.examUsersToImport = [];
         this.notFoundUsers = [];
         this.hasImported = false;
+        this.createInternalUsers = false;
     }
 
     async onCSVFileSelect(event: any) {
@@ -157,6 +161,7 @@ export class UsersImportDialogComponent implements OnDestroy {
                     }) as ExamUserDTO,
             );
         } else {
+            const passwordHeader = usedHeaders.find((value) => POSSIBLE_PASSWORD_HEADERS.includes(value)) || '';
             return csvUsers.map(
                 (user: CsvUser) =>
                     ({
@@ -165,6 +170,7 @@ export class UsersImportDialogComponent implements OnDestroy {
                         email: user[emailHeader]?.trim() || '',
                         firstName: user[firstNameHeader]?.trim() || '',
                         lastName: user[lastNameHeader]?.trim() || '',
+                        ...(passwordHeader && user[passwordHeader]?.trim() ? { password: user[passwordHeader].trim() } : {}),
                     }) as StudentDTO,
             );
         }
@@ -259,7 +265,7 @@ export class UsersImportDialogComponent implements OnDestroy {
         } else if (this.adminUserMode()) {
             // convert StudentDTO to User
             const artemisUsers = this.usersToImport.map((student) => ({ ...student, visibleRegistrationNumber: student.registrationNumber }));
-            this.adminUserService.importAll(artemisUsers).subscribe({
+            this.adminUserService.importAll(artemisUsers, this.createInternalUsers).subscribe({
                 next: (res) => {
                     const convertedStudents =
                         res.body?.map((user) => ({

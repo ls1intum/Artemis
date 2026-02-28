@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.service.user;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.DEFAULT_LANGUAGE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PASSWORD_MAX_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.PASSWORD_MIN_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
@@ -774,6 +775,38 @@ public class UserService {
         }
 
         return notFoundUsers;
+    }
+
+    /**
+     * Imports users from the given list. For each user, it first tries to find the user in the database or LDAP.
+     * If the user is not found, it creates a new internal user with the provided data.
+     *
+     * @param userDtos the list of users to import, each containing at least a login and optionally a password
+     * @return a list of users that could not be imported due to errors (e.g., missing login)
+     */
+    public List<StudentDTO> importUsersAsInternalUsers(List<StudentDTO> userDtos) {
+        List<StudentDTO> failedUsers = new ArrayList<>();
+        for (var userDto : userDtos) {
+            var optionalStudent = findUser(userDto.registrationNumber(), userDto.login(), userDto.email());
+            if (optionalStudent.isEmpty()) {
+                if (!StringUtils.hasText(userDto.login())) {
+                    failedUsers.add(new StudentDTO(userDto.login(), userDto.firstName(), userDto.lastName(), userDto.registrationNumber(), userDto.email()));
+                    continue;
+                }
+                try {
+                    String normalizedPassword = StringUtils.hasText(userDto.password()) ? userDto.password() : null;
+                    userCreationService.createUser(userDto.login(), normalizedPassword, null, userDto.firstName() != null ? userDto.firstName() : "",
+                            userDto.lastName() != null ? userDto.lastName() : "", userDto.email() != null ? userDto.email() : userDto.login() + "@invalid",
+                            userDto.registrationNumber(), "", DEFAULT_LANGUAGE, true);
+                }
+                catch (Exception ex) {
+                    log.warn("Failed to create internal user with login '{}': {}", userDto.login(), ex.getMessage());
+                    failedUsers.add(new StudentDTO(userDto.login(), userDto.firstName(), userDto.lastName(), userDto.registrationNumber(), userDto.email()));
+                }
+            }
+        }
+
+        return failedUsers;
     }
 
     /**

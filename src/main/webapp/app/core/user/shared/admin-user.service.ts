@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import { createRequestOption } from 'app/shared/util/request.util';
@@ -22,12 +22,17 @@ export class AdminUserService {
     }
 
     /**
-     * Import a list of users from ldap to artemis
+     * Import a list of users to Artemis.
      * @param users The list of users to be imported.
-     * @return Observable<HttpResponse<User[]>> with not found Users
+     * @param createInternalUsers If true, users not found in the database or LDAP will be created as internal users.
+     * @return Observable<HttpResponse<User[]>> with users that could not be imported
      */
-    importAll(users: Partial<User>[]): Observable<HttpResponse<User[]>> {
-        return this.http.post<User[]>(`${this.resourceUrl}/import`, users, { observe: 'response' });
+    importAll(users: Partial<User>[], createInternalUsers = false): Observable<HttpResponse<User[]>> {
+        let params = new HttpParams();
+        if (createInternalUsers) {
+            params = params.set('createInternalUsers', 'true');
+        }
+        return this.http.post<User[]>(`${this.resourceUrl}/import`, users, { observe: 'response', params });
     }
 
     /**
