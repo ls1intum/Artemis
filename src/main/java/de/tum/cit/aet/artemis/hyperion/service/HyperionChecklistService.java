@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -187,14 +188,14 @@ public class HyperionChecklistService {
         }
 
         // Run three analyses concurrently
-        var competenciesMono = Mono.fromCallable(() -> runCompetencyInference(ctx.input(), ctx.parentObs(), ctx.taskNames(), ctx.courseId()))
+        var competenciesMono = Mono.fromCallable(() -> runCompetencyInference(ctx.input(), ctx.parentObs(), ctx.taskNames(), ctx.courseId(), ctx.userId()))
                 .subscribeOn(Schedulers.boundedElastic()).doOnError(e -> log.warn("Competency inference failed (exerciseId={})", request.exerciseId(), e)).onErrorReturn(List.of());
 
-        var difficultyMono = Mono.fromCallable(() -> runDifficultyAnalysis(ctx.input(), ctx.parentObs(), ctx.declaredDifficulty(), ctx.courseId()))
+        var difficultyMono = Mono.fromCallable(() -> runDifficultyAnalysis(ctx.input(), ctx.parentObs(), ctx.declaredDifficulty(), ctx.courseId(), ctx.userId()))
                 .subscribeOn(Schedulers.boundedElastic()).doOnError(e -> log.warn("Difficulty analysis failed (exerciseId={})", request.exerciseId(), e))
                 .onErrorReturn(DifficultyAssessmentDTO.unknown("Analysis failed"));
 
-        var qualityMono = Mono.fromCallable(() -> runQualityAnalysis(ctx.input(), ctx.parentObs(), ctx.courseId())).subscribeOn(Schedulers.boundedElastic())
+        var qualityMono = Mono.fromCallable(() -> runQualityAnalysis(ctx.input(), ctx.parentObs(), ctx.courseId(), ctx.userId())).subscribeOn(Schedulers.boundedElastic())
                 .doOnError(e -> log.warn("Quality analysis failed (exerciseId={})", request.exerciseId(), e)).onErrorReturn(List.of());
 
         return Mono.zip(competenciesMono, difficultyMono, qualityMono).timeout(ANALYSIS_TIMEOUT).map(resultTuple -> {
@@ -236,16 +237,16 @@ public class HyperionChecklistService {
 
         return Mono.fromCallable(() -> switch (section) {
             case COMPETENCIES -> {
-                List<InferredCompetencyDTO> competencies = runCompetencyInference(ctx.input(), ctx.parentObs(), ctx.taskNames(), ctx.courseId());
+                List<InferredCompetencyDTO> competencies = runCompetencyInference(ctx.input(), ctx.parentObs(), ctx.taskNames(), ctx.courseId(), ctx.userId());
                 BloomRadarDTO bloomRadar = computeBloomRadar(competencies);
                 yield new ChecklistAnalysisResponseDTO(competencies, bloomRadar, null, null);
             }
             case DIFFICULTY -> {
-                DifficultyAssessmentDTO difficulty = runDifficultyAnalysis(ctx.input(), ctx.parentObs(), ctx.declaredDifficulty(), ctx.courseId());
+                DifficultyAssessmentDTO difficulty = runDifficultyAnalysis(ctx.input(), ctx.parentObs(), ctx.declaredDifficulty(), ctx.courseId(), ctx.userId());
                 yield new ChecklistAnalysisResponseDTO(null, null, difficulty, null);
             }
             case QUALITY -> {
-                List<QualityIssueDTO> issues = runQualityAnalysis(ctx.input(), ctx.parentObs(), ctx.courseId());
+                List<QualityIssueDTO> issues = runQualityAnalysis(ctx.input(), ctx.parentObs(), ctx.courseId(), ctx.userId());
                 yield new ChecklistAnalysisResponseDTO(null, null, null, issues);
             }
         }).subscribeOn(Schedulers.boundedElastic()).timeout(ANALYSIS_TIMEOUT).onErrorResume(e -> {
@@ -300,11 +301,14 @@ public class HyperionChecklistService {
             taskNames = List.of();
         }
 
-        return new AnalysisContext(input, parentObs, taskNames, declaredDifficulty, courseId);
+        // Resolve user ID on the servlet thread where SecurityContextHolder is available.
+        Long userId = SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findIdByLogin).orElse(null);
+
+        return new AnalysisContext(input, parentObs, taskNames, declaredDifficulty, courseId, userId);
     }
 
     /** Internal record holding the shared context needed for analysis methods. */
-    private record AnalysisContext(Map<String, String> input, Observation parentObs, List<String> taskNames, String declaredDifficulty, long courseId) {
+    private record AnalysisContext(Map<String, String> input, Observation parentObs, List<String> taskNames, String declaredDifficulty, long courseId, @Nullable Long userId) {
     }
 
     /**
@@ -322,6 +326,9 @@ public class HyperionChecklistService {
         Observation observation = Observation.createNotStarted("hyperion.checklist.action", observationRegistry).contextualName("checklist action")
                 .lowCardinalityKeyValue(KeyValue.of(AI_SPAN_KEY, AI_SPAN_VALUE)).start();
 
+        // Resolve user ID on the servlet thread where SecurityContextHolder is available.
+        Long userId = SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findIdByLogin).orElse(null);
+
         return Mono.fromCallable(() -> {
             // Sanitize context once and reuse for both instructions and summary
             Map<String, String> sanitizedContext = sanitizeContext(request.context());
@@ -338,7 +345,6 @@ public class HyperionChecklistService {
 
                 String result = LLMTokenUsageService.extractResponseText(chatResponse);
 
-                Long userId = SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findIdByLogin).orElse(null);
                 llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, CHECKLIST_ACTION_PIPELINE_ID,
                         builder -> builder.withCourse(courseId).withUser(userId));
 
@@ -539,7 +545,7 @@ public class HyperionChecklistService {
     /**
      * Runs competency inference using the standardized catalog.
      */
-    private List<InferredCompetencyDTO> runCompetencyInference(Map<String, String> input, Observation parentObs, List<String> taskNames, long courseId) {
+    private List<InferredCompetencyDTO> runCompetencyInference(Map<String, String> input, Observation parentObs, List<String> taskNames, long courseId, @Nullable Long userId) {
         var competencyInput = new HashMap<>(input);
         competencyInput.put("task_names", taskNames.isEmpty() ? "(no tasks detected)" : String.join(", ", taskNames));
         String renderedPrompt = templates.render("/prompts/hyperion/checklist_competencies.st", competencyInput);
@@ -548,7 +554,6 @@ public class HyperionChecklistService {
             var chatResponse = chatClient.prompt().system("You are an expert in computer science education and curriculum design. Return only JSON matching the schema.")
                     .user(renderedPrompt).call().chatResponse();
 
-            Long userId = SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findIdByLogin).orElse(null);
             llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, COMPETENCY_INFERENCE_PIPELINE_ID,
                     builder -> builder.withCourse(courseId).withUser(userId));
 
@@ -605,14 +610,13 @@ public class HyperionChecklistService {
     /**
      * Runs difficulty analysis.
      */
-    private DifficultyAssessmentDTO runDifficultyAnalysis(Map<String, String> input, Observation parentObs, String declaredDifficulty, long courseId) {
+    private DifficultyAssessmentDTO runDifficultyAnalysis(Map<String, String> input, Observation parentObs, String declaredDifficulty, long courseId, @Nullable Long userId) {
         String renderedPrompt = templates.render("/prompts/hyperion/checklist_difficulty.st", input);
 
         return runWithObservation("hyperion.checklist.difficulty", "difficulty check", parentObs, () -> {
             var chatResponse = chatClient.prompt().system("You are an expert in computer science education. Return only JSON matching the schema.").user(renderedPrompt).call()
                     .chatResponse();
 
-            Long userId = SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findIdByLogin).orElse(null);
             llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, DIFFICULTY_ANALYSIS_PIPELINE_ID,
                     builder -> builder.withCourse(courseId).withUser(userId));
 
@@ -660,7 +664,7 @@ public class HyperionChecklistService {
     /**
      * Runs quality analysis.
      */
-    private List<QualityIssueDTO> runQualityAnalysis(Map<String, String> input, Observation parentObs, long courseId) {
+    private List<QualityIssueDTO> runQualityAnalysis(Map<String, String> input, Observation parentObs, long courseId, @Nullable Long userId) {
         String renderedPrompt = templates.render("/prompts/hyperion/checklist_quality.st", input);
 
         return runWithObservation("hyperion.checklist.quality", "quality check", parentObs, () -> {
@@ -669,7 +673,6 @@ public class HyperionChecklistService {
                             + "When in doubt, do NOT report an issue. An empty result is perfectly valid. Return only JSON matching the schema.")
                     .user(renderedPrompt).call().chatResponse();
 
-            Long userId = SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findIdByLogin).orElse(null);
             llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, QUALITY_ANALYSIS_PIPELINE_ID,
                     builder -> builder.withCourse(courseId).withUser(userId));
 

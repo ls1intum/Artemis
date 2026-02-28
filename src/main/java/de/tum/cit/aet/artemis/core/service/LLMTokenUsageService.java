@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -152,8 +153,7 @@ public class LLMTokenUsageService {
             var metadata = chatResponse.getMetadata();
             var usage = metadata.getUsage();
             String model = metadata.getModel() != null ? metadata.getModel() : "";
-            var llmRequest = buildLLMRequest(model, usage.getPromptTokens() != null ? usage.getPromptTokens() : 0,
-                    usage.getCompletionTokens() != null ? usage.getCompletionTokens() : 0, pipelineId);
+            var llmRequest = buildLLMRequest(model, Objects.requireNonNullElse(usage.getPromptTokens(), 0), Objects.requireNonNullElse(usage.getCompletionTokens(), 0), pipelineId);
             saveLLMTokenUsage(List.of(llmRequest), serviceType, builderFunction);
         }
         catch (Exception e) {
