@@ -8,7 +8,7 @@
 
 // Default timeouts (CI values)
 const DEFAULT_BUILD_RESULT_TIMEOUT = 90000; // 90 seconds
-const DEFAULT_BUILD_FINISH_TIMEOUT = 120000; // 120 seconds
+const DEFAULT_BUILD_FINISH_TIMEOUT = 60000; // 60 seconds
 const DEFAULT_EXAM_DASHBOARD_TIMEOUT = 60000; // 60 seconds
 
 /**

@@ -1,4 +1,5 @@
 import { expect, Locator, Page } from '@playwright/test';
+import { Commands } from '../../../commands';
 
 export class ProgrammingExerciseSubmissionsPage {
     private readonly page: Page;
@@ -15,18 +16,17 @@ export class ProgrammingExerciseSubmissionsPage {
     }
 
     async checkInstructorSubmission() {
-        let submissionRow = this.getSubmissionWithText('INSTRUCTOR');
+        const submissionRow = this.getSubmissionWithText('INSTRUCTOR');
         await this.checkSubmissionVisible(submissionRow);
     }
 
     async checkStudentSubmission() {
-        let submissionRow = this.getSubmissionWithText('MANUAL');
+        const submissionRow = this.getSubmissionWithText('MANUAL');
         await this.checkSubmissionVisible(submissionRow);
     }
 
     private async checkSubmissionVisible(submissionRow: Locator) {
-        await submissionRow.waitFor({ state: 'visible' });
-        expect(submissionRow).not.toBeUndefined();
+        await Commands.reloadUntilFound(this.page, submissionRow, 3000, 60000);
         expect(submissionRow.locator('jhi-result')).not.toBeUndefined();
     }
 }
