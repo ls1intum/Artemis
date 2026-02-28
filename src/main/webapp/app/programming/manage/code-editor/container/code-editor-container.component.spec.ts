@@ -28,6 +28,8 @@ class MockFileService {
     updateFileReference = jest.fn((file) => file);
 }
 
+const fileTreeChange$ = new Subject<FileCreatedEvent | FileDeletedEvent | FileRenamedEvent>();
+
 describe('CodeEditorContainerComponent', () => {
     let component: CodeEditorContainerComponent;
     let fixture: ComponentFixture<CodeEditorContainerComponent>;
@@ -254,11 +256,9 @@ describe('CodeEditorContainerComponent', () => {
     });
 
     describe('remote file tree sync events', () => {
-        let fileTreeChange$: Subject<FileCreatedEvent | FileDeletedEvent | FileRenamedEvent>;
         let mockSyncService: Partial<CodeEditorFileSyncService>;
 
         beforeEach(() => {
-            fileTreeChange$ = new Subject();
             mockSyncService = { fileTreeChange$: fileTreeChange$.asObservable() } as any;
         });
 

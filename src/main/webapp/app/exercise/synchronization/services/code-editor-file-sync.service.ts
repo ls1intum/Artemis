@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable, Subject, Subscription } from 'rxjs';
 import * as Y from 'yjs';
 import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate } from 'y-protocols/awareness';
@@ -77,13 +77,14 @@ type FileSyncEntry = {
  * Follows the same initial-sync, late-winning, and request-queuing patterns as
  * `ProblemStatementSyncService`.
  *
- * Provided at the component level (not root) for clean lifecycle per editor session.
- * Implements OnDestroy as a safety net — Angular calls ngOnDestroy on component-scoped
- * services when the host component is destroyed. The parent component should still call
- * reset() explicitly, but this ensures cleanup even if an error interrupts the normal flow.
+ * Provided at the root level (singleton). It supports only one active exercise session at a
+ * time. Calling `init()` while a prior session is active will silently reset the previous
+ * session. This is acceptable because the consuming component
+ * (`CodeEditorInstructorAndEditorContainerComponent`) is always destroyed and recreated on
+ * navigation, ensuring a clean lifecycle.
  */
-@Injectable()
-export class CodeEditorFileSyncService implements OnDestroy {
+@Injectable({ providedIn: 'root' })
+export class CodeEditorFileSyncService {
     private syncService = inject(ExerciseEditorSyncService);
     private accountService = inject(AccountService);
 
@@ -95,6 +96,9 @@ export class CodeEditorFileSyncService implements OnDestroy {
     private fileDocs = new Map<string, FileSyncEntry>();
     private recentRenames = new Map<string, string>();
     private renameTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
+    // These Subjects are intentionally never completed. As a root singleton, the service outlives
+    // individual component lifecycles. Completing them on reset() would prevent subsequent init()
+    // calls from emitting. Consumers must unsubscribe when they are destroyed.
     private fileTreeChangeSubject = new Subject<FileCreatedEvent | FileDeletedEvent | FileRenamedEvent>();
     private stateReplacedSubject = new Subject<{ filePath: string } & FileSyncState>();
 
@@ -112,10 +116,6 @@ export class CodeEditorFileSyncService implements OnDestroy {
      */
     get stateReplaced$(): Observable<{ filePath: string } & FileSyncState> {
         return this.stateReplacedSubject.asObservable();
-    }
-
-    ngOnDestroy(): void {
-        this.reset();
     }
 
     /**
@@ -164,9 +164,16 @@ export class CodeEditorFileSyncService implements OnDestroy {
      * Open a file for synchronization. Creates a Y.Doc + Awareness, wires update handlers,
      * and requests initial sync from peers.
      *
+     * Returns `undefined` if the service has not been initialized via `init()`. This is a
+     * defensive guard — callers (e.g. `onFileSyncLoad`) already check `isInitialized()`
+     * before calling, so this path is not expected during normal operation. If it does fire
+     * (e.g. due to a race between domain change and file load), the file simply won't be
+     * synced for that load; the next file selection after init() completes will work normally.
+     *
      * @param filePath The file path relative to the repository root.
      * @param initialContent Fallback content if no peer responds with existing state.
-     * @returns The Yjs document, shared text, and per-file awareness instance.
+     * @returns The Yjs document, shared text, and per-file awareness instance,
+     *          or `undefined` if the service is not yet initialized.
      */
     openFile(filePath: string, initialContent: string): FileSyncState | undefined {
         if (!this.isInitialized()) {

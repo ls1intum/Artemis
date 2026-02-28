@@ -350,7 +350,10 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
     }
 
     /**
-     * Emmiter function for when a file was deleted; notifies the parent component
+     * Emitter function for when a file was deleted; notifies the parent component.
+     * Called after the server-side delete succeeds. handleFileChange() is a synchronous
+     * in-memory update (repositoryFiles map + tree rebuild) that cannot fail, so the
+     * subsequent emitFileDeleted() call is always reached safely.
      * @param fileChange
      */
     onFileDeleted(fileChange: FileChange) {

@@ -25,6 +25,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { CodeEditorFileSyncService, FileSyncState } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 import { ExerciseEditorSyncService, repositoryTypeToSyncTarget } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { MonacoBinding } from 'y-monaco';
+import type { editor } from 'monaco-editor';
 /**
  * Enumeration specifying the loading state
  */
@@ -444,6 +445,10 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         model.setValue('');
         this.createFileBinding(syncState, model, editorInstance);
 
+        // Capturing model and editorInstance via closure is safe here: Monaco does not replace
+        // model objects internally (they are stable for the lifetime of a URI), and the editor
+        // instance is equally stable. This subscription is torn down by teardownFileBinding()
+        // on every file switch (line 409), so the captured references cannot go stale.
         this.stateReplacedSubscription = this.fileSyncService.stateReplaced$.pipe(filter((event) => event.filePath === fileName)).subscribe((replacedState) => {
             model.setValue(replacedState.text.toString());
             this.createFileBinding(replacedState, model, editorInstance);
@@ -454,11 +459,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
      * Create (or recreate) the Monaco <-> Yjs binding for a code file.
      * Uses a double-destroy guard pattern to prevent duplicate cleanup.
      */
-    private createFileBinding(
-        syncState: FileSyncState,
-        model: import('monaco-editor').editor.ITextModel,
-        editorInstance: import('monaco-editor').editor.IStandaloneCodeEditor,
-    ): void {
+    private createFileBinding(syncState: FileSyncState, model: editor.ITextModel, editorInstance: editor.IStandaloneCodeEditor): void {
         this.currentFileBinding?.destroy();
         this.fileBindingDestroyed = false;
         const binding = new MonacoBinding(syncState.text, model, new Set([editorInstance]), syncState.awareness);

@@ -256,6 +256,10 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
      * If fileBrowser is not yet rendered (e.g. during initial load), the event is safely
      * ignored. This is acceptable because the file browser fetches the full file list from
      * the server on initialization, so it will already reflect the current state.
+     *
+     * This follows the same pattern as {@link ProblemStatementSyncService}, where the sync
+     * service emits events and the consuming component handles them if ready, gracefully
+     * skipping events that arrive before the UI is initialized.
      */
     private handleRemoteFileTreeEvent(event: FileCreatedEvent | FileDeletedEvent | FileRenamedEvent): void {
         switch (event.eventType) {
