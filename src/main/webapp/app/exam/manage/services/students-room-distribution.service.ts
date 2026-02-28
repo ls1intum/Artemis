@@ -75,14 +75,22 @@ export class StudentsRoomDistributionService {
      * @param courseId id of the course
      * @param examId id of the exam
      * @param roomIds ids of the rooms
+     * @param examRoomAliases a mapping from room id to room alias, if an alias is set
      * @param reserveFactor percentage of seats that should be left empty
      * @param useOnlyDefaultLayouts defines if only default layouts should be used for distribution
      */
-    distributeStudentsAcrossRooms(courseId: number, examId: number, roomIds: number[], reserveFactor: number, useOnlyDefaultLayouts: boolean): Observable<HttpResponse<void>> {
+    distributeStudentsAcrossRooms(
+        courseId: number,
+        examId: number,
+        roomIds: number[],
+        examRoomAliases: Record<number, string>,
+        reserveFactor: number,
+        useOnlyDefaultLayouts: boolean,
+    ): Observable<HttpResponse<void>> {
         const requestUrl = `${this.BASE_URL}/courses/${courseId}/exams/${examId}/distribute-registered-students`;
         const params = new HttpParams().set('reserveFactor', reserveFactor).set('useOnlyDefaultLayouts', useOnlyDefaultLayouts);
 
-        return this.http.post<void>(requestUrl, roomIds, { params, observe: 'response' });
+        return this.http.post<void>(requestUrl, { roomIds, examRoomAliases }, { params, observe: 'response' });
     }
 
     /**
@@ -97,12 +105,7 @@ export class StudentsRoomDistributionService {
         }
 
         const requestUrl = `${this.BASE_URL}/courses/${courseId}/exams/${examId}/rooms-used`;
-        return this.http.get<RoomForDistributionDTO[]>(requestUrl).pipe(
-            map((rooms: RoomForDistributionDTO[]) => rooms),
-            catchError((error) => {
-                return throwError(() => error);
-            }),
-        );
+        return this.http.get<RoomForDistributionDTO[]>(requestUrl);
     }
 
     /**
@@ -113,12 +116,7 @@ export class StudentsRoomDistributionService {
     loadSeatsOfExamRoom(examRoomId: number): Observable<SeatsOfExamRoomDTO> {
         const requestUrl = `${this.BASE_URL}/rooms/${examRoomId}/seats`;
 
-        return this.http.get<SeatsOfExamRoomDTO>(requestUrl).pipe(
-            map((seatsOfExamRoom: SeatsOfExamRoomDTO) => seatsOfExamRoom),
-            catchError((error) => {
-                return throwError(() => error);
-            }),
-        );
+        return this.http.get<SeatsOfExamRoomDTO>(requestUrl);
     }
 
     /**
@@ -138,11 +136,32 @@ export class StudentsRoomDistributionService {
             newSeat: newSeat,
         };
 
-        return this.http.post<void>(requestUrl, requestBody).pipe(
-            map(() => {}),
-            catchError((error) => {
-                return throwError(() => error);
-            }),
-        );
+        return this.http.post<void>(requestUrl, requestBody).pipe(map(() => {}));
+    }
+
+    /**
+     * Sends a GET request to obtain all registered aliases for all rooms of the given exam in the given course
+     *
+     * @param courseId the id of the course
+     * @param examId the id of the exam
+     */
+    getAliases(courseId: number, examId: number): Observable<Record<string, string>> {
+        const requestUrl = `${this.BASE_URL}/courses/${courseId}/exams/${examId}/room-aliases`;
+
+        return this.http.get<Record<string, string>>(requestUrl);
+    }
+
+    /**
+     * Sends a POST request to update the registered aliases for all rooms of the given exam in the given course.
+     * Rooms for which no alias is specified are reset to having no alias.
+     *
+     * @param courseId the id of the course
+     * @param examId the id of the exam
+     * @param examRoomAliases mapping of exam room id to an alias
+     */
+    updateAliases(courseId: number, examId: number, examRoomAliases: Record<number, string>): Observable<void> {
+        const requestUrl = `${this.BASE_URL}/courses/${courseId}/exams/${examId}/room-aliases`;
+
+        return this.http.put<void>(requestUrl, examRoomAliases);
     }
 }

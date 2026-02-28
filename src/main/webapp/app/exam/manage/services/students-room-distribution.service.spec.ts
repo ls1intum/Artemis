@@ -111,11 +111,11 @@ describe('StudentsRoomDistributionService', () => {
             const useOnlyDefaultLayouts = true;
 
             let actualResponse: HttpResponse<void> | undefined;
-            service.distributeStudentsAcrossRooms(courseId, examId, roomIds, reserveFactor, useOnlyDefaultLayouts).subscribe((resp) => (actualResponse = resp));
+            service.distributeStudentsAcrossRooms(courseId, examId, roomIds, {}, reserveFactor, useOnlyDefaultLayouts).subscribe((resp) => (actualResponse = resp));
 
             const req = httpMock.expectOne((r) => r.url === `${BASE_URL}/courses/${courseId}/exams/${examId}/distribute-registered-students` && r.method === 'POST');
 
-            expect(req.request.body).toEqual(roomIds);
+            expect(req.request.body).toEqual({ examRoomAliases: {}, roomIds: roomIds });
             expect(req.request.params.get('reserveFactor')).toBe(reserveFactor.toString());
             expect(req.request.params.get('useOnlyDefaultLayouts')).toBe('true');
 
@@ -217,6 +217,31 @@ describe('StudentsRoomDistributionService', () => {
             });
 
             req.flush(null);
+        });
+    });
+
+    describe('getAliases', () => {
+        it('should send GET request and return aliases', () => {
+            const courseId = 3;
+            const examId = 9;
+
+            const mockAliases: Record<string, string> = {
+                '1': 'Main Hall',
+                '2': 'Overflow Room',
+            };
+
+            let actualAliases: Record<string, string> | undefined;
+
+            service.getAliases(courseId, examId).subscribe((aliases) => {
+                actualAliases = aliases;
+            });
+
+            const req = httpMock.expectOne(`${BASE_URL}/courses/${courseId}/exams/${examId}/room-aliases`);
+            expect(req.request.method).toBe('GET');
+
+            req.flush(mockAliases);
+
+            expect(actualAliases).toEqual(mockAliases);
         });
     });
 });

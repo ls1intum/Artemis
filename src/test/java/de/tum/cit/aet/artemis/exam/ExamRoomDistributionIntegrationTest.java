@@ -7,6 +7,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -24,7 +26,9 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
+import de.tum.cit.aet.artemis.exam.domain.room.ExamRoomExamAssignment;
 import de.tum.cit.aet.artemis.exam.dto.room.AttendanceCheckerAppExamInformationDTO;
+import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomDistributionRequestBodyDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomForDistributionDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ReseatInformationDTO;
@@ -32,6 +36,7 @@ import de.tum.cit.aet.artemis.exam.dto.room.SeatsOfExamRoomDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamRoomDistributionService;
 import de.tum.cit.aet.artemis.exam.service.ExamRoomService;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamRoomExamAssignmentTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamRoomTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamRoomZipFiles;
@@ -59,6 +64,9 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Autowired
     private ExamUserRepository examUserRepository;
+
+    @Autowired
+    private ExamRoomExamAssignmentTestRepository examRoomExamAssignmentRepository;
 
     private static final String STUDENT_LOGIN = TEST_PREFIX + "student1";
 
@@ -92,31 +100,36 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
     void testDistributeRegisteredStudentsAsStudent() throws Exception {
-        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/distribute-registered-students", Set.of(), HttpStatus.FORBIDDEN);
+        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/distribute-registered-students",
+                new ExamRoomDistributionRequestBodyDTO(List.of(), Map.of()), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
     void testDistributeRegisteredStudentsAsTutor() throws Exception {
-        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/distribute-registered-students", Set.of(), HttpStatus.FORBIDDEN);
+        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/distribute-registered-students",
+                new ExamRoomDistributionRequestBodyDTO(List.of(), Map.of()), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
     void testDistributeRegisteredStudentsAsEditor() throws Exception {
-        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/distribute-registered-students", Set.of(), HttpStatus.FORBIDDEN);
+        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/distribute-registered-students",
+                new ExamRoomDistributionRequestBodyDTO(List.of(), Map.of()), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
     void testDistributeRegisteredStudentsAsInstructor() throws Exception {
-        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/distribute-registered-students", Set.of(), HttpStatus.BAD_REQUEST);
+        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/distribute-registered-students",
+                new ExamRoomDistributionRequestBodyDTO(List.of(), Map.of()), HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testDistributeRegisteredStudentsAsAdmin() throws Exception {
-        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/distribute-registered-students", Set.of(), HttpStatus.BAD_REQUEST);
+        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/distribute-registered-students",
+                new ExamRoomDistributionRequestBodyDTO(List.of(), Map.of()), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -127,8 +140,9 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 200);
         request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileSingleExamRoom, HttpStatus.OK);
 
-        var ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001"));
-        request.post("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/distribute-registered-students", ids, HttpStatus.BAD_REQUEST);
+        List<Long> ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001")).stream().toList();
+        request.post("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/distribute-registered-students", new ExamRoomDistributionRequestBodyDTO(ids, Map.of()),
+                HttpStatus.BAD_REQUEST);
 
         verifyAllUsersAreNotDistributed(exam);
     }
@@ -154,7 +168,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
             encounteredRoomsAndSeats.add(roomAndSeat);
         });
 
-        var usedRooms = storedExam.getExamUsers().stream().map(ExamUser::getPlannedRoom).collect(Collectors.toSet());
+        Set<String> usedRooms = storedExam.getExamUsers().stream().map(ExamUser::getPlannedRoom).collect(Collectors.toSet());
         assertThat(usedRooms).containsExactlyInAnyOrder(roomNumbers);
     }
 
@@ -166,8 +180,9 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 200);
         request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileFourExamRooms, HttpStatus.OK);
 
-        var ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001", "0101.02.179"));
-        request.postWithoutResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/distribute-registered-students", ids, HttpStatus.OK);
+        List<Long> ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001", "0101.02.179")).stream().toList();
+        request.postWithoutResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/distribute-registered-students",
+                new ExamRoomDistributionRequestBodyDTO(ids, Map.of()), HttpStatus.OK);
 
         verifyAllUsersAreDistributedAcrossExactly(exam, "5602.EG.001", "0101.02.179");
     }
@@ -180,8 +195,9 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 200);
 
         examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileFourExamRooms);
-        var ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001", "0101.02.179"));
-        request.postWithoutResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/distribute-registered-students", ids, HttpStatus.OK);
+        List<Long> ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001", "0101.02.179")).stream().toList();
+        request.postWithoutResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/distribute-registered-students",
+                new ExamRoomDistributionRequestBodyDTO(ids, Map.of()), HttpStatus.OK);
 
         verifyAllUsersAreDistributedAcrossExactly(exam, "5602.EG.001", "0101.02.179");
     }
@@ -194,9 +210,9 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 200);
 
         examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileFourExamRooms);
-        var ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001"));
-        request.postWithoutResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/distribute-registered-students?useOnlyDefaultLayouts=false", ids,
-                HttpStatus.OK);
+        List<Long> ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001")).stream().toList();
+        request.postWithoutResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/distribute-registered-students?useOnlyDefaultLayouts=false",
+                new ExamRoomDistributionRequestBodyDTO(ids, Map.of()), HttpStatus.OK);
 
         verifyAllUsersAreDistributedAcrossExactly(exam, "5602.EG.001");
     }
@@ -209,11 +225,66 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 200);
 
         examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileFourExamRooms);
-        var ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("0101.02.179"));
+        Set<Long> ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("0101.02.179"));
         request.postWithoutResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/distribute-registered-students?useOnlyDefaultLayouts=false", ids,
                 HttpStatus.BAD_REQUEST);
 
         verifyAllUsersAreNotDistributed(exam);
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    void testDistributeRegisteredStudentsAllRoomsAliased() throws Exception {
+        examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, NUMBER_OF_STUDENTS);
+        examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileFourExamRooms);
+
+        Set<ExamRoom> rooms = examRoomRepository.findAllNewestExamRoomVersions();
+
+        Map<Long, String> aliasesById = rooms.stream().collect(Collectors.toMap(ExamRoom::getId, room -> "Alias-" + room.getRoomNumber()));
+
+        request.postWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/distribute-registered-students",
+                new ExamRoomDistributionRequestBodyDTO(rooms.stream().map(ExamRoom::getId).toList(), aliasesById), HttpStatus.OK);
+
+        Exam storedExam = examRepository.findByIdWithExamUsersElseThrow(exam1.getId());
+
+        Set<String> roomNumbers = rooms.stream().map(ExamRoom::getRoomNumber).collect(Collectors.toSet());
+
+        assertThat(storedExam.getExamUsers()).allSatisfy(examUser -> {
+            assertThat(examUser.getPlannedRoom()).isIn(roomNumbers);
+            assertThat(examUser.getPlannedSeat()).isNotBlank();
+        });
+
+        Map<String, String> aliasesByRoomNumber = examRoomExamAssignmentRepository.findAllByExamId(exam1.getId()).stream()
+                .collect(Collectors.toMap(assignment -> assignment.getExamRoom().getRoomNumber(), assignment -> Objects.requireNonNull(assignment.getRoomAlias())));
+
+        assertThat(aliasesByRoomNumber).allSatisfy((roomNumber, alias) -> assertThat(alias).isEqualTo("Alias-" + roomNumber));
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    void testDistributeRegisteredStudentsPartialAliases() throws Exception {
+        examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, NUMBER_OF_STUDENTS);
+        examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileFourExamRooms);
+
+        Set<ExamRoom> rooms = examRoomRepository.findAllNewestExamRoomVersions();
+        ExamRoom aliasedRoom = rooms.iterator().next();
+
+        Map<Long, String> aliasesById = Map.of(aliasedRoom.getId(), "SPECIAL-ROOM");
+
+        request.postWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/distribute-registered-students",
+                new ExamRoomDistributionRequestBodyDTO(rooms.stream().map(ExamRoom::getId).toList(), aliasesById), HttpStatus.OK);
+
+        Exam storedExam = examRepository.findByIdWithExamUsersElseThrow(exam1.getId());
+
+        Set<String> roomNumbers = rooms.stream().map(ExamRoom::getRoomNumber).collect(Collectors.toSet());
+
+        assertThat(storedExam.getExamUsers()).extracting(ExamUser::getPlannedRoom).allMatch(roomNumbers::contains);
+
+        Map<String, String> aliasesByRoomNumber = examRoomExamAssignmentRepository.findAllByExamId(exam1.getId()).stream().filter(assignment -> assignment.getRoomAlias() != null)
+                .collect(Collectors.toMap(assignment -> assignment.getExamRoom().getRoomNumber(), ExamRoomExamAssignment::getRoomAlias));
+
+        assertThat(aliasesByRoomNumber).hasSize(1);
+        assertThat(aliasesByRoomNumber).containsEntry(aliasedRoom.getRoomNumber(), "SPECIAL-ROOM");
     }
 
     /* Tests for the GET /api/exam/courses/{courseId}/exams/{examId}/attendance-checker-information endpoint */
@@ -280,7 +351,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, 10);
         examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileSingleExamRoom);
         List<Long> ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001")).stream().toList();
-        examRoomDistributionService.distributeRegisteredStudents(exam1.getId(), ids, true, 0.0);
+        examRoomDistributionService.distributeRegisteredStudents(exam1.getId(), ids, Map.of(), true, 0.0);
 
         var attendanceCheckerInformation = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance-checker-information", HttpStatus.OK,
                 AttendanceCheckerAppExamInformationDTO.class);
@@ -338,7 +409,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, 10);
         examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileFourExamRooms);
         List<Long> ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("0101.01.135", "0101.02.179", "0101.Z1.090", "5602.EG.001")).stream().toList();
-        examRoomDistributionService.distributeRegisteredStudents(exam1.getId(), ids, true, 0.0);
+        examRoomDistributionService.distributeRegisteredStudents(exam1.getId(), ids, Map.of(), true, 0.0);
 
         var attendanceCheckerInformation = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance-checker-information", HttpStatus.OK,
                 AttendanceCheckerAppExamInformationDTO.class);
@@ -352,7 +423,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
     void testGetAttendanceCheckerInformationRegisteredStudentsWithAutomaticDistributionNotAllDistributed() throws Exception {
         uploadFourRoomsAndDistributeStudentsInExam1(10);
-        examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, 5);
+        examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, 11, 15);
 
         var attendanceCheckerInformation = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance-checker-information", HttpStatus.OK,
                 AttendanceCheckerAppExamInformationDTO.class);
@@ -389,7 +460,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, numberOfStudents);
         examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileFourExamRooms);
         List<Long> ids = examRoomRepository.findAllNewestExamRoomVersions().stream().map(ExamRoom::getId).toList();
-        examRoomDistributionService.distributeRegisteredStudents(exam1.getId(), ids, true, 0.1);
+        examRoomDistributionService.distributeRegisteredStudents(exam1.getId(), ids, Map.of(), true, 0.1);
     }
 
     private void reloadExam1WithExamUsers() {
@@ -503,5 +574,129 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
 
         assertThat(anyExamUser.getPlannedRoom()).isEqualTo(roomToDistributeTo.getRoomNumber());
         assertThat(anyExamUser.getPlannedSeat()).isNotBlank();
+    }
+
+    /* Tests for the GET /api/exam/courses/{courseId}/exams/{examId}/room-aliases endpoint */
+
+    @Test
+    @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+    void testGetRoomAliasesAsStudentForbidden() throws Exception {
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/room-aliases", HttpStatus.FORBIDDEN, Map.class);
+    }
+
+    @Test
+    @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+    void testGetRoomAliasesAsTutorAllowed() throws Exception {
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/room-aliases", HttpStatus.OK, Map.class);
+    }
+
+    @Test
+    @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+    void testGetRoomAliasesReturnsOnlyConnectedRooms() throws Exception {
+        Map<String, String> aliases = Map.of("5602.EG.001", "Main Hall", "0101.02.179", "Overflow Room");
+
+        uploadRoomsAndDistributeWithAliases(aliases);
+
+        Map<String, String> result = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/room-aliases", HttpStatus.OK, new TypeReference<>() {
+        });
+
+        assertThat(result).containsExactlyInAnyOrderEntriesOf(aliases);
+    }
+
+    private void uploadRoomsAndDistributeWithAliases(Map<String, String> aliases) {
+        examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, NUMBER_OF_STUDENTS);
+        examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileFourExamRooms);
+
+        List<Long> ids = examRoomRepository.findAllNewestExamRoomVersions().stream().map(ExamRoom::getId).toList();
+
+        Map<Long, String> aliasById = examRoomRepository.findAllNewestExamRoomVersions().stream().filter(room -> aliases.containsKey(room.getRoomNumber()))
+                .collect(Collectors.toMap(ExamRoom::getId, room -> aliases.get(room.getRoomNumber())));
+
+        examRoomDistributionService.distributeRegisteredStudents(exam1.getId(), ids, aliasById, true, 0.0);
+    }
+
+    /* Tests for the PUT /api/exam/courses/{courseId}/exams/{examId}/room-aliases endpoint */
+
+    @Test
+    @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+    void testUpdateRoomAliasesAsStudentForbidden() throws Exception {
+        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/room-aliases", Map.of(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+    void testUpdateRoomAliasesAsTutorForbidden() throws Exception {
+        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/room-aliases", Map.of(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    void testUpdateRoomAliasesAsEditorForbidden() throws Exception {
+        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/room-aliases", Map.of(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    void testUpdateRoomAliasesAsInstructor() throws Exception {
+        uploadFourRoomsAndDistributeStudentsInExam1(NUMBER_OF_STUDENTS);
+
+        Set<ExamRoomExamAssignment> assignments = examRoomExamAssignmentRepository.findAllByExamId(exam1.getId());
+
+        Map<Long, String> newAliases = assignments.stream()
+                .collect(Collectors.toMap(assignment -> assignment.getExamRoom().getId(), assignment -> "NEW-" + assignment.getExamRoom().getRoomNumber()));
+
+        request.putWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/room-aliases", newAliases, HttpStatus.OK);
+
+        Set<ExamRoomExamAssignment> updatedAssignments = examRoomExamAssignmentRepository.findAllByExamId(exam1.getId());
+
+        assertThat(updatedAssignments).allSatisfy(assignment -> {
+            String expectedAlias = "NEW-" + assignment.getExamRoom().getRoomNumber();
+            assertThat(assignment.getRoomAlias()).isEqualTo(expectedAlias);
+        });
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    void testUpdateRoomAliasesPartialUpdate() throws Exception {
+        uploadFourRoomsAndDistributeStudentsInExam1(NUMBER_OF_STUDENTS);
+
+        Set<ExamRoomExamAssignment> assignments = examRoomExamAssignmentRepository.findAllByExamId(exam1.getId());
+
+        Optional<ExamRoomExamAssignment> assignmentToUpdate = assignments.stream().findAny();
+        assertThat(assignmentToUpdate).isPresent();
+
+        Map<Long, String> update = Map.of(assignmentToUpdate.get().getExamRoom().getId(), "SPECIAL-ALIAS");
+
+        request.putWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/room-aliases", update, HttpStatus.OK);
+
+        Set<ExamRoomExamAssignment> updatedAssignments = examRoomExamAssignmentRepository.findAllByExamId(exam1.getId());
+
+        for (var assignment : updatedAssignments) {
+            if (assignment.getExamRoom().getId().equals(assignmentToUpdate.get().getExamRoom().getId())) {
+                assertThat(assignment.getRoomAlias()).isEqualTo("SPECIAL-ALIAS");
+            }
+            else {
+                assertThat(assignment.getRoomAlias()).isNull();
+            }
+        }
+    }
+
+    /* Test the alias trimming and verification */
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    void testUpdateRoomAliasesTrimsInput() throws Exception {
+        uploadFourRoomsAndDistributeStudentsInExam1(NUMBER_OF_STUDENTS);
+
+        ExamRoomExamAssignment assignment = examRoomExamAssignmentRepository.findAllByExamId(exam1.getId()).stream().findAny().orElseThrow();
+
+        Map<Long, String> update = Map.of(assignment.getExamRoom().getId(), "   TRIMMED-ALIAS   ");
+
+        request.putWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/room-aliases", update, HttpStatus.OK);
+
+        ExamRoomExamAssignment updated = examRoomExamAssignmentRepository.findAllByExamId(exam1.getId()).stream()
+                .filter(a -> a.getExamRoom().getId().equals(assignment.getExamRoom().getId())).findFirst().orElseThrow();
+
+        assertThat(updated.getRoomAlias()).isEqualTo("TRIMMED-ALIAS");
     }
 }

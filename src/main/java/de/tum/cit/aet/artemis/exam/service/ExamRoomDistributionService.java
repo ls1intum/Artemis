@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.exam.domain.room.LayoutStrategy;
 import de.tum.cit.aet.artemis.exam.dto.room.AttendanceCheckerAppExamInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamDistributionCapacityDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomForDistributionDTO;
+import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomWithAliasDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.SeatsOfExamRoomDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
@@ -102,11 +103,13 @@ public class ExamRoomDistributionService {
      *
      * @param examId                The exam
      * @param examRoomIds           The ids of the rooms to distribute to, ordered, no duplicates
+     * @param examRoomAliases       Optional mapping of room id to alias
      * @param useOnlyDefaultLayouts if we want to only use 'default' layouts
      * @param reserveFactor         Percentage of seats that should not be included
      * @throws BadRequestAlertException if the capacity doesn't suffice to seat the students
      */
-    public void distributeRegisteredStudents(long examId, @NotEmpty List<Long> examRoomIds, boolean useOnlyDefaultLayouts, double reserveFactor) {
+    public void distributeRegisteredStudents(long examId, @NotEmpty List<Long> examRoomIds, Map<Long, String> examRoomAliases, boolean useOnlyDefaultLayouts,
+            double reserveFactor) {
         examRoomIds = examRoomIds.stream().distinct().toList();
 
         final Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
@@ -127,7 +130,7 @@ public class ExamRoomDistributionService {
                     Map.of("numberOfUsableSeats", capacities.combinedMaximumCapacity(), "numberOfExamUsers", numberOfExamUsers));
         }
 
-        assignExamRoomsToExam(exam, examRoomsForExam);
+        assignExamRoomsToExam(exam, examRoomsForExam, examRoomAliases);
 
         List<ExamRoom> orderedExamRooms = getOrderedExamRooms(examRoomsForExam, examRoomIds);
         if (defaultLayoutsSuffice) {
@@ -150,14 +153,16 @@ public class ExamRoomDistributionService {
      *
      * @param exam             the exam
      * @param examRoomsForExam all exam rooms that students of this exam can be distributed to
+     * @param examRoomAliases  optional mapping of room id to alias
      */
-    private void assignExamRoomsToExam(Exam exam, Set<ExamRoom> examRoomsForExam) {
+    private void assignExamRoomsToExam(Exam exam, Set<ExamRoom> examRoomsForExam, Map<Long, String> examRoomAliases) {
         examRoomExamAssignmentRepository.deleteAllByExamId(exam.getId());
         List<ExamRoomExamAssignment> examRoomExamAssignments = new ArrayList<>();
         for (ExamRoom examRoom : examRoomsForExam) {
             var examRoomExamAssignment = new ExamRoomExamAssignment();
             examRoomExamAssignment.setExamRoom(examRoom);
             examRoomExamAssignment.setExam(exam);
+            examRoomExamAssignment.setRoomAlias(examRoomAliases.get(examRoom.getId()));
             examRoomExamAssignments.add(examRoomExamAssignment);
         }
         examRoomExamAssignmentRepository.saveAll(examRoomExamAssignments);
@@ -313,8 +318,9 @@ public class ExamRoomDistributionService {
         examUserService.setActualRoomAndSeatTransientForExamUsers(examUsers);
 
         Set<ExamRoom> examRooms = examRoomRepository.findAllByExamId(examId);
+        Map<String, String> roomAliases = this.getAliases(examId);
 
-        return AttendanceCheckerAppExamInformationDTO.from(exam, examRooms);
+        return AttendanceCheckerAppExamInformationDTO.from(exam, examRooms, roomAliases);
     }
 
     /**
@@ -324,7 +330,7 @@ public class ExamRoomDistributionService {
      * @return A DTO representation of all exam rooms that are used in the exam.
      */
     public Set<ExamRoomForDistributionDTO> getRoomsUsedInExam(long examId) {
-        return examRoomRepository.findAllByExamId(examId).stream().map(ExamRoomForDistributionDTO::from).collect(Collectors.toSet());
+        return examRoomRepository.findAllByExamIdWithAliases(examId).stream().map(ExamRoomForDistributionDTO::from).collect(Collectors.toSet());
     }
 
     /**
@@ -464,5 +470,38 @@ public class ExamRoomDistributionService {
                 .ifPresent(examUser -> {
                     throw new BadRequestAlertException("Someone already sits here", ENTITY_NAME, "room.seatTaken", Map.of("studentLogin", examUser.getUser().getLogin()));
                 });
+    }
+
+    /**
+     * Gets a mapping from the original room number to an optionally specified alias
+     *
+     * @param examId the id of the exam
+     * @return A {roomNumber => alias} mapping
+     */
+    public Map<String, String> getAliases(long examId) {
+        return examRoomRepository.findAllByExamIdWithAliases(examId).stream().filter(room -> room.alias() != null)
+                .collect(Collectors.toMap(ExamRoomWithAliasDTO::roomNumber, ExamRoomWithAliasDTO::alias));
+    }
+
+    /**
+     * Updates the alias mappings from all rooms that are connected to the given exam. If an alias for a room of this exam
+     * is not explicitly given, a possibly pre-existing alias is removed.
+     *
+     * @param examId      the id of the exam
+     * @param roomAliases a {roomNumber => alias} mapping
+     */
+    public void updateAliases(long examId, Map<Long, String> roomAliases) {
+        Set<ExamRoomExamAssignment> roomAssignments = examRoomExamAssignmentRepository.findAllByExamId(examId);
+        Set<Long> roomIdsUsedInExam = roomAssignments.stream().map(assignment -> assignment.getExamRoom().getId()).collect(Collectors.toSet());
+        if (!roomIdsUsedInExam.containsAll(roomAliases.keySet())) {
+            throw new BadRequestAlertException("trying to update the alias for an unconnected room", ENTITY_NAME, "updateAliasUnconnectedRoom");
+        }
+
+        for (ExamRoomExamAssignment roomAssignment : roomAssignments) {
+            Long roomId = roomAssignment.getExamRoom().getId();
+            roomAssignment.setRoomAlias(roomAliases.get(roomId));
+        }
+
+        examRoomExamAssignmentRepository.saveAll(roomAssignments);
     }
 }

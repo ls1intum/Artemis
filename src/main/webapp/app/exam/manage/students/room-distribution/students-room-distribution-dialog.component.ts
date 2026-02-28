@@ -19,7 +19,7 @@ import { FormsModule } from '@angular/forms';
 import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, debounceTime, distinctUntilChanged, map } from 'rxjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { faBan, faThLarge } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faTag, faThLarge } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -38,10 +38,13 @@ import { ButtonModule } from 'primeng/button';
 })
 export class StudentsRoomDistributionDialogComponent implements OnInit {
     readonly RESERVE_FACTOR_DEFAULT_PERCENTAGE: number = 10;
+    // size defined in 20260130175050_changelog.xml
+    protected readonly ALIAS_NAME_MAX_LENGTH: number = 255;
 
     // Icons
     protected readonly faBan = faBan;
     protected readonly faThLarge = faThLarge;
+    protected readonly faTag = faTag;
 
     private readonly studentsRoomDistributionService: StudentsRoomDistributionService = inject(StudentsRoomDistributionService);
     courseId: InputSignal<number> = input.required();
@@ -59,6 +62,13 @@ export class StudentsRoomDistributionDialogComponent implements OnInit {
     private selectedRoomsCapacity: Signal<ExamDistributionCapacityDTO> = this.studentsRoomDistributionService.capacityData;
     selectedRooms: WritableSignal<RoomForDistributionDTO[]> = signal([]);
     hasSelectedRooms: Signal<boolean> = computed(() => this.selectedRooms().length > 0);
+    protected roomAliases: Signal<Record<number, string>> = computed(() =>
+        Object.fromEntries(
+            this.selectedRooms()
+                .filter((room) => room.alias)
+                .map((room) => [room.id, room.alias!]),
+        ),
+    );
     seatInfo: Signal<CapacityDisplayDTO> = computed(() => this.computeSeatInfo());
     canSeatAllStudents: Signal<boolean> = computed(() => this.seatInfo().usableCapacity >= this.seatInfo().totalStudents);
 
@@ -106,10 +116,10 @@ export class StudentsRoomDistributionDialogComponent implements OnInit {
     }
 
     attemptDistributeAndCloseDialog(): void {
-        const selectedRoomIds = this.selectedRooms().map((room) => room.id);
+        const selectedRoomIds: number[] = this.selectedRooms().map((room) => room.id);
 
         this.studentsRoomDistributionService
-            .distributeStudentsAcrossRooms(this.courseId(), this.exam().id!, selectedRoomIds, this.reserveFactor(), !this.allowNarrowLayouts())
+            .distributeStudentsAcrossRooms(this.courseId(), this.exam().id!, selectedRoomIds, this.roomAliases(), this.reserveFactor(), !this.allowNarrowLayouts())
             .subscribe({
                 next: () => {
                     this.closeDialog();
@@ -243,5 +253,21 @@ export class StudentsRoomDistributionDialogComponent implements OnInit {
 
     toggleNarrowLayouts(): void {
         this.allowNarrowLayouts.update((oldValue) => !oldValue);
+    }
+
+    protected setRoomAlias($event: Event, roomId: number) {
+        const input: HTMLInputElement = $event.target as HTMLInputElement;
+        const alias = input.value.trim();
+
+        this.selectedRooms.update((rooms) => rooms.map((room) => (room.id === roomId ? { ...room, alias: alias || undefined } : room)));
+    }
+
+    protected updateRoomAliases() {
+        this.studentsRoomDistributionService.updateAliases(this.courseId(), this.exam().id!, this.roomAliases()).subscribe({
+            next: () => {
+                this.closeDialog();
+                this.onSave.emit();
+            },
+        });
     }
 }

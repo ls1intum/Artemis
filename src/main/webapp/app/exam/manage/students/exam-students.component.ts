@@ -14,7 +14,7 @@ import { ExamManagementService } from 'app/exam/manage/services/exam-management.
 import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { faChair, faCheck, faFileExport, faInfoCircle, faPlus, faThLarge, faTimes, faUpload, faUserSlash, faUserTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faFileExport, faInfoCircle, faPlus, faThLarge, faTimes, faUpload, faUserSlash, faUserTimes } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -28,6 +28,7 @@ import { addPublicFilePrefix } from 'app/app.constants';
 import { StudentsRoomDistributionDialogComponent } from 'app/exam/manage/students/room-distribution/students-room-distribution-dialog.component';
 import { StudentsReseatingDialogComponent } from 'app/exam/manage/students/room-distribution/students-reseating-dialog.component';
 import { StudentsExportDialogComponent } from 'app/exam/manage/students/export-users/students-export-dialog.component';
+import { StudentsRoomDistributionService } from 'app/exam/manage/services/students-room-distribution.service';
 
 const cssClasses = {
     alreadyRegistered: 'already-registered',
@@ -67,6 +68,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     private userService = inject(UserService);
     private accountService = inject(AccountService);
     private studentExamService = inject(StudentExamService);
+    private readonly studentsRoomDistributionService = inject(StudentsRoomDistributionService);
 
     dataTable = viewChild.required(DataTableComponent);
 
@@ -100,7 +102,6 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     protected readonly faCheck = faCheck;
     protected readonly faTimes = faTimes;
     protected readonly faThLarge = faThLarge;
-    protected readonly faChair = faChair;
     protected readonly faFileExport = faFileExport;
 
     ngOnInit() {
@@ -146,8 +147,34 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
                     };
                 }) || [];
         }
-        this.isTestExam = this.exam.testExam!;
-        this.isLoading = false;
+
+        this.exchangeRoomsForAliasesIfPossible().subscribe(() => {
+            this.isTestExam = this.exam.testExam!;
+            this.isLoading = false;
+        });
+    }
+
+    private exchangeRoomsForAliasesIfPossible(): Observable<void> {
+        return this.studentsRoomDistributionService.getAliases(this.courseId, this.exam.id!).pipe(
+            tap((aliases: Record<string, string>) => {
+                this.allRegisteredUsers.forEach((examUser) => {
+                    const plannedRoom: string = examUser.plannedRoom ?? '';
+                    const actualRoom: string = examUser.actualRoom ?? '';
+
+                    if (plannedRoom && plannedRoom in aliases) {
+                        examUser.plannedRoomAlias = aliases[plannedRoom];
+                    }
+                    if (actualRoom && actualRoom in aliases) {
+                        examUser.actualRoomAlias = aliases[actualRoom];
+                    }
+                });
+            }),
+            catchError(() => {
+                // Aliases are optional; room numbers remain as-is on failure
+                return of();
+            }),
+            map(() => undefined),
+        );
     }
 
     ngOnDestroy() {

@@ -30,6 +30,14 @@ export class MockStudentsRoomDistributionService {
         return of();
     });
 
+    getAliases = jest.fn((courseId: number, examId: number): Observable<Record<string, string>> => {
+        return of({});
+    });
+
+    updateAliases = jest.fn((courseId: number, examId: number, examAliases: Record<number, string>): Observable<void> => {
+        return of();
+    });
+
     private convertBodyToHttpResponse<T>(body?: T): HttpResponse<T> {
         return new HttpResponse<T>({ status: 200, body: body });
     }
