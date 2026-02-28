@@ -230,6 +230,8 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateProgrammingExercise() throws Exception {
+        ZonedDateTime originalReleaseDate = programmingExercise.getReleaseDate();
+
         // Pre-populate Weaviate with the exercise to avoid race condition on first insert
         // This ensures we're actually testing the UPDATE path, not the INSERT path
         if (exerciseWeaviateService != null && weaviateService != null) {
@@ -241,13 +243,14 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
             });
         }
 
-        programmingExercise.setReleaseDate(ZonedDateTime.now().plusHours(1));
+        ZonedDateTime newReleaseDate = ZonedDateTime.now().plusHours(1);
+        programmingExercise.setReleaseDate(newReleaseDate);
         programmingExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, programmingExercise, 1)));
         programmingExercise.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
 
         ProgrammingExercise updatedExercise = request.putWithResponseBody("/api/programming/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
 
-        assertThat(updatedExercise.getReleaseDate()).isEqualTo(programmingExercise.getReleaseDate());
+        assertThat(updatedExercise.getReleaseDate()).isEqualTo(newReleaseDate);
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(programmingExercise), eq(Optional.of(programmingExercise)));
 
         if (!WeaviateTestUtil.shouldSkipWeaviateAssertions(weaviateService)) {
@@ -256,6 +259,12 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
                 assertThat(weaviateProperties).isNotNull();
                 assertThat(weaviateProperties.get(ExerciseSchema.Properties.TITLE)).isEqualTo(updatedExercise.getTitle());
                 assertThat(((Number) weaviateProperties.get(ExerciseSchema.Properties.EXERCISE_ID)).longValue()).isEqualTo(updatedExercise.getId());
+                // Verify that the release date was actually updated in Weaviate
+                Object releaseDateObj = weaviateProperties.get(ExerciseSchema.Properties.RELEASE_DATE);
+                assertThat(releaseDateObj).as("Release date should be updated in Weaviate").isNotNull();
+                ZonedDateTime weaviateReleaseDate = ZonedDateTime.parse(releaseDateObj.toString());
+                assertThat(weaviateReleaseDate).isEqualTo(newReleaseDate);
+                assertThat(weaviateReleaseDate).isNotEqualTo(originalReleaseDate);
             });
         }
     }
