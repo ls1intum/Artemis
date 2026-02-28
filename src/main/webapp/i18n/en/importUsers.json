@@ -26,7 +26,13 @@
             "registrationNumber": "registration number",
             "room": "Room",
             "seat": "Seat",
-            "email": "Email"
+            "email": "Email",
+            "password": "Password",
+            "createInternalUsers": {
+                "label": "Create users as internal Artemis users if not found",
+                "tooltip": "When enabled, users that are not found in the database or LDAP will be created as internal Artemis users. You can optionally include a 'password' column in the CSV file to set specific passwords. If no password is provided, a random password will be generated."
+            },
+            "numberOfUsersFailed": "Failed:"
         }
     }
 }

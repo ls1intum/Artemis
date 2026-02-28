@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -283,15 +284,23 @@ public class AdminUserResource {
      * <p>
      * This method first tries to find the user in the internal Artemis user database (because the user is probably already using Artemis).
      * In case the user cannot be found, it additionally searches the connected LDAP in case it is configured.
+     * If {@code createInternalUsers} is true, users not found in the database or LDAP will be created as internal Artemis users.
      *
-     * @param userDtos the list of users (with at one unique user identifier) who should be imported to Artemis
-     * @return the list of users who could not be imported, because they could NOT be found in the Artemis database and could NOT be found in the connected LDAP
+     * @param userDtos            the list of users (with at least one unique user identifier) who should be imported to Artemis
+     * @param createInternalUsers if true, users not found in the database or LDAP will be created as internal users with optional passwords
+     * @return the list of users who could not be imported
      */
     @PostMapping("users/import")
-    public ResponseEntity<List<StudentDTO>> importUsers(@RequestBody List<StudentDTO> userDtos) {
-        log.debug("REST request to import {} to Artemis", userDtos);
-        List<StudentDTO> notFoundStudentsDtos = userService.importUsers(userDtos);
-        return ResponseEntity.ok().body(notFoundStudentsDtos);
+    public ResponseEntity<List<StudentDTO>> importUsers(@RequestBody List<StudentDTO> userDtos, @RequestParam(defaultValue = "false") boolean createInternalUsers) {
+        log.debug("REST request to import {} users to Artemis (createInternalUsers: {})", userDtos.size(), createInternalUsers);
+        List<StudentDTO> failedStudentsDtos;
+        if (createInternalUsers) {
+            failedStudentsDtos = userService.importUsersAsInternalUsers(userDtos);
+        }
+        else {
+            failedStudentsDtos = userService.importUsers(userDtos);
+        }
+        return ResponseEntity.ok().body(failedStudentsDtos);
     }
 
     /**
