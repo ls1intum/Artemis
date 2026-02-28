@@ -1,22 +1,29 @@
 <button class="back-button btn d-inline-flex align-items-center gap-1 text-secondary text-decoration-none p-1" type="button" (click)="back.emit()">
-    <fa-icon [icon]="faArrowLeft" />
+    <fa-icon [icon]="faArrowLeft" aria-hidden="true" />
     {{ 'entity.action.back' | artemisTranslate }}
 </button>
-<div class="lecture-results-list">
+<div class="lecture-results-list" role="listbox" aria-live="polite" [attr.aria-label]="'global.search.lectureResultsAriaLabel' | artemisTranslate">
     @if (lectureResults().length === 0) {
         <span class="d-block text-secondary text-center py-5">{{ 'global.search.noResultsFound' | artemisTranslate }}</span>
     } @else {
-        @for (result of lectureResults(); track result.lectureUnitId) {
-            <a class="lecture-result-card border p-3 text-decoration-none d-block" [href]="result.lectureUnitLink">
+        @for (result of lectureResults(); track $index) {
+            <a
+                #cardRef
+                class="lecture-result-card border p-3 text-decoration-none d-block"
+                role="option"
+                [attr.aria-selected]="selectedIndex() === $index"
+                [class.is-selected]="selectedIndex() === $index"
+                [routerLink]="result.lectureUnitLink"
+            >
                 <div class="d-flex align-items-start gap-2 mb-2">
                     <div class="lecture-card-icon-box d-flex align-items-center justify-content-center flex-shrink-0">
-                        <fa-icon [icon]="faFileLines" />
+                        <fa-icon [icon]="faFileLines" aria-hidden="true" />
                     </div>
-                    <div class="d-flex flex-column flex-grow-1" style="min-width: 0; gap: 0.125rem">
-                        <span class="d-block fw-medium text-body" style="font-size: 0.875rem">{{ result.lectureUnitName }}</span>
+                    <div class="d-flex flex-column flex-grow-1 lecture-card-meta">
+                        <span class="d-block fw-medium text-body lecture-card-title">{{ result.lectureUnitName }}</span>
                         <div class="lecture-card-unit d-flex align-items-center gap-2">
                             <span>{{ result.courseName }} › {{ result.lectureName }}</span>
-                            <span class="lecture-card-page">pg. {{ result.pageNumber }}</span>
+                            <span class="lecture-card-page">{{ 'global.search.pageAbbreviation' | artemisTranslate }} {{ result.pageNumber }}</span>
                         </div>
                     </div>
                 </div>
