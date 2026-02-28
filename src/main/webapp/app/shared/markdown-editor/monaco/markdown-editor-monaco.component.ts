@@ -36,7 +36,7 @@ import {
     NgbNavOutlet,
     NgbTooltip,
 } from '@ng-bootstrap/ng-bootstrap';
-import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
+import { TextEditorAction, TextStyleTextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { BoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
 import { ItalicAction } from 'app/shared/monaco-editor/model/actions/italic.action';
 import { UnderlineAction } from 'app/shared/monaco-editor/model/actions/underline.action';
@@ -98,6 +98,7 @@ export enum MarkdownEditorHeight {
 }
 
 interface MarkdownActionsByGroup {
+    style: TextStyleTextEditorAction[];
     standard: TextEditorAction[];
     header: HeadingAction[];
     color?: ColorAction;
@@ -330,6 +331,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     constrainDragPositionFn?: (pointerPosition: Point) => Point;
     isResizing = false;
     displayedActions: MarkdownActionsByGroup = {
+        style: [],
         standard: [],
         header: [],
         color: undefined,
@@ -338,6 +340,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         artemisIntelligence: [],
         meta: [],
     };
+    readonly showTextStyleActions = signal<boolean>(true);
+    readonly showNonTextStyleActions = signal<boolean>(true);
+    private selectionChangeListener?: { dispose(): void };
 
     /**
      * Color mapping from hex codes to CSS class names.
@@ -449,7 +454,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.minWrapperHeight = this.resizableMinHeight.valueOf();
         this.constrainDragPositionFn = this.constrainDragPosition.bind(this);
         this.displayedActions = {
-            standard: this.filterDisplayedActions(this.defaultActions),
+            style: this.filterDisplayedActions(this.defaultActions).filter((action) => action instanceof TextStyleTextEditorAction) as TextStyleTextEditorAction[],
+            standard: this.filterDisplayedActions(this.defaultActions).filter((action) => !(action instanceof TextStyleTextEditorAction)),
             header: this.filterDisplayedActions(this.headerActions?.actions ?? []),
             color: this.filterDisplayedAction(this.colorAction),
             domain: {
@@ -529,6 +535,10 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         if (this.useDefaultMarkdownEditorOptions) {
             this.monacoEditor.applyOptionPreset(DEFAULT_MARKDOWN_EDITOR_OPTIONS);
         }
+        if (this.isInCommunication()) {
+            this.showTextStyleActions.set(false);
+            this.selectionChangeListener = this.monacoEditor.onDidChangeTextSelection((selection) => this.onSelectionChanged(selection));
+        }
         this.renderEditorWidgets();
         this.updateReviewCommentButton();
     }
@@ -552,11 +562,20 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.resizeObserver?.disconnect();
         this.reviewCommentManager?.disposeAll();
         this.monacoEditor?.clearLineDecorationsHoverButton();
+        this.selectionChangeListener?.dispose();
     }
 
     onTextChanged(event: { text: string; fileName: string }): void {
         this.markdown = event.text;
         this.markdownChange.emit(event.text);
+    }
+
+    onSelectionChanged(selection: { isEmpty: boolean }): void {
+        if (!selection.isEmpty === this.showTextStyleActions() && selection.isEmpty === this.showNonTextStyleActions()) {
+            return;
+        }
+        this.showTextStyleActions.set(!selection.isEmpty);
+        this.showNonTextStyleActions.set(selection.isEmpty);
     }
 
     /**
