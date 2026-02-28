@@ -7,6 +7,8 @@ import * as Y from 'yjs';
 import { Awareness, encodeAwarenessUpdate } from 'y-protocols/awareness';
 import { CodeEditorFileSyncService, FileSyncState } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { AlertService } from 'app/shared/service/alert.service';
+import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import {
     ExerciseEditorSyncEvent,
     ExerciseEditorSyncEventType,
@@ -52,6 +54,7 @@ describe('CodeEditorFileSyncService', () => {
                         userIdentity: userIdentitySignal,
                     },
                 },
+                { provide: AlertService, useClass: MockAlertService },
             ],
         });
 
