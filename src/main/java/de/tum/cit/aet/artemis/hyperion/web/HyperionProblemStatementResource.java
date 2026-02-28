@@ -193,7 +193,7 @@ public class HyperionProblemStatementResource {
     public ResponseEntity<ChecklistActionResponseDTO> applyChecklistAction(@PathVariable long courseId, @Valid @RequestBody ChecklistActionRequestDTO request) {
         log.debug("REST request to Hyperion checklist action [{}] for course [{}]", request.actionType(), courseId);
         courseRepository.findByIdElseThrow(courseId);
-        var actionResult = checklistService.applyChecklistAction(request).join();
+        var actionResult = checklistService.applyChecklistAction(request, courseId).join();
         return ResponseEntity.ok(actionResult);
     }
 
