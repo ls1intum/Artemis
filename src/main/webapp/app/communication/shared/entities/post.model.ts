@@ -11,6 +11,7 @@ export class Post extends Posting {
     public resolved?: boolean;
     public forwardedPosts?: (Post | undefined)[] = [];
     public forwardedAnswerPosts?: (AnswerPost | undefined)[] = [];
+    public visibleForStudents?: boolean;
 
     constructor() {
         super();

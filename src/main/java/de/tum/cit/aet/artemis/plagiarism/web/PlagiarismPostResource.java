@@ -34,6 +34,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostCreationDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostCreationResponseDTO;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismPostService;
 import tech.jhipster.web.util.PaginationUtil;
 
@@ -58,31 +60,32 @@ public class PlagiarismPostResource {
     }
 
     /**
-     * POST /courses/{courseId}/posts : Create a new post
+     * POST /courses/{courseId}/posts: Create a new post
      *
-     * @param courseId id of the course the post belongs to
-     * @param post     post to create
+     * @param courseId id of course the post belongs to
+     * @param postDto  post to create
      * @return ResponseEntity with status 201 (Created) containing the created post in the response body,
-     *         or with status 400 (Bad Request) if the checks on user, course or post validity fail
+     *         or with status 400 (Bad Request) if the checks on user, course- or post-validity fail
      */
     @PostMapping("courses/{courseId}/posts")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Post> createPost(@PathVariable Long courseId, @Valid @RequestBody Post post) throws URISyntaxException {
-        log.debug("POST createPost invoked for course {} with post {}", courseId, post.getContent());
+    public ResponseEntity<PlagiarismPostCreationResponseDTO> createPost(@PathVariable Long courseId, @Valid @RequestBody PlagiarismPostCreationDTO postDto)
+            throws URISyntaxException {
+        log.debug("POST createPost invoked for course {} with post {}", courseId, postDto.content());
         long start = System.nanoTime();
-        Post createdPost = plagiarismPostService.createPost(courseId, post);
+        PlagiarismPostCreationResponseDTO createdPost = plagiarismPostService.createPost(courseId, postDto);
         log.info("createPost took {}", TimeLogUtil.formatDurationFrom(start));
-        return ResponseEntity.created(new URI("/api/plagiarism/courses/" + courseId + "/posts/" + createdPost.getId())).body(createdPost);
+        return ResponseEntity.created(new URI("/api/plagiarism/courses/" + courseId + "/posts/" + createdPost.id())).body(createdPost);
     }
 
     /**
-     * PUT /courses/{courseId}/posts/{postId} : Update an existing post with given id
+     * PUT /courses/{courseId}/posts/{postId}: Update an existing post with given id
      *
-     * @param courseId id of the course the post belongs to
+     * @param courseId id of course the post belongs to
      * @param postId   id of the post to update
      * @param post     post to update
      * @return ResponseEntity with status 200 (OK) containing the updated post in the response body,
-     *         or with status 400 (Bad Request) if the checks on user, course or post validity fail
+     *         or with status 400 (Bad Request) if the checks on user, course- or post-validity fail
      */
     @PutMapping("courses/{courseId}/posts/{postId}")
     @EnforceAtLeastInstructor
@@ -95,11 +98,11 @@ public class PlagiarismPostResource {
     }
 
     /**
-     * GET /courses/{courseId}/posts : Get all posts for a course by its id
+     * GET /courses/{courseId}/posts: Get all posts for a course by its id
      *
      * @param postContextFilter request param for filtering posts
      * @return ResponseEntity with status 200 (OK) and with body all posts for course, that match the specified context
-     *         or 400 (Bad Request) if the checks on user, course or post validity fail
+     *         or 400 (Bad Request) if the checks on user, course, or post-validity fail
      */
     @GetMapping("courses/{courseId}/posts")
     @EnforceAtLeastStudent
@@ -118,12 +121,12 @@ public class PlagiarismPostResource {
     }
 
     /**
-     * DELETE /courses/{courseId}/posts/{id} : Delete a post by its id
+     * DELETE /courses/{courseId}/posts/{id}: Delete a post by its id
      *
-     * @param courseId id of the course the post belongs to
+     * @param courseId id of course the post belongs to
      * @param postId   id of the post to delete
      * @return ResponseEntity with status 200 (OK),
-     *         or 400 (Bad Request) if the checks on user, course or post validity fail
+     *         or 400 (Bad Request) if the checks on user, course, or post-validity fail
      */
     @DeleteMapping("courses/{courseId}/posts/{postId}")
     @EnforceAtLeastInstructor

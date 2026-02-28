@@ -206,6 +206,12 @@
             "courseIdMissing": "The courseId is required.",
             "forbidChangeCourseId": "Exercise course id does not match the stored course id"
         },
+        "PlagiarismPost": {
+            "idNull": "The plagiarism post must have an id.",
+            "courseInformationSharingDisabled": "Posting is disabled for this course.",
+            "plagiarismCaseMissing": "The post must be associated with a plagiarism case.",
+            "idExists": "A new post cannot already have an ID"
+        },
         "ProblemStatementGeneration": {
             "generatedProblemStatementTooLong": "The generated problem statement is too long. Please try again with a different prompt.",
             "chatClientNotConfigured": "AI generation is currently unavailable. Please contact your administrator.",
