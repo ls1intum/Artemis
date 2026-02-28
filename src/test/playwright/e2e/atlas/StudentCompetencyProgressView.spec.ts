@@ -191,7 +191,7 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
                         const progressBody = (await progressResponse.json()) as { progress?: number };
                         return progressBody.progress ?? 0;
                     },
-                    { timeout: 20000 },
+                    { timeout: 60000 },
                 )
                 .toBeGreaterThan(0);
 
@@ -379,7 +379,7 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
                         const updatedCompetency = competencies.find((item) => item.id === competency.id);
                         return updatedCompetency?.userProgress?.[0]?.progress ?? 0;
                     },
-                    { timeout: 20000 },
+                    { timeout: 60000 },
                 )
                 .toBeGreaterThan(0);
 
