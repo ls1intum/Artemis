@@ -118,13 +118,13 @@ To add many users at once, you can import them from a CSV file:
 
 The CSV file should contain one user per row with a header row. The following column headers are recognized (case-insensitive, spaces are ignored):
 
-| Field               | Accepted Headers                                                                              | Required                    |
-|---------------------|-----------------------------------------------------------------------------------------------|-----------------------------|
-| Registration Number | `registrationNumber`, `matriculationNumber`, `matrikelnummer`, `number`                        | At least one of these three |
-| Login               | `login`, `user`, `username`, `benutzer`, `benutzername`                                       | fields must be              |
-| Email               | `email`, `e-mail`, `mail`                                                                     | present per row             |
-| First Name          | `firstName`, `firstNameOfStudent`, `givenName`, `forename`, `vorname`                         | Optional                    |
-| Last Name           | `familyName`, `lastName`, `familyNameOfStudent`, `surname`, `nachname`, `familienname`, `name`| Optional                    |
+| Field               | Accepted Headers                                                                              | Required |
+|---------------------|-----------------------------------------------------------------------------------------------|----------|
+| Registration Number | `registrationNumber`, `matriculationNumber`, `matrikelnummer`, `number`                        | Yes*     |
+| Login               | `login`, `user`, `username`, `benutzer`, `benutzername`                                       | Yes*     |
+| Email               | `email`, `e-mail`, `mail`                                                                     | Yes*     |
+| First Name          | `firstName`, `firstNameOfStudent`, `givenName`, `forename`, `vorname`                         | No       |
+| Last Name           | `familyName`, `lastName`, `familyNameOfStudent`, `surname`, `nachname`, `familienname`, `name`| No       |
 
 <Callout variant={CalloutVariant.info}>
     Each row in the CSV file must contain at least one of the following: a registration number, a login, or an email address. Rows missing all three identifiers will be flagged as invalid.
