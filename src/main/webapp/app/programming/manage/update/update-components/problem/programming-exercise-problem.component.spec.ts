@@ -4,6 +4,7 @@ import { of, throwError } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExerciseProblemComponent } from 'app/programming/manage/update/update-components/problem/programming-exercise-problem.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
 import { programmingExerciseCreationConfigMock } from 'test/helpers/mocks/programming-exercise-creation-config-mock';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -226,9 +227,11 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         const emitSpy = jest.spyOn(comp.programmingExerciseChange, 'emit');
 
-        comp.onCompetencyLinksChange([{ id: 1 }] as any);
+        const mockLink = new CompetencyExerciseLink({ id: 1, title: 'Test' } as any, programmingExercise, 1);
+        comp.onCompetencyLinksChange([mockLink]);
 
-        expect(programmingExercise.competencyLinks).toEqual([{ id: 1 }]);
+        expect(programmingExercise.competencyLinks).toHaveLength(1);
+        expect(programmingExercise.competencyLinks![0]).toBeInstanceOf(CompetencyExerciseLink);
         expect(emitSpy).toHaveBeenCalled();
     });
 
@@ -445,8 +448,9 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         comp.onInstructionChange('Updated statement');
 
+        expect(programmingExerciseSpy).toHaveBeenCalledOnce();
+        expect(programmingExerciseSpy).toHaveBeenCalledWith(expect.objectContaining({ problemStatement: 'Updated statement' }));
         expect(exercise.problemStatement).toBe('Updated statement');
         expect(problemStatementSpy).toHaveBeenCalledWith('Updated statement');
-        expect(programmingExerciseSpy).toHaveBeenCalledWith(exercise);
     });
 });

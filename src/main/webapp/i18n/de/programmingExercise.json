@@ -802,6 +802,35 @@
                 "error": {
                     "export": "Kann Aufgabe nicht exportieren: {{ message }}"
                 }
+            },
+            "instructorChecklist": {
+                "title": "Checkliste für Lehrende",
+                "analyze": "Problemstellung analysieren",
+                "analyzing": "Analysiere...",
+                "defaultMessage": "Klicke auf \"Problemstellung analysieren\", um nach Qualitätsproblemen zu suchen.",
+                "quality": {
+                    "title": "Qualitätsprobleme",
+                    "empty": "Keine Qualitätsprobleme gefunden.",
+                    "fix": "Beheben",
+                    "suggestedFix": "Vorgeschlagene Lösung:",
+                    "fixAll": "Alle Probleme beheben",
+                    "fixIssue": "KI-Lösung für dieses Problem anwenden",
+                    "fixSelected": "Ausgewählte beheben",
+                    "discardIssue": "Dieses Problem verwerfen",
+                    "discarded": "Problem verworfen.",
+                    "discardSelected": "Ausgewählte verwerfen",
+                    "discardedMultiple": "Ausgewählte Probleme verworfen.",
+                    "selectAll": "Alle auswählen",
+                    "deselectAll": "Alle abwählen",
+                    "radarChartLabel": "Radar-Diagramm der Qualitätsbewertung"
+                },
+                "actions": {
+                    "success": "Problemstellung erfolgreich aktualisiert.",
+                    "error": "Aktion konnte nicht angewendet werden. Bitte erneut versuchen.",
+                    "noChanges": "Keine Änderungen für diese Aktion nötig."
+                },
+                "outdated": "Veraltet",
+                "reanalyze": "Erneut analysieren"
             }
         },
         "error": {

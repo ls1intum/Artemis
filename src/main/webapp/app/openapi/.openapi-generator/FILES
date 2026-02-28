@@ -9,7 +9,12 @@ api/tutorialGroupSessionApi.service.ts
 configuration.ts
 encoder.ts
 model/artifactLocation.ts
+model/bloomRadar.ts
 model/channel.ts
+model/checklistActionRequest.ts
+model/checklistActionResponse.ts
+model/checklistAnalysisRequest.ts
+model/checklistAnalysisResponse.ts
 model/codeGenerationJobStart.ts
 model/codeGenerationRequest.ts
 model/consistencyCheckResponse.ts
@@ -23,6 +28,8 @@ model/problemStatementGlobalRefinementRequest.ts
 model/problemStatementRefinementResponse.ts
 model/problemStatementRewriteRequest.ts
 model/problemStatementRewriteResponse.ts
+model/qualityIssue.ts
+model/qualityIssueLocation.ts
 model/rewriteFaqRequest.ts
 model/rewriteFaqResponse.ts
 model/student.ts

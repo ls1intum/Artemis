@@ -325,6 +325,72 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/RewriteFaqResponse'}
+  /api/hyperion/courses/{courseId}/checklist-analysis:
+    post:
+      tags: [hyperion-problem-statement]
+      operationId: analyzeChecklist
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ChecklistAnalysisRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ChecklistAnalysisResponse'}
+  /api/hyperion/courses/{courseId}/checklist-analysis/sections/{section}:
+    post:
+      tags: [hyperion-problem-statement]
+      operationId: analyzeChecklistSection
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: section
+        in: path
+        required: true
+        schema:
+          type: string
+          enum: [COMPETENCIES, DIFFICULTY, QUALITY]
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ChecklistAnalysisRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ChecklistAnalysisResponse'}
+  /api/hyperion/courses/{courseId}/checklist-actions:
+    post:
+      tags: [hyperion-problem-statement]
+      operationId: applyChecklistAction
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ChecklistActionRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ChecklistActionResponse'}
   /api/tutorialgroup/tutorial-groups/{tutorialGroupId}/title:
     get:
       tags: [tutorial-group]
@@ -481,6 +547,30 @@ components:
         isOnline: {type: boolean}
         language: {type: string}
         campus: {type: string}
+    ChecklistAnalysisRequest:
+      type: object
+      properties:
+        problemStatementMarkdown: {type: string, maxLength: 50000, minLength: 0}
+        declaredDifficulty: {type: string, pattern: ^(EASY|MEDIUM|HARD)$}
+        language: {type: string, maxLength: 50, minLength: 0}
+        exerciseId: {type: integer, format: int64}
+      required: [problemStatementMarkdown]
+    ChecklistActionRequest:
+      type: object
+      description: Request to apply an AI-powered checklist action to the problem
+        statement
+      properties:
+        actionType:
+          type: string
+          description: Type of action to apply
+          enum: [FIX_QUALITY_ISSUE, FIX_ALL_QUALITY_ISSUES]
+        problemStatementMarkdown: {type: string, description: Current problem statement
+            markdown, maxLength: 50000, minLength: 0}
+        context:
+          type: object
+          additionalProperties: {type: string}
+          description: Action-specific context parameters
+      required: [actionType, problemStatementMarkdown]
     TutorialGroupStatus:
       type: object
       properties:
@@ -491,6 +581,23 @@ components:
       properties:
         draftProblemStatement: {type: string, description: Draft problem statement
             text}
+        error: {type: string, description: Error message if generation failed}
+    ChecklistAnalysisResponse:
+      type: object
+      properties:
+        bloomRadar: {$ref: '#/components/schemas/BloomRadar'}
+        qualityIssues:
+          type: array
+          items: {$ref: '#/components/schemas/QualityIssue'}
+    ChecklistActionResponse:
+      type: object
+      description: Response from applying a checklist action to the problem statement
+      properties:
+        updatedProblemStatement: {type: string, description: The updated problem statement
+            markdown}
+        applied: {type: boolean, description: Whether the action was successfully
+            applied}
+        summary: {type: string, description: Short summary of what was changed}
     CodeGenerationRequest:
       type: object
       properties:
@@ -510,6 +617,15 @@ components:
         dateChanged: {type: boolean}
         attendanceCount: {type: integer, format: int32}
       required: [end, location, start]
+    BloomRadar:
+      type: object
+      properties:
+        REMEMBER: {type: number, format: double}
+        UNDERSTAND: {type: number, format: double}
+        APPLY: {type: number, format: double}
+        ANALYZE: {type: number, format: double}
+        EVALUATE: {type: number, format: double}
+        CREATE: {type: number, format: double}
     CodeGenerationJobStart:
       type: object
       properties:
@@ -639,6 +755,19 @@ components:
         language: {type: string}
         additionalInformation: {type: string}
         isOnline: {type: boolean}
+    QualityIssue:
+      type: object
+      properties:
+        category:
+          type: string
+          enum: [CLARITY, COHERENCE, COMPLETENESS]
+        severity:
+          type: string
+          enum: [LOW, MEDIUM, HIGH]
+        description: {type: string}
+        location: {$ref: '#/components/schemas/QualityIssueLocation'}
+        suggestedFix: {type: string}
+        impactOnLearners: {type: string}
     Student:
       type: object
       properties:
@@ -683,6 +812,11 @@ components:
       type: object
       properties:
         login: {type: string}
+    QualityIssueLocation:
+      type: object
+      properties:
+        startLine: {type: integer, format: int32}
+        endLine: {type: integer, format: int32}
     TutorialGroupFreePeriodRequest:
       type: object
       properties:

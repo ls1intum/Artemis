@@ -802,6 +802,35 @@
                 "error": {
                     "export": "Unable to export programming exercise: {{ message }}"
                 }
+            },
+            "instructorChecklist": {
+                "title": "Instructor Checklist",
+                "analyze": "Analyze Problem Statement",
+                "analyzing": "Analyzing...",
+                "defaultMessage": "Click \"Analyze Problem Statement\" to check for quality issues.",
+                "quality": {
+                    "title": "Quality Assessment",
+                    "empty": "No quality issues found.",
+                    "fix": "Fix",
+                    "suggestedFix": "Suggested fix:",
+                    "fixAll": "Fix All Issues",
+                    "fixIssue": "Apply AI fix for this issue",
+                    "fixSelected": "Fix Selected",
+                    "discardIssue": "Discard this issue",
+                    "discarded": "Issue discarded.",
+                    "discardSelected": "Discard Selected",
+                    "discardedMultiple": "Selected issues discarded.",
+                    "selectAll": "Select All",
+                    "deselectAll": "Deselect All",
+                    "radarChartLabel": "Quality scores radar chart"
+                },
+                "actions": {
+                    "success": "Problem statement updated successfully.",
+                    "error": "Failed to apply the action. Please try again.",
+                    "noChanges": "No changes were needed for this action."
+                },
+                "outdated": "Outdated",
+                "reanalyze": "Re-analyze"
             }
         },
         "error": {
