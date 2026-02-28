@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.doNothing;
@@ -81,7 +82,7 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationIndependent
         // first data export creation should fail, the subsequent ones should succeed
         doThrow(new RuntimeException("error")).doNothing().doNothing().when(fileService).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), anyLong());
         dataExportScheduleService.createDataExportsAndDeleteOldOnes();
-        verify(mailService).sendSuccessfulDataExportsEmailToAdmin(any(MailRecipientDTO.class), any());
+        verify(mailService).sendSuccessfulDataExportsEmailToAdmin(any(MailRecipientDTO.class), argThat(exports -> exports != null && exports.size() == 2));
     }
 
     private static Stream<Arguments> provideDataExportStatesAndExpectedToBeCreated() {
