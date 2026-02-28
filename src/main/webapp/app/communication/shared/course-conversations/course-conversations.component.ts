@@ -10,6 +10,7 @@ import {
     faClock,
     faComment,
     faComments,
+    faEnvelopeOpenText,
     faFile,
     faFilter,
     faGraduationCap,
@@ -66,6 +67,7 @@ import { catchError, debounceTime, distinctUntilChanged, map, takeUntil } from '
 import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
+    unreadMessages: { entityData: [] },
     favoriteChannels: { entityData: [] },
     recents: { entityData: [] },
     generalChannels: { entityData: [] },
@@ -78,6 +80,7 @@ const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
 };
 
 const CHANNEL_TYPE_ICON: ChannelTypeIcons = {
+    unreadMessages: faEnvelopeOpenText,
     generalChannels: faMessage,
     exerciseChannels: faList,
     examChannels: faGraduationCap,
@@ -92,6 +95,7 @@ const CHANNEL_TYPE_ICON: ChannelTypeIcons = {
 };
 
 const DEFAULT_COLLAPSE_STATE: CollapseState = {
+    unreadMessages: false,
     generalChannels: true,
     exerciseChannels: true,
     examChannels: true,
@@ -106,6 +110,7 @@ const DEFAULT_COLLAPSE_STATE: CollapseState = {
 };
 
 const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
+    unreadMessages: true,
     generalChannels: true,
     exerciseChannels: false,
     examChannels: false,

@@ -18,6 +18,8 @@ import dayjs from 'dayjs/esm';
 import { ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
+import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 
 describe('CourseOverviewService', () => {
     let courseOverviewService: CourseOverviewService;
@@ -759,6 +761,250 @@ describe('CourseOverviewService', () => {
             quizExercise.dueDate = undefined;
             const result = courseOverviewService.getCorrespondingExerciseGroupByDate(quizExercise);
             expect(result).toBe('noDate');
+        });
+    });
+
+    describe('unreadMessages grouping', () => {
+        it('should add conversation with unread messages to unreadMessages group', () => {
+            generalChannel.unreadMessagesCount = 3;
+
+            const groupedConversations = courseOverviewService.groupConversationsByChannelType(course, [generalChannel], true);
+
+            expect(groupedConversations['unreadMessages'].entityData).toHaveLength(1);
+            expect(getAsChannelDTO(groupedConversations['unreadMessages'].entityData[0].conversation)?.name).toBe('General');
+        });
+
+        it('should not add conversation with unreadMessagesCount = 0 to unreadMessages group', () => {
+            generalChannel.unreadMessagesCount = 0;
+
+            const groupedConversations = courseOverviewService.groupConversationsByChannelType(course, [generalChannel], true);
+            expect(groupedConversations['unreadMessages'].entityData).toHaveLength(0);
+        });
+    });
+
+    describe('sortConversations', () => {
+        describe('sortDirectOrGroupMessages', () => {
+            describe.each([
+                { label: 'groupChats', createChat: () => new GroupChatDTO() },
+                { label: 'directMessages', createChat: () => new OneToOneChatDTO() },
+            ])('$label', ({ label, createChat }) => {
+                let chat1: ConversationDTO;
+                let chat2: ConversationDTO;
+                let chat3: ConversationDTO;
+
+                beforeEach(() => {
+                    chat1 = createChat();
+                    chat1.id = 101;
+                    chat1.isFavorite = false;
+                    chat1.unreadMessagesCount = 1;
+                    chat1.lastMessageDate = dayjs().subtract(3, 'day');
+
+                    chat2 = createChat();
+                    chat2.id = 102;
+                    chat2.isFavorite = false;
+                    chat2.unreadMessagesCount = 1;
+                    chat2.lastMessageDate = dayjs().subtract(1, 'day');
+
+                    chat3 = createChat();
+                    chat3.id = 103;
+                    chat3.isFavorite = false;
+                    chat3.unreadMessagesCount = 1;
+                    chat3.lastMessageDate = dayjs().subtract(2, 'day');
+                });
+
+                it('should sort favorites before non-favorites', () => {
+                    chat1.isFavorite = true;
+
+                    const grouped = courseOverviewService.groupConversationsByChannelType(course, [chat2, chat1], true);
+                    const items = grouped[label].entityData;
+
+                    expect(items[0].id).toBe(chat1.id);
+                    expect(items[1].id).toBe(chat2.id);
+                });
+
+                it('should sort by unread messages when favorite status is equal', () => {
+                    chat1.isFavorite = true;
+                    chat2.isFavorite = true;
+                    chat2.unreadMessagesCount = 3;
+
+                    const grouped = courseOverviewService.groupConversationsByChannelType(course, [chat1, chat2], true);
+                    const items = grouped[label].entityData;
+
+                    expect(items[0].id).toBe(chat2.id);
+                    expect(items[1].id).toBe(chat1.id);
+                });
+
+                it('should sort by lastMessageDate when favorite and unread status are equal', () => {
+                    chat1.isFavorite = true;
+                    chat1.unreadMessagesCount = 3;
+                    chat2.isFavorite = true;
+                    chat2.unreadMessagesCount = 3;
+                    chat3.isFavorite = true;
+                    chat3.unreadMessagesCount = 3;
+
+                    const grouped = courseOverviewService.groupConversationsByChannelType(course, [chat1, chat2, chat3], true);
+                    const items = grouped[label].entityData;
+
+                    expect(items[0].id).toBe(chat2.id);
+                    expect(items[1].id).toBe(chat3.id);
+                    expect(items[2].id).toBe(chat1.id);
+                });
+
+                it('should apply all three sort criteria correctly: favorite > unread > lastMessageDate', () => {
+                    chat1.isFavorite = true;
+                    chat1.unreadMessagesCount = 2;
+                    chat1.lastMessageDate = dayjs().subtract(5, 'day');
+
+                    chat2.isFavorite = false;
+                    chat2.unreadMessagesCount = 5;
+                    chat2.lastMessageDate = dayjs().subtract(1, 'day');
+
+                    chat3.isFavorite = false;
+                    chat3.unreadMessagesCount = 3;
+                    chat3.lastMessageDate = dayjs().subtract(2, 'day');
+
+                    const grouped = courseOverviewService.groupConversationsByChannelType(course, [chat3, chat2, chat1], true);
+                    const items = grouped[label].entityData;
+
+                    expect(items[0].id).toBe(chat1.id);
+                    expect(items[1].id).toBe(chat2.id);
+                    expect(items[2].id).toBe(chat3.id);
+                });
+            });
+        });
+
+        describe('sortUnreadMessages', () => {
+            let unreadChannel: ChannelDTO;
+            let unreadGroupChat: GroupChatDTO;
+            let unreadOneToOneChat: OneToOneChatDTO;
+
+            beforeEach(() => {
+                unreadChannel = new ChannelDTO();
+                unreadChannel.id = 201;
+                unreadChannel.name = 'B-channel';
+                unreadChannel.subType = ChannelSubType.GENERAL;
+                unreadChannel.unreadMessagesCount = 2;
+
+                unreadGroupChat = new GroupChatDTO();
+                unreadGroupChat.id = 202;
+                unreadGroupChat.unreadMessagesCount = 2;
+                unreadGroupChat.lastMessageDate = dayjs().subtract(1, 'day');
+
+                unreadOneToOneChat = new OneToOneChatDTO();
+                unreadOneToOneChat.id = 203;
+                unreadOneToOneChat.unreadMessagesCount = 2;
+                unreadOneToOneChat.lastMessageDate = dayjs().subtract(2, 'day');
+            });
+
+            it('should sort by type: DM > GroupChat > Channel', () => {
+                const grouped = courseOverviewService.groupConversationsByChannelType(course, [unreadChannel, unreadGroupChat, unreadOneToOneChat], true);
+                const items = grouped['unreadMessages'].entityData;
+
+                expect(items[0].id).toBe(unreadOneToOneChat.id);
+                expect(items[1].id).toBe(unreadGroupChat.id);
+                expect(items[2].id).toBe(unreadChannel.id);
+            });
+
+            it('should sort channels alphabetically when type rank is equal', () => {
+                const unreadChannel2 = new ChannelDTO();
+                unreadChannel2.id = 204;
+                unreadChannel2.name = 'A-channel';
+                unreadChannel2.subType = ChannelSubType.GENERAL;
+                unreadChannel2.unreadMessagesCount = 1;
+                unreadChannel2.isFavorite = true;
+                unreadChannel.unreadMessagesCount = 1;
+                unreadChannel.isFavorite = true;
+
+                const grouped = courseOverviewService.groupConversationsByChannelType(course, [unreadChannel, unreadChannel2], true);
+                const items = grouped['unreadMessages'].entityData;
+
+                expect(items[0].id).toBe(unreadChannel2.id);
+                expect(items[1].id).toBe(unreadChannel.id);
+            });
+
+            it('should sort DMs and GroupChats by lastMessageDate when type rank is equal', () => {
+                const unreadOneToOneChat2 = new OneToOneChatDTO();
+                unreadOneToOneChat2.id = 205;
+                unreadOneToOneChat2.unreadMessagesCount = 2;
+                unreadOneToOneChat2.lastMessageDate = dayjs().subtract(1, 'day');
+                unreadOneToOneChat2.isFavorite = true;
+                unreadOneToOneChat.isFavorite = true;
+
+                const unreadGroupChat2 = new GroupChatDTO();
+                unreadGroupChat2.id = 206;
+                unreadGroupChat2.unreadMessagesCount = 2;
+                unreadGroupChat2.lastMessageDate = dayjs().subtract(3, 'day');
+                unreadGroupChat2.isFavorite = true;
+                unreadGroupChat.isFavorite = true;
+
+                const grouped = courseOverviewService.groupConversationsByChannelType(course, [unreadGroupChat2, unreadGroupChat, unreadOneToOneChat2, unreadOneToOneChat], true);
+                const items = grouped['unreadMessages'].entityData;
+
+                expect(items[0].id).toBe(unreadOneToOneChat2.id);
+                expect(items[1].id).toBe(unreadOneToOneChat.id);
+                expect(items[2].id).toBe(unreadGroupChat.id);
+                expect(items[3].id).toBe(unreadGroupChat2.id);
+            });
+
+            it('should sort favorites before non-favorites regardless of type', () => {
+                unreadChannel.isFavorite = true;
+
+                const grouped = courseOverviewService.groupConversationsByChannelType(course, [unreadOneToOneChat, unreadChannel], true);
+                const items = grouped['unreadMessages'].entityData;
+
+                expect(items[0].id).toBe(unreadChannel.id);
+                expect(items[1].id).toBe(unreadOneToOneChat.id);
+            });
+        });
+
+        describe('sortDefault', () => {
+            it('should sort favorites before non-favorites', () => {
+                const groupedConversations = courseOverviewService.groupConversationsByChannelType(course, [generalChannel, favoriteChannel], true);
+                const items = groupedConversations['generalChannels'].entityData;
+
+                expect(items[0].id).toBe(favoriteChannel.id);
+                expect(items[1].id).toBe(generalChannel.id);
+            });
+
+            it('should sort conversations with unread messages before those without when favorite status is equal', () => {
+                generalChannel.unreadMessagesCount = 5;
+
+                const groupedConversations = courseOverviewService.groupConversationsByChannelType(course, [generalChannel2, generalChannel], true);
+                const items = groupedConversations['generalChannels'].entityData;
+
+                expect(items[0].id).toBe(generalChannel.id);
+                expect(items[1].id).toBe(generalChannel2.id);
+            });
+
+            it('should sort alphabetically when favorite and unread status are equal', () => {
+                const groupedConversations = courseOverviewService.groupConversationsByChannelType(course, [generalChannel2, generalChannel], true);
+                const items = groupedConversations['generalChannels'].entityData;
+
+                expect(items[0].id).toBe(generalChannel.id);
+                expect(items[1].id).toBe(generalChannel2.id);
+            });
+
+            it('should apply all three sort criteria correctly: favorite > unread > alphabetical', () => {
+                favoriteChannel.unreadMessagesCount = 0;
+                generalChannel.unreadMessagesCount = 5;
+
+                const generalChannel3 = new ChannelDTO();
+                generalChannel3.id = 301;
+                generalChannel3.name = 'Any Channel';
+                generalChannel3.subType = ChannelSubType.GENERAL;
+
+                const groupedConversations = courseOverviewService.groupConversationsByChannelType(
+                    course,
+                    [generalChannel2, generalChannel3, generalChannel, favoriteChannel],
+                    true,
+                );
+                const items = groupedConversations['generalChannels'].entityData;
+
+                expect(items[0].id).toBe(favoriteChannel.id);
+                expect(items[1].id).toBe(generalChannel.id);
+                expect(items[2].id).toBe(generalChannel3.id);
+                expect(items[3].id).toBe(generalChannel2.id);
+            });
         });
     });
 });
