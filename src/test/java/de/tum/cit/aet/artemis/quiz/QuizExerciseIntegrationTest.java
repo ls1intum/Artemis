@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertEx
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertQuizExerciseExistsInWeaviate;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.byLessThan;
+import static org.awaitility.Awaitility.await;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.OK;
@@ -12,6 +13,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -1210,7 +1212,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         // Insert the exercise into Weaviate first
         if (exerciseWeaviateService != null) {
             exerciseWeaviateService.upsertExerciseAsync(quizExercise);
-            assertQuizExerciseExistsInWeaviate(weaviateService, quizExercise);
+            await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertQuizExerciseExistsInWeaviate(weaviateService, quizExercise));
         }
 
         QuizExerciseDatesDTO updatedQuizExercise = request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-now", null, QuizExerciseDatesDTO.class,
@@ -1222,7 +1224,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
         // Verify the updated dates
         QuizExercise reloadedQuizExercise = quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
-        assertQuizExerciseExistsInWeaviate(weaviateService, reloadedQuizExercise);
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertQuizExerciseExistsInWeaviate(weaviateService, reloadedQuizExercise));
     }
 
     @Test
@@ -1234,7 +1236,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         if (exerciseWeaviateService != null) {
             exerciseWeaviateService.upsertExerciseAsync(quizExercise);
 
-            assertQuizExerciseExistsInWeaviate(weaviateService, quizExercise);
+            await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertQuizExerciseExistsInWeaviate(weaviateService, quizExercise));
         }
 
         QuizExerciseDatesDTO updatedQuizExercise = request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/set-visible", null,
@@ -1246,7 +1248,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
         // Wait for async Weaviate update to complete and verify the updated dates
         QuizExercise reloadedQuizExercise = quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
-        assertQuizExerciseExistsInWeaviate(weaviateService, reloadedQuizExercise);
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertQuizExerciseExistsInWeaviate(weaviateService, reloadedQuizExercise));
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
