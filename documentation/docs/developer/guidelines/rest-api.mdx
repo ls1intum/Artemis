@@ -470,6 +470,240 @@ public ResponseEntity<CourseForDashboardDTO> getCourseForDashboard(@PathVariable
 1. Verify the tool type is defined in `ToolTokenType.java`
 2. Send a POST request to `{{base_url}}/api/core/public/authenticate?tool=TOOLTYPE`
 
+### Access Control Best Practices: Custom Annotations vs. Policy-Based Approaches
+
+<Callout variant={CalloutVariant.danger}>
+  <strong>Anti-Pattern:</strong> Never combine <code>@PreAuthorize</code> with <code>@EnforceAccessPolicy</code> when a simpler custom annotation exists. This pattern is redundant, verbose, and less performant.
+</Callout>
+
+Artemis provides three approaches for REST endpoint authorization. Understanding when to use each is critical for maintainable, performant, and secure code.
+
+#### Approach 1: Resource-In-Context Annotations (Preferred for Simple Role Checks)
+
+**Use when:** Access control is based purely on role membership in a specific course/exercise/lecture, without additional conditions.
+
+**Benefits:**
+- Single annotation - most concise
+- Lightweight performance (single database query checking group membership)
+- Type-safe at compile time
+- Clear authorization requirements
+- Already includes the `@PreAuthorize` check internally
+
+**Available annotations:**
+
+| Annotation | Role Required | Context |
+|------------|---------------|---------|
+| `@EnforceAtLeastStudentInCourse` | Student+ | Course |
+| `@EnforceAtLeastTutorInCourse` | TA+ | Course |
+| `@EnforceAtLeastEditorInCourse` | Editor+ | Course |
+| `@EnforceAtLeastInstructorInCourse` | Instructor+ | Course |
+| `@EnforceAtLeastStudentInExercise` | Student+ | Exercise |
+| `@EnforceAtLeastTutorInExercise` | TA+ | Exercise |
+| `@EnforceAtLeastEditorInExercise` | Editor+ | Exercise |
+| `@EnforceAtLeastInstructorInExercise` | Instructor+ | Exercise |
+| `@EnforceAtLeastStudentInLecture` | Student+ | Lecture |
+| `@EnforceAtLeastTutorInLecture` | TA+ | Lecture |
+| `@EnforceAtLeastEditorInLecture` | Editor+ | Lecture |
+| `@EnforceAtLeastInstructorInLecture` | Instructor+ | Lecture |
+
+**Example:**
+```java
+// CORRECT: Clean, single annotation
+@GetMapping("courses/{courseId}/stats-for-assessment-dashboard")
+@EnforceAtLeastTutorInCourse
+public ResponseEntity<StatsForDashboardDTO> getStatsForAssessmentDashboard(@PathVariable long courseId) {
+    // Annotation handles both role check and course access verification
+    Course course = courseRepository.findByIdElseThrow(courseId);
+    return ResponseEntity.ok(courseStatsService.getStatsForDashboardDTO(course));
+}
+
+// WRONG: Redundant combination of annotations
+@GetMapping("courses/{courseId}/stats-for-assessment-dashboard")
+@PreAuthorize("hasRole('TA')")  // ❌ Redundant!
+@EnforceAccessPolicy(value = "courseStaffAccessPolicy", resourceIdFieldName = "courseId")  // ❌ Overkill!
+public ResponseEntity<StatsForDashboardDTO> getStatsForAssessmentDashboard(@PathVariable long courseId) {
+    // Same functionality, but verbose and less efficient
+}
+```
+
+**How it works:**
+1. The annotation first checks the global role via `@PreAuthorize("hasRole('TA')")` (fast, no DB query)
+2. Then the aspect intercepts and performs a lightweight query to verify the user is in the course's TA/editor/instructor group
+3. Throws `AccessForbiddenException` if unauthorized
+
+**Configuration:**
+- Default parameter name: `courseId` / `exerciseId` / `lectureId`
+- Custom parameter: `@EnforceAtLeastTutorInCourse(resourceIdFieldName = "id")`
+
+#### Approach 2: Policy-Based Access Control (Use for Complex Conditions)
+
+**Use when:** Access control requires:
+- Date/time conditions (e.g., "allow after course start date")
+- Multiple resource checks (e.g., "TA in source OR destination course")
+- Complex boolean logic beyond simple role hierarchy
+- Conditional access based on resource state (e.g., "allow if exam not archived")
+
+**Benefits:**
+- Centralized policy definition (single source of truth)
+- Reusable across multiple endpoints
+- Self-documenting (policies include metadata for auto-generated docs)
+- Composable conditions (`.and()`, `.or()`, `.negate()`)
+- Easy to test (policies are Spring beans)
+
+**When to avoid:**
+- Access is based purely on role membership → Use Resource-In-Context annotations instead
+- Policy only checks roles without additional logic → Unnecessarily complex
+
+**Policy DSL Example:**
+
+```java
+@Bean
+public AccessPolicy<Course> courseVisibilityPolicy() {
+    return AccessPolicy.forResource(Course.class)
+        .named("course-visibility")
+        .section("Course Navigation")
+        .features("Course Overview", "Course Dashboard")
+        .rule(when(isStaff()).thenAllow())  // Staff always allowed
+        .rule(when(isStudent().and(hasStarted(Course::getStartDate)))  // Students only after start
+            .thenAllow())
+        .denyByDefault();
+}
+```
+
+**Built-in Conditions:**
+- `memberOfGroup(Course::getTeachingAssistantGroupName)` - Check group membership
+- `hasStarted(Course::getStartDate)` - Check if date is null or in past
+- `hasNotEnded(Course::getEndDate)` - Check if date is null or in future
+- `isAdmin()` - Check for admin authority
+- `always()` / `never()` - Constant conditions
+- Compose with `.and()`, `.or()`, `.negate()`
+
+**Usage in Controllers:**
+
+```java
+@GetMapping("courses/{courseId}")
+@PreAuthorize("hasRole('USER')")  // Fast global role check
+@EnforceAccessPolicy(value = "courseVisibilityPolicy", resourceIdFieldName = "courseId")
+public ResponseEntity<Course> getCourse(@PathVariable Long courseId) {
+    // Policy engine checks:
+    // 1. If user is staff → allow
+    // 2. If user is student AND course has started → allow
+    // 3. Otherwise → deny
+    Course course = courseRepository.findByIdElseThrow(courseId);
+    return ResponseEntity.ok(course);
+}
+```
+
+**Policy Evaluation Process:**
+1. `@PreAuthorize` performs fast global role check (no DB query)
+2. Aspect loads the resource entity from database
+3. Loads current user with groups and authorities
+4. Policy engine evaluates rules sequentially
+5. First matching rule determines outcome (ALLOW or DENY)
+6. Throws `AccessForbiddenException` if denied
+
+#### Approach 3: Explicit Authorization with AuthorizationCheckService (Avoid When Possible)
+
+**Use only when:**
+- You need to load the user AND resource anyway for business logic
+- No matching `@EnforceRoleInResource` annotation exists
+- You need custom authorization logic that can't be expressed in policies
+
+**Drawbacks:**
+- Verbose and repetitive
+- Easy to forget the check
+- Loads resource twice (once for auth, once for business logic)
+- Tightly couples authorization to service layer
+
+**Example:**
+```java
+@GetMapping("courses/{courseId}/special-operation")
+@EnforceAtLeastInstructor  // Still use this for global role check
+public ResponseEntity<Void> performSpecialOperation(@PathVariable long courseId) {
+    var course = courseRepository.findById(courseId);
+    // Custom check that can't be expressed otherwise
+    authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+
+    // ... business logic that also needs the course
+    return ResponseEntity.ok().build();
+}
+```
+
+#### Decision Tree: Which Approach to Use?
+
+```
+Does access depend ONLY on role membership in course/exercise/lecture?
+├─ YES → Use @EnforceAtLeast[Role]In[Context]
+│         Example: @EnforceAtLeastTutorInCourse
+│
+└─ NO → Does it involve dates, multiple resources, or complex conditions?
+    ├─ YES → Use @EnforceAccessPolicy with a policy bean
+    │         Example: courseVisibilityPolicy (checks role + start date)
+    │
+    └─ NO → Do you need the user/resource for business logic anyway?
+        ├─ YES → Use explicit AuthorizationCheckService
+        │         (Only as a last resort!)
+        │
+        └─ NO → You probably need @EnforceAtLeast[Role]In[Context]
+                (Reconsider your design)
+```
+
+#### Migration Examples
+
+**Example 1: Simple Role Check**
+```java
+// BEFORE (Redundant)
+@PreAuthorize("hasRole('TA')")
+@EnforceAccessPolicy(value = "courseStaffAccessPolicy", resourceIdFieldName = "courseId")
+public ResponseEntity<Course> getCourseWithExercises(@PathVariable Long courseId)
+
+// AFTER (Clean)
+@EnforceAtLeastTutorInCourse
+public ResponseEntity<Course> getCourseWithExercises(@PathVariable Long courseId)
+```
+
+**Example 2: Instructor-Only Endpoint**
+```java
+// BEFORE (Redundant)
+@PreAuthorize("hasRole('INSTRUCTOR')")
+@EnforceAccessPolicy(value = "courseInstructorAccessPolicy", resourceIdFieldName = "courseId")
+public ResponseEntity<Course> updateCourse(@PathVariable Long courseId, @RequestBody Course courseUpdate)
+
+// AFTER (Clean)
+@EnforceAtLeastInstructorInCourse
+public ResponseEntity<Course> updateCourse(@PathVariable Long courseId, @RequestBody Course courseUpdate)
+```
+
+**Example 3: Complex Condition (Keep Policy)**
+```java
+// CORRECT: Policy-based approach needed for date logic
+@PreAuthorize("hasRole('USER')")
+@EnforceAccessPolicy(value = "courseVisibilityPolicy", resourceIdFieldName = "courseId")
+public ResponseEntity<Course> getCourseForDashboard(@PathVariable long courseId) {
+    // Policy checks: staff always OR (student AND course has started)
+    // This complex logic cannot be expressed with simple annotations
+}
+```
+
+#### Policy Mapping Reference
+
+| Old Policy Bean | Replacement Annotation | When to Keep Policy |
+|----------------|------------------------|---------------------|
+| `courseStaffAccessPolicy` | `@EnforceAtLeastTutorInCourse` | Never - simple role check |
+| `courseEditorAccessPolicy` | `@EnforceAtLeastEditorInCourse` | Never - simple role check |
+| `courseInstructorAccessPolicy` | `@EnforceAtLeastInstructorInCourse` | Never - simple role check |
+| `courseStudentAccessPolicy` | `@EnforceAtLeastStudentInCourse` | Never - simple role check |
+| `courseVisibilityPolicy` | *(Keep as policy)* | Always - has date logic |
+| `programmingExerciseVisibilityPolicy` | *(Keep as policy)* | Always - has date logic |
+
+<Callout variant={CalloutVariant.info}>
+  <strong>Performance Tip:</strong> Resource-In-Context annotations are more efficient than policies for simple role checks because they perform a lightweight group membership query instead of loading the entire resource entity and evaluating complex rule chains.
+</Callout>
+
+<Callout variant={CalloutVariant.warning}>
+  <strong>Testing:</strong> Always verify your access control works by testing with users of different roles. Resource-In-Context annotations are tested via aspects; policies should have dedicated unit tests.
+</Callout>
+
 ## JSON Serialization
 
 Always use ObjectMapper (Jackson) for JSON serialization and deserialization. Do not use other libraries.

@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,7 +27,7 @@ import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceAccessPolicy.EnforceAccessPolicy;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.course.CourseForUserGroupService;
 import de.tum.cit.aet.artemis.core.service.course.CourseOverviewService;
 import de.tum.cit.aet.artemis.core.service.course.CourseStatsService;
@@ -107,8 +106,7 @@ public class CourseStatsResource {
      * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
      */
     @GetMapping("courses/{courseId}/stats-for-assessment-dashboard")
-    @PreAuthorize("hasRole('TA')")
-    @EnforceAccessPolicy(value = "courseStaffAccessPolicy", resourceIdFieldName = "courseId")
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<StatsForDashboardDTO> getStatsForAssessmentDashboard(@PathVariable long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         StatsForDashboardDTO stats = courseStatsService.getStatsForDashboardDTO(course);
@@ -157,8 +155,7 @@ public class CourseStatsResource {
      * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
      */
     @GetMapping("courses/{courseId}/statistics")
-    @PreAuthorize("hasRole('TA')")
-    @EnforceAccessPolicy(value = "courseStaffAccessPolicy", resourceIdFieldName = "courseId")
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<List<Integer>> getActiveStudentsForCourseDetailView(@PathVariable Long courseId, @RequestParam Long periodIndex,
             @RequestParam Optional<Integer> periodSize) {
         var course = courseRepository.findByIdElseThrow(courseId);
@@ -177,8 +174,7 @@ public class CourseStatsResource {
      * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
      */
     @GetMapping("courses/{courseId}/statistics-lifetime-overview")
-    @PreAuthorize("hasRole('TA')")
-    @EnforceAccessPolicy(value = "courseStaffAccessPolicy", resourceIdFieldName = "courseId")
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<List<Integer>> getActiveStudentsForCourseLiveTime(@PathVariable Long courseId) {
         var course = courseRepository.findByIdElseThrow(courseId);
         var exerciseIds = exerciseRepository.findExerciseIdsByCourseId(courseId);
@@ -198,8 +194,7 @@ public class CourseStatsResource {
      * @return the ResponseEntity with status 200 (OK) and the body, or with status 404 (Not Found)
      */
     @GetMapping("courses/{courseId}/management-detail")
-    @PreAuthorize("hasRole('TA')")
-    @EnforceAccessPolicy(value = "courseStaffAccessPolicy", resourceIdFieldName = "courseId")
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<CourseManagementDetailViewDTO> getCourseDTOForDetailView(@PathVariable Long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         GradingScale gradingScale = gradingScaleRepository.findByCourseId(courseId).orElse(null);
