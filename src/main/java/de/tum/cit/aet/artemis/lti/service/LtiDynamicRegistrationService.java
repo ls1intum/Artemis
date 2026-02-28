@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.lti.service;
 
+import java.net.InetAddress;
+import java.net.URI;
+import java.net.UnknownHostException;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -64,6 +67,12 @@ public class LtiDynamicRegistrationService {
                 throw new BadRequestAlertException("Invalid platform configuration", "LTI", "invalidPlatformConfiguration");
             }
 
+            // Validate all URLs from the platform configuration to prevent delayed SSRF
+            validateExternalUrl(platformConfiguration.authorizationEndpoint());
+            validateExternalUrl(platformConfiguration.tokenEndpoint());
+            validateExternalUrl(platformConfiguration.jwksUri());
+            validateExternalUrl(platformConfiguration.registrationEndpoint());
+
             var clientRegistrationResponse = postClientRegistrationToPlatform(platformConfiguration.registrationEndpoint(), clientRegistrationId, registrationToken);
 
             LtiPlatformConfiguration ltiPlatformConfiguration = updateLtiPlatformConfiguration(clientRegistrationId, platformConfiguration, clientRegistrationResponse);
@@ -77,7 +86,112 @@ public class LtiDynamicRegistrationService {
         }
     }
 
+    /**
+     * Validates that the given URL uses HTTPS and does not point to a private, internal, or reserved network address.
+     * This prevents SSRF attacks where an attacker could make the server request internal resources.
+     * <p>
+     *
+     * @param url the URL to validate
+     */
+    private void validateExternalUrl(String url) {
+        URI uri;
+        try {
+            uri = URI.create(url);
+        }
+        catch (IllegalArgumentException e) {
+            throw new BadRequestAlertException("Invalid URL format", "LTI", "invalidUrl");
+        }
+
+        if (!"https".equals(uri.getScheme())) {
+            throw new BadRequestAlertException("Only HTTPS URLs are allowed for LTI configuration", "LTI", "invalidUrl");
+        }
+
+        String host = uri.getHost();
+        if (host == null) {
+            throw new BadRequestAlertException("URL must contain a valid host", "LTI", "invalidUrl");
+        }
+
+        InetAddress address;
+        try {
+            address = InetAddress.getByName(host);
+        }
+        catch (UnknownHostException e) {
+            throw new BadRequestAlertException("URL host could not be resolved", "LTI", "invalidUrl");
+        }
+
+        if (isPrivateOrReservedAddress(address)) {
+            throw new BadRequestAlertException("URLs pointing to internal or loopback addresses are not allowed", "LTI", "invalidUrl");
+        }
+    }
+
+    /**
+     * Checks whether the given address belongs to a private, loopback, link-local, or other reserved range
+     * that should not be targeted by outbound HTTP requests.
+     *
+     * @param address the resolved address to check
+     * @return true if the address is private or reserved
+     */
+    private boolean isPrivateOrReservedAddress(InetAddress address) {
+        if (address.isLoopbackAddress() || address.isSiteLocalAddress() || address.isLinkLocalAddress() || address.isAnyLocalAddress() || address.isMulticastAddress()) {
+            return true;
+        }
+
+        byte[] addr = address.getAddress();
+
+        if (addr.length == 4) {
+            int firstOctet = addr[0] & 0xFF;
+            int secondOctet = addr[1] & 0xFF;
+            // 100.64.0.0/10 - Shared Address Space (CGN, used by some cloud providers)
+            if (firstOctet == 100 && (secondOctet & 0xC0) == 64) {
+                return true;
+            }
+            // 0.0.0.0/8 - "This" network
+            if (firstOctet == 0) {
+                return true;
+            }
+        }
+
+        if (addr.length == 16) {
+            // IPv4-mapped IPv6 (::ffff:x.x.x.x) - extract the IPv4 portion and re-check
+            boolean isV4Mapped = true;
+            for (int i = 0; i < 10; i++) {
+                if (addr[i] != 0) {
+                    isV4Mapped = false;
+                    break;
+                }
+            }
+            if (isV4Mapped && (addr[10] & 0xFF) == 0xFF && (addr[11] & 0xFF) == 0xFF) {
+                byte[] v4Addr = new byte[] { addr[12], addr[13], addr[14], addr[15] };
+                try {
+                    return isPrivateOrReservedAddress(InetAddress.getByAddress(v4Addr));
+                }
+                catch (UnknownHostException e) {
+                    return true;
+                }
+            }
+            // IPv4-compatible IPv6 (::x.x.x.x) - deprecated (RFC 4291) but still parsed by Java
+            if (isV4Mapped) {
+                // bytes 0-9 are zero but bytes 10-11 are not 0xFF, so this is an IPv4-compatible address
+                byte[] v4Addr = new byte[] { addr[12], addr[13], addr[14], addr[15] };
+                try {
+                    return isPrivateOrReservedAddress(InetAddress.getByAddress(v4Addr));
+                }
+                catch (UnknownHostException e) {
+                    return true;
+                }
+            }
+            // fc00::/7 - IPv6 Unique Local Addresses
+            if ((addr[0] & 0xFE) == 0xFC) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private Lti13PlatformConfiguration getLti13PlatformConfiguration(String openIdConfigurationUrl) {
+        validateExternalUrl(openIdConfigurationUrl);
+
         Lti13PlatformConfiguration platformConfiguration = null;
         try {
             ResponseEntity<Lti13PlatformConfiguration> responseEntity = restTemplate.getForEntity(openIdConfigurationUrl, Lti13PlatformConfiguration.class);
@@ -95,6 +209,8 @@ public class LtiDynamicRegistrationService {
     }
 
     private Lti13ClientRegistration postClientRegistrationToPlatform(String registrationEndpoint, String clientRegistrationId, String registrationToken) {
+        validateExternalUrl(registrationEndpoint);
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         if (registrationToken != null) {
