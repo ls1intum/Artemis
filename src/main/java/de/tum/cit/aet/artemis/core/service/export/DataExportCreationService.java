@@ -180,9 +180,7 @@ public class DataExportCreationService {
             return;
         }
 
-        var adminRecipient = new MailRecipientDTO("data-export-admin-recipient", adminEmail, "en", "Administrator", null, null, null);
-
-        mailService.sendDataExportEmailFailedEmailToAdmin(adminRecipient, DataExportMailDTO.of(dataExport), emailFailedException);
+        mailService.sendDataExportEmailFailedEmailToAdmin(createAdminRecipient(), DataExportMailDTO.of(dataExport), emailFailedException);
     }
 
     /**
@@ -203,9 +201,7 @@ public class DataExportCreationService {
             return;
         }
 
-        var adminRecipient = new MailRecipientDTO("data-export-admin-recipient", adminEmail, "en", "Administrator", null, null, null);
-
-        mailService.sendDataExportFailedEmailToAdmin(adminRecipient, DataExportMailDTO.of(dataExport), exception);
+        mailService.sendDataExportFailedEmailToAdmin(createAdminRecipient(), DataExportMailDTO.of(dataExport), exception);
     }
 
     /**
@@ -267,6 +263,10 @@ public class DataExportCreationService {
             printer.printRecord(user.getLogin(), user.getName(), user.getEmail(), user.getRegistrationNumber());
             printer.flush();
         }
+    }
+
+    private MailRecipientDTO createAdminRecipient() {
+        return new MailRecipientDTO("data-export-admin-recipient", adminEmail, "en", "Administrator", null, null, null);
     }
 
     /**

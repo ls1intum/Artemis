@@ -81,9 +81,7 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationIndependent
         // first data export creation should fail, the subsequent ones should succeed
         doThrow(new RuntimeException("error")).doNothing().doNothing().when(fileService).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), anyLong());
         dataExportScheduleService.createDataExportsAndDeleteOldOnes();
-        var dataExportsAfterCreation = dataExportRepository.findAllSuccessfullyCreatedDataExports();
         verify(mailService).sendSuccessfulDataExportsEmailToAdmin(any(MailRecipientDTO.class), any());
-
     }
 
     private static Stream<Arguments> provideDataExportStatesAndExpectedToBeCreated() {

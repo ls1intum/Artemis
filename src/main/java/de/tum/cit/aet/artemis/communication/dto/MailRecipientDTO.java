@@ -16,10 +16,10 @@ public record MailRecipientDTO(String login, String email, String langKey, Strin
      * @return the full name
      */
     public String getName() {
-        if (lastName != null && !lastName.isEmpty()) {
-            return firstName + " " + lastName;
-        }
-        return firstName;
+        var safeFirstName = firstName == null ? "" : firstName.trim();
+        var safeLastName = lastName == null ? "" : lastName.trim();
+        var fullName = (safeFirstName + " " + safeLastName).trim();
+        return fullName.isEmpty() ? login : fullName;
     }
 
     /**
