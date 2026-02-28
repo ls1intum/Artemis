@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.ExerciseSchema;
+import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
@@ -101,6 +102,9 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
     @Autowired(required = false)
     private WeaviateService weaviateService;
+
+    @Autowired(required = false)
+    private ExerciseWeaviateService exerciseWeaviateService;
 
     @BeforeAll
     void setupAll() {
@@ -226,6 +230,17 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateProgrammingExercise() throws Exception {
+        // Pre-populate Weaviate with the exercise to avoid race condition on first insert
+        // This ensures we're actually testing the UPDATE path, not the INSERT path
+        if (exerciseWeaviateService != null && weaviateService != null) {
+            exerciseWeaviateService.upsertExerciseAsync(programmingExercise);
+            // Wait for initial insert to complete before proceeding with update
+            await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+                var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
+                assertThat(properties).as("Exercise should be initially present in Weaviate before update").isNotNull();
+            });
+        }
+
         programmingExercise.setReleaseDate(ZonedDateTime.now().plusHours(1));
         programmingExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, programmingExercise, 1)));
         programmingExercise.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
