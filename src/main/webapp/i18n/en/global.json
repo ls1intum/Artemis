@@ -41,7 +41,11 @@
             "toNavigate": "to navigate",
             "toClose": "to close",
             "searchLectureContent": "Search Lecture Content",
-            "searchLectureContentDescription": "Deep semantic search through transcripts and materials"
+            "searchLectureContentDescription": "Deep semantic search through transcripts and materials",
+            "lectureResultsAriaLabel": "Lecture search results",
+            "arrowUpAriaLabel": "Up arrow",
+            "arrowDownAriaLabel": "Down arrow",
+            "pageAbbreviation": "pg."
         },
         "menu": {
             "home": "Home",
