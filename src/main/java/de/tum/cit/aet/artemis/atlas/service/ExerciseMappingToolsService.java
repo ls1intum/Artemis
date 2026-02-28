@@ -120,6 +120,29 @@ public class ExerciseMappingToolsService {
      */
     private static final ThreadLocal<ExerciseCompetencyMappingDTO> exerciseMappingPreview = new ThreadLocal<>();
 
+    /**
+     * ThreadLocal storage for user-selected exercise mappings (from the frontend approval payload).
+     * When set, {@link #saveExerciseCompetencyMappings} uses these instead of the LLM-provided mappings,
+     * ensuring the user's checkbox selections and weight choices are respected.
+     */
+    private static final ThreadLocal<List<ExerciseCompetencyMappingOperation>> userSelectedMappings = new ThreadLocal<>();
+
+    /**
+     * Set the user-selected mappings before delegating to the exercise mapper agent for saving.
+     *
+     * @param mappings the competency mappings selected by the user in the frontend
+     */
+    public static void setUserSelectedMappings(List<ExerciseCompetencyMappingOperation> mappings) {
+        userSelectedMappings.set(mappings);
+    }
+
+    /**
+     * Clear the user-selected mappings ThreadLocal.
+     */
+    public static void clearUserSelectedMappings() {
+        userSelectedMappings.remove();
+    }
+
     private final ExerciseRepository exerciseRepository;
 
     private final CourseCompetencyRepository courseCompetencyRepository;
@@ -282,6 +305,14 @@ public class ExerciseMappingToolsService {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, userRepository.getUser());
 
             Exercise exercise = loadAndValidateExercise(exerciseId, courseId);
+
+            // If the user explicitly selected mappings via the frontend approval, use those
+            // instead of the LLM-provided ones to honour checkbox and weight choices.
+            List<ExerciseCompetencyMappingOperation> selected = userSelectedMappings.get();
+            if (selected != null) {
+                mappings = selected;
+                userSelectedMappings.remove();
+            }
 
             List<CompetencyExerciseLink> existingLinks = competencyExerciseLinkRepository.findByExerciseIdWithCompetency(exerciseId);
 

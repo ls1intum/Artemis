@@ -160,16 +160,14 @@ public class AtlasAgentService {
                 return new AtlasAgentChatResponseDTO("Plan cancelled.", ZonedDateTime.now(), false, null, null, null, null);
             }
 
-            switch (message) {
-                case CREATE_APPROVED_COMPETENCY -> {
-                    return handleCompetencyApproval(sessionId, courseId);
-                }
-                case CREATE_APPROVED_RELATION -> {
-                    return handleRelationApproval(sessionId, courseId);
-                }
-                case CREATE_APPROVED_EXERCISE_MAPPING -> {
-                    return handleExerciseMappingApproval(sessionId, courseId, message);
-                }
+            if (message.equals(CREATE_APPROVED_COMPETENCY)) {
+                return handleCompetencyApproval(sessionId, courseId);
+            }
+            else if (message.equals(CREATE_APPROVED_RELATION)) {
+                return handleRelationApproval(sessionId, courseId);
+            }
+            else if (message.startsWith(CREATE_APPROVED_EXERCISE_MAPPING)) {
+                return handleExerciseMappingApproval(sessionId, courseId, message);
             }
 
             String response = delegateToAgent(AgentType.MAIN_AGENT, message, courseId, sessionId);
@@ -761,14 +759,39 @@ public class AtlasAgentService {
     /**
      * Handles exercise mapping approval (button click or text approval).
      * Extracted to ensure consistent handling regardless of how approval is triggered.
+     * <p>
+     * When the message contains a JSON payload (format: {@code [CREATE_APPROVED_EXERCISE_MAPPING]:{...}}),
+     * the user-selected competency IDs and weights are parsed and stored in a ThreadLocal so that
+     * {@link ExerciseMappingToolsService#saveExerciseCompetencyMappings} uses them instead of
+     * re-deriving mappings from the LLM's memory.
      *
      * @param sessionId       the session ID
      * @param courseId        the course ID
-     * @param originalMessage the original message containing the approval
+     * @param originalMessage the original message containing the approval (with optional JSON payload)
      * @return the response DTO with potential plan continuation
      */
     private AtlasAgentChatResponseDTO handleExerciseMappingApproval(String sessionId, Long courseId, String originalMessage) {
-        String creationResponse = delegateToAgent(AgentType.EXERCISE_MAPPER, originalMessage, courseId, sessionId);
+        int payloadStart = originalMessage.indexOf(':');
+        if (payloadStart != -1) {
+            String json = originalMessage.substring(payloadStart + 1);
+            try {
+                record MappingSelection(Long competencyId, Double weight) {
+                }
+                record ApprovalPayload(Long exerciseId, List<MappingSelection> mappings) {
+                }
+                ApprovalPayload payload = objectMapper.readValue(json, ApprovalPayload.class);
+                if (payload.mappings() != null && !payload.mappings().isEmpty()) {
+                    List<ExerciseMappingToolsService.ExerciseCompetencyMappingOperation> selected = payload.mappings().stream()
+                            .map(m -> new ExerciseMappingToolsService.ExerciseCompetencyMappingOperation(m.competencyId(), m.weight(), false, false)).toList();
+                    ExerciseMappingToolsService.setUserSelectedMappings(selected);
+                }
+            }
+            catch (Exception e) {
+                log.warn("Could not parse exercise mapping approval payload, falling back to LLM-provided mappings: {}", e.getMessage());
+            }
+        }
+
+        String creationResponse = delegateToAgent(AgentType.EXERCISE_MAPPER, CREATE_APPROVED_EXERCISE_MAPPING, courseId, sessionId);
 
         ExerciseCompetencyMappingDTO exerciseMappingPreview = ExerciseMappingToolsService.getExerciseMappingPreview();
         String responseWithEmbeddedData = embedExerciseMappingPreviewDataInResponse(creationResponse, exerciseMappingPreview);

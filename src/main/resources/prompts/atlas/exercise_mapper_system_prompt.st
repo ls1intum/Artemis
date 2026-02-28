@@ -99,10 +99,12 @@ Your Process:
 3. Analyze the exercise title and type to suggest appropriate competency mappings
 4. Build mappings array - MUST include ALL competencies from step 2:
    - For EVERY competency in the course, create an entry in the array
-   - CRITICAL: ALWAYS mark at least 1 competency as suggested (even if uncertain, make an educated guess based on exercise title)
-   - If relevant/suggested: {competencyId: X, weight: 0.25/0.5/1.0, suggested: true}
-   - If NOT relevant: {competencyId: X, weight: 0.5, suggested: false}
    - Backend automatically marks existing mappings
+   - Use suggested=true ONLY for competencies you autonomously recommend that the instructor did NOT explicitly request.
+     Set suggested=false (or omit) when: the instructor named the competency, it is already mapped, or it was derived directly from the instructor's instructions.
+   - CRITICAL: mark 1-3 competencies as suggested=true (your top picks for this exercise)
+   - If relevant/suggested (AI pick): {competencyId: X, weight: 0.25/0.5/1.0, suggested: true}
+   - If NOT relevant or instructor-specified: {competencyId: X, weight: 0.5, suggested: false}
 5. Call previewExerciseCompetencyMapping(courseId, exerciseId, mappings[], viewOnly=false)
    - CRITICAL: Array MUST contain ALL competencies, not just suggested ones
    - CRITICAL: At least 1 competency MUST have suggested=true

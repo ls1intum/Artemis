@@ -266,7 +266,13 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
 
         this.isAgentTyping.set(true);
 
-        this.agentChatService.sendMessage('[CREATE_APPROVED_EXERCISE_MAPPING]', this.courseId()).subscribe({
+        const approvalPayload = JSON.stringify({
+            exerciseId: message.exerciseMappingPreview.exerciseId,
+            mappings: selected,
+        });
+        const approvalMessage = `[CREATE_APPROVED_EXERCISE_MAPPING]:${approvalPayload}`;
+
+        this.agentChatService.sendMessage(approvalMessage, this.courseId()).subscribe({
             next: (response) => {
                 this.isAgentTyping.set(false);
 
@@ -415,10 +421,10 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         if (exerciseMappingPreview) {
             message.exerciseMappingPreview = exerciseMappingPreview;
 
-            // Initialize checkbox states: pre-check already-mapped competencies
+            // Initialize checkbox states: pre-check already-mapped and AI-suggested competencies
             const checkboxStates = new Map<number, boolean>();
             exerciseMappingPreview.competencies.forEach((comp) => {
-                checkboxStates.set(comp.competencyId, comp.alreadyMapped ?? false);
+                checkboxStates.set(comp.competencyId, (comp.alreadyMapped ?? false) || (comp.suggested ?? false));
             });
             this.exerciseMappingCheckboxStates.set(message.id, checkboxStates);
         }
