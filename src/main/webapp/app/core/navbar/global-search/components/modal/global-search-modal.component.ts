@@ -247,8 +247,14 @@ export class GlobalSearchModalComponent implements OnDestroy {
 
     protected removeFilter(filterType: string) {
         this.activeFilters.set(this.activeFilters().filter((f) => f !== filterType));
-        // Re-trigger search without filter
-        if (this.searchQuery()) {
+
+        // If no filters remain and no query, reset to initial state
+        if (this.activeFilters().length === 0 && !this.searchQuery()) {
+            this.results.set([]);
+            this.hasSearched.set(false);
+            this.isLoading.set(false);
+        } else {
+            // Re-trigger search to update results
             this.searchSubject.next(this.searchQuery());
         }
     }
