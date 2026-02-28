@@ -1,6 +1,9 @@
 package de.tum.cit.aet.artemis.globalsearch.web;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +18,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -40,14 +45,17 @@ public class ExerciseWeaviateResource {
 
     private final CourseRepository courseRepository;
 
+    private final UserRepository userRepository;
+
     private final AuthorizationCheckService authCheckService;
 
     private final String serverUrl;
 
-    public ExerciseWeaviateResource(ExerciseWeaviateService exerciseWeaviateService, CourseRepository courseRepository, AuthorizationCheckService authCheckService,
-            @Value("${server.url}") String serverUrl) {
+    public ExerciseWeaviateResource(ExerciseWeaviateService exerciseWeaviateService, CourseRepository courseRepository, UserRepository userRepository,
+            AuthorizationCheckService authCheckService, @Value("${server.url}") String serverUrl) {
         this.exerciseWeaviateService = exerciseWeaviateService;
         this.courseRepository = courseRepository;
+        this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.serverUrl = serverUrl;
     }
@@ -78,16 +86,23 @@ public class ExerciseWeaviateResource {
         return ResponseEntity.ok(exercises);
     }
 
+    // TODO we still need to take care of the case that a user has different access rights in different courses (e.g. student in one course, tutor in another course) - we currently
+    // assume that the user has the same access rights in all courses, which is not always the case. We need to implement a more fine-grained access control mechanism that checks
+    // the user's access rights for each course individually when performing a global search. This will ensure that users only see search results from courses they have access to,
+    // and that the results are filtered appropriately based on their role in each course.
     /**
      * GET /search?q=:query&type=:type&courseId=:courseId&limit=:limit : perform unified semantic search across entity types.
      * <p>
      * This endpoint provides a unified search interface that can search across multiple entity types
      * (exercises, pages, features, courses, etc.) with a consistent response format.
      * Currently supports exercises only, but designed to be extensible for other types.
+     * <p>
+     * When courseId is not specified, the search is performed globally across all courses
+     * the authenticated user has access to (as a student, TA, editor, or instructor).
      *
      * @param query    the search query
      * @param type     optional entity type to filter by (e.g., "exercise", "page", "course")
-     * @param courseId optional course ID to filter by
+     * @param courseId optional course ID to filter by (if null, searches across all accessible courses)
      * @param limit    maximum number of results (default: 10, max: 100)
      * @return the ResponseEntity with status 200 (OK) and the list of unified search results in body
      */
@@ -105,15 +120,31 @@ public class ExerciseWeaviateResource {
         // Apply limit bounds: minimum 1, maximum 100
         int effectiveLimit = Math.min(Math.max(limit, 1), 100);
 
-        // Validate course access if courseId is specified
-        if (courseId != null) {
-            Course course = courseRepository.findByIdElseThrow(courseId);
-            authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-        }
-
         // For now, only support exercise search (type filter is optional for future extensibility)
         if (type == null || "exercise".equals(type)) {
-            var searchResults = exerciseWeaviateService.searchExercises(query, courseId, effectiveLimit);
+            List<Map<String, Object>> searchResults;
+
+            if (courseId != null) {
+                // Course-specific search: validate access and search within that course
+                Course course = courseRepository.findByIdElseThrow(courseId);
+                authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+                searchResults = exerciseWeaviateService.searchExercises(query, courseId, effectiveLimit);
+            }
+            else {
+                // Global search: get all courses accessible to the user and search across them
+                User user = userRepository.getUserWithGroupsAndAuthorities();
+                boolean isAdmin = authCheckService.isAdmin(user);
+                List<Course> accessibleCourses = courseRepository.findAllAccessibleCoursesForUser(user.getGroups(), isAdmin);
+
+                if (accessibleCourses.isEmpty()) {
+                    // User has no accessible courses, return empty results
+                    return ResponseEntity.ok(List.of());
+                }
+
+                Set<Long> accessibleCourseIds = accessibleCourses.stream().map(Course::getId).collect(Collectors.toSet());
+                searchResults = exerciseWeaviateService.searchExercisesInCourses(query, accessibleCourseIds, effectiveLimit);
+            }
+
             var resultDTOs = searchResults.stream().map(GlobalSearchResultDTO::fromExerciseProperties).toList();
             return ResponseEntity.ok(resultDTOs);
         }

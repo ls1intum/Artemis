@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
@@ -470,6 +471,45 @@ public class ExerciseWeaviateService {
         catch (Exception e) {
             log.error("Failed to search exercises with query '{}': {}", query, e.getMessage(), e);
             throw new WeaviateException("Failed to search exercises", e);
+        }
+    }
+
+    /**
+     * Performs semantic search on exercises across multiple courses.
+     * This method is used for global search to filter by courses accessible to the user.
+     *
+     * @param query     the search query
+     * @param courseIds set of course IDs to filter by (null or empty for no filtering)
+     * @param limit     maximum number of results
+     * @return list of exercise search results from Weaviate
+     */
+    public List<Map<String, Object>> searchExercisesInCourses(String query, Set<Long> courseIds, int limit) {
+        try {
+            var collection = weaviateService.getCollection(ExerciseSchema.COLLECTION_NAME);
+
+            var result = collection.query.hybrid(query, h -> {
+                h.limit(limit);
+                if (courseIds != null && !courseIds.isEmpty()) {
+                    // Build OR filter for all course IDs
+                    // Start with first course ID
+                    var courseIdsList = courseIds.stream().toList();
+                    var filter = Filter.property(ExerciseSchema.Properties.COURSE_ID).eq(courseIdsList.getFirst());
+
+                    // Chain OR conditions for remaining course IDs
+                    for (int i = 1; i < courseIdsList.size(); i++) {
+                        filter = filter.or(Filter.property(ExerciseSchema.Properties.COURSE_ID).eq(courseIdsList.get(i)));
+                    }
+
+                    h.filters(filter);
+                }
+                return h;
+            });
+
+            return result.objects().stream().map(obj -> obj.properties()).toList();
+        }
+        catch (Exception e) {
+            log.error("Failed to search exercises across courses with query '{}': {}", query, e.getMessage(), e);
+            throw new WeaviateException("Failed to search exercises across courses", e);
         }
     }
 }

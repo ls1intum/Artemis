@@ -653,6 +653,25 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
             """)
     List<Course> findCoursesForAtLeastTutorWithGroups(@Param("userGroups") Set<String> userGroups, @Param("isAdmin") boolean isAdmin);
 
+    /**
+     * Finds all courses where the user has at least student access based on their group memberships.
+     * This includes courses where the user is a student, TA, editor, or instructor.
+     *
+     * @param userGroups the groups the user belongs to
+     * @param isAdmin    whether the user is an admin
+     * @return a list of courses accessible to the user
+     */
+    @Query("""
+            SELECT c
+            FROM Course c
+            WHERE c.studentGroupName IN :userGroups
+               OR c.teachingAssistantGroupName IN :userGroups
+               OR c.editorGroupName IN :userGroups
+               OR c.instructorGroupName IN :userGroups
+               OR :isAdmin = TRUE
+            """)
+    List<Course> findAllAccessibleCoursesForUser(@Param("userGroups") Set<String> userGroups, @Param("isAdmin") boolean isAdmin);
+
     @Query("""
                 SELECT course.timeZone
                 FROM Course course
