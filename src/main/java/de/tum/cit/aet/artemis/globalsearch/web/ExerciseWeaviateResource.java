@@ -146,33 +146,38 @@ public class ExerciseWeaviateResource {
 
                 log.debug("Global search - User: {}, isAdmin: {}, authorities: {}", user.getLogin(), isAdmin, user.getAuthorities());
 
-                List<Course> accessibleCourses;
                 if (isAdmin) {
-                    // Admins have access to all courses
-                    accessibleCourses = courseRepository.findAll();
-                    log.debug("Admin user - fetched all {} courses", accessibleCourses.size());
+                    // Admins have access to all courses - skip course filtering for better performance
+                    log.debug("Admin user - searching across all courses without course ID filter");
+                    if (isEmptyQuery) {
+                        // For empty queries, fetch recent exercises instead of searching
+                        searchResults = exerciseWeaviateService.fetchRecentExercisesInCourses(null, effectiveLimit, sortBy);
+                    }
+                    else {
+                        searchResults = exerciseWeaviateService.searchExercisesInCourses(query, null, effectiveLimit);
+                    }
                 }
                 else {
                     // Regular users: get courses based on group memberships
-                    accessibleCourses = courseRepository.findAllAccessibleCoursesForUser(user.getGroups(), isAdmin);
+                    List<Course> accessibleCourses = courseRepository.findAllAccessibleCoursesForUser(user.getGroups(), false);
                     log.debug("Regular user - fetched {} accessible courses based on groups: {}", accessibleCourses.size(), user.getGroups());
-                }
 
-                if (accessibleCourses.isEmpty()) {
-                    // User has no accessible courses, return empty results
-                    log.warn("User {} has no accessible courses for global search", user.getLogin());
-                    return ResponseEntity.ok(List.of());
-                }
+                    if (accessibleCourses.isEmpty()) {
+                        // User has no accessible courses, return empty results
+                        log.warn("User {} has no accessible courses for global search", user.getLogin());
+                        return ResponseEntity.ok(List.of());
+                    }
 
-                Set<Long> accessibleCourseIds = accessibleCourses.stream().map(Course::getId).collect(Collectors.toSet());
-                log.debug("Searching exercises in {} courses with IDs: {}", accessibleCourseIds.size(), accessibleCourseIds);
+                    Set<Long> accessibleCourseIds = accessibleCourses.stream().map(Course::getId).collect(Collectors.toSet());
+                    log.debug("Searching exercises in {} courses with IDs: {}", accessibleCourseIds.size(), accessibleCourseIds);
 
-                if (isEmptyQuery) {
-                    // For empty queries, fetch recent exercises instead of searching
-                    searchResults = exerciseWeaviateService.fetchRecentExercisesInCourses(accessibleCourseIds, effectiveLimit, sortBy);
-                }
-                else {
-                    searchResults = exerciseWeaviateService.searchExercisesInCourses(query, accessibleCourseIds, effectiveLimit);
+                    if (isEmptyQuery) {
+                        // For empty queries, fetch recent exercises instead of searching
+                        searchResults = exerciseWeaviateService.fetchRecentExercisesInCourses(accessibleCourseIds, effectiveLimit, sortBy);
+                    }
+                    else {
+                        searchResults = exerciseWeaviateService.searchExercisesInCourses(query, accessibleCourseIds, effectiveLimit);
+                    }
                 }
                 log.debug("Found {} search results", searchResults.size());
             }
