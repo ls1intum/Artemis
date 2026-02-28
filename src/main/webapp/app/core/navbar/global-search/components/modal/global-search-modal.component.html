@@ -29,6 +29,7 @@
             type="text"
             [value]="searchQuery()"
             (input)="onSearchInput($event)"
+            (keydown)="onSearchKeyDown($event)"
             [placeholder]="'global.search.placeholder' | artemisTranslate"
             class="search-input flex-grow-1 border-0 bg-transparent text-body"
             [attr.aria-label]="'global.search.placeholder' | artemisTranslate"

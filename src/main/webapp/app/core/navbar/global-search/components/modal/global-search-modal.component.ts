@@ -220,6 +220,20 @@ export class GlobalSearchModalComponent implements OnDestroy {
         this.searchSubject.next(query);
     }
 
+    protected onSearchKeyDown(event: KeyboardEvent) {
+        const input = event.target as HTMLInputElement;
+
+        // If backspace is pressed and input is empty, remove the rightmost filter
+        if (event.key === 'Backspace' && input.value.trim() === '') {
+            event.preventDefault(); // Prevent any default backspace behavior
+            const filters = this.activeFilters();
+            if (filters.length > 0) {
+                // Remove the rightmost (last) filter
+                this.removeFilter(filters[filters.length - 1]);
+            }
+        }
+    }
+
     protected addFilter(filterType: string) {
         // For now, only one filter at a time (can be extended later)
         if (!this.activeFilters().includes(filterType)) {
