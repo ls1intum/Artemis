@@ -25,17 +25,20 @@ class IrisLectureSearchIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void search_shouldReturnResults() throws Exception {
-        var results = List.of(new PyrisLectureSearchResultDTO(1L, "Introduction Slide", "/link/1", 10L, "Intro to ML", 5L, "Machine Learning", 3, "supervised learning snippet"),
-                new PyrisLectureSearchResultDTO(2L, "Neural Networks", "/link/2", 10L, "Intro to ML", 5L, "Machine Learning", 7, "backpropagation snippet"));
+        var results = List.of(
+                new PyrisLectureSearchResultDTO(new PyrisLectureSearchResultDTO.Course(5L, "Machine Learning"), new PyrisLectureSearchResultDTO.Lecture(10L, "Intro to ML"),
+                        new PyrisLectureSearchResultDTO.LectureUnit(1L, "Introduction Slide", "/link/1", 3), "supervised learning snippet"),
+                new PyrisLectureSearchResultDTO(new PyrisLectureSearchResultDTO.Course(5L, "Machine Learning"), new PyrisLectureSearchResultDTO.Lecture(10L, "Intro to ML"),
+                        new PyrisLectureSearchResultDTO.LectureUnit(2L, "Neural Networks", "/link/2", 7), "backpropagation snippet"));
         irisRequestMockProvider.mockSearchLectures(results);
 
         var requestDTO = new PyrisLectureSearchRequestDTO("machine learning", 5);
         List<PyrisLectureSearchResultDTO> response = request.postListWithResponseBody("/api/iris/lecture-search", requestDTO, PyrisLectureSearchResultDTO.class, HttpStatus.OK);
 
         assertThat(response).hasSize(2);
-        assertThat(response.get(0).lectureUnitId()).isEqualTo(1L);
+        assertThat(response.get(0).lectureUnit().id()).isEqualTo(1L);
         assertThat(response.get(0).snippet()).isEqualTo("supervised learning snippet");
-        assertThat(response.get(1).lectureUnitId()).isEqualTo(2L);
+        assertThat(response.get(1).lectureUnit().id()).isEqualTo(2L);
     }
 
     @Test

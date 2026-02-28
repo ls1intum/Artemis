@@ -74,7 +74,7 @@ export class GlobalSearchLectureResultsComponent extends SearchResultView {
         const result = this.lectureResults()[index];
         if (event.key === 'Enter' && result) {
             event.preventDefault();
-            this.router.navigateByUrl(result.lectureUnitLink);
+            this.router.navigateByUrl(result.lectureUnit.link);
         }
     }
 }
