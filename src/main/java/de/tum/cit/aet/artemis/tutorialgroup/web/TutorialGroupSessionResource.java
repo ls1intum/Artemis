@@ -1,9 +1,8 @@
 package de.tum.cit.aet.artemis.tutorialgroup.web;
 
 import static de.tum.cit.aet.artemis.core.util.DateUtil.interpretInTimeZone;
-import static de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupScheduleService.updateTutorialGroupSession;
+import static de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupScheduleService.updateStatusAndFreePeriod;
 
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -22,7 +21,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -51,6 +52,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupSessionDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.exception.SessionOverlapsWithSessionException;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupFreePeriodRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
@@ -153,6 +155,7 @@ public class TutorialGroupSessionResource {
         sessionToUpdate.setStart(updatedSession.getStart());
         sessionToUpdate.setEnd(updatedSession.getEnd());
         sessionToUpdate.setLocation(updatedSession.getLocation());
+        sessionToUpdate.setAttendanceCount(updatedSession.getAttendanceCount());
 
         isValidTutorialGroupSession(sessionToUpdate, ZoneId.of(configuration.getCourse().getTimeZone()));
 
@@ -166,7 +169,7 @@ public class TutorialGroupSessionResource {
 
         Optional<TutorialGroupFreePeriod> overlappingPeriodOptional = tutorialGroupFreePeriodRepository
                 .findFirstOverlappingInSameCourse(sessionToUpdate.getTutorialGroup().getCourse(), sessionToUpdate.getStart(), sessionToUpdate.getEnd());
-        updateTutorialGroupSession(sessionToUpdate, overlappingPeriodOptional);
+        updateStatusAndFreePeriod(sessionToUpdate, overlappingPeriodOptional);
 
         TutorialGroupSession result = tutorialGroupSessionRepository.save(sessionToUpdate);
 
@@ -239,12 +242,12 @@ public class TutorialGroupSessionResource {
      */
     @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions")
     @EnforceAtLeastTutor
-    public ResponseEntity<TutorialGroupSession> create(@PathVariable Long courseId, @PathVariable Long tutorialGroupId,
-            @RequestBody @Valid TutorialGroupSessionRequestDTO tutorialGroupSessionDTO) throws URISyntaxException {
+    public ResponseEntity<TutorialGroupSessionDTO> create(@PathVariable Long courseId, @PathVariable Long tutorialGroupId,
+            @RequestBody @Valid TutorialGroupSessionRequestDTO tutorialGroupSessionDTO) {
         log.debug("REST request to create TutorialGroupSession: {} for tutorial group: {}", tutorialGroupSessionDTO, tutorialGroupId);
         tutorialGroupSessionDTO.validityCheck();
 
-        TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithSessionsElseThrow(tutorialGroupId);
+        TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithSessionsAndScheduleElseThrow(tutorialGroupId);
         Pair<User, Boolean> userAndIsAdminOrInstructorPair = getUserAndCheckWhetherTheyAreAdminOrInstructor(courseId);
         tutorialGroupService.checkIfUserIsAllowedToModifySessionsOfTutorialGroupElseThrow(tutorialGroup, userAndIsAdminOrInstructorPair.first(),
                 userAndIsAdminOrInstructorPair.second());
@@ -257,11 +260,10 @@ public class TutorialGroupSessionResource {
 
         Optional<TutorialGroupFreePeriod> overlappingPeriodOptional = tutorialGroupFreePeriodRepository.findFirstOverlappingInSameCourse(tutorialGroup.getCourse(),
                 newSession.getStart(), newSession.getEnd());
-        updateTutorialGroupSession(newSession, overlappingPeriodOptional);
+        updateStatusAndFreePeriod(newSession, overlappingPeriodOptional);
         newSession = tutorialGroupSessionRepository.save(newSession);
 
-        return ResponseEntity.created(URI.create("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + tutorialGroupId + "/sessions/" + newSession.getId()))
-                .body(TutorialGroupSession.preventCircularJsonConversion(newSession));
+        return ResponseEntity.status(HttpStatus.CREATED).body(TutorialGroupSessionDTO.from(newSession, tutorialGroup.getTutorialGroupSchedule()));
     }
 
     private TutorialGroupsConfiguration validateTutorialGroupConfiguration(@PathVariable Long courseId) {
@@ -376,7 +378,8 @@ public class TutorialGroupSessionResource {
      * DTO used because we want to interpret the dates in the time zone of the tutorial groups configuration
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record TutorialGroupSessionRequestDTO(@NonNull LocalDate date, @NonNull LocalTime startTime, @NonNull LocalTime endTime, @Size(min = 1, max = 2000) String location) {
+    public record TutorialGroupSessionRequestDTO(@NonNull LocalDate date, @NonNull LocalTime startTime, @NonNull LocalTime endTime, @Size(min = 1, max = 2000) String location,
+            @Nullable Integer attendance) {
 
         public void validityCheck() {
             if (startTime.isAfter(endTime)) {
@@ -395,6 +398,7 @@ public class TutorialGroupSessionResource {
             tutorialGroupSession.setStart(interpretInTimeZone(date, startTime, tutorialGroupsConfiguration.getCourse().getTimeZone()));
             tutorialGroupSession.setEnd(interpretInTimeZone(date, endTime, tutorialGroupsConfiguration.getCourse().getTimeZone()));
             tutorialGroupSession.setLocation(location);
+            tutorialGroupSession.setAttendanceCount(attendance);
             return tutorialGroupSession;
         }
 

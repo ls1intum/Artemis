@@ -142,7 +142,7 @@ public class TutorialGroupScheduleService {
         session.setTutorialGroup(tutorialGroupSchedule.getTutorialGroup());
 
         var overlappingPeriod = tutorialGroupFreePeriodService.findOverlappingPeriod(course, session).stream().findFirst();
-        updateTutorialGroupSession(session, overlappingPeriod);
+        updateStatusAndFreePeriod(session, overlappingPeriod);
         session.setLocation(tutorialGroupSchedule.getLocation());
         return session;
     }
@@ -153,7 +153,7 @@ public class TutorialGroupScheduleService {
      * @param newSession        the tutorial group session to be updated.
      * @param overlappingPeriod an Optional that may contain a TutorialGroupFreePeriod if there is an overlapping free period.
      */
-    public static void updateTutorialGroupSession(TutorialGroupSession newSession, Optional<TutorialGroupFreePeriod> overlappingPeriod) {
+    public static void updateStatusAndFreePeriod(TutorialGroupSession newSession, Optional<TutorialGroupFreePeriod> overlappingPeriod) {
         if (overlappingPeriod.isPresent()) {
             newSession.setStatus(TutorialGroupSessionStatus.CANCELLED);
             // the status explanation is set to null, as it is specified in the TutorialGroupFreePeriod

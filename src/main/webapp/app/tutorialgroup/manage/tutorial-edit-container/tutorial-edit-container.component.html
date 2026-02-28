@@ -1,0 +1,17 @@
+<div>
+    @let courseIdToPass = courseId();
+    @let tutorialGroupIdToPass = tutorialGroupId();
+    @if (courseIdToPass && tutorialGroupIdToPass) {
+        <jhi-tutorial-edit
+            [courseId]="courseIdToPass"
+            [tutorialGroupId]="tutorialGroupIdToPass"
+            [tutorialGroup]="tutorialGroup()"
+            [tutors]="tutors()"
+            [schedule]="schedule()"
+            (onUpdate)="updateTutorialGroup($event)"
+        />
+    }
+    @if (isLoading()) {
+        <jhi-loading-indicator-overlay />
+    }
+</div>

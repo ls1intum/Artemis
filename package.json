@@ -70,6 +70,7 @@
         "pdf-lib": "1.17.1",
         "pdfjs-dist": "5.4.624",
         "primeng": "21.1.1",
+        "primeicons": "7.0.0",
         "rxjs": "7.8.2",
         "simple-statistics": "7.8.8",
         "split.js": "1.6.5",

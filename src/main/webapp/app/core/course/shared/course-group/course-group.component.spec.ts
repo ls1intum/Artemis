@@ -12,7 +12,8 @@ import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { CourseGroupComponent, GroupUserInformationRow } from 'app/core/course/shared/course-group/course-group.component';
+import { CourseGroupComponent } from 'app/core/course/shared/course-group/course-group.component';
+import { ExportUserInformationRow } from 'app/shared/user-import/helpers/write-users-to-csv';
 
 describe('CourseGroupComponent', () => {
     let comp: CourseGroupComponent;
@@ -211,13 +212,13 @@ describe('CourseGroupComponent', () => {
         expect(exportAsCsvMock).toHaveBeenCalledOnce();
         const generatedRows = exportAsCsvMock.mock.calls[0][0];
 
-        const expectedRow1 = {} as GroupUserInformationRow;
+        const expectedRow1 = {} as ExportUserInformationRow;
         expectedRow1[NAME_KEY] = '';
         expectedRow1[USERNAME_KEY] = courseGroupUser.login ?? '';
         expectedRow1[EMAIL_KEY] = '';
         expectedRow1[REGISTRATION_NUMBER_KEY] = '';
 
-        const expectedRow2 = {} as GroupUserInformationRow;
+        const expectedRow2 = {} as ExportUserInformationRow;
         expectedRow2[NAME_KEY] = '';
         expectedRow2[USERNAME_KEY] = courseGroupUser2.login ?? '';
         expectedRow2[EMAIL_KEY] = '';
@@ -268,7 +269,7 @@ describe('CourseGroupComponent', () => {
 
     describe('exportAsCsv', () => {
         it('should call csv export functions', () => {
-            const rows: GroupUserInformationRow[] = [{ [NAME_KEY]: 'Test', [USERNAME_KEY]: 'test', [EMAIL_KEY]: 'test@test.com', [REGISTRATION_NUMBER_KEY]: '123' }];
+            const rows: ExportUserInformationRow[] = [{ [NAME_KEY]: 'Test', [USERNAME_KEY]: 'test', [EMAIL_KEY]: 'test@test.com', [REGISTRATION_NUMBER_KEY]: '123' }];
             const keys = [NAME_KEY, USERNAME_KEY, EMAIL_KEY, REGISTRATION_NUMBER_KEY];
 
             // Mock URL.createObjectURL since it's not available in test environment

@@ -946,6 +946,11 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         return getValueElseThrow(findOneWithGroupsAndAuthoritiesByLogin(username));
     }
 
+    @NonNull
+    default User getUserWithGroupsAndAuthorities(Long userId) {
+        return getValueElseThrow(findOneWithGroupsAndAuthoritiesById(userId));
+    }
+
     /**
      * Finds a single user with groups and authorities using the registration number
      *
@@ -983,6 +988,11 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             return Optional.empty();
         }
         return findOneWithGroupsAndAuthoritiesByEmail(email);
+    }
+
+    @NonNull
+    default User findByIdElseThrow(long userId) {
+        return getValueElseThrow(findById(userId), userId);
     }
 
     @NonNull
@@ -1507,4 +1517,11 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             GROUP BY g
             """)
     List<StudentGroupCountDTO> countUsersByStudentGroupNamesAndUserIds(@Param("studentGroupNames") Set<String> studentGroupNames, @Param("userIds") Set<Long> userIds);
+
+    @Query("""
+            SELECT COUNT(tutorialGroup) > 0
+            FROM TutorialGroup tutorialGroup
+            WHERE tutorialGroup.teachingAssistant.id = :userId AND tutorialGroup.id = :tutorialGroupId AND tutorialGroup.course.id = :courseId
+            """)
+    boolean isTutorInTutorialGroup(@Param("userId") long userId, @Param("tutorialGroupId") long tutorialGroupId, @Param("courseId") long courseId);
 }

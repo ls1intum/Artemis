@@ -1,0 +1,82 @@
+<p-dialog [header]="header()" [modal]="true" appendTo="body" [visible]="isOpen()" (visibleChange)="isOpen.set($event)">
+    @let step = flowStep();
+    <div class="frame">
+        @if (step === ImportFlowStep.RESULTS && allStudentsExist()) {
+            <div class="success-content">
+                <span class="pi pi-check-circle" style="font-size: 5rem"></span>
+                <span jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.resultsDescription.allStudentsRegistered"></span>
+            </div>
+        } @else {
+            @switch (step) {
+                @case (ImportFlowStep.EXPLANATION) {
+                    <span class="description" jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.explanationText"></span>
+                }
+                @case (ImportFlowStep.CONFIRMATION) {
+                    <span class="description" jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.confirmationText"></span>
+                }
+                @case (ImportFlowStep.RESULTS) {
+                    @if (noStudentsExist()) {
+                        <span class="description" jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.resultsDescription.noStudentsRegistered"></span>
+                    } @else {
+                        <span class="description" jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.resultsDescription.someStudentsRegistered"></span>
+                    }
+                }
+            }
+            <jhi-tutorial-registrations-import-modal-table [rows]="tableRows()" />
+        }
+        <div class="controls-footer">
+            @switch (step) {
+                @case (ImportFlowStep.EXPLANATION) {
+                    <div class="spacer"></div>
+                    <input type="file" class="file-upload-input" accept=".csv" (change)="parseStudents($event)" #fileUploadInput />
+                    <button
+                        pButton
+                        class="p-button-primary p-button-sm"
+                        jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.chooseFileButtonLabel"
+                        data-testid="choose-file-button"
+                        (click)="fileUploadInput.click()"
+                    ></button>
+                }
+                @case (ImportFlowStep.CONFIRMATION) {
+                    <button
+                        pButton
+                        class="p-button-secondary p-button-sm"
+                        data-testid="back-to-explanation-button"
+                        jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.backToExplanationButtonLabel"
+                        (click)="goToExplanationStep()"
+                    ></button>
+                    <div class="spacer"></div>
+                    <button
+                        pButton
+                        class="p-button-primary p-button-sm"
+                        data-testid="import-button"
+                        jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.importButtonLabel"
+                        (click)="importParsedStudents()"
+                    ></button>
+                }
+                @case (ImportFlowStep.RESULTS) {
+                    @if (!allStudentsExist()) {
+                        <button
+                            pButton
+                            class="p-button-secondary p-button-sm"
+                            data-testid="restart-button"
+                            jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.restartButtonLabel"
+                            (click)="goToExplanationStep()"
+                        ></button>
+                    }
+                    <div class="spacer"></div>
+                    <button
+                        pButton
+                        class="p-button-primary p-button-sm"
+                        data-testid="finish-button"
+                        jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.finishButtonLabel"
+                        (click)="close()"
+                    ></button>
+                }
+            }
+        </div>
+        @if (isLoading()) {
+            <jhi-loading-indicator-overlay />
+        }
+    </div>
+</p-dialog>

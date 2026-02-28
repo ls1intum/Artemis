@@ -213,7 +213,8 @@
             "cancel": "Cancel",
             "confirm": "Confirm",
             "refresh": "Refresh",
-            "invalidInput": "Invalid Input"
+            "invalidInput": "Invalid Input",
+            "requiredLabel": "* required"
         },
         "messages": {
             "info": {

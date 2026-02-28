@@ -1,0 +1,95 @@
+<p-dialog [header]="header()" [modal]="true" [(visible)]="isOpen" focusOnShow="false" (onHide)="clearData()">
+    <div class="frame">
+        <div class="label-and-input">
+            @let dateValidation = dateValidationResult();
+            <label jhiTranslate="artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.date"></label>
+            <p-inputgroup>
+                <p-datepicker
+                    appendTo="body"
+                    [placeholder]="('artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.date' | artemisTranslate) + ' *'"
+                    [(ngModel)]="date"
+                    (onBlur)="dateInputTouched.set(true)"
+                    [invalid]="dateValidation.status === ValidationStatus.INVALID && dateInputTouched()"
+                />
+                @if (dateValidation.status === ValidationStatus.INVALID && dateInputTouched()) {
+                    <p-inputgroup-addon [pTooltip]="dateValidation.message" tooltipPosition="left">
+                        <i class="pi pi-info-circle danger"></i>
+                    </p-inputgroup-addon>
+                }
+            </p-inputgroup>
+        </div>
+        <div class="label-and-input">
+            @let startTimeValidation = startTimeValidationResult();
+            <label jhiTranslate="artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.startTime"></label>
+            <p-inputgroup>
+                <p-datepicker
+                    appendTo="body"
+                    [placeholder]="('artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.startTime' | artemisTranslate) + ' *'"
+                    [(ngModel)]="startTime"
+                    [timeOnly]="true"
+                    (onBlur)="startTimeInputTouched.set(true)"
+                    [invalid]="startTimeValidation.status === ValidationStatus.INVALID && startTimeInputTouched()"
+                />
+                @if (startTimeValidation.status === ValidationStatus.INVALID && startTimeInputTouched()) {
+                    <p-inputgroup-addon [pTooltip]="startTimeValidation.message" tooltipPosition="left">
+                        <i class="pi pi-info-circle danger"></i>
+                    </p-inputgroup-addon>
+                }
+            </p-inputgroup>
+        </div>
+        <div class="label-and-input">
+            @let endTimeValidation = endTimeValidationResult();
+            <label jhiTranslate="artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.endTime"></label>
+            <p-inputgroup>
+                <p-datepicker
+                    appendTo="body"
+                    [placeholder]="('artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.endTime' | artemisTranslate) + ' *'"
+                    [(ngModel)]="endTime"
+                    [timeOnly]="true"
+                    (onBlur)="endTimeInputTouched.set(true)"
+                    [invalid]="endTimeValidation.status === ValidationStatus.INVALID && endTimeInputTouched()"
+                />
+                @if (endTimeValidation.status === ValidationStatus.INVALID && endTimeInputTouched()) {
+                    <p-inputgroup-addon [pTooltip]="endTimeValidation.message" tooltipPosition="left">
+                        <i class="pi pi-info-circle danger"></i>
+                    </p-inputgroup-addon>
+                }
+            </p-inputgroup>
+        </div>
+        <div class="label-and-input">
+            @let locationValidation = locationValidationResult();
+            <label jhiTranslate="artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.location"></label>
+            <p-inputgroup>
+                <input
+                    pInputText
+                    [(ngModel)]="location"
+                    [placeholder]="('artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.location' | artemisTranslate) + ' *'"
+                    (blur)="locationInputTouched.set(true)"
+                    [invalid]="locationValidation.status === ValidationStatus.INVALID && locationInputTouched()"
+                />
+                @if (locationValidation.status === ValidationStatus.INVALID && locationInputTouched()) {
+                    <p-inputgroup-addon [pTooltip]="locationValidation.message" tooltipPosition="left">
+                        <i class="pi pi-info-circle danger"></i>
+                    </p-inputgroup-addon>
+                }
+            </p-inputgroup>
+        </div>
+        <div class="label-and-input">
+            <label jhiTranslate="artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.attendance"></label>
+            <p-inputgroup>
+                <p-inputnumber
+                    placeholder="Attendance"
+                    [(ngModel)]="attendance"
+                    [min]="0"
+                    [showButtons]="true"
+                    [placeholder]="'artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.attendance' | artemisTranslate"
+                />
+            </p-inputgroup>
+        </div>
+        <div class="controls-footer">
+            <span jhiTranslate="global.form.requiredLabel"></span>
+            <button pButton class="p-button-secondary p-button-sm" (click)="cancel()" jhiTranslate="entity.action.cancel"></button>
+            <button pButton class="p-button-primary p-button-sm" [disabled]="saveButtonDisabled()" (click)="save()" jhiTranslate="entity.action.save"></button>
+        </div>
+    </div>
+</p-dialog>

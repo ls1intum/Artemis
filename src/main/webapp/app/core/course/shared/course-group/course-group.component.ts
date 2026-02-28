@@ -7,7 +7,6 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { iconsAsHTML } from 'app/shared/util/icons.utils';
-import { download, generateCsv, mkConfig } from 'export-to-csv';
 import { faDownload, faUserSlash } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/shared/export/export-constants';
@@ -19,17 +18,11 @@ import { UsersImportButtonComponent } from 'app/shared/user-import/button/users-
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
+import { ExportUserInformationRow, exportUserInformationAsCsv } from 'app/shared/user-import/helpers/write-users-to-csv';
 
 const cssClasses = {
     alreadyMember: 'already-member',
     newlyAddedMember: 'newly-added-member',
-};
-
-export type GroupUserInformationRow = {
-    [NAME_KEY]: string;
-    [USERNAME_KEY]: string;
-    [EMAIL_KEY]: string;
-    [REGISTRATION_NUMBER_KEY]: string;
 };
 
 @Component({
@@ -227,7 +220,7 @@ export class CourseGroupComponent {
     exportUserInformation = (): void => {
         const users = this.allGroupUsers();
         if (users.length > 0) {
-            const rows: GroupUserInformationRow[] = users.map((user: User): GroupUserInformationRow => {
+            const rows: ExportUserInformationRow[] = users.map((user: User): ExportUserInformationRow => {
                 return {
                     [NAME_KEY]: user.name?.trim() ?? '',
                     [USERNAME_KEY]: user.login?.trim() ?? '',
@@ -236,31 +229,9 @@ export class CourseGroupComponent {
                 };
             });
             const keys = [NAME_KEY, USERNAME_KEY, EMAIL_KEY, REGISTRATION_NUMBER_KEY];
-            this.exportAsCsv(rows, keys);
+            const fileName = this.exportFileName();
+            exportUserInformationAsCsv(rows, keys, fileName);
         }
-    };
-
-    /**
-     * Method for generating the csv file containing the user information
-     *
-     * @param rows the data to export
-     * @param keys the keys of the data
-     */
-    exportAsCsv = (rows: GroupUserInformationRow[], keys: string[]): void => {
-        const options = {
-            fieldSeparator: ';',
-            quoteStrings: true,
-            quoteCharacter: '"',
-            showLabels: true,
-            showTitle: false,
-            filename: this.exportFileName(),
-            useTextFile: false,
-            useBom: true,
-            columnHeaders: keys,
-        };
-        const csvExportConfig = mkConfig(options);
-        const csvData = generateCsv(csvExportConfig)(rows);
-        download(csvExportConfig)(csvData);
     };
 
     protected readonly addPublicFilePrefix = addPublicFilePrefix;

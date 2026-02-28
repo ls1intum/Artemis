@@ -13,6 +13,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -20,6 +21,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import jakarta.ws.rs.BadRequestException;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -41,7 +44,6 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ConversationDTO
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -53,12 +55,13 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistrationType;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
-import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailGroupDTO;
-import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailSessionDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupRegisterStudentDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupSessionDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRegistrationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
-import de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDetailGroupDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDetailSessionDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource.TutorialGroupImportErrors;
 import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource.TutorialGroupRegistrationImportDTO;
@@ -322,15 +325,24 @@ public class TutorialGroupService {
      * @param responsibleUser  The user who is responsible for the registration.
      * @return The students that could not be found and thus not registered.
      */
-    public Set<StudentDTO> registerMultipleStudents(TutorialGroup tutorialGroup, Set<StudentDTO> studentDTOs, TutorialGroupRegistrationType registrationType,
-            User responsibleUser) {
+    public List<TutorialGroupRegisterStudentDTO> registerMultipleStudentsViaLoginOrRegistrationNumber(TutorialGroup tutorialGroup,
+            List<TutorialGroupRegisterStudentDTO> studentDTOs, TutorialGroupRegistrationType registrationType, User responsibleUser) {
         Set<User> foundStudents = new HashSet<>();
-        Set<StudentDTO> notFoundStudentDTOs = new HashSet<>();
+        List<TutorialGroupRegisterStudentDTO> notFoundStudentDTOs = new LinkedList<>();
         for (var studentDto : studentDTOs) {
-            findStudent(studentDto, tutorialGroup.getCourse().getStudentGroupName()).ifPresentOrElse(foundStudents::add, () -> notFoundStudentDTOs.add(studentDto));
+            findStudent(studentDto.login(), tutorialGroup.getCourse().getStudentGroupName()).ifPresentOrElse(foundStudents::add, () -> notFoundStudentDTOs.add(studentDto));
         }
         registerMultipleStudentsToTutorialGroup(foundStudents, tutorialGroup, registrationType, responsibleUser, true);
         return notFoundStudentDTOs;
+    }
+
+    public void registerMultipleStudentsViaLogin(TutorialGroup tutorialGroup, List<String> logins, TutorialGroupRegistrationType registrationType, User responsibleUser) {
+        Set<User> students = new HashSet<>();
+        for (var login : logins) {
+            var student = findStudent(login, tutorialGroup.getCourse().getStudentGroupName()).orElseThrow(() -> new BadRequestException("Some students do not exist!"));
+            students.add(student);
+        }
+        registerMultipleStudentsToTutorialGroup(students, tutorialGroup, registrationType, responsibleUser, true);
     }
 
     /**
@@ -625,14 +637,14 @@ public class TutorialGroupService {
      * @param tutorialGroupId the ID of the tutorial group to fetch
      * @param courseId        the ID of the course of the tutorial group
      * @param courseTimeZone  the time zone of the course, used for session status evaluation
-     * @return a {@link TutorialGroupDetailGroupDTO}
+     * @return a {@link TutorialGroupDTO}
      * @throws EntityNotFoundException if no tutorial group exists with the given ID
      */
-    public TutorialGroupDetailGroupDTO getTutorialGroupDetailGroupDTO(long tutorialGroupId, long courseId, ZoneId courseTimeZone) {
-        RawTutorialGroupDetailGroupDTO rawGroupDTOs = tutorialGroupRepository.getTutorialGroupDetailData(tutorialGroupId, courseId)
+    public TutorialGroupDTO getTutorialGroupDTO(long tutorialGroupId, long courseId, ZoneId courseTimeZone) {
+        RawTutorialGroupDTO rawGroupDTOs = tutorialGroupRepository.getRawTutorialGroupDTO(tutorialGroupId, courseId)
                 .orElseThrow(() -> new EntityNotFoundException("No tutorial group found with id " + tutorialGroupId + " found for course with id " + courseId + "."));
 
-        String tutorLogin = rawGroupDTOs.teachingAssistantLogin();
+        String tutorLogin = rawGroupDTOs.tutorLogin();
         String currentUserLogin = userRepository.getCurrentUserLogin();
         Long tutorChatId = null;
         if (!tutorLogin.equals(currentUserLogin)) {
@@ -640,21 +652,21 @@ public class TutorialGroupService {
         }
 
         List<RawTutorialGroupDetailSessionDTO> rawSessionDTOs = tutorialGroupSessionRepository.getTutorialGroupDetailSessionData(tutorialGroupId);
-        List<TutorialGroupDetailSessionDTO> sessionDTOs;
-        // the schedule related properties are null if and only if there is no schedule for the tutorial group
+        List<TutorialGroupSessionDTO> sessionDTOs;
+        // the schedule related properties are null if and only if there is no schedule for the tutorial group TODO: bundle in a nested schedule DTO
         if (rawGroupDTOs.scheduleDayOfWeek() != null) {
             int scheduleDayOfWeek = rawGroupDTOs.scheduleDayOfWeek();
             LocalTime scheduleStart = LocalTime.parse(rawGroupDTOs.scheduleStartTime());
             LocalTime scheduleEnd = LocalTime.parse(rawGroupDTOs.scheduleEndTime());
             String scheduleLocation = rawGroupDTOs.scheduleLocation();
-            sessionDTOs = rawSessionDTOs.stream()
-                    .map(data -> TutorialGroupDetailSessionDTO.from(data, scheduleDayOfWeek, scheduleStart, scheduleEnd, scheduleLocation, courseTimeZone)).toList();
+            sessionDTOs = rawSessionDTOs.stream().map(data -> TutorialGroupSessionDTO.from(data, scheduleDayOfWeek, scheduleStart, scheduleEnd, scheduleLocation, courseTimeZone))
+                    .toList();
         }
         else {
-            sessionDTOs = rawSessionDTOs.stream().map(TutorialGroupDetailSessionDTO::from).toList();
+            sessionDTOs = rawSessionDTOs.stream().map(TutorialGroupSessionDTO::from).toList();
         }
 
-        return TutorialGroupDetailGroupDTO.from(rawGroupDTOs, sessionDTOs, tutorChatId);
+        return TutorialGroupDTO.from(rawGroupDTOs, sessionDTOs, tutorChatId);
     }
 
     /**
@@ -719,9 +731,8 @@ public class TutorialGroupService {
         }
     }
 
-    private Optional<User> findStudent(StudentDTO studentDto, String studentCourseGroupName) {
-        var userOptional = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(studentDto.registrationNumber())
-                .or(() -> userRepository.findUserWithGroupsAndAuthoritiesByLogin(studentDto.login()));
+    private Optional<User> findStudent(String login, String studentCourseGroupName) {
+        var userOptional = userRepository.findUserWithGroupsAndAuthoritiesByLogin(login);
         return userOptional.isPresent() && userOptional.get().getGroups().contains(studentCourseGroupName) ? userOptional : Optional.empty();
     }
 

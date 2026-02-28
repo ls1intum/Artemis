@@ -1,0 +1,20 @@
+<div>
+    @let courseToPass = course();
+    @let groupToPass = tutorialGroup();
+    @if (courseToPass && groupToPass) {
+        <jhi-course-tutorial-group-detail
+            [tutorialGroup]="groupToPass"
+            [course]="courseToPass"
+            [allowManagementActions]="true"
+            (onDeleteSession)="deleteSession($event)"
+            (onDeleteGroup)="deleteGroup($event)"
+            (onCancelSession)="cancelSession($event)"
+            (onActivateSession)="activateSession($event)"
+            (onUpdateSession)="updateSession($event)"
+            (onCreateSession)="createSession($event)"
+        />
+    }
+    @if (isLoading()) {
+        <jhi-loading-indicator-overlay />
+    }
+</div>

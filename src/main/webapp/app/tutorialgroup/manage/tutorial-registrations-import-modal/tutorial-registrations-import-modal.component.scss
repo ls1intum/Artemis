@@ -1,0 +1,33 @@
+.frame {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+
+    .description {
+        width: min(45rem, 85vw);
+    }
+
+    .success-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 25rem;
+        gap: 0.5rem;
+        color: var(--success);
+    }
+
+    .controls-footer {
+        display: flex;
+        justify-content: end;
+        width: 100%;
+
+        .file-upload-input {
+            display: none;
+        }
+
+        .spacer {
+            flex: 1;
+        }
+    }
+}

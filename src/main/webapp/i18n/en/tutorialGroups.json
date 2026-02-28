@@ -238,7 +238,6 @@
                 "creatTutorialGroupButton": "Create New Tutorial Group",
                 "editConfigurationButton": "Edit Global Configuration",
                 "rowButtons": {
-                    "sessions": "Sessions",
                     "registrations": "Registrations"
                 },
                 "deleteDialog": {
@@ -256,6 +255,56 @@
                 "configuration": "The course has a tutorial group configuration",
                 "createConfiguration": "Create Configuration",
                 "continueToManagement": "Continue to Tutorial Group Management"
+            },
+            "tutorialGroupRegistrations": {
+                "title": "Tutorial Registrations",
+                "searchFieldPlaceholder": "Search by Name or Login",
+                "importButtonLabel": "Import",
+                "exportButtonLabel": "Export",
+                "addStudentsButtonLabel": "Add Students",
+                "removeStudentButton": {
+                    "confirmationDialogue": {
+                        "header": "Confirm Removal",
+                        "message": "Do you really want to remove this student from registrations?"
+                    }
+                },
+                "studentsTableHeaderLabel": {
+                    "name": "Name",
+                    "login": "Login",
+                    "email": "Email",
+                    "registrationNumber": "Registration Number",
+                    "deregister": "Deregister"
+                },
+                "importModal": {
+                    "explanationText": "This dialog can be used to register existing users through a .csv file. Each entry in the file must contain a value for either login or registration number. If the file contains more then the required columns, they will be discarded automatically. Here an example for a valid .csv file:",
+                    "explanationHeader": "Import Students",
+                    "confirmImportHeader": "Confirm Import",
+                    "importResultsHeader": "Import Results",
+                    "chooseFileButtonLabel": "Choose File",
+                    "invalidFileEntriesAlert": "The chosen file contains entries that do not have at least one of the required fields.",
+                    "noFileEntriesAlert": "The chosen file contains no entries.",
+                    "confirmationText": "Please have a look at the contents of the parsed .csv file and confirm their correctness. After your confirmation, Artemis will verify that the users exists and register them for the group. Artemis parsed the following:",
+                    "backToExplanationButtonLabel": "Back",
+                    "importButtonLabel": "Import",
+                    "importErrorAlert": "Something went wrong while importing the students. Please try again.",
+                    "finishButtonLabel": "Finish",
+                    "restartButtonLabel": "Restart",
+                    "resultsDescription": {
+                        "someStudentsRegistered": "Only a subset of students could be registered. The logins/registration numbers highlighted in red could not be matched to any existing users:",
+                        "noStudentsRegistered": "No students could be registered. The given logins/registration numbers could not be matched to existing users:",
+                        "allStudentsRegistered": "All students were registered."
+                    }
+                },
+                "registerModal": {
+                    "header": "Register Students",
+                    "registerAllButtonLabel": "Register All",
+                    "cancelButtonLabel": "Cancel",
+                    "registerErrorAlert": "Something went wrong while registering the students. Please try again."
+                },
+                "registerSearchBar": {
+                    "fetchSuggestionsError": "An error occured while loading search results. Please try again.",
+                    "noResultsText": "No Students Found."
+                }
             },
             "createTutorialGroup": {
                 "title": "Create Tutorial Group"
@@ -299,18 +348,65 @@
                 "currentTutorialLectureLinkLabel": "Current Lesson",
                 "tutorChatLinkLabel": "Tutor Chat",
                 "groupChannelLinkLabel": "Group Channel",
+                "registrationsLinkLabel": "Registrations",
+                "editLinkLabel": "Edit",
+                "deleteButtonLabel": "Delete",
+                "newSessionButtonLabel": "New Session",
+                "confirmationDialog": {
+                    "deleteGroup": {
+                        "header": "Delete Group?",
+                        "message": "Do you really want to delete this tutorial group? This action can not be reversed!"
+                    },
+                    "deleteSession": {
+                        "header": "Delete Session?",
+                        "message": "Do you really want to delete this session?"
+                    }
+                },
                 "sessionTableColumnTitle": {
                     "date": "Date",
                     "time": "Time",
                     "location": "Location",
                     "attendance": "Attendance",
-                    "status": "Status"
+                    "status": "Status",
+                    "actions": "Actions"
+                },
+                "sessionTableActionTooltipLabel": {
+                    "edit": "Edit",
+                    "cancel": "Cancel",
+                    "activate": "Undo Cancellation",
+                    "delete": "Delete"
                 },
                 "disclaimerText": {
                     "noAttendanceDataAvailable": "No data available",
                     "noUpcomingSession": "No upcoming session"
                 },
-                "createOneToOneChatError": "Error while creating tutor chat. Please try again."
+                "pieChartCategoryLabel": {
+                    "attended": "Attended",
+                    "notAttended": "Not Attended"
+                },
+                "createOneToOneChatError": "Error while creating tutor chat. Please try again.",
+                "managementActionErrorAlert": {
+                    "sessionDeletion": "Error while deleting session. Please try again.",
+                    "groupDeletion": "Error while deleting group. Please try again.",
+                    "groupCreation": "Something went wrong while creating the tutorial group. Please try again.",
+                    "sessionCancellation": "Something went wrong while cancelling the session. Please try again.",
+                    "sessionActivation": "Something went wrong while undoing the cancellation. Please try again.",
+                    "sessionUpdate": "Something went wrong while updating the session. Please try again.",
+                    "sessionCreation": "Something went wrong while creating the session. Please try again."
+                },
+                "createOrEditSessionModal": {
+                    "header": {
+                        "create": "Create Session",
+                        "edit": "Edit Session"
+                    },
+                    "inputLabels": {
+                        "date": "Date",
+                        "startTime": "Start Time",
+                        "endTime": "End Time",
+                        "location": "Location",
+                        "attendance": "Attendance"
+                    }
+                }
             },
             "tutorialFreePeriodsManagement": {
                 "explanation": "Define course wide days on which no tutorial groups should take place. This can be used to define holidays or other days on which no tutorial groups should take place.",
@@ -321,11 +417,53 @@
                     "question": "Are you sure that you want to delete the tutorial group free day: {{ title }}?"
                 }
             },
-            "createTutorialFreePeriod": {
-                "title": "Add Tutorial Free Day"
-            },
-            "editTutorialFreePeriod": {
-                "title": "Edit Tutorial Free Day"
+            "createOrEditTutorialGroup": {
+                "title": {
+                    "edit": "Edit Tutorial Group",
+                    "create": "Create Tutorial Group"
+                },
+                "sectionTitle": {
+                    "generalInformation": "General Information",
+                    "planSessions": "Plan Sessions"
+                },
+                "inputLabel": {
+                    "title": "Title",
+                    "tutor": "Tutor",
+                    "language": "Language",
+                    "languageAutocompleteHeader": "input new or reuse existing:",
+                    "mode": "Mode",
+                    "campus": "Campus",
+                    "capacity": "Capacity",
+                    "additionalInformation": "Additional Information",
+                    "firstSessionStart": "First Session Start",
+                    "firstSessionEnd": "First Session Start",
+                    "repetitionFrequency": "Repetition Frequency",
+                    "repetitionFrequencyPrefix": "every ",
+                    "repetitionFrequencySuffix": " weeks(s)",
+                    "tutorialPeriodEnd": "Tutorial Period End",
+                    "location": "Location"
+                },
+                "validationError": {
+                    "titleContent": "Title must start with a letter or digit, and can otherwise only contain letters, digits, colons, spaces and dashes.",
+                    "titleLength": "Title must contain at most 19 characters. The system automatically removes leading/trailing whitespaces.",
+                    "campusLength": "Campus must contain at most 255 characters. The system automatically removes leading/trailing whitespaces.",
+                    "languageRequired": "Please choose a language.",
+                    "languageLength": "Campus must contain at most 255 characters. The system automatically removes leading/trailing whitespaces.",
+                    "firstSessionStartRequired": "Please choose a date.",
+                    "firstSessionEndRequired": "Please choose a date.",
+                    "firstSessionEndNotAfterStart": "The end of the first session must be after its start.",
+                    "firstSessionEndNotOnSameDayAsStart": "The end of the first session must be on the same day as its start.",
+                    "teachingPeriodRequired": "Please choose a date.",
+                    "teachingPeriodNotAfterFirstSessionStart": "The end of the teaching period must be after the first session's start.",
+                    "teachingPeriodNotAfterFirstSessionEnd": "The end of the teaching period must be after the first session's end.",
+                    "tutorRequired": "Please choose a tutor.",
+                    "locationRequired": "Please choose a location."
+                },
+                "confirmSaveDialog": {
+                    "header": "Save Group?",
+                    "message": "You made changes to the schedule. If you save, this will overwrite all existing sessions.",
+                    "acceptButtonLabel": "Save and Overwrite"
+                }
             },
             "tutorialGroupSessionManagement": {
                 "title": "Tutorial Group Session Management",

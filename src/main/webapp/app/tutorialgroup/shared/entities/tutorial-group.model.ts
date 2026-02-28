@@ -2,7 +2,7 @@ import { BaseEntity } from 'app/shared/model/base-entity';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { TutorialGroupSchedule } from 'app/tutorialgroup/shared/entities/tutorial-group-schedule.model';
-import { RawTutorialGroupDetailSessionDTO, TutorialGroupDetailSessionDTO, TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { RawTutorialGroupSessionDTO, TutorialGroupSession, TutorialGroupSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroupRegistration } from 'app/tutorialgroup/shared/entities/tutorial-group-registration.model';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import dayjs from 'dayjs/esm';
@@ -34,59 +34,104 @@ export class TutorialGroup implements BaseEntity {
     public averageAttendance?: number;
 }
 
-export class TutorialGroupDetailGroupDTO {
+export class TutorialGroupDTO {
     id: number;
     title: string;
     language: string;
     isOnline: boolean;
-    sessions: TutorialGroupDetailSessionDTO[];
-    teachingAssistantName: string;
-    teachingAssistantLogin: string;
-    teachingAssistantImageUrl?: string;
+    sessions: TutorialGroupSessionDTO[];
+    tutorName: string;
+    tutorLogin: string;
+    tutorId: number;
+    tutorImageUrl?: string;
     capacity?: number;
     campus?: string;
+    additionalInformation?: string;
     groupChannelId?: number;
     tutorChatId?: number;
 
-    constructor(rawDto: RawTutorialGroupDetailGroupDTO) {
+    constructor(rawDto: RawTutorialGroupDTO) {
         this.id = rawDto.id;
         this.title = rawDto.title;
         this.language = rawDto.language;
         this.isOnline = rawDto.isOnline;
         this.sessions = (rawDto.sessions ?? []).map(
-            (session: RawTutorialGroupDetailSessionDTO) =>
-                new TutorialGroupDetailSessionDTO(
-                    dayjs(session.start),
-                    dayjs(session.end),
-                    session.location,
-                    session.isCancelled,
-                    session.locationChanged,
-                    session.timeChanged,
-                    session.dateChanged,
-                    session.attendanceCount,
+            (rawSessionDto: RawTutorialGroupSessionDTO) =>
+                new TutorialGroupSessionDTO(
+                    rawSessionDto.id,
+                    dayjs(rawSessionDto.start),
+                    dayjs(rawSessionDto.end),
+                    rawSessionDto.location,
+                    rawSessionDto.isCancelled,
+                    rawSessionDto.locationChanged,
+                    rawSessionDto.timeChanged,
+                    rawSessionDto.dateChanged,
+                    rawSessionDto.attendanceCount,
                 ),
         );
-        this.teachingAssistantName = rawDto.teachingAssistantName;
-        this.teachingAssistantLogin = rawDto.teachingAssistantLogin;
-        this.teachingAssistantImageUrl = rawDto.teachingAssistantImageUrl;
+        this.tutorName = rawDto.tutorName;
+        this.tutorLogin = rawDto.tutorLogin;
+        this.tutorId = rawDto.tutorId;
+        this.tutorImageUrl = rawDto.tutorImageUrl;
         this.capacity = rawDto.capacity;
         this.campus = rawDto.campus;
+        this.additionalInformation = rawDto.additionalInformation;
         this.groupChannelId = rawDto.groupChannelId;
         this.tutorChatId = rawDto.tutorChatId;
     }
 }
 
-export class RawTutorialGroupDetailGroupDTO {
+export class RawTutorialGroupDTO {
     id: number;
     title: string;
     language: string;
     isOnline: boolean;
-    teachingAssistantName: string;
-    teachingAssistantLogin: string;
-    sessions: RawTutorialGroupDetailSessionDTO[] | undefined;
-    teachingAssistantImageUrl?: string;
+    tutorName: string;
+    tutorLogin: string;
+    tutorId: number;
+    sessions: RawTutorialGroupSessionDTO[] | undefined;
+    tutorImageUrl?: string;
     capacity?: number;
     campus?: string;
+    additionalInformation?: string;
     groupChannelId?: number;
     tutorChatId?: number;
+}
+
+export interface TutorialGroupRegisteredStudentDTO {
+    id: number;
+    name?: string;
+    profilePictureUrl?: string;
+    login: string;
+    email?: string;
+    registrationNumber?: string;
+}
+
+export interface TutorialGroupRegisterStudentDTO {
+    login?: string;
+    registrationNumber?: string;
+}
+
+export interface TutorialGroupTutorDTO {
+    id: number;
+    nameAndLogin: string;
+}
+
+export interface CreateOrUpdateTutorialGroupDTO {
+    title: string;
+    tutorId: number;
+    language: string;
+    isOnline: boolean;
+    campus?: string;
+    capacity?: number;
+    additionalInformation?: string;
+    tutorialGroupScheduleDTO?: TutorialGroupScheduleDTO;
+}
+
+export interface TutorialGroupScheduleDTO {
+    firstSessionStart: string;
+    firstSessionEnd: string;
+    repetitionFrequency: number;
+    tutorialPeriodEnd: string;
+    location: string;
 }

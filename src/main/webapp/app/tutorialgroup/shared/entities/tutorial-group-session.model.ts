@@ -22,8 +22,9 @@ export class TutorialGroupSession implements BaseEntity {
     public attendanceCount?: number;
 }
 
-export class TutorialGroupDetailSessionDTO {
+export class TutorialGroupSessionDTO {
     constructor(
+        public id: number,
         public start: Dayjs,
         public end: Dayjs,
         public location: string,
@@ -31,11 +32,12 @@ export class TutorialGroupDetailSessionDTO {
         public locationChanged: boolean,
         public timeChanged: boolean,
         public dateChanged: boolean,
-        public attendanceCount?: number,
+        public attendance?: number,
     ) {}
 }
 
-export interface RawTutorialGroupDetailSessionDTO {
+export interface RawTutorialGroupSessionDTO {
+    id: number;
     start: string;
     end: string;
     location: string;
@@ -44,4 +46,12 @@ export interface RawTutorialGroupDetailSessionDTO {
     timeChanged: boolean;
     dateChanged: boolean;
     attendanceCount?: number;
+}
+
+export interface CreateOrUpdateTutorialGroupSessionDTO {
+    date: string;
+    startTime: string;
+    endTime: string;
+    location: string;
+    attendance?: number;
 }

@@ -31,7 +31,6 @@ export class ProfilePictureComponent implements OnInit, OnChanges {
     imageSize: string;
     fontSize: string;
 
-    // Icons
     protected readonly faCog = faCog;
 
     ngOnInit(): void {

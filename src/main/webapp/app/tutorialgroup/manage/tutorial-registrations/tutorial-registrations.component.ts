@@ -1,0 +1,109 @@
+import { Component, computed, inject, input, signal } from '@angular/core';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
+import { InputTextModule } from 'primeng/inputtext';
+import { ButtonModule } from 'primeng/button';
+import { TutorialGroupRegisteredStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
+import { TranslateService } from '@ngx-translate/core';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
+import { FormsModule } from '@angular/forms';
+import { TutorialRegistrationsImportModalComponent } from 'app/tutorialgroup/manage/tutorial-registrations-import-modal/tutorial-registrations-import-modal.component';
+import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/shared/export/export-constants';
+import { ExportUserInformationRow, exportUserInformationAsCsv } from 'app/shared/user-import/helpers/write-users-to-csv';
+import { TutorialRegistrationsRegisterModalComponent } from 'app/tutorialgroup/manage/tutorial-registrations-register-modal/tutorial-registrations-register-modal.component';
+import {
+    TutorialRegistrationsStudentsTableComponent,
+    TutorialRegistrationsStudentsTableRemoveActionColumnInfo,
+} from 'app/tutorialgroup/manage/tutorial-registrations-students-table/tutorial-registrations-students-table.component';
+import { TutorialGroupRegisteredStudentsService } from 'app/tutorialgroup/shared/service/tutorial-group-registered-students.service';
+
+@Component({
+    selector: 'jhi-tutorial-registrations',
+    imports: [
+        IconFieldModule,
+        InputIconModule,
+        InputTextModule,
+        ConfirmDialogModule,
+        ButtonModule,
+        TranslateDirective,
+        FormsModule,
+        TutorialRegistrationsImportModalComponent,
+        TutorialRegistrationsRegisterModalComponent,
+        TutorialRegistrationsStudentsTableComponent,
+    ],
+    providers: [ConfirmationService],
+    templateUrl: './tutorial-registrations.component.html',
+    styleUrl: './tutorial-registrations.component.scss',
+})
+export class TutorialRegistrationsComponent {
+    private confirmationService = inject(ConfirmationService);
+    private translateService = inject(TranslateService);
+    private tutorialGroupRegisteredStudentService = inject(TutorialGroupRegisteredStudentsService);
+    private currentLocale = getCurrentLocaleSignal(this.translateService);
+
+    readonly studentsTableRemoveActionColumnInfo: TutorialRegistrationsStudentsTableRemoveActionColumnInfo = {
+        headerStringKey: 'artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.deregister',
+        onRemove: (event, student) => this.confirmDeregistration(event, student),
+    };
+
+    courseId = input.required<number>();
+    tutorialGroupId = input.required<number>();
+    registeredStudents = input.required<TutorialGroupRegisteredStudentDTO[]>();
+    filteredRegisteredStudents = computed<TutorialGroupRegisteredStudentDTO[]>(() => this.computeFilteredRegisteredStudents());
+    searchFieldPlaceholder = computed<string>(() => this.computeSearchFieldPlaceholder());
+    searchString = signal('');
+
+    exportRegisteredStudents() {
+        const registeredStudents = this.registeredStudents();
+        if (registeredStudents.length > 0) {
+            const rows: ExportUserInformationRow[] = registeredStudents.map((student) => {
+                return {
+                    [NAME_KEY]: student.name?.trim() ?? '',
+                    [USERNAME_KEY]: student.login?.trim() ?? '',
+                    [EMAIL_KEY]: student.email?.trim() ?? '',
+                    [REGISTRATION_NUMBER_KEY]: student.registrationNumber?.trim() ?? '',
+                };
+            });
+            const keys = [NAME_KEY, USERNAME_KEY, EMAIL_KEY, REGISTRATION_NUMBER_KEY];
+            exportUserInformationAsCsv(rows, keys, 'registrations');
+        }
+    }
+
+    private confirmDeregistration(event: Event, student: TutorialGroupRegisteredStudentDTO) {
+        this.confirmationService.confirm({
+            target: event.target as EventTarget,
+            message: this.translateService.instant('artemisApp.pages.tutorialGroupRegistrations.removeStudentButton.confirmationDialogue.message'),
+            header: this.translateService.instant('artemisApp.pages.tutorialGroupRegistrations.removeStudentButton.confirmationDialogue.header'),
+            rejectButtonProps: {
+                label: this.translateService.instant('entity.action.cancel'),
+                severity: 'secondary',
+            },
+            acceptButtonProps: {
+                label: this.translateService.instant('entity.action.remove'),
+                severity: 'danger',
+            },
+            accept: () => {
+                this.tutorialGroupRegisteredStudentService.deregisterStudent(this.courseId(), this.tutorialGroupId(), student.login);
+            },
+        });
+    }
+
+    private computeSearchFieldPlaceholder(): string {
+        this.currentLocale();
+        return this.translateService.instant('artemisApp.pages.tutorialGroupRegistrations.searchFieldPlaceholder');
+    }
+
+    private computeFilteredRegisteredStudents(): TutorialGroupRegisteredStudentDTO[] {
+        const registeredStudents = this.registeredStudents();
+        const searchString = this.searchString().toLowerCase();
+        if (searchString === '') return registeredStudents;
+        return registeredStudents.filter((student) => {
+            const nameMatches = student.name !== undefined && student.name.toLowerCase().includes(searchString);
+            const loginMatches = student.login.toLowerCase().includes(searchString);
+            return nameMatches || loginMatches;
+        });
+    }
+}
