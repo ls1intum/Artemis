@@ -1,0 +1,56 @@
+name: 'Find E2E PR Comment'
+description: 'Look up the PR number for the current workflow run and find the existing E2E comment, if any'
+
+outputs:
+  pr-number:
+    description: 'The PR number (empty string if not found)'
+    value: ${{ steps.find-pr.outputs.result }}
+  comment-id:
+    description: 'The existing E2E comment ID (empty string if not found)'
+    value: ${{ steps.find-comment.outputs.result }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Find PR number
+      id: find-pr
+      uses: actions/github-script@v8
+      continue-on-error: true
+      with:
+        script: |
+          const branch = '${{ github.event.workflow_run.head_branch }}';
+          const { data: prs } = await github.rest.pulls.list({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            head: `${{ github.repository_owner }}:${branch}`,
+            state: 'open'
+          });
+          if (!prs.length) {
+            console.log(`No open PR found for branch ${branch}`);
+            return '';
+          }
+          return String(prs[0].number);
+
+    - name: Find existing E2E comment
+      id: find-comment
+      if: steps.find-pr.outputs.result != ''
+      uses: actions/github-script@v8
+      continue-on-error: true
+      with:
+        script: |
+          const prNumber = Number('${{ steps.find-pr.outputs.result }}');
+          const marker = '<!-- E2E Test Results -->';
+          const MAX_PAGES = 50;
+          for (let page = 1; page <= MAX_PAGES; page++) {
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              per_page: 100,
+              page: page
+            });
+            if (!comments.length) break;
+            const found = comments.find(c => c.body && c.body.includes(marker));
+            if (found) return String(found.id);
+          }
+          return '';
