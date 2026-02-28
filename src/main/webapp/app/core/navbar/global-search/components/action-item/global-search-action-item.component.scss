@@ -4,6 +4,7 @@
     border-radius: 0.5rem;
     background: linear-gradient(to right, color-mix(in srgb, var(--accent) 7%, var(--module-bg)), color-mix(in srgb, var(--accent-secondary, var(--accent)) 7%, var(--module-bg)));
 
+    &.is-selected,
     &:hover {
         background: linear-gradient(
             to right,

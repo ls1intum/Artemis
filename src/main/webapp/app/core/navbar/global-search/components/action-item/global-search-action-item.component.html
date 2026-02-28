@@ -1,5 +1,6 @@
 <button
     class="d-flex align-items-center border-0 text-start action-item my-2 w-100"
+    [class.is-selected]="selected()"
     type="button"
     [style.--accent]="accentColor()"
     [style.--accent-secondary]="secondaryAccentColor()"

@@ -27,6 +27,7 @@
         border-color 0.15s,
         background 0.15s;
 
+    &.is-selected,
     &:hover,
     &:focus {
         border-color: var(--global-search-result-hover-border) !important;
@@ -62,6 +63,15 @@
     background: var(--global-search-result-icon-bg);
     border-radius: 0.3rem;
     padding: 0.05rem 0.3rem;
+}
+
+.lecture-card-meta {
+    min-width: 0;
+    gap: 0.125rem;
+}
+
+.lecture-card-title {
+    font-size: 0.875rem;
 }
 
 .lecture-card-content {

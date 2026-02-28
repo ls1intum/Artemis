@@ -10,9 +10,10 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
     styleUrls: ['./global-search-action-item.component.scss'],
 })
 export class GlobalSearchActionItemComponent {
-    title = input.required<string>();
-    description = input.required<string>();
-    accentColor = input.required<string>();
-    secondaryAccentColor = input<string>();
-    clicked = output<void>();
+    readonly title = input.required<string>();
+    readonly description = input.required<string>();
+    readonly accentColor = input.required<string>();
+    readonly secondaryAccentColor = input<string>();
+    readonly selected = input<boolean>(false);
+    readonly clicked = output<void>();
 }
