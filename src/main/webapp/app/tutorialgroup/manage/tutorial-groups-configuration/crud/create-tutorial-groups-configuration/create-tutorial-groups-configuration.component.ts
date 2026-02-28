@@ -32,7 +32,7 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit, OnDes
 
     ngUnsubscribe = new Subject<void>();
 
-    newTutorialGroupsConfiguration = {} as TutorialGroupConfigurationDTO;
+    newTutorialGroupsConfiguration: TutorialGroupConfigurationDTO = {};
     isLoading: boolean;
     course: Course;
 

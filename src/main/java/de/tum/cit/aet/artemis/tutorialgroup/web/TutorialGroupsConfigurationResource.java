@@ -136,14 +136,11 @@ public class TutorialGroupsConfigurationResource {
         if (updatedTutorialGroupConfigurationDto.id() == null) {
             throw new BadRequestAlertException("A tutorial group cannot be updated without an id", ENTITY_NAME, "idNull");
         }
-        if (!Objects.equals(updatedTutorialGroupConfigurationDto.id(), tutorialGroupsConfigurationId)) {
-            throw new BadRequestAlertException("The tutorial group configuration id in the path does not match the configuration to be updated.", ENTITY_NAME,
-                    "tutorialGroupConfigurationIdMismatch");
-        }
+
         var configurationFromDatabase = this.tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(tutorialGroupsConfigurationId);
         var course = configurationFromDatabase.getCourse();
-        checkCourseTimeZone(course);
 
+        checkCourseTimeZone(course);
         checkEntityIdMatchesPathIds(configurationFromDatabase, Optional.ofNullable(courseId), Optional.of(tutorialGroupsConfigurationId));
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, configurationFromDatabase.getCourse(), null);
         validateTutorialGroupConfiguration(updatedTutorialGroupConfigurationDto);
