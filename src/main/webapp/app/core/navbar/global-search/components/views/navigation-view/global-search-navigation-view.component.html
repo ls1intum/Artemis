@@ -1,0 +1,36 @@
+<!-- TODO: Add the Iris action button here (index 0) when implementing Iris search.
+     After adding it, increment NAV_ACTION_COUNT to 2 and shift the Lecture button to index 1. -->
+
+<!-- Action button: Search Lecture Content (currently index 0) -->
+<jhi-global-search-action-item
+    [title]="'global.search.searchLectureContent' | artemisTranslate"
+    [description]="'global.search.searchLectureContentDescription' | artemisTranslate"
+    [selected]="selectedIndex() === 0"
+    accentColor="var(--global-search-lecture-accent)"
+    secondaryAccentColor="var(--bs-primary)"
+    (clicked)="viewSelected.emit(SearchView.Lecture)"
+>
+    <fa-icon slot="icon" [icon]="faFileLines" aria-hidden="true" />
+</jhi-global-search-action-item>
+
+<!-- TODO: Add navigation search results here (indices NAV_ACTION_COUNT and above).
+     Use resultSelectedIndex() as the selected index offset for your results list.
+     See GlobalSearchLectureResultsComponent for the full pattern (viewChildren, effect for scroll,
+     toObservable → debounce → switchMap → catchError pipeline).
+
+     Example structure:
+     @if (navResults().length > 0) {
+         <div class="nav-results-list" role="listbox" aria-live="polite"
+              [attr.aria-label]="'...' | artemisTranslate">
+             @for (result of navResults(); track $index) {
+                 <a #cardRef
+                    role="option"
+                    [attr.aria-selected]="resultSelectedIndex() === $index"
+                    [class.is-selected]="resultSelectedIndex() === $index"
+                    [routerLink]="result.link">
+                     {{ result.title }}
+                 </a>
+             }
+         </div>
+     }
+-->
