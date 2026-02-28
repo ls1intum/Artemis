@@ -265,6 +265,9 @@ export class GlobalSearchModalComponent implements OnDestroy {
 
         // Load recent items for this entity type
         this.loadRecentItems(entity.filterTag);
+
+        // Keep search input focused so user can start typing immediately
+        this.focusInput();
     }
 
     private loadRecentItems(type?: string) {
