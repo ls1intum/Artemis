@@ -128,7 +128,8 @@
                 "input": "src/main/webapp/content/scss/themes/theme-dark.scss",
                 "inject": false
               },
-              "node_modules/monaco-editor/min/vs/editor/editor.main.css"
+              "node_modules/monaco-editor/min/vs/editor/editor.main.css",
+              "node_modules/@tumaet/apollon/dist/assets/style.css"
             ],
             "scripts": []
           },

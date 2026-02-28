@@ -14,7 +14,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { MockRouter } from 'src/test/javascript/spec/helpers/mocks/mock-router';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
-import { UMLDiagramType } from '@ls1intum/apollon';
+import { UMLDiagramType } from '@tumaet/apollon';
 
 describe('ApollonDiagramCreateForm Component', () => {
     setupTestBed({ zoneless: true });

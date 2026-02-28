@@ -5,7 +5,7 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ModelingExamSummaryComponent } from 'app/exam/overview/summary/exercises/modeling-exam-summary/modeling-exam-summary.component';
 import { ModelingSubmissionComponent } from 'app/modeling/overview/modeling-submission/modeling-submission.component';
-import { UMLDiagramType } from '@ls1intum/apollon';
+import { UMLDiagramType } from '@tumaet/apollon';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
@@ -56,7 +56,18 @@ describe('ModelingExamSummaryComponent', () => {
     });
 
     it('should show modeling submission when there is submission and exercise', () => {
-        const mockSubmission = { explanationText: 'Test Explanation', model: JSON.stringify({ model: true }) } as ModelingSubmission;
+        const mockSubmission = {
+            explanationText: 'Test Explanation',
+            model: JSON.stringify({
+                id: 'test-diagram-id',
+                version: '4.0.0',
+                title: 'Test Diagram',
+                type: 'ClassDiagram',
+                nodes: [],
+                edges: [],
+                assessments: {},
+            }),
+        } as ModelingSubmission;
         const course = new Course();
         const exercise = { course: course, exerciseGroup: undefined, diagramType: UMLDiagramType.ClassDiagram, studentParticipations: [{ id: 1 }] } as ModelingExercise;
         course.isAtLeastInstructor = true;

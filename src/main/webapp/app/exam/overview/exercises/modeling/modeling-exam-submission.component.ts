@@ -1,5 +1,5 @@
+import { UMLModel } from '@tumaet/apollon';
 import { ChangeDetectionStrategy, Component, OnInit, inject, input, output, viewChild } from '@angular/core';
-import { UMLModel } from '@ls1intum/apollon';
 import dayjs from 'dayjs/esm';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -111,8 +111,8 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
         if (!this.modelingEditor() || !this.modelingEditor().getCurrentModel()) {
             return;
         }
-        const currentApollonModel = this.modelingEditor().getCurrentModel();
-        const diagramJson = JSON.stringify(currentApollonModel);
+
+        const diagramJson = JSON.stringify(this.modelingEditor().getCurrentModel());
 
         if (this.studentSubmission()) {
             if (diagramJson) {
@@ -161,7 +161,6 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
             // and need to remove the content that was added before the string is saved to the db to get valid JSON
             let model = this.submissionVersion.content.substring(0, this.submissionVersion.content.indexOf('; Explanation:'));
             // if we do not wait here for apollon, the redux store might be undefined
-            await this.modelingEditor()!.apollonEditor!.nextRender;
             model = model.replace('Model: ', '');
             // updates the Apollon editor model state (view) with the latest modeling submission
             this.umlModel = JSON.parse(model);

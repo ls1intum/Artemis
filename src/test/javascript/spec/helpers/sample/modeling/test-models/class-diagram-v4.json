@@ -1,0 +1,113 @@
+{
+    "version": "4.0.0",
+    "id": "test-diagram-v4",
+    "title": "Test Class Diagram V4",
+    "type": "ClassDiagram",
+    "nodes": [
+        {
+            "id": "package-1",
+            "width": 470,
+            "height": 310,
+            "type": "package",
+            "position": { "x": 0, "y": 40 },
+            "data": { "name": "Package" },
+            "measured": { "width": 470, "height": 310 }
+        },
+        {
+            "id": "class-in-package",
+            "width": 200,
+            "height": 100,
+            "type": "class",
+            "position": { "x": 90, "y": 110 },
+            "parentId": "package-1",
+            "data": {
+                "name": "Class In Package",
+                "attributes": [{ "id": "attr-1", "name": "+ attribute: Type" }],
+                "methods": [{ "id": "method-1", "name": "+ method()" }]
+            },
+            "measured": { "width": 200, "height": 100 }
+        },
+        {
+            "id": "connected-class",
+            "width": 200,
+            "height": 100,
+            "type": "class",
+            "position": { "x": 700, "y": 70 },
+            "data": {
+                "name": "Connected Class",
+                "attributes": [{ "id": "attr-2", "name": "+ attribute: Type" }],
+                "methods": [{ "id": "method-2", "name": "+ method()" }]
+            },
+            "measured": { "width": 200, "height": 100 }
+        },
+        {
+            "id": "sibling-1",
+            "width": 200,
+            "height": 100,
+            "type": "class",
+            "position": { "x": 80, "y": 390 },
+            "data": {
+                "name": "Sibling 1",
+                "attributes": [{ "id": "attr-3", "name": "+ attribute: Type" }],
+                "methods": [{ "id": "method-3", "name": "+ method()" }]
+            },
+            "measured": { "width": 200, "height": 100 }
+        },
+        {
+            "id": "sibling-2",
+            "width": 200,
+            "height": 100,
+            "type": "class",
+            "position": { "x": 600, "y": 390 },
+            "data": {
+                "name": "Sibling 2",
+                "attributes": [{ "id": "attr-4", "name": "+ attribute: Type" }],
+                "methods": [{ "id": "method-4", "name": "+ method()" }]
+            },
+            "measured": { "width": 200, "height": 100 }
+        }
+    ],
+    "edges": [
+        {
+            "id": "edge-1",
+            "source": "connected-class",
+            "target": "package-1",
+            "type": "ClassBidirectional",
+            "sourceHandle": "top",
+            "targetHandle": "top",
+            "data": {
+                "sourceRole": "",
+                "sourceMultiplicity": "",
+                "targetRole": "",
+                "targetMultiplicity": "",
+                "points": [
+                    { "x": 800, "y": 70 },
+                    { "x": 800, "y": 0 },
+                    { "x": 235, "y": 0 },
+                    { "x": 235, "y": 40 }
+                ]
+            }
+        },
+        {
+            "id": "edge-2",
+            "source": "sibling-1",
+            "target": "sibling-2",
+            "type": "ClassBidirectional",
+            "sourceHandle": "bottom",
+            "targetHandle": "bottom",
+            "data": {
+                "sourceRole": "",
+                "sourceMultiplicity": "",
+                "targetRole": "",
+                "targetMultiplicity": "",
+                "points": [
+                    { "x": 180, "y": 490 },
+                    { "x": 180, "y": 530 },
+                    { "x": 700, "y": 530 },
+                    { "x": 700, "y": 490 }
+                ]
+            }
+        }
+    ],
+    "assessments": {}
+}

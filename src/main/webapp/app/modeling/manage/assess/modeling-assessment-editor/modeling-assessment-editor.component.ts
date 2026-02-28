@@ -3,7 +3,7 @@ import { Location } from '@angular/common';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { firstValueFrom } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
-import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
+import { UMLDiagramType, UMLModel, importDiagram } from '@tumaet/apollon';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -238,7 +238,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.hasAssessmentDueDatePassed = !!this.modelingExercise?.assessmentDueDate && dayjs(this.modelingExercise.assessmentDueDate).isBefore(dayjs());
 
         if (this.submission.model) {
-            this.model = JSON.parse(this.submission.model);
+            this.model = importDiagram(JSON.parse(this.submission.model));
         } else {
             this.alertService.closeAll();
             this.alertService.warning('artemisApp.modelingAssessmentEditor.messages.noModel');
@@ -427,7 +427,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     onSubmitAssessment() {
-        if ((this.model && this.referencedFeedback.length < Object.keys(this.model.elements).length) || !this.assessmentsAreValid) {
+        const totalNumberOfElements = (this.model?.nodes.length ?? 0) + (this.model?.edges.length ?? 0);
+        if ((this.model && this.referencedFeedback.length < totalNumberOfElements) || !this.assessmentsAreValid) {
             const confirmationMessage = this.translateService.instant('artemisApp.modelingAssessmentEditor.messages.confirmSubmission');
 
             // if the assessment is before the assessment due date, don't show the confirm submission button
@@ -586,7 +587,12 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             : new Map<string, string>();
 
         const referenceIds = this.referencedFeedback.map((feedback) => feedback.referenceId);
-        for (const element of Object.values(this.model.elements)) {
+        for (const element of Object.values(this.model.nodes)) {
+            if (!referenceIds.includes(element.id)) {
+                this.highlightedElements.set(element.id, FeedbackHighlightColor.RED);
+            }
+        }
+        for (const element of Object.values(this.model.edges)) {
             if (!referenceIds.includes(element.id)) {
                 this.highlightedElements.set(element.id, FeedbackHighlightColor.RED);
             }
