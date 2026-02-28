@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRe
 @Conditional(IrisEnabled.class)
 @Lazy
 @RestController
-@RequestMapping("api/iris/lecture-search")
+@RequestMapping("api/iris/")
 public class IrisLectureSearchResource {
 
     private final PyrisConnectorService pyrisConnectorService;
@@ -39,7 +39,7 @@ public class IrisLectureSearchResource {
      * @param requestDTO the search request containing query and limit
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of search results
      */
-    @PostMapping
+    @PostMapping("lecture-search")
     @EnforceAtLeastStudent
     public ResponseEntity<List<PyrisLectureSearchResultDTO>> search(@RequestBody @Valid PyrisLectureSearchRequestDTO requestDTO) {
         return ResponseEntity.ok(pyrisConnectorService.searchLectures(requestDTO.query(), requestDTO.limit()));
