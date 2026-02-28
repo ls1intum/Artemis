@@ -1,3 +1,4 @@
+// Atlas module
 package de.tum.cit.aet.artemis.atlas.dto.metrics;
 
 import jakarta.validation.constraints.NotNull;
