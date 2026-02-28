@@ -22,15 +22,13 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  */
 @ConfigurationProperties(prefix = "artemis.weaviate")
 public record WeaviateConfigurationProperties(boolean enabled, String httpHost, @DefaultValue(DEFAULT_HTTP_PORT) int httpPort, @DefaultValue(DEFAULT_GRPC_PORT) int grpcPort,
-        String scheme, @DefaultValue(DEFAULT_COLLECTION_PREFIX) String collectionPrefix, @DefaultValue(DEFAULT_VECTORIZER_MODULE) String vectorizerModule) {
+        String scheme, @DefaultValue(DEFAULT_COLLECTION_PREFIX) String collectionPrefix, @DefaultValue(VECTORIZER_NONE) String vectorizerModule) {
 
     public static final String DEFAULT_HTTP_PORT = "8001";
 
     public static final String DEFAULT_GRPC_PORT = "50051";
 
     public static final String DEFAULT_COLLECTION_PREFIX = "";
-
-    public static final String DEFAULT_VECTORIZER_MODULE = "none";
 
     public static final String VECTORIZER_NONE = "none";
 
