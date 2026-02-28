@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.communication.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.cit.aet.artemis.core.domain.User;
 
 /**
@@ -7,6 +9,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
  * Used by {@link de.tum.cit.aet.artemis.communication.service.notifications.MailService}
  * to avoid depending on the JPA entity directly.
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record MailRecipientDTO(String login, String email, String langKey, String firstName, String lastName, String activationKey, String resetKey) {
 
     /**

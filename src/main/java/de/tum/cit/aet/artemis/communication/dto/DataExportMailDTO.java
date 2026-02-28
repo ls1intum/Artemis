@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.communication.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.cit.aet.artemis.core.domain.DataExport;
 
 /**
@@ -10,6 +12,7 @@ import de.tum.cit.aet.artemis.core.domain.DataExport;
  * @param id   the data export ID
  * @param user nested DTO containing the login of the user who requested the export
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record DataExportMailDTO(Long id, DataExportUserDTO user) {
 
     /**
@@ -17,6 +20,7 @@ public record DataExportMailDTO(Long id, DataExportUserDTO user) {
      *
      * @param login the login of the user
      */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record DataExportUserDTO(String login) {
     }
 
