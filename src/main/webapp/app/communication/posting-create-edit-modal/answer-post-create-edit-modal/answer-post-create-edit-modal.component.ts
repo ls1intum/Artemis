@@ -5,13 +5,15 @@ import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PostContentValidationPattern } from 'app/communication/metis.util';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
+import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-answer-post-create-edit-modal',
     templateUrl: './answer-post-create-edit-modal.component.html',
     styleUrls: ['answer-post-create-edit-modal.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [FormsModule, ReactiveFormsModule, PostingMarkdownEditorComponent],
+    imports: [FormsModule, ReactiveFormsModule, PostingMarkdownEditorComponent, PostingButtonComponent, ArtemisTranslatePipe],
 })
 export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDirective<AnswerPost> {
     createEditAnswerPostContainerRef = input<ViewContainerRef>();
