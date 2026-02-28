@@ -7,7 +7,7 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.core.config.weaviate.schema.WeaviateSchemas;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.ExerciseSchema;
 
 /**
  * DTO for programming exercise data retrieved from Weaviate.
@@ -23,17 +23,15 @@ public record ProgrammingExerciseWeaviateDTO(long exerciseId, long courseId, @Nu
      * @param properties the properties map from Weaviate
      * @return the DTO
      */
-    public static ProgrammingExerciseWeaviateDTO fromWeaviateProperties(Map<String, Object> properties) {
-        return new ProgrammingExerciseWeaviateDTO(((Number) properties.get(WeaviateSchemas.ExercisesProperties.EXERCISE_ID)).longValue(),
-                ((Number) properties.get(WeaviateSchemas.ExercisesProperties.COURSE_ID)).longValue(), (String) properties.get(WeaviateSchemas.ExercisesProperties.COURSE_NAME),
-                (String) properties.get(WeaviateSchemas.ExercisesProperties.TITLE), (String) properties.get(WeaviateSchemas.ExercisesProperties.SHORT_NAME),
-                (String) properties.get(WeaviateSchemas.ExercisesProperties.PROBLEM_STATEMENT), parseDate(properties.get(WeaviateSchemas.ExercisesProperties.RELEASE_DATE)),
-                parseDate(properties.get(WeaviateSchemas.ExercisesProperties.START_DATE)), parseDate(properties.get(WeaviateSchemas.ExercisesProperties.DUE_DATE)),
-                (String) properties.get(WeaviateSchemas.ExercisesProperties.EXERCISE_TYPE), (String) properties.get(WeaviateSchemas.ExercisesProperties.PROGRAMMING_LANGUAGE),
-                (String) properties.get(WeaviateSchemas.ExercisesProperties.DIFFICULTY),
-                properties.get(WeaviateSchemas.ExercisesProperties.MAX_POINTS) != null ? ((Number) properties.get(WeaviateSchemas.ExercisesProperties.MAX_POINTS)).doubleValue()
-                        : 0.0,
-                (String) properties.get(WeaviateSchemas.ExercisesProperties.BASE_URL));
+    public static ProgrammingExerciseWeaviateDTO fromWeaviateProperties(Map<String, Object> properties, String baseUrl) {
+        return new ProgrammingExerciseWeaviateDTO(((Number) properties.get(ExerciseSchema.Properties.EXERCISE_ID)).longValue(),
+                ((Number) properties.get(ExerciseSchema.Properties.COURSE_ID)).longValue(), (String) properties.get(ExerciseSchema.Properties.COURSE_NAME),
+                (String) properties.get(ExerciseSchema.Properties.TITLE), (String) properties.get(ExerciseSchema.Properties.SHORT_NAME),
+                (String) properties.get(ExerciseSchema.Properties.PROBLEM_STATEMENT), parseDate(properties.get(ExerciseSchema.Properties.RELEASE_DATE)),
+                parseDate(properties.get(ExerciseSchema.Properties.START_DATE)), parseDate(properties.get(ExerciseSchema.Properties.DUE_DATE)),
+                (String) properties.get(ExerciseSchema.Properties.EXERCISE_TYPE), (String) properties.get(ExerciseSchema.Properties.PROGRAMMING_LANGUAGE),
+                (String) properties.get(ExerciseSchema.Properties.DIFFICULTY),
+                properties.get(ExerciseSchema.Properties.MAX_POINTS) != null ? ((Number) properties.get(ExerciseSchema.Properties.MAX_POINTS)).doubleValue() : 0.0, baseUrl);
     }
 
     @Nullable

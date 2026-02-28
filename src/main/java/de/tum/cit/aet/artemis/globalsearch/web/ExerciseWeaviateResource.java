@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
@@ -40,10 +41,14 @@ public class ExerciseWeaviateResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    public ExerciseWeaviateResource(ExerciseWeaviateService exerciseWeaviateService, CourseRepository courseRepository, AuthorizationCheckService authCheckService) {
+    private final String serverUrl;
+
+    public ExerciseWeaviateResource(ExerciseWeaviateService exerciseWeaviateService, CourseRepository courseRepository, AuthorizationCheckService authCheckService,
+            @Value("${server.url}") String serverUrl) {
         this.exerciseWeaviateService = exerciseWeaviateService;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
+        this.serverUrl = serverUrl;
     }
 
     /**
@@ -67,7 +72,7 @@ public class ExerciseWeaviateResource {
         boolean isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantInCourse(courseId);
 
         var exerciseProperties = exerciseWeaviateService.fetchProgrammingExercisesForCourse(courseId, isAtLeastTutor);
-        var exercises = exerciseProperties.stream().map(ProgrammingExerciseWeaviateDTO::fromWeaviateProperties).toList();
+        var exercises = exerciseProperties.stream().map(properties -> ProgrammingExerciseWeaviateDTO.fromWeaviateProperties(properties, serverUrl)).toList();
 
         return ResponseEntity.ok(exercises);
     }
