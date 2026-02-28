@@ -1,5 +1,5 @@
 <div class="label-and-input">
-    <label>Language</label>
+    <label jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.inputLabel.language"></label>
     <p-inputgroup>
         @let languageValidation = languageValidationResult();
         <p-inputgroup-addon>
@@ -8,7 +8,7 @@
         <input
             #searchInput
             pInputText
-            placeholder="Language *"
+            [placeholder]="('artemisApp.pages.createOrEditTutorialGroup.inputLabel.language' | artemisTranslate) + ' *'"
             [(ngModel)]="language"
             [invalid]="languageValidation.status === TutorialEditValidationStatus.INVALID"
             (blur)="onBlur()"

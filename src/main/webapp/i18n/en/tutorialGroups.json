@@ -399,11 +399,30 @@
                     "question": "Are you sure that you want to delete the tutorial group free day: {{ title }}?"
                 }
             },
-            "createTutorialFreePeriod": {
-                "title": "Add Tutorial Free Day"
-            },
-            "editTutorialFreePeriod": {
-                "title": "Edit Tutorial Free Day"
+            "createOrEditTutorialGroup": {
+                "title": {
+                    "edit": "Edit Tutorial Group",
+                    "create": "Create Tutorial Group"
+                },
+                "sectionTitle": {
+                    "generalInformation": "General Information",
+                    "planSessions": "Plan Sessions"
+                },
+                "inputLabel": {
+                    "title": "Title",
+                    "tutor": "Tutor",
+                    "language": "Language",
+                    "mode": "Mode",
+                    "campus": "Campus",
+                    "capacity": "Capacity",
+                    "additionalInformation": "Additional Information",
+                    "firstSessionStart": "First Session Start",
+                    "firstSessionEnd": "First Session Start",
+                    "repetitionFrequency": "Repetition Frequency",
+                    "tutorialPeriodEnd": "Tutorial Period End",
+                    "location": "Location"
+                },
+                "requiredLabel": "* required"
             },
             "tutorialGroupSessionManagement": {
                 "title": "Tutorial Group Session Management",

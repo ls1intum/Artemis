@@ -1,10 +1,9 @@
 <div class="frame">
     <section>
-        <h3>General Information</h3>
-
+        <h3 jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.sectionTitle.generalInformation"></h3>
         <div class="label-and-input-row">
             <div class="label-and-input">
-                <label>Title</label>
+                <label jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.inputLabel.title"></label>
                 <p-inputgroup>
                     @let titleValidation = titleValidationResult();
                     <p-inputgroup-addon>
@@ -13,7 +12,7 @@
                     <input
                         pInputText
                         [(ngModel)]="title"
-                        placeholder="Title *"
+                        [placeholder]="('artemisApp.pages.createOrEditTutorialGroup.inputLabel.title' | artemisTranslate) + ' *'"
                         [invalid]="titleValidation.status === ValidationStatus.INVALID && titleInputTouched()"
                         (blur)="titleInputTouched.set(true)"
                     />
@@ -27,14 +26,14 @@
 
             <div class="label-and-input">
                 @let tutorValidation = tutorValidationResult();
-                <label>Tutor</label>
+                <label jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.inputLabel.tutor"></label>
                 <p-inputgroup class="field-control right-control">
                     <p-inputgroup-addon><i class="pi pi-user"></i></p-inputgroup-addon>
                     <p-select
                         optionLabel="nameAndLogin"
                         optionValue="id"
                         filterBy="nameAndLogin"
-                        placeholder="Tutor *"
+                        [placeholder]="('artemisApp.pages.createOrEditTutorialGroup.inputLabel.tutor' | artemisTranslate) + ' *'"
                         [options]="tutors()"
                         [(ngModel)]="selectedTutorId"
                         [filter]="true"
@@ -55,23 +54,33 @@
             <jhi-tutorial-edit-languages-input [alreadyUsedLanguages]="['German', 'English']" [(language)]="language" />
 
             <div class="label-and-input">
-                <label>Mode</label>
+                <label jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.inputLabel.mode"></label>
                 <p-inputgroup>
                     <p-inputgroup-addon><i class="pi pi-compass"></i></p-inputgroup-addon>
-                    <p-select [options]="modes" [(ngModel)]="selectedMode" optionLabel="name" placeholder="Mode" />
+                    <p-select
+                        [options]="modes"
+                        [(ngModel)]="selectedMode"
+                        optionLabel="name"
+                        [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.mode' | artemisTranslate"
+                    />
                 </p-inputgroup>
             </div>
         </div>
 
         <div class="label-and-input-row">
             <div class="label-and-input">
-                <label>Campus</label>
+                <label jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.inputLabel.campus"></label>
                 <p-inputgroup>
                     @let campusValidation = campusValidationResult();
                     <p-inputgroup-addon>
                         <i class="pi pi-building"></i>
                     </p-inputgroup-addon>
-                    <input pInputText [(ngModel)]="campus" placeholder="Campus" [invalid]="campusValidation.status === ValidationStatus.INVALID" />
+                    <input
+                        pInputText
+                        [(ngModel)]="campus"
+                        [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.campus' | artemisTranslate"
+                        [invalid]="campusValidation.status === ValidationStatus.INVALID"
+                    />
                     @if (campusValidation.status === ValidationStatus.INVALID) {
                         <p-inputgroup-addon [pTooltip]="campusValidation.message" tooltipPosition="bottom">
                             <i class="pi pi-info-circle danger"></i>
@@ -81,7 +90,7 @@
             </div>
 
             <div class="label-and-input">
-                <label>Capacity</label>
+                <label jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.inputLabel.capacity"></label>
                 <p-inputgroup>
                     <p-inputgroup-addon><i class="pi pi-hashtag"></i></p-inputgroup-addon>
                     <p-inputnumber [(ngModel)]="capacity" placeholder="Capacity" [min]="1" [showButtons]="true" />
@@ -91,9 +100,14 @@
 
         <div class="label-and-input-row">
             <div class="label-and-input">
-                <label>Additional Information</label>
+                <label jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.inputLabel.additionalInformation"></label>
                 <p-inputgroup>
-                    <input type="text" placeholder="Additional Information" pInputText [(ngModel)]="additionalInformation" />
+                    <input
+                        type="text"
+                        [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.additionalInformation' | artemisTranslate"
+                        pInputText
+                        [(ngModel)]="additionalInformation"
+                    />
                 </p-inputgroup>
             </div>
             <div class="spacer"></div>
@@ -102,19 +116,19 @@
 
     <section>
         <div class="session-plan-section-header">
-            <h3>Plan Sessions</h3>
+            <h3 jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.sectionTitle.planSessions"></h3>
             <p-toggleswitch [(ngModel)]="configureSessionPlan" />
         </div>
 
         @if (configureSessionPlan()) {
             <div class="label-and-input-row">
                 <div class="label-and-input">
-                    <label>First Session Start</label>
+                    <label jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.inputLabel.firstSessionStart">First Session Start</label>
                     <p-inputgroup>
                         @let firstSessionStartValidation = firstSessionStartValidationResult();
                         <p-datepicker
                             hourFormat="24"
-                            placeholder="First Session Start *"
+                            [placeholder]="('artemisApp.pages.createOrEditTutorialGroup.inputLabel.firstSessionStart' | artemisTranslate) + ' *'"
                             [(ngModel)]="firstSessionStart"
                             [showTime]="true"
                             [invalid]="firstSessionStartValidation.status === ValidationStatus.INVALID && firstSessionStartInputTouched()"
@@ -129,12 +143,12 @@
                 </div>
 
                 <div class="label-and-input">
-                    <label>First Session End</label>
+                    <label jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.inputLabel.firstSessionEnd"></label>
                     <p-inputgroup>
                         @let firstSessionEndValidation = firstSessionEndValidationResult();
                         <p-datepicker
                             hourFormat="24"
-                            placeholder="First Session End *"
+                            [placeholder]="('artemisApp.pages.createOrEditTutorialGroup.inputLabel.firstSessionEnd' | artemisTranslate) + ' *'"
                             [(ngModel)]="firstSessionEnd"
                             [showTime]="true"
                             [invalid]="firstSessionEndValidation.status === ValidationStatus.INVALID && firstSessionEndInputTouched()"
@@ -151,19 +165,19 @@
 
             <div class="label-and-input-row">
                 <div class="label-and-input">
-                    <label>Repetition Frequency</label>
+                    <label jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.inputLabel.repetitionFrequency"></label>
                     <p-inputgroup>
                         <p-inputnumber [(ngModel)]="repetitionFrequency" prefix="every " suffix=" week(s)" [min]="1" [showButtons]="true" />
                     </p-inputgroup>
                 </div>
 
                 <div class="label-and-input">
-                    <label>Tutorial Period End</label>
+                    <label jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.inputLabel.tutorialPeriodEnd"></label>
                     <p-inputgroup>
                         @let tutorialPeriodEndValidation = tutorialPeriodEndValidationResult();
                         <p-datepicker
                             hourFormat="24"
-                            placeholder="Tutorial Period End *"
+                            [placeholder]="('artemisApp.pages.createOrEditTutorialGroup.inputLabel.tutorialPeriodEnd' | artemisTranslate) + ' *'"
                             [(ngModel)]="tutorialPeriodEnd"
                             [showButtonBar]="true"
                             [invalid]="tutorialPeriodEndValidation.status === ValidationStatus.INVALID && tutorialPeriodEndInputTouched()"
@@ -180,13 +194,13 @@
 
             <div class="label-and-input-row">
                 <div class="label-and-input">
-                    <label>Location</label>
+                    <label jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.inputLabel.location"></label>
                     <p-inputgroup>
                         @let locationValidation = locationValidationResult();
                         <input
                             type="text"
-                            placeholder="Location *"
                             pInputText
+                            [placeholder]="('artemisApp.pages.createOrEditTutorialGroup.inputLabel.location' | artemisTranslate) + ' *'"
                             [(ngModel)]="location"
                             [invalid]="locationValidation.status === ValidationStatus.INVALID && locationInputTouched()"
                             (blur)="locationInputTouched.set(true)"
@@ -204,9 +218,11 @@
     </section>
 
     <div class="controls-footer">
-        <span>* required</span>
-        <a [routerLink]="['..']" pButton class="p-button-secondary p-button-sm" data-testid="cancel-button">Cancel</a>
-        <button pButton class="p-button-primary p-button-sm" data-testid="save-button" (click)="save()" [disabled]="saveButtonDisabled()">Save</button>
+        <span jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.requiredLabel"></span>
+        <a [routerLink]="['..']" pButton class="p-button-secondary p-button-sm" data-testid="cancel-button" jhiTranslate="entity.action.cancel"></a>
+        <button pButton class="p-button-primary p-button-sm" data-testid="save-button" (click)="save()" [disabled]="saveButtonDisabled()" jhiTranslate="entity.action.save">
+            Save
+        </button>
     </div>
 </div>
 <p-confirmDialog />

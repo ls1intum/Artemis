@@ -306,11 +306,30 @@
                     "noResultsText": "Keine Studenten gefunden."
                 }
             },
-            "createTutorialGroup": {
-                "title": "Übungsgruppe erstellen"
-            },
-            "editTutorialGroup": {
-                "title": "Übungsgruppe bearbeiten"
+            "createOrEditTutorialGroup": {
+                "title": {
+                    "edit": "Übungsgruppe bearbeiten",
+                    "create": "Übungsgruppe erstellen"
+                },
+                "sectionTitle": {
+                    "generalInformation": "Generelle Informationen",
+                    "planSessions": "Sessions planen"
+                },
+                "inputLabel": {
+                    "title": "Titel",
+                    "tutor": "Tutor",
+                    "language": "Sprache",
+                    "mode": "Modus",
+                    "campus": "Campus",
+                    "capacity": "Kapazität",
+                    "additionalInformation": "Zusätzliche Information",
+                    "firstSessionStart": "Start erste Session",
+                    "firstSessionEnd": "Ende erste Session",
+                    "repetitionFrequency": "Wiederholungsfrequenz",
+                    "tutorialPeriodEnd": "Ende Tutoriumsperiode",
+                    "location": "Ort"
+                },
+                "requiredLabel": "* benötigt"
             },
             "tutorialGroupDetail": {
                 "cardTitles": {

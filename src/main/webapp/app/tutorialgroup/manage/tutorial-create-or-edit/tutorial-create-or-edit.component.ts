@@ -15,6 +15,8 @@ import { TutorialEditLanguagesInputComponent } from 'app/tutorialgroup/manage/tu
 import dayjs from 'dayjs/esm';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 type Mode = {
     name: string;
@@ -58,6 +60,8 @@ export interface UpdateTutorialGroupEvent {
         RouterLink,
         TutorialEditLanguagesInputComponent,
         ConfirmDialogModule,
+        TranslateDirective,
+        ArtemisTranslatePipe,
     ],
     providers: [ConfirmationService],
     templateUrl: './tutorial-create-or-edit.component.html',

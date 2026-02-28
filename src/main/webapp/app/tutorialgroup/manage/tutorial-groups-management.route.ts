@@ -54,7 +54,7 @@ export const tutorialGroupManagementRoutes: Routes = [
         loadComponent: () => import('app/tutorialgroup/manage/tutorial-create-container/tutorial-create-container.component').then((m) => m.TutorialCreateContainerComponent),
         data: {
             authorities: IS_AT_LEAST_INSTRUCTOR,
-            pageTitle: 'artemisApp.pages.createTutorialGroup.title',
+            pageTitle: 'artemisApp.pages.createOrEditTutorialGroup.title.create',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -63,7 +63,7 @@ export const tutorialGroupManagementRoutes: Routes = [
         loadComponent: () => import('app/tutorialgroup/manage/tutorial-edit-container/tutorial-edit-container.component').then((m) => m.TutorialEditContainerComponent),
         data: {
             authorities: IS_AT_LEAST_INSTRUCTOR,
-            pageTitle: 'artemisApp.pages.editTutorialGroup.title',
+            pageTitle: 'artemisApp.pages.createOrEditTutorialGroup.title.edit',
         },
         canActivate: [UserRouteAccessService],
     },

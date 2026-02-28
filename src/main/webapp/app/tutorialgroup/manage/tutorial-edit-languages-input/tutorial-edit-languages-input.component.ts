@@ -9,10 +9,12 @@ import { TooltipModule } from 'primeng/tooltip';
 import { FormsModule } from '@angular/forms';
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 import { ScrollingModule } from '@angular/cdk/scrolling';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-tutorial-edit-languages-input',
-    imports: [InputTextModule, InputGroupModule, InputGroupAddonModule, TooltipModule, FormsModule, ScrollingModule],
+    imports: [InputTextModule, InputGroupModule, InputGroupAddonModule, TooltipModule, FormsModule, ScrollingModule, TranslateDirective, ArtemisTranslatePipe],
     templateUrl: './tutorial-edit-languages-input.component.html',
     styleUrl: './tutorial-edit-languages-input.component.scss',
 })
