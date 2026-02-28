@@ -13,6 +13,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.core.env.Environment;
 
 import de.tum.cit.aet.artemis.core.exception.WeaviateConfigurationException;
+import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
 
 /**
  * Tests for ConfigurationValidator
@@ -27,10 +28,17 @@ class ConfigurationValidatorTest {
 
     private static final String VALID_SCHEME = "http";
 
+    private static final String VALID_VECTORIZER_MODULE = WeaviateConfigurationProperties.VECTORIZER_NONE;
+
     private ConfigurationValidator createValidator(boolean weaviateEnabled, String weaviateHost, int weaviatePort, int weaviateGrpcPort, String weaviateScheme) {
+        return createValidator(weaviateEnabled, weaviateHost, weaviatePort, weaviateGrpcPort, weaviateScheme, VALID_VECTORIZER_MODULE);
+    }
+
+    private ConfigurationValidator createValidator(boolean weaviateEnabled, String weaviateHost, int weaviatePort, int weaviateGrpcPort, String weaviateScheme,
+            String vectorizerModule) {
         Environment mockEnvironment = mock(Environment.class);
         when(mockEnvironment.getProperty(Constants.PASSKEY_ENABLED_PROPERTY_NAME, Boolean.class)).thenReturn(false);
-        return new ConfigurationValidator(mockEnvironment, false, null, null, weaviateEnabled, weaviateHost, weaviatePort, weaviateGrpcPort, weaviateScheme);
+        return new ConfigurationValidator(mockEnvironment, false, null, null, weaviateEnabled, weaviateHost, weaviatePort, weaviateGrpcPort, weaviateScheme, vectorizerModule);
     }
 
     @Nested
@@ -138,6 +146,46 @@ class ConfigurationValidatorTest {
             @ValueSource(ints = { 1, 50051, 50052, 65535 })
             void testValidPortShouldPassValidation(int port) {
                 ConfigurationValidator validator = createValidator(true, VALID_HOST, VALID_HTTP_PORT, port, VALID_SCHEME);
+
+                assertThatCode(validator::validateConfigurations).doesNotThrowAnyException();
+            }
+        }
+
+        @Nested
+        class VectorizerModuleValidationTest {
+
+            @ParameterizedTest
+            @NullAndEmptySource
+            @ValueSource(strings = { "   ", "\t", "\n" })
+            void testNullOrBlankShouldFailValidation(String vectorizerModule) {
+                ConfigurationValidator validator = createValidator(true, VALID_HOST, VALID_HTTP_PORT, VALID_GRPC_PORT, VALID_SCHEME, vectorizerModule);
+
+                assertThatThrownBy(validator::validateConfigurations).isInstanceOf(WeaviateConfigurationException.class)
+                        .hasMessageContaining("artemis.weaviate.vectorizer-module (must be configured when Weaviate is enabled)");
+            }
+
+            @ParameterizedTest
+            @ValueSource(strings = { "text2vec-transformer", "text2vec-openai", "invalid", "None", "TEXT2VEC-TRANSFORMERS" })
+            void testInvalidValueShouldFailValidation(String vectorizerModule) {
+                ConfigurationValidator validator = createValidator(true, VALID_HOST, VALID_HTTP_PORT, VALID_GRPC_PORT, VALID_SCHEME, vectorizerModule);
+
+                assertThatThrownBy(validator::validateConfigurations).isInstanceOf(WeaviateConfigurationException.class)
+                        .hasMessageContaining("artemis.weaviate.vectorizer-module (must be '" + WeaviateConfigurationProperties.VECTORIZER_NONE + "' or '"
+                                + WeaviateConfigurationProperties.VECTORIZER_TEXT2VEC_TRANSFORMERS + "')");
+            }
+
+            @Test
+            void testNoneShouldPassValidation() {
+                ConfigurationValidator validator = createValidator(true, VALID_HOST, VALID_HTTP_PORT, VALID_GRPC_PORT, VALID_SCHEME,
+                        WeaviateConfigurationProperties.VECTORIZER_NONE);
+
+                assertThatCode(validator::validateConfigurations).doesNotThrowAnyException();
+            }
+
+            @Test
+            void testText2vecTransformersShouldPassValidation() {
+                ConfigurationValidator validator = createValidator(true, VALID_HOST, VALID_HTTP_PORT, VALID_GRPC_PORT, VALID_SCHEME,
+                        WeaviateConfigurationProperties.VECTORIZER_TEXT2VEC_TRANSFORMERS);
 
                 assertThatCode(validator::validateConfigurations).doesNotThrowAnyException();
             }
