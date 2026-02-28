@@ -807,19 +807,45 @@
                 "title": "Instructor Checklist",
                 "analyze": "Analyze Problem Statement",
                 "analyzing": "Analyzing...",
-                "defaultMessage": "Click \"Analyze Problem Statement\" to check for quality issues.",
+                "defaultMessage": "Click \"Analyze Problem Statement\" to check for competencies, difficulty, and quality issues.",
+                "competencies": {
+                    "title": "Estimated Competencies",
+                    "empty": "No competencies inferred.",
+                    "primary": "Primary",
+                    "evidence": "Evidence:",
+                    "relatedTasks": "Related tasks:",
+                    "linked": "Linked",
+                    "applyCompetencies": "Apply Competencies",
+                    "applyHint": "Links matching course competencies and creates new ones for unmatched learning goals.",
+                    "syncSuccess": "Competencies applied to the exercise successfully.",
+                    "allLinked": "All inferred competencies are already linked.",
+                    "syncError": "Failed to apply competencies. Please try again.",
+                    "showDetails": "Details",
+                    "hideDetails": "Hide"
+                },
+                "difficulty": {
+                    "title": "Difficulty Assessment",
+                    "suggested": "Suggested:",
+                    "vsDeclared": "vs. Declared:",
+                    "tasks": "Tasks:",
+                    "tests": "Tests:",
+                    "harderThanDeclared": "Harder than declared",
+                    "easierThanDeclared": "Easier than declared",
+                    "matchesDeclared": "Matches declared",
+                    "unknown": "Unknown"
+                },
                 "quality": {
                     "title": "Quality Assessment",
                     "empty": "No quality issues found.",
                     "fix": "Fix",
+                    "fixSelected": "Fix Selected",
                     "suggestedFix": "Suggested fix:",
                     "fixAll": "Fix All Issues",
                     "fixIssue": "Apply AI fix for this issue",
-                    "fixSelected": "Fix Selected",
-                    "discardIssue": "Discard this issue",
-                    "discarded": "Issue discarded.",
-                    "discardSelected": "Discard Selected",
-                    "discardedMultiple": "Selected issues discarded.",
+                    "discardIssue": "Dismiss this issue",
+                    "discarded": "Issue dismissed.",
+                    "discardSelected": "Dismiss Selected",
+                    "discardedMultiple": "Selected issues dismissed.",
                     "selectAll": "Select All",
                     "deselectAll": "Deselect All",
                     "radarChartLabel": "Quality scores radar chart"
@@ -827,7 +853,10 @@
                 "actions": {
                     "success": "Problem statement updated successfully.",
                     "error": "Failed to apply the action. Please try again.",
-                    "noChanges": "No changes were needed for this action."
+                    "noChanges": "No changes were needed for this action.",
+                    "adaptTo": "Adapt to:",
+                    "current": "(current)",
+                    "adaptedReasoning": "Adapted to {{ difficulty }}. Re-analyze for an updated assessment."
                 },
                 "outdated": "Outdated",
                 "reanalyze": "Re-analyze"

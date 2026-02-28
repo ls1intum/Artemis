@@ -807,15 +807,41 @@
                 "title": "Checkliste für Lehrende",
                 "analyze": "Problemstellung analysieren",
                 "analyzing": "Analysiere...",
-                "defaultMessage": "Klicke auf \"Problemstellung analysieren\", um nach Qualitätsproblemen zu suchen.",
+                "defaultMessage": "Klicke auf \"Problemstellung analysieren\", um nach Kompetenzbereichen, Schwierigkeitsbewertung und Qualitätsproblemen zu suchen.",
+                "competencies": {
+                    "title": "Geschätzte Kompetenzen",
+                    "empty": "Keine Kompetenzen abgeleitet.",
+                    "primary": "Primär",
+                    "evidence": "Belege:",
+                    "relatedTasks": "Zugehörige Aufgaben:",
+                    "linked": "Verknüpft",
+                    "applyCompetencies": "Kompetenzen anwenden",
+                    "applyHint": "Verknüpft passende Kurskompetenzen und erstellt neue für nicht zugeordnete Lernziele.",
+                    "syncSuccess": "Kompetenzen erfolgreich auf die Aufgabe angewendet.",
+                    "allLinked": "Alle abgeleiteten Kompetenzen sind bereits verknüpft.",
+                    "syncError": "Anwenden der Kompetenzen fehlgeschlagen. Bitte erneut versuchen.",
+                    "showDetails": "Details",
+                    "hideDetails": "Ausblenden"
+                },
+                "difficulty": {
+                    "title": "Schwierigkeitsbewertung",
+                    "suggested": "Vorgeschlagen:",
+                    "vsDeclared": "vs. Angegeben:",
+                    "tasks": "Aufgaben:",
+                    "tests": "Tests:",
+                    "harderThanDeclared": "Schwerer als angegeben",
+                    "easierThanDeclared": "Leichter als angegeben",
+                    "matchesDeclared": "Entspricht der Angabe",
+                    "unknown": "Unbekannt"
+                },
                 "quality": {
                     "title": "Qualitätsprobleme",
                     "empty": "Keine Qualitätsprobleme gefunden.",
                     "fix": "Beheben",
+                    "fixSelected": "Ausgewählte beheben",
                     "suggestedFix": "Vorgeschlagene Lösung:",
                     "fixAll": "Alle Probleme beheben",
                     "fixIssue": "KI-Lösung für dieses Problem anwenden",
-                    "fixSelected": "Ausgewählte beheben",
                     "discardIssue": "Dieses Problem verwerfen",
                     "discarded": "Problem verworfen.",
                     "discardSelected": "Ausgewählte verwerfen",
@@ -827,7 +853,10 @@
                 "actions": {
                     "success": "Problemstellung erfolgreich aktualisiert.",
                     "error": "Aktion konnte nicht angewendet werden. Bitte erneut versuchen.",
-                    "noChanges": "Keine Änderungen für diese Aktion nötig."
+                    "noChanges": "Keine Änderungen für diese Aktion nötig.",
+                    "adaptTo": "Anpassen auf:",
+                    "current": "(aktuell)",
+                    "adaptedReasoning": "An {{ difficulty }} angepasst. Erneut analysieren für eine aktualisierte Bewertung."
                 },
                 "outdated": "Veraltet",
                 "reanalyze": "Erneut analysieren"

@@ -526,6 +526,20 @@ paths:
         '200': {description: OK}
 components:
   schemas:
+    DifficultyAssessment:
+      type: object
+      properties:
+        suggested:
+          type: string
+          enum: [EASY, MEDIUM, HARD, UNKNOWN]
+        confidence: {type: number, format: double}
+        reasoning: {type: string}
+        matchesDeclared: {type: boolean}
+        delta:
+          type: string
+          enum: [LOWER, MATCH, HIGHER, UNKNOWN]
+        taskCount: {type: integer, format: int32}
+        testCount: {type: integer, format: int32}
     Costs:
       type: object
       description: Response containing consistency check costs
@@ -563,7 +577,7 @@ components:
         actionType:
           type: string
           description: Type of action to apply
-          enum: [FIX_QUALITY_ISSUE, FIX_ALL_QUALITY_ISSUES]
+          enum: [FIX_QUALITY_ISSUE, FIX_ALL_QUALITY_ISSUES, ADAPT_DIFFICULTY]
         problemStatementMarkdown: {type: string, description: Current problem statement
             markdown, maxLength: 50000, minLength: 0}
         context:
@@ -585,7 +599,11 @@ components:
     ChecklistAnalysisResponse:
       type: object
       properties:
+        inferredCompetencies:
+          type: array
+          items: {$ref: '#/components/schemas/InferredCompetency'}
         bloomRadar: {$ref: '#/components/schemas/BloomRadar'}
+        difficultyAssessment: {$ref: '#/components/schemas/DifficultyAssessment'}
         qualityIssues:
           type: array
           items: {$ref: '#/components/schemas/QualityIssue'}
@@ -654,6 +672,25 @@ components:
           description: Related locations across artifacts
           items: {$ref: '#/components/schemas/ArtifactLocation'}
       required: [category, description, relatedLocations, severity, suggestedFix]
+    InferredCompetency:
+      type: object
+      properties:
+        knowledgeAreaShortTitle: {type: string}
+        competencyTitle: {type: string}
+        competencyVersion: {type: string}
+        catalogSourceId: {type: integer, format: int64}
+        taxonomyLevel: {type: string}
+        confidence: {type: number, format: double}
+        rank: {type: integer, format: int32}
+        evidence:
+          type: array
+          items: {type: string}
+        whyThisMatches: {type: string}
+        isLikelyPrimary: {type: boolean}
+        relatedTaskNames:
+          type: array
+          items: {type: string}
+        matchedCourseCompetencyId: {type: integer, format: int64}
     ProblemStatementRewriteRequest:
       type: object
       description: Request to rewrite a problem statement

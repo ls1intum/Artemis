@@ -21,7 +21,9 @@ model/consistencyCheckResponse.ts
 model/consistencyIssue.ts
 model/conversationUser.ts
 model/costs.ts
+model/difficultyAssessment.ts
 model/examSeat.ts
+model/inferredCompetency.ts
 model/problemStatementGenerationRequest.ts
 model/problemStatementGenerationResponse.ts
 model/problemStatementGlobalRefinementRequest.ts

@@ -283,7 +283,246 @@
                     }
                 </div>
 
-                <!-- Competencies and Difficulty sections will be added in future PRs -->
+                <!-- Estimated Learning Goals Section -->
+                <div class="section-card mb-2 border rounded" [class.stale]="isSectionStale('competencies')">
+                    <div
+                        class="section-header p-2 d-flex align-items-center"
+                        role="button"
+                        tabindex="0"
+                        [attr.aria-expanded]="sectionExpanded['competencies']()"
+                        (click)="toggleSection('competencies')"
+                        (keydown.enter)="toggleSection('competencies')"
+                        (keydown.space)="$event.preventDefault(); toggleSection('competencies')"
+                    >
+                        <fa-icon [icon]="sectionExpanded['competencies']() ? faChevronDown : faChevronRight" class="me-2 text-muted" />
+                        <h6 class="mb-0" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.title">Estimated Learning Goals</h6>
+                        @if (result.inferredCompetencies?.length) {
+                            <p-badge [value]="'' + result.inferredCompetencies?.length" severity="info" class="ms-2" />
+                        }
+                        @if (isSectionStale('competencies')) {
+                            <span class="ms-2 stale-badge">
+                                <fa-icon [icon]="faExclamationTriangle" />
+                                <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.outdated">Outdated</span>
+                            </span>
+                        }
+                        <span class="flex-grow-1"></span>
+                        @if (isSectionStale('competencies') || isSectionLoading('competencies')) {
+                            <button
+                                pButton
+                                severity="warn"
+                                [text]="true"
+                                size="small"
+                                class="reanalyze-btn"
+                                (click)="$event.stopPropagation(); reanalyzeSection('competencies')"
+                                [disabled]="isLoading() || isSectionLoading('competencies')"
+                            >
+                                <fa-icon [icon]="faSync" [animation]="isSectionLoading('competencies') ? 'spin' : undefined" class="me-1" />
+                                <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.reanalyze">Re-analyze</span>
+                            </button>
+                        }
+                    </div>
+                    @if (sectionExpanded['competencies']()) {
+                        <div class="section-body p-0">
+                            @if (!result.inferredCompetencies || result.inferredCompetencies.length === 0) {
+                                <div class="p-3 text-muted" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.empty">No competencies inferred.</div>
+                            }
+                            @if (result.inferredCompetencies && result.inferredCompetencies.length > 0) {
+                                <div class="competency-list">
+                                    @for (comp of result.inferredCompetencies; track $index) {
+                                        <div class="competency-item">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div class="flex-grow-1">
+                                                    <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                                                        @if (comp.knowledgeAreaShortTitle) {
+                                                            <p-tag [value]="comp.knowledgeAreaShortTitle" severity="secondary" />
+                                                        }
+                                                        <strong class="small">{{ comp.competencyTitle }}</strong>
+                                                        @if (comp.isLikelyPrimary) {
+                                                            <p-tag
+                                                                severity="info"
+                                                                [value]="'artemisApp.programmingExercise.instructorChecklist.competencies.primary' | artemisTranslate"
+                                                            />
+                                                        }
+                                                        <p-tag [value]="comp.taxonomyLevel" severity="info" />
+                                                        @if (isCompetencyLinked(comp)) {
+                                                            <p-tag severity="success">
+                                                                <fa-icon [icon]="faLink" size="xs" />
+                                                                <span class="ms-1" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.linked"
+                                                                    >Linked</span
+                                                                >
+                                                            </p-tag>
+                                                        }
+                                                    </div>
+                                                    @if (comp.whyThisMatches) {
+                                                        <p class="mb-0 text-muted small mt-1">{{ comp.whyThisMatches }}</p>
+                                                    }
+                                                </div>
+                                                <button
+                                                    pButton
+                                                    [text]="true"
+                                                    severity="secondary"
+                                                    size="small"
+                                                    class="expand-details-btn flex-shrink-0"
+                                                    (click)="toggleCompetencyExpand($index); $event.stopPropagation()"
+                                                >
+                                                    <fa-icon [icon]="isCompetencyExpanded($index) ? faChevronDown : faChevronRight" size="xs" class="me-1" />
+                                                    <span>{{
+                                                        isCompetencyExpanded($index)
+                                                            ? ('artemisApp.programmingExercise.instructorChecklist.competencies.hideDetails' | artemisTranslate)
+                                                            : ('artemisApp.programmingExercise.instructorChecklist.competencies.showDetails' | artemisTranslate)
+                                                    }}</span>
+                                                </button>
+                                            </div>
+                                            @if (isCompetencyExpanded($index)) {
+                                                <div class="evidence-section mt-2">
+                                                    @if (comp.relatedTaskNames?.length) {
+                                                        <strong class="small" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.relatedTasks"
+                                                            >Related tasks:</strong
+                                                        >
+                                                        <span class="small text-muted ms-1">{{ comp.relatedTaskNames?.join(', ') }}</span>
+                                                    }
+                                                    @if (comp.evidence?.length) {
+                                                        <strong class="small" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.evidence"
+                                                            >Evidence:</strong
+                                                        >
+                                                        <ul class="small mb-0">
+                                                            @for (item of comp.evidence; track $index) {
+                                                                <li>{{ item }}</li>
+                                                            }
+                                                        </ul>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+
+                                <!-- Competency Linking Action -->
+                                <div class="competency-actions-section p-3 border-top">
+                                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                                        <button
+                                            pButton
+                                            severity="primary"
+                                            size="small"
+                                            [outlined]="true"
+                                            [disabled]="isLoading() || isSyncingCompetencies() || isApplyingAction() || sectionLoading().size > 0"
+                                            (click)="applyCompetencies()"
+                                        >
+                                            @if (isSyncingCompetencies()) {
+                                                <fa-icon [icon]="faSpinner" animation="spin" size="xs" class="me-1" />
+                                            } @else {
+                                                <fa-icon [icon]="faLink" size="xs" class="me-1" />
+                                            }
+                                            <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.applyCompetencies">Apply Competencies</span>
+                                        </button>
+                                    </div>
+                                    <small class="text-muted mt-1 d-block" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.applyHint">
+                                        Links matching course competencies and creates new ones for unmatched learning goals.
+                                    </small>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <!-- Difficulty Section -->
+                <div class="section-card mb-2 border rounded" [class.stale]="isSectionStale('difficulty')">
+                    <div
+                        class="section-header p-2 d-flex align-items-center"
+                        role="button"
+                        tabindex="0"
+                        [attr.aria-expanded]="sectionExpanded['difficulty']()"
+                        (click)="toggleSection('difficulty')"
+                        (keydown.enter)="toggleSection('difficulty')"
+                        (keydown.space)="$event.preventDefault(); toggleSection('difficulty')"
+                    >
+                        <fa-icon [icon]="sectionExpanded['difficulty']() ? faChevronDown : faChevronRight" class="me-2 text-muted" />
+                        <h6 class="mb-0" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.difficulty.title">Difficulty Assessment</h6>
+                        @if (isSectionStale('difficulty')) {
+                            <span class="ms-2 stale-badge">
+                                <fa-icon [icon]="faExclamationTriangle" />
+                                <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.outdated">Outdated</span>
+                            </span>
+                        }
+                        <span class="flex-grow-1"></span>
+                        @if (isSectionStale('difficulty') || isSectionLoading('difficulty')) {
+                            <button
+                                pButton
+                                severity="warn"
+                                [text]="true"
+                                size="small"
+                                class="reanalyze-btn"
+                                (click)="$event.stopPropagation(); reanalyzeSection('difficulty')"
+                                [disabled]="isLoading() || isSectionLoading('difficulty')"
+                            >
+                                <fa-icon [icon]="faSync" [animation]="isSectionLoading('difficulty') ? 'spin' : undefined" class="me-1" />
+                                <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.reanalyze">Re-analyze</span>
+                            </button>
+                        }
+                    </div>
+                    @if (sectionExpanded['difficulty']() && result.difficultyAssessment) {
+                        <div class="section-body p-3">
+                            <div class="d-flex align-items-center mb-2 gap-3">
+                                <div>
+                                    <span class="fw-bold me-2" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.difficulty.suggested">Suggested:</span>
+                                    <p-tag [value]="result.difficultyAssessment.suggested" [severity]="getDifficultySeverity(result.difficultyAssessment.suggested)" />
+                                </div>
+                                <div>
+                                    <span class="fw-bold me-2" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.difficulty.vsDeclared">vs. Declared:</span>
+                                    <fa-icon [icon]="getDeltaIcon(result.difficultyAssessment.delta)" [ngClass]="getDeltaClass(result.difficultyAssessment.delta)" />
+                                    <span class="ms-1" [ngClass]="getDeltaClass(result.difficultyAssessment.delta)">
+                                        {{ getDeltaLabel(result.difficultyAssessment.delta) }}
+                                    </span>
+                                </div>
+                            </div>
+                            @if (localTaskTestCounts().tasks > 0 || localTaskTestCounts().tests > 0) {
+                                <div class="d-flex align-items-center gap-3 mb-2">
+                                    @if (localTaskTestCounts().tasks > 0) {
+                                        <p-tag severity="secondary">
+                                            <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.difficulty.tasks">Tasks:</span>
+                                            {{ localTaskTestCounts().tasks }}
+                                        </p-tag>
+                                    }
+                                    @if (localTaskTestCounts().tests > 0) {
+                                        <p-tag severity="secondary">
+                                            <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.difficulty.tests">Tests:</span>
+                                            {{ localTaskTestCounts().tests }}
+                                        </p-tag>
+                                    }
+                                </div>
+                            }
+                            <p class="text-muted mb-2">{{ result.difficultyAssessment.reasoning }}</p>
+
+                            <!-- Difficulty adaptation chips -->
+                            <div class="d-flex align-items-center gap-2 mt-2">
+                                <small class="fw-bold text-muted me-1" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.actions.adaptTo">Adapt to:</small>
+                                @for (level of difficultyLevels; track level) {
+                                    <button
+                                        pButton
+                                        [severity]="getDifficultySeverity(level)"
+                                        size="small"
+                                        class="difficulty-chip"
+                                        [ngClass]="{
+                                            'difficulty-chip--current': exercise()?.difficulty === level,
+                                            'difficulty-chip--suggested': result.difficultyAssessment.suggested === level && exercise()?.difficulty !== level,
+                                        }"
+                                        [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0 || exercise()?.difficulty === level"
+                                        (click)="adaptDifficulty(level)"
+                                    >
+                                        @if (isActionLoading('adapt-' + level)) {
+                                            <fa-icon [icon]="faSpinner" animation="spin" size="xs" />
+                                        } @else {
+                                            {{ 'artemisApp.exercise.' + level.toLowerCase() | artemisTranslate }}
+                                        }
+                                        @if (exercise()?.difficulty === level) {
+                                            <small class="ms-1" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.actions.current">(current)</small>
+                                        }
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
             </div>
         } @else {
             <div class="text-muted text-center p-3" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.defaultMessage">

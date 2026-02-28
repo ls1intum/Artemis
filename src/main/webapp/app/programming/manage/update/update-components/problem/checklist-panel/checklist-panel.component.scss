@@ -72,11 +72,13 @@
         color: var(--surface-ground);
     }
 
-    .quality-issues-list {
+    .quality-issues-list,
+    .competency-list {
         border-top: 1px solid var(--surface-border);
     }
 
-    .quality-issue-item {
+    .quality-issue-item,
+    .competency-item {
         padding: 0.75rem 1rem;
         border-bottom: 1px solid var(--surface-border);
 
@@ -87,5 +89,43 @@
 
     .quality-issue-item.issue-selected {
         background-color: color-mix(in srgb, var(--primary) 8%, transparent);
+    }
+
+    .evidence-section {
+        background-color: color-mix(in srgb, var(--primary) 6%, transparent);
+        padding: 0.5rem 0.75rem;
+        border-radius: var(--border-radius);
+        border-left: 0.25rem solid var(--primary);
+
+        ul {
+            padding-left: 1rem;
+            margin-bottom: 0;
+        }
+    }
+
+    .difficulty-chip {
+        border-radius: 1rem;
+        opacity: 0.75;
+
+        &:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        &:hover:not(:disabled) {
+            opacity: 1;
+        }
+
+        &--current {
+            opacity: 1;
+            cursor: default;
+            box-shadow:
+                0 0 0 0.125rem var(--surface-ground),
+                0 0 0 0.25rem currentColor;
+        }
+
+        &--suggested {
+            opacity: 1;
+        }
     }
 }

@@ -1,9 +1,11 @@
 import { Component, DestroyRef, Injector, OnDestroy, OnInit, afterNextRender, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faBan, faSave, faSpinner, faTableColumns } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
+import { CompetencyExerciseLink, CompetencyLearningObjectLink } from 'app/atlas/shared/entities/competency.model';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
@@ -71,6 +73,9 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     private refinementRequestId = 0;
     private profileService = inject(ProfileService);
     hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+
+    // Child component reference for refreshing competency selection
+    private competencySelectionComponent = viewChild(CompetencySelectionComponent);
 
     // icons
     facArtemisIntelligence = facArtemisIntelligence;
@@ -279,10 +284,43 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
         return this.translateService.instant('artemisApp.programmingExercise.problemStatement.examplePlaceholder');
     }
 
-    onCompetencyLinksChange(competencyLinks: ProgrammingExercise['competencyLinks']): void {
+    /**
+     * Handles changes to competency links from either the checklist panel or the competency selection.
+     * Also refreshes the CompetencySelectionComponent to reflect changes (e.g., newly created/linked competencies).
+     */
+    onCompetencyLinksChange(competencyLinks: CompetencyExerciseLink[] | CompetencyLearningObjectLink[] | undefined): void {
+        if (!competencyLinks || this.programmingExerciseCreationConfig().isExamMode) return;
         const exercise = this.programmingExercise();
         if (exercise) {
-            exercise.competencyLinks = competencyLinks;
+            // CompetencyExerciseLink extends CompetencyLearningObjectLink, so the assignment is safe.
+            exercise.competencyLinks = competencyLinks.map((link) =>
+                link instanceof CompetencyExerciseLink ? link : new CompetencyExerciseLink(link.competency, exercise, link.weight),
+            );
+            this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
+            this.programmingExerciseChange.emit(exercise);
+            this.refreshCompetencySelection(competencyLinks);
+        }
+    }
+
+    /**
+     * Refreshes the CompetencySelectionComponent so newly linked/created competencies are visible.
+     */
+    private refreshCompetencySelection(competencyLinks: CompetencyExerciseLink[] | CompetencyLearningObjectLink[]): void {
+        const selection = this.competencySelectionComponent();
+        if (!selection) return;
+
+        selection.refreshWithLinks(competencyLinks);
+    }
+
+    onDifficultyChange(difficulty: string): void {
+        const exercise = this.programmingExercise();
+        if (exercise) {
+            const level = DifficultyLevel[difficulty as keyof typeof DifficultyLevel];
+            if (level === undefined) {
+                return;
+            }
+            exercise.difficulty = level;
+            this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
             this.programmingExerciseChange.emit(exercise);
         }
     }

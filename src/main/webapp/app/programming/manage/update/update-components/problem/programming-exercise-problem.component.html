@@ -138,6 +138,8 @@
                 [courseId]="(programmingExercise()?.course?.id ?? programmingExercise()?.exerciseGroup?.exam?.course?.id)!"
                 [problemStatement]="programmingExercise()?.problemStatement ?? ''"
                 (problemStatementDiffRequest)="onChecklistActionDiffRequest($event)"
+                (competencyLinksChange)="onCompetencyLinksChange($event)"
+                (difficultyChange)="onDifficultyChange($event)"
             />
         }
     }

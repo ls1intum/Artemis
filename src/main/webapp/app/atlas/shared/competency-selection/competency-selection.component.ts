@@ -73,6 +73,8 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     isSuggesting = false;
     checkboxStates: Record<number, boolean>;
     suggestedCompetencyIds = new Set<number>();
+    /** Pending links received via refreshWithLinks before competency loading finished. */
+    private pendingRefreshLinks?: CompetencyLearningObjectLink[];
 
     getIcon = getIcon;
     faQuestionCircle = faQuestionCircle;
@@ -123,7 +125,13 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
                     .subscribe({
                         next: (response) => {
                             this.setCompetencyLinks(response.body!);
-                            this.writeValue(this.selectedCompetencyLinks);
+                            // Apply any links that arrived via refreshWithLinks() while still loading
+                            if (this.pendingRefreshLinks) {
+                                this.refreshWithLinks(this.pendingRefreshLinks);
+                                this.pendingRefreshLinks = undefined;
+                            } else {
+                                this.writeValue(this.selectedCompetencyLinks);
+                            }
                         },
                         error: () => {
                             this.disabled = true;
@@ -195,6 +203,46 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
         } else {
             this.selectedCompetencyLinks = value ?? [];
         }
+    }
+
+    /** Merges new competencies from the given links into the available list and rebuilds selection/checkbox state. */
+    refreshWithLinks(links: CompetencyLearningObjectLink[]): void {
+        if (!links) return;
+
+        // If competencies haven't loaded yet, store the links so they can be applied once loading finishes
+        if (!this.competencyLinks) {
+            this.pendingRefreshLinks = links;
+            return;
+        }
+
+        // Add any new competencies to the available list that aren't there yet
+        const availableIds = new Set(this.competencyLinks.map((l) => l.competency?.id).filter(Boolean));
+        const newLinks = links
+            .filter((link) => link.competency?.id && !availableIds.has(link.competency.id))
+            .map((link) => new CompetencyLearningObjectLink(link.competency, link.weight ?? MEDIUM_COMPETENCY_LINK_WEIGHT));
+        if (newLinks.length > 0) {
+            this.competencyLinks = [...this.competencyLinks, ...newLinks];
+        }
+
+        // Update selection state
+        this.writeValue(links);
+
+        // Notify the form control of the change to maintain ControlValueAccessor contract
+        if (this._onChange) {
+            this._onChange(this.selectedCompetencyLinks);
+        }
+
+        // Rebuild checkbox states to match the current selection
+        const selectedIds = new Set((this.selectedCompetencyLinks ?? []).map((l) => l.competency?.id).filter(Boolean));
+        this.checkboxStates = this.competencyLinks.reduce(
+            (states, cl) => {
+                if (cl.competency?.id) {
+                    states[cl.competency.id] = selectedIds.has(cl.competency.id);
+                }
+                return states;
+            },
+            {} as Record<number, boolean>,
+        );
     }
 
     registerOnChange(fn: any): void {

@@ -127,7 +127,8 @@ public class HyperionProblemStatementResource {
     }
 
     /**
-     * POST courses/{courseId}/checklist-analysis: Analyze the problem statement for quality issues.
+     * POST courses/{courseId}/checklist-analysis: Analyze the problem statement for checklist (learning goals, difficulty, quality).
+     * The three LLM calls (competency, difficulty, quality) run concurrently inside the service.
      * Blocking on the CompletableFuture here is acceptable because Artemis runs on virtual threads.
      *
      * @param courseId the id of the course
@@ -145,12 +146,11 @@ public class HyperionProblemStatementResource {
     }
 
     /**
-     * POST courses/{courseId}/checklist-analysis/sections/{section}: Analyze a single section of the checklist.
-     * Currently only the QUALITY section is supported.
+     * POST courses/{courseId}/checklist-analysis/sections/{section}: Analyze a single section of the checklist (competencies, difficulty, or quality).
      * Blocking here is acceptable because Artemis runs on virtual threads.
      *
      * @param courseId the id of the course
-     * @param section  the section to analyze (currently only QUALITY)
+     * @param section  the section to analyze (COMPETENCIES, DIFFICULTY, or QUALITY)
      * @param request  the request containing problem statement and metadata
      * @return the analysis response with only the requested section populated
      */
@@ -161,7 +161,7 @@ public class HyperionProblemStatementResource {
         log.debug("REST request to Hyperion checklist section analysis [{}] for course [{}]", section, courseId);
         courseRepository.findByIdElseThrow(courseId);
         validateExerciseBelongsToCourse(request.exerciseId(), courseId);
-        var result = checklistService.analyzeSection(request, courseId, section).join();
+        var result = checklistService.analyzeSection(request, section, courseId).join();
         return ResponseEntity.ok(result);
     }
 
