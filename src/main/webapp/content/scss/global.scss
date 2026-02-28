@@ -1226,7 +1226,7 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     width: 300px;
     border-radius: 0.5rem;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-    background-color: var(--iris-secondary-background);
+    background-color: var(--iris-secondary-background) !important;
     font-size: 14px;
     font-weight: 400;
 

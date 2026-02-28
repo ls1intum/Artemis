@@ -19,7 +19,22 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
+import {
+    AfterViewInit,
+    ChangeDetectionStrategy,
+    Component,
+    DestroyRef,
+    ElementRef,
+    HostListener,
+    computed,
+    effect,
+    inject,
+    input,
+    output,
+    signal,
+    untracked,
+    viewChild,
+} from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Clipboard } from '@angular/cdk/clipboard';
@@ -708,7 +723,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     onDeleteSession(session: IrisSessionDTO) {
-        const title = session.title || formatDate(session.creationDate, 'dd.MM.yy HH:mm', 'en');
+        const title = session.title || formatDate(session.creationDate, 'dd.MM.yy HH:mm', this.translateService.currentLang || 'en');
         this.confirmationService.confirm({
             header: this.translateService.instant('artemisApp.iris.chatHistory.deleteSessionHeader'),
             message: this.translateService.instant('artemisApp.iris.chatHistory.deleteSessionQuestion', { title }),
@@ -855,6 +870,11 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         this.sessionMenuOpen.set(false);
     }
 
+    @HostListener('document:click')
+    onDocumentClick() {
+        this.onSessionMenuHide();
+    }
+
     openNewSession() {
         this.chatService.clearChat();
     }
@@ -894,7 +914,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         if (session.title && !this.isNewChatSession(session)) {
             return session.title;
         }
-        const creationLabel = formatDate(session.creationDate, 'dd.MM.yy HH:mm', 'en');
+        const creationLabel = formatDate(session.creationDate, 'dd.MM.yy HH:mm', this.translateService.currentLang || 'en');
         return `${newChatLabel} (${creationLabel})`;
     }
 

@@ -184,7 +184,6 @@
                 "last7Days": "Letzten 7 Tage",
                 "last30Days": "Letzten 30 Tage",
                 "older": "Älter",
-                "recent": "Kürzlich",
                 "relatedEntityTooltip": {
                     "programmingExercise": "Diese Konversation bezieht sich auf eine Programmieraufgabe.",
                     "lecture": "Diese Konversation bezieht sich auf eine Vorlesung."
