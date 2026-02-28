@@ -1200,6 +1200,7 @@ describe('IrisBaseChatbotComponent', () => {
             vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
             vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(42));
             vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(10));
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([mockClientMessage, mockServerMessage]));
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
@@ -1244,19 +1245,21 @@ describe('IrisBaseChatbotComponent', () => {
             expect(trigger).toBeNull();
         });
 
-        it('should build menu items with New Chat and context sessions on toggle', () => {
+        it('should build menu items with group labels and context sessions on toggle', () => {
             const mockEvent = new MouseEvent('click');
             component.toggleSessionMenu(mockEvent);
 
-            expect(component.sessionMenuItems()).toHaveLength(3); // New Chat + 2 context sessions
-            expect(component.sessionMenuItems()[0].data?.isActive).toBe(false); // New Chat not active
+            // "Today" group label + session1 + "Older" group label + session2
+            expect(component.sessionMenuItems()).toHaveLength(4);
+            expect(component.sessionMenuItems()[0].disabled).toBe(true); // "Today" group label
             expect(component.sessionMenuItems()[1].label).toBe('Help with recursion');
             expect(component.sessionMenuItems()[1].data?.isActive).toBe(true); // Current session
-            expect(component.sessionMenuItems()[2].label).toBe('Array sorting question');
-            expect(component.sessionMenuItems()[2].data?.isActive).toBe(false);
+            expect(component.sessionMenuItems()[2].disabled).toBe(true); // "Older" group label
+            expect(component.sessionMenuItems()[3].label).toBe('Array sorting question');
+            expect(component.sessionMenuItems()[3].data?.isActive).toBe(false);
         });
 
-        it('should mark New Chat as active when current session id is undefined', () => {
+        it('should still build grouped menu when current session id is undefined', () => {
             vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(undefined));
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
@@ -1270,27 +1273,29 @@ describe('IrisBaseChatbotComponent', () => {
             const mockEvent = new MouseEvent('click');
             component.toggleSessionMenu(mockEvent);
 
-            expect(component.sessionMenuItems()[0].data?.isActive).toBe(true);
+            // No session is active, but sessions are still grouped
+            expect(component.sessionMenuItems()[1].data?.isActive).toBe(false);
+            expect(component.sessionMenuItems()[3].data?.isActive).toBe(false);
         });
 
-        it('should call openNewSession when New Chat menu item is clicked', () => {
-            vi.spyOn(chatService, 'clearChat').mockImplementation(() => {});
-            const openNewSessionSpy = vi.spyOn(component, 'openNewSession');
-            const mockEvent = new MouseEvent('click');
-            component.toggleSessionMenu(mockEvent);
-
-            component.sessionMenuItems()[0].command!({} as any);
-
-            expect(openNewSessionSpy).toHaveBeenCalledOnce();
-        });
-
-        it('should call onSessionClick when a session menu item is clicked', () => {
+        it('should call onSessionClick when a today session menu item is clicked', () => {
             vi.spyOn(chatService, 'switchToSession').mockImplementation(() => {});
             const onSessionClickSpy = vi.spyOn(component, 'onSessionClick');
             const mockEvent = new MouseEvent('click');
             component.toggleSessionMenu(mockEvent);
 
-            component.sessionMenuItems()[2].command!({} as any);
+            component.sessionMenuItems()[1].command!({} as any);
+
+            expect(onSessionClickSpy).toHaveBeenCalledWith(exerciseSession1);
+        });
+
+        it('should call onSessionClick when an older session menu item is clicked', () => {
+            vi.spyOn(chatService, 'switchToSession').mockImplementation(() => {});
+            const onSessionClickSpy = vi.spyOn(component, 'onSessionClick');
+            const mockEvent = new MouseEvent('click');
+            component.toggleSessionMenu(mockEvent);
+
+            component.sessionMenuItems()[3].command!({} as any);
 
             expect(onSessionClickSpy).toHaveBeenCalledWith(exerciseSession2);
         });

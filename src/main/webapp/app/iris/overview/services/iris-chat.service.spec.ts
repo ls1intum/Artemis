@@ -134,7 +134,7 @@ describe('IrisChatService', () => {
             mode: ChatServiceMode.LECTURE,
             entityId: relatedEntityId,
         };
-        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of({ body: newSession } as HttpResponse<IrisSession>));
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of({ body: newSession } as unknown as HttpResponse<IrisSession>));
         vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
         vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
 

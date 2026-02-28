@@ -62,9 +62,6 @@ const LAST_30_DAYS_START = 7;
 const LAST_30_DAYS_END = 29;
 const OLDER_SESSIONS_START = 30;
 
-// Widget session menu: sessions 5+ days old are grouped under "Older"
-const WIDGET_OLDER_THRESHOLD_DAYS = 5;
-
 // Interval (in ms) to check if the date has changed for session bucket recalculation
 const DAY_CHANGE_CHECK_INTERVAL_MS = 60000;
 
@@ -795,8 +792,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
         const sessions = this.contextSessions();
         const todaySessions = this.filterSessionsBetween(sessions, 0, 0);
-        const recentSessions = this.filterSessionsBetween(sessions, 1, WIDGET_OLDER_THRESHOLD_DAYS - 1);
-        const olderSessions = this.filterSessionsBetween(sessions, WIDGET_OLDER_THRESHOLD_DAYS, undefined, true);
+        const olderSessions = this.filterSessionsBetween(sessions, 1, undefined, true);
 
         const items: MenuItem[] = [];
 
@@ -824,7 +820,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         };
 
         addGroup(this.translateService.instant('artemisApp.iris.chatHistory.today'), todaySessions);
-        addGroup(this.translateService.instant('artemisApp.iris.chatHistory.recent'), recentSessions);
         addGroup(this.translateService.instant('artemisApp.iris.chatHistory.older'), olderSessions);
 
         // Fallback: if contextSessions() returned [] (e.g., chatMode/entityId race condition)
@@ -886,19 +881,11 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         if (!session) {
             return this.translateService.instant('artemisApp.iris.chatHistory.today');
         }
-        // Use calendar-day boundaries to match the logic in filterSessionsBetween()
-        const today = new Date();
-        const todayStart = new Date(today);
+        const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
-        const recentStart = new Date(today);
-        recentStart.setDate(today.getDate() - (WIDGET_OLDER_THRESHOLD_DAYS - 1));
-        recentStart.setHours(0, 0, 0, 0);
-
         const created = new Date(session.creationDate).getTime();
         if (created >= todayStart.getTime()) {
             return this.translateService.instant('artemisApp.iris.chatHistory.today');
-        } else if (created >= recentStart.getTime()) {
-            return this.translateService.instant('artemisApp.iris.chatHistory.recent');
         }
         return this.translateService.instant('artemisApp.iris.chatHistory.older');
     }
