@@ -9,16 +9,18 @@ import {
     faBook,
     faCalendarAlt,
     faChartBar,
-    faCode,
+    faCheckDouble,
     faComments,
     faCube,
-    faFileAlt,
+    faFileUpload,
+    faFont,
     faHashtag,
-    faQuestionCircle,
+    faKeyboard,
+    faProjectDiagram,
+    faQuestion,
     faSearch,
     faTimes,
     faTrophy,
-    faUpload,
     faUsers,
 } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
@@ -58,11 +60,13 @@ export class GlobalSearchModalComponent implements OnDestroy {
     protected readonly faSearch = faSearch;
     protected readonly faArrowUp = faArrowUp;
     protected readonly faArrowDown = faArrowDown;
-    protected readonly faCode = faCode;
+    protected readonly faKeyboard = faKeyboard;
+    protected readonly faProjectDiagram = faProjectDiagram;
+    protected readonly faFont = faFont;
+    protected readonly faFileUpload = faFileUpload;
+    protected readonly faCheckDouble = faCheckDouble;
     protected readonly faCube = faCube;
-    protected readonly faFileAlt = faFileAlt;
-    protected readonly faUpload = faUpload;
-    protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly faQuestion = faQuestion;
     protected readonly faTimes = faTimes;
     protected readonly faCalendarAlt = faCalendarAlt;
     protected readonly faTrophy = faTrophy;
@@ -309,12 +313,12 @@ export class GlobalSearchModalComponent implements OnDestroy {
 
     protected getIconForType(type: string, badge?: string) {
         if (type === 'exercise') {
-            if (badge === 'Programming') return this.faCode;
-            if (badge === 'Modeling') return this.faCube;
-            if (badge === 'Text') return this.faFileAlt;
-            if (badge === 'File Upload') return this.faUpload;
-            if (badge === 'Quiz') return this.faQuestionCircle;
-            return this.faCube;
+            if (badge === 'Programming') return this.faKeyboard;
+            if (badge === 'Modeling') return this.faProjectDiagram;
+            if (badge === 'Text') return this.faFont;
+            if (badge === 'File Upload') return this.faFileUpload;
+            if (badge === 'Quiz') return this.faCheckDouble;
+            return this.faQuestion;
         }
         return this.faSearch;
     }
