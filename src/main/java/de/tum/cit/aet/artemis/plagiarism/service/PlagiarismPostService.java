@@ -65,10 +65,6 @@ public class PlagiarismPostService extends PostingService {
      */
     public PlagiarismPostCreationResponseDTO createPost(Long courseId, PlagiarismPostCreationDTO postDto) {
         Post post = postDto.toEntity();
-        // checks
-        if (post.getId() != null) {
-            throw new BadRequestAlertException("A new post cannot already have an ID", PlagiarismPostCreationDTO.PLAGIARISM_POST_ENTITY_NAME, "idExists");
-        }
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();
         final Course course = courseRepository.findByIdElseThrow(courseId);
         if (course.getCourseInformationSharingConfiguration() == CourseInformationSharingConfiguration.DISABLED) {

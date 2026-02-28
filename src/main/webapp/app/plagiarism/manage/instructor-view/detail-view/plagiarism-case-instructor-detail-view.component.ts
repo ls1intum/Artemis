@@ -42,7 +42,7 @@ import { MetisConversationService } from 'app/communication/service/metis-conver
 import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
 import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
 import { PlagiarismPostService } from 'app/plagiarism/shared/services/plagiarism-post.service';
-import { PlagiarismPostCreationDTO } from 'app/plagiarism/shared/entities/PlagiarismPostCreationDTO';
+import { PlagiarismPostCreationDtoModel } from 'app/plagiarism/shared/entities/plagiarism-post-creation-dto.model';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 
 @Component({
@@ -278,7 +278,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     }
 
     createPlagiarismPost = (post: Post): Observable<Post> => {
-        const dto: PlagiarismPostCreationDTO = {
+        const dto: PlagiarismPostCreationDtoModel = {
             title: post.title ?? '',
             content: post.content ?? '',
             visibleForStudents: post.visibleForStudents ?? true,

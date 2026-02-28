@@ -5,7 +5,7 @@ import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import dayjs from 'dayjs/esm';
 import { User } from 'app/core/user/user.model';
 
-export interface PlagiarismPostCreationResponseDTO {
+export interface PlagiarismPostCreationResponseDtoModel {
     id: number;
     content: string;
     title: string;
@@ -18,7 +18,7 @@ export interface PlagiarismPostCreationResponseDTO {
     plagiarismCase: PlagiarismCaseDTO;
 }
 
-export function mapResponseToPost(dto: PlagiarismPostCreationResponseDTO): Post {
+export function mapResponseToPost(dto: PlagiarismPostCreationResponseDtoModel): Post {
     return {
         id: dto.id,
         title: dto.title,
