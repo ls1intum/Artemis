@@ -55,7 +55,6 @@ describe('LectureSearchService', () => {
                     courseId: 1,
                     courseName: 'Advanced Web Development',
                     pageNumber: 3,
-                    baseUrl: 'http://localhost',
                     snippet: 'Signals are a reactive primitive...',
                 },
             ];
