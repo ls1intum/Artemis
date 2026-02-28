@@ -128,6 +128,71 @@
                                 }
                             </div>
                         }
+                        @if (message.exerciseMappingPreview) {
+                            <div class="exercise-mapping-preview-container mt-2 border rounded p-3">
+                                <div class="mb-3">
+                                    <strong>{{ message.exerciseMappingPreview.exerciseTitle }}</strong>
+                                    @if (!message.exerciseMappingPreview.viewOnly) {
+                                        <small class="text-secondary d-block" jhiTranslate="artemisApp.agent.chat.exerciseMapping.selectHint"></small>
+                                    } @else {
+                                        <small class="text-secondary d-block" jhiTranslate="artemisApp.agent.chat.exerciseMapping.currentMappings"></small>
+                                    }
+                                </div>
+
+                                <div class="competency-selection-list">
+                                    @for (competency of message.exerciseMappingPreview.competencies; track competency.competencyId) {
+                                        <div class="competency-item mb-2 p-2 border rounded">
+                                            <div class="d-flex align-items-center">
+                                                <div class="d-flex align-items-center flex-grow-1 gap-2">
+                                                    @if (!message.exerciseMappingPreview.viewOnly) {
+                                                        <p-checkbox
+                                                            [inputId]="'competency-' + message.id + '-' + competency.competencyId"
+                                                            [ngModel]="getCompetencyCheckboxState(message, competency.competencyId)"
+                                                            (ngModelChange)="setCompetencyCheckboxState(message, competency.competencyId, $event)"
+                                                            [binary]="true"
+                                                        />
+                                                    }
+                                                    <label [for]="'competency-' + message.id + '-' + competency.competencyId">
+                                                        {{ competency.competencyTitle }}
+                                                        @if (competency.alreadyMapped) {
+                                                            <span class="badge bg-primary ms-2">
+                                                                <small jhiTranslate="artemisApp.agent.chat.exerciseMapping.existing"></small>
+                                                            </span>
+                                                        }
+                                                        @if (competency.suggested && !competency.alreadyMapped) {
+                                                            <span class="badge bg-success ms-2">
+                                                                <small jhiTranslate="artemisApp.agent.chat.exerciseMapping.aiSuggested"></small>
+                                                            </span>
+                                                        }
+                                                    </label>
+                                                </div>
+
+                                                <div class="ms-3">
+                                                    <p-select
+                                                        [(ngModel)]="competency.weight"
+                                                        [options]="weightOptions"
+                                                        optionLabel="label"
+                                                        optionValue="value"
+                                                        [disabled]="message.exerciseMappingPreview.viewOnly || !getCompetencyCheckboxState(message, competency.competencyId)"
+                                                        styleClass="weight-select-sm"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+
+                                @if (!message.exerciseMappingPreview.viewOnly) {
+                                    <button
+                                        type="button"
+                                        class="btn btn-primary btn-sm mt-3"
+                                        (click)="onApproveExerciseMapping(message)"
+                                        [disabled]="isAgentTyping()"
+                                        jhiTranslate="artemisApp.agent.chat.exerciseMapping.saveMappings"
+                                    ></button>
+                                }
+                            </div>
+                        }
                     </div>
                 </div>
             }

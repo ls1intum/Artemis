@@ -4,7 +4,7 @@ import { Observable, of } from 'rxjs';
 import { catchError, timeout } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { CompetencyRelationType, CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
-import { RelationGraphPreview } from 'app/atlas/shared/entities/chat-message.model';
+import { ExerciseMappingPreview, RelationGraphPreview } from 'app/atlas/shared/entities/chat-message.model';
 
 interface AgentChatRequest {
     message: string;
@@ -36,6 +36,7 @@ export interface AgentChatResponse {
     competencyPreviews?: CompetencyPreviewResponse[];
     relationPreviews?: CompetencyRelationPreviewResponse[];
     relationGraphPreview?: RelationGraphPreview;
+    exerciseMappingPreview?: ExerciseMappingPreview;
 }
 
 export interface AgentHistoryMessage {
@@ -44,6 +45,7 @@ export interface AgentHistoryMessage {
     competencyPreviews?: CompetencyPreviewResponse[];
     relationPreviews?: CompetencyRelationPreviewResponse[];
     relationGraphPreview?: RelationGraphPreview;
+    exerciseMappingPreview?: ExerciseMappingPreview;
 }
 
 @Injectable({

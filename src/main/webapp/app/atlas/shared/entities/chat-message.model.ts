@@ -8,8 +8,10 @@ export interface ChatMessage {
     relationGraphPreview?: RelationGraphPreview; // Graph visualization for relation preview
     competencyPreviews?: CompetencyPreview[]; // Unified array for competency previews
     relationPreviews?: CompetencyRelationPreview[]; // Unified array for relation previews
+    exerciseMappingPreview?: ExerciseMappingPreview; // Preview for exercise-to-competency mapping
     competencyCreated?: boolean;
     relationCreated?: boolean;
+    exerciseMappingCreated?: boolean;
     planPending?: boolean;
     planApproved?: boolean;
     // Pre-computed graph data for stable rendering
@@ -51,5 +53,20 @@ export interface RelationGraphEdge {
 export interface RelationGraphPreview {
     nodes: RelationGraphNode[];
     edges: RelationGraphEdge[];
+    viewOnly?: boolean;
+}
+
+export interface CompetencyMappingOption {
+    competencyId: number;
+    competencyTitle: string;
+    weight: number;
+    alreadyMapped?: boolean;
+    suggested?: boolean;
+}
+
+export interface ExerciseMappingPreview {
+    exerciseId: number;
+    exerciseTitle: string;
+    competencies: CompetencyMappingOption[];
     viewOnly?: boolean;
 }

@@ -1226,6 +1226,7 @@ public class HazelcastConfiguration {
      * <li><strong>rate-limit-buckets:</strong> API rate limiting state</li>
      * <li><strong>atlas-session-pending-operations:</strong> Long-lived session state for competency operations</li>
      * <li><strong>atlas-session-pending-relations:</strong> Long-lived session state for relation operations</li>
+     * <li><strong>atlas-execution-plan:</strong> Long-lived session state for multi-step execution plans</li>
      * </ul>
      *
      * <p>
@@ -1243,6 +1244,7 @@ public class HazelcastConfiguration {
         config.getMapConfigs().put("rate-limit-buckets", createRateLimitBucketsMapConfig(jHipsterProperties));
         config.getMapConfigs().put("atlas-session-pending-operations", createAtlasSessionMapConfig(jHipsterProperties));
         config.getMapConfigs().put("atlas-session-pending-relations", createAtlasSessionMapConfig(jHipsterProperties));
+        config.getMapConfigs().put("atlas-execution-plan", createAtlasSessionMapConfig(jHipsterProperties));
     }
 
     /**

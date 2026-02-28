@@ -2,7 +2,6 @@ import { vi } from 'vitest';
 import type { Mock, Mocked } from 'vitest';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { FormsModule } from '@angular/forms';
-import { HttpResponse } from '@angular/common/http';
 
 import { AgentChatModalComponent } from './agent-chat-modal.component';
 import { AgentChatResponse, AgentChatService, AgentHistoryMessage } from '../services/agent-chat.service';
@@ -10,7 +9,7 @@ import { CompetencyService } from 'app/atlas/manage/services/competency.service'
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChatMessage } from 'app/atlas/shared/entities/chat-message.model';
-import { Competency, CompetencyRelationType, CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
+import { CompetencyRelationType, CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { throwError } from 'rxjs';
 import { ElementRef } from '@angular/core';
@@ -205,15 +204,7 @@ describe('AgentChatModalComponent', () => {
     });
 
     describe('competency operations', () => {
-        it('should handle competency creation', () => {
-            const mockCompetency = new Competency();
-            mockCompetency.title = 'Test Competency';
-            mockCompetency.description = 'Test Description';
-            mockCompetency.taxonomy = CompetencyTaxonomy.ANALYZE;
-
-            const httpResponse = new HttpResponse({ body: mockCompetency, status: 200 });
-            (mockCompetencyService.create as Mock).mockReturnValue(of(httpResponse));
-
+        it('should handle competency creation by sending approval marker', () => {
             const message: ChatMessage = {
                 id: '1',
                 content: 'Test',
@@ -230,20 +221,10 @@ describe('AgentChatModalComponent', () => {
 
             component.onCreateCompetencies(message);
 
-            expect(mockCompetencyService.create).toHaveBeenCalled();
-            expect(mockCompetencyService.create).toHaveBeenCalledOnce();
+            expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('[CREATE_APPROVED_COMPETENCY]', component.courseId());
         });
 
-        it('should handle competency update', () => {
-            const mockCompetency = new Competency();
-            mockCompetency.id = 1;
-            mockCompetency.title = 'Updated Competency';
-            mockCompetency.description = 'Updated Description';
-            mockCompetency.taxonomy = CompetencyTaxonomy.ANALYZE;
-
-            const httpResponse = new HttpResponse({ body: mockCompetency, status: 200 });
-            (mockCompetencyService.update as Mock).mockReturnValue(of(httpResponse));
-
+        it('should handle competency update by sending approval marker', () => {
             const message: ChatMessage = {
                 id: '2',
                 content: 'Test',
@@ -261,8 +242,7 @@ describe('AgentChatModalComponent', () => {
 
             component.onCreateCompetencies(message);
 
-            expect(mockCompetencyService.update).toHaveBeenCalled();
-            expect(mockCompetencyService.update).toHaveBeenCalledOnce();
+            expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('[CREATE_APPROVED_COMPETENCY]', component.courseId());
         });
     });
 
@@ -440,7 +420,7 @@ describe('AgentChatModalComponent', () => {
             sendButton.click();
             const messages = component.messages();
             expect(component.isAgentTyping()).toBeFalsy();
-            expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.error');
+            expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.error.general');
             expect(messages).toHaveLength(3); // Welcome + user message + error message
             expect(messages[2].content).toBe(errorMessage);
             expect(messages[2].isUser).toBeFalsy();
@@ -824,7 +804,7 @@ describe('AgentChatModalComponent', () => {
 
                 const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
                 sendButton.click();
-                expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.error');
+                expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.error.general');
             });
 
             it('should handle null response message from service', () => {
@@ -845,7 +825,7 @@ describe('AgentChatModalComponent', () => {
                 const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
                 sendButton.click();
 
-                expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.error');
+                expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.error.general');
             });
         });
 
@@ -1239,7 +1219,7 @@ describe('AgentChatModalComponent', () => {
                     component['onApprovePlan'](message);
 
                     expect(component.isAgentTyping()).toBeFalsy();
-                    expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.error');
+                    expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.error.general');
                 });
             });
 
@@ -1266,20 +1246,20 @@ describe('AgentChatModalComponent', () => {
                 });
 
                 it('should create new competency when onCreateCompetencies is called', async () => {
-                    mockCompetencyService.create.mockReturnValue(
-                        of(
-                            new HttpResponse({
-                                body: { id: 1, title: 'Created' } as Competency,
-                                status: 200,
-                            }),
-                        ),
+                    mockAgentChatService.sendMessage.mockReturnValue(
+                        of({
+                            message: 'Competency created successfully',
+                            sessionId: 'session',
+                            timestamp: new Date().toISOString(),
+                            success: true,
+                            competenciesModified: true,
+                        }),
                     );
                     const emitSpy = vi.spyOn(component.competencyChanged, 'emit');
                     component.onCreateCompetencies(message);
                     await flushPromises();
 
-                    expect(mockCompetencyService.create).toHaveBeenCalledOnce();
-                    expect(mockCompetencyService.create).toHaveBeenCalledWith(expect.objectContaining({ title: 'New Competency' }), 123);
+                    expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('[CREATE_APPROVED_COMPETENCY]', component.courseId());
                     expect(component.isAgentTyping()).toBeFalsy();
                     expect(emitSpy).toHaveBeenCalled();
                 });
@@ -1295,26 +1275,21 @@ describe('AgentChatModalComponent', () => {
                         },
                     ];
                     component.messages.set([message]);
-                    mockCompetencyService.update.mockReturnValue(
-                        of(
-                            new HttpResponse({
-                                body: { id: 42, title: 'Updated Competency' } as Competency,
-                            }),
-                        ),
+                    mockAgentChatService.sendMessage.mockReturnValue(
+                        of({
+                            message: 'Competency updated successfully',
+                            sessionId: 'session',
+                            timestamp: new Date().toISOString(),
+                            success: true,
+                            competenciesModified: true,
+                        }),
                     );
                     const emitSpy = vi.spyOn(component.competencyChanged, 'emit');
 
                     component.onCreateCompetencies(message);
                     await flushPromises();
 
-                    expect(mockCompetencyService.update).toHaveBeenCalledOnce();
-                    expect(mockCompetencyService.update).toHaveBeenCalledWith(
-                        expect.objectContaining({
-                            id: 42,
-                            title: 'Updated Competency',
-                        }),
-                        123,
-                    );
+                    expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('[CREATE_APPROVED_COMPETENCY]', component.courseId());
                     const updatedMessage = component.messages().find((msg) => msg.id === '1');
                     expect(updatedMessage?.competencyCreated).toBeTruthy();
                     expect(emitSpy).toHaveBeenCalledOnce();
@@ -1344,21 +1319,21 @@ describe('AgentChatModalComponent', () => {
                 });
 
                 it('should handle creation error gracefully', async () => {
-                    mockCompetencyService.create.mockReturnValue(throwError(() => new Error('Creation failed')));
+                    mockAgentChatService.sendMessage.mockReturnValue(throwError(() => new Error('Creation failed')));
                     const createFailedText = 'Failed to create competency';
-                    vi.spyOn(mockTranslateService, 'instant').mockReturnValue(createFailedText);
+                    const translateSpy = vi.spyOn(mockTranslateService, 'instant').mockReturnValue(createFailedText);
 
                     component.onCreateCompetencies(message);
                     await flushPromises();
 
                     expect(component.isAgentTyping()).toBeFalsy();
-                    expect(mockTranslateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.competencyProcessFailure');
+                    expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.competencyProcessFailure');
                     const errorMessage = component.messages().find((msg) => !msg.isUser && msg.content === createFailedText);
                     expect(errorMessage).toBeDefined();
                 });
 
                 it('should handle update error gracefully', async () => {
-                    mockCompetencyService.update.mockReturnValue(throwError(() => new Error('Update failed')));
+                    mockAgentChatService.sendMessage.mockReturnValue(throwError(() => new Error('Update failed')));
                     const updateFailedText = 'Failed to update competency';
                     const translateSpy = vi.spyOn(mockTranslateService, 'instant').mockReturnValue(updateFailedText);
 
@@ -1439,11 +1414,15 @@ describe('AgentChatModalComponent', () => {
                 });
 
                 it('should create multiple competencies from batch preview', async () => {
-                    const mockCompetency: Partial<Competency> = {
-                        id: 1,
-                        title: 'Test',
-                    };
-                    mockCompetencyService.create.mockReturnValue(of(new HttpResponse({ body: mockCompetency as Competency })));
+                    mockAgentChatService.sendMessage.mockReturnValue(
+                        of({
+                            message: 'Competencies created successfully',
+                            sessionId: 'session',
+                            timestamp: new Date().toISOString(),
+                            success: true,
+                            competenciesModified: true,
+                        }),
+                    );
                     const emitSpy = vi.spyOn(component.competencyChanged, 'emit');
 
                     const message: ChatMessage = {
@@ -1477,7 +1456,7 @@ describe('AgentChatModalComponent', () => {
                     component.onCreateCompetencies(message);
                     await flushPromises();
 
-                    expect(mockCompetencyService.create).toHaveBeenCalledTimes(3);
+                    expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('[CREATE_APPROVED_COMPETENCY]', component.courseId());
                     expect(component.isAgentTyping()).toBeFalsy();
 
                     const updatedMessage = component.messages().find((msg) => msg.id === '1');
@@ -1535,25 +1514,6 @@ describe('AgentChatModalComponent', () => {
                 });
 
                 it('should handle mixed create and update operations in batch', () => {
-                    const competency = { id: 1, title: 'Created' };
-                    const updatedCompetency: Competency = { id: 10, title: 'Updated' };
-                    mockCompetencyService.create.mockReturnValue(
-                        of(
-                            new HttpResponse({
-                                body: competency as Competency,
-                                status: 200,
-                            }),
-                        ),
-                    );
-                    mockCompetencyService.update.mockReturnValue(
-                        of(
-                            new HttpResponse({
-                                body: updatedCompetency,
-                                status: 200,
-                            }),
-                        ),
-                    );
-
                     const message: ChatMessage = {
                         id: '1',
                         content: 'Mixed batch',
@@ -1579,17 +1539,13 @@ describe('AgentChatModalComponent', () => {
 
                     component.onCreateCompetencies(message);
 
-                    expect(mockCompetencyService.create).toHaveBeenCalledOnce();
-                    expect(mockCompetencyService.update).toHaveBeenCalledOnce();
+                    expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('[CREATE_APPROVED_COMPETENCY]', component.courseId());
                     const messages = component.messages();
                     const successMessage = messages[component.messages().length - 1];
                     expect(successMessage).toBeDefined();
                 });
 
                 it('should handle all updates in batch', () => {
-                    const updatedCompetency: Partial<Competency> = { id: 1, title: 'Updated' };
-                    mockCompetencyService.update.mockReturnValue(of(new HttpResponse({ body: updatedCompetency as Competency })));
-
                     const message: ChatMessage = {
                         id: '1',
                         content: 'Update batch',
@@ -1616,16 +1572,13 @@ describe('AgentChatModalComponent', () => {
 
                     component.onCreateCompetencies(message);
 
-                    expect(mockCompetencyService.update).toHaveBeenCalledTimes(2);
+                    expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('[CREATE_APPROVED_COMPETENCY]', component.courseId());
                     const messages = component.messages();
                     const successMessage = messages[component.messages().length - 1];
                     expect(successMessage).toBeDefined();
                 });
 
                 it('should handle single competency in batch', () => {
-                    const singleCompetency: Partial<Competency> = { id: 1, title: 'Single' };
-                    mockCompetencyService.create.mockReturnValue(of(new HttpResponse({ body: singleCompetency as Competency })));
-
                     const message: ChatMessage = {
                         id: '1',
                         content: 'Single batch',
@@ -1644,14 +1597,14 @@ describe('AgentChatModalComponent', () => {
 
                     component.onCreateCompetencies(message);
 
-                    expect(mockCompetencyService.create).toHaveBeenCalledOnce();
+                    expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('[CREATE_APPROVED_COMPETENCY]', component.courseId());
                     const messages = component.messages();
                     const successMessage = messages[component.messages().length - 1];
                     expect(successMessage).toBeDefined();
                 });
 
                 it('should handle batch creation error gracefully', async () => {
-                    mockCompetencyService.create.mockReturnValue(throwError(() => new Error('Creation failed')));
+                    mockAgentChatService.sendMessage.mockReturnValue(throwError(() => new Error('Creation failed')));
                     const createFailedText = 'Failed to create competency';
                     const translateSpy = vi.spyOn(mockTranslateService, 'instant').mockReturnValue(createFailedText);
 
@@ -1675,7 +1628,6 @@ describe('AgentChatModalComponent', () => {
                     await flushPromises();
 
                     expect(component.isAgentTyping()).toBeFalsy();
-                    expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.welcome');
                     expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.competencyProcessFailure');
                 });
             });
