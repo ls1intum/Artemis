@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.globalsearch.web;
 
 import java.util.List;
-import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +21,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.dto.ProgrammingExerciseWeaviateDTO;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
+import de.tum.cit.aet.artemis.globalsearch.dto.ExerciseSearchResultDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
 
 /**
@@ -82,12 +82,12 @@ public class ExerciseWeaviateResource {
      *
      * @param query    the search query
      * @param courseId optional course ID to filter by
-     * @param limit    maximum number of results (default: 10)
+     * @param limit    maximum number of results (default: 10, max: 100)
      * @return the ResponseEntity with status 200 (OK) and the list of exercise search results in body
      */
     @GetMapping("exercises/search")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<Map<String, Object>>> searchExercises(@RequestParam("q") String query, @RequestParam(value = "courseId", required = false) Long courseId,
+    public ResponseEntity<List<ExerciseSearchResultDTO>> searchExercises(@RequestParam("q") String query, @RequestParam(value = "courseId", required = false) Long courseId,
             @RequestParam(value = "limit", defaultValue = "10") int limit) {
 
         log.debug("REST request to search exercises with query: '{}', courseId: {}, limit: {}", query, courseId, limit);
@@ -96,19 +96,17 @@ public class ExerciseWeaviateResource {
             return ResponseEntity.badRequest().build();
         }
 
+        // Apply limit bounds: minimum 1, maximum 100
+        int effectiveLimit = Math.min(Math.max(limit, 1), 100);
+
         // Validate course access if courseId is specified
         if (courseId != null) {
             Course course = courseRepository.findByIdElseThrow(courseId);
             authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
         }
 
-        try {
-            List<Map<String, Object>> searchResults = exerciseWeaviateService.searchExercises(query, courseId, limit);
-            return ResponseEntity.ok(searchResults);
-        }
-        catch (Exception e) {
-            log.error("Failed to search exercises: {}", e.getMessage(), e);
-            return ResponseEntity.status(500).build();
-        }
+        var searchResults = exerciseWeaviateService.searchExercises(query, courseId, effectiveLimit);
+        var resultDTOs = searchResults.stream().map(ExerciseSearchResultDTO::fromWeaviateProperties).toList();
+        return ResponseEntity.ok(resultDTOs);
     }
 }

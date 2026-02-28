@@ -63,7 +63,7 @@ public class WeaviateService {
      */
     @PostConstruct
     public void initializeCollections() {
-        log.info("Initializing Weaviate collections...");
+        log.info("Initializing Weaviate collections with vectorizer module: {}", vectorizerModule);
 
         for (WeaviateCollectionSchema schema : WeaviateSchemas.ALL_SCHEMAS) {
             ensureCollectionExists(schema);
@@ -94,11 +94,11 @@ public class WeaviateService {
                 // - "text2vec-transformers": Automatic embeddings with embeddinggemma-300m (docker/weaviate-embeddings.yml)
                 switch (vectorizerModule) {
                     case WeaviateConfigurationProperties.VECTORIZER_TEXT2VEC_TRANSFORMERS -> {
-                        log.info("Configuring collection with text2vec-transformers vectorizer");
+                        log.debug("Configuring collection '{}' with text2vec-transformers vectorizer", collectionName);
                         collection.vectorConfig(VectorConfig.text2vecTransformers());
                     }
                     case WeaviateConfigurationProperties.VECTORIZER_NONE -> {
-                        log.info("Configuring collection with self-provided vectors");
+                        log.debug("Configuring collection '{}' with self-provided vectors", collectionName);
                         collection.vectorConfig(VectorConfig.selfProvided());
                     }
                     default -> {
