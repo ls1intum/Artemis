@@ -10,7 +10,10 @@ import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { BuildPhasesEditor } from 'app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/build-phases-editor';
-import { BuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
+import { BuildPhase, BuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
+import { ScriptAction } from 'app/programming/shared/entities/build.action';
+import { WindFile } from 'app/programming/shared/entities/wind.file';
+import { isEqual } from 'lodash-es';
 
 @Component({
     selector: 'jhi-programming-exercise-custom-build-plan',
@@ -42,24 +45,33 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
     constructor() {
         effect(() => {
             const editorInstance = this.phaseEditor();
-
-            if (editorInstance) {
-                if (this.programmingExercise.id || this.isImportFromFile) {
-                    this.code = this.programmingExercise.buildConfig?.buildScript || '';
-                }
-
-                const planFromSingleScript: BuildPlanPhases = {
-                    phases: [
-                        {
-                            name: 'script',
-                            script: this.code,
-                            condition: 'ALWAYS',
-                            resultPaths: [],
-                        },
-                    ],
-                };
-                editorInstance.initialize(planFromSingleScript);
+            if (!editorInstance) {
+                return;
             }
+
+            const windfile = this.programmingExercise.buildConfig?.windfile;
+
+            if (windfile?.actions?.length) {
+                // use windfile actions to populate phases (with script + result paths)
+                editorInstance.initialize(this.buildPlanFromWindfile(windfile));
+                return;
+            }
+
+            // Fallback: use raw build script in a single phase
+            if (this.programmingExercise.id || this.isImportFromFile) {
+                this.code = this.programmingExercise.buildConfig?.buildScript || '';
+            }
+            const planFromSingleScript: BuildPlanPhases = {
+                phases: [
+                    {
+                        name: 'script',
+                        script: this.code,
+                        condition: 'ALWAYS',
+                        resultPaths: [],
+                    },
+                ],
+            };
+            editorInstance.initialize(planFromSingleScript);
         });
     }
 
@@ -111,6 +123,20 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
             this.aeolusService.getAeolusTemplateFile(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns).subscribe({
                 next: (file) => {
                     this.programmingExercise.buildConfig!.windfile = this.aeolusService.parseWindFile(file);
+
+                    const editorInstance = this.phaseEditor();
+                    const windfile = this.programmingExercise.buildConfig!.windfile;
+                    if (!editorInstance || !windfile?.actions?.length) {
+                        return;
+                    }
+                    const newPhases = this.buildPlanFromWindfile(windfile);
+                    const newPhasesSame = isEqual(newPhases, editorInstance.getBuildPlanPhases());
+                    if (newPhasesSame) {
+                        return;
+                    }
+                    // re-initialize the phase editor with windfile data
+                    // (e.g. update phase editor when sequential test is toggled)
+                    editorInstance.initialize(newPhases);
                 },
                 error: () => {
                     this.programmingExercise.buildConfig!.windfile = undefined;
@@ -171,5 +197,23 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
         buildScript = buildScript.replaceAll('${studentParentWorkingDirectoryName}', assignmentRepoName);
         buildScript = buildScript.replaceAll('${testWorkingDirectory}', testRepoName);
         return buildScript;
+    }
+
+    /**
+     * Converts windfile actions into BuildPlanPhases format.
+     * Only ScriptActions (actions with a script property) are included.
+     * @param windfile The windfile containing actions to convert
+     * @returns BuildPlanPhases with one phase per script action
+     */
+    private buildPlanFromWindfile(windfile: WindFile): BuildPlanPhases {
+        const phases: BuildPhase[] = windfile.actions
+            .filter((action): action is ScriptAction => 'script' in action && !!action.script)
+            .map((action) => ({
+                name: action.name || '',
+                script: this.replacePlaceholders(action.script),
+                condition: 'ALWAYS' as const,
+                resultPaths: (action.results ?? []).map((r) => r.path).filter((p): p is string => !!p),
+            }));
+        return { phases };
     }
 }
