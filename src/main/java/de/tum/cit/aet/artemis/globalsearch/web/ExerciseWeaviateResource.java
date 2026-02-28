@@ -1,14 +1,12 @@
-package de.tum.cit.aet.artemis.exercise.web;
-
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+package de.tum.cit.aet.artemis.globalsearch.web;
 
 import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,12 +20,14 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.dto.ProgrammingExerciseWeaviateDTO;
+import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
+import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
 
 /**
  * REST controller for Weaviate-based exercise search operations.
  */
-@Profile(PROFILE_CORE)
 @Lazy
+@Conditional(WeaviateEnabled.class)
 @RestController
 @RequestMapping("api/")
 public class ExerciseWeaviateResource {
