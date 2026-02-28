@@ -1,13 +1,14 @@
-import { Component, ViewChild, computed, forwardRef, input, model, output, signal } from '@angular/core';
+import { Component, OnDestroy, Renderer2, ViewChild, computed, forwardRef, inject, input, model, output, signal } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
 import { faCalendarAlt, faCircleXmark, faClock, faGlobe, faQuestionCircle, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { OwlDateTimeComponent, OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
+import { TranslateService } from '@ngx-translate/core';
 
 export enum DateTimePickerType {
     CALENDAR,
@@ -39,13 +40,16 @@ export enum DateTimePickerType {
         ArtemisTranslatePipe,
     ],
 })
-export class FormDateTimePickerComponent implements ControlValueAccessor {
+export class FormDateTimePickerComponent implements ControlValueAccessor, OnDestroy {
     protected readonly faCalendarAlt = faCalendarAlt;
     protected readonly faGlobe = faGlobe;
     protected readonly faClock = faClock;
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faCircleXmark = faCircleXmark;
     protected readonly faTriangleExclamation = faTriangleExclamation;
+
+    private readonly renderer = inject(Renderer2);
+    private readonly translateService = inject(TranslateService);
 
     @ViewChild('dateInput', { static: false }) dateInput: NgModel;
 
@@ -162,6 +166,90 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
             this.onChange(undefined);
         }
         this.updateSignals();
+    }
+
+    /**
+     * Set the datepicker value to the current date and time.
+     */
+    setNow() {
+        const now = dayjs();
+        this.updateField(now);
+    }
+
+    private nowButtonElement?: HTMLButtonElement;
+    private nowButtonClickListener?: () => void;
+    private pickerOpenTimeoutId?: ReturnType<typeof setTimeout>;
+
+    /**
+     * Injects a "Now" button into the owl-date-time picker popup's button row
+     * when the picker is opened.
+     */
+    onPickerOpen(picker: OwlDateTimeComponent<Date>): void {
+        if (this.disabled() || this.pickerType() !== DateTimePickerType.DEFAULT) {
+            return;
+        }
+        // Use setTimeout to ensure the popup DOM is fully rendered
+        this.pickerOpenTimeoutId = setTimeout(() => {
+            this.pickerOpenTimeoutId = undefined;
+            const containerButtons = document.querySelector('.owl-dt-container-buttons');
+            if (!containerButtons || this.nowButtonElement) {
+                return;
+            }
+
+            const nowButton = this.renderer.createElement('button') as HTMLButtonElement;
+            this.renderer.setAttribute(nowButton, 'type', 'button');
+            this.renderer.setAttribute(nowButton, 'tabindex', '0');
+            const nowTooltip = this.translateService.instant('entity.setNowTooltip');
+            this.renderer.setAttribute(nowButton, 'title', nowTooltip);
+            this.renderer.setAttribute(nowButton, 'aria-label', nowTooltip);
+            this.renderer.addClass(nowButton, 'owl-dt-control');
+            this.renderer.addClass(nowButton, 'owl-dt-control-button');
+            this.renderer.addClass(nowButton, 'owl-dt-container-control-button');
+            this.renderer.addClass(nowButton, 'owl-dt-now-button');
+
+            const span = this.renderer.createElement('span');
+            this.renderer.addClass(span, 'owl-dt-control-content');
+            this.renderer.addClass(span, 'owl-dt-control-button-content');
+            this.renderer.setAttribute(span, 'tabindex', '-1');
+            const text = this.renderer.createText(this.translateService.instant('entity.now'));
+            this.renderer.appendChild(span, text);
+            this.renderer.appendChild(nowButton, span);
+
+            // Insert the "Now" button as the first button (before Cancel)
+            this.renderer.insertBefore(containerButtons, nowButton, containerButtons.firstChild);
+
+            this.nowButtonClickListener = this.renderer.listen(nowButton, 'click', () => {
+                this.setNow();
+                picker.close();
+            });
+
+            this.nowButtonElement = nowButton;
+        });
+    }
+
+    /**
+     * Cleans up the injected "Now" button when the picker is closed.
+     */
+    onPickerClose(): void {
+        if (this.pickerOpenTimeoutId !== undefined) {
+            clearTimeout(this.pickerOpenTimeoutId);
+            this.pickerOpenTimeoutId = undefined;
+        }
+        if (this.nowButtonClickListener) {
+            this.nowButtonClickListener();
+            this.nowButtonClickListener = undefined;
+        }
+        if (this.nowButtonElement) {
+            this.nowButtonElement.remove();
+            this.nowButtonElement = undefined;
+        }
+    }
+
+    ngOnDestroy(): void {
+        if (this.pickerOpenTimeoutId) {
+            clearTimeout(this.pickerOpenTimeoutId);
+        }
+        this.onPickerClose();
     }
 
     protected readonly DateTimePickerType = DateTimePickerType;
