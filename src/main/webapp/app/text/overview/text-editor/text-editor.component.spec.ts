@@ -445,6 +445,32 @@ describe('TextEditorComponent', () => {
         expect(comp.submission.id).toBe(2);
     });
 
+    it('should set the correct result when updateParticipation is called with resultId', () => {
+        const manualResult = { id: 99, assessmentType: AssessmentType.MANUAL, score: 85, completionDate: dayjs() } as Result;
+        const athenaResult = { id: 100, assessmentType: AssessmentType.AUTOMATIC_ATHENA, score: 75, completionDate: dayjs() } as Result;
+        const submissionList = [{ id: 2, results: [manualResult, athenaResult], latestResult: athenaResult }];
+
+        const textExercise = {
+            type: ExerciseType.TEXT,
+            dueDate: dayjs().add(5, 'minutes'),
+            course: { id: 1 },
+            assessmentDueDate: dayjs().add(6, 'minutes'),
+        } as TextExercise;
+        comp.participation = {
+            id: 2,
+            submissions: submissionList,
+            exercise: textExercise,
+        } as StudentParticipation;
+
+        // Call with submissionId and resultId to select specific manual result
+        comp['updateParticipation'](comp.participation, 2, 99);
+
+        expect(comp.submission.id).toBe(2);
+        expect(comp.result?.id).toBe(99);
+        expect(comp.result?.assessmentType).toBe(AssessmentType.MANUAL);
+        expect(comp.result?.score).toBe(85);
+    });
+
     it('should set the latest submission if updateParticipation is called with submission id that does not exist', () => {
         const submissionList = [{ id: 1 }, { id: 3 }, { id: 4, results: [{ id: 1, assessmentType: AssessmentType.MANUAL }] }];
 

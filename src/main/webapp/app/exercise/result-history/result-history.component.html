@@ -2,7 +2,7 @@
     <div class="result-history-element" [class.previous-history-element]="showPreviousDivider">
         <div class="result-divider"></div>
     </div>
-    @for (result of displayedResults; track result; let i = $index) {
+    @for (result of displayedResults; track result.id; let i = $index) {
         <div class="result-history-element">
             <div class="result-score">
                 <div

@@ -148,6 +148,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     hasAthenaResultForLatestSubmission = false;
     showHistory = false;
     submissionId: number | undefined;
+    resultId: number | undefined;
 
     ngOnInit() {
         if (this.inputValuesArePresent()) {
@@ -162,12 +163,13 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
             this.route.params?.subscribe(() => {
                 this.submissionId = Number(this.route.snapshot.paramMap.get('submissionId')) || undefined;
-                this.updateParticipation(this.participation, this.submissionId);
+                this.resultId = Number(this.route.snapshot.paramMap.get('resultId')) || undefined;
+                this.updateParticipation(this.participation, this.submissionId, this.resultId);
             });
 
-            this.textService.get(participationId!).subscribe({
+            this.textService.get(participationId!, this.resultId).subscribe({
                 next: (data: StudentParticipation) => {
-                    this.updateParticipation(data, this.submissionId);
+                    this.updateParticipation(data, this.submissionId, this.resultId);
                     this.loadIrisSettings();
                 },
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
@@ -247,8 +249,9 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      * Updates the participation, the submission selected can be chosen through submissionId, default undefined means latest
      * @param participation The participation data
      * @param submissionId The id of the submission of choice. undefined value defaults to the latest submission
+     * @param resultId The id of the specific result to display. undefined value defaults to the latest result
      */
-    private updateParticipation(participation: StudentParticipation, submissionId: number | undefined = undefined) {
+    private updateParticipation(participation: StudentParticipation, submissionId: number | undefined = undefined, resultId: number | undefined = undefined) {
         if (participation) {
             this.participation = participation;
         } else {
@@ -286,7 +289,12 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             }
 
             setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
-            if (!this.submission?.results) {
+
+            // If resultId is provided, find the specific result; otherwise use latest
+            if (resultId && this.submission?.results) {
+                const specificResult = this.submission.results.find((result) => result.id === resultId);
+                this.result = specificResult || this.submission.latestResult!;
+            } else if (!this.submission?.results) {
                 this.result = this.sortedHistoryResults.last()!;
             } else {
                 this.result = this.submission.latestResult!;

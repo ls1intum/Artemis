@@ -10,9 +10,16 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 export class TextEditorService {
     private http = inject(HttpClient);
 
-    get(participationId: number): Observable<StudentParticipation> {
+    /**
+     * Retrieves the participation data for the text editor.
+     * @param participationId - The ID of the participation
+     * @param resultId - Optional ID of a specific result to retrieve; if not provided, returns the latest result
+     * @returns Observable of the student participation with exercise data
+     */
+    get(participationId: number, resultId?: number): Observable<StudentParticipation> {
+        const params = resultId ? { resultId: resultId.toString() } : undefined;
         return this.http
-            .get(`api/text/text-editor/${participationId}`, { responseType: 'json' })
+            .get<StudentParticipation>(`api/text/text-editor/${participationId}`, { params })
             .pipe(tap((participation: StudentParticipation) => ExerciseService.convertExerciseDatesFromServer(participation.exercise)));
     }
 
