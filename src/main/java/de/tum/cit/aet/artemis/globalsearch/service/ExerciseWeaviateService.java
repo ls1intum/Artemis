@@ -8,9 +8,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
@@ -41,8 +43,11 @@ public class ExerciseWeaviateService {
 
     private final WeaviateService weaviateService;
 
-    public ExerciseWeaviateService(WeaviateService weaviateService) {
+    private final Executor executor;
+
+    public ExerciseWeaviateService(WeaviateService weaviateService, @Qualifier("taskExecutor") Executor executor) {
         this.weaviateService = weaviateService;
+        this.executor = executor;
     }
 
     /**
@@ -74,7 +79,7 @@ public class ExerciseWeaviateService {
                     log.warn("Failed to query exercise {}: {}", exerciseId, e.getMessage());
                 }
                 return null;
-            })).toList();
+            }, executor)).toList();
 
             // Collect results
             Map<Long, String> exerciseUuidMap = new HashMap<>();
@@ -296,7 +301,7 @@ public class ExerciseWeaviateService {
             catch (Exception e) {
                 log.error("Failed to update exercise {} in exam {}: {}", dto.exerciseId(), exam.getId(), e.getMessage(), e);
             }
-        })).toList();
+        }, executor)).toList();
 
         // Wait for all updates to complete
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
