@@ -8,6 +8,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
 import de.tum.cit.aet.artemis.core.exception.WeaviateConnectionException;
+import de.tum.cit.aet.artemis.globalsearch.config.WeaviateClientConfiguration;
+import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
 import io.weaviate.client6.v1.api.WeaviateClient;
 
 /**
@@ -15,9 +17,11 @@ import io.weaviate.client6.v1.api.WeaviateClient;
  */
 class WeaviateClientConfigurationTest {
 
+    private static final String TEST_COLLECTION_PREFIX = "TestArtemis_";
+
     @Test
     void testWeaviateClientCreationSecure() {
-        WeaviateConfigurationProperties properties = new WeaviateConfigurationProperties(true, "test-host", 443, 50051, "https");
+        WeaviateConfigurationProperties properties = new WeaviateConfigurationProperties(true, "test-host", 443, 50051, "https", TEST_COLLECTION_PREFIX);
 
         WeaviateClientConfiguration config = new WeaviateClientConfiguration(properties);
 
@@ -33,7 +37,7 @@ class WeaviateClientConfigurationTest {
 
     @Test
     void testWeaviateClientCreationNonSecure() {
-        WeaviateConfigurationProperties properties = new WeaviateConfigurationProperties(true, "localhost", 8001, 50051, "http");
+        WeaviateConfigurationProperties properties = new WeaviateConfigurationProperties(true, "localhost", 8001, 50051, "http", TEST_COLLECTION_PREFIX);
 
         WeaviateClientConfiguration config = new WeaviateClientConfiguration(properties);
 
@@ -49,7 +53,7 @@ class WeaviateClientConfigurationTest {
 
     @Test
     void testWeaviateClientConfigurationFailure() {
-        WeaviateConfigurationProperties properties = new WeaviateConfigurationProperties(true, "invalid-host", 8001, 50051, "http");
+        WeaviateConfigurationProperties properties = new WeaviateConfigurationProperties(true, "invalid-host", 8001, 50051, "http", TEST_COLLECTION_PREFIX);
 
         WeaviateClientConfiguration config = new WeaviateClientConfiguration(properties);
 

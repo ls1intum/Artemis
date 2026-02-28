@@ -22,6 +22,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,6 +37,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.testcontainers.weaviate.WeaviateContainer;
 
 import com.github.dockerjava.api.DockerClient;
 
@@ -71,6 +74,8 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStu
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
+import de.tum.cit.aet.artemis.shared.WeaviateTestConfiguration;
+import de.tum.cit.aet.artemis.shared.WeaviateTestContainerFactory;
 
 // Must start up an actual web server such that the tests can communicate with the ArtemisGitServlet using JGit.
 // Otherwise, only MockMvc requests could be used. The port this runs on is defined at server.port (see @TestPropertySource).
@@ -96,17 +101,22 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 @ContextConfiguration(classes = TestBuildAgentConfiguration.class)
 public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends AbstractArtemisIntegrationTest {
 
+    private static final Logger log = LoggerFactory.getLogger(AbstractSpringIntegrationLocalCILocalVCTest.class);
+
     private static final int serverPort;
 
     private static final int sshPort;
 
     private static final int hazelcastPort;
 
-    // Static initializer runs before @DynamicPropertySource, ensuring ports are available when Spring context starts
+    protected static final WeaviateContainer weaviateContainer;
+
+    // Static initializer runs before @DynamicPropertySource, ensuring ports and containers are available when Spring context starts
     static {
         serverPort = findAvailableTcpPort();
         sshPort = findAvailableTcpPort();
         hazelcastPort = findAvailableTcpPort();
+        weaviateContainer = WeaviateTestContainerFactory.getContainer();
     }
 
     @DynamicPropertySource
@@ -116,6 +126,8 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         registry.add("artemis.version-control.ssh-port", () -> sshPort);
         registry.add("artemis.version-control.ssh-template-clone-url", () -> "ssh://git@localhost:" + sshPort + "/");
         registry.add("spring.hazelcast.port", () -> hazelcastPort);
+
+        WeaviateTestConfiguration.registerWeaviateProperties(registry, weaviateContainer);
     }
 
     private static int findAvailableTcpPort() {

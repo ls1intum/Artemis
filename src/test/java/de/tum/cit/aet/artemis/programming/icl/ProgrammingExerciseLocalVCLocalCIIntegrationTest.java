@@ -2,12 +2,17 @@ package de.tum.cit.aet.artemis.programming.icl;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_RESULTS_DIRECTORY;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertExerciseNotInWeaviate;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertProgrammingExerciseExistsInWeaviate;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.queryExerciseProperties;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Optional;
@@ -38,6 +43,10 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.ExerciseSchema;
+import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
+import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
+import de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -90,6 +99,12 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
     @Autowired
     private ProgrammingExerciseImportTestService programmingExerciseImportTestService;
+
+    @Autowired(required = false)
+    private WeaviateService weaviateService;
+
+    @Autowired(required = false)
+    private ExerciseWeaviateService exerciseWeaviateService;
 
     @BeforeAll
     void setupAll() {
@@ -197,6 +212,8 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         localVCLocalCITestService.testLatestSubmission(createdExercise.getSolutionParticipation().getId(), null, 13, false);
 
         verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(createdExercise));
+
+        assertProgrammingExerciseExistsInWeaviate(weaviateService, createdExercise);
     }
 
     @Test
@@ -213,14 +230,45 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateProgrammingExercise() throws Exception {
-        programmingExercise.setReleaseDate(ZonedDateTime.now().plusHours(1));
+        ZonedDateTime originalReleaseDate = programmingExercise.getReleaseDate();
+
+        // Pre-populate Weaviate with the exercise to avoid race condition on first insert
+        // This ensures we're actually testing the UPDATE path, not the INSERT path
+        if (exerciseWeaviateService != null && weaviateService != null) {
+            exerciseWeaviateService.upsertExerciseAsync(programmingExercise);
+            // Wait for initial insert to complete before proceeding with update
+            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+                var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
+                assertThat(properties).as("Exercise should be initially present in Weaviate before update").isNotNull();
+                Object releaseDateObj = properties.get(ExerciseSchema.Properties.RELEASE_DATE);
+                assertThat(releaseDateObj).as("Initial release date should be set in Weaviate").isNotNull();
+            });
+        }
+
+        ZonedDateTime newReleaseDate = ZonedDateTime.now().plusHours(1);
+        programmingExercise.setReleaseDate(newReleaseDate);
         programmingExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, programmingExercise, 1)));
         programmingExercise.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
 
         ProgrammingExercise updatedExercise = request.putWithResponseBody("/api/programming/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
 
-        assertThat(updatedExercise.getReleaseDate()).isEqualTo(programmingExercise.getReleaseDate());
+        assertThat(updatedExercise.getReleaseDate()).isEqualTo(newReleaseDate);
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(programmingExercise), eq(Optional.of(programmingExercise)));
+
+        if (!WeaviateTestUtil.shouldSkipWeaviateAssertions(weaviateService)) {
+            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+                var weaviateProperties = queryExerciseProperties(weaviateService, updatedExercise.getId());
+                assertThat(weaviateProperties).as("Exercise properties should exist in Weaviate after update").isNotNull();
+                assertThat(weaviateProperties.get(ExerciseSchema.Properties.TITLE)).isEqualTo(updatedExercise.getTitle());
+                assertThat(((Number) weaviateProperties.get(ExerciseSchema.Properties.EXERCISE_ID)).longValue()).isEqualTo(updatedExercise.getId());
+                // Verify that the release date was actually updated in Weaviate
+                Object releaseDateObj = weaviateProperties.get(ExerciseSchema.Properties.RELEASE_DATE);
+                assertThat(releaseDateObj).as("Release date should be updated in Weaviate").isNotNull();
+                ZonedDateTime weaviateReleaseDate = ZonedDateTime.parse(releaseDateObj.toString());
+                assertThat(weaviateReleaseDate).isEqualTo(newReleaseDate);
+                assertThat(weaviateReleaseDate).isNotEqualTo(originalReleaseDate);
+            });
+        }
     }
 
     @Test
@@ -239,12 +287,13 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     void testDeleteProgrammingExercise() throws Exception {
         programmingExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, programmingExercise, 1)));
         programmingExerciseRepository.save(programmingExercise);
+        long exerciseId = programmingExercise.getId();
 
         // Delete the exercise
         var params = new LinkedMultiValueMap<String, String>();
         params.add("deleteStudentReposBuildPlans", "true");
         params.add("deleteBaseReposBuildPlans", "true");
-        request.delete("/api/programming/programming-exercises/" + programmingExercise.getId(), HttpStatus.OK, params);
+        request.delete("/api/programming/programming-exercises/" + exerciseId, HttpStatus.OK, params);
 
         // Assert that the repository folders do not exist anymore.
         LocalVCRepositoryUri templateRepositoryUri = new LocalVCRepositoryUri(programmingExercise.getTemplateRepositoryUri());
@@ -254,6 +303,8 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         LocalVCRepositoryUri testsRepositoryUri = new LocalVCRepositoryUri(programmingExercise.getTestRepositoryUri());
         assertThat(testsRepositoryUri.getLocalRepositoryPath(localVCBasePath)).doesNotExist();
         verify(competencyProgressApi).updateProgressByCompetencyAsync(eq(competency));
+
+        assertExerciseNotInWeaviate(weaviateService, exerciseId);
     }
 
     @Test
@@ -309,6 +360,8 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         verify(localCITriggerService, timeout(5000).times(1)).triggerBuild(eq(templateParticipation));
         verify(localCITriggerService, timeout(5000).times(1)).triggerBuild(eq(solutionParticipation));
         verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(importedExercise));
+
+        assertProgrammingExerciseExistsInWeaviate(weaviateService, importedExercise);
     }
 
     @Test
