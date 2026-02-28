@@ -127,6 +127,19 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(openModalSpy).not.toHaveBeenCalled();
     });
 
+    it('should pass file badges to Problem Statement entry', () => {
+        const problemStatementBadges = [new FileBadge(FileBadgeType.REVIEW_COMMENT, 2)];
+        fixture.componentRef.setInput('isProblemStatementVisible', true);
+        fixture.componentRef.setInput('fileBadges', { [PROBLEM_STATEMENT_IDENTIFIER]: problemStatementBadges });
+        comp.repositoryFiles = { [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT };
+        comp.setupTreeview();
+        fixture.changeDetectorRef.detectChanges();
+
+        const problemStatement = debugElement.query(By.directive(CodeEditorFileBrowserProblemStatementComponent));
+        expect(problemStatement).toBeTruthy();
+        expect(problemStatement.componentInstance.badges).toEqual(problemStatementBadges);
+    });
+
     it('should NOT enter rename mode for Problem Statement (PS is not renamable)', fakeAsync(() => {
         comp.repositoryFiles = { [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT };
         comp.setupTreeview();
@@ -1102,7 +1115,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         const mockFileBadges = {
             'folderA/file': [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 1)],
             'folderB/file1': [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 1)],
-            'folderB/file2': [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 2)],
+            'folderB/file2': [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 2), new FileBadge(FileBadgeType.REVIEW_COMMENT, 1)],
         };
 
         beforeEach(() => {
@@ -1122,7 +1135,7 @@ describe('CodeEditorFileBrowserComponent', () => {
 
         it('should aggregate file badges for a collapsed folder', () => {
             const result = comp.getFolderBadges({ value: 'folderB', collapsed: true } as TreeViewItem<string>);
-            expect(result).toEqual([new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 3)]); // 1 + 2
+            expect(result).toEqual([new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 3), new FileBadge(FileBadgeType.REVIEW_COMMENT, 1)]); // 1 + 2 suggestions, 1 review thread
         });
     });
 });

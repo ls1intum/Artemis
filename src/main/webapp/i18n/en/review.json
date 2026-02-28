@@ -9,6 +9,8 @@
             "loadFailed": "Could not load review comments.",
             "commentMenu": "Comment actions",
             "deleteComment": "Delete",
+            "deleteCommentConfirmTitle": "Delete comment",
+            "deleteCommentConfirmText": "This will permanently delete the comment. This action cannot be undone.",
             "deleteFailed": "Could not delete the review comment.",
             "replyPlaceholder": "Add reply...",
             "replySubmit": "Reply",

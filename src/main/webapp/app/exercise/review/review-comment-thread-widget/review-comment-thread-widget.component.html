@@ -1,4 +1,5 @@
 <div class="monaco-review-comment-widget monaco-review-comment-thread" [class.monaco-review-comment-thread--collapsed]="!showThreadBody()">
+    <p-confirmDialog [key]="deleteCommentDialogKey()" appendTo="body" />
     <div class="monaco-review-comment-thread-header">
         <div class="monaco-review-comment-thread-title">
             @if (showLocationWarning()) {

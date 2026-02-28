@@ -82,7 +82,7 @@
 <ng-template #itemTemplate let-item="item" let-onCollapseExpand="onCollapseExpand">
     <!--Problem Statement-->
     @if (repositoryFiles?.[item.value] === FileType.PROBLEM_STATEMENT) {
-        <jhi-code-editor-file-browser-problem-statement [item]="item" (onNodeSelect)="handleNodeSelected(item)" />
+        <jhi-code-editor-file-browser-problem-statement [item]="item" [badges]="fileBadges()?.[item.value] ?? []" (onNodeSelect)="handleNodeSelected(item)" />
     }
     <!--folder-->
     @if (repositoryFiles?.[item.value] === FileType.FOLDER) {

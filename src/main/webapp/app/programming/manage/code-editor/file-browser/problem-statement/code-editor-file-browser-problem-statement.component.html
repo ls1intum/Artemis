@@ -1,9 +1,14 @@
 <!-- Problem Statement -->
 <li (click)="onNodeSelect.emit(item())" class="list-group-item file-item problem-statement-entry" [class.node-selected]="item().checked" id="file-browser-problem-statement">
     <fa-icon aria-hidden="true" [icon]="faListAlt" [fixedWidth]="true" class="problem-statement-icon" />
-    <span
-        class="ms-1 list-group-item__fileName problem-statement-text"
-        jhiTranslate="artemisApp.exercise.problemStatement"
-        [ngClass]="item().checked ? 'text-white' : 'text-primary'"
-    ></span>
+    <span class="file-label-group">
+        <span
+            class="ms-1 list-group-item__fileName problem-statement-text"
+            jhiTranslate="artemisApp.exercise.problemStatement"
+            [ngClass]="item().checked ? 'text-white' : 'text-primary'"
+        ></span>
+        @for (badge of badges(); track badges().indexOf(badge)) {
+            <jhi-file-browser-badge [badge]="badge" [onColoredBackground]="item().checked" />
+        }
+    </span>
 </li>
