@@ -412,7 +412,9 @@ export class CourseMessagesPage {
      */
     async addUserToGroupChat(user: string) {
         await this.page.locator('#users-selector0-search-input').fill(user);
-        await this.page.locator('.dropdown-item', { hasText: `(${user})` }).click();
+        const dropdownItem = this.page.locator('.dropdown-item', { hasText: `(${user})` });
+        await dropdownItem.waitFor({ state: 'visible', timeout: 10000 });
+        await dropdownItem.click();
     }
 
     /**
@@ -429,7 +431,9 @@ export class CourseMessagesPage {
      */
     async listMembersButton(courseID: number, conversationID: number) {
         await this.page.goto(`/courses/${courseID}/communication?conversationId=${conversationID}`);
-        await this.page.locator('.members').click();
+        const membersButton = this.page.locator('.members');
+        await membersButton.waitFor({ state: 'visible', timeout: 30000 });
+        await membersButton.click();
     }
 
     /**
