@@ -15,8 +15,8 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 
 class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest {
 
-    // science, TutorSuggestions, Memiris, AtlasAgent, AtlasML, RateLimit disabled by default
-    private static final int FEATURES_DISABLED_DEFAULT = 6;
+    // science, TutorSuggestions, Memiris, AtlasAgent, AtlasML, RateLimit, GlobalSearch disabled by default
+    private static final int FEATURES_DISABLED_DEFAULT = 7;
 
     @Autowired
     private FeatureToggleService featureToggleService;
@@ -37,6 +37,7 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(featureToggleService.isFeatureEnabled(Feature.AtlasML)).isFalse();
         assertThat(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).isFalse();
         assertThat(featureToggleService.isFeatureEnabled(Feature.RateLimit)).isFalse();
+        assertThat(featureToggleService.isFeatureEnabled(Feature.GlobalSearch)).isFalse();
 
     }
 
@@ -55,6 +56,7 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
         featureToggleService.disableFeature(Feature.AtlasML);
         featureToggleService.disableFeature(Feature.AtlasAgent);
         featureToggleService.disableFeature(Feature.RateLimit);
+        featureToggleService.disableFeature(Feature.GlobalSearch);
     }
 
     @Test
