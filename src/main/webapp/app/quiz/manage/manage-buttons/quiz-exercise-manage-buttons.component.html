@@ -41,7 +41,14 @@
             </button>
         }
         @if (quizExercise().isAtLeastEditor && !quizExercise().quizEnded) {
-            <a [class.disabled]="!quizExercise().isEditable" [routerLink]="[baseUrl, 'quiz-exercises', quizExercise().id, 'edit']" class="btn btn-warning btn-sm me-1 mb-1">
+            <a
+                [routerLink]="quizExercise().isEditable ? [baseUrl, 'quiz-exercises', quizExercise().id, 'edit'] : null"
+                class="btn btn-warning btn-sm me-1 mb-1"
+                [class.disabled]="!quizExercise().isEditable"
+                [attr.aria-disabled]="!quizExercise().isEditable"
+                [attr.tabindex]="!quizExercise().isEditable ? -1 : null"
+                [ngbTooltip]="!quizExercise().isEditable ? ('artemisApp.quizExercise.editNotPossibleDuringQuiz' | artemisTranslate) : ''"
+            >
                 <fa-icon [icon]="faWrench" />
                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
             </a>

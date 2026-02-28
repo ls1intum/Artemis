@@ -44,8 +44,11 @@
                 "saving": "Saving...",
                 "saved": "Saved!",
                 "quizHasStarted": "The quiz has started. No more changes allowed.<br><br>Retroactive corrections can be made once the quiz has ended. To do so, go back to the overview and click on \"Re-evaluate\" once the quiz has ended. (\"Re-evaluate\" is not available to TAs.)",
-                "testRunSubmissionsExist": "This quiz contains submissions in one of the test runs for this exam. Delete the test run to edit the answer options."
+                "testRunSubmissionsExist": "This quiz contains submissions in one of the test runs for this exam. Delete the test run to edit the answer options.",
+                "editNotPossibleDuringQuiz": "During the quiz, editing is not possible. You can re-evaluate after the quiz has finished.",
+                "editNotPossibleAfterEnd": "After the end of the quiz working time, editing is not possible."
             },
+            "editNotPossibleDuringQuiz": "Editing is not possible during the quiz.",
             "saveError": "An error occurred while saving. Please review your input data and try again later.",
             "export": {
                 "title": "All quiz questions for course {{ param }}",

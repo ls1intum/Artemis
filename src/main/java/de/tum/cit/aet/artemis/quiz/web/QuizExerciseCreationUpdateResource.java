@@ -190,6 +190,7 @@ public class QuizExerciseCreationUpdateResource {
         QuizExercise originalQuiz = quizExerciseService.copyFieldsForUpdate(quizBase);
 
         quizExerciseService.mergeDTOIntoDomainObject(quizBase, quizExerciseFromEditorDTO, course);
+
         QuizExercise result = quizExerciseService.performUpdate(originalQuiz, quizBase, files, notificationText);
 
         // Notify AtlasML about the quiz exercise update
