@@ -5,11 +5,13 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledFuture;
@@ -88,6 +90,33 @@ public class SharedQueueProcessingService {
 
     private static final Duration BUILD_CHECK_AVAILABILITY_INTERVAL = Duration.ofSeconds(5);
 
+    /**
+     * Interval between retries when waiting for cluster connection during startup.
+     * Uses the same interval as the availability check for consistency.
+     */
+    private static final Duration CLUSTER_CONNECTION_RETRY_INTERVAL = Duration.ofSeconds(5);
+
+    /**
+     * Maximum number of consecutive stale detections before force-cleaning a job.
+     * With a 5-second detection interval, 6 detections = 30 seconds grace period.
+     * This only applies AFTER the minimum job age has been reached.
+     */
+    private static final int MAX_CONSECUTIVE_STALE_DETECTIONS = 6;
+
+    /**
+     * Minimum job age in seconds before stale detection applies.
+     * This grace period allows for slow Docker image pulls and repository cloning.
+     * Jobs younger than this won't be considered stale even without a container.
+     */
+    private static final int STALE_DETECTION_MIN_JOB_AGE_SECONDS = 120;
+
+    /**
+     * Tracks consecutive stale detection counts per job ID.
+     * Used to identify truly stuck jobs vs jobs that are still starting up.
+     * Jobs are removed from this map when they complete or are force-cleaned.
+     */
+    private final Map<String, Integer> staleJobDetectionCounts = new ConcurrentHashMap<>();
+
     private final BuildAgentConfiguration buildAgentConfiguration;
 
     private final BuildJobManagementService buildJobManagementService;
@@ -103,6 +132,8 @@ public class SharedQueueProcessingService {
     private final TaskScheduler taskScheduler;
 
     private final BuildAgentDockerService buildAgentDockerService;
+
+    private final BuildJobContainerService buildJobContainerService;
 
     private final DistributedDataAccessService distributedDataAccessService;
 
@@ -127,15 +158,23 @@ public class SharedQueueProcessingService {
 
     private UUID listenerId;
 
-    /**
-     * Scheduled future for checking availability and processing next build job.
-     */
+    /** UUID of the pause build agent message listener. Stored to allow removal on reconnection. */
+    private UUID pauseListenerId;
+
+    /** UUID of the resume build agent message listener. Stored to allow removal on reconnection. */
+    private UUID resumeListenerId;
+
+    /** Scheduled future for checking availability and processing next build job. */
     private ScheduledFuture<?> scheduledFuture;
 
-    /**
-     * Flag to indicate whether the build agent is paused.
-     */
+    /** Flag to indicate whether the build agent is paused. */
     private final AtomicBoolean isPaused = new AtomicBoolean(false);
+
+    /** Flag to track whether initialization has completed. Uses AtomicBoolean for thread-safe access. */
+    private final AtomicBoolean initialized = new AtomicBoolean(false);
+
+    /** Scheduled future for retrying cluster connection when build agent starts before core nodes. */
+    private ScheduledFuture<?> connectionRetryFuture;
 
     @Value("${artemis.continuous-integration.pause-grace-period-seconds:60}")
     private int pauseGracePeriodSeconds;
@@ -146,45 +185,59 @@ public class SharedQueueProcessingService {
     @Value("${artemis.continuous-integration.build-agent.display-name:}")
     private String buildAgentDisplayName;
 
-    /**
-     * Returns whether the build agent is currently paused.
-     *
-     * @return true if the build agent is paused, false otherwise
-     */
+    @Value("${artemis.continuous-integration.build-container-prefix:local-ci-}")
+    private String buildContainerPrefix;
+
+    /** @return true if the build agent is paused, false otherwise */
     public boolean isPaused() {
         return isPaused.get();
     }
 
-    /**
-     * Resets the internal pause state of the build agent. This method should ONLY be used in tests
-     * to ensure proper test isolation when tests manipulate the pause/resume state.
-     * <p>
-     * This method resets both the {@code isPaused} flag and the {@code processResults} flag
-     * to their default (non-paused) state.
-     */
+    /** Resets the pause state (for tests only). */
     public void resetPauseState() {
         isPaused.set(false);
     }
 
+    /**
+     * Resets the initialized state so that init() will re-register all listeners.
+     * This is useful for tests that need to re-initialize the service after calling
+     * removeListenerAndCancelScheduledFuture().
+     * (for tests only)
+     */
+    public void resetInitializedState() {
+        initialized.set(false);
+    }
+
     public SharedQueueProcessingService(BuildAgentConfiguration buildAgentConfiguration, BuildJobManagementService buildJobManagementService, BuildLogsMap buildLogsMap,
-            TaskScheduler taskScheduler, BuildAgentDockerService buildAgentDockerService, BuildAgentInformationService buildAgentInformationService,
-            DistributedDataAccessService distributedDataAccessService) {
+            TaskScheduler taskScheduler, BuildAgentDockerService buildAgentDockerService, BuildJobContainerService buildJobContainerService,
+            BuildAgentInformationService buildAgentInformationService, DistributedDataAccessService distributedDataAccessService) {
         this.buildAgentConfiguration = buildAgentConfiguration;
         this.buildJobManagementService = buildJobManagementService;
         this.buildLogsMap = buildLogsMap;
         this.buildAgentInformationService = buildAgentInformationService;
         this.taskScheduler = taskScheduler;
         this.buildAgentDockerService = buildAgentDockerService;
+        this.buildJobContainerService = buildJobContainerService;
         this.distributedDataAccessService = distributedDataAccessService;
     }
 
     /**
-     * Initialize relevant data from hazelcast
+     * Initialize the service by validating configuration and setting up distributed listeners.
+     * <p>
+     * When running as a Hazelcast client with asyncStart=true, the client may not yet be
+     * connected to the cluster when this method is called. In that case, we schedule
+     * periodic retries until the connection is established and initialization completes.
+     * <p>
+     * Additionally, a connection state listener is registered to handle reconnection after
+     * a connection loss. When the client reconnects to the cluster, the listener re-initializes
+     * the distributed listeners (queue, topics) which may have been lost during the disconnection.
+     * <p>
      * EventListener cannot be used here, as the bean is lazy
      * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      */
     @PostConstruct
     public void init() {
+        // Validate build agent short name - this doesn't require cluster connection
         if (!buildAgentShortName.matches("^[a-z0-9-]+$")) {
             String errorMessage = "Build agent short name must not be empty and only contain lowercase letters, numbers and hyphens."
                     + " Build agent short name should be changed in the application properties under 'artemis.continuous-integration.build-agent.short-name'.";
@@ -196,70 +249,181 @@ public class SharedQueueProcessingService {
             buildAgentDisplayName = buildAgentShortName;
         }
 
-        // Remove listener if already present
-        if (this.listenerId != null) {
-            distributedDataAccessService.getDistributedBuildJobQueue().removeListener(this.listenerId);
+        // Register a connection state listener to handle both initial connection and reconnection.
+        // On reconnection (isInitialConnection=false), the distributed listeners need to be re-registered
+        // because they may have been lost when the connection was interrupted.
+        distributedDataAccessService.addConnectionStateListener(isInitialConnection -> {
+            if (!isInitialConnection) {
+                // This is a reconnection - reset the initialized flag so listeners are re-registered
+                log.info("Hazelcast client reconnected to cluster. Re-initializing SharedQueueProcessingService listeners.");
+                initialized.set(false);
+                // Also cancel existing scheduled future if it's still running, as a new one will be created
+                cancelCheckAvailabilityAndProcessNextBuildScheduledFuture();
+            }
+            boolean initSucceeded = tryInitialize();
+            // If initialization failed after reconnection, schedule retries
+            if (!initSucceeded && !distributedDataAccessService.isConnectedToCluster()) {
+                if (connectionRetryFuture == null || connectionRetryFuture.isDone()) {
+                    connectionRetryFuture = taskScheduler.scheduleAtFixedRate(() -> {
+                        if (tryInitialize()) {
+                            if (connectionRetryFuture != null) {
+                                connectionRetryFuture.cancel(false);
+                            }
+                        }
+                    }, CLUSTER_CONNECTION_RETRY_INTERVAL);
+                }
+            }
+        });
+
+        // If already connected, tryInitialize was called by the listener above.
+        // If not connected yet, schedule periodic retries as a fallback.
+        if (!initialized.get() && !distributedDataAccessService.isConnectedToCluster()) {
+            log.info("Hazelcast client not yet connected to cluster. Scheduling periodic initialization retries every {} seconds.", CLUSTER_CONNECTION_RETRY_INTERVAL.toSeconds());
+
+            connectionRetryFuture = taskScheduler.scheduleAtFixedRate(() -> {
+                if (tryInitialize()) {
+                    // Initialization succeeded - cancel the retry task
+                    if (connectionRetryFuture != null) {
+                        connectionRetryFuture.cancel(false);
+                    }
+                }
+            }, CLUSTER_CONNECTION_RETRY_INTERVAL);
         }
-        log.info("Adding item listener to Hazelcast distributed build job queue for build agent with address {}", distributedDataAccessService.getLocalMemberAddress());
-        this.listenerId = this.distributedDataAccessService.getDistributedBuildJobQueue().addItemListener(new QueuedBuildJobItemListener());
+    }
 
-        /*
-         * Check every 5 seconds whether the node has at least one thread available for a new build job.
-         * If so, process the next build job.
-         * This is a backup mechanism in case the build queue is not empty, no new build jobs are entering the queue and the
-         * node otherwise stopped checking for build jobs in the queue.
-         */
-        scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, BUILD_CHECK_AVAILABILITY_INTERVAL);
+    /**
+     * Attempts to initialize the distributed listeners and scheduled tasks.
+     * <p>
+     * This method checks if the Hazelcast client is connected to the cluster before
+     * attempting to access distributed data structures. If not connected, it returns
+     * false so the caller can retry later.
+     *
+     * @return true if initialization succeeded, false if not connected to cluster
+     */
+    private synchronized boolean tryInitialize() {
+        if (initialized.get()) {
+            return true;
+        }
 
-        distributedDataAccessService.getPauseBuildAgentTopic().addMessageListener(buildAgentName -> {
-            if (buildAgentShortName.equals(buildAgentName)) {
-                pauseBuildAgent(false);
+        if (!distributedDataAccessService.isConnectedToCluster()) {
+            log.debug("Cannot initialize SharedQueueProcessingService: not connected to Hazelcast cluster yet");
+            return false;
+        }
+
+        try {
+            // Remove listener if already present (for idempotency)
+            if (this.listenerId != null) {
+                distributedDataAccessService.getDistributedBuildJobQueue().removeListener(this.listenerId);
             }
-        });
+            // Cancel existing scheduled task if present (for idempotency on partial failure retry)
+            cancelCheckAvailabilityAndProcessNextBuildScheduledFuture();
 
-        distributedDataAccessService.getResumeBuildAgentTopic().addMessageListener(buildAgentName -> {
-            if (buildAgentShortName.equals(buildAgentName)) {
-                resumeBuildAgent();
+            log.info("Adding item listener to Hazelcast distributed build job queue for build agent with address {}", distributedDataAccessService.getLocalMemberAddress());
+            this.listenerId = this.distributedDataAccessService.getDistributedBuildJobQueue().addItemListener(new QueuedBuildJobItemListener());
+
+            /*
+             * Check every 5 seconds whether the node has at least one thread available for a new build job.
+             * If so, process the next build job.
+             * This is a backup mechanism in case the build queue is not empty, no new build jobs are entering the queue and the
+             * node otherwise stopped checking for build jobs in the queue.
+             */
+            scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, BUILD_CHECK_AVAILABILITY_INTERVAL);
+
+            var pauseTopic = distributedDataAccessService.getPauseBuildAgentTopic();
+            var resumeTopic = distributedDataAccessService.getResumeBuildAgentTopic();
+
+            // Remove old listeners if they exist (prevents duplicate listeners on reconnection)
+            if (pauseListenerId != null) {
+                pauseTopic.removeMessageListener(pauseListenerId);
+                pauseListenerId = null;
             }
-        });
+            if (resumeListenerId != null) {
+                resumeTopic.removeMessageListener(resumeListenerId);
+                resumeListenerId = null;
+            }
+
+            pauseListenerId = pauseTopic.addMessageListener(buildAgentName -> {
+                if (buildAgentShortName.equals(buildAgentName)) {
+                    pauseBuildAgent(false);
+                }
+            });
+
+            resumeListenerId = resumeTopic.addMessageListener(buildAgentName -> {
+                if (buildAgentShortName.equals(buildAgentName)) {
+                    resumeBuildAgent();
+                }
+            });
+
+            initialized.set(true);
+            log.info("SharedQueueProcessingService initialized successfully - listening for build jobs");
+            return true;
+        }
+        catch (Exception e) {
+            // This can happen if the connection is lost between the check and the access
+            log.warn("Failed to initialize SharedQueueProcessingService: {}. Will retry.", e.getMessage());
+            return false;
+        }
     }
 
     /**
      * Cleanup method called when the service is being destroyed.
-     * Removes the queue listener and cancels the scheduled availability check.
+     * Removes the queue listener, cancels the scheduled availability check, and cancels
+     * any pending connection retry task.
      */
     @PreDestroy
     public void removeListenerAndCancelScheduledFuture() {
+        // Cancel connection retry task if it's running (for build agents that never connected)
+        if (connectionRetryFuture != null && !connectionRetryFuture.isCancelled()) {
+            connectionRetryFuture.cancel(false);
+        }
         removeListener();
         cancelCheckAvailabilityAndProcessNextBuildScheduledFuture();
     }
 
-    /**
-     * Removes the item listener from the distributed build job queue.
-     * Only removes if the Hazelcast instance is still running and a listener was registered.
-     */
+    /** Removes all listeners (queue, pause, resume) if the Hazelcast instance is running. */
     private void removeListener() {
-        if (distributedDataAccessService.isInstanceRunning() && this.listenerId != null) {
-            distributedDataAccessService.getDistributedBuildJobQueue().removeListener(this.listenerId);
+        if (distributedDataAccessService.isInstanceRunning()) {
+            if (this.listenerId != null) {
+                distributedDataAccessService.getDistributedBuildJobQueue().removeListener(this.listenerId);
+            }
+            if (this.pauseListenerId != null) {
+                distributedDataAccessService.getPauseBuildAgentTopic().removeMessageListener(this.pauseListenerId);
+            }
+            if (this.resumeListenerId != null) {
+                distributedDataAccessService.getResumeBuildAgentTopic().removeMessageListener(this.resumeListenerId);
+            }
         }
     }
 
     /**
-     * Cancels the scheduled future that periodically checks availability and processes builds.
-     * Uses non-interrupting cancel to allow current execution to complete gracefully.
+     * Removes the queue listener and cancels the scheduled availability check without removing
+     * the pause/resume topic listeners. Used when pausing the build agent, as it should still
+     * be able to receive resume commands.
      */
+    private void removeQueueListenerAndCancelScheduledTask() {
+        if (distributedDataAccessService.isInstanceRunning() && this.listenerId != null) {
+            distributedDataAccessService.getDistributedBuildJobQueue().removeListener(this.listenerId);
+            this.listenerId = null;
+        }
+        cancelCheckAvailabilityAndProcessNextBuildScheduledFuture();
+    }
+
+    /** Cancels the scheduled availability check, allowing current execution to complete gracefully. */
     private void cancelCheckAvailabilityAndProcessNextBuildScheduledFuture() {
         if (scheduledFuture != null && !scheduledFuture.isCancelled()) {
             scheduledFuture.cancel(false);
         }
     }
 
-    /**
-     * Wait 10 seconds after startup and then every 10 seconds update the build agent information of the local hazelcast member.
-     * This is necessary because the build agent information is not updated automatically when a node joins the cluster.
-     */
-    @Scheduled(initialDelay = 10_000, fixedRate = 10_000) // 10 seconds initial delay, 10 seconds fixed rate
+    /** Update the build agent information every 10s (not updated automatically when node joins cluster). */
+    @Scheduled(initialDelay = 10_000, fixedRate = 10_000)
     public void updateBuildAgentInformation() {
+        // Skip if not connected to cluster (happens when build agent starts before core nodes)
+        if (!distributedDataAccessService.isConnectedToCluster()) {
+            log.debug("Not connected to Hazelcast cluster yet. Skipping build agent information update.");
+            return;
+        }
+
         if (distributedDataAccessService.noDataMemberInClusterAvailable()) {
             log.debug("There are only lite member in the cluster. Not updating build agent information.");
             return;
@@ -267,9 +431,129 @@ public class SharedQueueProcessingService {
 
         removeOfflineNodes();
 
-        // Add build agent information of local hazelcast member to map if not already present
-        if (!distributedDataAccessService.getBuildAgentInformationMap().containsKey(distributedDataAccessService.getLocalMemberAddress())) {
+        // Add build agent information to map if not already present
+        // Use buildAgentShortName as the key since that's what BuildAgentInformationService uses
+        if (!distributedDataAccessService.getBuildAgentInformationMap().containsKey(buildAgentShortName)) {
             buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get());
+        }
+    }
+
+    /**
+     * Detects stale build jobs by verifying that running builds have corresponding Docker containers.
+     * This scheduled task runs every 5 seconds to identify and clean up orphaned/stuck builds.
+     * <p>
+     * A build job is considered stale if:
+     * <ul>
+     * <li>It is tracked as running in the local job management service, but has no Docker container</li>
+     * <li>It exists in the distributed processing jobs map but not in the local running jobs</li>
+     * </ul>
+     * <p>
+     * When a stale build is detected, the system:
+     * <ul>
+     * <li>Removes it from the distributed processing jobs map</li>
+     * <li>Updates the build agent information to reflect accurate job counts</li>
+     * </ul>
+     */
+    @Scheduled(initialDelay = 30_000, fixedRate = 5_000)
+    public void detectAndCleanupStaleBuildJobs() {
+        // Skip if not connected to cluster or if paused
+        if (!distributedDataAccessService.isConnectedToCluster() || isPaused.get()) {
+            return;
+        }
+
+        try {
+            // Get locally tracked running job IDs
+            Set<String> localRunningJobIds = buildJobManagementService.getRunningBuildJobIds();
+
+            // Clean up tracking for jobs that are no longer running
+            staleJobDetectionCounts.keySet().removeIf(jobId -> !localRunningJobIds.contains(jobId));
+
+            // Check each local running job against Docker containers
+            for (String jobId : localRunningJobIds) {
+                String containerName = buildContainerPrefix + jobId;
+                String containerId = buildJobContainerService.getIDOfRunningContainer(containerName);
+
+                if (containerId == null) {
+                    // Job is tracked as running but has no container - this could be:
+                    // 1. Container was killed externally
+                    // 2. Container startup failed but job wasn't cleaned up
+                    // 3. Job is still starting up (image pull, repo clone in progress)
+
+                    // Check job age - don't consider jobs stale during startup grace period
+                    // This allows time for Docker image pulls and repository cloning
+                    BuildJobQueueItem job = distributedDataAccessService.getDistributedProcessingJobs().get(jobId);
+                    if (job != null && job.jobTimingInfo() != null && job.jobTimingInfo().buildStartDate() != null) {
+                        long jobAgeSeconds = Duration.between(job.jobTimingInfo().buildStartDate(), ZonedDateTime.now()).getSeconds();
+                        if (jobAgeSeconds < STALE_DETECTION_MIN_JOB_AGE_SECONDS) {
+                            // Job is still in startup grace period - skip stale detection
+                            log.debug("Job {} is {} seconds old (< {} min grace period), skipping stale detection", jobId, jobAgeSeconds, STALE_DETECTION_MIN_JOB_AGE_SECONDS / 60);
+                            continue;
+                        }
+                    }
+
+                    int consecutiveCount = staleJobDetectionCounts.merge(jobId, 1, Integer::sum);
+
+                    if (consecutiveCount >= MAX_CONSECUTIVE_STALE_DETECTIONS) {
+                        // Job has been stale for too long - force cleanup and requeue
+                        log.error("Build job {} has been stale for {} consecutive checks (~{} seconds). Force-cancelling and requeuing.", jobId, consecutiveCount,
+                                consecutiveCount * 5);
+
+                        // Cancel the build job properly so it's recognized as CANCELLED, not FAILED.
+                        // This adds the job to cancelledBuildJobs set which the exceptionally handler checks.
+                        // IMPORTANT: cancelBuildJob() calls future.cancel(true), which completes the future
+                        // with a CancellationException. This triggers the exceptionally handler (see processBuild),
+                        // which calls removeProcessingJob() to decrement localProcessingJobs.
+                        // We must NOT decrement localProcessingJobs here to avoid a double decrement.
+                        buildJobManagementService.cancelBuildJob(jobId);
+
+                        // Remove from distributed processing jobs map immediately (don't wait for exceptionally handler).
+                        // The exceptionally handler's removeProcessingJob() will call remove() again, but that's
+                        // a no-op since the job is already removed from the map.
+                        BuildJobQueueItem staleJob = distributedDataAccessService.getDistributedProcessingJobs().remove(jobId);
+                        if (staleJob != null && staleJob.retryCount() < 5) {
+                            BuildJobQueueItem requeuedJob = new BuildJobQueueItem(staleJob, new BuildAgentDTO("", "", ""), staleJob.retryCount() + 1);
+                            log.info("Requeuing stale build job {} with retry count {}", jobId, requeuedJob.retryCount());
+                            distributedDataAccessService.getDistributedBuildJobQueue().add(requeuedJob);
+                        }
+                        else if (staleJob != null) {
+                            log.error("Stale build job {} exceeded maximum retry count ({}). Not requeuing.", jobId, staleJob.retryCount());
+                        }
+
+                        // Clean up stale detection state. Note: We do NOT decrement localProcessingJobs here
+                        // because the exceptionally handler will do it when the cancelled future completes.
+                        // See the documentation on removeProcessingJob() for the counter management contract.
+                        staleJobDetectionCounts.remove(jobId);
+                        buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get());
+                    }
+                    else {
+                        log.warn("Stale build job detected: job {} has no running Docker container '{}' (detection count: {}/{})", jobId, containerName, consecutiveCount,
+                                MAX_CONSECUTIVE_STALE_DETECTIONS);
+                    }
+                }
+                else {
+                    // Job has a container - reset stale detection count
+                    staleJobDetectionCounts.remove(jobId);
+                }
+            }
+
+            // Cross-check distributed processing jobs against local state
+            // Get jobs in distributed map that are assigned to this agent (by agent name, not member address)
+            List<String> distributedJobIds = distributedDataAccessService.getProcessingJobIdsForAgentByName(buildAgentShortName);
+
+            // Find jobs in distributed map but not tracked locally (orphaned in distributed state)
+            for (String distributedJobId : distributedJobIds) {
+                if (!localRunningJobIds.contains(distributedJobId)) {
+                    log.warn("Orphaned job in distributed map: job {} is assigned to agent {} but not running locally. Removing from distributed map.", distributedJobId,
+                            buildAgentShortName);
+                    distributedDataAccessService.getDistributedProcessingJobs().remove(distributedJobId);
+                    // Update agent info to reflect accurate counts
+                    buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get());
+                }
+            }
+        }
+        catch (Exception e) {
+            // Don't let detection failures affect other operations
+            log.debug("Error during stale build detection: {}", e.getMessage());
         }
     }
 
@@ -278,14 +562,21 @@ public class SharedQueueProcessingService {
      * If so, process the next build job.
      */
     private void checkAvailabilityAndProcessNextBuild() {
+        // Skip if not connected to cluster (happens when build agent starts before core nodes)
+        if (!distributedDataAccessService.isConnectedToCluster()) {
+            log.debug("Not connected to Hazelcast cluster yet. Skipping build job processing.");
+            return;
+        }
+
         if (distributedDataAccessService.noDataMemberInClusterAvailable() || distributedDataAccessService.getDistributedBuildJobQueue() == null) {
             log.warn("There are only lite member in the cluster. Not processing build jobs.");
             return;
         }
         // Check conditions before acquiring the lock to avoid unnecessary locking
         if (!nodeIsAvailable()) {
-            // Add build agent information of local hazelcast member to map if not already present
-            if (!distributedDataAccessService.getBuildAgentInformationMap().containsKey(distributedDataAccessService.getLocalMemberAddress())) {
+            // Add build agent information to map if not already present
+            // Use buildAgentShortName as the key since that's what BuildAgentInformationService uses
+            if (!distributedDataAccessService.getBuildAgentInformationMap().containsKey(buildAgentShortName)) {
                 buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get());
             }
 
@@ -381,26 +672,106 @@ public class SharedQueueProcessingService {
      * <p>
      * This cleanup is necessary because when a node goes offline unexpectedly (e.g., crash),
      * its build agent information and any jobs it was processing remain in the distributed maps.
-     * This method detects such stale entries by comparing registered agents with current cluster members.
+     * This method detects such stale entries by comparing the stored member address of each agent
+     * with current cluster members.
+     * <p>
+     * Note: Build agents running as Hazelcast clients (not cluster members) are not cleaned up by this
+     * method since their addresses are not in the cluster member list. Client-mode agents have addresses
+     * on ephemeral ports (e.g., [127.0.0.1]:54321) which will never exactly match cluster member addresses
+     * (which use the configured Hazelcast port like 5701). A separate mechanism (e.g., heartbeat-based
+     * cleanup) should be used for client-mode agent cleanup if needed.
      */
     private void removeOfflineNodes() {
         Set<String> memberAddresses = distributedDataAccessService.getClusterMemberAddresses();
-        for (String key : distributedDataAccessService.getBuildAgentInformationMap().keySet()) {
-            if (!memberAddresses.contains(key)) {
-                removeBuildAgentInformationForNode(key);
-                removeProcessingJobsForNode(key);
+        var buildAgentMap = distributedDataAccessService.getBuildAgentInformationMap();
+
+        log.debug("removeOfflineNodes: cluster member addresses = {}, build agent map keys = {}", memberAddresses, buildAgentMap.keySet());
+
+        // Iterate over entries to access both the key (short name) and the stored member address
+        for (var entry : buildAgentMap.entrySet()) {
+            String agentKey = entry.getKey();
+            String storedMemberAddress = entry.getValue().buildAgent().memberAddress();
+            boolean isClusterMember = isClusterMemberAddress(storedMemberAddress, memberAddresses);
+            boolean isInMemberSet = memberAddresses.contains(storedMemberAddress);
+
+            log.debug("removeOfflineNodes: checking agent '{}' with address '{}': isClusterMemberAddress={}, isInMemberSet={}", agentKey, storedMemberAddress, isClusterMember,
+                    isInMemberSet);
+
+            // Only clean up agents whose stored address matches the exact format of current cluster members
+            // AND is not in the current cluster member set (i.e., the member went offline).
+            // Client-mode agents have ephemeral port addresses that won't match cluster member addresses,
+            // so they are safely ignored by this cleanup logic.
+            if (isClusterMember && !isInMemberSet) {
+                log.info("removeOfflineNodes: REMOVING agent '{}' with address '{}' (was cluster member but is now offline)", agentKey, storedMemberAddress);
+                removeBuildAgentInformationForNode(agentKey, storedMemberAddress);
+                removeProcessingJobsForNode(storedMemberAddress);
             }
         }
     }
 
     /**
+     * Checks if the given address appears to be a cluster member address.
+     * <p>
+     * For Hazelcast: Cluster members use configured ports (typically 5701, 5702, etc.), while clients
+     * use ephemeral ports assigned by the OS. We check by comparing ports.
+     * <p>
+     * For Redisson: Addresses are simple client names (e.g., "artemis-node") without ports.
+     * We check if the address is directly contained in the member addresses set.
+     *
+     * @param address         the address to check
+     * @param memberAddresses the current set of cluster member addresses
+     * @return true if the address appears to be a cluster member address
+     */
+    private boolean isClusterMemberAddress(String address, Set<String> memberAddresses) {
+        if (address == null || memberAddresses == null || memberAddresses.isEmpty()) {
+            return false;
+        }
+
+        // First, check if the address is directly in the member addresses set (Redisson-style plain names)
+        if (memberAddresses.contains(address)) {
+            return true;
+        }
+
+        // For Hazelcast-style addresses with [host]:port format
+        if (!address.contains("]:")) {
+            return false;
+        }
+        // Extract port from the address (format: [host]:port)
+        String addressPort = extractPort(address);
+        if (addressPort == null) {
+            return false;
+        }
+        // Check if any cluster member uses the same port - this indicates it's a cluster member address
+        // Clients use random ephemeral ports, so they won't match cluster member ports
+        return memberAddresses.stream().map(this::extractPort).filter(Objects::nonNull).anyMatch(addressPort::equals);
+    }
+
+    /**
+     * Extracts the port from an address in [host]:port format.
+     *
+     * @param address the address string
+     * @return the port string, or null if extraction fails
+     */
+    private String extractPort(String address) {
+        if (address == null) {
+            return null;
+        }
+        int lastColon = address.lastIndexOf(':');
+        if (lastColon >= 0 && lastColon < address.length() - 1) {
+            return address.substring(lastColon + 1);
+        }
+        return null;
+    }
+
+    /**
      * Removes the build agent information entry for a specific node from the distributed map.
      *
-     * @param memberAddress the Hazelcast member address of the offline node
+     * @param agentKey      the map key (build agent short name) identifying the agent
+     * @param memberAddress the Hazelcast member address of the offline node (for logging)
      */
-    private void removeBuildAgentInformationForNode(String memberAddress) {
-        log.debug("Cleaning up build agent information for offline node: {}", memberAddress);
-        distributedDataAccessService.getDistributedBuildAgentInformation().remove(memberAddress);
+    private void removeBuildAgentInformationForNode(String agentKey, String memberAddress) {
+        log.debug("Cleaning up build agent information for offline node: {} (address: {})", agentKey, memberAddress);
+        distributedDataAccessService.getDistributedBuildAgentInformation().remove(agentKey);
     }
 
     /**
@@ -436,76 +807,108 @@ public class SharedQueueProcessingService {
 
         CompletableFuture<BuildResult> futureResult = buildJobManagementService.executeBuildJob(buildJob);
         futureResult.thenAccept(buildResult -> {
+            try {
+                log.debug("Build job completed: {}", buildJob);
+                JobTimingInfo jobTimingInfo = new JobTimingInfo(buildJob.jobTimingInfo().submissionDate(), buildJob.jobTimingInfo().buildStartDate(), ZonedDateTime.now(),
+                        buildJob.jobTimingInfo().estimatedCompletionDate(), buildJob.jobTimingInfo().estimatedDuration());
 
-            log.debug("Build job completed: {}", buildJob);
-            JobTimingInfo jobTimingInfo = new JobTimingInfo(buildJob.jobTimingInfo().submissionDate(), buildJob.jobTimingInfo().buildStartDate(), ZonedDateTime.now(),
-                    buildJob.jobTimingInfo().estimatedCompletionDate(), buildJob.jobTimingInfo().estimatedDuration());
+                BuildJobQueueItem finishedJob = new BuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgent(), buildJob.participationId(), buildJob.courseId(),
+                        buildJob.exerciseId(), buildJob.retryCount(), buildJob.priority(), BuildStatus.SUCCESSFUL, buildJob.repositoryInfo(), jobTimingInfo, buildJob.buildConfig(),
+                        null);
 
-            BuildJobQueueItem finishedJob = new BuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgent(), buildJob.participationId(), buildJob.courseId(),
-                    buildJob.exerciseId(), buildJob.retryCount(), buildJob.priority(), BuildStatus.SUCCESSFUL, buildJob.repositoryInfo(), jobTimingInfo, buildJob.buildConfig(),
-                    null);
+                List<BuildLogDTO> buildLogs = buildLogsMap.getAndTruncateBuildLogs(buildJob.id());
+                buildLogsMap.removeBuildLogs(buildJob.id());
 
-            List<BuildLogDTO> buildLogs = buildLogsMap.getAndTruncateBuildLogs(buildJob.id());
-            buildLogsMap.removeBuildLogs(buildJob.id());
+                ResultQueueItem resultQueueItem = new ResultQueueItem(buildResult, finishedJob, buildLogs, null);
+                enqueueBuildResult(resultQueueItem);
+                // This is the single point where localProcessingJobs is decremented for successful jobs.
+                // Other code (e.g., stale job cleanup) must NOT decrement the counter directly.
+                removeProcessingJob(buildJob);
 
-            ResultQueueItem resultQueueItem = new ResultQueueItem(buildResult, finishedJob, buildLogs, null);
-            enqueueBuildResult(resultQueueItem);
-            removeProcessingJob(buildJob);
+                buildAgentInformationService.updateLocalBuildAgentInformationWithRecentJob(finishedJob, isPaused.get(), false, consecutiveBuildJobFailures.get());
 
-            buildAgentInformationService.updateLocalBuildAgentInformationWithRecentJob(finishedJob, isPaused.get(), false, consecutiveBuildJobFailures.get());
+                consecutiveBuildJobFailures.set(0);
 
-            consecutiveBuildJobFailures.set(0);
-
-            // process next build job if node is available
-            checkAvailabilityAndProcessNextBuild();
+                // process next build job if node is available
+                checkAvailabilityAndProcessNextBuild();
+            }
+            catch (Exception e) {
+                log.error("Error in build success handler for job {}: {}. Attempting to continue processing.", buildJob.id(), e.getMessage(), e);
+                // Ensure we continue processing next builds even if cleanup/update fails
+                try {
+                    checkAvailabilityAndProcessNextBuild();
+                }
+                catch (Exception ignored) {
+                    log.error("Failed to check for next build after error in success handler", ignored);
+                }
+            }
         });
 
         futureResult.exceptionally(ex -> {
-            log.debug("Build job completed with exception: {}", buildJob, ex);
+            try {
+                log.debug("Build job completed with exception: {}", buildJob, ex);
 
-            ZonedDateTime completionDate = ZonedDateTime.now();
+                ZonedDateTime completionDate = ZonedDateTime.now();
 
-            BuildJobQueueItem finishedBuildJob;
-            BuildStatus status;
+                BuildJobQueueItem finishedBuildJob;
+                BuildStatus status;
 
-            if (isCausedByTimeoutException(ex, buildJob.id())) {
-                status = BuildStatus.TIMEOUT;
-                log.info("Build job with id {} was timed out", buildJob.id());
-                consecutiveBuildJobFailures.incrementAndGet();
-            }
-            else if (isCausedByCancelledException(ex, buildJob.id())) {
-                status = BuildStatus.CANCELLED;
-                log.info("Build job with id {} was cancelled", buildJob.id());
-            }
-            else {
-                status = BuildStatus.FAILED;
-                log.error("Error while processing build job: {}", buildJob, ex);
-                if (!isCausedByImagePullFailedException(ex)) {
+                if (isCausedByTimeoutException(ex, buildJob.id())) {
+                    status = BuildStatus.TIMEOUT;
+                    log.info("Build job with id {} was timed out", buildJob.id());
                     consecutiveBuildJobFailures.incrementAndGet();
                 }
+                else if (isCausedByCancelledException(ex, buildJob.id())) {
+                    status = BuildStatus.CANCELLED;
+                    log.info("Build job with id {} was cancelled", buildJob.id());
+                }
+                else {
+                    status = BuildStatus.FAILED;
+                    if (DockerUtil.isDockerNotAvailable(ex)) {
+                        log.warn("Docker is not available. Build job {} failed: {}", buildJob.id(), ex.getMessage());
+                    }
+                    else {
+                        log.error("Error while processing build job: {}", buildJob, ex);
+                    }
+                    if (!isCausedByImagePullFailedException(ex)) {
+                        consecutiveBuildJobFailures.incrementAndGet();
+                    }
+                }
+
+                finishedBuildJob = new BuildJobQueueItem(buildJob, completionDate, status);
+
+                List<BuildLogDTO> buildLogs = buildLogsMap.getAndTruncateBuildLogs(buildJob.id());
+                buildLogsMap.removeBuildLogs(buildJob.id());
+
+                BuildResult failedResult = new BuildResult(buildJob.buildConfig().branch(), buildJob.buildConfig().assignmentCommitHash(), buildJob.buildConfig().testCommitHash(),
+                        buildLogs, false);
+
+                ResultQueueItem resultQueueItem = new ResultQueueItem(failedResult, finishedBuildJob, buildLogs, ex);
+                enqueueBuildResult(resultQueueItem);
+                // This is the single point where localProcessingJobs is decremented for failed/cancelled jobs.
+                // Other code (e.g., stale job cleanup) must NOT decrement the counter directly.
+                removeProcessingJob(buildJob);
+
+                buildAgentInformationService.updateLocalBuildAgentInformationWithRecentJob(finishedBuildJob, isPaused.get(), false, consecutiveBuildJobFailures.get());
+
+                if (consecutiveBuildJobFailures.get() >= buildAgentConfiguration.getPauseAfterConsecutiveFailedJobs()) {
+                    log.error("Build agent has failed to process build jobs {} times in a row. Pausing build agent.", consecutiveBuildJobFailures.get());
+                    pauseBuildAgent(true);
+                    return null;
+                }
+
+                checkAvailabilityAndProcessNextBuild();
             }
-
-            finishedBuildJob = new BuildJobQueueItem(buildJob, completionDate, status);
-
-            List<BuildLogDTO> buildLogs = buildLogsMap.getAndTruncateBuildLogs(buildJob.id());
-            buildLogsMap.removeBuildLogs(buildJob.id());
-
-            BuildResult failedResult = new BuildResult(buildJob.buildConfig().branch(), buildJob.buildConfig().assignmentCommitHash(), buildJob.buildConfig().testCommitHash(),
-                    buildLogs, false);
-
-            ResultQueueItem resultQueueItem = new ResultQueueItem(failedResult, finishedBuildJob, buildLogs, ex);
-            enqueueBuildResult(resultQueueItem);
-            removeProcessingJob(buildJob);
-
-            buildAgentInformationService.updateLocalBuildAgentInformationWithRecentJob(finishedBuildJob, isPaused.get(), false, consecutiveBuildJobFailures.get());
-
-            if (consecutiveBuildJobFailures.get() >= buildAgentConfiguration.getPauseAfterConsecutiveFailedJobs()) {
-                log.error("Build agent has failed to process build jobs {} times in a row. Pausing build agent.", consecutiveBuildJobFailures.get());
-                pauseBuildAgent(true);
-                return null;
+            catch (Exception e) {
+                log.error("Error in build exception handler for job {}: {}. Attempting to continue processing.", buildJob.id(), e.getMessage(), e);
+                // Ensure we continue processing next builds even if cleanup/update fails
+                try {
+                    checkAvailabilityAndProcessNextBuild();
+                }
+                catch (Exception ignored) {
+                    log.error("Failed to check for next build after error in exception handler", ignored);
+                }
             }
-
-            checkAvailabilityAndProcessNextBuild();
             return null;
         });
     }
@@ -528,7 +931,23 @@ public class SharedQueueProcessingService {
     }
 
     /**
-     * Remove the processing job from the distributed processing jobs map and decrement the local processing jobs counter.
+     * Removes a processing job from the distributed map and decrements the local job counter.
+     * <p>
+     * <b>Counter Management Contract:</b> This method is the single point of responsibility for
+     * decrementing {@code localProcessingJobs} when a build job completes (successfully, with error,
+     * or via cancellation). It is called from:
+     * <ul>
+     * <li>The {@code thenAccept} handler when a build completes successfully</li>
+     * <li>The {@code exceptionally} handler when a build fails, times out, or is cancelled</li>
+     * </ul>
+     * <p>
+     * <b>Important:</b> Other code paths (such as stale job cleanup) must NOT decrement
+     * {@code localProcessingJobs} directly. Instead, they should trigger job cancellation via
+     * {@link BuildJobManagementService#cancelBuildJob(String)}, which will eventually cause the
+     * {@code exceptionally} handler to call this method.
+     * <p>
+     * The distributed map removal is idempotent - if the job was already removed by another code path,
+     * the remove operation simply returns null.
      *
      * @param buildJob the build job to remove
      */
@@ -592,7 +1011,9 @@ public class SharedQueueProcessingService {
             isPaused.set(true);
 
             // Stop accepting / scheduling new work before we update the distributed state.
-            removeListenerAndCancelScheduledFuture();
+            // Note: We only remove the queue listener and scheduled task, NOT the pause/resume
+            // topic listeners - the agent must still be able to receive resume commands.
+            removeQueueListenerAndCancelScheduledTask();
 
             // Persist the paused state so other components in the system see the agent as PAUSED.
             buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get(), dueToFailures, consecutiveBuildJobFailures.get());
@@ -712,7 +1133,9 @@ public class SharedQueueProcessingService {
             buildAgentDockerService.cleanUpContainers();
 
             // To avoid multiple listeners and scheduled tasks, remove any existing ones first.
-            removeListenerAndCancelScheduledFuture();
+            // Note: We only remove the queue listener and scheduled task - the topic listeners
+            // should remain intact as they were not removed during pause.
+            removeQueueListenerAndCancelScheduledTask();
 
             log.info("Re-adding item listener to distributed build job queue for build agent with address {}", distributedDataAccessService.getLocalMemberAddress());
 
@@ -809,8 +1232,7 @@ public class SharedQueueProcessingService {
         @Override
         public void itemAdded(BuildJobQueueItem item) {
             try {
-                log.debug("CIBuildJobQueueItem added to queue: {}", item);
-                log.debug("Current queued items: {}", distributedDataAccessService.getQueuedJobsSize());
+                log.debug("CIBuildJobQueueItem added to queue: {}. Current queued items: {}", item, distributedDataAccessService.getQueuedJobsSize());
                 checkAvailabilityAndProcessNextBuild();
             }
             catch (Exception e) {

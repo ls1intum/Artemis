@@ -1,6 +1,7 @@
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import {
     createBuildPlanUrl,
+    createProgrammingExerciseEntitySummary,
     hasDueDatePassed,
     isProgrammingExerciseParticipation,
     isProgrammingExerciseStudentParticipation,
@@ -13,6 +14,7 @@ import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/en
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import dayjs from 'dayjs/esm';
+import { ProgrammingExerciseDeletionSummaryDTO } from 'app/programming/shared/entities/programming-exercise-deletion-summary.model';
 
 describe('ProgrammingExerciseUtils', () => {
     it('createBuildPlanUrl fills in buildPlanId and projectKey', () => {
@@ -34,6 +36,24 @@ describe('ProgrammingExerciseUtils', () => {
         const generatedUrl = createBuildPlanUrl(template, projectKey, buildPlanId);
 
         expect(generatedUrl).toBeUndefined();
+    });
+
+    it('should create entity summary correctly', () => {
+        const summaryDTO: ProgrammingExerciseDeletionSummaryDTO = {
+            numberOfStudentParticipations: 5,
+            numberOfBuilds: 10,
+            numberOfCommunicationPosts: 3,
+            numberOfAnswerPosts: 2,
+        };
+
+        const expectedSummary = {
+            'artemisApp.programmingExercise.delete.summary.numberOfStudentParticipations': 5,
+            'artemisApp.programmingExercise.delete.summary.numberOfBuilds': 10,
+            'artemisApp.programmingExercise.delete.summary.numberOfCommunicationPosts': 3,
+            'artemisApp.programmingExercise.delete.summary.numberOfAnswerPosts': 2,
+        };
+
+        expect(createProgrammingExerciseEntitySummary(summaryDTO)).toEqual(expectedSummary);
     });
 
     describe('isProgrammingExerciseStudentParticipation', () => {
@@ -157,6 +177,18 @@ describe('ProgrammingExerciseUtils', () => {
             });
 
             it('return false if the assessment due date is not set and the latest result is not an automatic assessment', () => {
+                result.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+                expect(isResultPreliminary(result, participation, exercise)).toBeFalse();
+            });
+
+            it('return false if the assessment due date is in the future but the result is manually assessed', () => {
+                exercise.assessmentDueDate = dayjs().add(5, 'hours');
+                result.assessmentType = AssessmentType.MANUAL;
+                expect(isResultPreliminary(result, participation, exercise)).toBeFalse();
+            });
+
+            it('return false if the assessment due date is in the future but the result is semi-automatically assessed', () => {
+                exercise.assessmentDueDate = dayjs().add(5, 'hours');
                 result.assessmentType = AssessmentType.SEMI_AUTOMATIC;
                 expect(isResultPreliminary(result, participation, exercise)).toBeFalse();
             });

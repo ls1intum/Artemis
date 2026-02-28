@@ -25,9 +25,9 @@ public abstract class BaseExercise extends DomainObject {
     private String shortName;
 
     @Column(name = "max_points", nullable = false)
-    private Double maxPoints;
+    private Double maxPoints = 1.0;
 
-    @Column(name = "bonus_points")
+    @Column(name = "bonus_points", nullable = false)
     private Double bonusPoints = 0.0;
 
     @Enumerated(EnumType.STRING)

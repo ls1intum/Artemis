@@ -1,4 +1,5 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockDirective, MockProvider } from 'ng-mocks';
 import { CompetencyFormControlsWithViewed, GenerateCompetenciesComponent } from 'app/atlas/manage/generate-competencies/generate-competencies.component';
@@ -26,11 +27,12 @@ import { CourseCompetencyService } from 'app/atlas/shared/services/course-compet
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { CourseDescriptionFormStubComponent } from 'test/helpers/stubs/atlas/course-description-form-stub.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('GenerateCompetenciesComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<GenerateCompetenciesComponent>;
     let comp: GenerateCompetenciesComponent;
     let mockWebSocketSubject: Subject<any>;
@@ -39,9 +41,8 @@ describe('GenerateCompetenciesComponent', () => {
         mockWebSocketSubject = new Subject<any>();
 
         TestBed.configureTestingModule({
-            imports: [GenerateCompetenciesComponent],
-            declarations: [
-                CourseDescriptionFormStubComponent,
+            imports: [
+                GenerateCompetenciesComponent,
                 CompetencyRecommendationDetailComponent,
                 DocumentationButtonComponent,
                 CourseDescriptionFormComponent,
@@ -58,10 +59,9 @@ describe('GenerateCompetenciesComponent', () => {
                 {
                     provide: WebsocketService,
                     useValue: {
-                        subscribe: jest.fn(() => mockWebSocketSubject.asObservable()),
+                        subscribe: vi.fn(() => mockWebSocketSubject.asObservable()),
                     },
                 },
-                CourseDescriptionFormComponent,
                 MockProvider(CourseManagementService),
                 MockProvider(CourseCompetencyService),
                 MockProvider(CompetencyService),
@@ -79,7 +79,7 @@ describe('GenerateCompetenciesComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -89,7 +89,7 @@ describe('GenerateCompetenciesComponent', () => {
 
     it('should handle description submit', () => {
         fixture.detectChanges();
-        const getCompetencyRecommendationsSpy = jest.spyOn(comp, 'getCompetencyRecommendations').mockReturnValue();
+        const getCompetencyRecommendationsSpy = vi.spyOn(comp, 'getCompetencyRecommendations').mockReturnValue();
 
         const courseDescriptionComponent: CourseDescriptionFormComponent = fixture.debugElement.query(By.directive(CourseDescriptionFormComponent)).componentInstance;
         courseDescriptionComponent.formSubmitted.emit('');
@@ -97,24 +97,25 @@ describe('GenerateCompetenciesComponent', () => {
         expect(getCompetencyRecommendationsSpy).toHaveBeenCalledOnce();
     });
 
-    it('should initialize the form with the course description', fakeAsync(() => {
+    it('should initialize the form with the course description', async () => {
         fixture.detectChanges();
         const courseDescription = 'Course Description';
 
         const courseDescriptionComponent: CourseDescriptionFormComponent = fixture.debugElement.query(By.directive(CourseDescriptionFormComponent)).componentInstance;
-        const setCourseDescriptionSpy = jest.spyOn(courseDescriptionComponent, 'setCourseDescription');
+        const setCourseDescriptionSpy = vi.spyOn(courseDescriptionComponent, 'setCourseDescription');
 
         // mock the course returned by CourseManagementService
         const course = { description: courseDescription };
         const courseManagementService = TestBed.inject(CourseManagementService);
-        const getCourseSpy = jest.spyOn(courseManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+        const getCourseSpy = vi.spyOn(courseManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
 
         comp.ngOnInit();
-        tick();
+        await Promise.resolve();
+        await Promise.resolve();
 
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(setCourseDescriptionSpy).toHaveBeenCalledWith(courseDescription);
-    }));
+    });
 
     it('should add competency recommendations', () => {
         fixture.detectChanges();
@@ -124,7 +125,7 @@ describe('GenerateCompetenciesComponent', () => {
             status: 200,
         });
         const courseCompetencyService = TestBed.inject(CourseCompetencyService);
-        const getSpy = jest.spyOn(courseCompetencyService, 'generateCompetenciesFromCourseDescription').mockReturnValue(of(response));
+        const getSpy = vi.spyOn(courseCompetencyService, 'generateCompetenciesFromCourseDescription').mockReturnValue(of(response));
 
         //expect no recommendations to exist at the start
         expect(fixture.debugElement.queryAll(By.directive(CompetencyRecommendationDetailComponent))).toHaveLength(0);
@@ -145,7 +146,7 @@ describe('GenerateCompetenciesComponent', () => {
 
     it('should open modal to remove competency recommendations', () => {
         const modalService = fixture.debugElement.injector.get<NgbModal>(NgbModal);
-        const openSpy = jest.spyOn(modalService, 'open');
+        const openSpy = vi.spyOn(modalService, 'open');
         comp.competencies.push(createCompetencyFormGroup('Title', 'Description', CompetencyTaxonomy.ANALYZE, true));
         expect(openSpy).not.toHaveBeenCalled();
 
@@ -157,7 +158,7 @@ describe('GenerateCompetenciesComponent', () => {
     it('should cancel', () => {
         fixture.detectChanges();
         const router = fixture.debugElement.injector.get<Router>(Router);
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        const navigateSpy = vi.spyOn(router, 'navigate');
         const cancelButton = fixture.debugElement.nativeElement.querySelector('#cancelButton > .jhi-btn');
 
         cancelButton.click();
@@ -168,20 +169,20 @@ describe('GenerateCompetenciesComponent', () => {
     it('should deactivate correctly', () => {
         fixture.detectChanges();
 
-        expect(comp.canDeactivate()).toBeTrue();
+        expect(comp.canDeactivate()).toBeTruthy();
 
         comp.isLoading = true;
-        expect(comp.canDeactivate()).toBeFalse();
+        expect(comp.canDeactivate()).toBeFalsy();
 
         comp.submitted = true;
-        expect(comp.canDeactivate()).toBeTrue();
+        expect(comp.canDeactivate()).toBeTruthy();
     });
 
     it('should not submit for unviewed recommendations', async () => {
         fixture.detectChanges();
         const modalService = fixture.debugElement.injector.get<NgbModal>(NgbModal);
-        const openSpy = jest.spyOn(modalService, 'open');
-        const saveSpy = jest.spyOn(comp, 'save');
+        const openSpy = vi.spyOn(modalService, 'open');
+        const saveSpy = vi.spyOn(comp, 'save');
 
         //create competency recomendations that are UNVIEWED
         comp.competencies.push(createCompetencyFormGroup());
@@ -201,13 +202,13 @@ describe('GenerateCompetenciesComponent', () => {
         const modalService = fixture.debugElement.injector.get<NgbModal>(NgbModal);
         const competencyService = TestBed.inject(CompetencyService);
 
-        const navigateSpy = jest.spyOn(router, 'navigate');
-        const openSpy = jest.spyOn(modalService, 'open');
+        const navigateSpy = vi.spyOn(router, 'navigate');
+        const openSpy = vi.spyOn(modalService, 'open');
         const response: HttpResponse<Competency[]> = new HttpResponse({
             body: [],
             status: 200,
         });
-        const createBulkSpy = jest.spyOn(competencyService, 'createBulk').mockReturnValue(of(response));
+        const createBulkSpy = vi.spyOn(competencyService, 'createBulk').mockReturnValue(of(response));
 
         //create competency recomendations that are VIEWED
         comp.competencies.push(createCompetencyFormGroup('Title', 'Description', CompetencyTaxonomy.ANALYZE, true));
@@ -229,9 +230,9 @@ describe('GenerateCompetenciesComponent', () => {
             status: 200,
         });
         const courseCompetencyService = TestBed.inject(CourseCompetencyService);
-        const generateCompetenciesMock = jest.spyOn(courseCompetencyService, 'generateCompetenciesFromCourseDescription').mockReturnValue(of(response));
+        const generateCompetenciesMock = vi.spyOn(courseCompetencyService, 'generateCompetenciesFromCourseDescription').mockReturnValue(of(response));
 
-        const successMock = jest.spyOn(alertService, 'success');
+        const successMock = vi.spyOn(alertService, 'success');
         comp.getCompetencyRecommendations('Cool course description');
         const websocketMessage = {
             stages: [{ state: IrisStageStateDTO.DONE }],
@@ -241,7 +242,7 @@ describe('GenerateCompetenciesComponent', () => {
         expect(successMock).toHaveBeenCalledOnce();
         expect(generateCompetenciesMock).toHaveBeenCalledOnce();
 
-        const warnMock = jest.spyOn(alertService, 'warning');
+        const warnMock = vi.spyOn(alertService, 'warning');
         comp.getCompetencyRecommendations('Cool course description');
         const errorMessage = {
             stages: [{ state: IrisStageStateDTO.ERROR }],
@@ -254,7 +255,7 @@ describe('GenerateCompetenciesComponent', () => {
     it('should not deactivate when loading', () => {
         comp.isLoading = true;
         const canDeactivate = comp.canDeactivate();
-        expect(canDeactivate).toBeFalse();
+        expect(canDeactivate).toBeFalsy();
     });
 
     function createCompetencyFormGroup(title?: string, description?: string, taxonomy?: CompetencyTaxonomy, viewed = false): FormGroup<CompetencyFormControlsWithViewed> {

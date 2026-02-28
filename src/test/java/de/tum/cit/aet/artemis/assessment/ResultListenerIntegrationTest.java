@@ -7,6 +7,7 @@ import static org.awaitility.Awaitility.await;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -417,7 +418,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
         // Wait for the scheduler to execute its task
         participantScoreScheduleService.executeScheduledTasks();
-        await().until(() -> participantScoreScheduleService.isIdle());
+        await().pollInterval(10, TimeUnit.MILLISECONDS).until(() -> participantScoreScheduleService.isIdle());
 
         var savedParticipantScores = participantScoreRepository.findAllByExercise(exercise);
         assertThat(savedParticipantScores).isNotEmpty();

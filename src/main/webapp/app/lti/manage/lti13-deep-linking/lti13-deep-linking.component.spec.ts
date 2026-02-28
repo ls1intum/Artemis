@@ -17,6 +17,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { DeepLinkingType } from 'app/lti/manage/lti13-deep-linking/lti.constants';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { IS_AT_LEAST_INSTRUCTOR } from 'app/shared/constants/authority.constants';
 
 describe('Lti13DeepLinkingComponent', () => {
     setupTestBed({ zoneless: true });
@@ -433,7 +434,7 @@ describe('Lti13DeepLinkingComponent', () => {
 
     it('should invoke account service using jhiHasAnyAuthority directive', () => {
         fixture.changeDetectorRef.detectChanges();
-        expect(accountServiceMock.hasAnyAuthority).toHaveBeenCalledWith(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
+        expect(accountServiceMock.hasAnyAuthority).toHaveBeenCalledWith(IS_AT_LEAST_INSTRUCTOR);
     });
 
     it('should toggle exercise selection correctly', () => {

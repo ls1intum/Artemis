@@ -14,7 +14,7 @@ const sidebars: SidebarsConfig = {
                 'exercises/programming-exercise',
                 'exercises/quiz-exercise',
                 'exercises/modeling-exercise',
-                'exercises/textual-exercise',
+                'exercises/text-exercise',
                 'exercises/file-upload-exercise',
                 'exercises/team-exercise',
             ],

@@ -1,5 +1,4 @@
-import { inject } from '@angular/core';
-import { Component, computed, input, output, signal } from '@angular/core';
+import { Component, ElementRef, Injector, afterNextRender, computed, inject, input, output, signal } from '@angular/core';
 import { IconDefinition, faCheckCircle, faCircle, faDownload, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
@@ -20,6 +19,8 @@ import { CompetencyContributionComponent } from 'app/atlas/shared/competency-con
 })
 export class LectureUnitComponent {
     private router = inject(Router);
+    private elementRef = inject(ElementRef);
+    private injector = inject(Injector);
 
     protected faDownload = faDownload;
     protected faCheckCircle = faCheckCircle;
@@ -55,6 +56,15 @@ export class LectureUnitComponent {
     toggleCollapse() {
         this.isCollapsed.update((isCollapsed) => !isCollapsed);
         this.onCollapse.emit(this.isCollapsed());
+
+        if (!this.isCollapsed()) {
+            afterNextRender(
+                () => {
+                    this.elementRef.nativeElement.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' });
+                },
+                { injector: this.injector },
+            );
+        }
     }
 
     handleIsolatedView(event: Event) {

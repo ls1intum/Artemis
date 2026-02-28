@@ -2,7 +2,7 @@ import { ComponentFixture, ComponentFixtureAutoDetect, TestBed } from '@angular/
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
 import { BuildOverviewComponent } from 'app/buildagent/build-queue/build-overview.component';
 import { BuildOverviewService } from 'app/buildagent/build-queue/build-overview.service';
@@ -229,7 +229,7 @@ describe('BuildQueueComponent', () => {
             buildSubmissionDate: dayjs('2023-01-05'),
             buildStartDate: dayjs('2023-01-05'),
             buildCompletionDate: dayjs('2023-01-05'),
-            buildDuration: '0.000s',
+            buildDuration: '0.0s',
             commitHash: 'abc127',
         },
         {
@@ -246,7 +246,7 @@ describe('BuildQueueComponent', () => {
             triggeredByPushTo: TriggeredByPushTo.USER,
             buildStartDate: dayjs('2023-01-06'),
             buildCompletionDate: dayjs('2023-01-06'),
-            buildDuration: '0.000s',
+            buildDuration: '0.0s',
             commitHash: 'abc128',
         },
     ];
@@ -334,6 +334,9 @@ describe('BuildQueueComponent', () => {
         // Initialize the component
         component.ngOnInit();
 
+        // Admin view should be enabled when no courseId is present
+        expect(component.isAdministrationView()).toBe(true);
+
         // Expectations: The service methods for general build jobs are called
         expect(mockBuildQueueService.getQueuedBuildJobs).toHaveBeenCalled();
         expect(mockBuildQueueService.getRunningBuildJobs).toHaveBeenCalled();
@@ -362,10 +365,18 @@ describe('BuildQueueComponent', () => {
         // Initialize the component
         component.ngOnInit();
 
+        // Admin view should be disabled when courseId is present
+        expect(component.isAdministrationView()).toBe(false);
+
         // Expectations: The service methods are called with the test course ID
         expect(mockBuildQueueService.getQueuedBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId);
         expect(mockBuildQueueService.getRunningBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId);
         expect(mockBuildQueueService.getFinishedBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId, request, filterOptionsEmpty);
+
+        // Expectations: The service methods for general build jobs should not be called
+        expect(mockBuildQueueService.getQueuedBuildJobs).not.toHaveBeenCalled();
+        expect(mockBuildQueueService.getRunningBuildJobs).not.toHaveBeenCalled();
+        expect(mockBuildQueueService.getFinishedBuildJobs).not.toHaveBeenCalled();
 
         // Expectations: The component's properties are set with the mock data
         expect(component.queuedBuildJobs()).toEqual(mockQueuedJobs);
@@ -559,7 +570,10 @@ describe('BuildQueueComponent', () => {
         for (const finishedBuildJob of component.finishedBuildJobs()) {
             const { buildDuration, buildCompletionDate, buildStartDate } = finishedBuildJob;
             if (buildDuration && buildCompletionDate && buildStartDate) {
-                expect(buildDuration).toEqual((buildCompletionDate.diff(buildStartDate, 'milliseconds') / 1000).toFixed(3) + 's');
+                // Component formats with 1 decimal place for durations under 60s
+                const durationSeconds = buildCompletionDate.diff(buildStartDate, 'milliseconds') / 1000;
+                const expectedDuration = durationSeconds.toFixed(1) + 's';
+                expect(buildDuration).toEqual(expectedDuration);
             }
         }
     });
@@ -585,33 +599,154 @@ describe('BuildQueueComponent', () => {
         expect(modalRef.componentInstance.buildAgentFilterable).toBeTruthy();
     });
 
-    it('should download build logs', () => {
-        const buildJobId = '1';
+    describe('BuildOverviewComponent Download Logs', () => {
+        let alertService: AlertService;
+        let originalClick: typeof HTMLAnchorElement.prototype.click;
+        let originalURL: typeof window.URL;
 
-        const buildLogsMultiLines = 'log1\nlog2\nlog3';
-        mockBuildQueueService.getBuildJobLogs = vi.fn().mockReturnValue(of(buildLogsMultiLines));
+        beforeEach(() => {
+            alertService = TestBed.inject(AlertService);
 
-        component.viewBuildLogs(undefined, buildJobId);
+            originalClick = HTMLAnchorElement.prototype.click;
+            HTMLAnchorElement.prototype.click = vi.fn();
 
-        expect(mockBuildQueueService.getBuildJobLogs).toHaveBeenCalledWith(buildJobId);
-        expect(component.rawBuildLogsString).toEqual(buildLogsMultiLines);
+            originalURL = window.URL;
+        });
 
-        const mockBlob = new Blob([buildLogsMultiLines], { type: 'text/plain' });
+        afterEach(() => {
+            HTMLAnchorElement.prototype.click = originalClick;
 
-        // Mock URL.createObjectURL to ensure consistent behavior across environments
-        global.URL.createObjectURL = vi.fn(() => 'mockedURL');
-        global.URL.revokeObjectURL = vi.fn();
+            // restore URL
+            Object.defineProperty(window, 'URL', {
+                value: originalURL,
+                writable: true,
+                configurable: true,
+            });
 
-        const downloadSpy = vi.spyOn(DownloadUtil, 'downloadFile');
+            vi.restoreAllMocks();
+        });
 
-        component.downloadBuildLogs();
+        it('should show error alert when browser API is missing', async () => {
+            const buildJobId = '1';
+            const logs = 'log1\nlog2\nlog3';
 
-        expect(downloadSpy).toHaveBeenCalledOnce();
-        expect(downloadSpy).toHaveBeenCalledWith(mockBlob, `${buildJobId}.log`);
+            mockBuildQueueService.getBuildJobLogs.mockReturnValue(of(logs));
+            const downloadSpy = vi.spyOn(DownloadUtil, 'downloadFile');
+            const alertSpy = vi.spyOn(alertService, 'error');
 
-        component.downloadBuildLogs();
+            Object.defineProperty(window, 'URL', {
+                value: {},
+                writable: true,
+                configurable: true,
+            });
 
-        expect(downloadSpy).toHaveBeenCalledTimes(2);
-        expect(downloadSpy).toHaveBeenCalledWith(mockBlob, `${buildJobId}.log`);
+            component.viewBuildLogs(undefined, buildJobId);
+            component.downloadBuildLogs();
+
+            expect(downloadSpy).toHaveBeenCalledWith(expect.any(Blob), `${buildJobId}.log`);
+
+            const [blobArg, filenameArg] = downloadSpy.mock.calls[0] as [Blob, string];
+            expect(filenameArg).toBe(`${buildJobId}.log`);
+            expect(blobArg.type).toBe('text/plain');
+            expect(HTMLAnchorElement.prototype.click).not.toHaveBeenCalled();
+            expect(alertSpy).toHaveBeenCalled();
+        });
+
+        it('should download file when browser API is available', async () => {
+            const buildJobId = '1';
+            const logs = 'log1\nlog2\nlog3';
+
+            mockBuildQueueService.getBuildJobLogs.mockReturnValue(of(logs));
+            const downloadSpy = vi.spyOn(DownloadUtil, 'downloadFile');
+            const alertSpy = vi.spyOn(alertService, 'error');
+
+            Object.defineProperty(window, 'URL', {
+                value: {
+                    createObjectURL: vi.fn(() => 'mock-url'),
+                    revokeObjectURL: vi.fn(),
+                },
+                writable: true,
+                configurable: true,
+            });
+
+            component.viewBuildLogs(undefined, buildJobId);
+            component.downloadBuildLogs();
+
+            expect(downloadSpy).toHaveBeenCalledWith(expect.any(Blob), `${buildJobId}.log`);
+
+            const [blobArg, filenameArg] = downloadSpy.mock.calls[0] as [Blob, string];
+            expect(filenameArg).toBe(`${buildJobId}.log`);
+            expect(blobArg.type).toBe('text/plain');
+            expect(HTMLAnchorElement.prototype.click).toHaveBeenCalled();
+            expect(alertSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    it('should navigate to job detail page in admin view', () => {
+        routeStub.setParamMap({});
+        const router = TestBed.inject(Router);
+        const navigateSpy = vi.spyOn(router, 'navigate');
+
+        component.ngOnInit();
+        component.navigateToJobDetail('test-job-123');
+
+        expect(navigateSpy).toHaveBeenCalledWith(['/admin', 'build-overview', 'test-job-123', 'job-details']);
+    });
+
+    it('should navigate to job detail page in course view', () => {
+        routeStub.setParamMap({ courseId: testCourseId.toString() });
+        const router = TestBed.inject(Router);
+        const navigateSpy = vi.spyOn(router, 'navigate');
+
+        component.ngOnInit();
+        component.navigateToJobDetail('test-job-123');
+
+        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', testCourseId, 'build-overview', 'test-job-123', 'job-details']);
+    });
+
+    it('should not navigate if jobId is undefined', () => {
+        routeStub.setParamMap({});
+        const router = TestBed.inject(Router);
+        const navigateSpy = vi.spyOn(router, 'navigate');
+
+        component.ngOnInit();
+        component.navigateToJobDetail(undefined);
+
+        expect(navigateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should format finished duration correctly for under 60 seconds', () => {
+        expect(component.formatFinishedDuration(45.333)).toBe('45.3s');
+        expect(component.formatFinishedDuration(0)).toBe('0.0s');
+        expect(component.formatFinishedDuration(59.99)).toBe('60.0s');
+    });
+
+    it('should format finished duration correctly for 60+ seconds', () => {
+        expect(component.formatFinishedDuration(60)).toBe('1m 0s');
+        expect(component.formatFinishedDuration(90)).toBe('1m 30s');
+        expect(component.formatFinishedDuration(125)).toBe('2m 5s');
+    });
+
+    it('should calculate waiting time correctly for seconds', () => {
+        const submissionDate = dayjs().subtract(30, 'seconds');
+        const result = component.calculateWaitingTime(submissionDate);
+        expect(result).toMatch(/^\d+s$/);
+    });
+
+    it('should calculate waiting time correctly for minutes', () => {
+        const submissionDate = dayjs().subtract(5, 'minutes');
+        const result = component.calculateWaitingTime(submissionDate);
+        expect(result).toMatch(/^\d+m \d+s$/);
+    });
+
+    it('should calculate waiting time correctly for hours', () => {
+        const submissionDate = dayjs().subtract(2, 'hours');
+        const result = component.calculateWaitingTime(submissionDate);
+        expect(result).toMatch(/^\d+h \d+m$/);
+    });
+
+    it('should return dash for undefined submission date', () => {
+        const result = component.calculateWaitingTime(undefined);
+        expect(result).toBe('-');
     });
 });

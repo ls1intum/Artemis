@@ -2,7 +2,7 @@ import { IrisMessageContentDTO } from 'app/iris/shared/entities/iris-message-con
 
 /**
  * DTO for sending messages to Iris with optional uncommitted file changes.
- * Matches the backend IrisMessageRequestDTO structure.
+ * Matches the server IrisMessageRequestDTO structure.
  */
 export class IrisMessageRequestDTO {
     content: IrisMessageContentDTO[];

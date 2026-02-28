@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 
 /**
  * Service for managing password changes for authenticated users.
- * Communicates with the backend to update user passwords.
+ * Communicates with the server to update user passwords.
  */
 @Injectable({ providedIn: 'root' })
 export class PasswordService {

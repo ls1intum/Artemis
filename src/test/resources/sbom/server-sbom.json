@@ -1,0 +1,45 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:test-server-sbom-12345",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2024-01-01T00:00:00Z",
+    "component": {
+      "name": "artemis-server",
+      "version": "1.0.0"
+    }
+  },
+  "components": [
+    {
+      "group": "org.springframework",
+      "name": "spring-core",
+      "version": "6.0.0",
+      "type": "library",
+      "purl": "pkg:maven/org.springframework/spring-core@6.0.0",
+      "description": "Spring Framework Core",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ]
+    },
+    {
+      "group": "org.springframework.boot",
+      "name": "spring-boot",
+      "version": "3.0.0",
+      "type": "library",
+      "purl": "pkg:maven/org.springframework.boot/spring-boot@3.0.0",
+      "description": "Spring Boot",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ]
+    }
+  ]
+}

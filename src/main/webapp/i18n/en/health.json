@@ -8,7 +8,12 @@
             "properties": "Properties",
             "name": "Name",
             "value": "Value",
-            "error": "Error"
+            "error": "Error",
+            "jobs": "Jobs:",
+            "running": "Running:",
+            "version": "Version:",
+            "started": "Started:",
+            "noBuildAgents": "No build agents reported."
         },
         "indicator": {
             "clientConfigServer": "Client Config Server",
@@ -24,6 +29,7 @@
             "continuousIntegrationServer": "Continuous Integration Server",
             "versionControlServer": "Version Control Server",
             "hazelcast": "Hazelcast",
+            "JHipsterRegistry": "JHipsterRegistry (Eureka Service Registry)",
             "websocketBroker": "Websocket Broker (Server -> Broker)",
             "athena": "Athena",
             "apollon": "Apollon Conversion Server",

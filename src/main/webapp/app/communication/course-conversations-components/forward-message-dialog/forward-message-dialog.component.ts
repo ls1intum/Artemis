@@ -25,6 +25,9 @@ import { addPublicFilePrefix } from 'app/app.constants';
 import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
 import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faHashtag, faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
+import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 
 interface CombinedOption {
     id: number;
@@ -37,18 +40,18 @@ interface CombinedOption {
     selector: 'jhi-forward-message-dialog',
     templateUrl: './forward-message-dialog.component.html',
     styleUrls: ['./forward-message-dialog.component.scss'],
-    imports: [ArtemisTranslatePipe, ProfilePictureComponent, NgClass, PostingContentComponent, MarkdownEditorMonacoComponent, FormsModule, TranslateDirective],
+    imports: [ArtemisTranslatePipe, ProfilePictureComponent, NgClass, PostingContentComponent, MarkdownEditorMonacoComponent, FormsModule, TranslateDirective, FaIconComponent],
     providers: [MetisService, LinkPreviewService, LinkifyService, MetisConversationService],
 })
 export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
-    channels = signal<ChannelDTO[] | []>([]);
+    channels = signal<(ChannelDTO | GroupChatDTO)[] | []>([]);
     users = signal<UserPublicInfoDTO[] | []>([]);
     postToForward = signal<Post | undefined>(undefined);
     courseId = signal<number | undefined>(undefined);
     editorHeight = input<MarkdownEditorHeight>(MarkdownEditorHeight.INLINE);
-    filteredChannels: ChannelDTO[] = [];
+    filteredChannels: (ChannelDTO | GroupChatDTO)[] = [];
     filteredUsers: UserPublicInfoDTO[] = [];
-    selectedChannels: ChannelDTO[] = [];
+    selectedChannels: (ChannelDTO | GroupChatDTO)[] = [];
     selectedUsers: UserPublicInfoDTO[] = [];
     combinedOptions: CombinedOption[] = [];
     filteredOptions: CombinedOption[] = [];
@@ -68,6 +71,9 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     private cdr = inject(ChangeDetectorRef);
     private renderer = inject(Renderer2);
 
+    protected readonly faPeopleGroup = faPeopleGroup;
+    protected readonly faHashtag = faHashtag;
+
     ngOnInit(): void {
         this.filteredChannels = this.channels() || [];
         this.defaultActions = [new BoldAction(), new ItalicAction(), new UnderlineAction(), new QuoteAction(), new CodeAction(), new CodeBlockAction(), new UrlAction()];
@@ -76,11 +82,11 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
         // Combine users and channels into a single options list
         this.combinedOptions = [
             ...this.channels()
-                .filter((channel: ChannelDTO) => channel.name !== undefined)
+                .filter((channel: ChannelDTO | GroupChatDTO) => channel.name !== undefined)
                 .map((channel) => ({
                     id: channel.id!,
                     name: channel.name!,
-                    type: 'channel',
+                    type: channel.type!,
                     img: '',
                 })),
             ...this.users().map((user) => ({
@@ -157,7 +163,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
                 this.filteredUsers = [];
             }
 
-            this.filteredChannels = this.channels().filter((channel: ChannelDTO) => channel.name?.toLowerCase().includes(lowerCaseSearchTerm));
+            this.filteredChannels = this.channels().filter((channel: ChannelDTO | GroupChatDTO) => channel.name?.toLowerCase().includes(lowerCaseSearchTerm));
             this.updateCombinedOptions();
         } else {
             this.filteredUsers = [...this.users()];
@@ -174,7 +180,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
             ...this.filteredChannels.map((channel) => ({
                 id: channel.id!,
                 name: channel.name!,
-                type: 'channel',
+                type: channel.type!,
                 img: '',
             })),
             ...this.filteredUsers.map((user) => ({
@@ -191,10 +197,10 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
      * Ensures no duplicates.
      */
     selectOption(option: CombinedOption): void {
-        if (option.type === 'channel') {
-            const existing = this.selectedChannels.find((c) => (c as ChannelDTO).id === option.id);
+        if (option.type === 'channel' || option.type === 'groupChat') {
+            const existing = this.selectedChannels.find((c) => c.id === option.id);
             if (!existing) {
-                const channel = this.channels()?.find((c) => (c as ChannelDTO).id === option.id);
+                const channel = this.channels()?.find((c) => c.id === option.id);
                 if (channel) {
                     this.selectedChannels.push(channel);
                 }
@@ -215,7 +221,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     }
 
     /** Removes selected channel from the list */
-    removeSelectedChannel(channel: ChannelDTO): void {
+    removeSelectedChannel(channel: ChannelDTO | GroupChatDTO): void {
         const index = this.selectedChannels.findIndex((c) => c.id === channel.id);
         if (index > -1) {
             this.selectedChannels.splice(index, 1);

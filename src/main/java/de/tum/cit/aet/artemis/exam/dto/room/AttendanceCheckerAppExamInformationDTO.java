@@ -52,12 +52,19 @@ record ExamUserLocationDTO(
 ) {
     static ExamUserLocationDTO plannedFrom(ExamUser examUser) {
         final boolean isLegacy = examUser.getPlannedRoomTransient() == null || examUser.getPlannedSeatTransient() == null;
-
-        return new ExamUserLocationDTO(
-            isLegacy ? null : examUser.getPlannedRoomTransient().getId(),
-            isLegacy ? examUser.getPlannedRoom() : examUser.getPlannedRoomTransient().getRoomNumber(),
-            isLegacy ? examUser.getPlannedSeat() : examUser.getPlannedSeatTransient().name()
-        );
+        if (isLegacy) {
+            return new ExamUserLocationDTO(
+                null,
+                StringUtils.hasText(examUser.getPlannedRoom()) ? examUser.getPlannedRoom() : "No Room set",
+                StringUtils.hasText(examUser.getPlannedSeat()) ? examUser.getPlannedSeat() : "No Seat set"
+            );
+        } else {
+            return new ExamUserLocationDTO(
+                examUser.getPlannedRoomTransient().getId(),
+                examUser.getPlannedRoomTransient().getRoomNumber(),
+                examUser.getPlannedSeatTransient().name()
+            );
+        }
     }
 
     static ExamUserLocationDTO actualFrom(ExamUser examUser) {
@@ -136,10 +143,6 @@ public record AttendanceCheckerAppExamInformationDTO(
      * @return information for the attendance checker app
      */
     public static AttendanceCheckerAppExamInformationDTO from(Exam exam, Set<ExamRoom> examRooms) {
-        Set<ExamUser> examUsersWhoHaveBeenDistributed = exam.getExamUsers().stream()
-            .filter(examUser -> StringUtils.hasText(examUser.getPlannedRoom()) && StringUtils.hasText(examUser.getPlannedSeat()))
-            .collect(Collectors.toSet());
-
         return new AttendanceCheckerAppExamInformationDTO(
             exam.getId(),
             exam.getTitle(),
@@ -149,7 +152,7 @@ public record AttendanceCheckerAppExamInformationDTO(
             exam.getCourse().getId(),
             exam.getCourse().getTitle(),
             examRooms.stream().map(ExamRoomForAttendanceCheckerDTO::from).collect(Collectors.toSet()),
-            examUsersWhoHaveBeenDistributed.stream().map(ExamUserWithExamRoomAndSeatDTO::from).collect(Collectors.toSet())
+            exam.getExamUsers().stream().map(ExamUserWithExamRoomAndSeatDTO::from).collect(Collectors.toSet())
         );
     }
 }

@@ -471,6 +471,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             if (!this.submission.submitted) {
                 this.stopAutoSave();
                 this.triggerSave();
+                if (this.hasAnyAnswer() && this.quizExercise.quizMode !== QuizMode.SYNCHRONIZED) {
+                    this.alertService.success('artemisApp.quizExercise.submitSuccess');
+                }
             }
         }
         this.previousRunning = running;
@@ -1039,5 +1042,43 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 });
             },
         });
+    }
+
+    /**
+     * Checks whether the current quiz submission contains any user-provided answers.
+     *
+     * This method inspects all supported answer types (multiple choice,
+     * drag-and-drop, and short answer) and returns `true` as soon as at least
+     * one answer entry is present.
+     *
+     * @returns `true` if at least one answer exists in the current submission;
+     *          `false` otherwise.
+     */
+    hasAnyAnswer(): boolean {
+        return (
+            Array.from(this.selectedAnswerOptions.values()).some((v) => v?.length) ||
+            Array.from(this.dragAndDropMappings.values()).some((v) => v?.length) ||
+            Array.from(this.shortAnswerSubmittedTexts.values()).some((v) => v?.length)
+        );
+    }
+
+    /**
+     * Indicates whether the submission should be treated as "effectively submitted"
+     * for UI purposes, even if it has not been finalized on the server yet.
+     *
+     * This is the case if either:
+     * <ul>
+     *   <li>the submission has already been marked as submitted by the server, or</li>
+     *   <li>the quiz working time has expired and the submission shows evidence of user interaction
+     *       (e.g. at least one answer was given, or the submission has already been saved or created)</li>
+     * </ul>
+     *
+     * @returns `true` if the submission should be considered submitted in the UI;
+     *          `false` otherwise.
+     */
+
+    get shouldTreatAsSubmittedForUi(): boolean {
+        const hasSavedOrAnswered = this.hasAnyAnswer() || !!this.submission?.submissionDate || !!this.submission?.id;
+        return this.submission.submitted || (this.remainingTimeSeconds < 0 && hasSavedOrAnswered);
     }
 }

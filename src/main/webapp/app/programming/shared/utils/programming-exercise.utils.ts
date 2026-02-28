@@ -5,6 +5,8 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { isAIResultAndFailed, isAIResultAndIsBeingProcessed, isAIResultAndProcessed, isAIResultAndTimedOut } from 'app/exercise/result/result.utils';
+import { ProgrammingExerciseDeletionSummaryDTO } from 'app/programming/shared/entities/programming-exercise-deletion-summary.model';
+import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 
 export const createBuildPlanUrl = (template: string, projectKey: string, buildPlanId: string): string | undefined => {
     if (template && projectKey && buildPlanId) {
@@ -53,6 +55,10 @@ export const isResultPreliminary = (latestResult: Result, participation: Partici
     }
     // If an exercise's assessment type is not automatic the last result is supposed to be manually assessed
     if (programmingExercise.assessmentType !== AssessmentType.AUTOMATIC) {
+        // If the result has already been manually assessed (MANUAL or SEMI_AUTOMATIC), it is not preliminary
+        if (latestResult.assessmentType === AssessmentType.MANUAL || latestResult.assessmentType === AssessmentType.SEMI_AUTOMATIC) {
+            return false;
+        }
         // either the semi-automatic result is not yet available as last result (then it is preliminary), or it is already available (then it still can be changed)
         if (programmingExercise.assessmentDueDate) {
             return dayjs().isBefore(dayjs(programmingExercise.assessmentDueDate));
@@ -93,4 +99,13 @@ export const hasDueDatePassed = (exercise: ProgrammingExercise) => {
         referenceDate = dayjs(referenceDate);
     }
     return referenceDate.isBefore(dayjs());
+};
+
+export const createProgrammingExerciseEntitySummary = (summary: ProgrammingExerciseDeletionSummaryDTO): EntitySummary => {
+    return {
+        'artemisApp.programmingExercise.delete.summary.numberOfStudentParticipations': summary.numberOfStudentParticipations,
+        'artemisApp.programmingExercise.delete.summary.numberOfBuilds': summary.numberOfBuilds,
+        'artemisApp.programmingExercise.delete.summary.numberOfCommunicationPosts': summary.numberOfCommunicationPosts,
+        'artemisApp.programmingExercise.delete.summary.numberOfAnswerPosts': summary.numberOfAnswerPosts,
+    };
 };

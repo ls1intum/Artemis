@@ -573,7 +573,7 @@ public class UserTestService {
     // Test
     public void getAuthorities_asAdmin_isSuccessful() throws Exception {
         List<String> authorities = request.getList("/api/core/admin/users/authorities", HttpStatus.OK, String.class);
-        assertThat(authorities).hasSameElementsAs(List.of("ROLE_ADMIN", "ROLE_EDITOR", "ROLE_INSTRUCTOR", "ROLE_TA", "ROLE_USER"));
+        assertThat(authorities).hasSameElementsAs(List.of("ROLE_ADMIN", "ROLE_EDITOR", "ROLE_INSTRUCTOR", "ROLE_SUPER_ADMIN", "ROLE_TA", "ROLE_USER"));
     }
 
     // Test

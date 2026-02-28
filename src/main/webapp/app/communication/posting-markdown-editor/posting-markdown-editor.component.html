@@ -1,6 +1,7 @@
 <div class="col-12">
     <jhi-markdown-editor-monaco
         class="markdown-editor background-editor-color w-100"
+        [showMarkdownInfoText]="false"
         [markdown]="content"
         (markdownChange)="updateField($event)"
         (onEditSelect)="previewMode = false"

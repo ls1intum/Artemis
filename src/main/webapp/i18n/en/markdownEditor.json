@@ -1,6 +1,7 @@
 {
     "artemisApp": {
         "markdownEditor": {
+            "infoText": "You can use Markdown. <a href='https://markdown-it.github.io/' target='_blank' rel='noopener noreferrer'>View guide</a>",
             "commands": {
                 "katex": "Formula",
                 "fullscreen": "Fullscreen"

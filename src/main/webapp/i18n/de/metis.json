@@ -158,7 +158,9 @@
                 "bookmarkPostArchived": "Gespeicherten Beitrag archivieren",
                 "bookmarkPostComplete": "Gespeicherten Beitrag als Abgeschlossen markieren",
                 "thread": "Thread",
-                "saved": "Für später gespeichert"
+                "saved": "Für später gespeichert",
+                "removeBookmarkError": "Fehler beim Entfernen des Lesezeichens. Bitte versuche es später erneut.",
+                "changeSavedStatusError": "Fehler beim Ändern des Status. Bitte versuche es später erneut."
             },
             "answerPost": {
                 "created": "Antwort erfolgreich erstellt",

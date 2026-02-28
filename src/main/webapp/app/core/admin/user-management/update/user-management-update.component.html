@@ -251,7 +251,7 @@
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.userManagement.globalRoles"></label>
                     <div class="global-roles-container">
-                        @for (authority of authorities(); track authority) {
+                        @for (authority of sortedAuthorities(); track authority) {
                             <div class="global-role-item" (click)="toggleAuthority(authority)">
                                 <div class="role-checkbox" [class.checked]="hasAuthority(authority)">
                                     @if (hasAuthority(authority)) {

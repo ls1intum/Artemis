@@ -77,6 +77,10 @@ artemis:
   git:
     name: Artemis
     email: artemis@xcit.tum.de
+  rate-limiting:
+    enabled: false
+    account-management-requests-per-minute: 5
+    authentication-requests-per-minute: 30
   athena:
     url: http://localhost:5100
     secret: abcdef12345
@@ -85,12 +89,20 @@ artemis:
     conversion-service-url: http://localhost:8080
   hyperion:
     enabled: false  # Set this to true to enable the hyperion service on startup, requires Spring AI to be configured below.
-
+  llm:  # Shared LLM configuration for Spring AI-based services (Hyperion, Atlas)
+    model-costs:  # Token costs for usage tracking (EUR per million tokens)
+      gpt-5-mini:
+        input-cost-per-million-eur: 0.23
+        output-cost-per-million-eur: 1.84
+  atlas:
+    chat-model: gpt-4o
+    temperature: 0.2
   scheduling: # these values are cron expressions. To generate one, you can use e.g. https://www.freeformatter.com/cron-expression-generator-quartz.html
     programming-exercises-cleanup-time: 0 0 3 * * * # every day at 3am
     data-export-creation-time: 0 0 4 * * * # every day at 4am
     programming-exercises-retrigger-submission-without-result-time: 0 0 2 * * * # every day at 2am
     continuous-plagiarism-control-trigger-time: 0 0 5 * * * # every day at 5am
+    vulnerability-scan-time: 0 0 8 * * MON # every Monday at 8am
 
   data-export:
     days-between-data-exports: 14
@@ -106,6 +118,14 @@ artemis:
     enabled: false
     url: <your-nebula-url>
     secret-token: <your-secret>
+
+  iris: # The iris module is used for AI-powered features via Pyris
+    enabled: false
+    url: <your-pyris-url>
+    secret-token: <your-secret>
+
+  weaviate:
+    enabled: false
 
 # Configure Spring AI, if you want to use Hyperion or Atlas
 spring:
@@ -129,8 +149,7 @@ spring:
         options:
           model: openai/gpt-oss-20b    # or whatever name your local server expects
           temperature: 0.7
-
-## Alternative configuration for Azure OpenAI
+    ## Alternative configuration for Azure OpenAI
     # Use Azure OpenAI chat model auto-config
 #    model:
 #      chat: azure-openai

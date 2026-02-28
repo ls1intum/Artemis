@@ -33,7 +33,7 @@
         <label class="form-control-label" jhiTranslate="artemisApp.lti.requireExistingUser" for="field_requireExistingUser"></label>
         <jhi-help-icon text="artemisApp.lti.edit.requireExistingUserTooltip" />
     </div>
-    <div *jhiHasAnyAuthority="'ROLE_ADMIN'">
+    <div *jhiHasAnyAuthority="IS_AT_LEAST_ADMIN">
         <h4 class="modal-title mt-4" id="lti13" jhiTranslate="artemisApp.lti.version13"></h4>
         <div class="form-group mt-2">
             <span jhiTranslate="artemisApp.lti13.externalToolSettings"></span>

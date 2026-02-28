@@ -50,8 +50,8 @@ class ExamRoomServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testParseAndStoreZipFileSingleExamRoomRepeated() {
-        // Multiple entries of the same exam room should be ignored
-        testParseAndStoreZipFileAndValidateUploadOverview(ExamRoomZipFiles.zipFileSingleExamRoomRepeated, 1, 528, ExamRoomZipFiles.singleExamRoomName);
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileSingleExamRoomRepeated));
     }
 
     @Test

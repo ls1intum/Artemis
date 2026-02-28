@@ -119,7 +119,11 @@ export class WebauthnService {
             if (error instanceof InvalidCredentialError) {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.invalidCredential');
             } else {
-                this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.login');
+                if (error.status === 401) {
+                    this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.loginDeactivated');
+                } else {
+                    this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.login');
+                }
             }
             // eslint-disable-next-line no-undef
             console.error(error);

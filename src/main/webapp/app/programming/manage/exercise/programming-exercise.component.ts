@@ -1,11 +1,11 @@
 import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExerciseScoresExportButtonComponent } from 'app/exercise/exercise-scores/export-button/exercise-scores-export-button.component';
-import { merge } from 'rxjs';
+import { Observable, merge } from 'rxjs';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ExerciseComponent } from 'app/exercise/exercise.component';
-import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { ActionType, EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 import { onError } from 'app/shared/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -17,7 +17,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exercise.utils';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { faBook, faCheckDouble, faDownload, faFileSignature, faListAlt, faPencilAlt, faPlus, faSort, faTable, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { PROFILE_LOCALCI, PROFILE_THEIA } from 'app/app.constants';
+import { MODULE_FEATURE_THEIA, PROFILE_LOCALCI } from 'app/app.constants';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { FormsModule } from '@angular/forms';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
@@ -37,6 +37,7 @@ import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/ex
 import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-check/consistency-check.component';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { SharingInfo } from 'app/sharing/sharing.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 @Component({
     selector: 'jhi-programming-exercise',
     templateUrl: './programming-exercise.component.html',
@@ -57,6 +58,7 @@ import { SharingInfo } from 'app/sharing/sharing.model';
         ExerciseScoresExportButtonComponent,
         SlicePipe,
         ArtemisDatePipe,
+        ArtemisTranslatePipe,
     ],
 })
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
@@ -110,7 +112,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                 const profileInfo = this.profileService.getProfileInfo();
                 this.buildPlanLinkTemplate = profileInfo.buildPlanURLTemplate;
                 this.localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
-                this.onlineIdeEnabled = this.profileService.isProfileActive(PROFILE_THEIA);
+                this.onlineIdeEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA);
                 // reconnect exercise with course
                 this.programmingExercises.forEach((exercise) => {
                     exercise.course = this.course;
@@ -216,5 +218,9 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     checkConsistencies() {
         const modalRef = this.modalService.open(ConsistencyCheckComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.exercisesToCheck = this.selectedExercises;
+    }
+
+    fetchExerciseDeletionSummary(exerciseId: number): Observable<EntitySummary> {
+        return this.programmingExerciseService.getDeletionSummary(exerciseId);
     }
 }

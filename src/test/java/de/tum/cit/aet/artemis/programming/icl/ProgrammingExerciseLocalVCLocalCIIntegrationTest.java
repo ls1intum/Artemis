@@ -366,6 +366,18 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         programmingExerciseTestService.createProgrammingExercise_setInvalidExampleSolutionPublicationDate_badRequest();
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createProgrammingExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
+        programmingExerciseTestService.createProgrammingExercise_invalidPlagiarismDetectionConfig_badRequest();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateProgrammingExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
+        programmingExerciseTestService.updateProgrammingExercise_invalidPlagiarismDetectionConfig_badRequest();
+    }
+
     /**
      * Ensures <a href="https://github.com/ls1intum/Artemis/issues/7188">issue #7188</a> does not occur again
      *

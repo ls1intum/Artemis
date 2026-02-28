@@ -1,21 +1,21 @@
 <button
     [class.w-100]="fullWidth()"
-    [ngClass]="['jhi-btn', 'btn', btnType, btnSize]"
-    [type]="shouldSubmit ? 'submit' : 'button'"
-    [ngbTooltip]="tooltip | artemisTranslate"
+    [ngClass]="['jhi-btn', 'btn', btnType(), btnSize()]"
+    [type]="shouldSubmit() ? 'submit' : 'button'"
+    [ngbTooltip]="tooltip() | artemisTranslate"
     (click)="onClick.emit($event)"
-    [jhiFeatureToggle]="featureToggle"
-    [overwriteDisabled]="disabled || isLoading"
-    [placement]="tooltipPlacement"
+    [jhiFeatureToggle]="featureToggle()"
+    [overwriteDisabled]="disabled() || isLoading()"
+    [placement]="tooltipPlacement()"
     [triggers]="'hover'"
 >
-    @if (isLoading) {
+    @if (isLoading()) {
         <fa-icon class="jhi-btn__loading sm" [icon]="faCircleNotch" animation="spin" />
     }
-    @if (icon && !isLoading) {
-        <fa-icon class="jhi-btn__icon sm" [icon]="icon" [fixedWidth]="true" />
+    @if (icon() && !isLoading()) {
+        <fa-icon class="jhi-btn__icon sm" [icon]="icon()" [fixedWidth]="true" />
     }
-    @if (title) {
-        <span class="jhi-btn__title" [ngClass]="{ 'd-none d-sm-inline': shouldToggle }" [class.ms-1]="icon || isLoading" [jhiTranslate]="title"></span>
+    @if (title()) {
+        <span class="jhi-btn__title" [ngClass]="{ 'd-none d-sm-inline': shouldToggle() }" [class.ms-1]="icon() || isLoading()" [jhiTranslate]="title()"></span>
     }
 </button>

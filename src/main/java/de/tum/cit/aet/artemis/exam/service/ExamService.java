@@ -81,6 +81,7 @@ import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.ActiveExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
@@ -1497,7 +1498,7 @@ public class ExamService {
      * @param pageable paging specification
      * @return a page of exams visible to the user
      */
-    public Page<Exam> getAllActiveExams(final Pageable pageable, final User user) {
+    public Page<ActiveExamDTO> getAllActiveExams(final Pageable pageable, final User user) {
         // active exam means that exam has visible date in the past 7 days or next 7 days.
         var now = ZonedDateTime.now();
         var fromDate = now.minusDays(EXAM_ACTIVE_DAYS);

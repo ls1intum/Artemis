@@ -61,6 +61,9 @@
             "continuousPlagiarismControlTooltip": "Die kontinuierliche Plagiatskontrolle löst jede Nacht automatisch eine Plagiatskontrolle aus. Aufgedeckte Fälle werden als Plagiat gekennzeichnet und die Studierenden werden darüber behutsam informiert.",
             "continuousPlagiarismControlEnabled": "Aktiviere Kontinuierliche Plagiatskontrolle",
             "continuousPlagiarismControlPostDueDateChecksEnabled": "Führe die Überprüfung der Abgaben nach der Einreichungsfrist ein weiteres Mal durch.",
+            "validation": {
+                "mustBeInteger": "Der Wert muss eine ganze Zahl sein (keine Dezimalzahlen)."
+            },
             "cleanUp": {
                 "confirmDialog": {
                     "title": "Plagiatsvergleiche aufräumen",

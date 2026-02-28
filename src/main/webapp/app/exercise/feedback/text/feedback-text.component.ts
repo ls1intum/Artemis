@@ -14,8 +14,6 @@ export class FeedbackTextComponent implements OnInit {
     private longFeedbackService = inject(LongFeedbackTextService);
     private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
-    private readonly MAX_DISPLAYABLE_LENGTH = 20_000;
-
     feedback = input.required<FeedbackItem>();
 
     text?: string;
@@ -38,13 +36,8 @@ export class FeedbackTextComponent implements OnInit {
         if (feedbackId) {
             this.longFeedbackService.find(feedbackId).subscribe((longFeedbackResponse) => {
                 const longFeedback = longFeedbackResponse.body!;
-                const textLength = longFeedback.length ?? 0;
-
-                if (textLength > this.MAX_DISPLAYABLE_LENGTH) {
-                    this.setDownloadInfo(longFeedback);
-                } else {
-                    this.text = longFeedback;
-                }
+                this.text = longFeedback;
+                this.setDownloadInfo(longFeedback);
                 this.changeDetectorRef.markForCheck();
             });
         }

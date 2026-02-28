@@ -64,6 +64,10 @@ artemis:
         url: http://localhost:5100
         secret: abcdef12345
         restricted-modules: module_text_test_restricted,module_programming_test_restricted
+    iris:
+        enabled: true
+        url: http://iris.fake
+        secret-token: secret-token
     apollon:
         conversion-service-url: http://localhost:8080
     telemetry:

@@ -312,9 +312,9 @@ iptables -I DOCKER-USER -i artemis-restr -d $IP_OF_ARTEMIS_EXAMPLE_COM_CACHE -p 
 
 ## Timeout Options
 
-This setting is relevant only when using [Integrated Code Lifecycle Setup](https://docs.artemis.cit.tum.de/dev/setup/integrated-code-lifecycle.html).
+This setting is relevant only when using [Integrated Code Lifecycle Setup](/admin/production-setup/multiple-artemis-instances#integrated-code-lifecycle).
 
-You can adjust possible [timeout options](https://docs.artemis.cit.tum.de/user/exercises/programming.html#edit-maximum-build-duration) for the build process in Integrated Code Lifecycle Setup.
+You can adjust possible [timeout options](/admin/production-setup/programming-exercise-adjustments#timeout-options) for the build process in Integrated Code Lifecycle Setup.
 These values will determine what is the minimum, maximum, and default value for the build timeout in seconds that can be set in the Artemis UI.
 The max value is the upper limit for the timeout, if the value is set higher than the max value, the max value will be used.
 
@@ -336,7 +336,7 @@ artemis:
 
 ## Build Log Configuration
 
-This setting is relevant only when using [Integrated Code Lifecycle Setup](https://docs.artemis.cit.tum.de/dev/setup/integrated-code-lifecycle.html).
+This setting is relevant only when using [Integrated Code Lifecycle Setup](./integrated-code-lifecycle-setup.mdx).
 
 The build log settings control the amount of log data stored per build job.
 These values define the maximum number of lines and the maximum number of characters per line that can be retained in the logs.
@@ -357,7 +357,7 @@ artemis:
 
 ## Container Resource Restrictions
 
-This setting is relevant only when using [Integrated Code Lifecycle Setup](https://docs.artemis.cit.tum.de/dev/setup/integrated-code-lifecycle.html).
+This setting is relevant only when using [Integrated Code Lifecycle Setup](./integrated-code-lifecycle-setup.mdx).
 
 Instructors can edit the resources allocated to containers resulting from a programming exercise.
 These restrictions ensure that assigned values do not exceed predefined limits.
@@ -382,7 +382,7 @@ artemis:
 
 ## Custom Docker Networks
 
-This setting is relevant only when using [Integrated Code Lifecycle Setup](https://docs.artemis.cit.tum.de/dev/setup/integrated-code-lifecycle.html).
+This setting is relevant only when using [Integrated Code Lifecycle Setup](./integrated-code-lifecycle-setup.mdx).
 
 Artemis allows instructors to select a custom Docker network for build containers per programming exercise. This can be used to
 isolate containers (e.g., disable all outbound traffic) or to place them into a restricted network that only allows access to
@@ -413,7 +413,7 @@ artemis:
 
 ## Pause Grace Period
 
-This setting is relevant only when using [Integrated Code Lifecycle Setup](https://docs.artemis.cit.tum.de/dev/setup/integrated-code-lifecycle.html).
+This setting is relevant only when using [Integrated Code Lifecycle Setup](./integrated-code-lifecycle-setup.mdx).
 
 The pause grace period determines how long the build agent waits after being paused before canceling all currently running jobs on that agent and adding them back to the queue.
 This setting should be adjusted only if the default grace period is unsuitable for the specific environment. The configuration is set in the buildagent configuration file, `application-buildagent.yml`.

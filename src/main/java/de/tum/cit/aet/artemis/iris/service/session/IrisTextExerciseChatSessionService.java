@@ -1,12 +1,11 @@
 package de.tum.cit.aet.artemis.iris.service.session;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
-
 import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -17,11 +16,13 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
+import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
@@ -41,7 +42,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 @Lazy
 @Service
-@Profile(PROFILE_IRIS)
+@Conditional(IrisEnabled.class)
 public class IrisTextExerciseChatSessionService
         implements IrisChatBasedFeatureInterface<IrisTextExerciseChatSession>, IrisRateLimitedFeatureInterface<IrisTextExerciseChatSession> {
 
@@ -67,10 +68,12 @@ public class IrisTextExerciseChatSessionService
 
     private final UserRepository userRepository;
 
+    private final Optional<IrisCitationService> irisCitationService;
+
     public IrisTextExerciseChatSessionService(IrisSettingsService irisSettingsService, IrisSessionRepository irisSessionRepository, IrisRateLimitService rateLimitService,
             IrisMessageService irisMessageService, Optional<TextRepositoryApi> textRepositoryApi, StudentParticipationRepository studentParticipationRepository,
             PyrisPipelineService pyrisPipelineService, PyrisJobService pyrisJobService, IrisChatWebsocketService irisChatWebsocketService,
-            AuthorizationCheckService authCheckService, UserRepository userRepository) {
+            AuthorizationCheckService authCheckService, UserRepository userRepository, Optional<IrisCitationService> irisCitationService) {
         this.irisSettingsService = irisSettingsService;
         this.irisSessionRepository = irisSessionRepository;
         this.rateLimitService = rateLimitService;
@@ -82,6 +85,7 @@ public class IrisTextExerciseChatSessionService
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
+        this.irisCitationService = irisCitationService;
     }
 
     @Override
@@ -116,6 +120,7 @@ public class IrisTextExerciseChatSessionService
         // @formatter:off
         pyrisPipelineService.executePipeline(
                 "text-exercise-chat",
+                user.getSelectedLLMUsage(),
                 settings.variant().jsonValue(),
                 Optional.empty(),
                 pyrisJobService.createTokenForJob(token -> new TextExerciseChatJob(token, course.getId(), exercise.getId(), session.getId())),
@@ -138,11 +143,12 @@ public class IrisTextExerciseChatSessionService
         if (statusUpdate.result() != null) {
             var message = session.newMessage();
             message.addContent(new IrisTextMessageContent(statusUpdate.result()));
+            var citationInfo = irisCitationService.map(service -> service.resolveCitationInfo(statusUpdate.result())).orElse(List.of());
             IrisMessage savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
-            irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages(), sessionTitle);
+            irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages(), sessionTitle, citationInfo);
         }
         else {
-            irisChatWebsocketService.sendMessage(session, null, statusUpdate.stages(), sessionTitle);
+            irisChatWebsocketService.sendMessage(session, null, statusUpdate.stages(), sessionTitle, null);
         }
 
         return job;

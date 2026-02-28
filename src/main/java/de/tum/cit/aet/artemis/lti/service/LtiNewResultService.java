@@ -1,17 +1,16 @@
 package de.tum.cit.aet.artemis.lti.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
-
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
 
 @Lazy
 @Service
-@Profile(PROFILE_LTI)
+@Conditional(LtiEnabled.class)
 public class LtiNewResultService {
 
     private final Lti13Service lti13Service;

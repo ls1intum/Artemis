@@ -14,13 +14,16 @@ import { HttpClient,
          HttpResponse, HttpEvent, HttpContext 
         }       from '@angular/common/http';
 import { Observable }                                        from 'rxjs';
-
 // @ts-ignore
 import { ConsistencyCheckResponse } from '../model/consistencyCheckResponse';
 // @ts-ignore
 import { ProblemStatementGenerationRequest } from '../model/problemStatementGenerationRequest';
 // @ts-ignore
 import { ProblemStatementGenerationResponse } from '../model/problemStatementGenerationResponse';
+// @ts-ignore
+import { ProblemStatementGlobalRefinementRequest } from '../model/problemStatementGlobalRefinementRequest';
+// @ts-ignore
+import { ProblemStatementRefinementResponse } from '../model/problemStatementRefinementResponse';
 // @ts-ignore
 import { ProblemStatementRewriteRequest } from '../model/problemStatementRewriteRequest';
 // @ts-ignore
@@ -47,6 +50,7 @@ export class HyperionProblemStatementApiService extends BaseService {
      * @param programmingExerciseId 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
+     * @param options additional options
      */
     public checkExerciseConsistency(programmingExerciseId: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ConsistencyCheckResponse>;
     public checkExerciseConsistency(programmingExerciseId: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ConsistencyCheckResponse>>;
@@ -102,6 +106,7 @@ export class HyperionProblemStatementApiService extends BaseService {
      * @param problemStatementGenerationRequest 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
+     * @param options additional options
      */
     public generateProblemStatement(courseId: number, problemStatementGenerationRequest: ProblemStatementGenerationRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ProblemStatementGenerationResponse>;
     public generateProblemStatement(courseId: number, problemStatementGenerationRequest: ProblemStatementGenerationRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ProblemStatementGenerationResponse>>;
@@ -165,11 +170,81 @@ export class HyperionProblemStatementApiService extends BaseService {
     }
 
     /**
+     * @endpoint post /api/hyperion/courses/{courseId}/problem-statements/refine/global
+     * @param courseId 
+     * @param problemStatementGlobalRefinementRequest 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public refineProblemStatementGlobally(courseId: number, problemStatementGlobalRefinementRequest: ProblemStatementGlobalRefinementRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ProblemStatementRefinementResponse>;
+    public refineProblemStatementGlobally(courseId: number, problemStatementGlobalRefinementRequest: ProblemStatementGlobalRefinementRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ProblemStatementRefinementResponse>>;
+    public refineProblemStatementGlobally(courseId: number, problemStatementGlobalRefinementRequest: ProblemStatementGlobalRefinementRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ProblemStatementRefinementResponse>>;
+    public refineProblemStatementGlobally(courseId: number, problemStatementGlobalRefinementRequest: ProblemStatementGlobalRefinementRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (courseId === null || courseId === undefined) {
+            throw new Error('Required parameter courseId was null or undefined when calling refineProblemStatementGlobally.');
+        }
+        if (problemStatementGlobalRefinementRequest === null || problemStatementGlobalRefinementRequest === undefined) {
+            throw new Error('Required parameter problemStatementGlobalRefinementRequest was null or undefined when calling refineProblemStatementGlobally.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/hyperion/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/problem-statements/refine/global`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<ProblemStatementRefinementResponse>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: problemStatementGlobalRefinementRequest,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
      * @endpoint post /api/hyperion/courses/{courseId}/problem-statements/rewrite
      * @param courseId 
      * @param problemStatementRewriteRequest 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
+     * @param options additional options
      */
     public rewriteProblemStatement(courseId: number, problemStatementRewriteRequest: ProblemStatementRewriteRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ProblemStatementRewriteResponse>;
     public rewriteProblemStatement(courseId: number, problemStatementRewriteRequest: ProblemStatementRewriteRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ProblemStatementRewriteResponse>>;

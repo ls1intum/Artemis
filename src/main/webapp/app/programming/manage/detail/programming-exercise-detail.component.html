@@ -37,7 +37,7 @@
                                 <span jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle"></span>
                             </a>
                         }
-                        @if (programmingExercise.isAtLeastTutor) {
+                        @if (canAccessParticipationsAndScores) {
                             <a [routerLink]="[baseResource, 'participations']" class="btn btn-primary btn-sm">
                                 <fa-icon [icon]="faListAlt" />
                                 <span jhiTranslate="artemisApp.exercise.participations"></span>
@@ -63,7 +63,7 @@
                                 </a>
                             </jhi-feature-overlay>
                         }
-                        @if (programmingExercise.isAtLeastTutor) {
+                        @if (canAccessParticipationsAndScores) {
                             <a [routerLink]="baseResource + 'scores'" class="btn btn-info btn-sm">
                                 <fa-icon [icon]="faTable" />
                                 <span jhiTranslate="entity.action.scores"></span>
@@ -123,7 +123,15 @@
                             <button
                                 jhiDeleteButton
                                 [entityTitle]="programmingExercise.title || ''"
+                                entitySummaryTitle="artemisApp.programmingExercise.delete.summary.title"
+                                [fetchEntitySummary]="fetchExerciseDeletionSummary()"
                                 deleteQuestion="artemisApp.programmingExercise.delete.questionLocalVC.single"
+                                [translateValues]="{
+                                    courseTitle: programmingExercise.course!.title,
+                                    courseType: programmingExercise.course!.testCourse
+                                        ? ('artemisApp.programmingExercise.delete.testCourse' | artemisTranslate)
+                                        : ('artemisApp.programmingExercise.delete.realCourse' | artemisTranslate),
+                                }"
                                 (delete)="deleteProgrammingExercise($event)"
                                 [dialogError]="dialogError$"
                                 [additionalChecks]="

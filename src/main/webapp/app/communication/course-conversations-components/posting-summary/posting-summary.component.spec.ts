@@ -111,12 +111,36 @@ describe('PostingSummaryComponent', () => {
 
     describe('Event emissions', () => {
         it('should emit status change', () => {
+            const mockEvent = { stopPropagation: jest.fn() } as unknown as MouseEvent;
             const emitSpy = jest.spyOn(component.onChangeSavedPostStatus, 'emit');
             const newStatus = SavedPostStatus.ARCHIVED;
 
-            component['onStatusChangeClick'](newStatus);
+            component['onStatusChangeClick'](mockEvent, newStatus);
 
+            expect(mockEvent.stopPropagation).toHaveBeenCalledOnce();
             expect(emitSpy).toHaveBeenCalledWith(newStatus);
+        });
+
+        it('should emit remove bookmark event', () => {
+            const mockEvent = { stopPropagation: jest.fn() } as unknown as MouseEvent;
+            const emitSpy = jest.spyOn(component.onRemoveBookmark, 'emit');
+            fixture.componentRef.setInput('post', mockPost);
+
+            component['onRemoveBookmarkClick'](mockEvent);
+
+            expect(mockEvent.stopPropagation).toHaveBeenCalledOnce();
+            expect(emitSpy).toHaveBeenCalledWith(mockPost);
+        });
+
+        it('should not emit remove bookmark event when post is undefined', () => {
+            const mockEvent = { stopPropagation: jest.fn() } as unknown as MouseEvent;
+            const emitSpy = jest.spyOn(component.onRemoveBookmark, 'emit');
+            fixture.componentRef.setInput('post', undefined);
+
+            component['onRemoveBookmarkClick'](mockEvent);
+
+            expect(mockEvent.stopPropagation).toHaveBeenCalledOnce();
+            expect(emitSpy).not.toHaveBeenCalled();
         });
 
         it('should emit navigation event with post', () => {

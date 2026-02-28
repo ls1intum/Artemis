@@ -1,14 +1,12 @@
 package de.tum.cit.aet.artemis.lti.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
-
 import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -19,6 +17,7 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.dto.Lti13ClientRegistration;
 import de.tum.cit.aet.artemis.lti.dto.Lti13ClientRegistrationFactory;
@@ -27,7 +26,7 @@ import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
 
 @Lazy
 @Service
-@Profile(PROFILE_LTI)
+@Conditional(LtiEnabled.class)
 public class LtiDynamicRegistrationService {
 
     @Value("${server.url}")

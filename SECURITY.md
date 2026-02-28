@@ -116,12 +116,21 @@ Transport security:
 
 Artemis actively protects against supply chain risks:
 
+- The Artemis development team carefully reviews new dependencies before including them in the project to avoid introducing vulnerabilities in the first place
 - Automated dependency vulnerability scanning using **Mend (formerly WhiteSource)**
 - Regular updates to the latest stable versions of:
   - **Spring Boot**
   - **Angular**
 - Prompt application of security patches
 - Avoidance of unmaintained or low-trust dependencies
+
+**Vulnerability Monitoring and SBOM Support:**
+
+Artemis provides built-in tools to help administrators monitor and manage dependency security:
+
+- **Software Dependencies Page:** Administrators can view and check for known vulnerabilities directly in the application via the Admin area, allowing for quick assessment of the current security posture
+- **Software Bill of Materials (SBOM):** A downloadable SBOM is available for advanced security analysis in external systems, enabling integration with enterprise vulnerability management tools
+- **Automated Weekly Security Scan:** Artemis performs regular security analysis of all dependencies and proactively notifies administrators via email when issues are detected, ensuring timely awareness of potential vulnerabilities
 
 
 

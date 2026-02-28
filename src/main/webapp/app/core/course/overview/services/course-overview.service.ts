@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { faBookmark, faBoxArchive, faBullhorn, faGraduationCap, faHashtag, faLock, faSquareCheck } from '@fortawesome/free-solid-svg-icons';
+import { faBarsProgress, faBoxArchive, faBullhorn, faGraduationCap, faHashtag, faLock, faSquareCheck } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { ChannelSubType, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
@@ -272,7 +272,7 @@ export class CourseOverviewService {
                     title: this.translate.instant('artemisApp.courseOverview.sidebar.progress'),
                     id: SavedPostStatus.IN_PROGRESS.toString().toLowerCase(),
                     type: ConversationType.CHANNEL,
-                    icon: faBookmark,
+                    icon: faBarsProgress,
                     size: 'S',
                 },
                 {

@@ -139,7 +139,7 @@ export class AdminDataExportsComponent implements OnInit {
      * Returns the appropriate FontAwesome icon for a given export state.
      * - Clock: pending states (REQUESTED, IN_CREATION)
      * - Check: completed states (EMAIL_SENT, DOWNLOADED)
-     * - Warning: failed state (FAILED)
+     * - Warning: failure states (FAILED, EMAIL_FAILED)
      * - Times: deleted states (DELETED, DOWNLOADED_DELETED)
      *
      * @param state The current state of the data export
@@ -153,6 +153,7 @@ export class AdminDataExportsComponent implements OnInit {
             case DataExportState.DOWNLOADED:
                 return this.faCheck;
             case DataExportState.FAILED:
+            case DataExportState.EMAIL_FAILED:
                 return this.faExclamationTriangle;
             default:
                 return this.faTimes;
@@ -165,7 +166,7 @@ export class AdminDataExportsComponent implements OnInit {
      * - Primary (blue): requested
      * - Info (cyan): in creation
      * - Success (green): ready (email sent)
-     * - Warning (yellow): downloaded
+     * - Warning (yellow): downloaded or notification failed
      * - Danger (red): failed
      * - Secondary (gray): deleted
      *
@@ -183,6 +184,8 @@ export class AdminDataExportsComponent implements OnInit {
                 return 'bg-warning text-dark';
             case DataExportState.FAILED:
                 return 'bg-danger';
+            case DataExportState.EMAIL_FAILED:
+                return 'bg-warning text-dark';
             case DataExportState.DELETED:
             case DataExportState.DOWNLOADED_DELETED:
                 return 'bg-secondary';

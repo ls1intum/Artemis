@@ -20,5 +20,5 @@
 </div>
 <div class="modal-footer">
     <button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss('cancel click')" jhiTranslate="global.form.cancel"></button>
-    <button type="button" ngbAutofocus class="btn btn-danger" (click)="modal.close('Ok click')" jhiTranslate="global.form.confirm"></button>
+    <button type="button" ngbAutofocus class="btn btn-danger" (click)="modal.close('Ok click')" jhiTranslate="global.form.confirm" [disabled]="confirmDisabled"></button>
 </div>

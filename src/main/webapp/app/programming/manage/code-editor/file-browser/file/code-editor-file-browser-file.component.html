@@ -1,22 +1,22 @@
 <!--File-->
 <li
-    (click)="onNodeSelect.emit(item)"
+    (click)="onNodeSelect.emit(item())"
     class="list-group-item file-item"
-    [class.node-selected]="item.checked"
-    [class.text-danger]="!item.checked && hasError"
-    [class.bg-warning]="hasChanges"
+    [class.node-selected]="item().checked"
+    [class.text-danger]="!item().checked && hasError()"
+    [class.bg-warning]="hasChanges()"
     id="file-browser-file"
 >
     <fa-icon aria-hidden="true" [icon]="faFile" [fixedWidth]="true" />
-    @if (!isBeingRenamed) {
-        <span class="ms-1 list-group-item__fileName" [ngClass]="item.checked ? 'text-white' : 'primary'">{{ item.text }}</span>
+    @if (!isBeingRenamed()) {
+        <span class="ms-1 list-group-item__fileName" [ngClass]="item().checked ? 'text-white' : 'primary'">{{ item().text }}</span>
     }
     <!-- Renaming file tree item -->
-    @if (isBeingRenamed) {
+    @if (isBeingRenamed()) {
         <span class="ms-1"
             ><input
                 #renamingInput
-                value="{{ item.text }}"
+                value="{{ item().text }}"
                 (keyup.enter)="renameNode($event)"
                 (focusout)="renameNode($event)"
                 (keyup.esc)="clearRenamingNode($event)"
@@ -24,12 +24,12 @@
         /></span>
     }
     <!-- File badges -->
-    @for (badge of badges; track badges.indexOf(badge)) {
-        <jhi-file-browser-badge [badge]="badge" [onColoredBackground]="item.checked || hasError || hasChanges" />
+    @for (badge of badges(); track badges().indexOf(badge)) {
+        <jhi-file-browser-badge [badge]="badge" [onColoredBackground]="item().checked || hasError() || hasChanges()" />
     }
     <!-- File level actions -->
-    @if (!disableActions) {
-        <span class="file-icons" [ngClass]="item.checked ? 'text-white' : 'primary'">
+    @if (!disableActions()) {
+        <span class="file-icons" [ngClass]="item().checked ? 'text-white' : 'primary'">
             <button (click)="setRenamingNode($event)" class="btn btn-small">
                 <fa-icon id="file-browser-file-edit" [icon]="faEdit" title="{{ 'artemisApp.editor.fileBrowser.renameFile' | artemisTranslate }}" />
             </button>

@@ -5,11 +5,10 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_APOLLON;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ARTEMIS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_INDEPENDENT;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
@@ -42,6 +41,10 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.service.ArtemisVersionService;
+import de.tum.cit.aet.artemis.core.service.PasskeyAuthenticationService;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.core.service.VulnerabilityService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
 import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
@@ -58,10 +61,11 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 @ResourceLock("AbstractSpringIntegrationIndependentTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 // TODO: PROFILE_AEOLUS is bound to PROGRAMMING and LOCAL_VC and should not be active in an independent test context.
-@ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_TEST_INDEPENDENT, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_ATHENA, PROFILE_APOLLON, PROFILE_IRIS, PROFILE_AEOLUS,
-        PROFILE_LTI })
+@ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_TEST_INDEPENDENT, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_ATHENA, PROFILE_APOLLON, PROFILE_AEOLUS })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false", "artemis.sharing.enabled=true", "artemis.user-management.passkey.enabled=true",
-        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_independent", "artemis.nebula.enabled=true" })
+        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_independent", "artemis.nebula.enabled=true", "artemis.iris.enabled=true", "artemis.lti.enabled=true",
+        // Property moved here to avoid creating a separate Spring context in AutomaticBuildJobCleanupServiceIntegrationTest
+        "artemis.continuous-integration.build-job.retention-period=30" })
 public abstract class AbstractSpringIntegrationIndependentTest extends AbstractArtemisIntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractSpringIntegrationIndependentTest.class);
@@ -111,17 +115,36 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     @MockitoBean(name = "nebulaRestTemplate")
     protected RestTemplate nebulaRestTemplate;
 
+    // Mock PasskeyAuthenticationService to allow super admin operations in tests
+    // The @EnforceSuperAdmin annotation requires passkey authentication to be mocked
+    @MockitoSpyBean
+    protected PasskeyAuthenticationService passkeyAuthenticationService;
+
+    // Spy beans moved here to avoid creating separate Spring contexts in AdminSbomResourceIntegrationTest and VulnerabilityScanScheduleServiceTest
+    @MockitoSpyBean
+    protected ArtemisVersionService artemisVersionService;
+
+    @MockitoSpyBean
+    protected VulnerabilityService vulnerabilityService;
+
+    @MockitoSpyBean
+    protected ProfileService profileService;
+
     @BeforeEach
     protected void setupSpringAIMocks() {
         if (chatModel != null) {
             when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Mocked AI response for testing")))));
         }
+        // Mock passkey authentication to always return true for super admin operations in tests
+        // Use doReturn instead of when().thenReturn() because the method throws an exception
+        doReturn(true).when(passkeyAuthenticationService).isAuthenticatedWithSuperAdminApprovedPasskey();
     }
 
     @AfterEach
     @Override
     protected void resetSpyBeans() {
         Mockito.reset(oAuth2JWKSService, ltiPlatformConfigurationRepository, competencyProgressService, competencyProgressApi);
+        Mockito.reset(artemisVersionService, vulnerabilityService, profileService);
         if (chatModel != null) {
             Mockito.reset(chatModel);
         }

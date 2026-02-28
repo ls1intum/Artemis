@@ -1,0 +1,366 @@
+<h5 *adminTitleBarTitle id="sbom-page-heading" class="mb-0" jhiTranslate="artemisApp.dependencies.title"></h5>
+
+<div *adminTitleBarActions class="d-flex gap-2">
+    @if (vulnerabilities()) {
+        <button class="btn btn-outline-secondary btn-sm" (click)="refreshVulnerabilities()" [disabled]="loadingVulnerabilities()">
+            <fa-icon [icon]="faRefresh" [animation]="loadingVulnerabilities() ? 'spin' : undefined" />
+            <span jhiTranslate="artemisApp.dependencies.refreshVulnerabilities"></span>
+        </button>
+        <button class="btn btn-outline-info btn-sm" (click)="sendVulnerabilityEmail()" [disabled]="sendingEmail()">
+            <fa-icon [icon]="sendingEmail() ? faSpinner : faEnvelope" [animation]="sendingEmail() ? 'spin' : undefined" />
+            <span jhiTranslate="artemisApp.dependencies.sendEmail"></span>
+        </button>
+    }
+    @if (combinedSbom()?.server) {
+        <button class="btn btn-outline-primary btn-sm" (click)="downloadSbom('server')">
+            <fa-icon [icon]="faDownload" />
+            <span jhiTranslate="artemisApp.dependencies.downloadServer"></span>
+        </button>
+    }
+    @if (combinedSbom()?.client) {
+        <button class="btn btn-outline-primary btn-sm" (click)="downloadSbom('client')">
+            <fa-icon [icon]="faDownload" />
+            <span jhiTranslate="artemisApp.dependencies.downloadClient"></span>
+        </button>
+    }
+</div>
+
+@if (loading()) {
+    <div class="d-flex justify-content-center my-5">
+        <fa-icon [icon]="faSpinner" animation="spin" size="3x" />
+    </div>
+} @else if (combinedSbom()) {
+    <!-- Upgrade Recommendation Banner -->
+    @if (versionInfo()?.updateAvailable) {
+        <div
+            class="alert mb-4 d-flex align-items-center"
+            [class.alert-danger]="upgradeUrgency() === 'critical'"
+            [class.alert-warning]="upgradeUrgency() === 'high'"
+            [class.alert-info]="upgradeUrgency() === 'normal'"
+        >
+            <fa-icon [icon]="faArrowUp" class="me-3" size="lg" />
+            <div class="flex-grow-1">
+                @if (upgradeUrgency() === 'critical') {
+                    <strong jhiTranslate="artemisApp.dependencies.upgradeUrgentTitle"></strong>
+                } @else if (upgradeUrgency() === 'high') {
+                    <strong jhiTranslate="artemisApp.dependencies.upgradeRecommendedTitle"></strong>
+                } @else {
+                    <strong jhiTranslate="artemisApp.dependencies.upgradeAvailableTitle"></strong>
+                }
+                <span class="ms-1">
+                    {{ 'artemisApp.dependencies.upgradeMessage' | artemisTranslate: { current: versionInfo()?.currentVersion, latest: versionInfo()?.latestVersion } }}
+                </span>
+                @if (upgradeUrgency() === 'critical' || upgradeUrgency() === 'high') {
+                    <span class="ms-1" jhiTranslate="artemisApp.dependencies.upgradeSecurityMessage"></span>
+                }
+            </div>
+            @if (versionInfo()?.releaseUrl) {
+                <a
+                    [href]="versionInfo()?.releaseUrl"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="btn btn-sm"
+                    [class.btn-danger]="upgradeUrgency() === 'critical'"
+                    [class.btn-warning]="upgradeUrgency() === 'high'"
+                    [class.btn-info]="upgradeUrgency() === 'normal'"
+                >
+                    <span jhiTranslate="artemisApp.dependencies.viewRelease"></span>
+                </a>
+            }
+        </div>
+    }
+
+    <!-- Explanation Section -->
+    <div class="alert alert-light border mb-4">
+        <h6 class="alert-heading mb-2">
+            <fa-icon [icon]="faInfoCircle" class="me-2" />
+            <span jhiTranslate="artemisApp.dependencies.infoTitle"></span>
+        </h6>
+        <p class="mb-2">
+            <span jhiTranslate="artemisApp.dependencies.vulnerabilityExplanation"></span>
+            <a href="https://osv.dev" target="_blank" rel="noopener noreferrer" class="fw-semibold">
+                osv.dev
+                <fa-icon [icon]="faExternalLink" class="ms-1" size="xs" />
+            </a>
+            <jhi-help-icon text="artemisApp.dependencies.osvTooltip" />
+            . {{ 'artemisApp.dependencies.securityFeatureHighlight' | artemisTranslate }}
+        </p>
+        <p class="mb-2 text-muted small">
+            {{ 'artemisApp.dependencies.versionExplanation' | artemisTranslate: { version: versionInfo()?.currentVersion || 'unknown' } }}
+        </p>
+        <hr />
+        <p class="mb-0 small">
+            <strong jhiTranslate="artemisApp.dependencies.infoServerLabel"></strong>
+            <span jhiTranslate="artemisApp.dependencies.infoServerDesc"></span>
+            <br />
+            <strong jhiTranslate="artemisApp.dependencies.infoClientLabel"></strong>
+            <span jhiTranslate="artemisApp.dependencies.infoClientDesc"></span>
+        </p>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="card-title mb-0">{{ totalComponentCount() }}</h3>
+                    <p class="card-text text-muted" jhiTranslate="artemisApp.dependencies.totalComponents"></p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <fa-icon [icon]="faServer" class="text-primary me-2" />
+                    <h3 class="card-title mb-0 d-inline">{{ serverComponentCount() }}</h3>
+                    <p class="card-text text-muted" jhiTranslate="artemisApp.dependencies.serverComponents"></p>
+                    @if (serverMetadata()?.version) {
+                        <small class="text-muted">v{{ serverMetadata()?.version }}</small>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <fa-icon [icon]="faDesktop" class="text-danger me-2" />
+                    <h3 class="card-title mb-0 d-inline">{{ clientComponentCount() }}</h3>
+                    <p class="card-text text-muted" jhiTranslate="artemisApp.dependencies.clientComponents"></p>
+                    @if (clientMetadata()?.version) {
+                        <small class="text-muted">v{{ clientMetadata()?.version }}</small>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card" [class.border-danger]="vulnerabilities()?.totalVulnerabilities">
+                <div class="card-body text-center">
+                    @if (loadingVulnerabilities()) {
+                        <fa-icon [icon]="faSpinner" animation="spin" class="me-2" />
+                        <span class="text-muted" jhiTranslate="artemisApp.dependencies.loadingVulnerabilities"></span>
+                    } @else if (vulnerabilities()) {
+                        <fa-icon
+                            [icon]="faShieldAlt"
+                            [class.text-success]="!vulnerabilities()?.totalVulnerabilities"
+                            [class.text-danger]="vulnerabilities()?.totalVulnerabilities"
+                            class="me-2"
+                        />
+                        <h3 class="card-title mb-0 d-inline" [class.text-danger]="vulnerabilities()?.totalVulnerabilities">{{ vulnerabilities()?.totalVulnerabilities ?? 0 }}</h3>
+                        <p class="card-text text-muted" jhiTranslate="artemisApp.dependencies.vulnerabilities"></p>
+                        @if (vulnerabilities()?.totalVulnerabilities) {
+                            <div class="d-flex justify-content-center gap-2 flex-wrap">
+                                @if (vulnerabilities()?.criticalCount) {
+                                    <span class="badge bg-danger">{{ vulnerabilities()?.criticalCount }} Critical</span>
+                                }
+                                @if (vulnerabilities()?.highCount) {
+                                    <span class="badge bg-warning text-dark">{{ vulnerabilities()?.highCount }} High</span>
+                                }
+                                @if (vulnerabilities()?.mediumCount) {
+                                    <span class="badge bg-warning text-dark">{{ vulnerabilities()?.mediumCount }} Medium</span>
+                                }
+                                @if (vulnerabilities()?.lowCount) {
+                                    <span class="badge bg-info">{{ vulnerabilities()?.lowCount }} Low</span>
+                                }
+                            </div>
+                        }
+                    } @else {
+                        <fa-icon [icon]="faShieldAlt" class="text-muted me-2" />
+                        <span class="text-muted" jhiTranslate="artemisApp.dependencies.vulnerabilitiesNotLoaded"></span>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-3">
+        <div class="col-md-5">
+            <div class="input-group">
+                <span class="input-group-text">
+                    <fa-icon [icon]="faSearch" />
+                </span>
+                <input
+                    type="text"
+                    class="form-control"
+                    [placeholder]="'artemisApp.dependencies.filterPlaceholder' | artemisTranslate"
+                    [ngModel]="filterText()"
+                    (ngModelChange)="updateFilter($event)"
+                />
+            </div>
+        </div>
+        <div class="col-md-5">
+            <div class="btn-group" role="group">
+                <button
+                    type="button"
+                    class="btn"
+                    [class.btn-primary]="selectedSource() === 'all'"
+                    [class.btn-outline-primary]="selectedSource() !== 'all'"
+                    (click)="updateSource('all')"
+                >
+                    <span jhiTranslate="artemisApp.dependencies.sourceAll"></span>
+                    <span class="badge bg-secondary ms-1">{{ totalComponentCount() }}</span>
+                </button>
+                <button
+                    type="button"
+                    class="btn"
+                    [class.btn-primary]="selectedSource() === 'server'"
+                    [class.btn-outline-primary]="selectedSource() !== 'server'"
+                    (click)="updateSource('server')"
+                >
+                    <fa-icon [icon]="faServer" class="me-1" />
+                    <span jhiTranslate="artemisApp.dependencies.sourceServer"></span>
+                    <span class="badge bg-secondary ms-1">{{ serverComponentCount() }}</span>
+                </button>
+                <button
+                    type="button"
+                    class="btn"
+                    [class.btn-primary]="selectedSource() === 'client'"
+                    [class.btn-outline-primary]="selectedSource() !== 'client'"
+                    (click)="updateSource('client')"
+                >
+                    <fa-icon [icon]="faDesktop" class="me-1" />
+                    <span jhiTranslate="artemisApp.dependencies.sourceClient"></span>
+                    <span class="badge bg-secondary ms-1">{{ clientComponentCount() }}</span>
+                </button>
+            </div>
+        </div>
+        <div class="col-md-2">
+            @if (vulnerabilities()?.totalVulnerabilities) {
+                <button
+                    type="button"
+                    class="btn w-100"
+                    [class.btn-danger]="showOnlyVulnerable()"
+                    [class.btn-outline-danger]="!showOnlyVulnerable()"
+                    (click)="toggleVulnerableOnly()"
+                >
+                    <fa-icon [icon]="faExclamationTriangle" class="me-1" />
+                    <span jhiTranslate="artemisApp.dependencies.showVulnerableOnly"></span>
+                </button>
+            }
+        </div>
+    </div>
+
+    <!-- Results count -->
+    <div class="mb-2 text-muted">
+        <span>{{ 'artemisApp.dependencies.showingComponents' | artemisTranslate: { count: filteredComponents().length } }}</span>
+    </div>
+
+    <!-- Components Table -->
+    <div class="table-responsive">
+        <table class="table table-striped table-hover" aria-describedby="sbom-page-heading">
+            <thead class="table-light">
+                <tr jhiSort [predicate]="sortField()" [ascending]="sortAscending()" (ascendingChange)="updateSortAscending($event)">
+                    <th scope="col" class="sortable" (click)="updateSortField('name')">
+                        <span jhiTranslate="artemisApp.dependencies.componentName"></span>
+                        <fa-icon [icon]="faSort" />
+                    </th>
+                    <th scope="col" class="sortable" (click)="updateSortField('group')">
+                        <span jhiTranslate="artemisApp.dependencies.componentGroup"></span>
+                        <fa-icon [icon]="faSort" />
+                    </th>
+                    <th scope="col" class="sortable" (click)="updateSortField('version')">
+                        <span jhiTranslate="artemisApp.dependencies.componentVersion"></span>
+                        <fa-icon [icon]="faSort" />
+                    </th>
+                    <th scope="col">
+                        <span jhiTranslate="artemisApp.dependencies.componentSecurity"></span>
+                    </th>
+                    <th scope="col">
+                        <span jhiTranslate="artemisApp.dependencies.componentLicenses"></span>
+                    </th>
+                    <th scope="col">
+                        <span jhiTranslate="artemisApp.dependencies.componentSource"></span>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (component of filteredComponents(); track trackByName($index, component)) {
+                    <tr [class.table-danger]="component.componentVulnerabilities?.length">
+                        <td>
+                            <strong>{{ component.name }}</strong>
+                            @if (component.description) {
+                                <br />
+                                <small class="text-muted">{{ component.description }}</small>
+                            }
+                        </td>
+                        <td>{{ component.group ?? '-' }}</td>
+                        <td>
+                            <span class="badge bg-info">{{ component.version }}</span>
+                        </td>
+                        <td>
+                            @if (loadingVulnerabilities()) {
+                                <fa-icon [icon]="faSpinner" animation="spin" class="text-muted" />
+                            } @else if (component.componentVulnerabilities && component.componentVulnerabilities.length > 0) {
+                                <span
+                                    class="badge"
+                                    [ngClass]="getSeverityClass(getHighestSeverity(component.componentVulnerabilities))"
+                                    [title]="component.componentVulnerabilities[0]?.summary ?? ''"
+                                >
+                                    <fa-icon [icon]="faExclamationTriangle" class="me-1" />
+                                    {{ component.componentVulnerabilities!.length }}
+                                    @if (component.componentVulnerabilities!.length === 1) {
+                                        <span jhiTranslate="artemisApp.dependencies.vulnerability"></span>
+                                    } @else {
+                                        <span jhiTranslate="artemisApp.dependencies.vulnerabilitiesCount"></span>
+                                    }
+                                </span>
+                                <div class="mt-1">
+                                    @for (vuln of component.componentVulnerabilities!.slice(0, 3); track vuln.id) {
+                                        <a
+                                            [href]="'https://osv.dev/vulnerability/' + vuln.id"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            class="badge bg-secondary me-1 text-decoration-none"
+                                        >
+                                            {{ vuln.id }}
+                                        </a>
+                                    }
+                                    @if (component.componentVulnerabilities!.length > 3) {
+                                        <span class="badge bg-secondary">+{{ component.componentVulnerabilities!.length - 3 }}</span>
+                                    }
+                                </div>
+                            } @else {
+                                <span class="badge bg-success">
+                                    <fa-icon [icon]="faShieldAlt" class="me-1" />
+                                    <span jhiTranslate="artemisApp.dependencies.secure"></span>
+                                </span>
+                            }
+                        </td>
+                        <td>
+                            @if (component.licenses?.length) {
+                                @for (license of component.licenses; track license) {
+                                    <span class="badge bg-success me-1">{{ license }}</span>
+                                }
+                            } @else {
+                                <span class="text-muted">-</span>
+                            }
+                        </td>
+                        <td>
+                            @if (component.source === 'server') {
+                                <span class="badge bg-primary">
+                                    <fa-icon [icon]="faServer" class="me-1" />
+                                    Server
+                                </span>
+                            } @else {
+                                <span class="badge bg-danger">
+                                    <fa-icon [icon]="faDesktop" class="me-1" />
+                                    Client
+                                </span>
+                            }
+                        </td>
+                    </tr>
+                } @empty {
+                    <tr>
+                        <td colspan="6" class="text-center py-4">
+                            <span class="text-muted" jhiTranslate="artemisApp.dependencies.noComponents"></span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+} @else {
+    <div class="alert alert-info">
+        <span jhiTranslate="artemisApp.dependencies.notAvailable"></span>
+    </div>
+}

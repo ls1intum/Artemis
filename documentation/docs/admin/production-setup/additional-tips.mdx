@@ -40,7 +40,7 @@ server {
 This setup is recommended for production instances as it registers Artemis as a service and e.g. enables auto-restarting
 of Artemis after the VM running Artemis has been restarted.
 Alternatively, you could look at the section below about
-[deploying artemis as docker container](https://docs.artemis.cit.tum.de/dev/setup/server.html#run-the-server-via-docker).
+[deploying artemis as docker container](/developer/docker-compose).
 
 This is a service file that works on Debian/Ubuntu assuming you have created a system user `artemis` which has
 permissions in the `/opt/artemis/` directory that contains the `Artemis.war` file:
@@ -160,7 +160,7 @@ resolver_timeout 5s;
 
 ## Docker Compose Setup
 
-The [development section of the documentation](https://docs.artemis.cit.tum.de/dev/setup/docker-compose.html) provides an introduction to
+The [development section of the documentation](/developer/docker-compose) provides an introduction to
 Docker Compose setups for Artemis.
 This section provides additional information for administrators.
 

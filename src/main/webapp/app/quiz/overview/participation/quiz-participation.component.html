@@ -25,7 +25,7 @@
                 <div>
                     @if (!showingResult) {
                         <div class="d-flex gap-2 align-items-center">
-                            @if (!waitingForQuizStart && !submission.submitted) {
+                            @if (!waitingForQuizStart && !submission.submitted && remainingTimeSeconds >= 0) {
                                 <div class="align-content-center">
                                     <span jhiTranslate="artemisApp.quizExercise.remainingTime" class="colon-suffix"></span>
                                     <span
@@ -38,12 +38,20 @@
                                         {{ remainingTimeText }}
                                     </span>
                                 </div>
-                            } @else if (submission.submitted && quizExercise.dueDate && !quizExercise.quizEnded) {
+                            } @else if (!waitingForQuizStart && remainingTimeSeconds < 0 && !showingResult && !hasAnyAnswer()) {
+                                <div class="align-content-center">
+                                    <span jhiTranslate="artemisApp.quizExercise.remainingTime" class="colon-suffix"></span>
+                                    <span id="remaining-time-value" class="time-critical">{{ remainingTimeText }}</span>
+                                </div>
+                            } @else if (quizExercise.dueDate && !quizExercise.quizEnded && submission.submitted) {
                                 <div class="align-content-center">
                                     <span jhiTranslate="artemisApp.quizExercise.resultsAvailable" class="colon-suffix"></span>
-                                    <span id="results-available-value">
-                                        {{ quizExercise.dueDate | artemisDate }}
-                                    </span>
+                                    <span id="results-available-value">{{ quizExercise.dueDate | artemisDate }}</span>
+                                </div>
+                            } @else if (quizExercise.dueDate && remainingTimeSeconds < 0 && hasAnyAnswer()) {
+                                <div class="align-content-center">
+                                    <span jhiTranslate="artemisApp.quizExercise.resultsAvailable" class="colon-suffix"></span>
+                                    <span id="results-available-value">{{ quizExercise.dueDate | artemisDate }}</span>
                                 </div>
                             }
                             <jhi-button
@@ -51,8 +59,8 @@
                                 (onClick)="onSubmit()"
                                 [btnSize]="ButtonSize.SMALL"
                                 [btnType]="ButtonType.PRIMARY"
-                                [title]="submission.submitted ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit'"
-                                [disabled]="submission.submitted || isSubmitting || waitingForQuizStart || remainingTimeSeconds < 0"
+                                [title]="shouldTreatAsSubmittedForUi ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit'"
+                                [disabled]="shouldTreatAsSubmittedForUi || isSubmitting || waitingForQuizStart || remainingTimeSeconds < 0"
                             />
                         </div>
                     } @else if (mode !== 'solution') {
@@ -137,7 +145,7 @@
                     @if (!submission.submitted && !showingResult && remainingTimeSeconds >= 0) {
                         <p jhiTranslate="artemisApp.quizExercise.quizInstructions.live"></p>
                     }
-                    @if (submission.submitted && !showingResult) {
+                    @if (!showingResult && !waitingForQuizStart && (submission.submitted || remainingTimeSeconds < 0) && hasAnyAnswer()) {
                         <p jhiTranslate="artemisApp.quizExercise.quizInstructions.wait"></p>
                     }
                     @if (showingResult && mode !== 'solution') {
@@ -260,21 +268,21 @@
         </div>
         <div>
             <!-- OVERLAY SECTION -->
-            @if (!waitingForQuizStart && !showingResult) {
-                @if (!submission.submitted && remainingTimeSeconds < 0) {
+            @if (!waitingForQuizStart && !showingResult && remainingTimeSeconds < 0 && !submission.submitted) {
+                @if (!hasAnyAnswer()) {
                     <div class="quiz-is-over-overlay alert alert-info">
-                        @if (submission.submissionDate) {
-                            <span jhiTranslate="artemisApp.quizExercise.quizIsOverText"></span>
-                        } @else {
-                            <span jhiTranslate="artemisApp.quizExercise.notParticipatedText"></span>
-                        }
+                        <span jhiTranslate="artemisApp.quizExercise.notParticipatedText"></span>
+                    </div>
+                } @else if (quizExercise?.quizMode === QuizMode.SYNCHRONIZED) {
+                    <div class="quiz-is-over-overlay alert alert-info">
+                        <span jhiTranslate="artemisApp.quizExercise.quizIsOverText"></span>
                     </div>
                 }
-                @if (submission.submitted && quizExercise?.quizMode === QuizMode.SYNCHRONIZED) {
-                    <div class="quiz-submitted-overlay alert alert-success">
-                        <span jhiTranslate="artemisApp.quizExercise.successfullySubmittedText"></span>
-                    </div>
-                }
+            }
+            @if (quizExercise?.quizMode === QuizMode.SYNCHRONIZED && !waitingForQuizStart && !showingResult && submission.submitted) {
+                <div class="quiz-submitted-overlay alert alert-success">
+                    <span jhiTranslate="artemisApp.quizExercise.successfullySubmittedText"></span>
+                </div>
             }
         </div>
         @if (waitingForQuizStart) {
@@ -294,8 +302,10 @@
                 @if (!quizBatch) {
                     @if (quizExercise.quizMode === QuizMode.BATCHED && (quizExercise.remainingNumberOfAttempts ?? 1) > 0) {
                         <div jhiTranslate="artemisApp.quizExercise.quizInstructions.enterPassword"></div>
-                        <input id="join-patch-password" [(ngModel)]="password" />
-                        <jhi-button id="join-batch" [title]="'artemisApp.quizExercise.join'" [btnType]="ButtonType.SUCCESS" (onClick)="joinBatch()" />
+                        <div class="join-batch-row">
+                            <input id="join-patch-password" [(ngModel)]="password" (keyup.enter)="joinBatch()" />
+                            <jhi-button id="join-batch" [title]="'artemisApp.quizExercise.join'" [btnType]="ButtonType.SUCCESS" (onClick)="joinBatch()" />
+                        </div>
                     }
                     @if (quizExercise.quizMode === QuizMode.INDIVIDUAL && (quizExercise.remainingNumberOfAttempts ?? 1) > 0) {
                         <div jhiTranslate="artemisApp.quizExercise.quizInstructions.startNow"></div>

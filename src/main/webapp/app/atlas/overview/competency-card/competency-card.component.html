@@ -5,7 +5,7 @@
     [class.border-success]="isMastered"
     [class.text-secondary]="isMastered"
 >
-    @if (courseId() && !isPrerequisite()) {
+    @if (courseId() && !isPrerequisite() && competency()?.id) {
         <a class="stretched-link" [routerLink]="['/courses', courseId(), 'competencies', competency()?.id!]"></a>
     }
     <div class="col-auto d-none d-sm-block">

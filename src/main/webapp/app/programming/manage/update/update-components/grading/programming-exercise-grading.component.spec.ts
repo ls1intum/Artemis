@@ -95,7 +95,7 @@ describe('ProgrammingExerciseGradingComponent', () => {
         comp.programmingExercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
         comp.programmingExercise.bonusPoints = undefined;
 
-        fixture.detectChanges();
+        fixture.detectChanges(false);
 
         fixture.whenStable().then(() => {
             const result = comp.getGradingSummary();
@@ -190,13 +190,13 @@ describe('ProgrammingExerciseGradingComponent', () => {
     ) => {
         const checkFieldVisibility = (selector: string, isVisible: boolean, afterModification = false) => {
             if (afterModification) {
-                fixture.changeDetectorRef.detectChanges();
+                fixture.detectChanges(false);
             } else {
-                fixture.detectChanges();
+                fixture.detectChanges(false);
             }
             if (selector === 'jhi-grading-instructions-details' && isVisible) {
                 comp.programmingExercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-                fixture.changeDetectorRef.detectChanges();
+                fixture.detectChanges(false);
                 const instructionsField = fixture.debugElement.nativeElement.querySelector(selector);
                 expect(instructionsField).not.toBeNull();
                 return;
@@ -213,13 +213,13 @@ describe('ProgrammingExerciseGradingComponent', () => {
             describe('should handle input field ' + name + ' properly', () => {
                 it('should be displayed', () => {
                     extraCondition?.();
-                    fixture.detectChanges();
+                    fixture.detectChanges(false);
                     checkFieldVisibility(selector, true);
                 });
 
                 it('should NOT be displayed', () => {
                     extraCondition?.();
-                    fixture.detectChanges();
+                    fixture.detectChanges(false);
                     comp.isEditFieldDisplayedRecord()[field] = false;
                     checkFieldVisibility(selector, false, true);
                 });

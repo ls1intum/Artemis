@@ -24,7 +24,7 @@ describe('IrisStatusService', () => {
                 IrisStatusService,
                 { provide: WebsocketService, useValue: { connectionState: of({ connected: true, wasEverConnectedBefore: true }) } },
                 LocalStorageService,
-                { provide: ProfileService, useValue: { isProfileActive: vi.fn().mockReturnValue(true) } },
+                { provide: ProfileService, useValue: { isModuleFeatureActive: vi.fn().mockReturnValue(true) } },
             ],
         });
 

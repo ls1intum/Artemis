@@ -5,6 +5,7 @@ sidebar_label: Notifications
 ---
 
 import Image, {ImageSize} from "../../src/components/Image/Image";
+import TumLiveVideo from "../../src/components/TumLiveVideo/TumLiveVideo";
 
 import notificationWebImg from "./assets/notifications/notification-web.png";
 import notificationGeneralImg from "./assets/notifications/notification-general.png";
@@ -31,14 +32,7 @@ All notifications you receive (whether through web, push, or email) are accessib
 
 <Image src={notificationGeneralImg} alt={"notification-general"} size={ImageSize.small} />
 
-<iframe
-    src="https://live.rbg.tum.de/w/artemisintro/61337?video_only=1&t=0"
-    title="Web Notifications"
-    allowFullScreen="1"
-    frameBorder="0"
-    width="600"
-    height="350"
-/>
+<TumLiveVideo src="https://live.rbg.tum.de/w/artemisintro/61337" title="Web Notifications" />
 
 ## Email Notifications
 
@@ -90,14 +84,7 @@ For convenience, Artemis provides preset configurations that you can apply with 
 
 <Image src={notificationSettingsImg} alt={"notification-settings"} size={ImageSize.large} />
 
-<iframe
-    src="https://live.rbg.tum.de/w/artemisintro/61335?video_only=1&t=0"
-    title="Notification Settings"
-    allowFullScreen="1"
-    frameBorder="0"
-    width="600"
-    height="350"
-/>
+<TumLiveVideo src="https://live.rbg.tum.de/w/artemisintro/61335" title="Notification Settings" />
 
 ## Notification Types
 

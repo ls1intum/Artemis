@@ -5,7 +5,7 @@ import Layout from '@theme/Layout';
 import Heading from '@theme/Heading';
 import Link from '@docusaurus/Link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faGraduationCap, faChalkboardTeacher, faCode, faUserShield } from '@fortawesome/free-solid-svg-icons';
+import { faGraduationCap, faChalkboardTeacher, faCode, faUserShield, faBook } from '@fortawesome/free-solid-svg-icons';
 
 import styles from './index.module.css';
 
@@ -52,13 +52,20 @@ function HomepageHeader() {
                     />
                     <Tile
                         title="Developer"
-                        link="/staff/intro"
+                        link="/developer/intro"
                         icon={faCode}
                     />
                     <Tile
                         title="Admin"
                         link="/admin/intro"
                         icon={faUserShield}
+                    />
+                </div>
+                <div className={styles.publicationsSection}>
+                    <Tile
+                        title="Publications"
+                        link="/publications"
+                        icon={faBook}
                     />
                 </div>
             </div>

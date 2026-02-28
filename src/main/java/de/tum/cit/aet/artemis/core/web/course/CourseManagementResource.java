@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.core.web.course;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -26,7 +25,6 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseExistingExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseForImportDTO;
-import de.tum.cit.aet.artemis.core.dto.OnlineCourseDTO;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
@@ -96,28 +94,6 @@ public class CourseManagementResource {
         this.courseForUserGroupService = courseForUserGroupService;
         this.courseOverviewService = courseOverviewService;
         this.courseLoadService = courseLoadService;
-    }
-
-    /**
-     * GET courses/for-lti-dashboard : Retrieves a list of online courses for a specific LTI dashboard based on the client ID.
-     *
-     * @param clientId the client ID of the LTI platform used to filter the courses.
-     * @return a {@link ResponseEntity} containing a list of {@link OnlineCourseDTO} for the courses the user has access to.
-     */
-    @GetMapping("courses/for-lti-dashboard")
-    @EnforceAtLeastInstructor
-    @Profile(PROFILE_LTI)
-    public ResponseEntity<List<OnlineCourseDTO>> findAllOnlineCoursesForLtiDashboard(@RequestParam("clientId") String clientId) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        log.debug("REST request to get all online courses the user {} has access to", user.getLogin());
-
-        Set<Course> courses = courseService.findAllOnlineCoursesForPlatformForUser(clientId, user);
-
-        List<OnlineCourseDTO> onlineCourseDTOS = courses.stream().map(c -> new OnlineCourseDTO(c.getId(), c.getTitle(), c.getShortName(),
-                c.getOnlineCourseConfiguration().getLtiPlatformConfiguration().getRegistrationId(), c.getStartDate(), c.getEndDate(), c.getDescription(), c.getNumberOfStudents()))
-                .toList();
-
-        return ResponseEntity.ok(onlineCourseDTOS);
     }
 
     /**

@@ -163,7 +163,7 @@ describe('CourseFaqs', () => {
         expect(alertServiceStub).toHaveBeenCalledOnce();
     });
 
-    it('should display FAQs in the order received from backend (server-side sorting)', () => {
+    it('should display FAQs in the order received from server (server-side sorting)', () => {
         // Mock service to return FAQs in descending order by creation date (newest first)
         const newestFaq = createFaq(3, 'category3', '#0ab84f');
         const middleFaq = createFaq(2, 'category2', '#0ab84f');

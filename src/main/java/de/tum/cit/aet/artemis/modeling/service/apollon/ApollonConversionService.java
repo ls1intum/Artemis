@@ -7,6 +7,7 @@ import java.io.InputStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -15,7 +16,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.modeling.dto.ApollonModelDTO;
@@ -30,24 +31,21 @@ public class ApollonConversionService {
     @Value("${artemis.apollon.conversion-service-url}")
     private String apollonConversionUrl;
 
-    private RestTemplate restTemplate;
+    private final RestTemplate restTemplate;
 
-    public ApollonConversionService(RestTemplate apollonRestTemplate) {
-        setRestTemplate(apollonRestTemplate);
-    }
-
-    public void setRestTemplate(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
+    public ApollonConversionService(@Qualifier("apollonRestTemplate") RestTemplate apollonRestTemplate) {
+        this.restTemplate = apollonRestTemplate;
     }
 
     /**
      * Calls the remote Apollon conversion service to convert given model to pdf
      *
      * @param model the model to convert to pdf
-     * @return an input stream that is coming from apollon conversion server
+     * @return an input stream containing the PDF data
+     * @throws IOException if the conversion fails or returns an empty response
      */
-    public InputStream convertModel(String model) {
-        log.info("Calling Remote Service to convert for model.");
+    public InputStream convertModel(String model) throws IOException {
+        log.debug("Calling Remote Service to convert for model.");
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -61,13 +59,11 @@ public class ApollonConversionService {
             if (response.getBody() != null) {
                 return response.getBody().getInputStream();
             }
+
+            throw new IOException("Apollon conversion service returned an empty response body");
         }
-        catch (HttpClientErrorException ex) {
-            log.error("Error while calling Remote Service: {}", ex.getMessage());
+        catch (RestClientException ex) {
+            throw new IOException("Error while calling Apollon conversion service: " + ex.getMessage(), ex);
         }
-        catch (IOException ex) {
-            log.error(ex.getMessage(), ex);
-        }
-        return null;
     }
 }

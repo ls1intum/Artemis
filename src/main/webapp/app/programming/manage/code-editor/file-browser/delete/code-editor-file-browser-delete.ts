@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { captureException } from '@sentry/angular';
 import { faBan, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
@@ -21,9 +21,9 @@ export class CodeEditorFileBrowserDeleteComponent implements OnInit {
     activeModal = inject(NgbActiveModal);
     private repositoryFileService = inject(CodeEditorRepositoryFileService);
 
-    @Input() fileNameToDelete: string;
-    @Input() parent: IFileDeleteDelegate;
-    @Input() fileType: FileType;
+    readonly fileNameToDelete = signal<string | undefined>(undefined);
+    readonly parent = signal<IFileDeleteDelegate | undefined>(undefined);
+    readonly fileType = signal<FileType | undefined>(undefined);
 
     isLoading: boolean;
 
@@ -39,23 +39,32 @@ export class CodeEditorFileBrowserDeleteComponent implements OnInit {
         this.isLoading = false;
     }
 
+    setInputs({ fileNameToDelete, parent, fileType }: { fileNameToDelete: string; parent: IFileDeleteDelegate; fileType: FileType }) {
+        this.fileNameToDelete.set(fileNameToDelete);
+        this.parent.set(parent);
+        this.fileType.set(fileType);
+    }
+
     /**
      * @function deleteFile
      * @desc Reads the provided fileName and deletes the matching file in the repository
      */
     deleteFile() {
         // Guard against PROBLEM_STATEMENT deletion - it's a pseudo-file, not a real repository file
-        if (this.fileType === FileType.PROBLEM_STATEMENT) {
+        if (this.fileType() === FileType.PROBLEM_STATEMENT) {
             this.closeModal();
             return;
         }
         this.isLoading = true;
         // Make sure we have a filename
-        if (this.fileNameToDelete) {
-            this.repositoryFileService.deleteFile(this.fileNameToDelete).subscribe({
+        const fileName = this.fileNameToDelete();
+        const fileType = this.fileType();
+        const parent = this.parent();
+        if (fileName && fileType && parent) {
+            this.repositoryFileService.deleteFile(fileName).subscribe({
                 next: () => {
                     this.closeModal();
-                    this.parent.onFileDeleted(new DeleteFileChange(this.fileType, this.fileNameToDelete));
+                    parent.onFileDeleted(new DeleteFileChange(fileType, fileName));
                 },
                 error: (err) => {
                     captureException(err);

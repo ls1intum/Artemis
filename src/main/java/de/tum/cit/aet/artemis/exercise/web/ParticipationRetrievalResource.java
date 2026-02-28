@@ -87,7 +87,14 @@ public class ParticipationRetrievalResource {
             @RequestParam(defaultValue = "false") boolean withLatestResults) {
         log.debug("REST request to get all Participations for Exercise {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
+        if (exercise.isCourseExercise()) {
+            // teaching assistants can access scores and participations in course exercises
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
+        }
+        else if (exercise.isExamExercise()) {
+            // only instructors can access scores and participations in exam exercises
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
+        }
         Set<StudentParticipation> participations;
         if (withLatestResults) {
             participations = participationService.findByExerciseIdWithLatestSubmissionResultAndAssessmentNote(exercise.getId(), exercise.isTeamMode());

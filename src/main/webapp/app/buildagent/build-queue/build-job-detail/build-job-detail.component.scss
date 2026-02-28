@@ -1,0 +1,8 @@
+.build-logs-pre {
+    max-height: 600px;
+    overflow-y: auto;
+    padding: 1rem;
+    font-size: 0.85rem;
+    // Let global pre styles handle color/background for proper theme support
+    // See global.scss which uses $artemis-pre-color, $artemis-pre-background, $artemis-pre-border
+}

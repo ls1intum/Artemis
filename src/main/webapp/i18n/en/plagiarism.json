@@ -61,6 +61,9 @@
             "continuousPlagiarismControlTooltip": "Continuous Plagiarism Control automatically triggers a plagiarism check each night. Detected are marked as plagiarism and students are gently notified about this fact.",
             "continuousPlagiarismControlEnabled": "Enable Continuous Plagiarism Control",
             "continuousPlagiarismControlPostDueDateChecksEnabled": "Check the submissions for plagiarism one more time after the due date.",
+            "validation": {
+                "mustBeInteger": "Value must be a whole number (no decimals)."
+            },
             "cleanUp": {
                 "confirmDialog": {
                     "title": "Clean up plagiarism comparisons",

@@ -5,13 +5,15 @@
             <fa-icon [icon]="robotIcon" class="text-primary me-2 fs-5" />
             <h4 class="modal-title mb-0 text-body" jhiTranslate="artemisApp.agent.chat.title"></h4>
         </div>
-        <button type="button" class="btn-close" aria-label="Close" (click)="closeModal()"></button>
+        <button pButton type="button" severity="secondary" text rounded class="modal-close-button" aria-label="Close" (click)="closeModal()">
+            <fa-icon [icon]="closeIcon" />
+        </button>
     </div>
 
     <!-- Messages Container -->
     <div class="modal-body p-0">
         <div class="messages-container" #messagesContainer>
-            @for (message of messages; track message.id) {
+            @for (message of messages(); track message.id) {
                 <div class="message-wrapper" [class.user-message]="message.isUser" [class.agent-message]="!message.isUser">
                     <div class="message-content">
                         <div class="message-header">
@@ -20,7 +22,112 @@
                                 {{ message.isUser ? ('artemisApp.agent.chat.you' | artemisTranslate) : ('artemisApp.agent.chat.aiAssistant' | artemisTranslate) }}
                             </span>
                         </div>
-                        <div class="message-text">{{ message.content }}</div>
+                        @if (message.content) {
+                            <div class="message-text">{{ message.content }}</div>
+                        }
+                        @if (message.planPending && !message.planApproved) {
+                            <div class="plan-approval-container mt-2">
+                                <button
+                                    pButton
+                                    type="button"
+                                    size="small"
+                                    severity="primary"
+                                    (click)="onApprovePlan(message)"
+                                    [disabled]="isAgentTyping()"
+                                    jhiTranslate="artemisApp.agent.chat.approvePlan"
+                                ></button>
+                            </div>
+                        }
+                        @if (message.competencyPreviews && message.competencyPreviews.length > 0) {
+                            <div class="competency-preview-container mt-2">
+                                @if (message.competencyPreviews.length > 1) {
+                                    <div class="mb-2">
+                                        <small class="text-muted">{{ 'artemisApp.agent.chat.preview' | artemisTranslate: { count: message.competencyPreviews.length } }}</small>
+                                    </div>
+                                }
+                                @for (preview of message.competencyPreviews; track preview.title + preview.competencyId) {
+                                    <div class="mb-2">
+                                        <jhi-competency-card [courseId]="courseId()" [competency]="preview" [noProgressRings]="true" />
+                                    </div>
+                                }
+                                @if (!message.competencyPreviews[0]?.viewOnly) {
+                                    <button
+                                        pButton
+                                        type="button"
+                                        size="small"
+                                        class="mt-2"
+                                        [severity]="message.competencyCreated ? 'success' : 'primary'"
+                                        (click)="onCreateCompetencies(message)"
+                                        [disabled]="isAgentTyping() || message.competencyCreated"
+                                    >
+                                        @if (message.competencyCreated) {
+                                            @if (message.competencyPreviews.length === 1) {
+                                                {{
+                                                    message.competencyPreviews[0].competencyId
+                                                        ? ('artemisApp.agent.chat.updated' | artemisTranslate)
+                                                        : ('artemisApp.agent.chat.created' | artemisTranslate)
+                                                }}
+                                            } @else {
+                                                {{ 'artemisApp.agent.chat.completed' | artemisTranslate: { count: message.competencyPreviews.length } }}
+                                            }
+                                        } @else {
+                                            @if (message.competencyPreviews.length === 1) {
+                                                {{
+                                                    message.competencyPreviews[0].competencyId
+                                                        ? ('artemisApp.agent.chat.update' | artemisTranslate)
+                                                        : ('artemisApp.agent.chat.create' | artemisTranslate)
+                                                }}
+                                            } @else {
+                                                {{
+                                                    message.competencyPreviews[0]?.competencyId
+                                                        ? ('artemisApp.agent.chat.updateAll' | artemisTranslate: { count: message.competencyPreviews.length })
+                                                        : ('artemisApp.agent.chat.createAll' | artemisTranslate: { count: message.competencyPreviews.length })
+                                                }}
+                                            }
+                                        }
+                                    </button>
+                                }
+                            </div>
+                        }
+                        @if (message.relationGraphPreview) {
+                            <div class="relation-graph-preview-container mt-2 border rounded">
+                                <div class="relation-graph-viewport">
+                                    @if (message.graphCompetencies && message.graphRelations) {
+                                        <jhi-course-competencies-relation-graph
+                                            [courseCompetencies]="message.graphCompetencies"
+                                            [relations]="message.graphRelations"
+                                            [(selectedRelationId)]="selectedRelationId"
+                                        />
+                                    }
+                                </div>
+                                @if (!message.relationGraphPreview.viewOnly) {
+                                    <div class="relation-graph-actions p-3 border-top">
+                                        <button
+                                            pButton
+                                            type="button"
+                                            size="small"
+                                            [severity]="message.relationCreated ? 'success' : 'primary'"
+                                            (click)="onCreateRelation(message)"
+                                            [disabled]="isAgentTyping() || message.relationCreated"
+                                        >
+                                            @if (message.relationCreated) {
+                                                @if (isRelationUpdateOperation(message)) {
+                                                    <span jhiTranslate="artemisApp.agent.chat.updated"></span>
+                                                } @else {
+                                                    <span jhiTranslate="artemisApp.agent.chat.mapped"></span>
+                                                }
+                                            } @else {
+                                                @if (isRelationUpdateOperation(message)) {
+                                                    <span jhiTranslate="artemisApp.agent.chat.update"></span>
+                                                } @else {
+                                                    <span jhiTranslate="artemisApp.agent.chat.map"></span>
+                                                }
+                                            }
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        }
                     </div>
                 </div>
             }
@@ -56,13 +163,13 @@
                     class="form-control message-input"
                     [ngModel]="currentMessage()"
                     (ngModelChange)="currentMessage.set($event)"
-                    (keypress)="onKeyPress($event)"
+                    (keydown)="onKeyPress($event)"
                     (input)="onTextareaInput()"
                     placeholder="Type your message here..."
                     [disabled]="isAgentTyping()"
                     rows="1"
                 ></textarea>
-                <button type="button" class="btn btn-primary send-button ms-2" (click)="sendMessage()" [disabled]="!canSendMessage()" aria-label="Send">
+                <button pButton type="button" severity="primary" class="send-button ms-2" (click)="sendMessage()" [disabled]="!canSendMessage()" aria-label="Send">
                     <fa-icon [icon]="sendIcon" />
                 </button>
             </div>

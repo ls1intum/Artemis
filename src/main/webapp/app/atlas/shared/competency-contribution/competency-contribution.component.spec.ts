@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { CompetencyContributionComponent } from './competency-contribution.component';
@@ -11,12 +12,14 @@ import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { CompetencyContributionCardDTO } from 'app/atlas/shared/entities/competency.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CompetencyContributionComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<CompetencyContributionComponent>;
     let courseCompetencyService: CourseCompetencyService;
-    let getCompetencyContributionsForExerciseStub: jest.SpyInstance;
-    let getCompetencyContributionsForLectureUnitStub: jest.SpyInstance;
+    let getCompetencyContributionsForExerciseStub: ReturnType<typeof vi.spyOn>;
+    let getCompetencyContributionsForLectureUnitStub: ReturnType<typeof vi.spyOn>;
     let profileService: ProfileService;
 
     beforeEach(async () => {
@@ -28,19 +31,19 @@ describe('CompetencyContributionComponent', () => {
         fixture = TestBed.createComponent(CompetencyContributionComponent);
 
         courseCompetencyService = TestBed.inject(CourseCompetencyService);
-        getCompetencyContributionsForExerciseStub = jest
+        getCompetencyContributionsForExerciseStub = vi
             .spyOn(courseCompetencyService, 'getCompetencyContributionsForExercise')
             .mockReturnValue(of({} as HttpResponse<CompetencyContributionCardDTO[]>));
-        getCompetencyContributionsForLectureUnitStub = jest
+        getCompetencyContributionsForLectureUnitStub = vi
             .spyOn(courseCompetencyService, 'getCompetencyContributionsForLectureUnit')
             .mockReturnValue(of({} as HttpResponse<CompetencyContributionCardDTO[]>));
 
         profileService = TestBed.inject(ProfileService);
-        jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should fetch for exercise', () => {

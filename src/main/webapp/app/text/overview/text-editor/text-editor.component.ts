@@ -34,7 +34,7 @@ import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { PROFILE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { RequestFeedbackButtonComponent } from 'app/core/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
@@ -166,7 +166,10 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             });
 
             this.textService.get(participationId!).subscribe({
-                next: (data: StudentParticipation) => this.updateParticipation(data, this.submissionId),
+                next: (data: StudentParticipation) => {
+                    this.updateParticipation(data, this.submissionId);
+                    this.loadIrisSettings();
+                },
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
 
@@ -195,19 +198,18 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                     }
                 }
                 this.updateParticipation(this.participation);
-                this.loadIrisSettings();
             });
     }
 
     /**
      * Loads Iris settings for the current exercise if Iris is available and the exercise is not in exam mode.
      *
-     * This method retrieves the application profile settings and checks if `PROFILE_IRIS` is active.
+     * This method retrieves the application profile settings and checks if `MODULE_FEATURE_IRIS` is active.
      * If active and the exercise is not in exam mode, it fetches the Iris settings for the given exercise ID.
      */
     private loadIrisSettings(): void {
         // only load the settings if Iris is available and this is not an exam exercise
-        if (this.profileService.isProfileActive(PROFILE_IRIS) && !this.examMode && this.course?.id) {
+        if (this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS) && !this.examMode && this.course?.id) {
             this.irisSettingsService.getCourseSettingsWithRateLimit(this.course.id).subscribe((response) => {
                 this.irisSettings = response;
             });

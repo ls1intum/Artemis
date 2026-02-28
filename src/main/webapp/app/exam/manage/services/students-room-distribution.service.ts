@@ -1,6 +1,6 @@
 import { Injectable, Signal, WritableSignal, computed, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Observable, catchError, map, throwError } from 'rxjs';
+import { Observable, catchError, map, of, throwError } from 'rxjs';
 import { ExamDistributionCapacityDTO, RoomForDistributionDTO, SeatsOfExamRoomDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
 
 @Injectable({ providedIn: 'root' })
@@ -91,7 +91,11 @@ export class StudentsRoomDistributionService {
      * @param courseId id of the course
      * @param examId id of the exam
      */
-    loadRoomsUsedInExam(courseId: number, examId: number): Observable<RoomForDistributionDTO[]> {
+    loadRoomsUsedInExam(courseId?: number, examId?: number): Observable<RoomForDistributionDTO[]> {
+        if (!courseId || !examId) {
+            return of([]);
+        }
+
         const requestUrl = `${this.BASE_URL}/courses/${courseId}/exams/${examId}/rooms-used`;
         return this.http.get<RoomForDistributionDTO[]>(requestUrl).pipe(
             map((rooms: RoomForDistributionDTO[]) => rooms),

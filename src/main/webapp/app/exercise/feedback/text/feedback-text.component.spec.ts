@@ -69,8 +69,8 @@ describe('FeedbackTextComponent', () => {
         expect(getLongFeedbackStub).toHaveBeenCalledOnce();
         expect(getLongFeedbackStub).toHaveBeenCalledWith(2);
         expect(comp.text).toBe(longFeedbackText);
-        expect(comp.downloadText).toBeUndefined();
-        expect(comp.downloadFilename).toBeUndefined();
+        expect(comp.downloadText).toBeDefined();
+        expect(comp.downloadFilename).toBeDefined();
     }));
 
     it('should create a download link for very long feedback', fakeAsync(() => {
@@ -81,7 +81,7 @@ describe('FeedbackTextComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(comp.text).toBe('short version');
+        expect(comp.text).toBe(longFeedbackText);
         expect(comp.downloadFilename).toBe('feedback_2.txt');
         expect(comp.downloadText).toContain('data:text/plain;charset=utf-8,');
         expect(comp.downloadText).toContain(longFeedbackText);

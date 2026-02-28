@@ -232,6 +232,18 @@ describe('CourseSidebarItemService', () => {
             expect(item.featureToggle).toBe(FeatureToggle.StudentCourseAnalyticsDashboard);
         });
 
+        it('getIrisItem should return correct item', () => {
+            const item = service.getIrisItem();
+
+            expect(item).toEqual({
+                routerLink: 'iris',
+                icon: faRobot,
+                title: 'Iris',
+                translation: 'artemisApp.courseOverview.menu.iris',
+                hidden: false,
+            });
+        });
+
         it('getFaqManagementItem should return correct item', () => {
             const item = service.getFaqManagementItem(courseId);
 
@@ -297,9 +309,9 @@ describe('CourseSidebarItemService', () => {
             const item = service.getBuildQueueItem(courseId);
 
             expect(item).toEqual({
-                routerLink: `${courseId}/build-queue`,
+                routerLink: `${courseId}/build-overview`,
                 icon: faList,
-                title: 'Build Queue',
+                title: 'Build Overview',
                 translation: 'artemisApp.buildQueue.title',
                 hidden: false,
             });

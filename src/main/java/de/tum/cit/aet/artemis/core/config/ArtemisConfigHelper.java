@@ -3,9 +3,13 @@ package de.tum.cit.aet.artemis.core.config;
 import static de.tum.cit.aet.artemis.core.config.Constants.ATLAS_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.HYPERION_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.IRIS_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.LTI_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.NEBULA_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.PASSKEY_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.SHARING_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.THEIA_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.WEAVIATE_ENABLED_PROPERTY_NAME;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,6 +72,16 @@ public class ArtemisConfigHelper {
      */
     public boolean isHyperionEnabled(Environment environment) {
         return getPropertyOrExitArtemis(HYPERION_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if the Iris module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the Iris module is enabled, false otherwise
+     */
+    public boolean isIrisEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(IRIS_ENABLED_PROPERTY_NAME, environment);
     }
 
     /**
@@ -151,6 +165,38 @@ public class ArtemisConfigHelper {
     }
 
     /**
+     * Check if the LTI module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the LTI module is enabled, false otherwise
+     */
+    public boolean isLtiEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(LTI_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if the Theia module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the Theia module is enabled, false otherwise
+     */
+    public boolean isTheiaEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(THEIA_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if the Weaviate integration is enabled.
+     * Defaults to false if not configured, as this is a development feature.
+     *
+     * @param environment the Spring environment
+     * @return true if the Weaviate integration is enabled, false otherwise
+     */
+    public boolean isWeaviateEnabled(Environment environment) {
+        // For now this is a development feature only, so we default to false instead of throwing an error if the property is missing
+        return environment.getProperty(WEAVIATE_ENABLED_PROPERTY_NAME, Boolean.class, false);
+    }
+
+    /**
      * Gets the list of all enabled module features based on configuration.
      *
      * @param environment the Spring environment
@@ -164,6 +210,9 @@ public class ArtemisConfigHelper {
         }
         if (isHyperionEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_HYPERION);
+        }
+        if (isIrisEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_IRIS);
         }
         if (isExamEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_EXAM);
@@ -197,6 +246,12 @@ public class ArtemisConfigHelper {
         }
         if (isSharingEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_SHARING);
+        }
+        if (isLtiEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_LTI);
+        }
+        if (isTheiaEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_THEIA);
         }
 
         return enabledFeatures;

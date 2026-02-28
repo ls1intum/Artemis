@@ -14,8 +14,6 @@ import { HttpClient,
          HttpResponse, HttpEvent, HttpContext 
         }       from '@angular/common/http';
 import { Observable }                                        from 'rxjs';
-
-
 // @ts-ignore
 import { BASE_PATH }                     from '../variables';
 import { Configuration }                                     from '../configuration';
@@ -33,11 +31,13 @@ export class TutorialGroupFreePeriodApiService extends BaseService {
     }
 
     /**
+     * @endpoint delete /api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialGroupFreePeriodId}
      * @param courseId 
      * @param tutorialGroupsConfigurationId 
      * @param tutorialGroupFreePeriodId 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
+     * @param options additional options
      */
     public delete(courseId: number, tutorialGroupsConfigurationId: number, tutorialGroupFreePeriodId: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
     public delete(courseId: number, tutorialGroupsConfigurationId: number, tutorialGroupFreePeriodId: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
@@ -86,7 +86,7 @@ export class TutorialGroupFreePeriodApiService extends BaseService {
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
                 observe: observe,
-                transferCache: localVarTransferCache,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
                 reportProgress: reportProgress
             }
         );

@@ -226,8 +226,12 @@ public class UserCreationService {
         user.setFirstName(updatedUserDTO.getFirstName());
         user.setLastName(updatedUserDTO.getLastName());
         user.setEmail(updatedUserDTO.getEmail().toLowerCase());
-        // an empty string is considered as null to satisfy the unique constraint on registration number
-        if (StringUtils.hasText(updatedUserDTO.getVisibleRegistrationNumber())) {
+
+        // allow to remove the registration: an empty string is considered as null to satisfy the unique constraint on registration number
+        if (!StringUtils.hasText(updatedUserDTO.getVisibleRegistrationNumber())) {
+            user.setRegistrationNumber(null);
+        }
+        else {
             user.setRegistrationNumber(updatedUserDTO.getVisibleRegistrationNumber());
         }
         if (updatedUserDTO.getImageUrl() != null) {

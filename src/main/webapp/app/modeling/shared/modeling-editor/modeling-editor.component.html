@@ -108,11 +108,7 @@
         }
     </div>
     @if (readOnly()) {
-        <div
-            class="d-flex align-items-center justify-content-center readonly-diagram scroll-container"
-            [innerHtml]="readOnlySVG"
-            [ngClass]="{ 'full-screen-margin': isFullScreen }"
-        ></div>
+        <div class="d-flex align-items-center readonly-diagram scroll-container" [innerHtml]="readOnlySVG" [ngClass]="{ 'full-screen-margin': isFullScreen }"></div>
     }
 
     @if (withExplanation()) {

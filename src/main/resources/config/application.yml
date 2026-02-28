@@ -140,12 +140,36 @@ artemis:
         url: # Set this in production environment (e.g., https://nebula.example.com)
         secret-token: # Set this in production environment
 
+    # Theia configuration for online IDE functionality
+    theia:
+        enabled: false
+        portal-url: https://your-theia-instance.com
+
+        # Theia IDE images available for the different programming languages
+        images:
+            # Upper level key is the language category (must match the language key in the programming-exercise configuration)
+          java:
+            # Lower level key can be multiple flavors of the image, e.g. version, tag, or additional dependencies
+            java17: "my-kubernetes-appdefinition"
+            # Add more flavors here (e.g. Java-11, Java-8, etc.)
+            # Add more languages here (e.g. c, python, etc.)
+            c:
+              C: "my-kubernetes-appdefinition"
+
+
+    # Iris / Pyris configuration for AI-powered features
     iris:
+        enabled: false # Set this to true in prod if you want to use Iris
+        url: # Set this in production environment (e.g., https://pyris.example.com)
+        secret-token: # Set this in production environment
         ratelimit:
             # Use -1 for both values to indicate unlimited (no rate limiting)
             # Otherwise: default-limit >= 0 (0 = no requests allowed), default-timeframe-hours >= 1
             default-limit: -1
             default-timeframe-hours: -1
+
+    weaviate:
+        enabled: false
 
     # Default security configuration for internal endpoints accessed by other Artemis components
     # Currently set to allow all IPs. Adjust as necessary for your deployment.
@@ -358,6 +382,7 @@ info:
     # default value set to false
     textAssessmentAnalyticsEnabled: false
     studentExamStoreSessionData: true
+    localLLMDeploymentEnabled: false # Defines whether local on-premise LLMs are available or not
 
 # ===================================================================
 # JHipster specific properties
@@ -382,13 +407,25 @@ jhipster:
         password: AN-ADMIN-PASSWORD-THAT-MUST-BE-CHANGED (FROM REGISTRY CONFIG)
     http:
         cache: # Used by the CachingHttpHeadersFilter
-            timeToLiveInDays: 1461
+            # 7 days balances caching benefits with allowing bug fixes to propagate within a reasonable timeframe.
+            # Longer durations (e.g., years) make it difficult to push fixes to users who have cached broken responses.
+            timeToLiveInDays: 7
     cache: # Cache configuration
         hazelcast: # Hazelcast distributed cache
             time-to-live-seconds: 3600
             backup-count: 1
 
-# Eureka configuration
+# =======================================================================================
+# EUREKA CONFIGURATION (Service Discovery via JHipster Registry)
+# =======================================================================================
+# Eureka is used for service discovery, allowing Artemis nodes (core servers and build agents)
+# to find each other dynamically. The JHipster Registry acts as the Eureka server.
+#
+# Key use cases:
+# - Build agents discover core nodes to establish Hazelcast client connections
+# - Core nodes discover other core nodes for Hazelcast cluster formation
+# - Load balancers can use Eureka to find healthy instances
+# =======================================================================================
 eureka:
     client:
         region: default
@@ -407,8 +444,34 @@ eureka:
         prefer-ip-address: true
         appname: Artemis
         instanceId: Artemis:1
-        lease-renewal-interval-in-seconds: 20
-        lease-expiration-duration-in-seconds: 60
+        # -----------------------------------------------------------------------------------
+        # EUREKA LEASE/HEARTBEAT CONFIGURATION
+        # -----------------------------------------------------------------------------------
+        # These settings control how quickly the Eureka server (JHipster Registry) detects
+        # that an Artemis instance (core node or build agent) has gone offline.
+        #
+        # How it works:
+        # - Each instance sends a heartbeat to Eureka every 'lease-renewal-interval-in-seconds'
+        # - If Eureka doesn't receive a heartbeat within 'lease-expiration-duration-in-seconds',
+        #   the instance is marked as DOWN and eventually evicted from the registry
+        #
+        # Values chosen (10s interval, 30s expiration):
+        # - Balanced between fast detection and tolerance for brief network issues
+        # - Allows for 3 missed heartbeats before declaring an instance as DOWN
+        # - More conservative than Hazelcast (5s/15s) because Eureka handles service discovery
+        #   across potentially less reliable networks, and false-positive deregistrations
+        #   can cause unnecessary service disruption
+        # - Still fast enough to remove crashed instances within ~30-45 seconds
+        #
+        # Note: The actual eviction time also depends on the Eureka server's eviction interval
+        # (configured on the JHipster Registry side, typically runs every 60 seconds by default)
+        #
+        # Comparison with Hazelcast timeouts:
+        # - Hazelcast client heartbeat: 5s interval, 15s timeout (for real-time build agent status)
+        # - Eureka lease: 10s interval, 30s timeout (for service discovery, more tolerant)
+        # -----------------------------------------------------------------------------------
+        lease-renewal-interval-in-seconds: 10
+        lease-expiration-duration-in-seconds: 30
         status-page-url-path: ${management.endpoints.web.base-path}/info
         health-check-url-path: ${management.endpoints.web.base-path}/health
         metadata-map:

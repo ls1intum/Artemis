@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
-
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
@@ -10,8 +8,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.ResourceAccessException;
@@ -23,11 +21,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisHealthStatusDTO;
 
 @Component
 @Lazy
-@Profile(PROFILE_IRIS)
+@Conditional(IrisEnabled.class)
 public class PyrisHealthIndicator implements HealthIndicator {
 
     private static final String GREEN_CIRCLE = "\uD83D\uDFE2"; // 🟢

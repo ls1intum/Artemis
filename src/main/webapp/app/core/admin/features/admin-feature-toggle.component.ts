@@ -15,26 +15,26 @@ import {
     MODULE_FEATURE_EXAM,
     MODULE_FEATURE_FILEUPLOAD,
     MODULE_FEATURE_HYPERION,
+    MODULE_FEATURE_IRIS,
     MODULE_FEATURE_LECTURE,
+    MODULE_FEATURE_LTI,
     MODULE_FEATURE_MODELING,
     MODULE_FEATURE_NEBULA,
     MODULE_FEATURE_PASSKEY,
     MODULE_FEATURE_PLAGIARISM,
     MODULE_FEATURE_SHARING,
     MODULE_FEATURE_TEXT,
+    MODULE_FEATURE_THEIA,
     MODULE_FEATURE_TUTORIALGROUP,
     ModuleFeature,
     PROFILE_AEOLUS,
     PROFILE_APOLLON,
     PROFILE_ATHENA,
     PROFILE_BUILDAGENT,
-    PROFILE_IRIS,
     PROFILE_JENKINS,
     PROFILE_LDAP,
     PROFILE_LOCALCI,
-    PROFILE_LTI,
     PROFILE_SAML2,
-    PROFILE_THEIA,
     ProfileFeature,
 } from 'app/app.constants';
 
@@ -88,11 +88,8 @@ export class AdminFeatureToggleComponent implements OnInit {
 
     /** Profiles to display (excluding internal profiles like dev, prod, test) */
     private readonly displayedProfiles: ProfileFeature[] = [
-        PROFILE_IRIS,
         PROFILE_ATHENA,
-        PROFILE_LTI,
         PROFILE_APOLLON,
-        PROFILE_THEIA,
         PROFILE_LDAP,
         PROFILE_SAML2,
         PROFILE_LOCALCI,
@@ -103,6 +100,7 @@ export class AdminFeatureToggleComponent implements OnInit {
 
     /** Module features to display */
     private readonly displayedModuleFeatures: ModuleFeature[] = [
+        MODULE_FEATURE_IRIS,
         MODULE_FEATURE_ATLAS,
         MODULE_FEATURE_HYPERION,
         MODULE_FEATURE_EXAM,
@@ -114,51 +112,56 @@ export class AdminFeatureToggleComponent implements OnInit {
         MODULE_FEATURE_TUTORIALGROUP,
         MODULE_FEATURE_NEBULA,
         MODULE_FEATURE_SHARING,
+        MODULE_FEATURE_LTI,
         MODULE_FEATURE_PASSKEY,
+        MODULE_FEATURE_THEIA,
     ];
 
     /** Documentation links for runtime feature toggles */
     private readonly documentationLinks: Partial<Record<FeatureToggle, string>> = {
-        [FeatureToggle.ProgrammingExercises]: 'https://docs.artemis.cit.tum.de/user/exercises/programming/',
-        [FeatureToggle.PlagiarismChecks]: 'https://docs.artemis.cit.tum.de/user/plagiarism-check/',
-        [FeatureToggle.Exports]: 'https://docs.artemis.cit.tum.de/user/exports/',
-        [FeatureToggle.LearningPaths]: 'https://docs.artemis.cit.tum.de/user/adaptive-learning/',
-        [FeatureToggle.StandardizedCompetencies]: 'https://docs.artemis.cit.tum.de/user/adaptive-learning/',
-        [FeatureToggle.StudentCourseAnalyticsDashboard]: 'https://docs.artemis.cit.tum.de/user/learning-analytics/',
-        [FeatureToggle.TutorSuggestions]: 'https://docs.artemis.cit.tum.de/admin/setup/athena/',
-        [FeatureToggle.AtlasML]: 'https://docs.artemis.cit.tum.de/user/adaptive-learning/',
-        [FeatureToggle.AtlasAgent]: 'https://docs.artemis.cit.tum.de/admin/setup/pyris/',
-        [FeatureToggle.Memiris]: 'https://docs.artemis.cit.tum.de/admin/setup/pyris/',
-        [FeatureToggle.LectureContentProcessing]: 'https://docs.artemis.cit.tum.de/admin/setup/nebula/',
+        [FeatureToggle.ProgrammingExercises]: 'https://docs.artemis.tum.de/instructor/exercises/programming-exercise',
+        [FeatureToggle.PlagiarismChecks]: 'https://docs.artemis.tum.de/instructor/plagiarism-check',
+        [FeatureToggle.Exports]: 'https://docs.artemis.tum.de/instructor/exports',
+        [FeatureToggle.LearningPaths]: 'https://docs.artemis.tum.de/instructor/adaptive-learning',
+        [FeatureToggle.StandardizedCompetencies]: 'https://docs.artemis.tum.de/admin/adaptive-learning',
+        [FeatureToggle.StudentCourseAnalyticsDashboard]: 'https://docs.artemis.tum.de/instructor/learning-analytics',
+        [FeatureToggle.TutorSuggestions]: 'https://docs.artemis.tum.de/instructor/communication#tutor-suggestions',
+        [FeatureToggle.AtlasML]: 'https://docs.artemis.tum.de/admin/artemis-intelligence',
+        [FeatureToggle.AtlasAgent]: 'https://docs.artemis.tum.de/admin/artemis-intelligence',
+        [FeatureToggle.Memiris]: 'https://docs.artemis.tum.de/admin/extensions-setup#iris--pyris-setup-guide',
+        [FeatureToggle.LectureContentProcessing]: 'https://docs.artemis.tum.de/admin/extensions-setup#nebula-setup-guide',
+        [FeatureToggle.RateLimit]: 'https://docs.artemis.tum.de/admin/production-setup/security/#rate-limiting',
     };
 
     /** Documentation links for profile-based features */
     private readonly profileDocumentationLinks: Partial<Record<ProfileFeature, string>> = {
-        [PROFILE_IRIS]: 'https://docs.artemis.cit.tum.de/admin/setup/pyris/',
-        [PROFILE_ATHENA]: 'https://docs.artemis.cit.tum.de/admin/setup/athena/',
-        [PROFILE_LTI]: 'https://docs.artemis.cit.tum.de/admin/setup/lti/',
-        [PROFILE_APOLLON]: 'https://docs.artemis.cit.tum.de/user/exercises/modeling/',
-        [PROFILE_THEIA]: 'https://docs.artemis.cit.tum.de/admin/setup/theia/',
-        [PROFILE_LDAP]: 'https://docs.artemis.cit.tum.de/admin/setup/authentication/',
-        [PROFILE_SAML2]: 'https://docs.artemis.cit.tum.de/admin/setup/authentication/',
-        [PROFILE_LOCALCI]: 'https://docs.artemis.cit.tum.de/admin/setup/local-ci/',
-        [PROFILE_BUILDAGENT]: 'https://docs.artemis.cit.tum.de/admin/setup/local-ci/',
-        [PROFILE_AEOLUS]: 'https://docs.artemis.cit.tum.de/admin/setup/aeolus/',
-        [PROFILE_JENKINS]: 'https://docs.artemis.cit.tum.de/admin/setup/jenkins/',
+        [PROFILE_ATHENA]: 'https://docs.artemis.tum.de/admin/extensions-setup#athena-service',
+        [PROFILE_APOLLON]: 'https://docs.artemis.tum.de/instructor/exercises/modeling-exercise',
+        [PROFILE_LDAP]: 'https://docs.artemis.tum.de/admin/production-setup/security#ldap-authentication',
+        [PROFILE_SAML2]: 'https://docs.artemis.tum.de/admin/saml2-login-registration',
+        [PROFILE_LOCALCI]: 'https://docs.artemis.tum.de/developer/setup#integrated-code-lifecycle-setup',
+        [PROFILE_BUILDAGENT]: 'https://docs.artemis.tum.de/developer/setup#integrated-code-lifecycle-setup',
+        [PROFILE_AEOLUS]: 'https://docs.artemis.tum.de/developer/aeolus',
+        [PROFILE_JENKINS]: 'https://docs.artemis.tum.de/developer/jenkins-localvc',
     };
 
     /** Documentation links for module features */
     private readonly moduleDocumentationLinks: Partial<Record<ModuleFeature, string>> = {
-        [MODULE_FEATURE_ATLAS]: 'https://docs.artemis.cit.tum.de/user/adaptive-learning/',
-        [MODULE_FEATURE_HYPERION]: 'https://docs.artemis.cit.tum.de/admin/setup/hyperion/',
-        [MODULE_FEATURE_EXAM]: 'https://docs.artemis.cit.tum.de/user/exam_mode/',
-        [MODULE_FEATURE_PLAGIARISM]: 'https://docs.artemis.cit.tum.de/user/plagiarism-check/',
-        [MODULE_FEATURE_TEXT]: 'https://docs.artemis.cit.tum.de/user/exercises/textual/',
-        [MODULE_FEATURE_MODELING]: 'https://docs.artemis.cit.tum.de/user/exercises/modeling/',
-        [MODULE_FEATURE_FILEUPLOAD]: 'https://docs.artemis.cit.tum.de/user/exercises/file-upload/',
-        [MODULE_FEATURE_LECTURE]: 'https://docs.artemis.cit.tum.de/user/lectures/',
-        [MODULE_FEATURE_TUTORIALGROUP]: 'https://docs.artemis.cit.tum.de/user/tutorialgroups/',
-        [MODULE_FEATURE_PASSKEY]: 'https://docs.artemis.cit.tum.de/admin/setup/authentication/',
+        [MODULE_FEATURE_IRIS]: 'https://docs.artemis.tum.de/admin/extensions-setup#iris--pyris-setup-guide',
+        [MODULE_FEATURE_ATLAS]: 'https://docs.artemis.tum.de/instructor/adaptive-learning',
+        [MODULE_FEATURE_HYPERION]: 'https://docs.artemis.tum.de/admin/hyperion',
+        [MODULE_FEATURE_EXAM]: 'https://docs.artemis.tum.de/instructor/exams/intro',
+        [MODULE_FEATURE_PLAGIARISM]: 'https://docs.artemis.tum.de/instructor/plagiarism-check',
+        [MODULE_FEATURE_TEXT]: 'https://docs.artemis.tum.de/instructor/exercises/text-exercise',
+        [MODULE_FEATURE_MODELING]: 'https://docs.artemis.tum.de/instructor/exercises/modeling-exercise',
+        [MODULE_FEATURE_FILEUPLOAD]: 'https://docs.artemis.tum.de/instructor/exercises/file-upload-exercise',
+        [MODULE_FEATURE_LECTURE]: 'https://docs.artemis.tum.de/instructor/lectures',
+        [MODULE_FEATURE_TUTORIALGROUP]: 'https://docs.artemis.tum.de/instructor/tutorial-groups',
+        [MODULE_FEATURE_NEBULA]: 'https://docs.artemis.tum.de/admin/extensions-setup#nebula-setup-guide',
+        [MODULE_FEATURE_SHARING]: 'https://docs.artemis.tum.de/admin/extensions-setup#setup-guide-for-exchange-with-the-sharing-platform',
+        [MODULE_FEATURE_LTI]: 'https://docs.artemis.tum.de/instructor/lti-configuration',
+        [MODULE_FEATURE_PASSKEY]: 'https://docs.artemis.tum.de/admin/production-setup/security#passkey-authentication',
+        [MODULE_FEATURE_THEIA]: 'https://docs.artemis.tum.de',
     };
 
     ngOnInit(): void {

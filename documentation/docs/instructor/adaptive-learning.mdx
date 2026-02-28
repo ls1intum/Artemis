@@ -7,6 +7,7 @@ sidebar_label: Adaptive Learning
 import Callout from "../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../src/components/Image/Image";
+import TumLiveVideo from "../../src/components/TumLiveVideo/TumLiveVideo";
 
 import instructorCompetencyManagementImg from './assets/adaptive-learning/manage-competencies.png';
 import instructorImportAllCompetenciesImg from './assets/adaptive-learning/import-all-competencies.png';
@@ -24,13 +25,7 @@ import competencyGenerationSettingsImg from './assets/adaptive-learning/competen
 
 Adaptive Learning in Artemis is centered around **competencies**, overarching learning objectives that tie together various lectures and exercises. Artemis is also able to provide students with individualized **learning paths** based on competencies and their relations.
 
-<iframe
-    src="https://live.rbg.tum.de/w/artemisintro/26313?video_only=1&t=0"
-    allowFullScreen="1"
-    frameBorder="0"
-    width="600"
-    height="350"
-/>
+<TumLiveVideo src="https://live.rbg.tum.de/w/artemisintro/26313" title="Adaptive Learning Overview" />
 
 Students can track their progress in `competencies_student` and view the next recommended content in their `learning_paths_student`.
 
@@ -154,13 +149,7 @@ Again, selected competencies are displayed in a table and can be de-selected aga
 
 <Image src={competencyGenerationSettingsImg} alt={"competency-generation-settings"} size={ImageSize.large} />
 
-<iframe
-    src="https://live.rbg.tum.de/w/artemisintro/46941?video_only=1&t=0"
-    allowFullScreen="1"
-    frameBorder="0"
-    width="600"
-    height="350"
-/>
+<TumLiveVideo src="https://live.rbg.tum.de/w/artemisintro/46941" title="Generate Competencies with LLM" />
 
 | Instructors can use the integrated LLM subsystem of Artemis, to generate competencies for their course.
 | Based on a course description, the LLM generates around 10 recommendations for possible competencies (the amount may vary depending on the description provided).

@@ -31,7 +31,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ImageCropperModalComponent } from 'app/core/course/manage/image-cropper-modal/image-cropper-modal.component';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
-import { MODULE_FEATURE_ATLAS, PROFILE_LTI } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_LTI } from 'app/app.constants';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
@@ -133,7 +133,7 @@ describe('Course Management Update Component', () => {
 
     describe('ngOnInit', () => {
         it('should get course, profile and fill the form', async () => {
-            const profileInfo = { activeProfiles: [PROFILE_LTI], activeModuleFeatures: [MODULE_FEATURE_ATLAS] } as unknown as ProfileInfo;
+            const profileInfo = { activeProfiles: [], activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_LTI] } as unknown as ProfileInfo;
             const getProfileStub = vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
             const organization = new Organization();
             organization.id = 12344;
@@ -730,6 +730,263 @@ describe('Course Management Update Component', () => {
         });
     });
 
+    describe('form date control syncing', () => {
+        beforeEach(() => {
+            comp.ngOnInit();
+        });
+
+        it('should sync all date form control changes back to course model', () => {
+            const newStartDate = dayjs().subtract(10, 'day');
+            const newEndDate = dayjs().add(10, 'day');
+            const newEnrollmentStart = dayjs().subtract(5, 'day');
+            const newEnrollmentEnd = dayjs().add(3, 'day');
+            const newUnenrollmentEnd = dayjs().add(5, 'day');
+
+            // Verify initial state: course model does not yet have these values
+            expect(comp.course.startDate).not.toBe(newStartDate);
+            expect(comp.course.endDate).not.toBe(newEndDate);
+            expect(comp.course.enrollmentStartDate).not.toBe(newEnrollmentStart);
+            expect(comp.course.enrollmentEndDate).not.toBe(newEnrollmentEnd);
+            expect(comp.course.unenrollmentEndDate).not.toBe(newUnenrollmentEnd);
+
+            // Set each date via form control and verify it syncs to course model
+            comp.courseForm.controls['startDate'].setValue(newStartDate);
+            expect(comp.course.startDate).toBe(newStartDate);
+
+            comp.courseForm.controls['endDate'].setValue(newEndDate);
+            expect(comp.course.endDate).toBe(newEndDate);
+
+            comp.courseForm.controls['enrollmentStartDate'].setValue(newEnrollmentStart);
+            expect(comp.course.enrollmentStartDate).toBe(newEnrollmentStart);
+
+            comp.courseForm.controls['enrollmentEndDate'].setValue(newEnrollmentEnd);
+            expect(comp.course.enrollmentEndDate).toBe(newEnrollmentEnd);
+
+            comp.courseForm.controls['unenrollmentEndDate'].setValue(newUnenrollmentEnd);
+            expect(comp.course.unenrollmentEndDate).toBe(newUnenrollmentEnd);
+
+            // Verify all values are still correct after all updates
+            expect(comp.course.startDate).toBe(newStartDate);
+            expect(comp.course.endDate).toBe(newEndDate);
+            expect(comp.course.enrollmentStartDate).toBe(newEnrollmentStart);
+            expect(comp.course.enrollmentEndDate).toBe(newEnrollmentEnd);
+            expect(comp.course.unenrollmentEndDate).toBe(newUnenrollmentEnd);
+        });
+
+        it('should sync undefined/null values back to course model when dates are cleared', () => {
+            // Set initial dates on course model
+            comp.course.startDate = dayjs().subtract(5, 'day');
+            comp.course.endDate = dayjs().add(5, 'day');
+            comp.course.enrollmentStartDate = dayjs().subtract(3, 'day');
+            comp.course.enrollmentEndDate = dayjs().add(3, 'day');
+            comp.course.unenrollmentEndDate = dayjs().add(4, 'day');
+
+            // Clear each date via form control and verify it syncs undefined to course model
+            comp.courseForm.controls['startDate'].setValue(undefined);
+            expect(comp.course.startDate).toBeUndefined();
+
+            comp.courseForm.controls['endDate'].setValue(undefined);
+            expect(comp.course.endDate).toBeUndefined();
+
+            comp.courseForm.controls['enrollmentStartDate'].setValue(null);
+            expect(comp.course.enrollmentStartDate).toBeNull();
+
+            comp.courseForm.controls['enrollmentEndDate'].setValue(undefined);
+            expect(comp.course.enrollmentEndDate).toBeUndefined();
+
+            comp.courseForm.controls['unenrollmentEndDate'].setValue(null);
+            expect(comp.course.unenrollmentEndDate).toBeNull();
+        });
+
+        it('should keep form control and course model values consistent after multiple updates', () => {
+            const date1 = dayjs().add(5, 'day');
+            const date2 = dayjs().add(10, 'day');
+            const date3 = dayjs().add(15, 'day');
+
+            comp.courseForm.controls['endDate'].setValue(date1);
+            expect(comp.course.endDate).toBe(date1);
+            expect(comp.courseForm.controls['endDate'].value).toBe(date1);
+
+            comp.courseForm.controls['endDate'].setValue(date2);
+            expect(comp.course.endDate).toBe(date2);
+            expect(comp.courseForm.controls['endDate'].value).toBe(date2);
+
+            comp.courseForm.controls['endDate'].setValue(date3);
+            expect(comp.course.endDate).toBe(date3);
+            expect(comp.courseForm.controls['endDate'].value).toBe(date3);
+        });
+
+        it('should update isValidDate when startDate or endDate changes via form control', () => {
+            // Set valid start/end dates directly on the model first
+            comp.course.startDate = dayjs().subtract(5, 'day');
+            comp.course.endDate = dayjs().add(5, 'day');
+            expect(comp.isValidDate).toBe(true);
+
+            // Move startDate after endDate via form control -> should become invalid
+            const invalidStartDate = dayjs().add(10, 'day');
+            comp.courseForm.controls['startDate'].setValue(invalidStartDate);
+            expect(comp.course.startDate).toBe(invalidStartDate);
+            expect(comp.isValidDate).toBe(false);
+
+            // Fix by moving endDate further out via form control -> should become valid again
+            const laterEndDate = dayjs().add(20, 'day');
+            comp.courseForm.controls['endDate'].setValue(laterEndDate);
+            expect(comp.course.endDate).toBe(laterEndDate);
+            expect(comp.isValidDate).toBe(true);
+        });
+
+        it('should update isValidDate to true when endDate is cleared via form control', () => {
+            comp.course.startDate = dayjs().subtract(5, 'day');
+            comp.course.endDate = dayjs().add(5, 'day');
+            expect(comp.isValidDate).toBe(true);
+
+            // Clearing endDate: atLeastOneDateNotExisting() returns true, so isValidDate = true
+            comp.courseForm.controls['endDate'].setValue(undefined);
+            expect(comp.course.endDate).toBeUndefined();
+            expect(comp.isValidDate).toBe(true);
+        });
+
+        it('should invalidate enrollment period when endDate is moved before enrollmentEndDate via form control', () => {
+            comp.course.startDate = dayjs().subtract(5, 'day');
+            comp.course.endDate = dayjs().add(5, 'day');
+            comp.course.enrollmentStartDate = dayjs().subtract(3, 'day');
+            comp.course.enrollmentEndDate = dayjs().add(3, 'day');
+            expect(comp.isValidEnrollmentPeriod).toBe(true);
+            expect(comp.isValidConfiguration).toBe(true);
+
+            // Move endDate before enrollmentEndDate -> enrollment period should be invalid
+            const newEndDate = dayjs().add(1, 'day');
+            comp.courseForm.controls['endDate'].setValue(newEndDate);
+            expect(comp.course.endDate).toBe(newEndDate);
+            expect(comp.isValidEnrollmentPeriod).toBe(false);
+            expect(comp.isValidConfiguration).toBe(false);
+        });
+
+        it('should keep enrollment period valid when extending endDate past enrollmentEndDate via form control', () => {
+            comp.course.startDate = dayjs().subtract(5, 'day');
+            comp.course.endDate = dayjs().add(5, 'day');
+            comp.course.enrollmentStartDate = dayjs().subtract(3, 'day');
+            comp.course.enrollmentEndDate = dayjs().add(3, 'day');
+            expect(comp.isValidEnrollmentPeriod).toBe(true);
+            expect(comp.isValidConfiguration).toBe(true);
+
+            // Extend endDate further out -> enrollment period should remain valid
+            const newEndDate = dayjs().add(10, 'day');
+            comp.courseForm.controls['endDate'].setValue(newEndDate);
+            expect(comp.course.endDate).toBe(newEndDate);
+            expect(comp.isValidEnrollmentPeriod).toBe(true);
+            expect(comp.isValidConfiguration).toBe(true);
+        });
+
+        it('should invalidate enrollment period when enrollmentStartDate is moved after enrollmentEndDate via form control', () => {
+            comp.course.startDate = dayjs().subtract(5, 'day');
+            comp.course.endDate = dayjs().add(5, 'day');
+            comp.course.enrollmentStartDate = dayjs().subtract(3, 'day');
+            comp.course.enrollmentEndDate = dayjs().add(3, 'day');
+            expect(comp.isValidEnrollmentPeriod).toBe(true);
+
+            // Move enrollmentStartDate after enrollmentEndDate -> invalid
+            const invalidEnrollmentStart = dayjs().add(4, 'day');
+            comp.courseForm.controls['enrollmentStartDate'].setValue(invalidEnrollmentStart);
+            expect(comp.course.enrollmentStartDate).toBe(invalidEnrollmentStart);
+            expect(comp.isValidEnrollmentPeriod).toBe(false);
+            expect(comp.isValidConfiguration).toBe(false);
+        });
+
+        it('should invalidate enrollment period when enrollmentEndDate is moved after endDate via form control', () => {
+            comp.course.startDate = dayjs().subtract(5, 'day');
+            comp.course.endDate = dayjs().add(5, 'day');
+            comp.course.enrollmentStartDate = dayjs().subtract(3, 'day');
+            comp.course.enrollmentEndDate = dayjs().add(3, 'day');
+            expect(comp.isValidEnrollmentPeriod).toBe(true);
+
+            // Move enrollmentEndDate past endDate -> invalid
+            const invalidEnrollmentEnd = dayjs().add(10, 'day');
+            comp.courseForm.controls['enrollmentEndDate'].setValue(invalidEnrollmentEnd);
+            expect(comp.course.enrollmentEndDate).toBe(invalidEnrollmentEnd);
+            expect(comp.isValidEnrollmentPeriod).toBe(false);
+            expect(comp.isValidConfiguration).toBe(false);
+        });
+
+        it('should update isValidUnenrollmentEndDate when unenrollmentEndDate changes via form control', () => {
+            comp.course.startDate = dayjs().subtract(5, 'day');
+            comp.course.endDate = dayjs().add(10, 'day');
+            comp.course.enrollmentStartDate = dayjs().subtract(3, 'day');
+            comp.course.enrollmentEndDate = dayjs().add(3, 'day');
+            comp.course.unenrollmentEndDate = dayjs().add(5, 'day');
+            expect(comp.isValidUnenrollmentEndDate).toBe(true);
+            expect(comp.isValidConfiguration).toBe(true);
+
+            // Move unenrollmentEndDate past endDate -> invalid
+            const invalidUnenrollmentEnd = dayjs().add(15, 'day');
+            comp.courseForm.controls['unenrollmentEndDate'].setValue(invalidUnenrollmentEnd);
+            expect(comp.course.unenrollmentEndDate).toBe(invalidUnenrollmentEnd);
+            expect(comp.isValidUnenrollmentEndDate).toBe(false);
+            expect(comp.isValidConfiguration).toBe(false);
+        });
+
+        it('should invalidate unenrollmentEndDate when it is moved before enrollmentEndDate via form control', () => {
+            comp.course.startDate = dayjs().subtract(5, 'day');
+            comp.course.endDate = dayjs().add(10, 'day');
+            comp.course.enrollmentStartDate = dayjs().subtract(3, 'day');
+            comp.course.enrollmentEndDate = dayjs().add(3, 'day');
+            comp.course.unenrollmentEndDate = dayjs().add(5, 'day');
+            expect(comp.isValidUnenrollmentEndDate).toBe(true);
+
+            // Move unenrollmentEndDate before enrollmentEndDate -> invalid
+            const invalidUnenrollmentEnd = dayjs().add(1, 'day');
+            comp.courseForm.controls['unenrollmentEndDate'].setValue(invalidUnenrollmentEnd);
+            expect(comp.course.unenrollmentEndDate).toBe(invalidUnenrollmentEnd);
+            expect(comp.isValidUnenrollmentEndDate).toBe(false);
+            expect(comp.isValidConfiguration).toBe(false);
+        });
+
+        it('should invalidate unenrollmentEndDate when endDate is shortened past it via form control', () => {
+            comp.course.startDate = dayjs().subtract(5, 'day');
+            comp.course.endDate = dayjs().add(10, 'day');
+            comp.course.enrollmentStartDate = dayjs().subtract(3, 'day');
+            comp.course.enrollmentEndDate = dayjs().add(3, 'day');
+            comp.course.unenrollmentEndDate = dayjs().add(8, 'day');
+            expect(comp.isValidUnenrollmentEndDate).toBe(true);
+            expect(comp.isValidConfiguration).toBe(true);
+
+            // Shorten endDate so unenrollmentEndDate is now past it -> invalid
+            const shortenedEndDate = dayjs().add(6, 'day');
+            comp.courseForm.controls['endDate'].setValue(shortenedEndDate);
+            expect(comp.course.endDate).toBe(shortenedEndDate);
+            expect(comp.isValidUnenrollmentEndDate).toBe(false);
+            expect(comp.isValidConfiguration).toBe(false);
+        });
+
+        it('should recover full valid configuration after fixing dates via form controls', () => {
+            // Start with a fully valid configuration
+            comp.course.startDate = dayjs().subtract(5, 'day');
+            comp.course.endDate = dayjs().add(10, 'day');
+            comp.course.enrollmentStartDate = dayjs().subtract(3, 'day');
+            comp.course.enrollmentEndDate = dayjs().add(3, 'day');
+            comp.course.unenrollmentEndDate = dayjs().add(5, 'day');
+            expect(comp.isValidDate).toBe(true);
+            expect(comp.isValidEnrollmentPeriod).toBe(true);
+            expect(comp.isValidUnenrollmentEndDate).toBe(true);
+            expect(comp.isValidConfiguration).toBe(true);
+
+            // Break it: shorten endDate before enrollmentEndDate
+            const brokenEndDate = dayjs().add(1, 'day');
+            comp.courseForm.controls['endDate'].setValue(brokenEndDate);
+            expect(comp.isValidEnrollmentPeriod).toBe(false);
+            expect(comp.isValidConfiguration).toBe(false);
+
+            // Fix it: extend endDate back out
+            const fixedEndDate = dayjs().add(20, 'day');
+            comp.courseForm.controls['endDate'].setValue(fixedEndDate);
+            expect(comp.course.endDate).toBe(fixedEndDate);
+            expect(comp.isValidDate).toBe(true);
+            expect(comp.isValidEnrollmentPeriod).toBe(true);
+            expect(comp.isValidUnenrollmentEndDate).toBe(true);
+            expect(comp.isValidConfiguration).toBe(true);
+        });
+    });
+
     describe('removeOrganizationFromCourse', () => {
         it('should remove organization from component', () => {
             const organization = new Organization();
@@ -1041,7 +1298,7 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
         // Simulate a user who is an admin
         vi.spyOn(accountService, 'isAdmin').mockReturnValue(true);
 
-        const profileInfo = { activeProfiles: [PROFILE_LTI], activeModuleFeatures: [MODULE_FEATURE_ATLAS] } as unknown as ProfileInfo;
+        const profileInfo = { activeProfiles: [], activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_LTI] } as unknown as ProfileInfo;
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
 
         const featureToggleStub = featureToggleSpy.mockImplementation((feature: string) => {

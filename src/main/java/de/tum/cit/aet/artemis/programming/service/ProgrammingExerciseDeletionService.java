@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +12,10 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
+import de.tum.cit.aet.artemis.communication.repository.PostRepository;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
@@ -18,6 +23,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseDeletionSummaryDTO;
+import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
@@ -41,16 +48,29 @@ public class ProgrammingExerciseDeletionService {
 
     private final ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
 
+    private final BuildJobRepository buildJobRepository;
+
+    private final ChannelRepository channelRepository;
+
+    private final PostRepository postRepository;
+
+    private final AnswerPostRepository answerPostRepository;
+
     public ProgrammingExerciseDeletionService(ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             ProgrammingExerciseRepository programmingExerciseRepository, ParticipationDeletionService participationDeletionService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, InstanceMessageSendService instanceMessageSendService,
-            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository) {
+            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, BuildJobRepository buildJobRepository, ChannelRepository channelRepository,
+            PostRepository postRepository, AnswerPostRepository answerPostRepository) {
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationDeletionService = participationDeletionService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
+        this.buildJobRepository = buildJobRepository;
+        this.channelRepository = channelRepository;
+        this.postRepository = postRepository;
+        this.answerPostRepository = answerPostRepository;
     }
 
     /**
@@ -118,5 +138,28 @@ public class ProgrammingExerciseDeletionService {
     public void deleteTasks(long exerciseId) {
         List<ProgrammingExerciseTask> tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCaseElseThrow(exerciseId);
         programmingExerciseTaskRepository.deleteAll(tasks);
+    }
+
+    /**
+     * Get a summary of the deletion of a programming exercise.
+     *
+     * @param exerciseId the id of the programming exercise
+     * @return the summary of the deletion of the programming exercise
+     */
+    public ProgrammingExerciseDeletionSummaryDTO getProgrammingExerciseDeletionSummary(long exerciseId) {
+        final long numberOfStudentParticipations = programmingExerciseRepository.countStudentParticipationsByExerciseId(exerciseId);
+        final long numberOfBuilds = buildJobRepository.countBuildJobsByExerciseIds(Set.of(exerciseId));
+
+        long numberOfCommunicationPosts = 0;
+        long numberOfAnswerPosts = 0;
+
+        final Channel channel = channelRepository.findChannelByExerciseId(exerciseId);
+        if (channel != null) {
+            long conversationId = channel.getId();
+            numberOfCommunicationPosts = postRepository.countByConversationId(conversationId);
+            numberOfAnswerPosts = answerPostRepository.countByConversationId(conversationId);
+        }
+
+        return new ProgrammingExerciseDeletionSummaryDTO(numberOfStudentParticipations, numberOfBuilds, numberOfCommunicationPosts, numberOfAnswerPosts);
     }
 }

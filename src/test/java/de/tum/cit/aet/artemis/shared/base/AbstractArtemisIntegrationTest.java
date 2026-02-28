@@ -74,6 +74,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseScheduleSer
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.util.MockDelegate;
+import de.tum.cit.aet.artemis.shared.JacksonDeserializerInitializationConfig;
 import de.tum.cit.aet.artemis.shared.TestRepositoryConfiguration;
 import de.tum.cit.aet.artemis.text.service.TextBlockService;
 import de.tum.cit.aet.artemis.text.service.TextSubmissionService;
@@ -86,7 +87,7 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 @AutoConfigureMockMvc
 @ExtendWith(SpringExtension.class)
 @Execution(ExecutionMode.CONCURRENT)
-@Import(TestRepositoryConfiguration.class)
+@Import({ TestRepositoryConfiguration.class, JacksonDeserializerInitializationConfig.class })
 @AutoConfigureEmbeddedDatabase
 public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 

@@ -1,9 +1,9 @@
-@if (exercise.releaseDate && dayjs(exercise.releaseDate).isAfter(dayjs())) {
+@if (exercise().releaseDate && dayjs(exercise().releaseDate).isAfter(dayjs())) {
     <span
         class="not-released-tag badge bg-warning"
-        [class.ms-1]="!noMargin"
+        [class.ms-1]="!noMargin()"
         container="body"
-        ngbTooltip="{{ 'artemisApp.courseOverview.exerciseList.notReleasedTooltip' | artemisTranslate }}{{ exercise.releaseDate | artemisDate }}"
+        ngbTooltip="{{ 'artemisApp.courseOverview.exerciseList.notReleasedTooltip' | artemisTranslate }}{{ exercise().releaseDate | artemisDate }}"
         jhiTranslate="artemisApp.courseOverview.exerciseList.notReleased"
     ></span>
 }

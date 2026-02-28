@@ -3,7 +3,7 @@ import { HttpErrorResponse, HttpHeaders, HttpParams, HttpResponse } from '@angul
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { Subject, Subscription, combineLatest } from 'rxjs';
-import { onError } from 'app/shared/util/global.utils';
+import { isErrorAlert, onError } from 'app/shared/util/global.utils';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -66,6 +66,7 @@ export class UserFilter {
 }
 
 export enum AuthorityFilter {
+    SUPER_ADMIN = 'SUPER_ADMIN',
     ADMIN = 'ADMIN',
     INSTRUCTOR = 'INSTRUCTOR',
     EDITOR = 'EDITOR',
@@ -444,10 +445,18 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * @param isActivated true if user should be activated, otherwise false
      */
     setActive(user: User, isActivated: boolean) {
-        user.activated = isActivated;
         const action = isActivated ? this.adminUserService.activate : this.adminUserService.deactivate;
-        action.call(this.adminUserService, user.id!).subscribe(() => {
-            this.loadAll();
+        action.call(this.adminUserService, user.id!).subscribe({
+            next: () => {
+                user.activated = isActivated;
+                this.loadAll();
+            },
+            error: (err: HttpErrorResponse) => {
+                if (isErrorAlert(err)) {
+                    return;
+                }
+                onError(this.alertService, err);
+            },
         });
     }
 

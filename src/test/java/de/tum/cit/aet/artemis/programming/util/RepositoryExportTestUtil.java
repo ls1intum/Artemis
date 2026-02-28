@@ -15,15 +15,18 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import org.apache.commons.io.FileUtils;
+import org.awaitility.Awaitility;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -152,6 +155,8 @@ public final class RepositoryExportTestUtil {
             contentInitializer.accept(target.workingCopyGitRepo);
             // push initialized content so the bare repo has a default branch/history
             target.workingCopyGitRepo.push().setRemote("origin").call();
+            // Wait for the bare repository to be fully ready
+            waitForBareRepositoryReady(target);
         }
 
         return trackRepository(target);
@@ -374,6 +379,7 @@ public final class RepositoryExportTestUtil {
     /**
      * Writes a set of files into the repo working copy, commits them with the provided message, and pushes to origin.
      * Returns the created commit for callers that need the hash.
+     * After pushing, waits for the bare repository to be fully ready to prevent race conditions on slow CI systems.
      */
     public static RevCommit writeFilesAndPush(LocalRepository repo, Map<String, String> files, String message) throws Exception {
         for (Map.Entry<String, String> e : files.entrySet()) {
@@ -384,7 +390,44 @@ public final class RepositoryExportTestUtil {
         repo.workingCopyGitRepo.add().addFilepattern(".").call();
         var commit = GitService.commit(repo.workingCopyGitRepo).setMessage(message).call();
         repo.workingCopyGitRepo.push().setRemote("origin").call();
+
+        // Wait for the bare repository to be fully ready for cloning operations
+        waitForBareRepositoryReady(repo);
+
         return commit;
+    }
+
+    /**
+     * Waits for a bare repository to be fully ready for cloning operations.
+     * This addresses flaky test failures caused by race conditions where other services
+     * try to clone a repository immediately after a push, but the repository files
+     * aren't fully flushed to disk yet on slow CI systems.
+     *
+     * @param repo the local repository whose bare repo should be verified
+     */
+    public static void waitForBareRepositoryReady(LocalRepository repo) {
+        Awaitility.await().atMost(10, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
+            try {
+                // Try to open the bare repository and resolve HEAD
+                // This verifies the repo is accessible and has a valid HEAD reference
+                try (Git git = Git.open(repo.remoteBareGitRepoFile)) {
+                    var headRef = git.getRepository().resolve("HEAD");
+                    if (headRef == null) {
+                        log.debug("Bare repository HEAD is null, waiting...");
+                        return false;
+                    }
+                    // Verify we can read the commit object
+                    try (RevWalk revWalk = new RevWalk(git.getRepository())) {
+                        revWalk.parseCommit(headRef);
+                    }
+                    return true;
+                }
+            }
+            catch (Exception e) {
+                log.debug("Bare repository not ready yet: {}", e.getMessage());
+                return false;
+            }
+        });
     }
 
     /**

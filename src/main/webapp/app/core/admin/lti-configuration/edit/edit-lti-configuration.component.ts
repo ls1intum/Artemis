@@ -2,7 +2,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
-import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { faBan, faPlus, faSave } from '@fortawesome/free-solid-svg-icons';
 import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
 import { LtiConfigurationService } from 'app/core/admin/lti-configuration/lti-configuration.service';
@@ -31,6 +31,12 @@ export class EditLtiConfigurationComponent implements OnInit {
     /** Whether save is in progress */
     readonly isSaving = signal(false);
 
+    /** Whether we're in edit mode (editing existing configuration) */
+    readonly isEditMode = signal(false);
+
+    /** Whether loading the configuration failed in edit mode */
+    readonly loadFailed = signal(false);
+
     protected readonly faBan = faBan;
     protected readonly faSave = faSave;
     protected readonly faPlus = faPlus;
@@ -39,25 +45,35 @@ export class EditLtiConfigurationComponent implements OnInit {
      * Gets the configuration for the course encoded in the route and prepares the form
      */
     ngOnInit() {
+        // Always initialize the form first with empty values
+        this.initializeForm();
+
         const platformId = this.route.snapshot.paramMap.get('platformId');
         if (platformId) {
+            // Edit mode: load data and patch form values
+            this.isEditMode.set(true);
             this.ltiConfigurationService.getLtiPlatformById(Number(platformId)).subscribe({
                 next: (data) => {
                     this.platform = data;
-                    this.initializeForm();
+                    this.patchFormValues();
                 },
                 error: (error) => {
+                    this.loadFailed.set(true);
                     this.alertService.error(error);
                 },
             });
         }
-        this.initializeForm();
     }
 
     /**
      * Create or update lti platform configuration
      */
     save() {
+        // If we're in edit mode but loading failed, don't allow save
+        if (this.isEditMode() && this.loadFailed()) {
+            this.alertService.error('artemisApp.lti.editConfiguration.loadError');
+            return;
+        }
         this.isSaving.set(true);
         const platformConfiguration = this.platformConfigurationForm.getRawValue();
         if (this.platform?.id) {
@@ -115,15 +131,38 @@ export class EditLtiConfigurationComponent implements OnInit {
 
     private initializeForm() {
         this.platformConfigurationForm = new FormGroup({
-            id: new FormControl(this.platform?.id),
-            registrationId: new FormControl({ value: this.platform?.registrationId, disabled: true }),
-            originalUrl: new FormControl(this.platform?.originalUrl),
-            customName: new FormControl(this.platform?.customName),
-            clientId: new FormControl(this.platform?.clientId),
-            authorizationUri: new FormControl(this.platform?.authorizationUri),
-            tokenUri: new FormControl(this.platform?.tokenUri),
-            jwkSetUri: new FormControl(this.platform?.jwkSetUri),
+            id: new FormControl(null),
+            registrationId: new FormControl({ value: '', disabled: true }),
+            originalUrl: new FormControl(''),
+            customName: new FormControl(''),
+            clientId: new FormControl('', [Validators.required]),
+            authorizationUri: new FormControl('', [Validators.required]),
+            tokenUri: new FormControl('', [Validators.required]),
+            jwkSetUri: new FormControl('', [Validators.required]),
         });
+    }
+
+    /**
+     * Check if a form field is invalid and has been touched
+     */
+    isFieldInvalid(fieldName: string): boolean {
+        const field = this.platformConfigurationForm.get(fieldName);
+        return !!(field && field.invalid && (field.dirty || field.touched));
+    }
+
+    private patchFormValues() {
+        if (this.platform && this.platformConfigurationForm) {
+            this.platformConfigurationForm.patchValue({
+                id: this.platform.id,
+                registrationId: this.platform.registrationId,
+                originalUrl: this.platform.originalUrl ?? '',
+                customName: this.platform.customName ?? '',
+                clientId: this.platform.clientId,
+                authorizationUri: this.platform.authorizationUri,
+                tokenUri: this.platform.tokenUri,
+                jwkSetUri: this.platform.jwkSetUri,
+            });
+        }
     }
 
     /**

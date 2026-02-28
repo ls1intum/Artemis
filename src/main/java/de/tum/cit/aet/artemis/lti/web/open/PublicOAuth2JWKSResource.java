@@ -1,11 +1,9 @@
 package de.tum.cit.aet.artemis.lti.web.open;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,12 +15,13 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
 
 /**
  * REST controller to serve the public JWKSet related to all OAuth2 clients.
  */
-@Profile(PROFILE_LTI)
+@Conditional(LtiEnabled.class)
 @Lazy
 @RestController
 public class PublicOAuth2JWKSResource {
