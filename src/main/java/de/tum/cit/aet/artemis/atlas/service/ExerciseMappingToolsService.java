@@ -214,10 +214,11 @@ public class ExerciseMappingToolsService {
             Shows which competencies will be linked to the exercise with their weights (LOW=0.25, MEDIUM=0.5, HIGH=1.0).
             Existing mappings are automatically marked as 'alreadyMapped'.
             The preview is displayed to the user for confirmation before applying changes.
+            Only set suggested=true for competencies you proactively recommend that the user did NOT explicitly request.
             """)
     public String previewExerciseCompetencyMapping(@ToolParam(description = "The ID of the course") Long courseId,
             @ToolParam(description = "The ID of the exercise to map") Long exerciseId,
-            @ToolParam(description = "List of competency mappings with competencyId, weight (0.25/0.5/1.0), and suggested flag") List<ExerciseCompetencyMappingOperation> mappings,
+            @ToolParam(description = "List of competency mappings with competencyId, weight (0.25/0.5/1.0), and suggested flag. Set suggested=true ONLY for competencies you autonomously recommended that the user did NOT explicitly request. Set suggested=false when the user named the competency, when it is already mapped, or when it was derived directly from the user's instructions.") List<ExerciseCompetencyMappingOperation> mappings,
             @ToolParam(description = "If true, display only (no action buttons)") Boolean viewOnly) {
 
         try {

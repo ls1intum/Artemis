@@ -106,6 +106,25 @@
                     }
                 }
 
+                .exercise-mapping-preview-container {
+                    .weight-select-sm {
+                        :deep(.p-select) {
+                            font-size: 0.75rem;
+                            min-width: 5rem;
+                            height: 1.75rem;
+
+                            .p-select-label {
+                                padding: 0.2rem 0.4rem;
+                                font-size: 0.75rem;
+                            }
+
+                            .p-select-dropdown {
+                                width: 1.5rem;
+                            }
+                        }
+                    }
+                }
+
                 .relation-graph-preview-container {
                     .relation-graph-viewport {
                         height: 25rem;

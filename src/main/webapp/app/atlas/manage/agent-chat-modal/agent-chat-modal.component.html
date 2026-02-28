@@ -174,7 +174,7 @@
                                                         optionLabel="label"
                                                         optionValue="value"
                                                         [disabled]="message.exerciseMappingPreview.viewOnly || !getCompetencyCheckboxState(message, competency.competencyId)"
-                                                        styleClass="weight-select"
+                                                        styleClass="weight-select-sm"
                                                     />
                                                 </div>
                                             </div>
@@ -183,14 +183,13 @@
                                 </div>
 
                                 @if (!message.exerciseMappingPreview.viewOnly) {
-                                    <p-button
+                                    <button
                                         type="button"
-                                        severity="primary"
-                                        styleClass="mt-3"
-                                        (onClick)="onApproveExerciseMapping(message)"
+                                        class="btn btn-primary btn-sm mt-3"
+                                        (click)="onApproveExerciseMapping(message)"
                                         [disabled]="isAgentTyping()"
                                         jhiTranslate="artemisApp.agent.chat.exerciseMapping.saveMappings"
-                                    />
+                                    ></button>
                                 }
                             </div>
                         }
