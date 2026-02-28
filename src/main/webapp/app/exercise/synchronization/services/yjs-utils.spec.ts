@@ -1,4 +1,4 @@
-import { clearRemoteSelectionStyles, ensureRemoteSelectionStyle, getColorForClientId } from 'app/programming/manage/services/yjs-utils';
+import { clearRemoteSelectionStyles, ensureRemoteSelectionStyle, getColorForClientId } from 'app/exercise/synchronization/services/yjs-utils';
 
 describe('yjs-utils', () => {
     afterEach(() => {

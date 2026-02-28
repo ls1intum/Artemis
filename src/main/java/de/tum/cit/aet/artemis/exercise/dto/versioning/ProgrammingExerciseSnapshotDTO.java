@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.exercise.dto.versioning;
 
 import java.io.Serializable;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -60,10 +59,10 @@ public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<Auxi
         if (auxiliaryRepositories != null) {
             auxiliaryRepositoriesDTO = new ArrayList<>();
             for (AuxiliaryRepository repository : exercise.getAuxiliaryRepositories()) {
-                if (repository.getVcsRepositoryUri() != null) {
-                    var auxiliaryCommitHash = getCommitHash(repository.getVcsRepositoryUri(), gitService);
-                    auxiliaryRepositoriesDTO.add(new AuxiliaryRepositorySnapshotDTO(repository.getId(), repository.getRepositoryUri(), auxiliaryCommitHash));
-                }
+                var vcsRepositoryUri = repository.getVcsRepositoryUri();
+                var auxiliaryCommitHash = vcsRepositoryUri != null ? getCommitHash(vcsRepositoryUri, gitService) : null;
+                auxiliaryRepositoriesDTO.add(new AuxiliaryRepositorySnapshotDTO(repository.getId(), repository.getName(), repository.getCheckoutDirectory(),
+                        repository.getDescription(), repository.getRepositoryUri(), auxiliaryCommitHash));
             }
         }
 
@@ -80,7 +79,8 @@ public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<Auxi
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record AuxiliaryRepositorySnapshotDTO(long id, String repositoryUri, String commitId) implements Serializable {
+    public record AuxiliaryRepositorySnapshotDTO(long id, String name, String checkoutDirectory, String description, String repositoryUri, String commitId)
+            implements Serializable {
 
     }
 
@@ -148,6 +148,6 @@ public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<Auxi
     }
 
     private static ZonedDateTime toUtc(ZonedDateTime zdt) {
-        return zdt == null ? null : zdt.withZoneSameInstant(ZoneOffset.UTC);
+        return ExerciseSnapshotDTO.toUtc(zdt);
     }
 }
