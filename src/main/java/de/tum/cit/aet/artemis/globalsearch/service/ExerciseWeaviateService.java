@@ -46,28 +46,6 @@ public class ExerciseWeaviateService {
     }
 
     /**
-     * Updates exercise metadata in Weaviate using an upsert strategy.
-     * Queries for the existing object by exercise ID, then uses replace if found or insert if not.
-     * This avoids the data loss window of delete-then-insert and uses Weaviate's intended update API.
-     *
-     * @param exerciseWeaviateDTO the exercise data to update
-     */
-    private void updateExercise(ExerciseWeaviateDTO exerciseWeaviateDTO) {
-        if (exerciseWeaviateDTO.exerciseId() == null) {
-            log.warn("Cannot update exercise without an ID");
-            return;
-        }
-
-        try {
-            upsertExerciseInWeaviate(exerciseWeaviateDTO);
-            log.debug("Successfully updated exercise {} '{}' in Weaviate", exerciseWeaviateDTO.exerciseId(), exerciseWeaviateDTO.exerciseTitle());
-        }
-        catch (Exception e) {
-            log.error("Failed to update exercise {} in Weaviate: {}", exerciseWeaviateDTO.exerciseId(), e.getMessage(), e);
-        }
-    }
-
-    /**
      * Queries Weaviate for existing exercises in parallel batch operations.
      * Returns a map of exercise ID to Weaviate UUID for exercises that already exist.
      * Uses parallel queries instead of a single OR filter to work around API limitations.
