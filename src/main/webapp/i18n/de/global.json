@@ -213,7 +213,8 @@
             "cancel": "Abbruch",
             "confirm": "Bestätigen",
             "refresh": "Aktualisieren",
-            "invalidInput": "Ungültige Eingabe"
+            "invalidInput": "Ungültige Eingabe",
+            "requiredLabel": "* benötigt"
         },
         "messages": {
             "info": {

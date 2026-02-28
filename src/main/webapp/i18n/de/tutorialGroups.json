@@ -328,8 +328,7 @@
                     "repetitionFrequency": "Wiederholungsfrequenz",
                     "tutorialPeriodEnd": "Ende Tutoriumsperiode",
                     "location": "Ort"
-                },
-                "requiredLabel": "* benötigt"
+                }
             },
             "tutorialGroupDetail": {
                 "cardTitles": {
@@ -407,6 +406,19 @@
                 "managementActionErrorAlert": {
                     "sessionDeletion": "Fehler beim Löschen der Session. Bitte versuchen Sie es erneut.",
                     "groupDeletion": "Fehler beim Löschen der Gruppe. Bitte versuchen Sie es erneut."
+                },
+                "createOrEditSessionModal": {
+                    "header": {
+                        "create": "Session erstellen",
+                        "edit": "Session bearbeiten"
+                    },
+                    "inputLabels": {
+                        "date": "Datum",
+                        "startTime": "Startzeit",
+                        "endTime": "Endzeit",
+                        "location": "Ort",
+                        "attendance": "Anwesenheiten"
+                    }
                 }
             },
             "tutorialFreePeriodsManagement": {

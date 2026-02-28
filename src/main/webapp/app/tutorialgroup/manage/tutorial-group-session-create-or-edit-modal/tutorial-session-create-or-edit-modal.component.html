@@ -1,12 +1,12 @@
-<p-dialog header="Edit Session" [modal]="true" [(visible)]="isOpen" focusOnShow="false" (onHide)="clearData()">
+<p-dialog [header]="header()" [modal]="true" [(visible)]="isOpen" focusOnShow="false" (onHide)="clearData()">
     <div class="frame">
         <div class="label-and-input">
             @let dateValidation = dateValidationResult();
-            <label>Date</label>
+            <label jhiTranslate="artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.date"></label>
             <p-inputgroup>
                 <p-datepicker
-                    placeholder="Date *"
                     appendTo="body"
+                    [placeholder]="('artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.date' | artemisTranslate) + ' *'"
                     [(ngModel)]="date"
                     (onBlur)="dateInputTouched.set(true)"
                     [invalid]="dateValidation.status === ValidationStatus.INVALID && dateInputTouched()"
@@ -20,11 +20,11 @@
         </div>
         <div class="label-and-input">
             @let startTimeValidation = startTimeValidationResult();
-            <label>Start Time</label>
+            <label jhiTranslate="artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.startTime"></label>
             <p-inputgroup>
                 <p-datepicker
-                    placeholder="Start Time *"
                     appendTo="body"
+                    [placeholder]="('artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.startTime' | artemisTranslate) + ' *'"
                     [(ngModel)]="startTime"
                     [timeOnly]="true"
                     (onBlur)="startTimeInputTouched.set(true)"
@@ -39,11 +39,11 @@
         </div>
         <div class="label-and-input">
             @let endTimeValidation = endTimeValidationResult();
-            <label>End Time</label>
+            <label jhiTranslate="artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.endTime"></label>
             <p-inputgroup>
                 <p-datepicker
-                    placeholder="End Time *"
                     appendTo="body"
+                    [placeholder]="('artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.endTime' | artemisTranslate) + ' *'"
                     [(ngModel)]="endTime"
                     [timeOnly]="true"
                     (onBlur)="endTimeInputTouched.set(true)"
@@ -58,12 +58,12 @@
         </div>
         <div class="label-and-input">
             @let locationValidation = locationValidationResult();
-            <label>Location</label>
+            <label jhiTranslate="artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.location"></label>
             <p-inputgroup>
                 <input
                     pInputText
                     [(ngModel)]="location"
-                    placeholder="Location *"
+                    [placeholder]="('artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.location' | artemisTranslate) + ' *'"
                     (blur)="locationInputTouched.set(true)"
                     [invalid]="locationValidation.status === ValidationStatus.INVALID && locationInputTouched()"
                 />
@@ -75,15 +75,21 @@
             </p-inputgroup>
         </div>
         <div class="label-and-input">
-            <label>Attendance</label>
+            <label jhiTranslate="artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.attendance"></label>
             <p-inputgroup>
-                <p-inputnumber placeholder="Attendance" [(ngModel)]="attendance" [min]="0" [showButtons]="true" />
+                <p-inputnumber
+                    placeholder="Attendance"
+                    [(ngModel)]="attendance"
+                    [min]="0"
+                    [showButtons]="true"
+                    [placeholder]="'artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.attendance' | artemisTranslate"
+                />
             </p-inputgroup>
         </div>
         <div class="controls-footer">
-            <span>* required</span>
-            <button pButton class="p-button-secondary p-button-sm" (click)="cancel()">Cancel</button>
-            <button pButton class="p-button-primary p-button-sm" [disabled]="saveButtonDisabled()" (click)="save()">Save</button>
+            <span jhiTranslate="global.form.requiredLabel"></span>
+            <button pButton class="p-button-secondary p-button-sm" (click)="cancel()" jhiTranslate="entity.action.cancel"></button>
+            <button pButton class="p-button-primary p-button-sm" [disabled]="saveButtonDisabled()" (click)="save()" jhiTranslate="entity.action.save"></button>
         </div>
     </div>
 </p-dialog>

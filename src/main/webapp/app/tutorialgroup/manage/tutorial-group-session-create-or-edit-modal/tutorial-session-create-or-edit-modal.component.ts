@@ -1,4 +1,4 @@
-import { Component, computed, output, signal } from '@angular/core';
+import { Component, computed, inject, output, signal } from '@angular/core';
 import { DialogModule } from 'primeng/dialog';
 import { FormsModule } from '@angular/forms';
 import { DatePickerModule } from 'primeng/datepicker';
@@ -11,6 +11,10 @@ import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
 import { TooltipModule } from 'primeng/tooltip';
 import dayjs from 'dayjs/esm';
 import { InputNumberModule } from 'primeng/inputnumber';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
+import { TranslateService } from '@ngx-translate/core';
 
 export interface UpdateTutorialGroupSessionData {
     tutorialGroupSessionId: number;
@@ -19,14 +23,28 @@ export interface UpdateTutorialGroupSessionData {
 
 @Component({
     selector: 'jhi-tutorial-session-create-or-edit-modal',
-    imports: [DialogModule, FormsModule, DatePickerModule, InputGroupModule, InputTextModule, ButtonModule, InputGroupAddonModule, TooltipModule, InputNumberModule],
+    imports: [
+        DialogModule,
+        FormsModule,
+        DatePickerModule,
+        InputGroupModule,
+        InputTextModule,
+        ButtonModule,
+        InputGroupAddonModule,
+        TooltipModule,
+        InputNumberModule,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+    ],
     templateUrl: './tutorial-session-create-or-edit-modal.component.html',
     styleUrl: './tutorial-session-create-or-edit-modal.component.scss',
 })
 export class TutorialSessionCreateOrEditModalComponent {
     protected readonly ValidationStatus = ValidationStatus;
 
+    private translateService = inject(TranslateService);
     private session = signal<TutorialGroupSessionDTO | undefined>(undefined);
+    private currentLocale = getCurrentLocaleSignal(this.translateService);
 
     isOpen = signal(false);
     date = signal<Date | undefined>(undefined);
@@ -44,6 +62,7 @@ export class TutorialSessionCreateOrEditModalComponent {
     inputsInvalid = computed(() => this.computeIfInputsInvalid());
     saveButtonDisabled = computed<boolean>(() => this.computeIfSaveButtonDisabled());
     attendance = signal<number | undefined>(undefined);
+    header = computed(() => this.computeHeader());
     onUpdate = output<UpdateTutorialGroupSessionData>();
     onCreate = output<CreateOrUpdateTutorialGroupSessionDTO>();
 
@@ -210,5 +229,10 @@ export class TutorialSessionCreateOrEditModalComponent {
         const locationChanged = location !== session.location;
         const attendanceChanged = this.attendance() !== session.attendance;
         return dateChanged || startTimeChanged || endTimeChanged || locationChanged || attendanceChanged;
+    }
+
+    private computeHeader(): string {
+        this.currentLocale();
+        return this.translateService.instant(`artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.header.${this.session() ? 'edit' : 'create'}`);
     }
 }

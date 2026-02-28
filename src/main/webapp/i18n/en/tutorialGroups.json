@@ -388,6 +388,19 @@
                 "managementActionErrorAlert": {
                     "sessionDeletion": "Error while deleting session. Please try again.",
                     "groupDeletion": "Error while deleting group. Please try again."
+                },
+                "createOrEditSessionModal": {
+                    "header": {
+                        "create": "Create Session",
+                        "edit": "Edit Session"
+                    },
+                    "inputLabels": {
+                        "date": "Date",
+                        "startTime": "Start Time",
+                        "endTime": "End Time",
+                        "location": "Location",
+                        "attendance": "Attendance"
+                    }
                 }
             },
             "tutorialFreePeriodsManagement": {
@@ -421,8 +434,7 @@
                     "repetitionFrequency": "Repetition Frequency",
                     "tutorialPeriodEnd": "Tutorial Period End",
                     "location": "Location"
-                },
-                "requiredLabel": "* required"
+                }
             },
             "tutorialGroupSessionManagement": {
                 "title": "Tutorial Group Session Management",
