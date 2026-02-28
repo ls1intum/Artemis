@@ -111,6 +111,14 @@ a.disabled {
     color: $colored-btn-font !important;
 }
 
+/* Ensure btn-primary darkens on hover/active for consistent behavior with btn-secondary */
+.btn-primary {
+    --bs-btn-hover-bg: #{shade-color($primary, 15%)};
+    --bs-btn-hover-border-color: #{shade-color($primary, 20%)};
+    --bs-btn-active-bg: #{shade-color($primary, 20%)};
+    --bs-btn-active-border-color: #{shade-color($primary, 25%)};
+}
+
 a.btn {
     -webkit-appearance: none !important;
 }
