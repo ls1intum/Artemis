@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +18,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.communication.dto.DataExportMailDTO;
+import de.tum.cit.aet.artemis.communication.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
 import de.tum.cit.aet.artemis.core.domain.DataExport;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -92,7 +95,8 @@ public class DataExportScheduleService {
                 executor.shutdownNow();
             }
             if (!successfulDataExports.isEmpty()) {
-                mailService.sendSuccessfulDataExportsEmailToAdmin(admin.get(), successfulDataExports);
+                var dataExportDTOs = successfulDataExports.stream().map(DataExportMailDTO::of).collect(Collectors.toSet());
+                mailService.sendSuccessfulDataExportsEmailToAdmin(MailRecipientDTO.of(admin.get()), dataExportDTOs);
             }
         }
     }

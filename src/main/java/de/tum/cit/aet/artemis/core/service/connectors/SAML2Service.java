@@ -32,6 +32,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.saml2.provider.service.authentication.Saml2AuthenticatedPrincipal;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.communication.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
 import de.tum.cit.aet.artemis.core.config.SAML2Properties;
 import de.tum.cit.aet.artemis.core.domain.Authority;
@@ -143,7 +144,7 @@ public class SAML2Service {
             if (saml2EnablePassword.isPresent() && Boolean.TRUE.equals(saml2EnablePassword.get())) {
                 log.debug("Sending SAML2 creation mail");
                 if (userService.prepareUserForPasswordReset(user.get())) {
-                    mailService.sendSAML2SetPasswordMail(user.get());
+                    mailService.sendSAML2SetPasswordMail(MailRecipientDTO.of(user.get()));
                 }
                 else {
                     log.error("User {} was created but could not be found in the database!", user.get());
