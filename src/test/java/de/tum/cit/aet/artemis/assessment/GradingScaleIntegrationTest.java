@@ -270,11 +270,10 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         GradingScaleDTO savedGradingScale = request.postWithResponseBody("/api/assessment/courses/" + course.getId() + "/grading-scale", toRequestDTO(courseGradingScale),
                 GradingScaleDTO.class, HttpStatus.CREATED);
-        assertThat(savedGradingScale.gradeSteps().gradeSteps()).hasSameSizeAs(courseGradingScale.getGradeSteps());
-        assertThat(savedGradingScale.gradeSteps().gradeSteps()).allMatch(gradeStep -> isGradeStepInSet(courseGradingScale.getGradeSteps(), gradeStep));
 
         GradingScaleDTO expectedDto = GradingScaleDTO.of(courseGradingScale);
-
+        assertThat(savedGradingScale.gradeSteps().gradeSteps()).hasSameSizeAs(expectedDto.gradeSteps().gradeSteps());
+        assertThat(savedGradingScale.gradeSteps().gradeSteps()).allMatch(gradeStep -> isGradeStepInSet(expectedDto.gradeSteps().gradeSteps(), gradeStep));
         assertThat(savedGradingScale).usingRecursiveComparison().ignoringFields("id", "gradeSteps.gradeSteps.id", "course", "exam").ignoringCollectionOrder()
                 .isEqualTo(expectedDto);
     }
@@ -291,9 +290,12 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         GradingScaleDTO savedGradingScale = request.postWithResponseBody("/api/assessment/courses/" + course.getId() + "/grading-scale", toRequestDTO(courseGradingScale),
                 GradingScaleDTO.class, HttpStatus.CREATED);
 
-        assertThat(savedGradingScale.gradeSteps().gradeSteps()).hasSameSizeAs(courseGradingScale.getGradeSteps());
-        assertThat(savedGradingScale.gradeSteps().gradeSteps()).allMatch(gradeStep -> isGradeStepInSet(courseGradingScale.getGradeSteps(), gradeStep));
-        assertThat(savedGradingScale).usingRecursiveComparison().ignoringFields("id", "exam", "course", "gradeSteps").ignoringCollectionOrder().isEqualTo(courseGradingScale);
+        GradingScaleDTO expectedDto = GradingScaleDTO.of(courseGradingScale);
+
+        assertThat(savedGradingScale.gradeSteps().gradeSteps()).hasSameSizeAs(expectedDto.gradeSteps().gradeSteps());
+        assertThat(savedGradingScale.gradeSteps().gradeSteps()).allMatch(gradeStep -> isGradeStepInSet(expectedDto.gradeSteps().gradeSteps(), gradeStep));
+        assertThat(savedGradingScale).usingRecursiveComparison().ignoringFields("id", "gradeSteps.gradeSteps.id", "course", "exam").ignoringCollectionOrder()
+                .isEqualTo(expectedDto);
     }
 
     /**
@@ -309,8 +311,9 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         GradingScaleDTO savedGradingScale = request.postWithResponseBody("/api/assessment/courses/" + course.getId() + "/grading-scale", toRequestDTO(courseGradingScale),
                 GradingScaleDTO.class, HttpStatus.CREATED);
 
-        assertThat(savedGradingScale.gradeSteps().gradeSteps()).hasSameSizeAs(courseGradingScale.getGradeSteps());
-        assertThat(savedGradingScale.gradeSteps().gradeSteps()).allMatch(gradeStep -> isGradeStepInSet(courseGradingScale.getGradeSteps(), gradeStep));
+        GradingScaleDTO expectedDto = GradingScaleDTO.of(courseGradingScale);
+        assertThat(savedGradingScale.gradeSteps().gradeSteps()).hasSameSizeAs(expectedDto.gradeSteps().gradeSteps());
+        assertThat(savedGradingScale.gradeSteps().gradeSteps()).allMatch(gradeStep -> isGradeStepInSet(expectedDto.gradeSteps().gradeSteps(), gradeStep));
         assertThat(savedGradingScale).usingRecursiveComparison().ignoringFields("id", "exam", "course", "gradeSteps").ignoringCollectionOrder().isEqualTo(courseGradingScale);
     }
 
@@ -342,8 +345,9 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         GradingScaleDTO savedGradingScale = request.postWithResponseBody("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale",
                 toRequestDTO(examGradingScale), GradingScaleDTO.class, HttpStatus.CREATED);
 
-        assertThat(savedGradingScale.gradeSteps().gradeSteps()).hasSameSizeAs(examGradingScale.getGradeSteps());
-        assertThat(savedGradingScale.gradeSteps().gradeSteps()).allMatch(gradeStep -> isGradeStepInSet(examGradingScale.getGradeSteps(), gradeStep));
+        GradingScaleDTO expectedDto = GradingScaleDTO.of(examGradingScale);
+        assertThat(savedGradingScale.gradeSteps().gradeSteps()).hasSameSizeAs(expectedDto.gradeSteps().gradeSteps());
+        assertThat(savedGradingScale.gradeSteps().gradeSteps()).allMatch(gradeStep -> isGradeStepInSet(expectedDto.gradeSteps().gradeSteps(), gradeStep));
         assertThat(savedGradingScale).usingRecursiveComparison().ignoringFields("id", "exam", "course", "gradeSteps").ignoringCollectionOrder().isEqualTo(examGradingScale);
     }
 
@@ -352,8 +356,10 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateNonExistingGradingScaleForCourseGradingScale_ShouldReturnBadRequests() throws Exception {
-        request.put("/api/assessment/courses/" + course.getId() + "/grading-scale", toRequestDTO(courseGradingScale), HttpStatus.BAD_REQUEST);
+    void testUpdateNonExistingGradingScaleForCourseGradingScale_ShouldReturnNotFound() throws Exception {
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+        request.put("/api/assessment/courses/" + course.getId() + "/grading-scale", toRequestDTO(courseGradingScale), HttpStatus.NOT_FOUND);
     }
 
     /**
@@ -382,8 +388,9 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         GradingScaleDTO savedGradingScale = request.putWithResponseBody("/api/assessment/courses/" + course.getId() + "/grading-scale", toRequestDTO(courseGradingScale),
                 GradingScaleDTO.class, HttpStatus.OK);
 
-        assertThat(savedGradingScale.gradeSteps().gradeSteps()).hasSameSizeAs(courseGradingScale.getGradeSteps());
-        assertThat(savedGradingScale.gradeSteps().gradeSteps()).allMatch(gradeStep -> isGradeStepInSet(courseGradingScale.getGradeSteps(), gradeStep));
+        GradingScaleDTO expectedDto = GradingScaleDTO.of(courseGradingScale);
+        assertThat(savedGradingScale.gradeSteps().gradeSteps()).hasSameSizeAs(expectedDto.gradeSteps().gradeSteps());
+        assertThat(savedGradingScale.gradeSteps().gradeSteps()).allMatch(gradeStep -> isGradeStepInSet(expectedDto.gradeSteps().gradeSteps(), gradeStep));
         assertThat(savedGradingScale).usingRecursiveComparison().ignoringFields("id", "exam", "course", "gradeSteps").ignoringCollectionOrder().isEqualTo(courseGradingScale);
     }
 
@@ -392,8 +399,10 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateNonExistingGradingScaleForExamGradingScale_ShouldReturnBadRequests() throws Exception {
-        request.put("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", toRequestDTO(examGradingScale), HttpStatus.BAD_REQUEST);
+    void testUpdateNonExistingGradingScaleForExamGradingScale_ShouldReturnNotFound() throws Exception {
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(examGradingScale, true);
+        examGradingScale.setGradeSteps(gradeSteps);
+        request.put("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", toRequestDTO(examGradingScale), HttpStatus.NOT_FOUND);
     }
 
     /**
@@ -426,8 +435,9 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         GradingScaleDTO savedGradingScale = request.putWithResponseBody("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale",
                 toRequestDTO(examGradingScale), GradingScaleDTO.class, HttpStatus.OK);
 
-        assertThat(savedGradingScale.gradeSteps().gradeSteps()).hasSameSizeAs(examGradingScale.getGradeSteps());
-        assertThat(savedGradingScale.gradeSteps().gradeSteps()).allMatch(gradeStep -> isGradeStepInSet(examGradingScale.getGradeSteps(), gradeStep));
+        GradingScaleDTO expectedDto = GradingScaleDTO.of(examGradingScale);
+        assertThat(savedGradingScale.gradeSteps().gradeSteps()).hasSameSizeAs(expectedDto.gradeSteps().gradeSteps());
+        assertThat(savedGradingScale.gradeSteps().gradeSteps()).allMatch(gradeStep -> isGradeStepInSet(expectedDto.gradeSteps().gradeSteps(), gradeStep));
         assertThat(savedGradingScale).usingRecursiveComparison().ignoringFields("id", "exam", "course", "gradeSteps").ignoringCollectionOrder().isEqualTo(examGradingScale);
     }
 
@@ -557,8 +567,8 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
      * @param gradeStepToTest the grade step
      * @return true if it is contained and false otherwise
      */
-    private static boolean isGradeStepInSet(Set<GradeStep> gradeSteps, GradeStepDTO gradeStepToTest) {
-        for (GradeStep gradeStep : gradeSteps) {
+    private static boolean isGradeStepInSet(Set<GradeStepDTO> gradeSteps, GradeStepDTO gradeStepToTest) {
+        for (GradeStepDTO gradeStep : gradeSteps) {
             if (equalGradeSteps(gradeStep, gradeStepToTest)) {
                 return true;
             }
@@ -573,10 +583,10 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
      * @param gradeStep2 the second grade step
      * @return true if grade steps are equal and false otherwise
      */
-    private static boolean equalGradeSteps(GradeStep gradeStep1, GradeStepDTO gradeStep2) {
-        return gradeStep1.getIsPassingGrade() == gradeStep2.isPassingGrade() && gradeStep1.isLowerBoundInclusive() == gradeStep2.lowerBoundInclusive()
-                && gradeStep1.isUpperBoundInclusive() == gradeStep2.upperBoundInclusive() && gradeStep1.getLowerBoundPercentage() == gradeStep2.lowerBoundPercentage()
-                && gradeStep1.getUpperBoundPercentage() == gradeStep2.upperBoundPercentage() && gradeStep1.getGradeName().equals(gradeStep2.gradeName());
+    private static boolean equalGradeSteps(GradeStepDTO gradeStep1, GradeStepDTO gradeStep2) {
+        return gradeStep1.isPassingGrade() == gradeStep2.isPassingGrade() && gradeStep1.lowerBoundInclusive() == gradeStep2.lowerBoundInclusive()
+                && gradeStep1.upperBoundInclusive() == gradeStep2.upperBoundInclusive() && gradeStep1.lowerBoundPercentage() == gradeStep2.lowerBoundPercentage()
+                && gradeStep1.upperBoundPercentage() == gradeStep2.upperBoundPercentage() && gradeStep1.gradeName().equals(gradeStep2.gradeName());
     }
 
     @Nested
