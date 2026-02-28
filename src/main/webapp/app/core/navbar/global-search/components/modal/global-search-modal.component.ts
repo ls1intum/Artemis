@@ -70,6 +70,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
     protected readonly faTimes = faTimes;
     protected readonly faCalendarAlt = faCalendarAlt;
     protected readonly faTrophy = faTrophy;
+    protected readonly faBook = faBook;
 
     // Search state
     protected searchQuery = signal<string>('');

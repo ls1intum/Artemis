@@ -81,8 +81,19 @@
                                 </div>
 
                                 <!-- Metadata Row -->
-                                @if (result.metadata && (result.metadata['dueDate'] || result.metadata['points'] || result.metadata['difficulty'])) {
+                                @if (
+                                    result.metadata && (result.metadata['courseName'] || result.metadata['dueDate'] || result.metadata['points'] || result.metadata['difficulty'])
+                                ) {
                                     <div class="result-metadata d-flex align-items-center gap-2 mb-2 text-secondary small">
+                                        @if (result.metadata['courseName']) {
+                                            <span class="d-flex align-items-center gap-1">
+                                                <fa-icon [icon]="faBook" size="sm" aria-hidden="true" />
+                                                <span>{{ result.metadata['courseName'] }}</span>
+                                            </span>
+                                        }
+                                        @if (result.metadata['courseName'] && (result.metadata['dueDate'] || result.metadata['points'] || result.metadata['difficulty'])) {
+                                            <span>•</span>
+                                        }
                                         @if (result.metadata['dueDate']) {
                                             <span class="d-flex align-items-center gap-1">
                                                 <fa-icon [icon]="faCalendarAlt" size="sm" aria-hidden="true" />
