@@ -24,7 +24,7 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { GradingScaleDTO, toEntity } from 'app/assessment/shared/entities/grading-scale-dto.model';
+import { toEntity } from 'app/assessment/shared/entities/grading-scale-dto.model';
 
 export enum BonusStrategyOption {
     GRADES,
@@ -95,7 +95,7 @@ export class BonusComponent implements OnInit {
         },
     ];
 
-    sourceGradingScales: GradingScaleDTO[] = [];
+    sourceGradingScales: GradingScale[] = [];
 
     bonusToGradeStepsDTO: GradeStepsDTO;
 
@@ -144,7 +144,7 @@ export class BonusComponent implements OnInit {
             ),
             this.gradingService.findWithBonusGradeTypeForInstructor(this.state).pipe(
                 tap((gradingScalesDto) => {
-                    this.sourceGradingScales = gradingScalesDto.body?.resultsOnPage ?? [];
+                    this.sourceGradingScales = gradingScalesDto.body?.resultsOnPage.map((dto) => toEntity(dto)) ?? [];
                 }),
             ),
             this.gradingService.findGradeSteps(this.courseId, this.examId).pipe(
@@ -184,7 +184,9 @@ export class BonusComponent implements OnInit {
             if (!sourceGradingScale) {
                 throw new Error(`sourceGradingScale not found for id: ${this.bonus.sourceGradingScale.id}`);
             }
-            this.bonus.sourceGradingScale = toEntity(sourceGradingScale, this.bonus.sourceGradingScale.course, this.bonus.sourceGradingScale.exam);
+            sourceGradingScale.course = this.bonus.sourceGradingScale.course;
+            sourceGradingScale.exam = this.bonus.sourceGradingScale.exam;
+            this.bonus.sourceGradingScale = sourceGradingScale;
             this.onBonusSourceChange(this.bonus.sourceGradingScale);
         }
     }
