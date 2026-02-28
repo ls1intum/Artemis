@@ -34,15 +34,18 @@
 :host ::ng-deep .search-filter-chip {
     height: 1.75rem;
     font-size: 0.875rem;
+    background-color: var(--bs-primary) !important;
 
     .p-chip-text {
         margin-top: 0;
         margin-bottom: 0;
+        color: white !important;
     }
 
     .p-chip-remove-icon {
         font-size: 0.75rem;
         margin-left: 0.25rem;
+        color: white !important;
     }
 }
 
