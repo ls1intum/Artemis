@@ -208,7 +208,7 @@ public class FileUploadExerciseResource {
             }
         });
 
-        exerciseVersionService.createExerciseVersionAndSyncMetadata(result);
+        exerciseVersionService.createExerciseVersion(result);
 
         return ResponseEntity.created(new URI("/api/fileupload/file-upload-exercises/" + result.getId())).body(result);
     }
@@ -261,7 +261,7 @@ public class FileUploadExerciseResource {
                 log.warn("Failed to notify AtlasML about exercise creation: {}", e.getMessage());
             }
         });
-        exerciseVersionService.createExerciseVersionAndSyncMetadata(newFileUploadExercise);
+        exerciseVersionService.createExerciseVersion(newFileUploadExercise);
 
         return ResponseEntity.created(new URI("/api/fileupload/file-upload-exercises/" + newFileUploadExercise.getId())).body(newFileUploadExercise);
     }
@@ -438,7 +438,7 @@ public class FileUploadExerciseResource {
         });
 
         // Create a version snapshot for history tracking
-        exerciseVersionService.createExerciseVersionAndUpdateMetadata(persistedExercise);
+        exerciseVersionService.createExerciseVersion(persistedExercise);
 
         return ResponseEntity.ok(persistedExercise);
     }

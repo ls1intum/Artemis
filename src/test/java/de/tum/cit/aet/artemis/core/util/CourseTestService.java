@@ -607,7 +607,7 @@ public class CourseTestService {
             for (Exercise exercise : course.getExercises()) {
                 allExerciseIds.add(exercise.getId());
                 if (exerciseWeaviateService != null) {
-                    exerciseWeaviateService.insertExerciseAsync(exercise);
+                    exerciseWeaviateService.upsertExerciseAsync(exercise);
                 }
             }
         }

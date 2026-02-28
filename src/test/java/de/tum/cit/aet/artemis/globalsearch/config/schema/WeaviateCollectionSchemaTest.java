@@ -33,14 +33,14 @@ class WeaviateCollectionSchemaTest {
     void getProperty_returnsMatchingProperty() {
         var schema = WeaviateCollectionSchema.of("TestCollection", List.of(PROPERTY_A, PROPERTY_B));
 
-        assertThat(schema.getProperty("id")).isEqualTo(PROPERTY_A);
-        assertThat(schema.getProperty("name")).isEqualTo(PROPERTY_B);
+        assertThat(schema.getProperty("id")).contains(PROPERTY_A);
+        assertThat(schema.getProperty("name")).contains(PROPERTY_B);
     }
 
     @Test
-    void getProperty_returnsNullForUnknownName() {
+    void getProperty_returnsEmptyForUnknownName() {
         var schema = WeaviateCollectionSchema.of("TestCollection", List.of(PROPERTY_A));
 
-        assertThat(schema.getProperty("nonexistent")).isNull();
+        assertThat(schema.getProperty("nonexistent")).isEmpty();
     }
 }

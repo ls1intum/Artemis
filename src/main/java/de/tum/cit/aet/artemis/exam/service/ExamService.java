@@ -8,7 +8,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.Principal;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -1571,17 +1570,11 @@ public class ExamService {
     /**
      * Syncs exam exercises with Weaviate if visible date, start date, or end date has changed.
      *
-     * @param originalExam      the original exam before the update
-     * @param updatedExam       the updated exam
-     * @param examWithExercises the exam with exercises loaded
+     * @param examWithExercises         the exam with exercises loaded
+     * @param visibleOrStartDateChanged whether the visible or start date has changed
+     * @param endDateChanged            whether the end date has changed
      */
-    public void syncExamExercisesMetadata(Exam originalExam, Exam updatedExam, Exam examWithExercises) {
-        // We can't test dates for equality as the dates retrieved from the database lose precision. Also use instant to take timezones into account
-        Comparator<ZonedDateTime> comparator = Comparator.comparing(date -> date.truncatedTo(ChronoUnit.SECONDS).toInstant());
-        boolean visibleOrStartDateChanged = comparator.compare(originalExam.getVisibleDate(), updatedExam.getVisibleDate()) != 0
-                || comparator.compare(originalExam.getStartDate(), updatedExam.getStartDate()) != 0;
-        boolean endDateChanged = comparator.compare(originalExam.getEndDate(), updatedExam.getEndDate()) != 0;
-
+    public void syncExamExercisesMetadata(Exam examWithExercises, boolean visibleOrStartDateChanged, boolean endDateChanged) {
         if (visibleOrStartDateChanged || endDateChanged) {
             exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.updateExamExercisesAsync(examWithExercises));
         }

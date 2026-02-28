@@ -728,7 +728,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
         // Insert the exercise into Weaviate with initial dates
         if (exerciseWeaviateService != null) {
-            exerciseWeaviateService.insertExerciseAsync(modelingExercise);
+            exerciseWeaviateService.upsertExerciseAsync(modelingExercise);
 
             await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> WeaviateTestUtil.assertExerciseExamDatesInWeaviate(weaviateService, modelingExercise.getId(), exam));
         }
@@ -867,7 +867,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     void testDeleteExamWithExerciseGroupAndTextExercise_asInstructor() throws Exception {
         final TextExercise textExercise = exerciseRepository.save(TextExerciseFactory.generateTextExerciseForExam(exam2.getExerciseGroups().getFirst()));
         if (exerciseWeaviateService != null) {
-            exerciseWeaviateService.insertExerciseAsync(textExercise);
+            exerciseWeaviateService.upsertExerciseAsync(textExercise);
 
             await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> WeaviateTestUtil.assertExerciseExistsInWeaviate(weaviateService, textExercise));
         }

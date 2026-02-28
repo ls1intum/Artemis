@@ -11,7 +11,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.Principal;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -109,13 +108,13 @@ import de.tum.cit.aet.artemis.exam.service.ExamService;
 import de.tum.cit.aet.artemis.exam.service.ExamSessionService;
 import de.tum.cit.aet.artemis.exam.service.ExamUserService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
+import de.tum.cit.aet.artemis.exam.util.ExamDateUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseForPlagiarismCasesOverviewDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseGroupWithIdAndExamDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
-import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import tech.jhipster.web.util.PaginationUtil;
 
@@ -182,15 +181,12 @@ public class ExamResource {
 
     private final ExamUserService examUserService;
 
-    private final Optional<ExerciseWeaviateService> exerciseWeaviateService;
-
     public ExamResource(UserRepository userRepository, CourseRepository courseRepository, ExamService examService, ExamDeletionService examDeletionService,
             ExamAccessService examAccessService, InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, SubmissionService submissionService,
             AuthorizationCheckService authCheckService, ExamDateService examDateService, TutorParticipationRepository tutorParticipationRepository,
             AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService, ExamImportService examImportService,
             CustomAuditEventRepository auditEventRepository, ChannelService channelService, ChannelRepository channelRepository, ExerciseRepository exerciseRepository,
-            ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService, StudentExamService studentExamService, ExamUserService examUserService,
-            Optional<ExerciseWeaviateService> exerciseWeaviateService) {
+            ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService, StudentExamService studentExamService, ExamUserService examUserService) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examService = examService;
@@ -213,7 +209,6 @@ public class ExamResource {
         this.examLiveEventsService = examLiveEventsService;
         this.studentExamService = studentExamService;
         this.examUserService = examUserService;
-        this.exerciseWeaviateService = exerciseWeaviateService;
     }
 
     /**
@@ -294,10 +289,10 @@ public class ExamResource {
         // NOTE: We have to get exercises and groups as we need them for re-scheduling
         Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(savedExam.getId(), false);
 
-        // We can't test dates for equality as the dates retrieved from the database lose precision. Also use instant to take timezones into account
-        Comparator<ZonedDateTime> comparator = Comparator.comparing(date -> date.truncatedTo(ChronoUnit.SECONDS).toInstant());
+        Comparator<ZonedDateTime> comparator = ExamDateUtil.truncatedComparator();
         boolean visibleOrStartDateChanged = comparator.compare(originalExam.getVisibleDate(), updatedExam.getVisibleDate()) != 0
                 || comparator.compare(originalExam.getStartDate(), updatedExam.getStartDate()) != 0;
+        boolean endDateChanged = comparator.compare(originalExam.getEndDate(), updatedExam.getEndDate()) != 0;
         if (visibleOrStartDateChanged) {
             // for all programming exercises in the exam, send their ids for scheduling
             examWithExercises.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).filter(ProgrammingExercise.class::isInstance).map(Exercise::getId)
@@ -311,7 +306,7 @@ public class ExamResource {
             examService.updateStudentExamsAndRescheduleExercises(examWithStudentExams, originalExamDuration, workingTimeChange);
         }
 
-        examService.syncExamExercisesMetadata(originalExam, updatedExam, examWithExercises);
+        examService.syncExamExercisesMetadata(examWithExercises, visibleOrStartDateChanged, endDateChanged);
 
         if (updatedChannel != null) {
             savedExam.setChannelName(updatedExam.getChannelName());

@@ -72,7 +72,7 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testInsertExercise_storesMetadataInWeaviate() throws Exception {
-            exerciseWeaviateService.insertExerciseAsync(programmingExercise);
+            exerciseWeaviateService.upsertExerciseAsync(programmingExercise);
 
             await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertExerciseExistsInWeaviate(weaviateService, programmingExercise));
 
@@ -85,7 +85,7 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testUpdateExercise_updatesMetadataInWeaviate() throws Exception {
-            exerciseWeaviateService.insertExerciseAsync(programmingExercise);
+            exerciseWeaviateService.upsertExerciseAsync(programmingExercise);
 
             await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertExerciseExistsInWeaviate(weaviateService, programmingExercise));
 
@@ -95,7 +95,7 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
             programmingExercise.setTitle(updatedTitle);
             programmingExercise.setMaxPoints(updatedMaxPoints);
 
-            exerciseWeaviateService.updateExerciseAsync(programmingExercise);
+            exerciseWeaviateService.upsertExerciseAsync(programmingExercise);
 
             await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
                 var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
@@ -109,7 +109,7 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testDeleteExercise_removesMetadataFromWeaviate() throws Exception {
-            exerciseWeaviateService.insertExerciseAsync(programmingExercise);
+            exerciseWeaviateService.upsertExerciseAsync(programmingExercise);
 
             await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertExerciseExistsInWeaviate(weaviateService, programmingExercise));
 
@@ -126,7 +126,7 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testUpdateProblemStatement_updatesWeaviate() throws Exception {
             // Insert exercise into Weaviate first
-            exerciseWeaviateService.insertExerciseAsync(programmingExercise);
+            exerciseWeaviateService.upsertExerciseAsync(programmingExercise);
             await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertExerciseExistsInWeaviate(weaviateService, programmingExercise));
 
             // Update problem statement via endpoint
@@ -146,7 +146,7 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testUpdateTimeline_updatesWeaviate() throws Exception {
             // Insert exercise into Weaviate first
-            exerciseWeaviateService.insertExerciseAsync(programmingExercise);
+            exerciseWeaviateService.upsertExerciseAsync(programmingExercise);
             await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertExerciseExistsInWeaviate(weaviateService, programmingExercise));
 
             // Update timeline via endpoint

@@ -163,6 +163,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
 
         assertThat(channelFromDB).isNotNull();
         assertThat(channelFromDB.getName()).isEqualTo("exercise-new-fileupload-exerci");
+
         assertFileUploadExerciseExistsInWeaviate(weaviateService, receivedFileUploadExercise);
     }
 

@@ -209,7 +209,7 @@ public class ProgrammingExerciseUpdateResource {
         exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
         slideApi.ifPresent(api -> api.handleDueDateChange(programmingExerciseBeforeUpdate, updatedProgrammingExercise));
-        exerciseVersionService.createExerciseVersionAndUpdateMetadata(savedProgrammingExercise, user);
+        exerciseVersionService.createExerciseVersion(savedProgrammingExercise, user);
 
         return ResponseEntity.ok(savedProgrammingExercise);
     }
