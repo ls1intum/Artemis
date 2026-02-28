@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, HostListener, OnDestroy, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { filter } from 'rxjs';
@@ -22,7 +22,7 @@ import { SearchResultView } from 'app/core/navbar/global-search/components/views
     templateUrl: './global-search-modal.component.html',
     styleUrls: ['./global-search-modal.component.scss'],
 })
-export class GlobalSearchModalComponent {
+export class GlobalSearchModalComponent implements OnDestroy {
     protected readonly overlay = inject(SearchOverlayService);
     private readonly osDetector = inject(OsDetectorService);
     private readonly accountService = inject(AccountService);
@@ -37,6 +37,12 @@ export class GlobalSearchModalComponent {
     protected readonly selectedIndex = signal(-1);
     private readonly activeView = viewChild(SearchResultView);
     private readonly maxIndex = computed(() => (this.activeView()?.itemCount() ?? 0) - 1);
+
+    ngOnDestroy(): void {
+        if (this.overlay.isOpen()) {
+            this.overlay.close();
+        }
+    }
 
     constructor() {
         // Reset selection whenever the query changes; reading searchQuery() registers it as a reactive dependency.
