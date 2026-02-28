@@ -47,14 +47,9 @@ describe('LectureSearchService', () => {
         it('should return the results from the server', () => {
             const mockResults: LectureSearchResult[] = [
                 {
-                    lectureUnitId: 1,
-                    lectureUnitName: 'Introduction to Signals',
-                    lectureUnitLink: '/courses/1/lectures/1/units/1',
-                    lectureId: 1,
-                    lectureName: 'Angular Basics',
-                    courseId: 1,
-                    courseName: 'Advanced Web Development',
-                    pageNumber: 3,
+                    course: { id: 1, name: 'Advanced Web Development' },
+                    lecture: { id: 1, name: 'Angular Basics' },
+                    lectureUnit: { id: 1, name: 'Introduction to Signals', link: '/courses/1/lectures/1/units/1', pageNumber: 3 },
                     snippet: 'Signals are a reactive primitive...',
                 },
             ];
