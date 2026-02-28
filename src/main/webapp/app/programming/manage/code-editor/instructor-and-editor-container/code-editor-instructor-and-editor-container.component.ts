@@ -845,6 +845,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      *        The name of the file that was just loaded.
      */
     onFileLoad(fileName: string) {
+        this.onFileSyncLoad(fileName);
         if (this.fileToJumpOn === fileName) {
             if (this.lineJumpOnFileLoad !== undefined) {
                 this.codeEditorContainer.jumpToLine(this.lineJumpOnFileLoad);

@@ -1,0 +1,731 @@
+import { Mocked, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { WritableSignal, signal } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { Subject } from 'rxjs';
+import * as Y from 'yjs';
+import { Awareness, encodeAwarenessUpdate } from 'y-protocols/awareness';
+import { CodeEditorFileSyncService, FileSyncState } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { AlertService } from 'app/shared/service/alert.service';
+import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
+import {
+    ExerciseEditorSyncEvent,
+    ExerciseEditorSyncEventType,
+    ExerciseEditorSyncService,
+    ExerciseEditorSyncTarget,
+    FileCreatedEvent,
+    FileDeletedEvent,
+    FileRenamedEvent,
+} from 'app/exercise/synchronization/services/exercise-editor-sync.service';
+import * as yjsUtils from 'app/exercise/synchronization/services/yjs-utils';
+
+describe('CodeEditorFileSyncService', () => {
+    setupTestBed({ zoneless: true });
+    let service: CodeEditorFileSyncService;
+    let syncService: Mocked<ExerciseEditorSyncService>;
+    let incomingMessages$: Subject<ExerciseEditorSyncEvent>;
+    let userIdentitySignal: WritableSignal<any>;
+
+    const EXERCISE_ID = 42;
+    const TARGET = ExerciseEditorSyncTarget.TEMPLATE_REPOSITORY;
+    const FILE_PATH = 'src/Main.java';
+
+    beforeEach(() => {
+        vi.useFakeTimers();
+        incomingMessages$ = new Subject<ExerciseEditorSyncEvent>();
+        userIdentitySignal = signal(undefined);
+
+        TestBed.configureTestingModule({
+            providers: [
+                CodeEditorFileSyncService,
+                {
+                    provide: ExerciseEditorSyncService,
+                    useValue: {
+                        subscribeToUpdates: vi.fn().mockReturnValue(incomingMessages$.asObservable()),
+                        sendSynchronizationUpdate: vi.fn(),
+                        unsubscribe: vi.fn(),
+                        sessionId: 'test-session-id',
+                    },
+                },
+                {
+                    provide: AccountService,
+                    useValue: {
+                        userIdentity: userIdentitySignal,
+                    },
+                },
+                { provide: AlertService, useClass: MockAlertService },
+            ],
+        });
+
+        service = TestBed.inject(CodeEditorFileSyncService);
+        syncService = TestBed.inject(ExerciseEditorSyncService) as Mocked<ExerciseEditorSyncService>;
+    });
+
+    afterEach(() => {
+        service?.reset();
+        vi.useRealTimers();
+        vi.clearAllMocks();
+    });
+
+    describe('init and reset', () => {
+        it('subscribes to websocket updates on init', () => {
+            service.init(EXERCISE_ID, TARGET);
+            expect(syncService.subscribeToUpdates).toHaveBeenCalled();
+        });
+
+        it('calling init() a second time cleans up the previous state', () => {
+            service.init(EXERCISE_ID, TARGET);
+            const state = service.openFile(FILE_PATH, 'content')!;
+            const destroySpy = vi.spyOn(state.doc, 'destroy');
+
+            service.init(EXERCISE_ID, ExerciseEditorSyncTarget.SOLUTION_REPOSITORY);
+
+            expect(destroySpy).toHaveBeenCalled();
+            expect(service.isFileOpen(FILE_PATH)).toBe(false);
+        });
+
+        it('destroys all docs on reset', () => {
+            service.init(EXERCISE_ID, TARGET);
+            const state = service.openFile(FILE_PATH, 'content')!;
+            const destroySpy = vi.spyOn(state.doc, 'destroy');
+            const clearStylesSpy = vi.spyOn(yjsUtils, 'clearRemoteSelectionStyles');
+
+            service.reset();
+
+            expect(destroySpy).toHaveBeenCalled();
+            expect(clearStylesSpy).toHaveBeenCalled();
+            clearStylesSpy.mockRestore();
+        });
+    });
+
+    describe('openFile and closeFile', () => {
+        it('creates a Y.Doc and requests initial sync', () => {
+            service.init(EXERCISE_ID, TARGET);
+            const state = service.openFile(FILE_PATH, 'initial content')!;
+
+            expect(state.doc).toBeInstanceOf(Y.Doc);
+            expect(state.text).toBeDefined();
+            expect(state.awareness).toBeInstanceOf(Awareness);
+            expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
+                EXERCISE_ID,
+                expect.objectContaining({
+                    eventType: ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_REQUEST,
+                    target: TARGET,
+                    filePath: FILE_PATH,
+                    requestId: expect.any(String),
+                }),
+            );
+        });
+
+        it('returns existing state if file is already open', () => {
+            service.init(EXERCISE_ID, TARGET);
+            const state1 = service.openFile(FILE_PATH, 'content')!;
+            const state2 = service.openFile(FILE_PATH, 'different content')!;
+            expect(state1.doc).toBe(state2.doc);
+        });
+
+        it('closes a file and destroys its doc', () => {
+            service.init(EXERCISE_ID, TARGET);
+            const state = service.openFile(FILE_PATH, 'content')!;
+            const destroySpy = vi.spyOn(state.doc, 'destroy');
+
+            service.closeFile(FILE_PATH);
+
+            expect(destroySpy).toHaveBeenCalled();
+            expect(service.isFileOpen(FILE_PATH)).toBe(false);
+        });
+    });
+
+    describe('initial sync protocol', () => {
+        it('seeds fallback content when no peer responds', () => {
+            service.init(EXERCISE_ID, TARGET);
+            const state = service.openFile(FILE_PATH, 'Fallback content')!;
+            syncService.sendSynchronizationUpdate.mockClear();
+
+            vi.advanceTimersByTime(500);
+
+            expect(state.text.toString()).toBe('Fallback content');
+            // Seed should NOT be rebroadcast
+            expect(syncService.sendSynchronizationUpdate).not.toHaveBeenCalledWith(
+                EXERCISE_ID,
+                expect.objectContaining({
+                    eventType: ExerciseEditorSyncEventType.FILE_SYNC_UPDATE,
+                }),
+            );
+        });
+
+        it('uses earliest leader response during initial sync', () => {
+            service.init(EXERCISE_ID, TARGET);
+            const state = service.openFile(FILE_PATH, '')!;
+
+            const requestCall = syncService.sendSynchronizationUpdate.mock.calls.find(
+                ([, msg]) => msg.eventType === ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_REQUEST && (msg as any).filePath === FILE_PATH,
+            );
+            const requestId = (requestCall?.[1] as any).requestId as string;
+
+            const laterDoc = new Y.Doc();
+            laterDoc.getText('file-content').insert(0, 'Later leader');
+            const earlierDoc = new Y.Doc();
+            earlierDoc.getText('file-content').insert(0, 'Earlier leader');
+
+            incomingMessages$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_RESPONSE,
+                target: TARGET,
+                filePath: FILE_PATH,
+                responseTo: requestId,
+                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(laterDoc)),
+                leaderTimestamp: 200,
+                timestamp: 1,
+            });
+            incomingMessages$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_RESPONSE,
+                target: TARGET,
+                filePath: FILE_PATH,
+                responseTo: requestId,
+                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(earlierDoc)),
+                leaderTimestamp: 100,
+                timestamp: 2,
+            });
+
+            vi.advanceTimersByTime(500);
+            expect(state.text.toString()).toBe('Earlier leader');
+        });
+
+        it('buffers incremental updates during initial sync', () => {
+            service.init(EXERCISE_ID, TARGET);
+            const state = service.openFile(FILE_PATH, '')!;
+
+            // Send an incremental update before timeout
+            const doc = new Y.Doc();
+            doc.getText('file-content').insert(0, 'Buffered text');
+            incomingMessages$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_SYNC_UPDATE,
+                target: TARGET,
+                filePath: FILE_PATH,
+                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(doc)),
+                timestamp: 1,
+            });
+
+            // Before timeout, text should be empty (update is buffered)
+            expect(state.text.toString()).toBe('');
+
+            vi.advanceTimersByTime(500);
+            // After timeout, buffered update should be applied
+            expect(state.text.toString()).toBe('Buffered text');
+        });
+
+        it('queues full-content requests while initializing and responds after finalize', () => {
+            service.init(EXERCISE_ID, TARGET);
+            service.openFile(FILE_PATH, 'Initial');
+            syncService.sendSynchronizationUpdate.mockClear();
+
+            incomingMessages$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_REQUEST,
+                target: TARGET,
+                filePath: FILE_PATH,
+                requestId: 'queued-req',
+                timestamp: 1,
+            });
+
+            // Should not respond while awaiting init
+            expect(syncService.sendSynchronizationUpdate).not.toHaveBeenCalled();
+
+            vi.advanceTimersByTime(500);
+
+            // After init finalized, should respond
+            expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
+                EXERCISE_ID,
+                expect.objectContaining({
+                    eventType: ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_RESPONSE,
+                    responseTo: 'queued-req',
+                    filePath: FILE_PATH,
+                }),
+            );
+        });
+    });
+
+    describe('incremental sync', () => {
+        it('sends yjs update for local doc changes', () => {
+            service.init(EXERCISE_ID, TARGET);
+            const state = service.openFile(FILE_PATH, '')!;
+            vi.advanceTimersByTime(500);
+            syncService.sendSynchronizationUpdate.mockClear();
+
+            state.text.insert(0, 'Local edit');
+
+            expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
+                EXERCISE_ID,
+                expect.objectContaining({
+                    eventType: ExerciseEditorSyncEventType.FILE_SYNC_UPDATE,
+                    target: TARGET,
+                    filePath: FILE_PATH,
+                    yjsUpdate: expect.any(String),
+                }),
+            );
+        });
+
+        it('applies incoming yjs updates to the doc', () => {
+            service.init(EXERCISE_ID, TARGET);
+            const state = service.openFile(FILE_PATH, '')!;
+            vi.advanceTimersByTime(500);
+
+            const doc = new Y.Doc();
+            doc.getText('file-content').insert(0, 'Remote edit');
+            incomingMessages$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_SYNC_UPDATE,
+                target: TARGET,
+                filePath: FILE_PATH,
+                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(doc)),
+                timestamp: 1,
+            });
+
+            expect(state.text.toString()).toBe('Remote edit');
+        });
+    });
+
+    describe('sessionId tie-breaking', () => {
+        it('uses sessionId tie-breaker when timestamps are equal during initial sync', () => {
+            service.init(EXERCISE_ID, TARGET);
+            const state = service.openFile(FILE_PATH, '')!;
+
+            const requestCall = syncService.sendSynchronizationUpdate.mock.calls.find(
+                ([, msg]) => msg.eventType === ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_REQUEST && (msg as any).filePath === FILE_PATH,
+            );
+            const requestId = (requestCall?.[1] as any).requestId as string;
+
+            const doc1 = new Y.Doc();
+            doc1.getText('file-content').insert(0, 'Response 1');
+            const doc2 = new Y.Doc();
+            doc2.getText('file-content').insert(0, 'Response 2');
+
+            // Both responses have the same timestamp
+            incomingMessages$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_RESPONSE,
+                target: TARGET,
+                filePath: FILE_PATH,
+                responseTo: requestId,
+                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(doc1)),
+                leaderTimestamp: 100,
+                sessionId: 'session-bbb',
+                timestamp: 1,
+            });
+            incomingMessages$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_RESPONSE,
+                target: TARGET,
+                filePath: FILE_PATH,
+                responseTo: requestId,
+                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(doc2)),
+                leaderTimestamp: 100,
+                sessionId: 'session-aaa', // Lexicographically smaller
+                timestamp: 2,
+            });
+
+            vi.advanceTimersByTime(500);
+            // Should select 'session-aaa' due to tie-breaker
+            expect(state.text.toString()).toBe('Response 2');
+        });
+
+        it('replaces state when late response has better sessionId with same timestamp', () => {
+            service.init(EXERCISE_ID, TARGET);
+            service.openFile(FILE_PATH, 'Fallback')!;
+
+            const requestCall = syncService.sendSynchronizationUpdate.mock.calls.find(
+                ([, msg]) => msg.eventType === ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_REQUEST && (msg as any).filePath === FILE_PATH,
+            );
+            const requestId = (requestCall?.[1] as any).requestId as string;
+
+            // Initial response with higher sessionId
+            const initialDoc = new Y.Doc();
+            initialDoc.getText('file-content').insert(0, 'Initial content');
+            incomingMessages$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_RESPONSE,
+                target: TARGET,
+                filePath: FILE_PATH,
+                responseTo: requestId,
+                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(initialDoc)),
+                leaderTimestamp: 100,
+                sessionId: 'session-zzz',
+                timestamp: 1,
+            });
+
+            vi.advanceTimersByTime(500);
+
+            let replacedState: ({ filePath: string } & FileSyncState) | undefined;
+            const sub = service.stateReplaced$.subscribe((s) => (replacedState = s));
+
+            // Late response with same timestamp but better sessionId
+            const lateDoc = new Y.Doc();
+            lateDoc.getText('file-content').insert(0, 'Late better content');
+            incomingMessages$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_RESPONSE,
+                target: TARGET,
+                filePath: FILE_PATH,
+                responseTo: requestId,
+                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(lateDoc)),
+                leaderTimestamp: 100,
+                sessionId: 'session-aaa', // Lexicographically smaller
+                timestamp: 2,
+            });
+
+            expect(replacedState).toBeDefined();
+            expect(replacedState?.text.toString()).toBe('Late better content');
+            sub.unsubscribe();
+        });
+
+        it('does not replace state when late response has worse sessionId with same timestamp', () => {
+            service.init(EXERCISE_ID, TARGET);
+            const state = service.openFile(FILE_PATH, 'Fallback')!;
+
+            const requestCall = syncService.sendSynchronizationUpdate.mock.calls.find(
+                ([, msg]) => msg.eventType === ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_REQUEST && (msg as any).filePath === FILE_PATH,
+            );
+            const requestId = (requestCall?.[1] as any).requestId as string;
+
+            // Initial response with lower sessionId
+            const initialDoc = new Y.Doc();
+            initialDoc.getText('file-content').insert(0, 'Initial content');
+            incomingMessages$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_RESPONSE,
+                target: TARGET,
+                filePath: FILE_PATH,
+                responseTo: requestId,
+                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(initialDoc)),
+                leaderTimestamp: 100,
+                sessionId: 'session-aaa',
+                timestamp: 1,
+            });
+
+            vi.advanceTimersByTime(500);
+
+            let replacedState: ({ filePath: string } & FileSyncState) | undefined;
+            const sub = service.stateReplaced$.subscribe((s) => (replacedState = s));
+
+            // Late response with same timestamp but worse sessionId
+            const lateDoc = new Y.Doc();
+            lateDoc.getText('file-content').insert(0, 'Should not replace');
+            incomingMessages$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_RESPONSE,
+                target: TARGET,
+                filePath: FILE_PATH,
+                responseTo: requestId,
+                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(lateDoc)),
+                leaderTimestamp: 100,
+                sessionId: 'session-zzz', // Lexicographically larger — should not win
+                timestamp: 2,
+            });
+
+            expect(replacedState).toBeUndefined();
+            expect(state.text.toString()).toBe('Initial content');
+            sub.unsubscribe();
+        });
+    });
+
+    describe('late-winning response', () => {
+        it('replaces state when a better leader responds late', () => {
+            service.init(EXERCISE_ID, TARGET);
+            const state = service.openFile(FILE_PATH, 'Fallback')!;
+
+            const requestCall = syncService.sendSynchronizationUpdate.mock.calls.find(
+                ([, msg]) => msg.eventType === ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_REQUEST && (msg as any).filePath === FILE_PATH,
+            );
+            const requestId = (requestCall?.[1] as any).requestId as string;
+
+            let replacedState: ({ filePath: string } & FileSyncState) | undefined;
+            const sub = service.stateReplaced$.subscribe((s) => (replacedState = s));
+
+            vi.advanceTimersByTime(500);
+            expect(state.text.toString()).toBe('Fallback');
+
+            const lateDoc = new Y.Doc();
+            lateDoc.getText('file-content').insert(0, 'Late winning content');
+            incomingMessages$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_RESPONSE,
+                target: TARGET,
+                filePath: FILE_PATH,
+                responseTo: requestId,
+                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(lateDoc)),
+                leaderTimestamp: 1,
+                timestamp: 2,
+            });
+
+            expect(replacedState).toBeDefined();
+            expect(replacedState?.filePath).toBe(FILE_PATH);
+            expect(replacedState?.text.toString()).toBe('Late winning content');
+            sub.unsubscribe();
+        });
+    });
+
+    describe('awareness', () => {
+        it('applies awareness updates and registers remote styles', () => {
+            service.init(EXERCISE_ID, TARGET);
+            service.openFile(FILE_PATH, '');
+            vi.advanceTimersByTime(500);
+
+            const ensureStyleSpy = vi.spyOn(yjsUtils, 'ensureRemoteSelectionStyle').mockImplementation(() => undefined);
+
+            const remoteDoc = new Y.Doc();
+            const remoteAwareness = new Awareness(remoteDoc);
+            remoteAwareness.setLocalStateField('user', { name: 'Remote User', color: '#abcdef' });
+            const update = encodeAwarenessUpdate(remoteAwareness, [remoteAwareness.clientID]);
+
+            incomingMessages$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_AWARENESS_UPDATE,
+                target: TARGET,
+                filePath: FILE_PATH,
+                awarenessUpdate: yjsUtils.encodeUint8ArrayToBase64(update),
+                timestamp: 1,
+            });
+
+            expect(ensureStyleSpy).toHaveBeenCalledWith(remoteAwareness.clientID, '#abcdef', 'Remote User');
+            ensureStyleSpy.mockRestore();
+        });
+
+        it('updates local awareness name from user identity', () => {
+            userIdentitySignal.set({ name: 'Ada Lovelace', login: 'ada' });
+
+            service.init(EXERCISE_ID, TARGET);
+            const state = service.openFile(FILE_PATH, '')!;
+
+            expect(state.awareness.getLocalState()?.user?.name).toBe('Ada Lovelace');
+        });
+    });
+
+    describe('file tree events', () => {
+        it('emits FILE_CREATED event', () => {
+            service.init(EXERCISE_ID, TARGET);
+            service.emitFileCreated('src/New.java', 'FILE');
+
+            expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
+                EXERCISE_ID,
+                expect.objectContaining({
+                    eventType: ExerciseEditorSyncEventType.FILE_CREATED,
+                    target: TARGET,
+                    filePath: 'src/New.java',
+                    fileType: 'FILE',
+                }),
+            );
+        });
+
+        it('emits FILE_DELETED event and closes local doc', () => {
+            service.init(EXERCISE_ID, TARGET);
+            const state = service.openFile(FILE_PATH, 'content')!;
+            vi.advanceTimersByTime(500);
+            const destroySpy = vi.spyOn(state.doc, 'destroy');
+
+            service.emitFileDeleted(FILE_PATH, 'FILE');
+
+            expect(destroySpy).toHaveBeenCalled();
+            expect(service.isFileOpen(FILE_PATH)).toBe(false);
+            expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
+                EXERCISE_ID,
+                expect.objectContaining({
+                    eventType: ExerciseEditorSyncEventType.FILE_DELETED,
+                    filePath: FILE_PATH,
+                    fileType: 'FILE',
+                }),
+            );
+        });
+
+        it('emits FILE_RENAMED event and remaps doc key', () => {
+            service.init(EXERCISE_ID, TARGET);
+            service.openFile(FILE_PATH, 'content');
+            vi.advanceTimersByTime(500);
+
+            const newPath = 'src/Renamed.java';
+            service.emitFileRenamed(FILE_PATH, newPath, 'FILE');
+
+            expect(service.isFileOpen(FILE_PATH)).toBe(false);
+            expect(service.isFileOpen(newPath)).toBe(true);
+            expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
+                EXERCISE_ID,
+                expect.objectContaining({
+                    eventType: ExerciseEditorSyncEventType.FILE_RENAMED,
+                    oldPath: FILE_PATH,
+                    newPath,
+                    fileType: 'FILE',
+                }),
+            );
+        });
+
+        it('handles remote FILE_CREATED by emitting on fileTreeChange$', () => {
+            service.init(EXERCISE_ID, TARGET);
+
+            let received: FileCreatedEvent | FileDeletedEvent | FileRenamedEvent | undefined;
+            const sub = service.fileTreeChange$.subscribe((e) => (received = e));
+
+            incomingMessages$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_CREATED,
+                target: TARGET,
+                filePath: 'src/Remote.java',
+                fileType: 'FILE',
+                timestamp: 1,
+            });
+
+            expect(received).toBeDefined();
+            expect(received?.eventType).toBe(ExerciseEditorSyncEventType.FILE_CREATED);
+            sub.unsubscribe();
+        });
+
+        it('handles remote FILE_DELETED by closing doc and emitting on fileTreeChange$', () => {
+            service.init(EXERCISE_ID, TARGET);
+            const state = service.openFile(FILE_PATH, 'content')!;
+            vi.advanceTimersByTime(500);
+            const destroySpy = vi.spyOn(state.doc, 'destroy');
+
+            let received: FileCreatedEvent | FileDeletedEvent | FileRenamedEvent | undefined;
+            const sub = service.fileTreeChange$.subscribe((e) => (received = e));
+
+            incomingMessages$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_DELETED,
+                target: TARGET,
+                filePath: FILE_PATH,
+                fileType: 'FILE',
+                timestamp: 1,
+            });
+
+            expect(destroySpy).toHaveBeenCalled();
+            expect(received?.eventType).toBe(ExerciseEditorSyncEventType.FILE_DELETED);
+            sub.unsubscribe();
+        });
+
+        it('handles remote FILE_RENAMED by remapping key and emitting on fileTreeChange$', () => {
+            service.init(EXERCISE_ID, TARGET);
+            service.openFile(FILE_PATH, 'content');
+            vi.advanceTimersByTime(500);
+
+            let received: FileCreatedEvent | FileDeletedEvent | FileRenamedEvent | undefined;
+            const sub = service.fileTreeChange$.subscribe((e) => (received = e));
+
+            const newPath = 'src/Renamed.java';
+            incomingMessages$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_RENAMED,
+                target: TARGET,
+                oldPath: FILE_PATH,
+                newPath,
+                fileType: 'FILE',
+                timestamp: 1,
+            });
+
+            expect(service.isFileOpen(FILE_PATH)).toBe(false);
+            expect(service.isFileOpen(newPath)).toBe(true);
+            expect(received?.eventType).toBe(ExerciseEditorSyncEventType.FILE_RENAMED);
+            sub.unsubscribe();
+        });
+    });
+
+    describe('rename handling', () => {
+        it('remaps directory keys for all files under the directory', () => {
+            service.init(EXERCISE_ID, TARGET);
+            service.openFile('src/pkg/A.java', 'A');
+            service.openFile('src/pkg/B.java', 'B');
+            vi.advanceTimersByTime(500);
+
+            service.emitFileRenamed('src/pkg', 'src/newpkg', 'FOLDER');
+
+            expect(service.isFileOpen('src/pkg/A.java')).toBe(false);
+            expect(service.isFileOpen('src/pkg/B.java')).toBe(false);
+            expect(service.isFileOpen('src/newpkg/A.java')).toBe(true);
+            expect(service.isFileOpen('src/newpkg/B.java')).toBe(true);
+        });
+
+        it('applies late updates on old path via recentRenames', () => {
+            service.init(EXERCISE_ID, TARGET);
+            service.openFile(FILE_PATH, '');
+            vi.advanceTimersByTime(500);
+
+            const newPath = 'src/Renamed.java';
+            service.emitFileRenamed(FILE_PATH, newPath, 'FILE');
+
+            // Send an update addressed to the old path
+            const doc = new Y.Doc();
+            doc.getText('file-content').insert(0, 'Late update on old path');
+            incomingMessages$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_SYNC_UPDATE,
+                target: TARGET,
+                filePath: FILE_PATH,
+                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(doc)),
+                timestamp: 1,
+            });
+
+            // openFile returns the existing entry under the new key (remapped by rename)
+            const state = service.openFile(newPath, '')!;
+            expect(state.text.toString()).toBe('Late update on old path');
+        });
+    });
+
+    describe('responds to full-content requests', () => {
+        it('responds with current document state after init', () => {
+            service.init(EXERCISE_ID, TARGET);
+            const state = service.openFile(FILE_PATH, '')!;
+            vi.advanceTimersByTime(500);
+            state.text.insert(0, 'Current content');
+            syncService.sendSynchronizationUpdate.mockClear();
+
+            incomingMessages$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_REQUEST,
+                target: TARGET,
+                filePath: FILE_PATH,
+                requestId: 'req-abc',
+                timestamp: 1,
+            });
+
+            expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
+                EXERCISE_ID,
+                expect.objectContaining({
+                    eventType: ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_RESPONSE,
+                    target: TARGET,
+                    filePath: FILE_PATH,
+                    responseTo: 'req-abc',
+                    yjsUpdate: expect.any(String),
+                    leaderTimestamp: expect.any(Number),
+                }),
+            );
+
+            const response = syncService.sendSynchronizationUpdate.mock.calls[0][1] as unknown as { yjsUpdate: string };
+            const decoded = yjsUtils.decodeBase64ToUint8Array(response.yjsUpdate);
+            const responseDoc = new Y.Doc();
+            Y.applyUpdate(responseDoc, decoded);
+            expect(responseDoc.getText('file-content').toString()).toBe('Current content');
+        });
+    });
+
+    describe('message filtering', () => {
+        it('ignores messages for a different auxiliary repository id', () => {
+            service.init(EXERCISE_ID, ExerciseEditorSyncTarget.AUXILIARY_REPOSITORY, 1);
+            const state = service.openFile(FILE_PATH, '')!;
+            vi.advanceTimersByTime(500);
+
+            const doc = new Y.Doc();
+            doc.getText('file-content').insert(0, 'Wrong aux repo');
+            incomingMessages$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_SYNC_UPDATE,
+                target: ExerciseEditorSyncTarget.AUXILIARY_REPOSITORY,
+                filePath: FILE_PATH,
+                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(doc)),
+                auxiliaryRepositoryId: 999,
+                timestamp: 1,
+            });
+
+            expect(state.text.toString()).toBe('');
+        });
+
+        it('ignores messages for a different target', () => {
+            service.init(EXERCISE_ID, TARGET);
+            const state = service.openFile(FILE_PATH, '')!;
+            vi.advanceTimersByTime(500);
+
+            const doc = new Y.Doc();
+            doc.getText('file-content').insert(0, 'Wrong target');
+            incomingMessages$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_SYNC_UPDATE,
+                target: ExerciseEditorSyncTarget.SOLUTION_REPOSITORY,
+                filePath: FILE_PATH,
+                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(doc)),
+                timestamp: 1,
+            });
+
+            expect(state.text.toString()).toBe('');
+        });
+    });
+});
