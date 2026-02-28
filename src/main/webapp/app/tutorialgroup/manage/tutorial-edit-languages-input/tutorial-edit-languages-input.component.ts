@@ -151,13 +151,13 @@ export class TutorialEditLanguagesInputComponent {
         if (!trimmedLanguage) {
             return {
                 status: ValidationStatus.INVALID,
-                message: 'Please choose a language. The system automatically removes leading/trailing whitespaces.',
+                message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.languageRequired',
             };
         }
         if (trimmedLanguage && trimmedLanguage.length > 255) {
             return {
                 status: ValidationStatus.INVALID,
-                message: 'Language must contain at most 255 characters. The system automatically removes leading/trailing whitespaces.',
+                message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.languageLength',
             };
         }
         return { status: ValidationStatus.VALID };

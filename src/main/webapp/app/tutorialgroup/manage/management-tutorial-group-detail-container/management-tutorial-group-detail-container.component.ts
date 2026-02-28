@@ -89,7 +89,7 @@ export class ManagementTutorialGroupDetailContainerComponent {
                     this.isLoading.set(false);
                 },
                 error: () => {
-                    this.alertService.addErrorAlert('Something went wrong while cancelling the session. Please try again.');
+                    this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupDetail.managementActionErrorAlert.sessionCancellation');
                     this.isLoading.set(false);
                 },
             });
@@ -109,7 +109,7 @@ export class ManagementTutorialGroupDetailContainerComponent {
                     this.isLoading.set(false);
                 },
                 error: () => {
-                    this.alertService.addErrorAlert('Something went wrong while undoing the cancellation. Please try again.');
+                    this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupDetail.managementActionErrorAlert.sessionActivation');
                     this.isLoading.set(false);
                 },
             });
@@ -130,7 +130,7 @@ export class ManagementTutorialGroupDetailContainerComponent {
                     this.isLoading.set(false);
                 },
                 error: () => {
-                    this.alertService.addErrorAlert('Something went wrong while updating the session. Please try again.');
+                    this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupDetail.managementActionErrorAlert.sessionUpdate');
                     this.isLoading.set(false);
                 },
             });
@@ -150,7 +150,7 @@ export class ManagementTutorialGroupDetailContainerComponent {
                     this.isLoading.set(false);
                 },
                 error: () => {
-                    this.alertService.addErrorAlert('Something went wrong while updating the session. Please try again.');
+                    this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupDetail.managementActionErrorAlert.sessionCreation');
                     this.isLoading.set(false);
                 },
             });

@@ -387,7 +387,12 @@
                 "createOneToOneChatError": "Error while creating tutor chat. Please try again.",
                 "managementActionErrorAlert": {
                     "sessionDeletion": "Error while deleting session. Please try again.",
-                    "groupDeletion": "Error while deleting group. Please try again."
+                    "groupDeletion": "Error while deleting group. Please try again.",
+                    "groupCreation": "Something went wrong while creating the tutorial group. Please try again.",
+                    "sessionCancellation": "Something went wrong while cancelling the session. Please try again.",
+                    "sessionActivation": "Something went wrong while undoing the cancellation. Please try again.",
+                    "sessionUpdate": "Something went wrong while updating the session. Please try again.",
+                    "sessionCreation": "Something went wrong while creating the session. Please try again."
                 },
                 "createOrEditSessionModal": {
                     "header": {
@@ -425,6 +430,7 @@
                     "title": "Title",
                     "tutor": "Tutor",
                     "language": "Language",
+                    "languageAutocompleteHeader": "input new or reuse existing:",
                     "mode": "Mode",
                     "campus": "Campus",
                     "capacity": "Capacity",
@@ -432,8 +438,31 @@
                     "firstSessionStart": "First Session Start",
                     "firstSessionEnd": "First Session Start",
                     "repetitionFrequency": "Repetition Frequency",
+                    "repetitionFrequencyPrefix": "every ",
+                    "repetitionFrequencySuffix": " weeks(s)",
                     "tutorialPeriodEnd": "Tutorial Period End",
                     "location": "Location"
+                },
+                "validationError": {
+                    "titleContent": "Title must start with a letter or digit, and can otherwise only contain letters, digits, colons, spaces and dashes.",
+                    "titleLength": "Title must contain at most 19 characters. The system automatically removes leading/trailing whitespaces.",
+                    "campusLength": "Campus must contain at most 255 characters. The system automatically removes leading/trailing whitespaces.",
+                    "languageRequired": "Please choose a language.",
+                    "languageLength": "Campus must contain at most 255 characters. The system automatically removes leading/trailing whitespaces.",
+                    "firstSessionStartRequired": "Please choose a date.",
+                    "firstSessionEndRequired": "Please choose a date.",
+                    "firstSessionEndNotAfterStart": "The end of the first session must be after its start.",
+                    "firstSessionEndNotOnSameDayAsStart": "The end of the first session must be on the same day as its start.",
+                    "teachingPeriodRequired": "Please choose a date.",
+                    "teachingPeriodNotAfterFirstSessionStart": "The end of the teaching period must be after the first session's start.",
+                    "teachingPeriodNotAfterFirstSessionEnd": "The end of the teaching period must be after the first session's end.",
+                    "tutorRequired": "Please choose a tutor.",
+                    "locationRequired": "Please choose a location."
+                },
+                "confirmSaveDialog": {
+                    "header": "Save Group?",
+                    "message": "You made changes to the schedule. If you save, this will overwrite all existing sessions.",
+                    "acceptButtonLabel": "Save and Overwrite"
                 }
             },
             "tutorialGroupSessionManagement": {

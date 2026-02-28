@@ -17,7 +17,7 @@
                         (blur)="titleInputTouched.set(true)"
                     />
                     @if (titleValidation.status === ValidationStatus.INVALID && titleInputTouched()) {
-                        <p-inputgroup-addon [pTooltip]="titleValidation.message" tooltipPosition="bottom">
+                        <p-inputgroup-addon [pTooltip]="titleValidation.message | artemisTranslate" tooltipPosition="bottom">
                             <i class="pi pi-info-circle danger"></i>
                         </p-inputgroup-addon>
                     }
@@ -41,7 +41,7 @@
                         (onBlur)="tutorInputTouched.set(true)"
                     />
                     @if (tutorValidation.status === ValidationStatus.INVALID && tutorInputTouched()) {
-                        <p-inputgroup-addon [pTooltip]="tutorValidation.message" tooltipPosition="bottom">
+                        <p-inputgroup-addon [pTooltip]="tutorValidation.message | artemisTranslate" tooltipPosition="bottom">
                             <i class="pi pi-info-circle danger"></i>
                         </p-inputgroup-addon>
                     }
@@ -82,7 +82,7 @@
                         [invalid]="campusValidation.status === ValidationStatus.INVALID"
                     />
                     @if (campusValidation.status === ValidationStatus.INVALID) {
-                        <p-inputgroup-addon [pTooltip]="campusValidation.message" tooltipPosition="bottom">
+                        <p-inputgroup-addon [pTooltip]="campusValidation.message | artemisTranslate" tooltipPosition="bottom">
                             <i class="pi pi-info-circle danger"></i>
                         </p-inputgroup-addon>
                     }
@@ -93,7 +93,12 @@
                 <label jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.inputLabel.capacity"></label>
                 <p-inputgroup>
                     <p-inputgroup-addon><i class="pi pi-hashtag"></i></p-inputgroup-addon>
-                    <p-inputnumber [(ngModel)]="capacity" placeholder="Capacity" [min]="1" [showButtons]="true" />
+                    <p-inputnumber
+                        [(ngModel)]="capacity"
+                        [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.capacity' | artemisTranslate"
+                        [min]="1"
+                        [showButtons]="true"
+                    />
                 </p-inputgroup>
             </div>
         </div>
@@ -123,7 +128,7 @@
         @if (configureSessionPlan()) {
             <div class="label-and-input-row">
                 <div class="label-and-input">
-                    <label jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.inputLabel.firstSessionStart">First Session Start</label>
+                    <label jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.inputLabel.firstSessionStart"></label>
                     <p-inputgroup>
                         @let firstSessionStartValidation = firstSessionStartValidationResult();
                         <p-datepicker
@@ -135,7 +140,7 @@
                             (onBlur)="firstSessionStartInputTouched.set(true)"
                         />
                         @if (firstSessionStartValidation.status === ValidationStatus.INVALID && firstSessionStartInputTouched()) {
-                            <p-inputgroup-addon [pTooltip]="firstSessionStartValidation.message" tooltipPosition="bottom">
+                            <p-inputgroup-addon [pTooltip]="firstSessionStartValidation.message | artemisTranslate" tooltipPosition="bottom">
                                 <i class="pi pi-info-circle danger"></i>
                             </p-inputgroup-addon>
                         }
@@ -155,7 +160,7 @@
                             (onBlur)="firstSessionEndInputTouched.set(true)"
                         />
                         @if (firstSessionEndValidation.status === ValidationStatus.INVALID && firstSessionEndInputTouched()) {
-                            <p-inputgroup-addon [pTooltip]="firstSessionEndValidation.message" tooltipPosition="bottom">
+                            <p-inputgroup-addon [pTooltip]="firstSessionEndValidation.message | artemisTranslate" tooltipPosition="bottom">
                                 <i class="pi pi-info-circle danger"></i>
                             </p-inputgroup-addon>
                         }
@@ -167,7 +172,13 @@
                 <div class="label-and-input">
                     <label jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.inputLabel.repetitionFrequency"></label>
                     <p-inputgroup>
-                        <p-inputnumber [(ngModel)]="repetitionFrequency" prefix="every " suffix=" week(s)" [min]="1" [showButtons]="true" />
+                        <p-inputnumber
+                            [(ngModel)]="repetitionFrequency"
+                            [prefix]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.repetitionFrequencyPrefix' | artemisTranslate"
+                            [suffix]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.repetitionFrequencySuffix' | artemisTranslate"
+                            [min]="1"
+                            [showButtons]="true"
+                        />
                     </p-inputgroup>
                 </div>
 
@@ -184,7 +195,7 @@
                             (onBlur)="tutorialPeriodEndInputTouched.set(true)"
                         />
                         @if (tutorialPeriodEndValidation.status === ValidationStatus.INVALID && tutorialPeriodEndInputTouched()) {
-                            <p-inputgroup-addon [pTooltip]="tutorialPeriodEndValidation.message" tooltipPosition="left">
+                            <p-inputgroup-addon [pTooltip]="tutorialPeriodEndValidation.message | artemisTranslate" tooltipPosition="left">
                                 <i class="pi pi-info-circle danger"></i>
                             </p-inputgroup-addon>
                         }
@@ -206,7 +217,7 @@
                             (blur)="locationInputTouched.set(true)"
                         />
                         @if (locationValidation.status === ValidationStatus.INVALID && locationInputTouched()) {
-                            <p-inputgroup-addon [pTooltip]="locationValidation.message" tooltipPosition="left">
+                            <p-inputgroup-addon [pTooltip]="locationValidation.message | artemisTranslate" tooltipPosition="left">
                                 <i class="pi pi-info-circle danger"></i>
                             </p-inputgroup-addon>
                         }
@@ -220,9 +231,14 @@
     <div class="controls-footer">
         <span jhiTranslate="global.form.requiredLabel"></span>
         <a [routerLink]="['..']" pButton class="p-button-secondary p-button-sm" data-testid="cancel-button" jhiTranslate="entity.action.cancel"></a>
-        <button pButton class="p-button-primary p-button-sm" data-testid="save-button" (click)="save()" [disabled]="saveButtonDisabled()" jhiTranslate="entity.action.save">
-            Save
-        </button>
+        <button
+            pButton
+            class="p-button-primary p-button-sm"
+            data-testid="save-button"
+            (click)="save()"
+            [disabled]="saveButtonDisabled()"
+            jhiTranslate="entity.action.save"
+        ></button>
     </div>
 </div>
 <p-confirmDialog />

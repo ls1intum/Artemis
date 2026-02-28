@@ -17,6 +17,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateService } from '@ngx-translate/core';
 
 type Mode = {
     name: string;
@@ -71,6 +72,7 @@ export class TutorialCreateOrEditComponent {
     private readonly titleRegex = /^[A-Za-z0-9][A-Za-z0-9: -]*$/;
     protected readonly ValidationStatus = ValidationStatus;
     private confirmationService = inject(ConfirmationService);
+    private translateService = inject(TranslateService);
 
     courseId = input.required<number>();
     tutorialGroupId = input<number>();
@@ -164,10 +166,10 @@ export class TutorialCreateOrEditComponent {
 
     private confirmScheduleChangingSave(courseId: number, tutorialGroupId: number, updateTutorialGroupDTO: CreateOrUpdateTutorialGroupDTO) {
         this.confirmationService.confirm({
-            header: 'Confirm Save',
-            message: 'You made changes to the schedule. If you save, this will overwrite all existing sessions.',
-            acceptLabel: 'Save and Overwrite',
-            rejectLabel: 'Cancel',
+            header: this.translateService.instant('artemisApp.pages.createOrEditTutorialGroup.confirmSaveDialog.header'),
+            message: this.translateService.instant('artemisApp.pages.createOrEditTutorialGroup.confirmSaveDialog.message'),
+            acceptLabel: this.translateService.instant('artemisApp.pages.createOrEditTutorialGroup.confirmSaveDialog.acceptButtonLabel'),
+            rejectLabel: this.translateService.instant('entity.action.cancel'),
             acceptButtonStyleClass: 'p-button-danger',
             rejectButtonStyleClass: 'p-button-secondary',
             accept: () => this.onUpdate.emit({ courseId, tutorialGroupId, updateTutorialGroupDTO }),
@@ -201,14 +203,14 @@ export class TutorialCreateOrEditComponent {
         if (!title.match(this.titleRegex)) {
             return {
                 status: ValidationStatus.INVALID,
-                message: 'Title must start with a letter or digit, and can otherwise only contain letters, digits, colons, spaces and dashes.',
+                message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.titleContent',
             };
         }
         const trimmedTitle = title.trim();
         if (trimmedTitle.length > 19) {
             return {
                 status: ValidationStatus.INVALID,
-                message: 'Title must contain at most 19 characters. The system automatically removes leading/trailing whitespaces.',
+                message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.titleLength',
             };
         }
         return {
@@ -221,7 +223,7 @@ export class TutorialCreateOrEditComponent {
         if (trimmedCampus && trimmedCampus.length > 255) {
             return {
                 status: ValidationStatus.INVALID,
-                message: 'Campus must contain at most 255 characters. The system automatically removes leading/trailing whitespaces.',
+                message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.campusLength',
             };
         }
         return { status: ValidationStatus.VALID };
@@ -232,7 +234,7 @@ export class TutorialCreateOrEditComponent {
             ? { status: ValidationStatus.VALID }
             : {
                   status: ValidationStatus.INVALID,
-                  message: 'Please choose a date.',
+                  message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.firstSessionStartRequired',
               };
     }
 
@@ -241,14 +243,14 @@ export class TutorialCreateOrEditComponent {
         if (!firstSessionEnd) {
             return {
                 status: ValidationStatus.INVALID,
-                message: 'Please choose a date.',
+                message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.firstSessionEndRequired',
             };
         }
         const firstSessionStart = this.firstSessionStart();
         if (firstSessionStart && firstSessionEnd <= firstSessionStart) {
             return {
                 status: ValidationStatus.INVALID,
-                message: 'The end of the first session must be after its start.',
+                message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.firstSessionEndNotAfterStart',
             };
         }
         if (
@@ -259,7 +261,7 @@ export class TutorialCreateOrEditComponent {
         ) {
             return {
                 status: ValidationStatus.INVALID,
-                message: 'The end of the first session must be on the same day as its start.',
+                message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.firstSessionEndNotOnSameDayAsStart',
             };
         }
         return { status: ValidationStatus.VALID };
@@ -270,21 +272,21 @@ export class TutorialCreateOrEditComponent {
         if (!teachingPeriodEnd) {
             return {
                 status: ValidationStatus.INVALID,
-                message: 'Please choose a date.',
+                message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.teachingPeriodRequired',
             };
         }
         const firstSessionStart = this.firstSessionStart();
         if (firstSessionStart && teachingPeriodEnd <= firstSessionStart) {
             return {
                 status: ValidationStatus.INVALID,
-                message: "The end of the teaching period must be after the first session's start.",
+                message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.teachingPeriodNotAfterFirstSessionStart',
             };
         }
         const firstSessionEnd = this.firstSessionEnd();
         if (firstSessionEnd && teachingPeriodEnd <= firstSessionEnd) {
             return {
                 status: ValidationStatus.INVALID,
-                message: "The end of the teaching period must be after the first session's end.",
+                message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.teachingPeriodNotAfterFirstSessionEnd',
             };
         }
         return { status: ValidationStatus.VALID };
@@ -295,7 +297,7 @@ export class TutorialCreateOrEditComponent {
         if (selectedTutorId) return { status: ValidationStatus.VALID };
         return {
             status: ValidationStatus.INVALID,
-            message: 'Please choose a tutor.',
+            message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.tutorRequired',
         };
     }
 
@@ -304,7 +306,7 @@ export class TutorialCreateOrEditComponent {
         if (!location) {
             return {
                 status: ValidationStatus.INVALID,
-                message: 'Please choose a location.',
+                message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.locationRequired',
             };
         }
         return { status: ValidationStatus.VALID };

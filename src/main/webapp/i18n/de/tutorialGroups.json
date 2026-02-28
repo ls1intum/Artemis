@@ -319,6 +319,7 @@
                     "title": "Titel",
                     "tutor": "Tutor",
                     "language": "Sprache",
+                    "languageAutocompleteHeader": "gebe eine neue ein oder wähle eine existierende:",
                     "mode": "Modus",
                     "campus": "Campus",
                     "capacity": "Kapazität",
@@ -326,8 +327,30 @@
                     "firstSessionStart": "Start erste Session",
                     "firstSessionEnd": "Ende erste Session",
                     "repetitionFrequency": "Wiederholungsfrequenz",
+                    "repetitionFrequencyPrefix": "jede ",
+                    "repetitionFrequencySuffix": " Woche(n)",
                     "tutorialPeriodEnd": "Ende Tutoriumsperiode",
                     "location": "Ort"
+                },
+                "validationError": {
+                    "titleContent": "Der Titel muss mit einem Buchstaben oder einer Ziffer anfangen und darf sonst nur Buchstaben, Ziffern, Strichpunkte, Leerzeichen und Bindestriche enthalten.",
+                    "titleLength": "Titel darf eine maximale Länge von 19 Zeichen haben. Das sytsem entfernt automatisch führende und abschließende Whitespaces.",
+                    "campusLength": "Campus darf eine maximale Länge von 255 Zeichen haben. Das sytsem entfernt automatisch führende und abschließende Whitespaces.",
+                    "languageRequired": "Bitte wähle eine Sprache.",
+                    "firstSessionStartRequired": "Bitte wähle ein Zeitpunkt.",
+                    "firstSessionEndRequired": "Bitte wähle ein Zeitpunkt.",
+                    "firstSessionEndNotAfterStart": "Das Ende der Session muss nach dem Anfang liegen.",
+                    "firstSessionEndNotOnSameDayAsStart": "Das Ende der ersten Session muss am selben Tag sein wie der Anfang.",
+                    "teachingPeriodRequired": "Bitte wähle ein Zeitpunkt.",
+                    "teachingPeriodNotAfterFirstSessionStart": "Das Ende der Tutoriumsperiode muss nach dem Anfang der ersten Session liegen.",
+                    "teachingPeriodNotAfterFirstSessionEnd": "Das Ende der Tutoriumsperiode muss nach dem Ende der ersten Session liegen.",
+                    "tutorRequired": "Bitte wähle ein Tutor.",
+                    "locationRequired": "Bitte wähle einen Ort."
+                },
+                "confirmSaveDialog": {
+                    "header": "Gruppe Speichern?",
+                    "message": "Du hast den Sessionplan verändert. Bei einer Speicherung werden alle existierended Sessions überschrieben.",
+                    "acceptButtonLabel": "Speichern und Überschreiben"
                 }
             },
             "tutorialGroupDetail": {
@@ -405,7 +428,12 @@
                 "createOneToOneChatError": "Fehler beim Erstellen des Tutor-Chats. Bitte versuchen Sie es erneut.",
                 "managementActionErrorAlert": {
                     "sessionDeletion": "Fehler beim Löschen der Session. Bitte versuchen Sie es erneut.",
-                    "groupDeletion": "Fehler beim Löschen der Gruppe. Bitte versuchen Sie es erneut."
+                    "groupDeletion": "Fehler beim Löschen der Gruppe. Bitte versuchen Sie es erneut.",
+                    "groupCreation": "Beim Erstellen der Gruppe ist etwas schief gegangen. Bitte versuche es erneut.",
+                    "sessionCancellation": "Beim Absagen der Session ist etwas schief gegangen. Bitte versuche es erneut.",
+                    "sessionActivation": "Beim Rückgängigmachen der Absage ist etwas schief gegangen. Bitte versuche es erneut.",
+                    "sessionUpdate": "Beim Bearbeiten der Session ist etwas schief gegangen. Bitte versuche es erneut.",
+                    "sessionCreation": "Beim Erstellen der Session ist etwas schief gegangen. Bitte versuche es erneut."
                 },
                 "createOrEditSessionModal": {
                     "header": {

@@ -51,7 +51,7 @@ export class TutorialCreateContainerComponent {
                     this.router.navigate(['..'], { relativeTo: this.activatedRoute });
                 },
                 error: () => {
-                    this.alertService.addErrorAlert('Something went wrong while creating the tutorial group. Please try again.'); // TODO: create string key
+                    this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupDetail.managementActionErrorAlert.groupCreation');
                     this.isTutorialGroupLoading.set(false);
                 },
             });
