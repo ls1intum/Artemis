@@ -52,6 +52,11 @@ public class ExecutionPlanStateManagerService {
 
     private final CacheManager cacheManager;
 
+    /**
+     * Creates a new ExecutionPlanStateManagerService with the given cache manager.
+     *
+     * @param cacheManager the cache manager used to store execution plans
+     */
     public ExecutionPlanStateManagerService(CacheManager cacheManager) {
         this.cacheManager = cacheManager;
     }
@@ -132,29 +137,59 @@ public class ExecutionPlanStateManagerService {
         @Nullable
         private StepResult result;
 
+        /**
+         * Creates a new plan step for the given agent type with PENDING status.
+         *
+         * @param agentType the agent responsible for executing this step
+         */
         public PlanStep(AgentType agentType) {
             this.agentType = agentType;
             this.status = StepStatus.PENDING;
             this.result = null;
         }
 
+        /**
+         * Returns the agent type responsible for this step.
+         *
+         * @return the agent type
+         */
         public AgentType getAgentType() {
             return agentType;
         }
 
+        /**
+         * Returns the current execution status of this step.
+         *
+         * @return the step status
+         */
         public StepStatus getStatus() {
             return status;
         }
 
+        /**
+         * Updates the execution status of this step.
+         *
+         * @param status the new status
+         */
         public void setStatus(StepStatus status) {
             this.status = status;
         }
 
+        /**
+         * Returns the result produced by this step, or null if not yet completed.
+         *
+         * @return the step result, or null
+         */
         @Nullable
         public StepResult getResult() {
             return result;
         }
 
+        /**
+         * Stores the result produced by this step.
+         *
+         * @param result the step result, or null
+         */
         public void setResult(@Nullable StepResult result) {
             this.result = result;
         }
@@ -176,6 +211,13 @@ public class ExecutionPlanStateManagerService {
 
         private final Instant createdAt;
 
+        /**
+         * Creates a new execution plan with the given steps and user goal.
+         * The first step is immediately set to ACTIVE.
+         *
+         * @param steps    the ordered list of steps to execute
+         * @param userGoal the original user request, passed as context to each sub-agent
+         */
         public ExecutionPlan(List<PlanStep> steps, String userGoal) {
             this.steps = new ArrayList<>(steps);
             this.currentStepIndex = 0;
@@ -188,18 +230,38 @@ public class ExecutionPlanStateManagerService {
             }
         }
 
+        /**
+         * Returns all steps in this plan.
+         *
+         * @return the list of plan steps
+         */
         public List<PlanStep> getSteps() {
             return steps;
         }
 
+        /**
+         * Returns the original user goal that triggered this plan.
+         *
+         * @return the user goal string
+         */
         public String getUserGoal() {
             return userGoal;
         }
 
+        /**
+         * Returns whether there is a step after the current one.
+         *
+         * @return true if a next step exists
+         */
         public boolean hasNextStep() {
             return currentStepIndex < steps.size() - 1;
         }
 
+        /**
+         * Returns the currently active step, or null if the index is out of bounds.
+         *
+         * @return the current plan step, or null
+         */
         public PlanStep getCurrentStep() {
             if (currentStepIndex >= 0 && currentStepIndex < steps.size()) {
                 return steps.get(currentStepIndex);
@@ -207,6 +269,11 @@ public class ExecutionPlanStateManagerService {
             return null;
         }
 
+        /**
+         * Marks the current step as DONE and stores its result.
+         *
+         * @param result the result produced by the current step, or null
+         */
         public void markCurrentStepDone(@Nullable StepResult result) {
             PlanStep current = getCurrentStep();
             if (current != null) {
@@ -215,6 +282,10 @@ public class ExecutionPlanStateManagerService {
             }
         }
 
+        /**
+         * Advances the plan to the next step and sets it to ACTIVE.
+         * Has no effect if there is no next step.
+         */
         public void advanceToNextStep() {
             if (hasNextStep()) {
                 currentStepIndex++;
@@ -222,6 +293,11 @@ public class ExecutionPlanStateManagerService {
             }
         }
 
+        /**
+         * Returns the results of all steps that have already been completed.
+         *
+         * @return list of results from completed steps, in execution order
+         */
         public List<StepResult> getAllPreviousResults() {
             List<StepResult> results = new ArrayList<>();
             for (int i = 0; i < currentStepIndex; i++) {
@@ -233,6 +309,11 @@ public class ExecutionPlanStateManagerService {
             return results;
         }
 
+        /**
+         * Returns whether this plan has exceeded the maximum allowed duration.
+         *
+         * @return true if the plan has expired
+         */
         public boolean isExpired() {
             return createdAt.plus(PLAN_TIMEOUT).isBefore(Instant.now());
         }
