@@ -9,9 +9,10 @@ import { Subject } from 'rxjs';
 import { captureException } from '@sentry/angular';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { TutorialGroupFreePeriodFormComponent } from '../tutorial-free-period-form/tutorial-group-free-period-form.component';
-import { TutorialGroupFreePeriodDTO, TutorialGroupFreePeriodService } from 'app/tutorialgroup/shared/service/tutorial-group-free-period.service';
+import { TutorialGroupFreePeriodService } from 'app/tutorialgroup/shared/service/tutorial-group-free-period.service';
 import { DialogModule } from 'primeng/dialog';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TutorialGroupFreePeriodDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-free-period-dto.model';
 
 @Component({
     selector: 'jhi-create-tutorial-group-free-day',
@@ -49,7 +50,6 @@ export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
         this.tutorialGroupFreePeriodToCreate.startDate = CreateTutorialGroupFreePeriodComponent.combineDateAndTimeWithAlternativeDate(startDate, startTime, undefined);
         this.tutorialGroupFreePeriodToCreate.endDate = CreateTutorialGroupFreePeriodComponent.combineDateAndTimeWithAlternativeDate(endDate, endTime, startDate);
         this.tutorialGroupFreePeriodToCreate.reason = reason;
-
         this.isLoading = true;
         this.tutorialGroupFreePeriodService
             .create(this.course().id!, this.tutorialGroupConfigurationId(), this.tutorialGroupFreePeriodToCreate)
@@ -73,7 +73,7 @@ export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
 
     /**
      * This static method combines a date and time into a single Date object. If the date is not provided, it uses an alternative date.
-     * It is used to handle the start and end date of a freePeriod, a freeDay or a freePeriodWithinDay.
+     * It is used to handle the start and end date of a freePeriod, a freeDay, or a freePeriodWithinDay.
      *
      * @param {Date} date - The date to be combined with the time. If not provided, the method uses the alternative date. If the provided Date is the startDate, the alternativeDate should be left undefined
      * @param {Date} time - The time to be combined with the date. If not provided, the method sets the time to 23:59 for the alternative date or 0:00 for the date.

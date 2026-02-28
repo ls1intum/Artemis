@@ -5,8 +5,8 @@ import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { TutorialGroupSessionRowButtonsComponent } from 'app/tutorialgroup/manage/tutorial-group-sessions/tutorial-group-sessions-management/tutorial-group-session-row-buttons/tutorial-group-session-row-buttons.component';
 import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
-import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
-import { generateExampleTutorialGroupSession } from 'test/helpers/sample/tutorialgroup/tutorialGroupSessionExampleModels';
+import { TutorialGroupSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { generateExampleTutorialGroupSessionDTO } from 'test/helpers/sample/tutorialgroup/tutorialGroupSessionExampleModels';
 import { CancellationModalComponent } from 'app/tutorialgroup/manage/tutorial-group-sessions/tutorial-group-sessions-management/cancellation-modal/cancellation-modal.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
@@ -26,7 +26,7 @@ describe('TutorialGroupSessionRowButtonsComponent', () => {
     let sessionService: TutorialGroupSessionService;
     const course = { id: 1 } as Course;
     let tutorialGroup: TutorialGroup;
-    let tutorialGroupSession: TutorialGroupSession;
+    let tutorialGroupSession: TutorialGroupSessionDTO;
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [
@@ -40,7 +40,7 @@ describe('TutorialGroupSessionRowButtonsComponent', () => {
                 fixture = TestBed.createComponent(TutorialGroupSessionRowButtonsComponent);
                 component = fixture.componentInstance;
                 sessionService = TestBed.inject(TutorialGroupSessionService);
-                tutorialGroupSession = generateExampleTutorialGroupSession({});
+                tutorialGroupSession = generateExampleTutorialGroupSessionDTO({});
                 tutorialGroup = generateExampleTutorialGroup({});
                 setInputValues();
                 fixture.detectChanges();

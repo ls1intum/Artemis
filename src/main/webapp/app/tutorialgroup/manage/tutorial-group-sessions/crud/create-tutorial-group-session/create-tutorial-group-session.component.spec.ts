@@ -10,10 +10,10 @@ import { CreateTutorialGroupSessionComponent } from 'app/tutorialgroup/manage/tu
 import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
 import {
     formDataToTutorialGroupSessionDTO,
-    generateExampleTutorialGroupSession,
-    tutorialGroupSessionToTutorialGroupSessionFormData,
+    generateExampleTutorialGroupSessionDTO,
+    tutorialGroupSessionDtoToFormData,
 } from 'test/helpers/sample/tutorialgroup/tutorialGroupSessionExampleModels';
-import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { TutorialGroupSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
@@ -56,11 +56,10 @@ describe('CreateTutorialGroupSessionComponent', () => {
     });
 
     it('should send POST request upon form submission and close dialog', () => {
-        const exampleSession = generateExampleTutorialGroupSession({});
-        delete exampleSession.id;
+        const exampleSessionDto = generateExampleTutorialGroupSessionDTO({ id: undefined });
 
-        const createResponse: HttpResponse<TutorialGroupSession> = new HttpResponse({
-            body: exampleSession,
+        const createResponse: HttpResponse<TutorialGroupSessionDTO> = new HttpResponse({
+            body: exampleSessionDto,
             status: 201,
         });
 
@@ -69,7 +68,7 @@ describe('CreateTutorialGroupSessionComponent', () => {
 
         const sessionForm: TutorialGroupSessionFormComponent = fixture.debugElement.query(By.directive(TutorialGroupSessionFormComponent)).componentInstance;
 
-        const formData = tutorialGroupSessionToTutorialGroupSessionFormData(exampleSession, 'Europe/Berlin');
+        const formData = tutorialGroupSessionDtoToFormData(exampleSessionDto, 'Europe/Berlin');
 
         sessionForm.formSubmitted.emit(formData);
 

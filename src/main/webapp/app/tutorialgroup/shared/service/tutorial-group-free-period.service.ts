@@ -1,18 +1,12 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { convertDateFromServer, toISO8601DateTimeString } from 'app/shared/util/date.utils';
+import { localDateTimeStringToDate, toISO8601DateTimeString } from 'app/shared/util/date.utils';
 import { map } from 'rxjs/operators';
-import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
 import { TutorialGroupFreePeriodApiService } from 'app/openapi/api/tutorialGroupFreePeriodApi.service';
+import { TutorialGroupFreePeriodDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-free-period-dto.model';
 
-type EntityResponseType = HttpResponse<TutorialGroupFreePeriod>;
-
-export class TutorialGroupFreePeriodDTO {
-    public startDate?: Date;
-    public endDate?: Date;
-    public reason?: string;
-}
+type EntityResponseType = HttpResponse<TutorialGroupFreePeriodDTO>;
 
 @Injectable({ providedIn: 'root' })
 export class TutorialGroupFreePeriodService {
@@ -23,7 +17,7 @@ export class TutorialGroupFreePeriodService {
 
     getOneOfConfiguration(courseId: number, tutorialGroupsConfigurationId: number, tutorialGroupFreePeriodId: number): Observable<EntityResponseType> {
         return this.httpClient
-            .get<TutorialGroupFreePeriod>(
+            .get<TutorialGroupFreePeriodDTO>(
                 `${this.resourceURL}/courses/${courseId}/tutorial-groups-configuration/${tutorialGroupsConfigurationId}/tutorial-free-periods/${tutorialGroupFreePeriodId}`,
                 { observe: 'response' },
             )
@@ -33,7 +27,7 @@ export class TutorialGroupFreePeriodService {
     create(courseId: number, tutorialGroupConfigurationId: number, tutorialGroupFreePeriodDTO: TutorialGroupFreePeriodDTO): Observable<EntityResponseType> {
         const copy = this.convertTutorialGroupFreePeriodDatesFromClient(tutorialGroupFreePeriodDTO);
         return this.httpClient
-            .post<TutorialGroupFreePeriod>(`${this.resourceURL}/courses/${courseId}/tutorial-groups-configuration/${tutorialGroupConfigurationId}/tutorial-free-periods`, copy, {
+            .post<TutorialGroupFreePeriodDTO>(`${this.resourceURL}/courses/${courseId}/tutorial-groups-configuration/${tutorialGroupConfigurationId}/tutorial-free-periods`, copy, {
                 observe: 'response',
             })
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupFreePeriodResponseDatesFromServer(res)));
@@ -47,12 +41,10 @@ export class TutorialGroupFreePeriodService {
     ): Observable<EntityResponseType> {
         const copy = this.convertTutorialGroupFreePeriodDatesFromClient(tutorialGroupFreePeriodDTO);
         return this.httpClient
-            .put<TutorialGroupFreePeriod>(
+            .put<TutorialGroupFreePeriodDTO>(
                 `${this.resourceURL}/courses/${courseId}/tutorial-groups-configuration/${tutorialGroupConfigurationId}/tutorial-free-periods/${tutorialGroupFreePeriodId}`,
                 copy,
-                {
-                    observe: 'response',
-                },
+                { observe: 'response' },
             )
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupFreePeriodResponseDatesFromServer(res)));
     }
@@ -61,13 +53,16 @@ export class TutorialGroupFreePeriodService {
         return this.tutorialGroupFreePeriodApiService.delete(courseId, tutorialGroupConfigurationId, tutorialGroupFreePeriodId, 'response');
     }
 
-    convertTutorialGroupFreePeriodDatesFromServer(tutorialGroupFreePeriod: TutorialGroupFreePeriod): TutorialGroupFreePeriod {
-        tutorialGroupFreePeriod.start = convertDateFromServer(tutorialGroupFreePeriod.start);
-        tutorialGroupFreePeriod.end = convertDateFromServer(tutorialGroupFreePeriod.end);
-        return tutorialGroupFreePeriod;
+    convertTutorialGroupFreePeriodDatesFromServer(dto: TutorialGroupFreePeriodDTO): TutorialGroupFreePeriodDTO {
+        const anyDto = dto as any;
+
+        dto.startDate = localDateTimeStringToDate(anyDto.start);
+        dto.endDate = localDateTimeStringToDate(anyDto.end);
+
+        return dto;
     }
 
-    private convertTutorialGroupFreePeriodResponseDatesFromServer(res: HttpResponse<TutorialGroupFreePeriod>): HttpResponse<TutorialGroupFreePeriod> {
+    private convertTutorialGroupFreePeriodResponseDatesFromServer(res: HttpResponse<TutorialGroupFreePeriodDTO>): HttpResponse<TutorialGroupFreePeriodDTO> {
         if (res.body) {
             this.convertTutorialGroupFreePeriodDatesFromServer(res.body);
         }

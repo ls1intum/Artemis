@@ -3,6 +3,8 @@ import { Dayjs } from 'dayjs/esm';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupSchedule } from 'app/tutorialgroup/shared/entities/tutorial-group-schedule.model';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
+import { TutorialGroupFreePeriodDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-free-period-dto.model';
+import { TutorialGroupScheduleDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-schedule-dto.model';
 
 export enum TutorialGroupSessionStatus {
     ACTIVE = 'ACTIVE',
@@ -44,4 +46,23 @@ export interface RawTutorialGroupDetailSessionDTO {
     timeChanged: boolean;
     dateChanged: boolean;
     attendanceCount?: number;
+}
+
+export class TutorialGroupSessionDTO {
+    public id?: number;
+    public startDate?: Dayjs;
+    public endDate?: Dayjs;
+    public isCancelled?: boolean;
+    public statusExplanation?: string;
+    public location?: string;
+    public attendanceCount?: number;
+    public schedule?: TutorialGroupScheduleDTO;
+    public freePeriod?: TutorialGroupFreePeriodDTO;
+}
+
+export class TutorialGroupSessionRequestDTO {
+    public date?: Date;
+    public startTime?: string;
+    public endTime?: string;
+    public location?: string;
 }

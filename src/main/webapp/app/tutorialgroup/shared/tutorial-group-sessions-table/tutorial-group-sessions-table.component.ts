@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, TemplateRef, ViewEncapsulation, contentChild, effect, inject, input, output } from '@angular/core';
-import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { TutorialGroupSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { SortService } from 'app/shared/service/sort.service';
 import dayjs from 'dayjs/esm';
@@ -24,7 +24,7 @@ export class TutorialGroupSessionsTableComponent {
 
     readonly tutorialGroup = input.required<TutorialGroup>();
 
-    readonly sessions = input<TutorialGroupSession[]>([]);
+    readonly sessions = input<TutorialGroupSessionDTO[]>([]);
 
     readonly timeZone = input<string>();
 
@@ -36,10 +36,10 @@ export class TutorialGroupSessionsTableComponent {
 
     readonly attendanceUpdated = output<void>();
 
-    upcomingSessions: TutorialGroupSession[] = [];
-    pastSessions: TutorialGroupSession[] = [];
+    upcomingSessions: TutorialGroupSessionDTO[] = [];
+    pastSessions: TutorialGroupSessionDTO[] = [];
 
-    nextSession: TutorialGroupSession | undefined = undefined;
+    nextSession: TutorialGroupSessionDTO | undefined = undefined;
 
     isCollapsed = true;
 
@@ -84,17 +84,17 @@ export class TutorialGroupSessionsTableComponent {
         return dayjs();
     }
 
-    public trackSession(index: number, item: TutorialGroupSession): string {
+    public trackSession(index: number, item: TutorialGroupSessionDTO): string {
         return `${item.id}`;
     }
 
-    private splitIntoUpcomingAndPastSessions(sessions: TutorialGroupSession[]) {
-        const upcoming: TutorialGroupSession[] = [];
-        const past: TutorialGroupSession[] = [];
+    private splitIntoUpcomingAndPastSessions(sessions: TutorialGroupSessionDTO[]) {
+        const upcoming: TutorialGroupSessionDTO[] = [];
+        const past: TutorialGroupSessionDTO[] = [];
         const now = this.getCurrentDate();
 
         for (const session of sessions) {
-            if (session.end!.isBefore(now)) {
+            if (session.endDate!.isBefore(now)) {
                 past.push(session);
             } else {
                 upcoming.push(session);
@@ -104,7 +104,7 @@ export class TutorialGroupSessionsTableComponent {
         this.pastSessions = past;
     }
 
-    onAttendanceChanged(session: TutorialGroupSession) {
+    onAttendanceChanged(session: TutorialGroupSessionDTO) {
         // Note: We synchronize the attendance of upcoming or past sessions with the next session and vice versa
         if (session.id === this.nextSession?.id) {
             this.nextSession = session;

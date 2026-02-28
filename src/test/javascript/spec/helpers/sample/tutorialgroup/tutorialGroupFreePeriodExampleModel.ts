@@ -1,8 +1,8 @@
 import dayjs from 'dayjs/esm';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
 import { TutorialGroupFreePeriodFormData } from 'app/tutorialgroup/manage/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
-import { TutorialGroupFreePeriodDTO } from 'app/tutorialgroup/shared/service/tutorial-group-free-period.service';
 import { TutorialGroupFreePeriodsManagementComponent } from 'app/tutorialgroup/manage/tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-periods-management.component';
+import { TutorialGroupFreePeriodDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-free-period-dto.model';
 
 export const generateExampleTutorialGroupFreePeriod = ({
     id = 1,
@@ -12,7 +12,7 @@ export const generateExampleTutorialGroupFreePeriod = ({
 }: TutorialGroupFreePeriod) => {
     const examplePeriod = new TutorialGroupFreePeriod();
     examplePeriod.id = id;
-    // we get utc from the server --> will be converted to time zone of configuration
+    // we get utc from the server --> will be converted to the time zone of configuration
     examplePeriod.start = start;
     examplePeriod.end = end;
     examplePeriod.reason = reason;
@@ -57,10 +57,10 @@ export const formDataToTutorialGroupFreePeriodDTO = (formData: TutorialGroupFree
     } else {
         const res = {
             startDate: formData.startDate,
-            endDate: formData.startDate,
+            endDate: new Date(formData.startDate!.getTime()),
             reason: formData.reason,
         };
-        res.endDate!.setHours(23, 59);
+        res.endDate!.setHours(23, 59, 59, 999);
         return res;
     }
 };
