@@ -340,9 +340,31 @@ class HyperionUtilsTest {
 
     @Test
     void stripLineNumbers_handlesBlankLinesInMiddle() {
-        // Blank lines between numbered lines should be preserved
-        String input = "1: First\n\n2: Third";
+        // LLM drops the "2: " prefix from the blank line — blank counts as slot 2,
+        // so the next non-blank is correctly numbered 3.
+        String input = "1: First\n\n3: Third";
         assertThat(HyperionUtils.stripLineNumbers(input)).isEqualTo("First\n\nThird");
+    }
+
+    @Test
+    void stripLineNumbers_handlesBlankLineNumberedByLlm() {
+        // LLM preserves the number on the blank line ("2: ") — also valid
+        String input = "1: First\n2: \n3: Third";
+        assertThat(HyperionUtils.stripLineNumbers(input)).isEqualTo("First\n\nThird");
+    }
+
+    @Test
+    void stripLineNumbers_handlesMultipleConsecutiveBlankLines() {
+        // Two consecutive blank lines consume slots 2 and 3; next non-blank is 4.
+        String input = "1: First\n\n\n4: Fourth";
+        assertThat(HyperionUtils.stripLineNumbers(input)).isEqualTo("First\n\n\nFourth");
+    }
+
+    @Test
+    void stripLineNumbers_preservesResponseWithOutOfSequenceNumber() {
+        // "2: Third" after a blank is wrong (blank consumed slot 2, so 2 != expected 3).
+        String input = "1: First\n\n2: Third";
+        assertThat(HyperionUtils.stripLineNumbers(input)).isEqualTo(input);
     }
 
     @Test

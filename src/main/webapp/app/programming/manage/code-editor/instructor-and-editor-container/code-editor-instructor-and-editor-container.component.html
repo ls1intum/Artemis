@@ -390,7 +390,16 @@
                                 <fa-icon [icon]="faTableColumns" class="me-1" />
                                 <span [jhiTranslate]="'artemisApp.programmingExercise.diffReport.splitView.' + (allowSplitView() ? 'disable' : 'enable')"></span>
                             </button>
-                            <button pButton type="button" severity="secondary" size="small" [disabled]="isAiApplying() || isGeneratingCode()" (click)="revertAllRefinement()">
+                            <button
+                                pButton
+                                type="button"
+                                severity="secondary"
+                                size="small"
+                                [disabled]="isAiApplying() || isGeneratingCode()"
+                                [pTooltip]="'artemisApp.programmingExercise.problemStatement.revertAllTooltip' | artemisTranslate"
+                                tooltipPosition="bottom"
+                                (click)="revertAllRefinement()"
+                            >
                                 <fa-icon [icon]="faBan" class="me-1" />
                                 <span jhiTranslate="artemisApp.programmingExercise.problemStatement.revertAll"></span>
                             </button>
@@ -401,7 +410,16 @@
                                 [pTooltip]="'artemisApp.programmingExercise.problemStatement.diffLineStatTooltip' | artemisTranslate"
                                 tooltipPosition="bottom"
                             />
-                            <button pButton type="button" severity="success" size="small" [disabled]="isAiApplying() || isGeneratingCode()" (click)="closeDiff()">
+                            <button
+                                pButton
+                                type="button"
+                                severity="success"
+                                size="small"
+                                [disabled]="isAiApplying() || isGeneratingCode()"
+                                [pTooltip]="'artemisApp.programmingExercise.problemStatement.doneReviewingTooltip' | artemisTranslate"
+                                tooltipPosition="bottom"
+                                (click)="closeDiff()"
+                            >
                                 <fa-icon [icon]="faSave" class="me-1" />
                                 <span jhiTranslate="artemisApp.programmingExercise.problemStatement.doneReviewing"></span>
                             </button>

@@ -71,6 +71,11 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         disposable?: Disposable;
     }[] = [];
 
+    private scrollListeners: {
+        listener: () => void;
+        disposables: Disposable[];
+    }[] = [];
+
     private diffSnapshotModel?: monaco.editor.ITextModel;
     private diffListenersAttached = false;
     private resizeObserver?: ResizeObserver;
@@ -282,6 +287,12 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         }
         this.selectionChangeListeners = [];
 
+        // Dispose scroll listeners
+        for (const scrollEntry of this.scrollListeners) {
+            scrollEntry.disposables.forEach((d) => d.dispose());
+        }
+        this.scrollListeners = [];
+
         // Dispose snapshot model if present
         this.disposeDiffSnapshotModel();
 
@@ -417,6 +428,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.attachEditableEditorListeners(editor);
         this.reRegisterActions();
         this.reRegisterSelectionListeners();
+        this.reRegisterScrollListeners();
     }
 
     private getEditableEditor(): monaco.editor.IStandaloneCodeEditor {
@@ -873,6 +885,48 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             listenerEntry.disposable?.dispose();
             listenerEntry.disposable = this.registerSelectionListenerOnEditor(this.getActiveEditor(), listenerEntry.listener);
         }
+    }
+
+    private reRegisterScrollListeners(): void {
+        for (const scrollEntry of this.scrollListeners) {
+            scrollEntry.disposables.forEach((d) => d.dispose());
+            scrollEntry.disposables = this.registerScrollListenerOnEditors(scrollEntry.listener);
+        }
+    }
+
+    private registerScrollListenerOnEditors(listener: () => void): Disposable[] {
+        return this.ngZone.runOutsideAngular(() => {
+            const disposables: Disposable[] = [];
+            if (this.mode() === 'diff' && this._diffEditor) {
+                disposables.push(this._diffEditor.getOriginalEditor().onDidScrollChange(() => this.ngZone.run(listener)));
+                disposables.push(this._diffEditor.getModifiedEditor().onDidScrollChange(() => this.ngZone.run(listener)));
+            } else {
+                disposables.push(this._editor.onDidScrollChange(() => this.ngZone.run(listener)));
+            }
+            return disposables;
+        });
+    }
+
+    /**
+     * Registers a scroll change listener that fires whenever the visible editor (or either diff pane) scrolls.
+     * Automatically re-binds when the editor switches between normal and diff mode.
+     * @param listener Callback invoked on scroll.
+     * @returns A Disposable that removes the listener.
+     */
+    onScrollChange(listener: () => void): Disposable {
+        const disposables = this.registerScrollListenerOnEditors(listener);
+        const scrollEntry = { listener, disposables };
+        this.scrollListeners.push(scrollEntry);
+
+        return {
+            dispose: () => {
+                scrollEntry.disposables.forEach((d) => d.dispose());
+                const index = this.scrollListeners.indexOf(scrollEntry);
+                if (index !== -1) {
+                    this.scrollListeners.splice(index, 1);
+                }
+            },
+        };
     }
 
     private registerSelectionListenerOnEditor(editor: monaco.editor.IStandaloneCodeEditor, listener: (selection: EditorRange | undefined) => void): Disposable {

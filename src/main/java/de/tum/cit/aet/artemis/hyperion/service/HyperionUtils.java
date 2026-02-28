@@ -197,8 +197,12 @@ final class HyperionUtils {
      * the LLM may have copied from the numbered prompt context.
      * <p>
      * Prefixes are only removed when <em>every</em> non-blank line carries a
-     * sequential prefix starting at 1. If any non-blank line is missing a prefix or
-     * the sequence is not contiguous the text is returned unchanged, so that
+     * sequential prefix starting at 1. Blank lines are allowed to appear without
+     * a prefix in the response even though the original prompt numbered them
+     * (e.g. the LLM may return a bare empty line instead of {@code "2: "}); the
+     * expected counter is still advanced for each blank line so that the subsequent
+     * numbered lines remain in sequence. If any non-blank line is missing a prefix
+     * or the sequence is not contiguous the text is returned unchanged, so that
      * legitimate content like numbered lists ({@code "1. "}) is never altered.
      *
      * @param text the raw LLM output, never null
@@ -211,17 +215,27 @@ final class HyperionUtils {
 
         String[] lines = text.split("\n", -1);
 
-        // Verify every non-blank line has a sequential "N: " prefix starting at 1
+        // Verify every non-blank line has a sequential "N: " prefix starting at 1.
+        // Blank lines advance the counter even when they appear without a prefix,
+        // because addLineNumbers() numbers every line (including blank ones) and the
+        // LLM may choose to omit the prefix when echoing a blank line.
         int expectedNumber = 1;
         for (String line : lines) {
             if (line.isBlank()) {
+                expectedNumber++;
                 continue;
             }
             if (!LINE_NUMBER_PREFIX.matcher(line).find()) {
                 return text;
             }
             int colonIndex = line.indexOf(": ");
-            int number = Integer.parseInt(line.substring(0, colonIndex));
+            int number;
+            try {
+                number = Integer.parseInt(line.substring(0, colonIndex));
+            }
+            catch (NumberFormatException e) {
+                return text;
+            }
             if (number != expectedNumber) {
                 return text;
             }

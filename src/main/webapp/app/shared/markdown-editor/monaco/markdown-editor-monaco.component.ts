@@ -76,6 +76,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import { MatButton } from '@angular/material/button';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { Tag } from 'primeng/tag';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { faPaperPlane } from '@fortawesome/free-regular-svg-icons';
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
@@ -86,6 +87,7 @@ import { facArtemisIntelligence } from 'app/shared/icons/icons';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { addCommentBoxes } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 import { TranslateService } from '@ngx-translate/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { CommentThread, CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-widget-manager';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
@@ -162,6 +164,7 @@ const FLOATING_BUTTON_VERTICAL_OFFSET = 5;
         MatButton,
         ArtemisTranslatePipe,
         RedirectToIrisButtonComponent,
+        Tag,
     ],
 })
 export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterViewInit, OnDestroy {
@@ -339,12 +342,20 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     resizeObserver?: ResizeObserver;
     /** Disposable for the selection change listener */
     private selectionChangeDisposable?: { dispose: () => void };
-    /** Disposable for the scroll change listener used to reposition the inline refinement button */
+    /** Disposable for the scroll change listener used to hide the inline refinement button on editor scroll */
     private scrollChangeDisposable?: { dispose: () => void };
     /** Cached model selection used to re-compute screen position after scroll */
     private cachedSelection?: CachedSelectionWithText;
-    /** Guards requestAnimationFrame scheduling so at most one rAF per scroll burst fires */
-    private pendingScrollRafId: number | undefined;
+    /** Window scroll handler reference, stored so it can be removed in ngOnDestroy. */
+    private windowScrollHandler?: () => void;
+    /** Reactive translated label for the "Your Original" diff-pane header (updates on language change). */
+    protected readonly diffOriginalLabel = toSignal(this.translateService.stream('artemisApp.programmingExercise.problemStatement.diffView.originalLabel'), { initialValue: '' });
+    /** Reactive translated label for the "AI Suggestion" diff-pane header (updates on language change). */
+    protected readonly diffSuggestionLabel = toSignal(this.translateService.stream('artemisApp.programmingExercise.problemStatement.diffView.suggestionLabel'), {
+        initialValue: '',
+    });
+    /** Reactive translated hint text for the unified diff view (updates on language change). */
+    protected readonly diffUnifiedHint = toSignal(this.translateService.stream('artemisApp.programmingExercise.problemStatement.diffView.unifiedHint'), { initialValue: '' });
     targetWrapperHeight?: number;
     minWrapperHeight?: number;
     constrainDragPositionFn?: (pointerPosition: Point) => Point;
@@ -579,19 +590,14 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             }
         });
 
-        // Subscribe to scroll changes to reposition the inline refinement button
-        // when the selection scrolls back into view.
-        // Throttled via requestAnimationFrame so at most one reposition per frame fires.
-        this.scrollChangeDisposable = this.monacoEditor.getEditor()?.onDidScrollChange(() => {
-            if (this.cachedSelection && this.pendingScrollRafId === undefined) {
-                this.pendingScrollRafId = requestAnimationFrame(() => {
-                    this.pendingScrollRafId = undefined;
-                    if (this.cachedSelection) {
-                        this.emitSelectionWithScreenPosition();
-                    }
-                });
-            }
-        });
+        // Hide the inline refinement button whenever any scroll occurs (editor-internal or page).
+        const hideOnScroll = () => {
+            this.cachedSelection = undefined;
+            this.onSelectionChange.emit(undefined);
+        };
+        this.scrollChangeDisposable = this.monacoEditor.onScrollChange(hideOnScroll);
+        this.windowScrollHandler = hideOnScroll;
+        window.addEventListener('scroll', hideOnScroll, { passive: true, capture: true });
     }
 
     /**
@@ -647,9 +653,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.resizeObserver?.disconnect();
         this.selectionChangeDisposable?.dispose();
         this.scrollChangeDisposable?.dispose();
-        if (this.pendingScrollRafId !== undefined) {
-            window.cancelAnimationFrame(this.pendingScrollRafId);
-            this.pendingScrollRafId = undefined;
+        if (this.windowScrollHandler) {
+            window.removeEventListener('scroll', this.windowScrollHandler, { capture: true });
+            this.windowScrollHandler = undefined;
         }
         this.cachedSelection = undefined;
         this.reviewCommentManager?.disposeAll();

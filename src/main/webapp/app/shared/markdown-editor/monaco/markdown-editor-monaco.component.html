@@ -17,6 +17,26 @@
                 }
                 <ng-template ngbNavContent>
                     <div class="markdown-editor markdown-editor-wrapper flex-column" [ngClass]="{ 'd-flex': inEditMode, 'd-none': !inEditMode }">
+                        @if (mode() === 'diff') {
+                            @if (renderSideBySide()) {
+                                <!-- Split-view column headers so users know which side is which -->
+                                <div class="diff-pane-headers">
+                                    <div class="diff-pane-header">
+                                        <p-tag severity="danger" [value]="diffOriginalLabel()" />
+                                    </div>
+                                    <div class="diff-pane-header diff-pane-header--right">
+                                        <p-tag severity="success" [value]="diffSuggestionLabel()" />
+                                    </div>
+                                </div>
+                            } @else {
+                                <!-- Inline/unified diff: single explanatory row -->
+                                <div class="diff-pane-unified-hint">
+                                    <p-tag severity="danger" [value]="diffOriginalLabel()" />
+                                    <span class="diff-pane-unified-hint__text">{{ diffUnifiedHint() }}</span>
+                                    <p-tag severity="success" [value]="diffSuggestionLabel()" />
+                                </div>
+                            }
+                        }
                         <jhi-monaco-editor
                             class="h-100"
                             [mode]="mode()"
