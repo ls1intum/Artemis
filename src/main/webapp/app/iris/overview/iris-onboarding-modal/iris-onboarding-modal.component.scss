@@ -1,0 +1,590 @@
+// Container for the entire onboarding flow
+.onboarding-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1050;
+    pointer-events: none; // Allow clicks to pass through the container
+    --onboarding-tooltip-enter-duration: 500ms;
+    --onboarding-tooltip-enter-ease: cubic-bezier(0.2, 0.9, 0.2, 1);
+    --onboarding-tooltip-enter-distance: 16px;
+    --onboarding-radius: 0.5rem;
+    --onboarding-modal-surface: var(--iris-primary-background);
+    --onboarding-border: 1px solid var(--bs-border-color);
+}
+
+%absolute-fill {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+// Full backdrop for step 0 and step 4
+.full-backdrop {
+    @extend %absolute-fill;
+
+    background: var(--iris-onboarding-backdrop);
+    pointer-events: auto; // Block clicks on the backdrop
+}
+
+// Centered modal wrapper for step 0 and step 4
+.centered-modal-wrapper {
+    @extend %absolute-fill;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none; // Allow clicks through wrapper
+}
+
+// Welcome modal with two-column layout (Step 0)
+.iris-onboarding-modal-welcome {
+    position: relative;
+    border: var(--onboarding-border);
+    border-radius: var(--onboarding-radius);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+    width: 700px;
+    max-width: 90vw;
+    height: 450px;
+    max-height: 90vh;
+    overflow-y: auto;
+    display: flex;
+    pointer-events: auto; // Enable clicks on the modal
+}
+
+// Left side - Text content
+.welcome-text-section {
+    background: var(--iris-primary-background);
+    width: 380px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2.5rem;
+    border-radius: var(--onboarding-radius) 0 0 var(--onboarding-radius);
+}
+
+// Right side - Illustration
+.welcome-illustration-section {
+    flex: 1;
+    background: var(--iris-secondary-background);
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    border-radius: 0 var(--onboarding-radius) var(--onboarding-radius) 0;
+}
+
+.chat-preview {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.chat-widget-preview {
+    background: var(--onboarding-modal-surface);
+    border: 0.75px solid var(--bs-border-color);
+    border-radius: var(--onboarding-radius);
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    width: 90%;
+    margin-left: auto; // pushes it to the right inside .chat-preview
+}
+
+.chat-header-preview {
+    background: var(--onboarding-modal-surface);
+    border-bottom: 1px solid var(--bs-border-color);
+    padding: 0.25rem;
+    display: flex;
+    justify-content: flex-end;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.toolbar-icons {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.icon-btn {
+    width: 24px;
+    height: 20px;
+    background: var(--iris-secondary-background);
+    border-radius: 4px;
+}
+
+.chat-body-preview {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 240px;
+    justify-content: center;
+}
+
+.chat-greeting {
+    font-size: 1rem;
+    color: var(--bs-body-color);
+    margin: 0;
+    text-align: center;
+}
+
+.chat-bubble-preview {
+    background: var(--iris-tertiary-background);
+    border-radius: var(--onboarding-radius);
+    padding: 1rem;
+    width: 200px;
+    align-self: flex-end;
+}
+
+.chat-input-preview {
+    width: 100%;
+    background: var(--onboarding-modal-surface);
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--onboarding-radius);
+    padding: 1rem;
+    margin-top: 0.25rem;
+}
+
+.input-placeholder {
+    color: var(--bs-secondary-color);
+    cursor: default;
+    font-size: 0.8rem;
+}
+
+.iris-logo-badge {
+    border-radius: var(--onboarding-radius);
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+// Shared close-button base
+%close-button-base {
+    background: none;
+    border: none;
+    line-height: 1;
+    color: var(--bs-secondary-color);
+    cursor: pointer;
+    padding: 0;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+
+    &:hover {
+        opacity: 1;
+        color: var(--bs-body-color);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--primary);
+        outline-offset: 2px;
+    }
+}
+
+.close-button {
+    @extend %close-button-base;
+
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    font-size: 1.4rem;
+    z-index: 10;
+}
+
+.text-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 24rem;
+}
+
+.title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--bs-body-color);
+    margin: 0;
+    line-height: 1.2;
+}
+
+.description {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--bs-secondary-color);
+    margin: 0;
+}
+
+.note {
+    font-size: 0.75rem;
+    line-height: 1.6;
+    color: var(--bs-secondary-color);
+    margin: 0;
+}
+
+.actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    width: 100%;
+}
+
+// Spotlight overlay styles
+.spotlight-backdrop {
+    @extend %absolute-fill;
+
+    pointer-events: none;
+    z-index: 1050;
+}
+
+.spotlight-section {
+    position: absolute;
+    background: var(--iris-onboarding-backdrop);
+    pointer-events: auto; // Block clicks outside the spotlight cutout
+}
+
+.spotlight-blocker {
+    position: absolute;
+    background: transparent;
+    pointer-events: auto; // Block clicks on spotlight target while step is visible
+    cursor: default;
+    z-index: 1050;
+    border-radius: var(--onboarding-radius);
+}
+
+.spotlight-click-guard {
+    position: absolute;
+    inset: 0;
+    pointer-events: auto; // Block clicks on non-highlighted areas
+    background: transparent;
+    z-index: 1049;
+}
+
+.spotlight-blocker.rounded-cutout {
+    box-shadow: 0 0 0 200vmax var(--iris-onboarding-backdrop);
+}
+
+.spotlight-top {
+    top: 0;
+    left: 0;
+    right: 0;
+}
+
+.spotlight-left {
+    left: 0;
+}
+
+.spotlight-right {
+    right: 0;
+}
+
+.spotlight-bottom {
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+// Onboarding tooltip styles
+.onboarding-tooltip {
+    position: absolute;
+    background: var(--onboarding-modal-surface);
+    border: var(--onboarding-border);
+    border-radius: var(--onboarding-radius);
+    padding: 1rem;
+    box-shadow: 0 20px 25px rgba(0, 0, 0, 0.1);
+    width: 280px;
+    pointer-events: auto; // Enable clicks on tooltips
+    z-index: 1051;
+
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    animation: onboarding-tooltip-enter var(--onboarding-tooltip-enter-duration) var(--onboarding-tooltip-enter-ease) both;
+    transform-origin: left center;
+
+    &.sidebar-tooltip {
+        transition:
+            left 0.3s ease,
+            opacity 0.3s ease;
+
+        // Left-pointing arrow with border connecting the tooltip to the sidebar element
+        &::before,
+        &::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+        }
+
+        &::before {
+            left: -9px;
+            border-top: 9px solid transparent;
+            border-bottom: 9px solid transparent;
+            border-right: 9px solid var(--bs-border-color);
+        }
+
+        &::after {
+            left: -8px;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-right: 8px solid var(--onboarding-modal-surface);
+        }
+    }
+
+    &.tooltip-bottom-right-arrow {
+        transform-origin: right center;
+
+        &::before,
+        &::after {
+            content: '';
+            position: absolute;
+            bottom: 16px;
+            width: 0;
+            height: 0;
+        }
+
+        &::before {
+            right: -9px;
+            border-top: 9px solid transparent;
+            border-bottom: 9px solid transparent;
+            border-left: 9px solid var(--bs-border-color);
+        }
+
+        &::after {
+            right: -8px;
+            bottom: 17px;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-left: 8px solid var(--onboarding-modal-surface);
+        }
+    }
+}
+
+@keyframes onboarding-tooltip-enter {
+    from {
+        opacity: 0;
+        transform: translateY(var(--onboarding-tooltip-enter-distance)) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .onboarding-tooltip {
+        animation: none;
+    }
+
+    .final-modal-enter,
+    .final-modal-backdrop {
+        animation: none;
+    }
+
+    .coach-mark {
+        animation: none;
+
+        &::before {
+            animation: none;
+        }
+    }
+}
+
+.tooltip-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.tooltip-header-text {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--bs-body-color);
+    margin: 0;
+    line-height: 1.4;
+    flex: 1;
+}
+
+.tooltip-description {
+    font-size: 0.875rem;
+    font-weight: 400;
+    color: var(--bs-body-color);
+    margin: 0;
+    line-height: 1.6;
+}
+
+.tooltip-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+// Coach mark for Steps 1 and 3
+.coach-mark {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: var(--primary);
+    border-radius: 50%;
+    z-index: 1052;
+    pointer-events: none; // Don't block clicks on the coach mark
+    animation: pulse-coach-mark 1.5s ease-in-out infinite;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: -4px;
+        left: -4px;
+        right: -4px;
+        bottom: -4px;
+        border: 2px solid var(--primary);
+        border-radius: 50%;
+        opacity: 0;
+        animation: pulse-ring 1.5s ease-in-out infinite;
+    }
+}
+
+@keyframes pulse-coach-mark {
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.2);
+        opacity: 0.8;
+    }
+}
+
+@keyframes pulse-ring {
+    0% {
+        transform: scale(0.8);
+        opacity: 0.8;
+    }
+
+    50% {
+        transform: scale(1.3);
+        opacity: 0.3;
+    }
+
+    100% {
+        transform: scale(1.5);
+        opacity: 0;
+    }
+}
+
+// Step 4: Prompt Selection Modal
+.prompt-selection-modal {
+    position: relative;
+    background: var(--onboarding-modal-surface);
+    border: var(--onboarding-border);
+    border-radius: var(--onboarding-radius);
+    padding: 1.5rem;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+    max-width: 450px;
+    height: 400px;
+    max-height: 90vh;
+    overflow-y: auto;
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    pointer-events: auto; // Enable clicks on the modal
+}
+
+.modal-content-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    align-items: center;
+    width: 100%;
+}
+
+.final-modal-backdrop {
+    animation: final-modal-backdrop-fade-in 240ms ease-out;
+}
+
+.final-modal-enter {
+    animation: final-modal-enter 320ms cubic-bezier(0.2, 0.9, 0.2, 1);
+}
+
+@keyframes final-modal-backdrop-fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes final-modal-enter {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.modal-header-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+    width: 100%;
+}
+
+.prompt-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.prompt-chip {
+    background: var(--iris-secondary-background);
+    border: var(--onboarding-border);
+    border-radius: var(--onboarding-radius);
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 1rem;
+    color: var(--bs-body-color);
+    width: 100%;
+
+    &:hover {
+        background: var(--iris-tertiary-background);
+        transform: translateY(-1px);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--primary);
+        outline-offset: 2px;
+    }
+
+    fa-icon {
+        font-size: 1rem;
+        color: var(--bs-body-color);
+    }
+}

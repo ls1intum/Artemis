@@ -54,6 +54,7 @@ describe('IrisChatService', () => {
     };
     const userMock = {
         acceptExternalLLMUsage: vi.fn(),
+        updateLLMSelectionDecision: vi.fn().mockReturnValue(of(new HttpResponse<void>())),
     };
 
     const waitForSessionId = () => firstValueFrom(service.currentSessionId().pipe(filter((value): value is number => value !== undefined)));
@@ -497,6 +498,73 @@ describe('IrisChatService', () => {
             await firstValueFrom(service.deleteSession(5));
 
             expect(service.latestStartedSession).toBeUndefined();
+        });
+    });
+
+    describe('updateLLMUsageConsent', () => {
+        it('should update consent with CLOUD_AI and call closeAndStart', () => {
+            const closeAndStartSpy = vi.spyOn(service as any, 'closeAndStart');
+            userMock.updateLLMSelectionDecision.mockReturnValue(of(new HttpResponse<void>()));
+
+            service.updateLLMUsageConsent(LLMSelectionDecision.CLOUD_AI);
+
+            expect(service.hasJustAcceptedLLMUsage).toBe(true);
+            expect(closeAndStartSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should update consent with LOCAL_AI and call closeAndStart', () => {
+            const closeAndStartSpy = vi.spyOn(service as any, 'closeAndStart');
+            userMock.updateLLMSelectionDecision.mockReturnValue(of(new HttpResponse<void>()));
+
+            service.updateLLMUsageConsent(LLMSelectionDecision.LOCAL_AI);
+
+            expect(service.hasJustAcceptedLLMUsage).toBe(true);
+            expect(closeAndStartSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should handle NO_AI by closing the chat', () => {
+            const closeSpy = vi.spyOn(service as any, 'close');
+            userMock.updateLLMSelectionDecision.mockReturnValue(of(new HttpResponse<void>()));
+
+            service.updateLLMUsageConsent(LLMSelectionDecision.NO_AI);
+
+            expect(service.hasJustAcceptedLLMUsage).toBe(false);
+            expect(closeSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should handle error when accepting CLOUD_AI fails', async () => {
+            userMock.updateLLMSelectionDecision.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+            service.updateLLMUsageConsent(LLMSelectionDecision.CLOUD_AI);
+
+            const error = await firstValueFrom(service.currentError());
+            expect(error).toBe(IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE);
+            expect(service.hasJustAcceptedLLMUsage).toBe(false);
+        });
+
+        it('should handle error when declining with NO_AI fails and still close', () => {
+            const closeSpy = vi.spyOn(service as any, 'close');
+            userMock.updateLLMSelectionDecision.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+            service.updateLLMUsageConsent(LLMSelectionDecision.NO_AI);
+
+            // close() is called in the error handler even when the API call fails
+            expect(closeSpy).toHaveBeenCalledOnce();
+        });
+    });
+
+    describe('setShouldReopenChat', () => {
+        it('should emit true on shouldReopenChat$', async () => {
+            service.setShouldReopenChat(true);
+            const result = await firstValueFrom(service.shouldReopenChat$);
+            expect(result).toBe(true);
+        });
+
+        it('should emit false after being set to true', async () => {
+            service.setShouldReopenChat(true);
+            service.setShouldReopenChat(false);
+            const result = await firstValueFrom(service.shouldReopenChat$);
+            expect(result).toBe(false);
         });
     });
 
