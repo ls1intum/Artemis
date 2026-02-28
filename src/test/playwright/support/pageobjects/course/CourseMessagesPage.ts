@@ -483,11 +483,11 @@ export class CourseMessagesPage {
     async acceptCodeOfConductButton() {
         const button = this.page.locator('#acceptCodeOfConductButton');
         // Wait a short time for the page to load and determine if the button should be shown
-        await this.page.waitForLoadState('networkidle');
+        await this.page.waitForLoadState('domcontentloaded');
         if (await button.isVisible()) {
             await button.click();
             // Wait for the acceptance to be processed
-            await this.page.waitForLoadState('networkidle');
+            await this.page.waitForLoadState('domcontentloaded');
         }
     }
 }

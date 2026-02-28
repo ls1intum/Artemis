@@ -107,7 +107,9 @@ export class CourseOverviewPage {
      * Opens an exam given its title.
      */
     async openExam(examTitle: string): Promise<void> {
-        await this.page.locator('span').filter({ hasText: examTitle }).click();
+        const examLink = this.page.locator('span').filter({ hasText: examTitle });
+        await examLink.waitFor({ state: 'visible', timeout: 30000 });
+        await examLink.click();
     }
 
     /**

@@ -50,7 +50,7 @@ test.describe('Competency Import', { tag: '@fast' }, () => {
         await sourceRow.getByRole('button', { name: 'Select' }).click();
 
         // Optional: verify success message
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
         if (await page.getByText('Imported 3 competencies').isVisible()) {
             await page.locator('jhi-close-circle svg').click(); // Close success message
         }
@@ -94,7 +94,7 @@ test.describe('Competency Import', { tag: '@fast' }, () => {
         await page.getByRole('button', { name: 'Import' }).click();
 
         // Optional: verify success message
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
         if (await page.getByText('Imported 1 competencies').isVisible()) {
             await page.locator('jhi-close-circle svg').click(); // Close success message
         }
