@@ -1,5 +1,6 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
+import { GradeStepDTO } from 'app/assessment/shared/entities/grading-scale-request-dto.model';
 
 export class GradeStep implements BaseEntity {
     public id?: number;
@@ -23,7 +24,7 @@ export class GradeDTO {
 export class GradeStepsDTO {
     public title: string;
     public gradeType: GradeType;
-    public gradeSteps: GradeStep[];
+    public gradeSteps: GradeStepDTO[];
     public maxPoints?: number;
     public plagiarismGrade: string;
     public noParticipationGrade: string;

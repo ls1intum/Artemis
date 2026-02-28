@@ -7,9 +7,11 @@ import { map } from 'rxjs/operators';
 import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
 import { captureException } from '@sentry/angular';
 import { Course } from 'app/core/course/shared/entities/course.model';
+import { toRequestDTO } from 'app/assessment/shared/entities/grading-scale-request-dto.model';
+import { GradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
 
-export type EntityResponseType = HttpResponse<GradingScale>;
-export type EntityArrayResponseType = HttpResponse<GradingScale[]>;
+export type EntityResponseType = HttpResponse<GradingScaleDTO>;
+export type EntityArrayResponseType = HttpResponse<GradingScaleDTO[]>;
 
 @Injectable({ providedIn: 'root' })
 export class GradingService {
@@ -24,7 +26,8 @@ export class GradingService {
      * @param gradingScale the grading scale to be created
      */
     createGradingScaleForCourse(courseId: number, gradingScale: GradingScale): Observable<EntityResponseType> {
-        return this.http.post<GradingScale>(`${this.resourceUrl}/${courseId}/grading-scale`, gradingScale, { observe: 'response' });
+        const dto = toRequestDTO(gradingScale);
+        return this.http.post<GradingScaleDTO>(`${this.resourceUrl}/${courseId}/grading-scale`, dto, { observe: 'response' });
     }
 
     /**
@@ -34,7 +37,8 @@ export class GradingService {
      * @param gradingScale the grading scale to be updated
      */
     updateGradingScaleForCourse(courseId: number, gradingScale: GradingScale): Observable<EntityResponseType> {
-        return this.http.put<GradingScale>(`${this.resourceUrl}/${courseId}/grading-scale`, gradingScale, { observe: 'response' });
+        const dto = toRequestDTO(gradingScale);
+        return this.http.put<GradingScaleDTO>(`${this.resourceUrl}/${courseId}/grading-scale`, dto, { observe: 'response' });
     }
 
     /**
@@ -43,7 +47,7 @@ export class GradingService {
      * @param courseId the course for which the grading scale will be retrieved
      */
     findGradingScaleForCourse(courseId: number): Observable<EntityResponseType> {
-        return this.http.get<GradingScale>(`${this.resourceUrl}/${courseId}/grading-scale`, { observe: 'response' });
+        return this.http.get<GradingScaleDTO>(`${this.resourceUrl}/${courseId}/grading-scale`, { observe: 'response' });
     }
 
     /**
@@ -63,7 +67,8 @@ export class GradingService {
      * @param gradingScale the grading scale to be created
      */
     createGradingScaleForExam(courseId: number, examId: number, gradingScale: GradingScale): Observable<EntityResponseType> {
-        return this.http.post<GradingScale>(`${this.resourceUrl}/${courseId}/exams/${examId}/grading-scale`, gradingScale, { observe: 'response' });
+        const dto = toRequestDTO(gradingScale);
+        return this.http.post<GradingScaleDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/grading-scale`, dto, { observe: 'response' });
     }
 
     /**
@@ -74,7 +79,8 @@ export class GradingService {
      * @param gradingScale the grading scale to be updated
      */
     updateGradingScaleForExam(courseId: number, examId: number, gradingScale: GradingScale): Observable<EntityResponseType> {
-        return this.http.put<GradingScale>(`${this.resourceUrl}/${courseId}/exams/${examId}/grading-scale`, gradingScale, { observe: 'response' });
+        const dto = toRequestDTO(gradingScale);
+        return this.http.put<GradingScaleDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/grading-scale`, dto, { observe: 'response' });
     }
 
     /**
@@ -84,7 +90,7 @@ export class GradingService {
      * @param examId the exam for which the grading scale will be retrieved
      */
     findGradingScaleForExam(courseId: number, examId: number): Observable<EntityResponseType> {
-        return this.http.get<GradingScale>(`${this.resourceUrl}/${courseId}/exams/${examId}/grading-scale`, { observe: 'response' });
+        return this.http.get<GradingScaleDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/grading-scale`, { observe: 'response' });
     }
 
     /**
@@ -134,11 +140,11 @@ export class GradingService {
 
     /**
      * Finds grading scales eligible to be used as a bonus source. Grading Scales should have BONUS Grade Type and should belong to a
-     * course or exam where the current user is an instructor to be eligible. Supports search, sort and pagination.
+     * course or exam where the current user is an instructor to be eligible. Supports search, sort, and pagination.
      *
-     * @param pageable search, sort and pagination parameters
+     * @param pageable search, sort, and pagination parameters
      */
-    findWithBonusGradeTypeForInstructor(pageable: SearchTermPageableSearch): Observable<HttpResponse<SearchResult<GradingScale>>> {
+    findWithBonusGradeTypeForInstructor(pageable: SearchTermPageableSearch): Observable<HttpResponse<SearchResult<GradingScaleDTO>>> {
         const params = new HttpParams()
             .set('pageSize', String(pageable.pageSize))
             .set('page', String(pageable.page))
@@ -146,14 +152,14 @@ export class GradingService {
             .set('searchTerm', pageable.searchTerm)
             .set('sortedColumn', pageable.sortedColumn);
 
-        return this.http.get<SearchResult<GradingScale>>('api/assessment/grading-scales', {
+        return this.http.get<SearchResult<GradingScaleDTO>>('api/assessment/grading-scales', {
             params,
             observe: 'response',
         });
     }
 
     /**
-     * Finds a grade step for course that matches the given percentage
+     * Finds a grade step for the course that matches the given percentage
      *
      * @param courseId the course to which the exam belongs
      * @param percentage the percentage which will be matched
@@ -163,7 +169,7 @@ export class GradingService {
     }
 
     /**
-     * Finds a grade step for exam that matches the given percentage
+     * Finds a grade step for an exam that matches the given percentage
      *
      * @param courseId the course to which the exam belongs
      * @param examId the exam for which the grade step is retrieved
@@ -326,7 +332,7 @@ export class GradingService {
     }
 
     /**
-     * Parses the {@link gradeName} as a number in order to use it in grade and bonus calculations.
+     * Parses the {@link gradeName} as a number to use it in grade and bonus calculations.
      * Accepts both "," and "." as decimal separators.
      *
      * Returns undefined on error.

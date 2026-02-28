@@ -240,6 +240,9 @@
         "userManagement": {
             "onlySuperAdminCanManageAdmins": "You are not a super administrator and therefore not allowed to manage administrator accounts.",
             "cannotRemoveDefaultAdminRights": "You cannot remove super admin rights from the default admin user."
+        },
+        "Bonus": {
+            "invalidSourceGradingScale": "The bonus source's grading scale could not be found. Please ensure that a valid grading scale exists."
         }
     }
 }

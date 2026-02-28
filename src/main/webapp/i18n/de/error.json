@@ -240,6 +240,9 @@
         "userManagement": {
             "onlySuperAdminCanManageAdmins": "Du bist kein Super-Administrator und kannst daher keine Administrator-Accounts verwalten.",
             "cannotRemoveDefaultAdminRights": "Du kannst die Super-Admin-Rechte des Standard-Admin-Benutzers nicht entfernen."
+        },
+        "Bonus": {
+            "invalidSourceGradingScale": "Die Bewertungsskala der Bonusquelle konnte nicht gefunden werden. Bitte stelle sicher, dass eine gültige Bewertungsskala existiert."
         }
     }
 }

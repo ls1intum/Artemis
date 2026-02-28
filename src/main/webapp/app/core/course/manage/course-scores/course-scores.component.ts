@@ -57,6 +57,7 @@ import { CourseManagementService, GradeScoreDTO, StudentGradeDTO } from 'app/cor
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { GradingScaleDTO, toEntity } from 'app/assessment/shared/entities/grading-scale-dto.model';
 
 export enum HighlightType {
     AVERAGE = 'average',
@@ -165,7 +166,7 @@ export class CourseScoresComponent implements OnInit {
     readonly faClipboard = faClipboard;
 
     /**
-     * On init fetch the course, all released exercises and all participations with result for the course from the server.
+     * On init fetch the course, all released exercises and all participations with the result for the course from the server.
      */
     ngOnInit() {
         this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
@@ -259,7 +260,7 @@ export class CourseScoresComponent implements OnInit {
         const findGradeScoresObservable = this.courseManagementService.findGradeScores(courseId);
         // alternative course scores calculation using participant scores table
         // find grading scale if it exists for course
-        const gradingScaleObservable = this.gradingService.findGradingScaleForCourse(courseId).pipe(catchError(() => of(new HttpResponse<GradingScale>())));
+        const gradingScaleObservable = this.gradingService.findGradingScaleForCourse(courseId).pipe(catchError(() => of(new HttpResponse<GradingScaleDTO>())));
 
         const plagiarismCasesObservable = this.plagiarismEnabled()
             ? this.plagiarismCasesService.getCoursePlagiarismCasesForScores(courseId)
@@ -402,7 +403,7 @@ export class CourseScoresComponent implements OnInit {
     }
 
     /**
-     * Updates the students statistics with the presentation points.
+     * Updates the students' statistics with the presentation points.
      * @param studentStatistics
      */
     private addPresentationPointsForStudent(studentStatistics: CourseScoresStudentStatistics) {
@@ -422,7 +423,7 @@ export class CourseScoresComponent implements OnInit {
 
     /**
      * Goes through all grade scores, collects the found students and adds all grade scores.
-     * @return A map of the student`s id to the student statistic.
+     * @return A map of the student's id to the student statistic.
      */
     private mapStudentIdToStudentStatistics(): Map<number, CourseScoresStudentStatistics> {
         // student user id --> CourseScoresStudentStatistics
@@ -488,14 +489,14 @@ export class CourseScoresComponent implements OnInit {
 
     /**
      * Sets the grading scale
-     * @param gradingScale
+     * @param gradingScaleDTO
      */
-    setUpGradingScale(gradingScale: GradingScale) {
+    setUpGradingScale(gradingScaleDTO: GradingScaleDTO) {
         this.gradingScaleExists.set(true);
-        gradingScale.gradeSteps = this.gradingService.sortGradeSteps(gradingScale.gradeSteps);
-        this.gradingScale.set(gradingScale);
-        this.isBonus.set(gradingScale.gradeType === GradeType.BONUS);
-        this.maxGrade.set(this.gradingService.maxGrade(gradingScale.gradeSteps));
+        gradingScaleDTO.gradeSteps.gradeSteps = this.gradingService.sortGradeSteps(gradingScaleDTO.gradeSteps.gradeSteps);
+        this.gradingScale.set(toEntity(gradingScaleDTO, this.course()!));
+        this.isBonus.set(gradingScaleDTO.gradeSteps.gradeType === GradeType.BONUS);
+        this.maxGrade.set(this.gradingService.maxGrade(gradingScaleDTO.gradeSteps.gradeSteps));
     }
 
     /**
