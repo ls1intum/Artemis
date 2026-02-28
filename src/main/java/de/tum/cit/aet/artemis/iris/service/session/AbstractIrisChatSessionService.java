@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
+import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TrackedSessionBasedPyrisJob;
@@ -50,6 +51,31 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
 
     private final ObjectMapper objectMapper;
 
+    private final Optional<IrisCitationService> irisCitationService;
+
+    /**
+     * Constructor with citation service support.
+     * Use this for chat sessions that can have citations (Course, Lecture, Exercise chats).
+     */
+    public AbstractIrisChatSessionService(IrisSessionRepository irisSessionRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ObjectMapper objectMapper, IrisMessageService irisMessageService,
+            IrisMessageRepository irisMessageRepository, IrisChatWebsocketService irisChatWebsocketService, LLMTokenUsageService llmTokenUsageService,
+            Optional<IrisCitationService> irisCitationService) {
+        this.irisSessionRepository = irisSessionRepository;
+        this.programmingSubmissionRepository = programmingSubmissionRepository;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.objectMapper = objectMapper;
+        this.irisMessageService = irisMessageService;
+        this.irisMessageRepository = irisMessageRepository;
+        this.irisChatWebsocketService = irisChatWebsocketService;
+        this.llmTokenUsageService = llmTokenUsageService;
+        this.irisCitationService = irisCitationService;
+    }
+
+    /**
+     * Constructor without citation service support.
+     * Use this for sessions that don't support citations (e.g., Tutor Suggestions).
+     */
     public AbstractIrisChatSessionService(IrisSessionRepository irisSessionRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ObjectMapper objectMapper, IrisMessageService irisMessageService,
             IrisMessageRepository irisMessageRepository, IrisChatWebsocketService irisChatWebsocketService, LLMTokenUsageService llmTokenUsageService) {
@@ -61,6 +87,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
         this.irisMessageRepository = irisMessageRepository;
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.llmTokenUsageService = llmTokenUsageService;
+        this.irisCitationService = Optional.empty();
     }
 
     /**
@@ -135,11 +162,12 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
         if (statusUpdate.result() != null) {
             var message = new IrisMessage();
             message.addContent(new IrisTextMessageContent(statusUpdate.result()));
+            var citationInfo = irisCitationService.map(service -> service.resolveCitationInfo(statusUpdate.result())).orElse(List.of());
             message.setAccessedMemories(statusUpdate.accessedMemories());
             message.setCreatedMemories(statusUpdate.createdMemories());
             savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
             updatedJob.getAndUpdate(j -> j.withAssistantMessageId(savedMessage.getId()));
-            irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages(), sessionTitle);
+            irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages(), sessionTitle, citationInfo);
         }
         else {
             savedMessage = null;

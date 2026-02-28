@@ -13,6 +13,17 @@ Your task is to create a detailed testing plan based on the problem statement an
 **Current Repository Structure:**
 {{repositoryStructure}}
 
+**Consistency Check Issues (if any):**
+{{consistencyIssues}}
+
+If there are no issues listed above, skip the following steps.
+Treat the issues above as hard constraints. Be critical and explicit:
+1. Identify which requirements, tests, and repository artifacts each issue touches.
+2. Explain the likely root cause or mismatch implied by the issue.
+3. Update the test plan to resolve the issue with the minimal, safest change.
+4. Verify the plan remains consistent with the problem statement and existing repository patterns.
+5. If multiple approaches are possible, pick the most conservative and justify it.
+
 **Important:** Only modify files in the `/test/` directory. Do not change source code, build files, or configuration files.
 
 **Previous Build Errors:**

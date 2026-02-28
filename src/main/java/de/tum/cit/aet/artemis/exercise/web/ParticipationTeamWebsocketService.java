@@ -176,7 +176,7 @@ public class ParticipationTeamWebsocketService {
     }
 
     /**
-     * Called by a user once he starts to type or edit the content of a submission
+     * Called by a user once they start to type or edit the content of a submission
      * Updates the user's last typing date using websockets and broadcasts the list of online team members
      *
      * @param participationId id of participation which is being worked on
@@ -323,7 +323,7 @@ public class ParticipationTeamWebsocketService {
     }
 
     /**
-     * Called when a user unsubscribes (e.g. when he navigates to a different part of the app, is normally called in ngOnDestroy on the client side).
+     * Called when a user unsubscribes (e.g. when they navigate to a different part of the app, is normally called in ngOnDestroy on the client side).
      *
      * @param event session unsubscribe event
      */
@@ -333,7 +333,7 @@ public class ParticipationTeamWebsocketService {
     }
 
     /**
-     * Called when a user disconnects (e.g. when he goes offline or to a different website).
+     * Called when a user disconnects (e.g. when they go offline or to a different website).
      *
      * @param event session disconnect event
      */

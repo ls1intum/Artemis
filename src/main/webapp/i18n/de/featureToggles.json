@@ -35,10 +35,6 @@
                     "name": "Apollon (Modellierung)",
                     "description": "Aktiviert den Apollon-UML-Modellierungseditor zum Erstellen und Bearbeiten von Diagrammen in Modellierungsaufgaben."
                 },
-                "theia": {
-                    "name": "Theia (Online-IDE)",
-                    "description": "Aktiviert die Theia-Cloud-basierte IDE für Programmieraufgaben, die es Studierenden ermöglicht, im Browser zu programmieren."
-                },
                 "ldap": {
                     "name": "LDAP-Authentifizierung",
                     "description": "Aktiviert LDAP-basierte Authentifizierung für die Benutzeranmeldung über institutionelle Verzeichnisdienste."
@@ -108,6 +104,10 @@
                 "nebula": {
                     "name": "Nebula (Videoverarbeitung)",
                     "description": "Aktiviert die Verarbeitung und Transkription von Vorlesungsvideos für KI-gestütztes Inhaltsverständnis."
+                },
+                "theia": {
+                    "name": "Theia (Online-IDE)",
+                    "description": "Aktiviert die Theia-Cloud-basierte IDE für Programmieraufgaben, die es Studierenden ermöglicht, im Browser zu programmieren."
                 },
                 "sharing": {
                     "name": "Aufgaben-Sharing",

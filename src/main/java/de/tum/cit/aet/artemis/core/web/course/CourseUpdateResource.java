@@ -132,6 +132,10 @@ public class CourseUpdateResource {
             throw new BadRequestAlertException("The course short name cannot be changed", Course.ENTITY_NAME, "shortNameCannotChange", true);
         }
 
+        // only allow admins or instructors of the existing course to change it
+        // this is important, otherwise someone could put themselves into the instructor group of the updated course
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, existingCourse, user);
+
         if (!authCheckService.isAdmin(user)) {
             // this means the user must be an instructor, who has NO Admin rights.
             // instructors are not allowed to change group names, because this would lead to security problems

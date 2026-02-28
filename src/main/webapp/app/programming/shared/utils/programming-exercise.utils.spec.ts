@@ -180,6 +180,18 @@ describe('ProgrammingExerciseUtils', () => {
                 result.assessmentType = AssessmentType.SEMI_AUTOMATIC;
                 expect(isResultPreliminary(result, participation, exercise)).toBeFalse();
             });
+
+            it('return false if the assessment due date is in the future but the result is manually assessed', () => {
+                exercise.assessmentDueDate = dayjs().add(5, 'hours');
+                result.assessmentType = AssessmentType.MANUAL;
+                expect(isResultPreliminary(result, participation, exercise)).toBeFalse();
+            });
+
+            it('return false if the assessment due date is in the future but the result is semi-automatically assessed', () => {
+                exercise.assessmentDueDate = dayjs().add(5, 'hours');
+                result.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+                expect(isResultPreliminary(result, participation, exercise)).toBeFalse();
+            });
         });
 
         it('return true if buildAndTest date is set and in the future', () => {

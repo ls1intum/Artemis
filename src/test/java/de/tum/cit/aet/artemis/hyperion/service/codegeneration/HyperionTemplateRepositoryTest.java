@@ -84,7 +84,7 @@ class HyperionTemplateRepositoryServiceTest {
         when(templates.renderObject(eq("/prompts/hyperion/template/1_plan.st"), anyMap())).thenReturn(renderedPrompt);
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(jsonResponse));
 
-        CodeGenerationResponseDTO result = templateRepository.generateSolutionPlan(user, exercise, "build logs", "repo structure");
+        CodeGenerationResponseDTO result = templateRepository.generateSolutionPlan(user, exercise, "build logs", "repo structure", "consistency issues");
 
         assertThat(result).isNotNull();
         assertThat(result.getSolutionPlan()).isEqualTo(expectedPlan);
@@ -100,7 +100,7 @@ class HyperionTemplateRepositoryServiceTest {
         when(templates.renderObject(any(String.class), anyMap())).thenReturn("rendered");
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(jsonResponse));
 
-        templateRepository.generateSolutionPlan(user, exercise, "logs", "structure");
+        templateRepository.generateSolutionPlan(user, exercise, "logs", "structure", "consistency issues");
 
         verify(templates).renderObject(eq("/prompts/hyperion/template/1_plan.st"), anyMap());
         verify(chatModel).call(any(Prompt.class));
@@ -113,7 +113,7 @@ class HyperionTemplateRepositoryServiceTest {
         when(templates.renderObject(any(String.class), anyMap())).thenReturn("rendered");
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(jsonResponse));
 
-        templateRepository.generateSolutionPlan(user, exercise, "logs", "structure");
+        templateRepository.generateSolutionPlan(user, exercise, "logs", "structure", "consistency issues");
 
         verify(templates).renderObject(eq("/prompts/hyperion/template/1_plan.st"), anyMap());
         verify(chatModel).call(any(Prompt.class));
@@ -127,7 +127,7 @@ class HyperionTemplateRepositoryServiceTest {
         when(templates.renderObject(any(String.class), anyMap())).thenReturn("rendered");
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(jsonResponse));
 
-        templateRepository.generateSolutionPlan(user, exercise, "logs", "structure");
+        templateRepository.generateSolutionPlan(user, exercise, "logs", "structure", "consistency issues");
 
         verify(templates).renderObject(eq("/prompts/hyperion/template/1_plan.st"), anyMap());
         verify(chatModel).call(any(Prompt.class));
@@ -141,7 +141,7 @@ class HyperionTemplateRepositoryServiceTest {
         when(templates.renderObject(any(String.class), anyMap())).thenReturn("rendered");
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(jsonResponse));
 
-        templateRepository.generateSolutionPlan(user, exercise, "logs", "structure");
+        templateRepository.generateSolutionPlan(user, exercise, "logs", "structure", "consistency issues");
 
         verify(templates).renderObject(eq("/prompts/hyperion/template/1_plan.st"), anyMap());
         verify(chatModel).call(any(Prompt.class));
@@ -153,7 +153,7 @@ class HyperionTemplateRepositoryServiceTest {
         when(templates.renderObject(any(String.class), anyMap())).thenReturn("rendered");
         when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("Repository access failed"));
 
-        assertThatThrownBy(() -> templateRepository.generateSolutionPlan(user, exercise, "logs", "structure")).isInstanceOf(RuntimeException.class)
+        assertThatThrownBy(() -> templateRepository.generateSolutionPlan(user, exercise, "logs", "structure", "consistency issues")).isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Repository access failed");
     }
 
@@ -165,7 +165,7 @@ class HyperionTemplateRepositoryServiceTest {
         when(templates.renderObject(any(String.class), anyMap())).thenReturn("rendered");
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(jsonResponse));
 
-        templateRepository.generateSolutionPlan(user, exercise, "logs", "structure");
+        templateRepository.generateSolutionPlan(user, exercise, "logs", "structure", "consistency issues");
 
         verify(templates).renderObject(eq("/prompts/hyperion/template/1_plan.st"), anyMap());
         verify(chatModel).call(any(Prompt.class));
@@ -178,7 +178,7 @@ class HyperionTemplateRepositoryServiceTest {
         when(templates.renderObject(eq("/prompts/hyperion/template/2_file_structure.st"), anyMap())).thenReturn("rendered");
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(jsonResponse));
 
-        CodeGenerationResponseDTO result = templateRepository.defineFileStructure(user, exercise, "solution plan", "repo structure");
+        CodeGenerationResponseDTO result = templateRepository.defineFileStructure(user, exercise, "solution plan", "repo structure", "consistency issues");
 
         assertThat(result).isNotNull();
         assertThat(result.getFiles()).hasSize(1);
@@ -195,7 +195,7 @@ class HyperionTemplateRepositoryServiceTest {
         when(templates.renderObject(eq("/prompts/hyperion/template/3_headers.st"), anyMap())).thenReturn("rendered");
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(fileStructureJson)).thenReturn(createChatResponse(headersJson));
 
-        CodeGenerationResponseDTO result = templateRepository.generateClassAndMethodHeaders(user, exercise, "solution plan", "repo structure");
+        CodeGenerationResponseDTO result = templateRepository.generateClassAndMethodHeaders(user, exercise, "solution plan", "repo structure", "consistency issues");
 
         assertThat(result).isNotNull();
         assertThat(result.getFiles().getFirst().content()).contains("void method()");
@@ -212,7 +212,7 @@ class HyperionTemplateRepositoryServiceTest {
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(fileStructureJson)).thenReturn(createChatResponse(headersJson))
                 .thenReturn(createChatResponse(coreLogicJson));
 
-        CodeGenerationResponseDTO result = templateRepository.generateCoreLogic(user, exercise, "solution plan", "repo structure");
+        CodeGenerationResponseDTO result = templateRepository.generateCoreLogic(user, exercise, "solution plan", "repo structure", "consistency issues");
 
         assertThat(result).isNotNull();
         assertThat(result.getFiles().getFirst().content()).contains("TODO");
@@ -233,7 +233,7 @@ class HyperionTemplateRepositoryServiceTest {
         when(templates.renderObject(any(String.class), anyMap())).thenReturn("rendered");
         when(chatModel.call(any(Prompt.class))).thenThrow(new NonTransientAiException("AI service error"));
 
-        assertThatThrownBy(() -> templateRepository.generateSolutionPlan(user, exercise, "logs", "structure")).isInstanceOf(NetworkingException.class)
+        assertThatThrownBy(() -> templateRepository.generateSolutionPlan(user, exercise, "logs", "structure", "consistency issues")).isInstanceOf(NetworkingException.class)
                 .hasMessageContaining("AI request failed");
     }
 
@@ -245,24 +245,16 @@ class HyperionTemplateRepositoryServiceTest {
         when(templates.renderObject(any(String.class), anyMap())).thenReturn("rendered");
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(jsonResponse));
 
-        templateRepository.generateSolutionPlan(user, exercise, null, "repo structure");
+        templateRepository.generateSolutionPlan(user, exercise, null, "repo structure", "consistency issues");
 
         verify(templates).renderObject(eq("/prompts/hyperion/template/1_plan.st"), anyMap());
         verify(chatModel).call(any(Prompt.class));
     }
 
     @Test
-    void generateSolutionPlan_withNullRepositoryStructure_usesEmptyString() throws Exception {
-        String jsonResponse = "{\"solutionPlan\":\"test plan\",\"files\":[]}";
-
-        when(contextRenderer.getExistingSolutionCode(any(ProgrammingExercise.class), any(GitService.class))).thenReturn("public class Solution {}");
-        when(templates.renderObject(any(String.class), anyMap())).thenReturn("rendered");
-        when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(jsonResponse));
-
-        templateRepository.generateSolutionPlan(user, exercise, "logs", null);
-
-        verify(templates).renderObject(eq("/prompts/hyperion/template/1_plan.st"), anyMap());
-        verify(chatModel).call(any(Prompt.class));
+    void generateSolutionPlan_withNullRepositoryStructure_throwsIllegalArgumentException() {
+        assertThatThrownBy(() -> templateRepository.generateSolutionPlan(user, exercise, "logs", null, "consistency issues")).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("repositoryStructure must not be null");
     }
 
     private ChatResponse createChatResponse(String content) {

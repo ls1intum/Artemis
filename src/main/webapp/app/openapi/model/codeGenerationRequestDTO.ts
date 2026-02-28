@@ -17,6 +17,10 @@ export interface CodeGenerationRequestDTO {
      * Type of repository to generate code for
      */
     repositoryType?: CodeGenerationRequestDTO.RepositoryTypeEnum;
+    /**
+     * When true, only returns an active job without starting a new one
+     */
+    checkOnly?: boolean;
 }
 export namespace CodeGenerationRequestDTO {
     export const RepositoryTypeEnum = {
@@ -26,5 +30,4 @@ export namespace CodeGenerationRequestDTO {
     } as const;
     export type RepositoryTypeEnum = typeof RepositoryTypeEnum[keyof typeof RepositoryTypeEnum];
 }
-
 

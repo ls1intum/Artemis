@@ -15,16 +15,19 @@ import jakarta.persistence.InheritanceType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.dto.IrisCitationMetaDTO;
 
 /**
  * An IrisSession represents a list of messages of Artemis, a user, and an LLM.
@@ -66,6 +69,13 @@ public abstract class IrisSession extends DomainObject {
     @Column(name = "latest_suggestions")
     private String latestSuggestions;
 
+    /**
+     * Citation metadata extracted from the session messages.
+     * This information is derived at runtime and not persisted.
+     */
+    @Transient
+    private List<IrisCitationMetaDTO> citationInfo;
+
     public IrisMessage newMessage() {
         var message = new IrisMessage();
         message.setSession(this);
@@ -102,6 +112,15 @@ public abstract class IrisSession extends DomainObject {
 
     public void setLatestSuggestions(String latestSuggestions) {
         this.latestSuggestions = latestSuggestions;
+    }
+
+    @JsonProperty("citationInfo")
+    public List<IrisCitationMetaDTO> getCitationInfo() {
+        return citationInfo;
+    }
+
+    public void setCitationInfo(List<IrisCitationMetaDTO> citationInfo) {
+        this.citationInfo = citationInfo;
     }
 
     public abstract boolean shouldSelectLLMUsage();

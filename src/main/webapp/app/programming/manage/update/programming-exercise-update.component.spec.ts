@@ -28,7 +28,7 @@ import * as Utils from 'app/exercise/course-exercises/course-utils';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { PROFILE_THEIA } from 'app/app.constants';
+import { MODULE_FEATURE_THEIA } from 'app/app.constants';
 import { APP_NAME_PATTERN_FOR_SWIFT, PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN } from 'app/shared/constants/input.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
@@ -47,6 +47,16 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
+import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
+import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
+import { ProblemStatementSyncService } from 'app/exercise/synchronization/services/problem-statement-sync.service';
+import { DialogService } from 'primeng/dynamicdialog';
+
+jest.mock('y-monaco', () => ({
+    MonacoBinding: jest.fn().mockImplementation(() => ({
+        destroy: jest.fn(),
+    })),
+}));
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -85,6 +95,17 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 MockProvider(CalendarService),
+                MockProvider(ExerciseEditorSyncService),
+                MockProvider(ExerciseMetadataSyncService),
+                {
+                    provide: ProblemStatementSyncService,
+                    useValue: {
+                        init: jest.fn().mockReturnValue({ doc: {}, text: { toString: () => '' }, awareness: {} }),
+                        reset: jest.fn(),
+                        stateReplaced$: of(),
+                    },
+                },
+                MockProvider(DialogService),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);
@@ -1095,7 +1116,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             [
                 'find validation errors for invalid ide selection',
                 {
-                    activeProfiles: [PROFILE_THEIA],
+                    activeModuleFeatures: [MODULE_FEATURE_THEIA],
                 },
                 {
                     translateKey: 'artemisApp.programmingExercise.allowOnlineEditor.alert',
@@ -1103,19 +1124,23 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 },
             ],
             [
-                'find validation errors for invalid ide selection without theia profile',
+                'find validation errors for invalid ide selection without theia module feature',
                 {
-                    activeProfiles: [],
+                    activeModuleFeatures: [],
                 },
                 {
                     translateKey: 'artemisApp.programmingExercise.allowOnlineEditor.alertNoTheia',
                     translateValues: {},
                 },
             ],
-        ])('%s', (description: string, profileInfo: ProfileInfo, expectedException: ValidationReason) => {
+        ])('%s', (description: string, profileInfo: Partial<ProfileInfo>, expectedException: ValidationReason) => {
             const newProfileInfo = new ProfileInfo();
-            newProfileInfo.activeProfiles = profileInfo.activeProfiles;
+            newProfileInfo.activeProfiles = profileInfo.activeProfiles ?? [];
+            newProfileInfo.activeModuleFeatures = profileInfo.activeModuleFeatures ?? [];
             jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(newProfileInfo);
+            jest.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => {
+                return newProfileInfo.activeModuleFeatures?.includes(feature) ?? false;
+            });
 
             const route = TestBed.inject(ActivatedRoute);
             route.params = of({ courseId });
@@ -1383,6 +1408,28 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         expect(comp.exerciseCategories).toBeUndefined();
         comp.updateCategories(categories);
         expect(comp.exerciseCategories).toBe(categories);
+    }));
+
+    it('keeps exerciseCategories and programmingExercise.categories in sync when initially empty', fakeAsync(() => {
+        const route = TestBed.inject(ActivatedRoute);
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.id = 42;
+        programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+        programmingExercise.categories = undefined;
+
+        route.params = of({ courseId });
+        route.url = of([{ path: 'edit' } as UrlSegment]);
+        route.data = of({ programmingExercise });
+
+        jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+        jest.spyOn(Utils, 'loadCourseExerciseCategories').mockReturnValue(of([]));
+        jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
+
+        comp.ngOnInit();
+        tick();
+
+        expect(comp.exerciseCategories).toEqual([]);
+        expect(comp.programmingExercise.categories).toBe(comp.exerciseCategories);
     }));
 
     it('should validate form sections', () => {
