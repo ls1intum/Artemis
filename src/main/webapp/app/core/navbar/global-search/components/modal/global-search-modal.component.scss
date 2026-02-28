@@ -80,6 +80,7 @@
 
 .search-result-item {
     border-bottom: 1px solid var(--bs-border-color);
+    border-left: 3px solid transparent;
     transition: all 0.15s ease-in-out;
     cursor: pointer;
 
@@ -93,7 +94,7 @@
     }
 
     &.selected {
-        border-left: 3px solid var(--bs-primary);
+        border-left-color: var(--bs-primary);
     }
 }
 
