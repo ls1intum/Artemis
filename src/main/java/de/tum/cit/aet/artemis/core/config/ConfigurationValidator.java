@@ -4,6 +4,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PASSWORD_MIN_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MAX_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MIN_LENGTH;
+import static de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties.VECTORIZER_NONE;
+import static de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties.VECTORIZER_TEXT2VEC_TRANSFORMERS;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -71,6 +73,8 @@ public class ConfigurationValidator {
 
     private final String weaviateScheme;
 
+    private final String weaviateVectorizerModule;
+
     public ConfigurationValidator(Environment environment,
             @Value("${" + Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME + ":false}") boolean isPasskeyRequiredForAdministratorFeatures,
             @Value("${artemis.user-management.internal-admin.username:#{null}}") String internalAdminUsername,
@@ -78,7 +82,8 @@ public class ConfigurationValidator {
             @Value("${artemis.weaviate.http-host:#{null}}") String weaviateHost,
             @Value("${artemis.weaviate.http-port:" + WeaviateConfigurationProperties.DEFAULT_HTTP_PORT + "}") int weaviatePort,
             @Value("${artemis.weaviate.grpc-port:" + WeaviateConfigurationProperties.DEFAULT_GRPC_PORT + "}") int weaviateGrpcPort,
-            @Value("${artemis.weaviate.scheme:#{null}}") String weaviateScheme) {
+            @Value("${artemis.weaviate.scheme:#{null}}") String weaviateScheme,
+            @Value("${artemis.weaviate.vectorizer-module:" + VECTORIZER_NONE + "}") String weaviateVectorizerModule) {
         this.environment = environment;
         this.artemisConfigHelper = new ArtemisConfigHelper();
         this.isPasskeyRequiredForAdministratorFeatures = isPasskeyRequiredForAdministratorFeatures;
@@ -91,6 +96,7 @@ public class ConfigurationValidator {
         this.weaviatePort = weaviatePort;
         this.weaviateGrpcPort = weaviateGrpcPort;
         this.weaviateScheme = weaviateScheme;
+        this.weaviateVectorizerModule = weaviateVectorizerModule;
     }
 
     /**
@@ -216,6 +222,13 @@ public class ConfigurationValidator {
             effectiveScheme = weaviateScheme;
         }
 
+        if (weaviateVectorizerModule == null || weaviateVectorizerModule.isBlank()) {
+            invalidProperties.add("artemis.weaviate.vectorizer-module (must be configured when Weaviate is enabled)");
+        }
+        else if (!VECTORIZER_NONE.equals(weaviateVectorizerModule) && !VECTORIZER_TEXT2VEC_TRANSFORMERS.equals(weaviateVectorizerModule)) {
+            invalidProperties.add("artemis.weaviate.vectorizer-module (must be '" + VECTORIZER_NONE + "' or '" + VECTORIZER_TEXT2VEC_TRANSFORMERS + "')");
+        }
+
         if (!invalidProperties.isEmpty()) {
             String errorMessage = "Invalid Weaviate configuration: Weaviate is enabled but the following properties are missing or invalid: "
                     + String.join(", ", invalidProperties);
@@ -224,8 +237,8 @@ public class ConfigurationValidator {
         }
 
         boolean secure = HTTPS_SCHEME.equals(effectiveScheme);
-        log.info("Weaviate is enabled and configured with host: {}:{} (gRPC port: {}, secure: {}, scheme: {})", weaviateHost, weaviatePort, weaviateGrpcPort, secure,
-                effectiveScheme);
+        log.info("Weaviate is enabled and configured with host: {}:{} (gRPC port: {}, secure: {}, scheme: {}, vectorizer: {})", weaviateHost, weaviatePort, weaviateGrpcPort,
+                secure, effectiveScheme, weaviateVectorizerModule);
     }
 
     public static boolean isValidPort(int port) {
