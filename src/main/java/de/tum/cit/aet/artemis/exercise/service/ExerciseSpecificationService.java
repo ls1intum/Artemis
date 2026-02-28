@@ -70,9 +70,10 @@ public class ExerciseSpecificationService {
                 // Avoid incorrect type comparison which could lead to an exception "Data Conversion Error (CHARACTER VARYING to DECFLOAT)"
                 idMatchesSearch = criteriaBuilder.disjunction();
             }
-            Predicate exerciseTitleMatches = criteriaBuilder.like(root.get(Exercise_.TITLE), "%" + searchTerm + "%");
-            Predicate courseTitleMatches = criteriaBuilder.like(joinCourse.get(Course_.TITLE), "%" + searchTerm + "%");
-            Predicate examCourseTitleMatches = criteriaBuilder.like(joinExamCourse.get(Course_.TITLE), "%" + searchTerm + "%");
+            String searchTermLowercase = searchTerm.toLowerCase();
+            Predicate exerciseTitleMatches = criteriaBuilder.like(criteriaBuilder.lower(root.get(Exercise_.TITLE)), "%" + searchTermLowercase + "%");
+            Predicate courseTitleMatches = criteriaBuilder.like(criteriaBuilder.lower(joinCourse.get(Course_.TITLE)), "%" + searchTermLowercase + "%");
+            Predicate examCourseTitleMatches = criteriaBuilder.like(criteriaBuilder.lower(joinExamCourse.get(Course_.TITLE)), "%" + searchTermLowercase + "%");
 
             Predicate matchingCourseExercise = criteriaBuilder.or(idMatchesSearch, exerciseTitleMatches, courseTitleMatches);
             Predicate matchingExamExercise = criteriaBuilder.or(idMatchesSearch, exerciseTitleMatches, examCourseTitleMatches);

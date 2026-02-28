@@ -1831,6 +1831,30 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetAllExamsOnPage_searchIsCaseInsensitive() throws Exception {
+        var title = "CamelCaseExamTitle";
+        var exam = ExamFactory.generateExam(course1);
+        exam.setTitle(title);
+        examRepository.save(exam);
+
+        // Search with lowercase should find the exam
+        final SearchTermPageableSearchDTO<String> searchLowercase = pageableSearchUtilService.configureSearch("camelcaseexamtitle");
+        final var resultLowercase = request.getSearchResult("/api/exam/exams", HttpStatus.OK, Exam.class, pageableSearchUtilService.searchMapping(searchLowercase));
+        assertThat(resultLowercase.getResultsOnPage()).hasSize(1).containsExactly(exam);
+
+        // Search with uppercase should also find the exam
+        final SearchTermPageableSearchDTO<String> searchUppercase = pageableSearchUtilService.configureSearch("CAMELCASEEXAMTITLE");
+        final var resultUppercase = request.getSearchResult("/api/exam/exams", HttpStatus.OK, Exam.class, pageableSearchUtilService.searchMapping(searchUppercase));
+        assertThat(resultUppercase.getResultsOnPage()).hasSize(1).containsExactly(exam);
+
+        // Search with mixed case should also find the exam
+        final SearchTermPageableSearchDTO<String> searchMixedCase = pageableSearchUtilService.configureSearch("cAmElCaSeExAmTiTlE");
+        final var resultMixedCase = request.getSearchResult("/api/exam/exams", HttpStatus.OK, Exam.class, pageableSearchUtilService.searchMapping(searchMixedCase));
+        assertThat(resultMixedCase.getResultsOnPage()).hasSize(1).containsExactly(exam);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TUTOR")
     void testGetAllExamsOnPage_asTutor_failsWithForbidden() throws Exception {
         final SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureSearch("");

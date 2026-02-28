@@ -1048,6 +1048,37 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSearchTermMatchesTitle_caseInsensitive() throws Exception {
+        final Course course = courseUtilService.addEmptyCourse();
+        final var now = ZonedDateTime.now();
+        TextExercise exercise = TextExerciseFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course);
+        exercise.setTitle("CamelCaseTitle");
+        exercise = textExerciseRepository.save(exercise);
+
+        // Search with lowercase should find the exercise
+        final var searchLowercase = pageableSearchUtilService.configureSearch("camelcasetitle");
+        final var resultLowercase = request.getSearchResult("/api/text/text-exercises", HttpStatus.OK, TextExercise.class,
+                pageableSearchUtilService.searchMapping(searchLowercase));
+        assertThat(resultLowercase.getResultsOnPage()).hasSize(1);
+        assertThat(resultLowercase.getResultsOnPage().getFirst().getId()).isEqualTo(exercise.getId());
+
+        // Search with uppercase should also find the exercise
+        final var searchUppercase = pageableSearchUtilService.configureSearch("CAMELCASETITLE");
+        final var resultUppercase = request.getSearchResult("/api/text/text-exercises", HttpStatus.OK, TextExercise.class,
+                pageableSearchUtilService.searchMapping(searchUppercase));
+        assertThat(resultUppercase.getResultsOnPage()).hasSize(1);
+        assertThat(resultUppercase.getResultsOnPage().getFirst().getId()).isEqualTo(exercise.getId());
+
+        // Search with mixed case should also find the exercise
+        final var searchMixedCase = pageableSearchUtilService.configureSearch("cAmElCaSeTiTlE");
+        final var resultMixedCase = request.getSearchResult("/api/text/text-exercises", HttpStatus.OK, TextExercise.class,
+                pageableSearchUtilService.searchMapping(searchMixedCase));
+        assertThat(resultMixedCase.getResultsOnPage()).hasSize(1);
+        assertThat(resultMixedCase.getResultsOnPage().getFirst().getId()).isEqualTo(exercise.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportTextExercise_team_modeChange() throws Exception {
         var now = ZonedDateTime.now();
         Course course1 = courseUtilService.addEmptyCourse();
