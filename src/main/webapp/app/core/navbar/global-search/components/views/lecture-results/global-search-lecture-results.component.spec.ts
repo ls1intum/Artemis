@@ -20,7 +20,6 @@ const mockResult: LectureSearchResult = {
     courseId: 1,
     courseName: 'Advanced Web Development',
     pageNumber: 3,
-    baseUrl: 'http://localhost',
     snippet: 'Signals are a reactive primitive in Angular.',
 };
 
@@ -33,7 +32,6 @@ const mockResultNoSnippet: LectureSearchResult = {
     courseId: 2,
     courseName: 'Server-Side Development',
     pageNumber: 7,
-    baseUrl: 'http://localhost',
 };
 
 const mockSearchService = { search: vi.fn() };

@@ -7,6 +7,5 @@ export interface LectureSearchResult {
     courseId: number;
     courseName: string;
     pageNumber: number;
-    baseUrl: string;
     snippet?: string;
 }

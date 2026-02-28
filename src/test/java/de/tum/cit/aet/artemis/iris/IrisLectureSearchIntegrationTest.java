@@ -25,9 +25,8 @@ class IrisLectureSearchIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void search_shouldReturnResults() throws Exception {
-        var results = List.of(
-                new PyrisLectureSearchResultDTO(1L, "Introduction Slide", "/link/1", 10L, "Intro to ML", 5L, "Machine Learning", 3, "supervised learning snippet", "http://base"),
-                new PyrisLectureSearchResultDTO(2L, "Neural Networks", "/link/2", 10L, "Intro to ML", 5L, "Machine Learning", 7, "backpropagation snippet", "http://base"));
+        var results = List.of(new PyrisLectureSearchResultDTO(1L, "Introduction Slide", "/link/1", 10L, "Intro to ML", 5L, "Machine Learning", 3, "supervised learning snippet"),
+                new PyrisLectureSearchResultDTO(2L, "Neural Networks", "/link/2", 10L, "Intro to ML", 5L, "Machine Learning", 7, "backpropagation snippet"));
         irisRequestMockProvider.mockSearchLectures(results);
 
         var requestDTO = new PyrisLectureSearchRequestDTO("machine learning", 5);
