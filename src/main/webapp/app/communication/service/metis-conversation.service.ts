@@ -13,7 +13,7 @@ import { ChannelService } from 'app/communication/conversations/service/channel.
 import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
-import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
+import { OneToOneChatDTO, isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { GroupChatService } from 'app/communication/conversations/service/group-chat.service';
 import dayjs from 'dayjs/esm';
 import { NavigationEnd, Params, Router } from '@angular/router';
@@ -118,6 +118,8 @@ export class MetisConversationService implements OnDestroy {
     }
 
     public setActiveConversation(conversationIdentifier: ConversationDTO | number | undefined) {
+        const nextConversationId = typeof conversationIdentifier === 'number' ? conversationIdentifier : conversationIdentifier?.id;
+        this.removeEmptyOneToOneChatFromList(nextConversationId);
         this.updateLastReadDateAndNumberOfUnreadMessages();
         let cachedConversation: ConversationDTO | undefined = undefined;
         if (conversationIdentifier) {
@@ -179,6 +181,23 @@ export class MetisConversationService implements OnDestroy {
         }
     }
 
+    /**
+     * Removes the currently active conversation from the local list if it is an empty one-to-one chat
+     * (i.e., no messages have been sent yet). This ensures that empty direct message conversations
+     * do not persist in the sidebar when the user navigates away without sending a message.
+     */
+    private removeEmptyOneToOneChatFromList(nextConversationId?: number) {
+        if (
+            this.activeConversation &&
+            isOneToOneChatDTO(this.activeConversation) &&
+            !this.activeConversation.lastMessageDate &&
+            this.activeConversation.id !== nextConversationId
+        ) {
+            this.conversationsOfUser = this.conversationsOfUser.filter((c) => c.id !== this.activeConversation!.id);
+            this._conversationsOfUser$.next(this.conversationsOfUser);
+        }
+    }
+
     public forceRefresh(notifyActiveConversationSubscribers = true, notifyConversationsSubscribers = true): Observable<never> {
         if (!this._course) {
             throw new Error('Course is not set. The service does not seem to be initialized.');
@@ -231,9 +250,11 @@ export class MetisConversationService implements OnDestroy {
     public createChannel = (channel: ChannelDTO) => this.onConversationCreation(this.channelService.create(this._courseId, channel));
     public createGroupChat = (loginsOfChatPartners: string[]) => this.onConversationCreation(this.groupChatService.create(this._courseId, loginsOfChatPartners));
     private onConversationCreation = (creation$: Observable<HttpResponse<ConversationDTO>>): Observable<never> => {
+        let createdConversation: ConversationDTO | undefined;
         return creation$.pipe(
             tap((conversation: HttpResponse<ConversationDTO>) => {
-                this.activeConversation = conversation.body!;
+                createdConversation = conversation.body!;
+                this.activeConversation = createdConversation;
             }),
             catchError((res: HttpErrorResponse) => {
                 if (!res.error?.skipAlert) {
@@ -250,7 +271,21 @@ export class MetisConversationService implements OnDestroy {
                 return of(null);
             }),
             switchMap(() => {
-                return this.forceRefresh();
+                return this.forceRefresh().pipe(
+                    finalize(() => {
+                        // After refresh, if the newly created conversation is not in the server response
+                        // (e.g., an empty one-to-one chat with no messages yet), add it temporarily so
+                        // the user can see and interact with it until they navigate away.
+                        if (createdConversation && !this.activeConversation) {
+                            this.activeConversation = createdConversation;
+                            if (!this.conversationsOfUser.some((c) => c.id === createdConversation!.id)) {
+                                this.conversationsOfUser = [...this.conversationsOfUser, createdConversation];
+                                this._conversationsOfUser$.next(this.conversationsOfUser);
+                            }
+                            this._activeConversation$.next(this.activeConversation);
+                        }
+                    }),
+                );
             }),
         );
     };

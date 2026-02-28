@@ -22,6 +22,9 @@ public interface OneToOneChatRepository extends ArtemisJpaRepository<OneToOneCha
     /**
      * Find all active one-to-one chats of a given user in a given course.
      * <p>
+     * Only returns chats that have at least one message (lastMessageDate IS NOT NULL), so that empty
+     * conversations created but never used do not persist in the user's conversation list.
+     * <p>
      * We join the conversionParticipants twice, because the first time we use it for filtering the chats and binding it to the user ID. The second time, we fetch all participants;
      * as it's a one-to-one chat, two.
      *
@@ -37,7 +40,7 @@ public interface OneToOneChatRepository extends ArtemisJpaRepository<OneToOneCha
                 LEFT JOIN FETCH allParticipants.user user
                 LEFT JOIN FETCH user.groups
             WHERE oneToOneChat.course.id = :courseId
-                AND (oneToOneChat.lastMessageDate IS NOT NULL OR oneToOneChat.creator.id = :userId)
+                AND oneToOneChat.lastMessageDate IS NOT NULL
                 AND matchingParticipant.user.id = :userId
             ORDER BY oneToOneChat.lastMessageDate DESC
             """)

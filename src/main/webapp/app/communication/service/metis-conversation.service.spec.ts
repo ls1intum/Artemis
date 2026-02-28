@@ -560,4 +560,129 @@ describe('MetisConversationService', () => {
             expect(hasUnread).toBeTrue();
         });
     });
+
+    describe('removeEmptyOneToOneChatFromList', () => {
+        it('should remove empty one-to-one chat from list when navigating away', () => {
+            return new Promise((done) => {
+                metisConversationService.setUpConversationService(course).subscribe({
+                    complete: () => {
+                        // Create an empty one-to-one chat (no lastMessageDate)
+                        const emptyOneToOneChat = generateOneToOneChatDTO({ id: 50 } as OneToOneChatDTO);
+                        emptyOneToOneChat.lastMessageDate = undefined;
+
+                        (metisConversationService as any).conversationsOfUser = [groupChat, emptyOneToOneChat, channel];
+                        (metisConversationService as any).activeConversation = emptyOneToOneChat;
+
+                        // Navigate away by setting a different active conversation
+                        metisConversationService.setActiveConversation(channel);
+
+                        // The empty one-to-one chat should be removed from the list
+                        const conversations = (metisConversationService as any).conversationsOfUser;
+                        expect(conversations).not.toContainEqual(emptyOneToOneChat);
+                        expect(conversations).toContainEqual(groupChat);
+                        expect(conversations).toContainEqual(channel);
+                        expect(conversations).toHaveLength(2);
+                        done({});
+                    },
+                });
+            });
+        });
+
+        it('should NOT remove one-to-one chat with messages from list when navigating away', () => {
+            return new Promise((done) => {
+                metisConversationService.setUpConversationService(course).subscribe({
+                    complete: () => {
+                        // Explicitly mark as non-empty to avoid depending on helper defaults
+                        oneToOneChat.lastMessageDate = dayjs('2026-01-01T00:00:00.000Z');
+                        (metisConversationService as any).conversationsOfUser = [groupChat, oneToOneChat, channel];
+                        (metisConversationService as any).activeConversation = oneToOneChat;
+
+                        // Navigate away by setting a different active conversation
+                        metisConversationService.setActiveConversation(channel);
+
+                        // The one-to-one chat with messages should still be in the list
+                        const conversations = (metisConversationService as any).conversationsOfUser;
+                        expect(conversations).toContainEqual(oneToOneChat);
+                        expect(conversations).toHaveLength(3);
+                        done({});
+                    },
+                });
+            });
+        });
+
+        it('should NOT remove empty one-to-one chat when re-selecting the same conversation', () => {
+            return new Promise((done) => {
+                metisConversationService.setUpConversationService(course).subscribe({
+                    complete: () => {
+                        // Create an empty one-to-one chat (no lastMessageDate)
+                        const emptyOneToOneChat = generateOneToOneChatDTO({ id: 50 } as OneToOneChatDTO);
+                        emptyOneToOneChat.lastMessageDate = undefined;
+
+                        (metisConversationService as any).conversationsOfUser = [groupChat, emptyOneToOneChat, channel];
+                        (metisConversationService as any).activeConversation = emptyOneToOneChat;
+
+                        // Re-select the same empty one-to-one chat
+                        metisConversationService.setActiveConversation(emptyOneToOneChat);
+
+                        // The empty one-to-one chat should still be in the list since we did not navigate away
+                        const conversations = (metisConversationService as any).conversationsOfUser;
+                        expect(conversations).toContainEqual(emptyOneToOneChat);
+                        expect(conversations).toHaveLength(3);
+                        done({});
+                    },
+                });
+            });
+        });
+
+        it('should NOT remove group chat or channel when navigating away', () => {
+            return new Promise((done) => {
+                metisConversationService.setUpConversationService(course).subscribe({
+                    complete: () => {
+                        // Set up a group chat without lastMessageDate
+                        const emptyGroupChat = generateExampleGroupChatDTO({ id: 50 });
+                        emptyGroupChat.lastMessageDate = undefined;
+
+                        (metisConversationService as any).conversationsOfUser = [emptyGroupChat, oneToOneChat, channel];
+                        (metisConversationService as any).activeConversation = emptyGroupChat;
+
+                        // Navigate away
+                        metisConversationService.setActiveConversation(channel);
+
+                        // The group chat should still be in the list (only one-to-one chats are removed)
+                        const conversations = (metisConversationService as any).conversationsOfUser;
+                        expect(conversations).toContainEqual(emptyGroupChat);
+                        expect(conversations).toHaveLength(3);
+                        done({});
+                    },
+                });
+            });
+        });
+    });
+
+    it('should temporarily preserve empty one-to-one chat after creation when server does not return it', () => {
+        return new Promise((done) => {
+            metisConversationService.setUpConversationService(course).subscribe({
+                complete: () => {
+                    const newEmptyChat = generateOneToOneChatDTO({ id: 99 });
+                    newEmptyChat.lastMessageDate = undefined;
+
+                    jest.spyOn(oneToOneChatService, 'create').mockReturnValue(of(new HttpResponse({ body: newEmptyChat })));
+                    // Server does NOT return the empty chat (simulating new server behavior)
+                    jest.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(of(new HttpResponse({ body: [groupChat, oneToOneChat, channel] })));
+
+                    metisConversationService.createOneToOneChat('login').subscribe({
+                        complete: () => {
+                            metisConversationService.activeConversation$.subscribe((activeConversation) => {
+                                expect(activeConversation).toEqual(newEmptyChat);
+                            });
+                            metisConversationService.conversationsOfUser$.subscribe((conversations) => {
+                                expect(conversations).toContainEqual(newEmptyChat);
+                            });
+                            done({});
+                        },
+                    });
+                },
+            });
+        });
+    });
 });
