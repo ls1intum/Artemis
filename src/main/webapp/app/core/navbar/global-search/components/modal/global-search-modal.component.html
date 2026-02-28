@@ -59,7 +59,7 @@
             <div class="search-results-list">
                 @for (result of results(); track result.id; let i = $index) {
                     <div
-                        class="search-result-item p-3 cursor-pointer"
+                        class="search-result-item p-3 cursor-pointer position-relative"
                         [class.selected]="i === selectedIndex()"
                         (click)="navigateToResult(result)"
                         [attr.aria-selected]="i === selectedIndex()"
@@ -108,14 +108,14 @@
                                     </p>
                                 }
                             </div>
-
-                            <!-- Navigation hint for selected item -->
-                            @if (i === selectedIndex()) {
-                                <div class="result-nav-hint flex-shrink-0 text-secondary">
-                                    <kbd class="key-hint-small">↵</kbd>
-                                </div>
-                            }
                         </div>
+
+                        <!-- Navigation hint for selected item (positioned absolutely) -->
+                        @if (i === selectedIndex()) {
+                            <div class="result-nav-hint position-absolute text-secondary">
+                                <kbd class="key-hint-small">↵</kbd>
+                            </div>
+                        }
                     </div>
                 }
             </div>
