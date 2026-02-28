@@ -41,7 +41,11 @@
             "toNavigate": "zum Navigieren",
             "toClose": "zum Schließen",
             "searchLectureContent": "Vorlesungsinhalt suchen",
-            "searchLectureContentDescription": "Semantische Suche durch Transkripte und Materialien"
+            "searchLectureContentDescription": "Semantische Suche durch Transkripte und Materialien",
+            "lectureResultsAriaLabel": "Vorlesungsergebnisse",
+            "arrowUpAriaLabel": "Pfeil nach oben",
+            "arrowDownAriaLabel": "Pfeil nach unten",
+            "pageAbbreviation": "S."
         },
         "menu": {
             "home": "Startseite",
