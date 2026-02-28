@@ -36,11 +36,10 @@ class PlantUmlIntegrationTest extends AbstractProgrammingIntegrationIndependentT
     /**
      * A simple but valid PlantUML class diagram for testing actual rendering.
      * This diagram must be renderable by PlantUML without errors.
-     * Uses Smetana layout engine to avoid dependency on external Graphviz installation.
+     * Note: Smetana layout engine is applied via theme injection in PlantUmlService.
      */
     private static final String VALID_PLANTUML_DIAGRAM = """
             @startuml
-            !pragma layout smetana
             class Student {
                 +name: String
                 +getId(): int
@@ -49,6 +48,22 @@ class PlantUmlIntegrationTest extends AbstractProgrammingIntegrationIndependentT
                 +title: String
             }
             Student --> Course
+            @enduml
+            """;
+
+    /**
+     * A PlantUML diagram with a custom theme to test that Smetana is still applied.
+     */
+    private static final String DIAGRAM_WITH_CUSTOM_THEME = """
+            @startuml
+            !theme cerulean
+            class Person {
+                +name: String
+            }
+            class Address {
+                +street: String
+            }
+            Person --> Address
             @enduml
             """;
 
@@ -155,5 +170,22 @@ class PlantUmlIntegrationTest extends AbstractProgrammingIntegrationIndependentT
         assertThat(png[1]).as("PNG should have 'P' as second byte").isEqualTo((byte) 0x50);
         assertThat(png[2]).as("PNG should have 'N' as third byte").isEqualTo((byte) 0x4E);
         assertThat(png[3]).as("PNG should have 'G' as fourth byte").isEqualTo((byte) 0x47);
+    }
+
+    /**
+     * Tests that diagrams with custom themes still render correctly.
+     * The Smetana layout engine should be applied even when a custom theme is used,
+     * to avoid dependency on external Graphviz installation.
+     */
+    @Test
+    void generateSvg_withCustomTheme_actualRendering() throws Exception {
+        String svg = plantUmlService.generateSvg(DIAGRAM_WITH_CUSTOM_THEME, false);
+
+        assertThat(svg).as("SVG output should not be empty").isNotEmpty();
+        assertThat(svg).as("Output should be valid SVG").contains("<svg");
+        assertThat(svg).as("SVG should contain the class name from diagram").contains("Person");
+        assertThat(svg).as("Output should not contain PlantUML error markers").doesNotContain("Syntax Error");
+        // Verify it doesn't contain Graphviz-related error messages (indicates Smetana is being used)
+        assertThat(svg).as("Output should not contain Graphviz errors").doesNotContain("Cannot find Graphviz");
     }
 }
