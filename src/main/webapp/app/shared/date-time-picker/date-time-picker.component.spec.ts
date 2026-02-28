@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import dayjs from 'dayjs/esm';
@@ -162,12 +162,13 @@ describe('FormDateTimePickerComponent', () => {
         expect(calledWith.isBefore(afterCall.add(1, 'second'))).toBeTrue();
     });
 
-    it('should inject a Now button into the picker popup on open', fakeAsync(() => {
+    it('should inject a Now button into the picker popup on open', () => {
+        jest.useFakeTimers();
         const containerButtons = createContainerButtons();
 
         const mockPicker = { close: jest.fn() } as any;
         component.onPickerOpen(mockPicker);
-        tick();
+        jest.runAllTimers();
 
         const nowButton = containerButtons.querySelector('.owl-dt-now-button');
         expect(nowButton).toBeTruthy();
@@ -178,16 +179,18 @@ describe('FormDateTimePickerComponent', () => {
 
         component.onPickerClose();
         removeContainerButtons(containerButtons);
-    }));
+        jest.useRealTimers();
+    });
 
-    it('should call setNow and close picker when Now button is clicked', fakeAsync(() => {
+    it('should call setNow and close picker when Now button is clicked', () => {
+        jest.useFakeTimers();
         const containerButtons = createContainerButtons();
 
         const mockPicker = { close: jest.fn() } as any;
         const setNowSpy = jest.spyOn(component, 'setNow').mockImplementation();
 
         component.onPickerOpen(mockPicker);
-        tick();
+        jest.runAllTimers();
 
         const nowButton = containerButtons.querySelector('.owl-dt-now-button') as HTMLButtonElement;
         nowButton.click();
@@ -197,9 +200,11 @@ describe('FormDateTimePickerComponent', () => {
 
         component.onPickerClose();
         removeContainerButtons(containerButtons);
-    }));
+        jest.useRealTimers();
+    });
 
-    it('should clean up timeout and button on destroy', fakeAsync(() => {
+    it('should clean up timeout and button on destroy', () => {
+        jest.useFakeTimers();
         const containerButtons = createContainerButtons();
 
         const mockPicker = { close: jest.fn() } as any;
@@ -207,20 +212,22 @@ describe('FormDateTimePickerComponent', () => {
 
         // Destroy before setTimeout fires
         component.ngOnDestroy();
-        tick();
+        jest.runAllTimers();
 
         // The Now button should NOT have been injected since the timeout was cleared
         expect(containerButtons.querySelector('.owl-dt-now-button')).toBeFalsy();
 
         removeContainerButtons(containerButtons);
-    }));
+        jest.useRealTimers();
+    });
 
-    it('should clean up existing button on destroy after timeout has fired', fakeAsync(() => {
+    it('should clean up existing button on destroy after timeout has fired', () => {
+        jest.useFakeTimers();
         const containerButtons = createContainerButtons();
 
         const mockPicker = { close: jest.fn() } as any;
         component.onPickerOpen(mockPicker);
-        tick();
+        jest.runAllTimers();
 
         expect(containerButtons.querySelector('.owl-dt-now-button')).toBeTruthy();
 
@@ -229,9 +236,11 @@ describe('FormDateTimePickerComponent', () => {
         expect(containerButtons.querySelector('.owl-dt-now-button')).toBeFalsy();
 
         removeContainerButtons(containerButtons);
-    }));
+        jest.useRealTimers();
+    });
 
-    it('should clear pending timeout on picker close before it fires', fakeAsync(() => {
+    it('should clear pending timeout on picker close before it fires', () => {
+        jest.useFakeTimers();
         const containerButtons = createContainerButtons();
 
         const mockPicker = { close: jest.fn() } as any;
@@ -239,20 +248,22 @@ describe('FormDateTimePickerComponent', () => {
 
         // Close before setTimeout fires
         component.onPickerClose();
-        tick();
+        jest.runAllTimers();
 
         // The Now button should NOT have been injected since the timeout was cleared by close
         expect(containerButtons.querySelector('.owl-dt-now-button')).toBeFalsy();
 
         removeContainerButtons(containerButtons);
-    }));
+        jest.useRealTimers();
+    });
 
-    it('should remove the Now button on picker close', fakeAsync(() => {
+    it('should remove the Now button on picker close', () => {
+        jest.useFakeTimers();
         const containerButtons = createContainerButtons();
 
         const mockPicker = { close: jest.fn() } as any;
         component.onPickerOpen(mockPicker);
-        tick();
+        jest.runAllTimers();
 
         expect(containerButtons.querySelector('.owl-dt-now-button')).toBeTruthy();
 
@@ -261,9 +272,11 @@ describe('FormDateTimePickerComponent', () => {
         expect(containerButtons.querySelector('.owl-dt-now-button')).toBeFalsy();
 
         removeContainerButtons(containerButtons);
-    }));
+        jest.useRealTimers();
+    });
 
-    it('should not inject Now button when disabled', fakeAsync(() => {
+    it('should not inject Now button when disabled', () => {
+        jest.useFakeTimers();
         const containerButtons = createContainerButtons();
 
         fixture.componentRef.setInput('disabled', true);
@@ -271,14 +284,16 @@ describe('FormDateTimePickerComponent', () => {
 
         const mockPicker = { close: jest.fn() } as any;
         component.onPickerOpen(mockPicker);
-        tick();
+        jest.runAllTimers();
 
         expect(containerButtons.querySelector('.owl-dt-now-button')).toBeFalsy();
 
         removeContainerButtons(containerButtons);
-    }));
+        jest.useRealTimers();
+    });
 
-    it('should not inject Now button for non-DEFAULT picker types', fakeAsync(() => {
+    it('should not inject Now button for non-DEFAULT picker types', () => {
+        jest.useFakeTimers();
         const containerButtons = createContainerButtons();
 
         fixture.componentRef.setInput('pickerType', DateTimePickerType.CALENDAR);
@@ -286,10 +301,11 @@ describe('FormDateTimePickerComponent', () => {
 
         const mockPicker = { close: jest.fn() } as any;
         component.onPickerOpen(mockPicker);
-        tick();
+        jest.runAllTimers();
 
         expect(containerButtons.querySelector('.owl-dt-now-button')).toBeFalsy();
 
         removeContainerButtons(containerButtons);
-    }));
+        jest.useRealTimers();
+    });
 });
