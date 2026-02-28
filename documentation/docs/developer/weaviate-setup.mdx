@@ -61,6 +61,7 @@ For semantic search with automatic embedding generation using the `embeddinggemm
 export HF_TOKEN=your_huggingface_token
 
 # First-time setup: Build the transformer image (downloads the model, ~1.2GB)
+# The token is passed securely using Docker BuildKit secrets
 docker compose -f weaviate-embeddings.yml build
 
 # Start the services
@@ -73,7 +74,8 @@ docker compose -f weaviate-embeddings.yml up -d
 </Callout>
 
 <Callout variant={CalloutVariant.info}>
-  <p>The first build takes several minutes as it downloads the <code>google/embeddinggemma-300m</code> model from Hugging Face.
+  <p>The HF_TOKEN is passed securely to Docker using BuildKit secrets and will not be stored in the image history.
+  The first build takes several minutes as it downloads the <code>google/embeddinggemma-300m</code> model from Hugging Face.
   Subsequent starts are fast since the model is cached in the Docker image.</p>
 </Callout>
 
@@ -309,19 +311,28 @@ docker compose -f weaviate-embeddings.yml logs t2v-transformers
 
 If the transformer container fails to start or is unhealthy:
 
-1. **Check if the image was built correctly:**
+1. **Check if the HF_TOKEN is set:**
+   ```bash
+   echo $HF_TOKEN  # Should output your token, not be empty
+   ```
+   If empty, set it before building:
+   ```bash
+   export HF_TOKEN=your_huggingface_token
+   ```
+
+2. **Check if the image was built correctly:**
    ```bash
    docker compose -f weaviate-embeddings.yml build --no-cache
    ```
 
-2. **Verify the model download:**
+3. **Verify the model download:**
    ```bash
    docker compose -f weaviate-embeddings.yml logs t2v-transformers
    ```
 
-3. **Memory issues:** The embedding model requires approximately 1.2GB of memory. Ensure your Docker has sufficient resources allocated.
+4. **Memory issues:** The embedding model requires approximately 1.2GB of memory. Ensure your Docker has sufficient resources allocated.
 
-4. **Slow startup:** The first request after starting may be slow as the model loads. The healthcheck allows up to 2 minutes for initialization.
+5. **Slow startup:** The first request after starting may be slow as the model loads. The healthcheck allows up to 2 minutes for initialization.
 
 ### Verifying Embedding Generation
 
