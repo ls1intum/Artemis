@@ -26,10 +26,10 @@ class IrisLectureSearchIntegrationTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void search_shouldReturnResults() throws Exception {
         var results = List.of(
-                new PyrisLectureSearchResultDTO(new PyrisLectureSearchResultDTO.Course(5L, "Machine Learning"), new PyrisLectureSearchResultDTO.Lecture(10L, "Intro to ML"),
-                        new PyrisLectureSearchResultDTO.LectureUnit(1L, "Introduction Slide", "/link/1", 3), "supervised learning snippet"),
-                new PyrisLectureSearchResultDTO(new PyrisLectureSearchResultDTO.Course(5L, "Machine Learning"), new PyrisLectureSearchResultDTO.Lecture(10L, "Intro to ML"),
-                        new PyrisLectureSearchResultDTO.LectureUnit(2L, "Neural Networks", "/link/2", 7), "backpropagation snippet"));
+                new PyrisLectureSearchResultDTO(new PyrisLectureSearchResultDTO.CourseDTO(5L, "Machine Learning"), new PyrisLectureSearchResultDTO.LectureDTO(10L, "Intro to ML"),
+                        new PyrisLectureSearchResultDTO.LectureUnitDTO(1L, "Introduction Slide", "/link/1", 3), "supervised learning snippet"),
+                new PyrisLectureSearchResultDTO(new PyrisLectureSearchResultDTO.CourseDTO(5L, "Machine Learning"), new PyrisLectureSearchResultDTO.LectureDTO(10L, "Intro to ML"),
+                        new PyrisLectureSearchResultDTO.LectureUnitDTO(2L, "Neural Networks", "/link/2", 7), "backpropagation snippet"));
         irisRequestMockProvider.mockSearchLectures(results);
 
         var requestDTO = new PyrisLectureSearchRequestDTO("machine learning", 5);
