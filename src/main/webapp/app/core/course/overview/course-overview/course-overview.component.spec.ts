@@ -15,7 +15,6 @@ import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.mo
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { NgbDropdown, NgbModal, NgbModalRef, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { MatSidenavModule } from '@angular/material/sidenav';
@@ -54,7 +53,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
-import { generateExampleTutorialGroupsConfiguration } from 'test/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
+import { generateExampleTutorialGroupsConfigurationDTO } from 'test/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 import { CourseNotificationSettingService } from 'app/communication/course-notification/course-notification-setting.service';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
@@ -65,6 +64,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { TutorialGroupConfigurationDTO } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -573,8 +573,8 @@ describe('CourseOverviewComponent', () => {
             body: [new TutorialGroup()],
             status: 200,
         });
-        const configurationResponse: HttpResponse<TutorialGroupsConfiguration> = new HttpResponse({
-            body: generateExampleTutorialGroupsConfiguration({}),
+        const configurationResponse: HttpResponse<TutorialGroupConfigurationDTO> = new HttpResponse({
+            body: generateExampleTutorialGroupsConfigurationDTO({}),
             status: 200,
         });
 
