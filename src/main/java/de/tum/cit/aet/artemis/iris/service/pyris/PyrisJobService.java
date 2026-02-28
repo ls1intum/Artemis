@@ -9,6 +9,8 @@ import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
@@ -29,6 +31,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.TranscriptionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
 
 /**
@@ -41,6 +44,8 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
 @Service
 @Conditional(IrisEnabled.class)
 public class PyrisJobService {
+
+    private static final Logger log = LoggerFactory.getLogger(PyrisJobService.class);
 
     private final HazelcastInstance hazelcastInstance;
 
@@ -71,6 +76,7 @@ public class PyrisJobService {
     public void init() {
         var mapConfig = hazelcastInstance.getConfig().getMapConfig("pyris-job-map");
         mapConfig.setTimeToLiveSeconds(jobTimeout);
+        log.info("PyrisJobService initialized: mapTTL={}s, jobTimeout={}s, ingestionJobTimeout={}s", mapConfig.getTimeToLiveSeconds(), jobTimeout, ingestionJobTimeout);
     }
 
     /**
@@ -166,6 +172,23 @@ public class PyrisJobService {
     }
 
     /**
+     * Adds a new video transcription webhook job to the job map with a timeout.
+     *
+     * @param courseId      the ID of the course associated with the webhook job
+     * @param lectureId     the ID of the lecture associated with the webhook job
+     * @param lectureUnitId the ID of the lecture unit being transcribed
+     * @return a unique token identifying the created webhook job
+     */
+    public String addTranscriptionWebhookJob(long courseId, long lectureId, long lectureUnitId) {
+        var token = generateJobIdToken();
+        var job = new TranscriptionWebhookJob(token, courseId, lectureId, lectureUnitId);
+        getPyrisJobMap().put(token, job, ingestionJobTimeout, TimeUnit.SECONDS);
+        log.info("Added transcription job to Hazelcast: token={}, courseId={}, lectureId={}, lectureUnitId={}, ttl={}s, mapSize={}", token, courseId, lectureId, lectureUnitId,
+                ingestionJobTimeout, getPyrisJobMap().size());
+        return token;
+    }
+
+    /**
      * Remove a job from the job map.
      *
      * @param job the job to remove
@@ -175,12 +198,28 @@ public class PyrisJobService {
     }
 
     /**
-     * Store a job in the job map.
+     * Store a job in the job map with the appropriate TTL based on job type.
+     * Ingestion and transcription jobs use a longer TTL to accommodate long-running operations.
      *
      * @param job the job to store
      */
     public void updateJob(PyrisJob job) {
-        getPyrisJobMap().put(job.jobId(), job);
+        int timeout = getTimeoutForJob(job);
+        getPyrisJobMap().put(job.jobId(), job, timeout, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Get the appropriate timeout for a job based on its type.
+     * Ingestion and transcription jobs require longer timeouts.
+     *
+     * @param job the job to check
+     * @return the timeout in seconds
+     */
+    private int getTimeoutForJob(PyrisJob job) {
+        if (job instanceof LectureIngestionWebhookJob || job instanceof FaqIngestionWebhookJob || job instanceof TranscriptionWebhookJob) {
+            return ingestionJobTimeout;
+        }
+        return jobTimeout;
     }
 
     /**
@@ -199,7 +238,9 @@ public class PyrisJobService {
      * @return the job
      */
     public PyrisJob getJob(String token) {
-        return getPyrisJobMap().get(token);
+        var job = getPyrisJobMap().get(token);
+        log.info("Looking up job in Hazelcast: token={}, found={}, mapSize={}", token, job != null, getPyrisJobMap().size());
+        return job;
     }
 
     /**

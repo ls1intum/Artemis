@@ -366,7 +366,9 @@ public class LectureContentProcessingService {
 
     private void startTranscription(AttachmentVideoUnit unit, LectureUnitProcessingState state, String playlistUrl) {
         try {
-            NebulaTranscriptionRequestDTO request = new NebulaTranscriptionRequestDTO(playlistUrl, unit.getLecture().getId(), unit.getId());
+            NebulaTranscriptionRequestDTO request = new NebulaTranscriptionRequestDTO(playlistUrl, unit.getId(), unit.getLecture().getId(), unit.getLecture().getCourse().getId(),
+                    unit.getLecture().getCourse().getTitle(), unit.getLecture().getTitle(), unit.getName(), null  // settings will be added by LectureTranscriptionService
+            );
             transcriptionApi.get().startNebulaTranscription(unit.getLecture().getId(), unit.getId(), request);
             // Transition AFTER successful API call
             state.transitionTo(ProcessingPhase.TRANSCRIBING);
@@ -409,7 +411,10 @@ public class LectureContentProcessingService {
             processingStateRepository.save(state);
 
             try {
-                NebulaTranscriptionRequestDTO request = new NebulaTranscriptionRequestDTO(playlistUrl.get(), attachmentUnit.getLecture().getId(), attachmentUnit.getId());
+                NebulaTranscriptionRequestDTO request = new NebulaTranscriptionRequestDTO(playlistUrl.get(), attachmentUnit.getId(), attachmentUnit.getLecture().getId(),
+                        attachmentUnit.getLecture().getCourse().getId(), attachmentUnit.getLecture().getCourse().getTitle(), attachmentUnit.getLecture().getTitle(),
+                        attachmentUnit.getName(), null  // settings will be added by LectureTranscriptionService
+                );
                 transcriptionApi.get().startNebulaTranscription(attachmentUnit.getLecture().getId(), attachmentUnit.getId(), request);
                 log.info("Transcription retry job started for unit {}", unit.getId());
             }

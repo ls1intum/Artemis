@@ -1,12 +1,14 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.TutorSuggestionStatusUpdateDTO;
@@ -17,6 +19,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFa
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.transcription.PyrisTranscriptionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ExerciseChatJob;
@@ -26,6 +29,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TextExerciseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TrackedSessionBasedPyrisJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.TranscriptionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
 import de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService;
@@ -55,10 +59,15 @@ public class PyrisStatusUpdateService {
 
     private final Optional<ProcessingStateCallbackApi> processingStateCallbackApi;
 
+    private final WebsocketMessagingService websocketMessagingService;
+
+    private final PyrisTranscriptionStatusUpdateHandler transcriptionStatusUpdateHandler;
+
     public PyrisStatusUpdateService(PyrisJobService pyrisJobService, IrisExerciseChatSessionService irisExerciseChatSessionService,
             IrisTextExerciseChatSessionService irisTextExerciseChatSessionService, IrisCourseChatSessionService courseChatSessionService,
             IrisCompetencyGenerationService competencyGenerationService, IrisLectureChatSessionService irisLectureChatSessionService,
-            IrisTutorSuggestionSessionService irisTutorSuggestionSessionService, Optional<ProcessingStateCallbackApi> processingStateCallbackApi) {
+            IrisTutorSuggestionSessionService irisTutorSuggestionSessionService, Optional<ProcessingStateCallbackApi> processingStateCallbackApi,
+            WebsocketMessagingService websocketMessagingService, PyrisTranscriptionStatusUpdateHandler transcriptionStatusUpdateHandler) {
         this.pyrisJobService = pyrisJobService;
         this.irisExerciseChatSessionService = irisExerciseChatSessionService;
         this.irisTextExerciseChatSessionService = irisTextExerciseChatSessionService;
@@ -67,6 +76,8 @@ public class PyrisStatusUpdateService {
         this.irisLectureChatSessionService = irisLectureChatSessionService;
         this.irisTutorSuggestionSessionService = irisTutorSuggestionSessionService;
         this.processingStateCallbackApi = processingStateCallbackApi;
+        this.websocketMessagingService = websocketMessagingService;
+        this.transcriptionStatusUpdateHandler = transcriptionStatusUpdateHandler;
     }
 
     /**
@@ -161,6 +172,9 @@ public class PyrisStatusUpdateService {
         else {
             pyrisJobService.updateJob(job);
         }
+
+        // Notify the frontend so it can refresh the processing status without a manual page reload
+        websocketMessagingService.sendMessage("/topic/lectures/" + job.lectureId() + "/ingestion-status", Map.of("lectureUnitId", job.lectureUnitId()));
     }
 
     /**
@@ -195,6 +209,17 @@ public class PyrisStatusUpdateService {
         var updatedJob = irisTutorSuggestionSessionService.handleStatusUpdate(job, statusUpdate);
 
         removeJobIfTerminatedElseUpdate(statusUpdate.stages(), updatedJob);
+    }
+
+    /**
+     * Handles the status update of a video transcription job.
+     * Delegates to {@link PyrisTranscriptionStatusUpdateHandler}.
+     *
+     * @param job          the job that is updated
+     * @param statusUpdate the status update
+     */
+    public void handleStatusUpdate(TranscriptionWebhookJob job, PyrisTranscriptionStatusUpdateDTO statusUpdate) {
+        transcriptionStatusUpdateHandler.handleStatusUpdate(job, statusUpdate);
     }
 
 }

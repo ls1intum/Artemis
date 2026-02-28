@@ -2,12 +2,12 @@ import { Component, OnDestroy, OnInit, inject, input, output, signal } from '@an
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { concatMap, finalize, map } from 'rxjs/operators';
+import { concatMap, filter, finalize, map, skip } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
-import { Subject, from } from 'rxjs';
+import { Subject, Subscription, from } from 'rxjs';
 import { LectureUnitCombinedStatus, LectureUnitProcessingStatus, LectureUnitService, ProcessingPhase } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { AttachmentVideoUnit, TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
@@ -17,6 +17,7 @@ import dayjs from 'dayjs/esm';
 import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
+import { ConnectionState, WebsocketService } from 'app/shared/service/websocket.service';
 import { UnitCreationCardComponent } from '../unit-creation-card/unit-creation-card.component';
 import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
@@ -73,6 +74,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     private readonly alertService = inject(AlertService);
     protected readonly lectureUnitService = inject(LectureUnitService);
     private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
+    private readonly websocketService = inject(WebsocketService);
 
     showCreationCard = input<boolean>(true);
     showCompetencies = input<boolean>(true);
@@ -102,6 +104,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
 
     private resolvedLectureId: number | undefined;
     private retryProcessingTimeouts = new Map<number, ReturnType<typeof setTimeout>>();
+    private ingestionStatusSubscription?: Subscription;
+    private wsReconnectSubscription?: Subscription;
 
     ngOnInit(): void {
         this.resolvedLectureId = this.lectureId() ?? Number(this.activatedRoute?.parent?.snapshot.paramMap.get('lectureId'));
@@ -109,6 +113,20 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
             // TODO: the lecture (without units) is already available through the lecture.route.ts resolver, it's not really good that we load it twice
             // ideally the router could load the details directly
             this.loadData();
+            this.ingestionStatusSubscription = this.websocketService
+                .subscribe(`/topic/lectures/${this.resolvedLectureId}/ingestion-status`)
+                .subscribe(() => this.loadAllStatuses());
+
+            // If the WS connection drops and reconnects, sync status from the backend
+            // in case the completion message was sent while disconnected.
+            this.wsReconnectSubscription = this.websocketService.connectionState
+                .pipe(
+                    filter((state: ConnectionState) => state.connected),
+                    skip(1), // skip the initial connection on page load
+                )
+                .subscribe(() => {
+                    this.loadAllStatuses();
+                });
         }
     }
 
@@ -118,6 +136,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         }
         this.retryProcessingTimeouts.clear();
         this.dialogErrorSource.unsubscribe();
+        this.ingestionStatusSubscription?.unsubscribe();
+        this.wsReconnectSubscription?.unsubscribe();
     }
 
     loadData() {
