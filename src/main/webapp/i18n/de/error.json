@@ -58,6 +58,7 @@
         "server.not.reachable": "Server ist nicht erreichbar",
         "url.not.found": "Nicht gefunden",
         "NotNull": "Feld {{fieldName}} darf nicht leer sein!",
+        "Email": "Feld {{fieldName}} ist keine gültige E-Mail-Adresse!",
         "size": "Feld {{fieldName}} erfüllt nicht die minimalen/maximalen Längenanforderungen!",
         "userExists": "Login bereits vergeben!",
         "emailExists": "E-Mail wird bereits verwendet!",
