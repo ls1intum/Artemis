@@ -393,7 +393,13 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     addNewFeedback(lineNumber: number): void {
         // TODO for a follow-up: in the future, there might be multiple feedback items on the same line.
         const lineNumberZeroBased = lineNumber - 1;
-        if (!this.getInlineFeedbackNode(lineNumberZeroBased)) {
+        const existingComponent = this.inlineFeedbackComponents().find((comp) => comp.codeLine === lineNumberZeroBased);
+        if (existingComponent) {
+            this.ngZone.run(() => {
+                existingComponent.editFeedback(lineNumberZeroBased);
+                this.changeDetectorRef.markForCheck(); // Ensure that the edit dialogue opens, even though angular cannot detect the variables changing.
+            });
+        } else {
             this.newFeedbackLines.set([...this.newFeedbackLines(), lineNumberZeroBased]);
             this.renderFeedbackWidgets(lineNumberZeroBased);
         }
@@ -418,6 +424,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
         }
         this.renderFeedbackWidgets();
         this.onUpdateFeedback.emit(this.feedbackInternal());
+        this.editor().focus();
     }
 
     /**
@@ -430,6 +437,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
             this.newFeedbackLines.set(this.newFeedbackLines().filter((l) => l !== line));
             this.renderFeedbackWidgets();
         }
+        this.editor().focus();
     }
 
     /**
