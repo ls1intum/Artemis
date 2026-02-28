@@ -168,7 +168,7 @@ public class ExerciseWeaviateService {
 
     /**
      * Asynchronously updates Weaviate metadata for all exercises belonging to an exam.
-     * Uses hybrid approach: batch query to identify existing exercises, then parallel updates.
+     * Uses sequential upserts for now (in case performance becomes and issue we can optimize with batch operations later).
      * This method executes in a separate thread to avoid blocking the HTTP request thread.
      * IMPORTANT: The exam must have exercise groups, exercises, and their course relationships eagerly loaded,
      * otherwise a LazyInitializationException will be thrown.
