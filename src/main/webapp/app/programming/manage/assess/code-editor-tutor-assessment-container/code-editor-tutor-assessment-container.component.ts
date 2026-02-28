@@ -106,6 +106,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     complaint: Complaint;
     private cancelConfirmationText: string;
     private acceptComplaintWithoutMoreScoreText: string;
+    private confirmLeaveText: string;
     // Fatal error state: when the participation can't be retrieved, the code editor is unusable for the student
     loadingParticipation = false;
     participationCouldNotBeFetched = false;
@@ -158,6 +159,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
         translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
         translateService.get('artemisApp.assessment.messages.acceptComplaintWithoutMoreScore').subscribe((text) => (this.acceptComplaintWithoutMoreScoreText = text));
+        translateService.get('artemisApp.programmingAssessment.confirmLeave').subscribe((text) => (this.confirmLeaveText = text));
     }
 
     /**
@@ -444,6 +446,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Go to next submission
      */
     nextSubmission() {
+        if (this.hasPendingChanges && this.submission !== undefined) {
+            if (!window.confirm(this.confirmLeaveText)) {
+                return;
+            }
+        }
         this.loadingParticipation = true;
         this.submission = undefined;
         this.programmingSubmissionService.getSubmissionWithoutAssessment(this.exercise.id!, true, this.correctionRound).subscribe({
