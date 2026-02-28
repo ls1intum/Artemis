@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.dto.ProgrammingExerciseWeaviateDTO;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.dto.ExerciseSearchResultDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.GlobalSearchResultDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
 
 /**
@@ -75,6 +76,50 @@ public class ExerciseWeaviateResource {
         var exercises = exerciseProperties.stream().map(properties -> ProgrammingExerciseWeaviateDTO.fromWeaviateProperties(properties, serverUrl)).toList();
 
         return ResponseEntity.ok(exercises);
+    }
+
+    /**
+     * GET /search?q=:query&type=:type&courseId=:courseId&limit=:limit : perform unified semantic search across entity types.
+     * <p>
+     * This endpoint provides a unified search interface that can search across multiple entity types
+     * (exercises, pages, features, courses, etc.) with a consistent response format.
+     * Currently supports exercises only, but designed to be extensible for other types.
+     *
+     * @param query    the search query
+     * @param type     optional entity type to filter by (e.g., "exercise", "page", "course")
+     * @param courseId optional course ID to filter by
+     * @param limit    maximum number of results (default: 10, max: 100)
+     * @return the ResponseEntity with status 200 (OK) and the list of unified search results in body
+     */
+    @GetMapping("search")
+    @EnforceAtLeastStudent
+    public ResponseEntity<List<GlobalSearchResultDTO>> globalSearch(@RequestParam("q") String query, @RequestParam(value = "type", required = false) String type,
+            @RequestParam(value = "courseId", required = false) Long courseId, @RequestParam(value = "limit", defaultValue = "10") int limit) {
+
+        log.debug("REST request for global search with query: '{}', type: {}, courseId: {}, limit: {}", query, type, courseId, limit);
+
+        if (query.trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        // Apply limit bounds: minimum 1, maximum 100
+        int effectiveLimit = Math.min(Math.max(limit, 1), 100);
+
+        // Validate course access if courseId is specified
+        if (courseId != null) {
+            Course course = courseRepository.findByIdElseThrow(courseId);
+            authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        }
+
+        // For now, only support exercise search (type filter is optional for future extensibility)
+        if (type == null || "exercise".equals(type)) {
+            var searchResults = exerciseWeaviateService.searchExercises(query, courseId, effectiveLimit);
+            var resultDTOs = searchResults.stream().map(GlobalSearchResultDTO::fromExerciseProperties).toList();
+            return ResponseEntity.ok(resultDTOs);
+        }
+
+        // Return empty list for unsupported types (ready to add more types in the future)
+        return ResponseEntity.ok(List.of());
     }
 
     /**
