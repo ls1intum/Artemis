@@ -3,10 +3,11 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowLeft, faFileLines } from '@fortawesome/free-solid-svg-icons';
 import { Router, RouterLink } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { Skeleton } from 'primeng/skeleton';
 import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
 import { LectureSearchService } from 'app/core/navbar/global-search/services/lecture-search.service';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { catchError, debounceTime, of, switchMap } from 'rxjs';
+import { catchError, debounceTime, of, switchMap, tap } from 'rxjs';
 import { SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -17,7 +18,7 @@ const SEARCH_DEBOUNCE_MS = 300;
     templateUrl: 'global-search-lecture-results.component.html',
     styleUrls: ['./global-search-lecture-results.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [ArtemisTranslatePipe, FaIconComponent, RouterLink],
+    imports: [ArtemisTranslatePipe, FaIconComponent, RouterLink, Skeleton],
     providers: [{ provide: SearchResultView, useExisting: forwardRef(() => GlobalSearchLectureResultsComponent) }],
 })
 export class GlobalSearchLectureResultsComponent extends SearchResultView {
@@ -28,10 +29,12 @@ export class GlobalSearchLectureResultsComponent extends SearchResultView {
     private readonly router = inject(Router);
     private readonly hostElement = inject(ElementRef<HTMLElement>);
     protected readonly lectureResults = signal<LectureSearchResult[]>([]);
+    protected readonly isLoading = signal(false);
     readonly itemCount = computed(() => this.lectureResults().length);
     private readonly cards = viewChildren<ElementRef<HTMLAnchorElement>>('cardRef');
     protected readonly faArrowLeft = faArrowLeft;
     protected readonly faFileLines = faFileLines;
+    protected readonly skeletonItems = Array(5);
 
     constructor() {
         super();
@@ -46,6 +49,11 @@ export class GlobalSearchLectureResultsComponent extends SearchResultView {
         toObservable(this.searchQuery)
             .pipe(
                 debounceTime(SEARCH_DEBOUNCE_MS),
+                tap((query) => {
+                    if (query.trim()) {
+                        this.isLoading.set(true);
+                    }
+                }),
                 switchMap((query) => {
                     if (!query.trim()) {
                         return of([]);
@@ -54,7 +62,10 @@ export class GlobalSearchLectureResultsComponent extends SearchResultView {
                 }),
                 takeUntilDestroyed(),
             )
-            .subscribe((results) => this.lectureResults.set(results));
+            .subscribe((results) => {
+                this.lectureResults.set(results);
+                this.isLoading.set(false);
+            });
     }
 
     @HostListener('window:keydown', ['$event'])
