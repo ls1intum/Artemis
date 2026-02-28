@@ -2,18 +2,31 @@ package de.tum.cit.aet.artemis.core.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.mock.web.MockHttpSession;
+import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.PasskeyCredential;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -21,8 +34,25 @@ import de.tum.cit.aet.artemis.core.dto.PasskeyAdminDTO;
 import de.tum.cit.aet.artemis.core.dto.PasskeyDTO;
 import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.core.util.PasskeyCredentialUtilService;
+import de.tum.cit.aet.artemis.core.util.WebAuthnClientSimulator;
+import de.tum.cit.aet.artemis.core.util.WebAuthnClientSimulator.AuthenticationResponse;
+import de.tum.cit.aet.artemis.core.util.WebAuthnClientSimulator.RegistrationResponse;
+import de.tum.cit.aet.artemis.core.util.WebAuthnClientSimulator.VirtualAuthenticator;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
+/**
+ * Integration tests for WebAuthn/Passkey functionality.
+ * <p>
+ * Tests cover:
+ * <ul>
+ * <li>PasskeyResource endpoints (CRUD operations for passkeys)</li>
+ * <li>WebAuthn challenge endpoints handled by Spring Security filters</li>
+ * </ul>
+ * <p>
+ * Note: The WebAuthn endpoints (/webauthn/*) are handled by Spring Security filters,
+ * not by explicit REST controllers. These filters are configured in
+ * {@link de.tum.cit.aet.artemis.core.security.passkey.ArtemisWebAuthnConfigurer}.
+ */
 class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "passkeyintegration";
@@ -34,6 +64,15 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private PasskeyCredentialUtilService passkeyCredentialUtilService;
 
     @Autowired
+    private WebAuthnClientSimulator webAuthnClientSimulator;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Value("${server.url:http://localhost}")
+    private String serverUrl;
+
+    @Autowired
     private ApplicationContext applicationContext;
 
     @BeforeEach
@@ -41,244 +80,767 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testUpdatePasskeyLabel_Success() throws Exception {
-        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
-        PasskeyDTO modifiedCredential = new PasskeyDTO(existingCredential.getCredentialId(), "newLabel", existingCredential.getCreatedDate(), existingCredential.getLastUsed(),
-                false);
+    @AfterEach
+    void cleanupPasskeys() {
+        // Clean up only passkey credentials created for test users to avoid interfering with other tests
+        User student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElse(null);
+        User student2 = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElse(null);
 
-        request.put("/api/core/passkey/" + modifiedCredential.credentialId(), modifiedCredential, HttpStatus.OK);
-
-        PasskeyCredential modifiedCredentialInDatabase = passkeyCredentialsRepository.findByCredentialId(modifiedCredential.credentialId())
-                .orElseThrow(() -> new IllegalStateException("Credential not found"));
-
-        assertThat(modifiedCredentialInDatabase.getCredentialId()).isEqualTo(existingCredential.getCredentialId());
-        assertThat(modifiedCredentialInDatabase.getLabel()).isNotEqualTo(existingCredential.getLabel());
-        assertThat(modifiedCredentialInDatabase.getLabel()).isEqualTo(modifiedCredential.label());
+        if (student1 != null) {
+            passkeyCredentialsRepository.deleteAll(passkeyCredentialsRepository.findByUser(student1.getId()));
+        }
+        if (student2 != null) {
+            passkeyCredentialsRepository.deleteAll(passkeyCredentialsRepository.findByUser(student2.getId()));
+        }
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "ANONYMOUS")
-    void testUpdatePasskeyLabel_AccessDeniedBecauseOfRole() throws Exception {
-        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
-        PasskeyDTO modifiedCredential = new PasskeyDTO(existingCredential.getCredentialId(), "newLabel", existingCredential.getCreatedDate(), existingCredential.getLastUsed(),
-                false);
+    // ==================== PasskeyResource Tests (CRUD Operations) ====================
 
-        request.put("/api/core/passkey/" + modifiedCredential.credentialId(), modifiedCredential, HttpStatus.FORBIDDEN);
+    @Nested
+    class GetPasskeysTests {
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testGetPasskeys_Success() throws Exception {
+            User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+            PasskeyCredential credential1 = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
+            PasskeyCredential credential2 = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
+
+            List<PasskeyDTO> passkeys = request.getList("/api/core/passkey/user", HttpStatus.OK, PasskeyDTO.class);
+
+            assertThat(passkeys).hasSize(2);
+            assertThat(passkeys).extracting(PasskeyDTO::credentialId).containsExactlyInAnyOrder(credential1.getCredentialId(), credential2.getCredentialId());
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testGetPasskeys_EmptyList() throws Exception {
+            List<PasskeyDTO> passkeys = request.getList("/api/core/passkey/user", HttpStatus.OK, PasskeyDTO.class);
+
+            assertThat(passkeys).isEmpty();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testGetPasskeys_OnlyReturnsOwnPasskeys() throws Exception {
+            User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+            User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+
+            PasskeyCredential student1Credential = passkeyCredentialUtilService.createAndSavePasskeyCredential(student1);
+            passkeyCredentialUtilService.createAndSavePasskeyCredential(student2);
+
+            List<PasskeyDTO> passkeys = request.getList("/api/core/passkey/user", HttpStatus.OK, PasskeyDTO.class);
+
+            assertThat(passkeys).hasSize(1);
+            assertThat(passkeys.getFirst().credentialId()).isEqualTo(student1Credential.getCredentialId());
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "ANONYMOUS")
+        void testGetPasskeys_AccessDeniedForAnonymous() throws Exception {
+            request.getList("/api/core/passkey/user", HttpStatus.FORBIDDEN, PasskeyDTO.class);
+        }
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testUpdatePasskeyLabel_NotFoundBecausePasskeyBelongsToSomebodyElse() throws Exception {
-        User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(student2);
-        PasskeyDTO modifiedCredential = new PasskeyDTO(existingCredential.getCredentialId(), "newLabel", existingCredential.getCreatedDate(), existingCredential.getLastUsed(),
-                false);
+    @Nested
+    class UpdatePasskeyLabelTests {
 
-        request.put("/api/core/passkey/" + modifiedCredential.credentialId(), modifiedCredential, HttpStatus.NOT_FOUND);
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testUpdatePasskeyLabel_Success() throws Exception {
+            User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+            PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
+            PasskeyDTO modifiedCredential = new PasskeyDTO(existingCredential.getCredentialId(), "newLabel", existingCredential.getCreatedDate(), existingCredential.getLastUsed(),
+                    false);
+
+            request.put("/api/core/passkey/" + modifiedCredential.credentialId(), modifiedCredential, HttpStatus.OK);
+
+            PasskeyCredential modifiedCredentialInDatabase = passkeyCredentialsRepository.findByCredentialId(modifiedCredential.credentialId())
+                    .orElseThrow(() -> new IllegalStateException("Credential not found"));
+
+            assertThat(modifiedCredentialInDatabase.getCredentialId()).isEqualTo(existingCredential.getCredentialId());
+            assertThat(modifiedCredentialInDatabase.getLabel()).isNotEqualTo(existingCredential.getLabel());
+            assertThat(modifiedCredentialInDatabase.getLabel()).isEqualTo(modifiedCredential.label());
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "ANONYMOUS")
+        void testUpdatePasskeyLabel_AccessDeniedBecauseOfRole() throws Exception {
+            User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+            PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
+            PasskeyDTO modifiedCredential = new PasskeyDTO(existingCredential.getCredentialId(), "newLabel", existingCredential.getCreatedDate(), existingCredential.getLastUsed(),
+                    false);
+
+            request.put("/api/core/passkey/" + modifiedCredential.credentialId(), modifiedCredential, HttpStatus.FORBIDDEN);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testUpdatePasskeyLabel_NotFoundBecausePasskeyBelongsToSomebodyElse() throws Exception {
+            User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+            PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(student2);
+            PasskeyDTO modifiedCredential = new PasskeyDTO(existingCredential.getCredentialId(), "newLabel", existingCredential.getCreatedDate(), existingCredential.getLastUsed(),
+                    false);
+
+            request.put("/api/core/passkey/" + modifiedCredential.credentialId(), modifiedCredential, HttpStatus.NOT_FOUND);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testUpdatePasskeyLabel_NotFound() throws Exception {
+            User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+            PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(student2);
+            PasskeyDTO modifiedCredential = new PasskeyDTO(existingCredential.getCredentialId(), "newLabel", existingCredential.getCreatedDate(), existingCredential.getLastUsed(),
+                    false);
+
+            request.put("/api/core/passkey/" + modifiedCredential.credentialId() + "idDoesNotExist", modifiedCredential, HttpStatus.NOT_FOUND);
+        }
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testUpdatePasskeyLabel_NotFound() throws Exception {
-        User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(student2);
-        PasskeyDTO modifiedCredential = new PasskeyDTO(existingCredential.getCredentialId(), "newLabel", existingCredential.getCreatedDate(), existingCredential.getLastUsed(),
-                false);
+    @Nested
+    class DeletePasskeyTests {
 
-        request.put("/api/core/passkey/" + modifiedCredential.credentialId() + "idDoesNotExist", modifiedCredential, HttpStatus.NOT_FOUND);
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testDeletePasskey_Success() throws Exception {
+            User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+            PasskeyCredential credential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
+
+            assertThat(passkeyCredentialsRepository.findByCredentialId(credential.getCredentialId())).isPresent();
+
+            request.delete("/api/core/passkey/" + credential.getCredentialId(), HttpStatus.NO_CONTENT);
+
+            assertThat(passkeyCredentialsRepository.findByCredentialId(credential.getCredentialId())).isEmpty();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testDeletePasskey_NotFoundWhenDeletingOthersPasskey() throws Exception {
+            User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+            PasskeyCredential credential = passkeyCredentialUtilService.createAndSavePasskeyCredential(student2);
+
+            request.delete("/api/core/passkey/" + credential.getCredentialId(), HttpStatus.NOT_FOUND);
+
+            // Verify credential still exists
+            assertThat(passkeyCredentialsRepository.findByCredentialId(credential.getCredentialId())).isPresent();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testDeletePasskey_NotFoundForNonExistentCredential() throws Exception {
+            request.delete("/api/core/passkey/nonExistentCredentialId", HttpStatus.NOT_FOUND);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "ANONYMOUS")
+        void testDeletePasskey_AccessDeniedForAnonymous() throws Exception {
+            User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+            PasskeyCredential credential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
+
+            request.delete("/api/core/passkey/" + credential.getCredentialId(), HttpStatus.FORBIDDEN);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testDeletePasskey_OnlyDeletesSpecifiedPasskey() throws Exception {
+            User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+            PasskeyCredential credential1 = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
+            PasskeyCredential credential2 = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
+
+            request.delete("/api/core/passkey/" + credential1.getCredentialId(), HttpStatus.NO_CONTENT);
+
+            assertThat(passkeyCredentialsRepository.findByCredentialId(credential1.getCredentialId())).isEmpty();
+            assertThat(passkeyCredentialsRepository.findByCredentialId(credential2.getCredentialId())).isPresent();
+        }
     }
 
-    @Test
-    @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
-    void testUpdatePasskeyApproval_Success() throws Exception {
-        when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
+    // ==================== Admin Passkey Approval Tests ====================
 
-        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
-        assertThat(existingCredential.isSuperAdminApproved()).isFalse();
+    @Nested
+    class AdminPasskeyApprovalTests {
 
-        request.put("/api/core/passkey/" + existingCredential.getCredentialId() + "/approval", true, HttpStatus.OK);
+        @Test
+        @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
+        void testUpdatePasskeyApproval_Success() throws Exception {
+            when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
 
-        PasskeyCredential modifiedCredentialInDatabase = passkeyCredentialsRepository.findByCredentialId(existingCredential.getCredentialId())
-                .orElseThrow(() -> new IllegalStateException("Credential not found"));
+            User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+            PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
+            assertThat(existingCredential.isSuperAdminApproved()).isFalse();
 
-        assertThat(modifiedCredentialInDatabase.getCredentialId()).isEqualTo(existingCredential.getCredentialId());
-        assertThat(modifiedCredentialInDatabase.isSuperAdminApproved()).isTrue();
+            request.put("/api/core/passkey/" + existingCredential.getCredentialId() + "/approval", true, HttpStatus.OK);
+
+            PasskeyCredential modifiedCredentialInDatabase = passkeyCredentialsRepository.findByCredentialId(existingCredential.getCredentialId())
+                    .orElseThrow(() -> new IllegalStateException("Credential not found"));
+
+            assertThat(modifiedCredentialInDatabase.getCredentialId()).isEqualTo(existingCredential.getCredentialId());
+            assertThat(modifiedCredentialInDatabase.isSuperAdminApproved()).isTrue();
+        }
+
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void testUpdatePasskeyApproval_AccessDeniedBecauseNotSuperAdmin() throws Exception {
+            when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
+            User user = userUtilService.getUserByLogin("admin");
+            PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
+
+            request.put("/api/core/passkey/" + existingCredential.getCredentialId() + "/approval", true, HttpStatus.FORBIDDEN);
+        }
+
+        @Test
+        @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
+        void testUpdatePasskeyApproval_NotFound() throws Exception {
+            when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
+
+            request.put("/api/core/passkey/idDoesNotExist/approval", true, HttpStatus.NOT_FOUND);
+        }
+
+        @Test
+        @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
+        void testUpdatePasskeyApproval_RevokeApprovalForRegularUser() throws Exception {
+            when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
+
+            User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+            PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
+
+            // Approve the passkey first
+            existingCredential.setSuperAdminApproved(true);
+            passkeyCredentialsRepository.save(existingCredential);
+            assertThat(existingCredential.isSuperAdminApproved()).isTrue();
+
+            // Revoke approval
+            request.put("/api/core/passkey/" + existingCredential.getCredentialId() + "/approval", false, HttpStatus.OK);
+
+            // Verify the approval was revoked
+            PasskeyCredential credentialInDatabase = passkeyCredentialsRepository.findByCredentialId(existingCredential.getCredentialId())
+                    .orElseThrow(() -> new IllegalStateException("Credential not found"));
+            assertThat(credentialInDatabase.isSuperAdminApproved()).isFalse();
+        }
+
+        @Test
+        @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
+        void testUpdatePasskeyApproval_CannotRevokeInternalAdminPasskeyApproval() throws Exception {
+            when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
+
+            // Set up internal admin username
+            String internalAdminLogin = "artemis_admin";
+            Object passkeyResource = applicationContext.getBean("passkeyResource");
+            ReflectionTestUtils.setField(passkeyResource, "artemisInternalAdminUsername", Optional.of(internalAdminLogin));
+
+            // Create internal admin user and passkey
+            User internalAdminUser = userUtilService.createAndSaveUser(internalAdminLogin);
+            PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(internalAdminUser);
+
+            // Approve the passkey first
+            existingCredential.setSuperAdminApproved(true);
+            passkeyCredentialsRepository.save(existingCredential);
+
+            // Try to revoke approval - should fail with specific error
+            request.putAndExpectError("/api/core/passkey/" + existingCredential.getCredentialId() + "/approval", false, HttpStatus.BAD_REQUEST,
+                    "passkeyAuth.cannotRevokeInternalAdminPasskeyApproval");
+
+            // Verify the approval was not revoked
+            PasskeyCredential credentialInDatabase = passkeyCredentialsRepository.findByCredentialId(existingCredential.getCredentialId())
+                    .orElseThrow(() -> new IllegalStateException("Credential not found"));
+            assertThat(credentialInDatabase.isSuperAdminApproved()).isTrue();
+        }
     }
 
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testUpdatePasskeyApproval_AccessDeniedBecauseNotSuperAdmin() throws Exception {
-        when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
-        User user = userUtilService.getUserByLogin("admin");
-        PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
+    @Nested
+    class GetAllPasskeysForAdminTests {
 
-        request.put("/api/core/passkey/" + existingCredential.getCredentialId() + "/approval", true, HttpStatus.FORBIDDEN);
+        @Test
+        @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
+        void testGetAllPasskeysForAdmin_Success() throws Exception {
+            when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
+
+            // Create admin users with ADMIN authority
+            User admin1 = userUtilService.createAndSaveUser(TEST_PREFIX + "admin1");
+            admin1.setAuthorities(Set.of(de.tum.cit.aet.artemis.core.domain.Authority.ADMIN_AUTHORITY));
+            userTestRepository.save(admin1);
+
+            User admin2 = userUtilService.createAndSaveUser(TEST_PREFIX + "admin2");
+            admin2.setAuthorities(Set.of(de.tum.cit.aet.artemis.core.domain.Authority.ADMIN_AUTHORITY));
+            userTestRepository.save(admin2);
+
+            PasskeyCredential credential1 = passkeyCredentialUtilService.createAndSavePasskeyCredential(admin1);
+            PasskeyCredential credential2 = passkeyCredentialUtilService.createAndSavePasskeyCredential(admin2);
+            credential2.setSuperAdminApproved(true);
+            passkeyCredentialsRepository.save(credential2);
+
+            List<PasskeyAdminDTO> passkeys = request.getList("/api/core/passkey/admin", HttpStatus.OK, PasskeyAdminDTO.class);
+
+            assertThat(passkeys).isNotEmpty();
+            assertThat(passkeys).hasSizeGreaterThanOrEqualTo(2);
+
+            PasskeyAdminDTO passkeyDto1 = passkeys.stream().filter(p -> p.credentialId().equals(credential1.getCredentialId())).findFirst().orElseThrow();
+            assertThat(passkeyDto1.userLogin()).isEqualTo(admin1.getLogin());
+            assertThat(passkeyDto1.userName()).isEqualTo(admin1.getName());
+            assertThat(passkeyDto1.userId()).isEqualTo(admin1.getId());
+            assertThat(passkeyDto1.label()).isEqualTo(credential1.getLabel());
+            assertThat(passkeyDto1.isSuperAdminApproved()).isFalse();
+
+            PasskeyAdminDTO passkeyDto2 = passkeys.stream().filter(p -> p.credentialId().equals(credential2.getCredentialId())).findFirst().orElseThrow();
+            assertThat(passkeyDto2.userLogin()).isEqualTo(admin2.getLogin());
+            assertThat(passkeyDto2.userName()).isEqualTo(admin2.getName());
+            assertThat(passkeyDto2.userId()).isEqualTo(admin2.getId());
+            assertThat(passkeyDto2.label()).isEqualTo(credential2.getLabel());
+            assertThat(passkeyDto2.isSuperAdminApproved()).isTrue();
+        }
+
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void testGetAllPasskeysForAdmin_AccessDeniedBecauseNotSuperAdmin() throws Exception {
+            request.get("/api/core/passkey/admin", HttpStatus.FORBIDDEN, List.class);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testGetAllPasskeysForAdmin_AccessDeniedBecauseStudent() throws Exception {
+            request.get("/api/core/passkey/admin", HttpStatus.FORBIDDEN, List.class);
+        }
+
+        @Test
+        @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
+        void testGetAllPasskeysForAdmin_EmptyListWhenNoPasskeys() throws Exception {
+            when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
+
+            // Create an admin user without any passkeys to verify the endpoint handles users with no passkeys
+            User adminWithoutPasskeys = userUtilService.createAndSaveUser(TEST_PREFIX + "adminnopk");
+            adminWithoutPasskeys.setAuthorities(Set.of(de.tum.cit.aet.artemis.core.domain.Authority.ADMIN_AUTHORITY));
+            userTestRepository.save(adminWithoutPasskeys);
+
+            List<PasskeyAdminDTO> passkeys = request.getList("/api/core/passkey/admin", HttpStatus.OK, PasskeyAdminDTO.class);
+
+            // Verify the admin user we created has no passkeys in the response (tests empty case for this user)
+            assertThat(passkeys.stream().filter(p -> p.userLogin().equals(adminWithoutPasskeys.getLogin())).toList()).isEmpty();
+        }
+
+        @Test
+        @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
+        void testGetAllPasskeysForAdmin_OnlyReturnsAdminPasskeys() throws Exception {
+            when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
+
+            // Create admin users with ADMIN authority
+            User admin1 = userUtilService.createAndSaveUser(TEST_PREFIX + "adminuser1");
+            admin1.setAuthorities(Set.of(de.tum.cit.aet.artemis.core.domain.Authority.ADMIN_AUTHORITY));
+            userTestRepository.save(admin1);
+
+            // Create regular users (students, instructors, etc.) without ADMIN authority
+            User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+            User instructor = userUtilService.createAndSaveUser(TEST_PREFIX + "instructor1");
+            instructor.setAuthorities(Set.of(de.tum.cit.aet.artemis.core.domain.Authority.INSTRUCTOR_AUTHORITY));
+            userTestRepository.save(instructor);
+
+            // Create passkeys for all users
+            PasskeyCredential adminCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(admin1);
+            PasskeyCredential studentCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(student);
+            PasskeyCredential instructorCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(instructor);
+
+            // Fetch all admin passkeys
+            List<PasskeyAdminDTO> passkeys = request.getList("/api/core/passkey/admin", HttpStatus.OK, PasskeyAdminDTO.class);
+
+            // Verify only admin passkey is returned
+            assertThat(passkeys).isNotEmpty();
+            assertThat(passkeys).anyMatch(passkey -> passkey.credentialId().equals(adminCredential.getCredentialId()));
+            assertThat(passkeys).noneMatch(passkey -> passkey.credentialId().equals(studentCredential.getCredentialId()));
+            assertThat(passkeys).noneMatch(passkey -> passkey.credentialId().equals(instructorCredential.getCredentialId()));
+
+            // Verify admin passkey details
+            PasskeyAdminDTO adminPasskeyDto = passkeys.stream().filter(passkey -> passkey.credentialId().equals(adminCredential.getCredentialId())).findFirst().orElseThrow();
+            assertThat(adminPasskeyDto.userLogin()).isEqualTo(admin1.getLogin());
+            assertThat(adminPasskeyDto.userId()).isEqualTo(admin1.getId());
+        }
     }
 
-    @Test
-    @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
-    void testUpdatePasskeyApproval_NotFound() throws Exception {
-        when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
+    // ==================== WebAuthn Challenge Endpoint Tests ====================
 
-        request.put("/api/core/passkey/idDoesNotExist/approval", true, HttpStatus.NOT_FOUND);
+    /**
+     * Tests for the WebAuthn registration options endpoint.
+     * <p>
+     * This endpoint is handled by Spring Security's
+     * {@link de.tum.cit.aet.artemis.core.security.passkey.ArtemisPublicKeyCredentialCreationOptionsFilter}
+     * at POST /webauthn/register/options.
+     * <p>
+     * The endpoint returns a PublicKeyCredentialCreationOptions object containing:
+     * - challenge: Random bytes for the registration ceremony
+     * - rp: Relying Party information (id, name)
+     * - user: User information
+     * - pubKeyCredParams: Supported algorithms
+     * - timeout: Registration timeout
+     * - excludeCredentials: Already registered credentials
+     * - authenticatorSelection: Authenticator requirements
+     * - attestation: Attestation preference
+     */
+    @Nested
+    class RegistrationOptionsTests {
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testGetRegistrationOptions_Success() throws Exception {
+            MockHttpServletResponse response = request.performMvcRequest(post("/webauthn/register/options").contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
+                    .andReturn().getResponse();
+
+            String responseBody = response.getContentAsString();
+
+            // Verify the response contains expected WebAuthn registration options fields
+            assertThat(responseBody).contains("challenge");
+            assertThat(responseBody).contains("rp");
+            assertThat(responseBody).contains("user");
+            assertThat(responseBody).contains("pubKeyCredParams");
+            assertThat(responseBody).contains("timeout");
+        }
+
+        @Test
+        @WithAnonymousUser
+        void testGetRegistrationOptions_BadRequestForAnonymous() throws Exception {
+            // Registration options require an authenticated user to generate user-specific options
+            // The filter returns 400 Bad Request when no user is authenticated
+            request.performMvcRequest(post("/webauthn/register/options").contentType(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
+        }
     }
 
-    @Test
-    @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
-    void testGetAllPasskeysForAdmin_Success() throws Exception {
-        when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
+    /**
+     * Tests for the WebAuthn authentication options endpoint.
+     * <p>
+     * This endpoint is handled by Spring Security's PublicKeyCredentialRequestOptionsFilter
+     * at POST /webauthn/authenticate/options.
+     * <p>
+     * The endpoint returns a PublicKeyCredentialRequestOptions object containing:
+     * - challenge: Random bytes for the authentication ceremony
+     * - timeout: Authentication timeout
+     * - rpId: Relying Party ID
+     * - allowCredentials: Allowed credential descriptors (if user is known)
+     * - userVerification: User verification requirement
+     */
+    @Nested
+    class AuthenticationOptionsTests {
 
-        // Create admin users with ADMIN authority
-        User admin1 = userUtilService.createAndSaveUser(TEST_PREFIX + "admin1");
-        admin1.setAuthorities(Set.of(de.tum.cit.aet.artemis.core.domain.Authority.ADMIN_AUTHORITY));
-        userTestRepository.save(admin1);
+        @Test
+        @WithAnonymousUser
+        void testGetAuthenticationOptions_SuccessForAnonymous() throws Exception {
+            // Authentication options should be available to anonymous users
+            // as the user may not be logged in when starting the passkey login flow
+            MockHttpServletResponse response = request.performMvcRequest(post("/webauthn/authenticate/options").contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
+                    .andReturn().getResponse();
 
-        User admin2 = userUtilService.createAndSaveUser(TEST_PREFIX + "admin2");
-        admin2.setAuthorities(Set.of(de.tum.cit.aet.artemis.core.domain.Authority.ADMIN_AUTHORITY));
-        userTestRepository.save(admin2);
+            String responseBody = response.getContentAsString();
 
-        PasskeyCredential credential1 = passkeyCredentialUtilService.createAndSavePasskeyCredential(admin1);
-        PasskeyCredential credential2 = passkeyCredentialUtilService.createAndSavePasskeyCredential(admin2);
-        credential2.setSuperAdminApproved(true);
-        passkeyCredentialsRepository.save(credential2);
+            // Verify the response contains expected WebAuthn authentication options fields
+            assertThat(responseBody).contains("challenge");
+            assertThat(responseBody).contains("timeout");
+            assertThat(responseBody).contains("rpId");
+        }
 
-        List<PasskeyAdminDTO> passkeys = request.getList("/api/core/passkey/admin", HttpStatus.OK, PasskeyAdminDTO.class);
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testGetAuthenticationOptions_SuccessForAuthenticatedUser() throws Exception {
+            MockHttpServletResponse response = request.performMvcRequest(post("/webauthn/authenticate/options").contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
+                    .andReturn().getResponse();
 
-        assertThat(passkeys).isNotEmpty();
-        assertThat(passkeys).hasSizeGreaterThanOrEqualTo(2);
+            String responseBody = response.getContentAsString();
 
-        PasskeyAdminDTO passkeyDto1 = passkeys.stream().filter(p -> p.credentialId().equals(credential1.getCredentialId())).findFirst().orElseThrow();
-        assertThat(passkeyDto1.userLogin()).isEqualTo(admin1.getLogin());
-        assertThat(passkeyDto1.userName()).isEqualTo(admin1.getName());
-        assertThat(passkeyDto1.userId()).isEqualTo(admin1.getId());
-        assertThat(passkeyDto1.label()).isEqualTo(credential1.getLabel());
-        assertThat(passkeyDto1.isSuperAdminApproved()).isFalse();
-
-        PasskeyAdminDTO passkeyDto2 = passkeys.stream().filter(p -> p.credentialId().equals(credential2.getCredentialId())).findFirst().orElseThrow();
-        assertThat(passkeyDto2.userLogin()).isEqualTo(admin2.getLogin());
-        assertThat(passkeyDto2.userName()).isEqualTo(admin2.getName());
-        assertThat(passkeyDto2.userId()).isEqualTo(admin2.getId());
-        assertThat(passkeyDto2.label()).isEqualTo(credential2.getLabel());
-        assertThat(passkeyDto2.isSuperAdminApproved()).isTrue();
+            assertThat(responseBody).contains("challenge");
+            assertThat(responseBody).contains("timeout");
+            assertThat(responseBody).contains("rpId");
+        }
     }
 
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testGetAllPasskeysForAdmin_AccessDeniedBecauseNotSuperAdmin() throws Exception {
-        request.get("/api/core/passkey/admin", HttpStatus.FORBIDDEN, List.class);
+    /**
+     * Tests for the WebAuthn login endpoint.
+     * <p>
+     * This endpoint is handled by Spring Security's
+     * {@link de.tum.cit.aet.artemis.core.security.passkey.ArtemisWebAuthnAuthenticationFilter}
+     * at POST /login/webauthn.
+     * <p>
+     * Note: Full passkey login flow cannot be tested in integration tests without
+     * mocking the authenticator device. These tests verify the endpoint is reachable
+     * and returns appropriate error responses for invalid requests.
+     */
+    @Nested
+    class PasskeyLoginTests {
+
+        @Test
+        @WithAnonymousUser
+        void testLoginWithPasskey_UnauthorizedForEmptyBody() throws Exception {
+            // Spring Security's WebAuthn filter returns 401 Unauthorized when authentication fails
+            request.performMvcRequest(post("/login/webauthn").contentType(MediaType.APPLICATION_JSON).content("{}")).andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        @WithAnonymousUser
+        void testLoginWithPasskey_UnauthorizedForInvalidCredential() throws Exception {
+            // Spring Security's WebAuthn filter returns 401 Unauthorized for invalid credentials
+            String invalidCredential = """
+                    {
+                        "id": "invalidId",
+                        "rawId": "invalidRawId",
+                        "type": "public-key",
+                        "response": {
+                            "authenticatorData": "invalid",
+                            "clientDataJSON": "invalid",
+                            "signature": "invalid"
+                        }
+                    }
+                    """;
+
+            request.performMvcRequest(post("/login/webauthn").contentType(MediaType.APPLICATION_JSON).content(invalidCredential)).andExpect(status().isUnauthorized());
+        }
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetAllPasskeysForAdmin_AccessDeniedBecauseStudent() throws Exception {
-        request.get("/api/core/passkey/admin", HttpStatus.FORBIDDEN, List.class);
+    /**
+     * Tests for the WebAuthn registration endpoint.
+     * <p>
+     * This endpoint is handled by Spring Security's
+     * {@link de.tum.cit.aet.artemis.core.security.passkey.ArtemisWebAuthnRegistrationFilter}
+     * at POST /webauthn/register.
+     * <p>
+     * Note: Full passkey registration flow cannot be tested in integration tests without
+     * mocking the authenticator device. These tests verify the endpoint is reachable
+     * and returns appropriate error responses for invalid requests.
+     */
+    @Nested
+    class PasskeyRegistrationTests {
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testRegisterPasskey_BadRequestForInvalidCredential() throws Exception {
+            // First get registration options to initialize the registration ceremony
+            request.performMvcRequest(post("/webauthn/register/options").contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
+
+            // Sending invalid credential data should result in bad request
+            String invalidCredential = """
+                    {
+                        "publicKey": {
+                            "credential": {
+                                "id": "invalidId",
+                                "rawId": "invalidRawId",
+                                "type": "public-key",
+                                "response": {
+                                    "attestationObject": "invalid",
+                                    "clientDataJSON": "invalid"
+                                }
+                            }
+                        },
+                        "label": "Test Passkey"
+                    }
+                    """;
+
+            request.performMvcRequest(post("/webauthn/register").contentType(MediaType.APPLICATION_JSON).content(invalidCredential)).andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @WithAnonymousUser
+        void testRegisterPasskey_UnauthorizedForAnonymous() throws Exception {
+            request.performMvcRequest(post("/webauthn/register").contentType(MediaType.APPLICATION_JSON).content("{}")).andExpect(status().isUnauthorized());
+        }
     }
 
-    @Test
-    @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
-    void testGetAllPasskeysForAdmin_EmptyListWhenNoPasskeys() throws Exception {
-        when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
+    // ==================== Full E2E WebAuthn Tests with Virtual Authenticator ====================
 
-        // Create an admin user without any passkeys to verify the endpoint handles users with no passkeys
-        User adminWithoutPasskeys = userUtilService.createAndSaveUser(TEST_PREFIX + "adminnopk");
-        adminWithoutPasskeys.setAuthorities(Set.of(de.tum.cit.aet.artemis.core.domain.Authority.ADMIN_AUTHORITY));
-        userTestRepository.save(adminWithoutPasskeys);
+    /**
+     * End-to-end tests for the complete passkey registration flow.
+     * <p>
+     * These tests use {@link WebAuthnClientSimulator} to simulate what a browser's
+     * navigator.credentials.create() API would produce, enabling true end-to-end testing
+     * of the passkey feature without requiring actual hardware authenticators.
+     */
+    @Nested
+    class FullPasskeyRegistrationE2ETests {
 
-        List<PasskeyAdminDTO> passkeys = request.getList("/api/core/passkey/admin", HttpStatus.OK, PasskeyAdminDTO.class);
+        private String getRpId() throws Exception {
+            java.net.URL url = new java.net.URI(serverUrl).toURL();
+            return url.getHost();
+        }
 
-        // Verify the admin user we created has no passkeys in the response (tests empty case for this user)
-        assertThat(passkeys.stream().filter(p -> p.userLogin().equals(adminWithoutPasskeys.getLogin())).toList()).isEmpty();
+        private String getOrigin() {
+            return serverUrl;
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testFullPasskeyRegistration_Success() throws Exception {
+            User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+            String rpId = getRpId();
+            String origin = getOrigin();
+
+            // Verify no passkeys exist initially
+            assertThat(passkeyCredentialsRepository.findByUser(user.getId())).isEmpty();
+
+            // Step 1: Get registration options from server
+            MockHttpServletResponse optionsResponse = request.performMvcRequest(post("/webauthn/register/options").contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk()).andReturn().getResponse();
+
+            Map<String, Object> options = objectMapper.readValue(optionsResponse.getContentAsString(), new TypeReference<>() {
+            });
+            String challenge = (String) options.get("challenge");
+
+            // Step 2: Create virtual authenticator and generate registration response
+            VirtualAuthenticator authenticator = webAuthnClientSimulator.createVirtualAuthenticator();
+            RegistrationResponse registrationResponse = webAuthnClientSimulator.createRegistrationResponse(authenticator, challenge, origin, rpId);
+
+            // Step 3: Create registration request with label
+            Map<String, Object> registrationRequest = Map.of("publicKey", Map.of("credential", registrationResponse, "label", "Test Passkey"));
+            String requestBody = objectMapper.writeValueAsString(registrationRequest);
+
+            // Step 4: Submit registration
+            request.performMvcRequest(post("/webauthn/register").contentType(MediaType.APPLICATION_JSON).content(requestBody)).andExpect(status().isOk());
+
+            // Step 5: Verify passkey was created in database
+            List<PasskeyCredential> credentials = passkeyCredentialsRepository.findByUser(user.getId());
+            assertThat(credentials).hasSize(1);
+            assertThat(credentials.getFirst().getCredentialId()).isEqualTo(authenticator.getCredentialIdBase64Url());
+            assertThat(credentials.getFirst().getLabel()).isEqualTo("Test Passkey");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testFullPasskeyRegistration_MultiplePasskeys() throws Exception {
+            User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+            String rpId = getRpId();
+            String origin = getOrigin();
+
+            // Register first passkey
+            MockHttpServletResponse optionsResponse1 = request.performMvcRequest(post("/webauthn/register/options").contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk()).andReturn().getResponse();
+
+            Map<String, Object> options1 = objectMapper.readValue(optionsResponse1.getContentAsString(), new TypeReference<>() {
+            });
+            VirtualAuthenticator authenticator1 = webAuthnClientSimulator.createVirtualAuthenticator();
+            RegistrationResponse response1 = webAuthnClientSimulator.createRegistrationResponse(authenticator1, (String) options1.get("challenge"), origin, rpId);
+
+            request.performMvcRequest(post("/webauthn/register").contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(Map.of("publicKey", Map.of("credential", response1, "label", "First Passkey"))))).andExpect(status().isOk());
+
+            // Register second passkey
+            MockHttpServletResponse optionsResponse2 = request.performMvcRequest(post("/webauthn/register/options").contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk()).andReturn().getResponse();
+
+            Map<String, Object> options2 = objectMapper.readValue(optionsResponse2.getContentAsString(), new TypeReference<>() {
+            });
+            VirtualAuthenticator authenticator2 = webAuthnClientSimulator.createVirtualAuthenticator();
+            RegistrationResponse response2 = webAuthnClientSimulator.createRegistrationResponse(authenticator2, (String) options2.get("challenge"), origin, rpId);
+
+            request.performMvcRequest(post("/webauthn/register").contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(Map.of("publicKey", Map.of("credential", response2, "label", "Second Passkey"))))).andExpect(status().isOk());
+
+            // Verify both passkeys exist
+            List<PasskeyCredential> credentials = passkeyCredentialsRepository.findByUser(user.getId());
+            assertThat(credentials).hasSize(2);
+            assertThat(credentials).extracting(PasskeyCredential::getLabel).containsExactlyInAnyOrder("First Passkey", "Second Passkey");
+        }
     }
 
-    @Test
-    @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
-    void testGetAllPasskeysForAdmin_OnlyReturnsAdminPasskeys() throws Exception {
-        when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
+    /**
+     * End-to-end tests for the complete passkey authentication flow.
+     * <p>
+     * These tests use {@link WebAuthnClientSimulator} to simulate what a browser's
+     * navigator.credentials.get() API would produce, enabling true end-to-end testing
+     * of passkey login without requiring actual hardware authenticators.
+     */
+    @Nested
+    class FullPasskeyAuthenticationE2ETests {
 
-        // Create admin users with ADMIN authority
-        User admin1 = userUtilService.createAndSaveUser(TEST_PREFIX + "adminuser1");
-        admin1.setAuthorities(Set.of(de.tum.cit.aet.artemis.core.domain.Authority.ADMIN_AUTHORITY));
-        userTestRepository.save(admin1);
+        private String getRpId() throws Exception {
+            java.net.URL url = new java.net.URI(serverUrl).toURL();
+            return url.getHost();
+        }
 
-        // Create regular users (students, instructors, etc.) without ADMIN authority
-        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        User instructor = userUtilService.createAndSaveUser(TEST_PREFIX + "instructor1");
-        instructor.setAuthorities(Set.of(de.tum.cit.aet.artemis.core.domain.Authority.INSTRUCTOR_AUTHORITY));
-        userTestRepository.save(instructor);
+        private String getOrigin() {
+            return serverUrl;
+        }
 
-        // Create passkeys for all users
-        PasskeyCredential adminCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(admin1);
-        PasskeyCredential studentCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(student);
-        PasskeyCredential instructorCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(instructor);
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testFullPasskeyAuthentication_Success() throws Exception {
+            User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+            String rpId = getRpId();
+            String origin = getOrigin();
 
-        // Fetch all admin passkeys
-        List<PasskeyAdminDTO> passkeys = request.getList("/api/core/passkey/admin", HttpStatus.OK, PasskeyAdminDTO.class);
+            // Step 1: Register a passkey first
+            MockHttpServletResponse regOptionsResponse = request.performMvcRequest(post("/webauthn/register/options").contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk()).andReturn().getResponse();
 
-        // Verify only admin passkey is returned
-        assertThat(passkeys).isNotEmpty();
-        assertThat(passkeys).anyMatch(passkey -> passkey.credentialId().equals(adminCredential.getCredentialId()));
-        assertThat(passkeys).noneMatch(passkey -> passkey.credentialId().equals(studentCredential.getCredentialId()));
-        assertThat(passkeys).noneMatch(passkey -> passkey.credentialId().equals(instructorCredential.getCredentialId()));
+            Map<String, Object> regOptions = objectMapper.readValue(regOptionsResponse.getContentAsString(), new TypeReference<>() {
+            });
+            VirtualAuthenticator authenticator = webAuthnClientSimulator.createVirtualAuthenticator();
+            RegistrationResponse registrationResponse = webAuthnClientSimulator.createRegistrationResponse(authenticator, (String) regOptions.get("challenge"), origin, rpId);
 
-        // Verify admin passkey details
-        PasskeyAdminDTO adminPasskeyDto = passkeys.stream().filter(passkey -> passkey.credentialId().equals(adminCredential.getCredentialId())).findFirst().orElseThrow();
-        assertThat(adminPasskeyDto.userLogin()).isEqualTo(admin1.getLogin());
-        assertThat(adminPasskeyDto.userId()).isEqualTo(admin1.getId());
+            request.performMvcRequest(post("/webauthn/register").contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(Map.of("publicKey", Map.of("credential", registrationResponse, "label", "Auth Test Passkey")))))
+                    .andExpect(status().isOk());
+
+            // Verify passkey is registered
+            List<PasskeyCredential> credentials = passkeyCredentialsRepository.findByUser(user.getId());
+            assertThat(credentials).hasSize(1);
+
+            // Verify the credential ID matches what we expect
+            String expectedCredentialId = authenticator.getCredentialIdBase64Url();
+            String storedCredentialId = credentials.getFirst().getCredentialId();
+            assertThat(storedCredentialId).as("Stored credential ID should match the authenticator's credential ID").isEqualTo(expectedCredentialId);
+
+            // Step 2: Get authentication options (using a shared session for the authentication flow)
+            // The session is required because the challenge is stored in the session and validated on login
+            MockHttpSession authSession = new MockHttpSession();
+            MockHttpServletResponse authOptionsResponse = request
+                    .performMvcRequest(post("/webauthn/authenticate/options").contentType(MediaType.APPLICATION_JSON).session(authSession)).andExpect(status().isOk()).andReturn()
+                    .getResponse();
+
+            Map<String, Object> authOptions = objectMapper.readValue(authOptionsResponse.getContentAsString(), new TypeReference<>() {
+            });
+            String authChallenge = (String) authOptions.get("challenge");
+
+            // Step 3: Create authentication response using the same authenticator
+            String userHandle = webAuthnClientSimulator.encodeUserHandle(user.getId());
+            VirtualAuthenticator authenticatorWithIncrementedCount = authenticator.withIncrementedCount();
+            AuthenticationResponse authResponse = webAuthnClientSimulator.createAuthenticationResponse(authenticatorWithIncrementedCount, authChallenge, origin, rpId, userHandle);
+
+            // Step 4: Submit authentication (using the same session that has the challenge stored)
+            // We need to set the requestedSessionId so the server can retrieve the stored challenge
+            String authRequestBody = objectMapper.writeValueAsString(authResponse);
+            MockHttpServletResponse loginResponse = request
+                    .performMvcRequest(post("/login/webauthn").contentType(MediaType.APPLICATION_JSON).content(authRequestBody).session(authSession).with(mockRequest -> {
+                        mockRequest.setRequestedSessionId(authSession.getId());
+                        return mockRequest;
+                    })).andExpect(status().isOk()).andReturn().getResponse();
+
+            // Step 5: Verify successful authentication
+            String responseBody = loginResponse.getContentAsString();
+            assertThat(responseBody).contains("redirectUrl");
+
+            // Verify JWT cookie was set
+            assertThat(loginResponse.getHeader("Set-Cookie")).isNotNull();
+            assertThat(loginResponse.getHeader("Set-Cookie")).contains("jwt");
+        }
+
+        @Test
+        @WithAnonymousUser
+        void testPasskeyAuthentication_FailsForUnregisteredCredential() throws Exception {
+            String rpId = getRpId();
+            String origin = getOrigin();
+
+            // Create a virtual authenticator that was never registered
+            VirtualAuthenticator unregisteredAuthenticator = webAuthnClientSimulator.createVirtualAuthenticator();
+
+            // Get authentication options (using shared session for the authentication flow)
+            MockHttpSession authSession = new MockHttpSession();
+            MockHttpServletResponse authOptionsResponse = request
+                    .performMvcRequest(post("/webauthn/authenticate/options").contentType(MediaType.APPLICATION_JSON).session(authSession)).andExpect(status().isOk()).andReturn()
+                    .getResponse();
+
+            Map<String, Object> authOptions = objectMapper.readValue(authOptionsResponse.getContentAsString(), new TypeReference<>() {
+            });
+
+            // Try to authenticate with unregistered credential
+            AuthenticationResponse authResponse = webAuthnClientSimulator.createAuthenticationResponse(unregisteredAuthenticator, (String) authOptions.get("challenge"), origin,
+                    rpId, "dummyUserHandle");
+
+            // Authentication should fail (using same session with requestedSessionId set)
+            request.performMvcRequest(post("/login/webauthn").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(authResponse)).session(authSession)
+                    .with(mockRequest -> {
+                        mockRequest.setRequestedSessionId(authSession.getId());
+                        return mockRequest;
+                    })).andExpect(status().isUnauthorized());
+        }
     }
-
-    @Test
-    @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
-    void testUpdatePasskeyApproval_RevokeApprovalForRegularUser() throws Exception {
-        when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
-
-        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
-
-        // Approve the passkey first
-        existingCredential.setSuperAdminApproved(true);
-        passkeyCredentialsRepository.save(existingCredential);
-        assertThat(existingCredential.isSuperAdminApproved()).isTrue();
-
-        // Revoke approval
-        request.put("/api/core/passkey/" + existingCredential.getCredentialId() + "/approval", false, HttpStatus.OK);
-
-        // Verify the approval was revoked
-        PasskeyCredential credentialInDatabase = passkeyCredentialsRepository.findByCredentialId(existingCredential.getCredentialId())
-                .orElseThrow(() -> new IllegalStateException("Credential not found"));
-        assertThat(credentialInDatabase.isSuperAdminApproved()).isFalse();
-    }
-
-    @Test
-    @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
-    void testUpdatePasskeyApproval_CannotRevokeInternalAdminPasskeyApproval() throws Exception {
-        when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
-
-        // Set up internal admin username
-        String internalAdminLogin = "artemis_admin";
-        Object passkeyResource = applicationContext.getBean("passkeyResource");
-        ReflectionTestUtils.setField(passkeyResource, "artemisInternalAdminUsername", Optional.of(internalAdminLogin));
-
-        // Create internal admin user and passkey
-        User internalAdminUser = userUtilService.createAndSaveUser(internalAdminLogin);
-        PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(internalAdminUser);
-
-        // Approve the passkey first
-        existingCredential.setSuperAdminApproved(true);
-        passkeyCredentialsRepository.save(existingCredential);
-
-        // Try to revoke approval - should fail with specific error
-        request.putAndExpectError("/api/core/passkey/" + existingCredential.getCredentialId() + "/approval", false, HttpStatus.BAD_REQUEST,
-                "passkeyAuth.cannotRevokeInternalAdminPasskeyApproval");
-
-        // Verify the approval was not revoked
-        PasskeyCredential credentialInDatabase = passkeyCredentialsRepository.findByCredentialId(existingCredential.getCredentialId())
-                .orElseThrow(() -> new IllegalStateException("Credential not found"));
-        assertThat(credentialInDatabase.isSuperAdminApproved()).isTrue();
-    }
-
 }
