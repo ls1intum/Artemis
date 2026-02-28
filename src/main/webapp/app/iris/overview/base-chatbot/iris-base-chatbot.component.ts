@@ -46,6 +46,7 @@ import { ChatHistoryItemComponent } from './chat-history-item/chat-history-item.
 import { NgClass, formatDate } from '@angular/common';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
+import { ContextSelectionComponent } from 'app/iris/overview/context-selection/context-selection.component';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
@@ -88,6 +89,7 @@ const COPY_FEEDBACK_DURATION_MS = 1500;
         ChatHistoryItemComponent,
         NgClass,
         SearchFilterComponent,
+        ContextSelectionComponent,
         IrisCitationTextComponent,
         ConfirmDialogModule,
     ],
@@ -211,6 +213,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly isScrolledToBottom = signal(true);
     readonly resendAnimationActive = signal(false);
     readonly clickedSuggestion = signal<string | undefined>(undefined);
+    readonly showIconAndHelpOffer = signal(true);
 
     // Animation state (internal tracking)
     private shouldAnimate = false;
@@ -222,12 +225,14 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     public ButtonType = ButtonType;
     readonly copiedMessageKey = signal<number | undefined>(undefined);
 
+    readonly courseId = input<number>();
     showDeclineButton = input<boolean>(true);
     isChatHistoryAvailable = input<boolean>(false);
     isEmbeddedChat = input<boolean>(false);
     readonly fullSize = input<boolean>();
     readonly showCloseButton = input<boolean>(false);
     readonly isChatGptWrapper = input<boolean>(false);
+    readonly showContextSelection = input<boolean>(false);
     readonly layout = input<'client' | 'widget'>('client');
     readonly fullSizeToggle = output<void>();
     readonly closeClicked = output<void>();

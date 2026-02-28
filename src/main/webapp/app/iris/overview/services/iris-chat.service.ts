@@ -170,7 +170,7 @@ export class IrisChatService implements OnDestroy {
         this.chatSessionByIdSubscription?.unsubscribe();
     }
 
-    protected start() {
+    protected start(forceNew = false) {
         const requiresAcceptance = this.sessionCreationIdentifier
             ? this.modeRequiresLLMAcceptance.get(Object.values(ChatServiceMode).find((mode) => this.sessionCreationIdentifier?.includes(mode)) as ChatServiceMode)
             : true;
@@ -180,10 +180,17 @@ export class IrisChatService implements OnDestroy {
             this.accountService.userIdentity()?.selectedLLMUsage === LLMSelectionDecision.CLOUD_AI ||
             this.hasJustAcceptedLLMUsage
         ) {
-            this.getCurrentSessionOrCreate().subscribe({
-                ...this.handleNewSession(),
-                complete: () => this.loadChatSessions(),
-            });
+            if (forceNew) {
+                this.createNewSession().subscribe({
+                    ...this.handleNewSession(),
+                    complete: () => this.loadChatSessions(),
+                });
+            } else {
+                this.getCurrentSessionOrCreate().subscribe({
+                    ...this.handleNewSession(),
+                    complete: () => this.loadChatSessions(),
+                });
+            }
         }
     }
 
@@ -554,13 +561,22 @@ export class IrisChatService implements OnDestroy {
         );
     }
 
-    switchTo(mode: ChatServiceMode, id?: number): void {
+    /**
+     * Switches to a chat mode for the given entity.
+     * @param mode The chat mode to switch to
+     * @param id The entity ID (course, lecture, or exercise)
+     * @param forceNew If true, creates a new session when switching to a different context instead of reusing an existing one.
+     */
+    switchTo(mode: ChatServiceMode, id?: number, forceNew = false): void {
         const modeUrl = chatModeToUrlComponent(mode);
         const newIdentifier = modeUrl && id ? modeUrl + '/' + id : undefined;
         const isDifferent = this.sessionCreationIdentifier !== newIdentifier;
         this.sessionCreationIdentifier = newIdentifier;
         if (isDifferent) {
-            this.closeAndStart();
+            this.close();
+            if (this.sessionCreationIdentifier) {
+                this.start(forceNew);
+            }
         }
     }
 
