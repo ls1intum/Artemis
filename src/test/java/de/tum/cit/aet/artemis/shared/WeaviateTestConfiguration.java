@@ -40,5 +40,9 @@ public final class WeaviateTestConfiguration {
             registry.add("artemis.weaviate.scheme", () -> "http");
             registry.add("artemis.weaviate.collection-prefix", () -> COLLECTION_PREFIX);
         }
+        else {
+            // Explicitly disable Weaviate when container is unavailable to prevent bean creation attempts
+            registry.add("artemis.weaviate.enabled", () -> false);
+        }
     }
 }
