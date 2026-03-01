@@ -39,6 +39,7 @@ import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/butto
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, AUTOSAVE_TEAM_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
@@ -76,7 +77,6 @@ import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback
         TranslateDirective,
         NgClass,
         NgbTooltip,
-        AdditionalFeedbackComponent,
         RatingComponent,
         ComplaintsStudentViewComponent,
         DecimalPipe,
