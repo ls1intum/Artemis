@@ -42,7 +42,7 @@ public class ExerciseEditorSyncService {
     }
 
     /**
-     * Builds the synchronization topic used for exercise editor updates.
+     * Builds the websocket topic used for exercise editor synchronization.
      *
      * @param exerciseId the exercise id
      * @return the topic for exercise synchronization events
@@ -111,7 +111,7 @@ public class ExerciseEditorSyncService {
      * @param reviewUpdate the review update payload
      */
     public void broadcastReviewThreadUpdate(@NonNull Long exerciseId, @NonNull ReviewThreadSyncDTO reviewUpdate) {
-        ExerciseReviewThreadUpdateDTO payload = ExerciseReviewThreadUpdateDTO.fromReviewThreadUpdate(reviewUpdate, getClientSessionId(), Instant.now().toEpochMilli());
+        ExerciseReviewThreadUpdateDTO payload = ExerciseReviewThreadUpdateDTO.fromReviewThreadUpdate(exerciseId, reviewUpdate, getClientSessionId(), Instant.now().toEpochMilli());
         websocketMessagingService.sendMessage(getSynchronizationTopic(exerciseId), payload).exceptionally(exception -> {
             log.warn("Cannot send review thread update for exercise {}", exerciseId, exception);
             return null;

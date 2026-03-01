@@ -246,7 +246,7 @@ describe('ExerciseEditorSyncService', () => {
             yjsUpdate: 'update',
         };
 
-        expect(() => service.sendSynchronizationUpdate(5, message)).toThrow('Cannot send synchronization message: not connected to synchronization topic');
+        expect(() => service.sendSynchronizationUpdate(5, message)).toThrow('Cannot send synchronization message: not connected to websocket topic');
     });
 
     it('throws error when sending to wrong exercise id', () => {
@@ -463,7 +463,7 @@ describe('ExerciseEditorSyncService', () => {
                 yjsUpdate: 'update',
             };
 
-            expect(() => service.sendSynchronizationUpdate(5, message)).toThrow('Cannot send synchronization message: not connected to synchronization topic');
+            expect(() => service.sendSynchronizationUpdate(5, message)).toThrow('Cannot send synchronization message: not connected to websocket topic');
         });
     });
 });

@@ -117,7 +117,7 @@ class ExerciseEditorSyncServiceTest extends AbstractProgrammingIntegrationLocalC
      */
     @Test
     void broadcastReviewThreadUpdate() {
-        ReviewThreadSyncDTO reviewUpdate = ReviewThreadSyncDTO.commentDeleted(102L, 55L);
+        ReviewThreadSyncDTO reviewUpdate = ReviewThreadSyncDTO.commentDeleted(55L);
 
         synchronizationService.broadcastReviewThreadUpdate(102L, reviewUpdate);
 
@@ -141,7 +141,7 @@ class ExerciseEditorSyncServiceTest extends AbstractProgrammingIntegrationLocalC
         request.addHeader(ExerciseEditorSyncService.CLIENT_SESSION_HEADER, "client-review");
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
 
-        ReviewThreadSyncDTO reviewUpdate = ReviewThreadSyncDTO.commentDeleted(103L, 66L);
+        ReviewThreadSyncDTO reviewUpdate = ReviewThreadSyncDTO.commentDeleted(66L);
         synchronizationService.broadcastReviewThreadUpdate(103L, reviewUpdate);
 
         var captor = ArgumentCaptor.forClass(ExerciseReviewThreadUpdateDTO.class);

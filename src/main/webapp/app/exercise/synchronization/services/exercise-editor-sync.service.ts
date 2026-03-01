@@ -35,7 +35,7 @@ export enum ExerciseEditorSyncEventType {
 }
 
 /**
- * Shared fields for synchronization events received over the shared synchronization topic.
+ * Shared fields for synchronization events received over websocket.
  */
 export interface ExerciseEditorSyncEventBase {
     eventType: ExerciseEditorSyncEventType;
@@ -118,7 +118,7 @@ export type ExerciseEditorSyncEvent =
     | ReviewThreadSyncUpdateEvent;
 
 /**
- * Relays exercise editor synchronization messages over the shared synchronization topic.
+ * Relays exercise editor synchronization messages over WebSocket.
  *
  * This service is provided at the root level (singleton) and supports only one exercise
  * connection at a time. The lifecycle is managed by parent components (exercise edit page
@@ -227,7 +227,7 @@ export class ExerciseEditorSyncService {
      */
     sendSynchronizationUpdate(exerciseId: number, message: ExerciseEditorSyncEvent): void {
         if (!this.subscription) {
-            throw new Error('Cannot send synchronization message: not connected to synchronization topic');
+            throw new Error('Cannot send synchronization message: not connected to websocket topic');
         }
         if (this.exerciseId !== exerciseId) {
             throw new Error(`Cannot send synchronization message: exerciseId ${exerciseId} does not match connected exerciseId ${this.exerciseId}`);

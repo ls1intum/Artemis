@@ -32,14 +32,14 @@ public record ExerciseReviewThreadUpdateDTO(@Schema(description = "Event type di
     /**
      * Creates a synchronization payload from a review update payload.
      *
+     * @param exerciseId   the exercise id used to scope the synchronization topic
      * @param reviewUpdate the review update payload
      * @param sessionId    the sender session id
      * @param timestamp    the event timestamp in milliseconds since epoch
      * @return the mapped synchronization payload
      */
-    public static ExerciseReviewThreadUpdateDTO fromReviewThreadUpdate(ReviewThreadSyncDTO reviewUpdate, @Nullable String sessionId, @Nullable Long timestamp) {
-        return new ExerciseReviewThreadUpdateDTO(ExerciseEditorSyncEventType.REVIEW_THREAD_UPDATE, ExerciseEditorSyncTarget.REVIEW_COMMENTS, reviewUpdate.action(),
-                reviewUpdate.exerciseId(), reviewUpdate.thread(), reviewUpdate.comment(), reviewUpdate.commentId(), reviewUpdate.threadIds(), reviewUpdate.groupId(), sessionId,
-                timestamp);
+    public static ExerciseReviewThreadUpdateDTO fromReviewThreadUpdate(Long exerciseId, ReviewThreadSyncDTO reviewUpdate, @Nullable String sessionId, @Nullable Long timestamp) {
+        return new ExerciseReviewThreadUpdateDTO(ExerciseEditorSyncEventType.REVIEW_THREAD_UPDATE, ExerciseEditorSyncTarget.REVIEW_COMMENTS, reviewUpdate.action(), exerciseId,
+                reviewUpdate.thread(), reviewUpdate.comment(), reviewUpdate.commentId(), reviewUpdate.threadIds(), reviewUpdate.groupId(), sessionId, timestamp);
     }
 }
