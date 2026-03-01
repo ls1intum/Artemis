@@ -308,18 +308,14 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.openExerciseParticipations(exercise.id!);
             await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, instructor, javaPartiallySuccessfulSubmission, 'instructor commit');
-            // Wait for the instructor's build to complete before checking submissions.
-            // On cold Docker environments, builds can be slow due to Docker image pulls
-            // and Maven dependency downloads. Without this wait, checkInstructorSubmission would
-            // have to poll/reload for the INSTRUCTOR row, which may exceed its own timeout.
-            await waitForExerciseBuildToFinish(exercise.id!, undefined, 240000);
             // check the submission
             await navigationBar.openCourseManagement();
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.openExerciseParticipations(exercise.id!);
             await programmingExerciseParticipations.openStudentParticipationSubmissions(studentOne);
-            // there should be both submissions
-            await programmingExerciseSubmissions.checkInstructorSubmission();
+            // Use a generous timeout for the instructor submission check because the build
+            // may still be queued or running. The page will be reloaded until the row appears.
+            await programmingExerciseSubmissions.checkInstructorSubmission(240000);
             await programmingExerciseSubmissions.checkStudentSubmission();
         });
     });
