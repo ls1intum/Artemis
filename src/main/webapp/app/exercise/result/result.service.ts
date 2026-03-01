@@ -18,6 +18,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { captureException } from '@sentry/angular';
 import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import {
     isAIResultAndFailed,
@@ -165,8 +166,10 @@ export class ResultService implements IResultService {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackSuccessful');
         } else if (latestSubmission?.buildFailed) {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.buildFailed');
-        } else if (!result.testCaseCount) {
+        } else if (!result.testCaseCount && result.assessmentType !== AssessmentType.MANUAL && result.assessmentType !== AssessmentType.SEMI_AUTOMATIC) {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.buildSuccessfulNoTests');
+        } else if (!result.testCaseCount) {
+            buildAndTestMessage = this.translateService.instant('artemisApp.result.manualResult');
         } else {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.buildSuccessfulTests', {
                 numberOfTestsPassed:

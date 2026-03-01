@@ -1,7 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
+import { NgTemplateOutlet } from '@angular/common';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockCalendarService } from 'test/helpers/mocks/service/mock-calendar.service';
@@ -10,6 +11,8 @@ import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entit
 import { CalendarDesktopMonthPresentationComponent } from './calendar-desktop-month-presentation.component';
 import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover-component/calendar-event-detail-popover.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { PopoverModule } from 'primeng/popover';
 
 describe('CalendarDesktopMonthPresentationComponent', () => {
     let fixture: ComponentFixture<CalendarDesktopMonthPresentationComponent>;
@@ -55,14 +58,31 @@ describe('CalendarDesktopMonthPresentationComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [CalendarDesktopMonthPresentationComponent, CalendarEventDetailPopoverComponent],
-            declarations: [MockPipe(ArtemisTranslatePipe), MockComponent(CalendarDayBadgeComponent), MockDirective(TranslateDirective)],
+            declarations: [MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [
                 {
                     provide: CalendarService,
                     useFactory: () => new MockCalendarService(mockMap),
                 },
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(CalendarDesktopMonthPresentationComponent, {
+                set: {
+                    imports: [
+                        NgTemplateOutlet,
+                        MockComponent(FaIconComponent),
+                        MockDirective(TranslateDirective),
+                        MockComponent(CalendarDayBadgeComponent),
+                        CalendarEventDetailPopoverComponent,
+                    ],
+                },
+            })
+            .overrideComponent(CalendarEventDetailPopoverComponent, {
+                set: {
+                    imports: [MockModule(PopoverModule), MockDirective(TranslateDirective), MockComponent(FaIconComponent)],
+                },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(CalendarDesktopMonthPresentationComponent);
         component = fixture.componentInstance;

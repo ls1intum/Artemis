@@ -32,7 +32,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
-import { ProblemStatementSyncService, ProblemStatementSyncState } from 'app/programming/manage/services/problem-statement-sync.service';
+import { ProblemStatementSyncService, ProblemStatementSyncState } from 'app/exercise/synchronization/services/problem-statement-sync.service';
 import { editor } from 'monaco-editor';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { MonacoBinding } from 'y-monaco';
