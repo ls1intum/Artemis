@@ -454,13 +454,13 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         sharedQueueProcessingService.init();
 
         // Wait for the scheduled task to add the agent to the map (happens asynchronously after init)
-        await().atMost(Duration.ofSeconds(60)).until(() -> {
+        await().atMost(Duration.ofSeconds(30)).until(() -> {
             var agent = buildAgentInformation.get(buildAgentShortName);
             return agent != null && (agent.status() == BuildAgentStatus.IDLE || agent.status() == BuildAgentStatus.ACTIVE);
         });
 
         request.put("/api/core/admin/agents/" + URLEncoder.encode(buildAgentShortName, StandardCharsets.UTF_8) + "/pause", null, HttpStatus.NO_CONTENT);
-        await().atMost(Duration.ofSeconds(60)).until(() -> {
+        await().atMost(Duration.ofSeconds(30)).until(() -> {
             var agent = buildAgentInformation.get(buildAgentShortName);
             if (agent == null) {
                 return false;
@@ -470,7 +470,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         });
 
         request.put("/api/core/admin/agents/" + URLEncoder.encode(buildAgentShortName, StandardCharsets.UTF_8) + "/resume", null, HttpStatus.NO_CONTENT);
-        await().atMost(Duration.ofSeconds(60)).until(() -> {
+        await().atMost(Duration.ofSeconds(30)).until(() -> {
             var agent = buildAgentInformation.get(buildAgentShortName);
             if (agent == null) {
                 return false;
@@ -493,17 +493,17 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         sharedQueueProcessingService.init();
 
         // Wait for the scheduled task to add agents to the map (happens asynchronously after init)
-        await().atMost(Duration.ofSeconds(60)).until(() -> !buildAgentInformation.values().isEmpty());
+        await().atMost(Duration.ofSeconds(30)).until(() -> !buildAgentInformation.values().isEmpty());
 
         request.put("/api/core/admin/agents/pause-all", null, HttpStatus.NO_CONTENT);
-        await().atMost(Duration.ofSeconds(60)).until(() -> {
+        await().atMost(Duration.ofSeconds(30)).until(() -> {
             var agents = buildAgentInformation.values();
             printAgentInformation(agents);
             return !agents.isEmpty() && agents.stream().allMatch(agent -> agent.status() == BuildAgentStatus.PAUSED);
         });
 
         request.put("/api/core/admin/agents/resume-all", null, HttpStatus.NO_CONTENT);
-        await().atMost(Duration.ofSeconds(60)).until(() -> {
+        await().atMost(Duration.ofSeconds(30)).until(() -> {
             var agents = buildAgentInformation.values();
             printAgentInformation(agents);
             return !agents.isEmpty() && agents.stream().allMatch(agent -> agent.status() == BuildAgentStatus.IDLE);

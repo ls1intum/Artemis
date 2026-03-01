@@ -14,8 +14,9 @@ import org.testcontainers.weaviate.WeaviateContainer;
 public final class WeaviateTestConfiguration {
 
     /**
-     * Collection prefix used for all Weaviate collections in tests.
-     * Uses a timestamp to ensure uniqueness across test runs and avoid race conditions on collection creation in PostConstruct.
+     * Base collection prefix used for all Weaviate collections in tests.
+     * Test base classes append their own descriptive suffix (e.g., "IntegrationIndependent_")
+     * to create unique namespaces per Spring test context.
      * The trailing underscore separates the prefix from the collection name.
      */
     public static final String COLLECTION_PREFIX = "Test_";
