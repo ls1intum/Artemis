@@ -5,6 +5,7 @@ import {
     CompetencyWithTailRelationDTO,
     CourseCompetency,
     CourseCompetencyImportOptionsDTO,
+    CourseCompetencyProgress,
     UpdateCourseCompetencyRelationDTO,
 } from 'app/atlas/shared/entities/competency.model';
 
@@ -46,6 +47,10 @@ export class CourseCompetencyApiService extends BaseApiHttpService {
 
     async getCourseCompetenciesByCourseId(courseId: number): Promise<CourseCompetency[]> {
         return await this.get<CompetencyRelationDTO[]>(`${this.getPath(courseId)}`);
+    }
+
+    async getCourseProgressForCourse(courseId: number): Promise<CourseCompetencyProgress[]> {
+        return await this.get<CourseCompetencyProgress[]>(`${this.getPath(courseId)}/course-progress`);
     }
 
     async getSuggestedCompetencyRelations(courseId: number): Promise<SuggestCompetencyRelationsResponseDTO> {
