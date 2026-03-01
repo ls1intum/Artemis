@@ -45,7 +45,6 @@ import { ModelingAssessmentComponent } from '../../manage/assess/modeling-assess
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DecimalPipe, NgClass } from '@angular/common';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
@@ -76,7 +75,6 @@ import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback
         TranslateDirective,
         NgClass,
         NgbTooltip,
-        AdditionalFeedbackComponent,
         RatingComponent,
         ComplaintsStudentViewComponent,
         DecimalPipe,
