@@ -5,6 +5,8 @@ sidebar_label: Courses
 ---
 
 import Image, {ImageSize} from "../../src/components/Image/Image";
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
 
 import courseSettingsImg from "./assets/courses/course_settings.png";
 import courseOverviewImg from "./assets/courses/course_overview.png";
@@ -68,6 +70,97 @@ Clicking the course header opens management view allowing to
 <Image src={btnCourseEdit} alt={"course edit"} size={ImageSize.small} style={{display:"inline",verticalAlign:"middle"}} />
 or <Image src={btnCourseDelete} alt={"course delete"} size={ImageSize.small} style={{display:"inline",verticalAlign:"middle"}} /> a course, view statistics & administration options.
 
-Students, Tutors, Editors and Instructors can be added via **Course Details**.
+Students, Tutors, Editors and Instructors can be added via **Course Details** (see [Managing Course Participants](#managing-course-participants) below).
 
 <Image src={courseManagementImg} alt={"Course Management"} size={ImageSize.large} />
+
+---
+
+## Managing Course Participants
+
+Instructors can manage the participants of a course by adding or removing users in four role-based groups: **Students**, **Tutors**, **Editors**, and **Instructors**. Each group grants different permissions within the course (see :ref:`Access Rights <admin_access_rights>` for a detailed permission overview).
+
+### Navigating to User Management
+
+There are two ways to access user management for a course:
+
+1. **Quick Actions section**: On the course management page, the *Quick Actions* area displays the current count of Students, Tutors, Editors, and Instructors. Clicking on any of these counts navigates directly to the corresponding group management page. The **Add Users** dropdown menu next to the counts also provides direct links to each group.
+
+2. **Direct URL**: Navigate to `/course-management/<courseId>/groups/<groupName>` where `<groupName>` is one of `students`, `tutors`, `editors`, or `instructors` (e.g., `/course-management/1/groups/students`).
+
+<Callout variant={CalloutVariant.info}>
+    Only Instructors (and Admins) can manage course participants. Editors and Tutors do not have access to user management.
+</Callout>
+
+### Adding Individual Users
+
+To add a single user to a course group:
+
+1. Navigate to the desired group management page (e.g., *Students*).
+2. Use the **search bar** at the top of the user list. Enter at least three characters of the user's **login name** or **display name**.
+3. Artemis will search for matching users and display them in a dropdown. Users who are already members of the group are indicated with a different icon.
+4. Select the user you want to add from the dropdown. Artemis will add them to the group immediately.
+5. The newly added user appears in the list and is briefly highlighted with a green background to confirm the addition.
+
+You can repeat this process to add multiple users one at a time.
+
+### Importing Multiple Users via CSV
+
+To add many users at once, you can import them from a CSV file:
+
+1. Navigate to the desired group management page.
+2. Click the **Import Users** button (visible to Instructors only).
+3. In the **Import Users** dialog, select a CSV file from your computer.
+4. Click **Import** to start the import process.
+5. After the import completes, Artemis shows the results: how many users were successfully imported and how many could not be found.
+
+#### CSV File Format
+
+The CSV file should contain one user per row with a header row. The following column headers are recognized (case-insensitive, spaces are ignored):
+
+| Field               | Accepted Headers                                                                              | Required |
+|---------------------|-----------------------------------------------------------------------------------------------|----------|
+| Registration Number | `registrationNumber`, `matriculationNumber`, `matrikelnummer`, `number`                        | Yes*     |
+| Login               | `login`, `user`, `username`, `benutzer`, `benutzername`                                       | Yes*     |
+| Email               | `email`, `e-mail`, `mail`                                                                     | Yes*     |
+| First Name          | `firstName`, `firstNameOfStudent`, `givenName`, `forename`, `vorname`                         | No       |
+| Last Name           | `familyName`, `lastName`, `familyNameOfStudent`, `surname`, `nachname`, `familienname`, `name`| No       |
+
+*\*At least one of Registration Number, Login, or Email is required per row.*
+
+<Callout variant={CalloutVariant.info}>
+    Each row in the CSV file must contain at least one of the following: a registration number, a login, or an email address. Rows missing all three identifiers will be flagged as invalid.
+</Callout>
+
+**Example CSV file:**
+
+```csv
+registrationNumber,login,email,firstName,lastName
+01234567,student1,student1@example.com,Jane,Doe
+02345678,student2,student2@example.com,John,Smith
+```
+
+<Callout variant={CalloutVariant.warning}>
+    Registration numbers with leading zeros (e.g., `01234567`) may be silently converted to plain numbers by spreadsheet applications like Excel. To prevent this, ensure the registration number column is formatted as **text** before editing, or edit the CSV file in a plain text editor.
+</Callout>
+
+<Callout variant={CalloutVariant.warning}>
+    Users that cannot be found in the system based on the provided identifiers will be reported as "not found" after the import. These users must first be registered in Artemis before they can be added to a course.
+</Callout>
+
+### Removing Users
+
+To remove a user from a course group:
+
+1. Navigate to the group management page.
+2. Find the user in the list (you can use the search/filter functionality).
+3. Click the **remove** button on the right side of the user's row.
+4. Confirm the removal in the dialog that appears.
+
+### Exporting User Data
+
+Instructors can export the list of users in any group as a CSV file:
+
+1. Navigate to the group management page.
+2. Click the **Export CSV** button (available when there is at least one user in the group).
+3. The exported file contains each user's **Name**, **Username**, **Email**, and **Registration Number**.
