@@ -831,6 +831,25 @@ describe('CodeEditorFileSyncService', () => {
             expect(state.text.toString()).toBe('');
         });
 
+        it('ignores messages for auxiliary repository that are missing auxiliaryRepositoryId', () => {
+            service.init(EXERCISE_ID, ExerciseEditorSyncTarget.AUXILIARY_REPOSITORY, 1);
+            const state = service.openFile(FILE_PATH, '')!;
+            vi.advanceTimersByTime(500);
+
+            const doc = new Y.Doc();
+            doc.getText('file-content').insert(0, 'Missing aux id');
+            // Message has no auxiliaryRepositoryId property at all
+            incomingMessages$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_SYNC_UPDATE,
+                target: ExerciseEditorSyncTarget.AUXILIARY_REPOSITORY,
+                filePath: FILE_PATH,
+                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(doc)),
+                timestamp: 1,
+            } as any);
+
+            expect(state.text.toString()).toBe('');
+        });
+
         it('ignores messages for a different target', () => {
             service.init(EXERCISE_ID, TARGET);
             const state = service.openFile(FILE_PATH, '')!;
