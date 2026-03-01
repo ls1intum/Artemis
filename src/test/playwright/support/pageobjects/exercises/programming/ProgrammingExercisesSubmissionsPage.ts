@@ -1,5 +1,6 @@
 import { expect, Locator, Page } from '@playwright/test';
 import { Commands } from '../../../commands';
+import { BUILD_RESULT_TIMEOUT, POLLING_INTERVAL } from '../../../timeouts';
 
 export class ProgrammingExerciseSubmissionsPage {
     private readonly page: Page;
@@ -26,7 +27,9 @@ export class ProgrammingExerciseSubmissionsPage {
     }
 
     private async checkSubmissionVisible(submissionRow: Locator) {
-        await Commands.reloadUntilFound(this.page, submissionRow, 3000, 60000);
+        // Submissions appear after the build agent processes the git push,
+        // so use the standard build result timeout instead of an arbitrary value.
+        await Commands.reloadUntilFound(this.page, submissionRow, POLLING_INTERVAL, BUILD_RESULT_TIMEOUT);
         expect(submissionRow.locator('jhi-result')).not.toBeUndefined();
     }
 }
