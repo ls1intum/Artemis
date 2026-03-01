@@ -246,15 +246,6 @@ const routes: Routes = [
         path: 'lti',
         loadChildren: () => import('./lti/shared/lti.route').then((m) => m.ltiLaunchRoutes),
     },
-    {
-        path: 'about-iris',
-        pathMatch: 'full',
-        loadComponent: () => import('app/iris/overview/about-iris/about-iris.component').then((m) => m.AboutIrisComponent),
-        data: {
-            pageTitle: 'artemisApp.exerciseChatbot.title',
-            usesModuleBackground: true,
-        },
-    },
     // ===== SHARING =====
     {
         path: 'sharing/import/:basketToken',
