@@ -344,7 +344,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
     });
 
     describe('save with AI', () => {
-        it('should call automatic setup with empty repositories and navigate to solution editor', () => {
+        it('should call automatic setup with empty repositories and navigate to template editor', () => {
             const entity = new ProgrammingExercise(course, undefined);
             entity.releaseDate = dayjs();
             entity.course = course;
@@ -352,7 +352,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             const savedEntity = new ProgrammingExercise(course, undefined);
             savedEntity.id = 7;
             savedEntity.course = course;
-            savedEntity.solutionParticipation = { id: 11 } as any;
+            savedEntity.templateParticipation = { id: 11 } as any;
 
             comp.programmingExercise = entity;
             comp.backupExercise = {} as ProgrammingExercise;
@@ -375,8 +375,8 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 'programming-exercises',
                 savedEntity.id,
                 'code-editor',
-                RepositoryType.SOLUTION,
-                savedEntity.solutionParticipation!.id,
+                RepositoryType.TEMPLATE,
+                savedEntity.templateParticipation!.id,
             ]);
             expect(comp.isGeneratingWithAi()).toBeFalse();
         });

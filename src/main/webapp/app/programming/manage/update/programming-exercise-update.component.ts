@@ -987,7 +987,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     /**
-     * Handles successful save and navigates to the solution repository in the code editor.
+     * Handles successful save and navigates to the template repository in the code editor.
      *
      * @param exercise the created exercise
      */
@@ -1000,16 +1000,16 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             return;
         }
 
-        this.openCodeEditorForSolution(exercise);
+        this.openCodeEditorForTemplate(exercise);
     }
 
     /**
-     * Navigates to the code editor for the solution repository of the exercise.
+     * Navigates to the code editor for the template repository of the exercise.
      *
      * @param exercise the created exercise
      */
-    private openCodeEditorForSolution(exercise: ProgrammingExercise) {
-        if (!exercise?.id || !exercise.solutionParticipation?.id) {
+    private openCodeEditorForTemplate(exercise: ProgrammingExercise) {
+        if (!exercise?.id || !exercise.templateParticipation?.id) {
             this.onSaveSuccess(exercise);
             return;
         }
@@ -1029,11 +1029,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 'programming-exercises',
                 exercise.id,
                 'code-editor',
-                RepositoryType.SOLUTION,
-                exercise.solutionParticipation.id,
+                RepositoryType.TEMPLATE,
+                exercise.templateParticipation.id,
             ]);
         } else {
-            this.router.navigate(['course-management', courseId, 'programming-exercises', exercise.id, 'code-editor', RepositoryType.SOLUTION, exercise.solutionParticipation.id]);
+            this.router.navigate(['course-management', courseId, 'programming-exercises', exercise.id, 'code-editor', RepositoryType.TEMPLATE, exercise.templateParticipation.id]);
         }
     }
 
