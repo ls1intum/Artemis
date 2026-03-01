@@ -7,7 +7,7 @@
     (keydown.space)="toggleExpanded.emit()"
     [attr.aria-expanded]="expanded()"
 >
-    <a class="entity-icon-link" [routerLink]="entityRoute()" [queryParamsHandling]="'preserve'" [ngbTooltip]="tooltipKey() | artemisTranslate" (click)="$event.stopPropagation()">
+    <a class="entity-icon-link" [routerLink]="entityRoute()" [queryParamsHandling]="'preserve'" [pTooltip]="tooltipKey() | artemisTranslate" (click)="$event.stopPropagation()">
         <fa-icon [icon]="icon()" />
     </a>
     <span class="entity-name">{{ entityName() }}</span>

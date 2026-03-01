@@ -193,7 +193,9 @@
                 "sessionMenuAriaLabel": "Chat-Sitzungsaktionen",
                 "relatedContent": "Kurskontext-Chats",
                 "generalChat": "Allgemeine Chats",
-                "seeMore": "Mehr anzeigen"
+                "seeMore": "Mehr anzeigen",
+                "collapseAllGroups": "Alle Gruppen einklappen",
+                "expandAllGroups": "Alle Gruppen aufklappen"
             },
             "aboutIrisModal": {
                 "meetIris": "Lern Iris kennen",

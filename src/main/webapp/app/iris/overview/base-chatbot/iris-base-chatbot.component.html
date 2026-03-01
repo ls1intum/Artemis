@@ -60,76 +60,48 @@
                             <div class="chat-history-grouped">
                                 <div class="chat-history-label section-header">
                                     <p jhiTranslate="artemisApp.iris.chatHistory.relatedContent"></p>
+                                    @if (!areAllGroupsCollapsed()) {
+                                        <button
+                                            type="button"
+                                            class="collapse-all-button"
+                                            (click)="collapseAllGroups()"
+                                            [attr.aria-label]="'artemisApp.iris.chatHistory.collapseAllGroups' | artemisTranslate"
+                                        >
+                                            <fa-icon [icon]="faLayerGroup" />
+                                        </button>
+                                    }
                                 </div>
                                 @for (group of visibleEntityGroups(); track getGroupKey(group)) {
                                     @if (group.sessions.length > 0) {
-                                        <jhi-entity-group-header
-                                            [entityName]="group.entityName"
-                                            [icon]="getEntityGroupIcon(group.chatMode)!"
-                                            [tooltipKey]="getEntityGroupTooltipKey(group.chatMode)!"
-                                            [entityRoute]="getEntityGroupRoute(group)!"
-                                            [expanded]="isGroupExpanded(getGroupKey(group))"
-                                            (toggleExpanded)="toggleGroupCollapse(getGroupKey(group))"
-                                        />
-                                        <div [ngbCollapse]="!isGroupExpanded(getGroupKey(group))">
-                                            <div class="chat-history-label grouped-label">
-                                                <p jhiTranslate="artemisApp.iris.chatHistory.recent"></p>
-                                            </div>
-                                            @for (session of group.sessions; track session.id) {
-                                                <jhi-chat-history-item
-                                                    [session]="session"
-                                                    [active]="session.id === currentSessionId()"
-                                                    (sessionClicked)="onSessionClick(session)"
-                                                    (deleteSession)="onDeleteSession($event)"
-                                                />
-                                            }
-                                        </div>
+                                        <ng-container *ngTemplateOutlet="entityGroupTpl; context: { $implicit: group }" />
                                     }
                                 }
                                 @if (seeMoreRevealedGroup(); as revealedGroup) {
-                                    <jhi-entity-group-header
-                                        [entityName]="revealedGroup.entityName"
-                                        [icon]="getEntityGroupIcon(revealedGroup.chatMode)!"
-                                        [tooltipKey]="getEntityGroupTooltipKey(revealedGroup.chatMode)!"
-                                        [entityRoute]="getEntityGroupRoute(revealedGroup)!"
-                                        [expanded]="isGroupExpanded(getGroupKey(revealedGroup))"
-                                        (toggleExpanded)="toggleGroupCollapse(getGroupKey(revealedGroup))"
-                                    />
-                                    <div [ngbCollapse]="!isGroupExpanded(getGroupKey(revealedGroup))">
-                                        <div class="chat-history-label grouped-label">
-                                            <p jhiTranslate="artemisApp.iris.chatHistory.recent"></p>
-                                        </div>
-                                        @for (session of revealedGroup.sessions; track session.id) {
-                                            <jhi-chat-history-item
-                                                [session]="session"
-                                                [active]="session.id === currentSessionId()"
-                                                (sessionClicked)="onSessionClick(session)"
-                                                (deleteSession)="onDeleteSession($event)"
-                                            />
-                                        }
-                                    </div>
+                                    <ng-container *ngTemplateOutlet="entityGroupTpl; context: { $implicit: revealedGroup }" />
                                 }
                                 @if (hasMoreEntityGroups()) {
-                                    <button class="see-more-button" [class.active]="seeMoreMenuOpen()" (click)="openSeeMoreMenu($event)">
-                                        <fa-icon [icon]="faEllipsis" />
-                                        <span jhiTranslate="artemisApp.iris.chatHistory.seeMore"></span>
-                                    </button>
-                                    <p-menu
-                                        #seeMoreMenu
-                                        [model]="seeMoreMenuItems"
-                                        [popup]="true"
-                                        appendTo="body"
-                                        styleClass="see-more-menu"
-                                        (onShow)="onSeeMoreMenuShow()"
-                                        (onHide)="onSeeMoreMenuHide()"
-                                    >
-                                        <ng-template #item let-item>
-                                            <a class="p-menu-item-link see-more-menu-item">
-                                                <fa-icon [icon]="item.data?.faIcon" />
-                                                <span class="p-menu-item-label ms-2">{{ item.label }}</span>
-                                            </a>
-                                        </ng-template>
-                                    </p-menu>
+                                    <div class="see-more-wrapper">
+                                        <button class="see-more-button" [class.active]="seeMoreMenuOpen()" (click)="openSeeMoreMenu($event)">
+                                            <fa-icon [icon]="faEllipsis" />
+                                            <span jhiTranslate="artemisApp.iris.chatHistory.seeMore"></span>
+                                        </button>
+                                        <p-menu
+                                            #seeMoreMenu
+                                            [model]="seeMoreMenuItems"
+                                            [popup]="true"
+                                            appendTo="body"
+                                            styleClass="see-more-menu"
+                                            (onShow)="onSeeMoreMenuShow()"
+                                            (onHide)="onSeeMoreMenuHide()"
+                                        >
+                                            <ng-template #item let-item>
+                                                <a class="p-menu-item-link see-more-menu-item">
+                                                    <fa-icon [icon]="item.data?.faIcon" />
+                                                    <span class="p-menu-item-label ms-2">{{ item.label }}</span>
+                                                </a>
+                                            </ng-template>
+                                        </p-menu>
+                                    </div>
                                 }
                             </div>
                         }
@@ -398,3 +370,27 @@
         </div>
     </div>
 </div>
+
+<ng-template #entityGroupTpl let-group>
+    <jhi-entity-group-header
+        [entityName]="group.entityName"
+        [icon]="getEntityGroupIcon(group.chatMode)!"
+        [tooltipKey]="getEntityGroupTooltipKey(group.chatMode)!"
+        [entityRoute]="getEntityGroupRoute(group)!"
+        [expanded]="isGroupExpanded(getGroupKey(group))"
+        (toggleExpanded)="toggleGroupCollapse(getGroupKey(group))"
+    />
+    @if (isGroupExpanded(getGroupKey(group))) {
+        <div class="chat-history-label grouped-label">
+            <p jhiTranslate="artemisApp.iris.chatHistory.recent"></p>
+        </div>
+        @for (session of group.sessions; track session.id) {
+            <jhi-chat-history-item
+                [session]="session"
+                [active]="session.id === currentSessionId()"
+                (sessionClicked)="onSessionClick(session)"
+                (deleteSession)="onDeleteSession($event)"
+            />
+        }
+    }
+</ng-template>

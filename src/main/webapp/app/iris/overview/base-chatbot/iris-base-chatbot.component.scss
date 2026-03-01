@@ -553,8 +553,32 @@ pre {
         padding-left: 8px;
     }
 
-    &-label.section-header p {
-        font-size: 14px;
+    &-label.section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        p {
+            font-size: 14px;
+        }
+
+        .collapse-all-button {
+            background: none;
+            border: none;
+            color: var(--iris-label-color);
+            cursor: pointer;
+            padding: 4px 6px;
+            border-radius: var(--bs-border-radius-lg);
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            &:hover {
+                background-color: var(--iris-accent-background);
+                color: var(--bs-body-color);
+            }
+        }
     }
 
     &-label.grouped-label p {
@@ -565,6 +589,10 @@ pre {
         border-radius: 6px;
         display: block;
         padding-left: 24px;
+    }
+
+    .see-more-wrapper {
+        position: relative;
     }
 
     .see-more-button {
@@ -659,6 +687,16 @@ pre {
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
     border-bottom: 1px solid var(--bs-border-color);
+}
+
+// Prevent first-frame flicker at PrimeNG's default popup position.
+// The component adds `.menu-positioned` after computing the final fixed position.
+:host ::ng-deep .see-more-menu {
+    visibility: hidden;
+}
+
+:host ::ng-deep .see-more-menu.menu-positioned {
+    visibility: visible;
 }
 
 .disclaimer-message {

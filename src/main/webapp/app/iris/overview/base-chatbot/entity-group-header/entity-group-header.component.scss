@@ -4,7 +4,7 @@
     padding: 6px 8px;
     gap: 6px;
     cursor: pointer;
-    border-radius: 6px;
+    border-radius: var(--bs-border-radius-lg);
 
     &:hover {
         background-color: var(--iris-accent-background);

@@ -1349,6 +1349,42 @@ describe('IrisBaseChatbotComponent', () => {
             expect(component.isGroupExpanded(key0)).toBe(false);
         });
 
+        it('should only show collapse-all button when at least one group is expanded', () => {
+            fixture.componentRef.setInput('isChatHistoryAvailable', true);
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('.collapse-all-button')).toBeNull();
+
+            const groups = component.entityGroups();
+            const firstGroupKey = component.getGroupKey(groups[0]);
+            component.toggleGroupCollapse(firstGroupKey);
+            fixture.detectChanges();
+
+            const collapseButton = fixture.nativeElement.querySelector('.collapse-all-button');
+            expect(collapseButton).not.toBeNull();
+            expect(collapseButton.querySelector('svg')?.getAttribute('data-icon')).toBe('layer-group');
+        });
+
+        it('should only collapse groups when collapse-all button is clicked', () => {
+            fixture.componentRef.setInput('isChatHistoryAvailable', true);
+            fixture.detectChanges();
+
+            const groups = component.entityGroups();
+            const firstGroupKey = component.getGroupKey(groups[0]);
+            component.toggleGroupCollapse(firstGroupKey);
+            fixture.detectChanges();
+
+            const collapseButton = fixture.nativeElement.querySelector('.collapse-all-button') as HTMLButtonElement;
+            expect(collapseButton).not.toBeNull();
+            expect(component.isGroupExpanded(firstGroupKey)).toBe(true);
+
+            collapseButton.click();
+            fixture.detectChanges();
+
+            expect(component.isGroupExpanded(firstGroupKey)).toBe(false);
+            expect(fixture.nativeElement.querySelector('.collapse-all-button')).toBeNull();
+        });
+
         it('should only include ungrouped sessions in time buckets', () => {
             const recentBucket = component.recentSessions();
             expect(recentBucket.every((s) => s.chatMode === ChatServiceMode.COURSE)).toBe(true);
@@ -1417,6 +1453,7 @@ describe('IrisBaseChatbotComponent', () => {
             it('should build menu items from overflow groups when openSeeMoreMenu is called', () => {
                 const mockEvent = new MouseEvent('click');
                 component.openSeeMoreMenu(mockEvent);
+                component.onSeeMoreMenuShow();
 
                 expect(component.seeMoreMenuItems).toHaveLength(4);
                 expect(component.seeMoreMenuItems[0].label).toBe('Exercise 3');
@@ -1513,11 +1550,8 @@ describe('IrisBaseChatbotComponent', () => {
                 groupedSessions$.next(
                     groupedSessions$.value.map((session) =>
                         session.entityId === revealedHiddenGroup.entityId
-                            ? {
-                                  ...session,
-                                  lastActivityDate: new Date('2025-10-10T10:00:00.000Z'),
-                              }
-                            : { ...session },
+                            ? Object.assign({}, session, { lastActivityDate: new Date('2025-10-10T10:00:00.000Z') })
+                            : Object.assign({}, session),
                     ),
                 );
                 fixture.detectChanges();
@@ -1537,6 +1571,7 @@ describe('IrisBaseChatbotComponent', () => {
             it('should set seeMoreMenuOpen to false when menu hides', () => {
                 const mockEvent = new MouseEvent('click');
                 component.openSeeMoreMenu(mockEvent);
+                component.onSeeMoreMenuShow();
                 expect(component.seeMoreMenuOpen()).toBe(true);
 
                 component.onSeeMoreMenuHide();

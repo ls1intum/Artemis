@@ -3,7 +3,7 @@ import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { TooltipModule } from 'primeng/tooltip';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RouterLink } from '@angular/router';
 
@@ -11,8 +11,7 @@ import { RouterLink } from '@angular/router';
     selector: 'jhi-entity-group-header',
     templateUrl: './entity-group-header.component.html',
     styleUrls: ['./entity-group-header.component.scss'],
-    standalone: true,
-    imports: [FaIconComponent, NgbTooltipModule, ArtemisTranslatePipe, RouterLink, NgClass],
+    imports: [FaIconComponent, TooltipModule, ArtemisTranslatePipe, RouterLink, NgClass],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EntityGroupHeaderComponent {

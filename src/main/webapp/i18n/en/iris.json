@@ -193,7 +193,9 @@
                 "sessionMenuAriaLabel": "Chat session actions",
                 "relatedContent": "Course Context Chats",
                 "generalChat": "General Chats",
-                "seeMore": "See more"
+                "seeMore": "See more",
+                "collapseAllGroups": "Collapse all groups",
+                "expandAllGroups": "Expand all groups"
             },
             "aboutIrisModal": {
                 "meetIris": "Meet Iris",

@@ -7,6 +7,7 @@ import {
     faCopy,
     faEllipsis,
     faExpand,
+    faLayerGroup,
     faLink,
     faMagnifyingGlass,
     faPaperPlane,
@@ -30,7 +31,7 @@ import { IrisStatusService } from 'app/iris/overview/services/iris-status.servic
 import { IrisMessageContentType, IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
-import * as _ from 'lodash-es';
+import { cloneDeep } from 'lodash-es';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { IrisCitationTextComponent } from 'app/iris/overview/citation-text/iris-citation-text.component';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -42,7 +43,6 @@ import { AsPipe } from 'app/shared/pipes/as.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ChatHistoryItemComponent } from './chat-history-item/chat-history-item.component';
 import { EntityGroupHeaderComponent } from './entity-group-header/entity-group-header.component';
-import { NgbCollapseModule } from '@ng-bootstrap/ng-bootstrap';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
@@ -53,7 +53,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MenuItem } from 'primeng/api';
 import { Menu, MenuModule } from 'primeng/menu';
 import { AlertService } from 'app/shared/service/alert.service';
-import { formatDate } from '@angular/common';
+import { NgTemplateOutlet, formatDate } from '@angular/common';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { NEW_CHAT_TITLES, chatModeIcon, chatModeTooltipKey } from 'app/iris/overview/shared/iris-session.utils';
 
@@ -68,7 +68,6 @@ const COPY_FEEDBACK_DURATION_MS = 1500;
 
 // Maximum number of entity groups visible before "See more" is shown
 const MAX_VISIBLE_ENTITY_GROUPS = 3;
-const SEE_MORE_MENU_GAP_PX = 8;
 
 export interface EntityGroup {
     entityId: number;
@@ -100,7 +99,7 @@ export interface EntityGroup {
         HtmlForMarkdownPipe,
         ChatHistoryItemComponent,
         EntityGroupHeaderComponent,
-        NgbCollapseModule,
+        NgTemplateOutlet,
         SearchFilterComponent,
         IrisCitationTextComponent,
         ConfirmDialogModule,
@@ -140,6 +139,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected readonly faCopy = faCopy;
     protected readonly faCheck = faCheck;
     protected readonly faEllipsis = faEllipsis;
+    protected readonly faLayerGroup = faLayerGroup;
 
     // Types
     protected readonly IrisLogoSize = IrisLogoSize;
@@ -281,6 +281,13 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     // Collapse state for entity groups
     readonly groupCollapseState = signal<Record<string, boolean>>({});
     readonly isSearchActive = computed(() => !!this.searchValue());
+    readonly areAllGroupsCollapsed = computed(() => {
+        const visible = this.visibleEntityGroups();
+        const revealed = this.seeMoreRevealedGroup();
+        const allVisible = revealed ? [...visible, revealed] : visible;
+        if (allVisible.length === 0) return false;
+        return allVisible.every((group) => !this.isGroupExpanded(this.getGroupKey(group)));
+    });
 
     // Time buckets now use only ungrouped sessions: "Recent" (≤5 days) and "Older" (>5 days)
     readonly recentSessions = computed(() => this.filterSessionsBetween(this.ungroupedSessions(), 0, RECENT_DAYS_CUTOFF, false, this.dayTick()));
@@ -473,7 +480,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
      * Process messages for display (clone)
      */
     private processMessages(rawMessages: IrisMessage[]): IrisMessage[] {
-        return _.cloneDeep(rawMessages);
+        return cloneDeep(rawMessages);
     }
 
     ngAfterViewInit() {
@@ -768,7 +775,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     onDeleteSession(session: IrisSessionDTO) {
-        const title = session.title || formatDate(session.creationDate, 'dd.MM.yy HH:mm', 'en');
+        const title = session.title || formatDate(session.creationDate, 'dd.MM.yy HH:mm', this.translateService.currentLang || 'en');
         this.confirmationService.confirm({
             header: this.translateService.instant('artemisApp.iris.chatHistory.deleteSessionHeader'),
             message: this.translateService.instant('artemisApp.iris.chatHistory.deleteSessionQuestion', { title }),
@@ -888,6 +895,17 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         this.groupCollapseState.update((state) => Object.assign({}, state, { [groupKey]: !currentlyExpanded }));
     }
 
+    collapseAllGroups(): void {
+        const visible = this.visibleEntityGroups();
+        const revealed = this.seeMoreRevealedGroup();
+        const allVisible = revealed ? [...visible, revealed] : visible;
+        const newState: Record<string, boolean> = {};
+        for (const group of allVisible) {
+            newState[this.getGroupKey(group)] = false;
+        }
+        this.groupCollapseState.update((state) => Object.assign({}, state, ...Object.entries(newState).map(([k, v]) => ({ [k]: v }))));
+    }
+
     isGroupExpanded(groupKey: string): boolean {
         if (this.isSearchActive()) {
             return true;
@@ -925,43 +943,50 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             data: { faIcon: this.getEntityGroupIcon(group.chatMode) },
             command: () => this.onSeeMoreMenuItemClick(group),
         }));
-        this.seeMoreMenuOpen.set(true);
-        this.seeMoreMenu()?.toggle(event);
+        const menu = this.seeMoreMenu();
+        const menuOverlay = menu?.container as HTMLElement | undefined;
+        menuOverlay?.classList.remove('menu-positioned');
+        menu?.toggle(event);
     }
 
     onSeeMoreMenuHide(): void {
         this.seeMoreMenuOpen.set(false);
+        const menuOverlay = this.seeMoreMenu()?.container as HTMLElement | undefined;
+        menuOverlay?.classList.remove('menu-positioned');
     }
 
     onSeeMoreMenuShow(): void {
-        const menu = this.seeMoreMenu();
-        const container = menu?.container as HTMLElement | undefined;
-        const target = menu?.target as HTMLElement | undefined;
+        this.seeMoreMenuOpen.set(true);
 
-        if (!container || !target) {
+        // PrimeNG first applies its default popup position; we immediately override it.
+        // The overlay stays hidden until this method adds the "menu-positioned" class.
+        const menu = this.seeMoreMenu();
+        const menuOverlay = menu?.container as HTMLElement | undefined;
+        const targetButton = menu?.target as HTMLElement | undefined;
+        if (!menuOverlay || !targetButton) {
             return;
         }
 
-        const targetRect = target.getBoundingClientRect();
-        const menuRect = container.getBoundingClientRect();
-        const viewportLeft = window.scrollX;
-        const viewportTop = window.scrollY;
-        const viewportRight = viewportLeft + document.documentElement.clientWidth;
-        const viewportBottom = viewportTop + window.innerHeight;
+        const buttonRect = targetButton.getBoundingClientRect();
+        const menuRect = menuOverlay.getBoundingClientRect();
+        const menuWidth = menuRect.width || menuOverlay.offsetWidth || 200;
+        const menuHeight = menuRect.height || menuOverlay.offsetHeight || 200;
+        const gap = 8;
 
-        let left = viewportLeft + targetRect.right + SEE_MORE_MENU_GAP_PX;
-        // If there is not enough space on the right side, place it on the left side of the button.
-        if (left + menuRect.width > viewportRight - SEE_MORE_MENU_GAP_PX) {
-            left = Math.max(viewportLeft + SEE_MORE_MENU_GAP_PX, viewportLeft + targetRect.left - menuRect.width - SEE_MORE_MENU_GAP_PX);
+        let left = buttonRect.right + gap;
+        if (left + menuWidth > window.innerWidth - gap) {
+            left = Math.max(gap, buttonRect.left - menuWidth - gap);
         }
 
-        let top = viewportTop + targetRect.top;
-        if (top + menuRect.height > viewportBottom - SEE_MORE_MENU_GAP_PX) {
-            top = Math.max(viewportTop + SEE_MORE_MENU_GAP_PX, viewportBottom - menuRect.height - SEE_MORE_MENU_GAP_PX);
+        let top = buttonRect.top;
+        if (top + menuHeight > window.innerHeight - gap) {
+            top = Math.max(gap, window.innerHeight - menuHeight - gap);
         }
 
-        container.style.left = `${Math.round(left)}px`;
-        container.style.top = `${Math.round(top)}px`;
+        menuOverlay.style.position = 'fixed';
+        menuOverlay.style.left = `${Math.round(left)}px`;
+        menuOverlay.style.top = `${Math.round(top)}px`;
+        menuOverlay.classList.add('menu-positioned');
     }
 
     onSeeMoreMenuItemClick(group: EntityGroup): void {
