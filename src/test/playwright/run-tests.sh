@@ -98,7 +98,7 @@ if [ -n "$PLAYWRIGHT_REPORT_SERVER_URL" ] && [ -n "$PLAYWRIGHT_REPORT_TOKEN" ]; 
         test-reports/results.xml \
         test-reports/monocart-report-parallel \
         test-reports/monocart-report-sequential \
-        test-reports/client-coverage/lcov-report \
+        test-reports/client-coverage \
         test-results/; do
         [ -e "$p" ] && UPLOAD_PATHS+=("$p")
     done
