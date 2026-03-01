@@ -1,0 +1,68 @@
+<div class="search-result-item p-3 cursor-pointer position-relative" [class.selected]="isSelected()" (click)="onClick()" [attr.aria-selected]="isSelected()" role="option">
+    <div class="d-flex align-items-start gap-3">
+        <!-- Icon -->
+        <div class="result-icon flex-shrink-0">
+            <fa-icon [icon]="icon()" size="lg" class="text-primary" aria-hidden="true" />
+        </div>
+
+        <!-- Content -->
+        <div class="result-content flex-grow-1 min-width-0">
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <h6 class="result-title mb-0 text-truncate">{{ result().title }}</h6>
+                @if (result().badge) {
+                    <span class="badge bg-secondary text-white px-2 py-1 small">{{ result().badge }}</span>
+                }
+            </div>
+
+            <!-- Metadata Row -->
+            @if (result().metadata && (result().metadata['courseName'] || result().metadata['dueDate'] || result().metadata['points'] || result().metadata['difficulty'])) {
+                <div class="result-metadata d-flex align-items-center gap-2 mb-2 text-secondary small">
+                    @if (result().metadata['courseName']) {
+                        <span class="d-flex align-items-center gap-1">
+                            <fa-icon [icon]="faBook" size="sm" aria-hidden="true" />
+                            <span>{{ result().metadata['courseName'] }}</span>
+                        </span>
+                    }
+                    @if (result().metadata['courseName'] && (result().metadata['dueDate'] || result().metadata['points'] || result().metadata['difficulty'])) {
+                        <span>•</span>
+                    }
+                    @if (result().metadata['dueDate']) {
+                        <span class="d-flex align-items-center gap-1">
+                            <fa-icon [icon]="faCalendarAlt" size="sm" aria-hidden="true" />
+                            <span>Due: {{ result().metadata['dueDate'] }}</span>
+                        </span>
+                    }
+                    @if (result().metadata['dueDate'] && result().metadata['points']) {
+                        <span>•</span>
+                    }
+                    @if (result().metadata['points']) {
+                        <span class="d-flex align-items-center gap-1">
+                            <fa-icon [icon]="faTrophy" size="sm" aria-hidden="true" />
+                            <span>{{ result().metadata['points'] }} {{ result().metadata['points'] === 1 ? 'point' : 'points' }}</span>
+                        </span>
+                    }
+                    @if (result().metadata['difficulty'] && (result().metadata['dueDate'] || result().metadata['points'])) {
+                        <span>•</span>
+                    }
+                    @if (result().metadata['difficulty']) {
+                        <span class="text-capitalize">{{ result().metadata['difficulty'] }}</span>
+                    }
+                </div>
+            }
+
+            <!-- Description -->
+            @if (result().description) {
+                <p class="result-description mb-0 text-secondary small text-truncate-2">
+                    {{ result().description }}
+                </p>
+            }
+        </div>
+    </div>
+
+    <!-- Navigation hint for selected item (positioned absolutely) -->
+    @if (isSelected()) {
+        <div class="result-nav-hint position-absolute text-secondary">
+            <kbd class="key-hint-small">↵</kbd>
+        </div>
+    }
+</div>

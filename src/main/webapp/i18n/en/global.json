@@ -34,6 +34,18 @@
         "importTable": {
             "searchPlaceholder": "Search"
         },
+        "search": {
+            "title": "Search",
+            "placeholder": "Search or ask a question...",
+            "noResultsFound": "No results found",
+            "searching": "Searching...",
+            "toNavigate": "to navigate",
+            "toSelect": "to select",
+            "toClose": "to close",
+            "toAddFilter": "to add filter",
+            "tipTitle": "Quick Search",
+            "tipDescription": "Search for exercises, lectures, and more. Use filters to narrow your results."
+        },
         "menu": {
             "home": "Home",
             "overview": "Overview",

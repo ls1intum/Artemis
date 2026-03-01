@@ -1,0 +1,58 @@
+<p-dialog
+    [visible]="overlay.isOpen()"
+    (visibleChange)="$event ? overlay.open() : overlay.close()"
+    (onHide)="overlay.close()"
+    (onShow)="focusInput()"
+    [modal]="true"
+    [closable]="true"
+    [showHeader]="false"
+    [closeOnEscape]="false"
+    [dismissableMask]="true"
+    [style]="{ width: '100%', 'max-width': '700px', height: '60vh', 'max-height': '600px', 'margin-top': '15vh', overflow: 'hidden', background: 'var(--module-bg)' }"
+    contentStyleClass="p-0 d-flex flex-column h-100 overflow-hidden"
+    position="top"
+    styleClass="global-search-dialog"
+>
+    <!-- Search Input Container -->
+    <jhi-global-search-input
+        [searchQuery]="searchQuery()"
+        [activeFilters]="activeFilters()"
+        [isLoading]="isLoading()"
+        (searchInput)="onSearchInput($event)"
+        (searchKeyDown)="onSearchKeyDown($event)"
+        (filterRemoved)="removeFilter($event)"
+    />
+
+    <!-- Results Area -->
+    <div class="results-container flex-grow-1 overflow-auto">
+        @if (isLoading()) {
+            <jhi-global-search-empty-states [stateType]="'loading'" />
+        } @else if (showEmptyState()) {
+            <jhi-global-search-empty-states [stateType]="'empty'" />
+        } @else if (hasResults()) {
+            <!-- Results list -->
+            <div class="search-results-list">
+                @for (result of results(); track result.id; let i = $index) {
+                    <jhi-global-search-result-item
+                        [result]="result"
+                        [icon]="getIconForType(result.type, result.badge)"
+                        [isSelected]="i === selectedIndex()"
+                        (resultClick)="navigateToResult($event)"
+                    />
+                }
+            </div>
+        } @else if (showInitialState()) {
+            <!-- Initial state - show searchable entities -->
+            <div class="entity-list">
+                @for (entity of searchableEntities; track entity.id; let i = $index) {
+                    <jhi-global-search-entity-item [entity]="entity" [isSelected]="i === selectedIndex()" (entityClick)="onEntityClick($event)" />
+                }
+            </div>
+        } @else {
+            <jhi-global-search-empty-states [stateType]="'fallback'" />
+        }
+    </div>
+
+    <!-- Keyboard hints footer -->
+    <jhi-global-search-keyboard-hints />
+</p-dialog>
