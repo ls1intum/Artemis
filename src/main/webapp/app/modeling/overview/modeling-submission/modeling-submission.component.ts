@@ -55,6 +55,7 @@ import { AssessmentNamesForModelId, getNamesForAssessments } from '../../manage/
 import { countModelElements, hasModelElements, isModelEmpty as isApollonModelEmpty } from '../../shared/apollon-model.util';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ExerciseSubmitButtonComponent } from 'app/exercise/shared/exercise-submit-button/exercise-submit-button.component';
+import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -82,6 +83,7 @@ import { ExerciseSubmitButtonComponent } from 'app/exercise/shared/exercise-subm
         ArtemisTranslatePipe,
         HtmlForMarkdownPipe,
         ExerciseSubmitButtonComponent,
+        UnifiedFeedbackComponent,
     ],
 })
 export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
