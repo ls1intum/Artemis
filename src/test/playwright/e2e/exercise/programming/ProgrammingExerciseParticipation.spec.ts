@@ -290,6 +290,9 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
             programmingExerciseSubmissions,
             waitForExerciseBuildToFinish,
         }) => {
+            // This test involves 2 full git clone+push cycles and waiting for 4+ queued builds,
+            // which can exceed the default timeout on cold Docker environments.
+            test.slow();
             // student submits to create a participation + submission
             await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
             await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, studentOne, javaAllSuccessfulSubmission, 'student commit');
