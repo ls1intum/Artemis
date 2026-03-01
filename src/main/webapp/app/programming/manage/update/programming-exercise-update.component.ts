@@ -11,7 +11,7 @@ import { ProgrammingExerciseSharingService } from '../services/programming-exerc
 import { TranslateService } from '@ngx-translate/core';
 import { switchMap, take, tap } from 'rxjs/operators';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { Exercise, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
@@ -60,6 +60,8 @@ import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/f
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
+import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
 
@@ -102,6 +104,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly aeolusService = inject(AeolusService);
     private readonly calendarService = inject(CalendarService);
     private readonly localStorageService = inject(LocalStorageService);
+    private readonly exerciseEditorSyncService = inject(ExerciseEditorSyncService);
+    private readonly metadataSyncService = inject(ExerciseMetadataSyncService);
 
     private readonly packageNameRegexForJavaKotlin = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN);
     private readonly packageNameRegexForJavaBlackbox = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX);
@@ -592,7 +596,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                         }
                     }),
                 )
-                .subscribe();
+                .subscribe(() => this.setupMetadataSync());
         }
 
         // If an exercise is created, load our readme template so the problemStatement is not empty
@@ -630,6 +634,23 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         for (const subscription of this.inputFieldSubscriptions) {
             subscription?.unsubscribe();
         }
+        this.metadataSyncService.destroy();
+        this.exerciseEditorSyncService.disconnect();
+    }
+
+    private setupMetadataSync(): void {
+        if (!this.programmingExercise?.id || this.isImportFromExistingExercise || this.isImportFromFile || this.isImportFromSharing || !this.isEdit) {
+            return;
+        }
+        this.ensureExerciseCategoriesReference();
+        this.exerciseEditorSyncService.connect(this.programmingExercise.id);
+        this.metadataSyncService.initialize({
+            exerciseId: this.programmingExercise.id,
+            exerciseType: this.programmingExercise.type ?? ExerciseType.PROGRAMMING,
+            getCurrentExercise: () => this.programmingExercise,
+            getBaselineExercise: () => this.backupExercise,
+            setBaselineExercise: (exercise) => (this.backupExercise = exercise),
+        });
     }
 
     calculateFormStatusSections() {
@@ -712,6 +733,16 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         if (this.exerciseCategories === undefined) {
             this.exerciseCategories = [];
         }
+    }
+
+    /**
+     * Ensures that {@link exerciseCategories} and {@link programmingExercise.categories} reference the same array.
+     * This is required for metadata sync: the category handler modifies the array in-place,
+     * so both references must point to the same object for changes to propagate correctly.
+     */
+    private ensureExerciseCategoriesReference() {
+        this.exerciseCategories = this.programmingExercise.categories ?? this.exerciseCategories ?? [];
+        this.programmingExercise.categories = this.exerciseCategories;
     }
 
     /**
