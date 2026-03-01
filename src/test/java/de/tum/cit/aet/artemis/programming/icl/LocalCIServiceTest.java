@@ -49,12 +49,15 @@ class LocalCIServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTes
     private RepositoryCheckoutService repositoryCheckoutService;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws InterruptedException {
         queuedJobs = distributedDataAccessService.getDistributedBuildJobQueue();
         processingJobs = distributedDataAccessService.getDistributedProcessingJobs();
 
         // remove listener to avoid triggering build job processing
         sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
+        // Wait for any in-flight scheduled task to complete (scheduled tasks run every 5 seconds)
+        // This prevents race conditions where a scheduled task processes jobs from the queue before the test assertions
+        Thread.sleep(100);
         // Reset pause state to ensure clean state for each test
         sharedQueueProcessingService.resetPauseState();
     }
