@@ -127,7 +127,7 @@ public class HyperionConsistencyCheckService {
      * Execute structural and semantic consistency checks. Model calls run concurrently on bounded elastic threads.
      * Any individual failure degrades gracefully to an empty list; the aggregated response is always non-null.
      *
-     * @param exercise programming exercise reference to check consistency for
+     * @param exerciseId id of the programming exercise to check consistency for
      * @return aggregated consistency issues, timing, token usage, and costs.
      */
     @Observed(name = "hyperion.consistency", contextualName = "consistency check", lowCardinalityKeyValues = { AI_SPAN_KEY, AI_SPAN_VALUE })

@@ -59,6 +59,7 @@ import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewRepositorySe
 import de.tum.cit.aet.artemis.exercise.service.review.validation.ExerciseReviewValidationUtil;
 import de.tum.cit.aet.artemis.hyperion.dto.ArtifactLocationDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueDTO;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
@@ -150,6 +151,9 @@ public class ExerciseReviewService {
      */
     public void createConsistencyCheckThreads(long exerciseId, List<ConsistencyIssueDTO> issues) {
         Exercise exercise = exerciseRepository.findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
+        if (!(exercise instanceof ProgrammingExercise)) {
+            throw new BadRequestAlertException("Exercise is not a programming exercise", THREAD_ENTITY_NAME, "exerciseNotProgramming");
+        }
 
         if (issues == null || issues.isEmpty()) {
             return;
