@@ -303,16 +303,16 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
             // a student template clone build, and makeSubmission triggers the student submission build.
             // Locally these builds queue serially (~18s each), so we need a generous timeout
             // to cover all 4 builds. On CI, builds may be merged/faster but we use the same timeout.
-            await waitForExerciseBuildToFinish(exercise.id!, undefined, 150000);
+            await waitForExerciseBuildToFinish(exercise.id!, undefined, 240000);
             await navigationBar.openCourseManagement();
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.openExerciseParticipations(exercise.id!);
             await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, instructor, javaPartiallySuccessfulSubmission, 'instructor commit');
             // Wait for the instructor's build to complete before checking submissions.
-            // On cold Docker environments, the first build can take minutes due to image pulls
+            // On cold Docker environments, builds can be slow due to Docker image pulls
             // and Maven dependency downloads. Without this wait, checkInstructorSubmission would
             // have to poll/reload for the INSTRUCTOR row, which may exceed its own timeout.
-            await waitForExerciseBuildToFinish(exercise.id!, undefined, 150000);
+            await waitForExerciseBuildToFinish(exercise.id!, undefined, 240000);
             // check the submission
             await navigationBar.openCourseManagement();
             await courseManagement.openExercisesOfCourse(course.id!);
