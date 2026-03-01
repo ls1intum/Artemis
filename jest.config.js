@@ -63,6 +63,7 @@ const {
 } = require('./tsconfig.json');
 
 module.exports = {
+    testEnvironment: 'jsdom',
     testEnvironmentOptions: {
         url: 'https://artemis.fake/test',
         globalsCleanup: 'on',
