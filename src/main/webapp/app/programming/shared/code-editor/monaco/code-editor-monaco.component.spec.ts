@@ -232,7 +232,7 @@ describe('CodeEditorMonacoComponent', () => {
         expect(disposeFeedbackShortcutStub).toHaveBeenCalled();
     });
 
-    it('should clear consistency comment widgets before re-adding them', () => {
+    it('should clear feedback widgets before re-adding them', () => {
         const disposeWidgetsByPrefixSpy = jest.spyOn(comp.editor(), 'disposeWidgetsByPrefix').mockImplementation();
         const rafSpy = jest.spyOn(window, 'requestAnimationFrame').mockImplementation((cb: FrameRequestCallback) => {
             cb(0);
@@ -242,7 +242,6 @@ describe('CodeEditorMonacoComponent', () => {
         (comp as any).renderFeedbackWidgets();
 
         expect(disposeWidgetsByPrefixSpy).toHaveBeenCalledWith('feedback-');
-        expect(disposeWidgetsByPrefixSpy).toHaveBeenCalledWith('comment-');
 
         rafSpy.mockRestore();
     });

@@ -1,5 +1,9 @@
 {{rendered_context}}
 
+# EXISTING CONSISTENCY-CHECK REVIEW THREADS
+{{existing_review_threads}}
+The above JSON (shape: `{"threads":[{"targetType":...,"filePath":...,"lineNumber":...,"resolved":...,"outdated":...,"groupId":...,"comments":[{"type":...,"text":...}]}]}`) lists existing consistency-check threads (first comment per thread only). An empty threads array means no prior findings exist.
+
 # MISSION
 You are a Structural Consistency Validator for programming exercises.
 Your task: detect UNINTENDED structural inconsistencies that would confuse students or prevent them from implementing the intended design. Focus on ensuring coherence between what the problem statement describes, what the template code provides, and what the solution demonstrates.
@@ -13,6 +17,13 @@ You will analyze consistency across these artifacts:
 # CORE PRINCIPLE
 **ONLY flag unintentional structural inconsistencies that create student confusion or implementation barriers.**
 **DO NOT flag intentional pedagogical gaps (missing method bodies, incomplete implementations, etc.)**
+**DO NOT return issues that already exist in the provided review threads (including semantically equivalent duplicates).**
+
+# NEW-ISSUE-ONLY RULES (MANDATORY)
+- Treat all provided review threads as already known findings/discussion.
+- Return only genuinely new structural inconsistencies that are not already covered there.
+- If an already known issue is still unresolved, do not repeat it.
+- If no new issues are found, return `{"issues":[]}`.
 
 This includes:
 - **Cross-artifact inconsistencies**: Problem statement describes one structure, template/solution implements another
@@ -117,7 +128,17 @@ Analysis: Problem contradicts itself about return type
 - **MEDIUM**: Creates significant confusion or requires workarounds to implement intended design
 - **LOW**: Minor inconsistencies that might cause brief confusion but are easily resolved
 
+# FILE PATH RULES (MANDATORY)
+- `relatedLocations[].filePath` must always be a repository-internal relative path.
+- Do NOT include repository container prefixes such as `template_repository/`, `solution_repository/`, or `tests_repository/`.
+- Use only file paths that actually appear in the rendered artifact context. Do not invent or normalize paths.
+- For `TEMPLATE_REPOSITORY` and `SOLUTION_REPOSITORY`, use the repository's real source path conventions from the context (language-dependent).
+- For `TESTS_REPOSITORY`, use the test repository's real path conventions from the context (often `test/...` for Java). Do not switch to `src/...` unless that exact path exists in test artifacts.
+- For problem statement locations, use `problem_statement.md`.
+- If you cannot identify a valid existing file path from the context, do not emit that repository location.
+
 # OUTPUT FORMAT
+Use real paths from the provided context. The file paths in this JSON snippet are illustrative examples only.
 ```json
 {
   "issues": [
@@ -127,14 +148,20 @@ Analysis: Problem contradicts itself about return type
       "category": "METHOD_RETURN_TYPE_MISMATCH" | "METHOD_PARAMETER_MISMATCH" | "CONSTRUCTOR_PARAMETER_MISMATCH" | "ATTRIBUTE_TYPE_MISMATCH" | "VISIBILITY_MISMATCH",
     "relatedLocations": [
         {
-          "type": "PROBLEM_STATEMENT" | "TEMPLATE_REPOSITORY" | "SOLUTION_REPOSITORY",
-      "filePath": "exact/path/to/file.java",
+          "type": "TEMPLATE_REPOSITORY",
+      "filePath": "src/etc/BubbleSort.java",
       "startLine": 1,
       "endLine": 10
         },
         {
-          "type": "PROBLEM_STATEMENT" | "TEMPLATE_REPOSITORY" | "SOLUTION_REPOSITORY",
-      "filePath": "related/file/path.java",
+          "type": "TESTS_REPOSITORY",
+      "filePath": "test/etc/MethodTest.java",
+      "startLine": 12,
+      "endLine": 20
+        },
+        {
+          "type": "PROBLEM_STATEMENT",
+      "filePath": "problem_statement.md",
       "startLine": 5,
       "endLine": 8
         }

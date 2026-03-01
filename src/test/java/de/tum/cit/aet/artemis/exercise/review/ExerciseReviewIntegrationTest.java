@@ -544,7 +544,9 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
         TextExercise exercise = createExerciseWithVersion();
         CommentThread first = commentThreadRepository.save(buildThreadEntity(exercise));
         CommentThread second = commentThreadRepository.save(buildThreadEntity(exercise));
-        CommentThreadGroup group = commentThreadGroupRepository.save(buildGroupEntity(exercise, List.of(first, second)));
+        CommentThreadGroup group = new CommentThreadGroup();
+        group.setExercise(exercise);
+        group = commentThreadGroupRepository.save(group);
         first.setGroup(group);
         second.setGroup(group);
         commentThreadRepository.saveAll(List.of(first, second));

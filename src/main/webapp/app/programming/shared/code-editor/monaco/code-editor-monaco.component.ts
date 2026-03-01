@@ -36,12 +36,9 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CodeEditorRepositoryFileService, ConnectionError } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChange, FileType, RenameFileChange, RepositoryType } from '../model/code-editor.model';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
-import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
-import { addCommentBoxes } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
-import { TranslateService } from '@ngx-translate/core';
 import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-widget-manager';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
-import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CommentThread, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { isReviewCommentsSupportedRepository, mapRepositoryToThreadLocationType, matchesSelectedRepository } from 'app/exercise/review/review-comment-utils';
 
 type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; scrollTop: number; loadingError: boolean } };
@@ -76,7 +73,6 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     private readonly localStorageService = inject(LocalStorageService);
     private readonly changeDetectorRef = inject(ChangeDetectorRef);
     private readonly fileTypeService = inject(FileTypeService);
-    private readonly translateService = inject(TranslateService);
     private readonly ngZone = inject(NgZone);
     private readonly viewContainerRef = inject(ViewContainerRef);
     private readonly exerciseReviewCommentService = inject(ExerciseReviewCommentService);
@@ -97,7 +93,6 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     readonly selectedRepository = input<RepositoryType>();
     readonly sessionId = input.required<number | string>();
     readonly buildAnnotations = input<Annotation[]>([]);
-    readonly consistencyIssues = input<ConsistencyIssue[]>([]);
     readonly enableExerciseReviewComments = input<boolean>(false);
     readonly selectedAuxiliaryRepositoryId = input<number | undefined>();
 
@@ -109,6 +104,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     readonly onDiscardSuggestion = output<Feedback>();
     readonly onHighlightLines = output<MonacoEditorLineHighlight[]>();
     readonly onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
+    readonly onNavigateToReviewCommentLocation = output<ReviewThreadLocation>();
     readonly onEditorLoaded = output<void>();
 
     readonly loadingCount = signal<number>(0);
@@ -481,9 +477,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
                 this.renderScheduled = false;
                 this.ngZone.run(() => {
                     this.changeDetectorRef.detectChanges();
-                    const issues = this.consistencyIssues();
                     this.editor().disposeWidgetsByPrefix('feedback-');
-                    this.editor().disposeWidgetsByPrefix('comment-');
                     for (const feedback of this.filterFeedbackForSelectedFile([...this.feedbackInternal(), ...this.feedbackSuggestionsInternal()])) {
                         this.addLineWidgetWithFeedback(feedback);
                     }
@@ -499,9 +493,6 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
                     if (focusLine !== undefined) {
                         this.getInlineFeedbackNode(focusLine)?.querySelector<HTMLTextAreaElement>('#feedback-textarea')?.focus();
                     }
-
-                    // Readd inconsistency issue comments, because all widgets got removed
-                    addCommentBoxes(this.editor(), issues, this.selectedFile(), this.selectedRepository(), this.translateService);
                 });
             }),
         );
@@ -552,6 +543,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
                     this.getThreadFilePath(thread) === this.selectedFile() && matchesSelectedRepository(thread, this.selectedRepository(), this.selectedAuxiliaryRepositoryId()),
                 getThreadLine: (thread) => this.getReviewThreadLine(thread),
                 onAdd: (payload) => this.onAddReviewComment.emit(payload),
+                onNavigateToLocation: (location) => this.onNavigateToReviewCommentLocation.emit(location),
                 showLocationWarning: () => this.commitState() === CommitState.UNCOMMITTED_CHANGES,
             });
         }

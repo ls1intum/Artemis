@@ -16,14 +16,14 @@
             [showDefaultPreview]="false"
             [showPreviewButton]="showPreview()"
             [showEditButton]="showPreview()"
+            [enableExerciseReviewComments]="enableExerciseReviewComments()"
+            [showLocationWarning]="unsavedChangesValue"
             [isReadOnly]="isGeneratingOrRefining()"
             [isAiLoading]="isAiApplying()"
             [renderSideBySide]="renderSideBySide()"
-            [consistencyIssues]="consistencyIssues()"
-            [enableExerciseReviewComments]="enableExerciseReviewComments()"
-            [showLocationWarning]="unsavedChangesValue"
-            (markdownChange)="updateProblemStatement($event)"
             (diffLineChange)="diffLineChange.emit($event)"
+            (markdownChange)="updateProblemStatement($event)"
+            (onNavigateToReviewCommentLocation)="onNavigateToReviewCommentLocation.emit($event)"
         >
             <!-- Custom preview using ProgrammingExerciseInstructionComponent for proper rendering
                  of programming-specific syntax (task markers, PlantUML, test case status, etc.).

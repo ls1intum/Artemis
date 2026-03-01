@@ -177,6 +177,21 @@
     color: var(--artemis-alert-neutral-color);
 }
 
+.monaco-review-comment-thread-tag--consistency {
+    background-color: var(--artemis-alert-neutral-background);
+    color: var(--artemis-alert-neutral-color);
+}
+
+.monaco-review-comment-thread-tag--consistency-severity {
+    background-color: var(--artemis-alert-warning-background);
+    color: var(--artemis-alert-warning-color);
+}
+
+.monaco-review-comment-thread-tag--consistency-type {
+    background-color: var(--artemis-alert-info-background);
+    color: var(--artemis-alert-info-color);
+}
+
 .monaco-review-comment-thread-warning {
     display: inline-flex;
     align-items: center;
@@ -238,4 +253,64 @@
     justify-content: flex-end;
     gap: 0.5rem;
     margin-top: 0.5rem;
+}
+
+.monaco-review-comment-related-locations {
+    border-top: 1px solid var(--border-color);
+    margin-top: 0.75rem;
+    padding-top: 0.6rem;
+}
+
+.monaco-review-comment-related-locations-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+}
+
+.monaco-review-comment-related-locations-list {
+    margin: 0;
+    padding-left: 1rem;
+    list-style: disc;
+}
+
+.monaco-review-comment-related-locations-item {
+    font-size: 0.72rem;
+    line-height: 1.4;
+}
+
+.monaco-review-comment-related-location-entry {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+}
+
+.monaco-review-comment-related-location-label {
+    word-break: break-all;
+}
+
+.monaco-review-comment-related-location-go-to {
+    width: 1.25rem;
+    height: 1.25rem;
+    padding: 0;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.monaco-review-comment-related-location-go-to.p-button {
+    padding: 0 !important;
+}
+
+.monaco-review-comment-related-location-go-to fa-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.monaco-review-comment-related-location-go-to .svg-inline--fa {
+    width: 0.72rem;
+    height: 0.72rem;
+    vertical-align: middle;
 }

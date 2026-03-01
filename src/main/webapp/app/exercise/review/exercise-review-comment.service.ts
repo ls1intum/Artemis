@@ -41,8 +41,10 @@ export class ExerciseReviewCommentService {
 
     /**
      * Reloads threads for the active exercise context.
+     *
+     * @param onLoaded Optional callback invoked after threads were successfully reloaded.
      */
-    reloadThreads(): void {
+    reloadThreads(onLoaded?: () => void): void {
         const exerciseId = this.activeExerciseId;
         if (!exerciseId) {
             this.threads.set([]);
@@ -54,6 +56,7 @@ export class ExerciseReviewCommentService {
                     return;
                 }
                 this.threads.set(threads);
+                onLoaded?.();
             },
             error: () => {
                 if (this.activeExerciseId !== exerciseId) {

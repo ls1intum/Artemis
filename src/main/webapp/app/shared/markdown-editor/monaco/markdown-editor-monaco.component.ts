@@ -82,10 +82,7 @@ import { RedirectToIrisButtonComponent } from 'app/communication/shared/redirect
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { FileUploadResponse, FileUploaderService } from 'app/shared/service/file-uploader.service';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
-import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
-import { addCommentBoxes } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
-import { TranslateService } from '@ngx-translate/core';
-import { CommentThread, CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-widget-manager';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 
@@ -162,7 +159,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     private readonly metisService = inject(MetisService, { optional: true });
     private readonly fileUploaderService = inject(FileUploaderService);
     private readonly artemisMarkdown = inject(ArtemisMarkdownService);
-    private readonly translateService = inject(TranslateService);
     protected readonly artemisIntelligenceService = inject(ArtemisIntelligenceService); // used in template
     private readonly viewContainerRef = inject(ViewContainerRef);
     private readonly exerciseReviewCommentService = inject(ExerciseReviewCommentService);
@@ -269,7 +265,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     @Input()
     metaActions: TextEditorAction[] = [new FullscreenAction()];
 
-    readonly consistencyIssues = input<ConsistencyIssue[]>([]);
     readonly enableExerciseReviewComments = input<boolean>(false);
     readonly showLocationWarning = input<boolean>(false);
 
@@ -319,6 +314,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     onLeaveVisualTab = new EventEmitter<void>();
 
     readonly onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
+    readonly onNavigateToReviewCommentLocation = output<ReviewThreadLocation>();
     defaultPreviewHtml: SafeHtml | undefined;
     inPreviewMode = false;
     inVisualMode = false;
@@ -421,19 +417,14 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     }
 
     /**
-     * Renders consistency issues inside the editor.
+     * Renders review comment widgets inside the editor.
      */
     protected renderEditorWidgets() {
-        const issues = this.consistencyIssues();
-
         // Bail out until the editor is ready
         if (!this.monacoEditor) {
             return;
         }
 
-        // Keep review comment widgets stable while refreshing consistency issue widgets.
-        this.monacoEditor.disposeWidgetsByPrefix('comment-');
-        addCommentBoxes(this.monacoEditor, issues, PROBLEM_STATEMENT_FILE_PATH, CommentThreadLocationType.PROBLEM_STATEMENT, this.translateService);
         if (this.enableExerciseReviewComments()) {
             // Avoid tracking UI-only signals (e.g. showLocationWarning) as rerender dependencies.
             untracked(() => this.getReviewCommentManager()?.renderWidgets());
@@ -827,6 +818,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                 filterThread: (thread) => this.isProblemStatementThread(thread),
                 getThreadLine: (thread) => this.getProblemStatementThreadLine(thread),
                 onAdd: (payload) => this.onAddReviewComment.emit(payload),
+                onNavigateToLocation: (location) => this.onNavigateToReviewCommentLocation.emit(location),
                 showLocationWarning: () => this.showLocationWarning(),
             });
         }

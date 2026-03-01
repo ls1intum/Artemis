@@ -9,6 +9,23 @@
             <span class="monaco-review-comment-thread-title-text">
                 {{ 'artemisApp.review.threadTitle' | artemisTranslate }}
             </span>
+            @if (isConsistencyIssueThread() && firstConsistencyIssueContent(); as issueContent) {
+                <span class="monaco-review-comment-thread-tag monaco-review-comment-thread-tag--consistency">
+                    {{ 'artemisApp.review.threadConsistencyIssue' | artemisTranslate }}
+                </span>
+                <span class="monaco-review-comment-thread-tag monaco-review-comment-thread-tag--consistency-severity">
+                    {{
+                        'artemisApp.review.threadConsistencySeverity'
+                            | artemisTranslate
+                                : {
+                                      severity: 'artemisApp.review.consistencySeverity.' + issueContent.severity | artemisTranslate,
+                                  }
+                    }}
+                </span>
+                <span class="monaco-review-comment-thread-tag monaco-review-comment-thread-tag--consistency-type">
+                    {{ 'artemisApp.hyperion.consistencyCheck.category.' + issueContent.category | artemisTranslate }}
+                </span>
+            }
             @if (thread().resolved) {
                 <span class="monaco-review-comment-thread-tag monaco-review-comment-thread-tag--resolved">
                     {{ 'artemisApp.review.threadResolved' | artemisTranslate }}
@@ -30,7 +47,15 @@
             <div class="monaco-review-comment-item" [class.monaco-review-comment-item--with-divider]="!first">
                 <div class="monaco-review-comment-header">
                     <div class="monaco-review-comment-title">
-                        @if (commentVm.authorName) {
+                        @if (isConsistencyCheckComment(commentVm.comment)) {
+                            {{
+                                'artemisApp.review.requestedBy'
+                                    | artemisTranslate
+                                        : {
+                                              name: commentVm.authorName || ('artemisApp.review.systemAuthor' | artemisTranslate),
+                                          }
+                            }}
+                        } @else if (commentVm.authorName) {
                             {{ commentVm.authorName }}
                         } @else {
                             {{ 'artemisApp.review.systemAuthor' | artemisTranslate }}
@@ -103,6 +128,34 @@
                 } @else {
                     <div class="monaco-review-comment-text">{{ commentVm.displayText }}</div>
                 }
+            </div>
+        }
+        @if (relatedGroupLocations().length > 0) {
+            <div class="monaco-review-comment-related-locations">
+                <div class="monaco-review-comment-related-locations-title">
+                    {{ 'artemisApp.review.relatedLocationsTitle' | artemisTranslate }}
+                </div>
+                <ul class="monaco-review-comment-related-locations-list">
+                    @for (location of relatedGroupLocations(); track location.locationLabel) {
+                        <li class="monaco-review-comment-related-locations-item">
+                            <span class="monaco-review-comment-related-location-entry">
+                                <span class="monaco-review-comment-related-location-label">{{ location.locationLabel }}</span>
+                                <button
+                                    pButton
+                                    type="button"
+                                    text
+                                    size="small"
+                                    class="monaco-review-comment-related-location-go-to"
+                                    [attr.aria-label]="'artemisApp.review.goToRelatedLocation' | artemisTranslate"
+                                    [title]="'artemisApp.review.goToRelatedLocation' | artemisTranslate"
+                                    (click)="goToRelatedLocation(location)"
+                                >
+                                    <fa-icon [icon]="faArrowUpRightFromSquare" />
+                                </button>
+                            </span>
+                        </li>
+                    }
+                </ul>
             </div>
         }
         <div class="monaco-review-comment-reply">

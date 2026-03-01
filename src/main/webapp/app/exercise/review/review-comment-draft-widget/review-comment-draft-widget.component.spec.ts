@@ -4,6 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CommentContentType } from 'app/exercise/shared/entities/review/comment-content.model';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
@@ -50,7 +51,7 @@ describe('ReviewCommentDraftWidgetComponent', () => {
                 targetType: CommentThreadLocationType.TEMPLATE_REPO,
                 initialLineNumber: 5,
                 initialFilePath: 'src/main.ts',
-                initialComment: { contentType: 'USER', text: 'hello' },
+                initialComment: { contentType: CommentContentType.USER, text: 'hello' },
             },
             expect.any(Function),
         );
@@ -110,7 +111,7 @@ describe('ReviewCommentDraftWidgetComponent', () => {
             {
                 targetType: CommentThreadLocationType.PROBLEM_STATEMENT,
                 initialLineNumber: 9,
-                initialComment: { contentType: 'USER', text: 'comment' },
+                initialComment: { contentType: CommentContentType.USER, text: 'comment' },
             },
             expect.any(Function),
         );
@@ -131,7 +132,7 @@ describe('ReviewCommentDraftWidgetComponent', () => {
                 auxiliaryRepositoryId: 123,
                 initialLineNumber: 4,
                 initialFilePath: 'src/aux.ts',
-                initialComment: { contentType: 'USER', text: 'aux' },
+                initialComment: { contentType: CommentContentType.USER, text: 'aux' },
             },
             expect.any(Function),
         );

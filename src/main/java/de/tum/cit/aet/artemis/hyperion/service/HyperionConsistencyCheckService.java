@@ -46,7 +46,7 @@ import reactor.core.scheduler.Schedulers;
  * Flow:
  * <ol>
  * <li>Refetch exercise with template & solution participations.</li>
- * <li>Render textual snapshot (problem statement + repositories) via {@link HyperionProgrammingExerciseContextRendererService}.</li>
+ * <li>Render textual snapshot (problem statement + repositories) via {@link HyperionProgrammingExerciseContextRendererService} and append existing review-thread context.</li>
  * <li>Execute structural & semantic prompts concurrently using the Spring AI {@link ChatClient}.</li>
  * <li>Parse structured JSON into schema classes, normalize, aggregate, and expose as DTOs.</li>
  * </ol>
@@ -78,20 +78,42 @@ public class HyperionConsistencyCheckService {
 
     private final UserRepository userRepository;
 
+    private final HyperionReviewCommentContextRendererService reviewCommentContextRenderer;
+
     private final ObservationRegistry observationRegistry;
 
+    /**
+     * Creates the consistency-check orchestration service with all required persistence, prompt, and observability dependencies.
+     *
+     * @param programmingExerciseRepository repository for loading programming exercises with participations
+     * @param chatClient                    configured Spring AI chat client
+     * @param templates                     prompt template renderer
+     * @param exerciseContextRenderer       renderer for exercise problem/repository context
+     * @param reviewCommentContextRenderer  renderer for existing review-thread prompt context
+     * @param observationRegistry           Micrometer observation registry
+     * @param llmTokenUsageService          service for persisting token usage
+     * @param userRepository                repository for resolving current user id
+     */
     public HyperionConsistencyCheckService(ProgrammingExerciseRepository programmingExerciseRepository, ChatClient chatClient, HyperionPromptTemplateService templates,
-            HyperionProgrammingExerciseContextRendererService exerciseContextRenderer, ObservationRegistry observationRegistry, LLMTokenUsageService llmTokenUsageService,
-            UserRepository userRepository) {
+            HyperionProgrammingExerciseContextRendererService exerciseContextRenderer, HyperionReviewCommentContextRendererService reviewCommentContextRenderer,
+            ObservationRegistry observationRegistry, LLMTokenUsageService llmTokenUsageService, UserRepository userRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.chatClient = chatClient;
         this.templates = templates;
         this.exerciseContextRenderer = exerciseContextRenderer;
+        this.reviewCommentContextRenderer = reviewCommentContextRenderer;
         this.llmTokenUsageService = llmTokenUsageService;
         this.userRepository = userRepository;
         this.observationRegistry = observationRegistry;
     }
 
+    /**
+     * Maps AI response usage metadata into an {@link LLMRequest} for token accounting.
+     *
+     * @param response   raw chat response with model metadata
+     * @param pipelineId logical pipeline identifier used for usage persistence
+     * @return mapped request, or {@code null} if usage metadata is missing
+     */
     private LLMRequest buildRequestFromResponse(ChatResponse response, String pipelineId) {
         if (response == null || response.getMetadata() == null || response.getMetadata().getUsage() == null) {
             return null;
@@ -105,20 +127,21 @@ public class HyperionConsistencyCheckService {
      * Execute structural and semantic consistency checks. Model calls run concurrently on bounded elastic threads.
      * Any individual failure degrades gracefully to an empty list; the aggregated response is always non-null.
      *
-     * @param exercise programming exercise reference to check consistency for
+     * @param exerciseId id of the programming exercise to check consistency for
      * @return aggregated consistency issues, timing, token usage, and costs.
      */
     @Observed(name = "hyperion.consistency", contextualName = "consistency check", lowCardinalityKeyValues = { AI_SPAN_KEY, AI_SPAN_VALUE })
-    public ConsistencyCheckResponseDTO checkConsistency(ProgrammingExercise exercise) {
-        log.info("Performing consistency check for exercise {}", exercise.getId());
+    public ConsistencyCheckResponseDTO checkConsistency(long exerciseId) {
+        log.info("Performing consistency check for exercise {}", exerciseId);
 
         Instant startTime = Instant.now();
 
-        var exerciseWithParticipations = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
+        var exerciseWithParticipations = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
 
         String renderedRepositoryContext = exerciseContextRenderer.renderContext(exerciseWithParticipations);
+        String existingReviewThreads = reviewCommentContextRenderer.renderReviewThreads(exerciseId);
         String programmingLanguage = exerciseWithParticipations.getProgrammingLanguage() != null ? exerciseWithParticipations.getProgrammingLanguage().name() : "JAVA";
-        var input = Map.of("rendered_context", renderedRepositoryContext, "programming_language", programmingLanguage);
+        var input = Map.of("rendered_context", renderedRepositoryContext, "programming_language", programmingLanguage, "existing_review_threads", existingReviewThreads);
 
         // Thread-safe collector for usage data from parallel checks
         List<LLMRequest> usageCollector = new CopyOnWriteArrayList<>();
@@ -159,12 +182,12 @@ public class HyperionConsistencyCheckService {
         var costsDto = new CostsDTO(promptCost, completionCost, promptCost + completionCost);
 
         if (issueDTOs.isEmpty()) {
-            log.info("No consistency issues found for exercise {}", exercise.getId());
+            log.info("No consistency issues found for exercise {}", exerciseId);
         }
         else {
-            log.info("Consistency check for exercise {} found {} issues", exercise.getId(), issueDTOs.size());
+            log.info("Consistency check for exercise {} found {} issues", exerciseId, issueDTOs.size());
             for (var issue : issueDTOs) {
-                log.info("Consistency issue for exercise {}: [{}] {} - Suggested fix: {}", exercise.getId(), issue.severity(), issue.description(), issue.suggestedFix());
+                log.info("Consistency issue for exercise {}: [{}] {} - Suggested fix: {}", exerciseId, issue.severity(), issue.description(), issue.suggestedFix());
             }
         }
         return new ConsistencyCheckResponseDTO(startTime, issueDTOs, timingDTO, tokenDTO, costsDto);
@@ -173,7 +196,7 @@ public class HyperionConsistencyCheckService {
     /**
      * Run the structural consistency prompt. Returns empty list on any exception.
      *
-     * @param input          prompt variables (rendered_context, programming_language)
+     * @param input          prompt variables (rendered_context, programming_language, existing_review_threads)
      * @param parentObs      parent observation for tracing
      * @param usageCollector thread-safe list to collect LLM request data
      * @return structural issues (never null)
@@ -209,7 +232,7 @@ public class HyperionConsistencyCheckService {
     /**
      * Run the semantic consistency prompt. Returns empty list on any exception.
      *
-     * @param input          prompt variables (rendered_context, programming_language)
+     * @param input          prompt variables (rendered_context, programming_language, existing_review_threads)
      * @param parentObs      parent observation for tracing
      * @param usageCollector thread-safe list to collect LLM request data
      * @return semantic issues (never null)
@@ -330,4 +353,5 @@ public class HyperionConsistencyCheckService {
         private record ArtifactLocation(ArtifactType type, String filePath, Integer startLine, Integer endLine) {
         }
     }
+
 }

@@ -1,5 +1,37 @@
 import { CommentThread, CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { Comment } from 'app/exercise/shared/entities/review/comment.model';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+
+/**
+ * Sorts comments by creation timestamp and then by id for deterministic ordering.
+ *
+ * @param comments The comments to sort.
+ * @returns A sorted copy of the provided comments.
+ */
+export function sortCommentsByCreatedDateThenId(comments: Comment[] | undefined): Comment[] {
+    if (!comments?.length) {
+        return [];
+    }
+
+    return [...comments].sort((a, b) => {
+        const aDate = a.createdDate ? Date.parse(a.createdDate) : 0;
+        const bDate = b.createdDate ? Date.parse(b.createdDate) : 0;
+        if (aDate !== bDate) {
+            return aDate - bDate;
+        }
+        return (a.id ?? 0) - (b.id ?? 0);
+    });
+}
+
+/**
+ * Returns the first comment according to chronological ordering by creation timestamp and id.
+ *
+ * @param comments The comments to inspect.
+ * @returns The first chronological comment, if present.
+ */
+export function getFirstCommentByCreatedDateThenId(comments: Comment[] | undefined): Comment | undefined {
+    return sortCommentsByCreatedDateThenId(comments)[0];
+}
 
 /**
  * Checks whether a thread belongs to the currently selected repository.
