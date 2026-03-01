@@ -13,6 +13,7 @@ import cAllSuccessful from '../../../fixtures/exercise/programming/c/all_success
 import { admin, instructor, studentFour, studentOne, studentTwo, tutor } from '../../../support/users';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { GitCloneMethod } from '../../../support/pageobjects/exercises/programming/ProgrammingExerciseOverviewPage';
+import { BUILD_RESULT_TIMEOUT } from '../../../support/timeouts';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { GitExerciseParticipation } from '../../../support/pageobjects/exercises/programming/GitExerciseParticipation';
 
@@ -287,12 +288,16 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
             programmingExerciseParticipations,
             programmingExerciseOverview,
             programmingExerciseSubmissions,
+            waitForExerciseBuildToFinish,
         }) => {
             // student submits to create a participation + submission
             await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
             await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, studentOne, javaAllSuccessfulSubmission, 'student commit');
             // now instructor commits to the student participation
             await login(instructor);
+            // Wait for at least one pending build to complete before the instructor submits,
+            // reducing the build queue so the instructor's build finishes within the check timeout.
+            await waitForExerciseBuildToFinish(exercise.id!, undefined, BUILD_RESULT_TIMEOUT);
             await navigationBar.openCourseManagement();
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.openExerciseParticipations(exercise.id!);
