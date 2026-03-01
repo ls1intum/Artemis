@@ -389,4 +389,78 @@ class TestResultXmlParserTest {
         assertThat(successfulTests).extracting(LocalCITestJobDTO::name).containsExactlyInAnyOrder("Test", "Suite.Test");
         assertThat(failedTests).isEmpty();
     }
+
+    @Test
+    void testClassnameExtraction() throws IOException {
+        String input = """
+                <testsuite>
+                    <testcase name="testBubbleSort()" classname="de.tum.cit.SortingExampleBehaviorTest" time="0.029"/>
+                    <testcase name="testMergeSort()" classname="de.tum.cit.SortingExampleBehaviorTest" time="0.026">
+                        <failure message="Test failed"/>
+                    </testcase>
+                </testsuite>
+                """;
+
+        TestResultXmlParser.processTestResultFile(input, failedTests, successfulTests);
+
+        assertThat(successfulTests).hasSize(1);
+        assertThat(successfulTests.getFirst().name()).isEqualTo("testBubbleSort()");
+        assertThat(successfulTests.getFirst().classname()).isEqualTo("de.tum.cit.SortingExampleBehaviorTest");
+
+        assertThat(failedTests).hasSize(1);
+        assertThat(failedTests.getFirst().name()).isEqualTo("testMergeSort()");
+        assertThat(failedTests.getFirst().classname()).isEqualTo("de.tum.cit.SortingExampleBehaviorTest");
+    }
+
+    @Test
+    void testInitializationErrorWithClassname() throws IOException {
+        // This simulates what JUnit outputs when @BeforeAll fails
+        String input = """
+                <testsuite name="de.tum.cit.BehaviorTest" tests="1" errors="1">
+                    <testcase name="initializationError" classname="de.tum.cit.BehaviorTest" time="0.001">
+                        <error message="java.lang.RuntimeException: Setup failed">java.lang.RuntimeException: Setup failed</error>
+                    </testcase>
+                </testsuite>
+                """;
+
+        TestResultXmlParser.processTestResultFile(input, failedTests, successfulTests);
+
+        assertThat(failedTests).hasSize(1);
+        assertThat(failedTests.getFirst().name()).isEqualTo("initializationError");
+        assertThat(failedTests.getFirst().classname()).isEqualTo("de.tum.cit.BehaviorTest");
+        assertThat(failedTests.getFirst().testMessages()).contains("java.lang.RuntimeException: Setup failed");
+    }
+
+    @Test
+    void testRealInitializationErrorFromArtemis() throws IOException {
+        // This is the exact XML format produced by Artemis test execution when @BeforeAll fails
+        String input = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <testsuite name="de.tum.cit.aet.SortingExampleBehaviorTest" tests="1" skipped="0" failures="1" errors="0" timestamp="2026-01-18T18:52:53.257Z" hostname="Stephans-MacBook-Pro-2.local" time="0.0">
+                  <properties/>
+                  <testcase name="initializationError" classname="de.tum.cit.aet.SortingExampleBehaviorTest" time="0.0">
+                    <failure message="java.lang.RuntimeException: error" type="java.lang.RuntimeException">java.lang.RuntimeException: error
+                    at de.tum.cit.aet.SortingExampleBehaviorTest.init(SortingExampleBehaviorTest.java:32)
+                    at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+                    </failure>
+                  </testcase>
+                  <system-out><![CDATA[]]></system-out>
+                  <system-err><![CDATA[some log output]]></system-err>
+                </testsuite>
+                """;
+
+        TestResultXmlParser.processTestResultFile(input, failedTests, successfulTests);
+
+        assertThat(failedTests).hasSize(1);
+        LocalCITestJobDTO testJob = failedTests.getFirst();
+        assertThat(testJob.name()).isEqualTo("initializationError");
+        assertThat(testJob.classname()).isEqualTo("de.tum.cit.aet.SortingExampleBehaviorTest");
+        // The message should be extracted from the message attribute
+        assertThat(testJob.testMessages().getFirst()).isEqualTo("java.lang.RuntimeException: error");
+
+        // Verify that the TestCaseBase interface methods work correctly
+        de.tum.cit.aet.artemis.programming.dto.TestCaseBase testCaseBase = testJob;
+        assertThat(testCaseBase.name()).isEqualTo("initializationError");
+        assertThat(testCaseBase.classname()).isEqualTo("de.tum.cit.aet.SortingExampleBehaviorTest");
+    }
 }

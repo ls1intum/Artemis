@@ -306,6 +306,39 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgramming
     }
 
     @Test
+    void shouldNotRegisterInitializationErrorAsTestCase() {
+        // We do not want to use the test cases generated in the setup
+        testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
+
+        // Simulate a build result with real tests and an initializationError
+        // initializationError is a JUnit pseudo-test that occurs when @BeforeAll or class loading fails
+        var result = generateResult(List.of("test1", "test2"), List.of(ProgrammingExerciseGradingService.TESTCASE_INITIALIZATION_ERROR_NAME));
+        feedbackCreationService.generateTestCasesFromBuildResult(result, programmingExercise);
+
+        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        // Only test1 and test2 should be registered, initializationError should be filtered out
+        assertThat(testCases).hasSize(2);
+        assertThat(testCases).noneMatch(tc -> ProgrammingExerciseGradingService.TESTCASE_INITIALIZATION_ERROR_NAME.equals(tc.getTestName()));
+    }
+
+    @Test
+    void shouldNotRegisterQualifiedInitializationErrorAsTestCase() {
+        // We do not want to use the test cases generated in the setup
+        testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
+
+        // Simulate a build result with qualified initialization errors like "BehaviorTest.initializationError"
+        // This format is used when the CI result service includes the class name
+        var result = generateResult(List.of("test1", "test2"), List.of("BehaviorTest." + ProgrammingExerciseGradingService.TESTCASE_INITIALIZATION_ERROR_NAME,
+                "StructuralTest." + ProgrammingExerciseGradingService.TESTCASE_INITIALIZATION_ERROR_NAME));
+        feedbackCreationService.generateTestCasesFromBuildResult(result, programmingExercise);
+
+        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        // Only test1 and test2 should be registered, both qualified initializationError variants should be filtered out
+        assertThat(testCases).hasSize(2);
+        assertThat(testCases).noneMatch(tc -> tc.getTestName().contains(ProgrammingExerciseGradingService.TESTCASE_INITIALIZATION_ERROR_NAME));
+    }
+
+    @Test
     void shouldMapStructuralTestCaseTypesCorrectly() {
         Set<ProgrammingExerciseTestCase> structuralTestCases = Set.of(new ProgrammingExerciseTestCase().testName("testClass[Policy]").exercise(programmingExercise),
                 new ProgrammingExerciseTestCase().testName("testConstructors[BubbleSort]").exercise(programmingExercise),
