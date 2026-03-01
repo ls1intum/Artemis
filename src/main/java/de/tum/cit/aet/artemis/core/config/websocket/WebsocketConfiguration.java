@@ -400,6 +400,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 Long participationId = getParticipationIdFromDestination(destination);
                 return isParticipationOwnedByUser(principal, participationId);
             }
+
             if (isNonPersonalExerciseResultDestination(destination)) {
                 final long exerciseId = getExerciseIdFromNonPersonalExerciseResultDestination(destination).orElseThrow();
 

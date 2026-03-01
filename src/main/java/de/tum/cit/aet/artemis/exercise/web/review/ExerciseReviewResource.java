@@ -33,8 +33,10 @@ import de.tum.cit.aet.artemis.exercise.dto.review.CommentThreadDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CommentThreadGroupDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CreateCommentThreadDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CreateCommentThreadGroupDTO;
+import de.tum.cit.aet.artemis.exercise.dto.review.ReviewThreadSyncDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UpdateThreadResolvedStateDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UserCommentContentDTO;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseEditorSyncService;
 import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewService;
 
 @Profile(PROFILE_CORE)
@@ -47,8 +49,11 @@ public class ExerciseReviewResource {
 
     private final ExerciseReviewService exerciseReviewService;
 
-    public ExerciseReviewResource(ExerciseReviewService exerciseReviewService) {
+    private final ExerciseEditorSyncService exerciseEditorSyncService;
+
+    public ExerciseReviewResource(ExerciseReviewService exerciseReviewService, ExerciseEditorSyncService exerciseEditorSyncService) {
         this.exerciseReviewService = exerciseReviewService;
+        this.exerciseEditorSyncService = exerciseEditorSyncService;
     }
 
     /**
@@ -66,8 +71,9 @@ public class ExerciseReviewResource {
         ExerciseReviewService.ThreadCreationResult result = exerciseReviewService.createThread(exerciseId, createCommentThreadDTO);
         CommentThread savedThread = result.thread();
         Comment savedComment = result.comment();
-        return ResponseEntity.created(new URI("/api/exercise/exercises/" + exerciseId + "/review-threads/" + savedThread.getId()))
-                .body(new CommentThreadDTO(savedThread, List.of(new CommentDTO(savedComment))));
+        CommentThreadDTO createdThread = new CommentThreadDTO(savedThread, List.of(new CommentDTO(savedComment)));
+        exerciseEditorSyncService.broadcastReviewThreadUpdate(exerciseId, ReviewThreadSyncDTO.threadCreated(exerciseId, createdThread));
+        return ResponseEntity.created(new URI("/api/exercise/exercises/" + exerciseId + "/review-threads/" + savedThread.getId())).body(createdThread);
     }
 
     /**
@@ -99,6 +105,8 @@ public class ExerciseReviewResource {
             @Valid @NotNull @RequestBody CreateCommentThreadGroupDTO createCommentThreadGroupDTO) throws URISyntaxException {
         log.debug("REST request to create exercise review thread group for exercise {}", exerciseId);
         CommentThreadGroup savedGroup = exerciseReviewService.createGroup(exerciseId, createCommentThreadGroupDTO);
+        List<Long> savedThreadIds = savedGroup.getThreads().stream().map(CommentThread::getId).sorted().toList();
+        exerciseEditorSyncService.broadcastReviewThreadUpdate(exerciseId, ReviewThreadSyncDTO.groupUpdated(exerciseId, savedThreadIds, savedGroup.getId()));
         return ResponseEntity.created(new URI("/api/exercise/exercises/" + exerciseId + "/review-thread-groups/" + savedGroup.getId())).body(new CommentThreadGroupDTO(savedGroup));
     }
 
@@ -113,7 +121,8 @@ public class ExerciseReviewResource {
     @EnforceAtLeastEditorInExercise
     public ResponseEntity<Void> deleteThreadGroup(@PathVariable long exerciseId, @PathVariable long groupId) {
         log.debug("REST request to delete exercise review thread group {} for exercise {}", groupId, exerciseId);
-        exerciseReviewService.deleteGroup(exerciseId, groupId);
+        var threadIds = exerciseReviewService.deleteGroup(exerciseId, groupId);
+        exerciseEditorSyncService.broadcastReviewThreadUpdate(exerciseId, ReviewThreadSyncDTO.groupUpdated(exerciseId, threadIds, null));
         return ResponseEntity.noContent().build();
     }
 
@@ -131,7 +140,9 @@ public class ExerciseReviewResource {
             throws URISyntaxException {
         log.debug("REST request to create exercise review comment for thread {}", threadId);
         Comment savedComment = exerciseReviewService.createUserComment(exerciseId, threadId, content);
-        return ResponseEntity.created(new URI("/api/exercise/exercises/" + exerciseId + "/review-comments/" + savedComment.getId())).body(new CommentDTO(savedComment));
+        CommentDTO createdComment = new CommentDTO(savedComment);
+        exerciseEditorSyncService.broadcastReviewThreadUpdate(exerciseId, ReviewThreadSyncDTO.commentCreated(exerciseId, createdComment));
+        return ResponseEntity.created(new URI("/api/exercise/exercises/" + exerciseId + "/review-comments/" + savedComment.getId())).body(createdComment);
     }
 
     /**
@@ -146,6 +157,7 @@ public class ExerciseReviewResource {
     public ResponseEntity<Void> deleteComment(@PathVariable long exerciseId, @PathVariable long commentId) {
         log.debug("REST request to delete comment {} for exercise {}", commentId, exerciseId);
         exerciseReviewService.deleteComment(exerciseId, commentId);
+        exerciseEditorSyncService.broadcastReviewThreadUpdate(exerciseId, ReviewThreadSyncDTO.commentDeleted(exerciseId, commentId));
         return ResponseEntity.noContent().build();
     }
 
@@ -163,7 +175,9 @@ public class ExerciseReviewResource {
             @Valid @NotNull @RequestBody UpdateThreadResolvedStateDTO dto) {
         log.debug("REST request to update resolved state of thread {} for exercise {}", threadId, exerciseId);
         CommentThread updated = exerciseReviewService.updateThreadResolvedState(exerciseId, threadId, dto);
-        return ResponseEntity.ok(new CommentThreadDTO(updated, mapComments(updated)));
+        CommentThreadDTO updatedThread = new CommentThreadDTO(updated, mapComments(updated));
+        exerciseEditorSyncService.broadcastReviewThreadUpdate(exerciseId, ReviewThreadSyncDTO.threadUpdated(exerciseId, updatedThread));
+        return ResponseEntity.ok(updatedThread);
     }
 
     /**
@@ -180,7 +194,9 @@ public class ExerciseReviewResource {
             @Valid @NotNull @RequestBody UserCommentContentDTO dto) {
         log.debug("REST request to update content of comment {} for exercise {}", commentId, exerciseId);
         Comment updated = exerciseReviewService.updateUserCommentContent(exerciseId, commentId, dto);
-        return ResponseEntity.ok(new CommentDTO(updated));
+        CommentDTO updatedComment = new CommentDTO(updated);
+        exerciseEditorSyncService.broadcastReviewThreadUpdate(exerciseId, ReviewThreadSyncDTO.commentUpdated(exerciseId, updatedComment));
+        return ResponseEntity.ok(updatedComment);
     }
 
     private List<CommentDTO> mapComments(CommentThread thread) {

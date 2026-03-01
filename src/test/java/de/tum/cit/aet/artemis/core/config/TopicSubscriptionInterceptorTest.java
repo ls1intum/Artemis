@@ -134,6 +134,7 @@ class TopicSubscriptionInterceptorTest extends AbstractSpringIntegrationIndepend
             when(principalMock.getName()).thenReturn(TEST_PREFIX + "student1");
             returnedValue = interceptor.preSend(msgMock, channel);
             assertThat(returnedValue).isNull();
+
         }
     }
 }

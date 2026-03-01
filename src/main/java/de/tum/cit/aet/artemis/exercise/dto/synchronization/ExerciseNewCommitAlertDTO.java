@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
- * Websocket payload notifying clients about newly pushed commits.
+ * Synchronization payload notifying clients about newly pushed commits.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "Notification for newly pushed commits.")

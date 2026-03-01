@@ -821,18 +821,6 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * Checks if the passed user is at least an editor in the given exercise.
-     *
-     * @param login      the login of the user that needs to be checked
-     * @param exerciseId the id of the exercise that needs to be checked
-     * @return true if the user is at least an editor in the exercise, false otherwise
-     */
-    @CheckReturnValue
-    public boolean isAtLeastEditorInExercise(String login, long exerciseId) {
-        return userRepository.isAtLeastEditorInExercise(login, exerciseId);
-    }
-
-    /**
      * Checks if the current user is at least an editor in the given exercise.
      *
      * @param exerciseId the id of the exercise that needs to be checked
@@ -842,6 +830,18 @@ public class AuthorizationCheckService {
     public boolean isAtLeastEditorInExercise(long exerciseId) {
         final var userLogin = SecurityUtils.getCurrentUserLogin();
         return userLogin.filter(login -> userRepository.isAtLeastEditorInExercise(login, exerciseId)).isPresent();
+    }
+
+    /**
+     * Checks if the passed user is at least an editor in the given exercise.
+     *
+     * @param login      the login of the user that needs to be checked
+     * @param exerciseId the id of the exercise that needs to be checked
+     * @return true if the user is at least an editor in the exercise, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastEditorInExercise(String login, long exerciseId) {
+        return userRepository.isAtLeastEditorInExercise(login, exerciseId);
     }
 
     /**

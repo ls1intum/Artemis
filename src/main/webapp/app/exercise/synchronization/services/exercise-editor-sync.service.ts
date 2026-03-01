@@ -4,6 +4,9 @@ import { concatMap, filter, take, tap } from 'rxjs/operators';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
+import { Comment } from 'app/exercise/shared/entities/review/comment.model';
+import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { ReviewThreadSyncAction } from 'app/exercise/shared/entities/review/review-thread-sync-update.model';
 
 /**
  * Synchronization targets used to scope editor sync events.
@@ -15,6 +18,7 @@ export enum ExerciseEditorSyncTarget {
     TESTS_REPOSITORY = 'TESTS_REPOSITORY',
     AUXILIARY_REPOSITORY = 'AUXILIARY_REPOSITORY',
     EXERCISE_METADATA = 'EXERCISE_METADATA',
+    REVIEW_COMMENTS = 'REVIEW_COMMENTS',
 }
 
 /**
@@ -27,10 +31,11 @@ export enum ExerciseEditorSyncEventType {
     PROBLEM_STATEMENT_AWARENESS_UPDATE = 'PROBLEM_STATEMENT_AWARENESS_UPDATE',
     NEW_COMMIT_ALERT = 'NEW_COMMIT_ALERT',
     NEW_EXERCISE_VERSION_ALERT = 'NEW_EXERCISE_VERSION_ALERT',
+    REVIEW_THREAD_UPDATE = 'REVIEW_THREAD_UPDATE',
 }
 
 /**
- * Shared fields for synchronization events received over websocket.
+ * Shared fields for synchronization events received over the shared synchronization topic.
  */
 export interface ExerciseEditorSyncEventBase {
     eventType: ExerciseEditorSyncEventType;
@@ -86,6 +91,21 @@ export interface ExerciseNewVersionAlertEvent {
 }
 
 /**
+ * Event payload describing an incremental review-thread update.
+ */
+export interface ReviewThreadSyncUpdateEvent extends ExerciseEditorSyncEventBase {
+    eventType: ExerciseEditorSyncEventType.REVIEW_THREAD_UPDATE;
+    target: ExerciseEditorSyncTarget.REVIEW_COMMENTS;
+    action: ReviewThreadSyncAction;
+    exerciseId: number;
+    thread?: CommentThread;
+    comment?: Comment;
+    commentId?: number;
+    threadIds?: number[];
+    groupId?: number;
+}
+
+/**
  * Union of all synchronization events received by the editor.
  */
 export type ExerciseEditorSyncEvent =
@@ -94,10 +114,11 @@ export type ExerciseEditorSyncEvent =
     | ProblemStatementSyncUpdateEvent
     | ProblemStatementAwarenessUpdateEvent
     | ExerciseNewVersionAlertEvent
-    | ExerciseNewCommitAlertEvent;
+    | ExerciseNewCommitAlertEvent
+    | ReviewThreadSyncUpdateEvent;
 
 /**
- * Relays exercise editor synchronization messages over WebSocket.
+ * Relays exercise editor synchronization messages over the shared synchronization topic.
  *
  * This service is provided at the root level (singleton) and supports only one exercise
  * connection at a time. The lifecycle is managed by parent components (exercise edit page
@@ -206,7 +227,7 @@ export class ExerciseEditorSyncService {
      */
     sendSynchronizationUpdate(exerciseId: number, message: ExerciseEditorSyncEvent): void {
         if (!this.subscription) {
-            throw new Error('Cannot send synchronization message: not connected to websocket topic');
+            throw new Error('Cannot send synchronization message: not connected to synchronization topic');
         }
         if (this.exerciseId !== exerciseId) {
             throw new Error(`Cannot send synchronization message: exerciseId ${exerciseId} does not match connected exerciseId ${this.exerciseId}`);
