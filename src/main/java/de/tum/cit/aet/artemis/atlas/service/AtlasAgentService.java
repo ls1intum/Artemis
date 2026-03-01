@@ -250,6 +250,10 @@ public class AtlasAgentService {
             return new AtlasAgentChatResponseDTO(response, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), null, null, null, null);
         }
         catch (Exception e) {
+            log.error("Error processing chat message for session {}", sessionId, e);
+            if (executionPlanStateManagerService.hasPlan(sessionId)) {
+                executionPlanStateManagerService.cancelPlan(sessionId);
+            }
             return new AtlasAgentChatResponseDTO("I apologize, but I'm having trouble processing your request right now. Please try again later.", ZonedDateTime.now(), false, null,
                     null, null, null);
         }
@@ -259,6 +263,7 @@ public class AtlasAgentService {
             CompetencyExpertToolsService.getAndClearPreviews();
             CompetencyMappingToolsService.clearCurrentSessionId();
             CompetencyMappingToolsService.clearAllPreviews();
+            ExerciseMappingToolsService.clearUserSelectedMappings();
         }
 
     }

@@ -47,6 +47,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     private readonly activeModal = inject(NgbActiveModal);
     private readonly agentChatService = inject(AgentChatService);
     private readonly translateService = inject(TranslateService);
+    private readonly exerciseMappingCheckboxStates = new Map<string, Map<number, boolean>>();
 
     courseId = signal<number>(0);
     messages = signal<ChatMessage[]>([]);
@@ -54,8 +55,6 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     isAgentTyping = signal(false);
     shouldScrollToBottom = signal(false);
     selectedRelationId = signal<number | undefined>(undefined);
-
-    exerciseMappingCheckboxStates = new Map<string, Map<number, boolean>>();
 
     get weightOptions() {
         return [

@@ -202,14 +202,9 @@ public class ExerciseMappingToolsService {
      * @param courseId The course ID
      * @return JSON string with exercise list or error message
      */
-    @Tool(description = "Lists all exercises in a course with their IDs, titles, types, and currently mapped competencies. Use this when the user wants to map an exercise to competencies."
+    @Tool(description = "Lists all exercises in a course with their IDs, titles and types. Use this when the user wants to map an exercise to competencies."
             + "Returns a formatted list of exercises with enumeration for easy selection.")
     public String listCourseExercises(@ToolParam(description = "The ID of the course") Long courseId) {
-        Optional<Course> courseOptional = courseRepository.findById(courseId);
-        if (courseOptional.isEmpty()) {
-            return toJson(Map.of("error", "Course not found with ID: " + courseId));
-        }
-
         Set<Exercise> exercises = exerciseRepository.findByCourseIds(Set.of(courseId));
         List<AtlasAgentExerciseDTO> exerciseList = exercises.stream()
                 .map(exercise -> new AtlasAgentExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getType(), exercise.getMaxPoints(),
