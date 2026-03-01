@@ -1,0 +1,13 @@
+.jhi-table-view-container {
+    .p-datatable {
+        tr td {
+            padding: 8px 16px !important;
+        }
+        .p-datatable-header {
+            padding: 0 0 12px 0 !important;
+        }
+        .p-paginator {
+            justify-content: start !important;
+        }
+    }
+}

@@ -6,8 +6,12 @@ tabWidth: 4
 trailingComma: all
 endOfLine: auto
 
-# java rules:
 overrides:
+  # java rules:
   - files: "*.java"
     options:
       tabWidth: 4
+  # html rules:
+  - files: "*.html"
+    options:
+      parser: angular

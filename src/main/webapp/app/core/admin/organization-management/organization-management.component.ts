@@ -1,15 +1,20 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Organization } from 'app/core/shared/entities/organization.model';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { Subject } from 'rxjs';
-import { faEye, faPlus, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { TableLazyLoadEvent } from 'primeng/table';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title-bar-actions.directive';
+import { ColumnDef, TableView } from 'app/shared/table-view/table-view';
+import { buildDbQueryFromLazyEvent } from 'app/shared/table-view/request-builder';
+import { AlertService } from 'app/shared/service/alert.service';
+import { onError } from 'app/shared/util/global.utils';
 
 /**
  * Component for managing organizations.
@@ -18,39 +23,32 @@ import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title
 @Component({
     selector: 'jhi-organization-management',
     templateUrl: './organization-management.component.html',
-    imports: [TranslateDirective, RouterLink, FaIconComponent, DeleteButtonDirective, AdminTitleBarTitleDirective, AdminTitleBarActionsDirective],
+    imports: [TranslateDirective, RouterLink, FaIconComponent, DeleteButtonDirective, AdminTitleBarTitleDirective, AdminTitleBarActionsDirective, TableView],
 })
-export class OrganizationManagementComponent implements OnInit {
+export class OrganizationManagementComponent {
     private readonly organizationService = inject(OrganizationManagementService);
+    private readonly router = inject(Router);
+    private readonly route = inject(ActivatedRoute);
+    private readonly alertService = inject(AlertService);
 
-    /** List of organizations */
-    readonly organizations = signal<Organization[]>([]);
-
+    organizations = signal<Organization[]>([]);
+    totalCount = signal(0);
+    isLoading = signal(false);
+    columns: ColumnDef<Organization>[] = [
+        { field: 'id', headerKey: 'global.field.id', sort: true, width: '100px' },
+        { field: 'name', headerKey: 'artemisApp.organizationManagement.name', sort: true, width: '300px' },
+        { field: 'shortName', headerKey: 'artemisApp.organizationManagement.shortName', sort: true, width: '150px' },
+        { field: 'numberOfUsers', headerKey: 'artemisApp.organizationManagement.users', sort: true, width: '100px' },
+        { field: 'numberOfCourses', headerKey: 'artemisApp.organizationManagement.courses', sort: true, width: '100px' },
+        { field: 'emailPattern', headerKey: 'artemisApp.organizationManagement.emailPattern', sort: true, width: '200px' },
+    ];
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
     // Icons
     faPlus = faPlus;
     faTimes = faTimes;
-    faEye = faEye;
     faWrench = faWrench;
-
-    /**
-     * Loads organizations and their user/course counts on initialization.
-     */
-    ngOnInit(): void {
-        this.organizationService.getOrganizations().subscribe((organizations) => {
-            this.organizations.set(organizations);
-            this.organizationService.getNumberOfUsersAndCoursesOfOrganizations().subscribe((organizationCountDtos) => {
-                const orgs = this.organizations();
-                for (let i = 0; i < organizationCountDtos.length; i++) {
-                    orgs[i].numberOfUsers = organizationCountDtos[i].numberOfUsers;
-                    orgs[i].numberOfCourses = organizationCountDtos[i].numberOfCourses;
-                }
-                this.organizations.set([...orgs]);
-            });
-        });
-    }
 
     /**
      * Deletes an organization by ID.
@@ -61,6 +59,7 @@ export class OrganizationManagementComponent implements OnInit {
             next: () => {
                 this.dialogErrorSource.next('');
                 this.organizations.set(this.organizations().filter((org) => org.id !== organizationId));
+                this.totalCount.set(this.totalCount() - 1);
             },
             error: (error: HttpErrorResponse) => {
                 this.dialogErrorSource.next('An error occurred while removing the organization: ' + error.message);
@@ -68,12 +67,27 @@ export class OrganizationManagementComponent implements OnInit {
         });
     }
 
-    /**
-     * Returns the unique identifier for items in the collection
-     * @param index of a user in the collection
-     * @param item current user
-     */
-    trackIdentity(index: number, item: Organization) {
-        return item.id ?? -1;
+    loadOrganizations(event: TableLazyLoadEvent): void {
+        this.isLoading.set(true);
+        const query = buildDbQueryFromLazyEvent(event);
+        this.organizationService.getOrganizations(query, true).subscribe({
+            next: (response) => {
+                this.organizations.set(response.content);
+                this.totalCount.set(response.totalElements);
+                this.isLoading.set(false);
+            },
+            error: (error: HttpErrorResponse) => {
+                this.organizations.set([]);
+                this.totalCount.set(0);
+                this.isLoading.set(false);
+                onError(this.alertService, error);
+            },
+        });
+    }
+
+    onOrganizationSelect(organization: Organization | Organization[] | undefined): void {
+        if (!Array.isArray(organization) && organization?.id) {
+            this.router.navigate([organization.id], { relativeTo: this.route });
+        }
     }
 }

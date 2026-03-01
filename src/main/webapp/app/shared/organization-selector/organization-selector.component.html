@@ -1,52 +1,33 @@
-<div class="justify-content-center p-1">
-    @if (availableOrganizations && availableOrganizations.length > 0) {
-        <div class="table-responsive p-1">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th></th>
-                        <th><span jhiTranslate="artemisApp.organizationManagement.name"></span></th>
-                        <th><span jhiTranslate="artemisApp.organizationManagement.shortName"></span></th>
-                        <th><span jhiTranslate="artemisApp.organizationManagement.emailPattern"></span></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @for (organization of availableOrganizations; track organization) {
-                        <tr>
-                            <td>
-                                @if (organization.logoUrl) {
-                                    <img [height]="48" [src]="organization.logoUrl" (error)="$event.target.style.display = 'none'" />
-                                }
-                            </td>
-                            <td>
-                                <span>{{ organization.name }}</span>
-                            </td>
-                            <td>
-                                <span>{{ organization.shortName }}</span>
-                            </td>
-                            <td>{{ organization.emailPattern }}</td>
-                            <td>
-                                <button
-                                    type="button"
-                                    class="btn ms-2 btn-primary"
-                                    (click)="closeModal(organization)"
-                                    jhiTranslate="artemisApp.organizationManagement.modalSelector.select"
-                                ></button>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    } @else {
-        <div class="alert alert-info">
-            <span jhiTranslate="artemisApp.organizationManagement.modalSelector.noOrganizations"></span>
-            <a *jhiHasAnyAuthority="'ROLE_ADMIN'" [routerLink]="['/admin/organization-management']" (click)="closeModal(undefined)">
-                <span jhiTranslate="artemisApp.organizationManagement.modalSelector.manageOrganizations"></span>
-            </a>
-        </div>
-    }
+<div class="p-1">
+    <jhi-table-view
+        [cols]="columns()"
+        [vals]="organizations()"
+        [totalRows]="totalCount()"
+        (onLazyLoad)="loadOrganizations($event)"
+        [rowActions]="selectorActions"
+        [pageSize]="10"
+        [pageSizeOptions]="[10]"
+        [loading]="isLoading()"
+        emptyMessageTranslation="artemisApp.organizationManagement.modalSelector.noOrganizations"
+    />
+
     <div class="d-flex justify-content-end mt-3">
         <button type="button" class="btn btn-secondary" (click)="closeModal(undefined)" jhiTranslate="entity.action.cancel"></button>
     </div>
 </div>
+
+<ng-template #logoCell let-params>
+    @if (params.value) {
+        <img [height]="36" [src]="params.value" (error)="$event.target.style.display = 'none'" alt="" />
+    }
+</ng-template>
+
+<ng-template #selectorActions let-org>
+    <button
+        type="button"
+        class="btn btn-primary btn-sm"
+        [disabled]="isAlreadyAssigned()(org)"
+        (click)="selectOrganization(org); $event.stopPropagation()"
+        jhiTranslate="artemisApp.organizationManagement.modalSelector.select"
+    ></button>
+</ng-template>
