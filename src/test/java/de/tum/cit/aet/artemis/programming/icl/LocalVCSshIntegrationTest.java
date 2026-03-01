@@ -190,21 +190,24 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
      * and {@link org.apache.sshd.common.session.helpers.AbstractSession#getSession}.
      */
     private SshClient clientConnectToArtemisSshServer() throws GeneralSecurityException, IOException {
-        var serverSessions = sshServer.getActiveSessions();
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         KeyPair keyPair = setupKeyPairAndAddToUser();
         User user = userTestRepository.getUser();
+
+        // Capture baseline session count BEFORE connecting
+        var baselineServerSessions = sshServer.getActiveSessions();
+        int baselineSessionCount = baselineServerSessions.size();
 
         SshClient client = SshClient.setUpDefaultClient();
         client.start();
 
         ClientSession clientSession = connect(client, user, keyPair);
-        int numberOfSessions = serverSessions.size();
 
-        serverSessions = sshServer.getActiveSessions();
-        var attachedServerSessions = serverSessions.stream().filter(Objects::nonNull).count();
+        // Get current session count AFTER connecting
+        var currentServerSessions = sshServer.getActiveSessions();
+        var attachedServerSessions = currentServerSessions.stream().filter(Objects::nonNull).count();
         assertThat(clientSession.isAuthenticated()).isTrue();
-        assertThat(attachedServerSessions).as("There are more server sessions activated than expected.").isEqualTo(numberOfSessions + 1);
+        assertThat(attachedServerSessions).as("There are more server sessions activated than expected.").isEqualTo(baselineSessionCount + 1);
         return client;
     }
 
