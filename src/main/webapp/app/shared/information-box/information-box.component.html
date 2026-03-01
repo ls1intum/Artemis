@@ -1,15 +1,15 @@
-@if (informationBoxData) {
+@if (informationBoxData()) {
     <div
         id="test-information-box"
         class="mw-content text-nowrap rounded-3 py-1 px-2 border border-1 bg-module small fw-semibold"
-        ngbTooltip="{{ informationBoxData.tooltip | artemisTranslate: informationBoxData.tooltipParams }}"
+        ngbTooltip="{{ informationBoxData()!.tooltip | artemisTranslate: informationBoxData()!.tooltipParams }}"
     >
-        <div id="test-title" class="text-body-tertiary" [jhiTranslate]="informationBoxData.title"></div>
-        @if (informationBoxData.isContentComponent) {
+        <div id="test-title" class="text-body-tertiary" [jhiTranslate]="informationBoxData()!.title"></div>
+        @if (informationBoxData()!.isContentComponent) {
             <ng-content select="[contentComponent]" />
         } @else {
-            <div id="test-text" [ngClass]="informationBoxData.contentColor ? 'text-' + informationBoxData.contentColor : 'text-body'">
-                {{ informationBoxData.content.value }}
+            <div id="test-text" [ngClass]="informationBoxData()!.contentColor ? 'text-' + informationBoxData()!.contentColor : 'text-body'">
+                {{ informationBoxData()!.content.value }}
             </div>
         }
     </div>

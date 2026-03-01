@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, input, output, signal } from '@angular/core';
 import { IconProp, SizeProp } from '@fortawesome/fontawesome-svg-core';
 import { faCheck, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -11,13 +11,13 @@ import { NgClass } from '@angular/common';
     imports: [FaIconComponent, NgbTooltip, NgClass],
 })
 export class ConfirmIconComponent {
-    @Input() initialIcon = <IconProp>faTrash;
-    @Input() initialTooltip: string;
-    @Input() confirmIcon = <IconProp>faCheck;
-    @Input() confirmTooltip: string;
-    @Input() iconSize = <SizeProp>'md';
-    @Output() confirmEvent = new EventEmitter();
-    showConfirm = false;
+    initialIcon = input<IconProp>(faTrash);
+    initialTooltip = input<string>();
+    confirmIcon = input<IconProp>(faCheck);
+    confirmTooltip = input<string>();
+    iconSize = input<SizeProp>('1x');
+    confirmEvent = output<boolean>();
+    showConfirm = signal(false);
 
     /**
      * call toggle and emit confirmEvent
@@ -31,6 +31,6 @@ export class ConfirmIconComponent {
      * toggle showConfirm
      */
     toggle(): void {
-        this.showConfirm = !this.showConfirm;
+        this.showConfirm.update((confirmToggled) => !confirmToggled);
     }
 }
