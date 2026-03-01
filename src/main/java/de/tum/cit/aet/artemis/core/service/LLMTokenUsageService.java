@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageTraceRepository;
 @Service
 public class LLMTokenUsageService {
 
-    private static final Pattern DATE_SUFFIX_PATTERN = Pattern.compile("-\\d{4}-\\d{2}-\\d{2}$");
+    private static final Pattern DATE_SUFFIX_PATTERN = Pattern.compile("-?\\d{4}-\\d{2}-\\d{2}$");
 
     private final LLMTokenUsageTraceRepository llmTokenUsageTraceRepository;
 
@@ -37,12 +37,16 @@ public class LLMTokenUsageService {
 
     private final Map<String, ModelCost> costs;
 
+    private final Map<String, ModelCost> costsByDashlessKey;
+
     public LLMTokenUsageService(LLMTokenUsageTraceRepository llmTokenUsageTraceRepository, LLMTokenUsageRequestRepository llmTokenUsageRequestRepository,
             LLMModelCostConfiguration costConfiguration) {
         this.llmTokenUsageTraceRepository = llmTokenUsageTraceRepository;
         this.llmTokenUsageRequestRepository = llmTokenUsageRequestRepository;
         this.costs = costConfiguration.getModelCosts().entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> new ModelCost(e.getValue().getInputCostPerMillionEur(), e.getValue().getOutputCostPerMillionEur())));
+        this.costsByDashlessKey = costConfiguration.getModelCosts().entrySet().stream().collect(Collectors.toMap(entry -> entry.getKey().replace("-", ""),
+                entry -> new ModelCost(entry.getValue().getInputCostPerMillionEur(), entry.getValue().getOutputCostPerMillionEur()), (existing, replacement) -> existing));
     }
 
     /**
@@ -56,7 +60,8 @@ public class LLMTokenUsageService {
      */
     public LLMRequest buildLLMRequest(String model, int inputTokens, int outputTokens, String pipelineId) {
         String normalized = model != null ? DATE_SUFFIX_PATTERN.matcher(model).replaceAll("") : "";
-        ModelCost cost = costs.getOrDefault(normalized, ModelCost.ZERO);
+        String dashless = normalized.replace("-", "");
+        ModelCost cost = costs.getOrDefault(normalized, costsByDashlessKey.getOrDefault(dashless, ModelCost.ZERO));
         return new LLMRequest(model, inputTokens, cost.input(), outputTokens, cost.output(), pipelineId);
     }
 
