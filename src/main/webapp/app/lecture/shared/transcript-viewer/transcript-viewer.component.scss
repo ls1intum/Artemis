@@ -124,6 +124,7 @@
 
 /* Only the list scrolls */
 .transcript-list {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: 0.375rem;
