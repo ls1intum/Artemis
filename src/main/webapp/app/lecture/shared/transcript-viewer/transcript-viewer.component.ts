@@ -177,8 +177,9 @@ export class TranscriptViewerComponent {
         const el = document.getElementById(`segment-${segment.startTime}`);
         const container = this.transcriptListRef()?.nativeElement;
         if (el && container) {
-            const scrollTop = el.offsetTop - container.offsetTop - container.clientHeight / 2 + el.clientHeight / 2;
-            container.scrollTo({ top: scrollTop, behavior: 'smooth' });
+            const centeredTop = el.offsetTop - container.clientHeight / 2 + el.clientHeight / 2;
+            const top = Math.max(0, Math.min(centeredTop, container.scrollHeight - container.clientHeight));
+            container.scrollTo({ top, behavior: 'smooth' });
         }
     }
 }
