@@ -14,207 +14,45 @@
     styleClass="global-search-dialog"
 >
     <!-- Search Input Container -->
-    <div class="search-input-container d-flex align-items-center p-3 flex-shrink-0 border-bottom">
-        <fa-icon [icon]="faSearch" class="search-icon text-secondary me-2" aria-hidden="true" />
-
-        <!-- Active Filters -->
-        @if (activeFilters().length > 0) {
-            @for (filter of activeFilters(); track filter) {
-                <p-chip [label]="filter" [removable]="true" (onRemove)="removeFilter(filter)" styleClass="me-2 search-filter-chip" [attr.aria-label]="'Filter: ' + filter" />
-            }
-        }
-
-        <input
-            #searchInput
-            type="text"
-            [value]="searchQuery()"
-            (input)="onSearchInput($event)"
-            (keydown)="onSearchKeyDown($event)"
-            [placeholder]="'global.search.placeholder' | artemisTranslate"
-            class="search-input flex-grow-1 border-0 bg-transparent text-body"
-            [attr.aria-label]="'global.search.placeholder' | artemisTranslate"
-            autocomplete="off"
-        />
-
-        @if (isLoading()) {
-            <span class="spinner-border spinner-border-sm text-secondary" role="status" aria-label="Loading"></span>
-        }
-    </div>
+    <jhi-global-search-input
+        [searchQuery]="searchQuery()"
+        [activeFilters]="activeFilters()"
+        [isLoading]="isLoading()"
+        (searchInput)="onSearchInput($event)"
+        (searchKeyDown)="onSearchKeyDown($event)"
+        (filterRemoved)="removeFilter($event)"
+    />
 
     <!-- Results Area -->
     <div class="results-container flex-grow-1 overflow-auto">
         @if (isLoading()) {
-            <!-- Loading state -->
-            <div class="text-center py-5 text-secondary">
-                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                <span>{{ 'global.search.searching' | artemisTranslate }}</span>
-            </div>
+            <jhi-global-search-empty-states [stateType]="'loading'" />
         } @else if (showEmptyState()) {
-            <!-- Empty state -->
-            <div class="text-center py-5 text-secondary">
-                <fa-icon [icon]="faSearch" size="2x" class="mb-3" aria-hidden="true" />
-                <p class="mb-0">{{ 'global.search.noResultsFound' | artemisTranslate }}</p>
-            </div>
+            <jhi-global-search-empty-states [stateType]="'empty'" />
         } @else if (hasResults()) {
             <!-- Results list -->
             <div class="search-results-list">
                 @for (result of results(); track result.id; let i = $index) {
-                    <div
-                        class="search-result-item p-3 cursor-pointer position-relative"
-                        [class.selected]="i === selectedIndex()"
-                        (click)="navigateToResult(result)"
-                        [attr.aria-selected]="i === selectedIndex()"
-                        role="option"
-                    >
-                        <div class="d-flex align-items-start gap-3">
-                            <!-- Icon -->
-                            <div class="result-icon flex-shrink-0">
-                                <fa-icon [icon]="getIconForType(result.type, result.badge)" size="lg" class="text-primary" aria-hidden="true" />
-                            </div>
-
-                            <!-- Content -->
-                            <div class="result-content flex-grow-1 min-width-0">
-                                <div class="d-flex align-items-center gap-2 mb-1">
-                                    <h6 class="result-title mb-0 text-truncate">{{ result.title }}</h6>
-                                    @if (result.badge) {
-                                        <span class="badge bg-secondary text-white px-2 py-1 small">{{ result.badge }}</span>
-                                    }
-                                </div>
-
-                                <!-- Metadata Row -->
-                                @if (
-                                    result.metadata && (result.metadata['courseName'] || result.metadata['dueDate'] || result.metadata['points'] || result.metadata['difficulty'])
-                                ) {
-                                    <div class="result-metadata d-flex align-items-center gap-2 mb-2 text-secondary small">
-                                        @if (result.metadata['courseName']) {
-                                            <span class="d-flex align-items-center gap-1">
-                                                <fa-icon [icon]="faBook" size="sm" aria-hidden="true" />
-                                                <span>{{ result.metadata['courseName'] }}</span>
-                                            </span>
-                                        }
-                                        @if (result.metadata['courseName'] && (result.metadata['dueDate'] || result.metadata['points'] || result.metadata['difficulty'])) {
-                                            <span>•</span>
-                                        }
-                                        @if (result.metadata['dueDate']) {
-                                            <span class="d-flex align-items-center gap-1">
-                                                <fa-icon [icon]="faCalendarAlt" size="sm" aria-hidden="true" />
-                                                <span>Due: {{ result.metadata['dueDate'] }}</span>
-                                            </span>
-                                        }
-                                        @if (result.metadata['dueDate'] && result.metadata['points']) {
-                                            <span>•</span>
-                                        }
-                                        @if (result.metadata['points']) {
-                                            <span class="d-flex align-items-center gap-1">
-                                                <fa-icon [icon]="faTrophy" size="sm" aria-hidden="true" />
-                                                <span>{{ result.metadata['points'] }} {{ result.metadata['points'] === 1 ? 'point' : 'points' }}</span>
-                                            </span>
-                                        }
-                                        @if (result.metadata['difficulty'] && (result.metadata['dueDate'] || result.metadata['points'])) {
-                                            <span>•</span>
-                                        }
-                                        @if (result.metadata['difficulty']) {
-                                            <span class="text-capitalize">{{ result.metadata['difficulty'] }}</span>
-                                        }
-                                    </div>
-                                }
-
-                                <!-- Description -->
-                                @if (result.description) {
-                                    <p class="result-description mb-0 text-secondary small text-truncate-2">
-                                        {{ result.description }}
-                                    </p>
-                                }
-                            </div>
-                        </div>
-
-                        <!-- Navigation hint for selected item (positioned absolutely) -->
-                        @if (i === selectedIndex()) {
-                            <div class="result-nav-hint position-absolute text-secondary">
-                                <kbd class="key-hint-small">↵</kbd>
-                            </div>
-                        }
-                    </div>
+                    <jhi-global-search-result-item
+                        [result]="result"
+                        [icon]="getIconForType(result.type, result.badge)"
+                        [isSelected]="i === selectedIndex()"
+                        (resultClick)="navigateToResult($event)"
+                    />
                 }
             </div>
         } @else if (showInitialState()) {
             <!-- Initial state - show searchable entities -->
             <div class="entity-list">
                 @for (entity of searchableEntities; track entity.id; let i = $index) {
-                    <div
-                        class="entity-item p-3 cursor-pointer position-relative"
-                        [class.disabled]="!entity.enabled"
-                        [class.selected]="i === selectedIndex()"
-                        (click)="onEntityClick(entity)"
-                        [attr.aria-disabled]="!entity.enabled"
-                        [attr.aria-selected]="i === selectedIndex()"
-                        role="option"
-                    >
-                        <div class="d-flex align-items-start gap-3">
-                            <!-- Icon -->
-                            <div class="entity-icon flex-shrink-0">
-                                <fa-icon [icon]="entity.icon" size="lg" [class.text-primary]="entity.enabled" [class.text-secondary]="!entity.enabled" aria-hidden="true" />
-                            </div>
-
-                            <!-- Content -->
-                            <div class="entity-content flex-grow-1 min-width-0">
-                                <div class="d-flex align-items-center gap-2 mb-1">
-                                    <h6 class="entity-title mb-0">{{ entity.title }}</h6>
-                                    <span class="badge bg-secondary text-white px-2 py-1 small text-capitalize">{{ entity.type }}</span>
-                                </div>
-                                <p class="entity-description mb-0 text-secondary small">
-                                    {{ entity.description }}
-                                </p>
-                                @if (!entity.enabled) {
-                                    <p class="entity-coming-soon mb-0 text-muted small fst-italic mt-1">Coming soon</p>
-                                }
-                            </div>
-                        </div>
-
-                        <!-- Navigation hint for enabled items (positioned absolutely) -->
-                        @if (entity.enabled) {
-                            <div class="entity-nav-hint position-absolute text-secondary">
-                                <kbd class="key-hint-small">#</kbd>
-                            </div>
-                        }
-                    </div>
+                    <jhi-global-search-entity-item [entity]="entity" [isSelected]="i === selectedIndex()" (entityClick)="onEntityClick($event)" />
                 }
             </div>
         } @else {
-            <!-- Fallback state -->
-            <div class="text-center py-5 px-4 text-secondary">
-                <fa-icon [icon]="faSearch" size="2x" class="mb-3" aria-hidden="true" />
-                <p class="mb-2 fw-bold">{{ 'global.search.tipTitle' | artemisTranslate }}</p>
-                <p class="small mb-0">{{ 'global.search.tipDescription' | artemisTranslate }}</p>
-            </div>
+            <jhi-global-search-empty-states [stateType]="'fallback'" />
         }
     </div>
 
     <!-- Keyboard hints footer -->
-    <div class="search-footer flex-shrink-0 p-3 border-top bg-light">
-        <div class="keyboard-hints d-flex align-items-center justify-content-between text-secondary small gap-3 flex-wrap">
-            <span class="d-flex align-items-center gap-2">
-                <span class="d-flex align-items-center gap-1">
-                    <kbd class="key-hint-small">↑</kbd>
-                    <kbd class="key-hint-small">↓</kbd>
-                </span>
-                <span>{{ 'global.search.toNavigate' | artemisTranslate }}</span>
-            </span>
-
-            <span class="d-flex align-items-center gap-2">
-                <kbd class="key-hint-small">↵</kbd>
-                <span>{{ 'global.search.toSelect' | artemisTranslate }}</span>
-            </span>
-
-            <span class="d-flex align-items-center gap-2">
-                <kbd class="key-hint-small">#</kbd>
-                <span>{{ 'global.search.toAddFilter' | artemisTranslate }}</span>
-            </span>
-
-            <span class="d-flex align-items-center gap-2">
-                <kbd class="key-hint-small">ESC</kbd>
-                <span>{{ 'global.search.toClose' | artemisTranslate }}</span>
-            </span>
-        </div>
-    </div>
+    <jhi-global-search-keyboard-hints />
 </p-dialog>

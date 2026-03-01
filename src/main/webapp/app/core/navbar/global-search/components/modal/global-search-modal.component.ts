@@ -1,11 +1,8 @@
-import { Component, ElementRef, HostListener, OnDestroy, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { Component, HostListener, OnDestroy, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { SearchOverlayService } from '../../services/search-overlay.service';
 import { OsDetectorService } from '../../services/os-detector.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
-    faArrowDown,
-    faArrowUp,
     faBook,
     faCalendarAlt,
     faChartBar,
@@ -19,18 +16,19 @@ import {
     faProjectDiagram,
     faQuestion,
     faSearch,
-    faTimes,
-    faTrophy,
     faUsers,
 } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DialogModule } from 'primeng/dialog';
-import { ChipModule } from 'primeng/chip';
 import { GlobalSearchResult, GlobalSearchService } from '../../services/global-search.service';
 import { Subject, catchError, debounceTime, distinctUntilChanged, of, switchMap } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
+import { SearchInputComponent } from './search-input/search-input.component';
+import { SearchResultItemComponent } from './search-result-item/search-result-item.component';
+import { SearchableEntityItemComponent } from './searchable-entity-item/searchable-entity-item.component';
+import { KeyboardHintsComponent } from './keyboard-hints/keyboard-hints.component';
+import { SearchEmptyStatesComponent } from './search-empty-states/search-empty-states.component';
 
 export interface SearchableEntity {
     id: string;
@@ -45,7 +43,7 @@ export interface SearchableEntity {
 @Component({
     selector: 'jhi-global-search-modal',
     standalone: true,
-    imports: [DialogModule, FaIconComponent, ArtemisTranslatePipe, ChipModule],
+    imports: [DialogModule, SearchInputComponent, SearchResultItemComponent, SearchableEntityItemComponent, KeyboardHintsComponent, SearchEmptyStatesComponent],
     templateUrl: './global-search-modal.component.html',
     styleUrls: ['./global-search-modal.component.scss'],
 })
@@ -57,20 +55,13 @@ export class GlobalSearchModalComponent implements OnDestroy {
     private readonly router = inject(Router);
 
     // Icons
-    protected readonly faSearch = faSearch;
-    protected readonly faArrowUp = faArrowUp;
-    protected readonly faArrowDown = faArrowDown;
     protected readonly faKeyboard = faKeyboard;
     protected readonly faProjectDiagram = faProjectDiagram;
     protected readonly faFont = faFont;
     protected readonly faFileUpload = faFileUpload;
     protected readonly faCheckDouble = faCheckDouble;
-    protected readonly faCube = faCube;
     protected readonly faQuestion = faQuestion;
-    protected readonly faTimes = faTimes;
-    protected readonly faCalendarAlt = faCalendarAlt;
-    protected readonly faTrophy = faTrophy;
-    protected readonly faBook = faBook;
+    protected readonly faSearch = faSearch;
 
     // Search state
     protected searchQuery = signal<string>('');
@@ -80,7 +71,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
     protected isLoading = signal<boolean>(false);
     protected hasSearched = signal<boolean>(false);
 
-    protected searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
+    protected searchInputComponent = viewChild<SearchInputComponent>(SearchInputComponent);
 
     // Searchable entities for initial view
     protected searchableEntities: SearchableEntity[] = [
@@ -209,23 +200,17 @@ export class GlobalSearchModalComponent implements OnDestroy {
     }
 
     protected focusInput() {
-        setTimeout(() => {
-            this.searchInput()?.nativeElement.focus();
-        }, 0);
+        this.searchInputComponent()?.focusInput();
     }
 
-    protected onSearchInput(event: Event) {
-        const query = (event.target as HTMLInputElement).value;
+    protected onSearchInput(query: string) {
         this.searchQuery.set(query);
         this.searchSubject.next(query);
     }
 
     protected onSearchKeyDown(event: KeyboardEvent) {
-        const input = event.target as HTMLInputElement;
-
         // If backspace is pressed and input is empty, remove the rightmost filter
-        if (event.key === 'Backspace' && input.value.trim() === '') {
-            event.preventDefault(); // Prevent any default backspace behavior
+        if (event.key === 'Backspace') {
             const filters = this.activeFilters();
             if (filters.length > 0) {
                 // Remove the rightmost (last) filter
