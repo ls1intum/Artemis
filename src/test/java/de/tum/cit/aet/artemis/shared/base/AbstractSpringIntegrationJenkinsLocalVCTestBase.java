@@ -50,13 +50,15 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTestBase extends Ab
 
     protected static final WeaviateContainer weaviateContainer;
 
+    private static final String UNIQUE_COLLECTION_PREFIX = "JenkinsLocalVC_";
+
     static {
         weaviateContainer = WeaviateTestContainerFactory.getContainer();
     }
 
     @DynamicPropertySource
     static void registerWeaviateProperties(DynamicPropertyRegistry registry) {
-        WeaviateTestConfiguration.registerWeaviateProperties(registry, weaviateContainer);
+        WeaviateTestConfiguration.registerWeaviateProperties(registry, weaviateContainer, UNIQUE_COLLECTION_PREFIX);
     }
 
     // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Jenkins using the corresponding RestTemplate.

@@ -111,6 +111,8 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     protected static final WeaviateContainer weaviateContainer;
 
+    private static final String UNIQUE_COLLECTION_PREFIX = "LocalCILocalVC_";
+
     // Static initializer runs before @DynamicPropertySource, ensuring ports and containers are available when Spring context starts
     static {
         serverPort = findAvailableTcpPort();
@@ -127,7 +129,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         registry.add("artemis.version-control.ssh-template-clone-url", () -> "ssh://git@localhost:" + sshPort + "/");
         registry.add("spring.hazelcast.port", () -> hazelcastPort);
 
-        WeaviateTestConfiguration.registerWeaviateProperties(registry, weaviateContainer);
+        WeaviateTestConfiguration.registerWeaviateProperties(registry, weaviateContainer, UNIQUE_COLLECTION_PREFIX);
     }
 
     private static int findAvailableTcpPort() {

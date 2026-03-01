@@ -77,13 +77,15 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
 
     protected static final WeaviateContainer weaviateContainer;
 
+    private static final String UNIQUE_COLLECTION_PREFIX = "IntegrationIndependent_";
+
     static {
         weaviateContainer = WeaviateTestContainerFactory.getContainer();
     }
 
     @DynamicPropertySource
     static void registerWeaviateProperties(DynamicPropertyRegistry registry) {
-        WeaviateTestConfiguration.registerWeaviateProperties(registry, weaviateContainer);
+        WeaviateTestConfiguration.registerWeaviateProperties(registry, weaviateContainer, UNIQUE_COLLECTION_PREFIX);
     }
 
     @MockitoSpyBean
