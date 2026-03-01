@@ -85,27 +85,49 @@ echo "--- Merging test reports ---"
 npm run merge-junit-reports || true
 npm run merge-coverage-reports || true
 
-# Upload blob reports to Playwright Reports Server
+# Upload reports to E2E Reports Dashboard
 if [ -n "$PLAYWRIGHT_REPORT_SERVER_URL" ] && [ -n "$PLAYWRIGHT_REPORT_TOKEN" ]; then
-    echo "--- Uploading reports to Playwright Reports Server ---"
-    for blob_dir in ./test-reports/blob-*/; do
-        if [ -f "${blob_dir}report.zip" ]; then
-            test_type=$(basename "$blob_dir" | sed 's/^blob-//')
-            echo "Uploading ${test_type} report..."
-            if ! curl --silent --show-error --fail-with-body \
-                --connect-timeout 10 --max-time 120 \
-                --request PUT "${PLAYWRIGHT_REPORT_SERVER_URL}/api/result/upload" \
-                -H "Authorization: ${PLAYWRIGHT_REPORT_TOKEN}" \
-                -F "file=@${blob_dir}report.zip" \
-                -F "project=Artemis E2E (${test_type})" \
-                -F "triggerReportGeneration=true" \
-                -F "shardCurrent=1" \
-                -F "shardTotal=1" \
-                -F "testRun=${GITHUB_RUN_ID:-local}"; then
-                echo "WARNING: Failed to upload ${test_type} report to server"
-            fi
+    echo "--- Uploading reports to E2E Reports Dashboard ---"
+
+    # Determine phase from PLAYWRIGHT_TEST_TYPE or default
+    PHASE="${PLAYWRIGHT_REPORT_PHASE:-all}"
+    RUN_ID="${GITHUB_RUN_ID:-local}-${PHASE}"
+
+    # Create tar.gz of all report artifacts
+    UPLOAD_ARCHIVE="/tmp/e2e-upload-${RUN_ID}.tar.gz"
+    tar -czf "$UPLOAD_ARCHIVE" \
+        -C "$(dirname ./test-reports)" \
+        test-reports/results.xml \
+        test-reports/monocart-report-parallel \
+        test-reports/monocart-report-sequential \
+        test-reports/client-coverage/lcov-report \
+        test-results/ \
+        2>/dev/null || tar -czf "$UPLOAD_ARCHIVE" \
+        -C "$(dirname ./test-reports)" \
+        test-reports/ \
+        test-results/ \
+        2>/dev/null || true
+
+    if [ -f "$UPLOAD_ARCHIVE" ]; then
+        echo "Uploading reports ($(du -h "$UPLOAD_ARCHIVE" | cut -f1))..."
+        if ! curl --silent --show-error --fail-with-body \
+            --connect-timeout 10 --max-time 300 \
+            --request PUT "${PLAYWRIGHT_REPORT_SERVER_URL}/api/upload" \
+            -H "Authorization: Bearer ${PLAYWRIGHT_REPORT_TOKEN}" \
+            -F "archive=@${UPLOAD_ARCHIVE}" \
+            -F "run_id=${RUN_ID}" \
+            -F "github_run_id=${GITHUB_RUN_ID:-local}" \
+            -F "branch=${PLAYWRIGHT_REPORT_BRANCH:-unknown}" \
+            -F "commit_sha=${PLAYWRIGHT_REPORT_COMMIT_SHA:-unknown}" \
+            -F "pr_number=${PLAYWRIGHT_REPORT_PR_NUMBER:-}" \
+            -F "phase=${PHASE}" \
+            -F "triggered_by=${PLAYWRIGHT_REPORT_TRIGGERED_BY:-unknown}"; then
+            echo "WARNING: Failed to upload reports to E2E dashboard"
         fi
-    done
+        rm -f "$UPLOAD_ARCHIVE"
+    else
+        echo "WARNING: Failed to create upload archive"
+    fi
 fi
 
 # Write marker file if reporter failed but tests passed (picked up by execute.sh for CI reporting).
