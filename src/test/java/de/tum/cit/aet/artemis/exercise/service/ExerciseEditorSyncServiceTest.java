@@ -23,8 +23,8 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.exercise.domain.review.ReviewThreadWebsocketAction;
-import de.tum.cit.aet.artemis.exercise.dto.review.ReviewThreadWebsocketDTO;
+import de.tum.cit.aet.artemis.exercise.domain.review.ReviewThreadSyncAction;
+import de.tum.cit.aet.artemis.exercise.dto.review.ReviewThreadSyncDTO;
 import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseEditorSyncEventType;
 import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseNewCommitAlertDTO;
@@ -117,7 +117,7 @@ class ExerciseEditorSyncServiceTest extends AbstractProgrammingIntegrationLocalC
      */
     @Test
     void broadcastReviewThreadUpdate() {
-        ReviewThreadWebsocketDTO reviewUpdate = ReviewThreadWebsocketDTO.commentDeleted(102L, 55L);
+        ReviewThreadSyncDTO reviewUpdate = ReviewThreadSyncDTO.commentDeleted(102L, 55L);
 
         synchronizationService.broadcastReviewThreadUpdate(102L, reviewUpdate);
 
@@ -127,7 +127,7 @@ class ExerciseEditorSyncServiceTest extends AbstractProgrammingIntegrationLocalC
 
         assertThat(sentMessage.eventType()).isEqualTo(ExerciseEditorSyncEventType.REVIEW_THREAD_UPDATE);
         assertThat(sentMessage.target()).isEqualTo(ExerciseEditorSyncTarget.REVIEW_COMMENTS);
-        assertThat(sentMessage.action()).isEqualTo(ReviewThreadWebsocketAction.COMMENT_DELETED);
+        assertThat(sentMessage.action()).isEqualTo(ReviewThreadSyncAction.COMMENT_DELETED);
         assertThat(sentMessage.exerciseId()).isEqualTo(102L);
         assertThat(sentMessage.commentId()).isEqualTo(55L);
     }
@@ -141,7 +141,7 @@ class ExerciseEditorSyncServiceTest extends AbstractProgrammingIntegrationLocalC
         request.addHeader(ExerciseEditorSyncService.CLIENT_SESSION_HEADER, "client-review");
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
 
-        ReviewThreadWebsocketDTO reviewUpdate = ReviewThreadWebsocketDTO.commentDeleted(103L, 66L);
+        ReviewThreadSyncDTO reviewUpdate = ReviewThreadSyncDTO.commentDeleted(103L, 66L);
         synchronizationService.broadcastReviewThreadUpdate(103L, reviewUpdate);
 
         var captor = ArgumentCaptor.forClass(ExerciseReviewThreadUpdateDTO.class);

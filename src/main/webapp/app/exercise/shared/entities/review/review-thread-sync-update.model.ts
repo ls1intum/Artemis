@@ -1,7 +1,7 @@
 import { Comment } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
 
-export enum ReviewThreadWebsocketAction {
+export enum ReviewThreadSyncAction {
     THREAD_CREATED = 'THREAD_CREATED',
     THREAD_UPDATED = 'THREAD_UPDATED',
     COMMENT_CREATED = 'COMMENT_CREATED',
@@ -10,8 +10,8 @@ export enum ReviewThreadWebsocketAction {
     GROUP_UPDATED = 'GROUP_UPDATED',
 }
 
-export interface ReviewThreadWebsocketUpdate {
-    action: ReviewThreadWebsocketAction;
+export interface ReviewThreadSyncUpdate {
+    action: ReviewThreadSyncAction;
     exerciseId: number;
     thread?: CommentThread;
     comment?: Comment;

@@ -4,7 +4,7 @@ import { Observable, Subscription, map } from 'rxjs';
 import { Comment, CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentThread, CreateCommentThread, UpdateThreadResolvedState } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { AlertService } from 'app/shared/service/alert.service';
-import { ReviewThreadWebsocketAction, ReviewThreadWebsocketUpdate } from 'app/exercise/shared/entities/review/review-thread-websocket-update.model';
+import { ReviewThreadSyncAction, ReviewThreadSyncUpdate } from 'app/exercise/shared/entities/review/review-thread-sync-update.model';
 import {
     ExerciseEditorSyncEvent,
     ExerciseEditorSyncEventType,
@@ -29,7 +29,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
     private synchronizationSubscription?: Subscription;
     private subscribedExerciseId?: number;
     private isReloading = false;
-    private pendingWebsocketUpdates: ReviewThreadWebsocketUpdate[] = [];
+    private pendingSyncUpdates: ReviewThreadSyncUpdate[] = [];
     private reloadSequence = 0;
 
     /**
@@ -50,7 +50,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
         }
         this.reloadSequence++;
         this.isReloading = false;
-        this.pendingWebsocketUpdates = [];
+        this.pendingSyncUpdates = [];
         this.activeExerciseId = exerciseId;
         this.threads.set([]);
         this.synchronizationSubscription?.unsubscribe();
@@ -73,14 +73,14 @@ export class ExerciseReviewCommentService implements OnDestroy {
         }
         const reloadId = ++this.reloadSequence;
         this.isReloading = true;
-        this.pendingWebsocketUpdates = [];
+        this.pendingSyncUpdates = [];
         this.loadThreads(exerciseId).subscribe({
             next: (threads) => {
                 if (this.activeExerciseId !== exerciseId || this.reloadSequence !== reloadId) {
                     return;
                 }
-                this.threads.set(this.applyQueuedWebsocketUpdates(threads, this.pendingWebsocketUpdates));
-                this.pendingWebsocketUpdates = [];
+                this.threads.set(this.applyQueuedSyncUpdates(threads, this.pendingSyncUpdates));
+                this.pendingSyncUpdates = [];
                 this.isReloading = false;
                 this.ensureSynchronizationSubscription(exerciseId);
             },
@@ -88,8 +88,8 @@ export class ExerciseReviewCommentService implements OnDestroy {
                 if (this.activeExerciseId !== exerciseId || this.reloadSequence !== reloadId) {
                     return;
                 }
-                this.threads.set(this.applyQueuedWebsocketUpdates([], this.pendingWebsocketUpdates));
-                this.pendingWebsocketUpdates = [];
+                this.threads.set(this.applyQueuedSyncUpdates([], this.pendingSyncUpdates));
+                this.pendingSyncUpdates = [];
                 this.isReloading = false;
                 this.alertService.error('artemisApp.review.loadFailed');
                 this.ensureSynchronizationSubscription(exerciseId);
@@ -434,7 +434,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
      * received through dedicated comment events but are not present on the incoming thread payload.
      *
      * @param threads The current thread list.
-     * @param updatedThread The updated thread from websocket.
+     * @param updatedThread The updated thread from synchronization events.
      * @returns The merged thread list.
      */
     private mergeThreadUpdateInThreads(threads: CommentThread[], updatedThread: CommentThread): CommentThread[] {
@@ -530,35 +530,35 @@ export class ExerciseReviewCommentService implements OnDestroy {
     }
 
     /**
-     * Applies a single websocket update for the active exercise.
+     * Applies a single synchronization update for the active exercise.
      *
      * During a reload, updates are queued and replayed after the REST snapshot arrives to avoid
      * race conditions between snapshot and incremental events.
      *
-     * @param update The incoming websocket update.
+     * @param update The incoming synchronization update.
      */
-    private applyWebsocketUpdate(update: ReviewThreadWebsocketUpdate): void {
+    private applySyncUpdate(update: ReviewThreadSyncUpdate): void {
         if (!update || !this.activeExerciseId || update.exerciseId !== this.activeExerciseId) {
             return;
         }
         if (this.isReloading) {
-            this.pendingWebsocketUpdates.push(update);
+            this.pendingSyncUpdates.push(update);
             return;
         }
         this.threads.update((threads) => {
-            return this.applyWebsocketUpdateToThreads(threads, update);
+            return this.applySyncUpdateToThreads(threads, update);
         });
     }
 
     /**
-     * Replays queued websocket updates on top of a freshly loaded thread snapshot.
+     * Replays queued synchronization updates on top of a freshly loaded thread snapshot.
      *
      * @param threads The thread snapshot from REST.
-     * @param updates The queued websocket updates in arrival order.
+     * @param updates The queued synchronization updates in arrival order.
      * @returns The merged thread state.
      */
-    private applyQueuedWebsocketUpdates(threads: CommentThread[], updates: ReviewThreadWebsocketUpdate[]): CommentThread[] {
-        return updates.reduce((accumulator, update) => this.applyWebsocketUpdateToThreads(accumulator, update), threads);
+    private applyQueuedSyncUpdates(threads: CommentThread[], updates: ReviewThreadSyncUpdate[]): CommentThread[] {
+        return updates.reduce((accumulator, update) => this.applySyncUpdateToThreads(accumulator, update), threads);
     }
 
     /**
@@ -571,7 +571,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
             return;
         }
         const reviewUpdateEvent = event as ReviewThreadSyncUpdateEvent;
-        const reviewUpdate: ReviewThreadWebsocketUpdate = {
+        const reviewUpdate: ReviewThreadSyncUpdate = {
             action: reviewUpdateEvent.action,
             exerciseId: reviewUpdateEvent.exerciseId,
             thread: reviewUpdateEvent.thread,
@@ -580,47 +580,47 @@ export class ExerciseReviewCommentService implements OnDestroy {
             threadIds: reviewUpdateEvent.threadIds,
             groupId: reviewUpdateEvent.groupId,
         };
-        this.applyWebsocketUpdate(reviewUpdate);
+        this.applySyncUpdate(reviewUpdate);
     }
 
     /**
-     * Applies one websocket event to the current thread collection using idempotent reducers.
+     * Applies one synchronization event to the current thread collection using idempotent reducers.
      *
-     * Note: The initiating client can process the same logical change via HTTP and the echoed websocket event.
+     * Note: The initiating client can process the same logical change via HTTP and the echoed synchronization event.
      * This is acceptable because reducers are idempotent, and the widget manager rerenders only when state changes.
      *
      * @param threads The current thread list.
-     * @param update The websocket update to apply.
+     * @param update The synchronization update to apply.
      * @returns The updated thread list.
      */
-    private applyWebsocketUpdateToThreads(threads: CommentThread[], update: ReviewThreadWebsocketUpdate): CommentThread[] {
+    private applySyncUpdateToThreads(threads: CommentThread[], update: ReviewThreadSyncUpdate): CommentThread[] {
         switch (update.action) {
-            case ReviewThreadWebsocketAction.THREAD_CREATED:
+            case ReviewThreadSyncAction.THREAD_CREATED:
                 if (!update.thread) {
                     return threads;
                 }
                 return this.appendThreadToThreads(threads, update.thread);
-            case ReviewThreadWebsocketAction.THREAD_UPDATED:
+            case ReviewThreadSyncAction.THREAD_UPDATED:
                 if (!update.thread) {
                     return threads;
                 }
                 return this.mergeThreadUpdateInThreads(threads, update.thread);
-            case ReviewThreadWebsocketAction.COMMENT_CREATED:
+            case ReviewThreadSyncAction.COMMENT_CREATED:
                 if (!update.comment) {
                     return threads;
                 }
                 return this.appendCommentToThreads(threads, update.comment);
-            case ReviewThreadWebsocketAction.COMMENT_UPDATED:
+            case ReviewThreadSyncAction.COMMENT_UPDATED:
                 if (!update.comment) {
                     return threads;
                 }
                 return this.updateCommentInThreads(threads, update.comment);
-            case ReviewThreadWebsocketAction.COMMENT_DELETED:
+            case ReviewThreadSyncAction.COMMENT_DELETED:
                 if (!update.commentId) {
                     return threads;
                 }
                 return this.removeCommentFromThreads(threads, update.commentId);
-            case ReviewThreadWebsocketAction.GROUP_UPDATED:
+            case ReviewThreadSyncAction.GROUP_UPDATED:
                 if (!update.threadIds) {
                     return threads;
                 }
@@ -655,7 +655,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
         this.synchronizationSubscription?.unsubscribe();
         this.synchronizationSubscription = undefined;
         this.subscribedExerciseId = undefined;
-        this.pendingWebsocketUpdates = [];
+        this.pendingSyncUpdates = [];
         this.isReloading = false;
     }
 }

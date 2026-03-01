@@ -6,20 +6,20 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.exercise.domain.review.ReviewThreadWebsocketAction;
+import de.tum.cit.aet.artemis.exercise.domain.review.ReviewThreadSyncAction;
 import de.tum.cit.aet.artemis.exercise.dto.review.CommentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CommentThreadDTO;
-import de.tum.cit.aet.artemis.exercise.dto.review.ReviewThreadWebsocketDTO;
+import de.tum.cit.aet.artemis.exercise.dto.review.ReviewThreadSyncDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
- * Websocket payload relaying review-thread updates over the shared exercise synchronization topic.
+ * Synchronization payload relaying review-thread updates over the shared exercise synchronization topic.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "Review-thread update relayed over the exercise synchronization topic.")
 public record ExerciseReviewThreadUpdateDTO(@Schema(description = "Event type discriminator.", requiredMode = Schema.RequiredMode.REQUIRED) ExerciseEditorSyncEventType eventType,
         @Schema(description = "Synchronization target.", requiredMode = Schema.RequiredMode.REQUIRED) ExerciseEditorSyncTarget target,
-        @Schema(description = "Review update action.", requiredMode = Schema.RequiredMode.REQUIRED) ReviewThreadWebsocketAction action,
+        @Schema(description = "Review update action.", requiredMode = Schema.RequiredMode.REQUIRED) ReviewThreadSyncAction action,
         @Schema(description = "Identifier of the exercise.", requiredMode = Schema.RequiredMode.REQUIRED) Long exerciseId,
         @Schema(description = "Thread payload for thread-related actions.", requiredMode = Schema.RequiredMode.NOT_REQUIRED) CommentThreadDTO thread,
         @Schema(description = "Comment payload for comment-related actions.", requiredMode = Schema.RequiredMode.NOT_REQUIRED) CommentDTO comment,
@@ -37,7 +37,7 @@ public record ExerciseReviewThreadUpdateDTO(@Schema(description = "Event type di
      * @param timestamp    the event timestamp in milliseconds since epoch
      * @return the mapped synchronization payload
      */
-    public static ExerciseReviewThreadUpdateDTO fromReviewThreadUpdate(ReviewThreadWebsocketDTO reviewUpdate, @Nullable String sessionId, @Nullable Long timestamp) {
+    public static ExerciseReviewThreadUpdateDTO fromReviewThreadUpdate(ReviewThreadSyncDTO reviewUpdate, @Nullable String sessionId, @Nullable Long timestamp) {
         return new ExerciseReviewThreadUpdateDTO(ExerciseEditorSyncEventType.REVIEW_THREAD_UPDATE, ExerciseEditorSyncTarget.REVIEW_COMMENTS, reviewUpdate.action(),
                 reviewUpdate.exerciseId(), reviewUpdate.thread(), reviewUpdate.comment(), reviewUpdate.commentId(), reviewUpdate.threadIds(), reviewUpdate.groupId(), sessionId,
                 timestamp);

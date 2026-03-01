@@ -10,7 +10,7 @@ import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
- * Websocket payload notifying clients about a new exercise metadata version.
+ * Synchronization payload notifying clients about a new exercise metadata version.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "Alert/notification that a new exercise version was pushed.")

@@ -11,7 +11,7 @@ import {
 } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { ConnectionState, WebsocketService } from 'app/shared/service/websocket.service';
 import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
-import { ReviewThreadWebsocketAction } from 'app/exercise/shared/entities/review/review-thread-websocket-update.model';
+import { ReviewThreadSyncAction } from 'app/exercise/shared/entities/review/review-thread-sync-update.model';
 
 describe('ExerciseEditorSyncService', () => {
     setupTestBed({ zoneless: true });
@@ -55,7 +55,7 @@ describe('ExerciseEditorSyncService', () => {
         service.disconnect();
     });
 
-    it('connects to websocket topic and forwards NEW_COMMIT_ALERT updates', () => {
+    it('connects to synchronization topic and forwards NEW_COMMIT_ALERT updates', () => {
         const received: ExerciseEditorSyncEvent[] = [];
         service.connect(5);
         service.subscribeToUpdates().subscribe((message: ExerciseEditorSyncEvent) => received.push(message));
@@ -138,7 +138,7 @@ describe('ExerciseEditorSyncService', () => {
         const reviewEvent: ExerciseEditorSyncEvent = {
             eventType: ExerciseEditorSyncEventType.REVIEW_THREAD_UPDATE,
             target: ExerciseEditorSyncTarget.REVIEW_COMMENTS,
-            action: ReviewThreadWebsocketAction.THREAD_CREATED,
+            action: ReviewThreadSyncAction.THREAD_CREATED,
             exerciseId: 5,
             thread: { id: 11, comments: [] } as any,
             sessionId: 'other-session',
@@ -246,7 +246,7 @@ describe('ExerciseEditorSyncService', () => {
             yjsUpdate: 'update',
         };
 
-        expect(() => service.sendSynchronizationUpdate(5, message)).toThrow('Cannot send synchronization message: not connected to websocket topic');
+        expect(() => service.sendSynchronizationUpdate(5, message)).toThrow('Cannot send synchronization message: not connected to synchronization topic');
     });
 
     it('throws error when sending to wrong exercise id', () => {
@@ -463,7 +463,7 @@ describe('ExerciseEditorSyncService', () => {
                 yjsUpdate: 'update',
             };
 
-            expect(() => service.sendSynchronizationUpdate(5, message)).toThrow('Cannot send synchronization message: not connected to websocket topic');
+            expect(() => service.sendSynchronizationUpdate(5, message)).toThrow('Cannot send synchronization message: not connected to synchronization topic');
         });
     });
 });

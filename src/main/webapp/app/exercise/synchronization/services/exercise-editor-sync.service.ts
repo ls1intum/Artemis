@@ -6,7 +6,7 @@ import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { Comment } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { ReviewThreadWebsocketAction } from 'app/exercise/shared/entities/review/review-thread-websocket-update.model';
+import { ReviewThreadSyncAction } from 'app/exercise/shared/entities/review/review-thread-sync-update.model';
 
 /**
  * Synchronization targets used to scope editor sync events.
@@ -35,7 +35,7 @@ export enum ExerciseEditorSyncEventType {
 }
 
 /**
- * Shared fields for synchronization events received over websocket.
+ * Shared fields for synchronization events received over the shared synchronization topic.
  */
 export interface ExerciseEditorSyncEventBase {
     eventType: ExerciseEditorSyncEventType;
@@ -96,7 +96,7 @@ export interface ExerciseNewVersionAlertEvent {
 export interface ReviewThreadSyncUpdateEvent extends ExerciseEditorSyncEventBase {
     eventType: ExerciseEditorSyncEventType.REVIEW_THREAD_UPDATE;
     target: ExerciseEditorSyncTarget.REVIEW_COMMENTS;
-    action: ReviewThreadWebsocketAction;
+    action: ReviewThreadSyncAction;
     exerciseId: number;
     thread?: CommentThread;
     comment?: Comment;
@@ -118,7 +118,7 @@ export type ExerciseEditorSyncEvent =
     | ReviewThreadSyncUpdateEvent;
 
 /**
- * Relays exercise editor synchronization messages over WebSocket.
+ * Relays exercise editor synchronization messages over the shared synchronization topic.
  *
  * This service is provided at the root level (singleton) and supports only one exercise
  * connection at a time. The lifecycle is managed by parent components (exercise edit page
@@ -227,7 +227,7 @@ export class ExerciseEditorSyncService {
      */
     sendSynchronizationUpdate(exerciseId: number, message: ExerciseEditorSyncEvent): void {
         if (!this.subscription) {
-            throw new Error('Cannot send synchronization message: not connected to websocket topic');
+            throw new Error('Cannot send synchronization message: not connected to synchronization topic');
         }
         if (this.exerciseId !== exerciseId) {
             throw new Error(`Cannot send synchronization message: exerciseId ${exerciseId} does not match connected exerciseId ${this.exerciseId}`);
