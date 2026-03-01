@@ -16,7 +16,7 @@
                     <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0"><span jhiTranslate="entity.action.edit"></span></a>
                 }
                 <ng-template ngbNavContent>
-                    <div class="markdown-editor markdown-editor-wrapper flex-column" [ngClass]="{ 'd-flex': inEditMode, 'd-none': !inEditMode }">
+                    <div class="markdown-editor markdown-editor-wrapper d-flex flex-column">
                         <jhi-monaco-editor
                             class="h-100"
                             [mode]="mode()"
