@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -120,7 +121,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         // Ensure parent directory exists
         Files.createDirectories(newFilePath.getParent());
         // Copy instead of move to allow multiple tests to use the same source file
-        Files.copy(Path.of(TEST_DATA_EXPORT_BASE_FILE_PATH), newFilePath);
+        FileUtils.copyFile(Path.of(TEST_DATA_EXPORT_BASE_FILE_PATH).toFile(), newFilePath.toFile());
         // Track the file for cleanup
         createdTestFiles.add(newFilePath);
         dataExport.setFilePath(newFilePath.toString());
