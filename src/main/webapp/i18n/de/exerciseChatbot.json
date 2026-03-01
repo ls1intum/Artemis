@@ -59,6 +59,9 @@
                 "exerciseLabel": "Zugehörige Aufgabe",
                 "lectureLabel": "Zugehörige Vorlesung"
             },
+            "statusIndicator": {
+                "thinking": "Iris denkt nach"
+            },
             "actions": {
                 "copy": "Kopieren",
                 "goodResponse": "Gute Antwort",
