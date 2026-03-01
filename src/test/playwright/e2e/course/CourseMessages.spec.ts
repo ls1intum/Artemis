@@ -390,7 +390,7 @@ test.describe('Course messages', { tag: '@fast' }, () => {
                 await login(studentOne, `/courses/${course.id}/communication?conversationId=${groupChat.id}`);
                 const messageText = 'Student Test Message';
                 await courseMessages.writeMessage(messageText);
-                const message = await courseMessages.save(true);
+                const message = await courseMessages.save();
                 await courseMessages.checkMessage(message.id!, messageText);
             });
 

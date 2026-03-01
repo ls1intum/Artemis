@@ -13,7 +13,7 @@ import cAllSuccessful from '../../../fixtures/exercise/programming/c/all_success
 import { admin, instructor, studentFour, studentOne, studentTwo, tutor } from '../../../support/users';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { GitCloneMethod } from '../../../support/pageobjects/exercises/programming/ProgrammingExerciseOverviewPage';
-import { BUILD_RESULT_TIMEOUT } from '../../../support/timeouts';
+
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { GitExerciseParticipation } from '../../../support/pageobjects/exercises/programming/GitExerciseParticipation';
 
@@ -296,9 +296,11 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
             // now instructor commits to the student participation
             await login(instructor);
             // Wait for the student's build to complete before the instructor submits.
-            // The template clone and git push may be merged into a single build by the server,
-            // so we only wait for 1 result to ensure the build queue has drained.
-            await waitForExerciseBuildToFinish(exercise.id!, undefined, BUILD_RESULT_TIMEOUT);
+            // Exercise creation triggers BASE + SOLUTION builds, then startParticipation triggers
+            // a student template clone build, and makeSubmission triggers the student submission build.
+            // Locally these builds queue serially (~18s each), so we need a generous timeout
+            // to cover all 4 builds. On CI, builds may be merged/faster but we use the same timeout.
+            await waitForExerciseBuildToFinish(exercise.id!, undefined, 150000);
             await navigationBar.openCourseManagement();
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.openExerciseParticipations(exercise.id!);
