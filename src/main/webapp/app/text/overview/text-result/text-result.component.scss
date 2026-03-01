@@ -29,20 +29,6 @@
     }
 }
 
-.feedback-icon {
-    &.positive-feedback {
-        color: var(--textblock-assessment-text-feedback-positive-color);
-    }
-
-    &.negative-feedback {
-        color: var(--textblock-assessment-text-feedback-negative-color);
-    }
-}
-
-.feedback-points {
-    font-weight: bold;
-}
-
 .white-space {
     white-space: pre-wrap;
 }

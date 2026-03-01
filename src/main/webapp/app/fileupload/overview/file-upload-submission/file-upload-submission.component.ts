@@ -31,7 +31,7 @@ import { ButtonComponent } from 'app/shared/components/buttons/button/button.com
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExerciseActionButtonComponent } from 'app/shared/components/buttons/exercise-action-button/exercise-action-button.component';
-import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
+import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -49,7 +49,7 @@ import { firstValueFrom, map } from 'rxjs';
         ResizeableContainerComponent,
         TranslateDirective,
         ExerciseActionButtonComponent,
-        AdditionalFeedbackComponent,
+        UnifiedFeedbackComponent,
         RatingComponent,
         ComplaintsStudentViewComponent,
         FaIconComponent,

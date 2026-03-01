@@ -91,7 +91,11 @@
     }
     <div class="row ms-0">
         @if (unreferencedFeedback.length > 0) {
-            <jhi-additional-feedback class="col-xl-8 mt-3 alert unreferencedFeedback" [feedback]="unreferencedFeedback" [additional]="true" [course]="course" />
+            <div id="additional-feedback" class="col-xl-8 mt-3">
+                @for (feedback of unreferencedFeedback; track feedback.id) {
+                    <jhi-unified-feedback [feedbackContent]="feedback.detailText || ''" [points]="feedback.credits || 0" />
+                }
+            </div>
         }
     </div>
 </div>

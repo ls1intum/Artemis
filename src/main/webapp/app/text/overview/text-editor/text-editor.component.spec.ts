@@ -508,6 +508,65 @@ describe('TextEditorComponent', () => {
         expect(textSubmissionService.update).toHaveBeenCalled();
     });
 
+    it('isAutomaticResult reflects automatic Athena result', () => {
+        comp.result = { assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result;
+        expect(comp.isAutomaticResult).toBe(true);
+        comp.result = { assessmentType: AssessmentType.MANUAL } as Result;
+        expect(comp.isAutomaticResult).toBe(false);
+    });
+
+    it('submitButtonTooltip covers all branches', () => {
+        comp.textExercise = {} as TextExercise;
+        // Due date missed allowed
+        comp.isAllowedToSubmitAfterDueDate = true;
+        expect(comp.submitButtonTooltip).toBe('entity.action.submitDueDateMissedTooltip');
+
+        // Active without due date
+        comp.isAllowedToSubmitAfterDueDate = false;
+        comp.isAlwaysActive = true;
+        comp.result = undefined as any;
+        comp.textExercise = { dueDate: undefined } as any;
+        expect(comp.submitButtonTooltip).toBe('entity.action.submitNoDueDateTooltip');
+
+        // Active with due date
+        comp.textExercise = { dueDate: dayjs() } as any;
+        expect(comp.submitButtonTooltip).toBe('entity.action.submitTooltip');
+
+        // Not active
+        comp.isAlwaysActive = false;
+        comp.result = { assessmentType: AssessmentType.MANUAL } as any;
+        expect(comp.submitButtonTooltip).toBe('entity.action.dueDateMissedTooltip');
+    });
+
+    it('canDeactivate true when no submission or unchanged; false when changed', () => {
+        // no submission
+        // @ts-ignore
+        delete comp.submission;
+        expect(comp.canDeactivate()).toBe(true);
+        // unchanged
+        comp.submission = { text: 'same' } as TextSubmission;
+        comp.answer = 'same';
+        expect(comp.canDeactivate()).toBe(true);
+        // changed
+        comp.answer = 'different';
+        expect(comp.canDeactivate()).toBe(false);
+        // cleanup to avoid ngOnDestroy side-effects
+        comp.submission = undefined as any;
+    });
+
+    it('unloadNotification returns translation key when there are unsaved changes', () => {
+        const translate = TestBed.inject(TranslateService) as any;
+        vi.spyOn(translate, 'instant');
+        comp.submission = { text: 'before' } as TextSubmission;
+        comp.answer = 'after';
+        const event = new Event('beforeunload') as unknown as BeforeUnloadEvent;
+        const res = comp.unloadNotification(event);
+        expect(translate.instant).toHaveBeenCalledWith('pendingChanges');
+        expect(res).toBe('pendingChanges');
+        // cleanup to avoid ngOnDestroy side-effects
+        comp.submission = undefined as any;
+    });
+
     it('should load Iris settings when Iris module feature is active and not in exam mode', async () => {
         vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
 
