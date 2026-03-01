@@ -89,24 +89,24 @@ npm run merge-coverage-reports || true
 if [ -n "$PLAYWRIGHT_REPORT_SERVER_URL" ] && [ -n "$PLAYWRIGHT_REPORT_TOKEN" ]; then
     echo "--- Uploading reports to E2E Reports Dashboard ---"
 
-    # Determine phase from PLAYWRIGHT_TEST_TYPE or default
     PHASE="${PLAYWRIGHT_REPORT_PHASE:-all}"
     RUN_ID="${GITHUB_RUN_ID:-local}-${PHASE}"
 
-    # Create tar.gz of all report artifacts
-    UPLOAD_ARCHIVE="/tmp/e2e-upload-${RUN_ID}.tar.gz"
-    tar -czf "$UPLOAD_ARCHIVE" \
-        -C "$(dirname ./test-reports)" \
+    # Build file list dynamically — only include paths that actually exist
+    UPLOAD_PATHS=()
+    for p in \
         test-reports/results.xml \
         test-reports/monocart-report-parallel \
         test-reports/monocart-report-sequential \
         test-reports/client-coverage/lcov-report \
-        test-results/ \
-        2>/dev/null || tar -czf "$UPLOAD_ARCHIVE" \
-        -C "$(dirname ./test-reports)" \
-        test-reports/ \
-        test-results/ \
-        2>/dev/null || true
+        test-results/; do
+        [ -e "$p" ] && UPLOAD_PATHS+=("$p")
+    done
+
+    UPLOAD_ARCHIVE="/tmp/e2e-upload-${RUN_ID}.tar.gz"
+    if [ ${#UPLOAD_PATHS[@]} -gt 0 ]; then
+        tar -czf "$UPLOAD_ARCHIVE" "${UPLOAD_PATHS[@]}" 2>/dev/null
+    fi
 
     if [ -f "$UPLOAD_ARCHIVE" ]; then
         echo "Uploading reports ($(du -h "$UPLOAD_ARCHIVE" | cut -f1))..."
@@ -126,7 +126,7 @@ if [ -n "$PLAYWRIGHT_REPORT_SERVER_URL" ] && [ -n "$PLAYWRIGHT_REPORT_TOKEN" ]; 
         fi
         rm -f "$UPLOAD_ARCHIVE"
     else
-        echo "WARNING: Failed to create upload archive"
+        echo "WARNING: No report artifacts found to upload"
     fi
 fi
 
