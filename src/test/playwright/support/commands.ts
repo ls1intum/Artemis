@@ -89,6 +89,7 @@ export class Commands {
         exerciseId: number,
         interval: number = POLLING_INTERVAL,
         timeout: number = BUILD_FINISH_TIMEOUT,
+        minResults?: number,
     ) => {
         let exerciseParticipation: StudentParticipation | undefined;
         const startTime = Date.now();
@@ -114,19 +115,21 @@ export class Commands {
             throw new Error(`Timed out waiting for participation for exercise ${exerciseId}`);
         }
 
-        const numberOfBuildResults = exerciseParticipation.submissions
-            ? exerciseParticipation.submissions.reduce((sum, submission) => sum + (submission.results?.length ?? 0), 0)
-            : 0;
+        const countResults = (participation: StudentParticipation | undefined): number => {
+            return participation?.submissions ? participation.submissions.reduce((sum, submission) => sum + (submission.results?.length ?? 0), 0) : 0;
+        };
 
-        console.log('Waiting for build of an exercise to finish...');
+        const numberOfBuildResults = countResults(exerciseParticipation);
+        // If minResults is specified, wait until total results reach that count.
+        // Otherwise, wait for the result count to increase by at least 1.
+        const targetCount = minResults ?? numberOfBuildResults + 1;
+
+        console.log(`Waiting for build results to reach ${targetCount} (currently ${numberOfBuildResults})...`);
         while (Date.now() - startTime < timeout) {
             exerciseParticipation = await getParticipation();
+            const currentBuildResultsCount = countResults(exerciseParticipation);
 
-            const currentBuildResultsCount = exerciseParticipation?.submissions
-                ? exerciseParticipation.submissions.reduce((sum, submission) => sum + (submission.results?.length ?? 0), 0)
-                : 0;
-
-            if (currentBuildResultsCount > numberOfBuildResults) {
+            if (currentBuildResultsCount >= targetCount) {
                 return exerciseParticipation;
             }
 
