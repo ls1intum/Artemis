@@ -14,4 +14,5 @@ export interface BuildPhase {
 
 export interface BuildPlanPhases {
     phases: BuildPhase[];
+    dockerImage?: string;
 }

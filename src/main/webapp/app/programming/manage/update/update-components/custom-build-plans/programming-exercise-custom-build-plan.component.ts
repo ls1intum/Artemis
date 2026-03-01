@@ -187,6 +187,28 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
         this.programmingExercise.buildConfig!.windfile.metadata.docker.image = dockerImage.trim();
     }
 
+    /**
+     * Returns the build plan phases as a JSON string including the docker image.
+     * Used by the parent component to serialize phases into buildPlanConfiguration.
+     * @returns JSON string of BuildPlanPhases with dockerImage, or undefined if no phases available
+     */
+    getBuildPlanPhasesJSON(): string | undefined {
+        const editorInstance = this.phaseEditor();
+        if (!editorInstance) {
+            return undefined;
+        }
+        const buildPlanPhases = editorInstance.getBuildPlanPhases();
+        if (!buildPlanPhases?.phases) {
+            return undefined;
+        }
+        const dockerImage = this.programmingExercise.buildConfig?.windfile?.metadata?.docker?.image;
+        const phasesWithDocker: BuildPlanPhases = {
+            phases: buildPlanPhases.phases,
+            dockerImage: dockerImage,
+        };
+        return JSON.stringify(phasesWithDocker);
+    }
+
     setTimeout(timeout: number) {
         this.programmingExercise.buildConfig!.timeoutSeconds = timeout;
     }

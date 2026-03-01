@@ -157,7 +157,7 @@ public abstract class AbstractArtemisBuildAgentTest {
 
         BuildConfig buildConfig = new BuildConfig("dummy-build-script", "dummy-docker-image", "dummy-commit-hash", "assignment-commit-hash", "test-commit-hash", "main",
                 ProgrammingLanguage.JAVA, ProjectType.MAVEN_MAVEN, false, false, List.of("dummy-result-path"), 15, "dummy-assignment-checkout-path", "dummy-test-checkout-path",
-                "dummy-solution-checkout-path", null);
+                "dummy-solution-checkout-path", null, null);
 
         String randomString = UUID.randomUUID().toString();
         return new BuildJobQueueItem("dummy-id-" + randomString, "dummy-name", null, 1, 1, 1, 0, 0, null, repositoryInfo, jobTimingInfo, buildConfig, null);
@@ -171,7 +171,7 @@ public abstract class AbstractArtemisBuildAgentTest {
 
         BuildConfig buildConfig = new BuildConfig("dummy-build-script", image, "dummy-commit-hash", "assignment-commit-hash", "test-commit-hash", "main", ProgrammingLanguage.JAVA,
                 ProjectType.MAVEN_MAVEN, false, false, List.of("dummy-result-path"), 15, "dummy-assignment-checkout-path", "dummy-test-checkout-path",
-                "dummy-solution-checkout-path", null);
+                "dummy-solution-checkout-path", null, null);
 
         String randomString = UUID.randomUUID().toString();
         return new BuildJobQueueItem("dummy-id-" + randomString, "dummy-name", null, 1, 1, 1, 0, 0, null, repositoryInfo, jobTimingInfo, buildConfig, null);
@@ -185,7 +185,7 @@ public abstract class AbstractArtemisBuildAgentTest {
 
         BuildConfig buildConfig = new BuildConfig("dummy-build-script", "dummy-docker-image", "dummy-commit-hash", null, null, "main", ProgrammingLanguage.JAVA,
                 ProjectType.MAVEN_MAVEN, false, false, List.of("dummy-result-path"), 15, "dummy-assignment-checkout-path", "dummy-test-checkout-path",
-                "dummy-solution-checkout-path", null);
+                "dummy-solution-checkout-path", null, null);
 
         String randomString = UUID.randomUUID().toString();
         return new BuildJobQueueItem("dummy-id-" + randomString, "dummy-name", null, 1, 1, 1, 0, 0, null, repositoryInfo, jobTimingInfo, buildConfig, null);
@@ -199,7 +199,7 @@ public abstract class AbstractArtemisBuildAgentTest {
 
         BuildConfig buildConfig = new BuildConfig("dummy-build-script", "dummy-docker-image", "dummy-commit-hash", "assignment-commit-hash", "test-commit-hash", "main",
                 ProgrammingLanguage.JAVA, ProjectType.MAVEN_MAVEN, false, false, List.of("dummy-result-path"), 1, "dummy-assignment-checkout-path", "dummy-test-checkout-path",
-                "dummy-solution-checkout-path", null);
+                "dummy-solution-checkout-path", null, null);
 
         String randomString = UUID.randomUUID().toString();
         return new BuildJobQueueItem("dummy-id-" + randomString, "dummy-name", null, 1, 1, 1, 0, 0, null, repositoryInfo, jobTimingInfo, buildConfig, null);
@@ -221,6 +221,6 @@ public abstract class AbstractArtemisBuildAgentTest {
         DockerRunConfig dockerRunConfig = new DockerRunConfig(List.of("dummy-env", "dummy-env-value"), "none", 0, 0, 0);
         return new BuildConfig("dummy-build-script", "dummy-docker-image", "dummy-commit-hash", "assignment-commit-hash", "test-commit-hash", "main", ProgrammingLanguage.JAVA,
                 ProjectType.MAVEN_MAVEN, false, false, List.of("dummy-result-path"), 1, "dummy-assignment-checkout-path", "dummy-test-checkout-path",
-                "dummy-solution-checkout-path", dockerRunConfig);
+                "dummy-solution-checkout-path", dockerRunConfig, null);
     }
 }

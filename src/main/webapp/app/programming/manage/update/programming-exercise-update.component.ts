@@ -734,7 +734,14 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         }
 
         if (this.programmingExercise.customizeBuildPlanWithAeolus || this.isImportFromFile || this.isImportFromSharing) {
-            this.programmingExercise.buildConfig!.buildPlanConfiguration = this.aeolusService.serializeWindFile(this.programmingExercise.buildConfig!.windfile!);
+            // Try phases-based serialization first (from the build phases editor)
+            const phasesJSON = this.exerciseLanguageComponent?.programmingExerciseCustomBuildPlanComponent?.getBuildPlanPhasesJSON();
+            if (phasesJSON) {
+                this.programmingExercise.buildConfig!.buildPlanConfiguration = phasesJSON;
+            } else {
+                // Fallback to windfile serialization (e.g. import-from-file/sharing)
+                this.programmingExercise.buildConfig!.buildPlanConfiguration = this.aeolusService.serializeWindFile(this.programmingExercise.buildConfig!.windfile!);
+            }
         } else {
             this.programmingExercise.buildConfig!.buildPlanConfiguration = undefined;
             this.programmingExercise.buildConfig!.windfile = undefined;

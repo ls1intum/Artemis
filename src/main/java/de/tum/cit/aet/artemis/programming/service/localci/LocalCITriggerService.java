@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhases;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
@@ -101,6 +102,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final BuildJobRepository buildJobRepository;
 
+    private final BuildPhaseEvaluationService buildPhaseEvaluationService;
+
     private static final int DEFAULT_BUILD_DURATION = 17;
 
     // Arbitrary value to ensure that the build duration is always a bit higher than the actual build duration
@@ -112,7 +115,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             LocalCIBuildConfigurationService localCIBuildConfigurationService, ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, BuildScriptProviderService buildScriptProviderService,
-            ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService, BuildJobRepository buildJobRepository) {
+            ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService, BuildJobRepository buildJobRepository,
+            BuildPhaseEvaluationService buildPhaseEvaluationService) {
         this.distributedDataAccessService = distributedDataAccessService;
         this.aeolusTemplateService = aeolusTemplateService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
@@ -127,6 +131,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         this.programmingExerciseBuildConfigService = programmingExerciseBuildConfigService;
         this.programmingExerciseBuildStatisticsRepository = programmingExerciseBuildStatisticsRepository;
         this.buildJobRepository = buildJobRepository;
+        this.buildPhaseEvaluationService = buildPhaseEvaluationService;
     }
 
     /**
@@ -324,6 +329,55 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         boolean staticCodeAnalysisEnabled = programmingExercise.isStaticCodeAnalysisEnabled();
         boolean sequentialTestRunsEnabled = buildConfig.hasSequentialTestRuns();
 
+        DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig);
+
+        // Try the new build phases format first
+        BuildPlanPhases buildPlanPhases = buildConfig.getBuildPlanPhases();
+        if (buildPlanPhases != null) {
+            return getBuildConfigFromPhases(buildPlanPhases, programmingExercise, buildConfig, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage,
+                    projectType, staticCodeAnalysisEnabled, sequentialTestRunsEnabled, dockerRunConfig);
+        }
+
+        // Fall back to existing windfile path
+        return getBuildConfigFromWindfile(programmingExercise, buildConfig, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
+                staticCodeAnalysisEnabled, sequentialTestRunsEnabled, dockerRunConfig);
+    }
+
+    /**
+     * Creates a BuildConfig from the new BuildPlanPhases format.
+     * Evaluates phase conditions, assembles the build script from active phases,
+     * and extracts result paths only from active phases.
+     */
+    private BuildConfig getBuildConfigFromPhases(BuildPlanPhases buildPlanPhases, ProgrammingExercise programmingExercise, ProgrammingExerciseBuildConfig buildConfig,
+            String commitHashToBuild, String assignmentCommitHash, String testCommitHash, String branch, ProgrammingLanguage programmingLanguage, ProjectType projectType,
+            boolean staticCodeAnalysisEnabled, boolean sequentialTestRunsEnabled, DockerRunConfig dockerRunConfig) {
+
+        BuildPhaseEvaluationService.EvaluatedBuildPlan evaluated = buildPhaseEvaluationService.evaluate(buildPlanPhases, programmingExercise);
+
+        // Docker image: use the one stored in BuildPlanPhases, or fall back to language default
+        String dockerImage = buildPlanPhases.dockerImage();
+        if (dockerImage == null || dockerImage.isBlank()) {
+            dockerImage = programmingLanguageConfiguration.getImage(programmingExercise.getProgrammingLanguage(), Optional.ofNullable(programmingExercise.getProjectType()));
+        }
+
+        List<String> resultPaths = evaluated.resultPaths().stream().map(path -> LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/" + path).toList();
+        resultPaths = buildScriptProviderService.replaceResultPathsPlaceholders(resultPaths, buildConfig);
+
+        programmingExercise.setBuildConfig(buildConfig);
+        String buildScript = localCIBuildConfigurationService.createBuildScript(programmingExercise, evaluated.activePhases());
+
+        return new BuildConfig(buildScript, dockerImage, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
+                staticCodeAnalysisEnabled, sequentialTestRunsEnabled, resultPaths, buildConfig.getTimeoutSeconds(), buildConfig.getAssignmentCheckoutPath(),
+                buildConfig.getTestCheckoutPath(), buildConfig.getSolutionCheckoutPath(), dockerRunConfig, evaluated.testsExpected());
+    }
+
+    /**
+     * Creates a BuildConfig from the existing Windfile format (backwards compatibility).
+     */
+    private BuildConfig getBuildConfigFromWindfile(ProgrammingExercise programmingExercise, ProgrammingExerciseBuildConfig buildConfig, String commitHashToBuild,
+            String assignmentCommitHash, String testCommitHash, String branch, ProgrammingLanguage programmingLanguage, ProjectType projectType, boolean staticCodeAnalysisEnabled,
+            boolean sequentialTestRunsEnabled, DockerRunConfig dockerRunConfig) {
+
         Windfile windfile;
         String dockerImage;
         try {
@@ -337,17 +391,16 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             dockerImage = programmingLanguageConfiguration.getImage(programmingExercise.getProgrammingLanguage(), Optional.ofNullable(programmingExercise.getProjectType()));
         }
 
-        DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig);
-
         List<String> resultPaths = getTestResultPaths(windfile);
         resultPaths = buildScriptProviderService.replaceResultPathsPlaceholders(resultPaths, buildConfig);
 
         programmingExercise.setBuildConfig(buildConfig);
         String buildScript = localCIBuildConfigurationService.createBuildScript(programmingExercise);
 
+        // Windfile path: testsExpected is always true (backwards compatibility)
         return new BuildConfig(buildScript, dockerImage, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
                 staticCodeAnalysisEnabled, sequentialTestRunsEnabled, resultPaths, buildConfig.getTimeoutSeconds(), buildConfig.getAssignmentCheckoutPath(),
-                buildConfig.getTestCheckoutPath(), buildConfig.getSolutionCheckoutPath(), dockerRunConfig);
+                buildConfig.getTestCheckoutPath(), buildConfig.getSolutionCheckoutPath(), dockerRunConfig, true);
     }
 
     private ProgrammingExerciseBuildConfig loadBuildConfig(ProgrammingExercise programmingExercise) {

@@ -16,11 +16,16 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record BuildConfig(String buildScript, String dockerImage, String commitHashToBuild, String assignmentCommitHash, String testCommitHash, String branch,
         ProgrammingLanguage programmingLanguage, ProjectType projectType, boolean scaEnabled, boolean sequentialTestRunsEnabled, List<String> resultPaths, int timeoutSeconds,
-        String assignmentCheckoutPath, String testCheckoutPath, String solutionCheckoutPath, DockerRunConfig dockerRunConfig) implements Serializable {
+        String assignmentCheckoutPath, String testCheckoutPath, String solutionCheckoutPath, DockerRunConfig dockerRunConfig, Boolean testsExpected) implements Serializable {
 
     @Override
     public String dockerImage() {
         // make sure to avoid whitespace issues
         return dockerImage.trim();
+    }
+
+    @Override
+    public Boolean testsExpected() {
+        return testsExpected == null || testsExpected;
     }
 }

@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhases;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 
 @Entity
@@ -243,6 +244,30 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
         }
         catch (JsonProcessingException e) {
             log.error("Could not parse build plan configuration for programming exercise {}", this.getId(), e);
+        }
+        return null;
+    }
+
+    /**
+     * Tries to deserialize the buildPlanConfiguration as a {@link BuildPlanPhases} object.
+     * This provides discrimination between the new phases format and the old Windfile format:
+     * BuildPlanPhases JSON has a "phases" root key, while Windfile JSON has "api", "metadata", "actions".
+     *
+     * @return the {@link BuildPlanPhases} object, or null if the configuration is null, empty, or in Windfile format
+     */
+    public BuildPlanPhases getBuildPlanPhases() {
+        if (buildPlanConfiguration == null) {
+            return null;
+        }
+        try {
+            BuildPlanPhases phases = BuildPlanPhases.deserialize(buildPlanConfiguration);
+            // Discriminate: phases format must have a non-null, non-empty phases list
+            if (phases.phases() != null && !phases.phases().isEmpty()) {
+                return phases;
+            }
+        }
+        catch (JsonProcessingException e) {
+            // Not in phases format — fall through to windfile path
         }
         return null;
     }
