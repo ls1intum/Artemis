@@ -652,6 +652,127 @@ describe('CodeEditorFileSyncService', () => {
             const state = service.openFile(newPath, '')!;
             expect(state.text.toString()).toBe('Late update on old path');
         });
+
+        it('sends outgoing doc updates with the new path after a local rename', () => {
+            service.init(EXERCISE_ID, TARGET);
+            const state = service.openFile(FILE_PATH, '')!;
+            vi.advanceTimersByTime(500);
+
+            const newPath = 'src/Renamed.java';
+            service.emitFileRenamed(FILE_PATH, newPath, 'FILE');
+            syncService.sendSynchronizationUpdate.mockClear();
+
+            // Trigger a local doc update
+            state.text.insert(0, 'Edit after rename');
+
+            expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
+                EXERCISE_ID,
+                expect.objectContaining({
+                    eventType: ExerciseEditorSyncEventType.FILE_SYNC_UPDATE,
+                    filePath: newPath,
+                }),
+            );
+            expect(syncService.sendSynchronizationUpdate).not.toHaveBeenCalledWith(
+                EXERCISE_ID,
+                expect.objectContaining({
+                    eventType: ExerciseEditorSyncEventType.FILE_SYNC_UPDATE,
+                    filePath: FILE_PATH,
+                }),
+            );
+        });
+
+        it('sends outgoing awareness updates with the new path after a local rename', () => {
+            service.init(EXERCISE_ID, TARGET);
+            const state = service.openFile(FILE_PATH, '')!;
+            vi.advanceTimersByTime(500);
+
+            const newPath = 'src/Renamed.java';
+            service.emitFileRenamed(FILE_PATH, newPath, 'FILE');
+            syncService.sendSynchronizationUpdate.mockClear();
+
+            // Trigger a local awareness update
+            state.awareness.setLocalStateField('cursor', { line: 5 });
+
+            expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
+                EXERCISE_ID,
+                expect.objectContaining({
+                    eventType: ExerciseEditorSyncEventType.FILE_AWARENESS_UPDATE,
+                    filePath: newPath,
+                }),
+            );
+            expect(syncService.sendSynchronizationUpdate).not.toHaveBeenCalledWith(
+                EXERCISE_ID,
+                expect.objectContaining({
+                    eventType: ExerciseEditorSyncEventType.FILE_AWARENESS_UPDATE,
+                    filePath: FILE_PATH,
+                }),
+            );
+        });
+
+        it('stores late-winning replacement under the new path after a rename', () => {
+            service.init(EXERCISE_ID, TARGET);
+            service.openFile(FILE_PATH, 'Fallback')!;
+
+            const requestCall = syncService.sendSynchronizationUpdate.mock.calls.find(
+                ([, msg]: [number, any]) => msg.eventType === ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_REQUEST && msg.filePath === FILE_PATH,
+            );
+            const requestId = (requestCall?.[1] as any).requestId as string;
+
+            vi.advanceTimersByTime(500);
+
+            const newPath = 'src/Renamed.java';
+            service.emitFileRenamed(FILE_PATH, newPath, 'FILE');
+
+            let replacedState: ({ filePath: string } & FileSyncState) | undefined;
+            const sub = service.stateReplaced$.subscribe((s: { filePath: string } & FileSyncState) => (replacedState = s));
+
+            const lateDoc = new Y.Doc();
+            lateDoc.getText('file-content').insert(0, 'Late winning after rename');
+            incomingMessages$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_RESPONSE,
+                target: TARGET,
+                filePath: FILE_PATH, // old path, as the response was generated from the request
+                responseTo: requestId,
+                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(lateDoc)),
+                leaderTimestamp: 1,
+                timestamp: 2,
+            });
+
+            // stateReplaced$ must emit with the new path
+            expect(replacedState?.filePath).toBe(newPath);
+            // The new doc must be accessible under the new path, not the old one
+            expect(service.isFileOpen(newPath)).toBe(true);
+            expect(service.isFileOpen(FILE_PATH)).toBe(false);
+            sub.unsubscribe();
+        });
+
+        it('handleFullContentRequest responds with the new path after a rename', () => {
+            service.init(EXERCISE_ID, TARGET);
+            service.openFile(FILE_PATH, 'content');
+            vi.advanceTimersByTime(500);
+
+            const newPath = 'src/Renamed.java';
+            service.emitFileRenamed(FILE_PATH, newPath, 'FILE');
+            syncService.sendSynchronizationUpdate.mockClear();
+
+            // Peer requests full content using the old path (rename not yet processed by peer)
+            incomingMessages$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_REQUEST,
+                target: TARGET,
+                filePath: FILE_PATH,
+                requestId: 'req-after-rename',
+                timestamp: 1,
+            });
+
+            expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
+                EXERCISE_ID,
+                expect.objectContaining({
+                    eventType: ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_RESPONSE,
+                    filePath: newPath,
+                    responseTo: 'req-after-rename',
+                }),
+            );
+        });
     });
 
     describe('responds to full-content requests', () => {

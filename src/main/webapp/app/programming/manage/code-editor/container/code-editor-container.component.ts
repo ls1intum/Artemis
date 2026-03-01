@@ -223,13 +223,14 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
      * Also, all references to a file need to be updated in case of rename,
      * in case of delete make sure to also remove all sub entities (files in folder).
      */
-    onFileChange<F extends FileChange>([, fileChange]: [string[], F]) {
+    onFileChange<F extends FileChange>([, fileChange, isRemote]: [string[], F, boolean?]) {
         if (fileChange instanceof CreateFileChange) {
-            // Select newly created file
-            if (fileChange.fileType === FileType.FILE) {
+            // Select newly created file, but only for local operations — remote creates must not
+            // hijack the local user's current selection.
+            if (fileChange.fileType === FileType.FILE && !isRemote) {
                 this.selectedFile = fileChange.fileName;
-                this.commitState = CommitState.UNCOMMITTED_CHANGES;
             }
+            this.commitState = CommitState.UNCOMMITTED_CHANGES;
         } else if (fileChange instanceof RenameFileChange || fileChange instanceof DeleteFileChange) {
             // Guard against PROBLEM_STATEMENT file operations - only allow FILE and FOLDER
             if (fileChange.fileType !== FileType.FILE && fileChange.fileType !== FileType.FOLDER) {
@@ -264,13 +265,15 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     private handleRemoteFileTreeEvent(event: FileCreatedEvent | FileDeletedEvent | FileRenamedEvent): void {
         switch (event.eventType) {
             case ExerciseEditorSyncEventType.FILE_CREATED:
-                this.fileBrowser?.handleFileChange(new CreateFileChange(this.mapFileType(event.fileType), event.filePath));
+                // isRemote=true: prevents the container from auto-selecting the new file,
+                // which would hijack the local user's current editor selection.
+                this.fileBrowser?.handleFileChange(new CreateFileChange(this.mapFileType(event.fileType), event.filePath), true);
                 break;
             case ExerciseEditorSyncEventType.FILE_DELETED:
-                this.fileBrowser?.handleFileChange(new DeleteFileChange(this.mapFileType(event.fileType), event.filePath));
+                this.fileBrowser?.handleFileChange(new DeleteFileChange(this.mapFileType(event.fileType), event.filePath), true);
                 break;
             case ExerciseEditorSyncEventType.FILE_RENAMED:
-                this.fileBrowser?.handleFileChange(new RenameFileChange(this.mapFileType(event.fileType), event.oldPath, event.newPath));
+                this.fileBrowser?.handleFileChange(new RenameFileChange(this.mapFileType(event.fileType), event.oldPath, event.newPath), true);
                 break;
         }
     }

@@ -54,6 +54,11 @@ const INITIAL_SYNC_FINALIZE_DELAY_MS = 500;
 const RENAME_REDIRECT_TTL_MS = 5000;
 
 type FileSyncEntry = {
+    // Mutable — kept in sync with the fileDocs map key by remapFileKey/remapDirectoryKeys.
+    // Y.Doc has no off() API, so handlers are wired once and read entry.filePath at fire-time
+    // instead of capturing the path as a closure variable. This prevents stale-path bugs after
+    // a file is renamed while it is open in the editor.
+    filePath: string;
     doc: Y.Doc;
     text: Y.Text;
     awareness: Awareness;
@@ -194,6 +199,7 @@ export class CodeEditorFileSyncService {
         const now = Date.now();
 
         const entry: FileSyncEntry = {
+            filePath,
             doc,
             text,
             awareness,
@@ -204,8 +210,8 @@ export class CodeEditorFileSyncService {
             queuedFullContentRequests: [],
         };
 
-        this.wireDocumentHandlers(entry, filePath);
-        this.wireAwarenessHandlers(entry, filePath);
+        this.wireDocumentHandlers(entry);
+        this.wireAwarenessHandlers(entry);
         this.initializeLocalAwareness(awareness);
         this.fileDocs.set(key, entry);
         this.requestInitialSync(entry, filePath);
@@ -308,6 +314,9 @@ export class CodeEditorFileSyncService {
         }
         this.fileDocs.delete(oldKey);
         this.fileDocs.set(newKey, entry);
+        // Keep entry.filePath current so that already-wired document/awareness handlers emit
+        // under the new path rather than the stale pre-rename path.
+        entry.filePath = newPath;
         this.addRecentRename(oldKey, newKey);
     }
 
@@ -317,17 +326,20 @@ export class CodeEditorFileSyncService {
     private remapDirectoryKeys(oldDir: string, newDir: string): void {
         const oldPrefix = this.buildKey(oldDir.endsWith('/') ? oldDir : oldDir + '/');
         const newPrefix = this.buildKey(newDir.endsWith('/') ? newDir : newDir + '/');
-        const toRemap: [string, string, FileSyncEntry][] = [];
+        const newDirNormalized = newDir.endsWith('/') ? newDir : newDir + '/';
+        const toRemap: [string, string, FileSyncEntry, string][] = [];
         this.fileDocs.forEach((entry, key) => {
             if (key.startsWith(oldPrefix)) {
                 const suffix = key.slice(oldPrefix.length);
                 const newKey = newPrefix + suffix;
-                toRemap.push([key, newKey, entry]);
+                toRemap.push([key, newKey, entry, suffix]);
             }
         });
-        for (const [oldKey, newKey, entry] of toRemap) {
+        for (const [oldKey, newKey, entry, suffix] of toRemap) {
             this.fileDocs.delete(oldKey);
             this.fileDocs.set(newKey, entry);
+            // Same as remapFileKey: update entry.filePath so wired handlers stay current.
+            entry.filePath = newDirNormalized + suffix;
             this.addRecentRename(oldKey, newKey);
         }
     }
@@ -458,7 +470,9 @@ export class CodeEditorFileSyncService {
             entry.queuedFullContentRequests.push(requestId);
             return;
         }
-        this.respondWithFullContent(entry, filePath, requestId);
+        // Use entry.filePath (not the incoming filePath parameter) in case the file was renamed
+        // after the request arrived on the old path and was forwarded via recentRenames.
+        this.respondWithFullContent(entry, entry.filePath, requestId);
     }
 
     private handleSyncResponse(message: FileSyncFullContentResponseEvent): void {
@@ -480,7 +494,10 @@ export class CodeEditorFileSyncService {
             return;
         }
         const update = decodeBase64ToUint8Array(message.yjsUpdate);
-        this.replaceDocumentWithRemoteState(entry, message.filePath, update, message.leaderTimestamp, message.sessionId);
+        // Use entry.filePath (not message.filePath) so the replacement doc is stored under the
+        // current key. message.filePath may be the pre-rename path if the message was delivered
+        // via the recentRenames redirect chain.
+        this.replaceDocumentWithRemoteState(entry, entry.filePath, update, message.leaderTimestamp, message.sessionId);
     }
 
     private finalizeInitialSync(entry: FileSyncEntry, filePath: string): void {
@@ -560,6 +577,7 @@ export class CodeEditorFileSyncService {
         const awareness = new Awareness(doc);
 
         const newEntry: FileSyncEntry = {
+            filePath,
             doc,
             text,
             awareness,
@@ -572,8 +590,8 @@ export class CodeEditorFileSyncService {
             queuedFullContentRequests: [],
         };
 
-        this.wireDocumentHandlers(newEntry, filePath);
-        this.wireAwarenessHandlers(newEntry, filePath);
+        this.wireDocumentHandlers(newEntry);
+        this.wireAwarenessHandlers(newEntry);
         this.initializeLocalAwareness(awareness);
 
         Y.applyUpdate(doc, update, FileSyncOrigin.Remote);
@@ -588,7 +606,7 @@ export class CodeEditorFileSyncService {
 
     // ── Private: Document and awareness wiring ───────────────────────────
 
-    private wireDocumentHandlers(entry: FileSyncEntry, filePath: string): void {
+    private wireDocumentHandlers(entry: FileSyncEntry): void {
         entry.doc.on('update', (update: Uint8Array, origin: FileSyncOrigin | unknown) => {
             if (!this.exerciseId || !this.currentTarget) {
                 return;
@@ -599,7 +617,10 @@ export class CodeEditorFileSyncService {
             const updateEvent: FileSyncUpdateEvent = {
                 eventType: ExerciseEditorSyncEventType.FILE_SYNC_UPDATE,
                 target: this.currentTarget,
-                filePath,
+                // Read entry.filePath at fire-time, not from a closure-captured string.
+                // Y.Doc has no off() API, so if this file is renamed while open, remapFileKey
+                // updates entry.filePath and the next outgoing update carries the new path.
+                filePath: entry.filePath,
                 yjsUpdate: encodeUint8ArrayToBase64(update),
                 auxiliaryRepositoryId: this.auxiliaryRepositoryId,
             };
@@ -607,7 +628,7 @@ export class CodeEditorFileSyncService {
         });
     }
 
-    private wireAwarenessHandlers(entry: FileSyncEntry, filePath: string): void {
+    private wireAwarenessHandlers(entry: FileSyncEntry): void {
         entry.awareness.on('update', ({ added, updated, removed }: AwarenessUpdatePayload, origin: FileSyncOrigin | unknown) => {
             if (!this.exerciseId || !this.currentTarget || origin === FileSyncOrigin.Remote) {
                 return;
@@ -616,7 +637,9 @@ export class CodeEditorFileSyncService {
             const awarenessEvent: FileAwarenessUpdateEvent = {
                 eventType: ExerciseEditorSyncEventType.FILE_AWARENESS_UPDATE,
                 target: this.currentTarget,
-                filePath,
+                // Same reasoning as wireDocumentHandlers: read at fire-time so renames are
+                // reflected without re-registering the handler.
+                filePath: entry.filePath,
                 awarenessUpdate: encodeUint8ArrayToBase64(update),
                 auxiliaryRepositoryId: this.auxiliaryRepositoryId,
             };
@@ -718,12 +741,11 @@ export class CodeEditorFileSyncService {
         if (message.target !== this.currentTarget) {
             return;
         }
-        if (
-            this.currentTarget === ExerciseEditorSyncTarget.AUXILIARY_REPOSITORY &&
-            'auxiliaryRepositoryId' in message &&
-            message.auxiliaryRepositoryId !== this.auxiliaryRepositoryId
-        ) {
-            return;
+        if (this.currentTarget === ExerciseEditorSyncTarget.AUXILIARY_REPOSITORY) {
+            const messageAuxId = 'auxiliaryRepositoryId' in message ? message.auxiliaryRepositoryId : undefined;
+            if (messageAuxId !== this.auxiliaryRepositoryId) {
+                return;
+            }
         }
         switch (message.eventType) {
             case ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_REQUEST:

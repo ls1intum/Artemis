@@ -58,7 +58,6 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     protected fileSyncService = inject(CodeEditorFileSyncService);
 
     private currentFileBinding?: MonacoBinding;
-    private fileBindingDestroyed = false;
     private previousSyncedFile?: string;
     private stateReplacedSubscription?: Subscription;
 
@@ -450,6 +449,10 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         // instance is equally stable. This subscription is torn down by teardownFileBinding()
         // on every file switch (line 409), so the captured references cannot go stale.
         this.stateReplacedSubscription = this.fileSyncService.stateReplaced$.pipe(filter((event) => event.filePath === fileName)).subscribe((replacedState) => {
+            // Detach the old binding before mutating the model so that the setValue does not
+            // propagate as a spurious delete+insert through the old Y.Doc to peers.
+            this.currentFileBinding?.destroy();
+            this.currentFileBinding = undefined;
             model.setValue(replacedState.text.toString());
             this.createFileBinding(replacedState, model, editorInstance);
         });
@@ -457,18 +460,20 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
 
     /**
      * Create (or recreate) the Monaco <-> Yjs binding for a code file.
-     * Uses a double-destroy guard pattern to prevent duplicate cleanup.
+     * Uses a per-binding closure variable to guard against double-destroy: each binding
+     * captures its own `destroyed` flag so that a new binding creation cannot accidentally
+     * reset the guard of an older binding that is still being torn down asynchronously.
      */
     private createFileBinding(syncState: FileSyncState, model: editor.ITextModel, editorInstance: editor.IStandaloneCodeEditor): void {
         this.currentFileBinding?.destroy();
-        this.fileBindingDestroyed = false;
+        let destroyed = false;
         const binding = new MonacoBinding(syncState.text, model, new Set([editorInstance]), syncState.awareness);
         const originalDestroy = binding.destroy.bind(binding);
         binding.destroy = () => {
-            if (this.fileBindingDestroyed) {
+            if (destroyed) {
                 return;
             }
-            this.fileBindingDestroyed = true;
+            destroyed = true;
             originalDestroy();
         };
         this.currentFileBinding = binding;
@@ -485,7 +490,6 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         this.stateReplacedSubscription = undefined;
         this.currentFileBinding?.destroy();
         this.currentFileBinding = undefined;
-        this.fileBindingDestroyed = false;
     }
 
     /**

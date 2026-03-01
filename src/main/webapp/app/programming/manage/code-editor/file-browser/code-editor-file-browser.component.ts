@@ -151,7 +151,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
     fileSyncService = input<CodeEditorFileSyncService | undefined>();
 
     onToggleCollapse = output<InteractableEvent>();
-    onFileChange = output<[string[], FileChange]>();
+    onFileChange = output<[string[], FileChange, boolean?]>();
     selectedFileChange = output<string | undefined>();
     commitStateChange = output<CommitState>();
     onError = output<string>();
@@ -339,14 +339,23 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
         );
     };
 
-    handleFileChange(fileChange: FileChange) {
+    /**
+     * Apply a file-tree change to the in-memory repository map and rebuild the tree view.
+     *
+     * @param fileChange The change to apply (create / rename / delete).
+     * @param isRemote   True when the change originates from a remote peer via the sync service.
+     *                   Forwarded as the optional third element of the onFileChange tuple so that
+     *                   the container can suppress side-effects that are only appropriate for
+     *                   local operations (e.g. auto-selecting a newly created file).
+     */
+    handleFileChange(fileChange: FileChange, isRemote = false) {
         if (fileChange instanceof CreateFileChange) {
             this.repositoryFiles = { ...this.repositoryFiles, [fileChange.fileName]: fileChange.fileType };
         } else {
             this.repositoryFiles = this.fileService.updateFileReferences(this.repositoryFiles, fileChange);
         }
         this.setupTreeview();
-        this.onFileChange.emit([Object.keys(this.repositoryFiles), fileChange]);
+        this.onFileChange.emit([Object.keys(this.repositoryFiles), fileChange, isRemote]);
     }
 
     /**
