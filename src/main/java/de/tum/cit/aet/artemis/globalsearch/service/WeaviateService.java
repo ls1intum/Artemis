@@ -57,16 +57,26 @@ public class WeaviateService {
     /**
      * Initializes the Weaviate collections when the service is first used.
      * Creates collections that don't exist yet.
+     * <p>
+     * This method is resilient to failures - if Weaviate is temporarily unavailable during startup,
+     * the bean creation will still succeed. Individual operations will fail gracefully at runtime.
      */
     @PostConstruct
     public void initializeCollections() {
-        log.info("Initializing Weaviate collections...");
+        try {
+            log.info("Initializing Weaviate collections...");
 
-        for (WeaviateCollectionSchema schema : WeaviateSchemas.ALL_SCHEMAS) {
-            ensureCollectionExists(schema);
+            for (WeaviateCollectionSchema schema : WeaviateSchemas.ALL_SCHEMAS) {
+                ensureCollectionExists(schema);
+            }
+
+            log.info("Weaviate collection initialization complete");
         }
-
-        log.info("Weaviate collection initialization complete");
+        catch (Exception e) {
+            log.warn("Failed to initialize Weaviate collections during startup. The service may be temporarily unavailable. Error: {}", e.getMessage(), e);
+            // Don't rethrow - allow bean creation to succeed even if Weaviate is temporarily unavailable
+            // Individual operations will fail gracefully at runtime if Weaviate is not accessible
+        }
     }
 
     /**
