@@ -6,7 +6,6 @@ import archiver from 'archiver';
 import coverage from 'istanbul-lib-coverage';
 import reports from 'istanbul-reports';
 import libReport from 'istanbul-lib-report';
-import fsAsync from 'fs/promises';
 import fs from 'fs';
 
 /**
