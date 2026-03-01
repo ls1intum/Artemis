@@ -334,8 +334,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         // Try the new build phases format first
         BuildPlanPhases buildPlanPhases = buildConfig.getBuildPlanPhases();
         if (buildPlanPhases != null) {
-            return getBuildConfigFromPhases(buildPlanPhases, programmingExercise, buildConfig, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage,
-                    projectType, staticCodeAnalysisEnabled, sequentialTestRunsEnabled, dockerRunConfig);
+            return getBuildConfigFromPhases(buildPlanPhases, participation, programmingExercise, buildConfig, commitHashToBuild, assignmentCommitHash, testCommitHash, branch,
+                    programmingLanguage, projectType, staticCodeAnalysisEnabled, sequentialTestRunsEnabled, dockerRunConfig);
         }
 
         // Fall back to existing windfile path
@@ -348,11 +348,11 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      * Evaluates phase conditions, assembles the build script from active phases,
      * and extracts result paths only from active phases.
      */
-    private BuildConfig getBuildConfigFromPhases(BuildPlanPhases buildPlanPhases, ProgrammingExercise programmingExercise, ProgrammingExerciseBuildConfig buildConfig,
-            String commitHashToBuild, String assignmentCommitHash, String testCommitHash, String branch, ProgrammingLanguage programmingLanguage, ProjectType projectType,
-            boolean staticCodeAnalysisEnabled, boolean sequentialTestRunsEnabled, DockerRunConfig dockerRunConfig) {
+    private BuildConfig getBuildConfigFromPhases(BuildPlanPhases buildPlanPhases, ProgrammingExerciseParticipation participation, ProgrammingExercise programmingExercise,
+            ProgrammingExerciseBuildConfig buildConfig, String commitHashToBuild, String assignmentCommitHash, String testCommitHash, String branch,
+            ProgrammingLanguage programmingLanguage, ProjectType projectType, boolean staticCodeAnalysisEnabled, boolean sequentialTestRunsEnabled, DockerRunConfig dockerRunConfig) {
 
-        BuildPhaseEvaluationService.EvaluatedBuildPlan evaluated = buildPhaseEvaluationService.evaluate(buildPlanPhases, programmingExercise);
+        BuildPhaseEvaluationService.EvaluatedBuildPlan evaluated = buildPhaseEvaluationService.evaluate(buildPlanPhases, participation);
 
         // Docker image: use the one stored in BuildPlanPhases, or fall back to language default
         String dockerImage = buildPlanPhases.dockerImage();
