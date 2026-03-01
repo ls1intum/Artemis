@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
@@ -24,9 +23,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.exercise.dto.ProgrammingExerciseWeaviateDTO;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
-import de.tum.cit.aet.artemis.globalsearch.dto.ExerciseSearchResultDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.GlobalSearchResultDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
 
@@ -49,15 +46,12 @@ public class ExerciseWeaviateResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final String serverUrl;
-
     public ExerciseWeaviateResource(ExerciseWeaviateService exerciseWeaviateService, CourseRepository courseRepository, UserRepository userRepository,
-            AuthorizationCheckService authCheckService, @Value("${server.url}") String serverUrl) {
+            AuthorizationCheckService authCheckService) {
         this.exerciseWeaviateService = exerciseWeaviateService;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
-        this.serverUrl = serverUrl;
     }
 
     /**
@@ -71,7 +65,7 @@ public class ExerciseWeaviateResource {
      */
     @GetMapping("courses/{courseId}/programming-exercises/weaviate")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<ProgrammingExerciseWeaviateDTO>> getProgrammingExercisesFromWeaviate(@PathVariable Long courseId) {
+    public ResponseEntity<List<GlobalSearchResultDTO>> getProgrammingExercisesFromWeaviate(@PathVariable Long courseId) {
         log.debug("REST request to get programming exercises from Weaviate for course {}", courseId);
 
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -81,7 +75,7 @@ public class ExerciseWeaviateResource {
         boolean isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantInCourse(courseId);
 
         var exerciseProperties = exerciseWeaviateService.fetchProgrammingExercisesForCourse(courseId, isAtLeastTutor);
-        var exercises = exerciseProperties.stream().map(properties -> ProgrammingExerciseWeaviateDTO.fromWeaviateProperties(properties, serverUrl)).toList();
+        var exercises = exerciseProperties.stream().map(GlobalSearchResultDTO::fromExerciseProperties).toList();
 
         return ResponseEntity.ok(exercises);
     }
@@ -200,7 +194,7 @@ public class ExerciseWeaviateResource {
      */
     @GetMapping("exercises/search")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<ExerciseSearchResultDTO>> searchExercises(@RequestParam("q") String query, @RequestParam(value = "courseId", required = false) Long courseId,
+    public ResponseEntity<List<GlobalSearchResultDTO>> searchExercises(@RequestParam("q") String query, @RequestParam(value = "courseId", required = false) Long courseId,
             @RequestParam(value = "limit", defaultValue = "10") int limit) {
 
         log.debug("REST request to search exercises with query: '{}', courseId: {}, limit: {}", query, courseId, limit);
@@ -219,7 +213,7 @@ public class ExerciseWeaviateResource {
         }
 
         var searchResults = exerciseWeaviateService.searchExercises(query, courseId, effectiveLimit);
-        var resultDTOs = searchResults.stream().map(ExerciseSearchResultDTO::fromWeaviateProperties).toList();
+        var resultDTOs = searchResults.stream().map(GlobalSearchResultDTO::fromExerciseProperties).toList();
         return ResponseEntity.ok(resultDTOs);
     }
 }
