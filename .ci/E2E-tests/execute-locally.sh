@@ -84,6 +84,7 @@ services:
             sh -c '
             cd /app/artemis/src/test/playwright &&
             chmod 777 /root &&
+            rm -f test-reports/results*.xml &&
             npm ci &&
             npm run playwright:setup &&
             PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-reports/results.xml npx playwright test e2e --grep "${TEST_FILTER}" --reporter=list,junit,monocart-reporter

@@ -73,14 +73,15 @@ export class ExamExerciseGroupsPage {
     }
 
     async visitPageViaUrl(courseId: number, examId: number) {
-        await this.page.goto(`course-management/${courseId}/exams/${examId}/exercise-groups`);
+        await this.page.goto(`/course-management/${courseId}/exams/${examId}/exercise-groups`);
     }
 
     async shouldContainExerciseWithTitle(groupID: number, exerciseTitle: string) {
-        // Wait for the exercise groups page to fully load
-        await this.page.waitForLoadState('networkidle');
+        // Wait for DOM content to load but NOT networkidle, because programming exercise
+        // creation triggers async builds that produce ongoing network traffic, causing
+        // networkidle to block indefinitely and the test to time out.
+        await this.page.waitForLoadState('domcontentloaded');
         const exerciseElement = this.page.locator(`#group-${groupID} #exercises`, { hasText: exerciseTitle });
-        // Wait for the element to be attached to DOM first, with a longer timeout
         await exerciseElement.waitFor({ state: 'attached', timeout: 30000 });
         await exerciseElement.scrollIntoViewIfNeeded();
         await expect(exerciseElement).toBeVisible({ timeout: 10000 });

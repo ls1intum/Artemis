@@ -174,7 +174,7 @@ test.describe('Exam management', { tag: '@fast' }, () => {
             await page.goto(`/course-management/${course.id}/exams`);
             await examManagement.openStudentExams(exam.id!);
             await studentExamManagement.clickGenerateStudentExams();
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState('domcontentloaded');
             await expect(studentExamManagement.getGenerateMissingStudentExamsButton()).toBeDisabled();
         });
 

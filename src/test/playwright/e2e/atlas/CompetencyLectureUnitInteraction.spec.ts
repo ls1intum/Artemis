@@ -35,7 +35,7 @@ test.describe('Competency Lecture Unit Linking', { tag: '@fast' }, () => {
             await competencyManagement.goto(course.id!);
 
             await page.getByRole('link', { name: competencyData.title }).click();
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState('domcontentloaded');
 
             await expect(page.getByRole('heading', { name: 'Text Unit 1' })).toBeVisible();
         });
@@ -64,7 +64,7 @@ test.describe('Competency Lecture Unit Linking', { tag: '@fast' }, () => {
             await competencyManagement.goto(course.id!);
 
             await page.getByRole('link', { name: competencyData.title }).click();
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState('domcontentloaded');
 
             await expect(page.getByRole('heading', { name: 'Text Unit 1' })).toBeVisible();
             await expect(page.getByRole('heading', { name: 'Text Unit 2' })).toBeVisible();
@@ -78,7 +78,7 @@ test.describe('Competency Lecture Unit Linking', { tag: '@fast' }, () => {
             await courseManagementAPIRequests.enableLearningPaths(course);
 
             await page.goto(`/course-management/${course.id}/lectures/${lecture.id}/unit-management`);
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState('domcontentloaded');
 
             await lectureManagement.openCreateUnit(UnitType.TEXT);
             await page.fill('#name', 'UI Created Text Unit');
@@ -89,14 +89,14 @@ test.describe('Competency Lecture Unit Linking', { tag: '@fast' }, () => {
             await page.getByRole('checkbox', { name: 'UI Link Competency' }).check();
 
             await page.click('#submitButton');
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState('domcontentloaded');
 
             await expect(page.getByRole('heading', { name: 'UI Created Text Unit' })).toBeVisible();
 
             await competencyManagement.goto(course.id!);
 
             await page.getByRole('link', { name: 'UI Link Competency' }).click();
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState('domcontentloaded');
             await expect(page.getByRole('heading', { name: 'UI Created Text Unit' })).toBeVisible();
         });
     });
@@ -114,26 +114,26 @@ test.describe('Competency Lecture Unit Linking', { tag: '@fast' }, () => {
 
             await competencyManagement.goto(course.id!);
             await page.getByRole('link', { name: 'Comp A' }).click();
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState('domcontentloaded');
             await expect(page.getByRole('heading', { name: 'Text Unit' })).toBeVisible();
 
             await page.goto(`/course-management/${course.id}/lectures/${lecture.id}/unit-management/text-units/${textUnit.id}/edit`);
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState('domcontentloaded');
 
             await page.getByRole('checkbox', { name: 'Comp A' }).uncheck();
             await page.getByRole('checkbox', { name: 'Comp B' }).check();
 
             await page.click('#submitButton');
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState('domcontentloaded');
 
             await competencyManagement.goto(course.id!);
             await page.getByRole('link', { name: 'Comp A' }).click();
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState('domcontentloaded');
             await expect(page.getByRole('heading', { name: 'Text Unit' })).not.toBeVisible();
 
             await competencyManagement.goto(course.id!);
             await page.getByRole('link', { name: 'Comp B' }).click();
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState('domcontentloaded');
             await expect(page.getByRole('heading', { name: 'Text Unit' })).toBeVisible();
         });
     });
@@ -150,24 +150,24 @@ test.describe('Competency Lecture Unit Linking', { tag: '@fast' }, () => {
 
             await competencyManagement.goto(course.id!);
             await page.getByRole('link', { name: competencyData.title }).click();
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState('domcontentloaded');
             await expect(page.getByRole('heading', { name: 'Text Unit' })).toBeVisible();
 
             await page.goto(`/course-management/${course.id}/lectures/${lecture.id}/unit-management/text-units/${textUnit.id}/edit`);
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState('domcontentloaded');
 
             await page.getByRole('checkbox', { name: competencyData.title }).uncheck();
 
             await page.click('#submitButton');
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState('domcontentloaded');
 
             await competencyManagement.goto(course.id!);
             await page.getByRole('link', { name: competencyData.title }).click();
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState('domcontentloaded');
             await expect(page.getByRole('heading', { name: 'Text Unit' })).not.toBeVisible();
 
             await page.reload();
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState('domcontentloaded');
             await expect(page.getByRole('heading', { name: 'Text Unit' })).not.toBeVisible();
         });
     });
