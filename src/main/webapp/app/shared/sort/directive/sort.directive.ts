@@ -4,9 +4,6 @@ import { Directive, model, output } from '@angular/core';
 export class SortDirective<T> {
     predicate = model<T | undefined>();
     ascending = model<boolean>(false);
-
-    predicateChange = output<T>();
-    ascendingChange = output<boolean>();
     sortChange = output<{ predicate: T; ascending: boolean }>();
 
     sort(field: T): void {
