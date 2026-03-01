@@ -206,12 +206,6 @@
             "courseIdMissing": "The courseId is required.",
             "forbidChangeCourseId": "Exercise course id does not match the stored course id"
         },
-        "PlagiarismPost": {
-            "idNull": "The plagiarism post must have an id.",
-            "courseInformationSharingDisabled": "Posting is disabled for this course.",
-            "plagiarismCaseMissing": "The post must be associated with a plagiarism case.",
-            "idExists": "A new post cannot already have an ID"
-        },
         "ProblemStatementGeneration": {
             "generatedProblemStatementTooLong": "The generated problem statement is too long. Please try again with a different prompt.",
             "chatClientNotConfigured": "AI generation is currently unavailable. Please contact your administrator.",
@@ -231,20 +225,7 @@
             "problemStatementRefinementNull": "The AI returned an empty response. Please try again.",
             "refinedProblemStatementTooLong": "The refined problem statement is too long. Please adjust the refinement instructions and try again.",
             "refinedProblemStatementUnchanged": "The AI did not make any changes to the problem statement. Please adjust the refinement instructions and try again.",
-            "problemStatementRefinementFailed": "Failed to refine the problem statement. Please try again later.",
-            "textExtractionFailed": "Failed to extract the selected text for refinement. Please adjust your selection and try again.",
-            "invalidLineRange": "The selected line range is out of bounds. Please adjust your selection and try again.",
-            "invalidColumnRange": "The selected column range is invalid. Please adjust your selection and try again.",
-            "instructionEmpty": "The refinement instruction cannot be empty.",
-            "instructionTooLong": "The refinement instruction is too long. Please shorten it and try again."
-        },
-        "ProblemStatementRewrite": {
-            "chatClientNotConfigured": "AI rewrite is currently unavailable. Please contact your administrator.",
-            "chatClientNotConfigured_detail": "AI chat client is not configured.",
-            "problemStatementEmpty": "The problem statement cannot be empty.",
-            "problemStatementRewriteFailed": "Failed to rewrite problem statement. Please try again later.",
-            "problemStatementRewriteNull": "The AI returned an empty response. Please try again.",
-            "rewrittenProblemStatementTooLong": "The rewritten problem statement is too long. Please try again with a shorter input."
+            "problemStatementRefinementFailed": "Failed to refine the problem statement. Please try again later."
         },
         "noCourse": "An exam must belong to a course.",
         "wrongCourseId": "The course ID does not match the course connected to the exam.",
@@ -269,25 +250,6 @@
             "sessionIdMismatch": "The session id in the path does not match the id in the tutorial group session",
             "tutorialGroupIdMismatch": "The tutorialGroupId in the path does not match the tutorialGroupId in the tutorial group",
             "courseIdMismatch": "The courseId in the path does not match the courseId in the tutorial group"
-        },
-        "tutorialGroupsConfiguration": {
-            "idExists": "A new tutorial group configuration cannot already have an ID.",
-            "alreadyExists": "A tutorial group configuration already exists for this course.",
-            "courseHasNoTimeZone": "The course has no configured time zone.",
-            "idNull": "A tutorial group configuration cannot be updated without an id.",
-            "tutorialPeriodMissing": "Tutorial period start date and end date must be set.",
-            "tutorialPeriodInvalidFormat": "Tutorial period start date and end date must be valid ISO 8601 date strings.",
-            "tutorialPeriodInvalidOrder": "Tutorial period start date must be before tutorial period end date.",
-            "courseIdMismatch": "The course id in the path does not match the course of the tutorial group configuration.",
-            "tutorialGroupConfigurationIdMismatch": "The tutorial group configuration id in the path does not match the configuration to be updated."
-        },
-        "tutorialGroupFreePeriod": {
-            "tutorialFreePeriodStartDateMissing": "Tutorial group free period start date must be set.",
-            "tutorialFreePeriodEndDateMissing": "Tutorial group free period end date must be set.",
-            "tutorialFreePeriodInvalidFormat": "Tutorial group free period start date and end date must be valid ISO 8601 date strings.",
-            "tutorialFreePeriodInvalidOrder": "Tutorial group free period start date must be before tutorial group free period end date.",
-            "tutorialFreePeriodOutOfBounds": "Tutorial group free periods must lie within the tutorial period."
-        },
-        "fileReadError": "An error occurred while reading the files of the referenced commit. Please try again."
+        }
     }
 }
