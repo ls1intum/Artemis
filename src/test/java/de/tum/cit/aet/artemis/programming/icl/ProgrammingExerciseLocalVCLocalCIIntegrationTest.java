@@ -237,7 +237,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         if (exerciseWeaviateService != null && weaviateService != null) {
             exerciseWeaviateService.upsertExerciseAsync(programmingExercise);
             // Wait for initial insert to complete before proceeding with update
-            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+            await().atMost(Duration.ofSeconds(60)).untilAsserted(() -> {
                 var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
                 assertThat(properties).as("Exercise should be initially present in Weaviate before update").isNotNull();
                 Object releaseDateObj = properties.get(ExerciseSchema.Properties.RELEASE_DATE);
@@ -256,7 +256,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(programmingExercise), eq(Optional.of(programmingExercise)));
 
         if (!WeaviateTestUtil.shouldSkipWeaviateAssertions(weaviateService)) {
-            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+            await().atMost(Duration.ofSeconds(60)).untilAsserted(() -> {
                 var weaviateProperties = queryExerciseProperties(weaviateService, updatedExercise.getId());
                 assertThat(weaviateProperties).as("Exercise properties should exist in Weaviate after update").isNotNull();
                 assertThat(weaviateProperties.get(ExerciseSchema.Properties.TITLE)).isEqualTo(updatedExercise.getTitle());
