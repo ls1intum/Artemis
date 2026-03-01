@@ -1,11 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { MockModule, MockProvider } from 'ng-mocks';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/code-editor-tutor-assessment-inline-feedback.component';
 import { Feedback, FeedbackType, NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { By } from '@angular/platform-browser';
 
@@ -18,8 +17,8 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [MockModule(NgbTooltipModule)],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(StructuredGradingCriterionService)],
+            imports: [MockModule(NgbTooltipModule), TranslateModule.forRoot()],
+            providers: [MockProvider(StructuredGradingCriterionService)],
         })
             .compileComponents()
             .then(() => {
@@ -131,18 +130,19 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect(textToBeDisplayed).toEqual(expectedTextToBeDisplayed);
     });
 
-    it('should not display credits and icons for non-graded feedback suggestions', () => {
+    it('should render unified feedback for non-graded feedback suggestions', () => {
         comp.feedback = {
             type: FeedbackType.AUTOMATIC,
             text: NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER + 'feedback',
         } as Feedback;
         fixture.detectChanges();
 
-        const badgeElement = fixture.debugElement.query(By.css('.badge'));
-        expect(badgeElement).toBeNull();
+        const pointsElement = fixture.debugElement.query(By.css('.unified-feedback-points'));
+        expect(pointsElement).not.toBeNull();
+        expect(pointsElement.nativeElement.textContent).toContain('0');
     });
 
-    it('should display credits and icons for graded feedback', () => {
+    it('should display points and icon for graded feedback', () => {
         comp.feedback = {
             credits: 1,
             type: FeedbackType.AUTOMATIC,
@@ -150,34 +150,57 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         } as Feedback;
         fixture.detectChanges();
 
-        const badgeElement = fixture.debugElement.query(By.css('.badge'));
-        expect(badgeElement).not.toBeNull();
-        expect(badgeElement.nativeElement.textContent).toContain('1P');
+        const pointsElement = fixture.debugElement.query(By.css('.unified-feedback-points'));
+        expect(pointsElement).not.toBeNull();
+        expect(pointsElement.nativeElement.textContent).toContain('1');
+        const iconElement = fixture.debugElement.query(By.css('.unified-feedback-icon'));
+        expect(iconElement).not.toBeNull();
     });
 
-    it('should use the correct translation key for non-graded feedback', () => {
+    it('should render correct title and text for non-graded feedback', () => {
         comp.feedback = {
             type: FeedbackType.AUTOMATIC,
             text: NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER + 'feedback',
         } as Feedback;
         fixture.detectChanges();
 
-        const headerElement = fixture.debugElement.query(By.css('.col-10 h6')).nativeElement;
-        expect(headerElement.attributes['jhiTranslate'].value).toBe('artemisApp.assessment.detail.feedback');
-        const paragraphElement = fixture.debugElement.query(By.css('.col-10 p')).nativeElement;
-        expect(paragraphElement.innerHTML).toContain(comp.buildFeedbackTextForCodeEditor(comp.feedback));
+        const titleElement = fixture.debugElement.query(By.css('.unified-feedback-title')).nativeElement;
+        expect(titleElement.textContent.trim()).toBe('Not Attempted');
+        // Reference is hidden via [showReference]="false"
+        expect(fixture.debugElement.query(By.css('.unified-feedback-reference'))).toBeNull();
+        // Icon should be present regardless of type
+        expect(fixture.debugElement.query(By.css('.unified-feedback-icon'))).not.toBeNull();
+        const expectedText = comp.buildFeedbackTextForCodeEditor(comp.feedback);
+        const textDebug = fixture.debugElement.query(By.css('.unified-feedback-text'));
+        if (expectedText) {
+            expect(textDebug).not.toBeNull();
+            expect(textDebug!.nativeElement.innerHTML).toContain(expectedText);
+        } else {
+            expect(textDebug).toBeNull();
+        }
     });
 
-    it('should use the correct translation key for graded feedback', () => {
+    it('should render correct title and text for graded feedback', () => {
         comp.feedback = {
             type: FeedbackType.MANUAL,
             text: 'feedback',
         } as Feedback;
+        comp.feedback.credits = 1;
         fixture.detectChanges();
 
-        const headerElement = fixture.debugElement.query(By.css('.col-10 h6')).nativeElement;
-        expect(headerElement.attributes['jhiTranslate'].value).toBe('artemisApp.assessment.detail.tutorComment');
-        const paragraphElement = fixture.debugElement.query(By.css('.col-10 p')).nativeElement;
-        expect(paragraphElement.innerHTML).toContain(comp.buildFeedbackTextForCodeEditor(comp.feedback));
+        const titleElement = fixture.debugElement.query(By.css('.unified-feedback-title')).nativeElement;
+        expect(titleElement.textContent.trim()).toBe('Correct');
+        // Reference is hidden via [showReference]="false"
+        expect(fixture.debugElement.query(By.css('.unified-feedback-reference'))).toBeNull();
+        // Icon should be present regardless of type
+        expect(fixture.debugElement.query(By.css('.unified-feedback-icon'))).not.toBeNull();
+        const expectedText = comp.buildFeedbackTextForCodeEditor(comp.feedback);
+        const textDebug = fixture.debugElement.query(By.css('.unified-feedback-text'));
+        if (expectedText) {
+            expect(textDebug).not.toBeNull();
+            expect(textDebug!.nativeElement.innerHTML).toContain(expectedText);
+        } else {
+            expect(textDebug).toBeNull();
+        }
     });
 });
