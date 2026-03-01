@@ -4,7 +4,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_IRIS, PROFILE_ATHENA } from 'app/app.constants';
 
 /**
- * Guard to check if the route "/user-settings/llm-usage" can be activated.
+ * Guard to check if the route "/user-settings/ai-experience" can be activated.
  */
 @Injectable({ providedIn: 'root' })
 export class DataGuard implements CanActivate {

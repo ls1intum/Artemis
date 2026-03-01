@@ -25,7 +25,7 @@ import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.User;
 
 /**
- * A DTO representing a user, with his authorities.
+ * A DTO representing a user, with their authorities.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class UserDTO extends AuditingEntityDTO {

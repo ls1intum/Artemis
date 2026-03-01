@@ -1,0 +1,183 @@
+jhi-iris-citation-text {
+    // Base z-index for citation layering
+    $citation-base-z-index: 1;
+
+    --iris-citation-bg: var(--iris-tertiary-background);
+    --iris-citation-summary-bg: var(--iris-tertiary-background);
+    --iris-citation-agg-bg: color-mix(in srgb, var(--iris-accent-background) 60%, var(--iris-accent-border-color));
+    --iris-citation-agg-text: var(--iris-primary-background);
+    --iris-citation-icon-bg: var(--iris-label-color);
+    --iris-citation-source-color: var(--iris-label-color);
+    --iris-citation-lecture-color: var(--iris-label-color);
+
+    .iris-citation-group {
+        display: inline-flex;
+        align-items: center;
+        position: relative;
+    }
+
+    .iris-citation,
+    .iris-citation__count {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 6px;
+        border-radius: 999px;
+        font-size: 0.85em;
+        line-height: 1.2;
+    }
+
+    .iris-citation {
+        gap: 4px;
+        background-color: var(--iris-citation-bg);
+        vertical-align: middle;
+        margin: 0 2px;
+        max-width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        position: relative;
+        z-index: $citation-base-z-index; // Base layer for citation bubbles
+    }
+
+    .iris-citation__count {
+        justify-content: center;
+        background-color: var(--iris-citation-agg-bg);
+        color: var(--iris-citation-agg-text);
+        pointer-events: none;
+        margin-left: -7px; // Negative margin creates overlap effect with citation bubble
+    }
+
+    .iris-citation__summary {
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        width: 280px;
+        max-width: 70vw;
+        padding: 10px 10px 14px;
+        border-radius: 8px;
+        background-color: var(--iris-citation-summary-bg);
+        line-height: 1.4;
+        white-space: normal;
+        text-align: center;
+        z-index: $citation-base-z-index + 1; // Summary tooltip above citation bubble
+        transform: translate(-50%, calc(-100% - 18px)) translateX(var(--iris-citation-shift));
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition:
+            opacity 120ms ease,
+            visibility 120ms ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .iris-citation-group .iris-citation__summary {
+        font-size: 0.85em;
+    }
+
+    .iris-citation--has-summary,
+    .iris-citation-group--has-summary {
+        overflow: visible;
+
+        &:hover,
+        &:focus-within {
+            z-index: $citation-base-z-index + 10; // Elevated layer to appear above other citations
+
+            .iris-citation__summary {
+                opacity: 1;
+                visibility: visible;
+                pointer-events: auto;
+            }
+        }
+    }
+
+    .iris-citation__summary-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        min-height: 1.2em;
+    }
+
+    .iris-citation__summary-item {
+        display: none;
+
+        &.is-active {
+            display: block;
+        }
+    }
+
+    .iris-citation__summary-title {
+        display: block;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .iris-citation__summary-lecture {
+        display: block;
+        font-size: 0.75rem;
+        line-height: 1.2;
+        color: var(--iris-citation-lecture-color);
+    }
+
+    .iris-citation__summary-text {
+        display: block;
+        font-size: 0.85rem;
+    }
+
+    .iris-citation__nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding-top: 6px;
+        font-size: 0.9em;
+    }
+
+    .iris-citation__nav-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        border: none;
+        background: transparent;
+        padding: 0 6px;
+        cursor: pointer;
+        user-select: none;
+        color: var(--iris-label-color);
+        font: inherit;
+        pointer-events: auto;
+
+        &:focus-visible {
+            outline: 2px solid currentColor;
+            outline-offset: 1px;
+        }
+
+        svg {
+            width: 12px;
+            height: 12px;
+            color: currentColor;
+        }
+    }
+
+    .iris-citation__icon {
+        width: 14px;
+        height: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+
+        svg {
+            width: 100%;
+            height: 100%;
+            color: var(--iris-citation-icon-bg);
+        }
+    }
+
+    .iris-citation--source .iris-citation__icon svg {
+        color: var(--iris-citation-source-color);
+    }
+}

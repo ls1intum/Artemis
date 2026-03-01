@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { CourseCompetencyRelationFormComponent, UnionFind } from 'app/atlas/manage/course-competency-relation-form/course-competency-relation-form.component';
@@ -9,17 +10,19 @@ import { TranslateService } from '@ngx-translate/core';
 import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency, UpdateCourseCompetencyRelationDTO } from 'app/atlas/shared/entities/competency.model';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { of } from 'rxjs';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CourseCompetencyRelationFormComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: CourseCompetencyRelationFormComponent;
     let fixture: ComponentFixture<CourseCompetencyRelationFormComponent>;
     let courseCompetencyApiService: CourseCompetencyApiService;
     let alertService: AlertService;
 
-    let createCourseCompetencyRelationSpy: jest.SpyInstance;
-    let updateCourseCompetencyRelationSpy: jest.SpyInstance;
-    let deleteCourseCompetencyRelationSpy: jest.SpyInstance;
-    let getSuggestedCompetencyRelationsSpy: jest.SpyInstance;
+    let createCourseCompetencyRelationSpy: ReturnType<typeof vi.spyOn>;
+    let updateCourseCompetencyRelationSpy: ReturnType<typeof vi.spyOn>;
+    let deleteCourseCompetencyRelationSpy: ReturnType<typeof vi.spyOn>;
+    let getSuggestedCompetencyRelationsSpy: ReturnType<typeof vi.spyOn>;
 
     const courseId = 1;
     const courseCompetencies: CourseCompetency[] = [
@@ -59,16 +62,16 @@ describe('CourseCompetencyRelationFormComponent', () => {
                 {
                     provide: CourseCompetencyApiService,
                     useValue: {
-                        createCourseCompetencyRelation: jest.fn(),
-                        updateCourseCompetencyRelation: jest.fn(),
-                        deleteCourseCompetencyRelation: jest.fn(),
-                        getSuggestedCompetencyRelations: jest.fn(),
+                        createCourseCompetencyRelation: vi.fn(),
+                        updateCourseCompetencyRelation: vi.fn(),
+                        deleteCourseCompetencyRelation: vi.fn(),
+                        getSuggestedCompetencyRelations: vi.fn(),
                     },
                 },
                 {
                     provide: FeatureToggleService,
                     useValue: {
-                        getFeatureToggleActive: jest.fn().mockReturnValue(of(true)),
+                        getFeatureToggleActive: vi.fn().mockReturnValue(of(true)),
                     },
                 },
             ],
@@ -77,10 +80,10 @@ describe('CourseCompetencyRelationFormComponent', () => {
         courseCompetencyApiService = TestBed.inject(CourseCompetencyApiService);
         alertService = TestBed.inject(AlertService);
 
-        createCourseCompetencyRelationSpy = jest.spyOn(courseCompetencyApiService, 'createCourseCompetencyRelation').mockResolvedValue(newRelation);
-        updateCourseCompetencyRelationSpy = jest.spyOn(courseCompetencyApiService, 'updateCourseCompetencyRelation').mockResolvedValue();
-        deleteCourseCompetencyRelationSpy = jest.spyOn(courseCompetencyApiService, 'deleteCourseCompetencyRelation').mockResolvedValue();
-        getSuggestedCompetencyRelationsSpy = jest.spyOn(courseCompetencyApiService, 'getSuggestedCompetencyRelations');
+        createCourseCompetencyRelationSpy = vi.spyOn(courseCompetencyApiService, 'createCourseCompetencyRelation').mockResolvedValue(newRelation);
+        updateCourseCompetencyRelationSpy = vi.spyOn(courseCompetencyApiService, 'updateCourseCompetencyRelation').mockResolvedValue();
+        deleteCourseCompetencyRelationSpy = vi.spyOn(courseCompetencyApiService, 'deleteCourseCompetencyRelation').mockResolvedValue();
+        getSuggestedCompetencyRelationsSpy = vi.spyOn(courseCompetencyApiService, 'getSuggestedCompetencyRelations');
 
         fixture = TestBed.createComponent(CourseCompetencyRelationFormComponent);
         component = fixture.componentInstance;
@@ -92,7 +95,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('should set relationAlreadyExists correctly', () => {
@@ -102,7 +105,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.relationAlreadyExists()).toBeTrue();
+        expect(component.relationAlreadyExists()).toBeTruthy();
     });
 
     it('should set exactRelationAlreadyExists correctly', () => {
@@ -112,7 +115,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.exactRelationAlreadyExists()).toBeTrue();
+        expect(component.exactRelationAlreadyExists()).toBeTruthy();
     });
 
     it('should select relation if selectedRelationId is set', () => {
@@ -174,7 +177,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
     });
 
     it('should set isLoading correctly when creating a relation', async () => {
-        const isLoadingSpy = jest.spyOn(component.isLoading, 'set');
+        const isLoadingSpy = vi.spyOn(component.isLoading, 'set');
 
         component.headCompetencyId.set(2);
         component.tailCompetencyId.set(3);
@@ -189,7 +192,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
     it('should show error when creating relation fails', async () => {
         const error = 'Error creating relation';
         createCourseCompetencyRelationSpy.mockRejectedValue(error);
-        const alertServiceErrorSpy = jest.spyOn(alertService, 'error');
+        const alertServiceErrorSpy = vi.spyOn(alertService, 'error');
 
         component.headCompetencyId.set(2);
         component.tailCompetencyId.set(3);
@@ -222,7 +225,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
     });
 
     it('should set isLoading correctly when updating a relation', async () => {
-        const isLoadingSpy = jest.spyOn(component.isLoading, 'set');
+        const isLoadingSpy = vi.spyOn(component.isLoading, 'set');
         fixture.componentRef.setInput('selectedRelationId', selectedRelationId);
 
         fixture.detectChanges();
@@ -237,7 +240,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
 
     it('should show error when updating relation fails', async () => {
         updateCourseCompetencyRelationSpy.mockRejectedValue('Error updating relation');
-        const alertServiceErrorSpy = jest.spyOn(alertService, 'error');
+        const alertServiceErrorSpy = vi.spyOn(alertService, 'error');
         fixture.componentRef.setInput('selectedRelationId', selectedRelationId);
 
         fixture.detectChanges();
@@ -291,7 +294,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
         component.relationType.set(CompetencyRelationType.EXTENDS);
 
         expect(component['selectableTailCourseCompetencyIds']()).not.toContain(1);
-        expect(component.showCircularDependencyError()).toBeTrue();
+        expect(component.showCircularDependencyError()).toBeTruthy();
     });
 
     it('should delete relation', async () => {
@@ -306,7 +309,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
     });
 
     it('should set isLoading correctly when deleting a relation', async () => {
-        const isLoadingSpy = jest.spyOn(component.isLoading, 'set');
+        const isLoadingSpy = vi.spyOn(component.isLoading, 'set');
         fixture.componentRef.setInput('selectedRelationId', selectedRelationId);
 
         fixture.detectChanges();
@@ -319,7 +322,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
 
     it('should show error when deleting relation fails', async () => {
         deleteCourseCompetencyRelationSpy.mockRejectedValue('Error deleting relation');
-        const alertServiceErrorSpy = jest.spyOn(alertService, 'error');
+        const alertServiceErrorSpy = vi.spyOn(alertService, 'error');
         fixture.componentRef.setInput('selectedRelationId', selectedRelationId);
 
         fixture.detectChanges();
@@ -350,7 +353,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
             // Find the button with the correct tooltip
             const btn = allButtons.find((de) => de.componentInstance?.tooltip() === 'artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip');
             expect(btn).toBeTruthy();
-            expect(btn?.componentInstance?.disabled()).toBeFalse();
+            expect(btn?.componentInstance?.disabled()).toBeFalsy();
         });
 
         it('should disable lightbulb button when loading suggestions', async () => {
@@ -362,8 +365,8 @@ describe('CourseCompetencyRelationFormComponent', () => {
             const btn = fixture.debugElement
                 .queryAll(By.css('jhi-button'))
                 .find((de) => de.componentInstance?.tooltip() === 'artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip');
-            expect(btn?.componentInstance?.disabled()).toBeTrue();
-            expect(component.isLoadingSuggestions()).toBeTrue();
+            expect(btn?.componentInstance?.disabled()).toBeTruthy();
+            expect(component.isLoadingSuggestions()).toBeTruthy();
         });
 
         it('should call API and load suggestions when lightbulb button is clicked', async () => {
@@ -373,7 +376,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
 
             expect(getSuggestedCompetencyRelationsSpy).toHaveBeenCalledWith(courseId);
             expect(component.suggestedRelations()).toEqual(mockSuggestionResponse.relations);
-            expect(component.isLoadingSuggestions()).toBeFalse();
+            expect(component.isLoadingSuggestions()).toBeFalsy();
         });
 
         it('should auto-select only non-existing suggestions when fetched', async () => {
@@ -382,12 +385,12 @@ describe('CourseCompetencyRelationFormComponent', () => {
             await component.fetchSuggestions();
 
             // Existing relations (1->2 EXTENDS) should NOT be auto-selected
-            expect(component['doesSuggestionAlreadyExist'](mockSuggestionResponse.relations[0])).toBeTrue();
-            expect(component.selectedSuggestions().has(0)).toBeFalse();
+            expect(component['doesSuggestionAlreadyExist'](mockSuggestionResponse.relations[0])).toBeTruthy();
+            expect(component.selectedSuggestions().has(0)).toBeFalsy();
 
             // Non-existing suggestions should be selected
-            expect(component.selectedSuggestions().has(1)).toBeTrue();
-            expect(component.selectedSuggestions().has(2)).toBeTrue();
+            expect(component.selectedSuggestions().has(1)).toBeTruthy();
+            expect(component.selectedSuggestions().has(2)).toBeTruthy();
             expect(component.selectedSuggestions().size).toBe(2);
             expect(component.selectedSuggestionsCount()).toBe(2);
         });
@@ -414,17 +417,17 @@ describe('CourseCompetencyRelationFormComponent', () => {
             await component.fetchSuggestions();
 
             // Initially: index 1 and 2 are selected (non-existing); index 0 is not (existing)
-            expect(component['isSuggestionSelected'](1)).toBeTrue();
+            expect(component['isSuggestionSelected'](1)).toBeTruthy();
             expect(component.selectedSuggestionsCount()).toBe(2);
 
             // Toggle index 1 OFF
             component['toggleSuggestionSelection'](1);
-            expect(component['isSuggestionSelected'](1)).toBeFalse();
+            expect(component['isSuggestionSelected'](1)).toBeFalsy();
             expect(component.selectedSuggestionsCount()).toBe(1);
 
             // Toggle index 1 back ON
             component['toggleSuggestionSelection'](1);
-            expect(component['isSuggestionSelected'](1)).toBeTrue();
+            expect(component['isSuggestionSelected'](1)).toBeTruthy();
             expect(component.selectedSuggestionsCount()).toBe(2);
         });
 
@@ -440,12 +443,12 @@ describe('CourseCompetencyRelationFormComponent', () => {
 
             await component.fetchSuggestions();
 
-            expect(component['doesSuggestionAlreadyExist'](responseWithExisting.relations[0])).toBeTrue();
-            expect(component['doesSuggestionAlreadyExist'](responseWithExisting.relations[1])).toBeFalse();
+            expect(component['doesSuggestionAlreadyExist'](responseWithExisting.relations[0])).toBeTruthy();
+            expect(component['doesSuggestionAlreadyExist'](responseWithExisting.relations[1])).toBeFalsy();
 
             // Should only auto-select non-existing relations
-            expect(component.selectedSuggestions().has(0)).toBeFalse();
-            expect(component.selectedSuggestions().has(1)).toBeTrue();
+            expect(component.selectedSuggestions().has(0)).toBeFalsy();
+            expect(component.selectedSuggestions().has(1)).toBeTruthy();
         });
 
         it('should apply suggestion to form when clicked', async () => {
@@ -527,12 +530,12 @@ describe('CourseCompetencyRelationFormComponent', () => {
         });
 
         it('should handle API error gracefully when fetching suggestions', async () => {
-            const alertServiceWarningSpy = jest.spyOn(alertService, 'warning');
+            const alertServiceWarningSpy = vi.spyOn(alertService, 'warning');
             getSuggestedCompetencyRelationsSpy.mockRejectedValue(new Error('API Error'));
 
             await component.fetchSuggestions();
 
-            expect(component.isLoadingSuggestions()).toBeFalse();
+            expect(component.isLoadingSuggestions()).toBeFalsy();
             expect(component.suggestedRelations()).toEqual([]);
             expect(alertServiceWarningSpy).toHaveBeenCalledWith('Failed to load suggested relations');
         });
@@ -551,8 +554,8 @@ describe('CourseCompetencyRelationFormComponent', () => {
             });
             createCourseCompetencyRelationSpy.mockRejectedValueOnce(new Error('Creation failed'));
 
-            const alertServiceErrorSpy = jest.spyOn(alertService, 'error');
-            const alertServiceSuccessSpy = jest.spyOn(alertService, 'success');
+            const alertServiceErrorSpy = vi.spyOn(alertService, 'error');
+            const alertServiceSuccessSpy = vi.spyOn(alertService, 'success');
 
             await component['addSelectedSuggestions']();
 

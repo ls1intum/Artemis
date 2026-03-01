@@ -22,15 +22,19 @@ public class PlagiarismCaseVerdictNotification extends CourseNotification {
 
     protected String verdict;
 
+    protected Long examId;
+
     /**
      * Default constructor used when creating the notification
      */
-    public PlagiarismCaseVerdictNotification(Long courseId, String courseTitle, String courseImageUrl, Long exerciseId, String exerciseTitle, String exerciseType, String verdict) {
+    public PlagiarismCaseVerdictNotification(Long courseId, String courseTitle, String courseImageUrl, Long exerciseId, String exerciseTitle, String exerciseType, String verdict,
+            Long examId) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
         this.exerciseId = exerciseId;
         this.exerciseTitle = exerciseTitle;
         this.exerciseType = exerciseType;
         this.verdict = verdict;
+        this.examId = examId;
     }
 
     /**
@@ -57,6 +61,9 @@ public class PlagiarismCaseVerdictNotification extends CourseNotification {
 
     @Override
     public String getRelativeWebAppUrl() {
+        if (examId != null) {
+            return "/courses/" + courseId + "/exams/" + examId;
+        }
         return "/courses/" + courseId + "/exercises/" + exerciseId;
     }
 }

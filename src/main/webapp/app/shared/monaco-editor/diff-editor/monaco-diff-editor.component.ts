@@ -1,10 +1,8 @@
 import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, Renderer2, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
-import { Disposable } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
-import { LineChange } from 'app/programming/shared/utils/diff.utils';
+import { Disposable, MonacoEditorDiffText } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { LineChange, convertMonacoLineChanges } from 'app/programming/shared/utils/diff.utils';
 import { MonacoEditorService } from 'app/shared/monaco-editor/service/monaco-editor.service';
 import * as monaco from 'monaco-editor';
-
-export type MonacoEditorDiffText = { original: string; modified: string };
 
 @Component({
     selector: 'jhi-monaco-diff-editor',
@@ -71,7 +69,7 @@ export class MonacoDiffEditorComponent implements OnDestroy {
             const monacoLineChanges = this._editor.getLineChanges() ?? [];
 
             // Signal that the diff is ready for display with line changes summary
-            this.onReadyForDisplayChange.emit({ ready: true, lineChange: this.convertMonacoLineChanges(monacoLineChanges) });
+            this.onReadyForDisplayChange.emit({ ready: true, lineChange: convertMonacoLineChanges(monacoLineChanges) });
         });
 
         this.listeners.push(diffListener);
@@ -138,29 +136,6 @@ export class MonacoDiffEditorComponent implements OnDestroy {
         };
 
         this._editor.setModel(newModel);
-    }
-
-    /**
-     * Converts Monaco line changes to a LineChange object
-     * @param monacoLineChanges The Monaco line changes to convert
-     * @returns The converted LineChange object
-     */
-    convertMonacoLineChanges(monacoLineChanges: monaco.editor.ILineChange[]): LineChange {
-        const lineChange: LineChange = { addedLineCount: 0, removedLineCount: 0 };
-        if (!monacoLineChanges) {
-            return lineChange;
-        }
-
-        for (const change of monacoLineChanges) {
-            const addedLines = change.modifiedEndLineNumber >= change.modifiedStartLineNumber ? change.modifiedEndLineNumber - change.modifiedStartLineNumber + 1 : 0;
-
-            const removedLines = change.originalEndLineNumber >= change.originalStartLineNumber ? change.originalEndLineNumber - change.originalStartLineNumber + 1 : 0;
-
-            lineChange.addedLineCount += addedLines;
-            lineChange.removedLineCount += removedLines;
-        }
-
-        return lineChange;
     }
 
     /**

@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, OnInit, QueryList, ViewChildren, inject } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, QueryList, ViewChildren, inject, viewChild } from '@angular/core';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -47,6 +47,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     private router = inject(Router);
     private courseDashboardService = inject(CourseDashboardService);
     private profileService = inject(ProfileService);
+    private readonly courseChatbot = viewChild('courseChatbot', { read: CourseChatbotComponent });
 
     courseId: number;
     exerciseId: number;
@@ -60,6 +61,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     exercisePerformance?: ExercisePerformance[];
     atlasEnabled = false;
     studentMetrics?: StudentMetrics;
+    isCollapsed = false;
 
     private paramSubscription?: Subscription;
     private courseUpdatesSubscription?: Subscription;
@@ -74,6 +76,11 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     protected readonly round = round;
 
     @ViewChildren('competencyAccordionElement', { read: ElementRef }) competencyAccordions: QueryList<ElementRef>;
+
+    toggleSidebar(): void {
+        this.courseChatbot()?.toggleChatHistory();
+        this.isCollapsed = !this.isCollapsed;
+    }
 
     ngOnInit(): void {
         this.paramSubscription = this.route?.parent?.params.subscribe((params) => {

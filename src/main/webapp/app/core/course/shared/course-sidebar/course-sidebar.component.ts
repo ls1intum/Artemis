@@ -1,4 +1,4 @@
-import { Component, HostListener, OnChanges, Signal, SimpleChanges, ViewChild, computed, inject, input, output, signal } from '@angular/core';
+import { Component, HostListener, Signal, ViewChild, computed, effect, inject, input, output, signal } from '@angular/core';
 import { IconDefinition, faChevronRight, faCog, faEllipsis } from '@fortawesome/free-solid-svg-icons';
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -12,6 +12,8 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
+import { ScienceService } from 'app/shared/science/science.service';
+import { ScienceEventType } from 'app/shared/science/science.model';
 
 export interface CourseActionItem {
     title: string;
@@ -53,7 +55,7 @@ export interface SidebarItem {
         SlicePipe,
     ],
 })
-export class CourseSidebarComponent implements OnChanges {
+export class CourseSidebarComponent {
     protected readonly faChevronRight = faChevronRight;
     protected readonly faEllipsis = faEllipsis;
     protected readonly faCog = faCog;
@@ -71,9 +73,11 @@ export class CourseSidebarComponent implements OnChanges {
     hasUnreadMessages = input<boolean>(false);
     communicationRouteLoaded = input<boolean>(false);
     layoutService = inject(LayoutService);
+    private readonly scienceService = inject(ScienceService);
 
     hiddenItems = signal<SidebarItem[]>([]);
     anyItemHidden = signal<boolean>(false);
+    private readonly irisImpressionLoggedForCourseId = signal<number | undefined>(undefined);
 
     switchCourse = output<Course>();
     courseActionItemClick = output<CourseActionItem>();
@@ -93,14 +97,20 @@ export class CourseSidebarComponent implements OnChanges {
             this.activeBreakpoints();
             return this.layoutService.isBreakpointActive(CustomBreakpointNames.sidebarExpandable);
         });
-    }
 
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes['sidebarItems']) {
-            this.updateVisibleNavbarItems(window.innerHeight);
-            this.sidebarItemsTop.set(this.sidebarItems().filter((item) => !item.bottom));
-            this.sidebarItemsBottom.set(this.sidebarItems().filter((item) => item.bottom));
-        }
+        effect(() => {
+            this.course();
+            this.irisImpressionLoggedForCourseId.set(undefined);
+        });
+
+        effect(() => {
+            const items = this.sidebarItems();
+            if (items.length > 0) {
+                this.updateVisibleNavbarItems(window.innerHeight);
+                this.sidebarItemsTop.set(items.filter((item) => !item.bottom));
+                this.sidebarItemsBottom.set(items.filter((item) => item.bottom));
+            }
+        });
     }
 
     /** Listen window resize event by height */
@@ -138,6 +148,7 @@ export class CourseSidebarComponent implements OnChanges {
 
         this.anyItemHidden.set(newAnyItemHidden);
         this.hiddenItems.set(newHiddenItems);
+        this.logIrisEntrypointImpression();
     }
 
     /** Calculate threshold levels based on the number of entries in the sidebar */
@@ -146,5 +157,28 @@ export class CourseSidebarComponent implements OnChanges {
             return this.WINDOW_OFFSET;
         }
         return this.sidebarItems().length * this.ITEM_HEIGHT + this.WINDOW_OFFSET;
+    }
+
+    onSidebarItemClick(item: SidebarItem): void {
+        if (item.routerLink !== 'iris') {
+            return;
+        }
+        const courseId = this.course()?.id;
+        if (courseId) {
+            this.scienceService.logEvent(ScienceEventType.IRIS__OPENED_SIDEBAR, courseId);
+        }
+    }
+
+    private logIrisEntrypointImpression(): void {
+        const courseId = this.course()?.id;
+        if (!courseId || this.irisImpressionLoggedForCourseId() === courseId) {
+            return;
+        }
+        const irisItem = this.sidebarItems()?.find((item) => item.routerLink === 'iris' && !item.bottom);
+        if (!irisItem || irisItem.hidden) {
+            return;
+        }
+        this.scienceService.logEvent(ScienceEventType.IRIS__ENTRYPOINT_IMPRESSION, courseId);
+        this.irisImpressionLoggedForCourseId.set(courseId);
     }
 }

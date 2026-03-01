@@ -22,7 +22,8 @@ export class HtmlForMarkdownPipe implements PipeTransform {
         extensions: PluginSimple[] = [],
         allowedHtmlTags: string[] | undefined = undefined,
         allowedHtmlAttributes: string[] | undefined = undefined,
+        lineBreaks: boolean = false,
     ): SafeHtml {
-        return this.markdownService.safeHtmlForMarkdown(markdown, extensions, allowedHtmlTags, allowedHtmlAttributes);
+        return this.markdownService.safeHtmlForMarkdown(markdown, extensions, allowedHtmlTags, allowedHtmlAttributes, lineBreaks);
     }
 }
