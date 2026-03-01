@@ -50,7 +50,6 @@ import { ConsistencyCheckService } from 'app/programming/manage/consistency-chec
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
-import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
 import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
@@ -495,6 +494,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     checkConsistencies(exercise: ProgrammingExercise) {
         this.selectedIssue = undefined;
         this.showConsistencyIssuesToolbar.set(false);
+        const existingConsistencyThreadIds = new Set(
+            this.exerciseReviewCommentService
+                .threads()
+                .filter((thread) => this.extractConsistencyIssueContent(thread) !== undefined)
+                .map((thread) => thread.id)
+                .filter((id): id is number => id !== undefined),
+        );
 
         if (!exercise.id) {
             this.alertService.error(this.translateService.instant('artemisApp.hyperion.consistencyCheck.checkFailedAlert'));
@@ -514,15 +520,16 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
                 // Now the content is checked
                 this.artemisIntelligenceService.consistencyCheck(exercise.id!).subscribe({
-                    next: (response: ConsistencyCheckResponse) => {
-                        this.exerciseReviewCommentService.reloadThreads();
-
-                        if (!response.issues || response.issues.length === 0) {
-                            this.alertService.success(this.translateService.instant('artemisApp.hyperion.consistencyCheck.noInconsistencies'));
-                        } else {
+                    next: () => {
+                        this.exerciseReviewCommentService.reloadThreads(() => {
+                            const hasNewPersistedIssues = this.sortedIssues().some((issue) => !existingConsistencyThreadIds.has(issue.threadId));
+                            if (!hasNewPersistedIssues) {
+                                this.alertService.success(this.translateService.instant('artemisApp.hyperion.consistencyCheck.noInconsistencies'));
+                                return;
+                            }
                             this.alertService.warning(this.translateService.instant('artemisApp.hyperion.consistencyCheck.inconsistenciesFoundAlert'));
                             this.showConsistencyIssuesToolbar.set(true);
-                        }
+                        });
                     },
                     error: () => {
                         this.alertService.error(this.translateService.instant('artemisApp.hyperion.consistencyCheck.checkFailedAlert'));

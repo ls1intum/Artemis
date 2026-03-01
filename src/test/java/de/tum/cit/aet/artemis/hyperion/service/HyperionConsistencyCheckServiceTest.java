@@ -6,6 +6,7 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -112,7 +113,7 @@ class HyperionConsistencyCheckServiceTest {
             return new ChatResponse(List.of(new Generation(msg)));
         });
 
-        ConsistencyCheckResponseDTO resp = hyperionConsistencyCheckService.checkConsistency(exercise);
+        ConsistencyCheckResponseDTO resp = hyperionConsistencyCheckService.checkConsistency(exercise.getId());
 
         assertThat(resp).isNotNull();
         assertThat(resp.issues()).isNotEmpty();
@@ -136,7 +137,7 @@ class HyperionConsistencyCheckServiceTest {
             return new ChatResponse(List.of(new Generation(msg)), metadata);
         });
 
-        ConsistencyCheckResponseDTO resp = hyperionConsistencyCheckService.checkConsistency(exercise);
+        ConsistencyCheckResponseDTO resp = hyperionConsistencyCheckService.checkConsistency(exercise.getId());
 
         assertThat(resp).isNotNull();
         assertThat(resp.timestamp()).isNotNull();
@@ -174,14 +175,18 @@ class HyperionConsistencyCheckServiceTest {
         author.setLastName("Lovelace");
 
         Comment existingComment = new Comment();
+        existingComment.setId(100L);
         existingComment.setType(CommentType.CONSISTENCY_CHECK);
+        existingComment.setCreatedDate(Instant.parse("2026-01-01T10:00:00Z"));
         existingComment.setAuthor(author);
         existingComment
                 .setContent(new ConsistencyIssueCommentContentDTO(Severity.HIGH, ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH, "Already discussed naming mismatch", null));
         existingThread.getComments().add(existingComment);
 
         Comment replyComment = new Comment();
+        replyComment.setId(101L);
         replyComment.setType(CommentType.USER);
+        replyComment.setCreatedDate(Instant.parse("2026-01-01T10:05:00Z"));
         replyComment.setAuthor(author);
         replyComment.setContent(new UserCommentContentDTO("This user reply should not be part of prompt context"));
         existingThread.getComments().add(replyComment);
@@ -189,7 +194,7 @@ class HyperionConsistencyCheckServiceTest {
 
         when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage("{\"issues\":[]}")))));
 
-        hyperionConsistencyCheckService.checkConsistency(exercise);
+        hyperionConsistencyCheckService.checkConsistency(exercise.getId());
 
         ArgumentCaptor<Prompt> promptCaptor = ArgumentCaptor.forClass(Prompt.class);
         verify(chatModel, atLeastOnce()).call(promptCaptor.capture());
@@ -224,7 +229,7 @@ class HyperionConsistencyCheckServiceTest {
 
         when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage("{\"issues\":[]}")))));
 
-        hyperionConsistencyCheckService.checkConsistency(exercise);
+        hyperionConsistencyCheckService.checkConsistency(exercise.getId());
 
         ArgumentCaptor<Prompt> promptCaptor = ArgumentCaptor.forClass(Prompt.class);
         verify(chatModel, atLeastOnce()).call(promptCaptor.capture());

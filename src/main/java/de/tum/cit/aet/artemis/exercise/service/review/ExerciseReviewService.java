@@ -160,6 +160,7 @@ public class ExerciseReviewService {
         ExerciseVersion latestProblemStatementVersion = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exerciseId).orElse(null);
 
         List<CommentThread> threadsToPersist = new ArrayList<>();
+        List<CommentThreadGroup> groupsToPersist = new ArrayList<>();
         for (ConsistencyIssueDTO issue : issues) {
             Optional<String> validationError = ExerciseReviewValidationUtil.validateConsistencyIssue(issue);
             if (validationError.isPresent()) {
@@ -172,18 +173,37 @@ public class ExerciseReviewService {
                 log.warn("Skipping consistency issue for exercise {} because no related repository location exists", exerciseId);
                 continue;
             }
-            CommentThreadGroup group = locations.size() > 1 ? createConsistencyCheckGroup(exercise) : null;
+
+            if (locations.size() > 1) {
+                CommentThreadGroup group = createConsistencyCheckGroup(exercise);
+                Set<CommentThread> groupedThreads = new HashSet<>();
+                for (ConsistencyThreadLocation location : locations) {
+                    CommentThread thread = buildConsistencyCheckThread(exercise, location, initialCommitShasByTarget, latestProblemStatementVersion);
+                    thread.setGroup(group);
+                    Comment comment = buildConsistencyCheckComment(thread, issue);
+                    thread.getComments().add(comment);
+                    groupedThreads.add(thread);
+                }
+                group.setThreads(groupedThreads);
+                groupsToPersist.add(group);
+                continue;
+            }
 
             for (ConsistencyThreadLocation location : locations) {
                 CommentThread thread = buildConsistencyCheckThread(exercise, location, initialCommitShasByTarget, latestProblemStatementVersion);
-                thread.setGroup(group);
                 Comment comment = buildConsistencyCheckComment(thread, issue);
                 thread.getComments().add(comment);
                 threadsToPersist.add(thread);
             }
         }
 
+        if (!groupsToPersist.isEmpty()) {
+            commentThreadGroupRepository.saveAll(groupsToPersist);
+        }
+
         if (!threadsToPersist.isEmpty()) {
+            // Persist only ungrouped (single-location) consistency threads.
+            // Grouped threads are persisted via CommentThreadGroup save with cascade.
             commentThreadRepository.saveAll(threadsToPersist);
         }
     }
@@ -739,22 +759,23 @@ public class ExerciseReviewService {
     private String buildConsistencyIssueText(ConsistencyIssueDTO issue) {
         String description = issue.description();
         String suggestedFix = issue.suggestedFix();
-        if (suggestedFix.isBlank()) {
+        // Defensive fallback: render description-only if suggestedFix is absent or blank.
+        if (suggestedFix == null || suggestedFix.isBlank()) {
             return description;
         }
         return description + "\n\nSuggested fix: " + suggestedFix;
     }
 
     /**
-     * Creates and persists a new thread group for one consistency issue.
+     * Creates a new thread group for one consistency issue.
      *
      * @param exercise the owning exercise
-     * @return the persisted thread group
+     * @return the new unsaved thread group
      */
     private CommentThreadGroup createConsistencyCheckGroup(Exercise exercise) {
         CommentThreadGroup group = new CommentThreadGroup();
         group.setExercise(exercise);
-        return commentThreadGroupRepository.save(group);
+        return group;
     }
 
     /**

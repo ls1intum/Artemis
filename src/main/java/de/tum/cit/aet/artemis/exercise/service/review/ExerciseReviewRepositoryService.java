@@ -76,15 +76,8 @@ public class ExerciseReviewRepositoryService {
         ProgrammingExercise exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(exerciseId)
                 .orElseThrow(() -> new BadRequestAlertException("Exercise is not a programming exercise", THREAD_ENTITY_NAME, "exerciseNotProgramming"));
 
-        LocalVCRepositoryUri repositoryUri = switch (targetType) {
-            case TEMPLATE_REPO -> exercise.getVcsTemplateRepositoryUri() != null ? exercise.getVcsTemplateRepositoryUri()
-                    : exercise.getTemplateParticipation() != null ? exercise.getTemplateParticipation().getVcsRepositoryUri() : null;
-            case SOLUTION_REPO -> exercise.getVcsSolutionRepositoryUri() != null ? exercise.getVcsSolutionRepositoryUri()
-                    : exercise.getSolutionParticipation() != null ? exercise.getSolutionParticipation().getVcsRepositoryUri() : null;
-            case TEST_REPO -> exercise.getVcsTestRepositoryUri();
-            case AUXILIARY_REPO -> getAuxiliaryRepositoryUri(auxiliaryRepositoryId, exerciseId);
-            case PROBLEM_STATEMENT -> null;
-        };
+        LocalVCRepositoryUri repositoryUri = targetType == CommentThreadLocationType.AUXILIARY_REPO ? getAuxiliaryRepositoryUri(auxiliaryRepositoryId, exerciseId)
+                : resolveRepositoryUriForTarget(exercise, targetType);
 
         if (repositoryUri == null) {
             return null;
@@ -109,19 +102,17 @@ public class ExerciseReviewRepositoryService {
         Map<CommentThreadLocationType, LocalVCRepositoryUri> repositoryUris = new EnumMap<>(CommentThreadLocationType.class);
         Map<Long, LocalVCRepositoryUri> auxiliaryRepositoryUrisById = new HashMap<>();
 
-        LocalVCRepositoryUri templateUri = programmingExercise.getVcsTemplateRepositoryUri() != null ? programmingExercise.getVcsTemplateRepositoryUri()
-                : programmingExercise.getTemplateParticipation() != null ? programmingExercise.getTemplateParticipation().getVcsRepositoryUri() : null;
+        LocalVCRepositoryUri templateUri = resolveRepositoryUriForTarget(programmingExercise, CommentThreadLocationType.TEMPLATE_REPO);
         if (templateUri != null) {
             repositoryUris.put(CommentThreadLocationType.TEMPLATE_REPO, templateUri);
         }
 
-        LocalVCRepositoryUri solutionUri = programmingExercise.getVcsSolutionRepositoryUri() != null ? programmingExercise.getVcsSolutionRepositoryUri()
-                : programmingExercise.getSolutionParticipation() != null ? programmingExercise.getSolutionParticipation().getVcsRepositoryUri() : null;
+        LocalVCRepositoryUri solutionUri = resolveRepositoryUriForTarget(programmingExercise, CommentThreadLocationType.SOLUTION_REPO);
         if (solutionUri != null) {
             repositoryUris.put(CommentThreadLocationType.SOLUTION_REPO, solutionUri);
         }
 
-        LocalVCRepositoryUri testUri = programmingExercise.getVcsTestRepositoryUri();
+        LocalVCRepositoryUri testUri = resolveRepositoryUriForTarget(programmingExercise, CommentThreadLocationType.TEST_REPO);
         if (testUri != null) {
             repositoryUris.put(CommentThreadLocationType.TEST_REPO, testUri);
         }
@@ -209,6 +200,27 @@ public class ExerciseReviewRepositoryService {
             case TEMPLATE_REPO, SOLUTION_REPO, TEST_REPO -> repositoryUrisByTarget.repositoryUrisByTargetType().get(targetType);
             case AUXILIARY_REPO -> auxiliaryRepositoryId != null ? repositoryUrisByTarget.auxiliaryRepositoryUrisById().get(auxiliaryRepositoryId) : null;
             case PROBLEM_STATEMENT -> null;
+        };
+    }
+
+    /**
+     * Resolves the LocalVC repository URI for a repository-backed thread target directly from a programming exercise.
+     * This helper covers template, solution, and tests repository targets.
+     * Auxiliary repositories are intentionally excluded because they require id-based ownership validation.
+     *
+     * @param exercise   the programming exercise
+     * @param targetType repository-backed thread target type
+     * @return resolved repository URI, or {@code null} if unavailable or unsupported for this helper
+     */
+    @Nullable
+    private LocalVCRepositoryUri resolveRepositoryUriForTarget(ProgrammingExercise exercise, CommentThreadLocationType targetType) {
+        return switch (targetType) {
+            case TEMPLATE_REPO -> exercise.getVcsTemplateRepositoryUri() != null ? exercise.getVcsTemplateRepositoryUri()
+                    : exercise.getTemplateParticipation() != null ? exercise.getTemplateParticipation().getVcsRepositoryUri() : null;
+            case SOLUTION_REPO -> exercise.getVcsSolutionRepositoryUri() != null ? exercise.getVcsSolutionRepositoryUri()
+                    : exercise.getSolutionParticipation() != null ? exercise.getSolutionParticipation().getVcsRepositoryUri() : null;
+            case TEST_REPO -> exercise.getVcsTestRepositoryUri();
+            case AUXILIARY_REPO, PROBLEM_STATEMENT -> null;
         };
     }
 

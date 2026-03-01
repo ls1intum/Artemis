@@ -30,8 +30,6 @@ import de.tum.cit.aet.artemis.hyperion.service.HyperionConsistencyCheckService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionProblemStatementGenerationService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionProblemStatementRefinementService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionProblemStatementRewriteService;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 /**
  * REST controller for Hyperion problem statement features (generation, refinement, rewrite, and consistency check).
@@ -46,8 +44,6 @@ public class HyperionProblemStatementResource {
 
     private final CourseRepository courseRepository;
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
-
     private final HyperionConsistencyCheckService consistencyCheckService;
 
     private final ExerciseReviewService exerciseReviewService;
@@ -58,12 +54,10 @@ public class HyperionProblemStatementResource {
 
     private final HyperionProblemStatementRefinementService problemStatementRefinementService;
 
-    public HyperionProblemStatementResource(CourseRepository courseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            HyperionConsistencyCheckService consistencyCheckService, ExerciseReviewService exerciseReviewService,
+    public HyperionProblemStatementResource(CourseRepository courseRepository, HyperionConsistencyCheckService consistencyCheckService, ExerciseReviewService exerciseReviewService,
             HyperionProblemStatementRewriteService problemStatementRewriteService, HyperionProblemStatementGenerationService problemStatementGenerationService,
             HyperionProblemStatementRefinementService problemStatementRefinementService) {
         this.courseRepository = courseRepository;
-        this.programmingExerciseRepository = programmingExerciseRepository;
         this.consistencyCheckService = consistencyCheckService;
         this.exerciseReviewService = exerciseReviewService;
         this.problemStatementRewriteService = problemStatementRewriteService;
@@ -82,8 +76,7 @@ public class HyperionProblemStatementResource {
     @EnforceAtLeastEditorInExercise
     public ResponseEntity<ConsistencyCheckResponseDTO> checkExerciseConsistency(@PathVariable("programmingExerciseId") long exerciseId) {
         log.debug("REST request to Hyperion consistency check for programming exercise [{}]", exerciseId);
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
-        var response = consistencyCheckService.checkConsistency(exercise);
+        ConsistencyCheckResponseDTO response = consistencyCheckService.checkConsistency(exerciseId);
         try {
             exerciseReviewService.createConsistencyCheckThreads(exerciseId, response.issues());
         }

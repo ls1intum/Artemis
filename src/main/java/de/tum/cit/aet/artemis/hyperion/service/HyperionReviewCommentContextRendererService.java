@@ -60,6 +60,7 @@ public class HyperionReviewCommentContextRendererService {
      * A thread is included only if its first comment is of type {@code CONSISTENCY_CHECK}.
      * Only that first comment is embedded in prompt context, with at most {@link #MAX_SERIALIZED_COMMENTS} comments total.
      * Each serialized comment text is truncated to {@link #MAX_COMMENT_TEXT_LENGTH} characters.
+     * Threads are ordered by descending thread id (newest first) to prioritize recent findings while keeping deterministic output.
      *
      * @param exerciseId id of the exercise whose threads should be serialized
      * @return JSON string for prompt embedding

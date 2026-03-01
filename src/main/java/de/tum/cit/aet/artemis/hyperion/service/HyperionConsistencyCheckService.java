@@ -131,15 +131,14 @@ public class HyperionConsistencyCheckService {
      * @return aggregated consistency issues, timing, token usage, and costs.
      */
     @Observed(name = "hyperion.consistency", contextualName = "consistency check", lowCardinalityKeyValues = { AI_SPAN_KEY, AI_SPAN_VALUE })
-    public ConsistencyCheckResponseDTO checkConsistency(ProgrammingExercise exercise) {
-        log.info("Performing consistency check for exercise {}", exercise.getId());
+    public ConsistencyCheckResponseDTO checkConsistency(long exerciseId) {
+        log.info("Performing consistency check for exercise {}", exerciseId);
 
         Instant startTime = Instant.now();
 
-        var exerciseWithParticipations = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
+        var exerciseWithParticipations = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
 
         String renderedRepositoryContext = exerciseContextRenderer.renderContext(exerciseWithParticipations);
-        long exerciseId = exerciseWithParticipations.getId();
         String existingReviewThreads = reviewCommentContextRenderer.renderReviewThreads(exerciseId);
         String programmingLanguage = exerciseWithParticipations.getProgrammingLanguage() != null ? exerciseWithParticipations.getProgrammingLanguage().name() : "JAVA";
         var input = Map.of("rendered_context", renderedRepositoryContext, "programming_language", programmingLanguage, "existing_review_threads", existingReviewThreads);
@@ -183,12 +182,12 @@ public class HyperionConsistencyCheckService {
         var costsDto = new CostsDTO(promptCost, completionCost, promptCost + completionCost);
 
         if (issueDTOs.isEmpty()) {
-            log.info("No consistency issues found for exercise {}", exercise.getId());
+            log.info("No consistency issues found for exercise {}", exerciseId);
         }
         else {
-            log.info("Consistency check for exercise {} found {} issues", exercise.getId(), issueDTOs.size());
+            log.info("Consistency check for exercise {} found {} issues", exerciseId, issueDTOs.size());
             for (var issue : issueDTOs) {
-                log.info("Consistency issue for exercise {}: [{}] {} - Suggested fix: {}", exercise.getId(), issue.severity(), issue.description(), issue.suggestedFix());
+                log.info("Consistency issue for exercise {}: [{}] {} - Suggested fix: {}", exerciseId, issue.severity(), issue.description(), issue.suggestedFix());
             }
         }
         return new ConsistencyCheckResponseDTO(startTime, issueDTOs, timingDTO, tokenDTO, costsDto);
