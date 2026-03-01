@@ -11,6 +11,7 @@ import {
 } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { ConnectionState, WebsocketService } from 'app/shared/service/websocket.service';
 import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
+import { ReviewThreadWebsocketAction } from 'app/exercise/shared/entities/review/review-thread-websocket-update.model';
 
 describe('ExerciseEditorSyncService', () => {
     setupTestBed({ zoneless: true });
@@ -127,6 +128,24 @@ describe('ExerciseEditorSyncService', () => {
         receiveSubject.next(awarenessEvent);
 
         expect(received).toEqual([requestEvent, responseEvent, updateEvent, awarenessEvent]);
+    });
+
+    it('forwards review-thread synchronization events', () => {
+        const received: ExerciseEditorSyncEvent[] = [];
+        service.connect(5);
+        service.subscribeToUpdates().subscribe((message: ExerciseEditorSyncEvent) => received.push(message));
+
+        const reviewEvent: ExerciseEditorSyncEvent = {
+            eventType: ExerciseEditorSyncEventType.REVIEW_THREAD_UPDATE,
+            target: ExerciseEditorSyncTarget.REVIEW_COMMENTS,
+            action: ReviewThreadWebsocketAction.THREAD_CREATED,
+            exerciseId: 5,
+            thread: { id: 11, comments: [] } as any,
+            sessionId: 'other-session',
+        };
+        receiveSubject.next(reviewEvent);
+
+        expect(received).toEqual([reviewEvent]);
     });
 
     it('filters out messages from the same session', () => {

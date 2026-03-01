@@ -23,10 +23,13 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.exercise.domain.review.ReviewThreadWebsocketAction;
+import de.tum.cit.aet.artemis.exercise.dto.review.ReviewThreadWebsocketDTO;
 import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseEditorSyncEventType;
 import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseNewCommitAlertDTO;
 import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseNewVersionAlertDTO;
+import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseReviewThreadUpdateDTO;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 
 class ExerciseEditorSyncServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
@@ -107,6 +110,46 @@ class ExerciseEditorSyncServiceTest extends AbstractProgrammingIntegrationLocalC
 
         assertThat(sentMessage.sessionId()).isEqualTo("client-commits");
         assertThat(sentMessage.eventType()).isEqualTo(ExerciseEditorSyncEventType.NEW_COMMIT_ALERT);
+    }
+
+    /**
+     * Verifies that review-thread updates are broadcast on the synchronization topic.
+     */
+    @Test
+    void broadcastReviewThreadUpdate() {
+        ReviewThreadWebsocketDTO reviewUpdate = ReviewThreadWebsocketDTO.commentDeleted(102L, 55L);
+
+        synchronizationService.broadcastReviewThreadUpdate(102L, reviewUpdate);
+
+        var captor = ArgumentCaptor.forClass(ExerciseReviewThreadUpdateDTO.class);
+        verify(websocketMessagingService).sendMessage(eq("/topic/exercises/102/synchronization"), captor.capture());
+        var sentMessage = captor.getValue();
+
+        assertThat(sentMessage.eventType()).isEqualTo(ExerciseEditorSyncEventType.REVIEW_THREAD_UPDATE);
+        assertThat(sentMessage.target()).isEqualTo(ExerciseEditorSyncTarget.REVIEW_COMMENTS);
+        assertThat(sentMessage.action()).isEqualTo(ReviewThreadWebsocketAction.COMMENT_DELETED);
+        assertThat(sentMessage.exerciseId()).isEqualTo(102L);
+        assertThat(sentMessage.commentId()).isEqualTo(55L);
+    }
+
+    /**
+     * Verifies that review-thread updates include the client session header when present.
+     */
+    @Test
+    void broadcastReviewThreadUpdateUsesClientSessionHeader() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader(ExerciseEditorSyncService.CLIENT_SESSION_HEADER, "client-review");
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+
+        ReviewThreadWebsocketDTO reviewUpdate = ReviewThreadWebsocketDTO.commentDeleted(103L, 66L);
+        synchronizationService.broadcastReviewThreadUpdate(103L, reviewUpdate);
+
+        var captor = ArgumentCaptor.forClass(ExerciseReviewThreadUpdateDTO.class);
+        verify(websocketMessagingService).sendMessage(eq("/topic/exercises/103/synchronization"), captor.capture());
+        var sentMessage = captor.getValue();
+
+        assertThat(sentMessage.sessionId()).isEqualTo("client-review");
+        assertThat(sentMessage.eventType()).isEqualTo(ExerciseEditorSyncEventType.REVIEW_THREAD_UPDATE);
     }
 
     /**

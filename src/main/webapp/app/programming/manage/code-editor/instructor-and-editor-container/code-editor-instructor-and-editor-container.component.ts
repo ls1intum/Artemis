@@ -190,6 +190,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         return super.loadExercise(exerciseId).pipe(
             tap((exercise) => {
                 if (exercise.id) {
+                    this.connectExerciseEditorSync(exercise.id);
                     this.exerciseReviewCommentService.setExercise(exercise.id);
                     this.exerciseReviewCommentService.reloadThreads();
                 }

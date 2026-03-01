@@ -39,6 +39,7 @@ import { faCircleExclamation, faCircleInfo, faTriangleExclamation } from '@forta
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { CodeEditorInstructorBaseContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-base-container.component';
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { WritableSignal, signal } from '@angular/core';
@@ -81,6 +82,7 @@ function getBaseProviders(additionalProviders: Provider[] = []): Provider[] {
         { provide: TranslateService, useClass: MockTranslateService },
         { provide: ConsistencyCheckService, useValue: { checkConsistencyForProgrammingExercise: jest.fn() } },
         { provide: ArtemisIntelligenceService, useValue: { consistencyCheck: jest.fn(), isLoading: () => false } },
+        { provide: ExerciseEditorSyncService, useValue: { connect: jest.fn(), disconnect: jest.fn(), subscribeToUpdates: jest.fn() } },
         ...additionalProviders,
     ];
 }

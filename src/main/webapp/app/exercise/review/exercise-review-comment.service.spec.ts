@@ -6,25 +6,45 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { WebsocketService } from 'app/shared/service/websocket.service';
 import { Subject } from 'rxjs';
 import { ReviewThreadWebsocketAction, ReviewThreadWebsocketUpdate } from 'app/exercise/shared/entities/review/review-thread-websocket-update.model';
+import {
+    ExerciseEditorSyncEvent,
+    ExerciseEditorSyncEventType,
+    ExerciseEditorSyncService,
+    ExerciseEditorSyncTarget,
+    ReviewThreadSyncUpdateEvent,
+} from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 
 describe('ExerciseReviewCommentService', () => {
     setupTestBed({ zoneless: true });
     let service: ExerciseReviewCommentService;
     let httpMock: HttpTestingController;
     let alertServiceMock: { error: ReturnType<typeof vi.fn> };
-    let websocketServiceMock: { subscribe: ReturnType<typeof vi.fn> };
-    let websocketSubject: Subject<ReviewThreadWebsocketUpdate>;
+    let syncServiceMock: { subscribeToUpdates: ReturnType<typeof vi.fn> };
+    let syncSubject: Subject<ExerciseEditorSyncEvent>;
+
+    const createReviewSyncEvent = (update: ReviewThreadWebsocketUpdate): ReviewThreadSyncUpdateEvent => {
+        return {
+            eventType: ExerciseEditorSyncEventType.REVIEW_THREAD_UPDATE,
+            target: ExerciseEditorSyncTarget.REVIEW_COMMENTS,
+            action: update.action,
+            exerciseId: update.exerciseId,
+            thread: update.thread,
+            comment: update.comment,
+            commentId: update.commentId,
+            threadIds: update.threadIds,
+            groupId: update.groupId,
+        };
+    };
 
     beforeEach(() => {
         alertServiceMock = {
             error: vi.fn(),
         };
-        websocketSubject = new Subject<ReviewThreadWebsocketUpdate>();
-        websocketServiceMock = {
-            subscribe: vi.fn(() => websocketSubject.asObservable()),
+        syncSubject = new Subject<ExerciseEditorSyncEvent>();
+        syncServiceMock = {
+            subscribeToUpdates: vi.fn(() => syncSubject.asObservable()),
         };
 
         TestBed.configureTestingModule({
@@ -33,7 +53,7 @@ describe('ExerciseReviewCommentService', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: AlertService, useValue: alertServiceMock },
-                { provide: WebsocketService, useValue: websocketServiceMock },
+                { provide: ExerciseEditorSyncService, useValue: syncServiceMock },
             ],
         });
 
@@ -53,7 +73,18 @@ describe('ExerciseReviewCommentService', () => {
 
         expect(changed).toBe(true);
         expect(service.threads()).toEqual([]);
-        expect(websocketServiceMock.subscribe).toHaveBeenCalledWith('/topic/exercises/42/review-threads');
+        expect(syncServiceMock.subscribeToUpdates).toHaveBeenCalledTimes(1);
+    });
+
+    it('setExercise should not throw when synchronization connection is not ready', () => {
+        syncServiceMock.subscribeToUpdates.mockImplementationOnce(() => {
+            throw new Error('not connected');
+        });
+
+        const changed = service.setExercise(42);
+
+        expect(changed).toBe(true);
+        expect(service.threads()).toEqual([]);
     });
 
     it('setExercise should not clear thread state when exercise id is unchanged', () => {
@@ -64,7 +95,7 @@ describe('ExerciseReviewCommentService', () => {
 
         expect(changed).toBe(false);
         expect(service.threads()).toEqual([{ id: 1 } as any]);
-        expect(websocketServiceMock.subscribe).toHaveBeenCalledTimes(1);
+        expect(syncServiceMock.subscribeToUpdates).toHaveBeenCalledTimes(1);
     });
 
     it('reloadThreads should clear state when no active exercise exists', () => {
@@ -85,7 +116,7 @@ describe('ExerciseReviewCommentService', () => {
         req.flush([{ id: 11 }]);
 
         expect(service.threads()).toEqual([{ id: 11 } as any]);
-        expect(websocketServiceMock.subscribe).toHaveBeenCalledWith('/topic/exercises/2/review-threads');
+        expect(syncServiceMock.subscribeToUpdates).toHaveBeenCalledTimes(1);
     });
 
     it('reloadThreads should clear state and show alert on failure', () => {
@@ -99,7 +130,7 @@ describe('ExerciseReviewCommentService', () => {
 
         expect(service.threads()).toEqual([]);
         expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.review.loadFailed');
-        expect(websocketServiceMock.subscribe).toHaveBeenCalledWith('/topic/exercises/2/review-threads');
+        expect(syncServiceMock.subscribeToUpdates).toHaveBeenCalledTimes(1);
     });
 
     it('reloadThreads should ignore stale success responses after exercise switch', () => {
@@ -130,11 +161,13 @@ describe('ExerciseReviewCommentService', () => {
     it('setExercise should apply websocket events before the first reload', () => {
         service.setExercise(4);
 
-        websocketSubject.next({
-            action: ReviewThreadWebsocketAction.THREAD_CREATED,
-            exerciseId: 4,
-            thread: { id: 2, comments: [] } as any,
-        });
+        syncSubject.next(
+            createReviewSyncEvent({
+                action: ReviewThreadWebsocketAction.THREAD_CREATED,
+                exerciseId: 4,
+                thread: { id: 2, comments: [] } as any,
+            }),
+        );
 
         expect(service.threads()).toEqual([{ id: 2, comments: [] }] as any);
     });
@@ -148,11 +181,13 @@ describe('ExerciseReviewCommentService', () => {
         service.reloadThreads();
         const req = httpMock.expectOne('api/exercise/exercises/4/review-threads');
 
-        websocketSubject.next({
-            action: ReviewThreadWebsocketAction.THREAD_CREATED,
-            exerciseId: 4,
-            thread: { id: 2, comments: [] } as any,
-        });
+        syncSubject.next(
+            createReviewSyncEvent({
+                action: ReviewThreadWebsocketAction.THREAD_CREATED,
+                exerciseId: 4,
+                thread: { id: 2, comments: [] } as any,
+            }),
+        );
 
         req.flush([{ id: 1, comments: [] }]);
 
@@ -171,11 +206,13 @@ describe('ExerciseReviewCommentService', () => {
         service.reloadThreads();
         const req = httpMock.expectOne('api/exercise/exercises/4/review-threads');
 
-        websocketSubject.next({
-            action: ReviewThreadWebsocketAction.COMMENT_DELETED,
-            exerciseId: 4,
-            commentId: 9,
-        });
+        syncSubject.next(
+            createReviewSyncEvent({
+                action: ReviewThreadWebsocketAction.COMMENT_DELETED,
+                exerciseId: 4,
+                commentId: 9,
+            }),
+        );
 
         req.flush([{ id: 1, comments: [{ id: 9 }] }]);
 
@@ -490,8 +527,8 @@ describe('ExerciseReviewCommentService', () => {
         httpMock.expectOne('api/exercise/exercises/4/review-threads').flush([]);
         service.threads.set([{ id: 1, comments: [] }] as any);
 
-        websocketSubject.next({ action: ReviewThreadWebsocketAction.THREAD_CREATED, exerciseId: 4, thread: { id: 2, comments: [] } as any });
-        websocketSubject.next({ action: ReviewThreadWebsocketAction.THREAD_CREATED, exerciseId: 4, thread: { id: 2, comments: [] } as any });
+        syncSubject.next(createReviewSyncEvent({ action: ReviewThreadWebsocketAction.THREAD_CREATED, exerciseId: 4, thread: { id: 2, comments: [] } as any }));
+        syncSubject.next(createReviewSyncEvent({ action: ReviewThreadWebsocketAction.THREAD_CREATED, exerciseId: 4, thread: { id: 2, comments: [] } as any }));
 
         expect(service.threads()).toEqual([
             { id: 1, comments: [] },
@@ -506,8 +543,8 @@ describe('ExerciseReviewCommentService', () => {
         service.threads.set([{ id: 1, comments: [] }] as any);
 
         const comment = { id: 9, threadId: 1, content: { text: 'Hello' } } as any;
-        websocketSubject.next({ action: ReviewThreadWebsocketAction.COMMENT_CREATED, exerciseId: 4, comment });
-        websocketSubject.next({ action: ReviewThreadWebsocketAction.COMMENT_CREATED, exerciseId: 4, comment });
+        syncSubject.next(createReviewSyncEvent({ action: ReviewThreadWebsocketAction.COMMENT_CREATED, exerciseId: 4, comment }));
+        syncSubject.next(createReviewSyncEvent({ action: ReviewThreadWebsocketAction.COMMENT_CREATED, exerciseId: 4, comment }));
 
         expect(service.threads()).toEqual([{ id: 1, comments: [comment] }] as any);
     });
@@ -518,11 +555,13 @@ describe('ExerciseReviewCommentService', () => {
         httpMock.expectOne('api/exercise/exercises/4/review-threads').flush([]);
         service.threads.set([{ id: 1, comments: [{ id: 9, threadId: 1, content: { text: 'Old' } }] }] as any);
 
-        websocketSubject.next({
-            action: ReviewThreadWebsocketAction.COMMENT_UPDATED,
-            exerciseId: 4,
-            comment: { id: 9, threadId: 1, content: { text: 'New' } } as any,
-        });
+        syncSubject.next(
+            createReviewSyncEvent({
+                action: ReviewThreadWebsocketAction.COMMENT_UPDATED,
+                exerciseId: 4,
+                comment: { id: 9, threadId: 1, content: { text: 'New' } } as any,
+            }),
+        );
 
         expect(service.threads()).toEqual([{ id: 1, comments: [{ id: 9, threadId: 1, content: { text: 'New' } }] }] as any);
     });
@@ -535,11 +574,13 @@ describe('ExerciseReviewCommentService', () => {
             { id: 1, resolved: false, comments: [{ id: 11, threadId: 1, content: { text: 'new comment' }, lastModifiedDate: '2026-01-01T10:00:00.000Z' }] },
         ] as any);
 
-        websocketSubject.next({
-            action: ReviewThreadWebsocketAction.THREAD_UPDATED,
-            exerciseId: 4,
-            thread: { id: 1, resolved: true, comments: [] } as any,
-        });
+        syncSubject.next(
+            createReviewSyncEvent({
+                action: ReviewThreadWebsocketAction.THREAD_UPDATED,
+                exerciseId: 4,
+                thread: { id: 1, resolved: true, comments: [] } as any,
+            }),
+        );
 
         expect(service.threads()).toEqual([
             { id: 1, resolved: true, comments: [{ id: 11, threadId: 1, content: { text: 'new comment' }, lastModifiedDate: '2026-01-01T10:00:00.000Z' }] },
@@ -557,14 +598,16 @@ describe('ExerciseReviewCommentService', () => {
             },
         ] as any);
 
-        websocketSubject.next({
-            action: ReviewThreadWebsocketAction.THREAD_UPDATED,
-            exerciseId: 4,
-            thread: {
-                id: 1,
-                comments: [{ id: 11, threadId: 1, content: { text: 'older incoming' }, lastModifiedDate: '2026-01-01T09:00:00.000Z' }],
-            } as any,
-        });
+        syncSubject.next(
+            createReviewSyncEvent({
+                action: ReviewThreadWebsocketAction.THREAD_UPDATED,
+                exerciseId: 4,
+                thread: {
+                    id: 1,
+                    comments: [{ id: 11, threadId: 1, content: { text: 'older incoming' }, lastModifiedDate: '2026-01-01T09:00:00.000Z' }],
+                } as any,
+            }),
+        );
 
         expect(service.threads()).toEqual([
             {
@@ -580,11 +623,13 @@ describe('ExerciseReviewCommentService', () => {
         httpMock.expectOne('api/exercise/exercises/4/review-threads').flush([]);
         service.threads.set([{ id: 1, comments: [{ id: 9 }] }] as any);
 
-        websocketSubject.next({
-            action: ReviewThreadWebsocketAction.COMMENT_DELETED,
-            exerciseId: 4,
-            commentId: 9,
-        });
+        syncSubject.next(
+            createReviewSyncEvent({
+                action: ReviewThreadWebsocketAction.COMMENT_DELETED,
+                exerciseId: 4,
+                commentId: 9,
+            }),
+        );
 
         expect(service.threads()).toEqual([]);
     });
@@ -599,12 +644,14 @@ describe('ExerciseReviewCommentService', () => {
             { id: 3, groupId: 8 },
         ] as any);
 
-        websocketSubject.next({
-            action: ReviewThreadWebsocketAction.GROUP_UPDATED,
-            exerciseId: 4,
-            threadIds: [1, 2],
-            groupId: 77,
-        });
+        syncSubject.next(
+            createReviewSyncEvent({
+                action: ReviewThreadWebsocketAction.GROUP_UPDATED,
+                exerciseId: 4,
+                threadIds: [1, 2],
+                groupId: 77,
+            }),
+        );
 
         expect(service.threads()).toEqual([
             { id: 1, groupId: 77 },
@@ -619,11 +666,13 @@ describe('ExerciseReviewCommentService', () => {
         httpMock.expectOne('api/exercise/exercises/4/review-threads').flush([]);
         service.threads.set([{ id: 1, comments: [] }] as any);
 
-        websocketSubject.next({
-            action: ReviewThreadWebsocketAction.THREAD_CREATED,
-            exerciseId: 5,
-            thread: { id: 2, comments: [] } as any,
-        });
+        syncSubject.next(
+            createReviewSyncEvent({
+                action: ReviewThreadWebsocketAction.THREAD_CREATED,
+                exerciseId: 5,
+                thread: { id: 2, comments: [] } as any,
+            }),
+        );
 
         expect(service.threads()).toEqual([{ id: 1, comments: [] }] as any);
     });

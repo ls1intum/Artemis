@@ -186,6 +186,15 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     }
 
     /**
+     * Connects the shared exercise synchronization channel for the given exercise.
+     *
+     * @param exerciseId the exercise id for the synchronization topic
+     */
+    protected connectExerciseEditorSync(exerciseId: number): void {
+        this.exerciseEditorSyncService.connect(exerciseId);
+    }
+
+    /**
      * Get the next available participation, highest priority has the participation given to the method.
      * Removes participations without a repositoryUri (could be invalid).
      * Returns undefined if no valid participation can be found.

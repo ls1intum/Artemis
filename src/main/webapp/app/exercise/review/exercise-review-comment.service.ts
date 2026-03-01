@@ -4,8 +4,14 @@ import { Observable, Subscription, map } from 'rxjs';
 import { Comment, CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentThread, CreateCommentThread, UpdateThreadResolvedState } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { AlertService } from 'app/shared/service/alert.service';
-import { WebsocketService } from 'app/shared/service/websocket.service';
 import { ReviewThreadWebsocketAction, ReviewThreadWebsocketUpdate } from 'app/exercise/shared/entities/review/review-thread-websocket-update.model';
+import {
+    ExerciseEditorSyncEvent,
+    ExerciseEditorSyncEventType,
+    ExerciseEditorSyncService,
+    ExerciseEditorSyncTarget,
+    ReviewThreadSyncUpdateEvent,
+} from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 
 type CommentThreadArrayResponseType = HttpResponse<CommentThread[]>;
 type CommentThreadResponseType = HttpResponse<CommentThread>;
@@ -18,9 +24,9 @@ export class ExerciseReviewCommentService implements OnDestroy {
 
     private http = inject(HttpClient);
     private alertService = inject(AlertService);
-    private websocketService = inject(WebsocketService);
+    private exerciseEditorSyncService = inject(ExerciseEditorSyncService);
     private activeExerciseId?: number;
-    private websocketSubscription?: Subscription;
+    private synchronizationSubscription?: Subscription;
     private subscribedExerciseId?: number;
     private isReloading = false;
     private pendingWebsocketUpdates: ReviewThreadWebsocketUpdate[] = [];
@@ -47,11 +53,11 @@ export class ExerciseReviewCommentService implements OnDestroy {
         this.pendingWebsocketUpdates = [];
         this.activeExerciseId = exerciseId;
         this.threads.set([]);
-        this.websocketSubscription?.unsubscribe();
-        this.websocketSubscription = undefined;
+        this.synchronizationSubscription?.unsubscribe();
+        this.synchronizationSubscription = undefined;
         this.subscribedExerciseId = undefined;
         if (exerciseId) {
-            this.ensureWebsocketSubscription(exerciseId);
+            this.ensureSynchronizationSubscription(exerciseId);
         }
         return true;
     }
@@ -76,7 +82,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
                 this.threads.set(this.applyQueuedWebsocketUpdates(threads, this.pendingWebsocketUpdates));
                 this.pendingWebsocketUpdates = [];
                 this.isReloading = false;
-                this.ensureWebsocketSubscription(exerciseId);
+                this.ensureSynchronizationSubscription(exerciseId);
             },
             error: () => {
                 if (this.activeExerciseId !== exerciseId || this.reloadSequence !== reloadId) {
@@ -86,7 +92,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
                 this.pendingWebsocketUpdates = [];
                 this.isReloading = false;
                 this.alertService.error('artemisApp.review.loadFailed');
-                this.ensureWebsocketSubscription(exerciseId);
+                this.ensureSynchronizationSubscription(exerciseId);
             },
         });
     }
@@ -556,6 +562,28 @@ export class ExerciseReviewCommentService implements OnDestroy {
     }
 
     /**
+     * Filters synchronization events and forwards only review thread updates.
+     *
+     * @param event The synchronization event received from the shared topic.
+     */
+    private handleSynchronizationEvent(event: ExerciseEditorSyncEvent): void {
+        if (event.eventType !== ExerciseEditorSyncEventType.REVIEW_THREAD_UPDATE || event.target !== ExerciseEditorSyncTarget.REVIEW_COMMENTS) {
+            return;
+        }
+        const reviewUpdateEvent = event as ReviewThreadSyncUpdateEvent;
+        const reviewUpdate: ReviewThreadWebsocketUpdate = {
+            action: reviewUpdateEvent.action,
+            exerciseId: reviewUpdateEvent.exerciseId,
+            thread: reviewUpdateEvent.thread,
+            comment: reviewUpdateEvent.comment,
+            commentId: reviewUpdateEvent.commentId,
+            threadIds: reviewUpdateEvent.threadIds,
+            groupId: reviewUpdateEvent.groupId,
+        };
+        this.applyWebsocketUpdate(reviewUpdate);
+    }
+
+    /**
      * Applies one websocket event to the current thread collection using idempotent reducers.
      *
      * Note: The initiating client can process the same logical change via HTTP and the echoed websocket event.
@@ -603,23 +631,29 @@ export class ExerciseReviewCommentService implements OnDestroy {
     }
 
     /**
-     * Ensures an active websocket subscription for the given exercise and replaces stale subscriptions.
+     * Ensures an active synchronization subscription for review updates and replaces stale subscriptions.
      *
-     * @param exerciseId The exercise id whose review thread topic should be observed.
+     * @param exerciseId The exercise id whose review updates should be observed.
      */
-    private ensureWebsocketSubscription(exerciseId: number): void {
-        if (this.subscribedExerciseId === exerciseId && this.websocketSubscription) {
+    private ensureSynchronizationSubscription(exerciseId: number): void {
+        if (this.subscribedExerciseId === exerciseId && this.synchronizationSubscription) {
             return;
         }
-        this.websocketSubscription?.unsubscribe();
-        const topic = `/topic/exercises/${exerciseId}/review-threads`;
-        this.websocketSubscription = this.websocketService.subscribe<ReviewThreadWebsocketUpdate>(topic).subscribe((event) => this.applyWebsocketUpdate(event));
-        this.subscribedExerciseId = exerciseId;
+        this.synchronizationSubscription?.unsubscribe();
+        try {
+            this.synchronizationSubscription = this.exerciseEditorSyncService.subscribeToUpdates().subscribe((event) => this.handleSynchronizationEvent(event));
+            this.subscribedExerciseId = exerciseId;
+        } catch {
+            // Parent containers establish the shared synchronization connection. If it is not
+            // connected yet, later reload/context transitions retry subscription setup.
+            this.synchronizationSubscription = undefined;
+            this.subscribedExerciseId = undefined;
+        }
     }
 
     ngOnDestroy(): void {
-        this.websocketSubscription?.unsubscribe();
-        this.websocketSubscription = undefined;
+        this.synchronizationSubscription?.unsubscribe();
+        this.synchronizationSubscription = undefined;
         this.subscribedExerciseId = undefined;
         this.pendingWebsocketUpdates = [];
         this.isReloading = false;

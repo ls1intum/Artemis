@@ -19,10 +19,12 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
+import de.tum.cit.aet.artemis.exercise.dto.review.ReviewThreadWebsocketDTO;
 import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseEditorSyncEventType;
 import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseNewCommitAlertDTO;
 import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseNewVersionAlertDTO;
+import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseReviewThreadUpdateDTO;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -98,6 +100,20 @@ public class ExerciseEditorSyncService {
                 exerciseVersionId, new UserPublicInfoDTO(author), changedFields, getClientSessionId(), Instant.now().toEpochMilli());
         websocketMessagingService.sendMessage(getSynchronizationTopic(exerciseId), payload).exceptionally(exception -> {
             log.warn("Cannot send new exercise version alert for exercise {}", exerciseId, exception);
+            return null;
+        });
+    }
+
+    /**
+     * Broadcast a review-thread update to active editors for the given exercise.
+     *
+     * @param exerciseId   the exercise id
+     * @param reviewUpdate the review update payload
+     */
+    public void broadcastReviewThreadUpdate(@NonNull Long exerciseId, @NonNull ReviewThreadWebsocketDTO reviewUpdate) {
+        ExerciseReviewThreadUpdateDTO payload = ExerciseReviewThreadUpdateDTO.fromReviewThreadUpdate(reviewUpdate, getClientSessionId(), Instant.now().toEpochMilli());
+        websocketMessagingService.sendMessage(getSynchronizationTopic(exerciseId), payload).exceptionally(exception -> {
+            log.warn("Cannot send review thread update for exercise {}", exerciseId, exception);
             return null;
         });
     }
