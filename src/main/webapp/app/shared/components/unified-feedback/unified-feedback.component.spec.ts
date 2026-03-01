@@ -1,8 +1,10 @@
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { UnifiedFeedbackComponent } from './unified-feedback.component';
 import { TranslateModule } from '@ngx-translate/core';
 
 describe('UnifiedFeedbackComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: UnifiedFeedbackComponent;
     let fixture: ComponentFixture<UnifiedFeedbackComponent>;
 
