@@ -29,6 +29,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
@@ -227,10 +228,10 @@ public class ProgrammingExerciseCreationUpdateService {
 
     private void validateAiGenerationPreconditions(ProgrammingExercise programmingExercise) {
         if (!moduleFeatureService.isHyperionEnabled()) {
-            throw new IllegalStateException("Hyperion is disabled on this server");
+            throw new BadRequestAlertException("Hyperion is disabled on this server", "ProgrammingExercise", "hyperionDisabled");
         }
         if (programmingExercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
-            throw new IllegalStateException("AI generation is only supported for Java");
+            throw new BadRequestAlertException("AI generation is only supported for Java", "ProgrammingExercise", "aiGenerationUnsupportedLanguage");
         }
     }
 

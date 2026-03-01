@@ -100,8 +100,10 @@ public class ProgrammingExerciseRepositoryService {
      *
      * @param programmingExercise the programming exercise that should be set up
      * @param exerciseCreator     the User that performed the action (used as Git commit author)
+     * @throws IOException     If clearing repository sources for AI generation fails due to file I/O.
+     * @throws GitAPIException If committing, or pushing to the repo throws an exception.
      */
-    void setupExerciseTemplate(final ProgrammingExercise programmingExercise, final User exerciseCreator) throws GitAPIException {
+    void setupExerciseTemplate(final ProgrammingExercise programmingExercise, final User exerciseCreator) throws IOException, GitAPIException {
         setupExerciseTemplate(programmingExercise, exerciseCreator, false);
     }
 
@@ -112,8 +114,10 @@ public class ProgrammingExerciseRepositoryService {
      * @param programmingExercise the programming exercise that should be set up
      * @param exerciseCreator     the User that performed the action (used as Git commit author)
      * @param emptyRepositories   if true, clear sources in template, solution, and test repositories after setup
+     * @throws IOException     If clearing repository sources for AI generation fails due to file I/O.
+     * @throws GitAPIException If committing, or pushing to the repo throws an exception.
      */
-    void setupExerciseTemplate(final ProgrammingExercise programmingExercise, final User exerciseCreator, boolean emptyRepositories) throws GitAPIException {
+    void setupExerciseTemplate(final ProgrammingExercise programmingExercise, final User exerciseCreator, boolean emptyRepositories) throws IOException, GitAPIException {
         if (programmingExercise == null) {
             throw new IllegalArgumentException("ProgrammingExercise must not be null");
         }
@@ -132,7 +136,7 @@ public class ProgrammingExerciseRepositoryService {
     }
 
     private void clearRepositoriesForAiGenerationKeepingTests(final Repository templateRepository, final Repository solutionRepository, final User exerciseCreator)
-            throws GitAPIException {
+            throws IOException, GitAPIException {
         clearRepositorySources(templateRepository, RepositoryType.TEMPLATE, exerciseCreator);
         clearRepositorySources(solutionRepository, RepositoryType.SOLUTION, exerciseCreator);
     }
@@ -147,8 +151,10 @@ public class ProgrammingExerciseRepositoryService {
      * @param repository      the repository to clean
      * @param repositoryType  the repository type for logging and commit message
      * @param exerciseCreator the user performing the cleanup
+     * @throws IOException     If file cleanup in the repository fails.
+     * @throws GitAPIException If committing, or pushing to the repo throws an exception.
      */
-    void clearRepositorySources(final Repository repository, final RepositoryType repositoryType, final User exerciseCreator) throws GitAPIException {
+    void clearRepositorySources(final Repository repository, final RepositoryType repositoryType, final User exerciseCreator) throws IOException, GitAPIException {
         final String repositoryLabel = repositoryType.name().toLowerCase(Locale.ROOT);
         Path sourcePath = repository.getLocalPath().resolve("src");
         if (!Files.exists(sourcePath)) {
@@ -159,19 +165,13 @@ public class ProgrammingExerciseRepositoryService {
             FileUtils.cleanDirectory(sourcePath.toFile());
             Path keepFile = sourcePath.resolve(".gitkeep");
             if (!Files.exists(keepFile)) {
-                try (var outputStream = FileUtils.openOutputStream(keepFile.toFile())) {
-                    outputStream.write(new byte[0]);
-                }
+                Files.createFile(keepFile);
             }
             commitAndPushRepository(repository, "Cleared " + repositoryLabel + " sources for AI generation", true, exerciseCreator);
         }
         catch (IOException ex) {
             log.error("Failed to clean {} sources for AI generation", repositoryLabel, ex);
-            String message = String.format("Failed to clean %s sources for AI generation: %s", repositoryLabel, ex.getMessage());
-            GitAPIException exception = new GitAPIException(message) {
-            };
-            exception.initCause(ex);
-            throw exception;
+            throw ex;
         }
     }
 

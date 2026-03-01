@@ -343,7 +343,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             comp.saveExerciseWithAi();
 
-            expect(comp.isGeneratingWithAi).toBeTrue();
+            expect(comp.isGeneratingWithAi()).toBeTrue();
             expect(setupSpy).toHaveBeenCalledWith(entity, true);
 
             response$.next(new HttpResponse({ body: savedEntity }));
@@ -357,7 +357,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 RepositoryType.SOLUTION,
                 savedEntity.solutionParticipation!.id,
             ]);
-            expect(comp.isGeneratingWithAi).toBeFalse();
+            expect(comp.isGeneratingWithAi()).toBeFalse();
         });
 
         it('should fall back to regular save when hyperion is disabled', () => {
@@ -389,11 +389,11 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(response$);
 
             comp.saveExerciseWithAi();
-            expect(comp.isGeneratingWithAi).toBeTrue();
+            expect(comp.isGeneratingWithAi()).toBeTrue();
 
             response$.error(new HttpErrorResponse({ headers: new HttpHeaders({ 'X-artemisApp-alert': 'error-message' }) }));
 
-            expect(comp.isGeneratingWithAi).toBeFalse();
+            expect(comp.isGeneratingWithAi()).toBeFalse();
             expect(comp.isSaving).toBeFalse();
         });
     });
@@ -409,11 +409,13 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.isImportFromFile = false;
             comp.isImportFromSharing = false;
 
-            expect(comp.shouldShowGenerateWithAi()).toBeTrue();
+            expect(comp.showGenerateWithAi()).toBeTrue();
 
-            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.KOTLIN;
+            const kotlinExercise = new ProgrammingExercise(course, undefined);
+            kotlinExercise.programmingLanguage = ProgrammingLanguage.KOTLIN;
+            comp.programmingExercise = kotlinExercise;
 
-            expect(comp.shouldShowGenerateWithAi()).toBeFalse();
+            expect(comp.showGenerateWithAi()).toBeFalse();
         });
     });
 
