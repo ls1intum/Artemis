@@ -26,7 +26,6 @@ env:
   PLAYWRIGHT_REPORT_BRANCH: ${{ github.event.workflow_run.head_branch }}
   PLAYWRIGHT_REPORT_COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
   PLAYWRIGHT_REPORT_TRIGGERED_BY: ${{ github.event.workflow_run.event }}
-  GITHUB_RUN_ID: ${{ github.run_id }}
 
 jobs:
   # Job to determine which tests are relevant based on changed files (only for PRs)
