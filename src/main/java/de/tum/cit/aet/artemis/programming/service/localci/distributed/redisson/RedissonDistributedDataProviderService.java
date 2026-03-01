@@ -21,15 +21,16 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.config.LocalCIBuildAgentRedisDataCondition;
+import de.tum.cit.aet.artemis.core.config.RedisDataCondition;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.DistributedQueue;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.set.DistributedSet;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.topic.DistributedTopic;
 
 @Lazy
 @Service
-@Conditional(LocalCIBuildAgentRedisDataCondition.class)
+@Conditional(RedisDataCondition.class)
 public class RedissonDistributedDataProviderService implements DistributedDataProvider {
 
     private static final Logger log = LoggerFactory.getLogger(RedissonDistributedDataProviderService.class);
@@ -103,12 +104,17 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
 
     @Override
     public <K, V> DistributedMap<K, V> getMap(String name) {
-        return new RedissonDistributedMap<>(redissonClient.getMap(name), redissonClient.getTopic(name + ":map_notification"));
+        return new RedissonDistributedMap<>(redissonClient.getMapCache(name), redissonClient.getTopic(name + ":map_notification"));
     }
 
     @Override
     public <T> DistributedTopic<T> getTopic(String name) {
         return new RedissonDistributedTopic<>(redissonClient.getTopic(name));
+    }
+
+    @Override
+    public <E> DistributedSet<E> getSet(String name) {
+        return new RedissonDistributedSet<>(redissonClient.getSet(name), redissonClient.getTopic(name + ":set_notification"));
     }
 
     @Override

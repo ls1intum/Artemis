@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.lti.config;
 
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -9,7 +8,6 @@ import java.util.concurrent.TimeUnit;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -19,7 +17,7 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequ
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
-import com.hazelcast.core.HazelcastInstance;
+import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 
 /**
  * A specialized {@link AuthorizationRequestRepository} that uses Hazelcast to store OAuth2 authorization requests.
@@ -39,10 +37,7 @@ public class DistributedStateAuthorizationRequestRepository implements Authoriza
      */
     private final Executor delayedExecutor = CompletableFuture.delayedExecutor(2L, TimeUnit.MINUTES);
 
-    private final HazelcastInstance hazelcastInstance;
-
-    @Nullable
-    private Map<String, OAuth2AuthorizationRequest> store;
+    private final DistributedDataAccessService distributedDataAccessService;
 
     /**
      * Should we limit the login to a single IP address.
@@ -50,8 +45,8 @@ public class DistributedStateAuthorizationRequestRepository implements Authoriza
      */
     private boolean limitIpAddress = true;
 
-    DistributedStateAuthorizationRequestRepository(HazelcastInstance hazelcastInstance) {
-        this.hazelcastInstance = hazelcastInstance;
+    DistributedStateAuthorizationRequestRepository(DistributedDataAccessService distributedDataAccessService) {
+        this.distributedDataAccessService = distributedDataAccessService;
     }
 
     public void setLimitIpAddress(boolean limitIpAddress) {
@@ -66,7 +61,7 @@ public class DistributedStateAuthorizationRequestRepository implements Authoriza
         if (stateParameter == null) {
             return null;
         }
-        OAuth2AuthorizationRequest oAuth2AuthorizationRequest = getStore().get(stateParameter);
+        OAuth2AuthorizationRequest oAuth2AuthorizationRequest = distributedDataAccessService.getLtiOAuth2AuthorizationRequestMap().get(stateParameter);
         if (oAuth2AuthorizationRequest == null) {
             return null;
         }
@@ -96,9 +91,9 @@ public class DistributedStateAuthorizationRequestRepository implements Authoriza
         else {
             String state = authorizationRequest.getState();
             Assert.hasText(state, "authorizationRequest.state cannot be empty");
-            getStore().put(state, authorizationRequest);
+            distributedDataAccessService.getDistributedLtiOAuth2AuthorizationRequestMap().put(state, authorizationRequest);
             // Remove request after timeout
-            delayedExecutor.execute(() -> getStore().remove(state));
+            delayedExecutor.execute(() -> distributedDataAccessService.getDistributedLtiOAuth2AuthorizationRequestMap().remove(state));
         }
     }
 
@@ -108,16 +103,9 @@ public class DistributedStateAuthorizationRequestRepository implements Authoriza
         OAuth2AuthorizationRequest authorizationRequest = this.loadAuthorizationRequest(request);
         if (authorizationRequest != null) {
             String stateParameter = request.getParameter("state");
-            getStore().remove(stateParameter);
+            distributedDataAccessService.getDistributedLtiOAuth2AuthorizationRequestMap().remove(stateParameter);
         }
 
         return authorizationRequest;
-    }
-
-    private Map<String, OAuth2AuthorizationRequest> getStore() {
-        if (this.store == null) {
-            this.store = hazelcastInstance.getMap("ltiStateAuthorizationRequestStore");
-        }
-        return this.store;
     }
 }

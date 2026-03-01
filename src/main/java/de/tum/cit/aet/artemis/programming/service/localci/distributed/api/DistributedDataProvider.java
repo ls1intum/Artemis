@@ -8,6 +8,7 @@ import org.jspecify.annotations.NonNull;
 
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.DistributedQueue;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.set.DistributedSet;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.topic.DistributedTopic;
 
 /**
@@ -65,6 +66,15 @@ public interface DistributedDataProvider {
      * @return a DistributedTopic with the specified name
      */
     <T> DistributedTopic<T> getTopic(String name);
+
+    /**
+     * Returns a distributed set with the given name.
+     *
+     * @param name the name of the set
+     * @param <E>  the type of elements in the set
+     * @return a DistributedSet with the specified name
+     */
+    <E> DistributedSet<E> getSet(String name);
 
     /**
      * Checks if the distributed data provider instance is running.

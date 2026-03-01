@@ -11,13 +11,11 @@ import org.springframework.context.annotation.Condition;
 import org.springframework.context.annotation.ConditionContext;
 import org.springframework.core.type.AnnotatedTypeMetadata;
 
-public class LocalCIBuildAgentHazelcastDataCondition implements Condition {
+public class HazelcastDataCondition implements Condition {
 
     @Override
     public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
-        final Collection<String> activeProfiles = Arrays.asList(context.getEnvironment().getActiveProfiles());
         String dataStoreConfig = context.getEnvironment().getProperty("artemis.continuous-integration.data-store", HAZELCAST);
-
-        return (activeProfiles.contains(PROFILE_LOCALCI) || activeProfiles.contains(PROFILE_BUILDAGENT)) && dataStoreConfig.equalsIgnoreCase(HAZELCAST);
+        return dataStoreConfig.equalsIgnoreCase(HAZELCAST);
     }
 }

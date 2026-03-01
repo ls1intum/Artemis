@@ -20,13 +20,13 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
 import com.nimbusds.jose.jwk.JWK;
 
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSInitialisationService;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
 import de.tum.cit.aet.artemis.lti.service.OnlineCourseConfigurationService;
+import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
 
 class OAuth2JWKSServiceTest {
 
@@ -34,10 +34,10 @@ class OAuth2JWKSServiceTest {
     private OnlineCourseConfigurationService onlineCourseConfigurationService;
 
     @Mock
-    private HazelcastInstance hazelcastInstance;
+    private DistributedDataAccessService distributedDataAccessService;
 
     @Mock
-    private IMap<String, JWK> clientRegistrationIdToJwk;
+    private DistributedMap<String, JWK> clientRegistrationIdToJwk;
 
     private OAuth2JWKSService oAuth2JWKSService;
 
@@ -56,11 +56,12 @@ class OAuth2JWKSServiceTest {
         when(clientRegistration.getRegistrationId()).thenReturn(clientRegistrationId);
         when(onlineCourseConfigurationService.getAllClientRegistrations()).thenReturn(Collections.singletonList(clientRegistration));
 
-        // Mock Hazelcast maps and behavior
-        when(hazelcastInstance.getMap("ltiJwkMap")).thenAnswer(invocation -> clientRegistrationIdToJwk);
+        when(distributedDataAccessService.getDistributedClientRegistrationIdToJwk()).thenReturn(clientRegistrationIdToJwk);
+        when(distributedDataAccessService.getClientRegistrationIdToJwk()).thenReturn(Collections.emptyMap());
 
-        oAuth2JWKSService = new OAuth2JWKSService(onlineCourseConfigurationService, hazelcastInstance);
-        OAuth2JWKSInitialisationService oAuth2JWKSInitialisationService = new OAuth2JWKSInitialisationService(oAuth2JWKSService, onlineCourseConfigurationService);
+        oAuth2JWKSService = new OAuth2JWKSService(onlineCourseConfigurationService, distributedDataAccessService);
+        OAuth2JWKSInitialisationService oAuth2JWKSInitialisationService = new OAuth2JWKSInitialisationService(oAuth2JWKSService, onlineCourseConfigurationService,
+                distributedDataAccessService);
         oAuth2JWKSInitialisationService.init();  // Manually call the initialization method to populate the JWKs
     }
 
@@ -76,7 +77,7 @@ class OAuth2JWKSServiceTest {
     void getJWK() {
         JWK mockJwk = mock(JWK.class);
 
-        when(clientRegistrationIdToJwk.get(clientRegistrationId)).thenReturn(mockJwk);
+        when(distributedDataAccessService.getClientRegistrationIdToJwk()).thenReturn(Collections.singletonMap(clientRegistrationId, mockJwk));
 
         JWK jwk = oAuth2JWKSService.getJWK(clientRegistrationId);
         assertThat(jwk).isNotNull();

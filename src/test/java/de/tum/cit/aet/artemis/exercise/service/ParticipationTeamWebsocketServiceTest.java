@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.exercise.web.ParticipationTeamWebsocketService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
@@ -54,6 +55,9 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
 
     @Autowired
     private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private DistributedDataAccessService distributedDataAccessService;
 
     private StudentParticipation participation;
 
@@ -92,8 +96,8 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
     void testSubscribeToParticipationTeamWebsocketTopic() {
         participationTeamWebsocketService.subscribe(participation.getId(), getStompHeaderAccessorMock("fakeSessionId"));
         verify(websocketMessagingService).sendMessage(websocketTopic(participation), List.of());
-        assertThat(participationTeamWebsocketService.getDestinationTracker()).as("Session was added to destination tracker.").hasSize(1);
-        assertThat(participationTeamWebsocketService.getDestinationTracker()).as("Destination in tracker is correct.").containsValue(websocketTopic(participation));
+        assertThat(distributedDataAccessService.getParticipationTeamDestinationTracker()).as("Session was added to destination tracker.").hasSize(1);
+        assertThat(distributedDataAccessService.getParticipationTeamDestinationTracker()).as("Destination in tracker is correct.").containsValue(websocketTopic(participation));
     }
 
     @Test
@@ -114,8 +118,8 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
         participationTeamWebsocketService.unsubscribe(stompHeaderAccessor1.getSessionId());
 
         verify(websocketMessagingService, timeout(2000).times(3)).sendMessage(websocketTopic(participation), List.of());
-        assertThat(participationTeamWebsocketService.getDestinationTracker()).as("Session was removed from destination tracker.").hasSize(1);
-        assertThat(participationTeamWebsocketService.getDestinationTracker()).as("Correct session was removed.").containsKey(stompHeaderAccessor2.getSessionId());
+        assertThat(distributedDataAccessService.getParticipationTeamDestinationTracker()).as("Session was removed from destination tracker.").hasSize(1);
+        assertThat(distributedDataAccessService.getParticipationTeamDestinationTracker()).as("Correct session was removed.").containsKey(stompHeaderAccessor2.getSessionId());
     }
 
     @Test

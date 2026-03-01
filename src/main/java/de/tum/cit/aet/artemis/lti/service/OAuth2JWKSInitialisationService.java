@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
+import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 
 @Lazy
 @Service
@@ -25,9 +26,13 @@ public class OAuth2JWKSInitialisationService {
 
     private final OnlineCourseConfigurationService onlineCourseConfigurationService;
 
-    public OAuth2JWKSInitialisationService(OAuth2JWKSService oAuth2JWKSService, OnlineCourseConfigurationService onlineCourseConfigurationService) {
+    private final DistributedDataAccessService distributedDataAccessService;
+
+    public OAuth2JWKSInitialisationService(OAuth2JWKSService oAuth2JWKSService, OnlineCourseConfigurationService onlineCourseConfigurationService,
+            DistributedDataAccessService distributedDataAccessService) {
         this.oAuth2JWKSService = oAuth2JWKSService;
         this.onlineCourseConfigurationService = onlineCourseConfigurationService;
+        this.distributedDataAccessService = distributedDataAccessService;
     }
 
     /**
@@ -36,7 +41,7 @@ public class OAuth2JWKSInitialisationService {
      */
     @PostConstruct
     public void init() {
-        if (oAuth2JWKSService.getClientRegistrationIdToJwk().isEmpty()) {
+        if (distributedDataAccessService.getClientRegistrationIdToJwk().isEmpty()) {
             log.info("Initializing JWKSet for OAuth2 ClientRegistrations");
             generateOAuth2ClientKeys();
         }
@@ -47,7 +52,7 @@ public class OAuth2JWKSInitialisationService {
      * This method is called once during initialization to ensure all existing ClientRegistrations have a key.
      */
     private void generateOAuth2ClientKeys() {
-        onlineCourseConfigurationService.getAllClientRegistrations()
-                .forEach(cr -> oAuth2JWKSService.getClientRegistrationIdToJwk().computeIfAbsent(cr.getRegistrationId(), id -> oAuth2JWKSService.generateKey(cr)));
+        onlineCourseConfigurationService.getAllClientRegistrations().forEach(
+                cr -> distributedDataAccessService.getDistributedClientRegistrationIdToJwk().computeIfAbsent(cr.getRegistrationId(), id -> oAuth2JWKSService.generateKey(cr)));
     }
 }

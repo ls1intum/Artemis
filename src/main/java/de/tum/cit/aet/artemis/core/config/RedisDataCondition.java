@@ -12,13 +12,12 @@ import org.springframework.context.annotation.Condition;
 import org.springframework.context.annotation.ConditionContext;
 import org.springframework.core.type.AnnotatedTypeMetadata;
 
-public class LocalCIBuildAgentRedisDataCondition implements Condition {
+public class RedisDataCondition implements Condition {
 
     @Override
     public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
-        final Collection<String> activeProfiles = Arrays.asList(context.getEnvironment().getActiveProfiles());
         String dataStoreConfig = context.getEnvironment().getProperty("artemis.continuous-integration.data-store", HAZELCAST);
 
-        return (activeProfiles.contains(PROFILE_LOCALCI) || activeProfiles.contains(PROFILE_BUILDAGENT)) && dataStoreConfig.equalsIgnoreCase(REDIS);
+        return dataStoreConfig.equalsIgnoreCase(REDIS);
     }
 }

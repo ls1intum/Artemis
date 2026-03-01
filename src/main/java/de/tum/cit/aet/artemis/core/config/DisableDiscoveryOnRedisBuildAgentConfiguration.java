@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Lazy;
 @EnableAutoConfiguration(excludeName = { "org.springframework.cloud.netflix.eureka.EurekaClientAutoConfiguration",
         "org.springframework.cloud.netflix.eureka.loadbalancer.LoadBalancerEurekaAutoConfiguration",
         "org.springframework.cloud.netflix.eureka.config.DiscoveryClientOptionalArgsConfiguration", "org.springframework.cloud.netflix.eureka.EurekaDiscoveryClientConfiguration",
-        "org.springframework.cloud.netflix.eureka.EurekaClientConfigServerAutoConfiguration", "org.springframework.cloud.netflix.eureka.EurekaHealthIndicatorAutoConfiguration", })
+        "org.springframework.cloud.netflix.eureka.EurekaClientConfigServerAutoConfiguration", "org.springframework.cloud.netflix.eureka.EurekaHealthIndicatorAutoConfiguration",
+        "org.springframework.cloud.netflix.eureka.reactive.EurekaReactiveDiscoveryClientConfiguration", })
 public class DisableDiscoveryOnRedisBuildAgentConfiguration {
 }
