@@ -160,6 +160,6 @@ export class CourseDetailDoughnutChartComponent {
         if (showText) {
             return showText;
         }
-        return this.currentMax() === 0 ? '0' : data.value;
+        return this.currentMax() === 0 ? '0' : String(data.value);
     }
 }

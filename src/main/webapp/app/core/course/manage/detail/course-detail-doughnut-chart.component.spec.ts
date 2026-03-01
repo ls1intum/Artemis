@@ -97,7 +97,7 @@ describe('CourseDetailDoughnutChartComponent', () => {
     it('should show data value in tooltip when currentMax is not 0', () => {
         fixture.detectChanges();
 
-        expect(component.valueFormatting({ value: 42 })).toBe(42);
+        expect(component.valueFormatting({ value: 42 })).toBe('42');
     });
 
     it('should set the right title and link', () => {
