@@ -1,5 +1,5 @@
 import { TableLazyLoadEvent } from 'primeng/table';
-import { SearchTermPageableSearch, SortingOrder } from '../table/pageable-table';
+import { SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 
 function getSortingOrder(order: number | undefined | null): SortingOrder {
     return order === -1 ? SortingOrder.DESCENDING : SortingOrder.ASCENDING;
