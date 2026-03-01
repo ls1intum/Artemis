@@ -6,13 +6,16 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.util.Objects;
 
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
@@ -22,8 +25,9 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
  * DTO representing a tutorial group session, contains all relevant information about a tutorial group session, including its schedule and free period if applicable.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TutorialGroupSessionDTO(@NotNull Long id, @NotNull LocalDateTime startDate, @NotNull LocalDateTime endDate, boolean isCancelled, String statusExplanation,
-        @NotNull String location, Integer attendanceCount, TutorialGroupScheduleDTO schedule, TutorialGroupFreePeriodDTO freePeriod) {
+public record TutorialGroupSessionDTO(@NotNull Long id, @NotNull LocalDateTime startDate, @NotNull LocalDateTime endDate, TutorialGroupSessionStatus status,
+        @Size(min = 1, max = 256) String statusExplanation, @NotNull @Size(max = 2000) String location, @Max(3000) Integer attendanceCount, TutorialGroupScheduleDTO schedule,
+        TutorialGroupFreePeriodDTO freePeriod) {
 
     private static final String ENTITY_NAME = "tutorialGroupSession";
 
@@ -31,9 +35,10 @@ public record TutorialGroupSessionDTO(@NotNull Long id, @NotNull LocalDateTime s
      * DTO representing the tutorial group schedule a session originates from.
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record TutorialGroupScheduleDTO(@NotNull Long id, Integer dayOfWeek, String startTime, String endTime, Integer repetitionFrequency) {
+    public record TutorialGroupScheduleDTO(@NotNull Long id, @NotNull Integer dayOfWeek, @NotNull String startTime, @NotNull String endTime, @NotNull Integer repetitionFrequency) {
 
-        public static TutorialGroupScheduleDTO of(@NotNull TutorialGroupSchedule schedule) {
+        public static TutorialGroupScheduleDTO of(TutorialGroupSchedule schedule) {
+            Objects.requireNonNull(schedule, "Tutorial group schedule must be set");
             return new TutorialGroupScheduleDTO(schedule.getId(), schedule.getDayOfWeek(), schedule.getStartTime(), schedule.getEndTime(), schedule.getRepetitionFrequency());
         }
 
@@ -43,36 +48,33 @@ public record TutorialGroupSessionDTO(@NotNull Long id, @NotNull LocalDateTime s
      * DTO used to send the status explanation when e.g., cancelling a tutorial group session
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record TutorialGroupStatusDTO(String statusExplanation) {
+    public record TutorialGroupStatusDTO(@Size(min = 1, max = 256) String statusExplanation) {
     }
 
     /**
      * DTO used because we want to interpret the dates in the time zone of the tutorial groups configuration
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record TutorialGroupSessionRequestDTO(@NotNull LocalDate date, @NotNull LocalTime startTime, @NotNull LocalTime endTime, @Size(min = 1, max = 2000) String location) {
-
-        public void validityCheck() {
-            if (!startTime.isBefore(endTime)) {
-                throw new BadRequestAlertException("The start time must be before the end time", ENTITY_NAME, "startTimeAfterEndTime");
-            }
-        }
+    public record TutorialGroupSessionRequestDTO(@NotNull LocalDate date, @NotNull LocalTime startTime, @NotNull LocalTime endTime, @NotNull @Size(max = 2000) String location) {
 
         /**
-         * Convert the DTO to a TutorialGroupSession object
+         * Converts this DTO to a {@link TutorialGroupSession} entity, interpreting the date and time fields in the time zone of the given tutorial groups configuration.
          *
-         * @param tutorialGroupsConfiguration the tutorial groups configuration to use for the conversion (needed for the time zone)
+         * @param tutorialGroupSessionRequestDTO the DTO to convert
+         * @param tutorialGroupsConfiguration    the tutorial groups configuration to use for the conversion (needed for the time zone)
+         * @param tutorialGroup                  the tutorial group to which the session belongs (needed to set the relationship)
          * @return the converted TutorialGroupSession object
          */
-        public TutorialGroupSession toEntity(TutorialGroupsConfiguration tutorialGroupsConfiguration) {
+        public static TutorialGroupSession createFromDto(TutorialGroupSessionRequestDTO tutorialGroupSessionRequestDTO, TutorialGroupsConfiguration tutorialGroupsConfiguration,
+                TutorialGroup tutorialGroup) {
+            Objects.requireNonNull(tutorialGroupSessionRequestDTO, "Tutorial group session request DTO must be set");
+            Objects.requireNonNull(tutorialGroupsConfiguration, "Tutorial groups configuration must be set");
             String timeZone = tutorialGroupsConfiguration.getCourse().getTimeZone();
-            if (timeZone == null) {
-                throw new BadRequestAlertException("Course has no time zone configured", ENTITY_NAME, "missingTimeZone");
-            }
             TutorialGroupSession tutorialGroupSession = new TutorialGroupSession();
-            tutorialGroupSession.setStart(interpretInTimeZone(date, startTime, timeZone));
-            tutorialGroupSession.setEnd(interpretInTimeZone(date, endTime, timeZone));
-            tutorialGroupSession.setLocation(location);
+            tutorialGroupSession.setStart(interpretInTimeZone(tutorialGroupSessionRequestDTO.date(), tutorialGroupSessionRequestDTO.startTime(), timeZone));
+            tutorialGroupSession.setEnd(interpretInTimeZone(tutorialGroupSessionRequestDTO.date(), tutorialGroupSessionRequestDTO.endTime(), timeZone));
+            tutorialGroupSession.setLocation(tutorialGroupSessionRequestDTO.location());
+            tutorialGroupSession.setTutorialGroup(tutorialGroup);
             return tutorialGroupSession;
         }
 
@@ -86,20 +88,22 @@ public record TutorialGroupSessionDTO(@NotNull Long id, @NotNull LocalDateTime s
      * @param courseZone the course time zone (ZoneId.of(course.getTimeZone()))
      * @return a DTO representing the given session
      */
-    public static TutorialGroupSessionDTO of(@NotNull TutorialGroupSession session, @NotNull ZoneId courseZone) {
+    public static TutorialGroupSessionDTO of(TutorialGroupSession session, ZoneId courseZone) {
+        Objects.requireNonNull(session, "Tutorial group session must be set");
+        Objects.requireNonNull(courseZone, "Course time zone must be set");
         if (session.getStart() == null || session.getEnd() == null) {
-            throw new IllegalStateException("Tutorial group session has no start or end date");
+            throw new BadRequestAlertException("The session must have a start and end date.", ENTITY_NAME, "noStartOrEndDate");
         }
-
+        if (session.getStart().isAfter(session.getEnd())) {
+            throw new BadRequestAlertException("The session start date must be before the end date.", ENTITY_NAME, "startDateAfterEndDate");
+        }
         LocalDateTime start = session.getStart().withZoneSameInstant(courseZone).toLocalDateTime();
         LocalDateTime end = session.getEnd().withZoneSameInstant(courseZone).toLocalDateTime();
 
         var scheduleDto = session.getTutorialGroupSchedule() != null ? TutorialGroupScheduleDTO.of(session.getTutorialGroupSchedule()) : null;
         var freePeriodDto = session.getTutorialGroupFreePeriod() != null ? TutorialGroupFreePeriodDTO.of(session.getTutorialGroupFreePeriod()) : null;
-        boolean isCancelled = session.getStatus() == TutorialGroupSessionStatus.CANCELLED;
 
-        return new TutorialGroupSessionDTO(session.getId(), start, end, isCancelled, session.getStatusExplanation(), session.getLocation(), session.getAttendanceCount(),
+        return new TutorialGroupSessionDTO(session.getId(), start, end, session.getStatus(), session.getStatusExplanation(), session.getLocation(), session.getAttendanceCount(),
                 scheduleDto, freePeriodDto);
     }
-
 }

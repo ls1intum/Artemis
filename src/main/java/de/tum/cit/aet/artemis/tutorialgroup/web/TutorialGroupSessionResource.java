@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.tutorialgroup.web;
 
+import static de.tum.cit.aet.artemis.core.util.DateUtil.interpretInTimeZone;
+import static de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupSessionDTO.TutorialGroupSessionRequestDTO.createFromDto;
 import static de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupScheduleService.updateTutorialGroupSession;
 
 import java.net.URI;
@@ -117,24 +119,24 @@ public class TutorialGroupSessionResource {
             session.hidePrivacySensitiveInformation();
         }
         var courseZone = ZoneId.of(course.getTimeZone());
-        return ResponseEntity.ok(TutorialGroupSessionDTO.of(TutorialGroupSession.preventCircularJsonConversion(session), courseZone));
+        return ResponseEntity.ok(TutorialGroupSessionDTO.of(session, courseZone));
     }
 
     /**
      * PUT /courses/:courseId/tutorial-groups/:tutorialGroupId/sessions/:sessionId : Updates an existing tutorial group session
      *
-     * @param courseId                the id of the course to which the tutorial group belongs to
-     * @param tutorialGroupId         the id of the tutorial group to which the session belongs to
-     * @param sessionId               the id of the session to update
-     * @param tutorialGroupSessionDTO DTO containing the updated tutorial group session
+     * @param courseId                       the id of the course to which the tutorial group belongs to
+     * @param tutorialGroupId                the id of the tutorial group to which the session belongs to
+     * @param sessionId                      the id of the session to update
+     * @param tutorialGroupSessionRequestDTO DTO containing the updated tutorial group session
      * @return the ResponseEntity with status 200 (OK) and with body the updated tutorial group session
      */
     @PutMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}")
     @EnforceAtLeastTutor
     public ResponseEntity<TutorialGroupSessionDTO> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
-            @RequestBody @Valid TutorialGroupSessionDTO.TutorialGroupSessionRequestDTO tutorialGroupSessionDTO) {
+            @RequestBody @Valid TutorialGroupSessionDTO.TutorialGroupSessionRequestDTO tutorialGroupSessionRequestDTO) {
         log.debug("REST request to update session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
-        tutorialGroupSessionDTO.validityCheck();
+        checkForStartAndEndTimeOrder(tutorialGroupSessionRequestDTO);
 
         var sessionToUpdate = this.tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
         checkEntityIdMatchesPathIds(sessionToUpdate, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));
@@ -144,12 +146,14 @@ public class TutorialGroupSessionResource {
                 userAndIsAdminOrInstructorPair.second());
 
         TutorialGroupsConfiguration configuration = validateTutorialGroupConfiguration(courseId);
-        var updatedSession = tutorialGroupSessionDTO.toEntity(configuration);
-        sessionToUpdate.setStart(updatedSession.getStart());
-        sessionToUpdate.setEnd(updatedSession.getEnd());
-        sessionToUpdate.setLocation(updatedSession.getLocation());
+        var courseZone = configuration.getCourse().getTimeZone();
+        var zoneId = ZoneId.of(courseZone);
 
-        isValidTutorialGroupSession(sessionToUpdate, ZoneId.of(configuration.getCourse().getTimeZone()));
+        sessionToUpdate.setStart(interpretInTimeZone(tutorialGroupSessionRequestDTO.date(), tutorialGroupSessionRequestDTO.startTime(), courseZone));
+        sessionToUpdate.setEnd(interpretInTimeZone(tutorialGroupSessionRequestDTO.date(), tutorialGroupSessionRequestDTO.endTime(), courseZone));
+        sessionToUpdate.setLocation(tutorialGroupSessionRequestDTO.location());
+
+        checkForOverlapWithOtherSessions(sessionToUpdate, zoneId);
 
         // if the session belongs to a schedule, we have to cut the connection to mark that it does not follow the schedule anymore
         if (sessionToUpdate.getTutorialGroupSchedule() != null) {
@@ -165,8 +169,7 @@ public class TutorialGroupSessionResource {
 
         TutorialGroupSession result = tutorialGroupSessionRepository.save(sessionToUpdate);
 
-        var courseZone = ZoneId.of(configuration.getCourse().getTimeZone());
-        return ResponseEntity.ok(TutorialGroupSessionDTO.of(TutorialGroupSession.preventCircularJsonConversion(result), courseZone));
+        return ResponseEntity.ok(TutorialGroupSessionDTO.of(result, zoneId));
 
     }
 
@@ -201,7 +204,7 @@ public class TutorialGroupSessionResource {
         sessionToUpdate.setAttendanceCount(attendanceCount);
         var result = tutorialGroupSessionRepository.save(sessionToUpdate);
         var courseZone = ZoneId.of(result.getTutorialGroup().getCourse().getTimeZone());
-        return ResponseEntity.ok(TutorialGroupSessionDTO.of(TutorialGroupSession.preventCircularJsonConversion(result), courseZone));
+        return ResponseEntity.ok(TutorialGroupSessionDTO.of(result, courseZone));
     }
 
     /**
@@ -230,17 +233,17 @@ public class TutorialGroupSessionResource {
     /**
      * POST /courses/:courseId/tutorial-groups/:tutorialGroupId/sessions : creates a new tutorial group session.
      *
-     * @param courseId                the id of the course to which the tutorial group belongs to
-     * @param tutorialGroupId         the id of the tutorial group to which the session belongs to
-     * @param tutorialGroupSessionDTO DTO containing the new tutorial group session
+     * @param courseId                       the id of the course to which the tutorial group belongs to
+     * @param tutorialGroupId                the id of the tutorial group to which the session belongs to
+     * @param tutorialGroupSessionRequestDTO DTO containing the information for the new tutorial group session
      * @return ResponseEntity with status 201 (Created) and in the body the new tutorial group session
      */
     @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions")
     @EnforceAtLeastTutor
     public ResponseEntity<TutorialGroupSessionDTO> create(@PathVariable Long courseId, @PathVariable Long tutorialGroupId,
-            @RequestBody @Valid TutorialGroupSessionDTO.TutorialGroupSessionRequestDTO tutorialGroupSessionDTO) throws URISyntaxException {
-        log.debug("REST request to create TutorialGroupSession: {} for tutorial group: {}", tutorialGroupSessionDTO, tutorialGroupId);
-        tutorialGroupSessionDTO.validityCheck();
+            @RequestBody @Valid TutorialGroupSessionDTO.TutorialGroupSessionRequestDTO tutorialGroupSessionRequestDTO) throws URISyntaxException {
+        log.debug("REST request to create TutorialGroupSession: {} for tutorial group: {}", tutorialGroupSessionRequestDTO, tutorialGroupId);
+        checkForStartAndEndTimeOrder(tutorialGroupSessionRequestDTO);
 
         TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithSessionsElseThrow(tutorialGroupId);
         Pair<User, Boolean> userAndIsAdminOrInstructorPair = getUserAndCheckWhetherTheyAreAdminOrInstructor(courseId);
@@ -248,20 +251,20 @@ public class TutorialGroupSessionResource {
                 userAndIsAdminOrInstructorPair.second());
 
         TutorialGroupsConfiguration configuration = validateTutorialGroupConfiguration(courseId);
-        TutorialGroupSession newSession = tutorialGroupSessionDTO.toEntity(configuration);
-        newSession.setTutorialGroup(tutorialGroup);
+        var courseZone = ZoneId.of(configuration.getCourse().getTimeZone());
+
+        TutorialGroupSession newSession = createFromDto(tutorialGroupSessionRequestDTO, configuration, tutorialGroup);
+
         checkEntityIdMatchesPathIds(newSession, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.empty());
-        isValidTutorialGroupSession(newSession, ZoneId.of(configuration.getCourse().getTimeZone()));
+        checkForOverlapWithOtherSessions(newSession, courseZone);
 
         Optional<TutorialGroupFreePeriod> overlappingPeriodOptional = tutorialGroupFreePeriodRepository.findFirstOverlappingInSameCourse(tutorialGroup.getCourse(),
                 newSession.getStart(), newSession.getEnd());
         updateTutorialGroupSession(newSession, overlappingPeriodOptional);
         newSession = tutorialGroupSessionRepository.save(newSession);
 
-        var courseZone = ZoneId.of(configuration.getCourse().getTimeZone());
-        var dto = TutorialGroupSessionDTO.of(TutorialGroupSession.preventCircularJsonConversion(newSession), courseZone);
-
-        return ResponseEntity.created(URI.create("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + tutorialGroupId + "/sessions/" + newSession.getId())).body(dto);
+        return ResponseEntity.created(URI.create("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + tutorialGroupId + "/sessions/" + newSession.getId()))
+                .body(TutorialGroupSessionDTO.of(newSession, courseZone));
     }
 
     private TutorialGroupsConfiguration validateTutorialGroupConfiguration(@PathVariable Long courseId) {
@@ -290,7 +293,7 @@ public class TutorialGroupSessionResource {
         log.debug("REST request to cancel session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         var sessionToCancel = tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
         if (sessionToCancel.getTutorialGroupFreePeriod() != null) {
-            throw new BadRequestException("You can not cancel a session that is cancelled by a overlapping with a free period");
+            throw new BadRequestAlertException("You cannot cancel a session that overlaps with a free period.", ENTITY_NAME, "cancelOverlapWithFreePeriod");
         }
         checkEntityIdMatchesPathIds(sessionToCancel, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId), Optional.of(sessionId));
 
@@ -304,7 +307,7 @@ public class TutorialGroupSessionResource {
         }
         sessionToCancel = tutorialGroupSessionRepository.save(sessionToCancel);
         var courseZone = ZoneId.of(sessionToCancel.getTutorialGroup().getCourse().getTimeZone());
-        return ResponseEntity.ok(TutorialGroupSessionDTO.of(TutorialGroupSession.preventCircularJsonConversion(sessionToCancel), courseZone));
+        return ResponseEntity.ok(TutorialGroupSessionDTO.of(sessionToCancel, courseZone));
     }
 
     /**
@@ -321,7 +324,7 @@ public class TutorialGroupSessionResource {
         log.debug("REST request to activate session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         var sessionToActivate = tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
         if (sessionToActivate.getTutorialGroupFreePeriod() != null) {
-            throw new BadRequestException("You can not activate a session that is cancelled by a overlapping with a free period");
+            throw new BadRequestAlertException("You cannot activate a session that overlaps with a free period.", ENTITY_NAME, "activateOverlapWithFreePeriod");
         }
         checkEntityIdMatchesPathIds(sessionToActivate, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));
 
@@ -333,7 +336,7 @@ public class TutorialGroupSessionResource {
         sessionToActivate.setStatusExplanation(null);
         sessionToActivate = tutorialGroupSessionRepository.save(sessionToActivate);
         var courseZone = ZoneId.of(sessionToActivate.getTutorialGroup().getCourse().getTimeZone());
-        return ResponseEntity.ok(TutorialGroupSessionDTO.of(TutorialGroupSession.preventCircularJsonConversion(sessionToActivate), courseZone));
+        return ResponseEntity.ok(TutorialGroupSessionDTO.of(sessionToActivate, courseZone));
 
     }
 
@@ -356,15 +359,17 @@ public class TutorialGroupSessionResource {
         });
     }
 
-    private void isValidTutorialGroupSession(TutorialGroupSession tutorialGroupSession, ZoneId zoneId) {
-        this.checkForOverlapWithOtherSessions(tutorialGroupSession, zoneId);
-    }
-
     private void checkForOverlapWithOtherSessions(TutorialGroupSession session, ZoneId zoneId) {
         var overlappingSessions = tutorialGroupSessionRepository.findOverlappingInSameTutorialGroup(session.getTutorialGroup(), session.getStart(), session.getEnd()).stream()
                 .filter(overlappingSession -> !overlappingSession.getId().equals(session.getId())).collect(Collectors.toSet());
         if (!overlappingSessions.isEmpty()) {
             throw new SessionOverlapsWithSessionException(overlappingSessions, zoneId);
+        }
+    }
+
+    private void checkForStartAndEndTimeOrder(TutorialGroupSessionDTO.TutorialGroupSessionRequestDTO tutorialGroupSessionDTO) {
+        if (!tutorialGroupSessionDTO.startTime().isBefore(tutorialGroupSessionDTO.endTime())) {
+            throw new BadRequestAlertException("The session start time must be before the end time.", ENTITY_NAME, "startTimeAfterEndTime");
         }
     }
 }

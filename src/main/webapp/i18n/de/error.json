@@ -240,6 +240,16 @@
         "userManagement": {
             "onlySuperAdminCanManageAdmins": "Du bist kein Super-Administrator und kannst daher keine Administrator-Accounts verwalten.",
             "cannotRemoveDefaultAdminRights": "Du kannst die Super-Admin-Rechte des Standard-Admin-Benutzers nicht entfernen."
+        },
+        "tutorialGroupSession": {
+            "startTimeAfterEndTime": "Die Startzeit der Tutoriengruppensitzung muss vor der Endzeit liegen.",
+            "startDateAfterEndDate": "Das Startdatum der Tutoriengruppensitzung muss vor dem Enddatum liegen.",
+            "noStartOrEndDate": "Die Tutoriengruppensitzung muss ein Start- und Enddatum besitzen.",
+            "cancelOverlapWithFreePeriod": "Eine Tutoriengruppensitzung, die sich mit einem freien Zeitraum überschneidet, kann nicht storniert werden.",
+            "activateOverlapWithFreePeriod": "Eine Tutoriengruppensitzung, die sich mit einem freien Zeitraum überschneidet, kann nicht aktiviert werden.",
+            "sessionIdMismatch": "Die Sitzungs-ID stimmt nicht mit der angegebenen Tutoriengruppensitzung überein.",
+            "tutorialGroupIdMismatch": "Die Tutoriengruppen-ID stimmt nicht mit der angegebenen Tutoriengruppensitzung überein.",
+            "courseIdMismatch": "Die Kurs-ID stimmt nicht mit der angegebenen Tutoriengruppensitzung überein."
         }
     }
 }

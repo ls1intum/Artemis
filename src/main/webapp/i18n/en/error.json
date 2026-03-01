@@ -240,6 +240,16 @@
         "userManagement": {
             "onlySuperAdminCanManageAdmins": "You are not a super administrator and therefore not allowed to manage administrator accounts.",
             "cannotRemoveDefaultAdminRights": "You cannot remove super admin rights from the default admin user."
+        },
+        "tutorialGroupSession": {
+            "startTimeAfterEndTime": "The session start time must be before the end time.",
+            "startDateAfterEndDate": "The session start date must be before the end date.",
+            "noStartOrEndDate": "The session must have a start and end date.",
+            "cancelOverlapWithFreePeriod": "You cannot cancel a session that overlaps with a free period.",
+            "activateOverlapWithFreePeriod": "You cannot activate a session that overlaps with a free period.",
+            "sessionIdMismatch": "The session id in the path does not match the id in the tutorial group session",
+            "tutorialGroupIdMismatch": "The tutorialGroupId in the path does not match the tutorialGroupId in the tutorial group",
+            "courseIdMismatch": "The courseId in the path does not match the courseId in the tutorial group"
         }
     }
 }

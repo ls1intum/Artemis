@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.tutorialgroup.domain;
 
-import static jakarta.persistence.Persistence.getPersistenceUtil;
-
 import java.time.ZonedDateTime;
 
 import jakarta.persistence.Column;
@@ -173,25 +171,6 @@ public class TutorialGroupSession extends DomainObject {
         if (this.tutorialGroup != null) {
             this.tutorialGroup.hidePrivacySensitiveInformation();
         }
-    }
-
-    /**
-     * Removes circular references for JSON serialization.
-     *
-     * @param tutorialGroupSession the tutorial group session to remove circular references for
-     * @return the tutorial group session without circular references
-     */
-    public static TutorialGroupSession preventCircularJsonConversion(TutorialGroupSession tutorialGroupSession) {
-        // prevent circular to json conversion
-        if (getPersistenceUtil().isLoaded(tutorialGroupSession, "tutorialGroupSchedule") && tutorialGroupSession.getTutorialGroupSchedule() != null) {
-            tutorialGroupSession.getTutorialGroupSchedule().setTutorialGroupSessions(null);
-            tutorialGroupSession.getTutorialGroupSchedule().setTutorialGroup(null);
-        }
-        if (getPersistenceUtil().isLoaded(tutorialGroupSession, "tutorialGroup") && tutorialGroupSession.getTutorialGroup() != null) {
-            tutorialGroupSession.getTutorialGroup().setTutorialGroupSessions(null);
-            tutorialGroupSession.getTutorialGroup().setTutorialGroupSchedule(null);
-        }
-        return tutorialGroupSession;
     }
 
     public Integer getAttendanceCount() {
