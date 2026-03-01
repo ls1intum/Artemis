@@ -10,16 +10,18 @@ import { IrisLogoLookDirection, IrisLogoSize } from 'app/iris/overview/iris-logo
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { isTextContent } from 'app/iris/shared/entities/iris-content-type.model';
 import { removeCitationBlocks } from 'app/iris/overview/citation-text/iris-citation-text.util';
+import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-exercise-chatbot-button',
     templateUrl: './exercise-chatbot-button.component.html',
     styleUrls: ['./exercise-chatbot-button.component.scss'],
-    imports: [NgClass, FaIconComponent, IrisLogoComponent, HtmlForMarkdownPipe],
+    imports: [NgClass, FaIconComponent, IrisLogoComponent, HtmlForMarkdownPipe, TranslateDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisExerciseChatbotButtonComponent {
@@ -50,6 +52,10 @@ export class IrisExerciseChatbotButtonComponent {
     // Convert numNewMessages observable to signal
     private readonly numNewMessages = toSignal(this.chatService.numNewMessages, { initialValue: 0 });
     readonly hasNewMessages = computed(() => this.numNewMessages() > 0);
+
+    // Convert stages observable to signal for processing indicator
+    private readonly currentStages = toSignal(this.chatService.stages, { initialValue: [] as IrisStageDTO[] });
+    readonly isProcessing = computed(() => this.currentStages().some((s) => s.state === IrisStageStateDTO.IN_PROGRESS || s.state === IrisStageStateDTO.NOT_STARTED));
 
     // Convert newIrisMessage observable to signal for tracking incoming messages
     private readonly latestIrisMessageContent = toSignal(

@@ -14,6 +14,16 @@
             }
         }
     </div>
+    @if (isProcessing() && !newIrisMessage()) {
+        <div class="status-indicator" role="status">
+            <span class="sr-only" jhiTranslate="artemisApp.exerciseChatbot.statusIndicator.thinking"></span>
+            <div class="typing-dots" aria-hidden="true">
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </div>
+        </div>
+    }
     <div class="chatbot-button">
         <jhi-iris-logo [size]="IrisLogoSize.MEDIUM" [look]="IrisLogoLookDirection.LEFT" (click)="handleButtonClick()" />
         @if (hasNewMessages()) {

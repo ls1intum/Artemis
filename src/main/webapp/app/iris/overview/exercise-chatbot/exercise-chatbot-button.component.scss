@@ -110,3 +110,94 @@
     height: 10px;
     color: var(--red);
 }
+
+.status-indicator {
+    position: absolute;
+    bottom: 96px;
+    right: 80px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 1rem;
+    background-color: var(--iris-tertiary-background);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    z-index: 9998;
+    animation: status-bubble-enter 300ms ease-out;
+    pointer-events: none;
+}
+
+.status-indicator-logo {
+    animation: iris-chomp 0.6s ease-in-out infinite;
+}
+
+@keyframes iris-chomp {
+    0%,
+    100% {
+        clip-path: circle(50% at 50% 50%);
+    }
+
+    50% {
+        clip-path: polygon(0% 0%, 50% 0%, 100% 25%, 50% 50%, 100% 75%, 50% 100%, 0% 100%);
+    }
+}
+
+.typing-dots {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background-color: var(--iris-label-color);
+        animation: dot-bounce 1.4s ease-in-out infinite;
+
+        &:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        &:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+    }
+}
+
+@keyframes dot-bounce {
+    0%,
+    60%,
+    100% {
+        transform: translateY(0);
+        opacity: 0.4;
+    }
+
+    30% {
+        transform: translateY(-4px);
+        opacity: 1;
+    }
+}
+
+@keyframes status-bubble-enter {
+    from {
+        opacity: 0;
+        transform: scale(0.8) translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .status-indicator-logo,
+    .typing-dots .dot,
+    .status-indicator {
+        animation: none;
+    }
+
+    .typing-dots .dot {
+        opacity: 0.6;
+    }
+}

@@ -59,6 +59,9 @@
                 "exerciseLabel": "Related Exercise",
                 "lectureLabel": "Related Lecture"
             },
+            "statusIndicator": {
+                "thinking": "Iris is thinking"
+            },
             "actions": {
                 "copy": "Copy",
                 "goodResponse": "Good response",
