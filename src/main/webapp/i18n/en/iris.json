@@ -179,10 +179,7 @@
                 "newChat": "New chat",
                 "openChatHistory": "Open chat history",
                 "aboutIris": "About Iris",
-                "today": "Today",
-                "yesterday": "Yesterday",
-                "last7Days": "Last 7 Days",
-                "last30Days": "Last 30 Days",
+                "recent": "Recent",
                 "older": "Older",
                 "relatedEntityTooltip": {
                     "programmingExercise": "This chat is related to a programming exercise.",
@@ -193,7 +190,12 @@
                 "deleteSessionQuestion": "Are you sure you want to delete the chat session \"{{title}}\"? This action cannot be undone.",
                 "deleteSessionSuccess": "Chat session deleted.",
                 "deleteSessionError": "Failed to delete chat session.",
-                "sessionMenuAriaLabel": "Chat session actions"
+                "sessionMenuAriaLabel": "Chat session actions",
+                "relatedContent": "Course Context Chats",
+                "generalChat": "General Chats",
+                "seeMore": "See more",
+                "collapseAllGroups": "Collapse all groups",
+                "expandAllGroups": "Expand all groups"
             },
             "aboutIrisModal": {
                 "meetIris": "Meet Iris",

@@ -206,6 +206,7 @@ export class IrisChatService implements OnDestroy {
             tap((response: HttpResponse<IrisUserMessage>) => {
                 this.suggestions.next([]);
                 this.replaceOrAddMessage(response.body!);
+                this.updateCurrentSessionLastActivityDate();
             }),
             map(() => undefined),
             catchError((error: HttpErrorResponse) => {
@@ -231,6 +232,19 @@ export class IrisChatService implements OnDestroy {
         );
     }
 
+    /**
+     * Updates the lastActivityDate of the current session to now in the chatSessions BehaviorSubject.
+     * This provides an optimistic client-side update so the session immediately re-sorts in the sidebar.
+     */
+    private updateCurrentSessionLastActivityDate(): void {
+        if (!this.sessionId) {
+            return;
+        }
+        const now = new Date();
+        const updatedSessions = this.chatSessions.getValue().map((session) => (session.id === this.sessionId ? Object.assign({}, session, { lastActivityDate: now }) : session));
+        this.chatSessions.next(updatedSessions);
+    }
+
     private replaceOrAddMessage(message: IrisMessage) {
         const messageWasReplaced = this.replaceMessage(message);
         if (!messageWasReplaced) {
@@ -252,7 +266,10 @@ export class IrisChatService implements OnDestroy {
 
         return this.irisChatHttpService.resendMessage(this.sessionId, message).pipe(
             map((r: HttpResponse<IrisUserMessage>) => r.body!),
-            tap((m) => this.replaceMessage(m)),
+            tap((m) => {
+                this.replaceMessage(m);
+                this.updateCurrentSessionLastActivityDate();
+            }),
             map(() => undefined),
             catchError((error: HttpErrorResponse) => {
                 this.handleSendHttpError(error);
@@ -435,11 +452,13 @@ export class IrisChatService implements OnDestroy {
         }
         if (payload.sessionTitle && this.sessionId) {
             if (this.latestStartedSession?.id === this.sessionId) {
-                this.latestStartedSession = { ...this.latestStartedSession, title: payload.sessionTitle };
+                this.latestStartedSession = Object.assign({}, this.latestStartedSession, { title: payload.sessionTitle });
             }
 
             // Update the observable list immutably so OnPush change detection picks up the new title immediately.
-            const updatedSessions = this.chatSessions.getValue().map((session) => (session.id === this.sessionId ? { ...session, title: payload.sessionTitle } : session));
+            const updatedSessions = this.chatSessions
+                .getValue()
+                .map((session) => (session.id === this.sessionId ? Object.assign({}, session, { title: payload.sessionTitle }) : session));
             this.chatSessions.next(updatedSessions);
         }
         if (payload.citationInfo?.length) {

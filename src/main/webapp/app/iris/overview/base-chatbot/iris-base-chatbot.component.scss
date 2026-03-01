@@ -266,6 +266,7 @@
 
 .bubble-left {
     --_d: 0%;
+
     margin-bottom: 8px;
     place-self: center;
     max-width: 100%;
@@ -273,6 +274,7 @@
 
 .bubble-right {
     --_d: 100%;
+
     place-self: end;
     float: right;
     background-color: var(--iris-tertiary-background);
@@ -348,7 +350,7 @@ pre {
         flex-direction: column;
         flex: 1;
         align-items: stretch; // stretch children to full width
-        gap: 8px;
+        gap: 4px;
         margin: 0 16px;
 
         &.not-accepted {
@@ -419,25 +421,25 @@ pre {
     flex: 0 1 auto;
 
     textarea {
-        background-color: var(--iris-secondary-background);
+        background-color: transparent;
         flex: 1 0 auto;
-        padding: 16px 56px 36px 16px;
+        padding: 12px 16px 8px;
         resize: none;
-        border-radius: 8px;
-        min-height: 72px;
-        max-height: 200px;
+        border: none;
+        border-radius: 8px 8px 0 0;
+        min-height: 40px;
+        max-height: 164px;
         overflow-y: auto;
 
         &:focus {
             outline: none;
             box-shadow: none;
-            border-color: var(--primary);
         }
 
         &:disabled {
             opacity: 0.25;
             cursor: not-allowed;
-            background-color: var(--iris-secondary-background);
+            background-color: transparent !important;
         }
     }
 
@@ -449,20 +451,28 @@ pre {
     .textarea-wrapper {
         position: relative;
         display: flex;
+        flex-direction: column;
         flex: 1;
+        background-color: var(--iris-secondary-background);
+        border: 1px solid var(--bs-border-color);
+        border-radius: 8px;
+        overflow: visible;
+
+        &:focus-within {
+            border-color: var(--primary);
+        }
     }
 }
 
 .new-chat-button {
-    padding: 8px;
-    margin: 0 8px;
+    padding: 6px 8px;
     cursor: pointer;
     border-radius: var(--bs-border-radius-lg);
 
     &:hover {
         background-color: var(--iris-accent-background);
         border-radius: 6px;
-        padding: 8px;
+        padding: 6px 8px;
     }
 }
 
@@ -472,6 +482,7 @@ pre {
     border-right: 0.5px solid var(--border-color);
     width: 40px;
     height: 100%;
+    padding: 0 8px;
     flex-shrink: 0;
     overflow-x: hidden;
     transition:
@@ -504,6 +515,9 @@ pre {
         overflow-y: auto;
         scrollbar-width: thin;
         scrollbar-color: var(--bs-border-color) transparent;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
 
         &::-webkit-scrollbar {
             width: 4px;
@@ -522,7 +536,7 @@ pre {
     &-info-link {
         display: flex;
         justify-content: flex-start;
-        padding: 0 8px 8px;
+        padding: 0 0 8px;
 
         .info-button {
             cursor: pointer;
@@ -534,19 +548,83 @@ pre {
 
     &-label p {
         color: var(--iris-label-color);
-        font-size: 0.8rem;
-        margin: 0.5rem 0;
-        padding-left: 1rem;
+        font-size: 12px;
+        margin: 8px 0 4px;
+        padding-left: 8px;
+    }
+
+    &-label.section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        p {
+            font-size: 14px;
+        }
+
+        .collapse-all-button {
+            background: none;
+            border: none;
+            color: var(--iris-label-color);
+            cursor: pointer;
+            padding: 4px 6px;
+            border-radius: var(--bs-border-radius-lg);
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            &:hover {
+                background-color: var(--iris-accent-background);
+                color: var(--bs-body-color);
+            }
+        }
+    }
+
+    &-label.grouped-label p {
+        padding-left: 32px;
+    }
+
+    &-grouped jhi-chat-history-item {
+        border-radius: 6px;
+        display: block;
+        padding-left: 24px;
+    }
+
+    .see-more-wrapper {
+        position: relative;
+    }
+
+    .see-more-button {
+        background: none;
+        border: none;
+        color: var(--bs-body-color);
+        font-size: 14px;
+        cursor: pointer;
+        padding: 6px 8px;
+        width: 100%;
+        text-align: left;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+
+        &.active,
+        &:hover {
+            background-color: var(--iris-accent-background);
+            border-radius: 6px;
+            color: var(--bs-body-color);
+        }
     }
 
     &-divider {
         height: 1px;
         background-color: var(--bs-border-color);
-        margin: 0.5rem 0.75rem;
+        margin: 0.5rem 0;
     }
 
     .collapsed-icon-button {
-        padding: 4px 8px;
+        padding: 4px 6px;
         cursor: pointer;
         border-radius: var(--bs-border-radius-lg);
         display: flex;
@@ -571,7 +649,8 @@ pre {
 
         .new-chat-button {
             margin: 0;
-            padding: 6px 8px;
+            padding: 4px 6px;
+            border-radius: var(--bs-border-radius-lg);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -610,6 +689,16 @@ pre {
     border-bottom: 1px solid var(--bs-border-color);
 }
 
+// Prevent first-frame flicker at PrimeNG's default popup position.
+// The component adds `.menu-positioned` after computing the final fixed position.
+:host ::ng-deep .see-more-menu {
+    visibility: hidden;
+}
+
+:host ::ng-deep .see-more-menu.menu-positioned {
+    visibility: visible;
+}
+
 .disclaimer-message {
     font-size: 80%;
     color: var(--iris-label-color);
@@ -618,20 +707,22 @@ pre {
 }
 
 .scroll-to-bottom {
-    position: fixed;
-    bottom: 48px;
-    right: 20px;
+    position: absolute;
+    top: calc(-44px);
+    left: 50%;
+    transform: translateX(-50%);
     width: 30px;
     height: 30px;
     border-radius: 50%;
-    background-color: var(--secondary);
-    color: white;
+    background-color: var(--iris-primary-background);
+    color: var(--iris-label-color);
     display: flex;
     justify-content: center;
     align-items: center;
     cursor: pointer;
     box-shadow: 0 0 50px rgba(0, 0, 0, 0.4);
     z-index: 1;
+    border: 1px solid var(--bs-border-color);
 }
 
 .rate-message-buttons {
@@ -666,11 +757,8 @@ pre {
 }
 
 #irisSendButton {
-    position: absolute;
-    right: 8px;
-    bottom: 8px;
-    margin-bottom: 0;
-    transform: none;
+    align-self: flex-end;
+    margin: 0 8px 8px 0;
 
     ::ng-deep button {
         border-radius: 8px;
@@ -695,14 +783,6 @@ pre {
     ::ng-deep .svg-inline--fa {
         transition: transform 0.3s ease;
     }
-}
-
-::ng-deep ngb-modal-backdrop {
-    z-index: 9999 !important;
-}
-
-::ng-deep ngb-modal-window {
-    z-index: 9999 !important;
 }
 
 cdk-global-scrollblock {

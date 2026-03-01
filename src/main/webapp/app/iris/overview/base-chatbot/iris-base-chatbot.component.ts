@@ -5,7 +5,9 @@ import {
     faCircleNotch,
     faCompress,
     faCopy,
+    faEllipsis,
     faExpand,
+    faLayerGroup,
     faLink,
     faMagnifyingGlass,
     faPaperPlane,
@@ -14,10 +16,7 @@ import {
     faThumbsUp,
     faXmark,
 } from '@fortawesome/free-solid-svg-icons';
-import { AlertService } from 'app/shared/service/alert.service';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ConfirmationService } from 'primeng/api';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { TooltipModule } from 'primeng/tooltip';
 import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -32,7 +31,7 @@ import { IrisStatusService } from 'app/iris/overview/services/iris-status.servic
 import { IrisMessageContentType, IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
-import * as _ from 'lodash-es';
+import { cloneDeep } from 'lodash-es';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { IrisCitationTextComponent } from 'app/iris/overview/citation-text/iris-citation-text.component';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -43,27 +42,40 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AsPipe } from 'app/shared/pipes/as.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ChatHistoryItemComponent } from './chat-history-item/chat-history-item.component';
-import { NgClass, formatDate } from '@angular/common';
+import { EntityGroupHeaderComponent } from './entity-group-header/entity-group-header.component';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
 import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService, MenuItem } from 'primeng/api';
+import { Menu, MenuModule } from 'primeng/menu';
+import { AlertService } from 'app/shared/service/alert.service';
+import { NgTemplateOutlet, formatDate } from '@angular/common';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { NEW_CHAT_TITLES, chatModeIcon, chatModeTooltipKey } from 'app/iris/overview/shared/iris-session.utils';
 
-// Session history time bucket boundaries (in days ago)
-const YESTERDAY_OFFSET = 1;
-const LAST_7_DAYS_START = 2;
-const LAST_7_DAYS_END = 6;
-const LAST_30_DAYS_START = 7;
-const LAST_30_DAYS_END = 29;
-const OLDER_SESSIONS_START = 30;
+// Sessions with activity within this many days are "Recent", the rest are "Older"
+const RECENT_DAYS_CUTOFF = 5;
 
 // Interval (in ms) to check if the date has changed for session bucket recalculation
 const DAY_CHANGE_CHECK_INTERVAL_MS = 60000;
 
 // Duration (in ms) to show the "copied" feedback before resetting
 const COPY_FEEDBACK_DURATION_MS = 1500;
+
+// Maximum number of entity groups visible before "See more" is shown
+const MAX_VISIBLE_ENTITY_GROUPS = 3;
+
+export interface EntityGroup {
+    entityId: number;
+    entityName: string;
+    chatMode: ChatServiceMode;
+    sessions: IrisSessionDTO[];
+    mostRecentActivity: Date;
+}
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -77,7 +89,7 @@ const COPY_FEEDBACK_DURATION_MS = 1500;
         IrisLogoComponent,
         RouterLink,
         FaIconComponent,
-        NgbTooltip,
+        TooltipModule,
         TranslateDirective,
         ChatStatusBarComponent,
         FormsModule,
@@ -86,10 +98,12 @@ const COPY_FEEDBACK_DURATION_MS = 1500;
         AsPipe,
         HtmlForMarkdownPipe,
         ChatHistoryItemComponent,
-        NgClass,
+        EntityGroupHeaderComponent,
+        NgTemplateOutlet,
         SearchFilterComponent,
         IrisCitationTextComponent,
         ConfirmDialogModule,
+        MenuModule,
     ],
     providers: [ConfirmationService],
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -102,10 +116,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private readonly alertService = inject(AlertService);
     private readonly confirmationService = inject(ConfirmationService);
 
-    // Known "new chat" titles from all languages (server-side: messages*.properties, client-side: iris.json).
-    // Must match the values in src/main/resources/i18n/messages*.properties (iris.chat.session.newChatTitle)
-    // and src/main/webapp/i18n/*/iris.json (artemisApp.iris.chatHistory.newChat).
-    private static readonly NEW_CHAT_TITLES = new Set(['new chat', 'neuer chat']);
     protected statusService = inject(IrisStatusService);
     protected chatService = inject(IrisChatService);
     protected route = inject(ActivatedRoute);
@@ -128,6 +138,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faCopy = faCopy;
     protected readonly faCheck = faCheck;
+    protected readonly faEllipsis = faEllipsis;
+    protected readonly faLayerGroup = faLayerGroup;
 
     // Types
     protected readonly IrisLogoSize = IrisLogoSize;
@@ -160,6 +172,26 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     // Computed state
     readonly hasActiveStage = computed(() => this.stages()?.some((stage) => [IrisStageStateDTO.IN_PROGRESS, IrisStageStateDTO.NOT_STARTED].includes(stage.state)) ?? false);
+    readonly isInputDisabled = computed(
+        () =>
+            this.isLoading() ||
+            !this.active() ||
+            !!(this.rateLimitInfo()?.rateLimit && this.rateLimitInfo()?.currentMessageCount === this.rateLimitInfo()?.rateLimit) ||
+            this.hasActiveStage(),
+    );
+    readonly isSendDisabled = computed(() => !this.newMessageTextContent().trim() || this.isInputDisabled());
+    readonly canShowSuggestions = computed(
+        () =>
+            !!this.suggestions()?.length &&
+            this.isAIEnabled() &&
+            this.active() &&
+            (!this.rateLimitInfo()?.rateLimit || this.rateLimitInfo()?.currentMessageCount !== this.rateLimitInfo()?.rateLimit) &&
+            !this.hasActiveStage(),
+    );
+    readonly sessionBuckets = computed(() => [
+        { labelKey: 'artemisApp.iris.chatHistory.recent', sessions: this.recentSessions() },
+        { labelKey: 'artemisApp.iris.chatHistory.older', sessions: this.olderSessions() },
+    ]);
     readonly isEmptyState = computed(() => !this.messages()?.length && !this.isEmbeddedChat());
     readonly hasHeaderContent = computed(() => {
         const hasRelatedEntity = !!this.relatedEntityRoute() && !!this.relatedEntityLinkButtonLabel() && this.isChatHistoryAvailable();
@@ -193,11 +225,73 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         return [newestNewChat];
     });
     readonly filteredNonNewSessions = computed(() => this.filteredSessions().filter((session) => !this.isNewChatSession(session)));
-    readonly todaySessions = computed(() => this.filterSessionsBetween(this.filteredNonNewSessions(), 0, 0, false, this.dayTick()));
-    readonly yesterdaySessions = computed(() => this.filterSessionsBetween(this.filteredNonNewSessions(), YESTERDAY_OFFSET, YESTERDAY_OFFSET, false, this.dayTick()));
-    readonly last7DaysSessions = computed(() => this.filterSessionsBetween(this.filteredNonNewSessions(), LAST_7_DAYS_START, LAST_7_DAYS_END, false, this.dayTick()));
-    readonly last30DaysSessions = computed(() => this.filterSessionsBetween(this.filteredNonNewSessions(), LAST_30_DAYS_START, LAST_30_DAYS_END, false, this.dayTick()));
-    readonly olderSessions = computed(() => this.filterSessionsBetween(this.filteredNonNewSessions(), OLDER_SESSIONS_START, undefined, true, this.dayTick()));
+
+    // Entity grouping: split sessions into grouped (by related entity) and ungrouped
+    readonly entityGroupedSessions = computed(() => this.filteredNonNewSessions().filter((s) => this.hasRelatedEntity(s)));
+    readonly ungroupedSessions = computed(() => this.filteredNonNewSessions().filter((s) => !this.hasRelatedEntity(s)));
+
+    readonly entityGroups = computed<EntityGroup[]>(() => {
+        const sessions = this.entityGroupedSessions();
+        const groupMap = new Map<string, EntityGroup>();
+
+        for (const session of sessions) {
+            const key = `${session.chatMode}-${session.entityId}`;
+            const activityDate = new Date(session.lastActivityDate ?? session.creationDate);
+
+            if (!groupMap.has(key)) {
+                groupMap.set(key, {
+                    entityId: session.entityId,
+                    entityName: session.entityName,
+                    chatMode: session.chatMode,
+                    sessions: [],
+                    mostRecentActivity: activityDate,
+                });
+            }
+
+            const group = groupMap.get(key)!;
+            group.sessions.push(session);
+            if (activityDate.getTime() > group.mostRecentActivity.getTime()) {
+                group.mostRecentActivity = activityDate;
+                group.entityName = session.entityName;
+            }
+        }
+
+        // Sort sessions within each group by last activity desc
+        for (const group of groupMap.values()) {
+            group.sessions.sort((a, b) => new Date(b.lastActivityDate ?? b.creationDate).getTime() - new Date(a.lastActivityDate ?? a.creationDate).getTime());
+        }
+
+        // Sort groups by most recent activity desc
+        return [...groupMap.values()].sort((a, b) => b.mostRecentActivity.getTime() - a.mostRecentActivity.getTime());
+    });
+
+    // "See more" state for entity groups — tracks a single revealed group from the See More menu
+    readonly seeMoreRevealedGroup = signal<EntityGroup | undefined>(undefined);
+    readonly seeMoreMenuOpen = signal(false);
+    readonly visibleEntityGroups = computed(() => {
+        const groups = this.entityGroups();
+        return groups.slice(0, MAX_VISIBLE_ENTITY_GROUPS);
+    });
+    readonly hasMoreEntityGroups = computed(() => {
+        const hiddenCount = this.entityGroups().length - MAX_VISIBLE_ENTITY_GROUPS;
+        if (hiddenCount <= 0) return false;
+        return this.seeMoreRevealedGroup() ? hiddenCount > 1 : true;
+    });
+
+    // Collapse state for entity groups
+    readonly groupCollapseState = signal<Record<string, boolean>>({});
+    readonly isSearchActive = computed(() => !!this.searchValue());
+    readonly areAllGroupsCollapsed = computed(() => {
+        const visible = this.visibleEntityGroups();
+        const revealed = this.seeMoreRevealedGroup();
+        const allVisible = revealed ? [...visible, revealed] : visible;
+        if (allVisible.length === 0) return false;
+        return allVisible.every((group) => !this.isGroupExpanded(this.getGroupKey(group)));
+    });
+
+    // Time buckets now use only ungrouped sessions: "Recent" (≤5 days) and "Older" (>5 days)
+    readonly recentSessions = computed(() => this.filterSessionsBetween(this.ungroupedSessions(), 0, RECENT_DAYS_CUTOFF, false, this.dayTick()));
+    readonly olderSessions = computed(() => this.filterSessionsBetween(this.ungroupedSessions(), RECENT_DAYS_CUTOFF + 1, undefined, true, this.dayTick()));
 
     // Daily tick signal for reactive date-based session buckets
     readonly dayTick = signal(new Date().toDateString());
@@ -234,9 +328,12 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     // ViewChilds
     readonly messagesElement = viewChild<ElementRef>('messagesElement');
-    readonly scrollArrow = viewChild<ElementRef>('scrollArrow');
     readonly messageTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('messageTextarea');
     readonly acceptButton = viewChild<ElementRef<HTMLButtonElement>>('acceptButton');
+    readonly seeMoreMenu = viewChild<Menu>('seeMoreMenu');
+
+    // "See more" popup menu items
+    seeMoreMenuItems: MenuItem[] = [];
 
     constructor() {
         // Initialize user acceptance state
@@ -253,6 +350,34 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         this.route.queryParams?.pipe(takeUntilDestroyed()).subscribe((params: any) => {
             if (params?.irisQuestion) {
                 this.newMessageTextContent.set(params.irisQuestion);
+            }
+        });
+
+        // Keep revealed "See more" group in sync with live group ordering.
+        // If it moves into the visible top section or disappears, clear the reveal slot.
+        effect(() => {
+            const revealed = this.seeMoreRevealedGroup();
+            if (!revealed) {
+                return;
+            }
+
+            const groups = this.entityGroups();
+            const revealedKey = this.getGroupKey(revealed);
+            const currentGroup = groups.find((group) => this.getGroupKey(group) === revealedKey);
+
+            if (!currentGroup) {
+                this.seeMoreRevealedGroup.set(undefined);
+                return;
+            }
+
+            const isStillHidden = groups.slice(MAX_VISIBLE_ENTITY_GROUPS).some((group) => this.getGroupKey(group) === revealedKey);
+            if (!isStillHidden) {
+                this.seeMoreRevealedGroup.set(undefined);
+                return;
+            }
+
+            if (currentGroup !== revealed) {
+                this.seeMoreRevealedGroup.set(currentGroup);
             }
         });
 
@@ -355,7 +480,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
      * Process messages for display (clone)
      */
     private processMessages(rawMessages: IrisMessage[]): IrisMessage[] {
-        return _.cloneDeep(rawMessages);
+        return cloneDeep(rawMessages);
     }
 
     ngAfterViewInit() {
@@ -602,47 +727,22 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         textarea.style.height = 'auto'; // Reset the height to auto
         if (!textarea.value.trim()) {
             textarea.style.height = '';
-            this.adjustScrollButtonPosition(1);
             return;
         }
-        const bufferForSpaceBetweenLines = 4;
-        const lineHeight = parseInt(getComputedStyle(textarea).lineHeight, 10) + bufferForSpaceBetweenLines;
-        const maxHeight = 200;
+        const maxHeight = 164;
         const newHeight = Math.min(textarea.scrollHeight, maxHeight);
         textarea.style.height = `${newHeight}px`;
-
-        this.adjustScrollButtonPosition(newHeight / lineHeight);
     }
 
     /**
-     * Adjusts the position of the scroll button based on the number of rows in the message textarea.
-     * @param newRows - The new number of rows.
-     */
-    adjustScrollButtonPosition(newRows: number) {
-        const textareaRef = this.messageTextarea();
-        const scrollArrowRef = this.scrollArrow();
-        if (!textareaRef || !scrollArrowRef) return;
-        const textarea: HTMLTextAreaElement = textareaRef.nativeElement;
-        const scrollArrow: HTMLElement = scrollArrowRef.nativeElement;
-        const lineHeight = parseInt(window.getComputedStyle(textarea).lineHeight);
-        const rowHeight = lineHeight * newRows - lineHeight;
-        setTimeout(() => {
-            scrollArrow.style.bottom = `calc(11% + ${rowHeight}px)`;
-        }, 10);
-    }
-
-    /**
-     * Resets the textarea height and scroll button position.
+     * Resets the textarea height.
      */
     resetChatBodyHeight() {
         const textareaRef = this.messageTextarea();
-        const scrollArrowRef = this.scrollArrow();
-        if (!textareaRef || !scrollArrowRef) return;
+        if (!textareaRef) return;
         const textarea: HTMLTextAreaElement = textareaRef.nativeElement;
-        const scrollArrow: HTMLElement = scrollArrowRef.nativeElement;
         textarea.rows = 1;
         textarea.style.height = '';
-        scrollArrow.style.bottom = '';
     }
 
     checkChatScroll() {
@@ -663,11 +763,19 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             this.openNewSession();
             return;
         }
+        // If a "See more" group is revealed, hide it when clicking a session outside that group
+        const revealed = this.seeMoreRevealedGroup();
+        if (revealed) {
+            const sessionKey = `${session.chatMode}-${session.entityId}`;
+            if (sessionKey !== this.getGroupKey(revealed)) {
+                this.seeMoreRevealedGroup.set(undefined);
+            }
+        }
         this.chatService.switchToSession(session);
     }
 
     onDeleteSession(session: IrisSessionDTO) {
-        const title = session.title || formatDate(session.creationDate, 'dd.MM.yy HH:mm', 'en');
+        const title = session.title || formatDate(session.creationDate, 'dd.MM.yy HH:mm', this.translateService.currentLang || 'en');
         this.confirmationService.confirm({
             header: this.translateService.instant('artemisApp.iris.chatHistory.deleteSessionHeader'),
             message: this.translateService.instant('artemisApp.iris.chatHistory.deleteSessionQuestion', { title }),
@@ -703,7 +811,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         if (!title) {
             return false;
         }
-        return IrisBaseChatbotComponent.NEW_CHAT_TITLES.has(title);
+        return NEW_CHAT_TITLES.has(title);
     }
 
     /**
@@ -734,14 +842,14 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         }
 
         const filtered = sessions.filter((session) => {
-            const sessionCreationDate = new Date(session.creationDate);
-            const isAfterOrOnStartDate = ignoreOlderBoundary || (rangeStartDate && sessionCreationDate.getTime() >= rangeStartDate.getTime());
-            const isBeforeOrOnEndDate = sessionCreationDate.getTime() <= rangeEndDate.getTime();
+            const activityDate = new Date(session.lastActivityDate ?? session.creationDate);
+            const isAfterOrOnStartDate = ignoreOlderBoundary || (rangeStartDate && activityDate.getTime() >= rangeStartDate.getTime());
+            const isBeforeOrOnEndDate = activityDate.getTime() <= rangeEndDate.getTime();
             return isBeforeOrOnEndDate && (ignoreOlderBoundary || isAfterOrOnStartDate);
         });
 
-        // Sort by creation date descending (most recent first)
-        return filtered.sort((a, b) => new Date(b.creationDate).getTime() - new Date(a.creationDate).getTime());
+        // Sort by last activity date descending (most recent first)
+        return filtered.sort((a, b) => new Date(b.lastActivityDate ?? b.creationDate).getTime() - new Date(a.lastActivityDate ?? a.creationDate).getTime());
     }
 
     openNewSession() {
@@ -776,6 +884,115 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
      */
     getSessionsBetween(daysAgoNewer: number, daysAgoOlder?: number, ignoreOlderBoundary = false): IrisSessionDTO[] {
         return this.filterSessionsBetween(this.filteredNonNewSessions(), daysAgoNewer, daysAgoOlder, ignoreOlderBoundary, this.dayTick());
+    }
+
+    private hasRelatedEntity(session: IrisSessionDTO): boolean {
+        return session.chatMode === ChatServiceMode.PROGRAMMING_EXERCISE || session.chatMode === ChatServiceMode.LECTURE;
+    }
+
+    toggleGroupCollapse(groupKey: string): void {
+        const currentlyExpanded = this.isGroupExpanded(groupKey);
+        this.groupCollapseState.update((state) => Object.assign({}, state, { [groupKey]: !currentlyExpanded }));
+    }
+
+    collapseAllGroups(): void {
+        const visible = this.visibleEntityGroups();
+        const revealed = this.seeMoreRevealedGroup();
+        const allVisible = revealed ? [...visible, revealed] : visible;
+        const newState: Record<string, boolean> = {};
+        for (const group of allVisible) {
+            newState[this.getGroupKey(group)] = false;
+        }
+        this.groupCollapseState.update((state) => Object.assign({}, state, ...Object.entries(newState).map(([k, v]) => ({ [k]: v }))));
+    }
+
+    isGroupExpanded(groupKey: string): boolean {
+        if (this.isSearchActive()) {
+            return true;
+        }
+        const explicit = this.groupCollapseState()[groupKey];
+        if (explicit !== undefined) {
+            return explicit;
+        }
+        return false;
+    }
+
+    getGroupKey(group: EntityGroup): string {
+        return `${group.chatMode}-${group.entityId}`;
+    }
+
+    getEntityGroupRoute(group: EntityGroup): string | undefined {
+        return this.computeRelatedEntityRoute(group.chatMode, group.entityId);
+    }
+
+    getEntityGroupIcon(chatMode: ChatServiceMode): IconProp | undefined {
+        return chatModeIcon(chatMode);
+    }
+
+    getEntityGroupTooltipKey(chatMode: ChatServiceMode): string | undefined {
+        return chatModeTooltipKey(chatMode);
+    }
+
+    openSeeMoreMenu(event: Event): void {
+        const allGroups = this.entityGroups();
+        const revealed = this.seeMoreRevealedGroup();
+        const revealedKey = revealed ? this.getGroupKey(revealed) : undefined;
+        const hiddenGroups = allGroups.slice(MAX_VISIBLE_ENTITY_GROUPS).filter((g) => this.getGroupKey(g) !== revealedKey);
+        this.seeMoreMenuItems = hiddenGroups.map((group) => ({
+            label: group.entityName,
+            data: { faIcon: this.getEntityGroupIcon(group.chatMode) },
+            command: () => this.onSeeMoreMenuItemClick(group),
+        }));
+        const menu = this.seeMoreMenu();
+        const menuOverlay = menu?.container as HTMLElement | undefined;
+        menuOverlay?.classList.remove('menu-positioned');
+        menu?.toggle(event);
+    }
+
+    onSeeMoreMenuHide(): void {
+        this.seeMoreMenuOpen.set(false);
+        const menuOverlay = this.seeMoreMenu()?.container as HTMLElement | undefined;
+        menuOverlay?.classList.remove('menu-positioned');
+    }
+
+    onSeeMoreMenuShow(): void {
+        this.seeMoreMenuOpen.set(true);
+
+        // PrimeNG first applies its default popup position; we immediately override it.
+        // The overlay stays hidden until this method adds the "menu-positioned" class.
+        const menu = this.seeMoreMenu();
+        const menuOverlay = menu?.container as HTMLElement | undefined;
+        const targetButton = menu?.target as HTMLElement | undefined;
+        if (!menuOverlay || !targetButton) {
+            return;
+        }
+
+        const buttonRect = targetButton.getBoundingClientRect();
+        const menuRect = menuOverlay.getBoundingClientRect();
+        const menuWidth = menuRect.width || menuOverlay.offsetWidth || 200;
+        const menuHeight = menuRect.height || menuOverlay.offsetHeight || 200;
+        const gap = 8;
+
+        let left = buttonRect.right + gap;
+        if (left + menuWidth > window.innerWidth - gap) {
+            left = Math.max(gap, buttonRect.left - menuWidth - gap);
+        }
+
+        let top = buttonRect.top;
+        if (top + menuHeight > window.innerHeight - gap) {
+            top = Math.max(gap, window.innerHeight - menuHeight - gap);
+        }
+
+        menuOverlay.style.position = 'fixed';
+        menuOverlay.style.left = `${Math.round(left)}px`;
+        menuOverlay.style.top = `${Math.round(top)}px`;
+        menuOverlay.classList.add('menu-positioned');
+    }
+
+    onSeeMoreMenuItemClick(group: EntityGroup): void {
+        this.seeMoreRevealedGroup.set(group);
+        const groupKey = this.getGroupKey(group);
+        this.groupCollapseState.update((state) => Object.assign({}, state, { [groupKey]: false }));
     }
 
     private computeRelatedEntityRoute(currentChatMode: ChatServiceMode | undefined, currentRelatedEntityId: number | undefined): string | undefined {

@@ -2,7 +2,7 @@
 <!-- main chat section -->
 <div class="chat-layout">
     @if (isChatHistoryAvailable()) {
-        <div class="chat-history" [ngClass]="{ 'chat-history-open': isChatHistoryOpen() }">
+        <div class="chat-history" [class.chat-history-open]="isChatHistoryOpen()">
             @if (!isChatHistoryOpen()) {
                 <div class="chat-history-collapsed">
                     <div
@@ -44,7 +44,7 @@
             @if (isChatHistoryOpen()) {
                 <div class="chat-history-container">
                     <div class="chat-history-top">
-                        <div class="px-2 mt-2 mb-3">
+                        <div class="mt-2 mb-2">
                             <jhi-search-filter class="w-100" (newSearchEvent)="setSearchValue($event)" />
                         </div>
 
@@ -56,75 +56,76 @@
                     </div>
 
                     <div class="chat-history-list">
-                        @if (todaySessions().length > 0) {
-                            <div class="chat-history-label">
-                                <p jhiTranslate="artemisApp.iris.chatHistory.today"></p>
+                        @if (entityGroups().length > 0) {
+                            <div class="chat-history-grouped">
+                                <div class="chat-history-label section-header">
+                                    <p jhiTranslate="artemisApp.iris.chatHistory.relatedContent"></p>
+                                    @if (!areAllGroupsCollapsed()) {
+                                        <button
+                                            type="button"
+                                            class="collapse-all-button"
+                                            (click)="collapseAllGroups()"
+                                            [attr.aria-label]="'artemisApp.iris.chatHistory.collapseAllGroups' | artemisTranslate"
+                                        >
+                                            <fa-icon [icon]="faLayerGroup" />
+                                        </button>
+                                    }
+                                </div>
+                                @for (group of visibleEntityGroups(); track getGroupKey(group)) {
+                                    @if (group.sessions.length > 0) {
+                                        <ng-container *ngTemplateOutlet="entityGroupTpl; context: { $implicit: group }" />
+                                    }
+                                }
+                                @if (seeMoreRevealedGroup(); as revealedGroup) {
+                                    <ng-container *ngTemplateOutlet="entityGroupTpl; context: { $implicit: revealedGroup }" />
+                                }
+                                @if (hasMoreEntityGroups()) {
+                                    <div class="see-more-wrapper">
+                                        <button class="see-more-button" [class.active]="seeMoreMenuOpen()" (click)="openSeeMoreMenu($event)">
+                                            <fa-icon [icon]="faEllipsis" />
+                                            <span jhiTranslate="artemisApp.iris.chatHistory.seeMore"></span>
+                                        </button>
+                                        <p-menu
+                                            #seeMoreMenu
+                                            [model]="seeMoreMenuItems"
+                                            [popup]="true"
+                                            appendTo="body"
+                                            styleClass="see-more-menu"
+                                            (onShow)="onSeeMoreMenuShow()"
+                                            (onHide)="onSeeMoreMenuHide()"
+                                        >
+                                            <ng-template #item let-item>
+                                                <a class="p-menu-item-link see-more-menu-item">
+                                                    <fa-icon [icon]="item.data?.faIcon" />
+                                                    <span class="p-menu-item-label ms-2">{{ item.label }}</span>
+                                                </a>
+                                            </ng-template>
+                                        </p-menu>
+                                    </div>
+                                }
                             </div>
-                            @for (session of todaySessions(); track session.id) {
-                                <jhi-chat-history-item
-                                    [session]="session"
-                                    [active]="session.id === currentSessionId()"
-                                    (sessionClicked)="onSessionClick(session)"
-                                    (deleteSession)="onDeleteSession($event)"
-                                />
-                            }
                         }
 
-                        @if (yesterdaySessions().length > 0) {
-                            <div class="chat-history-label">
-                                <p jhiTranslate="artemisApp.iris.chatHistory.yesterday"></p>
+                        <div class="chat-history-ungrouped">
+                            <div class="chat-history-label section-header">
+                                <p jhiTranslate="artemisApp.iris.chatHistory.generalChat"></p>
                             </div>
-                            @for (session of yesterdaySessions(); track session.id) {
-                                <jhi-chat-history-item
-                                    [session]="session"
-                                    [active]="session.id === currentSessionId()"
-                                    (sessionClicked)="onSessionClick(session)"
-                                    (deleteSession)="onDeleteSession($event)"
-                                />
+                            @for (bucket of sessionBuckets(); track bucket.labelKey) {
+                                @if (bucket.sessions.length > 0) {
+                                    <div class="chat-history-label">
+                                        <p [jhiTranslate]="bucket.labelKey"></p>
+                                    </div>
+                                    @for (session of bucket.sessions; track session.id) {
+                                        <jhi-chat-history-item
+                                            [session]="session"
+                                            [active]="session.id === currentSessionId()"
+                                            (sessionClicked)="onSessionClick(session)"
+                                            (deleteSession)="onDeleteSession($event)"
+                                        />
+                                    }
+                                }
                             }
-                        }
-
-                        @if (last7DaysSessions().length > 0) {
-                            <div class="chat-history-label">
-                                <p jhiTranslate="artemisApp.iris.chatHistory.last7Days"></p>
-                            </div>
-                            @for (session of last7DaysSessions(); track session.id) {
-                                <jhi-chat-history-item
-                                    [session]="session"
-                                    [active]="session.id === currentSessionId()"
-                                    (sessionClicked)="onSessionClick(session)"
-                                    (deleteSession)="onDeleteSession($event)"
-                                />
-                            }
-                        }
-
-                        @if (last30DaysSessions().length > 0) {
-                            <div class="chat-history-label">
-                                <p jhiTranslate="artemisApp.iris.chatHistory.last30Days"></p>
-                            </div>
-                            @for (session of last30DaysSessions(); track session.id) {
-                                <jhi-chat-history-item
-                                    [session]="session"
-                                    [active]="session.id === currentSessionId()"
-                                    (sessionClicked)="onSessionClick(session)"
-                                    (deleteSession)="onDeleteSession($event)"
-                                />
-                            }
-                        }
-
-                        @if (olderSessions().length > 0) {
-                            <div class="chat-history-label">
-                                <p jhiTranslate="artemisApp.iris.chatHistory.older"></p>
-                            </div>
-                            @for (session of olderSessions(); track session.id) {
-                                <jhi-chat-history-item
-                                    [session]="session"
-                                    [active]="session.id === currentSessionId()"
-                                    (sessionClicked)="onSessionClick(session)"
-                                    (deleteSession)="onDeleteSession($event)"
-                                />
-                            }
-                        }
+                        </div>
                     </div>
 
                     @if (!isChatGptWrapper()) {
@@ -166,7 +167,8 @@
                             <div class="toolbox">
                                 <span
                                     class="rate-limit"
-                                    [ngbTooltip]="'artemisApp.exerciseChatbot.rateLimitTooltip' | artemisTranslate: { hours: rateLimitInfo()?.rateLimitTimeframeHours }"
+                                    [pTooltip]="'artemisApp.exerciseChatbot.rateLimitTooltip' | artemisTranslate: { hours: rateLimitInfo()?.rateLimitTimeframeHours }"
+                                    tooltipPosition="bottom"
                                 >
                                     {{ rateLimitInfo()?.currentMessageCount }} / {{ rateLimit }}
                                 </span>
@@ -269,13 +271,7 @@
                                 }
                             </div>
                         }
-                        @if (
-                            suggestions()?.length &&
-                            isAIEnabled() &&
-                            active() &&
-                            (!rateLimitInfo()?.rateLimit || rateLimitInfo()?.currentMessageCount !== rateLimitInfo()?.rateLimit) &&
-                            !hasActiveStage()
-                        ) {
+                        @if (canShowSuggestions()) {
                             <div animate.enter="suggestion-entering" animate.leave="suggestion-leaving">
                                 <div class="suggestions-container">
                                     @for (suggestion of suggestions(); track $index) {
@@ -317,16 +313,6 @@
                     </div>
                 </div>
             }
-            <button
-                type="button"
-                class="scroll-to-bottom"
-                [hidden]="isScrolledToBottom()"
-                (click)="scrollToBottom('smooth')"
-                #scrollArrow
-                [attr.aria-label]="'artemisApp.exerciseChatbot.scrollToBottom' | artemisTranslate"
-            >
-                <fa-icon [icon]="faArrowDown" />
-            </button>
             @if (error()) {
                 <div class="client-chat-error">
                     {{ error() | artemisTranslate: { hours: rateLimitInfo()?.rateLimitTimeframeHours } }}
@@ -349,12 +335,7 @@
                                 class="form-control"
                                 (input)="onInput()"
                                 (paste)="onPaste()"
-                                [disabled]="
-                                    isLoading() ||
-                                    !active() ||
-                                    (rateLimitInfo()?.rateLimit && rateLimitInfo()?.currentMessageCount === rateLimitInfo()?.rateLimit) ||
-                                    hasActiveStage()
-                                "
+                                [disabled]="isInputDisabled()"
                                 (keydown)="handleKey($event)"
                                 placeholder="{{ 'artemisApp.exerciseChatbot.inputMessage' | artemisTranslate }}"
                                 #messageTextarea
@@ -366,14 +347,17 @@
                                 (onClick)="onSend()"
                                 [btnType]="ButtonType.SUCCESS_OUTLINE"
                                 [icon]="faPaperPlane"
-                                [disabled]="
-                                    !newMessageTextContent().trim() ||
-                                    isLoading() ||
-                                    !active() ||
-                                    (rateLimitInfo()?.rateLimit && rateLimitInfo()?.currentMessageCount === rateLimitInfo()?.rateLimit) ||
-                                    hasActiveStage()
-                                "
+                                [disabled]="isSendDisabled()"
                             />
+                            <button
+                                type="button"
+                                class="scroll-to-bottom"
+                                [hidden]="isScrolledToBottom()"
+                                (click)="scrollToBottom('smooth')"
+                                [attr.aria-label]="'artemisApp.exerciseChatbot.scrollToBottom' | artemisTranslate"
+                            >
+                                <fa-icon [icon]="faArrowDown" />
+                            </button>
                         </div>
                     </div>
                     @if (!isChatGptWrapper()) {
@@ -386,3 +370,27 @@
         </div>
     </div>
 </div>
+
+<ng-template #entityGroupTpl let-group>
+    <jhi-entity-group-header
+        [entityName]="group.entityName"
+        [icon]="getEntityGroupIcon(group.chatMode)!"
+        [tooltipKey]="getEntityGroupTooltipKey(group.chatMode)!"
+        [entityRoute]="getEntityGroupRoute(group)!"
+        [expanded]="isGroupExpanded(getGroupKey(group))"
+        (toggleExpanded)="toggleGroupCollapse(getGroupKey(group))"
+    />
+    @if (isGroupExpanded(getGroupKey(group))) {
+        <div class="chat-history-label grouped-label">
+            <p jhiTranslate="artemisApp.iris.chatHistory.recent"></p>
+        </div>
+        @for (session of group.sessions; track session.id) {
+            <jhi-chat-history-item
+                [session]="session"
+                [active]="session.id === currentSessionId()"
+                (sessionClicked)="onSessionClick(session)"
+                (deleteSession)="onDeleteSession($event)"
+            />
+        }
+    }
+</ng-template>
