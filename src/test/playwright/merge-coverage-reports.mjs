@@ -85,14 +85,8 @@ lcovReport.execute(context);
 
 console.log(`Merged coverage reports successfully`);
 
-// Clean up directories only if they exist
-if (fs.existsSync(coverageParallelDir)) {
-    await fsAsync.rm(coverageParallelDir, { recursive: true, force: true });
-}
-
-if (fs.existsSync(coverageSequentialDir)) {
-    await fsAsync.rm(coverageSequentialDir, { recursive: true, force: true });
-}
+// Keep monocart directories for upload to the E2E reports dashboard.
+// They are cleaned up by the e2e-setup action on the next run.
 
 // Bamboo can upload only files as an artifact, not directories
 // That's why we archive the lcov coverage directory on CI to prepare it as an artifact
