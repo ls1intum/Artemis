@@ -295,10 +295,10 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
             await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, studentOne, javaAllSuccessfulSubmission, 'student commit');
             // now instructor commits to the student participation
             await login(instructor);
-            // Wait for both student participation builds (template clone + student submission)
-            // to complete before the instructor submits. Using minResults=2 ensures we wait
-            // for the total result count to reach 2, regardless of how many already finished.
-            await waitForExerciseBuildToFinish(exercise.id!, undefined, BUILD_RESULT_TIMEOUT, 2);
+            // Wait for the student's build to complete before the instructor submits.
+            // The template clone and git push may be merged into a single build by the server,
+            // so we only wait for 1 result to ensure the build queue has drained.
+            await waitForExerciseBuildToFinish(exercise.id!, undefined, BUILD_RESULT_TIMEOUT);
             await navigationBar.openCourseManagement();
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.openExerciseParticipations(exercise.id!);
