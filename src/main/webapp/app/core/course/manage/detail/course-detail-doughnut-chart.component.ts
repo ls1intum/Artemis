@@ -156,6 +156,10 @@ export class CourseDetailDoughnutChartComponent {
      * returns string representing custom tooltip content
      */
     valueFormatting(data: any): string {
-        return this.currentMax() === 0 ? '0' : data.value;
+        const showText = this.showText();
+        if (showText) {
+            return showText;
+        }
+        return this.currentMax() === 0 ? '0' : String(data.value);
     }
 }
