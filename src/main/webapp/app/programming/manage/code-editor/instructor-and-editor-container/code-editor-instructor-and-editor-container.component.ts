@@ -1,5 +1,7 @@
-import { Component, TemplateRef, ViewChild, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, Injector, OnDestroy, TemplateRef, ViewChild, computed, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
+import { A11yModule } from '@angular/cdk/a11y';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
@@ -11,12 +13,16 @@ import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/ex
 import {
     faArrowLeft,
     faArrowRight,
+    faBan,
     faCheckDouble,
     faCircleExclamation,
     faCircleInfo,
     faCircleNotch,
+    faPaperPlane,
     faPlus,
+    faSave,
     faSpinner,
+    faTableColumns,
     faTimes,
     faTimesCircle,
     faTriangleExclamation,
@@ -25,18 +31,18 @@ import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from '../../status/programming-exercise-instructor-exercise-status.component';
-import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CodeGenerationRequestDTO } from 'app/openapi/model/codeGenerationRequestDTO';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { HyperionWebsocketService } from 'app/hyperion/services/hyperion-websocket.service';
 import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { Observable, Subscription, catchError, of, take, tap } from 'rxjs';
+import { ProblemStatementAiOperationsHelper } from 'app/programming/manage/shared/problem-statement-ai-operations.helper';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
@@ -49,6 +55,17 @@ import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-revie
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 
 import { getRepoPath } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
+import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
+import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
+import { LineChange } from 'app/programming/shared/utils/diff.utils';
+import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
+import { InlineRefinementEvent, MAX_USER_PROMPT_LENGTH } from 'app/programming/manage/shared/problem-statement.utils';
+import { TooltipModule } from 'primeng/tooltip';
+import { TextareaModule } from 'primeng/textarea';
+import { BadgeModule } from 'primeng/badge';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
+import { Popover, PopoverModule } from 'primeng/popover';
 
 const SEVERITY_ORDER = {
     HIGH: 0,
@@ -72,28 +89,65 @@ const SEVERITY_ORDER = {
         NgbDropdown,
         NgbDropdownToggle,
         NgbDropdownMenu,
-        NgbDropdownButtonItem,
         NgbDropdownItem,
         NgbTooltip,
         UpdatingResultComponent,
         ProgrammingExerciseStudentTriggerBuildButtonComponent,
         ProgrammingExerciseEditableInstructionComponent,
         ProgrammingExerciseInstructionComponent,
+        FormsModule,
+        A11yModule,
+        GitDiffLineStatComponent,
+        TooltipModule,
+        TextareaModule,
+        BadgeModule,
+        ButtonModule,
+        MessageModule,
+        PopoverModule,
     ],
 })
-export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent {
+export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent implements OnDestroy {
     @ViewChild('codeGenerationRunningModal', { static: true }) codeGenerationRunningModal: TemplateRef<unknown>;
-    @ViewChild(UpdatingResultComponent, { static: false }) resultComp: UpdatingResultComponent;
-    @ViewChild(ProgrammingExerciseEditableInstructionComponent, { static: false }) editableInstructions: ProgrammingExerciseEditableInstructionComponent;
+    readonly resultComp = viewChild(UpdatingResultComponent);
+    readonly editableInstructions = viewChild(ProgrammingExerciseEditableInstructionComponent);
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
+    protected readonly MAX_USER_PROMPT_LENGTH = MAX_USER_PROMPT_LENGTH;
     readonly MarkdownEditorHeight = MarkdownEditorHeight;
     readonly consistencyIssues = signal<ConsistencyIssue[]>([]);
     readonly sortedIssues = computed(() => [...this.consistencyIssues()].sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]));
 
+    /** Shared helper that encapsulates all AI-powered problem statement operations. */
+    readonly aiOps = new ProblemStatementAiOperationsHelper(
+        inject(ProblemStatementService),
+        inject(AlertService),
+        inject(ArtemisIntelligenceService),
+        inject(ProfileService),
+        inject(DestroyRef),
+        inject(Injector),
+    );
+
+    // Delegate signals for template binding compatibility
+    protected readonly allowSplitView = this.aiOps.allowSplitView;
+    protected readonly addedLineCount = this.aiOps.addedLineCount;
+    protected readonly removedLineCount = this.aiOps.removedLineCount;
+    protected readonly isGeneratingOrRefining = this.aiOps.isGeneratingOrRefining;
+    protected readonly isAiApplying = this.aiOps.isAiApplying;
+    readonly showDiff = this.aiOps.showDiff;
+    readonly hyperionEnabled = this.aiOps.hyperionEnabled;
+    protected readonly isPromptNearLimit = this.aiOps.isPromptNearLimit;
+    readonly shouldShowGenerateButton = this.aiOps.shouldShowGenerateButton;
+
+    readonly faTableColumns = faTableColumns;
+    readonly ButtonSize = ButtonSize;
+
+    readonly refinementPopover = viewChild<Popover>('refinementPopover');
+    /** Prompt bound to the refinement popover textarea — aliased to aiOps.userPrompt. */
+    readonly refinementPrompt = this.aiOps.userPrompt;
+    protected readonly faPaperPlane = faPaperPlane;
+
     private consistencyCheckService = inject(ConsistencyCheckService);
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
-    private profileService = inject(ProfileService);
     private exerciseReviewCommentService = inject(ExerciseReviewCommentService);
 
     lineJumpOnFileLoad: number | undefined = undefined;
@@ -106,6 +160,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     protected readonly faTimes = faTimes;
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faTimesCircle = faTimesCircle;
+    protected readonly faSave = faSave;
+    protected readonly faBan = faBan;
     protected readonly faArrowLeft = faArrowLeft;
     protected readonly faArrowRight = faArrowRight;
     protected readonly faCircleExclamation = faCircleExclamation;
@@ -114,8 +170,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     protected readonly faSpinner = faSpinner;
     protected readonly facArtemisIntelligence = facArtemisIntelligence;
-
-    hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
 
     protected readonly RepositoryType = RepositoryType;
     protected readonly FeatureToggle = FeatureToggle;
@@ -132,6 +186,18 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private statusSubscription?: Subscription;
     private restoreRequestId = 0;
 
+    constructor() {
+        super();
+        this.aiOps.setChangeHandler({
+            onContentChanged: (content, exercise) => {
+                if (this.exercise?.id && exercise?.id && this.exercise.id !== exercise.id) {
+                    return; // Ignore stale async results from a different exercise
+                }
+                this.onInstructionChanged(content);
+            },
+        });
+    }
+
     override loadExercise(exerciseId: number): Observable<ProgrammingExercise> {
         return super.loadExercise(exerciseId).pipe(
             tap((exercise) => {
@@ -139,6 +205,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     this.exerciseReviewCommentService.setExercise(exercise.id);
                     this.exerciseReviewCommentService.reloadThreads();
                 }
+                this.aiOps.loadTemplate(exercise);
+                this.aiOps.currentProblemStatement.set(exercise.problemStatement ?? '');
             }),
         );
     }
@@ -155,7 +223,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * Clears problem-statement draft widgets and reloads review comment threads after saving.
      */
     onProblemStatementSaved(): void {
-        this.editableInstructions?.clearReviewCommentDrafts();
+        this.editableInstructions()?.clearReviewCommentDrafts();
         this.exerciseReviewCommentService.reloadThreads();
     }
 
@@ -234,6 +302,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     override ngOnDestroy() {
         this.clearJobSubscription(true);
         this.statusSubscription?.unsubscribe();
+        this.aiOps.destroy();
         super.ngOnDestroy();
     }
 
@@ -463,6 +532,55 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     /**
+     * Reverts all changes made during the refinement session and restores the original/snapshot state.
+     * Syncs the reverted content back to the model.
+     */
+    revertAllRefinement(): void {
+        this.aiOps.revertAllChanges(this.exercise, this.editableInstructions());
+    }
+
+    /**
+     * Closes the diff view after syncing the current editor content to the model.
+     */
+    closeDiff(): void {
+        this.aiOps.closeDiffView(this.exercise, this.editableInstructions());
+    }
+
+    /**
+     * Cancels the ongoing problem statement generation or refinement.
+     * Resets all in-progress states.
+     */
+    cancelAiOperation(): void {
+        this.aiOps.cancelAiOperation();
+    }
+
+    /**
+     * Toggles the refinement prompt popover visibility.
+     */
+    toggleRefinementPopover(event: Event, target?: HTMLElement): void {
+        this.refinementPopover()?.toggle(event, target);
+    }
+
+    /**
+     * Submits the full problem statement refinement.
+     * Hides the popover, then delegates to the shared AI operations helper.
+     */
+    submitRefinement(): void {
+        const prompt = this.refinementPrompt().trim();
+        if (!prompt || !this.exercise) return;
+
+        this.refinementPopover()?.hide();
+        this.aiOps.handleProblemStatementAction(this.exercise, this.editableInstructions());
+    }
+
+    /**
+     * Handles inline refinement request from editor selection.
+     */
+    onInlineRefinement(event: InlineRefinementEvent): void {
+        this.aiOps.onInlineRefinement(this.exercise, this.editableInstructions(), event);
+    }
+
+    /**
      * Returns a Bootstrap text color class based on an issue's severity.
      *
      * @param {ConsistencyIssue.SeverityEnum} severity
@@ -590,7 +708,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         if (location.targetType === CommentThreadLocationType.PROBLEM_STATEMENT) {
             this.codeEditorContainer.selectedFile = this.codeEditorContainer.problemStatementIdentifier;
             if (location.lineNumber !== undefined) {
-                this.editableInstructions.jumpToLine(location.lineNumber);
+                this.editableInstructions()?.jumpToLine(location.lineNumber);
             }
             return;
         }
@@ -680,5 +798,14 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             this.lineJumpOnFileLoad = undefined;
             this.fileToJumpOn = undefined;
         }
+    }
+
+    onDiffLineChange(event: { ready: boolean; lineChange: LineChange }): void {
+        this.aiOps.onDiffLineChange(event);
+    }
+
+    override onInstructionChanged(markdown: string) {
+        super.onInstructionChanged(markdown);
+        this.aiOps.currentProblemStatement.set(markdown);
     }
 }

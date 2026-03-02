@@ -491,4 +491,74 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(renderedHtml).toContain('<ul>');
         expect(renderedHtml).toContain('<blockquote>');
     });
+
+    it('should emit closeEditor on close button click', () => {
+        fixture.detectChanges();
+        const emitSpy = jest.spyOn(comp.closeEditor, 'emit');
+
+        comp.onCloseButtonClick();
+
+        expect(emitSpy).toHaveBeenCalled();
+    });
+
+    it('should dispose selection change listener on destroy', () => {
+        fixture.detectChanges();
+
+        // Mock the disposable
+        const mockDisposable = { dispose: jest.fn() };
+        (comp as any).selectionChangeDisposable = mockDisposable;
+
+        comp.ngOnDestroy();
+
+        expect(mockDisposable.dispose).toHaveBeenCalled();
+    });
+
+    it('should return selection from getSelection', () => {
+        fixture.detectChanges();
+
+        const mockSelection = {
+            startLineNumber: 1,
+            endLineNumber: 3,
+            startColumn: 1,
+            endColumn: 10,
+        };
+
+        jest.spyOn(comp.monacoEditor, 'getSelection').mockReturnValue(mockSelection as any);
+
+        const result = comp.getSelection();
+
+        expect(result).toEqual({
+            startLine: 1,
+            endLine: 3,
+            startColumn: 1,
+            endColumn: 10,
+        });
+    });
+
+    it('should return undefined from getSelection when no selection', () => {
+        fixture.detectChanges();
+
+        jest.spyOn(comp.monacoEditor, 'getSelection').mockReturnValue(undefined);
+
+        const result = comp.getSelection();
+
+        expect(result).toBeUndefined();
+    });
+
+    it('should return undefined from getSelection when monacoEditor is undefined', () => {
+        fixture.detectChanges();
+
+        (comp as any).monacoEditor = undefined;
+
+        const result = comp.getSelection();
+
+        expect(result).toBeUndefined();
+    });
+
+    it('should have consistencyIssues input', () => {
+        fixture.detectChanges();
+
+        // Verify the consistencyIssues input is defined
+        expect(comp.consistencyIssues).toBeDefined();
+    });
 });

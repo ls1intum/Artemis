@@ -47,6 +47,7 @@ import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
+import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService;
@@ -192,6 +193,9 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     protected IrisCourseChatSessionService irisCourseChatSessionService;
 
     @MockitoSpyBean
+    protected IrisCitationService irisCitationService;
+
+    @MockitoSpyBean
     protected CompetencyJolService competencyJolService;
 
     @MockitoSpyBean
@@ -261,7 +265,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @Override
     protected void resetSpyBeans() {
         Mockito.reset(gitServiceSpy, continuousIntegrationService, localCITriggerService, buildAgentConfiguration, resourceLoaderService, programmingMessagingService,
-                competencyProgressService, competencyProgressApi);
+                competencyProgressService, competencyProgressApi, irisCitationService);
         super.resetSpyBeans();
     }
 
