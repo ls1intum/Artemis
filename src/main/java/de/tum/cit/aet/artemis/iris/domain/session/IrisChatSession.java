@@ -17,8 +17,6 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 public class IrisChatSession extends IrisSession {
 
     // TODO: JsonIgnore entfernen ?
-    private long userId;
-
     @JsonIgnore
     private long courseId;
 
@@ -34,28 +32,20 @@ public class IrisChatSession extends IrisSession {
     }
 
     public IrisChatSession(Course course, User user) {
-        this.userId = user.getId();
+        setUserId(user.getId());
         this.courseId = course.getId();
     }
 
     public IrisChatSession(Exercise exercise, User user) {
-        this.userId = user.getId();
+        setUserId(user.getId());
         this.exerciseId = exercise.getId();
         this.courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
     }
 
     public IrisChatSession(Lecture lecture, User user) {
-        this.userId = user.getId();
+        setUserId(user.getId());
         this.lectureId = lecture.getId();
         this.courseId = lecture.getCourse().getId();
-    }
-
-    public long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(long userId) {
-        this.userId = userId;
     }
 
     public long getCourseId() {
@@ -87,6 +77,7 @@ public class IrisChatSession extends IrisSession {
         return true;
     }
 
+    @Override
     public IrisChatMode getMode() {
         return IrisChatMode.CHAT;
     }

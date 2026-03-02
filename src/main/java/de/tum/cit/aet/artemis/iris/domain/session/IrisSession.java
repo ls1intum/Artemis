@@ -48,6 +48,8 @@ import de.tum.cit.aet.artemis.iris.dto.IrisCitationMetaDTO;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class IrisSession extends DomainObject {
 
+    private long userId;
+
     @OrderColumn(name = "iris_message_order")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @OneToMany(mappedBy = "session", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
@@ -120,6 +122,16 @@ public abstract class IrisSession extends DomainObject {
         this.citationInfo = citationInfo;
     }
 
+    public long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(long userId) {
+        this.userId = userId;
+    }
+
     public abstract boolean shouldSelectLLMUsage();
+
+    public abstract IrisChatMode getMode();
 
 }
