@@ -27,6 +27,8 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.treewalk.TreeWalk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -392,7 +394,7 @@ public final class RepositoryExportTestUtil {
         repo.workingCopyGitRepo.push().setRemote("origin").call();
 
         // Wait for the bare repository to be fully ready for cloning operations
-        waitForBareRepositoryReady(repo);
+        waitForBareRepositoryReady(repo, commit.getId());
 
         return commit;
     }
@@ -406,19 +408,53 @@ public final class RepositoryExportTestUtil {
      * @param repo the local repository whose bare repo should be verified
      */
     public static void waitForBareRepositoryReady(LocalRepository repo) {
+        waitForBareRepositoryReady(repo, null);
+    }
+
+    /**
+     * Waits for a bare repository to be fully ready and a specific commit to be readable.
+     * Uses {@link FileRepositoryBuilder} (the same mechanism as the server's {@code getBareRepository})
+     * to ensure that the commit is visible through the same JGit code path the production code uses.
+     *
+     * @param repo     the local repository whose bare repo should be verified
+     * @param commitId optional commit ID to verify; if null, only HEAD is checked
+     */
+    public static void waitForBareRepositoryReady(LocalRepository repo, ObjectId commitId) {
         Awaitility.await().atMost(10, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
             try {
-                // Try to open the bare repository and resolve HEAD
-                // This verifies the repo is accessible and has a valid HEAD reference
-                try (Git git = Git.open(repo.remoteBareGitRepoFile)) {
-                    var headRef = git.getRepository().resolve("HEAD");
-                    if (headRef == null) {
+                // Use FileRepositoryBuilder (same as server's getBareRepository) to avoid
+                // JGit RepositoryCache masking filesystem visibility issues
+                FileRepositoryBuilder builder = new FileRepositoryBuilder();
+                builder.setBare();
+                builder.setGitDir(repo.remoteBareGitRepoFile);
+                builder.setMustExist(true);
+                builder.readEnvironment();
+                builder.findGitDir();
+                builder.setup();
+                try (var jgitRepo = builder.build()) {
+                    // Verify the specific commit if provided, otherwise fall back to HEAD
+                    ObjectId objectToCheck = commitId;
+                    if (objectToCheck == null) {
+                        objectToCheck = jgitRepo.resolve("HEAD");
+                    }
+                    if (objectToCheck == null) {
                         log.debug("Bare repository HEAD is null, waiting...");
                         return false;
                     }
-                    // Verify we can read the commit object
-                    try (RevWalk revWalk = new RevWalk(git.getRepository())) {
-                        revWalk.parseCommit(headRef);
+                    // Verify the full commit tree including all blob objects.
+                    // This ensures all pack objects (trees + blobs) are flushed to disk,
+                    // matching what the server does in RepositoryService.getFileContentFromBareRepositoryForCommitId.
+                    try (RevWalk revWalk = new RevWalk(jgitRepo)) {
+                        var commit = revWalk.parseCommit(objectToCheck);
+                        try (TreeWalk treeWalk = new TreeWalk(jgitRepo)) {
+                            treeWalk.addTree(commit.getTree());
+                            treeWalk.setRecursive(true);
+                            while (treeWalk.next()) {
+                                // Read each blob to verify the object is accessible on disk
+                                var objectId = treeWalk.getObjectId(0);
+                                jgitRepo.open(objectId).openStream().close();
+                            }
+                        }
                     }
                     return true;
                 }
