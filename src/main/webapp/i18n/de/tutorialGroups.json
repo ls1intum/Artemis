@@ -440,14 +440,15 @@
                     "notAttended": "Abwesend"
                 },
                 "createOneToOneChatError": "Fehler beim Erstellen des Tutor-Chats. Bitte versuchen Sie es erneut.",
-                "managementActionErrorAlert": {
+                "networkError": {
                     "sessionDeletion": "Fehler beim Löschen der Session. Bitte versuchen Sie es erneut.",
                     "groupDeletion": "Fehler beim Löschen der Gruppe. Bitte versuchen Sie es erneut.",
                     "groupCreation": "Beim Erstellen der Gruppe ist etwas schief gegangen. Bitte versuche es erneut.",
                     "sessionCancellation": "Beim Absagen der Session ist etwas schief gegangen. Bitte versuche es erneut.",
                     "sessionActivation": "Beim Rückgängigmachen der Absage ist etwas schief gegangen. Bitte versuche es erneut.",
                     "sessionUpdate": "Beim Bearbeiten der Session ist etwas schief gegangen. Bitte versuche es erneut.",
-                    "sessionCreation": "Beim Erstellen der Session ist etwas schief gegangen. Bitte versuche es erneut."
+                    "sessionCreation": "Beim Erstellen der Session ist etwas schief gegangen. Bitte versuche es erneut.",
+                    "fetchCourse": "Beim Laden des Kurses der Tutoriumsgruppe ist etwas schief gegangen. Bitte versiche es erneut, indem du die Seite neu lädst."
                 },
                 "createOrEditSessionModal": {
                     "header": {

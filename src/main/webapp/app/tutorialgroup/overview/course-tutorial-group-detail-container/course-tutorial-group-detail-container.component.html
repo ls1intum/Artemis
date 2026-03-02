@@ -5,8 +5,6 @@
         <div class="p-3 scrollable-content">
             <jhi-course-tutorial-group-detail [course]="courseToPass" [tutorialGroup]="tutorialGroupToPass" />
         </div>
-    } @else {
-        something is not available
     }
     @if (isLoading()) {
         <jhi-loading-indicator-overlay />

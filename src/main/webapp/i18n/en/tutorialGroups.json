@@ -393,14 +393,15 @@
                     "notAttended": "Not Attended"
                 },
                 "createOneToOneChatError": "Error while creating tutor chat. Please try again.",
-                "managementActionErrorAlert": {
+                "networkError": {
                     "sessionDeletion": "Error while deleting session. Please try again.",
                     "groupDeletion": "Error while deleting group. Please try again.",
                     "groupCreation": "Something went wrong while creating the tutorial group. Please try again.",
                     "sessionCancellation": "Something went wrong while cancelling the session. Please try again.",
                     "sessionActivation": "Something went wrong while undoing the cancellation. Please try again.",
                     "sessionUpdate": "Something went wrong while updating the session. Please try again.",
-                    "sessionCreation": "Something went wrong while creating the session. Please try again."
+                    "sessionCreation": "Something went wrong while creating the session. Please try again.",
+                    "fetchCourse": "Something went wrong while loading the course for the tutorial group. Please try again by refreshing the page."
                 },
                 "createOrEditSessionModal": {
                     "header": {

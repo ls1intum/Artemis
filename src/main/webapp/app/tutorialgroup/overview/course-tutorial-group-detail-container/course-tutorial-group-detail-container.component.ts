@@ -41,7 +41,7 @@ export class CourseTutorialGroupDetailContainerComponent {
                         this.isCourseLoading.set(false);
                     },
                     error: () => {
-                        this.alertService.addErrorAlert('Something went wrong while fetching the course information for the tutorial group. Please refresh the page to try again.'); // TODO: create string key
+                        this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupDetail.networkError.groupDeletion');
                         this.isCourseLoading.set(false);
                     },
                 });
