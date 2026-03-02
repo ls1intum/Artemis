@@ -136,6 +136,7 @@
                     [isGeneratingOrRefining]="isGeneratingOrRefining()"
                     [mode]="showDiff() ? 'diff' : 'normal'"
                     (hasUnsavedChanges)="programmingExerciseCreationConfig().hasUnsavedChanges = $event"
+                    (instructionChange)="onInstructionChange($event)"
                     (onInlineRefinement)="onInlineRefinement($event)"
                     [renderSideBySide]="allowSplitView()"
                     (diffLineChange)="onDiffLineChange($event)"
