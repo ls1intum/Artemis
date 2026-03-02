@@ -28,7 +28,9 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.OrganizationCountDTO;
+import de.tum.cit.aet.artemis.core.dto.OrganizationCourseDTO;
 import de.tum.cit.aet.artemis.core.dto.OrganizationDTO;
+import de.tum.cit.aet.artemis.core.dto.OrganizationMemberDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
@@ -207,6 +209,36 @@ public class AdminOrganizationResource {
     }
 
     /**
+     * GET organizations/:organizationId/users : Get a paginated list of users belonging to an organization
+     *
+     * @param organizationId the id of the organization
+     * @param search         the search criteria containing the search term and pagination/sorting info
+     * @return ResponseEntity containing a page of member DTOs with status 200 (OK)
+     */
+    @GetMapping("organizations/{organizationId}/users")
+    public ResponseEntity<List<OrganizationMemberDTO>> getOrganizationUsers(@PathVariable long organizationId, SearchTermPageableSearchDTO<String> search) {
+        log.debug("REST request to get users of organization : {}", organizationId);
+        Page<OrganizationMemberDTO> page = organizationRepository.getUsersByOrganizationId(organizationId, search);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+    }
+
+    /**
+     * GET organizations/:organizationId/courses : Get a paginated list of courses belonging to an organization
+     *
+     * @param organizationId the id of the organization
+     * @param search         the search criteria containing the search term and pagination/sorting info
+     * @return ResponseEntity containing a page of course DTOs with status 200 (OK)
+     */
+    @GetMapping("organizations/{organizationId}/courses")
+    public ResponseEntity<List<OrganizationCourseDTO>> getOrganizationCourses(@PathVariable long organizationId, SearchTermPageableSearchDTO<String> search) {
+        log.debug("REST request to get courses of organization : {}", organizationId);
+        Page<OrganizationCourseDTO> page = organizationRepository.getCoursesByOrganizationId(organizationId, search);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+    }
+
+    /**
      * GET organizations/:organizationId/count : Get the number of users and courses
      * currently mapped to an organization
      *
@@ -234,20 +266,6 @@ public class AdminOrganizationResource {
     public ResponseEntity<Organization> getOrganizationById(@PathVariable long organizationId) {
         log.debug("REST request to get organization : {}", organizationId);
         Organization organization = organizationRepository.findByIdElseThrow(organizationId);
-        return new ResponseEntity<>(organization, HttpStatus.OK);
-    }
-
-    /**
-     * GET organizations/:organizationId/full : Get an organization by its id with eagerly loaded users and courses
-     *
-     * @param organizationId the id of the organization to get
-     * @return ResponseEntity containing the organization with eagerly loaded users and courses, with status 200 (OK)
-     *         if exists, else with status 404 (Not Found)
-     */
-    @GetMapping("organizations/{organizationId}/full")
-    public ResponseEntity<Organization> getOrganizationByIdWithUsersAndCourses(@PathVariable long organizationId) {
-        log.debug("REST request to get organization with users and courses : {}", organizationId);
-        Organization organization = organizationRepository.findByIdWithEagerUsersAndCoursesElseThrow(organizationId);
         return new ResponseEntity<>(organization, HttpStatus.OK);
     }
 
