@@ -292,6 +292,15 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         this.calculateFormSectionStatus();
     }
 
+    onMarkdownEditorKeydown(event: KeyboardEvent): void {
+        const isSpaceKey = event.code === 'Space';
+        const isCopyPaste = (event.ctrlKey || event.metaKey) && (event.code === 'KeyC' || event.code === 'KeyV');
+
+        if (isSpaceKey || isCopyPaste) {
+            event.stopPropagation();
+        }
+    }
+
     handleEnterKeyNavigation(event: Event): void {
         event.preventDefault();
         event.stopPropagation();

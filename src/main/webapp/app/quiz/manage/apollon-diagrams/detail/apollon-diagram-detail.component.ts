@@ -151,7 +151,6 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         this.apollonEditor = new ApollonEditor(this.editorContainer().nativeElement, {
             mode: ApollonMode.Modelling,
             model: initialModel,
-            scrollLock: true,
             type: this.apollonDiagram()!.diagramType,
             locale: this.translateService.getCurrentLang() as Locale,
         });
