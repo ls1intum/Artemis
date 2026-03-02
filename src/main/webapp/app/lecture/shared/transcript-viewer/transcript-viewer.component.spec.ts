@@ -18,8 +18,8 @@ describe('TranscriptViewerComponent', () => {
     ];
 
     beforeEach(async () => {
-        // Mock scrollIntoView for tests
-        Element.prototype.scrollIntoView = vi.fn();
+        // Mock scrollTo for the test environment (jsdom does not define it)
+        Element.prototype.scrollTo = vi.fn();
 
         await TestBed.configureTestingModule({
             imports: [TranscriptViewerComponent, TranslateModule.forRoot()],
@@ -100,5 +100,29 @@ describe('TranscriptViewerComponent', () => {
 
         expect(component.isCurrentSearchResult(filtered[0])).toBe(true);
         expect(component.isCurrentSearchResult(mockSegments[0])).toBe(false);
+    });
+
+    it('should scroll within the transcript list container, not the page', () => {
+        fixture.detectChanges();
+
+        const transcriptList = fixture.nativeElement.querySelector('.transcript-list');
+        const scrollToSpy = vi.spyOn(transcriptList, 'scrollTo');
+
+        component.scrollToSegment(1);
+
+        expect(scrollToSpy).toHaveBeenCalledWith(expect.objectContaining({ behavior: 'smooth' }));
+    });
+
+    it('should not scroll when segment index is out of bounds', () => {
+        fixture.detectChanges();
+
+        const transcriptList = fixture.nativeElement.querySelector('.transcript-list');
+        const scrollToSpy = vi.spyOn(transcriptList, 'scrollTo');
+
+        component.scrollToSegment(-1);
+        expect(scrollToSpy).not.toHaveBeenCalled();
+
+        component.scrollToSegment(999);
+        expect(scrollToSpy).not.toHaveBeenCalled();
     });
 });
