@@ -185,11 +185,11 @@ export class TutorialGroupDetailComponent {
                     if (chatId) {
                         this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: chatId } });
                     } else {
-                        this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupDetail.createOneToOneChatError');
+                        this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupDetail.networkError.createOneToOneChat');
                     }
                 },
                 error: () => {
-                    this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupDetail.createOneToOneChatError');
+                    this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupDetail.networkError.createOneToOneChat');
                 },
             });
         }
