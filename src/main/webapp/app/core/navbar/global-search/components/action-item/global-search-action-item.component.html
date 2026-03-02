@@ -1,0 +1,16 @@
+<button
+    class="d-flex align-items-center border-0 text-start action-item my-2 w-100"
+    [class.is-selected]="selected()"
+    type="button"
+    [style.--accent]="accentColor()"
+    [style.--accent-secondary]="secondaryAccentColor()"
+    (click)="clicked.emit()"
+>
+    <span class="d-inline-flex align-items-center justify-content-center flex-shrink-0 action-icon-box">
+        <ng-content select="[slot=icon]" />
+    </span>
+    <span class="d-flex flex-column flex-grow-1 action-text">
+        <span class="action-title fw-medium text-body">{{ title() }}</span>
+        <span class="action-description text-secondary">{{ description() }}</span>
+    </span>
+</button>

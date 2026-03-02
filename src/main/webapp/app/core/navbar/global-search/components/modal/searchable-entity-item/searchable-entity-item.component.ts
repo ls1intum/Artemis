@@ -1,6 +1,6 @@
 import { Component, input, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { SearchableEntity } from '../global-search-modal.component';
+import { SearchableEntity } from '../../../models/searchable-entity.model';
 
 @Component({
     selector: 'jhi-global-search-entity-item',
