@@ -9,10 +9,34 @@
  */
 
 
+/**
+ * Request to analyze a problem statement for quality, competencies, and difficulty
+ */
 export interface ChecklistAnalysisRequest { 
+    /**
+     * Problem statement in Markdown format
+     */
     problemStatementMarkdown: string;
-    declaredDifficulty?: string;
+    /**
+     * Declared difficulty of the exercise
+     */
+    declaredDifficulty?: ChecklistAnalysisRequest.DeclaredDifficultyEnum;
+    /**
+     * Programming language, e.g. JAVA, PYTHON
+     */
     language?: string;
+    /**
+     * ID of the exercise
+     */
     exerciseId?: number;
 }
+export namespace ChecklistAnalysisRequest {
+    export const DeclaredDifficultyEnum = {
+        Easy: 'EASY',
+        Medium: 'MEDIUM',
+        Hard: 'HARD'
+    } as const;
+    export type DeclaredDifficultyEnum = typeof DeclaredDifficultyEnum[keyof typeof DeclaredDifficultyEnum];
+}
+
 

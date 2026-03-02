@@ -16,7 +16,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "Response containing the checklist analysis results")
-public record ChecklistAnalysisResponseDTO(@Schema(description = "Bloom's taxonomy radar distribution") BloomRadarDTO bloomRadar,
+public record ChecklistAnalysisResponseDTO(@Schema(description = "Top inferred competencies from the standardized catalog") List<InferredCompetencyDTO> inferredCompetencies,
+        @Schema(description = "Bloom's taxonomy radar distribution") BloomRadarDTO bloomRadar,
+        @Schema(description = "Difficulty assessment with delta indicator") DifficultyAssessmentDTO difficultyAssessment,
         @Schema(description = "List of quality issues found in the problem statement") List<QualityIssueDTO> qualityIssues) {
 
     /**
