@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Migrate iris_session discriminator values to unified CHAT type -->
+
+    <!-- Step 1: Populate course_id for exercise sessions (standalone exercises with direct course_id) -->
+    <changeSet id="20260302-01-iris-session-exercise-course-id" author="dietrich">
+        <sql>
+            UPDATE iris_session
+            SET course_id = (SELECT e.course_id FROM exercise e WHERE e.id = iris_session.exercise_id AND e.course_id IS NOT NULL)
+            WHERE discriminator IN ('PROGRAMMING_EXERCISE_CHAT', 'TEXT_EXERCISE_CHAT')
+              AND exercise_id IS NOT NULL;
+        </sql>
+    </changeSet>
+
+    <!-- Step 2: Populate course_id for exercise sessions (exam exercises: exercise -> exercise_group -> exam -> course) -->
+    <changeSet id="20260302-02-iris-session-exam-exercise-course-id" author="dietrich">
+        <sql>
+            UPDATE iris_session
+            SET course_id = (
+                SELECT ex.course_id
+                FROM exercise e
+                JOIN exercise_group eg ON e.exercise_group_id = eg.id
+                JOIN exam ex ON eg.exam_id = ex.id
+                WHERE e.id = iris_session.exercise_id
+            )
+            WHERE discriminator IN ('PROGRAMMING_EXERCISE_CHAT', 'TEXT_EXERCISE_CHAT')
+              AND exercise_id IS NOT NULL
+              AND course_id = 0;
+        </sql>
+    </changeSet>
+
+    <!-- Step 3: Populate course_id for lecture sessions -->
+    <changeSet id="20260302-03-iris-session-lecture-course-id" author="dietrich">
+        <sql>
+            UPDATE iris_session
+            SET course_id = (SELECT l.course_id FROM lecture l WHERE l.id = iris_session.lecture_id)
+            WHERE discriminator = 'LECTURE_CHAT';
+        </sql>
+    </changeSet>
+
+    <!-- Step 4: Migrate discriminator values to unified CHAT -->
+    <changeSet id="20260302-04-iris-session-unify-discriminator" author="dietrich">
+        <sql>
+            UPDATE iris_session
+            SET discriminator = 'CHAT'
+            WHERE discriminator IN ('PROGRAMMING_EXERCISE_CHAT', 'TEXT_EXERCISE_CHAT', 'COURSE_CHAT', 'LECTURE_CHAT');
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
