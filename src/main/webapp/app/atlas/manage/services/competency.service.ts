@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import {
     Competency,
     CompetencyImportResponseDTO,
@@ -91,8 +91,11 @@ export class CompetencyService extends CourseCompetencyService {
     }
 
     import(courseCompetency: CourseCompetency, courseId: number): Observable<EntityResponseType> {
+        if (courseCompetency.id === undefined) {
+            return throwError(() => new Error('Cannot import competency: courseCompetency.id is missing'));
+        }
         const payload: CourseCompetencyImportOptionsDTO = {
-            competencyIds: courseCompetency.id ? [courseCompetency.id] : [],
+            competencyIds: [courseCompetency.id],
             importRelations: false,
             importExercises: false,
             importLectures: false,
