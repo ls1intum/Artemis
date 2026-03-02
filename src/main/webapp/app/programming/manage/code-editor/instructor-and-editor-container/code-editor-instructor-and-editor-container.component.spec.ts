@@ -1,5 +1,15 @@
 import 'zone.js';
 import 'zone.js/testing';
+
+// Mock y-monaco so MonacoBinding does not require a real Monaco editor instance.
+// The mock exposes a controllable `destroy` spy that lets tests verify the
+// double-destroy guard in the real createFileBinding implementation.
+jest.mock('y-monaco', () => {
+    const mockDestroy = jest.fn();
+    const MockMonacoBinding = jest.fn().mockImplementation(() => ({ destroy: mockDestroy }));
+    (MockMonacoBinding as any).__mockDestroy = mockDestroy;
+    return { MonacoBinding: MockMonacoBinding };
+});
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Provider } from '@angular/core';
 import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing';
@@ -1190,42 +1200,27 @@ describe('CodeEditorInstructorBaseContainerComponent - file sync binding', () =>
         expect(createFileBindingSpy).toHaveBeenCalledOnce();
     });
 
-    it('double-destroy guard prevents the wrapped destroy from being invoked twice', () => {
-        // Exercise createFileBinding directly without going through onFileSyncLoad,
-        // so we don't need a real MonacoBinding (which requires a live DOM/Monaco).
-        const innerDestroy = jest.fn();
+    it('double-destroy guard in the real createFileBinding prevents the underlying destroy from being invoked twice', async () => {
+        // Retrieve the mock destroy spy injected by the module-level jest.mock('y-monaco').
+        const yMonaco = await import('y-monaco');
+        const innerDestroy: jest.Mock = (yMonaco.MonacoBinding as any).__mockDestroy;
+        innerDestroy.mockClear();
+
         const fakeSyncState = { doc: {} as any, text: {} as any, awareness: {} as any };
         const fakeModel = {} as any;
         const fakeEditor = {} as any;
 
-        // Spy on MonacoBinding construction by intercepting createFileBinding internals:
-        // inject a fake binding instance via the module-level import.
-        jest.spyOn(comp as any, 'createFileBinding').mockImplementation(function (this: any) {
-            // Replicate the guard logic to test it in isolation
-            this.currentFileBinding?.destroy();
-            let destroyed = false;
-            const originalDestroy = innerDestroy;
-            const wrapped = {
-                destroy: () => {
-                    if (destroyed) return;
-                    destroyed = true;
-                    originalDestroy();
-                },
-            };
-            this.currentFileBinding = wrapped;
-        });
-
-        // First binding
+        // Call the REAL createFileBinding — not a mock — so we exercise the actual guard.
         (comp as any).createFileBinding(fakeSyncState, fakeModel, fakeEditor);
         const firstBinding = (comp as any).currentFileBinding;
 
-        // Call destroy twice — second call must be a no-op
+        // Call destroy twice; the second call must be a no-op (guard in production code).
         firstBinding.destroy();
         firstBinding.destroy();
 
         expect(innerDestroy).toHaveBeenCalledOnce();
 
-        // teardownFileBinding called twice must also be idempotent
+        // teardownFileBinding must also be idempotent when called more than once.
         (comp as any).teardownFileBinding();
         (comp as any).teardownFileBinding();
         // No error thrown — guard works

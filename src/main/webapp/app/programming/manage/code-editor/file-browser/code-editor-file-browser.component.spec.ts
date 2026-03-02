@@ -9,6 +9,7 @@ import {
     DeleteFileChange,
     FileBadge,
     FileBadgeType,
+    FileChange,
     FileType,
     GitConflictState,
     PROBLEM_STATEMENT_IDENTIFIER,
