@@ -16,7 +16,7 @@ export const generateExampleTutorialGroupSession = ({
 }: TutorialGroupSession) => {
     const exampleSession = new TutorialGroupSession();
     exampleSession.id = id;
-    // we get utc from the server --> will be converted to time zone of configuration
+    // we get utc from the server --> will be converted to the time zone of configuration
     exampleSession.start = start;
     exampleSession.end = end;
     exampleSession.location = location;
@@ -27,42 +27,49 @@ export const generateExampleTutorialGroupSession = ({
 
 export const generateExampleTutorialGroupSessionDTO = ({
     id = 3,
-    startDate = dayjs.utc('2021-01-01T10:00:00'),
-    endDate = dayjs.utc('2021-01-01T11:00:00'),
+    startDate = '2021-01-01T10:00:00Z',
+    endDate = '2021-01-01T11:00:00Z',
     location = 'Room 1',
-    isCancelled = false,
+    status = TutorialGroupSessionStatus.ACTIVE,
     statusExplanation,
     attendanceCount,
     schedule,
     freePeriod,
-}: TutorialGroupSessionDTO = {}) => {
-    const dto = new TutorialGroupSessionDTO();
-    dto.id = id;
-    dto.startDate = startDate;
-    dto.endDate = endDate;
-    dto.location = location;
-    dto.isCancelled = isCancelled;
-    dto.statusExplanation = statusExplanation;
-    dto.attendanceCount = attendanceCount;
-    dto.schedule = schedule;
-    dto.freePeriod = freePeriod;
-    return dto;
+}: Partial<TutorialGroupSessionDTO> = {}): TutorialGroupSessionDTO => {
+    return {
+        id,
+        startDate,
+        endDate,
+        location,
+        status,
+        statusExplanation,
+        attendanceCount,
+        schedule,
+        freePeriod,
+    };
 };
 
 export const tutorialGroupSessionDtoToFormData = (dto: TutorialGroupSessionDTO, tz: string): TutorialGroupSessionFormData => {
+    const start = dayjs(dto.startDate).tz(tz);
+    const end = dayjs(dto.endDate).tz(tz);
+
     return {
-        date: dto.startDate!.tz(tz).toDate(),
-        startTime: dto.startDate!.tz(tz).format('HH:mm:ss'),
-        endTime: dto.endDate!.tz(tz).format('HH:mm:ss'),
+        date: start.toDate(),
+        startTime: start.format('HH:mm'),
+        endTime: end.format('HH:mm'),
         location: dto.location,
     };
 };
 
 export const formDataToTutorialGroupSessionDTO = (formData: TutorialGroupSessionFormData): TutorialGroupSessionRequestDTO => {
-    const dto = new TutorialGroupSessionRequestDTO();
-    dto.date = formData.date;
-    dto.startTime = formData.startTime;
-    dto.endTime = formData.endTime;
-    dto.location = formData.location;
-    return dto;
+    if (!formData.date || !formData.startTime || !formData.endTime) {
+        throw new Error('Date, startTime and endTime are required');
+    }
+
+    return {
+        date: formData.date.toISOString().split('T')[0],
+        startTime: formData.startTime,
+        endTime: formData.endTime,
+        location: formData.location!,
+    };
 };

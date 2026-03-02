@@ -138,9 +138,11 @@ describe('EditTutorialGroupSessionComponent', () => {
     it('should return early from updateSession when IDs are missing', () => {
         const captureExceptionSpy = vi.spyOn(Sentry, 'captureException');
         const sessionWithoutId = generateExampleTutorialGroupSessionDTO({});
-        sessionWithoutId.id = undefined;
 
-        fixture.componentRef.setInput('tutorialGroupSession', sessionWithoutId);
+        fixture.componentRef.setInput('tutorialGroupSession', {
+            ...sessionWithoutId,
+            id: undefined,
+        });
         fixture.detectChanges();
 
         const sessionForm: TutorialGroupSessionFormComponent = fixture.debugElement.query(By.directive(TutorialGroupSessionFormComponent)).componentInstance;

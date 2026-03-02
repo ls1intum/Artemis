@@ -48,21 +48,21 @@ export interface RawTutorialGroupDetailSessionDTO {
     attendanceCount?: number;
 }
 
-export class TutorialGroupSessionDTO {
-    public id?: number;
-    public startDate?: Dayjs;
-    public endDate?: Dayjs;
-    public isCancelled?: boolean;
-    public statusExplanation?: string;
-    public location?: string;
-    public attendanceCount?: number;
-    public schedule?: TutorialGroupScheduleDTO;
-    public freePeriod?: TutorialGroupFreePeriodDTO;
+export interface TutorialGroupSessionDTO {
+    id: number;
+    startDate: string;
+    endDate: string;
+    status?: TutorialGroupSessionStatus;
+    statusExplanation?: string;
+    location: string;
+    attendanceCount?: number;
+    schedule?: TutorialGroupScheduleDTO;
+    freePeriod?: TutorialGroupFreePeriodDTO;
 }
 
-export class TutorialGroupSessionRequestDTO {
-    public date?: Date;
-    public startTime?: string;
-    public endTime?: string;
-    public location?: string;
+export interface TutorialGroupSessionRequestDTO {
+    date: string;
+    startTime: string;
+    endTime: string;
+    location: string;
 }

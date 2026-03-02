@@ -14,7 +14,7 @@ import {
     signal,
 } from '@angular/core';
 import { faUmbrellaBeach } from '@fortawesome/free-solid-svg-icons';
-import { TutorialGroupSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { TutorialGroupSessionDTO, TutorialGroupSessionStatus } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -93,7 +93,7 @@ export class TutorialGroupSessionRowComponent {
 
     updateSomethingBasedOnSession() {
         if (this.localSession()) {
-            this.isCancelled = !!this.localSession().isCancelled;
+            this.isCancelled = this.localSession().status === TutorialGroupSessionStatus.CANCELLED;
             this.hasSchedule = !!this.localSession().schedule;
             this.overlapsWithFreePeriod = !!this.localSession().freePeriod;
             if (this.isCancelled) {

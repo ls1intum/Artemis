@@ -29,14 +29,16 @@ export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
     readonly dialogVisible = signal<boolean>(false);
     readonly freePeriodCreated = output<void>();
 
-    tutorialGroupFreePeriodToCreate: TutorialGroupFreePeriodDTO = new TutorialGroupFreePeriodDTO();
+    tutorialGroupFreePeriodToCreate: TutorialGroupFreePeriodDTO;
     isLoading = false;
 
     readonly tutorialGroupConfigurationId = input.required<number>();
     readonly course = input.required<Course>();
 
     open(): void {
-        this.tutorialGroupFreePeriodToCreate = new TutorialGroupFreePeriodDTO();
+        this.tutorialGroupFreePeriodToCreate = {
+            tutorialGroupConfigurationId: this.tutorialGroupConfigurationId(),
+        } as TutorialGroupFreePeriodDTO;
         this.dialogVisible.set(true);
     }
 
@@ -47,8 +49,8 @@ export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
     createTutorialGroupFreePeriod(formData: TutorialGroupFreePeriodFormData) {
         const { startDate, endDate, startTime, endTime, reason } = formData;
 
-        this.tutorialGroupFreePeriodToCreate.startDate = CreateTutorialGroupFreePeriodComponent.combineDateAndTimeWithAlternativeDate(startDate, startTime, undefined);
-        this.tutorialGroupFreePeriodToCreate.endDate = CreateTutorialGroupFreePeriodComponent.combineDateAndTimeWithAlternativeDate(endDate, endTime, startDate);
+        this.tutorialGroupFreePeriodToCreate.start = CreateTutorialGroupFreePeriodComponent.combineDateAndTimeWithAlternativeDate(startDate, startTime, undefined).toISOString();
+        this.tutorialGroupFreePeriodToCreate.end = CreateTutorialGroupFreePeriodComponent.combineDateAndTimeWithAlternativeDate(endDate, endTime, startDate).toISOString();
         this.tutorialGroupFreePeriodToCreate.reason = reason;
         this.isLoading = true;
         this.tutorialGroupFreePeriodService

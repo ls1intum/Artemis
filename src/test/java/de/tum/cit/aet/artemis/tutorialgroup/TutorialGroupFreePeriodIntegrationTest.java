@@ -93,7 +93,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
         // when
         var freePeriodFromRequest = request.get(getTutorialGroupFreePeriodsPath(freePeriod.getId()), HttpStatus.OK, TutorialGroupFreePeriodDTO.class);
         // then
-        assertThat(freePeriodFromRequest).isEqualTo(TutorialGroupFreePeriodDTO.of(freePeriod));
+        assertThat(freePeriodFromRequest).isEqualTo(TutorialGroupFreePeriodDTO.of(freePeriod, ZoneId.of(freePeriod.getTutorialGroupsConfiguration().getCourse().getTimeZone())));
 
         // cleanup
         tutorialGroupFreePeriodRepository.deleteById(freePeriod.getId());
@@ -317,7 +317,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
         var dto = createTutorialGroupFreePeriodDTO(FIRST_AUGUST_MONDAY_00_00, FIRST_AUGUST_MONDAY_23_59, "Holiday");
         var numberOfFreePeriods = tutorialGroupFreePeriodRepository.findAllByTutorialGroupsConfigurationCourseId(exampleCourseId).size();
         // when
-        request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriod.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriodDTO.class, HttpStatus.BAD_REQUEST);
         // then
         assertThat(tutorialGroupFreePeriodRepository.findAllByTutorialGroupsConfigurationCourseId(exampleCourseId)).hasSize(numberOfFreePeriods);
 
@@ -376,7 +376,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
 
         var numberOfFreePeriods = tutorialGroupFreePeriodRepository.findAllByTutorialGroupsConfigurationCourseId(exampleCourseId).size();
         // when
-        request.putWithResponseBody(getTutorialGroupFreePeriodsPath(firstMondayOfAugustFreeDay.getId()), dto, TutorialGroupFreePeriod.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody(getTutorialGroupFreePeriodsPath(firstMondayOfAugustFreeDay.getId()), dto, TutorialGroupFreePeriodDTO.class, HttpStatus.BAD_REQUEST);
 
         // then
         assertThat(tutorialGroupFreePeriodRepository.findAllByTutorialGroupsConfigurationCourseId(exampleCourseId)).hasSize(numberOfFreePeriods);

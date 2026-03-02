@@ -86,11 +86,11 @@ export class EditTutorialGroupFreePeriodComponent implements OnDestroy {
     updateTutorialGroupFreePeriod(formData: TutorialGroupFreePeriodFormData) {
         const { startDate, endDate, startTime, endTime, reason } = formData;
 
-        const tutorialGroupFreePeriodDto = new TutorialGroupFreePeriodDTO();
-        tutorialGroupFreePeriodDto.startDate = CreateTutorialGroupFreePeriodComponent.combineDateAndTimeWithAlternativeDate(startDate, startTime, undefined);
-        tutorialGroupFreePeriodDto.endDate = CreateTutorialGroupFreePeriodComponent.combineDateAndTimeWithAlternativeDate(endDate, endTime, startDate);
+        const tutorialGroupFreePeriodDto: TutorialGroupFreePeriodDTO = {} as TutorialGroupFreePeriodDTO;
+        tutorialGroupFreePeriodDto.start = CreateTutorialGroupFreePeriodComponent.combineDateAndTimeWithAlternativeDate(startDate, startTime, undefined).toISOString();
+        tutorialGroupFreePeriodDto.end = CreateTutorialGroupFreePeriodComponent.combineDateAndTimeWithAlternativeDate(endDate, endTime, startDate).toISOString();
         tutorialGroupFreePeriodDto.reason = reason;
-
+        tutorialGroupFreePeriodDto.tutorialGroupConfigurationId = this.tutorialGroupsConfiguration().id!;
         this.isLoading = true;
         this.tutorialGroupFreePeriodService
             .update(this.course().id!, this.tutorialGroupsConfiguration().id!, this.tutorialGroupFreePeriod().id!, tutorialGroupFreePeriodDto)

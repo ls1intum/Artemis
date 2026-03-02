@@ -101,7 +101,7 @@ public record TutorialGroupSessionDTO(@NotNull Long id, @NotNull LocalDateTime s
         LocalDateTime end = session.getEnd().withZoneSameInstant(courseZone).toLocalDateTime();
 
         var scheduleDto = session.getTutorialGroupSchedule() != null ? TutorialGroupScheduleDTO.of(session.getTutorialGroupSchedule()) : null;
-        var freePeriodDto = session.getTutorialGroupFreePeriod() != null ? TutorialGroupFreePeriodDTO.of(session.getTutorialGroupFreePeriod()) : null;
+        var freePeriodDto = session.getTutorialGroupFreePeriod() != null ? TutorialGroupFreePeriodDTO.of(session.getTutorialGroupFreePeriod(), courseZone) : null;
 
         return new TutorialGroupSessionDTO(session.getId(), start, end, session.getStatus(), session.getStatusExplanation(), session.getLocation(), session.getAttendanceCount(),
                 scheduleDto, freePeriodDto);

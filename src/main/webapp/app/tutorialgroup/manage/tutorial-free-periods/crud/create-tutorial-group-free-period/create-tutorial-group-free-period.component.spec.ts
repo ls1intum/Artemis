@@ -6,13 +6,13 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { CreateTutorialGroupFreePeriodComponent } from 'app/tutorialgroup/manage/tutorial-free-periods/crud/create-tutorial-group-free-period/create-tutorial-group-free-period.component';
 import { TutorialGroupFreePeriodService } from 'app/tutorialgroup/shared/service/tutorial-group-free-period.service';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import {
     formDataToTutorialGroupFreePeriodDTO,
-    generateExampleTutorialGroupFreePeriod,
+    generateExampleTutorialGroupFreePeriodDTO,
+    tutorialGroupFreePeriodDTOToEntity,
     tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData,
 } from 'test/helpers/sample/tutorialgroup/tutorialGroupFreePeriodExampleModel';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -20,6 +20,7 @@ import { TutorialGroupFreePeriodFormComponent } from 'app/tutorialgroup/manage/t
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { TutorialGroupFreePeriodDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-free-period-dto.model';
 
 describe('CreateTutorialGroupFreePeriodComponent', () => {
     setupTestBed({ zoneless: true });
@@ -59,10 +60,10 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
     });
 
     it('should send POST request upon form submission and close dialog', () => {
-        const exampleFreePeriod = generateExampleTutorialGroupFreePeriod({});
+        const exampleFreePeriod = generateExampleTutorialGroupFreePeriodDTO({});
         delete exampleFreePeriod.id;
 
-        const createResponse: HttpResponse<TutorialGroupSession> = new HttpResponse({
+        const createResponse: HttpResponse<TutorialGroupFreePeriodDTO> = new HttpResponse({
             body: exampleFreePeriod,
             status: 201,
         });
@@ -72,12 +73,12 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
 
         const sessionForm: TutorialGroupFreePeriodFormComponent = fixture.debugElement.query(By.directive(TutorialGroupFreePeriodFormComponent)).componentInstance;
 
-        const formData = tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData(exampleFreePeriod, 'Europe/Berlin');
+        const formData = tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData(tutorialGroupFreePeriodDTOToEntity(createResponse.body!), 'Europe/Berlin');
 
         sessionForm.formSubmitted.emit(formData);
 
         expect(createStub).toHaveBeenCalledOnce();
-        expect(createStub).toHaveBeenCalledWith(course.id!, configurationId, formDataToTutorialGroupFreePeriodDTO(formData));
+        expect(createStub).toHaveBeenCalledWith(course.id!, configurationId, formDataToTutorialGroupFreePeriodDTO(formData, configurationId));
         expect(freePeriodCreatedSpy).toHaveBeenCalledOnce();
         expect(component.dialogVisible()).toBe(false);
     });

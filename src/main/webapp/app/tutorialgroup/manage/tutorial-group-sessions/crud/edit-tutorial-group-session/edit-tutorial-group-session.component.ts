@@ -13,6 +13,8 @@ import { captureException } from '@sentry/angular';
 import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
 import { DialogModule } from 'primeng/dialog';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { toISO8601DateString } from 'app/shared/util/date.utils';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-edit-tutorial-group-session',
@@ -45,10 +47,14 @@ export class EditTutorialGroupSessionComponent implements OnDestroy {
             captureException('Error: Component not fully configured');
             return;
         }
+        const start = tutorialGroupSession.startDate ? dayjs(tutorialGroupSession.startDate).tz(course.timeZone) : undefined;
+
+        const end = tutorialGroupSession.endDate ? dayjs(tutorialGroupSession.endDate).tz(course.timeZone) : undefined;
+
         this.formData = {
-            date: tutorialGroupSession.startDate?.tz(course.timeZone).toDate(),
-            startTime: tutorialGroupSession.startDate?.tz(course.timeZone).format('HH:mm:ss'),
-            endTime: tutorialGroupSession.endDate?.tz(course.timeZone).format('HH:mm:ss'),
+            date: start?.toDate(),
+            startTime: start?.format('HH:mm'),
+            endTime: end?.format('HH:mm'),
             location: tutorialGroupSession.location,
         };
         this.dialogVisible.set(true);
@@ -61,12 +67,12 @@ export class EditTutorialGroupSessionComponent implements OnDestroy {
     updateSession(formData: TutorialGroupSessionFormData) {
         const { date, startTime, endTime, location } = formData;
 
-        const tutorialGroupSessionDTO = new TutorialGroupSessionRequestDTO();
-
-        tutorialGroupSessionDTO.date = date;
-        tutorialGroupSessionDTO.startTime = startTime;
-        tutorialGroupSessionDTO.endTime = endTime;
-        tutorialGroupSessionDTO.location = location;
+        const tutorialGroupSessionDTO: TutorialGroupSessionRequestDTO = {
+            date: toISO8601DateString(date)!,
+            startTime: startTime!,
+            endTime: endTime!,
+            location: location!,
+        };
 
         this.isLoading = true;
         const course = this.course();

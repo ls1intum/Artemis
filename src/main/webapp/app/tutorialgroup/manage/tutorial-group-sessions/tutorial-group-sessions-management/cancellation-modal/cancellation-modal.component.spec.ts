@@ -105,7 +105,7 @@ describe('CancellationModalComponent', () => {
     });
 
     it('should return empty string for generateSessionLabel when session has no start or end', () => {
-        const sessionWithoutDates: TutorialGroupSessionDTO = { ...tutorialGroupSession, startDate: undefined, endDate: undefined };
+        const sessionWithoutDates: TutorialGroupSessionDTO = { ...tutorialGroupSession, startDate: '', endDate: '' };
         expect(component.generateSessionLabel(sessionWithoutDates)).toBe('');
     });
 

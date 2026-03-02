@@ -12,6 +12,7 @@ import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tu
 import { DialogModule } from 'primeng/dialog';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TutorialGroupSessionRequestDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { toISO8601DateString } from 'app/shared/util/date.utils';
 
 @Component({
     selector: 'jhi-create-tutorial-group-session',
@@ -28,14 +29,14 @@ export class CreateTutorialGroupSessionComponent implements OnDestroy {
     readonly dialogVisible = signal<boolean>(false);
     readonly sessionCreated = output<void>();
 
-    tutorialGroupSessionToCreate: TutorialGroupSessionRequestDTO = new TutorialGroupSessionRequestDTO();
+    tutorialGroupSessionToCreate: TutorialGroupSessionRequestDTO;
     isLoading = false;
 
     readonly tutorialGroup = input.required<TutorialGroup>();
     readonly course = input.required<Course>();
 
     open(): void {
-        this.tutorialGroupSessionToCreate = new TutorialGroupSessionRequestDTO();
+        this.tutorialGroupSessionToCreate = {} as TutorialGroupSessionRequestDTO;
         this.dialogVisible.set(true);
     }
 
@@ -46,10 +47,10 @@ export class CreateTutorialGroupSessionComponent implements OnDestroy {
     createTutorialGroupSession(formData: TutorialGroupSessionFormData) {
         const { date, startTime, endTime, location } = formData;
 
-        this.tutorialGroupSessionToCreate.date = date;
-        this.tutorialGroupSessionToCreate.startTime = startTime;
-        this.tutorialGroupSessionToCreate.endTime = endTime;
-        this.tutorialGroupSessionToCreate.location = location;
+        this.tutorialGroupSessionToCreate.date = toISO8601DateString(date)!;
+        this.tutorialGroupSessionToCreate.startTime = startTime!;
+        this.tutorialGroupSessionToCreate.endTime = endTime!;
+        this.tutorialGroupSessionToCreate.location = location!;
 
         this.isLoading = true;
 

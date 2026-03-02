@@ -76,7 +76,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITO")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void createNewSession_asEditor_shouldForbidSession() throws Exception {
         createNewSessionForbiddenTest();
     }

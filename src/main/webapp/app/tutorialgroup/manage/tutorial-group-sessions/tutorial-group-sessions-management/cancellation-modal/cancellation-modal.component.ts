@@ -12,6 +12,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonDirective } from 'primeng/button';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-cancellation-modal',
@@ -67,12 +68,13 @@ export class CancellationModalComponent implements OnInit, OnDestroy {
         if (!tutorialGroupSession?.startDate || !tutorialGroupSession?.endDate) {
             return '';
         }
-
-        return tutorialGroupSession.startDate.tz(this.course().timeZone).format('LLLL') + ' - ' + tutorialGroupSession.endDate.tz(this.course().timeZone).format('LT');
+        return (
+            dayjs(tutorialGroupSession.startDate).tz(this.course().timeZone).format('LLLL') + ' - ' + dayjs(tutorialGroupSession.endDate).tz(this.course().timeZone).format('LT')
+        );
     }
 
     cancelOrActivate(): void {
-        if (!this.tutorialGroupSession().isCancelled) {
+        if (this.tutorialGroupSession().status === TutorialGroupSessionStatus.ACTIVE) {
             this.cancelSession();
         } else {
             this.activateSession();
