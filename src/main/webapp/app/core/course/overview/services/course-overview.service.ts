@@ -317,7 +317,7 @@ export class CourseOverviewService {
         // Apply sorting strategies for specific groups, and default sorting for the rest
         for (const group in groupedConversationGroups) {
             const items = groupedConversationGroups[group].entityData;
-            const strategy = sortStrategies[group] ?? ((items) => this.sortDefault(items));
+            const strategy = sortStrategies[group] ?? ((defaultItems) => this.sortDefault(defaultItems));
             strategy(items);
         }
 
