@@ -121,7 +121,24 @@ jobs:
     - name: Print failed tests
       if: failure()
       # DataExportResourceIntegrationTest has a parameterized test with a FAILED enum and needs to be excluded, as it is not an actual test failure
-      run: grep "Test >.* FAILED\$" tests.log | grep -v "Starting logs for .* > .*state = FAILED\$" || echo "No failed tests."
+      run: |
+        FAILED_TESTS=$(grep "Test >.* FAILED\$" tests.log | grep -v "Starting logs for .* > .*state = FAILED\$" || true)
+        if [ -n "$FAILED_TESTS" ]; then
+          echo "$FAILED_TESTS"
+          exit 1
+        else
+          echo "No failed tests."
+        fi
+    - name: Print JaCoCo coverage violations
+      if: failure()
+      run: |
+        VIOLATIONS=$(grep "Rule violated for bundle" tests.log || true)
+        if [ -n "$VIOLATIONS" ]; then
+          echo "::error::JaCoCo code coverage thresholds violated:"
+          echo "$VIOLATIONS"
+          echo ""
+          echo "If this is not related to your PR, adjust the thresholds in gradle/jacoco.gradle (ModuleCoverageThresholds)."
+        fi
     - name: "Codacy: Report coverage"
       uses: codacy/codacy-coverage-reporter-action@master
       with:
