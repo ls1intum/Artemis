@@ -493,7 +493,10 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         sharedQueueProcessingService.init();
 
         // Wait for the scheduled task to add agents to the map (happens asynchronously after init)
-        await().atMost(Duration.ofSeconds(10)).pollInterval(Duration.ofMillis(200)).until(() -> !buildAgentInformation.values().isEmpty());
+        await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(200)).until(() -> {
+            var agents = buildAgentInformation.values();
+            return !agents.isEmpty() && agents.stream().allMatch(agent -> agent.status() == BuildAgentStatus.IDLE || agent.status() == BuildAgentStatus.ACTIVE);
+        });
 
         request.put("/api/core/admin/agents/pause-all", null, HttpStatus.NO_CONTENT);
         await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(200)).until(() -> {
