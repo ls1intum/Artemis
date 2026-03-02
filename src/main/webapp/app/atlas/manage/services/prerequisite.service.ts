@@ -1,6 +1,6 @@
 import { HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { CompetencyImportResponseDTO, CompetencyWithTailRelationDTO, CourseCompetency, CourseCompetencyImportOptionsDTO } from 'app/atlas/shared/entities/competency.model';
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
@@ -55,7 +55,7 @@ export class PrerequisiteService extends CourseCompetencyService {
 
     import(courseCompetency: CourseCompetency, courseId: number): Observable<EntityResponseType> {
         if (courseCompetency.id === undefined) {
-            throw new Error('Cannot import prerequisite: courseCompetency.id is missing');
+            return throwError(() => new Error('Cannot import prerequisite: courseCompetency.id is missing'));
         }
         const payload: CourseCompetencyImportOptionsDTO = {
             competencyIds: [courseCompetency.id],
