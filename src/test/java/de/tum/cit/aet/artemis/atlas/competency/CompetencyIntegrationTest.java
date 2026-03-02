@@ -8,6 +8,7 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.http.HttpStatus;
@@ -17,8 +18,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
-import de.tum.cit.aet.artemis.atlas.config.AtlasMLNotPresentException;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
@@ -371,9 +370,10 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
         @BeforeEach
         void setupNestedMocks() {
             // Reset mock server to clear any previous test's requests, then add expectations
-            var provider = atlasMLRequestMockProvider.orElseThrow(() -> new AtlasMLNotPresentException(AtlasMLApi.class));
-            provider.reset();
-            provider.mockSaveCompetenciesAny();
+            atlasMLRequestMockProvider.ifPresent(provider -> {
+                provider.reset();
+                provider.mockSaveCompetenciesAny();
+            });
         }
 
         @Test
@@ -385,7 +385,8 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
             var mockedResponse = new SuggestCompetencyResponseDTO(List.of(new AtlasMLCompetencyDTO(1L, "Mocked", "Desc", 1L)));
 
             // Add mock for this specific test (mockSaveCompetenciesAny is already set by @BeforeEach)
-            var provider = atlasMLRequestMockProvider.orElseThrow(() -> new AtlasMLNotPresentException(AtlasMLApi.class));
+            Assumptions.assumeTrue(atlasMLRequestMockProvider.isPresent(), "AtlasML is disabled in this test profile");
+            var provider = atlasMLRequestMockProvider.get();
             provider.mockSuggestCompetencies(requestBody, mockedResponse);
 
             var response = request.postWithResponseBody("/api/atlas/competencies/suggest", requestBody, SuggestCompetencyResponseDTO.class, HttpStatus.OK);
@@ -412,7 +413,8 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
             var mockedRelations = new SuggestCompetencyRelationsResponseDTO(List.of(new AtlasMLCompetencyRelationDTO(1L, 2L, "ASSUMES")));
 
             // Add mock for this specific test (mockSaveCompetenciesAny is already set by @BeforeEach)
-            var provider = atlasMLRequestMockProvider.orElseThrow(() -> new AtlasMLNotPresentException(AtlasMLApi.class));
+            Assumptions.assumeTrue(atlasMLRequestMockProvider.isPresent(), "AtlasML is disabled in this test profile");
+            var provider = atlasMLRequestMockProvider.get();
             provider.mockSuggestCompetencyRelations(courseId, mockedRelations);
 
             var response = request.get("/api/atlas/courses/" + courseId + "/competencies/relations/suggest", HttpStatus.OK, SuggestCompetencyRelationsResponseDTO.class);

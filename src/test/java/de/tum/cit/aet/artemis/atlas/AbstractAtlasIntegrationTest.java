@@ -7,12 +7,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.util.StudentScoreUtilService;
-import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyProgressUtilService;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.competency.util.PrerequisiteUtilService;
 import de.tum.cit.aet.artemis.atlas.competency.util.StandardizedCompetencyUtilService;
-import de.tum.cit.aet.artemis.atlas.config.AtlasMLNotPresentException;
 import de.tum.cit.aet.artemis.atlas.connector.AtlasMLRequestMockProvider;
 import de.tum.cit.aet.artemis.atlas.learningpath.util.LearningPathUtilService;
 import de.tum.cit.aet.artemis.atlas.profile.util.LearnerProfileUtilService;
@@ -187,10 +185,11 @@ public abstract class AbstractAtlasIntegrationTest extends AbstractSpringIntegra
 
     @BeforeEach
     void setupAtlasMLMocks() {
-        var provider = atlasMLRequestMockProvider.orElseThrow(() -> new AtlasMLNotPresentException(AtlasMLApi.class));
-        provider.reset();
-        provider.enableMockingOfRequests();
-        provider.mockSaveCompetenciesAny();
+        atlasMLRequestMockProvider.ifPresent(provider -> {
+            provider.reset();
+            provider.enableMockingOfRequests();
+            provider.mockSaveCompetenciesAny();
+        });
     }
 
 }
