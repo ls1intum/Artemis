@@ -1,50 +1,55 @@
 <!-- Action buttons: Only show when no filter is active -->
 @if (!showResults()) {
     <!-- Action button: Ask Iris (index 0) - Placeholder -->
-    <jhi-global-search-action-item
-        #selectableItem
-        [title]="'Ask Iris'"
-        [description]="'Chat with Iris AI assistant'"
-        [selected]="selectedIndex() === 0"
-        accentColor="var(--bs-primary)"
-        secondaryAccentColor="var(--bs-info)"
-        (clicked)="viewSelected.emit(SearchView.Iris)"
-    >
-        <fa-icon slot="icon" [icon]="faHashtag" aria-hidden="true" />
-    </jhi-global-search-action-item>
+    <div #selectableItem>
+        <jhi-global-search-action-item
+            [title]="'Ask Iris'"
+            [description]="'Chat with Iris AI assistant'"
+            [selected]="selectedIndex() === 0"
+            accentColor="var(--bs-primary)"
+            secondaryAccentColor="var(--bs-info)"
+            (clicked)="viewSelected.emit(SearchView.Iris)"
+        >
+            <fa-icon slot="icon" [icon]="faHashtag" aria-hidden="true" />
+        </jhi-global-search-action-item>
+    </div>
 
     <!-- Action button: Search Lecture Content (index 1) - Placeholder -->
-    <jhi-global-search-action-item
-        #selectableItem
-        [title]="'Lecture Search'"
-        [description]="'Search through lecture content and slides'"
-        [selected]="selectedIndex() === 1"
-        accentColor="var(--global-search-lecture-accent)"
-        secondaryAccentColor="var(--bs-primary)"
-        (clicked)="viewSelected.emit(SearchView.Lecture)"
-    >
-        <fa-icon slot="icon" [icon]="faFileLines" aria-hidden="true" />
-    </jhi-global-search-action-item>
+    <div #selectableItem>
+        <jhi-global-search-action-item
+            [title]="'Lecture Search'"
+            [description]="'Search through lecture content and slides'"
+            [selected]="selectedIndex() === 1"
+            accentColor="var(--global-search-lecture-accent)"
+            secondaryAccentColor="var(--bs-primary)"
+            (clicked)="viewSelected.emit(SearchView.Lecture)"
+        >
+            <fa-icon slot="icon" [icon]="faFileLines" aria-hidden="true" />
+        </jhi-global-search-action-item>
+    </div>
 }
 
 <!-- Results list when searching or filter is active -->
 @if (showResults()) {
     <div class="search-results-list mt-3">
         @for (result of results(); track result.id; let i = $index) {
-            <jhi-global-search-result-item
-                #selectableItem
-                [result]="result"
-                [icon]="getIconForType(result.type, result.badge)"
-                [isSelected]="selectedIndex() === i"
-                (resultClick)="navigateToResult($event)"
-            />
+            <div #selectableItem>
+                <jhi-global-search-result-item
+                    [result]="result"
+                    [icon]="getIconForType(result.type, result.badge)"
+                    [isSelected]="selectedIndex() === i"
+                    (resultClick)="navigateToResult($event)"
+                />
+            </div>
         }
     </div>
 } @else {
     <!-- Searchable entities list (initial state) -->
     <div class="entity-list mt-3">
         @for (entity of searchableEntities; track entity.id; let i = $index) {
-            <jhi-global-search-entity-item #selectableItem [entity]="entity" [isSelected]="selectedIndex() === NAV_ACTION_COUNT + i" (entityClick)="onEntityItemClick($event)" />
+            <div #selectableItem>
+                <jhi-global-search-entity-item [entity]="entity" [isSelected]="selectedIndex() === NAV_ACTION_COUNT + i" (entityClick)="onEntityItemClick($event)" />
+            </div>
         }
     </div>
 }
