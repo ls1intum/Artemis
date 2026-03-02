@@ -193,9 +193,9 @@ public class SharedQueueProcessingService {
         return isPaused.get();
     }
 
-    /** Resets the pause state (for tests only). */
-    public void resetPauseState() {
-        isPaused.set(false);
+    /** Sets the pause state (for tests only). */
+    public void setPauseState(boolean paused) {
+        isPaused.set(paused);
     }
 
     /**

@@ -12,6 +12,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -344,11 +345,16 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     }
 
     @Test
-    void testPauseBuildAgentBehavior() {
+    void testPauseBuildAgentBehavior() throws InterruptedException {
+        CountDownLatch buildStarted = new CountDownLatch(1);
+
         StartContainerCmd startContainerCmd = mock(StartContainerCmd.class);
         when(dockerClient.startContainerCmd(anyString())).thenReturn(startContainerCmd);
         doAnswer(invocation -> {
-            Thread.sleep(5000);
+            buildStarted.countDown();
+            // Sleep longer than the grace period (2s in test config) to ensure the grace period
+            // expires while the build is still running, triggering re-queue via handleTimeoutAndCancelRunningJobs
+            Thread.sleep(60_000);
             return null;
         }).when(startContainerCmd).exec();
 
@@ -356,10 +362,8 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
         buildJobQueue.add(queueItem);
 
-        await().atMost(30, TimeUnit.SECONDS).until(() -> {
-            var buildAgent = buildAgentInformation.get(buildAgentShortName);
-            return buildAgent != null && buildAgent.status() == BuildAgentStatus.ACTIVE;
-        });
+        // Wait for the build job to actually start executing (not just agent being ACTIVE)
+        assertThat(buildStarted.await(30, TimeUnit.SECONDS)).as("Build job should start executing").isTrue();
 
         pauseBuildAgentTopic.publish(buildAgentShortName);
 
