@@ -9,8 +9,8 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
 import { ExerciseUpdateNotificationComponent } from 'app/exercise/exercise-update-notification/exercise-update-notification.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ButtonModule } from 'primeng/button';
 
 @Component({
     selector: 'jhi-form-footer',
@@ -23,7 +23,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         ExerciseUpdateNotificationComponent,
         TranslateDirective,
         FaIconComponent,
-        ButtonComponent,
+        ButtonModule,
         ArtemisTranslatePipe,
     ],
 })

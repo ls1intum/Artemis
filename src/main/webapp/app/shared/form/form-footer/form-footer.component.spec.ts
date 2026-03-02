@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent } from 'ng-mocks';
 import { ExerciseUpdateNotificationComponent } from 'app/exercise/exercise-update-notification/exercise-update-notification.component';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { By } from '@angular/platform-browser';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -14,7 +13,7 @@ describe('FormFooterComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockComponent(ExerciseUpdateNotificationComponent), MockComponent(ButtonComponent)],
+            imports: [MockComponent(ExerciseUpdateNotificationComponent)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient()],
         })
             .compileComponents()
@@ -68,7 +67,7 @@ describe('FormFooterComponent', () => {
         fixture.componentRef.setInput('invalidReasons', []);
         fixture.componentRef.setInput('isDisabled', false);
         fixture.detectChanges();
-        const saveButton = fixture.debugElement.query(By.css('#save-entity')).componentInstance;
-        expect(saveButton.disabled()).toBeFalse();
+        const saveButton = fixture.debugElement.query(By.css('#save-entity')).nativeElement as HTMLButtonElement;
+        expect(saveButton.disabled).toBeFalse();
     });
 });

@@ -40,31 +40,27 @@
                 <span class="d-none d-md-inline">({{ invalidReasons().length }})</span>
             </div>
         }
-        <button type="button" id="cancel-save" class="btn btn-sm btn-secondary" (click)="onCancel.emit()">
+        <button pButton type="button" id="cancel-save" severity="secondary" size="small" (click)="onCancel.emit()">
             <fa-icon [fixedWidth]="true" [icon]="faBan" class="sm" />
             <span class="d-none d-sm-inline" jhiTranslate="entity.action.cancel"></span>
         </button>
         @if (showGenerateWithAi()) {
-            <jhi-button
+            <button
+                pButton
+                type="button"
                 id="generate-with-ai"
-                [shouldToggle]="true"
                 [disabled]="!!invalidReasons().length || isDisabled() || isSaving() || isGeneratingWithAi()"
-                [isLoading]="isGeneratingWithAi()"
-                [icon]="facArtemisIntelligence"
-                [title]="'artemisApp.programmingExercise.codeGeneration.generateWithAi'"
-                (onClick)="generateWithAi.emit()"
-                [btnSize]="ButtonSize.SMALL"
-            />
+                [loading]="isGeneratingWithAi()"
+                size="small"
+                (click)="generateWithAi.emit()"
+            >
+                <fa-icon [fixedWidth]="true" [icon]="facArtemisIntelligence" class="sm" />
+                <span class="d-none d-sm-inline" jhiTranslate="artemisApp.programmingExercise.codeGeneration.generateWithAi"></span>
+            </button>
         }
-        <jhi-button
-            id="save-entity"
-            [shouldToggle]="true"
-            [disabled]="!!invalidReasons().length || isDisabled()"
-            [isLoading]="isSaving()"
-            [icon]="faSave"
-            [title]="saveTitle()"
-            (onClick)="save.emit()"
-            [btnSize]="ButtonSize.SMALL"
-        />
+        <button pButton type="button" id="save-entity" [disabled]="!!invalidReasons().length || isDisabled()" [loading]="isSaving()" size="small" (click)="save.emit()">
+            <fa-icon [fixedWidth]="true" [icon]="faSave" class="sm" />
+            <span class="d-none d-sm-inline">{{ saveTitle() | artemisTranslate }}</span>
+        </button>
     </div>
 </div>
