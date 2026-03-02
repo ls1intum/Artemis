@@ -60,7 +60,7 @@ jhi-iris-citation-text {
         white-space: normal;
         text-align: center;
         z-index: $citation-base-z-index + 1; // Summary tooltip above citation bubble
-        transform: translate(-50%, calc(-100% - 18px)) translateX(var(--iris-citation-shift));
+        transform: translate(-50%, var(--iris-citation-vertical-offset)) translateX(var(--iris-citation-shift));
         opacity: 0;
         visibility: hidden;
         pointer-events: none;
@@ -71,6 +71,11 @@ jhi-iris-citation-text {
         flex-direction: column;
         align-items: center;
         gap: 8px;
+
+        // When flipped to position below, reverse order to put navigation on top
+        &--flipped {
+            flex-direction: column-reverse;
+        }
     }
 
     .iris-citation-group .iris-citation__summary {
