@@ -93,6 +93,20 @@ describe('AssessmentLayoutComponent', () => {
         expect(assessmentNoteComponent).toBeNull();
     });
 
+    it('should hide jhi-assessment-note when submission is cleared after navigating to next submission', () => {
+        fixture.componentRef.setInput('submission', { id: 1 } as Submission);
+        fixture.changeDetectorRef.detectChanges();
+
+        let assessmentNoteComponent = fixture.debugElement.query(By.directive(AssessmentNoteComponent));
+        expect(assessmentNoteComponent).not.toBeNull();
+
+        fixture.componentRef.setInput('submission', undefined);
+        fixture.changeDetectorRef.detectChanges();
+
+        assessmentNoteComponent = fixture.debugElement.query(By.directive(AssessmentNoteComponent));
+        expect(assessmentNoteComponent).toBeNull();
+    });
+
     it('should include jhi-complaints-for-tutor-form', () => {
         let complaintsForTutorComponent = fixture.debugElement.query(By.directive(ComplaintsForTutorComponent));
         expect(complaintsForTutorComponent).toBeFalsy();
