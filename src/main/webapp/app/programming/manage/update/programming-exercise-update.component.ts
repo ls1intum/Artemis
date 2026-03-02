@@ -305,7 +305,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     showGenerateWithAi = computed(() => {
         return (
             this.hyperionEnabledForAi() &&
-            !this.programmingExerciseIdForAi() &&
+            this.programmingExerciseIdForAi() == null &&
             !this.isImportFromExistingExerciseForAi() &&
             !this.isImportFromFileForAi() &&
             !this.isImportFromSharingForAi() &&
@@ -854,7 +854,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         if (this.isSaving || this.isGeneratingWithAi()) {
             return;
         }
-        if (this.isImportFromFile || this.isImportFromSharing || this.isImportFromExistingExercise || this.programmingExercise.id !== undefined || !this.hyperionEnabled) {
+        if (this.isImportFromFile || this.isImportFromSharing || this.isImportFromExistingExercise || this.programmingExercise.id != null || !this.hyperionEnabled) {
             this.saveExercise();
             return;
         }
@@ -932,7 +932,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             });
         } else if (this.isImportFromExistingExercise) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise, this.importOptions));
-        } else if (this.programmingExercise.id !== undefined) {
+        } else if (this.programmingExercise.id != null) {
             const requestOptions = {} as any;
             if (this.notificationText) {
                 requestOptions.notificationText = this.notificationText;

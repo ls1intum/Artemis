@@ -80,7 +80,7 @@ class ProgrammingExerciseRepositoryServiceTest {
         Repository repository = mockRepository(repoPath);
         User user = new User();
 
-        assertThatThrownBy(() -> programmingExerciseRepositoryService.clearRepositorySources(repository, RepositoryType.SOLUTION, user)).isInstanceOf(IllegalStateException.class)
+        assertThatThrownBy(() -> programmingExerciseRepositoryService.clearRepositorySources(repository, RepositoryType.SOLUTION, user)).isInstanceOf(java.io.IOException.class)
                 .hasMessageContaining("no source directory found");
 
         verifyNoInteractions(gitService);
@@ -107,6 +107,25 @@ class ProgrammingExerciseRepositoryServiceTest {
             assertThat(testFiles.map(path -> path.getFileName().toString()).toList()).containsExactly(".gitkeep");
             assertThat(behaviorTestFiles.map(path -> path.getFileName().toString()).toList()).containsExactly(".gitkeep");
             assertThat(structuralTestFiles.map(path -> path.getFileName().toString()).toList()).containsExactly(".gitkeep");
+        }
+
+        verify(gitService).stageAllChanges(repository);
+        verify(gitService).commitAndPush(eq(repository), eq("Cleared tests sources for AI generation"), eq(true), same(user));
+    }
+
+    @Test
+    void clearRepositorySources_testsRepository_removesTestsuiteDirectoryAndAddsGitkeep() throws Exception {
+        Path repoPath = tempDir.resolve("repo");
+        Files.createDirectories(repoPath.resolve("testsuite").resolve("sample.tests"));
+        FileUtils.writeStringToFile(repoPath.resolve("testsuite/sample.tests/test.exp").toFile(), "pass", StandardCharsets.UTF_8);
+
+        Repository repository = mockRepository(repoPath);
+        User user = new User();
+
+        programmingExerciseRepositoryService.clearRepositorySources(repository, RepositoryType.TESTS, user);
+
+        try (var testsuiteFiles = Files.list(repoPath.resolve("testsuite"))) {
+            assertThat(testsuiteFiles.map(path -> path.getFileName().toString()).toList()).containsExactly(".gitkeep");
         }
 
         verify(gitService).stageAllChanges(repository);

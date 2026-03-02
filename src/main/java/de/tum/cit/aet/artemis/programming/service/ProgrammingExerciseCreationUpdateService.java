@@ -163,10 +163,10 @@ public class ProgrammingExerciseCreationUpdateService {
      */
     public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise, boolean emptyRepositories) throws GitAPIException, IOException {
         if (programmingExercise == null) {
-            throw new IllegalArgumentException("ProgrammingExercise must not be null");
+            throw new BadRequestAlertException("ProgrammingExercise must not be null", "ProgrammingExercise", "programmingExerciseNull");
         }
         if (programmingExercise.getBuildConfig() == null) {
-            throw new IllegalArgumentException("ProgrammingExercise build config must not be null");
+            throw new BadRequestAlertException("ProgrammingExercise build config must not be null", "ProgrammingExercise", "buildConfigMissing");
         }
         if (emptyRepositories) {
             validateAiGenerationPreconditions(programmingExercise);

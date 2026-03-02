@@ -75,6 +75,27 @@ class ProgrammingExerciseCreationUpdateServiceTest {
         verifyNoInteractions(userRepository);
     }
 
+    @Test
+    void createProgrammingExercise_nullExercise_throwsBadRequest() {
+        assertThatThrownBy(() -> programmingExerciseCreationUpdateService.createProgrammingExercise(null, false)).isInstanceOfSatisfying(BadRequestAlertException.class, ex -> {
+            assertThat(ex.getMessage()).isEqualTo("ProgrammingExercise must not be null");
+            assertThat(ex.getErrorKey()).isEqualTo("programmingExerciseNull");
+        });
+        verifyNoInteractions(userRepository);
+    }
+
+    @Test
+    void createProgrammingExercise_missingBuildConfig_throwsBadRequest() {
+        var exercise = new ProgrammingExercise();
+        exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+
+        assertThatThrownBy(() -> programmingExerciseCreationUpdateService.createProgrammingExercise(exercise, false)).isInstanceOfSatisfying(BadRequestAlertException.class, ex -> {
+            assertThat(ex.getMessage()).isEqualTo("ProgrammingExercise build config must not be null");
+            assertThat(ex.getErrorKey()).isEqualTo("buildConfigMissing");
+        });
+        verifyNoInteractions(userRepository);
+    }
+
     private static ProgrammingExercise createExercise(ProgrammingLanguage language) {
         var exercise = new ProgrammingExercise();
         exercise.setBuildConfig(new ProgrammingExerciseBuildConfig());

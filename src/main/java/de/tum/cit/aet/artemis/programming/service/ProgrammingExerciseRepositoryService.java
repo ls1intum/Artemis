@@ -159,8 +159,7 @@ public class ProgrammingExerciseRepositoryService {
         final String repositoryLabel = repositoryType.name().toLowerCase(Locale.ROOT);
         List<Path> sourcePaths = getAiGenerationSourcePaths(repository, repositoryType);
         if (sourcePaths.isEmpty()) {
-            throw new IllegalStateException(
-                    "Cannot clear sources for AI generation: no source directory found in " + repositoryLabel + " repository " + repository.getRemoteRepositoryUri());
+            throw new IOException("Cannot clear sources for AI generation: no source directory found in " + repositoryLabel + " repository " + repository.getRemoteRepositoryUri());
         }
         try {
             for (Path sourcePath : sourcePaths) {

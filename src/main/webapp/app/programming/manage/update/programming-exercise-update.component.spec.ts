@@ -417,6 +417,23 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(comp.isGeneratingWithAi()).toBeFalse();
             expect(comp.isSaving).toBeFalse();
         });
+
+        it('should treat null id as a new exercise and use empty repositories setup', () => {
+            const entity = new ProgrammingExercise(course, undefined);
+            entity.releaseDate = dayjs();
+            entity.course = course;
+            entity.id = null as unknown as number;
+
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.hyperionEnabled = true;
+
+            const setupSpy = jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: entity })));
+
+            comp.saveExerciseWithAi();
+
+            expect(setupSpy).toHaveBeenCalledWith(entity, true);
+        });
     });
 
     describe('generate with AI visibility', () => {
@@ -437,6 +454,20 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.programmingExercise = kotlinExercise;
 
             expect(comp.showGenerateWithAi()).toBeFalse();
+        });
+
+        it('should still show when id is null', () => {
+            const entity = new ProgrammingExercise(course, undefined);
+            entity.programmingLanguage = ProgrammingLanguage.JAVA;
+            entity.id = null as unknown as number;
+
+            comp.programmingExercise = entity;
+            comp.hyperionEnabled = true;
+            comp.isImportFromExistingExercise = false;
+            comp.isImportFromFile = false;
+            comp.isImportFromSharing = false;
+
+            expect(comp.showGenerateWithAi()).toBeTrue();
         });
     });
 
