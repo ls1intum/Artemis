@@ -62,7 +62,9 @@
     <!-- Navigation hint for selected item (positioned absolutely) -->
     @if (isSelected()) {
         <div class="result-nav-hint position-absolute text-secondary">
-            <kbd class="key-hint-small">↵</kbd>
+            <kbd class="key-hint-small" aria-label="Press Enter to activate">
+                <fa-icon [icon]="faLevelDownAlt" />
+            </kbd>
         </div>
     }
 </div>

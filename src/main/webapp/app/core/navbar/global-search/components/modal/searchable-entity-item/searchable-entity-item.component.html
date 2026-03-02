@@ -29,7 +29,7 @@
     </div>
 
     <!-- Navigation hint for enabled items (positioned absolutely) -->
-    @if (entity().enabled) {
+    @if (entity().enabled && isSelected()) {
         <div class="entity-nav-hint position-absolute text-secondary">
             <kbd class="key-hint-small">#</kbd>
         </div>
