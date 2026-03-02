@@ -75,13 +75,9 @@ export class PrerequisiteService extends CourseCompetencyService {
             competencyIds: courseCompetencyIds,
         };
         return this.httpClient
-            .post<Array<CompetencyWithTailRelationResponseDTO>>(
-                `${this.resourceURL}/courses/${courseId}/prerequisites/import/bulk`,
-                payload,
-                {
-                    observe: 'response',
-                },
-            )
+            .post<Array<CompetencyWithTailRelationResponseDTO>>(`${this.resourceURL}/courses/${courseId}/prerequisites/import/bulk`, payload, {
+                observe: 'response',
+            })
             .pipe(map((res: HttpResponse<Array<CompetencyWithTailRelationResponseDTO>>) => this.mapPrerequisiteImportResponse(res)));
     }
 
@@ -94,13 +90,9 @@ export class PrerequisiteService extends CourseCompetencyService {
             sourceCourseId,
         };
         return this.httpClient
-            .post<Array<CompetencyWithTailRelationResponseDTO>>(
-                `${this.resourceURL}/courses/${courseId}/prerequisites/import-all`,
-                payload,
-                {
-                    observe: 'response',
-                },
-            )
+            .post<Array<CompetencyWithTailRelationResponseDTO>>(`${this.resourceURL}/courses/${courseId}/prerequisites/import-all`, payload, {
+                observe: 'response',
+            })
             .pipe(map((res: HttpResponse<Array<CompetencyWithTailRelationResponseDTO>>) => this.mapPrerequisiteImportResponse(res)));
     }
 
