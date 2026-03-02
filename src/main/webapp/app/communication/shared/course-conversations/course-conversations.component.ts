@@ -110,7 +110,7 @@ const DEFAULT_COLLAPSE_STATE: CollapseState = {
 };
 
 const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
-    unreadMessages: true,
+    unreadMessages: false,
     generalChannels: true,
     exerciseChannels: false,
     examChannels: false,
