@@ -30,6 +30,7 @@ model/problemStatementGlobalRefinementRequest.ts
 model/problemStatementRefinementResponse.ts
 model/problemStatementRewriteRequest.ts
 model/problemStatementRewriteResponse.ts
+model/problemStatementTargetedRefinementRequest.ts
 model/qualityIssue.ts
 model/qualityIssueLocation.ts
 model/rewriteFaqRequest.ts

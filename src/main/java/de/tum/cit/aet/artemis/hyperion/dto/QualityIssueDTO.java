@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.hyperion.domain.Severity;
  * @param suggestedFix     Concrete suggestion to fix the issue
  * @param impactOnLearners How this increases extraneous cognitive load
  */
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record QualityIssueDTO(QualityIssueCategory category, Severity severity, String description, QualityIssueLocationDTO location, String suggestedFix,
         String impactOnLearners) {
 }
