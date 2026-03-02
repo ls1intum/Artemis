@@ -95,6 +95,7 @@ public class HyperionChecklistService {
         String problemStatement = request.problemStatementMarkdown();
         var input = Map.of("problem_statement", problemStatement);
 
+        // TODO: Replace BloomRadarDTO.empty() with actual Bloom taxonomy analysis in a future PR.
         return Mono.fromCallable(() -> runQualityAnalysis(input, parentObs)).subscribeOn(Schedulers.boundedElastic()).timeout(ANALYSIS_TIMEOUT)
                 .map(issues -> new ChecklistAnalysisResponseDTO(BloomRadarDTO.empty(), issues)).onErrorResume(e -> {
                     log.warn("Checklist analysis timed out or failed (exerciseId={})", request.exerciseId(), e);
@@ -132,11 +133,12 @@ public class HyperionChecklistService {
         var input = Map.of("problem_statement", problemStatement);
         final Observation capturedParentObs = parentObs;
 
+        // TODO: Replace BloomRadarDTO.empty() with actual section-specific analysis in a future PR.
         return Mono.fromCallable(() -> {
             List<QualityIssueDTO> issues = runQualityAnalysis(input, capturedParentObs);
             return new ChecklistAnalysisResponseDTO(BloomRadarDTO.empty(), issues);
         }).subscribeOn(Schedulers.boundedElastic()).timeout(ANALYSIS_TIMEOUT).onErrorResume(e -> {
-            log.warn("Section analysis timed out or failed: QUALITY (exerciseId={})", request.exerciseId(), e);
+            log.warn("Section analysis timed out or failed: {} (exerciseId={})", section, request.exerciseId(), e);
             observation.error(e);
             return Mono.just(ChecklistAnalysisResponseDTO.empty());
         }).doFinally(signal -> observation.stop()).toFuture();

@@ -6,19 +6,8 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { Tag } from 'primeng/tag';
 import { ButtonDirective } from 'primeng/button';
 import { Badge } from 'primeng/badge';
-import {
-    faBolt,
-    faCheckCircle,
-    faChevronDown,
-    faChevronRight,
-    faExclamationTriangle,
-    faInfoCircle,
-    faMagic,
-    faSpinner,
-    faSync,
-    faTrashCan,
-    faWrench,
-} from '@fortawesome/free-solid-svg-icons';
+import { Panel } from 'primeng/panel';
+import { faBolt, faCheckCircle, faExclamationTriangle, faInfoCircle, faMagic, faSpinner, faSync, faTrashCan, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
 import { ChecklistAnalysisResponse } from 'app/openapi/model/checklistAnalysisResponse';
@@ -26,7 +15,6 @@ import { ChecklistActionRequest } from 'app/openapi/model/checklistActionRequest
 import { QualityIssue } from 'app/openapi/model/qualityIssue';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Checkbox } from 'primeng/checkbox';
-import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
@@ -63,7 +51,7 @@ const PENALTY_LOW = 0.1;
     templateUrl: './checklist-panel.component.html',
     styleUrls: ['./checklist-panel.component.scss'],
     standalone: true,
-    imports: [NgClass, DecimalPipe, TranslateModule, FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective, Tag, ButtonDirective, Badge, Checkbox, FormsModule],
+    imports: [NgClass, DecimalPipe, TranslateModule, FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective, Tag, ButtonDirective, Badge, Checkbox, Panel],
 })
 export class ChecklistPanelComponent {
     private hyperionApiService = inject(HyperionProblemStatementApiService);
@@ -140,8 +128,6 @@ export class ChecklistPanelComponent {
     readonly faInfoCircle = faInfoCircle;
     readonly faSpinner = faSpinner;
     readonly faMagic = faMagic;
-    readonly faChevronDown = faChevronDown;
-    readonly faChevronRight = faChevronRight;
     readonly faWrench = faWrench;
     readonly faBolt = faBolt;
     readonly faSync = faSync;
