@@ -150,7 +150,7 @@ public class HyperionReviewCommentContextRendererService {
      * @return sanitized, normalized, single-line-safe text
      */
     private String sanitizeAndNormalizeText(String text) {
-        return normalizeWhitespace(HyperionPromptSanitizer.sanitizeInput(text));
+        return normalizeWhitespace(HyperionUtils.sanitizeInput(text));
     }
 
     /**

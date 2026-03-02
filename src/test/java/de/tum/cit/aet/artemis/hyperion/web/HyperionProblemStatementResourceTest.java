@@ -45,7 +45,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
 
     @Autowired
     private CommentThreadRepository commentThreadRepository;
-  
+
     @Autowired
     private ObjectMapper objectMapper;
 
