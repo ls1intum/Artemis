@@ -21,6 +21,7 @@ import {
     signal,
     untracked,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { MonacoEditorMode } from 'app/shared/monaco-editor/model/monaco-editor.types';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
@@ -77,6 +78,7 @@ import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import { MatButton } from '@angular/material/button';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Tag } from 'primeng/tag';
+import { TranslateService } from '@ngx-translate/core';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { faPaperPlane } from '@fortawesome/free-regular-svg-icons';
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
@@ -165,6 +167,7 @@ const FLOATING_BUTTON_VERTICAL_OFFSET = 5;
 })
 export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterViewInit, OnDestroy {
     private readonly alertService = inject(AlertService);
+    private readonly translateService = inject(TranslateService);
     // We inject the MetisService here to avoid a NullInjectorError in the FileUploaderService.
     private readonly metisService = inject(MetisService, { optional: true });
     private readonly fileUploaderService = inject(FileUploaderService);

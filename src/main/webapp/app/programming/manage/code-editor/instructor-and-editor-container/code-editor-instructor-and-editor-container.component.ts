@@ -1,5 +1,4 @@
-import { Component, DestroyRef, Injector, OnDestroy, TemplateRef, ViewChild, afterNextRender, computed, effect, inject, signal, viewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, Injector, OnDestroy, TemplateRef, ViewChild, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { A11yModule } from '@angular/cdk/a11y';
@@ -215,10 +214,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 this.onInstructionChanged(content);
             },
         });
-    }
-
-    constructor() {
-        super();
         effect(() => {
             if (!this.showConsistencyIssuesToolbar()) {
                 return;

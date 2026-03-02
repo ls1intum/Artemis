@@ -148,9 +148,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * In the code editor view, this is the currently selected participation (template/solution/student).
      */
     readonly participation = input<Participation>();
-    readonly forceRender = input<Observable<void> | undefined>();
-    readonly showPreview = input<boolean>(true);
-    readonly enableExerciseReviewComments = input<boolean>(false);
 
     readonly hasUnsavedChanges = output<boolean>();
     readonly instructionChange = output<string>();
