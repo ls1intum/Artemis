@@ -14,7 +14,6 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.time.ZonedDateTime;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.sshd.client.SshClient;
@@ -194,18 +193,18 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
         KeyPair keyPair = setupKeyPairAndAddToUser();
         User user = userTestRepository.getUser();
 
-        // Capture baseline session count BEFORE connecting
+        // Capture baseline session count BEFORE connecting, scoped to the test user to avoid flakiness under parallel runs
         var baselineServerSessions = sshServer.getActiveSessions();
-        long baselineAttachedSessionCount = baselineServerSessions.stream().filter(Objects::nonNull).count();
+        long baselineAttachedSessionCount = baselineServerSessions.stream().filter(session -> user.getName().equals(session.getUsername())).count();
 
         SshClient client = SshClient.setUpDefaultClient();
         client.start();
 
         ClientSession clientSession = connect(client, user, keyPair);
 
-        // Get current session count AFTER connecting
+        // Get current session count AFTER connecting, scoped to the test user
         var currentServerSessions = sshServer.getActiveSessions();
-        var attachedServerSessions = currentServerSessions.stream().filter(Objects::nonNull).count();
+        var attachedServerSessions = currentServerSessions.stream().filter(session -> user.getName().equals(session.getUsername())).count();
         assertThat(clientSession.isAuthenticated()).isTrue();
         assertThat(attachedServerSessions).as("There are more server sessions activated than expected.").isEqualTo(baselineAttachedSessionCount + 1);
         return client;
