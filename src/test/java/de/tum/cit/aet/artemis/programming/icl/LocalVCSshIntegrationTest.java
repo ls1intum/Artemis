@@ -196,7 +196,7 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
 
         // Capture baseline session count BEFORE connecting
         var baselineServerSessions = sshServer.getActiveSessions();
-        int baselineSessionCount = baselineServerSessions.size();
+        long baselineAttachedSessionCount = baselineServerSessions.stream().filter(Objects::nonNull).count();
 
         SshClient client = SshClient.setUpDefaultClient();
         client.start();
@@ -207,7 +207,7 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
         var currentServerSessions = sshServer.getActiveSessions();
         var attachedServerSessions = currentServerSessions.stream().filter(Objects::nonNull).count();
         assertThat(clientSession.isAuthenticated()).isTrue();
-        assertThat(attachedServerSessions).as("There are more server sessions activated than expected.").isEqualTo(baselineSessionCount + 1);
+        assertThat(attachedServerSessions).as("There are more server sessions activated than expected.").isEqualTo(baselineAttachedSessionCount + 1);
         return client;
     }
 

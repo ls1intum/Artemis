@@ -429,7 +429,7 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
         // Two exams ends within the next 120 minutes
         assertMetricEquals(baselineDueCount + 2, "artemis.scheduled.exams.due.count", "range", "15");
         assertMetricEquals(baselineDueStudents + 2, "artemis.scheduled.exams.due.student_multiplier", "range", "15"); // 2 + 1 students are registered for the exam, but they are
-                                                                                                                      // duplicate users
+                                                                                                                      // duplicated users
 
         var registeredExamUser4 = new ExamUser();
         registeredExamUser4.setUser(users.get(2));
