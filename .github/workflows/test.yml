@@ -132,7 +132,7 @@ jobs:
     - name: Print JaCoCo coverage violations
       if: failure()
       run: |
-        VIOLATIONS=$(grep "Rule violated for bundle" tests.log || true)
+        VIOLATIONS=$(./gradlew --console=plain jacocoTestCoverageVerification 2>&1 | grep -E "Rule violated for bundle|❌ Build failed: Coverage requirements" || true)
         if [ -n "$VIOLATIONS" ]; then
           echo "::error::JaCoCo code coverage thresholds violated:"
           echo "$VIOLATIONS"
