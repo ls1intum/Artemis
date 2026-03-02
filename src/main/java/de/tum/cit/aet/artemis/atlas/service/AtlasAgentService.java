@@ -264,6 +264,7 @@ public class AtlasAgentService {
             CompetencyMappingToolsService.clearCurrentSessionId();
             CompetencyMappingToolsService.clearAllPreviews();
             ExerciseMappingToolsService.clearUserSelectedMappings();
+            ExerciseMappingToolsService.clearExerciseMappingPreview();
         }
 
     }
@@ -464,7 +465,8 @@ public class AtlasAgentService {
                         || (text.contains("REQUIREMENTS:") && text.contains("CONSTRAINTS:") && text.contains("CONTEXT:"));
                 boolean isDelegationMarker = text.contains(DELEGATE_TO_COMPETENCY_EXPERT) || text.contains(DELEGATE_TO_COMPETENCY_MAPPER)
                         || text.contains(DELEGATE_TO_EXERCISE_MAPPER) || text.contains(RETURN_TO_MAIN_AGENT);
-                boolean isActionConfirmation = text.equals(CREATE_APPROVED_RELATION) || text.equals(CREATE_APPROVED_COMPETENCY) || text.equals(CREATE_APPROVED_EXERCISE_MAPPING);
+                boolean isActionConfirmation = text.equals(CREATE_APPROVED_RELATION) || text.equals(CREATE_APPROVED_COMPETENCY) || text.equals(CREATE_APPROVED_EXERCISE_MAPPING)
+                        || text.startsWith(CREATE_APPROVED_EXERCISE_MAPPING + ":");
                 boolean isPlanContinuation = text.startsWith("MULTI-STEP PLAN CONTINUATION");
 
                 if (isBriefing || isDelegationMarker || isActionConfirmation || isPlanContinuation) {
@@ -1002,8 +1004,7 @@ public class AtlasAgentService {
                     + "Call getCourseCompetencies first to get the competency IDs, then call suggestRelationMappingsUsingML or "
                     + "use previewRelationMappings to suggest appropriate relations (ASSUMES, EXTENDS, MATCHES) between them. " + "Set viewOnly=false for the preview.";
             case EXERCISE_MAPPER -> "Map the competencies from the previous step to exercises in the course. "
-                    + "Call listCourseExercises first to see available exercises. If there is only one exercise, immediately proceed to map it. "
-                    + "If multiple exercises exist, ask which exercise to map. " + "Once the exercise is identified: call getCourseCompetencies to get competency IDs, then call "
+                    + "The orchestrator will provide the exercise ID and title. Call getCourseCompetencies to get competency IDs, then call "
                     + "previewExerciseCompetencyMapping with viewOnly=false to show the interactive preview. "
                     + "Do NOT ask the user how they want to adjust mappings - the preview UI is interactive and handles that.";
             case COMPETENCY_EXPERT -> "Create or update competencies as described in the original user request. " + "Use the context from previous steps if available.";

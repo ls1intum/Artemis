@@ -184,11 +184,18 @@
 
                                 @if (!message.exerciseMappingPreview.viewOnly) {
                                     <button
+                                        pButton
                                         type="button"
-                                        class="btn btn-primary btn-sm mt-3"
+                                        size="small"
+                                        class="mt-3"
+                                        [severity]="message.exerciseMappingCreated ? 'success' : 'primary'"
                                         (click)="onApproveExerciseMapping(message)"
-                                        [disabled]="isAgentTyping()"
-                                        jhiTranslate="artemisApp.agent.chat.exerciseMapping.saveMappings"
+                                        [disabled]="isAgentTyping() || message.exerciseMappingCreated"
+                                        [jhiTranslate]="
+                                            message.exerciseMappingCreated
+                                                ? 'artemisApp.agent.chat.success.exerciseMappingCreated'
+                                                : 'artemisApp.agent.chat.exerciseMapping.saveMappings'
+                                        "
                                     ></button>
                                 }
                             </div>

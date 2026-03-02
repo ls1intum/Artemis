@@ -47,7 +47,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     private readonly activeModal = inject(NgbActiveModal);
     private readonly agentChatService = inject(AgentChatService);
     private readonly translateService = inject(TranslateService);
-    private readonly exerciseMappingCheckboxStates = new Map<string, Map<number, boolean>>();
+    private readonly exerciseMappingCheckboxStates = signal(new Map<string, Map<number, boolean>>());
 
     courseId = signal<number>(0);
     messages = signal<ChatMessage[]>([]);
@@ -254,7 +254,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     }
 
     protected onApproveExerciseMapping(message: ChatMessage): void {
-        if (!message.exerciseMappingPreview || message.exerciseMappingPreview.viewOnly) {
+        if (!message.exerciseMappingPreview || message.exerciseMappingPreview.viewOnly || message.exerciseMappingCreated) {
             return;
         }
 
@@ -274,6 +274,9 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         this.agentChatService.sendMessage(approvalMessage, this.courseId()).subscribe({
             next: (response) => {
                 this.isAgentTyping.set(false);
+
+                // Mark this message as saved to prevent resubmission
+                this.messages.update((msgs) => msgs.map((msg) => (msg.id === message.id ? { ...msg, exerciseMappingCreated: true } : msg)));
 
                 this.addMessage(
                     response.message || this.translateService.instant('artemisApp.agent.chat.success.exerciseMappingCreated'),
@@ -300,7 +303,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
      * Gets the checkbox state for a specific competency in exercise mapping
      */
     protected getCompetencyCheckboxState(message: ChatMessage, competencyId: number): boolean {
-        const messageStates = this.exerciseMappingCheckboxStates.get(message.id);
+        const messageStates = this.exerciseMappingCheckboxStates().get(message.id);
         return messageStates?.get(competencyId) ?? false;
     }
 
@@ -308,12 +311,14 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
      * Sets the checkbox state for a specific competency in exercise mapping
      */
     protected setCompetencyCheckboxState(message: ChatMessage, competencyId: number, checked: boolean): void {
-        let messageStates = this.exerciseMappingCheckboxStates.get(message.id);
+        const allStates = this.exerciseMappingCheckboxStates();
+        let messageStates = allStates.get(message.id);
         if (!messageStates) {
             messageStates = new Map<number, boolean>();
-            this.exerciseMappingCheckboxStates.set(message.id, messageStates);
         }
         messageStates.set(competencyId, checked);
+        // Create a new outer Map to trigger signal change detection
+        this.exerciseMappingCheckboxStates.set(new Map(allStates).set(message.id, messageStates));
     }
 
     /**
@@ -324,7 +329,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             return [];
         }
 
-        const messageStates = this.exerciseMappingCheckboxStates.get(message.id);
+        const messageStates = this.exerciseMappingCheckboxStates().get(message.id);
         if (!messageStates) {
             return [];
         }
@@ -425,7 +430,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             exerciseMappingPreview.competencies.forEach((comp) => {
                 checkboxStates.set(comp.competencyId, (comp.alreadyMapped ?? false) || (comp.suggested ?? false));
             });
-            this.exerciseMappingCheckboxStates.set(message.id, checkboxStates);
+            this.exerciseMappingCheckboxStates.update((allStates) => new Map(allStates).set(message.id, checkboxStates));
         }
 
         this.finalizeMessage(message, isUser);
@@ -464,10 +469,16 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     /**
      * Finalizes a message before displaying it:
      * - Detects plan approval markers
+     * - Skips internal delegation briefs (e.g. EXERCISE_ID / EXERCISE_TITLE lines)
      * - Appends it to the message list
      * - Marks for scroll and change detection
      */
     private finalizeMessage(message: ChatMessage, isUser: boolean): void {
+        // Skip internal orchestrator delegation briefs that leaked into history
+        if (isUser && this.isDelegationBrief(message.content)) {
+            return;
+        }
+
         // Detect [PLAN_PENDING] markers and clean message text
         if (!isUser) {
             const cleanedContent = this.removePlanPendingMarkerFromMessageContent(message.content);
@@ -479,6 +490,25 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
 
         this.messages.update((msgs) => [...msgs, message]);
         this.shouldScrollToBottom.set(true);
+    }
+
+    /**
+     * Returns true if the message is an internal system message that should never appear in the chat UI:
+     * - Orchestrator delegation briefs (EXERCISE_ID: / %%ARTEMIS_DELEGATE_TO_)
+     * - Action confirmation commands with JSON payloads ([CREATE_APPROVED_EXERCISE_MAPPING]:{...})
+     */
+    private isDelegationBrief(content: string): boolean {
+        if (!content) {
+            return false;
+        }
+        const trimmed = content.trimStart();
+        return (
+            trimmed.startsWith('EXERCISE_ID:') ||
+            trimmed.startsWith('%%ARTEMIS_DELEGATE_TO_') ||
+            trimmed.startsWith('[CREATE_APPROVED_EXERCISE_MAPPING]:') ||
+            trimmed.startsWith('[CREATE_APPROVED_COMPETENCY]:') ||
+            trimmed.startsWith('[CREATE_APPROVED_RELATION]:')
+        );
     }
 
     /**

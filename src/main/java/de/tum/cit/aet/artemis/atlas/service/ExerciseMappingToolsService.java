@@ -21,11 +21,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
-import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentExerciseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.ExerciseCompetencyMappingDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRequestDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyResponseDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -42,10 +44,8 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
  * by large language models during conversations.
  *
  * Main Responsibilities:
- * - List exercises in a course with their current competency mappings
- * - Preview exercise-to-competency mappings before creation
+ * - Preview exercise-to-competency mappings before creation (with server-side AtlasML suggestions)
  * - Create/update/delete exercise-competency links
- * - Provide AI suggestions for competency mappings based on exercise content
  */
 @Lazy
 @Service
@@ -85,32 +85,16 @@ public class ExerciseMappingToolsService {
             return competencyId;
         }
 
-        public void setCompetencyId(Long competencyId) {
-            this.competencyId = competencyId;
-        }
-
         public Double getWeight() {
             return weight;
-        }
-
-        public void setWeight(Double weight) {
-            this.weight = weight;
         }
 
         public Boolean getAlreadyMapped() {
             return alreadyMapped;
         }
 
-        public void setAlreadyMapped(Boolean alreadyMapped) {
-            this.alreadyMapped = alreadyMapped;
-        }
-
         public Boolean getSuggested() {
             return suggested;
-        }
-
-        public void setSuggested(Boolean suggested) {
-            this.suggested = suggested;
         }
     }
 
@@ -155,17 +139,20 @@ public class ExerciseMappingToolsService {
 
     private final UserRepository userRepository;
 
+    private final AtlasMLApi atlasMLApi;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public ExerciseMappingToolsService(ExerciseRepository exerciseRepository, CourseCompetencyRepository courseCompetencyRepository,
             CompetencyExerciseLinkRepository competencyExerciseLinkRepository, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService,
-            UserRepository userRepository) {
+            UserRepository userRepository, AtlasMLApi atlasMLApi) {
         this.exerciseRepository = exerciseRepository;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.competencyExerciseLinkRepository = competencyExerciseLinkRepository;
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
+        this.atlasMLApi = atlasMLApi;
     }
 
     /**
@@ -196,27 +183,6 @@ public class ExerciseMappingToolsService {
     }
 
     /**
-     * Lists all exercises in a course with their current competency mappings.
-     * Returns a formatted list of exercises showing ID, title, type, and currently mapped competencies.
-     *
-     * @param courseId The course ID
-     * @return JSON string with exercise list or error message
-     */
-    @Tool(description = "Lists all exercises in a course with their IDs, titles and types. Use this when the user wants to map an exercise to competencies."
-            + "Returns a formatted list of exercises with enumeration for easy selection.")
-    public String listCourseExercises(@ToolParam(description = "The ID of the course") Long courseId) {
-        Set<Exercise> exercises = exerciseRepository.findByCourseIds(Set.of(courseId));
-        List<AtlasAgentExerciseDTO> exerciseList = exercises.stream()
-                .map(exercise -> new AtlasAgentExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getType(), exercise.getMaxPoints(),
-                        exercise.getReleaseDate() != null ? exercise.getReleaseDate().toString() : null, exercise.getDueDate() != null ? exercise.getDueDate().toString() : null))
-                .toList();
-
-        record Response(Long courseId, List<AtlasAgentExerciseDTO> exercises) {
-        }
-        return toJson(new Response(courseId, exerciseList));
-    }
-
-    /**
      * Generates a preview of exercise-to-competency mappings before saving.
      * Shows which competencies will be mapped to the exercise with their weights.
      * Existing mappings are marked as alreadyMapped for frontend styling.
@@ -232,11 +198,11 @@ public class ExerciseMappingToolsService {
             Shows which competencies will be linked to the exercise with their weights (LOW=0.25, MEDIUM=0.5, HIGH=1.0).
             Existing mappings are automatically marked as 'alreadyMapped'.
             The preview is displayed to the user for confirmation before applying changes.
-            Only set suggested=true for competencies you proactively recommend that the user did NOT explicitly request.
+            Do NOT set suggested — the server determines AI suggestions automatically via AtlasML.
             """)
     public String previewExerciseCompetencyMapping(@ToolParam(description = "The ID of the course") Long courseId,
             @ToolParam(description = "The ID of the exercise to map") Long exerciseId,
-            @ToolParam(description = "List of competency mappings with competencyId, weight (0.25/0.5/1.0), and suggested flag. Set suggested=true ONLY for competencies you autonomously recommended that the user did NOT explicitly request. Set suggested=false when the user named the competency, when it is already mapped, or when it was derived directly from the user's instructions.") List<ExerciseCompetencyMappingOperation> mappings,
+            @ToolParam(description = "List of competency mappings with competencyId and weight (0.25/0.5/1.0). Do NOT set suggested — the server determines this automatically via AtlasML.") List<ExerciseCompetencyMappingOperation> mappings,
             @ToolParam(description = "If true, display only (no action buttons)") Boolean viewOnly) {
 
         try {
@@ -252,10 +218,22 @@ public class ExerciseMappingToolsService {
             List<CompetencyExerciseLink> existingLinks = competencyExerciseLinkRepository.findByExerciseIdWithCompetency(exerciseId);
             Set<Long> existingCompetencyIds = existingLinks.stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
 
-            ExerciseCompetencyMappingDTO preview = new ExerciseCompetencyMappingDTO(exercise.getId(), exercise.getTitle(),
-                    mappings.stream().map(op -> new ExerciseCompetencyMappingDTO.CompetencyMappingOptionDTO(op.getCompetencyId(), getCompetencyTitle(op.getCompetencyId()),
-                            op.getWeight(), existingCompetencyIds.contains(op.getCompetencyId()), op.getSuggested() != null && op.getSuggested())).toList(),
-                    viewOnly != null && viewOnly);
+            // Fetch AtlasML suggestions using the exercise description (same logic as the exercise edit lightbulb).
+            // Returns null when AtlasML is unavailable — in that case fall back to the LLM's own suggested flags.
+            String description = exercise.getProblemStatement() != null && !exercise.getProblemStatement().isBlank() ? exercise.getProblemStatement() : exercise.getTitle();
+            Set<Long> suggestedIds = fetchSuggestedCompetencyIds(courseId, description);
+            boolean useAtlasML = suggestedIds != null;
+
+            // Bulk-load titles to avoid N+1 queries
+            List<Long> allCompetencyIds = mappings.stream().map(ExerciseCompetencyMappingOperation::getCompetencyId).toList();
+            Map<Long, String> titleById = courseCompetencyRepository.findAllById(allCompetencyIds).stream()
+                    .collect(Collectors.toMap(CourseCompetency::getId, CourseCompetency::getTitle));
+
+            ExerciseCompetencyMappingDTO preview = new ExerciseCompetencyMappingDTO(exercise.getId(), exercise.getTitle(), mappings.stream().map(op -> {
+                boolean suggested = useAtlasML ? suggestedIds.contains(op.getCompetencyId()) : Boolean.TRUE.equals(op.getSuggested());
+                return new ExerciseCompetencyMappingDTO.CompetencyMappingOptionDTO(op.getCompetencyId(), titleById.getOrDefault(op.getCompetencyId(), "Unknown Competency"),
+                        op.getWeight(), existingCompetencyIds.contains(op.getCompetencyId()), suggested);
+            }).toList(), viewOnly != null && viewOnly);
 
             exerciseMappingPreview.set(preview);
 
@@ -312,18 +290,29 @@ public class ExerciseMappingToolsService {
             List<CompetencyExerciseLink> existingLinks = competencyExerciseLinkRepository.findByExerciseIdWithCompetency(exerciseId);
 
             List<Long> newCompetencyIds = mappings.stream().map(ExerciseCompetencyMappingOperation::getCompetencyId).distinct().toList();
-            List<Long> existingCompetencyIds = existingLinks.stream().map(link -> link.getCompetency().getId()).distinct().toList();
+            Map<Long, CompetencyExerciseLink> existingLinksByCompetencyId = existingLinks.stream().collect(Collectors.toMap(link -> link.getCompetency().getId(), link -> link));
 
             List<CompetencyExerciseLink> linksToDelete = existingLinks.stream().filter(link -> !newCompetencyIds.contains(link.getCompetency().getId())).toList();
 
-            List<Long> missingCompetencyIds = mappings.stream().map(ExerciseCompetencyMappingOperation::getCompetencyId).filter(id -> !existingCompetencyIds.contains(id)).toList();
+            // Only load competencies not yet linked — and validate they belong to this course
+            List<Long> missingCompetencyIds = newCompetencyIds.stream().filter(id -> !existingLinksByCompetencyId.containsKey(id)).toList();
 
-            Map<Long, CourseCompetency> competencyById = courseCompetencyRepository.findAllById(missingCompetencyIds).stream()
+            Map<Long, CourseCompetency> competencyById = courseCompetencyRepository.findAllById(missingCompetencyIds).stream().filter(c -> courseId.equals(c.getCourse().getId()))
                     .collect(Collectors.toMap(CourseCompetency::getId, c -> c));
 
             List<CompetencyExerciseLink> linksToCreate = new ArrayList<>();
+            List<CompetencyExerciseLink> linksToUpdate = new ArrayList<>();
+
             for (ExerciseCompetencyMappingOperation mapping : mappings) {
-                if (!existingCompetencyIds.contains(mapping.getCompetencyId())) {
+                CompetencyExerciseLink existing = existingLinksByCompetencyId.get(mapping.getCompetencyId());
+                if (existing != null) {
+                    // Update weight if it changed
+                    if (Double.compare(existing.getWeight(), mapping.getWeight()) != 0) {
+                        existing.setWeight(mapping.getWeight());
+                        linksToUpdate.add(existing);
+                    }
+                }
+                else {
                     CourseCompetency competency = competencyById.get(mapping.getCompetencyId());
                     if (competency != null) {
                         CompetencyExerciseLink link = new CompetencyExerciseLink();
@@ -331,6 +320,9 @@ public class ExerciseMappingToolsService {
                         link.setExercise(exercise);
                         link.setWeight(mapping.getWeight());
                         linksToCreate.add(link);
+                    }
+                    else {
+                        log.warn("Skipping competency {} — not found in course {}", mapping.getCompetencyId(), courseId);
                     }
                 }
             }
@@ -343,11 +335,21 @@ public class ExerciseMappingToolsService {
             if (!linksToCreate.isEmpty()) {
                 competencyExerciseLinkRepository.saveAll(linksToCreate);
                 log.info("Created {} new competency links for exercise {}", linksToCreate.size(), exerciseId);
+                // Notify AtlasML so the exercise's vector embedding reflects the new competency links
+                for (CompetencyExerciseLink link : linksToCreate) {
+                    atlasMLApi.mapCompetencyToExercise(exerciseId, link.getCompetency().getId());
+                }
+            }
+
+            if (!linksToUpdate.isEmpty()) {
+                competencyExerciseLinkRepository.saveAll(linksToUpdate);
+                log.info("Updated weight for {} competency links for exercise {}", linksToUpdate.size(), exerciseId);
             }
 
             exerciseMappingPreview.remove();
 
-            return success(String.format("Successfully updated exercise-competency mappings. Created %d, deleted %d.", linksToCreate.size(), linksToDelete.size()));
+            return success(String.format("Successfully updated exercise-competency mappings. Created %d, updated %d, deleted %d.", linksToCreate.size(), linksToUpdate.size(),
+                    linksToDelete.size()));
 
         }
         catch (Exception e) {
@@ -394,13 +396,25 @@ public class ExerciseMappingToolsService {
     }
 
     /**
-     * Helper method to get competency title by ID.
+     * Calls AtlasML to get competency IDs semantically relevant to the given exercise description.
+     * Uses the same logic as the exercise edit page lightbulb button.
      *
-     * @param competencyId The competency ID
-     * @return The competency title or "Unknown"
+     * @param courseId    the course ID
+     * @param description the exercise problem statement (or title as fallback)
+     * @return set of suggested competency IDs, or {@code null} if AtlasML is unavailable (callers should fall back to LLM judgment)
      */
-    private String getCompetencyTitle(Long competencyId) {
-        return courseCompetencyRepository.findById(competencyId).map(CourseCompetency::getTitle).orElse("Unknown Competency");
+    private Set<Long> fetchSuggestedCompetencyIds(Long courseId, String description) {
+        try {
+            SuggestCompetencyResponseDTO response = atlasMLApi.suggestCompetencies(new SuggestCompetencyRequestDTO(description, courseId));
+            if (response == null || response.competencies() == null) {
+                return Set.of();
+            }
+            return response.competencies().stream().map(c -> c.id()).collect(Collectors.toSet());
+        }
+        catch (Exception e) {
+            log.warn("AtlasML suggestion unavailable for exercise in course {}: {}", courseId, e.getMessage());
+            return null;
+        }
     }
 
     /**

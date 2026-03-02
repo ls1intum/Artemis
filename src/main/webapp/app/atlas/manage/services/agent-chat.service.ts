@@ -64,7 +64,7 @@ export class AgentChatService {
             timeout(30000),
             catchError(() => {
                 return of({
-                    message: this.translateService.instant('artemisApp.agent.chat.error'),
+                    message: this.translateService.instant('artemisApp.agent.chat.error.general'),
                     timestamp: new Date().toISOString(),
                     competenciesModified: false,
                 });
