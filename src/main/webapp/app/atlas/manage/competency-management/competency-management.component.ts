@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, effect, inject, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, PendingTasks, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CompetencyWithTailRelationDTO, CourseCompetency, CourseCompetencyType, getIcon } from 'app/atlas/shared/entities/competency.model';
@@ -67,6 +67,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     private readonly featureToggleService = inject(FeatureToggleService);
     private readonly localStorageService = inject(LocalStorageService);
     private readonly accountService = inject(AccountService);
+    private readonly pendingTasks = inject(PendingTasks);
 
     readonly courseId = toSignal(this.activatedRoute.parent!.params.pipe(map((params) => Number(params.courseId))), { requireSync: true });
     readonly isLoading = signal<boolean>(false);
@@ -123,6 +124,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     }
 
     private async loadCourseCompetencies(courseId: number) {
+        const done = this.pendingTasks.add();
         try {
             this.isLoading.set(true);
             const [competenciesResult, progressResult] = await Promise.allSettled([
@@ -145,6 +147,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             this.alertService.error(error);
         } finally {
             this.isLoading.set(false);
+            done();
         }
     }
 
