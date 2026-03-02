@@ -81,9 +81,36 @@ class ProgrammingExerciseRepositoryServiceTest {
         User user = new User();
 
         assertThatThrownBy(() -> programmingExerciseRepositoryService.clearRepositorySources(repository, RepositoryType.SOLUTION, user)).isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("no src directory found");
+                .hasMessageContaining("no source directory found");
 
         verifyNoInteractions(gitService);
+    }
+
+    @Test
+    void clearRepositorySources_testsRepository_removesTestDirectoriesAndAddsGitkeep() throws Exception {
+        Path repoPath = tempDir.resolve("repo");
+        Files.createDirectories(repoPath.resolve("test"));
+        Files.createDirectories(repoPath.resolve("behavior").resolve("test"));
+        Files.createDirectories(repoPath.resolve("structural").resolve("test"));
+        FileUtils.writeStringToFile(repoPath.resolve("test/SomeTest.java").toFile(), "class SomeTest {}", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(repoPath.resolve("behavior/test/BehaviorTest.java").toFile(), "class BehaviorTest {}", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(repoPath.resolve("structural/test/StructuralTest.java").toFile(), "class StructuralTest {}", StandardCharsets.UTF_8);
+
+        Repository repository = mockRepository(repoPath);
+        User user = new User();
+
+        programmingExerciseRepositoryService.clearRepositorySources(repository, RepositoryType.TESTS, user);
+
+        try (var testFiles = Files.list(repoPath.resolve("test"));
+                var behaviorTestFiles = Files.list(repoPath.resolve("behavior").resolve("test"));
+                var structuralTestFiles = Files.list(repoPath.resolve("structural").resolve("test"))) {
+            assertThat(testFiles.map(path -> path.getFileName().toString()).toList()).containsExactly(".gitkeep");
+            assertThat(behaviorTestFiles.map(path -> path.getFileName().toString()).toList()).containsExactly(".gitkeep");
+            assertThat(structuralTestFiles.map(path -> path.getFileName().toString()).toList()).containsExactly(".gitkeep");
+        }
+
+        verify(gitService).stageAllChanges(repository);
+        verify(gitService).commitAndPush(eq(repository), eq("Cleared tests sources for AI generation"), eq(true), same(user));
     }
 
     private Repository mockRepository(Path repoPath) {

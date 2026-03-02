@@ -131,14 +131,15 @@ public class ProgrammingExerciseRepositoryService {
         setupRepositories(programmingExercise, exerciseCreator, exerciseResources, solutionResources, testResources);
 
         if (emptyRepositories) {
-            clearRepositoriesForAiGenerationKeepingTests(exerciseResources.repository, solutionResources.repository, exerciseCreator);
+            clearRepositoriesForAiGeneration(exerciseResources.repository, solutionResources.repository, testResources.repository, exerciseCreator);
         }
     }
 
-    private void clearRepositoriesForAiGenerationKeepingTests(final Repository templateRepository, final Repository solutionRepository, final User exerciseCreator)
-            throws IOException, GitAPIException {
+    private void clearRepositoriesForAiGeneration(final Repository templateRepository, final Repository solutionRepository, final Repository testRepository,
+            final User exerciseCreator) throws IOException, GitAPIException {
         clearRepositorySources(templateRepository, RepositoryType.TEMPLATE, exerciseCreator);
         clearRepositorySources(solutionRepository, RepositoryType.SOLUTION, exerciseCreator);
+        clearRepositorySources(testRepository, RepositoryType.TESTS, exerciseCreator);
     }
 
     private record RepositoryResources(Repository repository, Resource[] resources, Path prefix, Resource[] projectTypeResources, Path projectTypePrefix,
@@ -156,16 +157,18 @@ public class ProgrammingExerciseRepositoryService {
      */
     void clearRepositorySources(final Repository repository, final RepositoryType repositoryType, final User exerciseCreator) throws IOException, GitAPIException {
         final String repositoryLabel = repositoryType.name().toLowerCase(Locale.ROOT);
-        Path sourcePath = repository.getLocalPath().resolve("src");
-        if (!Files.exists(sourcePath)) {
+        List<Path> sourcePaths = getAiGenerationSourcePaths(repository, repositoryType);
+        if (sourcePaths.isEmpty()) {
             throw new IllegalStateException(
-                    "Cannot clear sources for AI generation: no src directory found in " + repositoryLabel + " repository " + repository.getRemoteRepositoryUri());
+                    "Cannot clear sources for AI generation: no source directory found in " + repositoryLabel + " repository " + repository.getRemoteRepositoryUri());
         }
         try {
-            FileUtils.cleanDirectory(sourcePath.toFile());
-            Path keepFile = sourcePath.resolve(".gitkeep");
-            if (!Files.exists(keepFile)) {
-                Files.createFile(keepFile);
+            for (Path sourcePath : sourcePaths) {
+                FileUtils.cleanDirectory(sourcePath.toFile());
+                Path keepFile = sourcePath.resolve(".gitkeep");
+                if (!Files.exists(keepFile)) {
+                    Files.createFile(keepFile);
+                }
             }
             commitAndPushRepository(repository, "Cleared " + repositoryLabel + " sources for AI generation", true, exerciseCreator);
         }
@@ -173,6 +176,17 @@ public class ProgrammingExerciseRepositoryService {
             log.error("Failed to clean {} sources for AI generation", repositoryLabel, ex);
             throw ex;
         }
+    }
+
+    private static List<Path> getAiGenerationSourcePaths(final Repository repository, final RepositoryType repositoryType) {
+        final Path repositoryPath = repository.getLocalPath();
+        final List<Path> possibleSourcePaths = switch (repositoryType) {
+            case TEMPLATE, SOLUTION -> List.of(repositoryPath.resolve("src"));
+            case TESTS -> List.of(repositoryPath.resolve("test"), repositoryPath.resolve("behavior").resolve("test"), repositoryPath.resolve("structural").resolve("test"),
+                    repositoryPath.resolve("testsuite"));
+            default -> List.of();
+        };
+        return possibleSourcePaths.stream().filter(Files::exists).filter(Files::isDirectory).toList();
     }
 
     /**
