@@ -120,7 +120,8 @@ jobs:
         path: build/test-results/test/*.xml
     - name: Print failed tests
       if: failure()
-      run: grep "Test >.* FAILED\$" tests.log || echo "No failed tests."
+      # DataExportResourceIntegrationTest has a parameterized test with a FAILED enum and needs to be excluded, as it is not an actual test failure
+      run: grep "Test >.* FAILED\$" tests.log | grep -v "Starting logs for .* > .*state = FAILED\$" || echo "No failed tests."
     - name: "Codacy: Report coverage"
       uses: codacy/codacy-coverage-reporter-action@master
       with:
