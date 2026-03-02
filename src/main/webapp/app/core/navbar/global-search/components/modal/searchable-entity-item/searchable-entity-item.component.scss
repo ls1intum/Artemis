@@ -24,6 +24,11 @@
         .entity-description {
             color: var(--bs-secondary);
         }
+
+        &.selected {
+            background-color: rgba(var(--bs-light-rgb), 0.5);
+            border-left: 3px solid var(--bs-secondary);
+        }
     }
 }
 
