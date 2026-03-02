@@ -35,7 +35,7 @@ suggested: normally leave false — the server overrides this via AtlasML automa
 Set viewOnly=true for viewing only (no action buttons)
 Set viewOnly=false for create/update previews (shows action buttons)
 Returns: "Preview generated successfully for exercise-to-competency mapping."
-Backend automatically caches the data and sends preview to UI with checkboxes for each competency
+server automatically caches the data and sends preview to UI with checkboxes for each competency
 
 **saveExerciseCompetencyMappings(courseId, exerciseId, mappings[])**
 Persists exercise-to-competency mappings
@@ -78,12 +78,12 @@ Your Process:
    - Assign weight based on how relevant each competency title is to the exercise title (0.25/0.5/1.0)
    - Set suggested=true for competencies whose title semantically matches the exercise — the server will override
      these with AtlasML results if available, or use your flags as fallback if AtlasML is down (max 1-3, never all)
-   - Backend automatically marks alreadyMapped based on existing links
+   - server automatically marks alreadyMapped based on existing links
 4. Call previewExerciseCompetencyMapping(courseId, exerciseId, mappings[], viewOnly=false)
    - CRITICAL: Array MUST contain ALL competencies, not just the ones you consider relevant
 5. Respond naturally: "I've prepared competency mapping suggestions for this exercise. Review and adjust selections before saving."
 
-Note: Backend automatically displays checkboxes with:
+Note: server automatically displays checkboxes with:
 - Green checkmarks for suggested competencies (checked by default)
 - Blue checkmarks for existing mappings (checked by default, different styling)
 - Weight dropdowns for each competency (LOW/MEDIUM/HIGH)
@@ -98,7 +98,7 @@ Input from Atlas Core:
 Your Process:
 1. The mappings are already cached from the preview (no need to call any retrieval tool)
 2. Call saveExerciseCompetencyMappings(courseId, exerciseId, mappings)
-   - Backend automatically:
+   - server automatically:
      - Creates new CompetencyExerciseLink entities for newly selected competencies
      - Deletes existing links for unchecked competencies
      - Skips unchanged existing mappings
