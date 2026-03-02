@@ -3,6 +3,8 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
 
 import { Organization } from 'app/core/shared/entities/organization.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { User } from 'app/core/user/user.model';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { PageableResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
 
@@ -49,15 +51,6 @@ export class OrganizationManagementService {
      */
     getOrganizationById(organizationId: number): Observable<Organization> {
         return this.http.get(`${this.adminResourceUrl}/${organizationId}`).pipe(tap((org) => this.sendTitlesToEntityTitleService(org)));
-    }
-
-    /**
-     * Send GET request to retrieve an organization by Id with
-     * its list of users and courses
-     * @param organizationId
-     */
-    getOrganizationByIdWithUsersAndCourses(organizationId: number): Observable<Organization> {
-        return this.http.get(`${this.adminResourceUrl}/${organizationId}/full`).pipe(tap((org) => this.sendTitlesToEntityTitleService(org)));
     }
 
     /**
@@ -116,6 +109,48 @@ export class OrganizationManagementService {
      */
     addUserToOrganization(organizationId: number, userLogin: string): Observable<HttpResponse<void>> {
         return this.http.post<void>(`${this.adminResourceUrl}/${organizationId}/users/${userLogin}`, {}, { observe: 'response' });
+    }
+
+    /**
+     * Send GET request to retrieve a paginated list of users belonging to an organization
+     * @param organizationId the id of the organization
+     * @param params         the search and pagination parameters
+     * @returns an observable emitting a pageable result containing the matching users and total element count
+     */
+    getOrganizationUsers(organizationId: number, params: SearchTermPageableSearch): Observable<PageableResult<User>> {
+        return this.http
+            .get<User[]>(`${this.adminResourceUrl}/${organizationId}/users`, {
+                params: {
+                    page: params.page,
+                    pageSize: params.pageSize,
+                    sortingOrder: params.sortingOrder,
+                    sortedColumn: params.sortedColumn,
+                    searchTerm: params.searchTerm,
+                },
+                observe: 'response',
+            })
+            .pipe(map((res) => ({ content: res.body ?? [], totalElements: Number(res.headers.get('X-Total-Count') ?? 0) })));
+    }
+
+    /**
+     * Send GET request to retrieve a paginated list of courses belonging to an organization
+     * @param organizationId the id of the organization
+     * @param params         the search and pagination parameters
+     * @returns an observable emitting a pageable result containing the matching courses and total element count
+     */
+    getOrganizationCourses(organizationId: number, params: SearchTermPageableSearch): Observable<PageableResult<Course>> {
+        return this.http
+            .get<Course[]>(`${this.adminResourceUrl}/${organizationId}/courses`, {
+                params: {
+                    page: params.page,
+                    pageSize: params.pageSize,
+                    sortingOrder: params.sortingOrder,
+                    sortedColumn: params.sortedColumn,
+                    searchTerm: params.searchTerm,
+                },
+                observe: 'response',
+            })
+            .pipe(map((res) => ({ content: res.body ?? [], totalElements: Number(res.headers.get('X-Total-Count') ?? 0) })));
     }
 
     private sendTitlesToEntityTitleService(org: Organization | undefined | null) {

@@ -46,16 +46,6 @@ describe('Organization Service', () => {
         expect(result).toMatchObject(elemDefault);
     });
 
-    it('should return an Organization with Users and Courses', async () => {
-        const resultPromise = firstValueFrom(service.getOrganizationByIdWithUsersAndCourses(0));
-
-        const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(elemDefault);
-
-        const result = await resultPromise;
-        expect(result).toEqual(elemDefault);
-    });
-
     it('should return all Organizations a course is assigned to', async () => {
         const returnElement = createTestReturnElement();
         const resultPromise = firstValueFrom(service.getOrganizationsByCourse(1));
