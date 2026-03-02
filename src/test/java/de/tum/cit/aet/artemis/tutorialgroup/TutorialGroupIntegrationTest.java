@@ -255,6 +255,20 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         oneOfCoursePrivateInfoShownTest(loadFromService, TEST_PREFIX + "instructor1", true);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getOneOfCourse_asInstructor_shouldNotExposeRegistrationNumber() throws Exception {
+        var responseBody = request.get("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId, HttpStatus.OK, String.class);
+        var tutorialGroupResponse = request.getObjectMapper().readTree(responseBody);
+        var registrations = tutorialGroupResponse.path("registrations");
+
+        assertThat(registrations.isArray()).isTrue();
+        assertThat(registrations.size()).isPositive();
+        for (var registration : registrations) {
+            assertThat(registration.path("student").has("registrationNumber")).isFalse();
+        }
+    }
+
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")

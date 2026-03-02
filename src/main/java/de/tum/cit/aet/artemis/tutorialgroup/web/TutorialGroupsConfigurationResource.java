@@ -126,7 +126,7 @@ public class TutorialGroupsConfigurationResource {
      * @param courseId                             the id of the course to which the tutorial groups configuration belongs
      * @param tutorialGroupsConfigurationId        the id of the tutorial groups configuration to update
      * @param updatedTutorialGroupConfigurationDto the configuration dto to update
-     * @return the ResponseEntity with status 200 (OK) and with body the updated tutorial group configuration dto
+     * @return the ResponseEntity with status 200 (OK) and with body the updated tutorial group configuration
      */
     @PutMapping("courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}")
     @EnforceAtLeastInstructor
@@ -237,7 +237,6 @@ public class TutorialGroupsConfigurationResource {
             }
         });
     }
-
     private static void checkCourseTimeZone(Course course) {
         if (course.getTimeZone() == null) {
             throw new BadRequestAlertException("The course has no configured time zone.", ENTITY_NAME, "courseHasNoTimeZone");

@@ -8,7 +8,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.time.ZoneId;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -73,6 +72,8 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailGroupDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupResponseDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupUpdateDataDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManagementService;
@@ -185,7 +186,7 @@ public class TutorialGroupResource {
      */
     @GetMapping("courses/{courseId}/tutorial-groups")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<TutorialGroup>> getAllForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<List<TutorialGroupResponseDTO>> getAllForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all tutorial groups of course with id: {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -193,7 +194,7 @@ public class TutorialGroupResource {
         boolean isAdminOrInstructor = isAdminOrInstructorOfCourse(user, course);
         // ToDo: Optimization Idea: Do not send all registered student information but just the number in a DTO
         var tutorialGroups = tutorialGroupService.findAllForCourse(course, user, isAdminOrInstructor);
-        return ResponseEntity.ok(new ArrayList<>(tutorialGroups));
+        return ResponseEntity.ok(tutorialGroups.stream().map(TutorialGroupResponseDTO::from).toList());
     }
 
     /**
@@ -205,13 +206,13 @@ public class TutorialGroupResource {
      */
     @GetMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<TutorialGroup> getOneOfCourse(@PathVariable Long courseId, @PathVariable Long tutorialGroupId) {
+    public ResponseEntity<TutorialGroupResponseDTO> getOneOfCourse(@PathVariable Long courseId, @PathVariable Long tutorialGroupId) {
         log.debug("REST request to get tutorial group: {} of course: {}", tutorialGroupId, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         boolean isAdminOrInstructor = isAdminOrInstructorOfCourse(user, course);
         var tutorialGroup = tutorialGroupService.getOneOfCourse(course, tutorialGroupId, user, isAdminOrInstructor);
-        return ResponseEntity.ok().body(tutorialGroup);
+        return ResponseEntity.ok().body(TutorialGroupResponseDTO.from(tutorialGroup));
     }
 
     /**
@@ -247,7 +248,7 @@ public class TutorialGroupResource {
      */
     @PostMapping("courses/{courseId}/tutorial-groups")
     @EnforceAtLeastInstructor
-    public ResponseEntity<TutorialGroup> create(@PathVariable Long courseId, @RequestBody @Valid TutorialGroupDTO tutorialGroupDTO) throws URISyntaxException {
+    public ResponseEntity<TutorialGroupResponseDTO> create(@PathVariable Long courseId, @RequestBody @Valid TutorialGroupDTO tutorialGroupDTO) throws URISyntaxException {
         log.debug("REST request to create TutorialGroup: {} in course: {}", tutorialGroupDTO, courseId);
         if (tutorialGroupDTO.id() != null) {
             throw new BadRequestException("A new tutorial group cannot already have an ID");
@@ -265,22 +266,10 @@ public class TutorialGroupResource {
             throw new BadRequestException("The course has no time zone");
         }
 
-        // Convert DTO to entity
-        TutorialGroup tutorialGroup = new TutorialGroup();
+        TutorialGroup tutorialGroup = mapTutorialGroupDTOToEntity(tutorialGroupDTO);
         tutorialGroup.setCourse(course);
-        tutorialGroup.setTitle(tutorialGroupDTO.title());
-        tutorialGroup.setAdditionalInformation(tutorialGroupDTO.additionalInformation());
-        tutorialGroup.setCapacity(tutorialGroupDTO.capacity());
-        tutorialGroup.setIsOnline(tutorialGroupDTO.isOnline());
-        tutorialGroup.setLanguage(tutorialGroupDTO.language());
-        tutorialGroup.setCampus(tutorialGroupDTO.campus());
 
-        // Look up teaching assistant from database if provided
-        User teachingAssistant = null;
-        if (tutorialGroupDTO.teachingAssistant() != null && tutorialGroupDTO.teachingAssistant().login() != null) {
-            teachingAssistant = userRepository.findOneByLogin(tutorialGroupDTO.teachingAssistant().login()).orElse(null);
-            tutorialGroup.setTeachingAssistant(teachingAssistant);
-        }
+        User teachingAssistant = tutorialGroup.getTeachingAssistant();
 
         trimStringFields(tutorialGroup);
         checkTitleIsValid(tutorialGroup);
@@ -299,7 +288,7 @@ public class TutorialGroupResource {
         }
 
         return ResponseEntity.created(new URI("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + persistedTutorialGroup.getId()))
-                .body(TutorialGroup.preventCircularJsonConversion(persistedTutorialGroup));
+                .body(TutorialGroupResponseDTO.from(persistedTutorialGroup));
     }
 
     /**
@@ -339,8 +328,13 @@ public class TutorialGroupResource {
      * @param updateTutorialGroupChannelName whether the tutorial group channel name should be updated with the new tutorial group title or not
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record TutorialGroupUpdateDTO(@Valid @NotNull TutorialGroup tutorialGroup, @Size(min = 1, max = 1000) @Nullable String notificationText,
+    public record TutorialGroupUpdateDTO(@Valid @NotNull TutorialGroupUpdateDataDTO tutorialGroup, @Size(min = 1, max = 1000) @Nullable String notificationText,
             @Nullable Boolean updateTutorialGroupChannelName) {
+
+        public TutorialGroupUpdateDTO(@Valid @NotNull TutorialGroup tutorialGroup, @Size(min = 1, max = 1000) @Nullable String notificationText,
+                @Nullable Boolean updateTutorialGroupChannelName) {
+            this(TutorialGroupUpdateDataDTO.from(tutorialGroup), notificationText, updateTutorialGroupChannelName);
+        }
     }
 
     /**
@@ -353,9 +347,9 @@ public class TutorialGroupResource {
      */
     @PutMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}")
     @EnforceAtLeastInstructor
-    public ResponseEntity<TutorialGroup> update(@PathVariable long courseId, @PathVariable long tutorialGroupId,
+    public ResponseEntity<TutorialGroupResponseDTO> update(@PathVariable long courseId, @PathVariable long tutorialGroupId,
             @RequestBody @Valid TutorialGroupUpdateDTO tutorialGroupUpdateDTO) {
-        TutorialGroup updatedTutorialGroup = tutorialGroupUpdateDTO.tutorialGroup();
+        TutorialGroup updatedTutorialGroup = mapTutorialGroupUpdateDTOToEntity(tutorialGroupUpdateDTO.tutorialGroup());
         log.debug("REST request to update TutorialGroup : {}", updatedTutorialGroup);
         if (updatedTutorialGroup.getId() == null) {
             throw new BadRequestException("A tutorial group cannot be updated without an id");
@@ -382,7 +376,7 @@ public class TutorialGroupResource {
         }
         if (!oldTutorialGroup.getTitle().equals(updatedTutorialGroup.getTitle())) {
             checkTitleIsValid(updatedTutorialGroup);
-            if (configuration.getUseTutorialGroupChannels() && tutorialGroupUpdateDTO.updateTutorialGroupChannelName()) {
+            if (configuration.getUseTutorialGroupChannels() && Boolean.TRUE.equals(tutorialGroupUpdateDTO.updateTutorialGroupChannelName())) {
                 tutorialGroupChannelManagementService.updateNameOfTutorialGroupChannel(updatedTutorialGroup);
             }
         }
@@ -433,7 +427,7 @@ public class TutorialGroupResource {
                 Optional.ofNullable(updatedTutorialGroup.getTutorialGroupSchedule()));
         persistedTutorialGroup = tutorialGroupRepository.findByIdElseThrow(persistedTutorialGroup.getId());
 
-        return ResponseEntity.ok(TutorialGroup.preventCircularJsonConversion(persistedTutorialGroup));
+        return ResponseEntity.ok(TutorialGroupResponseDTO.from(persistedTutorialGroup));
     }
 
     /**
@@ -524,6 +518,48 @@ public class TutorialGroupResource {
         var registrations = tutorialGroupService.importRegistrations(courseFromDatabase, importDTOs);
         var sortedRegistrations = registrations.stream().sorted(Comparator.comparing(TutorialGroupRegistrationImportDTO::title)).toList();
         return ResponseEntity.ok().body(sortedRegistrations);
+    }
+
+    private TutorialGroup mapTutorialGroupDTOToEntity(TutorialGroupDTO tutorialGroupDTO) {
+        TutorialGroup tutorialGroup = new TutorialGroup();
+        tutorialGroup.setId(tutorialGroupDTO.id());
+        tutorialGroup.setTitle(tutorialGroupDTO.title());
+        tutorialGroup.setAdditionalInformation(tutorialGroupDTO.additionalInformation());
+        tutorialGroup.setCapacity(tutorialGroupDTO.capacity());
+        tutorialGroup.setIsOnline(tutorialGroupDTO.isOnline());
+        tutorialGroup.setLanguage(tutorialGroupDTO.language());
+        tutorialGroup.setCampus(tutorialGroupDTO.campus());
+
+        if (tutorialGroupDTO.teachingAssistant() != null && StringUtils.hasText(tutorialGroupDTO.teachingAssistant().login())) {
+            tutorialGroup.setTeachingAssistant(userRepository.findOneByLogin(tutorialGroupDTO.teachingAssistant().login()).orElse(null));
+        }
+        else {
+            tutorialGroup.setTeachingAssistant(null);
+        }
+
+        return tutorialGroup;
+    }
+
+    private TutorialGroup mapTutorialGroupUpdateDTOToEntity(TutorialGroupUpdateDataDTO tutorialGroupDTO) {
+        TutorialGroup tutorialGroup = mapTutorialGroupDTOToEntity(tutorialGroupDTO.toTutorialGroupDTO());
+        tutorialGroup.setTutorialGroupSchedule(mapTutorialGroupScheduleDTOToEntity(tutorialGroupDTO.tutorialGroupSchedule()));
+        return tutorialGroup;
+    }
+
+    private TutorialGroupSchedule mapTutorialGroupScheduleDTOToEntity(TutorialGroupUpdateDataDTO.TutorialGroupScheduleDTO tutorialGroupScheduleDTO) {
+        if (tutorialGroupScheduleDTO == null) {
+            return null;
+        }
+        TutorialGroupSchedule tutorialGroupSchedule = new TutorialGroupSchedule();
+        tutorialGroupSchedule.setId(tutorialGroupScheduleDTO.id());
+        tutorialGroupSchedule.setDayOfWeek(tutorialGroupScheduleDTO.dayOfWeek());
+        tutorialGroupSchedule.setStartTime(tutorialGroupScheduleDTO.startTime());
+        tutorialGroupSchedule.setEndTime(tutorialGroupScheduleDTO.endTime());
+        tutorialGroupSchedule.setRepetitionFrequency(tutorialGroupScheduleDTO.repetitionFrequency());
+        tutorialGroupSchedule.setValidFromInclusive(tutorialGroupScheduleDTO.validFromInclusive());
+        tutorialGroupSchedule.setValidToInclusive(tutorialGroupScheduleDTO.validToInclusive());
+        tutorialGroupSchedule.setLocation(tutorialGroupScheduleDTO.location());
+        return tutorialGroupSchedule;
     }
 
     private void trimStringFields(TutorialGroup tutorialGroup) {

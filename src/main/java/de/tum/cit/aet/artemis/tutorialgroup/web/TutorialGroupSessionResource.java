@@ -51,6 +51,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupResponseDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.exception.SessionOverlapsWithSessionException;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupFreePeriodRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
@@ -112,7 +113,8 @@ public class TutorialGroupSessionResource {
      */
     @GetMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<TutorialGroupSession> getOneOfTutorialGroup(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId) {
+    public ResponseEntity<TutorialGroupResponseDTO.TutorialGroupSessionDTO> getOneOfTutorialGroup(@PathVariable Long courseId, @PathVariable Long tutorialGroupId,
+            @PathVariable Long sessionId) {
         log.debug("REST request to get session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         var session = tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
@@ -122,7 +124,7 @@ public class TutorialGroupSessionResource {
         if (!tutorialGroupService.userHasManagingRightsForTutorialGroup(session.getTutorialGroup(), user, isAdminOrInstructor)) {
             session.hidePrivacySensitiveInformation();
         }
-        return ResponseEntity.ok().body(TutorialGroupSession.preventCircularJsonConversion(session));
+        return ResponseEntity.ok().body(TutorialGroupResponseDTO.TutorialGroupSessionDTO.from(session));
     }
 
     /**
@@ -136,7 +138,7 @@ public class TutorialGroupSessionResource {
      */
     @PutMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}")
     @EnforceAtLeastTutor
-    public ResponseEntity<TutorialGroupSession> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
+    public ResponseEntity<TutorialGroupResponseDTO.TutorialGroupSessionDTO> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
             @RequestBody @Valid TutorialGroupSessionRequestDTO tutorialGroupSessionDTO) {
         log.debug("REST request to update session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         tutorialGroupSessionDTO.validityCheck();
@@ -170,7 +172,7 @@ public class TutorialGroupSessionResource {
 
         TutorialGroupSession result = tutorialGroupSessionRepository.save(sessionToUpdate);
 
-        return ResponseEntity.ok(TutorialGroupSession.preventCircularJsonConversion(result));
+        return ResponseEntity.ok(TutorialGroupResponseDTO.TutorialGroupSessionDTO.from(result));
     }
 
     private Pair<User, Boolean> getUserAndCheckWhetherTheyAreAdminOrInstructor(long courseId) {
@@ -191,8 +193,8 @@ public class TutorialGroupSessionResource {
      */
     @PatchMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/attendance-count")
     @EnforceAtLeastTutor
-    public ResponseEntity<TutorialGroupSession> updateAttendanceCount(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
-            @RequestParam(required = false) @Min(0) @Max(3000) Integer attendanceCount) {
+    public ResponseEntity<TutorialGroupResponseDTO.TutorialGroupSessionDTO> updateAttendanceCount(@PathVariable Long courseId, @PathVariable Long tutorialGroupId,
+            @PathVariable Long sessionId, @RequestParam(required = false) @Min(0) @Max(3000) Integer attendanceCount) {
         log.debug("REST request to update attendance count of session: {} of tutorial group: {} of course {} to {}", sessionId, tutorialGroupId, courseId, attendanceCount);
         var sessionToUpdate = this.tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
         checkEntityIdMatchesPathIds(sessionToUpdate, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));
@@ -203,7 +205,7 @@ public class TutorialGroupSessionResource {
 
         sessionToUpdate.setAttendanceCount(attendanceCount);
         var result = tutorialGroupSessionRepository.save(sessionToUpdate);
-        return ResponseEntity.ok(TutorialGroupSession.preventCircularJsonConversion(result));
+        return ResponseEntity.ok(TutorialGroupResponseDTO.TutorialGroupSessionDTO.from(result));
     }
 
     /**
@@ -239,7 +241,7 @@ public class TutorialGroupSessionResource {
      */
     @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions")
     @EnforceAtLeastTutor
-    public ResponseEntity<TutorialGroupSession> create(@PathVariable Long courseId, @PathVariable Long tutorialGroupId,
+    public ResponseEntity<TutorialGroupResponseDTO.TutorialGroupSessionDTO> create(@PathVariable Long courseId, @PathVariable Long tutorialGroupId,
             @RequestBody @Valid TutorialGroupSessionRequestDTO tutorialGroupSessionDTO) throws URISyntaxException {
         log.debug("REST request to create TutorialGroupSession: {} for tutorial group: {}", tutorialGroupSessionDTO, tutorialGroupId);
         tutorialGroupSessionDTO.validityCheck();
@@ -261,7 +263,7 @@ public class TutorialGroupSessionResource {
         newSession = tutorialGroupSessionRepository.save(newSession);
 
         return ResponseEntity.created(URI.create("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + tutorialGroupId + "/sessions/" + newSession.getId()))
-                .body(TutorialGroupSession.preventCircularJsonConversion(newSession));
+                .body(TutorialGroupResponseDTO.TutorialGroupSessionDTO.from(newSession));
     }
 
     private TutorialGroupsConfiguration validateTutorialGroupConfiguration(@PathVariable Long courseId) {
@@ -285,7 +287,7 @@ public class TutorialGroupSessionResource {
      */
     @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/cancel")
     @EnforceAtLeastTutor
-    public ResponseEntity<TutorialGroupSession> cancel(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
+    public ResponseEntity<TutorialGroupResponseDTO.TutorialGroupSessionDTO> cancel(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
             @RequestBody TutorialGroupStatusDTO tutorialGroupStatusDTO) throws URISyntaxException {
         log.debug("REST request to cancel session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         var sessionToCancel = tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
@@ -303,7 +305,7 @@ public class TutorialGroupSessionResource {
             sessionToCancel.setStatusExplanation(tutorialGroupStatusDTO.status_explanation().trim());
         }
         sessionToCancel = tutorialGroupSessionRepository.save(sessionToCancel);
-        return ResponseEntity.ok().body(TutorialGroupSession.preventCircularJsonConversion(sessionToCancel));
+        return ResponseEntity.ok().body(TutorialGroupResponseDTO.TutorialGroupSessionDTO.from(sessionToCancel));
     }
 
     /**
@@ -316,7 +318,8 @@ public class TutorialGroupSessionResource {
      */
     @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/activate")
     @EnforceAtLeastTutor
-    public ResponseEntity<TutorialGroupSession> activate(@PathVariable long courseId, @PathVariable long tutorialGroupId, @PathVariable long sessionId) throws URISyntaxException {
+    public ResponseEntity<TutorialGroupResponseDTO.TutorialGroupSessionDTO> activate(@PathVariable long courseId, @PathVariable long tutorialGroupId, @PathVariable long sessionId)
+            throws URISyntaxException {
         log.debug("REST request to activate session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         var sessionToActivate = tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
         if (sessionToActivate.getTutorialGroupFreePeriod() != null) {
@@ -331,7 +334,7 @@ public class TutorialGroupSessionResource {
         sessionToActivate.setStatus(TutorialGroupSessionStatus.ACTIVE);
         sessionToActivate.setStatusExplanation(null);
         sessionToActivate = tutorialGroupSessionRepository.save(sessionToActivate);
-        return ResponseEntity.ok().body(TutorialGroupSession.preventCircularJsonConversion(sessionToActivate));
+        return ResponseEntity.ok().body(TutorialGroupResponseDTO.TutorialGroupSessionDTO.from(sessionToActivate));
     }
 
     private void checkEntityIdMatchesPathIds(TutorialGroupSession tutorialGroupSession, Optional<Long> courseId, Optional<Long> tutorialGroupId, Optional<Long> sessionId) {
