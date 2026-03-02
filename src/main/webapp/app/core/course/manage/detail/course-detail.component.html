@@ -50,7 +50,7 @@
                                 <div class="llm-cost-display mx-3">
                                     <h5 class="text-center">{{ 'artemisApp.course.detail.currentTotalLLMCostTitle' | artemisTranslate }}</h5>
                                     <div class="llm-cost-value">
-                                        <span class="h4 mb-0">{{ (courseDTO()?.currentTotalLlmCostInEur ?? 0) + ' €' }}</span>
+                                        <span class="h4 mb-0">{{ courseDTO()?.currentTotalLlmCostInEur ?? 0 | number: '1.2-2' }}&nbsp;€</span>
                                     </div>
                                 </div>
                             </div>

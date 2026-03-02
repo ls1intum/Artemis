@@ -1,3 +1,4 @@
+import { DecimalPipe } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -39,7 +40,15 @@ export enum DoughnutChartType {
     selector: 'jhi-course-detail',
     templateUrl: './course-detail.component.html',
     styleUrls: ['./course-detail.component.scss'],
-    imports: [CourseDetailDoughnutChartComponent, CourseDetailLineChartComponent, DetailOverviewListComponent, QuickActionsComponent, ControlCenterComponent, ArtemisTranslatePipe],
+    imports: [
+        CourseDetailDoughnutChartComponent,
+        CourseDetailLineChartComponent,
+        DetailOverviewListComponent,
+        QuickActionsComponent,
+        ControlCenterComponent,
+        ArtemisTranslatePipe,
+        DecimalPipe,
+    ],
 })
 export class CourseDetailComponent implements OnInit, OnDestroy {
     protected readonly DoughnutChartType = DoughnutChartType;
