@@ -80,7 +80,7 @@ describe('AdminImportStandardizedCompetenciesComponent', () => {
             };
 
             component.onFileChange(event);
-            expect(errorSpy).toHaveBeenCalled();
+            expect(errorSpy).toHaveBeenCalledOnce();
         },
     );
 
@@ -164,7 +164,7 @@ describe('AdminImportStandardizedCompetenciesComponent', () => {
 
         component.importCompetencies();
 
-        expect(navigateSpy).toHaveBeenCalled();
+        expect(navigateSpy).toHaveBeenCalledOnce();
     });
 
     it('should cancel', () => {
@@ -173,7 +173,7 @@ describe('AdminImportStandardizedCompetenciesComponent', () => {
 
         component.cancel();
 
-        expect(navigateSpy).toHaveBeenCalled();
+        expect(navigateSpy).toHaveBeenCalledOnce();
     });
 
     it('should toggle collapse', () => {
@@ -210,7 +210,7 @@ describe('AdminImportStandardizedCompetenciesComponent', () => {
             component['setImportDataAndCount']();
 
             expect(component['importData']()).toBeUndefined();
-            expect(component['validationErrors']().some((e) => e.includes('shortTitleTooLong'))).toBe(true);
+            expect(component['validationErrors']()).toSatisfy((errors: string[]) => errors.some((e) => e.includes('shortTitleTooLong')));
         });
 
         it('should not set import data for competency missing title', () => {
@@ -224,7 +224,7 @@ describe('AdminImportStandardizedCompetenciesComponent', () => {
             component['setImportDataAndCount']();
 
             expect(component['importData']()).toBeUndefined();
-            expect(component['validationErrors']().some((e) => e.includes('titleRequired'))).toBe(true);
+            expect(component['validationErrors']()).toSatisfy((errors: string[]) => errors.some((e) => e.includes('titleRequired')));
         });
 
         it('should not set import data for invalid taxonomy', () => {
@@ -238,7 +238,7 @@ describe('AdminImportStandardizedCompetenciesComponent', () => {
             component['setImportDataAndCount']();
 
             expect(component['importData']()).toBeUndefined();
-            expect(component['validationErrors']().some((e) => e.includes('taxonomyInvalid'))).toBe(true);
+            expect(component['validationErrors']()).toSatisfy((errors: string[]) => errors.some((e) => e.includes('taxonomyInvalid')));
         });
 
         it('should not set import data when sourceId does not match any source', () => {
@@ -252,7 +252,7 @@ describe('AdminImportStandardizedCompetenciesComponent', () => {
             component['setImportDataAndCount']();
 
             expect(component['importData']()).toBeUndefined();
-            expect(component['validationErrors']().some((e) => e.includes('sourceIdInvalid'))).toBe(true);
+            expect(component['validationErrors']()).toSatisfy((errors: string[]) => errors.some((e) => e.includes('sourceIdInvalid')));
         });
 
         it('should set import data for valid data with no validation errors', () => {
@@ -271,7 +271,7 @@ describe('AdminImportStandardizedCompetenciesComponent', () => {
 
             component['setImportDataAndCount']();
 
-            expect(component['importData']()).toBeDefined();
+            expect(component['importData']()?.knowledgeAreas).toHaveLength(1);
             expect(component['validationErrors']()).toHaveLength(0);
         });
 
@@ -286,7 +286,7 @@ describe('AdminImportStandardizedCompetenciesComponent', () => {
             component['setImportDataAndCount']();
 
             expect(component['importData']()).toBeUndefined();
-            expect(component['validationErrors']().some((e) => e.includes('sourceTitleRequired'))).toBe(true);
+            expect(component['validationErrors']()).toSatisfy((errors: string[]) => errors.some((e) => e.includes('sourceTitleRequired')));
         });
 
         it('should not set import data when source is missing author', () => {
@@ -300,7 +300,7 @@ describe('AdminImportStandardizedCompetenciesComponent', () => {
             component['setImportDataAndCount']();
 
             expect(component['importData']()).toBeUndefined();
-            expect(component['validationErrors']().some((e) => e.includes('sourceAuthorRequired'))).toBe(true);
+            expect(component['validationErrors']()).toSatisfy((errors: string[]) => errors.some((e) => e.includes('sourceAuthorRequired')));
         });
     });
 

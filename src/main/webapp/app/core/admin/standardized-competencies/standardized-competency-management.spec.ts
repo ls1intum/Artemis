@@ -115,7 +115,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
         getSourcesSpy.mockReturnValue(of(new HttpResponse({ body: sources })));
         componentFixture.detectChanges();
 
-        expect(getForTreeViewSpy).toHaveBeenCalled();
+        expect(getForTreeViewSpy).toHaveBeenCalledOnce();
         expect(component['knowledgeAreaMap'].size).toBe(7);
         expect(component['knowledgeAreasForSelect']).toHaveLength(7);
         expect(component['dataSource'].data).toHaveLength(3);
@@ -243,7 +243,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
         const detailComponent = componentFixture.debugElement.query(By.directive(StandardizedCompetencyEditComponent)).componentInstance;
         detailComponent.onSave.emit(competencyToCreate);
 
-        expect(createSpy).toHaveBeenCalled();
+        expect(createSpy).toHaveBeenCalledOnce();
         const competencies = component['knowledgeAreaMap'].get(1)!.competencies!;
         expect(competencies).toHaveLength(3);
         expect(competencies).toContainEqual(expectedCompetencyInTree);
@@ -429,7 +429,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
         const detailComponent = componentFixture.debugElement.query(By.directive(KnowledgeAreaEditComponent)).componentInstance;
         detailComponent.onSave.emit(knowledgeAreaToCreate);
 
-        expect(createSpy).toHaveBeenCalled();
+        expect(createSpy).toHaveBeenCalledOnce();
         const knowledgeAreaMap = component['knowledgeAreaMap'];
         expect(knowledgeAreaMap.size).toBe(2);
         expect(knowledgeAreaMap.get(5)).toEqual(expectedKnowledgeAreaInTree);
@@ -457,7 +457,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
 
         component.saveKnowledgeArea(knowledgeAreaToCreate);
 
-        expect(createSpy).toHaveBeenCalled();
+        expect(createSpy).toHaveBeenCalledOnce();
         const knowledgeAreaMap = component['knowledgeAreaMap'];
         expect(knowledgeAreaMap.size).toBe(3);
         expect(knowledgeAreaMap.get(5)).toEqual(expectedKnowledgeAreaInTree);
@@ -503,7 +503,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
         componentFixture.detectChanges();
 
         const dragHandle = componentFixture.debugElement.query(By.css('.draggable-left'));
-        expect(dragHandle).toBeTruthy();
+        expect(dragHandle).not.toBeNull();
     });
 
     it('should not show detail panel when nothing is selected', () => {
@@ -539,7 +539,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
         const detailComponent = componentFixture.debugElement.query(By.directive(StandardizedCompetencyEditComponent)).componentInstance;
         detailComponent.onSave.emit(competencyToUpdate);
 
-        expect(updateSpy).toHaveBeenCalled();
+        expect(updateSpy).toHaveBeenCalledOnce();
     }
 
     /**
@@ -556,7 +556,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
         const detailComponent = componentFixture.debugElement.query(By.directive(KnowledgeAreaEditComponent)).componentInstance;
         detailComponent.onSave.emit(knowledgeAreaToUpdate);
 
-        expect(updateSpy).toHaveBeenCalled();
+        expect(updateSpy).toHaveBeenCalledOnce();
     }
 
     /**
