@@ -78,16 +78,7 @@ describe('CourseDetailDoughnutChartComponent', () => {
         expect(component.ngxData()[2].value).toBe(1);
     });
 
-    it('should show showText in tooltip when showText is set', () => {
-        componentRef.setInput('contentType', DoughnutChartType.CURRENT_LLM_COST);
-        componentRef.setInput('showText', '5.23 €');
-        componentRef.setInput('currentMax', 0);
-        fixture.detectChanges();
-
-        expect(component.valueFormatting({ value: 1 })).toBe('5.23 €');
-    });
-
-    it('should show 0 in tooltip when currentMax is 0 and no showText', () => {
+    it('should show 0 in tooltip when currentMax is 0', () => {
         componentRef.setInput('currentMax', 0);
         fixture.detectChanges();
 

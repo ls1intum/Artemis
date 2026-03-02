@@ -22,6 +22,7 @@ import { CourseDetailDoughnutChartComponent } from './course-detail-doughnut-cha
 import { CourseDetailLineChartComponent } from './course-detail-line-chart.component';
 import { QuickActionsComponent } from 'app/core/course/manage/quick-actions/quick-actions.component';
 import { ControlCenterComponent } from 'app/core/course/manage/control-center/control-center.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export enum DoughnutChartType {
     ASSESSMENT = 'ASSESSMENT',
@@ -38,7 +39,7 @@ export enum DoughnutChartType {
     selector: 'jhi-course-detail',
     templateUrl: './course-detail.component.html',
     styleUrls: ['./course-detail.component.scss'],
-    imports: [CourseDetailDoughnutChartComponent, CourseDetailLineChartComponent, DetailOverviewListComponent, QuickActionsComponent, ControlCenterComponent],
+    imports: [CourseDetailDoughnutChartComponent, CourseDetailLineChartComponent, DetailOverviewListComponent, QuickActionsComponent, ControlCenterComponent, ArtemisTranslatePipe],
 })
 export class CourseDetailComponent implements OnInit, OnDestroy {
     protected readonly DoughnutChartType = DoughnutChartType;

@@ -17,6 +17,21 @@ jhi-image {
     min-width: 200px;
 }
 
+.llm-cost-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+
+    .llm-cost-value {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 160px;
+    }
+}
+
 .fullscreen {
     margin-top: 4px;
 }
