@@ -293,6 +293,10 @@
                         "someStudentsRegistered": "Nur ein Teil der Studenten konnten registriert werden. Die rot markierten logins/registration numbers konnten keinen Benutzern zugeordnet werden:",
                         "noStudentsRegistered": "Keine Studenten konnten registriert werden. Die gegebenen logins/registration numbers konnten keinen Benutzern zugeordnet werden:",
                         "allStudentsRegistered": "Alle Studenten wurden registriert.."
+                    },
+                    "tableHeader": {
+                        "login": "Login",
+                        "registrationNumber": "Registration Number"
                     }
                 },
                 "registerModal": {
@@ -304,6 +308,10 @@
                 "registerSearchBar": {
                     "fetchSuggestionsError": "Ein Fehler ist aufgetreten während des Ladens der Suchergebnisse. Bitte versuche es erneut.",
                     "noResultsText": "Keine Studenten gefunden."
+                },
+                "networkError": {
+                    "deregisterStudent": "Beim Deregistrieren des Studenten ist etwas schief gegangen. Bitte versuche es erneut.",
+                    "fetchRegisteredStudents": "Beim Laden der registrierten Studenten ist etwas schief gegangen. Bitte versuche es erneut."
                 }
             },
             "createOrEditTutorialGroup": {
@@ -348,8 +356,10 @@
                     "locationRequired": "Bitte wähle einen Ort."
                 },
                 "networkError": {
+                    "fetchGroup": "Beim laden der Tutoriumsgruppe ist etwas schief gegangen. Bitte versuche es erneut, indem du die Seite neu lädst.",
                     "updateGroup": "Beim Bearbeiten der Gruppe ist etwas schief gegangen. Bitte versuche es erneut.",
-                    "scheduleLoading": "Beim laden des Sessionplans ist etwas schief gegangen. Bitte versuche es erneut."
+                    "scheduleLoading": "Beim laden des Sessionplans ist etwas schief gegangen. Bitte versuche es erneut, indem du die Seite neu lädst.",
+                    "fetchTutors": "Beim laden der Tutoren ist etwas schief gegangen. Bitte versuche es erneut, indem du die Seite neu lädst."
                 },
                 "confirmSaveDialog": {
                     "header": "Gruppe Speichern?",
@@ -510,11 +520,6 @@
                         "question": "Sicher, dass die abgesagte Sitzung {{label}} reaktiviert werden soll??"
                     }
                 }
-            },
-            "registeredStudents": {
-                "title": "Registrierte Studierende",
-                "header": "Registrierte Studierende von {{ title }}",
-                "capacityWarning": "Die Kapazität der Übungsgruppe von {{ capacity }} ist erreicht! Bist du sicher, dass du noch mehr Studierende hinzufügen möchtest?"
             },
             "createTutorialSession": {
                 "title": "Sitzung erstellen"

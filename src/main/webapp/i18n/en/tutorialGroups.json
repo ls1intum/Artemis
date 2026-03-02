@@ -293,6 +293,10 @@
                         "someStudentsRegistered": "Only a subset of students could be registered. The logins/registration numbers highlighted in red could not be matched to any existing users:",
                         "noStudentsRegistered": "No students could be registered. The given logins/registration numbers could not be matched to existing users:",
                         "allStudentsRegistered": "All students were registered."
+                    },
+                    "tableHeader": {
+                        "login": "Login",
+                        "registrationNumber": "Registration Number"
                     }
                 },
                 "registerModal": {
@@ -304,6 +308,10 @@
                 "registerSearchBar": {
                     "fetchSuggestionsError": "An error occured while loading search results. Please try again.",
                     "noResultsText": "No Students Found."
+                },
+                "networkError": {
+                    "deregisterStudent": "Something went wrong while deregistering the student. Please try again.",
+                    "fetchRegisteredStudents": "Something went wrong while fetching the registered students. Please try again"
                 }
             },
             "createTutorialGroup": {
@@ -467,8 +475,10 @@
                     "locationRequired": "Please choose a location."
                 },
                 "networkError": {
+                    "fetchGroup": "Something went wrong while fetching the tutorial group information. Please refresh the page to try again.",
                     "updateGroup": "Something went wrong while updating the tutorial group. Please try again.",
-                    "scheduleLoading": "Something went wrong while loading the schedule for the tutorial group. Please try again by refreshing the page."
+                    "scheduleLoading": "Something went wrong while loading the schedule for the tutorial group. Please try again by refreshing the page.",
+                    "fetchTutors": "Something went wrong while loading the tutors for the tutorial group. Please try again by refreshing the page."
                 },
                 "confirmSaveDialog": {
                     "header": "Save Group?",
@@ -511,11 +521,6 @@
                         "question": "Do you really want to activate the cancelled session {{label}}?"
                     }
                 }
-            },
-            "registeredStudents": {
-                "title": "Registered Students",
-                "header": "Registered Students for Tutorial Group {{ title }}",
-                "capacityWarning": "The capacity of this tutorial group of {{ capacity }} has been reached. Are you sure you want to register more students?"
             },
             "createTutorialSession": {
                 "title": "Add Session to tutorial group "

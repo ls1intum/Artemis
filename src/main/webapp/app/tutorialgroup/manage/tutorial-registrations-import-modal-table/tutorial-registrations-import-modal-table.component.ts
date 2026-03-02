@@ -1,4 +1,5 @@
 import { Component, input } from '@angular/core';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 export interface TutorialRegistrationsImportModalTableRow {
     login?: string;
@@ -8,7 +9,7 @@ export interface TutorialRegistrationsImportModalTableRow {
 
 @Component({
     selector: 'jhi-tutorial-registrations-import-modal-table',
-    imports: [],
+    imports: [TranslateDirective],
     templateUrl: './tutorial-registrations-import-modal-table.component.html',
     styleUrl: './tutorial-registrations-import-modal-table.component.scss',
 })

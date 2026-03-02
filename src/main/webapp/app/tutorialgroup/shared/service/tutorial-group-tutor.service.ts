@@ -25,10 +25,7 @@ export class TutorialGroupTutorService {
                 this.isLoading.set(false);
             },
             error: () => {
-                this.alertService.addErrorAlert(
-                    // TODO: create string key
-                    'Something went wrong while loading the tutor options for the tutorial group. Please try again by refreshing the page.',
-                );
+                this.alertService.addErrorAlert('artemisApp.pages.createOrEditTutorialGroup.networkError.fetchGroup');
                 this.isLoading.set(false);
             },
         });

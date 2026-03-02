@@ -26,7 +26,7 @@ export class TutorialGroupService {
                     this.isLoading.set(false);
                 },
                 error: () => {
-                    this.alertService.addErrorAlert('Something went wrong while fetching the tutorial group information. Please refresh the page to try again.'); // TODO: create string key
+                    this.alertService.addErrorAlert('artemisApp.pages.createOrEditTutorialGroup.networkError.fetchTutors');
                     this.isLoading.set(false);
                 },
             });
