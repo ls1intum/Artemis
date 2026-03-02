@@ -1,6 +1,7 @@
 @import '../course-base-container/course-variables';
 
-#course-title-bar-test {
+// Must match or exceed the quiz participation bar's z-index (1030)
+#course-title-bar {
     z-index: 1030;
 }
 
@@ -20,7 +21,7 @@
         border-color: transparent;
     }
 
-    transition: border-color $transition-color-length $transition-delay + $transition-chevron-rotate-length * 2 ease-in-out;
+    transition: border-color $transition-color-length $transition-delay +$transition-chevron-rotate-length * 2 ease-in-out;
 }
 
 .btn-sidebar-collapse::after,

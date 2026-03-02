@@ -40,7 +40,7 @@ describe('CourseTitleBarComponent', () => {
 
     it('should hide component when exam is started', () => {
         // Initially visible
-        const titleBar = fixture.debugElement.query(By.css('#course-title-bar-test'));
+        const titleBar = fixture.debugElement.query(By.css('#course-title-bar'));
         expect(titleBar.styles['display']).not.toBe('none');
 
         // Set exam started to true
@@ -148,7 +148,7 @@ describe('CourseTitleBarComponent', () => {
     });
 
     it('should have the correct styling classes on the title bar', () => {
-        const titleBar = fixture.debugElement.query(By.css('#course-title-bar-test'));
+        const titleBar = fixture.debugElement.query(By.css('#course-title-bar'));
         expect(titleBar.classes['module-bg']).toBeTruthy();
         expect(titleBar.classes['rounded']).toBeTruthy();
         expect(titleBar.classes['rounded-3']).toBeTruthy();
