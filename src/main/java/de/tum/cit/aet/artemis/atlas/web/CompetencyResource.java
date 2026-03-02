@@ -359,8 +359,8 @@ public class CompetencyResource {
     public ResponseEntity<SuggestCompetencyResponseDTO> suggestCompetencies(@RequestBody SuggestCompetencyRequestDTO request) {
         log.debug("REST request to suggest competencies using AtlasML with description: {}", request.description());
 
+        var api = atlasMLApi.orElseThrow(() -> new AtlasMLNotPresentException(AtlasMLApi.class));
         try {
-            var api = atlasMLApi.orElseThrow(() -> new AtlasMLNotPresentException(AtlasMLApi.class));
             SuggestCompetencyResponseDTO result = api.suggestCompetencies(request);
             return ResponseEntity.ok(result);
         }
@@ -381,8 +381,8 @@ public class CompetencyResource {
     @FeatureToggle(Feature.AtlasML)
     public ResponseEntity<SuggestCompetencyRelationsResponseDTO> suggestCompetencyRelations(@PathVariable long courseId) {
         log.debug("REST request to suggest competency relations using AtlasML for course: {}", courseId);
+        var api = atlasMLApi.orElseThrow(() -> new AtlasMLNotPresentException(AtlasMLApi.class));
         try {
-            var api = atlasMLApi.orElseThrow(() -> new AtlasMLNotPresentException(AtlasMLApi.class));
             SuggestCompetencyRelationsResponseDTO result = api.suggestCompetencyRelations(courseId);
             return ResponseEntity.ok(result);
         }
