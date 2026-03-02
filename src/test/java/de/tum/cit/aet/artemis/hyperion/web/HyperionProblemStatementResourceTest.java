@@ -122,7 +122,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         }));
         doReturn(difficultyResponse).when(azureOpenAiChatModel).call(argThat((Prompt prompt) -> {
             String text = prompt.getContents();
-            return !text.contains("curriculum design") && !text.contains("reviewer");
+            return text.contains("suggest the appropriate difficulty level");
         }));
         doReturn(qualityResponse).when(azureOpenAiChatModel).call(argThat((Prompt prompt) -> {
             String text = prompt.getContents();
