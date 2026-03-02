@@ -450,6 +450,13 @@
                         "endTime": "Endzeit",
                         "location": "Ort",
                         "attendance": "Anwesenheiten"
+                    },
+                    "validationError": {
+                        "dateRequired": "Bitte wähle ein Datum.",
+                        "startTimeRequired": "Bitte wähle eine Startzeit.",
+                        "endTimeRequired": "Bitte wähle eine Endzeit.",
+                        "endTimeNotAfterStartTime": "Die Endzeit muss nach der Startzeit sein.",
+                        "locationRequired": "Bitte wähle einen Ort."
                     }
                 }
             },

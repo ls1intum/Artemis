@@ -159,7 +159,7 @@ export class TutorialSessionCreateOrEditModalComponent {
         if (date === undefined) {
             return {
                 status: ValidationStatus.INVALID,
-                message: 'Please choose a date.',
+                message: 'artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.validationError.dateRequired',
             };
         }
         return { status: ValidationStatus.VALID };
@@ -170,7 +170,7 @@ export class TutorialSessionCreateOrEditModalComponent {
         if (startTime === undefined) {
             return {
                 status: ValidationStatus.INVALID,
-                message: 'Please choose a start time.',
+                message: 'artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.validationError.startTimeRequired',
             };
         }
         return { status: ValidationStatus.VALID };
@@ -181,7 +181,7 @@ export class TutorialSessionCreateOrEditModalComponent {
         if (endTime === undefined) {
             return {
                 status: ValidationStatus.INVALID,
-                message: 'Please choose an end time.',
+                message: 'artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.validationError.endTimeRequired',
             };
         }
         const startTime = this.startTime();
@@ -189,7 +189,10 @@ export class TutorialSessionCreateOrEditModalComponent {
             const startMinutes = startTime.getHours() * 60 + startTime.getMinutes();
             const endMinutes = endTime.getHours() * 60 + endTime.getMinutes();
             if (endMinutes <= startMinutes) {
-                return { status: ValidationStatus.INVALID, message: 'End time must be after the start time.' };
+                return {
+                    status: ValidationStatus.INVALID,
+                    message: 'artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.validationError.endTimeNotAfterStartTime',
+                };
             }
         }
         return { status: ValidationStatus.VALID };
@@ -200,7 +203,7 @@ export class TutorialSessionCreateOrEditModalComponent {
         if (trimmedLocation === '') {
             return {
                 status: ValidationStatus.INVALID,
-                message: 'Please choose a location.',
+                message: 'artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.validationError.locationRequired',
             };
         }
         return { status: ValidationStatus.VALID };

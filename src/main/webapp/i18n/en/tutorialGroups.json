@@ -405,6 +405,13 @@
                         "endTime": "End Time",
                         "location": "Location",
                         "attendance": "Attendance"
+                    },
+                    "validationError": {
+                        "dateRequired": "Please choose a date.",
+                        "startTimeRequired": "Please choose a start time.",
+                        "endTimeRequired": "Please choose an end time.",
+                        "endTimeNotAfterStartTime": "The end time must be after the start time.",
+                        "locationRequired": "Please choose a location."
                     }
                 }
             },
@@ -436,10 +443,10 @@
                     "capacity": "Capacity",
                     "additionalInformation": "Additional Information",
                     "firstSessionStart": "First Session Start",
-                    "firstSessionEnd": "First Session Start",
+                    "firstSessionEnd": "First Session End",
                     "repetitionFrequency": "Repetition Frequency",
                     "repetitionFrequencyPrefix": "every ",
-                    "repetitionFrequencySuffix": " weeks(s)",
+                    "repetitionFrequencySuffix": " week(s)",
                     "tutorialPeriodEnd": "Tutorial Period End",
                     "location": "Location"
                 },
@@ -448,7 +455,7 @@
                     "titleLength": "Title must contain at most 19 characters. The system automatically removes leading/trailing whitespaces.",
                     "campusLength": "Campus must contain at most 255 characters. The system automatically removes leading/trailing whitespaces.",
                     "languageRequired": "Please choose a language.",
-                    "languageLength": "Campus must contain at most 255 characters. The system automatically removes leading/trailing whitespaces.",
+                    "languageLength": "Language must contain at most 255 characters. The system automatically removes leading/trailing whitespaces.",
                     "firstSessionStartRequired": "Please choose a date.",
                     "firstSessionEndRequired": "Please choose a date.",
                     "firstSessionEndNotAfterStart": "The end of the first session must be after its start.",

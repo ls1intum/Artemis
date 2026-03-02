@@ -12,7 +12,7 @@
                     [invalid]="dateValidation.status === ValidationStatus.INVALID && dateInputTouched()"
                 />
                 @if (dateValidation.status === ValidationStatus.INVALID && dateInputTouched()) {
-                    <p-inputgroup-addon [pTooltip]="dateValidation.message" tooltipPosition="left">
+                    <p-inputgroup-addon [pTooltip]="dateValidation.message | artemisTranslate" tooltipPosition="left">
                         <i class="pi pi-info-circle danger"></i>
                     </p-inputgroup-addon>
                 }
@@ -31,7 +31,7 @@
                     [invalid]="startTimeValidation.status === ValidationStatus.INVALID && startTimeInputTouched()"
                 />
                 @if (startTimeValidation.status === ValidationStatus.INVALID && startTimeInputTouched()) {
-                    <p-inputgroup-addon [pTooltip]="startTimeValidation.message" tooltipPosition="left">
+                    <p-inputgroup-addon [pTooltip]="startTimeValidation.message | artemisTranslate" tooltipPosition="left">
                         <i class="pi pi-info-circle danger"></i>
                     </p-inputgroup-addon>
                 }
@@ -50,7 +50,7 @@
                     [invalid]="endTimeValidation.status === ValidationStatus.INVALID && endTimeInputTouched()"
                 />
                 @if (endTimeValidation.status === ValidationStatus.INVALID && endTimeInputTouched()) {
-                    <p-inputgroup-addon [pTooltip]="endTimeValidation.message" tooltipPosition="left">
+                    <p-inputgroup-addon [pTooltip]="endTimeValidation.message | artemisTranslate" tooltipPosition="left">
                         <i class="pi pi-info-circle danger"></i>
                     </p-inputgroup-addon>
                 }
@@ -68,7 +68,7 @@
                     [invalid]="locationValidation.status === ValidationStatus.INVALID && locationInputTouched()"
                 />
                 @if (locationValidation.status === ValidationStatus.INVALID && locationInputTouched()) {
-                    <p-inputgroup-addon [pTooltip]="locationValidation.message" tooltipPosition="left">
+                    <p-inputgroup-addon [pTooltip]="locationValidation.message | artemisTranslate" tooltipPosition="left">
                         <i class="pi pi-info-circle danger"></i>
                     </p-inputgroup-addon>
                 }
@@ -78,7 +78,6 @@
             <label jhiTranslate="artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.attendance"></label>
             <p-inputgroup>
                 <p-inputnumber
-                    placeholder="Attendance"
                     [(ngModel)]="attendance"
                     [min]="0"
                     [showButtons]="true"
