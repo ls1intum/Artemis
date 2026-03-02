@@ -87,17 +87,25 @@ describe('OrganizationManagementComponent', () => {
         expect(component.organizations()).toHaveLength(0);
     });
 
-    it('should delete an organization', () => {
+    it('should delete an organization and refresh the list', () => {
         const organization1 = new Organization();
         organization1.id = 5;
         organization1.name = 'orgOne';
 
-        component.organizations.set([organization1]);
+        const getOrganizationsSpy = vi
+            .spyOn(organizationService, 'getOrganizations')
+            .mockReturnValueOnce(of({ content: [organization1], totalElements: 1 }))
+            .mockReturnValueOnce(of({ content: [], totalElements: 0 }));
+
+        const event: TableLazyLoadEvent = { first: 0, rows: 50 };
+        component.loadOrganizations(event);
+
         vi.spyOn(organizationService, 'deleteOrganization').mockReturnValue(of(new HttpResponse<void>()));
 
         component.deleteOrganization(5);
-        fixture.changeDetectorRef.detectChanges();
-        expect(component).not.toBeNull();
+
+        expect(organizationService.deleteOrganization).toHaveBeenCalledWith(5);
+        expect(getOrganizationsSpy).toHaveBeenCalledTimes(2);
         expect(component.organizations()).toHaveLength(0);
     });
 

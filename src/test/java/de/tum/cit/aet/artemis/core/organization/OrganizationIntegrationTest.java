@@ -17,7 +17,9 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.OrganizationCountDTO;
+import de.tum.cit.aet.artemis.core.dto.OrganizationCourseDTO;
 import de.tum.cit.aet.artemis.core.dto.OrganizationDTO;
+import de.tum.cit.aet.artemis.core.dto.OrganizationMemberDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -153,8 +155,10 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         request.postWithoutLocation("/api/core/admin/organizations/" + organization.getId() + "/courses/" + course1.getId(), null, HttpStatus.OK, null);
 
-        Organization updatedOrganization = request.get("/api/core/admin/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
-        assertThat(updatedOrganization.getCourses()).contains(course1);
+        List<OrganizationCourseDTO> courses = request.getList("/api/core/admin/organizations/" + organization.getId() + "/courses", HttpStatus.OK, OrganizationCourseDTO.class,
+                pageableSearchUtilService.searchMapping(buildSearch("")));
+        Long addedCourseId = course1.getId();
+        assertThat(courses).anyMatch(c -> c.id().equals(addedCourseId));
     }
 
     /**
@@ -169,13 +173,16 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         Organization organization = organizationUtilService.createOrganization();
         courseRepository.addOrganizationToCourse(course1.getId(), organization);
 
-        Organization originalOrganization = request.get("/api/core/admin/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
-        assertThat(originalOrganization.getCourses()).contains(course1);
+        Long removedCourseId = course1.getId();
+        List<OrganizationCourseDTO> coursesBeforeRemoval = request.getList("/api/core/admin/organizations/" + organization.getId() + "/courses", HttpStatus.OK,
+                OrganizationCourseDTO.class, pageableSearchUtilService.searchMapping(buildSearch("")));
+        assertThat(coursesBeforeRemoval).anyMatch(c -> c.id().equals(removedCourseId));
 
         request.delete("/api/core/admin/organizations/" + organization.getId() + "/courses/" + course1.getId(), HttpStatus.OK);
 
-        Organization updatedOrganization = request.get("/api/core/admin/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
-        assertThat(updatedOrganization.getCourses()).isEmpty();
+        List<OrganizationCourseDTO> coursesAfterRemoval = request.getList("/api/core/admin/organizations/" + organization.getId() + "/courses", HttpStatus.OK,
+                OrganizationCourseDTO.class, pageableSearchUtilService.searchMapping(buildSearch("")));
+        assertThat(coursesAfterRemoval).isEmpty();
     }
 
     /**
@@ -189,8 +196,9 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         User student = userUtilService.createAndSaveUser(TEST_PREFIX + "testAddUserToOrganization");
 
         request.postWithoutLocation("/api/core/admin/organizations/" + organization.getId() + "/users/" + student.getLogin(), null, HttpStatus.OK, null);
-        Organization updatedOrganization = request.get("/api/core/admin/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
-        assertThat(updatedOrganization.getUsers()).contains(student);
+        List<OrganizationMemberDTO> members = request.getList("/api/core/admin/organizations/" + organization.getId() + "/users", HttpStatus.OK, OrganizationMemberDTO.class,
+                pageableSearchUtilService.searchMapping(buildSearch("")));
+        assertThat(members).anyMatch(m -> m.id().equals(student.getId()));
     }
 
     /**
@@ -208,9 +216,10 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(organization.getUsers()).contains(student);
 
         request.delete("/api/core/admin/organizations/" + organization.getId() + "/users/" + student.getLogin(), HttpStatus.OK);
-        Organization updatedOrganization = request.get("/api/core/admin/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
+        List<OrganizationMemberDTO> remainingMembers = request.getList("/api/core/admin/organizations/" + organization.getId() + "/users", HttpStatus.OK,
+                OrganizationMemberDTO.class, pageableSearchUtilService.searchMapping(buildSearch("")));
 
-        assertThat(updatedOrganization.getUsers()).doesNotContain(student);
+        assertThat(remainingMembers).noneMatch(m -> m.id().equals(student.getId()));
     }
 
     /**
@@ -450,6 +459,114 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
     }
 
     /**
+     * Test pagination of users within an organization: page 0 of size 2 returns the first 2 members,
+     * page 1 returns the third.
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testGetOrganizationUsersPaginated() throws Exception {
+        Organization organization = organizationUtilService.createOrganization();
+        User member1 = userUtilService.createAndSaveUser(TEST_PREFIX + "pagedMember1");
+        User member2 = userUtilService.createAndSaveUser(TEST_PREFIX + "pagedMember2");
+        User member3 = userUtilService.createAndSaveUser(TEST_PREFIX + "pagedMember3");
+        userTestRepository.addOrganizationToUser(member1.getId(), organization);
+        userTestRepository.addOrganizationToUser(member2.getId(), organization);
+        userTestRepository.addOrganizationToUser(member3.getId(), organization);
+
+        SearchTermPageableSearchDTO<String> firstPageSearch = buildSearch("", 0, 2, "id", SortingOrder.ASCENDING);
+        List<OrganizationMemberDTO> firstPage = request.getList("/api/core/admin/organizations/" + organization.getId() + "/users", HttpStatus.OK, OrganizationMemberDTO.class,
+                pageableSearchUtilService.searchMapping(firstPageSearch));
+
+        SearchTermPageableSearchDTO<String> secondPageSearch = buildSearch("", 1, 2, "id", SortingOrder.ASCENDING);
+        List<OrganizationMemberDTO> secondPage = request.getList("/api/core/admin/organizations/" + organization.getId() + "/users", HttpStatus.OK, OrganizationMemberDTO.class,
+                pageableSearchUtilService.searchMapping(secondPageSearch));
+
+        assertThat(firstPage).hasSize(2);
+        assertThat(firstPage.get(0).id()).isEqualTo(member1.getId());
+        assertThat(firstPage.get(1).id()).isEqualTo(member2.getId());
+        assertThat(secondPage).hasSize(1);
+        assertThat(secondPage.get(0).id()).isEqualTo(member3.getId());
+    }
+
+    /**
+     * Test filtering users within an organization by search term: only the member whose login
+     * contains the search term is returned.
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testGetOrganizationUsersPaginated_filterBySearchTerm() throws Exception {
+        String uniqueLogin = "uniqueUserSearch";
+        Organization organization = organizationUtilService.createOrganization();
+        User matchingMember = userUtilService.createAndSaveUser(TEST_PREFIX + uniqueLogin + "Matching");
+        User nonMatchingMember = userUtilService.createAndSaveUser(TEST_PREFIX + "nonMatchingMbr");
+        userTestRepository.addOrganizationToUser(matchingMember.getId(), organization);
+        userTestRepository.addOrganizationToUser(nonMatchingMember.getId(), organization);
+
+        List<OrganizationMemberDTO> result = request.getList("/api/core/admin/organizations/" + organization.getId() + "/users", HttpStatus.OK, OrganizationMemberDTO.class,
+                pageableSearchUtilService.searchMapping(buildSearch(uniqueLogin)));
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).id()).isEqualTo(matchingMember.getId());
+    }
+
+    /**
+     * Test pagination of courses within an organization: page 0 of size 2 returns the first 2 courses,
+     * page 1 returns the third.
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testGetOrganizationCoursesPaginated() throws Exception {
+        Organization organization = organizationUtilService.createOrganization();
+        Course course1 = courseRepository
+                .save(CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "PagedCourse1", "tutor", "editor", "instructor"));
+        Course course2 = courseRepository
+                .save(CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "PagedCourse2", "tutor", "editor", "instructor"));
+        Course course3 = courseRepository
+                .save(CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "PagedCourse3", "tutor", "editor", "instructor"));
+        courseRepository.addOrganizationToCourse(course1.getId(), organization);
+        courseRepository.addOrganizationToCourse(course2.getId(), organization);
+        courseRepository.addOrganizationToCourse(course3.getId(), organization);
+
+        SearchTermPageableSearchDTO<String> firstPageSearch = buildSearch("", 0, 2, "id", SortingOrder.ASCENDING);
+        List<OrganizationCourseDTO> firstPage = request.getList("/api/core/admin/organizations/" + organization.getId() + "/courses", HttpStatus.OK, OrganizationCourseDTO.class,
+                pageableSearchUtilService.searchMapping(firstPageSearch));
+
+        SearchTermPageableSearchDTO<String> secondPageSearch = buildSearch("", 1, 2, "id", SortingOrder.ASCENDING);
+        List<OrganizationCourseDTO> secondPage = request.getList("/api/core/admin/organizations/" + organization.getId() + "/courses", HttpStatus.OK, OrganizationCourseDTO.class,
+                pageableSearchUtilService.searchMapping(secondPageSearch));
+
+        assertThat(firstPage).hasSize(2);
+        assertThat(firstPage.get(0).id()).isEqualTo(course1.getId());
+        assertThat(firstPage.get(1).id()).isEqualTo(course2.getId());
+        assertThat(secondPage).hasSize(1);
+        assertThat(secondPage.get(0).id()).isEqualTo(course3.getId());
+    }
+
+    /**
+     * Test filtering courses within an organization by search term: only the course whose title
+     * contains the search term is returned.
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testGetOrganizationCoursesPaginated_filterBySearchTerm() throws Exception {
+        String uniqueTitle = "uniqueCourseFilter";
+        Organization organization = organizationUtilService.createOrganization();
+        Course matchingCourse = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tutor", "tutor", "editor", "instructor");
+        matchingCourse.setTitle(uniqueTitle + " Matching");
+        matchingCourse = courseRepository.save(matchingCourse);
+        Course nonMatchingCourse = courseRepository
+                .save(CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tutor", "tutor", "editor", "instructor"));
+        courseRepository.addOrganizationToCourse(matchingCourse.getId(), organization);
+        courseRepository.addOrganizationToCourse(nonMatchingCourse.getId(), organization);
+
+        List<OrganizationCourseDTO> result = request.getList("/api/core/admin/organizations/" + organization.getId() + "/courses", HttpStatus.OK, OrganizationCourseDTO.class,
+                pageableSearchUtilService.searchMapping(buildSearch(uniqueTitle)));
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).id()).isEqualTo(matchingCourse.getId());
+    }
+
+    /**
      * Test get number of users and courses of a given organization
      */
     @Test
@@ -493,14 +610,18 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         userTestRepository.addOrganizationToUser(student.getId(), organization);
 
         Organization result = request.get("/api/core/admin/organizations/" + organization.getId(), HttpStatus.OK, Organization.class);
-        Organization resultWithCoursesAndUsers = request.get("/api/core/admin/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
+        List<OrganizationCourseDTO> courses = request.getList("/api/core/admin/organizations/" + organization.getId() + "/courses", HttpStatus.OK, OrganizationCourseDTO.class,
+                pageableSearchUtilService.searchMapping(buildSearch("")));
+        List<OrganizationMemberDTO> users = request.getList("/api/core/admin/organizations/" + organization.getId() + "/users", HttpStatus.OK, OrganizationMemberDTO.class,
+                pageableSearchUtilService.searchMapping(buildSearch("")));
 
+        Long expectedCourseId = course1.getId();
         assertThat(result.getId()).isEqualTo(organization.getId());
         assertThat(result.getName()).isEqualTo(organization.getName());
 
-        assertThat(resultWithCoursesAndUsers.getCourses()).contains(course1);
+        assertThat(courses).anyMatch(c -> c.id().equals(expectedCourseId));
 
-        assertThat(resultWithCoursesAndUsers.getUsers()).contains(student);
+        assertThat(users).anyMatch(u -> u.id().equals(student.getId()));
     }
 
     /**
@@ -553,10 +674,11 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         organization.setEmailPattern("^" + student.getEmail() + "$");
 
         Organization updatedOrganization = request.putWithResponseBody("/api/core/admin/organizations/" + organization.getId(), organization, Organization.class, HttpStatus.OK);
-        updatedOrganization = request.get("/api/core/admin/organizations/" + updatedOrganization.getId() + "/full", HttpStatus.OK, Organization.class);
+        List<OrganizationMemberDTO> members = request.getList("/api/core/admin/organizations/" + updatedOrganization.getId() + "/users", HttpStatus.OK, OrganizationMemberDTO.class,
+                pageableSearchUtilService.searchMapping(buildSearch("")));
 
-        assertThat(updatedOrganization.getUsers()).hasSize(1);
-        assertThat(updatedOrganization.getUsers()).contains(student);
+        assertThat(members).hasSize(1);
+        assertThat(members.get(0).id()).isEqualTo(student.getId());
 
         var organizations = organizationRepo.getAllMatchingOrganizationsByUserEmail(student.getEmail());
         assertThat(organizations).containsExactly(organization);
