@@ -11,16 +11,16 @@ import org.mockito.MockitoAnnotations;
 
 import de.tum.cit.aet.artemis.core.config.LLMModelCostConfiguration;
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
-import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageRequestRepository;
-import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageTraceRepository;
+import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageRequestTestRepository;
+import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
 
 class LLMTokenUsageServiceTest {
 
     @Mock
-    private LLMTokenUsageTraceRepository llmTokenUsageTraceRepository;
+    private LLMTokenUsageTraceTestRepository llmTokenUsageTraceRepository;
 
     @Mock
-    private LLMTokenUsageRequestRepository llmTokenUsageRequestRepository;
+    private LLMTokenUsageRequestTestRepository llmTokenUsageRequestRepository;
 
     private LLMTokenUsageService llmTokenUsageService;
 
