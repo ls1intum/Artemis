@@ -58,7 +58,7 @@ describe('MonacoEditorComponent', () => {
             dispose: jest.fn(),
             addCommand: jest.fn(),
         }),
-        getOriginalEditor: jest.fn().mockReturnValue({ getValue: jest.fn() }),
+        getOriginalEditor: jest.fn().mockReturnValue({ getValue: jest.fn(), updateOptions: jest.fn() }),
         setModel: jest.fn(),
         onDidUpdateDiff: jest.fn().mockReturnValue({ dispose: jest.fn() }),
         getLineChanges: jest.fn(),
@@ -573,6 +573,18 @@ describe('MonacoEditorComponent', () => {
         expect(modifiedEditor).toBeUndefined();
     });
 
+    it('should dispose selection change listeners on destroy', () => {
+        fixture.detectChanges();
+
+        const mockDisposable = { dispose: jest.fn() };
+        comp['selectionChangeListeners'] = [{ listener: jest.fn(), disposable: mockDisposable }];
+
+        comp.ngOnDestroy();
+
+        expect(mockDisposable.dispose).toHaveBeenCalled();
+        expect(comp['selectionChangeListeners']).toHaveLength(0);
+    });
+
     it('should handle multiple models', () => {
         fixture.detectChanges();
 
@@ -623,8 +635,6 @@ describe('MonacoEditorComponent', () => {
 
         expect(comp['_diffEditor']).toBeDefined();
 
-        expect(comp['_diffEditor']).toBeDefined();
-
         // Switch back to normal
         fixture.componentRef.setInput('mode', 'normal');
         fixture.detectChanges();
@@ -649,6 +659,7 @@ describe('MonacoEditorComponent', () => {
             setValue: setValueSpy,
             onDidChangeModelContent: jest.fn(),
             onDidFocusEditorText: jest.fn(),
+            updateOptions: jest.fn(),
             dispose: jest.fn(),
             addCommand: jest.fn(),
         };

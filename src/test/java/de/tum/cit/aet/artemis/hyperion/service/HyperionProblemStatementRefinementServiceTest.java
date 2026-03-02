@@ -3,11 +3,12 @@ package de.tum.cit.aet.artemis.hyperion.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -20,14 +21,24 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
+import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRefinementResponseDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementTargetedRefinementRequestDTO;
 
 class HyperionProblemStatementRefinementServiceTest {
 
     @Mock
     private ChatModel chatModel;
+
+    @Mock
+    private LLMTokenUsageService llmTokenUsageService;
+
+    @Mock
+    private UserTestRepository userRepository;
 
     private HyperionProblemStatementRefinementService hyperionProblemStatementRefinementService;
 
@@ -38,26 +49,35 @@ class HyperionProblemStatementRefinementServiceTest {
         mocks = MockitoAnnotations.openMocks(this);
         ChatClient chatClient = ChatClient.create(chatModel);
         var templateService = new HyperionPromptTemplateService();
-        this.hyperionProblemStatementRefinementService = new HyperionProblemStatementRefinementService(chatClient, templateService);
-    }
-
-    @AfterEach
-    void tearDown() throws Exception {
-        mocks.close();
+        this.hyperionProblemStatementRefinementService = new HyperionProblemStatementRefinementService(chatClient, templateService, llmTokenUsageService, userRepository);
     }
 
     @Test
     void refineProblemStatement_returnsRefinedStatement() {
         String originalStatement = "Original problem statement";
         String refinedStatement = "Refined problem statement with improvements";
-        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(refinedStatement)))));
+
+        ChatResponse chatResponse = org.mockito.Mockito.mock(ChatResponse.class);
+        var generation = new Generation(new AssistantMessage(refinedStatement));
+        when(chatResponse.getResult()).thenReturn(generation);
+
+        var metadata = org.mockito.Mockito.mock(org.springframework.ai.chat.metadata.ChatResponseMetadata.class);
+        var usage = org.mockito.Mockito.mock(org.springframework.ai.chat.metadata.Usage.class);
+        when(usage.getPromptTokens()).thenReturn(10);
+        when(usage.getCompletionTokens()).thenReturn(20);
+        when(metadata.getUsage()).thenReturn(usage);
+        when(chatResponse.getMetadata()).thenReturn(metadata);
+
+        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> chatResponse);
 
         var course = new Course();
+        course.setId(123L);
         course.setTitle("Test Course");
         course.setDescription("Test Description");
         ProblemStatementRefinementResponseDTO resp = hyperionProblemStatementRefinementService.refineProblemStatement(course, originalStatement, "Make it better");
         assertThat(resp).isNotNull();
         assertThat(resp.refinedProblemStatement()).isEqualTo(refinedStatement);
+        verify(llmTokenUsageService).trackChatResponseTokenUsage(eq(chatResponse), eq(LLMServiceType.HYPERION), eq("HYPERION_PROBLEM_REFINEMENT_GLOBAL"), any());
     }
 
     @Test
@@ -158,7 +178,7 @@ class HyperionProblemStatementRefinementServiceTest {
 
     @Test
     void refineProblemStatement_throwsExceptionWhenChatClientIsNull() {
-        var serviceWithNullClient = new HyperionProblemStatementRefinementService(null, new HyperionPromptTemplateService());
+        var serviceWithNullClient = new HyperionProblemStatementRefinementService(null, new HyperionPromptTemplateService(), llmTokenUsageService, userRepository);
         var course = new Course();
         course.setTitle("Test Course");
         course.setDescription("Test Description");
@@ -229,11 +249,216 @@ class HyperionProblemStatementRefinementServiceTest {
     void refineProblemStatement_throwsExceptionWhenProblemStatementTooLong() {
         // 50001 characters exceeds MAX_PROBLEM_STATEMENT_LENGTH (50000)
         String tooLongProblemStatement = "a".repeat(50_001);
-        var course = new Course();
-        course.setTitle("Test Course");
-        course.setDescription("Test Description");
+        var course = createTestCourse();
 
         assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatement(course, tooLongProblemStatement, "Refine this"))
                 .isInstanceOf(BadRequestAlertException.class).hasMessageContaining("exceeds maximum length");
+    }
+
+    // Targeted refinement tests
+
+    @Test
+    void refineProblemStatementTargeted_returnsRefinedStatement() {
+        String originalText = "Line one\nLine two\nLine three";
+        String refinedText = "Line one\nImproved line two\nLine three";
+        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(refinedText)))));
+
+        var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 2, 2, null, null, "Improve this line");
+        ProblemStatementRefinementResponseDTO resp = hyperionProblemStatementRefinementService.refineProblemStatementTargeted(createTestCourse(), request);
+        assertThat(resp).isNotNull();
+        assertThat(resp.refinedProblemStatement()).isEqualTo(refinedText);
+        verify(llmTokenUsageService).trackChatResponseTokenUsage(any(ChatResponse.class), eq(LLMServiceType.HYPERION), eq("HYPERION_PROBLEM_REFINEMENT_TARGETED"), any());
+    }
+
+    @Test
+    void refineProblemStatementTargeted_withColumnRange_returnsRefinedStatement() {
+        String originalText = "Hello world example";
+        String refinedText = "Hello universe example";
+        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(refinedText)))));
+
+        var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 1, 1, 7, 12, "Replace world");
+        ProblemStatementRefinementResponseDTO resp = hyperionProblemStatementRefinementService.refineProblemStatementTargeted(createTestCourse(), request);
+        assertThat(resp).isNotNull();
+        assertThat(resp.refinedProblemStatement()).isEqualTo(refinedText);
+    }
+
+    @Test
+    void refineProblemStatementTargeted_multiLineWithColumnRange_returnsRefinedStatement() {
+        String originalText = "First line content\nSecond line content\nThird line content";
+        String refinedText = "First line content\nModified content\nThird line content";
+        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(refinedText)))));
+
+        var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 1, 2, 7, 12, "Merge these lines");
+        ProblemStatementRefinementResponseDTO resp = hyperionProblemStatementRefinementService.refineProblemStatementTargeted(createTestCourse(), request);
+        assertThat(resp).isNotNull();
+        assertThat(resp.refinedProblemStatement()).isEqualTo(refinedText);
+    }
+
+    @Test
+    void refineProblemStatementTargeted_throwsExceptionOnAIFailure() {
+        String originalText = "Line one\nLine two";
+        when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("AI service unavailable"));
+
+        var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 1, 2, null, null, "Improve this");
+        assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatementTargeted(createTestCourse(), request))
+                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("Failed to refine problem statement");
+    }
+
+    @Test
+    void refineProblemStatementTargeted_throwsExceptionWhenResponseIsNull() {
+        String originalText = "Line one\nLine two";
+        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(null)))));
+
+        var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 1, 1, null, null, "Improve this");
+        assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatementTargeted(createTestCourse(), request))
+                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("null or empty");
+    }
+
+    @Test
+    void refineProblemStatementTargeted_throwsExceptionWhenResponseUnchanged() {
+        String originalText = "Unchanged problem statement";
+        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(originalText)))));
+
+        var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 1, 1, null, null, "Change something");
+        assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatementTargeted(createTestCourse(), request)).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("same after refinement");
+    }
+
+    @Test
+    void refineProblemStatementTargeted_throwsExceptionWhenChatClientIsNull() {
+        var serviceWithNullClient = new HyperionProblemStatementRefinementService(null, new HyperionPromptTemplateService(), llmTokenUsageService, userRepository);
+        String originalText = "Some text";
+
+        var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 1, 1, null, null, "Fix this");
+        assertThatThrownBy(() -> serviceWithNullClient.refineProblemStatementTargeted(createTestCourse(), request)).isInstanceOf(InternalServerErrorAlertException.class)
+                .hasMessageContaining("AI chat client is not configured");
+    }
+
+    @Test
+    void refineProblemStatementTargeted_throwsExceptionWhenProblemStatementIsEmpty() {
+        var request = new ProblemStatementTargetedRefinementRequestDTO("   ", 1, 1, null, null, "Fix this");
+        assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatementTargeted(createTestCourse(), request)).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("Cannot refine empty problem statement");
+    }
+
+    @Test
+    void refineProblemStatementTargeted_throwsExceptionWhenLineRangeOutOfBounds() {
+        // Only 1 line but requesting line 5
+        String originalText = "Single line";
+
+        var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 5, 5, null, null, "Fix this");
+        assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatementTargeted(createTestCourse(), request)).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("Invalid line range");
+    }
+
+    @Test
+    void refineProblemStatementTargeted_throwsExceptionWhenInstructionIsEmpty() {
+        assertThatThrownBy(() -> new ProblemStatementTargetedRefinementRequestDTO("Some text", 1, 1, null, null, "   ")).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("instruction must not be empty after trimming");
+    }
+
+    @Test
+    void refineProblemStatementTargeted_withEndColumnAtEndOfLine_succeeds() {
+        // Monaco sends endColumn = line.length() + 1 for "select to end of line" (1-indexed, exclusive)
+        String originalText = "Hello";
+        String refinedText = "World";
+        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(refinedText)))));
+
+        // endColumn=6 on a 5-char line ("Hello"): 1-indexed exclusive → selects chars 1-5
+        var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 1, 1, 1, 6, "Replace entire line");
+        ProblemStatementRefinementResponseDTO resp = hyperionProblemStatementRefinementService.refineProblemStatementTargeted(createTestCourse(), request);
+        assertThat(resp).isNotNull();
+        assertThat(resp.refinedProblemStatement()).isEqualTo(refinedText);
+    }
+
+    @Test
+    void refineProblemStatementTargeted_withEndColumnBeyondLineLength_clamps() {
+        // Monaco may send endColumn beyond the line length in edge cases
+        String originalText = "Hi";
+        String refinedText = "Bye";
+        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(refinedText)))));
+
+        // endColumn=100 on a 2-char line: should clamp to line length
+        var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 1, 1, 1, 100, "Replace it");
+        ProblemStatementRefinementResponseDTO resp = hyperionProblemStatementRefinementService.refineProblemStatementTargeted(createTestCourse(), request);
+        assertThat(resp).isNotNull();
+        assertThat(resp.refinedProblemStatement()).isEqualTo(refinedText);
+    }
+
+    @Test
+    void refineProblemStatementTargeted_throwsExceptionWhenResponseIsBlank() {
+        String originalText = "Line one\nLine two";
+        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage("   ")))));
+
+        var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 1, 1, null, null, "Improve this");
+        assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatementTargeted(createTestCourse(), request))
+                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("null or empty");
+    }
+
+    @Test
+    void refineProblemStatementTargeted_stripsLineNumbersFromResponse() {
+        String originalText = "Line one\nLine two\nLine three";
+        // LLM returns content with line-number prefixes despite being told not to
+        String llmResponse = "1: Line one\n2: Improved line two\n3: Line three";
+        String expectedStripped = "Line one\nImproved line two\nLine three";
+        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(llmResponse)))));
+
+        var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 2, 2, null, null, "Improve line two");
+        ProblemStatementRefinementResponseDTO resp = hyperionProblemStatementRefinementService.refineProblemStatementTargeted(createTestCourse(), request);
+        assertThat(resp).isNotNull();
+        assertThat(resp.refinedProblemStatement()).isEqualTo(expectedStripped);
+    }
+
+    @Test
+    void refineProblemStatementTargeted_doesNotStripNonSequentialLineNumbers() {
+        String originalText = "Some text";
+        // Content starting with digits-colon but not sequential line numbers — should not be stripped
+        String llmResponse = "3: First item\n5: Second item";
+        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(llmResponse)))));
+
+        var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 1, 1, null, null, "Transform this");
+        ProblemStatementRefinementResponseDTO resp = hyperionProblemStatementRefinementService.refineProblemStatementTargeted(createTestCourse(), request);
+        assertThat(resp).isNotNull();
+        // Non-sequential numbers should be preserved as-is
+        assertThat(resp.refinedProblemStatement()).isEqualTo(llmResponse);
+    }
+
+    @Test
+    void refineProblemStatementTargeted_preservesContentWithLeadingDigitsColon() {
+        String originalText = "Some text";
+        // Legitimate content that happens to start with "1: " on first line but not on second
+        String llmResponse = "1: Introduction\nNo prefix here";
+        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(llmResponse)))));
+
+        var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 1, 1, null, null, "Rewrite");
+        ProblemStatementRefinementResponseDTO resp = hyperionProblemStatementRefinementService.refineProblemStatementTargeted(createTestCourse(), request);
+        assertThat(resp).isNotNull();
+        // Because the second non-empty line doesn't have "2: " prefix, content should be preserved
+        assertThat(resp.refinedProblemStatement()).isEqualTo(llmResponse);
+    }
+
+    @Test
+    void refineProblemStatementTargeted_throwsExceptionWhenStartLineGreaterThanEndLine() {
+        String originalText = "Line one\nLine two\nLine three";
+        assertThatThrownBy(() -> new ProblemStatementTargetedRefinementRequestDTO(originalText, 3, 1, null, null, "Improve this")).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("startLine must be less than or equal to endLine");
+    }
+
+    @Test
+    void refineProblemStatementTargeted_withNullInstruction_doesNotThrowFromDTO() {
+        // Verify that the DTO constructor accepts null instruction (it's rejected at the service level, not the DTO level)
+        // Note: @NotBlank annotation covers null case via Spring validation, so the compact constructor does not throw
+        var request = new ProblemStatementTargetedRefinementRequestDTO("Some text", 1, 1, null, null, null);
+        assertThat(request).isNotNull();
+        assertThat(request.instruction()).isNull();
+    }
+
+    // --- Helpers ---
+
+    private Course createTestCourse() {
+        var course = new Course();
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+        return course;
     }
 }
