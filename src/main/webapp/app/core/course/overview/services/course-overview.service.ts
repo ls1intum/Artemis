@@ -312,6 +312,7 @@ export class CourseOverviewService {
             directMessages: (items) => this.sortDirectOrGroupMessages(items),
             groupChats: (items) => this.sortDirectOrGroupMessages(items),
             unreadMessages: (items) => this.sortUnreadMessages(items),
+            savedPosts: () => {},
         };
 
         // Apply sorting strategies for specific groups, and default sorting for the rest
