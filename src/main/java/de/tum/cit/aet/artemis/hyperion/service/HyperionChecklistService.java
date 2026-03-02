@@ -14,6 +14,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -112,11 +113,16 @@ public class HyperionChecklistService {
 
     private final UserRepository userRepository;
 
-    /** Lazily cached JSON representation of the standardized competency catalog. */
-    private volatile String cachedCatalogJson;
+    /**
+     * Holds a JSON snapshot of the standardized competency catalog together with its timestamp.
+     * Both fields are read and written as a single unit via {@link AtomicReference} so that the
+     * double-checked locking fast path in {@link #serializeCompetencyCatalog()} avoids the
+     * non-atomic two-volatile-read race that would exist with separate fields.
+     */
+    private record CatalogSnapshot(String json, Instant cachedAt) {
+    }
 
-    /** Timestamp of when the catalog was last cached. */
-    private volatile Instant catalogCachedAt;
+    private final AtomicReference<CatalogSnapshot> catalogCache = new AtomicReference<>();
 
     /** Time-to-live for the competency catalog cache. */
     private static final Duration CATALOG_CACHE_TTL = Duration.ofHours(1);
@@ -432,22 +438,20 @@ public class HyperionChecklistService {
      * Serializes the standardized competency catalog to condensed JSON for the prompt.
      */
     private String serializeCompetencyCatalog() {
-        String cached = this.cachedCatalogJson;
-        Instant cachedAt = this.catalogCachedAt;
-        if (cached != null && cachedAt != null && Instant.now().isBefore(cachedAt.plus(CATALOG_CACHE_TTL))) {
-            return cached;
+        // Fast path: single atomic read – both json and cachedAt are always read as one unit
+        CatalogSnapshot snapshot = this.catalogCache.get();
+        if (snapshot != null && Instant.now().isBefore(snapshot.cachedAt().plus(CATALOG_CACHE_TTL))) {
+            return snapshot.json();
         }
         synchronized (catalogLock) {
-            // Double-checked locking: re-read after acquiring lock
-            cached = this.cachedCatalogJson;
-            cachedAt = this.catalogCachedAt;
-            if (cached != null && cachedAt != null && Instant.now().isBefore(cachedAt.plus(CATALOG_CACHE_TTL))) {
-                return cached;
+            // Double-checked locking: re-read after acquiring lock (still one atomic read)
+            snapshot = this.catalogCache.get();
+            if (snapshot != null && Instant.now().isBefore(snapshot.cachedAt().plus(CATALOG_CACHE_TTL))) {
+                return snapshot.json();
             }
             if (standardizedCompetencyApi.isEmpty()) {
                 log.warn("StandardizedCompetencyApi is not available (Atlas module disabled). Using empty catalog.");
-                this.cachedCatalogJson = "[]";
-                this.catalogCachedAt = Instant.now();
+                this.catalogCache.set(new CatalogSnapshot("[]", Instant.now()));
                 return "[]";
             }
             try {
@@ -459,14 +463,12 @@ public class HyperionChecklistService {
                 }
 
                 String json = objectMapper.writeValueAsString(catalog);
-                this.cachedCatalogJson = json;
-                this.catalogCachedAt = Instant.now();
+                this.catalogCache.set(new CatalogSnapshot(json, Instant.now()));
                 return json;
             }
             catch (JsonProcessingException e) {
                 log.error("Failed to serialize competency catalog", e);
-                this.cachedCatalogJson = "[]";
-                this.catalogCachedAt = Instant.now();
+                this.catalogCache.set(new CatalogSnapshot("[]", Instant.now()));
                 return "[]";
             }
         }

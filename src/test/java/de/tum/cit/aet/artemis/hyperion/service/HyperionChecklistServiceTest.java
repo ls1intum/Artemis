@@ -363,4 +363,21 @@ class HyperionChecklistServiceTest {
         assertThat(response.applied()).isFalse();
         assertThat(response.updatedProblemStatement()).isEqualTo("Original problem statement");
     }
+
+    @Test
+    void applyChecklistAction_adaptDifficulty() {
+        String updatedStatement = "Updated problem statement adapted to MEDIUM difficulty.";
+        when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(updatedStatement)))));
+
+        var request = new ChecklistActionRequestDTO(ChecklistActionRequestDTO.ActionType.ADAPT_DIFFICULTY, "Original problem statement",
+                Map.of("targetDifficulty", "MEDIUM", "currentDifficulty", "EASY", "reasoning", "Exercise is conceptually moderate.", "taskCount", "5", "testCount", "10"));
+
+        ChecklistActionResponseDTO response = hyperionChecklistService.applyChecklistAction(request).join();
+
+        assertThat(response).isNotNull();
+        assertThat(response.applied()).isTrue();
+        assertThat(response.updatedProblemStatement()).isEqualTo(updatedStatement);
+        // Summary should reference the target difficulty level
+        assertThat(response.summary()).contains("MEDIUM");
+    }
 }
