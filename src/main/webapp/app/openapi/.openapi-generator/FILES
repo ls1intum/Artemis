@@ -23,6 +23,7 @@ model/problemStatementGlobalRefinementRequest.ts
 model/problemStatementRefinementResponse.ts
 model/problemStatementRewriteRequest.ts
 model/problemStatementRewriteResponse.ts
+model/problemStatementTargetedRefinementRequest.ts
 model/rewriteFaqRequest.ts
 model/rewriteFaqResponse.ts
 model/student.ts
