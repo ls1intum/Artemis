@@ -77,7 +77,14 @@
                             "sourceAuthorRequired": "Source '{{title}}': author is required",
                             "sourceAuthorTooLong": "Source '{{title}}': author exceeds {{max}} characters",
                             "sourceUriTooLong": "Source '{{title}}': uri exceeds {{max}} characters",
-                            "moreErrors": "... and {{count}} more error(s)"
+                            "moreErrors": "... and {{count}} more error(s)",
+                            "labels": {
+                                "knowledgeAreaNamed": "Knowledge area '{{title}}'",
+                                "knowledgeAreaUnnamed": "Knowledge area",
+                                "childOf": "Child of {{label}}",
+                                "competencyNamed": "Competency '{{title}}' in {{parent}}",
+                                "competencyUnnamed": "Unnamed competency in {{parent}}"
+                            }
                         }
                     },
                     "success": "Successfully imported all knowledge areas and standardized competencies"

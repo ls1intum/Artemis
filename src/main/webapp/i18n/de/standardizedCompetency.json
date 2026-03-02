@@ -77,7 +77,14 @@
                             "sourceAuthorRequired": "Quelle '{{title}}': Autor ist erforderlich",
                             "sourceAuthorTooLong": "Quelle '{{title}}': Autor überschreitet {{max}} Zeichen",
                             "sourceUriTooLong": "Quelle '{{title}}': URI überschreitet {{max}} Zeichen",
-                            "moreErrors": "... und {{count}} weitere Fehler"
+                            "moreErrors": "... und {{count}} weitere Fehler",
+                            "labels": {
+                                "knowledgeAreaNamed": "Wissensgebiet '{{title}}'",
+                                "knowledgeAreaUnnamed": "Wissensgebiet",
+                                "childOf": "Untergebiet von {{label}}",
+                                "competencyNamed": "Kompetenz '{{title}}' in {{parent}}",
+                                "competencyUnnamed": "Unbenannte Kompetenz in {{parent}}"
+                            }
                         }
                     },
                     "success": "Erfolgreich alle standardisierte Kompetenzen und Wissensgebiete importiert"

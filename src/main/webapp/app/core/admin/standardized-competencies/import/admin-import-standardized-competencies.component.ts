@@ -77,6 +77,7 @@ export class AdminImportStandardizedCompetenciesComponent {
     protected dataSource = new MatTreeNestedDataSource<KnowledgeAreaForTree>();
     private fileReader: FileReader = new FileReader();
     private readonly validationTranslationBase = 'artemisApp.standardizedCompetency.manage.import.error.validation';
+    private readonly labelsBase = `${this.validationTranslationBase}.labels`;
 
     //Icons
     protected readonly faFileImport = faFileImport;
@@ -230,9 +231,14 @@ export class AdminImportStandardizedCompetenciesComponent {
      */
     private validateImportData(data: KnowledgeAreasForImportDTO): string[] {
         const errors: string[] = [];
-        const sourceIds = new Set((data.sources ?? []).map((s) => s.id).filter((id): id is number => id !== undefined));
-        (data.sources ?? []).forEach((source, index) => this.validateSource(source, index + 1, errors));
-        for (const ka of data.knowledgeAreas ?? []) {
+        const sources = data.sources ?? [];
+        const knowledgeAreas = data.knowledgeAreas ?? [];
+        if (!Array.isArray(sources) || !Array.isArray(knowledgeAreas)) {
+            return [this.translateService.instant('artemisApp.standardizedCompetency.manage.import.error.fileStructure')];
+        }
+        const sourceIds = new Set(sources.map((s) => s.id).filter((id): id is number => id !== undefined));
+        sources.forEach((source, index) => this.validateSource(source, index + 1, errors));
+        for (const ka of knowledgeAreas) {
             this.validateKnowledgeArea(ka, errors, sourceIds);
         }
         return errors;
@@ -257,8 +263,10 @@ export class AdminImportStandardizedCompetenciesComponent {
         }
     }
 
-    private validateKnowledgeArea(ka: KnowledgeAreaDTO, errors: string[], sourceIds: Set<number>, path = 'Knowledge area'): void {
-        const label = ka.title ? `Knowledge area '${ka.title}'` : path;
+    private validateKnowledgeArea(ka: KnowledgeAreaDTO, errors: string[], sourceIds: Set<number>, path?: string): void {
+        const label = ka.title
+            ? this.translateService.instant(`${this.labelsBase}.knowledgeAreaNamed`, { title: ka.title })
+            : (path ?? this.translateService.instant(`${this.labelsBase}.knowledgeAreaUnnamed`));
         if (!ka.title) {
             errors.push(this.translateService.instant(`${this.validationTranslationBase}.titleRequired`, { label }));
         } else if (ka.title.length > KnowledgeAreaValidators.TITLE_MAX) {
@@ -275,7 +283,7 @@ export class AdminImportStandardizedCompetenciesComponent {
             errors.push(this.translateService.instant(`${this.validationTranslationBase}.descriptionTooLong`, { label, max: KnowledgeAreaValidators.DESCRIPTION_MAX }));
         }
         for (const child of ka.children ?? []) {
-            this.validateKnowledgeArea(child, errors, sourceIds, `Child of ${label}`);
+            this.validateKnowledgeArea(child, errors, sourceIds, this.translateService.instant(`${this.labelsBase}.childOf`, { label }));
         }
         for (const competency of ka.competencies ?? []) {
             this.validateCompetency(competency, errors, sourceIds, label);
@@ -283,7 +291,9 @@ export class AdminImportStandardizedCompetenciesComponent {
     }
 
     private validateCompetency(competency: StandardizedCompetencyDTO, errors: string[], sourceIds: Set<number>, parentLabel: string): void {
-        const label = competency.title ? `Competency '${competency.title}' in ${parentLabel}` : `Unnamed competency in ${parentLabel}`;
+        const label = competency.title
+            ? this.translateService.instant(`${this.labelsBase}.competencyNamed`, { title: competency.title, parent: parentLabel })
+            : this.translateService.instant(`${this.labelsBase}.competencyUnnamed`, { parent: parentLabel });
         if (!competency.title) {
             errors.push(this.translateService.instant(`${this.validationTranslationBase}.titleRequired`, { label }));
         } else if (competency.title.length > StandardizedCompetencyValidators.TITLE_MAX) {

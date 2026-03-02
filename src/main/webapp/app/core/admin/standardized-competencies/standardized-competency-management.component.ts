@@ -10,6 +10,7 @@ import {
     faUpRightAndDownLeftFromCenter,
 } from '@fortawesome/free-solid-svg-icons';
 import interact from 'interactjs';
+import type { ResizeEvent } from '@interactjs/actions/resize/plugin';
 import {
     KnowledgeAreaDTO,
     KnowledgeAreaForTree,
@@ -142,21 +143,21 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
             .resizable({
                 edges: { left: '.draggable-left', right: false, bottom: false, top: false },
                 modifiers: [
-                    interact.modifiers!.restrictSize({
+                    interact.modifiers.restrictSize({
                         min: { width: 250, height: 0 },
                         max: { width: 1100, height: 2000 },
                     }),
                 ],
                 inertia: true,
             })
-            .on('resizestart', function (event: any) {
+            .on('resizestart', (event: ResizeEvent) => {
                 event.target.classList.add('card-resizable');
             })
-            .on('resizeend', function (event: any) {
+            .on('resizeend', (event: ResizeEvent) => {
                 event.target.classList.remove('card-resizable');
             })
-            .on('resizemove', (event: any) => {
-                event.target.style.width = event.rect.width + 'px';
+            .on('resizemove', (event: ResizeEvent) => {
+                (event.target as HTMLElement).style.width = event.rect.width + 'px';
                 this.detailPanelWidth.set(event.rect.width);
             });
     }
