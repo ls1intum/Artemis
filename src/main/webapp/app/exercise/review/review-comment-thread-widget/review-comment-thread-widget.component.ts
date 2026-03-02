@@ -83,7 +83,6 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
             key: this.deleteCommentDialogKey(),
             header: this.translateService.instant('artemisApp.review.deleteCommentConfirmTitle'),
             message: this.translateService.instant('artemisApp.review.deleteCommentConfirmText'),
-            icon: 'pi pi-exclamation-triangle',
             acceptButtonStyleClass: 'p-button-danger',
             accept: () => this.reviewCommentService.deleteCommentInContext(commentId),
         });
