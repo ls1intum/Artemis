@@ -25,7 +25,7 @@
         margin: 0;
     }
 
-    :deep(.checklist-section) {
+    ::ng-deep .checklist-section {
         border-left: none;
         border-right: none;
         border-bottom: none;
