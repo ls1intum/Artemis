@@ -16,8 +16,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
+import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -37,7 +37,7 @@ class ProgrammingExerciseCreationUpdateServiceTest {
     private ModuleFeatureService moduleFeatureService;
 
     @Mock
-    private UserRepository userRepository;
+    private UserTestRepository userRepository;
 
     private ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService;
 
