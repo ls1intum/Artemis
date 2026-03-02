@@ -84,10 +84,10 @@ public class FeatureToggleService {
         features = hazelcastInstance.getMap("features");
 
         // Features that are neither enabled nor disabled should be enabled by default
-        // This ensures that all features (except the Science API, TutorSuggestions, AtlasML, Memiris, AtlasAgent, and RateLimit) are enabled once the system starts up
+        // This ensures that all features (except the Science API, TutorSuggestions, AtlasML, AtlasAgent, and RateLimit) are enabled once the system starts up
         for (Feature feature : Feature.values()) {
-            if (!features.containsKey(feature) && feature != Feature.Science && feature != Feature.TutorSuggestions && feature != Feature.AtlasML && feature != Feature.Memiris
-                    && feature != Feature.AtlasAgent && feature != Feature.RateLimit) {
+            if (!features.containsKey(feature) && feature != Feature.Science && feature != Feature.TutorSuggestions && feature != Feature.AtlasML && feature != Feature.AtlasAgent
+                    && feature != Feature.RateLimit) {
                 features.put(feature, true);
             }
         }
@@ -106,10 +106,6 @@ public class FeatureToggleService {
 
         if (!features.containsKey(Feature.AtlasML)) {
             features.put(Feature.AtlasML, false);
-        }
-
-        if (!features.containsKey(Feature.Memiris)) {
-            features.put(Feature.Memiris, false);
         }
 
         // Disable LectureContentProcessing in dev profile to avoid issues with local file system access
