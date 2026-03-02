@@ -13,10 +13,25 @@ import { InferredCompetency } from './inferredCompetency';
 import { QualityIssue } from './qualityIssue';
 
 
+/**
+ * Response containing the checklist analysis results
+ */
 export interface ChecklistAnalysisResponse { 
+    /**
+     * Top inferred competencies from the standardized catalog
+     */
     inferredCompetencies?: Array<InferredCompetency>;
+    /**
+     * Bloom\'s taxonomy radar distribution
+     */
     bloomRadar?: BloomRadar;
+    /**
+     * Difficulty assessment with delta indicator
+     */
     difficultyAssessment?: DifficultyAssessment;
+    /**
+     * List of quality issues found in the problem statement
+     */
     qualityIssues?: Array<QualityIssue>;
 }
 

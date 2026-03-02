@@ -25,6 +25,7 @@ import {
     faTrashCan,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
+import { Panel } from 'primeng/panel';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
 import { ChecklistAnalysisResponse } from 'app/openapi/model/checklistAnalysisResponse';
@@ -46,8 +47,8 @@ import {
 import { EMPTY, Observable, from, of } from 'rxjs';
 import { catchError, concatMap, map, switchMap, tap, toArray } from 'rxjs/operators';
 import { taskRegex } from 'app/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
-import { Checkbox } from 'primeng/checkbox';
 import { FormsModule } from '@angular/forms';
+import { Checkbox } from 'primeng/checkbox';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
@@ -88,7 +89,7 @@ const PENALTY_LOW = 0.1;
     templateUrl: './checklist-panel.component.html',
     styleUrls: ['./checklist-panel.component.scss'],
     standalone: true,
-    imports: [NgClass, DecimalPipe, TranslateModule, FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective, Tag, ButtonDirective, Badge, Checkbox, FormsModule],
+    imports: [NgClass, DecimalPipe, TranslateModule, FontAwesomeModule, FormsModule, ArtemisTranslatePipe, TranslateDirective, Tag, ButtonDirective, Badge, Checkbox, Panel],
 })
 export class ChecklistPanelComponent {
     private hyperionApiService = inject(HyperionProblemStatementApiService);
