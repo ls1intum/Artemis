@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.atlas.web;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceSetting;
+import de.tum.cit.aet.artemis.atlas.dto.ScienceSettingDTO;
 import de.tum.cit.aet.artemis.atlas.repository.ScienceSettingRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -59,11 +61,12 @@ public class ScienceSettingsResource {
      */
     @GetMapping("science-settings")
     @EnforceAtLeastStudent
-    public ResponseEntity<Set<ScienceSetting>> getScienceSettingsForCurrentUser() {
+    public ResponseEntity<Set<ScienceSettingDTO>> getScienceSettingsForCurrentUser() {
         User user = userRepository.getUser();
         log.debug("REST request to get all ScienceSettings for current user {}", user);
         Set<ScienceSetting> scienceSettings = scienceSettingRepository.findAllByUserId(user.getId());
-        return new ResponseEntity<>(scienceSettings, HttpStatus.OK);
+        var scienceSettingDtos = scienceSettings.stream().map(ScienceSettingDTO::of).collect(Collectors.toSet());
+        return new ResponseEntity<>(scienceSettingDtos, HttpStatus.OK);
     }
 
     /**
@@ -77,18 +80,18 @@ public class ScienceSettingsResource {
      */
     @PutMapping("science-settings")
     @EnforceAtLeastStudent
-    public ResponseEntity<ScienceSetting[]> saveScienceSettingsForCurrentUser(@NonNull @RequestBody ScienceSetting[] scienceSettings) {
+    public ResponseEntity<ScienceSettingDTO[]> saveScienceSettingsForCurrentUser(@NonNull @RequestBody ScienceSettingDTO[] scienceSettings) {
         if (scienceSettings.length == 0) {
             throw new BadRequestAlertException("Cannot save non-existing Science Settings", "ScienceSettings", "scienceSettingsEmpty");
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to save ScienceSettings : {} for current user {}", scienceSettings, user);
-        List<ScienceSetting> scienceSettingList = Arrays.stream(scienceSettings).peek(scienceSetting -> scienceSetting.setUser(user)).toList();
+        List<ScienceSetting> scienceSettingList = Arrays.stream(scienceSettings).map(dto -> new ScienceSetting(user, dto.settingId(), dto.active())).toList();
         List<ScienceSetting> persistedSettingList = scienceSettingRepository.saveAll(scienceSettingList);
         if (persistedSettingList.isEmpty()) {
             throw new BadRequestAlertException("Error occurred during saving of Science Settings", "ScienceSettings", "scienceSettingsEmptyAfterSave");
         }
-        ScienceSetting[] persistedSettingArray = persistedSettingList.toArray(new ScienceSetting[0]);
+        ScienceSettingDTO[] persistedSettingArray = persistedSettingList.stream().map(ScienceSettingDTO::of).toArray(ScienceSettingDTO[]::new);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, "scienceSetting", "test")).body(persistedSettingArray);
     }
 }
