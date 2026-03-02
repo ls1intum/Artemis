@@ -825,13 +825,13 @@ describe('CourseOverviewService', () => {
                 it('should sort by unread messages when favorite status is equal', () => {
                     chat1.isFavorite = true;
                     chat2.isFavorite = true;
-                    chat2.unreadMessagesCount = 3;
+                    chat2.unreadMessagesCount = 0;
 
                     const grouped = courseOverviewService.groupConversationsByChannelType(course, [chat1, chat2], true);
                     const items = grouped[label].entityData;
 
-                    expect(items[0].id).toBe(chat2.id);
-                    expect(items[1].id).toBe(chat1.id);
+                    expect(items[0].id).toBe(chat1.id);
+                    expect(items[1].id).toBe(chat2.id);
                 });
 
                 it('should sort by lastMessageDate when favorite and unread status are equal', () => {
