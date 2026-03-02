@@ -2,7 +2,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TableLazyLoadEvent, TablePageEvent } from 'primeng/table';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ColumnDef, TableView } from './table-view';
+import { ColumnDef, TableView, TableViewOptions } from './table-view';
 
 interface TestData {
     id: number;
@@ -56,23 +56,107 @@ describe('TableView', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should initialize with required inputs', () => {
+    it('should initialize with inputs', () => {
         expect(component.cols()).toEqual(mockColumns);
         expect(component.vals()).toEqual(mockData);
         expect(component.totalRows()).toBe(3);
-        expect(component.pageSize()).toBe(50);
-    });
-
-    it('should have default page size options', () => {
-        expect(component.pageSizeOptions()).toEqual([10, 20, 50, 100, 200]);
     });
 
     it('should have default loading state as false', () => {
         expect(component.loading()).toBe(false);
     });
 
-    it('should have default empty message translation', () => {
-        expect(component.emptyMessageTranslation()).toBe('artemisApp.dataTable.search.noResults');
+    describe('resolvedOptions', () => {
+        it('should use all defaults when options is empty', () => {
+            const resolved = component['resolvedOptions']();
+            expect(resolved.lazy).toBe(true);
+            expect(resolved.paginated).toBe(true);
+            expect(resolved.striped).toBe(false);
+            expect(resolved.selectionMode).toBeUndefined();
+            expect(resolved.dataKey).toBe('id');
+            expect(resolved.tableStyle).toEqual({ 'min-width': '50rem' });
+            expect(resolved.showCurrentPageReport).toBe(true);
+            expect(resolved.pageSize).toBe(50);
+            expect(resolved.pageSizeOptions).toEqual([10, 20, 50, 100, 200]);
+            expect(resolved.showSearch).toBe(true);
+            expect(resolved.emptyMessageTranslation).toBe('artemisApp.dataTable.search.noResults');
+        });
+
+        it('should merge partial options onto defaults', () => {
+            fixture.componentRef.setInput('options', { striped: true, pageSize: 20 });
+            const resolved = component['resolvedOptions']();
+            expect(resolved.striped).toBe(true);
+            expect(resolved.pageSize).toBe(20);
+            // Unset fields remain at defaults
+            expect(resolved.lazy).toBe(true);
+            expect(resolved.paginated).toBe(true);
+            expect(resolved.emptyMessageTranslation).toBe('artemisApp.dataTable.search.noResults');
+        });
+
+        it('should apply a full options override', () => {
+            const fullOptions: TableViewOptions = {
+                lazy: false,
+                paginated: false,
+                striped: true,
+                selectionMode: 'single',
+                dataKey: 'name',
+                tableStyle: { 'min-width': '20rem' },
+                showCurrentPageReport: false,
+                pageSize: 10,
+                pageSizeOptions: [10],
+                showSearch: false,
+                emptyMessageTranslation: 'custom.message',
+            };
+            fixture.componentRef.setInput('options', fullOptions);
+            const resolved = component['resolvedOptions']();
+            expect(resolved.lazy).toBe(false);
+            expect(resolved.paginated).toBe(false);
+            expect(resolved.striped).toBe(true);
+            expect(resolved.selectionMode).toBe('single');
+            expect(resolved.dataKey).toBe('name');
+            expect(resolved.tableStyle).toEqual({ 'min-width': '20rem' });
+            expect(resolved.showCurrentPageReport).toBe(false);
+            expect(resolved.pageSize).toBe(10);
+            expect(resolved.pageSizeOptions).toEqual([10]);
+            expect(resolved.showSearch).toBe(false);
+            expect(resolved.emptyMessageTranslation).toBe('custom.message');
+        });
+    });
+
+    describe('effectiveTotalRows', () => {
+        it('should use totalRows when provided', () => {
+            fixture.componentRef.setInput('totalRows', 42);
+            expect(component['effectiveTotalRows']()).toBe(42);
+        });
+
+        it('should fall back to vals().length when totalRows is undefined', () => {
+            fixture.componentRef.setInput('totalRows', undefined);
+            expect(component['effectiveTotalRows']()).toBe(mockData.length);
+        });
+    });
+
+    describe('effectivePageSize', () => {
+        it('should use options.pageSize as the initial page size', () => {
+            expect(component['effectivePageSize']()).toBe(50);
+        });
+
+        it('should reflect a custom pageSize from options', () => {
+            fixture.componentRef.setInput('options', { pageSize: 20 });
+            expect(component['effectivePageSize']()).toBe(20);
+        });
+
+        it('should be updated by pageChange', () => {
+            const pageEvent: TablePageEvent = { first: 0, rows: 10 };
+            component.pageChange(pageEvent);
+            expect(component['effectivePageSize']()).toBe(10);
+        });
+
+        it('should override options.pageSize after pageChange', () => {
+            fixture.componentRef.setInput('options', { pageSize: 20 });
+            expect(component['effectivePageSize']()).toBe(20);
+            component.pageChange({ first: 0, rows: 100 });
+            expect(component['effectivePageSize']()).toBe(100);
+        });
     });
 
     it('should compute item range begin correctly', () => {
@@ -92,9 +176,15 @@ describe('TableView', () => {
         // Default state: first=0, pageSize=50, totalRows=3
         expect(component.itemRangeEnd()).toBe(3);
 
-        // Change page size to 2
-        component.pageSize.set(2);
+        // Change page size via pageChange
+        component.pageChange({ first: 0, rows: 2 });
         expect(component.itemRangeEnd()).toBe(2);
+    });
+
+    it('should compute item range begin from vals length when totalRows is undefined', () => {
+        fixture.componentRef.setInput('totalRows', undefined);
+        expect(component.itemRangeBegin()).toBe(1);
+        expect(component.itemRangeEnd()).toBe(mockData.length);
     });
 
     it('should build renderer params correctly', () => {
@@ -150,22 +240,8 @@ describe('TableView', () => {
 
         component.pageChange(pageEvent);
 
-        expect(component.pageSize()).toBe(10);
+        expect(component['effectivePageSize']()).toBe(10);
         expect(component['currentFirst']()).toBe(20);
-    });
-
-    it('should update page size via model', () => {
-        expect(component.pageSize()).toBe(50);
-
-        component.pageSize.set(100);
-        expect(component.pageSize()).toBe(100);
-    });
-
-    it('should support custom page size options', () => {
-        const customOptions = [5, 15, 25, 50];
-        fixture.componentRef.setInput('pageSizeOptions', customOptions);
-
-        expect(component.pageSizeOptions()).toEqual(customOptions);
     });
 
     it('should support loading input', () => {
@@ -175,11 +251,13 @@ describe('TableView', () => {
         expect(component.loading()).toBe(true);
     });
 
-    it('should support custom empty message translation', () => {
-        expect(component.emptyMessageTranslation()).toBe('artemisApp.dataTable.search.noResults');
+    it('should support table actions template input', () => {
+        expect(component.tableActions()).toBeNull();
 
-        fixture.componentRef.setInput('emptyMessageTranslation', 'custom.message');
-        expect(component.emptyMessageTranslation()).toBe('custom.message');
+        const mockTemplate = { template: 'mock' } as any;
+        fixture.componentRef.setInput('tableActions', mockTemplate);
+
+        expect(component.tableActions()).toEqual(mockTemplate);
     });
 
     it('should support row actions template input', () => {
@@ -283,8 +361,8 @@ describe('TableView', () => {
         expect(component.itemRangeBegin()).toBe(1);
         expect(component.itemRangeEnd()).toBe(10);
 
-        // Update page size
-        component.pageSize.set(5);
+        // Change page size via pageChange
+        component.pageChange({ first: 0, rows: 5 });
         expect(component.itemRangeEnd()).toBe(5);
     });
 

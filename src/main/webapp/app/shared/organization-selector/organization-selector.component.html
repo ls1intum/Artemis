@@ -5,10 +5,8 @@
         [totalRows]="totalCount()"
         (onLazyLoad)="loadOrganizations($event)"
         [rowActions]="selectorActions"
-        [pageSize]="10"
-        [pageSizeOptions]="[10]"
         [loading]="isLoading()"
-        emptyMessageTranslation="artemisApp.organizationManagement.modalSelector.noOrganizations"
+        [options]="selectorTableOptions"
     />
 
     <div class="d-flex justify-content-end mt-3">

@@ -4,7 +4,7 @@ import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Organization } from 'app/core/shared/entities/organization.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TableLazyLoadEvent } from 'primeng/table';
-import { CellRendererParams, ColumnDef, TableView } from 'app/shared/table-view/table-view';
+import { CellRendererParams, ColumnDef, TableView, TableViewOptions } from 'app/shared/table-view/table-view';
 import { buildDbQueryFromLazyEvent } from 'app/shared/table-view/request-builder';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -20,6 +20,13 @@ export interface OrganizationSelectorDialogData {
     imports: [TranslateDirective, TableView],
 })
 export class OrganizationSelectorComponent {
+    readonly selectorTableOptions: TableViewOptions = {
+        pageSize: 10,
+        hidePageSizeOptions: true,
+        emptyMessageTranslation: 'artemisApp.organizationManagement.modalSelector.noOrganizations',
+        striped: true,
+    };
+
     private readonly dialogRef = inject(DynamicDialogRef);
     private readonly config = inject(DynamicDialogConfig<OrganizationSelectorDialogData>);
     private readonly organizationService = inject(OrganizationManagementService);

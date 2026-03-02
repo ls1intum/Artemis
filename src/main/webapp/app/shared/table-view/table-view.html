@@ -1,27 +1,36 @@
 <div class="jhi-table-view-container">
     <p-table
         #dt
-        stripedRows
+        [stripedRows]="resolvedOptions().striped"
         [columns]="cols()"
         [value]="vals()"
-        [totalRecords]="totalRows()"
-        [tableStyle]="{ 'min-width': '50rem' }"
-        [paginator]="true"
-        [rows]="pageSize()"
-        [rowsPerPageOptions]="pageSizeOptions()"
-        [showCurrentPageReport]="true"
-        [currentPageReportTemplate]="'global.item-count' | artemisTranslate: { first: itemRangeBegin(), second: itemRangeEnd(), total: totalRows() }"
+        [totalRecords]="effectiveTotalRows()"
+        [tableStyle]="resolvedOptions().tableStyle"
+        [paginator]="resolvedOptions().paginated"
+        [rows]="effectivePageSize()"
+        [rowsPerPageOptions]="resolvedOptions().pageSizeOptions"
+        [showCurrentPageReport]="resolvedOptions().showCurrentPageReport"
+        [currentPageReportTemplate]="'global.item-count' | artemisTranslate: { first: itemRangeBegin(), second: itemRangeEnd(), total: effectiveTotalRows() }"
         (onPage)="pageChange($event)"
         [loading]="loading()"
-        [selectionMode]="selectionMode()"
+        [selectionMode]="resolvedOptions().selectionMode"
         [(selection)]="selectedRow"
-        dataKey="id"
+        [dataKey]="resolvedOptions().dataKey"
         (onRowSelect)="onRowSelect.emit($event.data)"
-        [lazy]="true"
+        [lazy]="resolvedOptions().lazy"
         (onLazyLoad)="handleLazyLoad($event)"
     >
         <ng-template #caption>
-            <jhi-search-filter (newSearchEvent)="onGlobalSearch($event)" />
+            <div class="d-flex align-items-center gap-2">
+                @if (resolvedOptions().showSearch) {
+                    <div class="flex-grow-1">
+                        <jhi-search-filter (newSearchEvent)="onGlobalSearch($event)" />
+                    </div>
+                }
+                @if (tableActions()) {
+                    <ng-container [ngTemplateOutlet]="tableActions()!" />
+                }
+            </div>
         </ng-template>
         <ng-template #header let-columns>
             <tr>
@@ -75,7 +84,7 @@
         <ng-template #emptymessage>
             <tr>
                 <td [colSpan]="cols().length + (rowActions() ? 1 : 0)" class="text-secondary">
-                    <span [jhiTranslate]="emptyMessageTranslation()"></span>
+                    <span [jhiTranslate]="resolvedOptions().emptyMessageTranslation"></span>
                 </td>
             </tr>
         </ng-template>

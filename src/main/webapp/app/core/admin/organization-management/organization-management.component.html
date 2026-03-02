@@ -14,7 +14,7 @@
             [rowActions]="organizationActions"
             [loading]="isLoading()"
             (onRowSelect)="onOrganizationSelect($event)"
-            selectionMode="single"
+            [options]="{ selectionMode: 'single', striped: true }"
         />
     </div>
 </div>

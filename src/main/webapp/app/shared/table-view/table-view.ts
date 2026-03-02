@@ -1,5 +1,5 @@
 import { NgComponentOutlet, NgTemplateOutlet } from '@angular/common';
-import { Component, DestroyRef, TemplateRef, Type, ViewEncapsulation, computed, inject, input, model, output, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, TemplateRef, Type, ViewEncapsulation, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -26,6 +26,57 @@ export interface CellRendererParams<T> {
     rowIndex: number;
 }
 
+/**
+ * The fully-resolved configuration for the table. All fields are required.
+ * Callers provide a {@link TableViewOptions} partial; missing fields fall back to DEFAULT_TABLE_CONFIG.
+ */
+export interface TableConfig {
+    /** Enable server-side lazy loading. Default: true */
+    lazy: boolean;
+    /** Show paginator controls. Default: true */
+    paginated: boolean;
+    /** Show striped rows. Default: false */
+    striped: boolean;
+    /** Row selection mode. Default: undefined (no selection) */
+    selectionMode: 'single' | 'multiple' | undefined;
+    /** Field used as the unique row key for selection and virtual scroll. Default: 'id' */
+    dataKey: string;
+    /** Inline style object passed to p-table. Default: { 'min-width': '50rem' } */
+    tableStyle: Record<string, string>;
+    /** Show the "X–Y of Z" current-page report below the table. Default: true */
+    showCurrentPageReport: boolean;
+    /** Number of rows per page. Default: 50 */
+    pageSize: number;
+    /** Rows-per-page options shown in the paginator dropdown. Pass undefined to hide the dropdown. Default: [10, 20, 50, 100, 200] */
+    pageSizeOptions: number[] | undefined;
+    /** Show the search filter in the table caption bar. Default: true */
+    showSearch: boolean;
+    /** Translation key for the message shown when the table has no rows. Default: 'artemisApp.dataTable.search.noResults' */
+    emptyMessageTranslation: string;
+}
+
+/**
+ * Configuration options for the table-view component.
+ * All fields are optional; omitted fields fall back to DEFAULT_TABLE_CONFIG.
+ */
+export interface TableViewOptions extends Partial<TableConfig> {
+    hidePageSizeOptions?: boolean;
+}
+
+const DEFAULT_TABLE_CONFIG: TableConfig = {
+    lazy: true,
+    paginated: true,
+    striped: false,
+    selectionMode: undefined,
+    dataKey: 'id',
+    tableStyle: { 'min-width': '50rem' },
+    showCurrentPageReport: true,
+    pageSize: 50,
+    pageSizeOptions: [10, 20, 50, 100, 200],
+    showSearch: true,
+    emptyMessageTranslation: 'artemisApp.dataTable.search.noResults',
+};
+
 @Component({
     selector: 'jhi-table-view',
     imports: [NgComponentOutlet, NgTemplateOutlet, FormsModule, TableModule, TranslateDirective, ArtemisTranslatePipe, SearchFilterComponent],
@@ -38,13 +89,17 @@ export class TableView<T> {
 
     cols = input.required<ColumnDef<T>[]>();
     vals = input.required<T[]>();
-    totalRows = input.required<number>();
-    pageSize = model<number>(50);
-    pageSizeOptions = input<number[]>([10, 20, 50, 100, 200]);
+    /**
+     * Total number of records in the full dataset.
+     * Must be provided in lazy/server-side mode so the paginator knows the full record count.
+     * In non-lazy mode, falls back to `vals().length` when omitted.
+     */
+    totalRows = input<number | undefined>(undefined);
     rowActions = input<TemplateRef<{ $implicit: T }> | null>(null);
+    /** Template rendered in the caption bar alongside the search field. Receives no context. */
+    tableActions = input<TemplateRef<unknown> | null>(null);
     loading = input(false);
-    emptyMessageTranslation = input<string>('artemisApp.dataTable.search.noResults');
-    selectionMode = input<'single' | 'multiple' | undefined>(undefined);
+    options = input<TableViewOptions>({});
     selectedRow: T | undefined;
 
     onLazyLoad = output<TableLazyLoadEvent>();
@@ -58,10 +113,37 @@ export class TableView<T> {
         inject(DestroyRef).onDestroy(() => clearTimeout(this.debounceTimer));
     }
 
-    private currentFirst = signal(0);
+    private readonly currentFirst = signal(0);
+    /** Tracks user-driven page-size changes; undefined means use resolvedOptions().pageSize. */
+    private readonly currentPageSizeOverride = signal<number | undefined>(undefined);
 
-    itemRangeBegin = computed(() => (this.totalRows() === 0 ? 0 : Math.min(this.totalRows(), this.currentFirst() + 1)));
-    itemRangeEnd = computed(() => Math.min(this.totalRows(), this.currentFirst() + this.pageSize()));
+    /** Merges caller overrides onto defaults. Single source of truth for all p-table config. */
+    protected readonly resolvedOptions = computed<TableConfig>(() => {
+        const opts = this.options();
+        const tableConfig: TableConfig = {
+            lazy: opts.lazy ?? DEFAULT_TABLE_CONFIG.lazy,
+            paginated: opts.paginated ?? DEFAULT_TABLE_CONFIG.paginated,
+            striped: opts.striped ?? DEFAULT_TABLE_CONFIG.striped,
+            selectionMode: opts.selectionMode ?? DEFAULT_TABLE_CONFIG.selectionMode,
+            dataKey: opts.dataKey ?? DEFAULT_TABLE_CONFIG.dataKey,
+            tableStyle: opts.tableStyle ?? DEFAULT_TABLE_CONFIG.tableStyle,
+            showCurrentPageReport: opts.showCurrentPageReport ?? DEFAULT_TABLE_CONFIG.showCurrentPageReport,
+            pageSize: opts.pageSize ?? DEFAULT_TABLE_CONFIG.pageSize,
+            pageSizeOptions: opts.hidePageSizeOptions ? undefined : (opts.pageSizeOptions ?? DEFAULT_TABLE_CONFIG.pageSizeOptions),
+            showSearch: opts.showSearch ?? DEFAULT_TABLE_CONFIG.showSearch,
+            emptyMessageTranslation: opts.emptyMessageTranslation ?? DEFAULT_TABLE_CONFIG.emptyMessageTranslation,
+        };
+        return tableConfig;
+    });
+
+    /** Falls back to vals().length in non-lazy mode. */
+    protected readonly effectiveTotalRows = computed(() => this.totalRows() ?? this.vals().length);
+
+    /** Uses the caller-set pageSize until the user changes it via the paginator. */
+    protected readonly effectivePageSize = computed(() => this.currentPageSizeOverride() ?? this.resolvedOptions().pageSize);
+
+    itemRangeBegin = computed(() => (this.effectiveTotalRows() === 0 ? 0 : Math.min(this.effectiveTotalRows(), this.currentFirst() + 1)));
+    itemRangeEnd = computed(() => Math.min(this.effectiveTotalRows(), this.currentFirst() + this.effectivePageSize()));
 
     /** Pre-built renderer params for every cell, keyed by row data object. Recomputed only when vals() or cols() change. */
     renderedRows = computed(() => {
@@ -103,7 +185,7 @@ export class TableView<T> {
     }
 
     pageChange(event: TablePageEvent): void {
-        this.pageSize.set(event.rows);
+        this.currentPageSizeOverride.set(event.rows);
         this.currentFirst.set(event.first);
     }
 }

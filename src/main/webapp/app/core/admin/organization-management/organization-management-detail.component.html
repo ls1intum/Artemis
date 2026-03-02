@@ -28,14 +28,29 @@
             <h3>
                 <span jhiTranslate="artemisApp.organizationManagement.courses"></span>
             </h3>
-            <jhi-table-view [cols]="courseColumns()" [vals]="courses()" [totalRows]="coursesTotal()" [loading]="coursesLoading()" (onLazyLoad)="loadCourses($event)" />
+            <jhi-table-view
+                [cols]="courseColumns()"
+                [vals]="courses()"
+                [totalRows]="coursesTotal()"
+                [loading]="coursesLoading()"
+                (onLazyLoad)="loadCourses($event)"
+                [options]="{ striped: true }"
+            />
         </div>
     </div>
     <div class="container p-2">
         <h3>
             <span jhiTranslate="artemisApp.organizationManagement.users"></span>
         </h3>
-        <jhi-table-view [cols]="userColumns()" [vals]="users()" [totalRows]="usersTotal()" [loading]="usersLoading()" [rowActions]="userActions" (onLazyLoad)="loadUsers($event)" />
+        <jhi-table-view
+            [cols]="userColumns()"
+            [vals]="users()"
+            [totalRows]="usersTotal()"
+            [loading]="usersLoading()"
+            [rowActions]="userActions"
+            (onLazyLoad)="loadUsers($event)"
+            [options]="{ striped: true }"
+        />
     </div>
 </div>
 
