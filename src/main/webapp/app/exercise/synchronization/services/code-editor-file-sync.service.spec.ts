@@ -68,6 +68,69 @@ describe('CodeEditorFileSyncService', () => {
         vi.clearAllMocks();
     });
 
+    describe('uninitialized guards', () => {
+        it('openFile returns undefined when not initialized', () => {
+            expect(service.openFile(FILE_PATH, 'content')).toBeUndefined();
+        });
+
+        it('emitFileCreated does not send when not initialized', () => {
+            service.emitFileCreated('src/New.java', 'FILE');
+            expect(syncService.sendSynchronizationUpdate).not.toHaveBeenCalled();
+        });
+
+        it('emitFileDeleted does not send when not initialized', () => {
+            service.emitFileDeleted('src/Old.java', 'FILE');
+            expect(syncService.sendSynchronizationUpdate).not.toHaveBeenCalled();
+        });
+
+        it('emitFileRenamed does not send when not initialized', () => {
+            service.emitFileRenamed('old.java', 'new.java', 'FILE');
+            expect(syncService.sendSynchronizationUpdate).not.toHaveBeenCalled();
+        });
+
+        it('incoming message before init is silently ignored', () => {
+            // No init() call — currentTarget is undefined
+            const doc = new Y.Doc();
+            doc.getText('file-content').insert(0, 'should be ignored');
+            expect(() =>
+                incomingMessages$.next({
+                    eventType: ExerciseEditorSyncEventType.FILE_SYNC_UPDATE,
+                    target: ExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
+                    filePath: FILE_PATH,
+                    yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(doc)),
+                    timestamp: 1,
+                }),
+            ).not.toThrow();
+        });
+
+        it('closeFile on never-opened file does not throw', () => {
+            service.init(EXERCISE_ID, TARGET);
+            expect(() => service.closeFile('nonexistent.java')).not.toThrow();
+        });
+
+        it('emitFileRenamed on a never-opened file does not throw and does not affect open files', () => {
+            service.init(EXERCISE_ID, TARGET);
+            service.openFile(FILE_PATH, 'content');
+            vi.advanceTimersByTime(500);
+
+            // Rename a file that was never opened — remapFileKey should return early
+            expect(() => service.emitFileRenamed('ghost.java', 'ghost2.java', 'FILE')).not.toThrow();
+            expect(service.isFileOpen(FILE_PATH)).toBe(true);
+        });
+
+        it('emitFileRenamed on a directory with no open files does not throw', () => {
+            service.init(EXERCISE_ID, TARGET);
+            // No files opened under 'src/empty/'
+            expect(() => service.emitFileRenamed('src/empty', 'src/renamed', 'FOLDER')).not.toThrow();
+        });
+
+        it('emitFileDeleted on a directory with no open files does not throw', () => {
+            service.init(EXERCISE_ID, TARGET);
+            // No files opened under 'src/empty/'
+            expect(() => service.emitFileDeleted('src/empty', 'FOLDER')).not.toThrow();
+        });
+    });
+
     describe('init and reset', () => {
         it('subscribes to websocket updates on init', () => {
             service.init(EXERCISE_ID, TARGET);

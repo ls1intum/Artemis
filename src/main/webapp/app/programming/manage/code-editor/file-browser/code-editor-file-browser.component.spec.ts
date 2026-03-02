@@ -5,6 +5,7 @@ import { DebugElement } from '@angular/core';
 import { Subject, of } from 'rxjs';
 import {
     CommitState,
+    CreateFileChange,
     DeleteFileChange,
     FileBadge,
     FileBadgeType,
@@ -1203,5 +1204,29 @@ describe('CodeEditorFileBrowserComponent', () => {
             expect(createFolderStub).toHaveBeenCalledWith('newpkg');
             expect(mockSyncService.emitFileCreated).toHaveBeenCalledWith('newpkg', 'FOLDER');
         }));
+    });
+
+    describe('handleFileChange isRemote propagation', () => {
+        it('emits isRemote=true as the third tuple element when called with isRemote=true', () => {
+            comp.repositoryFiles = {};
+            const emitted: [string[], FileChange, boolean?][] = [];
+            comp.onFileChange.subscribe((event) => emitted.push(event));
+
+            comp.handleFileChange(new CreateFileChange(FileType.FILE, 'src/Remote.java'), true);
+
+            expect(emitted).toHaveLength(1);
+            expect(emitted[0][2]).toBeTrue();
+        });
+
+        it('emits isRemote=false as the third tuple element when called without the parameter', () => {
+            comp.repositoryFiles = {};
+            const emitted: [string[], FileChange, boolean?][] = [];
+            comp.onFileChange.subscribe((event) => emitted.push(event));
+
+            comp.handleFileChange(new CreateFileChange(FileType.FILE, 'src/Local.java'));
+
+            expect(emitted).toHaveLength(1);
+            expect(emitted[0][2]).toBeFalse();
+        });
     });
 });
