@@ -21,9 +21,7 @@
         (onLazyLoad)="handleLazyLoad($event)"
     >
         <ng-template #caption>
-            <div style="width: 15rem">
-                <jhi-search-filter (newSearchEvent)="onGlobalSearch($event)" />
-            </div>
+            <jhi-search-filter (newSearchEvent)="onGlobalSearch($event)" />
         </ng-template>
         <ng-template #header let-columns>
             <tr>
@@ -52,14 +50,15 @@
             </tr>
         </ng-template>
 
-        <ng-template #body let-rowData let-columns="columns" let-rowIndex="rowIndex">
+        <ng-template #body let-rowData let-columns="columns">
+            @let rowParams = renderedRows().get(rowData);
             <tr [pSelectableRow]="rowData">
                 @for (col of columns; track col; let colIndex = $index) {
                     <td>
                         @if (col?.templateRef) {
-                            <ng-container [ngTemplateOutlet]="col.templateRef" [ngTemplateOutletContext]="{ $implicit: renderedRows()[rowIndex]?.[colIndex] }" />
+                            <ng-container [ngTemplateOutlet]="col.templateRef" [ngTemplateOutletContext]="{ $implicit: rowParams?.[colIndex] }" />
                         } @else if (col?.cellRenderer) {
-                            <ng-container *ngComponentOutlet="col.cellRenderer; inputs: { params: renderedRows()[rowIndex]?.[colIndex] }" />
+                            <ng-container *ngComponentOutlet="col.cellRenderer; inputs: { params: rowParams?.[colIndex] }" />
                         } @else {
                             {{ rowData?.[col?.field] }}
                         }
