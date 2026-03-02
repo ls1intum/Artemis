@@ -54,8 +54,11 @@ export class PrerequisiteService extends CourseCompetencyService {
     }
 
     import(courseCompetency: CourseCompetency, courseId: number): Observable<EntityResponseType> {
+        if (courseCompetency.id === undefined) {
+            throw new Error('Cannot import prerequisite: courseCompetency.id is missing');
+        }
         const payload: CourseCompetencyImportOptionsDTO = {
-            competencyIds: courseCompetency.id ? [courseCompetency.id] : [],
+            competencyIds: [courseCompetency.id],
             importRelations: false,
             importExercises: false,
             importLectures: false,
