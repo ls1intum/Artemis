@@ -98,7 +98,7 @@ export class CompetencyManagementTableComponent {
     }
 
     readonly filteredAndSortedCompetencies = computed(() => {
-        const text = this.filterText().toLowerCase();
+        const text = this.filterText().trim().toLowerCase();
         const predicate = this._sortPredicate();
         const ascending = this._sortAscending();
 

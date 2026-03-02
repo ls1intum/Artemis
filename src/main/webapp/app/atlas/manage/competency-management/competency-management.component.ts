@@ -125,14 +125,21 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     private async loadCourseCompetencies(courseId: number) {
         try {
             this.isLoading.set(true);
-            const [courseCompetencies, courseProgressList] = await Promise.all([
+            const [competenciesResult, progressResult] = await Promise.allSettled([
                 this.courseCompetencyApiService.getCourseCompetenciesByCourseId(courseId),
                 this.courseCompetencyApiService.getCourseProgressForCourse(courseId),
             ]);
-            const progressMap = new Map(courseProgressList.map((p) => [p.competencyId, p]));
-            courseCompetencies.forEach((c) => {
-                c.courseProgress = progressMap.get(c.id);
-            });
+            if (competenciesResult.status === 'rejected') {
+                this.alertService.error(competenciesResult.reason);
+                return;
+            }
+            const courseCompetencies = competenciesResult.value;
+            if (progressResult.status === 'fulfilled') {
+                const progressMap = new Map(progressResult.value.map((p) => [p.competencyId, p]));
+                courseCompetencies.forEach((c) => {
+                    c.courseProgress = progressMap.get(c.id);
+                });
+            }
             this.courseCompetencies.set(courseCompetencies);
         } catch (error) {
             this.alertService.error(error);
