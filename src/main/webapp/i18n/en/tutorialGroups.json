@@ -459,6 +459,10 @@
                     "tutorRequired": "Please choose a tutor.",
                     "locationRequired": "Please choose a location."
                 },
+                "networkError": {
+                    "updateGroup": "Something went wrong while updating the tutorial group. Please try again.",
+                    "scheduleLoading": "Something went wrong while loading the schedule for the tutorial group. Please try again by refreshing the page."
+                },
                 "confirmSaveDialog": {
                     "header": "Save Group?",
                     "message": "You made changes to the schedule. If you save, this will overwrite all existing sessions.",

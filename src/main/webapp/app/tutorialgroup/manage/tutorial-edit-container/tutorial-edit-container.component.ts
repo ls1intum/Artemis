@@ -67,7 +67,7 @@ export class TutorialEditContainerComponent {
                     this.router.navigate(['..'], { relativeTo: this.activatedRoute });
                 },
                 error: () => {
-                    this.alertService.addErrorAlert('Something went wrong while updating the tutorial group. Please try again.'); // TODO: create string key
+                    this.alertService.addErrorAlert('artemisApp.pages.createOrEditTutorialGroup.networkError.updateGroup');
                     this.isTutorialGroupLoading.set(false);
                 },
             });
@@ -81,8 +81,7 @@ export class TutorialEditContainerComponent {
                 this.isScheduleLoading.set(false);
             },
             error: () => {
-                // TODO: create string key
-                this.alertService.addErrorAlert('Something went wrong while loading the schedule for the tutorial group. Please try again by refreshing the page.');
+                this.alertService.addErrorAlert('artemisApp.pages.createOrEditTutorialGroup.networkError.scheduleLoading');
                 this.isScheduleLoading.set(false);
             },
         });

@@ -347,6 +347,10 @@
                     "tutorRequired": "Bitte wähle ein Tutor.",
                     "locationRequired": "Bitte wähle einen Ort."
                 },
+                "networkError": {
+                    "updateGroup": "Beim Bearbeiten der Gruppe ist etwas schief gegangen. Bitte versuche es erneut.",
+                    "scheduleLoading": "Beim laden des Sessionplans ist etwas schief gegangen. Bitte versuche es erneut."
+                },
                 "confirmSaveDialog": {
                     "header": "Gruppe Speichern?",
                     "message": "Du hast den Sessionplan verändert. Bei einer Speicherung werden alle existierended Sessions überschrieben.",
