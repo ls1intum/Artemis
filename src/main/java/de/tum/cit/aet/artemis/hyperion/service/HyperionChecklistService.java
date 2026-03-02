@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
@@ -495,11 +496,11 @@ public class HyperionChecklistService {
             }
             String json = objectMapper.writeValueAsString(result);
             courseCompetencyCache.put(courseId, new CourseCompetencyCacheEntry(json, Instant.now()));
-            while (courseCompetencyCache.size() > MAX_COURSE_CACHE_SIZE) {
-                int sizeBefore = courseCompetencyCache.size();
+            if (courseCompetencyCache.size() > MAX_COURSE_CACHE_SIZE) {
                 evictStaleCourseCompetencyEntries();
-                if (courseCompetencyCache.size() >= sizeBefore) {
-                    break; // no progress – all entries are within TTL
+                if (courseCompetencyCache.size() > MAX_COURSE_CACHE_SIZE) {
+                    // All entries are within TTL – evict the oldest one to enforce the size cap
+                    courseCompetencyCache.entrySet().stream().min(Comparator.comparing(e -> e.getValue().cachedAt())).ifPresent(e -> courseCompetencyCache.remove(e.getKey()));
                 }
             }
             return json;
