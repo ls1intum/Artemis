@@ -21,42 +21,35 @@
         <p-panel
             [toggleable]="true"
             [collapsed]="!sectionExpanded['quality']()"
-            (onToggle)="toggleSection('quality')"
-            [styleClass]="'checklist-section' + (isSectionStale('quality') ? ' stale' : '')"
+            (collapsedChange)="toggleSection('quality')"
+            [header]="'artemisApp.programmingExercise.instructorChecklist.quality.title' | artemisTranslate"
+            [class]="'checklist-section' + (isSectionStale('quality') ? ' stale' : '')"
         >
-            <ng-template pTemplate="header">
-                <div class="section-title-row">
-                    <h6 jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.title">Quality Assessment</h6>
-                    @if (result.qualityIssues?.length) {
-                        <p-badge [value]="'' + result.qualityIssues?.length" severity="warn" />
-                    } @else {
-                        <p-tag severity="success">
-                            <fa-icon [icon]="faCheckCircle" size="xs" />
-                        </p-tag>
-                    }
-                    @if (isSectionStale('quality')) {
-                        <span class="stale-badge">
-                            <fa-icon [icon]="faExclamationTriangle" />
-                            <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.outdated">Outdated</span>
-                        </span>
-                    }
-                </div>
-            </ng-template>
-
-            <ng-template pTemplate="icons">
-                @if (isSectionStale('quality') || isSectionLoading('quality')) {
-                    <button
-                        pButton
-                        severity="warn"
-                        [text]="true"
-                        size="small"
-                        (click)="$event.stopPropagation(); reanalyzeSection('quality')"
-                        [disabled]="isLoading() || isSectionLoading('quality')"
-                    >
-                        <fa-icon [icon]="faSync" [animation]="isSectionLoading('quality') ? 'spin' : undefined" />
-                        <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.reanalyze">Re-analyze</span>
-                    </button>
+            <ng-template #icons>
+                @if (result.qualityIssues?.length) {
+                    <p-badge [value]="'' + result.qualityIssues?.length" severity="warn" />
+                } @else {
+                    <p-tag severity="success">
+                        <fa-icon [icon]="faCheckCircle" size="xs" />
+                    </p-tag>
                 }
+                @if (isSectionStale('quality')) {
+                    <span class="stale-badge">
+                        <fa-icon [icon]="faExclamationTriangle" />
+                        <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.outdated">Outdated</span>
+                    </span>
+                }
+                <button
+                    pButton
+                    severity="warn"
+                    [text]="true"
+                    size="small"
+                    (click)="$event.stopPropagation(); reanalyzeSection('quality')"
+                    [disabled]="isLoading() || isSectionLoading('quality')"
+                >
+                    <fa-icon [icon]="faSync" [animation]="isSectionLoading('quality') ? 'spin' : undefined" />
+                    <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.reanalyze">Re-analyze</span>
+                </button>
             </ng-template>
 
             <!-- Quality Radar Chart -->

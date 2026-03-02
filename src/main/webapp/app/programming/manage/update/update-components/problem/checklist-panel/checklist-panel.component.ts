@@ -1,5 +1,5 @@
 import { Component, DestroyRef, WritableSignal, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { DecimalPipe, NgClass } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -14,6 +14,7 @@ import { ChecklistAnalysisResponse } from 'app/openapi/model/checklistAnalysisRe
 import { ChecklistActionRequest } from 'app/openapi/model/checklistActionRequest';
 import { QualityIssue } from 'app/openapi/model/qualityIssue';
 import { AlertService } from 'app/shared/service/alert.service';
+import { pairwise } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { Checkbox } from 'primeng/checkbox';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -102,18 +103,13 @@ export class ChecklistPanelComponent {
          * When the problem statement input changes (external edit), mark all
          * checklist sections as stale so the user knows results may be outdated.
          */
-        let previousPS: string | undefined;
-        effect(() => {
-            const currentPS = this.problemStatement();
-            if (previousPS !== undefined && currentPS !== previousPS) {
-                untracked(() => {
-                    if (this.analysisResult()) {
-                        this.staleSections.set(new Set<ChecklistSectionType>(['quality']));
-                    }
-                });
-            }
-            previousPS = currentPS;
-        });
+        toObservable(this.problemStatement)
+            .pipe(pairwise(), takeUntilDestroyed(this.destroyRef))
+            .subscribe(([prev, curr]) => {
+                if (prev !== curr && this.analysisResult()) {
+                    this.staleSections.set(new Set<ChecklistSectionType>(['quality']));
+                }
+            });
     }
 
     sectionExpanded: Record<ChecklistSectionType, ReturnType<typeof signal<boolean>>> = {
@@ -137,7 +133,7 @@ export class ChecklistPanelComponent {
 
     analyze() {
         const cId = this.courseId();
-        if (cId == null || this.isApplyingAction() || this.sectionLoading().size > 0) {
+        if (cId == null || this.isLoading() || this.isApplyingAction() || this.sectionLoading().size > 0) {
             return;
         }
 
