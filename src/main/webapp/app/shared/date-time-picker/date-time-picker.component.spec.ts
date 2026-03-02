@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import dayjs from 'dayjs/esm';
@@ -11,6 +12,14 @@ import { TranslateModule } from '@ngx-translate/core';
 describe('FormDateTimePickerComponent', () => {
     let component: FormDateTimePickerComponent;
     let fixture: ComponentFixture<FormDateTimePickerComponent>;
+
+    beforeAll(() => {
+        try {
+            TestBed.initTestEnvironment(BrowserTestingModule, platformBrowserTesting());
+        } catch {
+            // The environment is already initialized when running through the Angular CLI test harness.
+        }
+    });
 
     const normalDate = dayjs('2022-01-02T22:15+00:00');
     const normalDateAsDateObject = new Date('2022-01-02T22:15+00:00');
