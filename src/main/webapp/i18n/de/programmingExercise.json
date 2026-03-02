@@ -826,7 +826,7 @@
                 "analyzing": "Analysiere...",
                 "defaultMessage": "Klicke auf \"Problemstellung analysieren\", um nach Kompetenzbereichen, Schwierigkeitsbewertung und Qualitätsproblemen zu suchen.",
                 "competencies": {
-                    "title": "Geschätzte Kompetenzen",
+                    "title": "Geschätzte Lernziele",
                     "empty": "Keine Kompetenzen abgeleitet.",
                     "primary": "Primär",
                     "evidence": "Belege:",

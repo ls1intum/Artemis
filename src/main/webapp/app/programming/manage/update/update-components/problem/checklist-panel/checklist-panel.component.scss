@@ -17,6 +17,15 @@
     .p-panel-content {
         border-radius: 0;
     }
+
+    .stale-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        color: var(--warning);
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
 }
 
 .checklist-panel {
@@ -44,21 +53,6 @@
         text-align: center;
         padding: 0.75rem;
         margin: 0;
-    }
-
-    .section-title-row {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .stale-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.25rem;
-        color: var(--warning);
-        font-size: 0.75rem;
-        font-weight: 600;
     }
 
     .quality-radar-section {

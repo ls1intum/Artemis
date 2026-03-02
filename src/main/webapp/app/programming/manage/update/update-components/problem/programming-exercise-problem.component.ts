@@ -1,4 +1,4 @@
-import { Component, DestroyRef, Injector, OnDestroy, OnInit, inject, input, output, viewChild } from '@angular/core';
+import { Component, DestroyRef, Injector, OnDestroy, OnInit, inject, input, output, signal, viewChild } from '@angular/core';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faBan, faSave, faSpinner, faTableColumns } from '@fortawesome/free-solid-svg-icons';
@@ -64,6 +64,9 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     problemStatementChange = output<string>();
     programmingExerciseChange = output<ProgrammingExercise>();
 
+    /** Tracks the authoritative competency links state, updated whenever links change from any source. */
+    readonly activeCompetencyLinks = signal<CompetencyExerciseLink[]>([]);
+
     private translateService = inject(TranslateService);
 
     // Child component reference for refreshing competency selection
@@ -113,6 +116,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         const exercise = this.programmingExercise();
+        this.activeCompetencyLinks.set([...(exercise?.competencyLinks ?? [])]);
         this.aiOps.currentProblemStatement.set(exercise?.problemStatement ?? '');
         this.aiOps.loadTemplate(exercise);
     }
@@ -154,16 +158,19 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
      * Also refreshes the CompetencySelectionComponent to reflect changes (e.g., newly created/linked competencies).
      */
     onCompetencyLinksChange(competencyLinks: CompetencyExerciseLink[] | CompetencyLearningObjectLink[] | undefined): void {
-        if (!competencyLinks || this.programmingExerciseCreationConfig().isExamMode) return;
+        if (this.programmingExerciseCreationConfig().isExamMode) return;
         const exercise = this.programmingExercise();
         if (exercise) {
-            // CompetencyExerciseLink extends CompetencyLearningObjectLink, so the assignment is safe.
-            exercise.competencyLinks = competencyLinks.map((link) =>
+            // undefined means all competencies were unlinked — treat as empty array.
+            const updatedLinks = (competencyLinks ?? []).map((link) =>
                 link instanceof CompetencyExerciseLink ? link : new CompetencyExerciseLink(link.competency, exercise, link.weight),
             );
+            exercise.competencyLinks = updatedLinks;
+            // Update the reactive signal so the checklist panel badges update immediately.
+            this.activeCompetencyLinks.set(updatedLinks);
             this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
             this.programmingExerciseChange.emit(exercise);
-            this.refreshCompetencySelection(competencyLinks);
+            this.refreshCompetencySelection(competencyLinks ?? []);
         }
     }
 

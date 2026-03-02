@@ -1,5 +1,5 @@
 import { Component, DestroyRef, WritableSignal, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { DecimalPipe, NgClass } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -45,7 +45,7 @@ import {
     MEDIUM_COMPETENCY_LINK_WEIGHT,
 } from 'app/atlas/shared/entities/competency.model';
 import { EMPTY, Observable, from, of } from 'rxjs';
-import { catchError, concatMap, map, switchMap, tap, toArray } from 'rxjs/operators';
+import { catchError, concatMap, map, pairwise, switchMap, tap, toArray } from 'rxjs/operators';
 import { taskRegex } from 'app/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
 import { FormsModule } from '@angular/forms';
 import { Checkbox } from 'primeng/checkbox';
@@ -101,6 +101,8 @@ export class ChecklistPanelComponent {
     exercise = input.required<ProgrammingExercise>();
     courseId = input.required<number>();
     problemStatement = input.required<string>();
+    /** Authoritative list of competency links for this exercise, kept in sync by the parent. */
+    competencyLinks = input<CompetencyExerciseLink[]>([]);
 
     problemStatementDiffRequest = output<string>();
     competencyLinksChange = output<CompetencyExerciseLink[]>();
@@ -152,18 +154,13 @@ export class ChecklistPanelComponent {
          * When the problem statement input changes (external edit), mark all
          * checklist sections as stale so the user knows results may be outdated.
          */
-        let previousPS: string | undefined;
-        effect(() => {
-            const currentPS = this.problemStatement();
-            if (previousPS !== undefined && currentPS !== previousPS) {
-                untracked(() => {
-                    if (this.analysisResult()) {
-                        this.staleSections.set(new Set<ChecklistSectionType>(['competencies', 'difficulty', 'quality']));
-                    }
-                });
-            }
-            previousPS = currentPS;
-        });
+        toObservable(this.problemStatement)
+            .pipe(pairwise(), takeUntilDestroyed(this.destroyRef))
+            .subscribe(([prev, curr]) => {
+                if (prev !== curr && this.analysisResult()) {
+                    this.staleSections.set(new Set<ChecklistSectionType>(['competencies', 'difficulty', 'quality']));
+                }
+            });
     }
 
     /**
@@ -205,7 +202,7 @@ export class ChecklistPanelComponent {
 
     analyze() {
         const cId = this.courseId();
-        if (cId == null || this.isApplyingAction() || this.sectionLoading().size > 0) {
+        if (cId == null || this.isLoading() || this.isApplyingAction() || this.sectionLoading().size > 0) {
             return;
         }
 
@@ -816,15 +813,19 @@ export class ChecklistPanelComponent {
         return { allLinks, newlyLinked, toCreate, toCreateInferred, linkedIds };
     }
 
-    private competencyTitleIn(comp: InferredCompetency, titleSet: Set<string>): boolean {
-        return titleSet.has((comp.competencyTitle ?? '').toLowerCase().trim());
-    }
-
     /**
-     * Checks if an inferred competency has been linked to the exercise
+     * Checks if an inferred competency has been linked to the exercise.
+     * Uses the authoritative competencyLinks input kept in sync by the parent so
+     * that manual unchecks in the competency selector are reflected immediately.
      */
     isCompetencyLinked(comp: InferredCompetency): boolean {
-        return this.competencyTitleIn(comp, this.linkedCompetencyTitles());
+        const links = this.competencyLinks();
+        const matchId = comp.matchedCourseCompetencyId;
+        if (matchId != null && matchId > 0) {
+            if (links.some((link) => link.competency?.id === matchId)) return true;
+        }
+        const title = (comp.competencyTitle ?? '').toLowerCase().trim();
+        return links.some((link) => (link.competency?.title ?? '').toLowerCase().trim() === title);
     }
 
     /**
