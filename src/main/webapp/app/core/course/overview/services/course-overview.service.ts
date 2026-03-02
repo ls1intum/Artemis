@@ -329,14 +329,12 @@ export class CourseOverviewService {
     // 2. Then by unread messages
     // 3. Then by last message date (most recent first)
     private sortDirectOrGroupMessages(items: SidebarCardElement[]): void {
-        items.sort((a, b) => {
-            const favoriteOf = (x: SidebarCardElement) => (x.conversation?.isFavorite ? 1 : 0);
-            const unreadOf = (x: SidebarCardElement) => ((x.conversation?.unreadMessagesCount ?? 0) > 0 ? 1 : 0);
-
-            return (
-                favoriteOf(b) - favoriteOf(a) || unreadOf(b) - unreadOf(a) || (b.conversation?.lastMessageDate?.valueOf() ?? 0) - (a.conversation?.lastMessageDate?.valueOf() ?? 0)
-            );
-        });
+        items.sort(
+            (a, b) =>
+                this.isFavorite(b) - this.isFavorite(a) ||
+                this.hasUnread(b) - this.hasUnread(a) ||
+                (b.conversation?.lastMessageDate?.valueOf() ?? 0) - (a.conversation?.lastMessageDate?.valueOf() ?? 0),
+        );
     }
 
     // Sorts unread messages with the following priority:
@@ -344,34 +342,40 @@ export class CourseOverviewService {
     // 2. Then by type (DM > GroupChat > Channel)
     // 3. Then by last message date for DMs & GroupChats (most recent first) or alphabetically for Channels
     private sortUnreadMessages(items: SidebarCardElement[]): void {
-        const favoriteRank = (item: SidebarCardElement) => (item.conversation?.isFavorite ? 1 : 0);
-        const typeRank = (item: SidebarCardElement) => {
-            const ranks: Partial<Record<ConversationType, number>> = {
-                [ConversationType.ONE_TO_ONE]: 3,
-                [ConversationType.GROUP_CHAT]: 2,
-            };
-            return ranks[item.type as ConversationType] ?? 1;
-        };
-
-        items.sort((a, b) => {
-            return (
-                favoriteRank(b) - favoriteRank(a) ||
-                typeRank(b) - typeRank(a) ||
+        items.sort(
+            (a, b) =>
+                this.isFavorite(b) - this.isFavorite(a) ||
+                this.typeRank(b) - this.typeRank(a) ||
                 (a.type === ConversationType.CHANNEL
                     ? a.title.localeCompare(b.title, undefined, { sensitivity: 'base' })
-                    : (b.conversation?.lastMessageDate?.valueOf() ?? 0) - (a.conversation?.lastMessageDate?.valueOf() ?? 0))
-            );
-        });
+                    : (b.conversation?.lastMessageDate?.valueOf() ?? 0) - (a.conversation?.lastMessageDate?.valueOf() ?? 0)),
+        );
     }
 
     // Default sorting: Favorites first, then by unread messages, then alphabetically by title
     private sortDefault(items: SidebarCardElement[]): void {
-        items.sort((a, b) => {
-            const favoriteOf = (x: SidebarCardElement) => (x.conversation?.isFavorite ? 1 : 0);
-            const unreadOf = (x: SidebarCardElement) => ((x.conversation?.unreadMessagesCount ?? 0) > 0 ? 1 : 0);
+        items.sort(
+            (a, b) =>
+                this.isFavorite(b) - this.isFavorite(a) ||
+                this.hasUnread(b) - this.hasUnread(a) ||
+                (a.title ?? '').localeCompare(b.title ?? '', undefined, { sensitivity: 'base' }),
+        );
+    }
 
-            return favoriteOf(b) - favoriteOf(a) || unreadOf(b) - unreadOf(a) || (a.title ?? '').localeCompare(b.title ?? '', undefined, { sensitivity: 'base' });
-        });
+    private isFavorite(item: SidebarCardElement): number {
+        return item.conversation?.isFavorite ? 1 : 0;
+    }
+
+    private hasUnread(item: SidebarCardElement): number {
+        return (item.conversation?.unreadMessagesCount ?? 0) > 0 ? 1 : 0;
+    }
+
+    private typeRank(item: SidebarCardElement): number {
+        const ranks: Partial<Record<ConversationType, number>> = {
+            [ConversationType.ONE_TO_ONE]: 3,
+            [ConversationType.GROUP_CHAT]: 2,
+        };
+        return ranks[item.type as ConversationType] ?? 1;
     }
 
     mapLecturesToSidebarCardElements(lectures: Lecture[]) {
