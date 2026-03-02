@@ -348,6 +348,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     private cachedSelection?: CachedSelectionWithText;
     /** Window scroll handler reference, stored so it can be removed in ngOnDestroy. */
     private windowScrollHandler?: () => void;
+    /** Pending timeout for deferred layout adjustment after tab switch. */
+    private pendingNavChangeTimeout?: number;
     /** Reactive translated label for the "Your Original" diff-pane header (updates on language change). */
     protected readonly diffOriginalLabel = toSignal(this.translateService.stream('artemisApp.programmingExercise.problemStatement.diffView.originalLabel'), { initialValue: '' });
     /** Reactive translated label for the "AI Suggestion" diff-pane header (updates on language change). */
@@ -653,6 +655,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.resizeObserver?.disconnect();
         this.selectionChangeDisposable?.dispose();
         this.scrollChangeDisposable?.dispose();
+        if (this.pendingNavChangeTimeout !== undefined) {
+            window.clearTimeout(this.pendingNavChangeTimeout);
+        }
         if (this.windowScrollHandler) {
             window.removeEventListener('scroll', this.windowScrollHandler, { capture: true });
             this.windowScrollHandler = undefined;
@@ -738,8 +743,12 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.inVisualMode = event.nextId === this.TAB_VISUAL;
         this.inEditMode = event.nextId === this.TAB_EDIT;
         if (this.inEditMode) {
-            this.adjustEditorDimensions();
-            this.monacoEditor.focus();
+            // Defer layout adjustment to after Angular change detection and NgbNav tab switch complete.
+            // Reading DOM dimensions before the tab pane is active yields incorrect values (e.g. height 0).
+            this.pendingNavChangeTimeout = window.setTimeout(() => {
+                this.adjustEditorDimensions();
+                this.monacoEditor.focus();
+            });
             this.onEditSelect.emit();
         } else if (this.inPreviewMode) {
             this.onPreviewSelect.emit();

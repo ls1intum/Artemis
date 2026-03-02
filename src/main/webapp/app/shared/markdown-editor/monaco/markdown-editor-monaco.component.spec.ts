@@ -92,7 +92,7 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(emitSpy).toHaveBeenCalledOnce();
     });
 
-    it('should layout and focus the editor when switching to editor mode', () => {
+    it('should layout and focus the editor when switching to editor mode', fakeAsync(() => {
         fixture.detectChanges();
         const adjustEditorDimensionsSpy = jest.spyOn(comp, 'adjustEditorDimensions');
         const focusSpy = jest.spyOn(comp.monacoEditor, 'focus');
@@ -101,9 +101,11 @@ describe('MarkdownEditorMonacoComponent', () => {
             activeId: MarkdownEditorMonacoComponent.TAB_PREVIEW,
             preventDefault: jest.fn(),
         });
+        // adjustEditorDimensions and focus are deferred to allow the tab pane to become active first
+        flush();
         expect(adjustEditorDimensionsSpy).toHaveBeenCalledOnce();
         expect(focusSpy).toHaveBeenCalledOnce();
-    });
+    }));
 
     it('should emit when leaving the visual tab', () => {
         const emitSpy = jest.spyOn(comp.onLeaveVisualTab, 'emit');
