@@ -135,11 +135,15 @@ test.describe('Exam test run', { tag: '@fast' }, () => {
         });
 
         test('Deletes a test run', async ({ login, page, examTestRun }) => {
+            // The shared beforeEach creates a programming exercise whose solution build
+            // must complete before test cases can be fetched. On slow CI this can exceed
+            // the default fast-test timeout, so triple it.
+            test.slow();
             await login(instructor);
             await examTestRun.openTestRunPage(course, exam);
             // The test run was created via API in beforeEach, but the page may load
             // before the data is available. Reload until the test run element appears.
-            await Commands.reloadUntilFound(page, examTestRun.getTestRun(testRun.id!));
+            await Commands.reloadUntilFound(page, examTestRun.getTestRun(testRun.id!), 2000, 60000);
             await examTestRun.deleteTestRun(testRun.id!);
             await expect(examTestRun.getTestRun(testRun.id!)).not.toBeVisible();
         });

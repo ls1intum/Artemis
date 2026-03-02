@@ -39,7 +39,7 @@ run_playwright() {
     local test_type="$1"
     shift
 
-    PLAYWRIGHT_TEST_TYPE="$test_type" npx playwright test "$@"
+    NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=6144}" PLAYWRIGHT_TEST_TYPE="$test_type" npx playwright test "$@"
     local exit_code=$?
 
     if [ $exit_code -ne 0 ]; then
