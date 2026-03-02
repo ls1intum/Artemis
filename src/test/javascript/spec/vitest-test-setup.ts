@@ -83,17 +83,10 @@ if (typeof Element.prototype.matches === 'undefined') {
     };
 }
 
-// Mock getComputedStyle to handle CSS custom properties and jsdom specificity crashes
+// Mock getComputedStyle to handle CSS custom properties
 const originalGetComputedStyle = window.getComputedStyle;
 window.getComputedStyle = function (element: Element, pseudoElt?: string | null): CSSStyleDeclaration {
-    let style: CSSStyleDeclaration;
-    try {
-        style = originalGetComputedStyle.call(window, element, pseudoElt);
-    } catch {
-        // jsdom may crash on CSS specificity parsing (e.g. Specificity.max() returning undefined).
-        // Fall back to the element's inline style so tests can still proceed.
-        return element instanceof HTMLElement ? element.style : ({} as CSSStyleDeclaration);
-    }
+    const style = originalGetComputedStyle.call(window, element, pseudoElt);
     return new Proxy(style, {
         get(target, prop) {
             const value = target[prop as keyof CSSStyleDeclaration];
