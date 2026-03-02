@@ -35,7 +35,7 @@ public record CourseCompetencyResponseDTO(long id, String title, @Nullable Strin
         Long linkedStandardizedCompetencyId = linkedStandardizedCompetency != null ? linkedStandardizedCompetency.getId() : null;
         return new CourseCompetencyResponseDTO(competency.getId(), competency.getTitle(), competency.getDescription(), competency.getTaxonomy(), competency.getSoftDueDate(),
                 competency.getMasteryThreshold(), competency.isOptional(), competency.getType(), LinkedCourseCompetencyDTO.of(competency.getLinkedCourseCompetency()),
-                linkedStandardizedCompetencyId, progress, null, null, null);
+                linkedStandardizedCompetencyId, progress, null, Collections.emptyList(), Collections.emptyList());
     }
 
     /**
@@ -47,7 +47,8 @@ public record CourseCompetencyResponseDTO(long id, String title, @Nullable Strin
     public static CourseCompetencyResponseDTO ofWithCourse(CourseCompetency competency) {
         var base = of(competency);
         return new CourseCompetencyResponseDTO(base.id(), base.title(), base.description(), base.taxonomy(), base.softDueDate(), base.masteryThreshold(), base.optional(),
-                base.type(), base.linkedCourseCompetency(), base.linkedStandardizedCompetencyId(), base.userProgress(), CourseInfoDTO.of(competency.getCourse()), null, null);
+                base.type(), base.linkedCourseCompetency(), base.linkedStandardizedCompetencyId(), base.userProgress(), CourseInfoDTO.of(competency.getCourse()),
+                Collections.emptyList(), Collections.emptyList());
     }
 
     /**
@@ -58,8 +59,14 @@ public record CourseCompetencyResponseDTO(long id, String title, @Nullable Strin
      */
     public static CourseCompetencyResponseDTO ofWithLearningObjects(CourseCompetency competency) {
         var base = of(competency);
-        var exerciseLinks = Optional.ofNullable(competency.getExerciseLinks()).orElse(Collections.emptySet()).stream().map(CompetencyExerciseLinkResponseDTO::of).toList();
-        var lectureUnitLinks = Optional.ofNullable(competency.getLectureUnitLinks()).orElse(Collections.emptySet()).stream().map(CompetencyLectureUnitLinkResponseDTO::of).toList();
+        List<CompetencyExerciseLinkResponseDTO> exerciseLinks = Collections.emptyList();
+        if (Hibernate.isInitialized(competency.getExerciseLinks())) {
+            exerciseLinks = Optional.ofNullable(competency.getExerciseLinks()).orElse(Collections.emptySet()).stream().map(CompetencyExerciseLinkResponseDTO::of).toList();
+        }
+        List<CompetencyLectureUnitLinkResponseDTO> lectureUnitLinks = Collections.emptyList();
+        if (Hibernate.isInitialized(competency.getLectureUnitLinks())) {
+            lectureUnitLinks = Optional.ofNullable(competency.getLectureUnitLinks()).orElse(Collections.emptySet()).stream().map(CompetencyLectureUnitLinkResponseDTO::of).toList();
+        }
 
         return new CourseCompetencyResponseDTO(base.id(), base.title(), base.description(), base.taxonomy(), base.softDueDate(), base.masteryThreshold(), base.optional(),
                 base.type(), base.linkedCourseCompetency(), base.linkedStandardizedCompetencyId(), base.userProgress(), CourseInfoDTO.of(competency.getCourse()), exerciseLinks,

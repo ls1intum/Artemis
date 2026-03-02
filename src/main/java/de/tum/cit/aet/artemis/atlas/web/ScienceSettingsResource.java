@@ -84,9 +84,18 @@ public class ScienceSettingsResource {
         if (scienceSettings.length == 0) {
             throw new BadRequestAlertException("Cannot save non-existing Science Settings", "ScienceSettings", "scienceSettingsEmpty");
         }
+        for (ScienceSettingDTO scienceSetting : scienceSettings) {
+            if (scienceSetting == null) {
+                throw new BadRequestAlertException("Science settings contain invalid entries", "InvalidScienceSettings", "invalidScienceSettings");
+            }
+            String settingId = scienceSetting.settingId();
+            if (settingId == null || settingId.trim().isBlank()) {
+                throw new BadRequestAlertException("Science settings contain invalid entries", "InvalidScienceSettings", "invalidScienceSettings");
+            }
+        }
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to save ScienceSettings : {} for current user {}", scienceSettings, user);
-        List<ScienceSetting> scienceSettingList = Arrays.stream(scienceSettings).map(dto -> new ScienceSetting(user, dto.settingId(), dto.active())).toList();
+        List<ScienceSetting> scienceSettingList = Arrays.stream(scienceSettings).map(dto -> new ScienceSetting(user, dto.settingId().trim(), dto.active())).toList();
         List<ScienceSetting> persistedSettingList = scienceSettingRepository.saveAll(scienceSettingList);
         if (persistedSettingList.isEmpty()) {
             throw new BadRequestAlertException("Error occurred during saving of Science Settings", "ScienceSettings", "scienceSettingsEmptyAfterSave");

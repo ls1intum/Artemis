@@ -67,16 +67,17 @@ export class PrerequisiteService extends CourseCompetencyService {
 
     importBulk(courseCompetencies: CourseCompetency[], courseId: number, importRelations: boolean) {
         const courseCompetencyIds = courseCompetencies.map((competency) => competency.id).filter((id): id is number => id !== undefined);
+        const payload: CourseCompetencyImportOptionsDTO = {
+            importExercises: false,
+            importRelations,
+            sourceCourseId: courseId,
+            importLectures: false,
+            competencyIds: courseCompetencyIds,
+        };
         return this.httpClient
             .post<Array<CompetencyWithTailRelationResponseDTO>>(
                 `${this.resourceURL}/courses/${courseId}/prerequisites/import/bulk`,
-                {
-                    importExercises: false,
-                    importRelations: importRelations,
-                    sourceCourseId: courseId,
-                    importLectures: false,
-                    competencyIds: courseCompetencyIds,
-                } as CourseCompetencyImportOptionsDTO,
+                payload,
                 {
                     observe: 'response',
                 },
@@ -85,15 +86,17 @@ export class PrerequisiteService extends CourseCompetencyService {
     }
 
     importAll(courseId: number, sourceCourseId: number, importRelations: boolean) {
+        const payload: CourseCompetencyImportOptionsDTO = {
+            competencyIds: [],
+            importLectures: false,
+            importRelations,
+            importExercises: false,
+            sourceCourseId,
+        };
         return this.httpClient
             .post<Array<CompetencyWithTailRelationResponseDTO>>(
                 `${this.resourceURL}/courses/${courseId}/prerequisites/import-all`,
-                {
-                    importLectures: false,
-                    importRelations: importRelations,
-                    importExercises: false,
-                    sourceCourseId: sourceCourseId,
-                } as CourseCompetencyImportOptionsDTO,
+                payload,
                 {
                     observe: 'response',
                 },

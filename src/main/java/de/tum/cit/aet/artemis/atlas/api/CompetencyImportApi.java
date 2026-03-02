@@ -40,12 +40,13 @@ public class CompetencyImportApi extends AbstractAtlasApi {
     }
 
     /**
-     * Imports course competencies into a course.
+     * Imports course competencies into a course and returns wrappers for the imported results.
      *
      * @param course             the course to import into
      * @param courseCompetencies the course competencies to import
      * @param importOptions      the import options
-     * @return the set of imported course competencies
+     * @return the set of {@link CompetencyWithTailRelation} wrappers returned by {@link #importCourseCompetencies(Course, Collection, CompetencyImportOptionsDTO)},
+     *         representing imported course competencies together with tail relation metadata
      */
     public Set<CompetencyWithTailRelation> importCourseCompetencies(Course course, Collection<CourseCompetency> courseCompetencies, CompetencyImportOptionsDTO importOptions) {
         return courseCompetencyService.importCourseCompetencies(course, courseCompetencies, importOptions);

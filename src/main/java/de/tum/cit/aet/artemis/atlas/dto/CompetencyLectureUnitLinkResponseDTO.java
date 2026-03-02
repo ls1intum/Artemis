@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CompetencyLectureUnitLinkResponseDTO(double weight, LectureUnitForCompetencyDTO lectureUnit) {
+public record CompetencyLectureUnitLinkResponseDTO(double weight, @Nullable LectureUnitForCompetencyDTO lectureUnit) {
 
     @Nullable
     public static CompetencyLectureUnitLinkResponseDTO of(@Nullable CompetencyLectureUnitLink link) {
