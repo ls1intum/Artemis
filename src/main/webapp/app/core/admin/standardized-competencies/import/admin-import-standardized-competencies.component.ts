@@ -246,20 +246,19 @@ export class AdminImportStandardizedCompetenciesComponent {
 
     private validateSource(source: Source, index: number, errors: string[]): void {
         const title = source.title;
+        const label = title || `#${index}`;
         if (!title) {
             errors.push(this.translateService.instant(`${this.validationTranslationBase}.sourceTitleRequired`, { index }));
-        } else {
-            if (title.length > SourceValidators.FIELD_MAX) {
-                errors.push(this.translateService.instant(`${this.validationTranslationBase}.sourceTitleTooLong`, { title, max: SourceValidators.FIELD_MAX }));
-            }
-            if (!source.author) {
-                errors.push(this.translateService.instant(`${this.validationTranslationBase}.sourceAuthorRequired`, { title }));
-            } else if (source.author.length > SourceValidators.FIELD_MAX) {
-                errors.push(this.translateService.instant(`${this.validationTranslationBase}.sourceAuthorTooLong`, { title, max: SourceValidators.FIELD_MAX }));
-            }
-            if (source.uri && source.uri.length > SourceValidators.FIELD_MAX) {
-                errors.push(this.translateService.instant(`${this.validationTranslationBase}.sourceUriTooLong`, { title, max: SourceValidators.FIELD_MAX }));
-            }
+        } else if (title.length > SourceValidators.FIELD_MAX) {
+            errors.push(this.translateService.instant(`${this.validationTranslationBase}.sourceTitleTooLong`, { title, max: SourceValidators.FIELD_MAX }));
+        }
+        if (!source.author) {
+            errors.push(this.translateService.instant(`${this.validationTranslationBase}.sourceAuthorRequired`, { title: label }));
+        } else if (source.author.length > SourceValidators.FIELD_MAX) {
+            errors.push(this.translateService.instant(`${this.validationTranslationBase}.sourceAuthorTooLong`, { title: label, max: SourceValidators.FIELD_MAX }));
+        }
+        if (source.uri && source.uri.length > SourceValidators.FIELD_MAX) {
+            errors.push(this.translateService.instant(`${this.validationTranslationBase}.sourceUriTooLong`, { title: label, max: SourceValidators.FIELD_MAX }));
         }
     }
 
