@@ -117,7 +117,7 @@ Edit `llm_config.yml` with your model configurations. Pyris needs **three types 
 - **Reranker models** (optional) — improves retrieval quality
 
 <Callout variant={CalloutVariant.warning}>
-  <p>The OpenAI examples below are for development and testing only. For production, use a GDPR-compliant provider such as Azure OpenAI.</p>
+  <p>The examples below use Azure OpenAI, which is recommended for production (GDPR-compliant). For local development, you can also use direct OpenAI entries — see `llm_config.example.yml` for examples.</p>
 </Callout>
 
 **Azure OpenAI chat model example:**
@@ -226,7 +226,7 @@ curl https://pyris.your-domain.com/api/v1/health
 curl http://localhost:${PYRIS_PORT:-8000}/api/v1/health
 
 # Check Weaviate health (from the server, if ports are not exposed externally)
-curl http://localhost:8001/v1/.well-known/ready
+curl http://localhost:${WEAVIATE_PORT:-8001}/v1/.well-known/ready
 ```
 
 **Managing containers:**
@@ -239,7 +239,7 @@ docker compose -f docker/pyris-production.yml logs -f pyris-app
 docker compose -f docker/pyris-production.yml down
 
 # Pull new image and restart
-PYRIS_DOCKER_TAG=latest docker compose -f docker/pyris-production.yml up -d
+PYRIS_DOCKER_TAG=latest docker compose -f docker/pyris-production.yml up -d --pull always
 ```
 
 #### Option B: Local Development Setup (without Docker)
