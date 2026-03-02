@@ -4,7 +4,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { take } from 'rxjs/operators';
 import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
-import { TutorialGroupSessionDTO, TutorialGroupSessionRequestDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { TutorialGroupSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { generateExampleTutorialGroupSessionDTO } from 'test/helpers/sample/tutorialgroup/tutorialGroupSessionExampleModels';
 import { provideHttpClient } from '@angular/common/http';
 
@@ -48,7 +48,12 @@ describe('TutorialGroupSessionService', () => {
         const expected = { ...returnedFromService };
         let result: any;
         service
-            .create(1, 1, new TutorialGroupSessionRequestDTO())
+            .create(1, 1, {
+                date: '2021-01-01',
+                startTime: '10:00',
+                endTime: '11:00',
+                location: 'Room 1',
+            })
             .pipe(take(1))
             .subscribe((resp) => (result = resp));
 
@@ -63,7 +68,12 @@ describe('TutorialGroupSessionService', () => {
         let result: any;
 
         service
-            .update(1, 1, 1, new TutorialGroupSessionRequestDTO())
+            .update(1, 1, 1, {
+                date: '2021-01-01',
+                startTime: '10:00',
+                endTime: '11:00',
+                location: 'Room 1',
+            })
             .pipe(take(1))
             .subscribe((resp) => (result = resp));
 

@@ -7,6 +7,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TutorialGroupSessionRowComponent } from './tutorial-group-session-row/tutorial-group-session-row.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { entityToTutorialGroupScheduleDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-schedule-dto.model';
+import { entityToTutorialGroupFreePeriodDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-free-period-dto.model';
 
 @Component({
     selector: 'jhi-tutorial-group-sessions-table',
@@ -63,8 +65,20 @@ export class TutorialGroupSessionsTableComponent {
         // Effect to handle tutorialGroup changes
         effect(() => {
             const group = this.tutorialGroup();
-            if (group) {
-                this.nextSession = group.nextSession;
+            if (group?.nextSession) {
+                this.nextSession = {
+                    id: group.nextSession.id!,
+                    startDate: group.nextSession.start!.toISOString(),
+                    endDate: group.nextSession.end!.toISOString(),
+                    location: group.nextSession.location!,
+                    statusExplanation: group.nextSession.statusExplanation,
+                    status: group.nextSession.status,
+                    attendanceCount: group.nextSession.attendanceCount,
+                    freePeriod: entityToTutorialGroupFreePeriodDTO(group.nextSession.tutorialGroupFreePeriod),
+                    schedule: entityToTutorialGroupScheduleDTO(group.nextSession.tutorialGroupSchedule),
+                };
+            } else {
+                this.nextSession = undefined;
             }
         });
     }
@@ -94,7 +108,9 @@ export class TutorialGroupSessionsTableComponent {
         const now = this.getCurrentDate();
 
         for (const session of sessions) {
-            if (session.endDate!.isBefore(now)) {
+            const end = session.endDate ? dayjs(session.endDate) : undefined;
+
+            if (end && end.isBefore(now)) {
                 past.push(session);
             } else {
                 upcoming.push(session);

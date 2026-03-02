@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Component, input, viewChild, viewChildren } from '@angular/core';
-import { TutorialGroupSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { TutorialGroupSessionDTO, TutorialGroupSessionStatus } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TutorialGroupSessionRowStubComponent } from 'test/helpers/stubs/tutorialgroup/tutorial-group-sessions-table-stub.component';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -133,18 +133,25 @@ describe('TutorialGroupSessionTableComponent', () => {
 
                 pastSession = generateExampleTutorialGroupSessionDTO({
                     id: 1,
-                    startDate: dayjs('2021-01-01T12:00:00.000Z').tz('Europe/Berlin'),
-                    endDate: dayjs('2021-01-01T13:00:00.000Z').tz('Europe/Berlin'),
+                    startDate: '2021-01-01T12:00:00.000Z',
+                    endDate: '2021-01-01T13:00:00.000Z',
                     location: 'Room 1',
                 });
                 upcomingSession = generateExampleTutorialGroupSessionDTO({
                     id: 2,
-                    startDate: dayjs('2021-01-03T12:00:00.000Z').tz('Europe/Berlin'),
-                    endDate: dayjs('2021-01-03T13:00:00.000Z').tz('Europe/Berlin'),
+                    startDate: '2021-01-03T12:00:00.000Z',
+                    endDate: '2021-01-03T13:00:00.000Z',
                     location: 'Room 1',
                 });
                 tutorialGroup = generateExampleTutorialGroup({});
-                tutorialGroup.nextSession = upcomingSession;
+                tutorialGroup.nextSession = {
+                    id: 2,
+                    start: dayjs('2021-01-03T12:00:00.000Z'),
+                    end: dayjs('2021-01-03T13:00:00.000Z'),
+                    location: 'Room 1',
+                    status: TutorialGroupSessionStatus.ACTIVE,
+                    attendanceCount: undefined,
+                };
 
                 fixture.componentRef.setInput('sessions', [upcomingSession, pastSession]);
                 fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
