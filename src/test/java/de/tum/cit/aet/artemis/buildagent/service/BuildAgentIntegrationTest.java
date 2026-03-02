@@ -352,8 +352,9 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         when(dockerClient.startContainerCmd(anyString())).thenReturn(startContainerCmd);
         doAnswer(invocation -> {
             buildStarted.countDown();
-            // Sleep longer than the grace period (2s in test config) to ensure the grace period
-            // expires while the build is still running, triggering re-queue via handleTimeoutAndCancelRunningJobs
+            // Sleep longer than the pause grace period (2s in test config) so the build is still
+            // running when the grace period expires, causing handleTimeoutAndCancelRunningJobs to
+            // cancel and re-queue the job. The sleep is interrupted via future.cancel(true).
             Thread.sleep(60_000);
             return null;
         }).when(startContainerCmd).exec();
