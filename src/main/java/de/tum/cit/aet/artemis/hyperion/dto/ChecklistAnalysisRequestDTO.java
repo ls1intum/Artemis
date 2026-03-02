@@ -7,6 +7,8 @@ import jakarta.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * DTO for the request to analyze the checklist.
  *
@@ -16,7 +18,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param exerciseId               The ID of the exercise (positive Long, optional)
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ChecklistAnalysisRequestDTO(@NotBlank @Size(max = 50000) String problemStatementMarkdown,
-        @Pattern(regexp = "^(EASY|MEDIUM|HARD)$", message = "declaredDifficulty must be EASY, MEDIUM, or HARD") String declaredDifficulty, @Size(max = 50) String language,
-        @Positive Long exerciseId) {
+@Schema(description = "Request to analyze a problem statement for quality, competencies, and difficulty")
+public record ChecklistAnalysisRequestDTO(@NotBlank @Size(max = 50000) @Schema(description = "Problem statement in Markdown format") String problemStatementMarkdown,
+        @Pattern(regexp = "^(EASY|MEDIUM|HARD)$", message = "declaredDifficulty must be EASY, MEDIUM, or HARD") @Schema(description = "Declared difficulty of the exercise", allowableValues = {
+                "EASY", "MEDIUM", "HARD" }) String declaredDifficulty,
+        @Size(max = 50) @Schema(description = "Programming language, e.g. JAVA, PYTHON") String language, @Positive @Schema(description = "ID of the exercise") Long exerciseId){
 }
