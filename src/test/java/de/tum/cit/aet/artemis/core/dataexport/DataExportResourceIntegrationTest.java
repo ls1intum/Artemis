@@ -106,8 +106,6 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         assertThat(dataExportFile).isNotNull();
         assertThat(dataExportAfterDownload.getDataExportState()).isEqualTo(DataExportState.DOWNLOADED);
         assertThat(dataExportAfterDownload.getDownloadDate()).isNotNull();
-        restoreTestDataInitState(dataExport);
-
     }
 
     private DataExport prepareDataExportForDownload() throws IOException {
@@ -126,11 +124,6 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         createdTestFiles.add(newFilePath);
         dataExport.setFilePath(newFilePath.toString());
         return dataExportRepository.save(dataExport);
-    }
-
-    private void restoreTestDataInitState(DataExport dataExport) throws IOException {
-        // No-op: files are now cleaned up in tearDown() instead of being moved back
-        // This prevents race conditions when tests run in parallel
     }
 
     @Test
@@ -169,7 +162,6 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         dataExport.setDataExportState(state);
         dataExport = dataExportRepository.save(dataExport);
         request.get("/api/core/data-exports/" + dataExport.getId(), HttpStatus.FORBIDDEN, Resource.class);
-
     }
 
     @Test
@@ -441,7 +433,6 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
 
         var dataExportAfterDownload = dataExportRepository.findByIdElseThrow(dataExport.getId());
         assertThat(dataExportAfterDownload.getDataExportState()).isEqualTo(DataExportState.DOWNLOADED);
-        restoreTestDataInitState(dataExport);
     }
 
     @Test
