@@ -131,8 +131,8 @@
                     <div class="issue-toolbar-start">
                         <p-checkbox
                             [binary]="true"
-                            [checked]="allIssuesSelected()"
-                            (onChange)="allIssuesSelected() ? deselectAllIssues() : selectAllIssues()"
+                            [ngModel]="allIssuesSelected()"
+                            (ngModelChange)="$event ? selectAllIssues() : deselectAllIssues()"
                             [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0"
                             inputId="select-all-issues"
                             data-testid="select-all-issues"
@@ -199,8 +199,8 @@
                                 <div class="issue-badges">
                                     <p-checkbox
                                         [binary]="true"
-                                        [checked]="isIssueSelected(i)"
-                                        (onChange)="toggleIssueSelection(i)"
+                                        [ngModel]="isIssueSelected(i)"
+                                        (ngModelChange)="toggleIssueSelection(i)"
                                         [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0"
                                         [inputId]="'issue-select-' + i"
                                         [attr.data-testid]="'issue-checkbox-' + i"

@@ -14,6 +14,7 @@ import { ChecklistAnalysisResponse } from 'app/openapi/model/checklistAnalysisRe
 import { ChecklistActionRequest } from 'app/openapi/model/checklistActionRequest';
 import { QualityIssue } from 'app/openapi/model/qualityIssue';
 import { AlertService } from 'app/shared/service/alert.service';
+import { FormsModule } from '@angular/forms';
 import { Checkbox } from 'primeng/checkbox';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -51,7 +52,7 @@ const PENALTY_LOW = 0.1;
     templateUrl: './checklist-panel.component.html',
     styleUrls: ['./checklist-panel.component.scss'],
     standalone: true,
-    imports: [NgClass, DecimalPipe, TranslateModule, FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective, Tag, ButtonDirective, Badge, Checkbox, Panel],
+    imports: [NgClass, DecimalPipe, TranslateModule, FontAwesomeModule, FormsModule, ArtemisTranslatePipe, TranslateDirective, Tag, ButtonDirective, Badge, Checkbox, Panel],
 })
 export class ChecklistPanelComponent {
     private hyperionApiService = inject(HyperionProblemStatementApiService);
