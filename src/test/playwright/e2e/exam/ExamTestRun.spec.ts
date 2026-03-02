@@ -143,7 +143,7 @@ test.describe('Exam test run', { tag: '@fast' }, () => {
             await examTestRun.openTestRunPage(course, exam);
             // The test run was created via API in beforeEach, but the page may load
             // before the data is available. Reload until the test run element appears.
-            await Commands.reloadUntilFound(page, examTestRun.getTestRun(testRun.id!), 2000, 60000);
+            await Commands.reloadUntilFound(page, examTestRun.getTestRun(testRun.id!), 10000, 60000);
             await examTestRun.deleteTestRun(testRun.id!);
             await expect(examTestRun.getTestRun(testRun.id!)).not.toBeVisible();
         });
