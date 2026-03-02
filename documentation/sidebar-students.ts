@@ -22,6 +22,7 @@ const sidebars: SidebarsConfig = {
         'user-experience',
         'communication',
         'notifications',
+        'iris',
         'faq',
         'grading',
         'integrated-code-lifecycle',
