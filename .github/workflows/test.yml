@@ -134,10 +134,18 @@ jobs:
       run: |
         VIOLATIONS=$(grep "Rule violated for bundle" tests.log || true)
         if [ -n "$VIOLATIONS" ]; then
-          echo "::error::JaCoCo code coverage thresholds violated:"
-          echo "$VIOLATIONS"
+          # Extract failing module names from custom coverage error messages
+          MODULES=$(grep "Coverage requirements for" tests.log | sed 's/.*Coverage requirements for \(.*\) not met.*/\1/' | sort -u | tr '\n' ', ' | sed 's/, $//' || true)
+          echo "::error::JaCoCo code coverage thresholds violated${MODULES:+ in module(s): $MODULES}"
           echo ""
-          echo "If this is not related to your PR, adjust the thresholds in gradle/jacoco.gradle (ModuleCoverageThresholds)."
+          # Show per-module coverage details and violations
+          grep -E "(📊 Module:|🔍 Measured|🏛️ Uncovered|❌ Coverage requirements|Rule violated for bundle)" tests.log || true
+          echo ""
+          if [ -n "$MODULES" ]; then
+            echo "If this is not related to your PR, adjust the thresholds for module(s) [$MODULES] in gradle/jacoco.gradle (ModuleCoverageThresholds)."
+          else
+            echo "If this is not related to your PR, adjust the thresholds in gradle/jacoco.gradle (ModuleCoverageThresholds)."
+          fi
           exit 1
         fi
     - name: "Codacy: Report coverage"
