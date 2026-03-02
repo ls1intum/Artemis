@@ -50,24 +50,28 @@ export class OrganizationManagementComponent {
     faTimes = faTimes;
     faWrench = faWrench;
 
+    private lastLoadEvent: TableLazyLoadEvent | undefined;
+
     /**
-     * Deletes an organization by ID.
+     * Deletes an organization by ID and refreshes the current page.
      * @param organizationId - The ID of the organization to delete
      */
     deleteOrganization(organizationId: number): void {
         this.organizationService.deleteOrganization(organizationId).subscribe({
             next: () => {
                 this.dialogErrorSource.next('');
-                this.organizations.set(this.organizations().filter((org) => org.id !== organizationId));
-                this.totalCount.set(this.totalCount() - 1);
+                if (this.lastLoadEvent) {
+                    this.loadOrganizations(this.lastLoadEvent);
+                }
             },
             error: (error: HttpErrorResponse) => {
-                this.dialogErrorSource.next('An error occurred while removing the organization: ' + error.message);
+                this.dialogErrorSource.next(error.message);
             },
         });
     }
 
     loadOrganizations(event: TableLazyLoadEvent): void {
+        this.lastLoadEvent = event;
         this.isLoading.set(true);
         const query = buildDbQueryFromLazyEvent(event);
         this.organizationService.getOrganizations(query, true).subscribe({
