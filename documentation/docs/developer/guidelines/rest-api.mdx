@@ -704,6 +704,84 @@ public ResponseEntity<Course> getCourseForDashboard(@PathVariable long courseId)
   <strong>Testing:</strong> Always verify your access control works by testing with users of different roles. Resource-In-Context annotations are tested via aspects; policies should have dedicated unit tests.
 </Callout>
 
+## OpenAPI Documentation
+
+Artemis uses [SpringDoc OpenAPI](https://springdoc.org/) to automatically generate API documentation at runtime. The generated OpenAPI specification is available at:
+- `/v3/api-docs` (JSON format)
+- `/swagger-ui` (interactive documentation UI)
+
+### Enabling OpenAPI Documentation
+
+By default, OpenAPI documentation endpoints are **disabled** in production for security reasons. To enable them:
+
+```yaml
+# In application-dev.yml or application-prod.yml
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+```
+
+### Security Documentation
+
+All endpoints secured with custom authorization annotations are automatically documented with their security requirements. This includes:
+
+- **Global role annotations**: `@EnforceAdmin`, `@EnforceAtLeastInstructor`, `@EnforceAtLeastEditor`, `@EnforceAtLeastTutor`, `@EnforceAtLeastStudent`
+- **Course-scoped annotations**: `@EnforceAtLeastInstructorInCourse`, `@EnforceAtLeastEditorInCourse`, `@EnforceAtLeastTutorInCourse`, `@EnforceAtLeastStudentInCourse`
+- **Exercise-scoped annotations**: Similar annotations for exercise context
+- **Lecture-scoped annotations**: Similar annotations for lecture context
+
+The `OpenApiConfiguration` class (in `core/config`) automatically detects these annotations and adds:
+1. JWT bearer token security requirements to the operation
+2. Human-readable security descriptions (e.g., "Requires at least INSTRUCTOR role in the course")
+
+**Example:**
+
+```java
+@GetMapping("courses/{courseId}")
+@EnforceAtLeastInstructorInCourse
+public ResponseEntity<Course> getCourse(@PathVariable Long courseId) {
+    // ...
+}
+```
+
+This endpoint will be documented in OpenAPI with:
+- **Security**: Bearer JWT token required
+- **Description**: "Requires at least INSTRUCTOR role in the course"
+
+### Customizing OpenAPI Documentation
+
+You can further customize endpoint documentation using standard OpenAPI annotations:
+
+```java
+@Operation(
+    summary = "Get course details",
+    description = "Retrieves detailed information about a specific course",
+    responses = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved course"),
+        @ApiResponse(responseCode = "403", description = "User does not have sufficient permissions"),
+        @ApiResponse(responseCode = "404", description = "Course not found")
+    }
+)
+@GetMapping("courses/{courseId}")
+@EnforceAtLeastInstructorInCourse
+public ResponseEntity<Course> getCourse(
+    @Parameter(description = "ID of the course to retrieve", required = true)
+    @PathVariable Long courseId
+) {
+    // ...
+}
+```
+
+### Best Practices
+
+1. **Always use custom annotations**: Prefer `@EnforceAtLeastInstructorInCourse` over `@PreAuthorize("hasRole('INSTRUCTOR')")` for better documentation
+2. **Add operation summaries**: Use `@Operation(summary = "...")` to describe what the endpoint does
+3. **Document error responses**: Include `@ApiResponse` annotations for common error cases (400, 403, 404, etc.)
+4. **Describe parameters**: Use `@Parameter(description = "...")` for path variables and request parameters
+5. **Test the documentation**: Periodically check `/swagger-ui` to ensure endpoints are properly documented
+
 ## JSON Serialization
 
 Always use ObjectMapper (Jackson) for JSON serialization and deserialization. Do not use other libraries.

@@ -359,7 +359,6 @@ public class CourseAccessResource {
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
     @PostMapping("courses/{courseId}/editors/{editorLogin:" + Constants.LOGIN_REGEX + "}")
-    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> addEditorToCourse(@PathVariable Long courseId, @PathVariable String editorLogin) {
         log.debug("REST request to add {} as editors to course : {}", editorLogin, courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
