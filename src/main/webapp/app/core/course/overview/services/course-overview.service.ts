@@ -298,7 +298,7 @@ export class CourseOverviewService {
             const conversationCardItem = this.mapConversationToSidebarCardElement(course, conversation);
 
             // Add all unread messages to the "unreadMessages" group
-            if ((conversation.unreadMessagesCount ?? 0) > 0) {
+            if ((conversation.unreadMessagesCount ?? 0) > 0 && !conversation.isHidden) {
                 groupedConversationGroups.unreadMessages.entityData.push(conversationCardItem);
             }
 
