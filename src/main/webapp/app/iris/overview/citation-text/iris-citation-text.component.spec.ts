@@ -33,6 +33,19 @@ describe('IrisCitationTextComponent', () => {
             toJSON: () => ({}),
         }) as DOMRect;
 
+    const rectWithVertical = (left: number, right: number, top: number, bottom: number): DOMRect =>
+        ({
+            left,
+            right,
+            top,
+            bottom,
+            width: right - left,
+            height: bottom - top,
+            x: left,
+            y: top,
+            toJSON: () => ({}),
+        }) as DOMRect;
+
     const setupTooltip = () => {
         const citationInfo: IrisCitationMetaDTO[] = [{ entityId: 7, lectureTitle: 'L', lectureUnitTitle: '' }];
         const el = render('[cite:L:7::::Key:Summary]', citationInfo);
@@ -41,6 +54,16 @@ describe('IrisCitationTextComponent', () => {
 
         expect(citation).toBeTruthy();
         return { el, citation, summary };
+    };
+
+    const mockClosestBoundaries = (citation: HTMLElement, el: HTMLElement) => {
+        const originalClosest = citation.closest.bind(citation);
+        vi.spyOn(citation, 'closest').mockImplementation((selector: string) => {
+            if (selector === '.bubble-left') return el;
+            if (selector === 'div.messages') return el;
+            if (selector === 'jhi-iris-citation-text') return el;
+            return originalClosest(selector);
+        });
     };
 
     afterEach(() => {
@@ -103,42 +126,30 @@ describe('IrisCitationTextComponent', () => {
         expect(el.querySelector('.iris-citation__nav')).toBeFalsy();
     });
 
-    it('updates bubble when navigating a citation group', () => {
+    it('keeps citation bubble text unchanged when navigating grouped summaries', () => {
         const citationInfo: IrisCitationMetaDTO[] = [
             { entityId: 1, lectureTitle: 'L1', lectureUnitTitle: '' },
             { entityId: 2, lectureTitle: 'L2', lectureUnitTitle: '' },
         ];
-        const el = render('[cite:L:1:5:::One:S1] [cite:F:2::::FAQ:S2]', citationInfo);
+        const el = render('[cite:L:1:5:::FirstKeyword:S1] [cite:F:2::::SecondKeyword:S2]', citationInfo);
 
-        const group = el.querySelector('.iris-citation-group') as HTMLElement;
-        const bubble = group.querySelector('.iris-citation') as HTMLElement;
-        const bubbleText = bubble.querySelector('.iris-citation__text') as HTMLElement;
+        const group = el.querySelector('.iris-citation-group--has-summary') as HTMLElement;
+        const bubbleText = group.querySelector('.iris-citation__text') as HTMLElement;
         const navButtons = group.querySelectorAll('.iris-citation__nav-button') as NodeListOf<HTMLElement>;
 
-        expect(bubbleText.textContent?.trim()).toBe('One');
-        expect(bubble.classList.contains('iris-citation--slide')).toBe(true);
+        const initialText = bubbleText.textContent?.trim();
 
         navButtons[1].click();
-
-        expect(bubbleText.textContent?.trim()).toBe('FAQ');
-        expect(bubble.classList.contains('iris-citation--faq')).toBe(true);
-        expect(bubble.classList.contains('iris-citation--slide')).toBe(false);
+        expect(bubbleText.textContent?.trim()).toBe(initialText);
 
         navButtons[0].click();
-
-        expect(bubbleText.textContent?.trim()).toBe('One');
-        expect(bubble.classList.contains('iris-citation--slide')).toBe(true);
+        expect(bubbleText.textContent?.trim()).toBe(initialText);
     });
 
     it('adjusts tooltip shift based on overflow', () => {
         const { el, citation, summary } = setupTooltip();
 
-        const originalClosest = citation.closest.bind(citation);
-        vi.spyOn(citation, 'closest').mockImplementation((selector: string) => {
-            if (selector === '.bubble-left') return null;
-            if (selector === 'jhi-iris-citation-text') return el;
-            return originalClosest(selector);
-        });
+        mockClosestBoundaries(citation, el);
 
         const boundarySpy = vi.spyOn(el, 'getBoundingClientRect');
         const summarySpy = vi.spyOn(summary, 'getBoundingClientRect');
@@ -159,13 +170,104 @@ describe('IrisCitationTextComponent', () => {
         });
     });
 
-    it('resets tooltip shift on mouseout', () => {
-        const { citation } = setupTooltip();
-        citation.style.setProperty('--iris-citation-shift', '-50px');
+    describe('Vertical collision detection', () => {
+        it('positions tooltip above when there is sufficient space', () => {
+            const { el, citation, summary } = setupTooltip();
 
-        citation.dispatchEvent(new MouseEvent('mouseout', { bubbles: true, relatedTarget: document.body }));
+            mockClosestBoundaries(citation, el);
 
-        expect(citation.style.getPropertyValue('--iris-citation-shift')).toBe('0px');
+            // Vertical boundary top at y=0, summary top at y=82 → summary.top >= boundary.top → fits
+            const boundarySpy = vi.spyOn(el, 'getBoundingClientRect').mockReturnValue(rectWithVertical(0, 400, 0, 600));
+            const summarySpy = vi.spyOn(summary, 'getBoundingClientRect').mockReturnValue(rectWithVertical(50, 200, 82, 182));
+
+            citation.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+
+            expect(citation.style.getPropertyValue('--iris-citation-vertical-offset')).toBe('calc(-100% - 18px)');
+
+            boundarySpy.mockRestore();
+            summarySpy.mockRestore();
+        });
+
+        it('positions tooltip below when it overflows boundary top', () => {
+            const { el, citation, summary } = setupTooltip();
+
+            mockClosestBoundaries(citation, el);
+
+            // Vertical boundary top at y=0, summary top at y=-10 → summary.top < boundary.top → overflow
+            const boundarySpy = vi.spyOn(el, 'getBoundingClientRect').mockReturnValue(rectWithVertical(0, 400, 0, 600));
+            const summarySpy = vi.spyOn(summary, 'getBoundingClientRect').mockReturnValue(rectWithVertical(50, 200, -10, 90));
+
+            citation.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+
+            expect(citation.style.getPropertyValue('--iris-citation-vertical-offset')).toBe('0px');
+
+            boundarySpy.mockRestore();
+            summarySpy.mockRestore();
+        });
+
+        it('works correctly with both horizontal and vertical collision', () => {
+            const { el, citation, summary } = setupTooltip();
+
+            mockClosestBoundaries(citation, el);
+
+            // Summary overflows both boundaries (left and top)
+            const boundarySpy = vi.spyOn(el, 'getBoundingClientRect').mockReturnValue(rectWithVertical(0, 400, 0, 600));
+            const citationSpy = vi.spyOn(citation, 'getBoundingClientRect').mockReturnValue(rectWithVertical(10, 60, 40, 60));
+            const summarySpy = vi.spyOn(summary, 'getBoundingClientRect').mockReturnValue(rectWithVertical(-105, 45, -78, 22));
+
+            citation.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+
+            expect(citation.style.getPropertyValue('--iris-citation-vertical-offset')).toBe('0px');
+            expect(citation.style.getPropertyValue('--iris-citation-shift')).toBe('105px');
+
+            boundarySpy.mockRestore();
+            citationSpy.mockRestore();
+            summarySpy.mockRestore();
+        });
+
+        it('adds flipped class when positioned below', () => {
+            const { el, citation, summary } = setupTooltip();
+
+            mockClosestBoundaries(citation, el);
+
+            const boundarySpy = vi.spyOn(el, 'getBoundingClientRect').mockReturnValue(rectWithVertical(0, 400, 0, 600));
+            const summarySpy = vi.spyOn(summary, 'getBoundingClientRect').mockReturnValue(rectWithVertical(50, 200, -10, 90));
+
+            citation.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+
+            expect(summary.classList.contains('iris-citation__summary--flipped')).toBe(true);
+
+            boundarySpy.mockRestore();
+            summarySpy.mockRestore();
+        });
+
+        it('removes flipped class when positioned above', () => {
+            const { el, citation, summary } = setupTooltip();
+
+            // First add flipped class
+            summary.classList.add('iris-citation__summary--flipped');
+
+            mockClosestBoundaries(citation, el);
+
+            const boundarySpy = vi.spyOn(el, 'getBoundingClientRect').mockReturnValue(rectWithVertical(0, 400, 0, 600));
+            const summarySpy = vi.spyOn(summary, 'getBoundingClientRect').mockReturnValue(rectWithVertical(50, 200, 82, 182));
+
+            citation.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+
+            expect(summary.classList.contains('iris-citation__summary--flipped')).toBe(false);
+
+            boundarySpy.mockRestore();
+            summarySpy.mockRestore();
+        });
+
+        it('removes flipped class on mouseout', () => {
+            const { citation, summary } = setupTooltip();
+            summary.classList.add('iris-citation__summary--flipped');
+
+            citation.dispatchEvent(new MouseEvent('mouseout', { bubbles: true, relatedTarget: document.body }));
+
+            expect(summary.classList.contains('iris-citation__summary--flipped')).toBe(false);
+        });
     });
 });
 
