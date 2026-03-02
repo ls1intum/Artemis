@@ -826,7 +826,7 @@
                 "analyzing": "Analyzing...",
                 "defaultMessage": "Click \"Analyze Problem Statement\" to check for competencies, difficulty, and quality issues.",
                 "competencies": {
-                    "title": "Estimated Competencies",
+                    "title": "Estimated Learning Goals",
                     "empty": "No competencies inferred.",
                     "primary": "Primary",
                     "evidence": "Evidence:",
