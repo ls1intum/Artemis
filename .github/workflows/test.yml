@@ -138,6 +138,7 @@ jobs:
           echo "$VIOLATIONS"
           echo ""
           echo "If this is not related to your PR, adjust the thresholds in gradle/jacoco.gradle (ModuleCoverageThresholds)."
+          exit 1
         fi
     - name: "Codacy: Report coverage"
       uses: codacy/codacy-coverage-reporter-action@master
