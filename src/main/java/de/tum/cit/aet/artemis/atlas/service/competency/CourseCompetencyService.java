@@ -445,7 +445,7 @@ public class CourseCompetencyService {
      * Gets the course progress for all competencies of a course.
      *
      * @param course the course entity
-     * @return a list of course competency progress DTOs, one per competency
+     * @return a list of course competency progress DTOs
      */
     public List<CourseCompetencyProgressDTO> getCourseProgressForAllCompetencies(Course course) {
         return courseCompetencyRepository.findByCourseIdWithExercises(course.getId()).stream()
