@@ -34,10 +34,10 @@ public record ExerciseWeaviateDTO(Long exerciseId, Long courseId, String courseT
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         Exam exam = exercise.isExamExercise() ? exercise.getExam() : null;
 
-        return new ExerciseWeaviateDTO(exercise.getId(), course.getId(), course.getTitle(), exercise.getTitle(), exercise.getExerciseType().name(),
-                exercise.getMaxPoints() != null ? exercise.getMaxPoints() : 0.0, exercise.getShortName(), exercise.getProblemStatement(), exercise.getReleaseDate(),
-                exercise.getStartDate(), exercise.getDueDate(), exercise.getDifficulty() != null ? exercise.getDifficulty().name() : null, exercise.isExamExercise(),
-                exam != null ? exam.getId() : null, exam != null ? exam.isTestExam() : null, exam != null ? exam.getVisibleDate() : null, exam != null ? exam.getStartDate() : null,
+        return new ExerciseWeaviateDTO(exercise.getId(), course.getId(), course.getTitle(), exercise.getTitle(), exercise.getExerciseType().name(), exercise.getMaxPoints(),
+                exercise.getShortName(), exercise.getProblemStatement(), exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(),
+                exercise.getDifficulty() != null ? exercise.getDifficulty().name() : null, exercise.isExamExercise(), exam != null ? exam.getId() : null,
+                exam != null ? exam.isTestExam() : null, exam != null ? exam.getVisibleDate() : null, exam != null ? exam.getStartDate() : null,
                 exam != null ? exam.getEndDate() : null,
                 exercise instanceof ProgrammingExercise pe && pe.getProgrammingLanguage() != null ? pe.getProgrammingLanguage().name() : null,
                 exercise instanceof ProgrammingExercise pe && pe.getProjectType() != null ? pe.getProjectType().name() : null,
@@ -60,10 +60,10 @@ public record ExerciseWeaviateDTO(Long exerciseId, Long courseId, String courseT
     public static ExerciseWeaviateDTO fromExerciseWithExam(Exercise exercise, Exam exam) {
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
 
-        return new ExerciseWeaviateDTO(exercise.getId(), course.getId(), course.getTitle(), exercise.getTitle(), exercise.getExerciseType().name(),
-                exercise.getMaxPoints() != null ? exercise.getMaxPoints() : 0.0, exercise.getShortName(), exercise.getProblemStatement(), exercise.getReleaseDate(),
-                exercise.getStartDate(), exercise.getDueDate(), exercise.getDifficulty() != null ? exercise.getDifficulty().name() : null, exercise.isExamExercise(),
-                exam != null ? exam.getId() : null, exam != null ? exam.isTestExam() : null, exam != null ? exam.getVisibleDate() : null, exam != null ? exam.getStartDate() : null,
+        return new ExerciseWeaviateDTO(exercise.getId(), course.getId(), course.getTitle(), exercise.getTitle(), exercise.getExerciseType().name(), exercise.getMaxPoints(),
+                exercise.getShortName(), exercise.getProblemStatement(), exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(),
+                exercise.getDifficulty() != null ? exercise.getDifficulty().name() : null, exercise.isExamExercise(), exam != null ? exam.getId() : null,
+                exam != null ? exam.isTestExam() : null, exam != null ? exam.getVisibleDate() : null, exam != null ? exam.getStartDate() : null,
                 exam != null ? exam.getEndDate() : null,
                 exercise instanceof ProgrammingExercise pe && pe.getProgrammingLanguage() != null ? pe.getProgrammingLanguage().name() : null,
                 exercise instanceof ProgrammingExercise pe && pe.getProjectType() != null ? pe.getProjectType().name() : null,
