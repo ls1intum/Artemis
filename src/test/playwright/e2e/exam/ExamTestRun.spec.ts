@@ -10,6 +10,7 @@ import { generateUUID } from '../../support/utils';
 import { test } from '../../support/fixtures';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { expect } from '@playwright/test';
+import { Commands } from '../../support/commands';
 
 // Common primitives
 const textFixture = 'loremIpsum-short.txt';
@@ -133,11 +134,12 @@ test.describe('Exam test run', { tag: '@fast' }, () => {
             testRun = await courseManagementAPIRequests.createExamTestRun(exam, exerciseArray);
         });
 
-        test('Deletes a test run', async ({ login, examTestRun }) => {
+        test('Deletes a test run', async ({ login, page, examTestRun }) => {
             await login(instructor);
             await examTestRun.openTestRunPage(course, exam);
-            await examTestRun.getTestRun(testRun.id!).waitFor({ state: 'visible' });
-            await expect(examTestRun.getTestRunIdElement(testRun.id!)).toBeVisible();
+            // The test run was created via API in beforeEach, but the page may load
+            // before the data is available. Reload until the test run element appears.
+            await Commands.reloadUntilFound(page, examTestRun.getTestRun(testRun.id!));
             await examTestRun.deleteTestRun(testRun.id!);
             await expect(examTestRun.getTestRun(testRun.id!)).not.toBeVisible();
         });
