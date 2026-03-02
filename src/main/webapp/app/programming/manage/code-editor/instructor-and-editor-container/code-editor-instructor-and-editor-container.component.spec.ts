@@ -1080,7 +1080,7 @@ describe('CodeEditorInstructorBaseContainerComponent - file sync binding', () =>
 
     /** Minimal monaco model/editor doubles sufficient for binding tests. */
     function makeMonacoDoubles() {
-        const model = { setValue: jest.fn(), onDidChangeContent: jest.fn(() => ({ dispose: jest.fn() })) } as any;
+        const model = { setValue: jest.fn(), setEOL: jest.fn(), onDidChangeContent: jest.fn(() => ({ dispose: jest.fn() })) } as any;
         const editorInstance = { getModel: jest.fn(() => model), getEditor: jest.fn(), getText: jest.fn(() => 'content') } as any;
         return { model, editorInstance };
     }
@@ -1109,18 +1109,42 @@ describe('CodeEditorInstructorBaseContainerComponent - file sync binding', () =>
     }
 
     /** Builds the codeEditorContainer stub used by all three tests. */
-    function makeContainerStub(model: any) {
+    function makeContainerStub(model: any, fileText = '') {
         return {
             monacoEditor: {
                 binaryFileSelected: jest.fn(() => false),
                 editor: jest.fn(() => ({
                     getModel: jest.fn(() => model),
                     getEditor: jest.fn(() => ({})),
-                    getText: jest.fn(() => ''),
+                    getText: jest.fn(() => fileText),
                 })),
             },
         };
     }
+
+    it('normalizes CRLF fallback content and enforces LF EOL before binding', () => {
+        const stateReplaced$ = new Subject<{ filePath: string } & FileSyncState>();
+        const { model } = makeMonacoDoubles();
+        const openFile = jest.fn(() => ({ doc: {}, text: { toString: () => '' }, awareness: {} }));
+
+        (comp as any).fileSyncService = {
+            isInitialized: jest.fn(() => true),
+            openFile,
+            closeFile: jest.fn(),
+            reset: jest.fn(),
+            stateReplaced$: stateReplaced$.asObservable(),
+        };
+        const createFileBindingSpy = jest.spyOn(comp as any, 'createFileBinding').mockImplementation(() => undefined);
+
+        (comp as any).codeEditorContainer = makeContainerStub(model, 'line1\r\nline2\r\n');
+
+        (comp as any).onFileSyncLoad('src/Main.java');
+
+        expect(openFile).toHaveBeenCalledWith('src/Main.java', 'line1\nline2\n');
+        expect(model.setEOL).toHaveBeenCalledOnce();
+        expect(model.setValue).toHaveBeenCalledWith('');
+        expect(createFileBindingSpy).toHaveBeenCalledOnce();
+    });
 
     it('stateReplaced$ for the active file tears down the old binding, sets model value, and rebinds', () => {
         const stateReplaced$ = new Subject<{ filePath: string } & FileSyncState>();
@@ -1251,7 +1275,7 @@ describe('CodeEditorInstructorBaseContainerComponent - file sync binding', () =>
 
         it('does nothing when openFile returns undefined', () => {
             const createFileBindingSpy = jest.spyOn(comp as any, 'createFileBinding');
-            const model = { setValue: jest.fn() };
+            const model = { setValue: jest.fn(), setEOL: jest.fn() };
             (comp as any).fileSyncService = {
                 isInitialized: jest.fn(() => true),
                 openFile: jest.fn(() => undefined),

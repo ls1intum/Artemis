@@ -25,7 +25,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { CodeEditorFileSyncService, FileSyncState } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 import { ExerciseEditorSyncService, repositoryTypeToSyncTarget } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { MonacoBinding } from 'y-monaco';
-import type { editor } from 'monaco-editor';
+import { editor } from 'monaco-editor';
 /**
  * Enumeration specifying the loading state
  */
@@ -428,7 +428,9 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
             return;
         }
 
-        const fallbackContent = editorComponent.getText();
+        // Keep fallback content LF-only before seeding Yjs. If a Windows client seeds CRLF,
+        // Monaco/Yjs offsets diverge by one char per line break on LF peers.
+        const fallbackContent = this.normalizeLineEndings(editorComponent.getText());
         const syncState = this.fileSyncService.openFile(fileName, fallbackContent);
         if (!syncState) {
             return;
@@ -442,6 +444,9 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         // Safe: no MonacoBinding exists yet at this point, so the setValue('') cannot propagate
         // as a Yjs delete. The binding is only created on the next line.
         model.setValue('');
+        // Monaco may still keep CRLF as model EOL depending on prior content/defaultEOL.
+        // Force LF right after setValue so y-monaco computes offsets against LF text.
+        this.enforceLfEol(model);
         this.createFileBinding(syncState, model, editorInstance);
 
         // Capturing model and editorInstance via closure is safe here: Monaco does not replace
@@ -453,9 +458,23 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
             // propagate as a spurious delete+insert through the old Y.Doc to peers.
             this.currentFileBinding?.destroy();
             this.currentFileBinding = undefined;
-            model.setValue(replacedState.text.toString());
+            // Late leader replacement can carry content originally seeded from Windows peers.
+            // Normalize + enforce LF to keep local model offsets consistent with Y.Text.
+            const replacedText = this.normalizeLineEndings(replacedState.text.toString());
+            model.setValue(replacedText);
+            this.enforceLfEol(model);
             this.createFileBinding(replacedState, model, editorInstance);
         });
+    }
+
+    /** Normalize CRLF to LF so all peers use the same newline width for offset math. */
+    private normalizeLineEndings(content: string): string {
+        return content.replace(/\r\n/g, '\n');
+    }
+
+    /** Enforce LF on Monaco model to avoid CRLF/LF positional drift in collaborative edits. */
+    private enforceLfEol(model: editor.ITextModel): void {
+        model.setEOL(editor.EndOfLineSequence.LF);
     }
 
     /**
