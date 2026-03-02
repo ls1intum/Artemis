@@ -1,5 +1,5 @@
 <button
-    class="d-flex align-items-center border-0 text-start action-item my-2 w-100"
+    class="d-flex align-items-center border-0 text-start action-item my-2 w-100 position-relative"
     [class.is-selected]="selected()"
     type="button"
     [style.--accent]="accentColor()"
@@ -13,4 +13,9 @@
         <span class="action-title fw-medium text-body">{{ title() }}</span>
         <span class="action-description text-secondary">{{ description() }}</span>
     </span>
+    @if (selected()) {
+        <kbd class="key-hint-enter position-absolute" aria-label="Press Enter to activate">
+            <fa-icon [icon]="faLevelDownAlt" />
+        </kbd>
+    }
 </button>

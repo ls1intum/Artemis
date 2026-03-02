@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, HostListener, computed, forwardRef, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed, effect, forwardRef, inject, input, output, viewChildren } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
     faBook,
@@ -58,6 +58,28 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     private readonly overlay = inject(SearchOverlayService);
 
     protected readonly NAV_ACTION_COUNT = NAV_ACTION_COUNT;
+
+    // Query all selectable items for auto-scroll functionality
+    private readonly selectableItems = viewChildren<ElementRef<HTMLElement>>('selectableItem');
+
+    // Auto-scroll selected item into view when selection changes
+    constructor() {
+        super();
+        effect(() => {
+            const idx = this.selectedIndex();
+            const items = this.selectableItems();
+            if (idx >= 0 && idx < items.length) {
+                const element = items[idx]?.nativeElement;
+                if (element) {
+                    element.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'nearest',
+                        inline: 'nearest',
+                    });
+                }
+            }
+        });
+    }
 
     // Icons
     protected readonly faKeyboard = faKeyboard;
@@ -133,8 +155,8 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     // Total selectable items reported to the modal to bound ArrowDown/ArrowUp.
     readonly itemCount = computed(() => {
         if (this.showResults()) {
-            // When showing results, count action buttons + results
-            return NAV_ACTION_COUNT + this.results().length;
+            // When showing results, action buttons are hidden, only count results
+            return this.results().length;
         } else {
             // When showing entities, count action buttons + entities
             return NAV_ACTION_COUNT + this.searchableEntities.length;
@@ -175,23 +197,24 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     handleKeydown(event: KeyboardEvent): void {
         if (event.key !== 'Enter') return;
         const idx = this.selectedIndex();
-        if (idx === 0) {
+
+        if (this.showResults()) {
+            // When showing results, no action buttons are present
             event.preventDefault();
-            this.viewSelected.emit(SearchView.Iris);
-        } else if (idx === 1) {
-            event.preventDefault();
-            this.viewSelected.emit(SearchView.Lecture);
-        } else if (idx >= NAV_ACTION_COUNT) {
-            event.preventDefault();
-            if (this.showResults()) {
-                // Handle result selection
-                const resultIndex = idx - NAV_ACTION_COUNT;
-                const result = this.results()[resultIndex];
-                if (result) {
-                    this.navigateToResult(result);
-                }
-            } else {
-                // Handle entity selection
+            const result = this.results()[idx];
+            if (result) {
+                this.navigateToResult(result);
+            }
+        } else {
+            // When showing entities, action buttons are present
+            if (idx === 0) {
+                event.preventDefault();
+                this.viewSelected.emit(SearchView.Iris);
+            } else if (idx === 1) {
+                event.preventDefault();
+                this.viewSelected.emit(SearchView.Lecture);
+            } else if (idx >= NAV_ACTION_COUNT) {
+                event.preventDefault();
                 const entityIndex = idx - NAV_ACTION_COUNT;
                 const entity = this.searchableEntities[entityIndex];
                 if (entity && entity.enabled) {
