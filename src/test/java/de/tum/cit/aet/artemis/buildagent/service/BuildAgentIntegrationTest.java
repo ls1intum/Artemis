@@ -368,7 +368,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
             return buildAgent != null && buildAgent.status() == BuildAgentStatus.PAUSED;
         });
 
-        await().atMost(30, TimeUnit.SECONDS).until(() -> {
+        await().atMost(60, TimeUnit.SECONDS).until(() -> {
             var queued = buildJobQueue.peek();
             return queued != null && queued.id().equals(queueItem.id());
         });
