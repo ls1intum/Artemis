@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.core.security.policy.AccessPolicy;
 import de.tum.cit.aet.artemis.core.security.policy.Conditions;
 import de.tum.cit.aet.artemis.core.security.policy.EntityManagerPolicyResourceResolver;
 import de.tum.cit.aet.artemis.core.security.policy.PolicyEngine;
+import de.tum.cit.aet.artemis.core.security.policy.PolicyProvider;
 import de.tum.cit.aet.artemis.core.security.policy.PolicyResourceResolver;
 
 @ExtendWith(MockitoExtension.class)
@@ -97,6 +98,23 @@ class EnforceAccessPolicyAspectTest {
         }
     }
 
+    /**
+     * Test PolicyProvider for accessing the test policy.
+     */
+    public static class TestPolicyProvider implements PolicyProvider<TestResource> {
+
+        private AccessPolicy<TestResource> policy;
+
+        public void setPolicy(AccessPolicy<TestResource> policy) {
+            this.policy = policy;
+        }
+
+        @Override
+        public AccessPolicy<TestResource> getPolicy() {
+            return policy;
+        }
+    }
+
     @BeforeEach
     void setUp() {
         policyEngine = new PolicyEngine();
@@ -128,7 +146,9 @@ class EnforceAccessPolicyAspectTest {
         // Policy: allow admins
         AccessPolicy<TestResource> policy = AccessPolicy.forResource(TestResource.class).named("test-policy").rule(when(Conditions.<TestResource>isAdmin()).thenAllow())
                 .denyByDefault();
-        when(applicationContext.getBean("testPolicy", AccessPolicy.class)).thenReturn(policy);
+        TestPolicyProvider policyProvider = new TestPolicyProvider();
+        policyProvider.setPolicy(policy);
+        when(applicationContext.getBean(TestPolicyProvider.class)).thenReturn(policyProvider);
 
         User admin = createUser(Set.of(), Set.of(new Authority(Role.ADMIN.getAuthority())));
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(admin);
@@ -137,7 +157,7 @@ class EnforceAccessPolicyAspectTest {
         Object expectedResult = "success";
         when(joinPoint.proceed()).thenReturn(expectedResult);
 
-        EnforceAccessPolicy annotation = createAnnotation("testPolicy", "resourceId");
+        EnforceAccessPolicy annotation = createAnnotation(TestPolicyProvider.class, "resourceId");
         Object result = aspect.enforce(joinPoint, annotation);
 
         assertThat(result).isEqualTo(expectedResult);
@@ -153,14 +173,16 @@ class EnforceAccessPolicyAspectTest {
         // Policy: only allow admins
         AccessPolicy<TestResource> policy = AccessPolicy.forResource(TestResource.class).named("test-policy").rule(when(Conditions.<TestResource>isAdmin()).thenAllow())
                 .denyByDefault();
-        when(applicationContext.getBean("testPolicy", AccessPolicy.class)).thenReturn(policy);
+        TestPolicyProvider policyProvider = new TestPolicyProvider();
+        policyProvider.setPolicy(policy);
+        when(applicationContext.getBean(TestPolicyProvider.class)).thenReturn(policyProvider);
 
         User student = createUser(Set.of("some-group"), Set.of());
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(student);
 
         setupJoinPoint("resourceId", 42L);
 
-        EnforceAccessPolicy annotation = createAnnotation("testPolicy", "resourceId");
+        EnforceAccessPolicy annotation = createAnnotation(TestPolicyProvider.class, "resourceId");
         assertThatThrownBy(() -> aspect.enforce(joinPoint, annotation)).isInstanceOf(AccessForbiddenException.class);
 
         verify(joinPoint, never()).proceed();
@@ -174,7 +196,9 @@ class EnforceAccessPolicyAspectTest {
 
         // Policy: allow everyone
         AccessPolicy<TestResource> policy = AccessPolicy.forResource(TestResource.class).named("test-policy").allowByDefault();
-        when(applicationContext.getBean("testPolicy", AccessPolicy.class)).thenReturn(policy);
+        TestPolicyProvider policyProvider = new TestPolicyProvider();
+        policyProvider.setPolicy(policy);
+        when(applicationContext.getBean(TestPolicyProvider.class)).thenReturn(policyProvider);
         when(defaultResolver.loadById(TestResource.class, 42L)).thenReturn(resource);
 
         User user = createUser(Set.of(), Set.of());
@@ -183,7 +207,7 @@ class EnforceAccessPolicyAspectTest {
         setupJoinPoint("resourceId", 42L);
         when(joinPoint.proceed()).thenReturn("ok");
 
-        EnforceAccessPolicy annotation = createAnnotation("testPolicy", "resourceId");
+        EnforceAccessPolicy annotation = createAnnotation(TestPolicyProvider.class, "resourceId");
         Object result = aspect.enforce(joinPoint, annotation);
 
         assertThat(result).isEqualTo("ok");
@@ -195,12 +219,14 @@ class EnforceAccessPolicyAspectTest {
         setupAspect(List.of());
 
         AccessPolicy<TestResource> policy = AccessPolicy.forResource(TestResource.class).named("test-policy").allowByDefault();
-        when(applicationContext.getBean("testPolicy", AccessPolicy.class)).thenReturn(policy);
+        TestPolicyProvider policyProvider = new TestPolicyProvider();
+        policyProvider.setPolicy(policy);
+        when(applicationContext.getBean(TestPolicyProvider.class)).thenReturn(policyProvider);
 
         // Parameter name doesn't match
         setupJoinPoint("wrongParam", 42L);
 
-        EnforceAccessPolicy annotation = createAnnotation("testPolicy", "resourceId");
+        EnforceAccessPolicy annotation = createAnnotation(TestPolicyProvider.class, "resourceId");
         assertThatThrownBy(() -> aspect.enforce(joinPoint, annotation)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("resourceId");
     }
 
@@ -211,19 +237,21 @@ class EnforceAccessPolicyAspectTest {
         setupAspect(List.of(resolver));
 
         AccessPolicy<TestResource> policy = AccessPolicy.forResource(TestResource.class).named("test-policy").allowByDefault();
-        when(applicationContext.getBean("testPolicy", AccessPolicy.class)).thenReturn(policy);
+        TestPolicyProvider policyProvider = new TestPolicyProvider();
+        policyProvider.setPolicy(policy);
+        when(applicationContext.getBean(TestPolicyProvider.class)).thenReturn(policyProvider);
 
         // Request entity with different ID than what the resolver has
         setupJoinPoint("resourceId", 999L);
 
-        EnforceAccessPolicy annotation = createAnnotation("testPolicy", "resourceId");
+        EnforceAccessPolicy annotation = createAnnotation(TestPolicyProvider.class, "resourceId");
         assertThatThrownBy(() -> aspect.enforce(joinPoint, annotation)).isInstanceOf(EntityNotFoundException.class);
     }
 
     /**
      * Creates a proxy {@link EnforceAccessPolicy} annotation instance for testing.
      */
-    private static EnforceAccessPolicy createAnnotation(String value, String resourceIdFieldName) {
+    private static EnforceAccessPolicy createAnnotation(Class<? extends PolicyProvider<?>> policyProviderClass, String resourceIdFieldName) {
         return new EnforceAccessPolicy() {
 
             @Override
@@ -232,8 +260,8 @@ class EnforceAccessPolicyAspectTest {
             }
 
             @Override
-            public String value() {
-                return value;
+            public Class<? extends PolicyProvider<?>> value() {
+                return policyProviderClass;
             }
 
             @Override
