@@ -16,6 +16,7 @@ import { GlobalSearchOptions, GlobalSearchResult, GlobalSearchService } from '..
 import { SearchInputComponent } from './search-input/search-input.component';
 import { SearchableEntity } from '../../models/searchable-entity.model';
 import { GlobalSearchLectureResultsComponent } from 'app/core/navbar/global-search/components/views/lecture-results/global-search-lecture-results.component';
+import { GlobalSearchIrisAnswerComponent } from 'app/core/navbar/global-search/components/views/iris-answer/global-search-iris-answer.component';
 
 interface SearchState {
     query: string;
@@ -26,7 +27,7 @@ interface SearchState {
     selector: 'jhi-global-search-modal',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [DialogModule, FaIconComponent, ArtemisTranslatePipe, GlobalSearchNavigationViewComponent, GlobalSearchLectureResultsComponent, SearchInputComponent],
+    imports: [DialogModule, FaIconComponent, ArtemisTranslatePipe, GlobalSearchNavigationViewComponent, GlobalSearchLectureResultsComponent, SearchInputComponent, GlobalSearchIrisAnswerComponent],
     templateUrl: './global-search-modal.component.html',
     styleUrls: ['./global-search-modal.component.scss'],
 })
@@ -40,6 +41,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
     protected readonly faArrowDown = faArrowDown;
     protected readonly searchInputComponent = viewChild<SearchInputComponent>(SearchInputComponent);
     protected readonly currentView = signal(SearchView.Navigation);
+    protected readonly irisSourceView = signal(SearchView.Navigation);
     protected readonly SearchView = SearchView;
     protected readonly searchQuery = signal('');
     protected readonly activeFilters = signal<string[]>([]);
@@ -246,6 +248,13 @@ export class GlobalSearchModalComponent implements OnDestroy {
         }, 0);
     }
 
+    protected resetState() {
+        this.overlay.close();
+        this.currentView.set(SearchView.Navigation);
+        this.irisSourceView.set(SearchView.Navigation);
+        this.selectedIndex.set(-1);
+    }
+
     @HostListener('window:keydown', ['$event'])
     handleKeyboardEvent(event: KeyboardEvent) {
         if (this.isToggleShortcut(event)) {
@@ -280,7 +289,21 @@ export class GlobalSearchModalComponent implements OnDestroy {
     }
 
     protected navigateTo(view: SearchView) {
+        if (view === SearchView.Iris) {
+            if (this.currentView() === SearchView.Iris) {
+                // Drawer is already open — do nothing to avoid collapsing it
+                return;
+            }
+            this.irisSourceView.set(this.currentView());
+        }
         this.currentView.set(view);
+        this.selectedIndex.set(-1);
+    }
+
+    // Updates which view is shown on the left side of the Iris split layout
+    // without closing the drawer. Used when an action button is clicked inside the split.
+    protected updateIrisSource(view: SearchView) {
+        this.irisSourceView.set(view);
         this.selectedIndex.set(-1);
     }
 }
