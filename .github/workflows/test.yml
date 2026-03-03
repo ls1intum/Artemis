@@ -134,12 +134,11 @@ jobs:
       run: |
         VIOLATIONS=$(grep "Rule violated for bundle" tests.log || true)
         if [ -n "$VIOLATIONS" ]; then
-          # Extract failing module names from custom coverage error messages
-          MODULES=$(grep "Coverage requirements for" tests.log | sed 's/.*Coverage requirements for \(.*\) not met.*/\1/' | sort -u | tr '\n' ', ' | sed 's/, $//' || true)
+          # Extract failing module names from Gradle task failure messages
+          MODULES=$(grep 'jacocoTestCoverageVerification-.*FAILED' tests.log | sed 's/.*jacocoTestCoverageVerification-\([a-zA-Z]*\).*/\1/' | sort -u | tr '\n' ', ' | sed 's/, $//' || true)
           echo "::error::JaCoCo code coverage thresholds violated${MODULES:+ in module(s): $MODULES}"
           echo ""
-          # Show per-module coverage details and violations
-          grep -E "(📊 Module:|🔍 Measured|🏛️ Uncovered|❌ Coverage requirements|Rule violated for bundle)" tests.log || true
+          echo "$VIOLATIONS"
           echo ""
           if [ -n "$MODULES" ]; then
             echo "If this is not related to your PR, adjust the thresholds for module(s) [$MODULES] in gradle/jacoco.gradle (ModuleCoverageThresholds)."
