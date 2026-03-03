@@ -22,7 +22,7 @@ public class BuildPhaseEvaluationService {
         this.exerciseDateService = exerciseDateService;
     }
 
-    public record EvaluatedBuildPlan(List<BuildPhase> activePhases, boolean testsExpected, List<String> resultPaths) {
+    public record EvaluatedBuildPlan(List<BuildPhase> activePhases, List<String> resultPaths) {
     }
 
     /**
@@ -34,7 +34,7 @@ public class BuildPhaseEvaluationService {
      *
      * @param phases        the build plan phases configuration
      * @param participation the participation for which the build is being triggered
-     * @return the evaluated build plan with active phases, result paths, and whether tests are expected
+     * @return the evaluated build plan with active phases and result paths
      */
     public EvaluatedBuildPlan evaluate(BuildPlanPhases phases, ProgrammingExerciseParticipation participation) {
         boolean allPhasesActive = isInstructorParticipation(participation) || exerciseDateService.isAfterDueDate(participation);
@@ -43,9 +43,7 @@ public class BuildPhaseEvaluationService {
 
         List<String> resultPaths = activePhases.stream().filter(phase -> phase.resultPaths() != null).flatMap(phase -> phase.resultPaths().stream()).toList();
 
-        boolean testsExpected = !resultPaths.isEmpty();
-
-        return new EvaluatedBuildPlan(activePhases, testsExpected, resultPaths);
+        return new EvaluatedBuildPlan(activePhases, resultPaths);
     }
 
     private boolean isInstructorParticipation(ProgrammingExerciseParticipation participation) {

@@ -48,7 +48,6 @@ class BuildPhaseEvaluationServiceTest {
 
         assertThat(result.activePhases()).hasSize(2);
         assertThat(result.activePhases()).containsExactly(compile, test);
-        assertThat(result.testsExpected()).isTrue();
         assertThat(result.resultPaths()).containsExactly("target/surefire-reports/*.xml");
     }
 
@@ -64,7 +63,6 @@ class BuildPhaseEvaluationServiceTest {
 
         assertThat(result.activePhases()).hasSize(1);
         assertThat(result.activePhases()).containsExactly(compile);
-        assertThat(result.testsExpected()).isFalse();
         assertThat(result.resultPaths()).isEmpty();
     }
 
@@ -80,7 +78,6 @@ class BuildPhaseEvaluationServiceTest {
 
         assertThat(result.activePhases()).hasSize(2);
         assertThat(result.activePhases()).containsExactly(compile, test);
-        assertThat(result.testsExpected()).isTrue();
         assertThat(result.resultPaths()).containsExactly("target/surefire-reports/*.xml");
     }
 
@@ -93,7 +90,6 @@ class BuildPhaseEvaluationServiceTest {
         BuildPhaseEvaluationService.EvaluatedBuildPlan result = buildPhaseEvaluationService.evaluate(phases, participation);
 
         assertThat(result.activePhases()).isEmpty();
-        assertThat(result.testsExpected()).isFalse();
         assertThat(result.resultPaths()).isEmpty();
     }
 
@@ -108,7 +104,6 @@ class BuildPhaseEvaluationServiceTest {
         BuildPhaseEvaluationService.EvaluatedBuildPlan result = buildPhaseEvaluationService.evaluate(phases, participation);
 
         assertThat(result.activePhases()).isEmpty();
-        assertThat(result.testsExpected()).isFalse();
         assertThat(result.resultPaths()).isEmpty();
     }
 
@@ -124,7 +119,6 @@ class BuildPhaseEvaluationServiceTest {
 
         assertThat(result.activePhases()).hasSize(2);
         assertThat(result.activePhases()).containsExactly(test1, test2);
-        assertThat(result.testsExpected()).isTrue();
         assertThat(result.resultPaths()).containsExactlyInAnyOrder("module1/target/*.xml", "module2/target/*.xml");
     }
 
@@ -139,7 +133,6 @@ class BuildPhaseEvaluationServiceTest {
         BuildPhaseEvaluationService.EvaluatedBuildPlan result = buildPhaseEvaluationService.evaluate(phases, participation);
 
         assertThat(result.activePhases()).hasSize(2);
-        assertThat(result.testsExpected()).isTrue();
         assertThat(result.resultPaths()).containsExactly("compile-results/*.xml", "test-results/*.xml", "integration/*.xml");
     }
 
@@ -154,7 +147,6 @@ class BuildPhaseEvaluationServiceTest {
 
         assertThat(result.activePhases()).hasSize(1);
         assertThat(result.activePhases()).containsExactly(compile);
-        assertThat(result.testsExpected()).isFalse();
         assertThat(result.resultPaths()).isEmpty();
     }
 
@@ -168,7 +160,6 @@ class BuildPhaseEvaluationServiceTest {
         BuildPhaseEvaluationService.EvaluatedBuildPlan result = buildPhaseEvaluationService.evaluate(phases, participation);
 
         assertThat(result.activePhases()).hasSize(1);
-        assertThat(result.testsExpected()).isFalse();
         assertThat(result.resultPaths()).isEmpty();
     }
 
@@ -184,10 +175,9 @@ class BuildPhaseEvaluationServiceTest {
 
         BuildPhaseEvaluationService.EvaluatedBuildPlan result = buildPhaseEvaluationService.evaluate(phases, participation);
 
-        // Before due date: only compile runs, no tests expected
+        // Before due date: only compile runs, no result paths
         assertThat(result.activePhases()).hasSize(1);
         assertThat(result.activePhases()).containsExactly(compile);
-        assertThat(result.testsExpected()).isFalse();
         assertThat(result.resultPaths()).isEmpty();
     }
 
@@ -203,10 +193,9 @@ class BuildPhaseEvaluationServiceTest {
 
         BuildPhaseEvaluationService.EvaluatedBuildPlan result = buildPhaseEvaluationService.evaluate(phases, participation);
 
-        // After due date: all phases run, tests expected
+        // After due date: all phases run, result paths present
         assertThat(result.activePhases()).hasSize(3);
         assertThat(result.activePhases()).containsExactly(compile, test, sca);
-        assertThat(result.testsExpected()).isTrue();
         assertThat(result.resultPaths()).containsExactly("target/surefire-reports/*.xml", "target/checkstyle-result.xml");
     }
 
@@ -225,7 +214,6 @@ class BuildPhaseEvaluationServiceTest {
 
         assertThat(result.activePhases()).hasSize(2);
         assertThat(result.activePhases()).containsExactly(compile, test);
-        assertThat(result.testsExpected()).isTrue();
         assertThat(result.resultPaths()).containsExactly("target/surefire-reports/*.xml");
     }
 
@@ -245,7 +233,6 @@ class BuildPhaseEvaluationServiceTest {
 
         assertThat(result.activePhases()).hasSize(3);
         assertThat(result.activePhases()).containsExactly(compile, test, sca);
-        assertThat(result.testsExpected()).isTrue();
         assertThat(result.resultPaths()).containsExactly("target/surefire-reports/*.xml", "target/checkstyle-result.xml");
     }
 
@@ -261,6 +248,5 @@ class BuildPhaseEvaluationServiceTest {
 
         assertThat(result.activePhases()).hasSize(2);
         assertThat(result.activePhases()).containsExactly(test1, test2);
-        assertThat(result.testsExpected()).isTrue();
     }
 }

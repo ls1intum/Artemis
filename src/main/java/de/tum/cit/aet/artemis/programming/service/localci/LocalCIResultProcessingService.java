@@ -241,7 +241,7 @@ public class LocalCIResultProcessingService {
                     participation.setProgrammingExercise(programmingExerciseRepository.getProgrammingExerciseWithBuildConfigFromParticipation(participation));
                 }
 
-                boolean testsExpected = buildJob.buildConfig().testsExpected(); // testsExpected evaluated at trigger time
+                boolean testsExpected = buildJob.buildConfig().areTestsExpected();
                 result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult, testsExpected);
 
             }
