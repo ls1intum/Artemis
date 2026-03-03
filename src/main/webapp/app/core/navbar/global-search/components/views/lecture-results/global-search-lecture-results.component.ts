@@ -8,9 +8,7 @@ import { LectureSearchResult } from 'app/core/navbar/global-search/models/lectur
 import { LectureSearchService } from 'app/core/navbar/global-search/services/lecture-search.service';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { catchError, debounceTime, of, switchMap, tap } from 'rxjs';
-import { SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
-
-const SEARCH_DEBOUNCE_MS = 300;
+import { SEARCH_DEBOUNCE_MS, SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 
 @Component({
     selector: 'jhi-global-search-lecture-results',
@@ -30,11 +28,12 @@ export class GlobalSearchLectureResultsComponent extends SearchResultView {
     private readonly hostElement = inject(ElementRef<HTMLElement>);
     protected readonly lectureResults = signal<LectureSearchResult[]>([]);
     protected readonly isLoading = signal(false);
+    protected readonly hasError = signal(false);
     readonly itemCount = computed(() => this.lectureResults().length);
-    private readonly cards = viewChildren<ElementRef<HTMLAnchorElement>>('cardRef');
+    private readonly selectableItems = viewChildren<ElementRef>('selectableItem');
     protected readonly faArrowLeft = faArrowLeft;
     protected readonly faFileLines = faFileLines;
-    protected readonly skeletonItems = Array(5);
+    protected readonly skeletonItems = Array.from({ length: 5 });
 
     constructor() {
         super();
@@ -43,13 +42,14 @@ export class GlobalSearchLectureResultsComponent extends SearchResultView {
             if (index < 0) {
                 this.hostElement.nativeElement.scrollIntoView({ block: 'start' });
             } else {
-                this.cards()[index]?.nativeElement.scrollIntoView({ block: 'nearest' });
+                this.selectableItems()[index]?.nativeElement.scrollIntoView({ block: 'nearest' });
             }
         });
         toObservable(this.searchQuery)
             .pipe(
                 debounceTime(SEARCH_DEBOUNCE_MS),
                 tap((query) => {
+                    this.hasError.set(false);
                     if (query.trim()) {
                         this.isLoading.set(true);
                     }
@@ -58,7 +58,12 @@ export class GlobalSearchLectureResultsComponent extends SearchResultView {
                     if (!query.trim()) {
                         return of([]);
                     }
-                    return this.searchService.search(query).pipe(catchError(() => of([])));
+                    return this.searchService.search(query).pipe(
+                        catchError(() => {
+                            this.hasError.set(true);
+                            return of([]);
+                        }),
+                    );
                 }),
                 takeUntilDestroyed(),
             )

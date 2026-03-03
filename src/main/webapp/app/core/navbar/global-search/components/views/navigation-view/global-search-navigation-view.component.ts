@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, HostListener, computed, forwardRef, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed, effect, forwardRef, input, output, signal, viewChildren } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faFileLines } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -38,6 +38,19 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
 
     protected readonly SearchView = SearchView;
     protected readonly faFileLines = faFileLines;
+
+    private readonly selectableItems = viewChildren<ElementRef>('selectableItem');
+
+    constructor() {
+        super();
+        effect(() => {
+            const idx = this.selectedIndex();
+            const items = this.selectableItems();
+            if (idx >= 0 && idx < items.length) {
+                items[idx]?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        });
+    }
 
     @HostListener('window:keydown', ['$event'])
     handleKeydown(event: KeyboardEvent): void {
