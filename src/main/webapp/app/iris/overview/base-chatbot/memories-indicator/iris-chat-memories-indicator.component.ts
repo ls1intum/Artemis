@@ -48,11 +48,11 @@ export class IrisChatMemoriesIndicatorComponent {
     private buildTooltipText(used: number, created: number): string {
         const parts: string[] = [];
         if (used > 0) {
-            const key = used === 1 ? 'artemisApp.iris.chatbot.memories.indicator.usedSingular' : 'artemisApp.iris.chatbot.memories.indicator.usedPlural';
+            const key = used === 1 ? 'artemisApp.iris.memories.indicator.usedSingular' : 'artemisApp.iris.memories.indicator.usedPlural';
             parts.push(this.translate.instant(key, { count: used }));
         }
         if (created > 0) {
-            const key = created === 1 ? 'artemisApp.iris.chatbot.memories.indicator.createdSingular' : 'artemisApp.iris.chatbot.memories.indicator.createdPlural';
+            const key = created === 1 ? 'artemisApp.iris.memories.indicator.createdSingular' : 'artemisApp.iris.memories.indicator.createdPlural';
             parts.push(this.translate.instant(key, { count: created }));
         }
         return parts.join(', ');
@@ -61,10 +61,10 @@ export class IrisChatMemoriesIndicatorComponent {
     private buildCompactLabel(used: number, created: number): string {
         const parts: string[] = [];
         if (used > 0) {
-            parts.push(this.translate.instant('artemisApp.iris.chatbot.memories.indicator.compactUsed', { count: used }));
+            parts.push(this.translate.instant('artemisApp.iris.memories.indicator.compactUsed', { count: used }));
         }
         if (created > 0) {
-            parts.push(this.translate.instant('artemisApp.iris.chatbot.memories.indicator.compactCreated', { count: created }));
+            parts.push(this.translate.instant('artemisApp.iris.memories.indicator.compactCreated', { count: created }));
         }
         return parts.join(' · ');
     }
