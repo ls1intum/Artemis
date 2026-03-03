@@ -87,20 +87,19 @@ export class GlobalSearchLectureResultsComponent extends SearchResultView {
 
     @HostListener('window:keydown', ['$event'])
     handleKeydown(event: KeyboardEvent): void {
+        if (event.key !== 'Enter') return;
         const index = this.selectedIndex();
         if (index < 0) return;
         // Iris button visible when iris is enabled and the split view is not already open
         if (this.irisEnabled && !this.irisOpen() && index === 0) {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                this.viewSelected.emit(SearchView.Iris);
-            }
+            event.preventDefault();
+            this.viewSelected.emit(SearchView.Iris);
             return;
         }
         // Offset by 1 if iris button is visible
         const resultIndex = this.irisEnabled && !this.irisOpen() ? index - 1 : index;
         const result = this.lectureResults()[resultIndex];
-        if (event.key === 'Enter' && result) {
+        if (result) {
             event.preventDefault();
             this.router.navigateByUrl(result.lectureUnit.link);
         }
