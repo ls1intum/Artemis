@@ -3,8 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { IrisChatMemoriesIndicatorComponent } from 'app/iris/overview/base-chatbot/memories-indicator/iris-chat-memories-indicator.component';
 import { MemirisMemory } from 'app/iris/shared/entities/memiris.model';
-import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('IrisChatMemoriesIndicatorComponent', () => {
     setupTestBed({ zoneless: true });
@@ -15,7 +15,7 @@ describe('IrisChatMemoriesIndicatorComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [IrisChatMemoriesIndicatorComponent],
-            providers: [MockProvider(TranslateService, { instant: (key: string, _params?: object) => key })],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(IrisChatMemoriesIndicatorComponent);
