@@ -742,9 +742,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 // Fallback to windfile serialization (e.g. import-from-file/sharing)
                 this.programmingExercise.buildConfig!.buildPlanConfiguration = this.aeolusService.serializeWindFile(this.programmingExercise.buildConfig!.windfile!);
             }
-        } else {
-            this.programmingExercise.buildConfig!.buildPlanConfiguration = undefined;
-            this.programmingExercise.buildConfig!.windfile = undefined;
         }
 
         if (this.programmingExercise.buildConfig?.timeoutSeconds && this.programmingExercise.buildConfig?.timeoutSeconds < 1) {

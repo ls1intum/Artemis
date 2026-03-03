@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, model} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 
@@ -8,7 +8,7 @@ import { SelectModule } from 'primeng/select';
 import { TextareaModule } from 'primeng/textarea';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { BuildPhase, BuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
+import { BuildPhase } from 'app/programming/shared/entities/build-plan-phases.model';
 import { BuildPhaseEditor } from 'app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/build-phase/build-phase-editor';
 
 @Component({
@@ -20,20 +20,9 @@ import { BuildPhaseEditor } from 'app/programming/manage/update/update-component
 export class BuildPhasesEditor {
     protected readonly faPlus = faPlus;
 
-    readonly phases = signal<BuildPhase[]>([
-        {
-            name: '',
-            script: '# enter the script of this phase',
-            condition: 'ALWAYS',
-            resultPaths: [],
-        },
-    ]);
+    readonly phases = model.required<BuildPhase[]>();
 
     readonly phaseCount = computed(() => this.phases().length);
-
-    initialize(loadedPlan: BuildPlanPhases) {
-        this.phases.set(loadedPlan.phases);
-    }
 
     addPhase() {
         this.phases.update((phases) => [
@@ -71,9 +60,5 @@ export class BuildPhasesEditor {
             [updated[index], updated[index + 1]] = [updated[index + 1], updated[index]];
             return updated;
         });
-    }
-
-    getBuildPlanPhases(): BuildPlanPhases {
-        return { phases: this.phases() };
     }
 }

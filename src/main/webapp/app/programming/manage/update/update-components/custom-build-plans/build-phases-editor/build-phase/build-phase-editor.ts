@@ -28,7 +28,6 @@ export class BuildPhaseEditor {
     readonly isLast = input<boolean>(false);
     readonly isOnly = input<boolean>(false);
 
-    readonly phaseChange = output<BuildPhase>();
     readonly delete = output<void>();
     readonly moveUp = output<void>();
     readonly moveDown = output<void>();
@@ -39,30 +38,32 @@ export class BuildPhaseEditor {
     }));
 
     updateName(name: string): void {
-        this.phaseChange.emit({ ...this.phase(), name });
+        this.phase.update(oldPhase => ({ ...oldPhase, name }));
     }
 
     updateScript(script: string): void {
-        this.phaseChange.emit({ ...this.phase(), script });
+        this.phase.update(oldPhase => ({ ...oldPhase, script }))
     }
 
     updateCondition(condition: BuildPhaseCondition): void {
-        this.phaseChange.emit({ ...this.phase(), condition });
-    }
+        this.phase.update((oldPhase) => ({ ...oldPhase, condition }));    }
 
     updateResultPath(index: number, value: string): void {
-        const resultPaths = [...(this.phase().resultPaths ?? [])];
-        resultPaths[index] = value;
-        this.phaseChange.emit({ ...this.phase(), resultPaths });
+        this.phase.update((oldPhase) => {
+            const resultPaths = [...(oldPhase.resultPaths ?? [])];
+            resultPaths[index] = value;
+            return { ...oldPhase, resultPaths };
+        });
     }
 
     addResultPath(): void {
-        const resultPaths = [...(this.phase().resultPaths ?? []), ''];
-        this.phaseChange.emit({ ...this.phase(), resultPaths });
+        this.phase.update((oldPhase) => ({...oldPhase, resultPaths: [...(oldPhase.resultPaths ?? []), '']}));
     }
 
     deleteResultPath(deleteIndex: number): void {
-        const resultPaths = (this.phase().resultPaths ?? []).filter((_, i) => i !== deleteIndex);
-        this.phaseChange.emit({ ...this.phase(), resultPaths });
+        this.phase.update((oldPhase) => ({
+            ...oldPhase,
+            resultPaths: (oldPhase.resultPaths ?? []).filter((_, i) => i !== deleteIndex)
+        }));
     }
 }

@@ -1,10 +1,8 @@
-import { Component, Input, OnChanges, SimpleChanges, ViewChild, effect, inject, signal, viewChild } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild, inject } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
-import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { AeolusService } from 'app/programming/shared/services/aeolus.service';
 import { ProgrammingExerciseBuildConfigurationComponent } from 'app/programming/manage/update/update-components/custom-build-plans/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
-import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { ASSIGNMENT_REPO_NAME, TEST_REPO_NAME } from 'app/shared/constants/input.constants';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -13,7 +11,6 @@ import { BuildPhasesEditor } from 'app/programming/manage/update/update-componen
 import { BuildPhase, BuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
 import { ScriptAction } from 'app/programming/shared/entities/build.action';
 import { WindFile } from 'app/programming/shared/entities/wind.file';
-import { isEqual } from 'lodash-es';
 
 @Component({
     selector: 'jhi-programming-exercise-custom-build-plan',
@@ -21,7 +18,7 @@ import { isEqual } from 'lodash-es';
     styleUrls: ['../../../../shared/programming-exercise-form.scss'],
     imports: [FormsModule, TranslateDirective, HelpIconComponent, ProgrammingExerciseBuildConfigurationComponent, BuildPhasesEditor],
 })
-export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
+export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges, OnInit {
     private aeolusService = inject(AeolusService);
 
     @Input() programmingExercise: ProgrammingExercise;
@@ -29,50 +26,42 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
 
     @ViewChild(ProgrammingExerciseBuildConfigurationComponent) programmingExerciseDockerImageComponent?: ProgrammingExerciseBuildConfigurationComponent;
 
-    editorHeight = signal(100);
-
     programmingLanguage?: ProgrammingLanguage;
     projectType?: ProjectType;
     staticCodeAnalysisEnabled?: boolean;
     sequentialTestRuns?: boolean;
     isImportFromFile = false;
 
-    code: string = '#!/bin/bash\n\n# Add your custom build plan action here';
-    private _editor?: MonacoEditorComponent;
+    buildPlanPhases: BuildPlanPhases = {
+        phases: [
+            {
+                name: '',
+                script: '# enter the script of this phase',
+                condition: 'ALWAYS',
+                resultPaths: [],
+            },
+        ],
+    } as BuildPlanPhases;
 
-    readonly phaseEditor = viewChild<BuildPhasesEditor>('phase_editor');
-
-    constructor() {
-        effect(() => {
-            const editorInstance = this.phaseEditor();
-            if (!editorInstance) {
-                return;
+    ngOnInit() {
+        const configJson = this.programmingExercise.buildConfig?.buildPlanConfiguration;
+        if (configJson) {
+            try {
+                const parsed = JSON.parse(configJson);
+                if (parsed?.phases?.length) {
+                    this.buildPlanPhases = parsed as BuildPlanPhases;
+                    return;
+                }
+            } catch {
+                // Not valid JSON or not phases format
             }
+        }
 
-            const windfile = this.programmingExercise.buildConfig?.windfile;
-
-            if (windfile?.actions?.length) {
-                // use windfile actions to populate phases (with script + result paths)
-                editorInstance.initialize(this.buildPlanFromWindfile(windfile));
-                return;
-            }
-
-            // Fallback: use raw build script in a single phase
-            if (this.programmingExercise.id || this.isImportFromFile) {
-                this.code = this.programmingExercise.buildConfig?.buildScript || '';
-            }
-            const planFromSingleScript: BuildPlanPhases = {
-                phases: [
-                    {
-                        name: 'script',
-                        script: this.code,
-                        condition: 'ALWAYS',
-                        resultPaths: [],
-                    },
-                ],
-            };
-            editorInstance.initialize(planFromSingleScript);
-        });
+        const windfile = this.programmingExercise.buildConfig?.windfile;
+        if (windfile?.actions?.length) {
+            this.buildPlanPhases = this.buildPlanFromWindfile(windfile);
+            return;
+        }
     }
 
     ngOnChanges(changes: SimpleChanges) {
@@ -123,20 +112,11 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
             this.aeolusService.getAeolusTemplateFile(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns).subscribe({
                 next: (file) => {
                     this.programmingExercise.buildConfig!.windfile = this.aeolusService.parseWindFile(file);
-
-                    const editorInstance = this.phaseEditor();
                     const windfile = this.programmingExercise.buildConfig!.windfile;
-                    if (!editorInstance || !windfile?.actions?.length) {
+                    if (!windfile?.actions?.length) {
                         return;
                     }
-                    const newPhases = this.buildPlanFromWindfile(windfile);
-                    const newPhasesSame = isEqual(newPhases, editorInstance.getBuildPlanPhases());
-                    if (newPhasesSame) {
-                        return;
-                    }
-                    // re-initialize the phase editor with windfile data
-                    // (e.g. update phase editor when sequential test is toggled)
-                    editorInstance.initialize(newPhases);
+                    this.buildPlanPhases = this.buildPlanFromWindfile(windfile);
                 },
                 error: () => {
                     this.programmingExercise.buildConfig!.windfile = undefined;
@@ -147,44 +127,27 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
         if (!this.programmingExercise.buildConfig?.windfile) {
             this.resetCustomBuildPlan();
         }
-        if (!isImportFromFile || !this.programmingExercise.buildConfig?.buildScript) {
-            this.aeolusService.getAeolusTemplateScript(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns).subscribe({
-                next: (file: string) => {
-                    file = this.replacePlaceholders(file);
-                    this.codeChanged(file);
-                    this.editor?.setText(file);
-                },
-                error: () => {
-                    this.programmingExercise.buildConfig!.buildScript = undefined;
-                },
-            });
-        }
-        if (!this.programmingExercise.buildConfig?.buildScript) {
-            this.resetCustomBuildPlan();
-        }
         if (!this.programmingExercise.buildConfig?.timeoutSeconds) {
             this.programmingExercise.buildConfig!.timeoutSeconds = 0;
         }
     }
 
-    get editor(): MonacoEditorComponent | undefined {
-        return this._editor;
+    /**
+     * Called when the build phases editor emits a change.
+     */
+    onPhasesChange(phases: BuildPhase[]) {
+        this.buildPlanPhases = { ...this.buildPlanPhases, phases };
     }
 
-    faQuestionCircle = faQuestionCircle;
-
-    codeChanged(codeOrEvent: string | { text: string; fileName: string }): void {
-        const code = typeof codeOrEvent === 'string' ? codeOrEvent : codeOrEvent.text;
-        this.code = code;
-        this.editor?.setText(code);
-        this.programmingExercise.buildConfig!.buildScript = code;
+    /**
+     * Returns the current docker image from buildPlanPhases.
+     */
+    get currentDockerImage(): string | undefined {
+        return this.buildPlanPhases.dockerImage;
     }
 
     setDockerImage(dockerImage: string) {
-        if (!this.programmingExercise.buildConfig?.windfile || !this.programmingExercise.buildConfig?.windfile.metadata.docker) {
-            return;
-        }
-        this.programmingExercise.buildConfig!.windfile.metadata.docker.image = dockerImage.trim();
+        this.buildPlanPhases = { ...this.buildPlanPhases, dockerImage: dockerImage.trim() };
     }
 
     /**
@@ -193,20 +156,10 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
      * @returns JSON string of BuildPlanPhases with dockerImage, or undefined if no phases available
      */
     getBuildPlanPhasesJSON(): string | undefined {
-        const editorInstance = this.phaseEditor();
-        if (!editorInstance) {
+        if (!this.buildPlanPhases?.phases?.length) {
             return undefined;
         }
-        const buildPlanPhases = editorInstance.getBuildPlanPhases();
-        if (!buildPlanPhases?.phases) {
-            return undefined;
-        }
-        const dockerImage = this.programmingExercise.buildConfig?.windfile?.metadata?.docker?.image;
-        const phasesWithDocker: BuildPlanPhases = {
-            phases: buildPlanPhases.phases,
-            dockerImage: dockerImage,
-        };
-        return JSON.stringify(phasesWithDocker);
+        return JSON.stringify(this.buildPlanPhases);
     }
 
     setTimeout(timeout: number) {
@@ -225,7 +178,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
      * Converts windfile actions into BuildPlanPhases format.
      * Only ScriptActions (actions with a script property) are included.
      * @param windfile The windfile containing actions to convert
-     * @returns BuildPlanPhases with one phase per script action
+     * @returns BuildPlanPhases with one phase per script action and the docker image
      */
     private buildPlanFromWindfile(windfile: WindFile): BuildPlanPhases {
         const phases: BuildPhase[] = windfile.actions
@@ -236,6 +189,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
                 condition: 'ALWAYS' as const,
                 resultPaths: (action.results ?? []).map((r) => r.path).filter((p): p is string => !!p),
             }));
-        return { phases };
+        const dockerImage = windfile.metadata?.docker?.image;
+        return { phases, dockerImage };
     }
 }

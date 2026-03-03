@@ -5,27 +5,16 @@
         <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.customizeBuildPlansWithAeolusTooltip" />
     </div>
     @if (programmingExercise.customizeBuildPlanWithAeolus) {
-        @if (programmingExercise.buildConfig?.windfile && programmingExercise.buildConfig?.windfile?.metadata && programmingExercise.buildConfig?.windfile?.metadata?.docker) {
+        @if (currentDockerImage) {
             <jhi-programming-exercise-build-configuration
                 [programmingExercise]="programmingExercise"
-                [dockerImage]="programmingExercise.buildConfig!.windfile!.metadata.docker.image"
+                [dockerImage]="currentDockerImage"
                 (dockerImageChange)="setDockerImage($event)"
                 [timeout]="programmingExercise.buildConfig!.timeoutSeconds === 0 ? 120 : programmingExercise.buildConfig!.timeoutSeconds!"
                 (timeoutChange)="setTimeout($event)"
                 [isAeolus]="false"
             />
         }
-        <!-- label jhiTranslate="artemisApp.programmingExercise.script" class="mb-2"></label>
-        <div class="card p-0" [style.height.px]="editorHeight()">
-            <jhi-monaco-editor
-                #editor
-                [stickyScroll]="false"
-                [shrinkToFit]="false"
-                (textChanged)="codeChanged($event)"
-                (contentHeightChanged)="editorHeight.set($event)"
-                class="h-100"
-            />
-        </div -->
-        <jhi-build-phases-editor #phase_editor />
+        <jhi-build-phases-editor [phases]="buildPlanPhases.phases" (phasesChange)="onPhasesChange($event)" />
     }
 </div>
