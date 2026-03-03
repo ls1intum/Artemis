@@ -247,35 +247,59 @@ zonky:
         database:
             prefetching:
                 concurrency: 1
-            type: H2 # Alternatives: H2 / MYSQL / POSTGRES
+            # Default: H2 (in-process, no Docker). Override via Gradle tasks:
+            #   ./gradlew testPostgres -x webapp  (PostgreSQL via Testcontainers)
+            #   ./gradlew testMysql -x webapp     (MySQL via Testcontainers)
+            # Connection pooling for Testcontainers is handled by TestDataSourcePoolConfig.
+            type: H2
             postgres:
                 docker:
-                    image: docker.io/library/postgres:18.1-alpine
+                    image: docker.io/library/postgres:${postgres.version}${postgres.image.variant}
+                    # Zonky's built-in tmpfs targets /var/lib/postgresql/data which is wrong for PG 18+
+                    # (PGDATA moved to /var/lib/postgresql/<major>/docker). We disable it here and mount
+                    # tmpfs at /var/lib/postgresql via PostgresTmpfsContainerCustomizer instead.
                     tmpfs:
-                        enabled: true
+                        enabled: false
                 server:
+                    # Performance tuning: disable durability guarantees for test speed.
+                    # Safe because test data is ephemeral and does not need crash recovery.
                     properties:
-                        max_connections: 100
-                        shared_buffers: 2GB
-                        effective_cache_size: 4GB
-                        maintenance_work_mem: 256MB
+                        fsync: off
+                        synchronous_commit: off
+                        full_page_writes: off
+                        max_connections: 200
+                        shared_buffers: 256MB
+                        effective_cache_size: 512MB
+                        maintenance_work_mem: 64MB
                         checkpoint_completion_target: 0.9
                         wal_buffers: 16MB
                         default_statistics_target: 100
                         random_page_cost: 1.1
                         effective_io_concurrency: 200
-                        work_mem: 16MB
-                        min_wal_size: 1GB
-                        max_wal_size: 4GB
-                        max_worker_processes: 8
-                        max_parallel_workers_per_gather: 4
-                        max_parallel_workers: 8
-                        max_parallel_maintenance_workers: 4
+                        work_mem: 4MB
+                        min_wal_size: 256MB
+                        max_wal_size: 1GB
+                        max_worker_processes: 4
+                        max_parallel_workers_per_gather: 2
+                        max_parallel_workers: 4
+                        max_parallel_maintenance_workers: 2
             mysql:
                 docker:
-                    image: docker.io/library/mysql:9.5.0
+                    image: docker.io/library/mysql:${mysql.version}
+                    # MySQL's default DATADIR works with Zonky's tmpfs, no customizer needed.
                     tmpfs:
                         enabled: true
+                server:
+                    # Performance tuning: disable durability guarantees for test speed.
+                    properties:
+                        innodb_flush_log_at_trx_commit: 0
+                        innodb_doublewrite: 0
+                        sync_binlog: 0
+                        skip-log-bin: 1
+                        innodb_log_buffer_size: 64M
+                        innodb_buffer_pool_size: 512M
+                        innodb_io_capacity: 2000
+                        max_connections: 200
 
 server:
     port: 8080
