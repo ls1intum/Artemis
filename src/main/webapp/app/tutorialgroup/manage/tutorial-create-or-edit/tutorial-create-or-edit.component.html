@@ -57,12 +57,7 @@
                 <label jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.inputLabel.mode"></label>
                 <p-inputgroup>
                     <p-inputgroup-addon><i class="pi pi-compass"></i></p-inputgroup-addon>
-                    <p-select
-                        [options]="modes"
-                        [(ngModel)]="selectedMode"
-                        optionLabel="name"
-                        [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.mode' | artemisTranslate"
-                    />
+                    <p-select [options]="modes" [(ngModel)]="selectedMode" [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.mode' | artemisTranslate" />
                 </p-inputgroup>
             </div>
         </div>

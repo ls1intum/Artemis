@@ -19,9 +19,10 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 
-type Mode = {
-    name: string;
-};
+enum Mode {
+    ONLINE = 'Online',
+    OFFLINE = 'Offline',
+}
 
 export enum ValidationStatus {
     VALID = 'VALID',
@@ -73,6 +74,7 @@ export class TutorialCreateOrEditComponent {
     protected readonly ValidationStatus = ValidationStatus;
     private confirmationService = inject(ConfirmationService);
     private translateService = inject(TranslateService);
+    private inputsInvalid = computed(() => this.computeIfInputsInvalid());
 
     courseId = input.required<number>();
     tutorialGroupId = input<number>();
@@ -87,8 +89,8 @@ export class TutorialCreateOrEditComponent {
     tutorValidationResult = computed<Validation>(() => this.computeTutorValidation());
     tutorInputTouched = signal(false);
     language = signal<string>('');
-    modes: Mode[] = [{ name: 'Online' }, { name: 'Offline' }];
-    selectedMode = signal<Mode>({ name: 'Online' });
+    modes = Object.values(Mode);
+    selectedMode = signal<Mode>(Mode.OFFLINE);
     campus = signal('');
     campusValidationResult = computed<Validation>(() => this.computeCampusValidation());
     capacity = signal<number | undefined>(undefined);
@@ -122,7 +124,7 @@ export class TutorialCreateOrEditComponent {
                 this.title.set(tutorialGroup.title);
                 this.selectedTutorId.set(tutorialGroup.tutorId);
                 this.language.set(tutorialGroup.language);
-                this.selectedMode.set(tutorialGroup.isOnline ? { name: 'Online' } : { name: 'Offline' });
+                this.selectedMode.set(tutorialGroup.isOnline ? Mode.ONLINE : Mode.OFFLINE);
                 if (tutorialGroup.campus) {
                     this.campus.set(tutorialGroup.campus);
                 }
@@ -190,7 +192,7 @@ export class TutorialCreateOrEditComponent {
             title: this.title(),
             tutorId: this.selectedTutorId()!,
             language: this.language(),
-            isOnline: this.selectedMode().name === 'Online',
+            isOnline: this.selectedMode() === Mode.ONLINE,
             campus: this.campus() || undefined,
             capacity: this.capacity(),
             additionalInformation: this.additionalInformation() || undefined,
@@ -328,6 +330,41 @@ export class TutorialCreateOrEditComponent {
     }
 
     private computeIfSaveButtonDisabled(): boolean {
+        if (this.inputsInvalid()) return true;
+        const tutorialGroup = this.tutorialGroup();
+        const schedule = this.schedule();
+        if (tutorialGroup) {
+            return !this.checkIfTutorialGroupChanged(tutorialGroup, schedule);
+        }
+        return false;
+    }
+
+    private checkIfTutorialGroupChanged(tutorialGroup: TutorialGroupDTO, schedule?: TutorialGroupScheduleDTO): boolean {
+        const titleChanged = this.title() !== tutorialGroup.title;
+        const tutorChanged = this.selectedTutorId() !== tutorialGroup.tutorId;
+        const languageChanged = this.language() !== tutorialGroup.language;
+        const modeChanged = this.selectedMode() === Mode.OFFLINE && tutorialGroup.isOnline;
+        const campusChanged = this.campus() !== (tutorialGroup.campus ?? '');
+        const capacityChanged = this.capacity() !== tutorialGroup.capacity;
+        const additionalInformationChanged = this.additionalInformation() !== (tutorialGroup.additionalInformation ?? '');
+        const tutorialGroupChanged = titleChanged || tutorChanged || languageChanged || modeChanged || campusChanged || capacityChanged || additionalInformationChanged;
+        if (schedule) {
+            const firstSessionStart = this.firstSessionStart();
+            const firstSessionStartChanged = firstSessionStart ? firstSessionStart.getTime() !== dayjs(schedule.firstSessionStart).toDate().getTime() : true;
+            const firstSessionEnd = this.firstSessionEnd();
+            const firstSessionEndChanged = firstSessionEnd ? firstSessionEnd.getTime() !== dayjs(schedule.firstSessionEnd).toDate().getTime() : true;
+            const repetitionFrequencyChanged = this.repetitionFrequency() !== schedule.repetitionFrequency;
+            const tutorialPeriodEnd = this.tutorialPeriodEnd();
+            const tutorialPeriodEndChanged = tutorialPeriodEnd ? tutorialPeriodEnd.getTime() !== dayjs(schedule.tutorialPeriodEnd).toDate().getTime() : true;
+            const locationChanged = this.location() !== schedule.location;
+            const scheduleChanged =
+                !this.configureSessionPlan() || firstSessionStartChanged || firstSessionEndChanged || repetitionFrequencyChanged || tutorialPeriodEndChanged || locationChanged;
+            return tutorialGroupChanged || scheduleChanged;
+        }
+        return tutorialGroupChanged || this.configureSessionPlan();
+    }
+
+    private computeIfInputsInvalid(): boolean {
         const titleInvalid = this.titleValidationResult().status === ValidationStatus.INVALID;
         const tutorInvalid = this.tutorValidationResult().status === ValidationStatus.INVALID;
         const generalInformationInvalid = titleInvalid || tutorInvalid;

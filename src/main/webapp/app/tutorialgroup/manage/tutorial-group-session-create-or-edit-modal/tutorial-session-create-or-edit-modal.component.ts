@@ -45,6 +45,7 @@ export class TutorialSessionCreateOrEditModalComponent {
     private translateService = inject(TranslateService);
     private session = signal<TutorialGroupSessionDTO | undefined>(undefined);
     private currentLocale = getCurrentLocaleSignal(this.translateService);
+    private inputsInvalid = computed(() => this.computeIfInputsInvalid());
 
     isOpen = signal(false);
     date = signal<Date | undefined>(undefined);
@@ -59,7 +60,6 @@ export class TutorialSessionCreateOrEditModalComponent {
     location = signal<string>('');
     locationValidationResult = computed<Validation>(() => this.computeLocationValidation());
     locationInputTouched = signal(false);
-    inputsInvalid = computed(() => this.computeIfInputsInvalid());
     saveButtonDisabled = computed<boolean>(() => this.computeIfSaveButtonDisabled());
     attendance = signal<number | undefined>(undefined);
     header = computed(() => this.computeHeader());
