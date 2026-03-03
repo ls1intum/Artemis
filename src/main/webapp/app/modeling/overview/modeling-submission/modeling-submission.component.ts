@@ -43,8 +43,6 @@ import { ResizeableContainerComponent } from 'app/shared/resizeable-container/re
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ModelingAssessmentComponent } from '../../manage/assess/modeling-assessment.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { DecimalPipe, NgClass } from '@angular/common';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
@@ -73,11 +71,8 @@ import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback
         TeamSubmissionSyncComponent,
         ModelingAssessmentComponent,
         TranslateDirective,
-        NgClass,
-        NgbTooltip,
         RatingComponent,
         ComplaintsStudentViewComponent,
-        DecimalPipe,
         ArtemisTranslatePipe,
         HtmlForMarkdownPipe,
         UnifiedFeedbackComponent,
