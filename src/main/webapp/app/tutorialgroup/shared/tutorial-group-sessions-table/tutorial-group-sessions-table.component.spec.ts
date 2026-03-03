@@ -183,7 +183,17 @@ describe('TutorialGroupSessionTableComponent', () => {
 
     it('should sync next session and past sessions when attendance changed', () => {
         // Create a new object to trigger the signal change
-        fixture.componentRef.setInput('tutorialGroup', { ...tutorialGroup, nextSession: pastSession });
+        fixture.componentRef.setInput('tutorialGroup', {
+            ...tutorialGroup,
+            nextSession: {
+                id: pastSession.id,
+                start: dayjs(pastSession.startDate),
+                end: dayjs(pastSession.endDate),
+                location: pastSession.location,
+                status: pastSession.status,
+                attendanceCount: pastSession.attendanceCount,
+            },
+        });
         fixture.detectChanges();
 
         const sessionWithAttendanceData = { ...pastSession, attendanceCount: 1 } as TutorialGroupSessionDTO;

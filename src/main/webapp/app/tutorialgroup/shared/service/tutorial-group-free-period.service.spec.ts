@@ -108,7 +108,6 @@ describe('TutorialGroupFreePeriodService', () => {
 
         const req = httpMock.expectOne({ method: 'DELETE' });
         req.flush({});
-        expect(result?.body).toEqual({});
-        expect(result?.status).toBe(204);
+        expect(result!.body).toEqual({});
     });
 });

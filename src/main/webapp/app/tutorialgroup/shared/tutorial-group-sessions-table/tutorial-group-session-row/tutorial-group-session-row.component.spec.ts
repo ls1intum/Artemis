@@ -3,7 +3,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { generateExampleTutorialGroupSessionDTO } from 'test/helpers/sample/tutorialgroup/tutorialGroupSessionExampleModels';
-import { TutorialGroupSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { TutorialGroupSessionDTO, TutorialGroupSessionStatus } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockDirective, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -51,7 +51,7 @@ describe('TutorialGroupSessionRowComponent', () => {
     });
 
     it('should display session canceled button when sessions are cancelled', () => {
-        fixture.componentRef.setInput('session', { ...session, isCancelled: true });
+        fixture.componentRef.setInput('session', { ...session, status: TutorialGroupSessionStatus.CANCELLED });
         fixture.detectChanges();
 
         const sessionCanceledButton = fixture.debugElement.query(By.css('button.btn-outline-danger'));

@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CancellationModalComponent } from 'app/tutorialgroup/manage/tutorial-group-sessions/tutorial-group-sessions-management/cancellation-modal/cancellation-modal.component';
 import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
 import { generateExampleTutorialGroupSessionDTO } from 'test/helpers/sample/tutorialgroup/tutorialGroupSessionExampleModels';
-import { TutorialGroupSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { TutorialGroupSessionDTO, TutorialGroupSessionStatus } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -68,7 +68,7 @@ describe('CancellationModalComponent', () => {
     });
 
     it('should call activate with cancelled session', () => {
-        fixture.componentRef.setInput('tutorialGroupSession', { ...tutorialGroupSession, isCancelled: true });
+        fixture.componentRef.setInput('tutorialGroupSession', { ...tutorialGroupSession, status: TutorialGroupSessionStatus.CANCELLED });
         fixture.detectChanges();
 
         const activateSessionSpy = vi.spyOn(tutorialGroupSessionService, 'activate').mockReturnValue(of(new HttpResponse<TutorialGroupSessionDTO>({ body: tutorialGroupSession })));
@@ -124,7 +124,7 @@ describe('CancellationModalComponent', () => {
     });
 
     it('should handle error when activating session fails', () => {
-        fixture.componentRef.setInput('tutorialGroupSession', { ...tutorialGroupSession, isCancelled: true });
+        fixture.componentRef.setInput('tutorialGroupSession', { ...tutorialGroupSession, status: TutorialGroupSessionStatus.CANCELLED });
         fixture.detectChanges();
 
         const errorResponse = new HttpErrorResponse({ status: 400 });
