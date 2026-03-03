@@ -11,7 +11,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title-bar-actions.directive';
-import { ColumnDef, TableViewComponent } from 'app/shared/table-view/table-view';
+import { ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared/table-view/table-view';
 import { buildDbQueryFromLazyEvent } from 'app/shared/table-view/request-builder';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -30,6 +30,8 @@ export class OrganizationManagementComponent {
     private readonly router = inject(Router);
     private readonly route = inject(ActivatedRoute);
     private readonly alertService = inject(AlertService);
+
+    readonly tableOptions: TableViewOptions = { selectionMode: 'single', striped: true };
 
     organizations = signal<Organization[]>([]);
     totalCount = signal(0);

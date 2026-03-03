@@ -57,7 +57,7 @@ export class OrganizationSelectorComponent {
         this.isLoading.set(true);
         const requestId = ++this.loadRequestId;
         const query = buildDbQueryFromLazyEvent(event);
-        this.organizationService.getOrganizations(query).subscribe({
+        this.organizationService.getOrganizations(query, false).subscribe({
             next: (response) => {
                 if (requestId !== this.loadRequestId) return;
                 this.organizations.set(response.content);

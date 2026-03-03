@@ -5,6 +5,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.List;
 import java.util.Set;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -202,7 +204,7 @@ public class AdminOrganizationResource {
      * @return ResponseEntity containing a page of organization DTOs with status 200 (OK)
      */
     @GetMapping("organizations")
-    public ResponseEntity<List<OrganizationDTO>> getOrganizations(SearchTermPageableSearchDTO<String> search, @RequestParam(defaultValue = "false") boolean withCounts) {
+    public ResponseEntity<List<OrganizationDTO>> getOrganizations(@Valid SearchTermPageableSearchDTO<String> search, @RequestParam(defaultValue = "false") boolean withCounts) {
         final Page<OrganizationDTO> page = organizationRepository.getAllOrganizations(search, withCounts);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
@@ -216,7 +218,7 @@ public class AdminOrganizationResource {
      * @return ResponseEntity containing a page of member DTOs with status 200 (OK)
      */
     @GetMapping("organizations/{organizationId}/users")
-    public ResponseEntity<List<OrganizationMemberDTO>> getOrganizationUsers(@PathVariable long organizationId, SearchTermPageableSearchDTO<String> search) {
+    public ResponseEntity<List<OrganizationMemberDTO>> getOrganizationUsers(@PathVariable long organizationId, @Valid SearchTermPageableSearchDTO<String> search) {
         log.debug("REST request to get users of organization : {}", organizationId);
         organizationRepository.findByIdElseThrow(organizationId);
         Page<OrganizationMemberDTO> page = organizationRepository.getUsersByOrganizationId(organizationId, search);
@@ -232,7 +234,7 @@ public class AdminOrganizationResource {
      * @return ResponseEntity containing a page of course DTOs with status 200 (OK)
      */
     @GetMapping("organizations/{organizationId}/courses")
-    public ResponseEntity<List<OrganizationCourseDTO>> getOrganizationCourses(@PathVariable long organizationId, SearchTermPageableSearchDTO<String> search) {
+    public ResponseEntity<List<OrganizationCourseDTO>> getOrganizationCourses(@PathVariable long organizationId, @Valid SearchTermPageableSearchDTO<String> search) {
         log.debug("REST request to get courses of organization : {}", organizationId);
         organizationRepository.findByIdElseThrow(organizationId);
         Page<OrganizationCourseDTO> page = organizationRepository.getCoursesByOrganizationId(organizationId, search);

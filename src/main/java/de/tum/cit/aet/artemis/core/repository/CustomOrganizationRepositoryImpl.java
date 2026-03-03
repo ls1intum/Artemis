@@ -109,7 +109,8 @@ public class CustomOrganizationRepositoryImpl implements CustomOrganizationRepos
         }
 
         // Sorting — aggregate sort fields fall back to id when counts are not loaded
-        Expression<?> sortExpr = switch (sortedColumn) {
+        final String effectiveSortedColumn = sortedColumn != null ? sortedColumn : "";
+        Expression<?> sortExpr = switch (effectiveSortedColumn) {
             case "name" -> root.get(Organization_.NAME);
             case "shortName" -> root.get(Organization_.SHORT_NAME);
             case "emailPattern" -> root.get(Organization_.EMAIL_PATTERN);
@@ -156,7 +157,8 @@ public class CustomOrganizationRepositoryImpl implements CustomOrganizationRepos
         query.where(getMemberPredicate(builder, root, u, organizationId, searchTerm));
 
         // Sorting
-        Expression<?> sortExpr = switch (sortedColumn) {
+        final String effectiveSortedColumn = sortedColumn != null ? sortedColumn : "";
+        Expression<?> sortExpr = switch (effectiveSortedColumn) {
             case "login" -> u.get(User_.LOGIN);
             case "name" -> nameExpr;
             case "email" -> u.get(User_.EMAIL);
@@ -199,7 +201,8 @@ public class CustomOrganizationRepositoryImpl implements CustomOrganizationRepos
         query.where(getCoursePredicate(builder, root, c, organizationId, searchTerm));
 
         // Sorting
-        Expression<?> sortExpr = switch (sortedColumn) {
+        final String effectiveSortedColumn = sortedColumn != null ? sortedColumn : "";
+        Expression<?> sortExpr = switch (effectiveSortedColumn) {
             case "title" -> c.get(Course_.TITLE);
             case "shortName" -> c.get(Course_.SHORT_NAME);
             default -> c.get(Course_.ID);

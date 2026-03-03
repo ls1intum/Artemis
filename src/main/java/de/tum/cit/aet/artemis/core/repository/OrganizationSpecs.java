@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.repository;
 
 import java.util.Arrays;
+import java.util.Locale;
 
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.From;
@@ -37,7 +38,7 @@ public class OrganizationSpecs {
         if (searchTerm == null || searchTerm.isBlank()) {
             return builder.conjunction();
         }
-        String pattern = "%" + searchTerm.trim().toLowerCase() + "%";
+        String pattern = "%" + searchTerm.trim().toLowerCase(Locale.ROOT) + "%";
         Predicate[] predicates = Arrays.stream(columns).map(column -> builder.like(builder.lower(from.get(column)), pattern)).toArray(Predicate[]::new);
         return builder.or(predicates);
     }

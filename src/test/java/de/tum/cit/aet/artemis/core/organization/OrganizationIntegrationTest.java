@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.organization;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -12,6 +13,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Organization;
@@ -317,16 +320,24 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         // Page 0 with size 2 returns orgs A and B; page 1 with size 2 returns org C
         SearchTermPageableSearchDTO<String> firstPageSearch = buildSearch(prefix, 0, 2, "name", SortingOrder.ASCENDING);
-        List<OrganizationDTO> firstPage = request.getList("/api/core/admin/organizations", HttpStatus.OK, OrganizationDTO.class,
-                pageableSearchUtilService.searchMapping(firstPageSearch));
+        MvcResult firstPageResult = request
+                .performMvcRequest(MockMvcRequestBuilders.get("/api/core/admin/organizations").params(pageableSearchUtilService.searchMapping(firstPageSearch)))
+                .andExpect(status().isOk()).andReturn();
+        List<OrganizationDTO> firstPage = request.getObjectMapper().readValue(firstPageResult.getResponse().getContentAsString(),
+                request.getObjectMapper().getTypeFactory().constructCollectionType(List.class, OrganizationDTO.class));
 
         SearchTermPageableSearchDTO<String> secondPageSearch = buildSearch(prefix, 1, 2, "name", SortingOrder.ASCENDING);
-        List<OrganizationDTO> secondPage = request.getList("/api/core/admin/organizations", HttpStatus.OK, OrganizationDTO.class,
-                pageableSearchUtilService.searchMapping(secondPageSearch));
+        MvcResult secondPageResult = request
+                .performMvcRequest(MockMvcRequestBuilders.get("/api/core/admin/organizations").params(pageableSearchUtilService.searchMapping(secondPageSearch)))
+                .andExpect(status().isOk()).andReturn();
+        List<OrganizationDTO> secondPage = request.getObjectMapper().readValue(secondPageResult.getResponse().getContentAsString(),
+                request.getObjectMapper().getTypeFactory().constructCollectionType(List.class, OrganizationDTO.class));
 
+        assertThat(firstPageResult.getResponse().getHeader("X-Total-Count")).isEqualTo("3");
         assertThat(firstPage).hasSize(2);
         assertThat(firstPage.get(0).id()).isEqualTo(organizationA.getId());
         assertThat(firstPage.get(1).id()).isEqualTo(organizationB.getId());
+        assertThat(secondPageResult.getResponse().getHeader("X-Total-Count")).isEqualTo("3");
         assertThat(secondPage).hasSize(1);
         assertThat(secondPage.get(0).id()).isEqualTo(organizationC.getId());
     }
@@ -424,8 +435,11 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         SearchTermPageableSearchDTO<String> search = buildSearch(uniqueName);
         var params = pageableSearchUtilService.searchMapping(search);
         params.add("withCounts", "true");
-        List<OrganizationDTO> result = request.getList("/api/core/admin/organizations", HttpStatus.OK, OrganizationDTO.class, params);
+        MvcResult countResult = request.performMvcRequest(MockMvcRequestBuilders.get("/api/core/admin/organizations").params(params)).andExpect(status().isOk()).andReturn();
+        List<OrganizationDTO> result = request.getObjectMapper().readValue(countResult.getResponse().getContentAsString(),
+                request.getObjectMapper().getTypeFactory().constructCollectionType(List.class, OrganizationDTO.class));
 
+        assertThat(countResult.getResponse().getHeader("X-Total-Count")).isEqualTo("1");
         assertThat(result).hasSize(1);
         OrganizationDTO dto = result.get(0);
         assertThat(dto.id()).isEqualTo(organization.getId());
@@ -473,17 +487,24 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         userTestRepository.addOrganizationToUser(member2.getId(), organization);
         userTestRepository.addOrganizationToUser(member3.getId(), organization);
 
+        String usersUrl = "/api/core/admin/organizations/" + organization.getId() + "/users";
         SearchTermPageableSearchDTO<String> firstPageSearch = buildSearch("", 0, 2, "id", SortingOrder.ASCENDING);
-        List<OrganizationMemberDTO> firstPage = request.getList("/api/core/admin/organizations/" + organization.getId() + "/users", HttpStatus.OK, OrganizationMemberDTO.class,
-                pageableSearchUtilService.searchMapping(firstPageSearch));
+        MvcResult firstPageResult = request.performMvcRequest(MockMvcRequestBuilders.get(usersUrl).params(pageableSearchUtilService.searchMapping(firstPageSearch)))
+                .andExpect(status().isOk()).andReturn();
+        List<OrganizationMemberDTO> firstPage = request.getObjectMapper().readValue(firstPageResult.getResponse().getContentAsString(),
+                request.getObjectMapper().getTypeFactory().constructCollectionType(List.class, OrganizationMemberDTO.class));
 
         SearchTermPageableSearchDTO<String> secondPageSearch = buildSearch("", 1, 2, "id", SortingOrder.ASCENDING);
-        List<OrganizationMemberDTO> secondPage = request.getList("/api/core/admin/organizations/" + organization.getId() + "/users", HttpStatus.OK, OrganizationMemberDTO.class,
-                pageableSearchUtilService.searchMapping(secondPageSearch));
+        MvcResult secondPageResult = request.performMvcRequest(MockMvcRequestBuilders.get(usersUrl).params(pageableSearchUtilService.searchMapping(secondPageSearch)))
+                .andExpect(status().isOk()).andReturn();
+        List<OrganizationMemberDTO> secondPage = request.getObjectMapper().readValue(secondPageResult.getResponse().getContentAsString(),
+                request.getObjectMapper().getTypeFactory().constructCollectionType(List.class, OrganizationMemberDTO.class));
 
+        assertThat(firstPageResult.getResponse().getHeader("X-Total-Count")).isEqualTo("3");
         assertThat(firstPage).hasSize(2);
         assertThat(firstPage.get(0).id()).isEqualTo(member1.getId());
         assertThat(firstPage.get(1).id()).isEqualTo(member2.getId());
+        assertThat(secondPageResult.getResponse().getHeader("X-Total-Count")).isEqualTo("3");
         assertThat(secondPage).hasSize(1);
         assertThat(secondPage.get(0).id()).isEqualTo(member3.getId());
     }
@@ -527,17 +548,24 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         courseRepository.addOrganizationToCourse(course2.getId(), organization);
         courseRepository.addOrganizationToCourse(course3.getId(), organization);
 
+        String coursesUrl = "/api/core/admin/organizations/" + organization.getId() + "/courses";
         SearchTermPageableSearchDTO<String> firstPageSearch = buildSearch("", 0, 2, "id", SortingOrder.ASCENDING);
-        List<OrganizationCourseDTO> firstPage = request.getList("/api/core/admin/organizations/" + organization.getId() + "/courses", HttpStatus.OK, OrganizationCourseDTO.class,
-                pageableSearchUtilService.searchMapping(firstPageSearch));
+        MvcResult firstPageResult = request.performMvcRequest(MockMvcRequestBuilders.get(coursesUrl).params(pageableSearchUtilService.searchMapping(firstPageSearch)))
+                .andExpect(status().isOk()).andReturn();
+        List<OrganizationCourseDTO> firstPage = request.getObjectMapper().readValue(firstPageResult.getResponse().getContentAsString(),
+                request.getObjectMapper().getTypeFactory().constructCollectionType(List.class, OrganizationCourseDTO.class));
 
         SearchTermPageableSearchDTO<String> secondPageSearch = buildSearch("", 1, 2, "id", SortingOrder.ASCENDING);
-        List<OrganizationCourseDTO> secondPage = request.getList("/api/core/admin/organizations/" + organization.getId() + "/courses", HttpStatus.OK, OrganizationCourseDTO.class,
-                pageableSearchUtilService.searchMapping(secondPageSearch));
+        MvcResult secondPageResult = request.performMvcRequest(MockMvcRequestBuilders.get(coursesUrl).params(pageableSearchUtilService.searchMapping(secondPageSearch)))
+                .andExpect(status().isOk()).andReturn();
+        List<OrganizationCourseDTO> secondPage = request.getObjectMapper().readValue(secondPageResult.getResponse().getContentAsString(),
+                request.getObjectMapper().getTypeFactory().constructCollectionType(List.class, OrganizationCourseDTO.class));
 
+        assertThat(firstPageResult.getResponse().getHeader("X-Total-Count")).isEqualTo("3");
         assertThat(firstPage).hasSize(2);
         assertThat(firstPage.get(0).id()).isEqualTo(course1.getId());
         assertThat(firstPage.get(1).id()).isEqualTo(course2.getId());
+        assertThat(secondPageResult.getResponse().getHeader("X-Total-Count")).isEqualTo("3");
         assertThat(secondPage).hasSize(1);
         assertThat(secondPage.get(0).id()).isEqualTo(course3.getId());
     }
