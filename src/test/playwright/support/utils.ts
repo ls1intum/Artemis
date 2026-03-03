@@ -421,7 +421,7 @@ export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType
         endDate: end,
         numberOfCorrectionRoundsInExam: numberOfCorrectionRounds,
         examStudentReviewStart: resultDate,
-        examStudentReviewEnd: resultDate.add(1, 'minute'),
+        examStudentReviewEnd: resultDate.add(5, 'minutes'),
         publishResultsDate: resultDate,
         gracePeriod: 10,
     };
