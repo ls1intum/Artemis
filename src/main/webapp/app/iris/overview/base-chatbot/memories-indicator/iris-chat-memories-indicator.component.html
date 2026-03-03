@@ -16,7 +16,7 @@
         <div class="memories-popover">
             @if (usedCount() > 0) {
                 <div class="memories-section" data-testid="memories-used-section">
-                    <div class="memories-section-title">Used memories</div>
+                    <div class="memories-section-title" jhiTranslate="artemisApp.iris.chatbot.memories.indicator.usedSectionTitle"></div>
                     <ul class="memories-list">
                         @for (memory of accessedMemories() ?? []; track memory.id) {
                             <li class="memories-item">
@@ -30,7 +30,7 @@
 
             @if (createdCount() > 0) {
                 <div class="memories-section" data-testid="memories-created-section">
-                    <div class="memories-section-title">Created memories</div>
+                    <div class="memories-section-title" jhiTranslate="artemisApp.iris.chatbot.memories.indicator.createdSectionTitle"></div>
                     <ul class="memories-list">
                         @for (memory of createdMemories() ?? []; track memory.id) {
                             <li class="memories-item">

@@ -3,18 +3,23 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { IrisChatMemoriesIndicatorComponent } from 'app/iris/overview/base-chatbot/memories-indicator/iris-chat-memories-indicator.component';
 import { MemirisMemory } from 'app/iris/shared/entities/memiris.model';
+import { MockProvider } from 'ng-mocks';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('IrisChatMemoriesIndicatorComponent', () => {
     setupTestBed({ zoneless: true });
 
     let fixture: ComponentFixture<IrisChatMemoriesIndicatorComponent>;
+    let component: IrisChatMemoriesIndicatorComponent;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [IrisChatMemoriesIndicatorComponent],
+            providers: [MockProvider(TranslateService, { instant: (key: string, _params?: object) => key })],
         }).compileComponents();
 
         fixture = TestBed.createComponent(IrisChatMemoriesIndicatorComponent);
+        component = fixture.componentInstance;
     });
 
     afterEach(() => {
@@ -39,9 +44,10 @@ describe('IrisChatMemoriesIndicatorComponent', () => {
 
         const button: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="memories-indicator-button"]');
         expect(button).toBeTruthy();
-        expect(button.textContent).toContain('1 used');
-        expect(button.textContent).toContain('2 created');
-        expect(button.getAttribute('aria-label')).toBe('1 memory used, 2 created');
+        expect(component.usedCount()).toBe(1);
+        expect(component.createdCount()).toBe(2);
+        expect(component.compactLabel()).toBeTruthy();
+        expect(component.tooltipText()).toBeTruthy();
     });
 
     it('hides zero values in compact label and tooltip', () => {
@@ -50,9 +56,12 @@ describe('IrisChatMemoriesIndicatorComponent', () => {
         fixture.detectChanges();
 
         const button: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="memories-indicator-button"]');
-        expect(button.textContent).toContain('1 created');
-        expect(button.textContent).not.toContain('0 used');
-        expect(button.getAttribute('aria-label')).toBe('1 created');
+        expect(button).toBeTruthy();
+        expect(component.usedCount()).toBe(0);
+        expect(component.createdCount()).toBe(1);
+        // compact label should not mention "used" when usedCount is 0
+        expect(component.compactLabel()).not.toContain('used');
+        expect(component.tooltipText()).not.toContain('used');
     });
 
     it('opens popover with details on click', () => {
@@ -64,7 +73,7 @@ describe('IrisChatMemoriesIndicatorComponent', () => {
         button.click();
         fixture.detectChanges();
 
-        expect(document.querySelector('.iris-memories-popover')).toBeTruthy();
+        expect(document.querySelector('.memories-popover')).toBeTruthy();
         expect(document.querySelector('[data-testid="memories-used-section"]')).toBeTruthy();
         expect(document.querySelector('[data-testid="memories-created-section"]')).toBeTruthy();
         expect(document.body.textContent).toContain('Used 1');

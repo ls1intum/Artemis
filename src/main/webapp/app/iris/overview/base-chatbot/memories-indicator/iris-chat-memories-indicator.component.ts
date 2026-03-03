@@ -1,19 +1,23 @@
-import { ChangeDetectionStrategy, Component, Signal, computed, input, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Signal, computed, inject, input, signal, viewChild } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBrain } from '@fortawesome/free-solid-svg-icons';
 import { MemirisMemory } from 'app/iris/shared/entities/memiris.model';
 import { Popover } from 'primeng/popover';
 import { TooltipModule } from 'primeng/tooltip';
+import { TranslateService } from '@ngx-translate/core';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-iris-chat-memories-indicator',
     templateUrl: './iris-chat-memories-indicator.component.html',
     styleUrls: ['./iris-chat-memories-indicator.component.scss'],
     standalone: true,
-    imports: [FaIconComponent, Popover, TooltipModule],
+    imports: [FaIconComponent, Popover, TooltipModule, TranslateDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisChatMemoriesIndicatorComponent {
+    private readonly translate = inject(TranslateService);
+
     readonly accessedMemories = input<MemirisMemory[] | undefined>(undefined);
     readonly createdMemories = input<MemirisMemory[] | undefined>(undefined);
 
@@ -44,10 +48,12 @@ export class IrisChatMemoriesIndicatorComponent {
     private buildTooltipText(used: number, created: number): string {
         const parts: string[] = [];
         if (used > 0) {
-            parts.push(used === 1 ? '1 memory used' : `${used} memories used`);
+            const key = used === 1 ? 'artemisApp.iris.chatbot.memories.indicator.usedSingular' : 'artemisApp.iris.chatbot.memories.indicator.usedPlural';
+            parts.push(this.translate.instant(key, { count: used }));
         }
         if (created > 0) {
-            parts.push(created === 1 ? '1 created' : `${created} created`);
+            const key = created === 1 ? 'artemisApp.iris.chatbot.memories.indicator.createdSingular' : 'artemisApp.iris.chatbot.memories.indicator.createdPlural';
+            parts.push(this.translate.instant(key, { count: created }));
         }
         return parts.join(', ');
     }
@@ -55,10 +61,10 @@ export class IrisChatMemoriesIndicatorComponent {
     private buildCompactLabel(used: number, created: number): string {
         const parts: string[] = [];
         if (used > 0) {
-            parts.push(`${used} used`);
+            parts.push(this.translate.instant('artemisApp.iris.chatbot.memories.indicator.compactUsed', { count: used }));
         }
         if (created > 0) {
-            parts.push(`${created} created`);
+            parts.push(this.translate.instant('artemisApp.iris.chatbot.memories.indicator.compactCreated', { count: created }));
         }
         return parts.join(' · ');
     }
