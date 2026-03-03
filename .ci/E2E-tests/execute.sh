@@ -41,6 +41,9 @@ fi
 
 cd docker || { echo "ERROR: Failed to change to docker directory" >&2; exit 1; }
 
+# Clean up stale reporter-failed marker from previous runs (self-hosted runners have persistent workspaces)
+rm -f ../src/test/playwright/test-reports/.reporter-failed
+
 # Pull the images to avoid using outdated images
 # --env-file ../.env is needed because .env lives in the project root but we cd'd into docker/
 docker compose --env-file ../.env -f $COMPOSE_FILE pull --quiet --policy always
@@ -60,6 +63,8 @@ if [ -f "$REPORTER_MARKER" ]; then
         echo "reporter_failed=true" >> "$GITHUB_OUTPUT"
     fi
     rm -f "$REPORTER_MARKER"
+    # Tests passed but reporter failed — treat as success
+    exitCode=0
 fi
 
 if [ $exitCode -eq 0 ]
