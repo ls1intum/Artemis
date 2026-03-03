@@ -13,6 +13,7 @@ import cAllSuccessful from '../../../fixtures/exercise/programming/c/all_success
 import { admin, instructor, studentFour, studentOne, studentTwo, tutor } from '../../../support/users';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { GitCloneMethod } from '../../../support/pageobjects/exercises/programming/ProgrammingExerciseOverviewPage';
+
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { GitExerciseParticipation } from '../../../support/pageobjects/exercises/programming/GitExerciseParticipation';
 
@@ -287,12 +288,22 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
             programmingExerciseParticipations,
             programmingExerciseOverview,
             programmingExerciseSubmissions,
+            waitForExerciseBuildToFinish,
         }) => {
+            // This test involves 2 full git clone+push cycles and waiting for 4+ queued builds,
+            // which can exceed the default timeout on cold Docker environments.
+            test.slow();
             // student submits to create a participation + submission
             await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
             await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, studentOne, javaAllSuccessfulSubmission, 'student commit');
             // now instructor commits to the student participation
             await login(instructor);
+            // Wait for the student's build to complete before the instructor submits.
+            // Exercise creation triggers BASE + SOLUTION builds, then startParticipation triggers
+            // a student template clone build, and makeSubmission triggers the student submission build.
+            // Locally these builds queue serially (~18s each), so we need a generous timeout
+            // to cover all 4 builds. On CI, builds may be merged/faster but we use the same timeout.
+            await waitForExerciseBuildToFinish(exercise.id!, undefined, 240000);
             await navigationBar.openCourseManagement();
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.openExerciseParticipations(exercise.id!);
@@ -302,8 +313,9 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.openExerciseParticipations(exercise.id!);
             await programmingExerciseParticipations.openStudentParticipationSubmissions(studentOne);
-            // there should be both submissions
-            await programmingExerciseSubmissions.checkInstructorSubmission();
+            // Use a generous timeout for the instructor submission check because the build
+            // may still be queued or running. The page will be reloaded until the row appears.
+            await programmingExerciseSubmissions.checkInstructorSubmission(240000);
             await programmingExerciseSubmissions.checkStudentSubmission();
         });
     });
