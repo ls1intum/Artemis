@@ -100,7 +100,7 @@ public class ProgrammingExerciseRepositoryService {
      *
      * @param programmingExercise the programming exercise that should be set up
      * @param exerciseCreator     the User that performed the action (used as Git commit author)
-     * @throws IOException     If clearing repository sources for AI generation fails due to file I/O.
+     * @throws IOException     If setting up the base template files fails due to file I/O.
      * @throws GitAPIException If committing, or pushing to the repo throws an exception.
      */
     void setupExerciseTemplate(final ProgrammingExercise programmingExercise, final User exerciseCreator) throws IOException, GitAPIException {
@@ -114,7 +114,7 @@ public class ProgrammingExerciseRepositoryService {
      * @param programmingExercise the programming exercise that should be set up
      * @param exerciseCreator     the User that performed the action (used as Git commit author)
      * @param emptyRepositories   if true, clear sources in template, solution, and test repositories after setup
-     * @throws IOException     If clearing repository sources for AI generation fails due to file I/O.
+     * @throws IOException     If setting up the base template files fails due to file I/O.
      * @throws GitAPIException If committing, or pushing to the repo throws an exception.
      */
     void setupExerciseTemplate(final ProgrammingExercise programmingExercise, final User exerciseCreator, boolean emptyRepositories) throws IOException, GitAPIException {
@@ -136,10 +136,20 @@ public class ProgrammingExerciseRepositoryService {
     }
 
     private void clearRepositoriesForAiGeneration(final Repository templateRepository, final Repository solutionRepository, final Repository testRepository,
-            final User exerciseCreator) throws IOException, GitAPIException {
-        clearRepositorySources(templateRepository, RepositoryType.TEMPLATE, exerciseCreator);
-        clearRepositorySources(solutionRepository, RepositoryType.SOLUTION, exerciseCreator);
-        clearRepositorySources(testRepository, RepositoryType.TESTS, exerciseCreator);
+            final User exerciseCreator) {
+        clearRepositorySourcesSafely(templateRepository, RepositoryType.TEMPLATE, exerciseCreator);
+        clearRepositorySourcesSafely(solutionRepository, RepositoryType.SOLUTION, exerciseCreator);
+        clearRepositorySourcesSafely(testRepository, RepositoryType.TESTS, exerciseCreator);
+    }
+
+    private void clearRepositorySourcesSafely(final Repository repository, final RepositoryType repositoryType, final User exerciseCreator) {
+        try {
+            clearRepositorySources(repository, repositoryType, exerciseCreator);
+        }
+        catch (IOException | GitAPIException ex) {
+            log.warn("Failed to clear {} repository sources for AI generation in {}. Continuing without source cleanup.", repositoryType.name().toLowerCase(Locale.ROOT),
+                    repository.getRemoteRepositoryUri(), ex);
+        }
     }
 
     private record RepositoryResources(Repository repository, Resource[] resources, Path prefix, Resource[] projectTypeResources, Path projectTypePrefix,

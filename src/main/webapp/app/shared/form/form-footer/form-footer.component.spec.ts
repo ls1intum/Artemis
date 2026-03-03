@@ -66,8 +66,28 @@ describe('FormFooterComponent', () => {
     it('should enable save button when form is valid', () => {
         fixture.componentRef.setInput('invalidReasons', []);
         fixture.componentRef.setInput('isDisabled', false);
+        fixture.componentRef.setInput('isSaving', false);
+        fixture.componentRef.setInput('isGeneratingWithAi', false);
         fixture.detectChanges();
         const saveButton = fixture.debugElement.query(By.css('#save-entity')).nativeElement as HTMLButtonElement;
         expect(saveButton.disabled).toBeFalse();
+    });
+
+    it('should disable save button when saving is in progress', () => {
+        fixture.componentRef.setInput('invalidReasons', []);
+        fixture.componentRef.setInput('isDisabled', false);
+        fixture.componentRef.setInput('isSaving', true);
+        fixture.detectChanges();
+        const saveButton = fixture.debugElement.query(By.css('#save-entity')).nativeElement as HTMLButtonElement;
+        expect(saveButton.disabled).toBeTrue();
+    });
+
+    it('should disable save button while generating with AI', () => {
+        fixture.componentRef.setInput('invalidReasons', []);
+        fixture.componentRef.setInput('isDisabled', false);
+        fixture.componentRef.setInput('isGeneratingWithAi', true);
+        fixture.detectChanges();
+        const saveButton = fixture.debugElement.query(By.css('#save-entity')).nativeElement as HTMLButtonElement;
+        expect(saveButton.disabled).toBeTrue();
     });
 });

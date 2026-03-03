@@ -159,37 +159,37 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     auxiliaryRepositoryDuplicateNames: boolean;
     auxiliaryRepositoryDuplicateDirectories: boolean;
     auxiliaryRepositoryNamedCorrectly: boolean;
-    private _isImportFromExistingExercise = false;
-    private _isImportFromFile = false;
-    private _isImportFromSharing = false;
+    private isImportFromExistingExerciseValue = false;
+    private isImportFromFileValue = false;
+    private isImportFromSharingValue = false;
     isImportFromExistingExerciseForAi = signal<boolean>(false);
     isImportFromFileForAi = signal<boolean>(false);
     isImportFromSharingForAi = signal<boolean>(false);
 
     get isImportFromExistingExercise(): boolean {
-        return this._isImportFromExistingExercise;
+        return this.isImportFromExistingExerciseValue;
     }
 
     set isImportFromExistingExercise(value: boolean) {
-        this._isImportFromExistingExercise = value;
+        this.isImportFromExistingExerciseValue = value;
         this.isImportFromExistingExerciseForAi.set(value);
     }
 
     get isImportFromFile(): boolean {
-        return this._isImportFromFile;
+        return this.isImportFromFileValue;
     }
 
     set isImportFromFile(value: boolean) {
-        this._isImportFromFile = value;
+        this.isImportFromFileValue = value;
         this.isImportFromFileForAi.set(value);
     }
 
     get isImportFromSharing(): boolean {
-        return this._isImportFromSharing;
+        return this.isImportFromSharingValue;
     }
 
     set isImportFromSharing(value: boolean) {
-        this._isImportFromSharing = value;
+        this.isImportFromSharingValue = value;
         this.isImportFromSharingForAi.set(value);
     }
 
@@ -207,6 +207,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     set programmingExercise(value: ProgrammingExercise) {
+        value.id = value.id ?? undefined;
         this._programmingExercise = value;
         this.programmingExerciseIdForAi.set(value.id);
         this.programmingExerciseLanguageForAi.set(value.programmingLanguage);
@@ -305,7 +306,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     showGenerateWithAi = computed(() => {
         return (
             this.hyperionEnabledForAi() &&
-            this.programmingExerciseIdForAi() == null &&
+            this.programmingExerciseIdForAi() === undefined &&
             !this.isImportFromExistingExerciseForAi() &&
             !this.isImportFromFileForAi() &&
             !this.isImportFromSharingForAi() &&
@@ -826,6 +827,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         onConfirmed: () => void,
         onReEvaluated: (reference: Awaited<ReturnType<ExerciseUpdateWarningService['checkExerciseBeforeUpdate']>>) => void = () => onConfirmed(),
     ) {
+        if (this.isSaving || this.isGeneratingWithAi()) {
+            return;
+        }
         const preUpdateModalRef = this.popupService.checkExerciseBeforeUpdate(this.programmingExercise, this.backupExercise, this.isExamMode);
         this.determineProjectTypeIfNotSelectedAndInSimpleMode();
 
@@ -854,7 +858,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         if (this.isSaving || this.isGeneratingWithAi()) {
             return;
         }
-        if (this.isImportFromFile || this.isImportFromSharing || this.isImportFromExistingExercise || this.programmingExercise.id != null || !this.hyperionEnabled) {
+        if (this.isImportFromFile || this.isImportFromSharing || this.isImportFromExistingExercise || this.programmingExercise.id !== undefined || !this.hyperionEnabled) {
             this.saveExercise();
             return;
         }
@@ -932,7 +936,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             });
         } else if (this.isImportFromExistingExercise) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise, this.importOptions));
-        } else if (this.programmingExercise.id != null) {
+        } else if (this.programmingExercise.id !== undefined) {
             const requestOptions = {} as any;
             if (this.notificationText) {
                 requestOptions.notificationText = this.notificationText;
