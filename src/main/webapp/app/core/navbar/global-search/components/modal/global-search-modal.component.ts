@@ -11,6 +11,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DialogModule } from 'primeng/dialog';
 import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
 import { GlobalSearchNavigationViewComponent } from 'app/core/navbar/global-search/components/views/navigation-view/global-search-navigation-view.component';
+import { GlobalSearchLectureResultsComponent } from 'app/core/navbar/global-search/components/views/lecture-results/global-search-lecture-results.component';
 import { SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 import { GlobalSearchResult, GlobalSearchService } from '../../services/global-search.service';
 import { SearchInputComponent } from './search-input/search-input.component';
@@ -20,7 +21,7 @@ import { SearchableEntity } from '../../models/searchable-entity.model';
     selector: 'jhi-global-search-modal',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [DialogModule, FaIconComponent, ArtemisTranslatePipe, GlobalSearchNavigationViewComponent, SearchInputComponent],
+    imports: [DialogModule, FaIconComponent, ArtemisTranslatePipe, GlobalSearchNavigationViewComponent, GlobalSearchLectureResultsComponent, SearchInputComponent],
     templateUrl: './global-search-modal.component.html',
     styleUrls: ['./global-search-modal.component.scss'],
 })

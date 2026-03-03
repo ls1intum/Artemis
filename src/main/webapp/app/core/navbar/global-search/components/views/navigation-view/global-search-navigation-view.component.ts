@@ -20,6 +20,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { GlobalSearchActionItemComponent } from 'app/core/navbar/global-search/components/action-item/global-search-action-item.component';
 import { SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
 import { SearchableEntity } from 'app/core/navbar/global-search/models/searchable-entity.model';
 import { SearchableEntityItemComponent } from 'app/core/navbar/global-search/components/modal/searchable-entity-item/searchable-entity-item.component';
@@ -38,7 +39,7 @@ export const NAV_ACTION_COUNT = 2;
     selector: 'jhi-global-search-navigation-view',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [GlobalSearchActionItemComponent, FaIconComponent, SearchableEntityItemComponent, SearchResultItemComponent],
+    imports: [GlobalSearchActionItemComponent, FaIconComponent, SearchableEntityItemComponent, SearchResultItemComponent, ArtemisTranslatePipe],
     templateUrl: './global-search-navigation-view.component.html',
     styleUrls: ['./global-search-navigation-view.component.scss'],
     providers: [{ provide: SearchResultView, useExisting: forwardRef(() => GlobalSearchNavigationViewComponent) }],
