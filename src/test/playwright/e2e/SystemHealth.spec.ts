@@ -19,7 +19,7 @@ test.describe('Check artemis system health', { tag: '@fast' }, () => {
         page = await browser.newPage();
         await Commands.login(page, admin, '/admin/health');
         // Wait for the page to fully load
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
     });
 
     for (const healthCheck of healthChecks) {
@@ -45,7 +45,7 @@ test.describe('Check artemis system health', { tag: '@fast' }, () => {
                 // WebSocket not connected yet, reload and try again
                 if (Date.now() - startTime + reloadInterval < timeout) {
                     await page.reload();
-                    await page.waitForLoadState('networkidle');
+                    await page.waitForLoadState('domcontentloaded');
                 }
             }
         }
