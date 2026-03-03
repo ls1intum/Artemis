@@ -1,6 +1,6 @@
 services:
   valkey:
-    image: valkey/valkey:8.1.3
+    image: valkey/valkey:${VALKEY_VERSION}
     restart: always
     ports:
       - "6379:6379"
