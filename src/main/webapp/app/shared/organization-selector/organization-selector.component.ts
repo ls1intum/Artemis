@@ -4,7 +4,7 @@ import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Organization } from 'app/core/shared/entities/organization.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TableLazyLoadEvent } from 'primeng/table';
-import { CellRendererParams, ColumnDef, TableView, TableViewOptions } from 'app/shared/table-view/table-view';
+import { CellRendererParams, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared/table-view/table-view';
 import { buildDbQueryFromLazyEvent } from 'app/shared/table-view/request-builder';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -17,7 +17,7 @@ export interface OrganizationSelectorDialogData {
 @Component({
     selector: 'jhi-organization-selector',
     templateUrl: './organization-selector.component.html',
-    imports: [TranslateDirective, TableView],
+    imports: [TranslateDirective, TableViewComponent],
 })
 export class OrganizationSelectorComponent {
     readonly selectorTableOptions: TableViewOptions = {
@@ -36,6 +36,8 @@ export class OrganizationSelectorComponent {
     readonly totalCount = signal(0);
     readonly isLoading = signal(false);
 
+    private loadRequestId = 0;
+
     private readonly logoTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<Organization> }>>('logoCell');
 
     protected readonly assignedOrgIds = new Set<number>(
@@ -53,14 +55,17 @@ export class OrganizationSelectorComponent {
 
     loadOrganizations(event: TableLazyLoadEvent): void {
         this.isLoading.set(true);
+        const requestId = ++this.loadRequestId;
         const query = buildDbQueryFromLazyEvent(event);
         this.organizationService.getOrganizations(query).subscribe({
             next: (response) => {
+                if (requestId !== this.loadRequestId) return;
                 this.organizations.set(response.content);
                 this.totalCount.set(response.totalElements);
                 this.isLoading.set(false);
             },
             error: (error: HttpErrorResponse) => {
+                if (requestId !== this.loadRequestId) return;
                 this.organizations.set([]);
                 this.totalCount.set(0);
                 this.isLoading.set(false);

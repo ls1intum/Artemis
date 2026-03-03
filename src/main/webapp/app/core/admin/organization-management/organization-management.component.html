@@ -27,9 +27,9 @@
         </button>
         <button
             jhiDeleteButton
-            [entityTitle]="organization.name!"
+            [entityTitle]="organization.name"
             deleteQuestion="artemisApp.organizationManagement.delete.question"
-            (delete)="deleteOrganization(organization.id!)"
+            (delete)="deleteOrganization(organization.id)"
             [dialogError]="dialogError$"
             (click)="$event.stopPropagation()"
         >

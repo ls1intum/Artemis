@@ -84,7 +84,7 @@ const DEFAULT_TABLE_CONFIG: TableConfig = {
     styleUrl: './table-view.scss',
     encapsulation: ViewEncapsulation.None,
 })
-export class TableView<T> {
+export class TableViewComponent<T> {
     private static readonly SEARCH_DEBOUNCE_MS = 300;
 
     cols = input.required<ColumnDef<T>[]>();
@@ -150,12 +150,12 @@ export class TableView<T> {
         const vals = this.vals();
         const cols = this.cols();
         const map = new Map<T, CellRendererParams<T>[]>();
-        vals.forEach((data, rowIndex) =>
+        for (const [rowIndex, data] of vals.entries()) {
             map.set(
                 data,
                 cols.map((col) => this.buildRendererParams(data, col, rowIndex)),
-            ),
-        );
+            );
+        }
         return map;
     });
 
@@ -166,7 +166,7 @@ export class TableView<T> {
         this.debounceTimer = setTimeout(() => {
             this.dt().first = 0;
             this.dt().filterGlobal(value, 'contains');
-        }, TableView.SEARCH_DEBOUNCE_MS);
+        }, TableViewComponent.SEARCH_DEBOUNCE_MS);
     }
 
     buildRendererParams(data: T, col: ColumnDef<T>, rowIndex: number): CellRendererParams<T> {

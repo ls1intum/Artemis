@@ -67,6 +67,7 @@
                         @if (col?.templateRef) {
                             <ng-container [ngTemplateOutlet]="col.templateRef" [ngTemplateOutletContext]="{ $implicit: rowParams?.[colIndex] }" />
                         } @else if (col?.cellRenderer) {
+                            <!-- ngComponentOutlet is used intentionally: @-syntax has no equivalent for dynamic component instantiation -->
                             <ng-container *ngComponentOutlet="col.cellRenderer; inputs: { params: rowParams?.[colIndex] }" />
                         } @else {
                             {{ rowData?.[col?.field] }}

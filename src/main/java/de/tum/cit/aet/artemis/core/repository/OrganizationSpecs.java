@@ -34,7 +34,10 @@ public class OrganizationSpecs {
      * @return an OR predicate over all specified columns
      */
     private static Predicate buildSearchPredicate(CriteriaBuilder builder, From<?, ?> from, String searchTerm, String... columns) {
-        String pattern = "%" + searchTerm.toLowerCase() + "%";
+        if (searchTerm == null || searchTerm.isBlank()) {
+            return builder.conjunction();
+        }
+        String pattern = "%" + searchTerm.trim().toLowerCase() + "%";
         Predicate[] predicates = Arrays.stream(columns).map(column -> builder.like(builder.lower(from.get(column)), pattern)).toArray(Predicate[]::new);
         return builder.or(predicates);
     }
@@ -78,7 +81,7 @@ public class OrganizationSpecs {
     @NonNull
     public static Predicate getMemberPredicate(CriteriaBuilder builder, Root<Organization> root, Join<Organization, User> u, long organizationId, String searchTerm) {
         Predicate orgFilter = builder.equal(root.get(Organization_.ID), organizationId);
-        if (searchTerm.isBlank()) {
+        if (searchTerm == null || searchTerm.isBlank()) {
             return orgFilter;
         }
         return builder.and(orgFilter, getMemberSearchPredicate(builder, u, searchTerm));
@@ -128,7 +131,7 @@ public class OrganizationSpecs {
     @NonNull
     public static Predicate getCoursePredicate(CriteriaBuilder builder, Root<Organization> root, Join<Organization, Course> c, long organizationId, String searchTerm) {
         Predicate orgFilter = builder.equal(root.get(Organization_.ID), organizationId);
-        if (searchTerm.isBlank()) {
+        if (searchTerm == null || searchTerm.isBlank()) {
             return orgFilter;
         }
         return builder.and(orgFilter, getCourseSearchPredicate(builder, c, searchTerm));

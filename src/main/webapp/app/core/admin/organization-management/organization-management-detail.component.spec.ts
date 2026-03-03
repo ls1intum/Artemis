@@ -67,6 +67,7 @@ describe('OrganizationManagementDetailComponent', () => {
 
         component.ngOnInit();
 
+        expect(organizationService.getOrganizationById).toHaveBeenCalledWith(organization1.id);
         expect(component.organization().id).toBe(organization1.id);
         expect(component.organizationId()).toBe(organization1.id);
     });

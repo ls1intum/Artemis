@@ -11,7 +11,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title-bar-actions.directive';
-import { ColumnDef, TableView } from 'app/shared/table-view/table-view';
+import { ColumnDef, TableViewComponent } from 'app/shared/table-view/table-view';
 import { buildDbQueryFromLazyEvent } from 'app/shared/table-view/request-builder';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -23,7 +23,7 @@ import { onError } from 'app/shared/util/global.utils';
 @Component({
     selector: 'jhi-organization-management',
     templateUrl: './organization-management.component.html',
-    imports: [TranslateDirective, RouterLink, FaIconComponent, DeleteButtonDirective, AdminTitleBarTitleDirective, AdminTitleBarActionsDirective, TableView],
+    imports: [TranslateDirective, RouterLink, FaIconComponent, DeleteButtonDirective, AdminTitleBarTitleDirective, AdminTitleBarActionsDirective, TableViewComponent],
 })
 export class OrganizationManagementComponent {
     private readonly organizationService = inject(OrganizationManagementService);
@@ -51,12 +51,16 @@ export class OrganizationManagementComponent {
     faWrench = faWrench;
 
     private lastLoadEvent: TableLazyLoadEvent | undefined;
+    private loadRequestId = 0;
 
     /**
      * Deletes an organization by ID and refreshes the current page.
      * @param organizationId - The ID of the organization to delete
      */
-    deleteOrganization(organizationId: number): void {
+    deleteOrganization(organizationId: number | undefined): void {
+        if (organizationId === undefined) {
+            return;
+        }
         this.organizationService.deleteOrganization(organizationId).subscribe({
             next: () => {
                 this.dialogErrorSource.next('');
@@ -73,14 +77,17 @@ export class OrganizationManagementComponent {
     loadOrganizations(event: TableLazyLoadEvent): void {
         this.lastLoadEvent = event;
         this.isLoading.set(true);
+        const requestId = ++this.loadRequestId;
         const query = buildDbQueryFromLazyEvent(event);
         this.organizationService.getOrganizations(query, true).subscribe({
             next: (response) => {
+                if (requestId !== this.loadRequestId) return;
                 this.organizations.set(response.content);
                 this.totalCount.set(response.totalElements);
                 this.isLoading.set(false);
             },
             error: (error: HttpErrorResponse) => {
+                if (requestId !== this.loadRequestId) return;
                 this.organizations.set([]);
                 this.totalCount.set(0);
                 this.isLoading.set(false);

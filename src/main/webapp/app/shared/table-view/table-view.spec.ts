@@ -2,7 +2,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TableLazyLoadEvent, TablePageEvent } from 'primeng/table';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ColumnDef, TableView, TableViewOptions } from './table-view';
+import { ColumnDef, TableViewComponent, TableViewOptions } from './table-view';
 
 interface TestData {
     id: number;
@@ -10,11 +10,11 @@ interface TestData {
     value: number;
 }
 
-describe('TableView', () => {
+describe('TableViewComponent', () => {
     setupTestBed({ zoneless: true });
 
-    let component: TableView<TestData>;
-    let fixture: ComponentFixture<TableView<TestData>>;
+    let component: TableViewComponent<TestData>;
+    let fixture: ComponentFixture<TableViewComponent<TestData>>;
 
     const mockColumns: ColumnDef<TestData>[] = [
         { field: 'id', header: 'ID', width: '100px', sort: true },
@@ -30,12 +30,12 @@ describe('TableView', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [TableView],
+            imports: [TableViewComponent],
         })
-            .overrideTemplate(TableView, '')
+            .overrideTemplate(TableViewComponent, '')
             .compileComponents();
 
-        fixture = TestBed.createComponent(TableView<TestData>);
+        fixture = TestBed.createComponent(TableViewComponent<TestData>);
         component = fixture.componentInstance;
 
         // Set required inputs
@@ -300,7 +300,7 @@ describe('TableView', () => {
         expect(mockTable.filterGlobal).not.toHaveBeenCalled();
 
         // Wait for debounce
-        vi.advanceTimersByTime(TableView['SEARCH_DEBOUNCE_MS']);
+        vi.advanceTimersByTime(TableViewComponent['SEARCH_DEBOUNCE_MS']);
 
         expect(mockTable.filterGlobal).toHaveBeenCalledWith('test search', 'contains');
         expect(mockTable.first).toBe(0);
@@ -339,7 +339,7 @@ describe('TableView', () => {
 
         component.onGlobalSearch('  TEST SEARCH  ');
 
-        vi.advanceTimersByTime(TableView['SEARCH_DEBOUNCE_MS']);
+        vi.advanceTimersByTime(TableViewComponent['SEARCH_DEBOUNCE_MS']);
 
         expect(mockTable.filterGlobal).toHaveBeenCalledWith('test search', 'contains');
     });

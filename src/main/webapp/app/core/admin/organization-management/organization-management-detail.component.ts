@@ -13,7 +13,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 import { TableLazyLoadEvent } from 'primeng/table';
-import { CellRendererParams, ColumnDef, TableView } from 'app/shared/table-view/table-view';
+import { CellRendererParams, ColumnDef, TableViewComponent } from 'app/shared/table-view/table-view';
 import { buildDbQueryFromLazyEvent } from 'app/shared/table-view/request-builder';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -25,7 +25,7 @@ import { onError } from 'app/shared/util/global.utils';
 @Component({
     selector: 'jhi-organization-management-detail',
     templateUrl: './organization-management-detail.component.html',
-    imports: [TranslateDirective, RouterLink, FaIconComponent, DeleteButtonDirective, AdminTitleBarTitleDirective, TableView],
+    imports: [TranslateDirective, RouterLink, FaIconComponent, DeleteButtonDirective, AdminTitleBarTitleDirective, TableViewComponent],
 })
 export class OrganizationManagementDetailComponent implements OnInit {
     private readonly organizationService = inject(OrganizationManagementService);
@@ -76,13 +76,24 @@ export class OrganizationManagementDetailComponent implements OnInit {
     /** Last load event for users table, used to refresh after removal */
     private lastUsersLoadEvent: TableLazyLoadEvent | undefined;
 
+    private usersLoadId = 0;
+    private coursesLoadId = 0;
+
     ngOnInit() {
         this.route.data.subscribe(({ organization }) => {
             if (organization) {
-                const id: number = organization.body ? organization.body.id : organization.id;
+                const id: number | undefined = organization.body ? organization.body.id : organization.id;
+                if (id === undefined || !Number.isFinite(id)) {
+                    return;
+                }
                 this.organizationId.set(id);
-                this.organizationService.getOrganizationById(id).subscribe((org) => {
-                    this.organization.set(org);
+                this.organizationService.getOrganizationById(id).subscribe({
+                    next: (org) => {
+                        this.organization.set(org);
+                    },
+                    error: (err: HttpErrorResponse) => {
+                        onError(this.alertService, err);
+                    },
                 });
             }
         });
@@ -95,14 +106,17 @@ export class OrganizationManagementDetailComponent implements OnInit {
         }
         this.lastUsersLoadEvent = event;
         this.usersLoading.set(true);
+        const requestId = ++this.usersLoadId;
         const query = buildDbQueryFromLazyEvent(event);
         this.organizationService.getOrganizationUsers(id, query).subscribe({
             next: (res) => {
+                if (requestId !== this.usersLoadId) return;
                 this.users.set(res.content);
                 this.usersTotal.set(res.totalElements);
                 this.usersLoading.set(false);
             },
             error: (err: HttpErrorResponse) => {
+                if (requestId !== this.usersLoadId) return;
                 this.users.set([]);
                 this.usersTotal.set(0);
                 this.usersLoading.set(false);
@@ -117,14 +131,17 @@ export class OrganizationManagementDetailComponent implements OnInit {
             return;
         }
         this.coursesLoading.set(true);
+        const requestId = ++this.coursesLoadId;
         const query = buildDbQueryFromLazyEvent(event);
         this.organizationService.getOrganizationCourses(id, query).subscribe({
             next: (res) => {
+                if (requestId !== this.coursesLoadId) return;
                 this.courses.set(res.content);
                 this.coursesTotal.set(res.totalElements);
                 this.coursesLoading.set(false);
             },
             error: (err: HttpErrorResponse) => {
+                if (requestId !== this.coursesLoadId) return;
                 this.courses.set([]);
                 this.coursesTotal.set(0);
                 this.coursesLoading.set(false);

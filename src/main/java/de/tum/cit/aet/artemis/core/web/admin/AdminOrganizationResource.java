@@ -218,6 +218,7 @@ public class AdminOrganizationResource {
     @GetMapping("organizations/{organizationId}/users")
     public ResponseEntity<List<OrganizationMemberDTO>> getOrganizationUsers(@PathVariable long organizationId, SearchTermPageableSearchDTO<String> search) {
         log.debug("REST request to get users of organization : {}", organizationId);
+        organizationRepository.findByIdElseThrow(organizationId);
         Page<OrganizationMemberDTO> page = organizationRepository.getUsersByOrganizationId(organizationId, search);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
@@ -233,6 +234,7 @@ public class AdminOrganizationResource {
     @GetMapping("organizations/{organizationId}/courses")
     public ResponseEntity<List<OrganizationCourseDTO>> getOrganizationCourses(@PathVariable long organizationId, SearchTermPageableSearchDTO<String> search) {
         log.debug("REST request to get courses of organization : {}", organizationId);
+        organizationRepository.findByIdElseThrow(organizationId);
         Page<OrganizationCourseDTO> page = organizationRepository.getCoursesByOrganizationId(organizationId, search);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
