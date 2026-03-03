@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, forwardRef, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, computed, effect, forwardRef, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -23,6 +23,8 @@ import { SEARCH_DEBOUNCE_MS, SearchResultView } from 'app/core/navbar/global-sea
 })
 export class GlobalSearchIrisAnswerComponent extends SearchResultView {
     readonly query = input.required<string>();
+    readonly selectedSourceIndex = input<number>(-1);
+    readonly active = input<boolean>(false);
     readonly closeDrawer = output<void>();
 
     private readonly lectureSearchService = inject(LectureSearchService);
@@ -31,8 +33,9 @@ export class GlobalSearchIrisAnswerComponent extends SearchResultView {
     protected readonly isLoading = signal(false);
     protected readonly hasError = signal(false);
 
-    // Does not participate in keyboard navigation — nav stays on the lecture results side.
-    readonly itemCount = computed(() => 0);
+    readonly itemCount = computed(() => this.result()?.sources.length ?? 0);
+    private readonly selectableItems = viewChildren<ElementRef>('selectableItem');
+    private readonly contentArea = viewChild<ElementRef<HTMLElement>>('contentArea');
 
     protected readonly faTimes = faTimes;
     protected readonly faComments = faComments;
@@ -40,6 +43,18 @@ export class GlobalSearchIrisAnswerComponent extends SearchResultView {
 
     constructor() {
         super();
+        effect(() => {
+            const index = this.selectedSourceIndex();
+            if (index < 0) {
+                // Only scroll to top when the panel itself is still focused (ArrowUp past first source).
+                // When the panel is deactivated (ArrowLeft), leave the scroll position as-is.
+                if (this.active()) {
+                    this.contentArea()?.nativeElement.scrollTo({ top: 0 });
+                }
+            } else {
+                this.selectableItems()[index]?.nativeElement.scrollIntoView({ block: 'nearest' });
+            }
+        });
         toObservable(this.query)
             .pipe(
                 debounceTime(SEARCH_DEBOUNCE_MS),

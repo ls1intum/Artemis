@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, HostListener, OnDestroy, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, OnDestroy, computed, effect, inject, signal, viewChild, viewChildren } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EMPTY, Subject, catchError, filter, of, switchMap, tap, timer } from 'rxjs';
@@ -42,6 +42,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
     protected readonly searchInputComponent = viewChild<SearchInputComponent>(SearchInputComponent);
     protected readonly currentView = signal(SearchView.Navigation);
     protected readonly irisSourceView = signal(SearchView.Navigation);
+    protected readonly activeSplitPanel = signal<'left' | 'right'>('left');
     protected readonly SearchView = SearchView;
     protected readonly searchQuery = signal('');
     protected readonly activeFilters = signal<string[]>([]);
@@ -50,8 +51,13 @@ export class GlobalSearchModalComponent implements OnDestroy {
     protected readonly hasSearched = signal<boolean>(false);
     protected readonly searchError = signal<string | undefined>(undefined);
     protected readonly selectedIndex = signal(-1);
-    private readonly activeView = viewChild(SearchResultView);
-    private readonly maxIndex = computed(() => (this.activeView()?.itemCount() ?? 0) - 1);
+    private readonly allViews = viewChildren(SearchResultView);
+    private readonly maxIndex = computed(() => {
+        if (this.currentView() === SearchView.Iris && this.activeSplitPanel() === 'right') {
+            return (this.allViews()[1]?.itemCount() ?? 0) - 1;
+        }
+        return (this.allViews()[0]?.itemCount() ?? 0) - 1;
+    });
     private readonly searchSubject = new Subject<SearchState | null>();
     // Cache for placeholder results (empty-query + filter) so re-adding a filter serves from cache
     private readonly placeholderCache = new Map<string, GlobalSearchResult[]>();
@@ -180,6 +186,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
     }
 
     protected onSearchKeyDown(event: KeyboardEvent) {
+        this.onInputKeydown(event);
         // If backspace is pressed and input is empty, remove the rightmost filter
         if (event.key === 'Backspace' && this.searchQuery() === '') {
             const filters = this.activeFilters();
@@ -241,6 +248,18 @@ export class GlobalSearchModalComponent implements OnDestroy {
         this.placeholderCache.clear();
     }
 
+    protected onInputKeydown(event: KeyboardEvent): void {
+        if (this.currentView() !== SearchView.Iris) return;
+        // When no item is selected (selectedIndex < 0) the user is back in the input:
+        // let ArrowLeft/Right move the cursor normally instead of switching panels.
+        if (this.selectedIndex() < 0) return;
+        if (event.key === 'ArrowRight' && this.activeSplitPanel() === 'left') {
+            event.preventDefault();
+        } else if (event.key === 'ArrowLeft' && this.activeSplitPanel() === 'right') {
+            event.preventDefault();
+        }
+    }
+
     protected focusInput() {
         // setTimeout(0) defers focus until after PrimeNG's dialog focus trap has run
         setTimeout(() => {
@@ -252,6 +271,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
         this.overlay.close();
         this.currentView.set(SearchView.Navigation);
         this.irisSourceView.set(SearchView.Navigation);
+        this.activeSplitPanel.set('left');
         this.selectedIndex.set(-1);
     }
 
@@ -281,6 +301,20 @@ export class GlobalSearchModalComponent implements OnDestroy {
                 event.preventDefault();
                 this.selectedIndex.update((i) => Math.max(i - 1, -1));
                 break;
+            case 'ArrowRight':
+                if (this.currentView() === SearchView.Iris && this.activeSplitPanel() === 'left' && this.selectedIndex() >= 0) {
+                    event.preventDefault();
+                    this.activeSplitPanel.set('right');
+                    this.selectedIndex.set(0);
+                }
+                break;
+            case 'ArrowLeft':
+                if (this.currentView() === SearchView.Iris && this.activeSplitPanel() === 'right' && this.selectedIndex() >= 0) {
+                    event.preventDefault();
+                    this.activeSplitPanel.set('left');
+                    this.selectedIndex.set(0);
+                }
+                break;
         }
     }
 
@@ -297,6 +331,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
             this.irisSourceView.set(this.currentView());
         }
         this.currentView.set(view);
+        this.activeSplitPanel.set('left');
         this.selectedIndex.set(-1);
     }
 

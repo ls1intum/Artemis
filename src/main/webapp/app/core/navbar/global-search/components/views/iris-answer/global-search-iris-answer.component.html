@@ -16,7 +16,7 @@
     </div>
 
     <!-- Content -->
-    <div class="iris-answer-content flex-grow-1 overflow-y-auto">
+    <div #contentArea class="iris-answer-content flex-grow-1 overflow-y-auto">
         @if (isLoading()) {
             <div class="iris-loading d-flex flex-column gap-2 p-2" aria-busy="true">
                 <p-skeleton width="90%" height="0.875rem" borderRadius="0.25rem" />
@@ -37,7 +37,13 @@
                     <span class="iris-sources-label text-secondary">{{ 'global.search.irisAnswerSources' | artemisTranslate }}</span>
                     <div class="iris-sources-list d-flex flex-column gap-2 mt-2">
                         @for (source of result()!.sources; track $index) {
-                            <a class="iris-source-card border p-2 text-decoration-none d-block" [routerLink]="source.lectureUnit.link" [attr.aria-label]="source.lectureUnit.name">
+                            <a
+                                #selectableItem
+                                class="iris-source-card border p-2 text-decoration-none d-block"
+                                [class.is-selected]="selectedSourceIndex() === $index"
+                                [routerLink]="source.lectureUnit.link"
+                                [attr.aria-label]="source.lectureUnit.name"
+                            >
                                 <span class="d-block fw-medium text-body iris-source-title">{{ source.lectureUnit.name }}</span>
                                 <span class="iris-source-meta"
                                     >{{ source.course.name }} › {{ source.lecture.name }} · {{ 'global.search.pageAbbreviation' | artemisTranslate }}
