@@ -106,18 +106,16 @@ export const mockWebsocketStatusMessageWithInteralStage = {
 
 export const mockConversation = {
     id: 1,
-    exercise: irisExercise,
     messages: [mockClientMessage, mockServerMessage],
-    chatMode: ChatServiceMode.COURSE,
+    mode: ChatServiceMode.COURSE,
     entityId: 1,
     creationDate: new Date(),
 } as IrisSession;
 
 export const mockConversationWithNoMessages = {
     id: 1,
-    exercise: irisExercise,
     messages: [],
-    chatMode: ChatServiceMode.COURSE,
+    mode: ChatServiceMode.COURSE,
     entityId: 1,
     creationDate: new Date(),
 } as IrisSession;
