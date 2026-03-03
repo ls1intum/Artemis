@@ -7,6 +7,9 @@ TEST_PATHS=("$@")
 FAILED=0
 REPORTER_FAILED=0
 
+# Clean up stale marker from previous runs (self-hosted runners have persistent workspaces)
+rm -f ./test-reports/.reporter-failed
+
 if [ ${#TEST_PATHS[@]} -eq 0 ] && [ -n "$PLAYWRIGHT_TEST_PATHS" ]; then
     read -r -a TEST_PATHS <<< "$PLAYWRIGHT_TEST_PATHS"
 fi
