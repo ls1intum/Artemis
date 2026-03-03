@@ -219,8 +219,9 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, OnDest
             this.renderer.insertBefore(containerButtons, nowButton, containerButtons.firstChild);
 
             this.nowButtonClickListener = this.renderer.listen(nowButton, 'click', () => {
-                this.setNow();
-                picker.close();
+                const now = new Date();
+                picker.select(now);
+                picker.confirmSelect();
             });
 
             this.nowButtonElement = nowButton;

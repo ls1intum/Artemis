@@ -191,21 +191,25 @@ describe('FormDateTimePickerComponent', () => {
         jest.useRealTimers();
     });
 
-    it('should call setNow and close picker when Now button is clicked', () => {
+    it('should select current date and confirm when Now button is clicked', () => {
         jest.useFakeTimers();
         const containerButtons = createContainerButtons();
 
-        const mockPicker = { close: jest.fn() } as any;
-        const setNowSpy = jest.spyOn(component, 'setNow').mockImplementation();
+        const mockPicker = { select: jest.fn(), confirmSelect: jest.fn() } as any;
 
         component.onPickerOpen(mockPicker);
         jest.runAllTimers();
 
+        const beforeClick = new Date();
         const nowButton = containerButtons.querySelector('.owl-dt-now-button') as HTMLButtonElement;
         nowButton.click();
+        const afterClick = new Date();
 
-        expect(setNowSpy).toHaveBeenCalledOnce();
-        expect(mockPicker.close).toHaveBeenCalledOnce();
+        expect(mockPicker.select).toHaveBeenCalledOnce();
+        const selectedDate = mockPicker.select.mock.calls[0][0] as Date;
+        expect(selectedDate.getTime()).toBeGreaterThanOrEqual(beforeClick.getTime());
+        expect(selectedDate.getTime()).toBeLessThanOrEqual(afterClick.getTime());
+        expect(mockPicker.confirmSelect).toHaveBeenCalledOnce();
 
         component.onPickerClose();
         removeContainerButtons(containerButtons);
