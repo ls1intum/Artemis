@@ -1,51 +1,38 @@
-# Runs on every PR intentionally: PostgreSQL testcontainer runs are fast and catch
-# database-specific issues early. The H2-based test run may be disabled in the future.
+# Only runs when server-relevant files change (Java source, Gradle config, test resources, etc.)
+# Client-only changes do not need PostgreSQL integration testing.
 name: Test (PostgreSQL)
 
 on:
   pull_request:
-    paths-ignore:
-    - 'README.md'
-    - 'CODE_OF_CONDUCT.md'
-    - 'CONTRIBUTING.md'
-    - 'LICENSE'
-    - 'SECURITY.md'
-    - 'documentation/**'
-    - '.github/**'
-    - '!.github/workflows/test-postgres.yml'
-    - '.husky/**'
-    - 'docker/**'
-    - '.coderabbit.yaml'
-    - '.editorconfig'
-    - '.gitattributes'
-    - 'artemis-server-cli'
-    - 'supporting_scripts/**'
-    - 'CITATION.cff'
-    - 'proxy.conf.mjs'
+    paths:
+    - 'src/main/java/**'
+    - 'src/main/resources/**'
+    - 'src/test/java/**'
+    - 'src/test/resources/**'
+    - 'build.gradle'
+    - 'settings.gradle'
+    - 'gradle.properties'
+    - 'gradle/**'
+    - '.env'
+    - '.github/workflows/test-postgres.yml'
   push:
     branches:
     - develop
     - main
     - release/*
     tags: '[0-9]+.[0-9]+.[0-9]+'
-    paths-ignore:
-    - 'README.md'
-    - 'CODE_OF_CONDUCT.md'
-    - 'CONTRIBUTING.md'
-    - 'LICENSE'
-    - 'SECURITY.md'
-    - 'documentation/**'
-    - '.github/**'
-    - '!.github/workflows/test-postgres.yml'
-    - '.husky/**'
-    - 'docker/**'
-    - '.coderabbit.yaml'
-    - '.editorconfig'
-    - '.gitattributes'
-    - 'artemis-server-cli'
-    - 'supporting_scripts/**'
-    - 'CITATION.cff'
-    - 'proxy.conf.mjs'
+    paths:
+    - 'src/main/java/**'
+    - 'src/main/resources/**'
+    - 'src/test/java/**'
+    - 'src/test/resources/**'
+    - 'build.gradle'
+    - 'settings.gradle'
+    - 'gradle.properties'
+    - 'gradle/**'
+    - '.env'
+    - '.github/workflows/test-postgres.yml'
+  workflow_dispatch: # Allow manual trigger
   release:
     types:
     - created

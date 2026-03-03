@@ -502,7 +502,7 @@ dependencies {
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.5"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.7.1"
     testImplementation "com.redis:testcontainers-redis:2.2.4"
-    testImplementation "org.testcontainers:testcontainers-weaviate:2.0.3"
+    testImplementation "org.testcontainers:testcontainers-weaviate:${testcontainers_version}"
     testImplementation "com.icegreen:greenmail-junit5:2.1.8"
     testImplementation "com.tngtech.archunit:archunit:1.4.1"
     testImplementation "org.skyscreamer:jsonassert:1.5.3"
@@ -535,7 +535,7 @@ dependencyManagement {
         def pgVersion = findProperty('postgres_version') ?: '18.1'
         def bomVersion = pgVersion.count('.') < 2 ? "${pgVersion}.0" : pgVersion
         mavenBom "io.zonky.test.postgres:embedded-postgres-binaries-bom:${bomVersion}"
-        mavenBom "org.testcontainers:testcontainers-bom:2.0.3"
+        mavenBom "org.testcontainers:testcontainers-bom:${testcontainers_version}"
     }
 }
 
@@ -544,12 +544,12 @@ dependencyManagement {
 configurations.matching { it.name != 'mockitoAgent' }.configureEach {
     resolutionStrategy {
         dependencySubstitution {
-            substitute module("org.testcontainers:mysql") using module("org.testcontainers:testcontainers-mysql:2.0.3")
-            substitute module("org.testcontainers:postgresql") using module("org.testcontainers:testcontainers-postgresql:2.0.3")
-            substitute module("org.testcontainers:jdbc") using module("org.testcontainers:testcontainers-jdbc:2.0.3")
-            substitute module("org.testcontainers:database-commons") using module("org.testcontainers:testcontainers-database-commons:2.0.3")
-            substitute module("org.testcontainers:weaviate") using module("org.testcontainers:testcontainers-weaviate:2.0.3")
-            substitute module("org.testcontainers:testcontainers") using module("org.testcontainers:testcontainers:2.0.3")
+            substitute module("org.testcontainers:mysql") using module("org.testcontainers:testcontainers-mysql:${testcontainers_version}")
+            substitute module("org.testcontainers:postgresql") using module("org.testcontainers:testcontainers-postgresql:${testcontainers_version}")
+            substitute module("org.testcontainers:jdbc") using module("org.testcontainers:testcontainers-jdbc:${testcontainers_version}")
+            substitute module("org.testcontainers:database-commons") using module("org.testcontainers:testcontainers-database-commons:${testcontainers_version}")
+            substitute module("org.testcontainers:weaviate") using module("org.testcontainers:testcontainers-weaviate:${testcontainers_version}")
+            substitute module("org.testcontainers:testcontainers") using module("org.testcontainers:testcontainers:${testcontainers_version}")
         }
     }
 }
