@@ -10,6 +10,8 @@ import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { catchError, debounceTime, of, switchMap, tap } from 'rxjs';
 import { SEARCH_DEBOUNCE_MS, SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
+import { GlobalSearchActionItemComponent } from 'app/core/navbar/global-search/components/action-item/global-search-action-item.component';
+import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 
 @Component({
     selector: 'jhi-global-search-lecture-results',
@@ -17,7 +19,7 @@ import { SearchView } from 'app/core/navbar/global-search/models/search-view.mod
     templateUrl: 'global-search-lecture-results.component.html',
     styleUrls: ['./global-search-lecture-results.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [ArtemisTranslatePipe, FaIconComponent, RouterLink, Skeleton],
+    imports: [ArtemisTranslatePipe, FaIconComponent, RouterLink, Skeleton, GlobalSearchActionItemComponent, IrisLogoComponent],
     providers: [{ provide: SearchResultView, useExisting: forwardRef(() => GlobalSearchLectureResultsComponent) }],
 })
 export class GlobalSearchLectureResultsComponent extends SearchResultView {
@@ -32,12 +34,13 @@ export class GlobalSearchLectureResultsComponent extends SearchResultView {
     protected readonly lectureResults = signal<LectureSearchResult[]>([]);
     protected readonly isLoading = signal(false);
     protected readonly hasError = signal(false);
-    readonly itemCount = computed(() => this.lectureResults().length);
-    private readonly cards = viewChildren<ElementRef<HTMLAnchorElement>>('cardRef');
+    readonly itemCount = computed(() => (!this.irisOpen() ? 1 : 0) + this.lectureResults().length);
+    private readonly selectableItems = viewChildren<ElementRef>('selectableItem');
     protected readonly faArrowLeft = faArrowLeft;
     protected readonly faFileLines = faFileLines;
     protected readonly skeletonItems = Array.from({ length: 5 });
     protected readonly SearchView = SearchView;
+    protected readonly IrisLogoSize = IrisLogoSize;
 
     constructor() {
         super();
@@ -46,7 +49,7 @@ export class GlobalSearchLectureResultsComponent extends SearchResultView {
             if (index < 0) {
                 this.hostElement.nativeElement.scrollIntoView({ block: 'start' });
             } else {
-                this.cards()[index]?.nativeElement.scrollIntoView({ block: 'nearest' });
+                this.selectableItems()[index]?.nativeElement.scrollIntoView({ block: 'nearest' });
             }
         });
         toObservable(this.searchQuery)
@@ -81,7 +84,14 @@ export class GlobalSearchLectureResultsComponent extends SearchResultView {
     handleKeydown(event: KeyboardEvent): void {
         const index = this.selectedIndex();
         if (index < 0) return;
-        const result = this.lectureResults()[index];
+        if (!this.irisOpen() && index === 0) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                this.viewSelected.emit(SearchView.Iris);
+            }
+            return;
+        }
+        const result = this.lectureResults()[index - (this.irisOpen() ? 0 : 1)];
         if (event.key === 'Enter' && result) {
             event.preventDefault();
             this.router.navigateByUrl(result.lectureUnit.link);
