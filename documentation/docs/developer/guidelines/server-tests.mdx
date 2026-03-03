@@ -254,7 +254,7 @@ By annotating `abstract` base classes with it, we group tests into parallel runn
 @Execution(ExecutionMode.CONCURRENT)
 @ResourceLock("AbstractSpringIntegrationIndependentTest")
 @AutoConfigureEmbeddedDatabase
-@ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_SCHEDULING, PROFILE_IRIS })
+@ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_SCHEDULING })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false" })
 public abstract class AbstractSpringIntegrationIndependentTest extends AbstractArtemisIntegrationTest { ... }
 ```

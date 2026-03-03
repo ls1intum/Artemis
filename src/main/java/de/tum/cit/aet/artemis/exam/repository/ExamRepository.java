@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.dto.ActiveExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamDeletionInfoDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamStudentCountDTO;
@@ -126,7 +127,9 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
      * @return a paginated list of exams visible to the user according to their role
      */
     @Query("""
-            SELECT e
+            SELECT new de.tum.cit.aet.artemis.exam.dto.ActiveExamDTO(
+                e.id, e.title, e.startDate, e.endDate, e.testExam, e.course.id, e.course.title
+            )
             FROM Exam e
             WHERE :fromDate <= e.visibleDate
                 AND
@@ -136,7 +139,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
                     ((e.course.editorGroupName IN :groups OR e.course.teachingAssistantGroupName IN :groups)
                      AND e.visibleDate <= :nowDate))
             """)
-    Page<Exam> findAllActiveExamsInCoursesWhereAtLeastTutor(@Param("groups") Set<String> groups, Pageable pageable, @Param("fromDate") ZonedDateTime fromDate,
+    Page<ActiveExamDTO> findAllActiveExamsInCoursesWhereAtLeastTutor(@Param("groups") Set<String> groups, Pageable pageable, @Param("fromDate") ZonedDateTime fromDate,
             @Param("nowDate") ZonedDateTime nowDate, @Param("toDate") ZonedDateTime toDate);
 
     /**

@@ -1,6 +1,7 @@
 ---
 services:
   weaviate:
+    container_name: artemis-weaviate
     command:
       - --host
       - 0.0.0.0
@@ -8,7 +9,8 @@ services:
       - "8001"
       - --scheme
       - http
-    image: cr.weaviate.io/semitechnologies/weaviate:1.34.10
+    # Must be compatible with the Java client: https://docs.weaviate.io/weaviate/release-notes
+    image: cr.weaviate.io/semitechnologies/weaviate:1.34.14
     expose:
       - 8001
       - 50051

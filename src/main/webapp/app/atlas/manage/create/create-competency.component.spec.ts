@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -17,15 +18,23 @@ import { CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competen
 import { CompetencyFormComponent } from 'app/atlas/manage/forms/competency/competency-form.component';
 
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CreateCompetency', () => {
+    setupTestBed({ zoneless: true });
     let createCompetencyComponentFixture: ComponentFixture<CreateCompetencyComponent>;
     let createCompetencyComponent: CreateCompetencyComponent;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [CreateCompetencyComponent, CompetencyFormComponent],
-            declarations: [MockPipe(ArtemisTranslatePipe), MockComponent(DocumentationButtonComponent), MockComponent(CompetencyFormComponent), MockDirective(TranslateDirective)],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [
+                CreateCompetencyComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(DocumentationButtonComponent),
+                MockComponent(CompetencyFormComponent),
+                MockDirective(TranslateDirective),
+            ],
+            declarations: [],
             providers: [
                 MockProvider(CompetencyService),
                 MockProvider(LectureService),
@@ -44,15 +53,20 @@ describe('CreateCompetency', () => {
                 },
             ],
         })
-            .compileComponents()
-            .then(() => {
-                createCompetencyComponentFixture = TestBed.createComponent(CreateCompetencyComponent);
-                createCompetencyComponent = createCompetencyComponentFixture.componentInstance;
-            });
+            .overrideComponent(CreateCompetencyComponent, {
+                remove: { imports: [CompetencyFormComponent, DocumentationButtonComponent, TranslateDirective] },
+                add: {
+                    imports: [MockComponent(CompetencyFormComponent), MockComponent(DocumentationButtonComponent), MockDirective(TranslateDirective)],
+                },
+            })
+            .compileComponents();
+
+        createCompetencyComponentFixture = TestBed.createComponent(CreateCompetencyComponent);
+        createCompetencyComponent = createCompetencyComponentFixture.componentInstance;
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -76,8 +90,8 @@ describe('CreateCompetency', () => {
             status: 201,
         });
 
-        const createSpy = jest.spyOn(competencyService, 'create').mockReturnValue(of(response));
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        const createSpy = vi.spyOn(competencyService, 'create').mockReturnValue(of(response));
+        const navigateSpy = vi.spyOn(router, 'navigate');
 
         createCompetencyComponentFixture.detectChanges();
 
@@ -110,7 +124,7 @@ describe('CreateCompetency', () => {
             optional: true,
         };
 
-        const createSpy = jest.spyOn(competencyService, 'create');
+        const createSpy = vi.spyOn(competencyService, 'create');
 
         createCompetencyComponent.createCompetency(formData);
 

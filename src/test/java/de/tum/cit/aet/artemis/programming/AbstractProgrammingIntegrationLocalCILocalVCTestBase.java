@@ -66,6 +66,7 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
         // Standard doReturn().when() can cause "WrongTypeOfReturnValue" errors when multiple tests
         // simultaneously stub the same spy bean.
         lenient().doReturn(dockerClientMock).when(buildAgentConfiguration).getDockerClient();
+        lenient().doReturn(true).when(buildAgentConfiguration).isDockerAvailable();
         this.dockerClient = dockerClientMock;
     }
 

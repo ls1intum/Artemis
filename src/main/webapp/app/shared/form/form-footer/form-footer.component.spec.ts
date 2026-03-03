@@ -70,6 +70,6 @@ describe('FormFooterComponent', () => {
         comp.isDisabled = false;
         fixture.detectChanges();
         const saveButton = fixture.debugElement.query(By.css('#save-entity')).componentInstance;
-        expect(saveButton.disabled).toBeFalse();
+        expect(saveButton.disabled()).toBeFalse();
     });
 });

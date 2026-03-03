@@ -26,10 +26,11 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercise/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
 import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
-import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/detail-overview-list.component';
+import { DetailOverviewListComponent, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { MockDirective } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CompetencyExerciseLink, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
 
 // Mock child components to avoid their complex dependencies
 @Component({
@@ -200,6 +201,55 @@ describe('TextExercise Management Detail Component', () => {
             expect(statisticsServiceStub).toHaveBeenCalledOnce();
             expect(comp.isExamExercise).toBe(true);
             expect(comp.textExercise).toEqual(textExerciseWithExerciseGroup);
+        });
+    });
+
+    describe('competency links display', () => {
+        const course: Course = { id: 123 } as Course;
+        const textExerciseWithCompetencies: TextExercise = new TextExercise(course, undefined);
+        textExerciseWithCompetencies.id = 123;
+
+        beforeEach(() => {
+            const route = TestBed.inject(ActivatedRoute);
+            route.params = of({ exerciseId: textExerciseWithCompetencies.id });
+        });
+
+        it('should display competency links when exercise has competencies', () => {
+            const competency1 = { id: 1, title: 'Competency 1' } as CourseCompetency;
+            const competency2 = { id: 2, title: 'Competency 2' } as CourseCompetency;
+            textExerciseWithCompetencies.competencyLinks = [{ competency: competency1 } as CompetencyExerciseLink, { competency: competency2 } as CompetencyExerciseLink];
+
+            const headers = new HttpHeaders().append('link', 'link;link');
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: textExerciseWithCompetencies, headers })));
+            vi.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of(textExerciseStatistics));
+
+            fixture.detectChanges();
+
+            expect(comp.detailOverviewSections).toBeDefined();
+            const problemSection = comp.detailOverviewSections.find((section) => section.headline === 'artemisApp.exercise.sections.problem');
+            expect(problemSection).toBeDefined();
+            const competencyDetail = problemSection?.details.find((detail) => detail && 'title' in detail && detail.title === 'artemisApp.competency.link.title');
+            expect(competencyDetail).toBeDefined();
+            expect(competencyDetail).toHaveProperty('type', DetailType.Text);
+            expect(competencyDetail).toHaveProperty('data.text', 'Competency 1, Competency 2');
+        });
+
+        it('should not display competency links when exercise has no competencies', () => {
+            const exerciseWithoutCompetencies = new TextExercise(course, undefined);
+            exerciseWithoutCompetencies.id = 123;
+            exerciseWithoutCompetencies.competencyLinks = [];
+
+            const headers = new HttpHeaders().append('link', 'link;link');
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exerciseWithoutCompetencies, headers })));
+            vi.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of(textExerciseStatistics));
+
+            fixture.detectChanges();
+
+            expect(comp.detailOverviewSections).toBeDefined();
+            const problemSection = comp.detailOverviewSections.find((section) => section.headline === 'artemisApp.exercise.sections.problem');
+            expect(problemSection).toBeDefined();
+            const competencyDetail = problemSection?.details.find((detail) => detail && 'title' in detail && detail.title === 'artemisApp.competency.link.title');
+            expect(competencyDetail).toBeUndefined();
         });
     });
 });

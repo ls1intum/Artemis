@@ -171,7 +171,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testCreateTeam_Forbidden_AsTutorOfDifferentCourse() throws Exception {
-        // If the TA is not part of the correct course TA group anymore, he should not be able to create a team for an exercise of that course
+        // If the TA is not part of the correct course TA group anymore, they should not be able to create a team for an exercise of that course
         course.setTeachingAssistantGroupName("Different group name");
         courseRepository.save(course);
 
@@ -254,7 +254,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testUpdateTeam_Forbidden_AsTutorOfDifferentCourse() throws Exception {
-        // If the TA is not part of the correct course TA group anymore, he should not be able to update a team for an exercise of that course
+        // If the TA is not part of the correct course TA group anymore, they should not be able to update a team for an exercise of that course
         course.setTeachingAssistantGroupName("Different group name");
         courseRepository.save(course);
 
@@ -325,7 +325,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetTeamsForExercise_Forbidden() throws Exception {
-        // If the TA is not part of the correct course TA group anymore, he should not be able to get the teams for an exercise of that course
+        // If the TA is not part of the correct course TA group anymore, they should not be able to get the teams for an exercise of that course
         course.setTeachingAssistantGroupName("Different group name");
         courseRepository.save(course);
         teamUtilService.addTeamsForExercise(exercise, 3, tutor);
@@ -355,7 +355,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteTeam_Forbidden_AsInstructorOfDifferentCourse() throws Exception {
         // If the instructor is not part of the correct course instructor group anymore,
-        // he should not be able to delete a team for an exercise of that course
+        // they should not be able to delete a team for an exercise of that course
         course.setInstructorGroupName("Different group name");
         courseRepository.save(course);
 
@@ -398,7 +398,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         List<TeamSearchUserDTO> users1 = request.getList(resourceUrlSearchUsersInCourse(TEST_PREFIX + "student"), HttpStatus.OK, TeamSearchUserDTO.class);
         assertThat(users1).as("All users of course with 'student' in login were found").hasSize(NUMBER_OF_STUDENTS);
 
-        // Check that a student is found by his login and that he is NOT marked as "assignedToTeam" yet
+        // Check that a student is found by their login and that they are NOT marked as "assignedToTeam" yet
         List<TeamSearchUserDTO> users2 = request.getList(resourceUrlSearchUsersInCourse(TEST_PREFIX + "student1"), HttpStatus.OK, TeamSearchUserDTO.class);
         assertThat(users2).as("Only user with login " + TEST_PREFIX + "'student1' was found").hasSize(1);
         assertThat(users2.getFirst().assignedTeamId()).as("User was correctly marked as not being assigned to a team yet").isNull();
@@ -426,7 +426,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testSearchUsersInCourse_Forbidden_AsTutorOfDifferentCourse() throws Exception {
-        // If the TA is not part of the correct course TA group anymore, he should not be able to search for users in the course
+        // If the TA is not part of the correct course TA group anymore, they should not be able to search for users in the course
         course.setTeachingAssistantGroupName("Different group name");
         courseRepository.save(course);
 

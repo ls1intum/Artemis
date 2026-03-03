@@ -261,6 +261,36 @@ In order to achieve low coupling and high cohesion, services should have as few 
 * Do not break the dependency cycle manually or by using `@Lazy`
 * Move simple service methods into the repository as `default` methods
 
+### Circular dependency resolution
+
+<Callout variant={CalloutVariant.Danger} title="Do NOT use @Lazy or ObjectProvider to resolve circular dependencies">
+
+Using `@Lazy` on constructor parameters or `ObjectProvider<T>` to work around circular dependencies is **strictly forbidden**. These patterns hide architectural problems and make the codebase harder to understand and maintain.
+
+**Forbidden patterns:**
+```java
+// BAD: Using @Lazy on parameter to break circular dependency
+public MyService(@Lazy OtherService otherService) { ... }
+
+// BAD: Using ObjectProvider to defer resolution
+public MyService(ObjectProvider<OtherService> otherServiceProvider) { ... }
+```
+
+**Why these patterns are problematic:**
+1. They hide the underlying architectural issue instead of fixing it
+2. They make dependency graphs harder to understand
+3. They can lead to runtime errors instead of startup-time errors
+4. They encourage poor design decisions
+
+**How to properly resolve circular dependencies:**
+1. **Refactor the architecture** - Extract shared logic into a new service that both services can depend on
+2. **Move logic to repositories** - Simple database operations can be `default` methods in repositories
+3. **Reconsider the design** - A circular dependency often indicates that responsibilities are not properly separated
+
+**Exception:** JPA entity listeners (classes using `@PostPersist`, `@PostUpdate`, `@PreRemove`) are instantiated by Hibernate during `EntityManagerFactory` construction, before the full Spring context is available. In this specific case, `@Lazy` on constructor parameters is the only viable solution. This exception is documented in the architecture tests.
+
+</Callout>
+
 An example for a simple method is finding a single entity by ID:
 
 ```java

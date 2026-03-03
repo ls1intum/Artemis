@@ -1,9 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -14,12 +11,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import jakarta.ws.rs.BadRequestException;
-
 import org.hibernate.Hibernate;
 import org.jspecify.annotations.NonNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -52,8 +45,6 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 @Service
 public class LectureUnitService {
 
-    private static final Logger log = LoggerFactory.getLogger(LectureUnitService.class);
-
     private final LectureUnitRepository lectureUnitRepository;
 
     private final LectureRepository lectureRepository;
@@ -70,11 +61,12 @@ public class LectureUnitService {
 
     private final Optional<CompetencyRepositoryApi> competencyRepositoryApi;
 
-    private final LectureContentProcessingApi contentProcessingApi;
+    private final Optional<LectureContentProcessingApi> contentProcessingApi;
 
     public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
             FileService fileService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<CourseCompetencyApi> courseCompetencyApi,
-            Optional<CompetencyRelationApi> competencyRelationApi, Optional<CompetencyRepositoryApi> competencyRepositoryApi, LectureContentProcessingApi contentProcessingApi) {
+            Optional<CompetencyRelationApi> competencyRelationApi, Optional<CompetencyRepositoryApi> competencyRepositoryApi,
+            Optional<LectureContentProcessingApi> contentProcessingApi) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
@@ -150,7 +142,7 @@ public class LectureUnitService {
         }
     }
 
-    private LectureUnitCompletion createLectureUnitCompletion(LectureUnit lectureUnit, User user) {
+    private static LectureUnitCompletion createLectureUnitCompletion(LectureUnit lectureUnit, User user) {
         // Create a completion status for this lecture unit (only if it does not exist)
         LectureUnitCompletion completion = new LectureUnitCompletion();
         completion.setLectureUnit(lectureUnit);
@@ -174,7 +166,7 @@ public class LectureUnitService {
         if (lectureUnitToDelete instanceof AttachmentVideoUnit attachmentVideoUnit) {
             // Cancel ongoing processing and delete from Pyris vector database
             // Processing state deletion is handled by DB cascade when lecture unit is deleted
-            contentProcessingApi.handleUnitDeletion(attachmentVideoUnit);
+            contentProcessingApi.ifPresent(api -> api.handleUnitDeletion(attachmentVideoUnit));
 
             if (attachmentVideoUnit.getAttachment() != null && attachmentVideoUnit.getAttachment().getLink() != null) {
                 fileService.schedulePathForDeletion(
@@ -206,22 +198,6 @@ public class LectureUnitService {
         lectureUnitLinks.forEach(link -> link.setCompetency(competency));
         competency.setLectureUnitLinks(lectureUnitLinks);
         courseCompetencyApi.get().save(competency);
-    }
-
-    /**
-     * Validates the given URL string and returns the URL object
-     *
-     * @param urlString The URL string to validate
-     * @return The URL object
-     * @throws BadRequestException If the URL string is invalid
-     */
-    public URL validateUrlStringAndReturnUrl(String urlString) {
-        try {
-            return new URI(urlString).toURL();
-        }
-        catch (URISyntaxException | MalformedURLException | IllegalArgumentException e) {
-            throw new BadRequestException();
-        }
     }
 
     /**

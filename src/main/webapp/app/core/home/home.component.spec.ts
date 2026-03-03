@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HomeComponent } from './home.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core/auth/account.service';
@@ -9,7 +9,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauthn.service';
 import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
-import { MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -23,6 +23,9 @@ import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, SetupPasskeyMod
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { User } from 'app/core/user/user.model';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { Saml2LoginComponent } from './saml2-login/saml2-login.component';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { RouterLink } from '@angular/router';
 
 describe('HomeComponent', () => {
     let component: HomeComponent;
@@ -45,7 +48,6 @@ describe('HomeComponent', () => {
         router.setUrl('');
 
         await TestBed.configureTestingModule({
-            imports: [MockRouterLinkDirective, SetupPasskeyModalComponent],
             providers: [
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useValue: route },
@@ -58,11 +60,15 @@ describe('HomeComponent', () => {
                 MockProvider(AlertService),
                 MockProvider(WebauthnService),
                 MockProvider(WebauthnApiService),
-                MockProvider(NgbModal),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(HomeComponent, {
+                remove: { imports: [Saml2LoginComponent, ButtonComponent, RouterLink] },
+                add: { imports: [MockComponent(Saml2LoginComponent), MockComponent(ButtonComponent), MockRouterLinkDirective] },
+            })
+            .compileComponents();
 
         localStorageService = TestBed.inject(LocalStorageService);
         localStorageService.clear();
@@ -94,7 +100,7 @@ describe('HomeComponent', () => {
         expect(component.isFormValid).toBeFalse();
     });
 
-    it('should handle successful login', async () => {
+    it('should handle successful login', fakeAsync(() => {
         const loginSpy = jest.spyOn(loginService, 'login').mockResolvedValue();
         const handleLoginSuccessSpy = jest.spyOn(component as any, 'handleLoginSuccess');
 
@@ -102,7 +108,8 @@ describe('HomeComponent', () => {
         component.password = 'password123';
         component.rememberMe = true;
 
-        await component.login();
+        component.login();
+        tick();
 
         expect(component.isSubmittingLogin).toBeFalse();
         expect(loginSpy).toHaveBeenCalledWith({
@@ -112,33 +119,35 @@ describe('HomeComponent', () => {
         });
         expect(handleLoginSuccessSpy).toHaveBeenCalled();
         expect(component.authenticationError).toBeFalse();
-    });
+    }));
 
-    it('should handle failed login', async () => {
+    it('should handle failed login', fakeAsync(() => {
         jest.spyOn(loginService, 'login').mockRejectedValue(new Error('Login failed'));
 
         component.username = 'testUser';
         component.password = 'wrongPassword';
 
-        await component.login();
+        component.login();
+        tick();
 
         expect(component.isSubmittingLogin).toBeFalse();
         expect(component.authenticationError).toBeTrue();
-    });
+    }));
 
-    it('should set and reset isSubmittingLogin flag', async () => {
+    it('should set and reset isSubmittingLogin flag', fakeAsync(() => {
         const loginSpy = jest.spyOn(loginService, 'login').mockResolvedValue();
 
         component.username = 'testUser';
         component.password = 'password123';
 
-        const loginPromise = component.login();
+        component.login();
         expect(component.isSubmittingLogin).toBeTrue();
 
-        await loginPromise;
+        tick();
+
         expect(component.isSubmittingLogin).toBeFalse();
         expect(loginSpy).toHaveBeenCalled();
-    });
+    }));
 
     describe('openSetupPasskeyModal', () => {
         it('should not open the modal if passkey feature is disabled', () => {

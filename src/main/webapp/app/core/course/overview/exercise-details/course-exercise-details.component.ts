@@ -32,7 +32,7 @@ import { MAX_RESULT_HISTORY_LENGTH, ResultHistoryComponent } from 'app/exercise/
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
 import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
-import { PROFILE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
@@ -219,7 +219,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this.allowComplaintsForAutomaticAssessments = !!programmingExercise.allowComplaintsForAutomaticAssessments && isAfterDateForComplaint;
             this.submissionPolicy = programmingExercise.submissionPolicy;
 
-            this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
+            this.irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
             if (this.irisEnabled && !this.exercise.exerciseGroup && this.courseId) {
                 this.irisSettingsSubscription = this.irisSettingsService.getCourseSettingsWithRateLimit(this.courseId).subscribe((response) => {
                     this.irisChatEnabled = response?.settings?.enabled ?? false;

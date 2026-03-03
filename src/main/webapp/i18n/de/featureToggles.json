@@ -27,10 +27,6 @@
                 "description": "Aktiviere oder deaktiviere Funktionen für alle Nutzer:innen. Änderungen werden sofort wirksam ohne Server-Neustart."
             },
             "profiles": {
-                "iris": {
-                    "name": "Iris (KI-Assistent)",
-                    "description": "Aktiviert den Iris-KI-Tutor, der von LLMs angetrieben wird, für personalisierte Studierendenunterstützung und Code-Hilfe."
-                },
                 "athena": {
                     "name": "Athena (KI-Bewertung)",
                     "description": "Aktiviert Athena ML-basierte automatisierte Feedback-Vorschläge für Text- und Programmieraufgaben."
@@ -38,10 +34,6 @@
                 "apollon": {
                     "name": "Apollon (Modellierung)",
                     "description": "Aktiviert den Apollon-UML-Modellierungseditor zum Erstellen und Bearbeiten von Diagrammen in Modellierungsaufgaben."
-                },
-                "theia": {
-                    "name": "Theia (Online-IDE)",
-                    "description": "Aktiviert die Theia-Cloud-basierte IDE für Programmieraufgaben, die es Studierenden ermöglicht, im Browser zu programmieren."
                 },
                 "ldap": {
                     "name": "LDAP-Authentifizierung",
@@ -69,6 +61,10 @@
                 }
             },
             "modules": {
+                "iris": {
+                    "name": "Iris (KI-Assistent)",
+                    "description": "Aktiviert den Iris-KI-Tutor, der von LLMs angetrieben wird, für personalisierte Studierendenunterstützung und Code-Hilfe."
+                },
                 "atlas": {
                     "name": "Atlas (Adaptives Lernen)",
                     "description": "Aktiviert kompetenzbasierte Lernfunktionen einschließlich Lernpfade, Kompetenz-Tracking und Analysen."
@@ -108,6 +104,10 @@
                 "nebula": {
                     "name": "Nebula (Videoverarbeitung)",
                     "description": "Aktiviert die Verarbeitung und Transkription von Vorlesungsvideos für KI-gestütztes Inhaltsverständnis."
+                },
+                "theia": {
+                    "name": "Theia (Online-IDE)",
+                    "description": "Aktiviert die Theia-Cloud-basierte IDE für Programmieraufgaben, die es Studierenden ermöglicht, im Browser zu programmieren."
                 },
                 "sharing": {
                     "name": "Aufgaben-Sharing",

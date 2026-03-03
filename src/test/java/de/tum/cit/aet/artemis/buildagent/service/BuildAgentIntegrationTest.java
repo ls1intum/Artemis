@@ -7,6 +7,7 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -14,6 +15,7 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,6 +32,7 @@ import com.github.dockerjava.api.command.CopyArchiveToContainerCmd;
 import com.github.dockerjava.api.command.InspectImageCmd;
 import com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.dockerjava.api.command.StartContainerCmd;
+import com.github.dockerjava.api.command.VersionCmd;
 import com.github.dockerjava.api.exception.NotFoundException;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
@@ -79,6 +82,12 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     @Autowired
     private ApplicationContext applicationContext;
 
+    @Autowired
+    private SharedQueueProcessingService sharedQueueProcessingService;
+
+    @Autowired
+    private BuildAgentInformationService buildAgentInformationService;
+
     @BeforeAll
     void init() {
         processingJobs = distributedDataAccessService.getDistributedProcessingJobs();
@@ -98,6 +107,24 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         buildJobQueue.clear();
         processingJobs.clear();
         resultQueue.clear();
+        // Ensure the build agent is not paused from a previous test
+        if (sharedQueueProcessingService.isPaused()) {
+            resumeBuildAgentTopic.publish(buildAgentShortName);
+            await().atMost(10, TimeUnit.SECONDS).until(() -> !sharedQueueProcessingService.isPaused());
+        }
+    }
+
+    @AfterEach
+    void cleanup() {
+        // Ensure the build agent is resumed after each test to not affect subsequent tests
+        if (sharedQueueProcessingService.isPaused()) {
+            resumeBuildAgentTopic.publish(buildAgentShortName);
+            await().atMost(10, TimeUnit.SECONDS).until(() -> !sharedQueueProcessingService.isPaused());
+        }
+        // Clear any remaining items
+        buildJobQueue.clear();
+        processingJobs.clear();
+        resultQueue.clear();
     }
 
     @Test
@@ -106,18 +133,18 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
         buildJobQueue.add(queueItem);
 
-        await().until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
             var processingJob = processingJobs.get(queueItem.id());
             return processingJob != null && processingJob.jobTimingInfo().buildStartDate() != null;
         });
 
-        await().until(() -> {
-            var buildAgent = buildAgentInformation.get(distributedDataAccessService.getLocalMemberAddress());
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
+            var buildAgent = buildAgentInformation.get(buildAgentShortName);
             return buildAgent.numberOfCurrentBuildJobs() == 1 && buildAgent.maxNumberOfConcurrentBuildJobs() == 2 && buildAgent.runningBuildJobs().size() == 1
                     && buildAgent.runningBuildJobs().getFirst().id().equals(queueItem.id());
         });
 
-        await().until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
             var resultQueueItem = resultQueue.poll();
             return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())
                     && resultQueueItem.buildJobQueueItem().status() == BuildStatus.SUCCESSFUL;
@@ -153,21 +180,21 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         buildJobQueue.add(queueItem);
         buildJobQueue.add(queueItem2);
 
-        await().pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
             var processingJob = processingJobs.get(queueItem.id());
             var processingJob2 = processingJobs.get(queueItem2.id());
             return processingJob != null && processingJob.jobTimingInfo().buildStartDate() != null && processingJob2 != null
                     && processingJob2.jobTimingInfo().buildStartDate() != null;
         });
 
-        await().pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
-            var buildAgent = buildAgentInformation.get(distributedDataAccessService.getLocalMemberAddress());
+        await().atMost(30, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
+            var buildAgent = buildAgentInformation.get(buildAgentShortName);
             return buildAgent.numberOfCurrentBuildJobs() == 2 && buildAgent.maxNumberOfConcurrentBuildJobs() == 2 && buildAgent.runningBuildJobs().size() == 2
                     && (buildAgent.runningBuildJobs().getFirst().id().equals(queueItem.id()) || buildAgent.runningBuildJobs().getFirst().id().equals(queueItem2.id()))
                     && (buildAgent.runningBuildJobs().getLast().id().equals(queueItem.id()) || buildAgent.runningBuildJobs().getLast().id().equals(queueItem2.id()));
         });
 
-        await().until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
             var resultQueueItem = resultQueue.poll();
             var resultQueueItem2 = resultQueue.poll();
             return resultQueueItem != null && resultQueueItem.buildJobQueueItem().status() == BuildStatus.SUCCESSFUL && resultQueueItem2 != null
@@ -187,7 +214,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
         buildJobQueue.add(queueItem);
 
-        await().until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
             var resultQueueItem = resultQueue.poll();
             return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id()) && resultQueueItem.buildJobQueueItem().status() == BuildStatus.FAILED;
         });
@@ -206,7 +233,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
         buildJobQueue.add(queueItem);
 
-        await().until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
             var resultQueueItem = resultQueue.poll();
             return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())
                     && resultQueueItem.buildJobQueueItem().status() == BuildStatus.TIMEOUT;
@@ -219,7 +246,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
         buildJobQueue.add(queueItem);
 
-        await().until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
             var resultQueueItem = resultQueue.poll();
             return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())
                     && resultQueueItem.buildJobQueueItem().status() == BuildStatus.SUCCESSFUL;
@@ -241,14 +268,14 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         buildJobQueue.add(queueItem);
 
         // poll delay will slow down tests, but will remove flaky to make sure that the job was added to the map before sending the cancellation message
-        await().pollDelay(500, TimeUnit.MILLISECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).pollDelay(500, TimeUnit.MILLISECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
             var processingJob = processingJobs.get(queueItem.id());
             return processingJob != null && processingJob.jobTimingInfo().buildStartDate() != null;
         });
 
         canceledBuildJobsTopic.publish(queueItem.id());
 
-        await().until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
             var resultQueueItem = resultQueue.poll();
             return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())
                     && resultQueueItem.buildJobQueueItem().status() == BuildStatus.CANCELLED;
@@ -288,8 +315,8 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     void testPauseAndResumeBuildAgent() throws InterruptedException {
         pauseBuildAgentTopic.publish(buildAgentShortName);
 
-        await().until(() -> {
-            var buildAgent = buildAgentInformation.get(distributedDataAccessService.getLocalMemberAddress());
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
+            var buildAgent = buildAgentInformation.get(buildAgentShortName);
             return buildAgent.status() == BuildAgentStatus.PAUSED;
         });
 
@@ -297,19 +324,19 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
         buildJobQueue.add(queueItem);
 
-        await().pollDelay(100, TimeUnit.MILLISECONDS).until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).pollDelay(100, TimeUnit.MILLISECONDS).until(() -> {
             var queueItemPolled = buildJobQueue.peek();
             return queueItemPolled != null && queueItemPolled.id().equals(queueItem.id());
         });
 
         resumeBuildAgentTopic.publish(buildAgentShortName);
 
-        await().until(() -> {
-            var buildAgent = buildAgentInformation.get(distributedDataAccessService.getLocalMemberAddress());
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
+            var buildAgent = buildAgentInformation.get(buildAgentShortName);
             return buildAgent.status() == BuildAgentStatus.ACTIVE;
         });
 
-        await().until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
             var resultQueueItem = resultQueue.poll();
             return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())
                     && resultQueueItem.buildJobQueueItem().status() == BuildStatus.SUCCESSFUL;
@@ -330,14 +357,14 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         buildJobQueue.add(queueItem);
 
         await().atMost(30, TimeUnit.SECONDS).until(() -> {
-            var buildAgent = buildAgentInformation.get(distributedDataAccessService.getLocalMemberAddress());
+            var buildAgent = buildAgentInformation.get(buildAgentShortName);
             return buildAgent != null && buildAgent.status() == BuildAgentStatus.ACTIVE;
         });
 
         pauseBuildAgentTopic.publish(buildAgentShortName);
 
         await().atMost(30, TimeUnit.SECONDS).until(() -> {
-            var buildAgent = buildAgentInformation.get(distributedDataAccessService.getLocalMemberAddress());
+            var buildAgent = buildAgentInformation.get(buildAgentShortName);
             return buildAgent != null && buildAgent.status() == BuildAgentStatus.PAUSED;
         });
 
@@ -377,7 +404,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         var queueItem = createBaseBuildJobQueueItemForTrigger();
         buildJobQueue.add(queueItem);
 
-        await().until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
             var resultQueueItem = resultQueue.poll();
             return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())
                     && resultQueueItem.buildJobQueueItem().status() == BuildStatus.SUCCESSFUL;
@@ -391,7 +418,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
         buildJobQueue.add(queueItem);
 
-        await().until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
             var resultQueueItem = resultQueue.poll();
             return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())
                     && resultQueueItem.buildJobQueueItem().status() == BuildStatus.SUCCESSFUL;
@@ -406,17 +433,17 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
             buildJobQueue.add(createBaseBuildJobQueueItemForTrigger());
         }
 
-        await().until(() -> resultQueue.size() >= pauseAfterConsecutiveFailures);
+        await().atMost(30, TimeUnit.SECONDS).until(() -> resultQueue.size() >= pauseAfterConsecutiveFailures);
 
-        await().until(() -> {
-            var buildAgent = buildAgentInformation.get(distributedDataAccessService.getLocalMemberAddress());
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
+            var buildAgent = buildAgentInformation.get(buildAgentShortName);
             return buildAgent != null && buildAgent.status() == BuildAgentStatus.SELF_PAUSED;
         });
 
         // resume and wait for unpause not interfere with other tests
         resumeBuildAgentTopic.publish(buildAgentShortName);
-        await().until(() -> {
-            var buildAgent = buildAgentInformation.get(distributedDataAccessService.getLocalMemberAddress());
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
+            var buildAgent = buildAgentInformation.get(buildAgentShortName);
             return buildAgent.status() != BuildAgentStatus.SELF_PAUSED;
         });
     }
@@ -599,5 +626,103 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
             var resultQueueItem = resultQueue.poll();
             return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id()) && resultQueueItem.buildJobQueueItem().status() == BuildStatus.FAILED;
         });
+    }
+
+    /**
+     * Test that the Docker version is retrieved and stored in build agent details.
+     * The scheduled task should populate the Docker version which then appears in the distributed map.
+     */
+    @Test
+    void testDockerVersionIsRetrievedAndStoredInBuildAgentDetails() {
+        // Trigger the scheduled Docker version update manually
+        buildAgentInformationService.updateDockerVersion();
+
+        // Verify that the Docker version was retrieved and stored
+        assertThat(buildAgentInformationService.getDockerVersion()).isEqualTo("24.0.0-test");
+
+        // Verify that the build agent information in the distributed map contains the Docker version
+        await().atMost(10, TimeUnit.SECONDS).until(() -> {
+            var buildAgent = buildAgentInformation.get(buildAgentShortName);
+            return buildAgent != null && buildAgent.buildAgentDetails() != null && "24.0.0-test".equals(buildAgent.buildAgentDetails().dockerVersion());
+        });
+    }
+
+    /**
+     * Test that when the Docker version changes, the build agent information is updated in the distributed map.
+     */
+    @Test
+    void testDockerVersionChangePropagatedToDistributedMap() {
+        // First, trigger an initial update
+        buildAgentInformationService.updateDockerVersion();
+        assertThat(buildAgentInformationService.getDockerVersion()).isEqualTo("24.0.0-test");
+
+        // Now mock a version change
+        DockerClientTestService.mockVersionCmd(dockerClient, "25.0.0-updated");
+
+        // Trigger the update again
+        buildAgentInformationService.updateDockerVersion();
+
+        // Verify the version was updated
+        assertThat(buildAgentInformationService.getDockerVersion()).isEqualTo("25.0.0-updated");
+
+        // Verify the distributed map was updated with the new version
+        await().atMost(10, TimeUnit.SECONDS).until(() -> {
+            var buildAgent = buildAgentInformation.get(buildAgentShortName);
+            return buildAgent != null && buildAgent.buildAgentDetails() != null && "25.0.0-updated".equals(buildAgent.buildAgentDetails().dockerVersion());
+        });
+
+        // Reset the mock to original version for other tests
+        DockerClientTestService.mockVersionCmd(dockerClient, "24.0.0-test");
+    }
+
+    /**
+     * Test that the updateDockerVersion method handles exceptions gracefully.
+     * When Docker version retrieval fails, the method should log a warning but not throw.
+     */
+    @Test
+    void testDockerVersionRetrievalFailureHandledGracefully() {
+        // Store the current version
+        buildAgentInformationService.updateDockerVersion();
+        String originalVersion = buildAgentInformationService.getDockerVersion();
+
+        // Mock versionCmd to throw an exception
+        VersionCmd versionCmd = mock(VersionCmd.class);
+        when(dockerClient.versionCmd()).thenReturn(versionCmd);
+        doThrow(new RuntimeException("Docker daemon unavailable")).when(versionCmd).exec();
+
+        // Trigger the update - should not throw
+        buildAgentInformationService.updateDockerVersion();
+
+        // Version should remain unchanged (graceful degradation)
+        assertThat(buildAgentInformationService.getDockerVersion()).isEqualTo(originalVersion);
+
+        // Reset the mock to working state for other tests
+        DockerClientTestService.mockVersionCmd(dockerClient, "24.0.0-test");
+    }
+
+    /**
+     * Test that the Docker version is included in build agent details after a build completes.
+     */
+    @Test
+    void testDockerVersionIncludedInBuildAgentDetailsAfterBuild() {
+        // Ensure Docker version is set
+        buildAgentInformationService.updateDockerVersion();
+
+        // Run a build job
+        var queueItem = createBaseBuildJobQueueItemForTrigger();
+        buildJobQueue.add(queueItem);
+
+        // Wait for the build to complete
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
+            var resultQueueItem = resultQueue.poll();
+            return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())
+                    && resultQueueItem.buildJobQueueItem().status() == BuildStatus.SUCCESSFUL;
+        });
+
+        // Verify the build agent details contain the Docker version
+        var buildAgent = buildAgentInformation.get(buildAgentShortName);
+        assertThat(buildAgent).isNotNull();
+        assertThat(buildAgent.buildAgentDetails()).isNotNull();
+        assertThat(buildAgent.buildAgentDetails().dockerVersion()).isEqualTo("24.0.0-test");
     }
 }

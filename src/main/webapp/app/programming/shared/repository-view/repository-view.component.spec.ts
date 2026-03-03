@@ -18,6 +18,9 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 
 describe('RepositoryViewComponent', () => {
     let component: RepositoryViewComponent;
@@ -30,7 +33,12 @@ describe('RepositoryViewComponent', () => {
     beforeEach(async () => {
         mockDomainService = {
             setDomain: jest.fn(),
+            subscribeDomainChange: jest.fn().mockReturnValue(of([DomainType.PARTICIPATION, { id: 1 }])),
         };
+        // Mock the ResizeObserver, which is not available in the test environment
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
 
         await TestBed.configureTestingModule({
             providers: [
@@ -40,6 +48,7 @@ describe('RepositoryViewComponent', () => {
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: ProfileService, useClass: MockProfileService },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .compileComponents()
@@ -47,11 +56,15 @@ describe('RepositoryViewComponent', () => {
                 fixture = TestBed.createComponent(RepositoryViewComponent);
                 component = fixture.componentInstance;
                 fixture.detectChanges();
-
                 activatedRoute = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
                 programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
                 programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
             });
+    });
+
+    afterEach(() => {
+        // in case it causes side effects in other tests
+        delete (global as any).ResizeObserver;
     });
 
     it('should create', () => {
@@ -339,9 +352,9 @@ describe('RepositoryViewComponent', () => {
     });
 
     it('should handle error when loading exercise', () => {
-        // route to an exercise that does not exist
-        activatedRoute.setParameters({ exerciseId: 8 });
-
+        // route to an exercise that does not exist, but we need to specify a repository type
+        // in order to call the mocked findWithTemplateAndSolutionParticipationAndLatestResults
+        activatedRoute.setParameters({ exerciseId: 8, repositoryType: 'TEMPLATE' });
         // Mock the service to return an error
         jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(
             new Observable((subscriber) => {

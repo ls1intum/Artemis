@@ -624,6 +624,35 @@ describe('BuildOverviewService', () => {
         expect(errorOccurred).toBeTruthy();
     });
 
+    it('should get build job by id (admin)', async () => {
+        const buildJobId = 'test-123';
+        const expectedResponse = { id: buildJobId, name: 'Test Job' };
+
+        const resultPromise = firstValueFrom(service.getBuildJobById(buildJobId));
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/build-job/${buildJobId}`);
+        expect(req.request.method).toBe('GET');
+        req.flush(expectedResponse);
+
+        const result = await resultPromise;
+        expect(result).toEqual(expectedResponse);
+    });
+
+    it('should get build job by id for course', async () => {
+        const courseId = 1;
+        const buildJobId = 'test-123';
+        const expectedResponse = { id: buildJobId, name: 'Test Job' };
+
+        const resultPromise = firstValueFrom(service.getBuildJobByIdForCourse(courseId, buildJobId));
+
+        const req = httpMock.expectOne(`${service.resourceUrl}/courses/${courseId}/build-job/${buildJobId}`);
+        expect(req.request.method).toBe('GET');
+        req.flush(expectedResponse);
+
+        const result = await resultPromise;
+        expect(result).toEqual(expectedResponse);
+    });
+
     afterEach(() => {
         httpMock.verify(); // Verify that there are no outstanding requests.
     });

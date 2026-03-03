@@ -80,7 +80,7 @@ class MockIrisExerciseChatbotButtonComponent {
 import { mockCourseSettings } from 'test/helpers/mocks/iris/mock-settings';
 import { MockScienceService } from 'test/helpers/mocks/service/mock-science-service';
 import { ScienceEventType } from 'app/shared/science/science.model';
-import { PROFILE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
 import { provideHttpClient } from '@angular/common/http';
 import { ElementRef, signal } from '@angular/core';
@@ -430,9 +430,9 @@ describe('CourseExerciseDetailsComponent', () => {
         participationWebsocketBehaviorSubject.next({ ...newParticipation, exercise: programmingExercise });
     }));
 
-    it.each<[string[]]>([[[]], [[PROFILE_IRIS]]])(
-        'should load iris settings only if profile iris is active',
-        fakeAsync((activeProfiles: string[]) => {
+    it.each<[string[]]>([[[]], [[MODULE_FEATURE_IRIS]]])(
+        'should load iris settings only if module feature iris is active',
+        fakeAsync((activeModuleFeatures: string[]) => {
             // Setup
             const submissionPolicy = new LockRepositoryPolicy();
             const programmingExercise = {
@@ -448,8 +448,8 @@ describe('CourseExerciseDetailsComponent', () => {
             getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: programmingExercise } }));
 
             const profileService = TestBed.inject(ProfileService);
-            jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles } as any as ProfileInfo);
-            jest.spyOn(profileService, 'isProfileActive').mockReturnValue(activeProfiles.includes(PROFILE_IRIS));
+            jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeModuleFeatures } as any as ProfileInfo);
+            jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(activeModuleFeatures.includes(MODULE_FEATURE_IRIS));
 
             const irisSettingsService = TestBed.inject(IrisSettingsService);
             const getCourseSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(fakeSettings));
@@ -458,7 +458,7 @@ describe('CourseExerciseDetailsComponent', () => {
             comp.ngOnInit();
             tick();
 
-            if (activeProfiles.includes(PROFILE_IRIS)) {
+            if (activeModuleFeatures.includes(MODULE_FEATURE_IRIS)) {
                 // Should have called getCourseSettings if 'iris' is active
                 expect(getCourseSettingsSpy).toHaveBeenCalledWith(1);
                 expect(comp.irisEnabled).toBeTrue();

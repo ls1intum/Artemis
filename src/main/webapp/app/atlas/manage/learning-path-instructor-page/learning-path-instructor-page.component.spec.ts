@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LearningPathInstructorPageComponent } from 'app/atlas/manage/learning-path-instructor-page/learning-path-instructor-page.component';
 import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
@@ -8,19 +9,21 @@ import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/com
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('LearningPathInstructorPageComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: LearningPathInstructorPageComponent;
     let fixture: ComponentFixture<LearningPathInstructorPageComponent>;
     let learningPathApiService: LearningPathApiService;
     let alertService: AlertService;
     let courseManagementService: CourseManagementService;
-    let getCourseSpy: jest.SpyInstance;
+    let getCourseSpy: ReturnType<typeof vi.spyOn>;
 
     const courseId = 1;
 
@@ -58,7 +61,7 @@ describe('LearningPathInstructorPageComponent', () => {
         alertService = TestBed.inject(AlertService);
         courseManagementService = TestBed.inject(CourseManagementService);
 
-        getCourseSpy = jest.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(
+        getCourseSpy = vi.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(
             of(
                 new HttpResponse({
                     body: course,
@@ -79,8 +82,8 @@ describe('LearningPathInstructorPageComponent', () => {
     });
 
     it('should show error on load course', async () => {
-        const alertServiceErrorSpy = jest.spyOn(alertService, 'addAlert');
-        getCourseSpy.mockRejectedValue(new HttpErrorResponse({ error: 'Error' }));
+        const alertServiceErrorSpy = vi.spyOn(alertService, 'addAlert');
+        getCourseSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ error: 'Error' })));
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -90,7 +93,7 @@ describe('LearningPathInstructorPageComponent', () => {
     });
 
     it('should set isLoading correctly on course loading', async () => {
-        const isLoadingSpy = jest.spyOn(component.isLoading, 'set');
+        const isLoadingSpy = vi.spyOn(component.isLoading, 'set');
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -108,18 +111,18 @@ describe('LearningPathInstructorPageComponent', () => {
     });
 
     it('should enable learning paths', async () => {
-        const enableLearningPathsSpy = jest.spyOn(learningPathApiService, 'enableLearningPaths').mockResolvedValue();
+        const enableLearningPathsSpy = vi.spyOn(learningPathApiService, 'enableLearningPaths').mockResolvedValue();
 
         fixture.detectChanges();
         await component.enableLearningPaths();
 
         expect(enableLearningPathsSpy).toHaveBeenCalledExactlyOnceWith(courseId);
-        expect(component.learningPathsEnabled()).toBeTrue();
+        expect(component.learningPathsEnabled()).toBeTruthy();
     });
 
     it('should show error on enable learning paths', async () => {
-        const alertServiceErrorSpy = jest.spyOn(alertService, 'addAlert');
-        jest.spyOn(learningPathApiService, 'enableLearningPaths').mockRejectedValue(new Error('Error'));
+        const alertServiceErrorSpy = vi.spyOn(alertService, 'addAlert');
+        vi.spyOn(learningPathApiService, 'enableLearningPaths').mockRejectedValue(new Error('Error'));
         fixture.detectChanges();
         await component.enableLearningPaths();
 
@@ -127,8 +130,8 @@ describe('LearningPathInstructorPageComponent', () => {
     });
 
     it('should set isLoading correctly on enable learning paths', async () => {
-        const isLoadingSpy = jest.spyOn(component.isLoading, 'set');
-        jest.spyOn(learningPathApiService, 'enableLearningPaths').mockResolvedValue();
+        const isLoadingSpy = vi.spyOn(component.isLoading, 'set');
+        vi.spyOn(learningPathApiService, 'enableLearningPaths').mockResolvedValue();
 
         await component.enableLearningPaths();
 

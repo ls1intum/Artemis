@@ -1100,6 +1100,28 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void getAllParticipationsForExamExercise_asTutor_forbidden() throws Exception {
+        Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
+        TextExercise examTextExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
+        examTextExercise = exerciseRepository.save(examTextExercise);
+        request.getList("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", HttpStatus.FORBIDDEN, StudentParticipation.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getAllParticipationsForExamExercise_asInstructor_success() throws Exception {
+        Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
+        TextExercise examTextExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
+        examTextExercise = exerciseRepository.save(examTextExercise);
+        participationUtilService.createAndSaveParticipationForExercise(examTextExercise, TEST_PREFIX + "student1");
+        var participations = request.getList("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class);
+        assertThat(participations).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void updateParticipation() throws Exception {
         var participation = ParticipationFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
