@@ -36,7 +36,7 @@ public class StatelessJenkinsCIService implements StatelessCIService {
     private final RestTemplate restTemplate;
 
     @Value("${artemis.external-ci.url:http://localhost:8081}")
-    private String connectorBaseUrl;
+    private String jenkinsConnectorBaseUrl;
 
     public StatelessJenkinsCIService(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
@@ -45,21 +45,22 @@ public class StatelessJenkinsCIService implements StatelessCIService {
     @Override
     public ConnectorHealth health() {
         try {
-            String healthUrl = connectorBaseUrl + "/actuator/health";
+            String healthUrl = jenkinsConnectorBaseUrl + "/actuator/health";
 
             // Call the Jenkins connector health endpoint
             var healthResponse = restTemplate.getForObject(healthUrl, Map.class);
 
             if (healthResponse != null && "UP".equals(healthResponse.get("status"))) {
-                return new ConnectorHealth(true, Map.of("status", "up", "connectorUrl", connectorBaseUrl, "service", "jenkins-connector"));
+                return new ConnectorHealth(true, Map.of("status", "up", "connectorUrl", jenkinsConnectorBaseUrl, "service", "jenkins-connector"));
             }
             else {
-                return new ConnectorHealth(false, Map.of("status", "down", "connectorUrl", connectorBaseUrl, "service", "jenkins-connector", "message", "Health check failed"));
+                return new ConnectorHealth(false,
+                        Map.of("status", "down", "connectorUrl", jenkinsConnectorBaseUrl, "service", "jenkins-connector", "message", "Health check failed"));
             }
         }
         catch (Exception e) {
-            log.error("Failed to check health of Jenkins connector at {}", connectorBaseUrl, e);
-            return new ConnectorHealth(false, Map.of("status", "down", "connectorUrl", connectorBaseUrl, "service", "jenkins-connector", "error", e.getMessage()));
+            log.error("Failed to check health of Jenkins connector at {}", jenkinsConnectorBaseUrl, e);
+            return new ConnectorHealth(false, Map.of("status", "down", "connectorUrl", jenkinsConnectorBaseUrl, "service", "jenkins-connector", "error", e.getMessage()));
         }
     }
 
@@ -98,7 +99,7 @@ public class StatelessJenkinsCIService implements StatelessCIService {
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<BuildTriggerRequestDTO> request = new HttpEntity<>(buildTriggerRequestDTO, headers);
 
-            String buildApiUrl = connectorBaseUrl + "/api/v1/build";
+            String buildApiUrl = jenkinsConnectorBaseUrl + "/api/v1/build";
 
             // POST the DTO to the Jenkins connector's build API
             restTemplate.postForObject(buildApiUrl, request, Void.class);

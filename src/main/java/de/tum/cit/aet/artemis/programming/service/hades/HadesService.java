@@ -50,7 +50,7 @@ public class HadesService implements StatelessCIService {
     private String hadesAuthKey;
 
     @Value("${artemis.continuous-integration.hades.images.clone-image}")
-    private String cloneDockerImage;
+    private String cloneImage;
 
     @Value("${artemis.version-control.build-agent-git-username}")
     private String username;
@@ -90,6 +90,7 @@ public class HadesService implements StatelessCIService {
     @Override
     public BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation) {
         // TODO: fetch from HadesLogManager
+        // Hades only supports running, succeeded and failed.
         return null;
     }
 
@@ -168,7 +169,7 @@ public class HadesService implements StatelessCIService {
         cloneMetadata.put("HADES_ASSIGNMENT_PATH", assignmentPath);
         cloneMetadata.put("HADES_ASSIGNMENT_ORDER", assignmentOrder);
 
-        steps.add(new HadesBuildStepDTO(1, "Clone", cloneDockerImage, volumeMounts, workingDir, cloneMetadata, ""));
+        steps.add(new HadesBuildStepDTO(1, "Clone", cloneImage, volumeMounts, workingDir, cloneMetadata, ""));
 
         // Create Execute Step
         ProjectType projectType = ProjectType.tryFromString(buildTriggerRequestDTO.additionalProperties().get("projectType"));

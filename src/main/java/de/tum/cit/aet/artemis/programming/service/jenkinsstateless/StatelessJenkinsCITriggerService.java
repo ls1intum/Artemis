@@ -36,7 +36,7 @@ public class StatelessJenkinsCITriggerService implements ContinuousIntegrationTr
     private final StatelessJenkinsCIService statelessJenkinsCIService;
 
     @Value("${artemis.continuous-integration.vcs-credentials}")
-    private String vscAccessToken;
+    private String vcsAccessToken;
 
     @Autowired
     private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
@@ -67,10 +67,10 @@ public class StatelessJenkinsCITriggerService implements ContinuousIntegrationTr
             String buildScript = buildConfig.getBuildScript();
 
             // Create the submission repository DTO
-            var exerciseRepository = new RepositoryDTO(participation.getVcsRepositoryUri().toString(), commitHash, null, vscAccessToken);
+            var exerciseRepository = new RepositoryDTO(participation.getVcsRepositoryUri().toString(), commitHash, null, vcsAccessToken);
 
             // Create the test repository DTO based on the corresponding exercise
-            var testRepository = new RepositoryDTO(participation.getProgrammingExercise().getTestRepositoryUri(), null, null, vscAccessToken);
+            var testRepository = new RepositoryDTO(participation.getProgrammingExercise().getTestRepositoryUri(), null, null, vcsAccessToken);
 
             var auxiliaryRepository = new ArrayList<RepositoryDTO>();
 
@@ -78,7 +78,7 @@ public class StatelessJenkinsCITriggerService implements ContinuousIntegrationTr
             String scriptType = BuildTriggerRequestDTO.ScriptType.GROOVY.getValue();
 
             var additionalProperties = new HashMap<String, String>();
-            additionalProperties.put("gitCredentialsKey", vscAccessToken);
+            additionalProperties.put("gitCredentialsKey", vcsAccessToken);
 
             // Create the build trigger request DTO
             BuildTriggerRequestDTO buildTriggerRequest = new BuildTriggerRequestDTO(exerciseID, participationID, exerciseRepository, testRepository, auxiliaryRepository,
