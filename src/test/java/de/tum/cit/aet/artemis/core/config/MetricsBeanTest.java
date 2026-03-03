@@ -79,8 +79,10 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
     void resetDatabase() {
         SecurityUtils.setAuthorizationObject();
 
+        // Reset ALL exams to the past to avoid time-sensitive cleanup issues.
+        // Using findAll() instead of findAllByEndDateGreaterThanEqual() prevents
+        // edge cases where exams at the boundary of ZonedDateTime.now() are missed.
         examRepository.findAll().forEach(exam -> {
-            // Set dates of existing exams to past to that they are not returned in the metrics
             exam.setStartDate(ZonedDateTime.now().minusHours(2));
             exam.setEndDate(ZonedDateTime.now().minusHours(1));
             examRepository.save(exam);
