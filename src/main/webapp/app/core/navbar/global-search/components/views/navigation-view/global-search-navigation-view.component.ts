@@ -1,10 +1,12 @@
-import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed, effect, forwardRef, input, output, signal, viewChildren } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed, effect, forwardRef, inject, input, output, signal, viewChildren } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faFileLines } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { GlobalSearchActionItemComponent } from 'app/core/navbar/global-search/components/action-item/global-search-action-item.component';
 import { SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
+import { MODULE_FEATURE_IRIS } from 'app/app.constants';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 // Number of fixed action buttons rendered above the search results.
 // Arrow-key indices 0..NAV_ACTION_COUNT-1 map to these buttons in template order.
@@ -20,6 +22,8 @@ export const NAV_ACTION_COUNT = 1;
     providers: [{ provide: SearchResultView, useExisting: forwardRef(() => GlobalSearchNavigationViewComponent) }],
 })
 export class GlobalSearchNavigationViewComponent extends SearchResultView {
+    private readonly profileService = inject(ProfileService);
+
     readonly searchQuery = input.required<string>();
     readonly selectedIndex = input<number>(-1);
 
@@ -29,12 +33,15 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     // TODO: Replace `never[]` with the real navigation result type and inject the search service.
     protected readonly navResults = signal<never[]>([]);
 
+    // False when artemis.iris.enabled = false in the server config; the button is hidden.
+    protected readonly irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
+
     // Total selectable items reported to the modal to bound ArrowDown/ArrowUp.
-    readonly itemCount = computed(() => NAV_ACTION_COUNT + this.navResults().length);
+    readonly itemCount = computed(() => (this.irisEnabled ? NAV_ACTION_COUNT : 0) + this.navResults().length);
 
     // Index relative to the results list, with the action-button offset stripped.
     // Pass this as [selectedIndex] to your results list component or use directly in @for.
-    protected readonly resultSelectedIndex = computed(() => this.selectedIndex() - NAV_ACTION_COUNT);
+    protected readonly resultSelectedIndex = computed(() => this.selectedIndex() - (this.irisEnabled ? NAV_ACTION_COUNT : 0));
 
     protected readonly SearchView = SearchView;
     protected readonly faFileLines = faFileLines;
@@ -56,6 +63,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     handleKeydown(event: KeyboardEvent): void {
         if (event.key !== 'Enter') return;
         const idx = this.selectedIndex();
+        if (!this.irisEnabled) return;
         if (idx === 0) {
             event.preventDefault();
             this.viewSelected.emit(SearchView.Lecture);
