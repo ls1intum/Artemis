@@ -79,6 +79,7 @@ public abstract class HyperionCodeGenerationService {
      *
      * @param user                the user requesting code generation
      * @param exercise            the programming exercise to generate code for
+     * @param courseId            the resolved course id for telemetry attribution
      * @param previousBuildLogs   build failure logs from previous attempts for iterative improvement
      * @param repositoryStructure tree-format representation of current repository structure
      * @param consistencyIssues   formatted consistency issues to inform the generation prompts
@@ -144,6 +145,7 @@ public abstract class HyperionCodeGenerationService {
      *
      * @param user              user initiating the generation request
      * @param exercise          programming exercise context for token-usage trace attribution
+     * @param courseId          resolved course id for token-usage trace attribution
      * @param prompt            the prompt template path to render
      * @param templateVariables variables to substitute in the prompt template
      * @return the AI response containing generated content
@@ -255,6 +257,7 @@ public abstract class HyperionCodeGenerationService {
      *
      * @param user                the user requesting code generation
      * @param exercise            the programming exercise to analyze
+     * @param courseId            the resolved course id for telemetry attribution
      * @param previousBuildLogs   build failure logs from previous attempts for correction
      * @param repositoryStructure tree-format representation of current repository structure
      * @param consistencyIssues   formatted consistency issues to inform the generation prompts
@@ -270,6 +273,7 @@ public abstract class HyperionCodeGenerationService {
      *
      * @param user                the user requesting code generation
      * @param exercise            the programming exercise to structure
+     * @param courseId            the resolved course id for telemetry attribution
      * @param solutionPlan        the high-level solution plan from step 1
      * @param repositoryStructure tree-format representation of current repository structure
      * @param consistencyIssues   formatted consistency issues to inform the generation prompts
@@ -285,6 +289,7 @@ public abstract class HyperionCodeGenerationService {
      *
      * @param user                the user requesting code generation
      * @param exercise            the programming exercise to create headers for
+     * @param courseId            the resolved course id for telemetry attribution
      * @param solutionPlan        the high-level solution plan from step 1
      * @param repositoryStructure tree-format representation of current repository structure
      * @param consistencyIssues   formatted consistency issues to inform the generation prompts
@@ -300,6 +305,7 @@ public abstract class HyperionCodeGenerationService {
      *
      * @param user                the user requesting code generation
      * @param exercise            the programming exercise to implement
+     * @param courseId            the resolved course id for telemetry attribution
      * @param solutionPlan        the high-level solution plan from step 1
      * @param repositoryStructure tree-format representation of current repository structure
      * @param consistencyIssues   formatted consistency issues to inform the generation prompts

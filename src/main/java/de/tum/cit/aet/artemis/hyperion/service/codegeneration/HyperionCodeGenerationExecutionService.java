@@ -285,6 +285,7 @@ public class HyperionCodeGenerationExecutionService {
      *
      * @param exercise       the programming exercise
      * @param user           the initiating user
+     * @param courseId       the resolved course id for telemetry attribution
      * @param repositoryType repository type to generate
      * @param publisher      event publisher for websocket updates
      * @return the latest build result or null
