@@ -430,6 +430,76 @@ describe('IrisChatService', () => {
         });
     });
 
+    describe('deleteSession', () => {
+        it('should delete a non-active session and remove it from the list', async () => {
+            const sessions = [
+                { id: 1, creationDate: new Date(), chatMode: ChatServiceMode.COURSE, entityId: 1, entityName: 'C1' } as IrisSessionDTO,
+                { id: 2, creationDate: new Date(), chatMode: ChatServiceMode.COURSE, entityId: 1, entityName: 'C1' } as IrisSessionDTO,
+            ];
+            service.chatSessions.next(sessions);
+            service.sessionId = 1;
+
+            vi.spyOn(httpService, 'deleteSession').mockReturnValue(of(new HttpResponse<void>({ status: 204 })));
+            const closeSpy = vi.spyOn(service as any, 'close');
+
+            await firstValueFrom(service.deleteSession(2));
+
+            const remaining = service.chatSessions.getValue();
+            expect(remaining).toHaveLength(1);
+            expect(remaining[0].id).toBe(1);
+            expect(closeSpy).not.toHaveBeenCalled();
+        });
+
+        it('should delete the active session and switch to the next available session', async () => {
+            const sessions = [
+                { id: 1, creationDate: new Date(), chatMode: ChatServiceMode.COURSE, entityId: 1, entityName: 'C1' } as IrisSessionDTO,
+                { id: 2, creationDate: new Date(), chatMode: ChatServiceMode.COURSE, entityId: 1, entityName: 'C1' } as IrisSessionDTO,
+            ];
+            service.chatSessions.next(sessions);
+            service.sessionId = 1;
+
+            vi.spyOn(httpService, 'deleteSession').mockReturnValue(of(new HttpResponse<void>({ status: 204 })));
+            // switchToSession internally calls getChatSessionById, so we need to mock it
+            vi.spyOn(httpService, 'getChatSessionById').mockReturnValue(of({ ...mockConversation, id: 2 }));
+            vi.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
+            const switchSpy = vi.spyOn(service, 'switchToSession');
+
+            await firstValueFrom(service.deleteSession(1));
+
+            expect(switchSpy).toHaveBeenCalledWith(expect.objectContaining({ id: 2 }));
+        });
+
+        it('should delete the last remaining session and stay in closed state', async () => {
+            const sessions = [{ id: 1, creationDate: new Date(), chatMode: ChatServiceMode.COURSE, entityId: 1, entityName: 'C1' } as IrisSessionDTO];
+            service.chatSessions.next(sessions);
+            service.sessionId = 1;
+
+            vi.spyOn(httpService, 'deleteSession').mockReturnValue(of(new HttpResponse<void>({ status: 204 })));
+            const clearChatSpy = vi.spyOn(service, 'clearChat');
+            const switchSpy = vi.spyOn(service, 'switchToSession');
+
+            await firstValueFrom(service.deleteSession(1));
+
+            expect(clearChatSpy).not.toHaveBeenCalled();
+            expect(switchSpy).not.toHaveBeenCalled();
+            expect(service.chatSessions.getValue()).toHaveLength(0);
+            expect(service.sessionId).toBeUndefined();
+        });
+
+        it('should clear latestStartedSession if the deleted session matches', async () => {
+            const session = { id: 5, creationDate: new Date(), chatMode: ChatServiceMode.COURSE, entityId: 1, entityName: 'C1' } as IrisSessionDTO;
+            service.chatSessions.next([session]);
+            service.latestStartedSession = session;
+            service.sessionId = 99; // different from 5
+
+            vi.spyOn(httpService, 'deleteSession').mockReturnValue(of(new HttpResponse<void>({ status: 204 })));
+
+            await firstValueFrom(service.deleteSession(5));
+
+            expect(service.latestStartedSession).toBeUndefined();
+        });
+    });
+
     describe('getCourseId', () => {
         /**
          * It can be the case that courseId is undefined when loading a page directly from a URL or via browser page reload.

@@ -42,7 +42,7 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
-import { ProblemStatementSyncService } from 'app/programming/manage/services/problem-statement-sync.service';
+import { ProblemStatementSyncService } from 'app/exercise/synchronization/services/problem-statement-sync.service';
 import { editor } from 'test/helpers/mocks/mock-monaco-editor';
 
 describe('ProgrammingExerciseEditableInstructionComponent', () => {
@@ -407,5 +407,174 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         const actions = comp.artemisIntelligenceActions();
         expect(actions).toHaveLength(1);
         expect(actions[0]).toBeInstanceOf(RewriteAction);
+    });
+
+    it('should cleanup subscriptions on destroy', fakeAsync(() => {
+        setRequiredInputs(fixture, exercise);
+        fixture.componentRef.setInput('participation', templateParticipation);
+        fixture.detectChanges();
+        tick();
+
+        // Get subscription reference before destroy
+        const testCaseSubscription = comp.testCaseSubscription;
+
+        // Destroy the component
+        comp.ngOnDestroy();
+
+        // Verify cleanup occurred
+        if (testCaseSubscription) {
+            expect(testCaseSubscription.closed).toBeTrue();
+        }
+
+        flush();
+    }));
+
+    it('should subscribe for test cases when exercise changes', fakeAsync(() => {
+        const newExercise = { ...exercise, id: 31 } as ProgrammingExercise;
+        setRequiredInputs(fixture, exercise);
+        fixture.componentRef.setInput('participation', templateParticipation);
+        fixture.detectChanges();
+        tick();
+
+        // Reset spy
+        generateHtmlSubjectStub.mockClear();
+
+        // Trigger exercise change
+        fixture.componentRef.setInput('exercise', newExercise);
+        fixture.detectChanges();
+        tick();
+
+        expect(subscribeForTestCaseSpy).toHaveBeenCalledWith(newExercise.id);
+
+        fixture.destroy();
+        flush();
+    }));
+
+    it('should update inline refinement position with signal on selection change', () => {
+        const selection = {
+            startLine: 1,
+            endLine: 2,
+            startColumn: 5,
+            endColumn: 10,
+            selectedText: 'Some selected text',
+            screenPosition: { top: 100, left: 200 },
+        };
+
+        // Enable hyperion
+        jest.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockReturnValue(true);
+        fixture.destroy();
+        fixture = TestBed.createComponent(ProgrammingExerciseEditableInstructionComponent);
+        comp = fixture.componentInstance;
+
+        // Mock container bounding rect to verify viewport-to-container coordinate conversion
+        jest.spyOn(fixture.nativeElement, 'getBoundingClientRect').mockReturnValue({ top: 30, left: 50 } as DOMRect);
+
+        comp.onEditorSelectionChange(selection);
+
+        // Position uses viewport-relative coordinates with clamping
+        expect(comp.inlineRefinementPosition()).toEqual({ top: 100, left: 200 });
+        expect(comp.selectedTextForRefinement()).toBe('Some selected text');
+        expect(comp.selectionPositionInfo()).toEqual({
+            startLine: 1,
+            endLine: 2,
+            startColumn: 5,
+            endColumn: 10,
+        });
+    });
+
+    it('should hide inline refinement button when selection is empty', () => {
+        comp.inlineRefinementPosition.set({ top: 100, left: 200 });
+        comp.selectedTextForRefinement.set('some text');
+        comp.selectionPositionInfo.set({ startLine: 1, endLine: 1, startColumn: 0, endColumn: 5 });
+
+        comp.onEditorSelectionChange(undefined);
+
+        expect(comp.inlineRefinementPosition()).toBeUndefined();
+        expect(comp.selectedTextForRefinement()).toBe('');
+        expect(comp.selectionPositionInfo()).toBeUndefined();
+    });
+
+    it('should hide inline refinement button when selection has only whitespace', () => {
+        jest.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockReturnValue(true);
+        fixture = TestBed.createComponent(ProgrammingExerciseEditableInstructionComponent);
+        comp = fixture.componentInstance;
+
+        const selection = {
+            startLine: 1,
+            endLine: 1,
+            startColumn: 0,
+            endColumn: 5,
+            selectedText: '   ',
+            screenPosition: { top: 100, left: 200 },
+        };
+
+        comp.onEditorSelectionChange(selection);
+
+        expect(comp.inlineRefinementPosition()).toBeUndefined();
+    });
+
+    it('should emit inline refinement event and hide button on refine', () => {
+        comp.inlineRefinementPosition.set({ top: 100, left: 200 });
+        comp.selectedTextForRefinement.set('some text');
+        comp.selectionPositionInfo.set({ startLine: 1, endLine: 1, startColumn: 0, endColumn: 5 });
+
+        const emitSpy = jest.spyOn(comp.onInlineRefinement, 'emit');
+
+        const event = {
+            instruction: 'Improve this',
+            startLine: 1,
+            endLine: 2,
+            startColumn: 0,
+            endColumn: 10,
+        };
+
+        comp.onInlineRefine(event);
+
+        expect(emitSpy).toHaveBeenCalledWith(event);
+        expect(comp.inlineRefinementPosition()).toBeUndefined();
+        expect(comp.selectedTextForRefinement()).toBe('');
+        expect(comp.selectionPositionInfo()).toBeUndefined();
+    });
+
+    it('should get current content from editor', () => {
+        const mockGetText = jest.fn().mockReturnValue('editor content');
+        comp.markdownEditorMonaco = {
+            monacoEditor: {
+                getText: mockGetText,
+            },
+        } as unknown as MarkdownEditorMonacoComponent;
+
+        const content = comp.getCurrentContent();
+
+        expect(content).toBe('editor content');
+        expect(mockGetText).toHaveBeenCalled();
+    });
+
+    it('should return undefined when editor is not available for getCurrentContent', () => {
+        comp.markdownEditorMonaco = undefined;
+
+        const content = comp.getCurrentContent();
+
+        expect(content).toBeUndefined();
+    });
+
+    it('should return undefined when monacoEditor is not available for getCurrentContent', () => {
+        comp.markdownEditorMonaco = {} as unknown as MarkdownEditorMonacoComponent;
+
+        const content = comp.getCurrentContent();
+
+        expect(content).toBeUndefined();
+    });
+
+    it('should hide inline refinement button explicitly', () => {
+        comp.inlineRefinementPosition.set({ top: 100, left: 200 });
+        comp.selectedTextForRefinement.set('text');
+        comp.selectionPositionInfo.set({ startLine: 1, endLine: 1, startColumn: 0, endColumn: 5 });
+
+        comp.hideInlineRefinementButton();
+
+        expect(comp.inlineRefinementPosition()).toBeUndefined();
+        expect(comp.selectedTextForRefinement()).toBe('');
+        expect(comp.selectionPositionInfo()).toBeUndefined();
     });
 });

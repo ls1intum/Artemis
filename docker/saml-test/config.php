@@ -472,7 +472,7 @@ $config = array(
     'default-wsfed-idp' => 'urn:federation:pingfederate:localhost',
 
     /*
-     * Whether the discovery service should allow the user to save his choice of IdP.
+     * Whether the discovery service should allow the user to save their choice of IdP.
      */
     'idpdisco.enableremember' => true,
     'idpdisco.rememberchecked' => true,

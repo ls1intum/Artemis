@@ -29,11 +29,8 @@ export const routes: Routes = [
             },
             {
                 path: 'llm-usage',
-                loadComponent: () => import('app/core/user/settings/llm-usage-settings/llm-usage-settings.component').then((m) => m.LlmUsageSettingsComponent),
-                data: {
-                    pageTitle: 'artemisApp.userSettings.categories.LLMUsage',
-                },
-                canActivate: [DataGuard],
+                redirectTo: 'ai-experience',
+                pathMatch: 'full',
             },
             {
                 path: 'profile',
@@ -118,6 +115,14 @@ export const routes: Routes = [
                 data: {
                     pageTitle: 'artemisApp.userSettings.categories.QUIZ_TRAINING_SETTINGS',
                 },
+            },
+            {
+                path: 'ai-experience',
+                loadComponent: () => import('app/core/user/settings/ai-experience-settings/ai-experience-settings.component').then((m) => m.AiExperienceSettingsComponent),
+                data: {
+                    pageTitle: 'artemisApp.userSettings.aiExperienceSettingsPage.title',
+                },
+                canActivate: [DataGuard],
             },
         ],
     },
