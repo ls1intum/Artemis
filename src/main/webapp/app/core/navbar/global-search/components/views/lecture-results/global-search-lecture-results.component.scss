@@ -6,7 +6,7 @@
         background 0.15s;
 
     &:hover,
-    &:focus {
+    &:focus-visible {
         color: var(--bs-body-color);
         background: var(--bs-secondary-bg);
         text-decoration: none;

@@ -13,6 +13,7 @@ import { GlobalSearchActionItemComponent } from 'app/core/navbar/global-search/c
 import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
 import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 
 @Component({
     selector: 'jhi-global-search-lecture-results',
@@ -20,12 +21,13 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
     templateUrl: 'global-search-lecture-results.component.html',
     styleUrls: ['./global-search-lecture-results.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [ArtemisTranslatePipe, FaIconComponent, RouterLink, SkeletonModule, GlobalSearchActionItemComponent],
+    imports: [ArtemisTranslatePipe, FaIconComponent, RouterLink, SkeletonModule, GlobalSearchActionItemComponent, IrisLogoComponent],
     providers: [{ provide: SearchResultView, useExisting: forwardRef(() => GlobalSearchLectureResultsComponent) }],
 })
 export class GlobalSearchLectureResultsComponent extends SearchResultView {
     readonly searchQuery = input.required<string>();
     readonly selectedIndex = input<number>(-1);
+    readonly irisOpen = input<boolean>(false);
     protected readonly back = output<void>();
     protected readonly viewSelected = output<SearchView>();
     private readonly searchService = inject(LectureSearchService);
@@ -36,13 +38,14 @@ export class GlobalSearchLectureResultsComponent extends SearchResultView {
     protected readonly isLoading = signal(false);
     protected readonly hasError = signal(false);
     protected readonly irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
-    readonly itemCount = computed(() => (this.irisEnabled ? 1 : 0) + this.lectureResults().length);
+    readonly itemCount = computed(() => (this.irisEnabled && !this.irisOpen() ? 1 : 0) + this.lectureResults().length);
     private readonly selectableItems = viewChildren<ElementRef>('selectableItem');
     protected readonly faArrowLeft = faArrowLeft;
     protected readonly faFileLines = faFileLines;
     protected readonly faHashtag = faHashtag;
     protected readonly skeletonItems = Array.from({ length: 5 });
     protected readonly SearchView = SearchView;
+    protected readonly IrisLogoSize = IrisLogoSize;
 
     constructor() {
         super();
@@ -85,16 +88,17 @@ export class GlobalSearchLectureResultsComponent extends SearchResultView {
     @HostListener('window:keydown', ['$event'])
     handleKeydown(event: KeyboardEvent): void {
         const index = this.selectedIndex();
-        // If Iris is enabled, index 0 is the Iris action button
-        if (this.irisEnabled && index === 0) {
+        if (index < 0) return;
+        // Iris button visible when iris is enabled and the split view is not already open
+        if (this.irisEnabled && !this.irisOpen() && index === 0) {
             if (event.key === 'Enter') {
                 event.preventDefault();
                 this.viewSelected.emit(SearchView.Iris);
             }
             return;
         }
-        // Offset the index by 1 if Iris button is present
-        const resultIndex = this.irisEnabled ? index - 1 : index;
+        // Offset by 1 if iris button is visible
+        const resultIndex = this.irisEnabled && !this.irisOpen() ? index - 1 : index;
         const result = this.lectureResults()[resultIndex];
         if (event.key === 'Enter' && result) {
             event.preventDefault();
