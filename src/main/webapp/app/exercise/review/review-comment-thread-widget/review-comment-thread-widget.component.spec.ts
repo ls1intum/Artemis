@@ -271,4 +271,40 @@ describe('ReviewCommentThreadWidgetComponent', () => {
 
         expect(comp.consistencySuggestedInlineFix()).toEqual(suggestedFix);
     });
+
+    it('should emit apply-inline-fix event', () => {
+        const inlineFix = {
+            startLine: 2,
+            endLine: 2,
+            expectedCode: 'foo',
+            replacementCode: 'bar',
+            applied: false,
+        };
+        const applySpy = vi.fn();
+        comp.onApplyInlineFix.subscribe(applySpy);
+
+        comp.applySuggestedInlineFix(inlineFix);
+
+        expect(applySpy).toHaveBeenCalledWith(inlineFix);
+    });
+
+    it('should clear outdated warning when trying to apply an inline fix', () => {
+        const inlineFix = {
+            startLine: 2,
+            endLine: 2,
+            expectedCode: 'foo',
+            replacementCode: 'bar',
+            applied: false,
+        };
+        comp.setInlineFixOutdatedWarning(true);
+
+        comp.applySuggestedInlineFix(inlineFix);
+
+        expect(comp.showInlineFixOutdatedWarning()).toBe(false);
+    });
+
+    it('should set outdated warning state for inline fixes', () => {
+        comp.setInlineFixOutdatedWarning(true);
+        expect(comp.showInlineFixOutdatedWarning()).toBe(true);
+    });
 });

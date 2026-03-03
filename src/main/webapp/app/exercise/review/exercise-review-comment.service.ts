@@ -194,6 +194,38 @@ export class ExerciseReviewCommentService {
     }
 
     /**
+     * Marks an inline-fix suggestion as applied for a consistency-check comment in the active exercise context.
+     *
+     * @param commentId The consistency comment id.
+     * @param onSuccess Callback invoked only after successful backend persistence.
+     */
+    markInlineFixAppliedInContext(commentId: number, onSuccess?: ReviewCommentSuccessCallback): void {
+        const exerciseId = this.activeExerciseId;
+        if (!exerciseId) {
+            return;
+        }
+        this.markConsistencyInlineFixApplied(exerciseId, commentId).subscribe({
+            next: (response) => {
+                if (this.activeExerciseId !== exerciseId) {
+                    return;
+                }
+                const updatedComment = response.body;
+                if (!updatedComment) {
+                    return;
+                }
+                this.threads.update((threads) => this.updateCommentInThreads(threads, updatedComment));
+                onSuccess?.();
+            },
+            error: () => {
+                if (this.activeExerciseId !== exerciseId) {
+                    return;
+                }
+                this.alertService.error('artemisApp.review.saveFailed');
+            },
+        });
+    }
+
+    /**
      * Toggles thread resolved state in the active exercise and reconciles local thread state.
      *
      * @param threadId The thread id.
@@ -290,6 +322,17 @@ export class ExerciseReviewCommentService {
      */
     updateUserCommentContent(exerciseId: number, commentId: number, content: UpdateCommentContent): Observable<CommentResponseType> {
         return this.http.put<Comment>(`${this.resourceUrl}/${exerciseId}/review-comments/${commentId}`, content, { observe: 'response' });
+    }
+
+    /**
+     * Marks an inline-fix suggestion as applied for a consistency-check comment.
+     *
+     * @param exerciseId The exercise that owns the comment.
+     * @param commentId The consistency comment id.
+     * @returns The HTTP response observable containing the updated comment.
+     */
+    markConsistencyInlineFixApplied(exerciseId: number, commentId: number): Observable<CommentResponseType> {
+        return this.http.put<Comment>(`${this.resourceUrl}/${exerciseId}/review-comments/${commentId}/inline-fix/applied`, {}, { observe: 'response' });
     }
 
     /**

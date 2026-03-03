@@ -294,6 +294,41 @@ public class ExerciseReviewService {
     }
 
     /**
+     * Marks an inline suggested fix of a consistency-check comment as applied.
+     * This operation is intentionally limited to toggling the {@code applied} flag only.
+     *
+     * @param exerciseId the exercise id from the request path
+     * @param commentId  the comment id
+     * @return the updated comment
+     * @throws EntityNotFoundException  if the comment does not exist
+     * @throws BadRequestAlertException if validation fails or the comment exercise does not match the request exercise
+     */
+    public Comment markConsistencyInlineFixApplied(long exerciseId, long commentId) {
+        Comment comment = commentRepository.findWithThreadById(commentId).orElseThrow(() -> new EntityNotFoundException("Comment", commentId));
+        ExerciseReviewValidationUtil.validateExerciseIdMatchesRequest(exerciseId, comment.getThread().getExercise().getId(), COMMENT_ENTITY_NAME);
+
+        if (comment.getType() != CommentType.CONSISTENCY_CHECK) {
+            throw new BadRequestAlertException("Only consistency-check comments support inline-fix apply updates", COMMENT_ENTITY_NAME, "inlineFixNotSupported");
+        }
+        if (!(comment.getContent() instanceof ConsistencyIssueCommentContentDTO consistencyContent)) {
+            throw new BadRequestAlertException("Comment content does not match type", COMMENT_ENTITY_NAME, "contentTypeMismatch");
+        }
+
+        InlineCodeChangeDTO inlineFix = consistencyContent.suggestedFix();
+        if (inlineFix == null) {
+            throw new BadRequestAlertException("Comment has no inline fix to apply", COMMENT_ENTITY_NAME, "inlineFixMissing");
+        }
+        if (Boolean.TRUE.equals(inlineFix.applied())) {
+            return comment;
+        }
+
+        InlineCodeChangeDTO updatedInlineFix = new InlineCodeChangeDTO(inlineFix.startLine(), inlineFix.endLine(), inlineFix.expectedCode(), inlineFix.replacementCode(), true);
+        comment.setContent(new ConsistencyIssueCommentContentDTO(consistencyContent.severity(), consistencyContent.category(), consistencyContent.text(), updatedInlineFix));
+        Comment saved = commentRepository.save(comment);
+        return commentRepository.findWithThreadById(saved.getId()).orElse(saved);
+    }
+
+    /**
      * Create a new comment thread group for an exercise.
      *
      * @param exerciseId the exercise id

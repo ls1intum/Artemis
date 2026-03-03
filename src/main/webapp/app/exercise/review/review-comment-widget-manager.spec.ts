@@ -7,6 +7,15 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 describe('ReviewCommentWidgetManager', () => {
     const createEditorMock = () => {
         let onDidScrollChangeCallback: (() => void) | undefined;
+        let modelLines = [''];
+        const model = {
+            getLineCount: vi.fn(() => modelLines.length),
+            getLineMaxColumn: vi.fn((lineNumber: number) => (modelLines[lineNumber - 1]?.length ?? 0) + 1),
+            getValueInRange: vi.fn((range: { startLineNumber: number; endLineNumber: number }) => modelLines.slice(range.startLineNumber - 1, range.endLineNumber).join('\n')),
+        };
+        const activeEditor = {
+            executeEdits: vi.fn(),
+        };
         const monacoEditorMock = {
             onDidScrollChange: vi.fn((callback: () => void) => {
                 onDidScrollChangeCallback = callback;
@@ -19,7 +28,12 @@ describe('ReviewCommentWidgetManager', () => {
             addLineWidget: vi.fn(),
             disposeWidgetsByPrefix: vi.fn(),
             getEditor: vi.fn(() => monacoEditorMock),
+            getModel: vi.fn(() => model),
+            getActiveEditor: vi.fn(() => activeEditor),
             triggerScroll: () => onDidScrollChangeCallback?.(),
+            setModelLines: (lines: string[]) => {
+                modelLines = lines;
+            },
         };
     };
 
@@ -54,6 +68,8 @@ describe('ReviewCommentWidgetManager', () => {
         const instance: any = {
             onToggleCollapse: { subscribe: vi.fn((cb) => (instance._onToggleCollapse = cb)) },
             onNavigateToLocation: { subscribe: vi.fn((cb) => (instance._onNavigateToLocation = cb)) },
+            onApplyInlineFix: { subscribe: vi.fn((cb) => (instance._onApplyInlineFix = cb)) },
+            setInlineFixOutdatedWarning: vi.fn(),
             hideAllCommentMenus: vi.fn(),
         };
         return {
@@ -255,5 +271,73 @@ describe('ReviewCommentWidgetManager', () => {
         editor.triggerScroll();
 
         expect(threadRef.instance.hideAllCommentMenus).toHaveBeenCalledTimes(1);
+    });
+
+    it('should apply inline fix when expected code matches editor content', () => {
+        const editor = createEditorMock();
+        editor.setModelLines(['class Example {', '    public class QuickSort {', '}']);
+        const vcRef = createViewContainerRefMock();
+        const threads: CommentThread[] = [{ id: 15, lineNumber: 2, resolved: false } as any];
+        const onApplyInlineFix = vi.fn();
+        const config = createConfig({ getThreads: () => threads, onApplyInlineFix });
+        const manager = new ReviewCommentWidgetManager(editor as any, vcRef as any, config);
+
+        manager.renderWidgets();
+        const threadRef = vcRef.createComponent.mock.results.find((r: any) => r.value.instance.onApplyInlineFix)?.value;
+        threadRef.instance._onApplyInlineFix({
+            startLine: 2,
+            endLine: 2,
+            expectedCode: '    public class QuickSort {',
+            replacementCode: '    public class BubbleSort {',
+            applied: false,
+        });
+
+        expect(editor.getActiveEditor().executeEdits).toHaveBeenCalledWith('ReviewCommentWidgetManager::applyInlineFix', [
+            {
+                range: {
+                    startLineNumber: 2,
+                    startColumn: 1,
+                    endLineNumber: 2,
+                    endColumn: 29,
+                },
+                text: '    public class BubbleSort {',
+                forceMoveMarkers: true,
+            },
+        ]);
+        expect(threadRef.instance.setInlineFixOutdatedWarning).toHaveBeenCalledWith(false);
+        expect(onApplyInlineFix).toHaveBeenCalledWith({
+            thread: threads[0],
+            inlineFix: {
+                startLine: 2,
+                endLine: 2,
+                expectedCode: '    public class QuickSort {',
+                replacementCode: '    public class BubbleSort {',
+                applied: false,
+            },
+        });
+    });
+
+    it('should not apply inline fix when expected code does not match editor content', () => {
+        const editor = createEditorMock();
+        editor.setModelLines(['class Example {', '    public class QuickSort {', '}']);
+        const vcRef = createViewContainerRefMock();
+        const threads: CommentThread[] = [{ id: 16, lineNumber: 2, resolved: false } as any];
+        const onApplyInlineFix = vi.fn();
+        const config = createConfig({ getThreads: () => threads, onApplyInlineFix });
+        const manager = new ReviewCommentWidgetManager(editor as any, vcRef as any, config);
+
+        manager.renderWidgets();
+        const threadRef = vcRef.createComponent.mock.results.find((r: any) => r.value.instance.onApplyInlineFix)?.value;
+        threadRef.instance._onApplyInlineFix({
+            startLine: 2,
+            endLine: 2,
+            expectedCode: '    public class BubbleSort {',
+            replacementCode: '    public class BubbleSort {',
+            applied: false,
+        });
+
+        expect(editor.getActiveEditor().executeEdits).not.toHaveBeenCalled();
+        expect(threadRef.instance.setInlineFixOutdatedWarning).toHaveBeenCalledWith(true);
+        expect(onApplyInlineFix).not.toHaveBeenCalled();
     });
 });

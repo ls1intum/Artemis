@@ -24,8 +24,10 @@ import de.tum.cit.aet.artemis.exercise.domain.review.CommentType;
 import de.tum.cit.aet.artemis.exercise.dto.review.CommentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CommentThreadDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CommentThreadGroupDTO;
+import de.tum.cit.aet.artemis.exercise.dto.review.ConsistencyIssueCommentContentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CreateCommentThreadDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CreateCommentThreadGroupDTO;
+import de.tum.cit.aet.artemis.exercise.dto.review.InlineCodeChangeDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UpdateThreadResolvedStateDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UserCommentContentDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionTestRepository;
@@ -34,6 +36,8 @@ import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadGroupRepos
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.hyperion.domain.ConsistencyIssueCategory;
+import de.tum.cit.aet.artemis.hyperion.domain.Severity;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
@@ -145,6 +149,40 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
         assertThat(updated.content()).isInstanceOf(UserCommentContentDTO.class);
         assertThat(((UserCommentContentDTO) updated.content()).text()).isEqualTo("Updated text");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void shouldMarkConsistencyInlineFixAsApplied() throws Exception {
+        TextExercise exercise = createExerciseWithVersion();
+        CommentThreadDTO consistencyThread = createThreadWithConsistencyComment(exercise, "Consistency issue", false);
+        CommentDTO consistencyComment = consistencyThread.comments().getFirst();
+
+        var updated = request.performMvcRequest(MockMvcRequestBuilders.put(new URI(reviewCommentInlineFixAppliedPath(exercise.getId(), consistencyComment.id())))
+                .contentType(MediaType.APPLICATION_JSON).content("{}")).andExpect(status().isOk()).andReturn();
+        CommentDTO updatedComment = objectMapper.readValue(updated.getResponse().getContentAsString(), CommentDTO.class);
+
+        assertThat(updatedComment.type()).isEqualTo(CommentType.CONSISTENCY_CHECK);
+        assertThat(updatedComment.content()).isInstanceOf(ConsistencyIssueCommentContentDTO.class);
+        InlineCodeChangeDTO inlineFix = ((ConsistencyIssueCommentContentDTO) updatedComment.content()).suggestedFix();
+        assertThat(inlineFix).isNotNull();
+        assertThat(inlineFix.applied()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void shouldRejectMarkConsistencyInlineFixAsAppliedForUserComment() throws Exception {
+        TextExercise exercise = createExerciseWithVersion();
+        CommentThreadDTO createdThread = createThreadWithComment(exercise, "Initial comment");
+        CommentDTO userComment = createdThread.comments().getFirst();
+
+        var result = request.performMvcRequest(
+                MockMvcRequestBuilders.put(new URI(reviewCommentInlineFixAppliedPath(exercise.getId(), userComment.id()))).contentType(MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isBadRequest()).andReturn();
+        String content = result.getResponse().getContentAsString();
+        var payload = objectMapper.readValue(content, java.util.Map.class);
+        assertThat(payload.get("message")).isEqualTo("error.inlineFixNotSupported");
+        assertThat(payload.get("params")).isEqualTo("exerciseReviewComment");
     }
 
     @Test
@@ -581,6 +619,10 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
         return "/api/exercise/exercises/" + exerciseId + "/review-comments/" + commentId;
     }
 
+    private String reviewCommentInlineFixAppliedPath(long exerciseId, long commentId) {
+        return reviewCommentPath(exerciseId, commentId) + "/inline-fix/applied";
+    }
+
     private String reviewThreadResolvedPath(long exerciseId, long threadId) {
         return reviewThreadsPath(exerciseId) + "/" + threadId + "/resolved";
     }
@@ -656,6 +698,30 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
         comment.setThread(savedThread);
         comment.setType(CommentType.USER);
         comment.setContent(new UserCommentContentDTO(text));
+        comment.setInitialVersion(savedThread.getInitialVersion());
+        var savedComment = commentRepository.save(comment);
+
+        return new CommentThreadDTO(savedThread, List.of(new CommentDTO(savedComment)));
+    }
+
+    private CommentThreadDTO createThreadWithConsistencyComment(TextExercise exercise, String text, boolean applied) {
+        var thread = new CommentThread();
+        thread.setExercise(exercise);
+        thread.setTargetType(CommentThreadLocationType.PROBLEM_STATEMENT);
+        thread.setInitialFilePath(null);
+        thread.setInitialLineNumber(1);
+        thread.setFilePath(null);
+        thread.setLineNumber(1);
+        thread.setOutdated(false);
+        thread.setResolved(false);
+        thread.setInitialVersion(exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId()).orElse(null));
+        var savedThread = commentThreadRepository.save(thread);
+
+        var comment = new Comment();
+        comment.setThread(savedThread);
+        comment.setType(CommentType.CONSISTENCY_CHECK);
+        comment.setContent(new ConsistencyIssueCommentContentDTO(Severity.HIGH, ConsistencyIssueCategory.IDENTIFIER_NAMING_INCONSISTENCY, text,
+                new InlineCodeChangeDTO(1, 1, "old", "new", applied)));
         comment.setInitialVersion(savedThread.getInitialVersion());
         var savedComment = commentRepository.save(comment);
 

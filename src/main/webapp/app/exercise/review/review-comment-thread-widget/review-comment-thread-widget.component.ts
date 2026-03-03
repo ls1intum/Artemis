@@ -54,6 +54,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
 
     readonly onToggleCollapse = output<boolean>();
     readonly onNavigateToLocation = output<ReviewThreadLocation>();
+    readonly onApplyInlineFix = output<InlineCodeChange>();
 
     readonly replyText = signal('');
     protected readonly faTriangleExclamation = faTriangleExclamation;
@@ -98,6 +99,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     });
     readonly isConsistencyIssueThread = computed(() => this.firstConsistencyIssueContent() !== undefined);
     readonly consistencySuggestedInlineFix = computed<InlineCodeChange | undefined>(() => this.firstConsistencyIssueContent()?.suggestedFix);
+    readonly showInlineFixOutdatedWarning = signal(false);
     readonly relatedGroupLocations = computed<RelatedThreadLocation[]>(() => {
         // Recompute related location labels when language changes because repository labels are translated.
         this.languageVersion();
@@ -219,6 +221,25 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         const nextVisibleState = !this.showThreadBody();
         this.showThreadBody.set(nextVisibleState);
         this.onToggleCollapse.emit(!nextVisibleState);
+    }
+
+    /**
+     * Emits a request to apply the suggested inline fix in the active editor context.
+     *
+     * @param inlineFix The inline fix payload to apply.
+     */
+    applySuggestedInlineFix(inlineFix: InlineCodeChange): void {
+        this.showInlineFixOutdatedWarning.set(false);
+        this.onApplyInlineFix.emit(inlineFix);
+    }
+
+    /**
+     * Sets whether the inline fix cannot be applied because the current editor code is out of date.
+     *
+     * @param showWarning Whether to show the warning next to the apply button.
+     */
+    setInlineFixOutdatedWarning(showWarning: boolean): void {
+        this.showInlineFixOutdatedWarning.set(showWarning);
     }
 
     ngOnInit(): void {

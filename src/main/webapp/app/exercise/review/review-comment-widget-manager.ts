@@ -3,6 +3,7 @@ import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.co
 import { ReviewCommentDraftWidgetComponent } from 'app/exercise/review/review-comment-draft-widget/review-comment-draft-widget.component';
 import { ReviewCommentThreadWidgetComponent } from 'app/exercise/review/review-comment-thread-widget/review-comment-thread-widget.component';
 import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { InlineCodeChange } from 'app/exercise/shared/entities/review/comment-content.model';
 
 export type ReviewCommentDraftContext = {
     targetType: CommentThreadLocationType;
@@ -20,6 +21,7 @@ export type ReviewCommentWidgetManagerConfig = {
     filterThread: (thread: CommentThread) => boolean;
     getThreadLine: (thread: CommentThread) => number;
     onAdd: (payload: { lineNumber: number; fileName: string }) => void;
+    onApplyInlineFix?: (payload: { thread: CommentThread; inlineFix: InlineCodeChange }) => void;
     onNavigateToLocation?: (location: ReviewThreadLocation) => void;
     showLocationWarning: () => boolean;
 };
@@ -210,9 +212,18 @@ export class ReviewCommentWidgetManager {
                     this.collapseState.set(thread.id, shouldCollapse);
                 }
                 widgetRef.setInput('initialCollapsed', this.collapseState.get(thread.id) ?? false);
-                widgetRef.instance.onToggleCollapse.subscribe((collapsed) => this.collapseState.set(thread.id, collapsed));
-                widgetRef.instance.onNavigateToLocation.subscribe((location) => this.config.onNavigateToLocation?.(location));
-                this.threadWidgetRefs.set(thread.id, widgetRef);
+                const createdWidgetRef = widgetRef;
+                createdWidgetRef.instance.onToggleCollapse.subscribe((collapsed) => this.collapseState.set(thread.id, collapsed));
+                createdWidgetRef.instance.onNavigateToLocation.subscribe((location) => this.config.onNavigateToLocation?.(location));
+                createdWidgetRef.instance.onApplyInlineFix.subscribe((inlineFix) => {
+                    const isOutdated = this.applyInlineFixToActiveEditor(inlineFix);
+                    createdWidgetRef.instance.setInlineFixOutdatedWarning(isOutdated);
+                    if (!isOutdated) {
+                        const currentThread = this.config.getThreads().find((candidate) => candidate.id === thread.id) ?? thread;
+                        this.config.onApplyInlineFix?.({ thread: currentThread, inlineFix });
+                    }
+                });
+                this.threadWidgetRefs.set(thread.id, createdWidgetRef);
             } else {
                 widgetRef.setInput('thread', thread);
                 widgetRef.setInput('showLocationWarning', showLocationWarning);
@@ -348,5 +359,50 @@ export class ReviewCommentWidgetManager {
         for (const ref of this.threadWidgetRefs.values()) {
             ref.instance.hideAllCommentMenus();
         }
+    }
+
+    /**
+     * Applies an inline fix only if the current editor content in the referenced line range
+     * still matches the expected snapshot from consistency-check creation time.
+     *
+     * @param inlineFix The inline fix payload to apply.
+     * @returns True if the fix is out of date and should show a warning.
+     */
+    private applyInlineFixToActiveEditor(inlineFix: InlineCodeChange): boolean {
+        const model = this.editor.getModel();
+        if (!model) {
+            return false;
+        }
+
+        const startLine = inlineFix.startLine;
+        const endLine = inlineFix.endLine;
+        if (startLine < 1 || endLine < startLine || endLine > model.getLineCount()) {
+            return false;
+        }
+
+        const endColumn = model.getLineMaxColumn(endLine);
+        const currentCode = model.getValueInRange({
+            startLineNumber: startLine,
+            startColumn: 1,
+            endLineNumber: endLine,
+            endColumn,
+        });
+        if (currentCode !== inlineFix.expectedCode) {
+            return true;
+        }
+
+        this.editor.getActiveEditor().executeEdits('ReviewCommentWidgetManager::applyInlineFix', [
+            {
+                range: {
+                    startLineNumber: startLine,
+                    startColumn: 1,
+                    endLineNumber: endLine,
+                    endColumn,
+                },
+                text: inlineFix.replacementCode,
+                forceMoveMarkers: true,
+            },
+        ]);
+        return false;
     }
 }

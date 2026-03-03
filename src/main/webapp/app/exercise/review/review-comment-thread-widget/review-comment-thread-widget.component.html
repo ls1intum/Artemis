@@ -140,8 +140,24 @@
                                 </div>
                                 <jhi-monaco-diff-editor [allowSplitView]="true" [forceSideBySide]="true" [lineNumberOffset]="inlineFix.startLine - 1" />
                                 <div class="monaco-review-comment-inline-diff-actions">
-                                    <button pButton type="button" size="small" class="monaco-review-comment-inline-diff-apply">
-                                        {{ 'artemisApp.review.applyInlineFix' | artemisTranslate }}
+                                    @if (showInlineFixOutdatedWarning()) {
+                                        <span class="monaco-review-comment-inline-diff-warning">
+                                            {{ 'artemisApp.review.inlineFixOutdatedWarning' | artemisTranslate }}
+                                        </span>
+                                    }
+                                    <button
+                                        pButton
+                                        type="button"
+                                        size="small"
+                                        class="monaco-review-comment-inline-diff-apply"
+                                        [disabled]="inlineFix.applied"
+                                        (click)="applySuggestedInlineFix(inlineFix)"
+                                    >
+                                        @if (inlineFix.applied) {
+                                            {{ 'artemisApp.review.inlineFixAlreadyApplied' | artemisTranslate }}
+                                        } @else {
+                                            {{ 'artemisApp.review.applyInlineFix' | artemisTranslate }}
+                                        }
                                     </button>
                                 </div>
                             </div>

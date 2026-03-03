@@ -183,6 +183,22 @@ public class ExerciseReviewResource {
         return ResponseEntity.ok(new CommentDTO(updated));
     }
 
+    /**
+     * PUT /exercises/:exerciseId/review-comments/:commentId/inline-fix/applied : Mark a consistency inline-fix suggestion as applied.
+     * This endpoint only updates the {@code applied} flag of the stored inline fix suggestion.
+     *
+     * @param exerciseId the exercise id
+     * @param commentId  the consistency comment id
+     * @return the updated comment
+     */
+    @PutMapping("exercises/{exerciseId}/review-comments/{commentId}/inline-fix/applied")
+    @EnforceAtLeastEditorInExercise
+    public ResponseEntity<CommentDTO> markConsistencyInlineFixApplied(@PathVariable long exerciseId, @PathVariable long commentId) {
+        log.debug("REST request to mark inline fix as applied for comment {} in exercise {}", commentId, exerciseId);
+        Comment updated = exerciseReviewService.markConsistencyInlineFixApplied(exerciseId, commentId);
+        return ResponseEntity.ok(new CommentDTO(updated));
+    }
+
     private List<CommentDTO> mapComments(CommentThread thread) {
         if (thread.getComments() == null || thread.getComments().isEmpty()) {
             return List.of();

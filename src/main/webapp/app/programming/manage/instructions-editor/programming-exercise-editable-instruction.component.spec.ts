@@ -44,6 +44,8 @@ import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-in
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { ProblemStatementSyncService } from 'app/exercise/synchronization/services/problem-statement-sync.service';
 import { editor } from 'test/helpers/mocks/mock-monaco-editor';
+import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+import { signal } from '@angular/core';
 
 describe('ProgrammingExerciseEditableInstructionComponent', () => {
     let comp: ProgrammingExerciseEditableInstructionComponent;
@@ -117,6 +119,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: ProblemStatementSyncService, useValue: problemStatementSyncServiceMock },
+                MockProvider(ExerciseReviewCommentService, { threads: signal([]), markInlineFixAppliedInContext: jest.fn() }),
                 { provide: ActivatedRoute, useValue: route },
                 MockProvider(ProfileService, {
                     getProfileInfo: () => mockProfileInfo,

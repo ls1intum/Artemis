@@ -566,6 +566,56 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldMarkConsistencyInlineFixAsAppliedWithoutChangingOtherFields() {
+        CommentThread thread = persistThread(programmingExercise);
+        InlineCodeChangeDTO inlineFix = new InlineCodeChangeDTO(2, 3, "int value = foo;", "int value = bar;", false);
+        ConsistencyIssueCommentContentDTO consistencyContent = new ConsistencyIssueCommentContentDTO(Severity.MEDIUM, ConsistencyIssueCategory.IDENTIFIER_NAMING_INCONSISTENCY,
+                "Rename identifier", inlineFix);
+        Comment comment = new Comment();
+        comment.setType(CommentType.CONSISTENCY_CHECK);
+        comment.setContent(consistencyContent);
+        comment.setThread(thread);
+        Comment saved = commentRepository.save(comment);
+
+        Comment updated = exerciseReviewService.markConsistencyInlineFixApplied(programmingExercise.getId(), saved.getId());
+
+        assertThat(updated.getContent()).isInstanceOf(ConsistencyIssueCommentContentDTO.class);
+        ConsistencyIssueCommentContentDTO updatedContent = (ConsistencyIssueCommentContentDTO) updated.getContent();
+        assertThat(updatedContent.severity()).isEqualTo(consistencyContent.severity());
+        assertThat(updatedContent.category()).isEqualTo(consistencyContent.category());
+        assertThat(updatedContent.text()).isEqualTo(consistencyContent.text());
+        assertThat(updatedContent.suggestedFix()).isNotNull();
+        assertThat(updatedContent.suggestedFix().startLine()).isEqualTo(inlineFix.startLine());
+        assertThat(updatedContent.suggestedFix().endLine()).isEqualTo(inlineFix.endLine());
+        assertThat(updatedContent.suggestedFix().expectedCode()).isEqualTo(inlineFix.expectedCode());
+        assertThat(updatedContent.suggestedFix().replacementCode()).isEqualTo(inlineFix.replacementCode());
+        assertThat(updatedContent.suggestedFix().applied()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectMarkConsistencyInlineFixAsAppliedForUserComment() {
+        CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
+        Comment userComment = exerciseReviewService.createUserComment(programmingExercise.getId(), thread.getId(), buildUserCommentContent("Initial"));
+
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> exerciseReviewService.markConsistencyInlineFixApplied(programmingExercise.getId(), userComment.getId()));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectMarkConsistencyInlineFixAsAppliedWhenInlineFixMissing() {
+        CommentThread thread = persistThread(programmingExercise);
+        Comment consistencyComment = buildConsistencyIssueCommentEntity("Missing inline fix");
+        consistencyComment.setThread(thread);
+        Comment saved = commentRepository.save(consistencyComment);
+
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> exerciseReviewService.markConsistencyInlineFixApplied(programmingExercise.getId(), saved.getId()));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRejectCreateUserCommentWhenExerciseIdDoesNotMatchThread() {
         CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
         long mismatchingExerciseId = programmingExercise.getId() + 1;

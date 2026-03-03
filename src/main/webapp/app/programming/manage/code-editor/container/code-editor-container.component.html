@@ -78,6 +78,7 @@
             [sessionId]="participation()?.id ?? 'test'"
             [enableExerciseReviewComments]="enableExerciseReviewComments()"
             (onFileContentChange)="onFileContentChange($event)"
+            (onSavedFiles)="onSavedFiles($event)"
             (onUpdateFeedback)="onUpdateFeedback.emit($event)"
             (onAcceptSuggestion)="onAcceptSuggestion.emit($event)"
             (onDiscardSuggestion)="onDiscardSuggestion.emit($event)"
@@ -85,6 +86,7 @@
             (onNavigateToReviewCommentLocation)="onNavigateToReviewCommentLocation.emit($event)"
             (onError)="onError($event)"
             (onFileLoad)="fileLoad($event)"
+            (onInlineFixCommitted)="onInlineFixCommitted()"
             (onEditorLoaded)="onEditorLoaded.emit()"
         />
     </ng-container>

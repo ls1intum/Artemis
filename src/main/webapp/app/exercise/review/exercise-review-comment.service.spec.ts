@@ -285,6 +285,42 @@ describe('ExerciseReviewCommentService', () => {
         expect(service.threads()).toEqual([{ id: 7, resolved: true }] as any);
     });
 
+    it('markInlineFixAppliedInContext should update matching consistency comment', () => {
+        service.setExercise(3);
+        service.threads.set([
+            {
+                id: 7,
+                comments: [
+                    {
+                        id: 12,
+                        threadId: 7,
+                        content: {
+                            contentType: CommentContentType.CONSISTENCY_CHECK,
+                            text: 'issue',
+                            suggestedFix: { applied: false },
+                        },
+                    },
+                ],
+            },
+        ] as any);
+
+        service.markInlineFixAppliedInContext(12);
+
+        const req = httpMock.expectOne('api/exercise/exercises/3/review-comments/12/inline-fix/applied');
+        expect(req.request.method).toBe('PUT');
+        req.flush({
+            id: 12,
+            threadId: 7,
+            content: {
+                contentType: CommentContentType.CONSISTENCY_CHECK,
+                text: 'issue',
+                suggestedFix: { applied: true },
+            },
+        });
+
+        expect((service.threads() as any)[0].comments[0].content.suggestedFix.applied).toBe(true);
+    });
+
     it('createThread should send POST request', () => {
         const payload = {
             targetType: CommentThreadLocationType.TEMPLATE_REPO,
@@ -348,6 +384,15 @@ describe('ExerciseReviewCommentService', () => {
         const req = httpMock.expectOne('api/exercise/exercises/8/review-comments/9');
         expect(req.request.method).toBe('PUT');
         expect(req.request.body).toEqual(payload);
+        req.flush({});
+    });
+
+    it('markConsistencyInlineFixApplied should send PUT request', () => {
+        service.markConsistencyInlineFixApplied(8, 9).subscribe();
+
+        const req = httpMock.expectOne('api/exercise/exercises/8/review-comments/9/inline-fix/applied');
+        expect(req.request.method).toBe('PUT');
+        expect(req.request.body).toEqual({});
         req.flush({});
     });
 

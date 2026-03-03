@@ -169,6 +169,13 @@
     background-color: var(--body-bg);
 }
 
+.monaco-review-comment-inline-diff-warning {
+    margin-right: auto;
+    color: var(--danger);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
 .monaco-review-comment-reply {
     margin-top: 0.75rem;
 }

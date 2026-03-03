@@ -29,6 +29,8 @@
             "threadConsistencyIssue": "Konsistenzproblem",
             "threadConsistencySeverity": "{{severity}} Schweregrad",
             "applyInlineFix": "Änderungen anwenden",
+            "inlineFixAlreadyApplied": "Bereits angewendet",
+            "inlineFixOutdatedWarning": "Veraltet: Der Code hat sich seit Erstellung dieses Vorschlags geändert.",
             "inlineDiffHeader": {
                 "originalCode": "Originalcode",
                 "suggestedResult": "Vorgeschlagenes Ergebnis"
