@@ -499,6 +499,7 @@ public class ProgrammingExerciseParticipationResource {
             return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(exercise, commitId, null, participation));
         }
         catch (IOException e) {
+            log.error("Could not read files at commit {} for participation {}", commitId, participationId, e);
             throw new InternalServerErrorAlertException("Could not read files at commit " + commitId + " for participation " + participationId, ENTITY_NAME, "fileReadError");
         }
     }
@@ -539,6 +540,7 @@ public class ProgrammingExerciseParticipationResource {
             }
         }
         catch (IOException e) {
+            log.error("Could not read files at commit {} for exercise {}", commitId, exerciseId, e);
             throw new InternalServerErrorAlertException("Could not read files at commit " + commitId + " for exercise " + exerciseId, ENTITY_NAME, "fileReadError");
         }
     }
