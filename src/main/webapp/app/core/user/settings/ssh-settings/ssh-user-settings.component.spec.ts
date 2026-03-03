@@ -32,6 +32,7 @@ describe('SshUserSettingsComponent', () => {
     let sshServiceMock: {
         deleteSshPublicKey: jest.Mock;
         getSshPublicKeys: jest.Mock;
+        sshKeys: UserSshPublicKey[];
     };
     let translateService: TranslateService;
 
@@ -39,17 +40,26 @@ describe('SshUserSettingsComponent', () => {
         sshServiceMock = {
             deleteSshPublicKey: jest.fn(),
             getSshPublicKeys: jest.fn(),
+            sshKeys: [],
         };
         alertServiceMock = {
             error: jest.fn(),
         };
         await TestBed.configureTestingModule({
+            imports: [SshUserSettingsComponent],
             providers: [
                 { provide: SshUserSettingsService, useValue: sshServiceMock },
                 { provide: AlertService, useValue: alertServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(SshUserSettingsComponent, {
+                set: {
+                    imports: [],
+                    template: '',
+                },
+            })
+            .compileComponents();
         fixture = TestBed.createComponent(SshUserSettingsComponent);
         comp = fixture.componentInstance;
         translateService = TestBed.inject(TranslateService);
