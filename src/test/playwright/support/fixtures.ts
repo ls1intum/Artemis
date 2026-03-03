@@ -74,7 +74,7 @@ import { ProgrammingExerciseSubmissionsPage } from './pageobjects/exercises/prog
 // Define custom types for fixtures
 export type ArtemisCommands = {
     login: (credentials: UserCredentials, url?: string) => Promise<void>;
-    waitForExerciseBuildToFinish: (exerciseId: number, interval?: number, timeout?: number) => Promise<void>;
+    waitForExerciseBuildToFinish: (exerciseId: number, interval?: number, timeout?: number, minResults?: number) => Promise<void>;
     waitForParticipationBuildToFinish: (participationId: number, interval?: number, timeout?: number) => Promise<void>;
     toggleSidebar: () => Promise<void>;
     createCompetency: (
@@ -180,8 +180,8 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
         });
     },
     waitForExerciseBuildToFinish: async ({ page, exerciseAPIRequests }, use) => {
-        await use(async (exerciseId: number, interval?, timeout?) => {
-            await Commands.waitForExerciseBuildToFinish(page, exerciseAPIRequests, exerciseId, interval, timeout);
+        await use(async (exerciseId: number, interval?, timeout?, minResults?) => {
+            await Commands.waitForExerciseBuildToFinish(page, exerciseAPIRequests, exerciseId, interval, timeout, minResults);
         });
     },
     waitForParticipationBuildToFinish: async ({ exerciseAPIRequests }, use) => {
