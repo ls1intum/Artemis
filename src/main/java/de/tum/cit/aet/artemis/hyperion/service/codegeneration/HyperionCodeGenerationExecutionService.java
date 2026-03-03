@@ -289,7 +289,7 @@ public class HyperionCodeGenerationExecutionService {
      * @param publisher      event publisher for websocket updates
      * @return the latest build result or null
      */
-    public Result generateAndCompileCode(ProgrammingExercise exercise, User user, RepositoryType repositoryType, HyperionCodeGenerationEventPublisher publisher) {
+    public Result generateAndCompileCode(ProgrammingExercise exercise, User user, Long courseId, RepositoryType repositoryType, HyperionCodeGenerationEventPublisher publisher) {
         RepositorySetupResult setupResult = setupRepository(exercise, repositoryType);
         if (!setupResult.success()) {
             publisher.error("Repository setup failed");
@@ -309,7 +309,7 @@ public class HyperionCodeGenerationExecutionService {
             for (int i = 0; i < MAX_ITERATIONS; i++) {
                 attemptsUsed = i + 1;
                 String repositoryStructure = repositoryStructureService.getRepositoryStructure(setupResult.repository());
-                List<GeneratedFileDTO> generatedFiles = strategy.generateCode(user, exercise, lastBuildLogs, repositoryStructure, consistencyIssues);
+                List<GeneratedFileDTO> generatedFiles = strategy.generateCode(user, exercise, courseId, lastBuildLogs, repositoryStructure, consistencyIssues);
 
                 if (generatedFiles != null && !generatedFiles.isEmpty()) {
 

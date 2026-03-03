@@ -157,7 +157,7 @@ class HyperionCodeGenerationExecutionServiceTest {
     void generateAndCompileCode_withNullRepositoryUri_returnsNull() {
         HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
 
-        Result result = service.generateAndCompileCode(exercise, user, RepositoryType.SOLUTION, publisher);
+        Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, publisher);
 
         assertThat(result).isNull();
         verify(publisher, times(1)).error(anyString());
@@ -181,7 +181,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         doNothing().when(repositoryService).commitChanges(repository, user);
         doNothing().when(gitService).resetToOriginHead(repository);
         when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
-        when(solutionStrategy.generateCode(eq(user), eq(exercise), any(), any(), any())).thenReturn(List.of(new GeneratedFileDTO("Test.java", "public class Test {}")));
+        when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any())).thenReturn(List.of(new GeneratedFileDTO("Test.java", "public class Test {}")));
         when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
         doNothing().when(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "new-hash", RepositoryType.SOLUTION);
         when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(solutionParticipation));
@@ -193,7 +193,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         when(buildResult.isSuccessful()).thenReturn(true);
         when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.SOLUTION)).thenReturn(true);
 
-        Result result = service.generateAndCompileCode(exercise, user, RepositoryType.SOLUTION, publisher);
+        Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, publisher);
 
         assertThat(result).isEqualTo(buildResult);
         verify(exerciseVersionService).createExerciseVersion(exercise, user);

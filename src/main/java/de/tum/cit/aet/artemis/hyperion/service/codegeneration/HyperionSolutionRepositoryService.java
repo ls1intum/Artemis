@@ -38,12 +38,12 @@ public class HyperionSolutionRepositoryService extends HyperionCodeGenerationSer
      * @throws IllegalArgumentException if {@code exercise}, {@code repositoryStructure}, or {@code consistencyIssues} is {@code null}
      */
     @Override
-    protected CodeGenerationResponseDTO generateSolutionPlan(User user, ProgrammingExercise exercise, String previousBuildLogs, String repositoryStructure,
+    protected CodeGenerationResponseDTO generateSolutionPlan(User user, ProgrammingExercise exercise, Long courseId, String previousBuildLogs, String repositoryStructure,
             String consistencyIssues) throws NetworkingException {
         Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, consistencyIssues);
         templateVariables.put("problemStatement", exercise.getProblemStatement());
         templateVariables.put("previousBuildLogs", previousBuildLogs != null ? previousBuildLogs : "");
-        return callChatClient(user, exercise, "/prompts/hyperion/solution/1_plan.st", templateVariables);
+        return callChatClient(user, exercise, courseId, "/prompts/hyperion/solution/1_plan.st", templateVariables);
     }
 
     /**
@@ -52,11 +52,11 @@ public class HyperionSolutionRepositoryService extends HyperionCodeGenerationSer
      * @throws IllegalArgumentException if {@code exercise}, {@code repositoryStructure}, or {@code consistencyIssues} is {@code null}
      */
     @Override
-    protected CodeGenerationResponseDTO defineFileStructure(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure, String consistencyIssues)
-            throws NetworkingException {
+    protected CodeGenerationResponseDTO defineFileStructure(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
+            String consistencyIssues) throws NetworkingException {
         Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, consistencyIssues);
         templateVariables.put("solutionPlan", solutionPlan);
-        return callChatClient(user, exercise, "/prompts/hyperion/solution/2_file_structure.st", templateVariables);
+        return callChatClient(user, exercise, courseId, "/prompts/hyperion/solution/2_file_structure.st", templateVariables);
     }
 
     /**
@@ -65,13 +65,13 @@ public class HyperionSolutionRepositoryService extends HyperionCodeGenerationSer
      * @throws IllegalArgumentException if {@code exercise}, {@code repositoryStructure}, or {@code consistencyIssues} is {@code null}
      */
     @Override
-    protected CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure,
+    protected CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
             String consistencyIssues) throws NetworkingException {
-        CodeGenerationResponseDTO fileStructure = defineFileStructure(user, exercise, solutionPlan, repositoryStructure, consistencyIssues);
+        CodeGenerationResponseDTO fileStructure = defineFileStructure(user, exercise, courseId, solutionPlan, repositoryStructure, consistencyIssues);
         Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, consistencyIssues);
         templateVariables.put("solutionPlan", solutionPlan);
         templateVariables.put("fileStructure", fileStructure.getFiles());
-        return callChatClient(user, exercise, "/prompts/hyperion/solution/3_headers.st", templateVariables);
+        return callChatClient(user, exercise, courseId, "/prompts/hyperion/solution/3_headers.st", templateVariables);
     }
 
     /**
@@ -80,13 +80,13 @@ public class HyperionSolutionRepositoryService extends HyperionCodeGenerationSer
      * @throws IllegalArgumentException if {@code exercise}, {@code repositoryStructure}, or {@code consistencyIssues} is {@code null}
      */
     @Override
-    protected CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure, String consistencyIssues)
-            throws NetworkingException {
-        CodeGenerationResponseDTO headers = generateClassAndMethodHeaders(user, exercise, solutionPlan, repositoryStructure, consistencyIssues);
+    protected CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
+            String consistencyIssues) throws NetworkingException {
+        CodeGenerationResponseDTO headers = generateClassAndMethodHeaders(user, exercise, courseId, solutionPlan, repositoryStructure, consistencyIssues);
         Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, consistencyIssues);
         templateVariables.put("solutionPlan", solutionPlan);
         templateVariables.put("filesWithHeaders", headers.getFiles());
-        return callChatClient(user, exercise, "/prompts/hyperion/solution/4_logic.st", templateVariables);
+        return callChatClient(user, exercise, courseId, "/prompts/hyperion/solution/4_logic.st", templateVariables);
     }
 
     @Override

@@ -8,10 +8,9 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.client.ChatClientAttributes;
+import org.springframework.ai.chat.client.ResponseEntity;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.converter.BeanOutputConverter;
 import org.springframework.ai.retry.NonTransientAiException;
 import org.springframework.ai.retry.TransientAiException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -86,8 +85,8 @@ public abstract class HyperionCodeGenerationService {
      * @return list of generated code files
      * @throws NetworkingException if AI service communication fails
      */
-    public List<GeneratedFileDTO> generateCode(User user, ProgrammingExercise exercise, String previousBuildLogs, String repositoryStructure, String consistencyIssues)
-            throws NetworkingException {
+    public List<GeneratedFileDTO> generateCode(User user, ProgrammingExercise exercise, Long courseId, String previousBuildLogs, String repositoryStructure,
+            String consistencyIssues) throws NetworkingException {
         if (user == null) {
             throw new IllegalArgumentException("user must not be null");
         }
@@ -98,10 +97,11 @@ public abstract class HyperionCodeGenerationService {
             throw new IllegalArgumentException("repositoryStructure must not be null");
         }
         String normalizedConsistencyIssues = normalizeConsistencyIssues(consistencyIssues);
-        CodeGenerationResponseDTO solutionPlanResponse = generateSolutionPlan(user, exercise, previousBuildLogs, repositoryStructure, normalizedConsistencyIssues);
-        defineFileStructure(user, exercise, solutionPlanResponse.getSolutionPlan(), repositoryStructure, normalizedConsistencyIssues);
-        generateClassAndMethodHeaders(user, exercise, solutionPlanResponse.getSolutionPlan(), repositoryStructure, normalizedConsistencyIssues);
-        CodeGenerationResponseDTO coreLogicResponse = generateCoreLogic(user, exercise, solutionPlanResponse.getSolutionPlan(), repositoryStructure, normalizedConsistencyIssues);
+        CodeGenerationResponseDTO solutionPlanResponse = generateSolutionPlan(user, exercise, courseId, previousBuildLogs, repositoryStructure, normalizedConsistencyIssues);
+        defineFileStructure(user, exercise, courseId, solutionPlanResponse.getSolutionPlan(), repositoryStructure, normalizedConsistencyIssues);
+        generateClassAndMethodHeaders(user, exercise, courseId, solutionPlanResponse.getSolutionPlan(), repositoryStructure, normalizedConsistencyIssues);
+        CodeGenerationResponseDTO coreLogicResponse = generateCoreLogic(user, exercise, courseId, solutionPlanResponse.getSolutionPlan(), repositoryStructure,
+                normalizedConsistencyIssues);
 
         return coreLogicResponse.getFiles();
     }
@@ -149,18 +149,14 @@ public abstract class HyperionCodeGenerationService {
      * @return the AI response containing generated content
      * @throws NetworkingException if AI service communication fails
      */
-    protected CodeGenerationResponseDTO callChatClient(User user, ProgrammingExercise exercise, String prompt, Map<String, Object> templateVariables) throws NetworkingException {
+    protected CodeGenerationResponseDTO callChatClient(User user, ProgrammingExercise exercise, Long courseId, String prompt, Map<String, Object> templateVariables)
+            throws NetworkingException {
         String rendered = templates.renderObject(prompt, templateVariables);
-        BeanOutputConverter<CodeGenerationResponseDTO> outputConverter = new BeanOutputConverter<>(CodeGenerationResponseDTO.class);
         try {
-            ChatClient.CallResponseSpec responseSpec = chatClient.prompt()
-                    .advisors(advisorSpec -> advisorSpec.param(ChatClientAttributes.OUTPUT_FORMAT.getKey(), outputConverter.getFormat())
-                            .param(ChatClientAttributes.STRUCTURED_OUTPUT_SCHEMA.getKey(), outputConverter.getJsonSchema()))
-                    .user(rendered).call();
-            ChatResponse chatResponse = responseSpec.chatResponse();
-            storeTokenUsage(user, exercise, prompt, chatResponse);
-            String responseContent = extractResponseContent(chatResponse);
-            CodeGenerationResponseDTO response = outputConverter.convert(responseContent);
+            ResponseEntity<ChatResponse, CodeGenerationResponseDTO> responseResult = chatClient.prompt().user(rendered).call().responseEntity(CodeGenerationResponseDTO.class);
+            ChatResponse chatResponse = responseResult.getResponse();
+            storeTokenUsage(user, exercise, courseId, prompt, chatResponse);
+            CodeGenerationResponseDTO response = responseResult.entity();
             if (response == null) {
                 throw new IllegalArgumentException("AI response content is missing");
             }
@@ -191,26 +187,10 @@ public abstract class HyperionCodeGenerationService {
             }
             current = current.getCause();
         }
-        for (StackTraceElement element : throwable.getStackTrace()) {
-            if ("org.springframework.ai.converter.BeanOutputConverter".equals(element.getClassName())) {
-                return true;
-            }
-        }
         return false;
     }
 
-    private static String extractResponseContent(ChatResponse chatResponse) {
-        if (chatResponse == null || chatResponse.getResult() == null || chatResponse.getResult().getOutput() == null) {
-            throw new IllegalArgumentException("AI response content is missing");
-        }
-        String responseContent = chatResponse.getResult().getOutput().getText();
-        if (responseContent == null || responseContent.isBlank()) {
-            throw new IllegalArgumentException("AI response content is empty");
-        }
-        return responseContent;
-    }
-
-    private void storeTokenUsage(User user, ProgrammingExercise exercise, String prompt, ChatResponse chatResponse) {
+    private void storeTokenUsage(User user, ProgrammingExercise exercise, Long courseId, String prompt, ChatResponse chatResponse) {
         if (llmTokenUsageService == null || chatResponse == null || chatResponse.getMetadata() == null || chatResponse.getMetadata().getUsage() == null) {
             return;
         }
@@ -225,13 +205,12 @@ public abstract class HyperionCodeGenerationService {
             if (promptTokenCount == null && completionTokenCount == null) {
                 return;
             }
-            int promptTokens = promptTokenCount != null ? promptTokenCount : 0;
-            int completionTokens = completionTokenCount != null ? completionTokenCount : 0;
+            int promptTokens = sanitizeTokenCount(promptTokenCount);
+            int completionTokens = sanitizeTokenCount(completionTokenCount);
             LLMRequest llmRequest = llmTokenUsageService.buildLLMRequest(model, promptTokens, completionTokens, buildPipelineId(prompt));
             if (llmRequest == null) {
                 return;
             }
-            Long courseId = exercise != null && exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
             Long exerciseId = exercise != null ? exercise.getId() : null;
             Long userId = user != null ? user.getId() : null;
             llmTokenUsageService.saveLLMTokenUsage(List.of(llmRequest), LLMServiceType.HYPERION, builder -> builder.withCourse(courseId).withExercise(exerciseId).withUser(userId));
@@ -242,9 +221,32 @@ public abstract class HyperionCodeGenerationService {
         }
     }
 
+    private static int sanitizeTokenCount(Integer tokenCount) {
+        if (tokenCount == null) {
+            return 0;
+        }
+        return Math.max(tokenCount, 0);
+    }
+
     private String buildPipelineId(String prompt) {
-        String promptId = prompt != null ? prompt.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]+", "_") : "UNKNOWN";
+        String promptId = extractPromptId(prompt);
         return String.join("_", "HYPERION", "CODE", "GENERATION", getRepositoryType().name(), promptId);
+    }
+
+    private static String extractPromptId(String prompt) {
+        if (prompt == null || prompt.isBlank()) {
+            return "UNKNOWN";
+        }
+
+        String normalizedPath = prompt.trim().replace('\\', '/');
+        int lastSlashIndex = normalizedPath.lastIndexOf('/');
+        String fileName = lastSlashIndex >= 0 ? normalizedPath.substring(lastSlashIndex + 1) : normalizedPath;
+
+        int extensionSeparatorIndex = fileName.lastIndexOf('.');
+        String fileNameWithoutExtension = extensionSeparatorIndex > 0 ? fileName.substring(0, extensionSeparatorIndex) : fileName;
+
+        String sanitized = fileNameWithoutExtension.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]+", "_").replaceAll("^_+|_+$", "");
+        return sanitized.isBlank() ? "UNKNOWN" : sanitized;
     }
 
     /**
@@ -259,7 +261,7 @@ public abstract class HyperionCodeGenerationService {
      * @return AI response containing the solution plan
      * @throws NetworkingException if AI service communication fails
      */
-    protected abstract CodeGenerationResponseDTO generateSolutionPlan(User user, ProgrammingExercise exercise, String previousBuildLogs, String repositoryStructure,
+    protected abstract CodeGenerationResponseDTO generateSolutionPlan(User user, ProgrammingExercise exercise, Long courseId, String previousBuildLogs, String repositoryStructure,
             String consistencyIssues) throws NetworkingException;
 
     /**
@@ -274,7 +276,7 @@ public abstract class HyperionCodeGenerationService {
      * @return AI response containing file structure definitions
      * @throws NetworkingException if AI service communication fails
      */
-    protected abstract CodeGenerationResponseDTO defineFileStructure(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure,
+    protected abstract CodeGenerationResponseDTO defineFileStructure(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
             String consistencyIssues) throws NetworkingException;
 
     /**
@@ -289,8 +291,8 @@ public abstract class HyperionCodeGenerationService {
      * @return AI response containing class and method headers
      * @throws NetworkingException if AI service communication fails
      */
-    protected abstract CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure,
-            String consistencyIssues) throws NetworkingException;
+    protected abstract CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan,
+            String repositoryStructure, String consistencyIssues) throws NetworkingException;
 
     /**
      * Generates the core implementation logic for the solution.
@@ -304,7 +306,7 @@ public abstract class HyperionCodeGenerationService {
      * @return AI response containing complete implementation with generated files
      * @throws NetworkingException if AI service communication fails
      */
-    protected abstract CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure,
+    protected abstract CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
             String consistencyIssues) throws NetworkingException;
 
     /**

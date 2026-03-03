@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.Map;
 
@@ -64,6 +65,21 @@ class LLMTokenUsageServiceTest {
 
         assertThat(request.costPerMillionInputToken()).isEqualTo(0.0f);
         assertThat(request.costPerMillionOutputToken()).isEqualTo(0.0f);
+    }
+
+    @Test
+    void constructor_withDashlessModelCostCollision_throwsIllegalStateException() {
+        LLMModelCostConfiguration configuration = new LLMModelCostConfiguration();
+        LLMModelCostConfiguration.ModelCostProperties dashedModel = new LLMModelCostConfiguration.ModelCostProperties();
+        dashedModel.setInputCostPerMillionEur(0.23f);
+        dashedModel.setOutputCostPerMillionEur(1.84f);
+        LLMModelCostConfiguration.ModelCostProperties dashlessModel = new LLMModelCostConfiguration.ModelCostProperties();
+        dashlessModel.setInputCostPerMillionEur(0.10f);
+        dashlessModel.setOutputCostPerMillionEur(0.20f);
+        configuration.setModelCosts(Map.of("gpt-5-mini", dashedModel, "gpt5-mini", dashlessModel));
+
+        assertThatThrownBy(() -> new LLMTokenUsageService(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository, configuration)).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("gpt-5-mini").hasMessageContaining("gpt5-mini").hasMessageContaining("gpt5mini");
     }
 
     private static LLMModelCostConfiguration createCostConfiguration() {

@@ -45,8 +45,12 @@ public class LLMTokenUsageService {
         this.llmTokenUsageRequestRepository = llmTokenUsageRequestRepository;
         this.costs = costConfiguration.getModelCosts().entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> new ModelCost(e.getValue().getInputCostPerMillionEur(), e.getValue().getOutputCostPerMillionEur())));
-        this.costsByDashlessKey = costConfiguration.getModelCosts().entrySet().stream().collect(Collectors.toMap(entry -> entry.getKey().replace("-", ""),
-                entry -> new ModelCost(entry.getValue().getInputCostPerMillionEur(), entry.getValue().getOutputCostPerMillionEur()), (existing, replacement) -> existing));
+        this.costsByDashlessKey = costConfiguration.getModelCosts().entrySet().stream()
+                .collect(Collectors.toMap(entry -> entry.getKey().replace("-", ""),
+                        entry -> new DashlessModelCost(entry.getKey(), entry.getKey().replace("-", ""),
+                                new ModelCost(entry.getValue().getInputCostPerMillionEur(), entry.getValue().getOutputCostPerMillionEur())),
+                        LLMTokenUsageService::throwOnDashlessCostCollision))
+                .entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().cost()));
     }
 
     /**
@@ -68,6 +72,15 @@ public class LLMTokenUsageService {
     private record ModelCost(float input, float output) {
 
         static final ModelCost ZERO = new ModelCost(0f, 0f);
+    }
+
+    private record DashlessModelCost(String originalKey, String dashlessKey, ModelCost cost) {
+    }
+
+    private static DashlessModelCost throwOnDashlessCostCollision(DashlessModelCost existing, DashlessModelCost replacement) {
+        String message = new StringBuilder("Conflicting LLM model cost keys '").append(existing.originalKey()).append("' and '").append(replacement.originalKey())
+                .append("' normalize to identical dashless key '").append(existing.dashlessKey()).append("'").toString();
+        throw new IllegalStateException(message);
     }
 
     /**

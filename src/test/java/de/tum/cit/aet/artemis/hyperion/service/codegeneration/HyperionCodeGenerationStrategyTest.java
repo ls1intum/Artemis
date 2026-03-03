@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.advisor.ChatModelCallAdvisor;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.metadata.ChatResponseMetadata;
 import org.springframework.ai.chat.metadata.DefaultUsage;
@@ -65,7 +66,7 @@ class HyperionCodeGenerationServiceTest {
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
-        ChatClient chatClient = ChatClient.create(chatModel);
+        ChatClient chatClient = ChatClient.builder(chatModel).defaultAdvisors(ChatModelCallAdvisor.builder().chatModel(chatModel).build()).build();
         this.strategy = new TestCodeGenerationStrategy(programmingExerciseRepository, chatClient, templates, llmTokenUsageService);
 
         this.user = new User();
@@ -83,7 +84,7 @@ class HyperionCodeGenerationServiceTest {
 
         setupMockTemplateAndChatResponses(coreLogicJson);
 
-        List<GeneratedFileDTO> result = strategy.generateCode(user, exercise, "build logs", "repo structure", "consistency issues");
+        List<GeneratedFileDTO> result = strategy.generateCode(user, exercise, 1L, "build logs", "repo structure", "consistency issues");
 
         assertThat(result).hasSize(2);
         assertThat(result.get(0).path()).isEqualTo("Sort.java");
@@ -102,7 +103,7 @@ class HyperionCodeGenerationServiceTest {
         String coreLogicJson = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"Test.java\",\"content\":\"class Test {}\"}]}";
         setupMockTemplateAndChatResponses(coreLogicJson);
 
-        List<GeneratedFileDTO> result = strategy.generateCode(user, exercise, null, "repo structure", "consistency issues");
+        List<GeneratedFileDTO> result = strategy.generateCode(user, exercise, 1L, null, "repo structure", "consistency issues");
 
         assertThat(result).hasSize(1);
         verify(chatModel, times(4)).call(any(Prompt.class));
@@ -110,13 +111,13 @@ class HyperionCodeGenerationServiceTest {
 
     @Test
     void generateCode_withNullRepositoryStructure_throwsIllegalArgumentException() {
-        assertThatThrownBy(() -> strategy.generateCode(user, exercise, "logs", null, "consistency issues")).isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> strategy.generateCode(user, exercise, 1L, "logs", null, "consistency issues")).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("repositoryStructure must not be null");
     }
 
     @Test
     void generateCode_withNullConsistencyIssues_throwsIllegalArgumentException() {
-        assertThatThrownBy(() -> strategy.generateCode(user, exercise, "logs", "repo structure", null)).isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> strategy.generateCode(user, exercise, 1L, "logs", "repo structure", null)).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("consistencyIssues must not be null");
     }
 
@@ -193,20 +194,58 @@ class HyperionCodeGenerationServiceTest {
     }
 
     @Test
-    void callChatClient_withInvalidJson_tracksTokenUsageBeforeFailing() {
-        String invalidJsonResponse = "{\"solutionPlan\":\"broken json\"";
+    void callChatClient_withNegativeUsageMetadata_clampsTokenUsageToZeroBeforeTracking() throws Exception {
+        String expectedPlan = "Generated solution plan";
+        String jsonResponse = "{\"solutionPlan\":\"" + expectedPlan + "\",\"files\":[]}";
         Map<String, Object> templateVariables = Map.of("key", "value");
         String modelName = "gpt-5-mini-2025-08-07";
         String pipelineId = "HYPERION_CODE_GENERATION_SOLUTION_TEST_TEMPLATE";
+        LLMRequest llmRequest = new LLMRequest(modelName, 0, 0.23f, 7, 1.84f, pipelineId);
+
+        when(templates.renderObject("test-template", templateVariables)).thenReturn("rendered prompt");
+        when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(jsonResponse, modelName, -11, 7));
+        when(llmTokenUsageService.buildLLMRequest(modelName, 0, 7, pipelineId)).thenReturn(llmRequest);
+
+        CodeGenerationResponseDTO result = strategy.testCallChatClient(user, exercise, "test-template", templateVariables);
+
+        assertThat(result.getSolutionPlan()).isEqualTo(expectedPlan);
+        verify(llmTokenUsageService).buildLLMRequest(modelName, 0, 7, pipelineId);
+        verify(llmTokenUsageService).saveLLMTokenUsage(eq(List.of(llmRequest)), eq(LLMServiceType.HYPERION), any());
+    }
+
+    @Test
+    void callChatClient_withPromptPath_buildsPipelineIdFromFilenameOnly() throws Exception {
+        String expectedPlan = "Generated solution plan";
+        String jsonResponse = "{\"solutionPlan\":\"" + expectedPlan + "\",\"files\":[]}";
+        Map<String, Object> templateVariables = Map.of("key", "value");
+        String modelName = "gpt-5-mini-2025-08-07";
+        String promptPath = "/prompts/hyperion/solution/1_plan.st";
+        String pipelineId = "HYPERION_CODE_GENERATION_SOLUTION_1_PLAN";
         LLMRequest llmRequest = new LLMRequest(modelName, 11, 0.23f, 7, 1.84f, pipelineId);
+
+        when(templates.renderObject(promptPath, templateVariables)).thenReturn("rendered prompt");
+        when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(jsonResponse, modelName, 11, 7));
+        when(llmTokenUsageService.buildLLMRequest(modelName, 11, 7, pipelineId)).thenReturn(llmRequest);
+
+        CodeGenerationResponseDTO result = strategy.testCallChatClient(user, exercise, promptPath, templateVariables);
+
+        assertThat(result.getSolutionPlan()).isEqualTo(expectedPlan);
+        verify(llmTokenUsageService).buildLLMRequest(modelName, 11, 7, pipelineId);
+        verify(llmTokenUsageService).saveLLMTokenUsage(eq(List.of(llmRequest)), eq(LLMServiceType.HYPERION), any());
+    }
+
+    @Test
+    void callChatClient_withInvalidJson_throwsNetworkingException() {
+        String invalidJsonResponse = "{\"solutionPlan\":\"broken json\"";
+        Map<String, Object> templateVariables = Map.of("key", "value");
+        String modelName = "gpt-5-mini-2025-08-07";
 
         when(templates.renderObject("test-template", templateVariables)).thenReturn("rendered prompt");
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(invalidJsonResponse, modelName, 11, 7));
-        when(llmTokenUsageService.buildLLMRequest(modelName, 11, 7, pipelineId)).thenReturn(llmRequest);
 
         assertThatThrownBy(() -> strategy.testCallChatClient(user, exercise, "test-template", templateVariables)).isInstanceOf(NetworkingException.class)
                 .hasMessageContaining("AI response processing failed. Please retry.");
-        verify(llmTokenUsageService).saveLLMTokenUsage(eq(List.of(llmRequest)), eq(LLMServiceType.HYPERION), any());
+        verifyNoInteractions(llmTokenUsageService);
     }
 
     @Test
@@ -275,31 +314,31 @@ class HyperionCodeGenerationServiceTest {
         }
 
         @Override
-        protected CodeGenerationResponseDTO generateSolutionPlan(User user, ProgrammingExercise exercise, String previousBuildLogs, String repositoryStructure,
+        protected CodeGenerationResponseDTO generateSolutionPlan(User user, ProgrammingExercise exercise, Long courseId, String previousBuildLogs, String repositoryStructure,
                 String consistencyIssues) throws NetworkingException {
             Map<String, Object> variables = Map.of("test", "plan");
-            return callChatClient(user, exercise, "test-plan-template", variables);
+            return callChatClient(user, exercise, courseId, "test-plan-template", variables);
         }
 
         @Override
-        protected CodeGenerationResponseDTO defineFileStructure(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure, String consistencyIssues)
-                throws NetworkingException {
+        protected CodeGenerationResponseDTO defineFileStructure(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
+                String consistencyIssues) throws NetworkingException {
             Map<String, Object> variables = Map.of("test", "structure");
-            return callChatClient(user, exercise, "test-structure-template", variables);
+            return callChatClient(user, exercise, courseId, "test-structure-template", variables);
         }
 
         @Override
-        protected CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure,
+        protected CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
                 String consistencyIssues) throws NetworkingException {
             Map<String, Object> variables = Map.of("test", "headers");
-            return callChatClient(user, exercise, "test-headers-template", variables);
+            return callChatClient(user, exercise, courseId, "test-headers-template", variables);
         }
 
         @Override
-        protected CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure, String consistencyIssues)
-                throws NetworkingException {
+        protected CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
+                String consistencyIssues) throws NetworkingException {
             Map<String, Object> variables = Map.of("test", "logic");
-            return callChatClient(user, exercise, "test-logic-template", variables);
+            return callChatClient(user, exercise, courseId, "test-logic-template", variables);
         }
 
         @Override
@@ -310,7 +349,7 @@ class HyperionCodeGenerationServiceTest {
         // Expose protected method for testing
         public CodeGenerationResponseDTO testCallChatClient(User user, ProgrammingExercise exercise, String prompt, Map<String, Object> templateVariables)
                 throws NetworkingException {
-            return callChatClient(user, exercise, prompt, templateVariables);
+            return callChatClient(user, exercise, 1L, prompt, templateVariables);
         }
     }
 }
