@@ -62,6 +62,8 @@ if [ -f "$REPORTER_MARKER" ]; then
         echo "reporter_failed=true" >> "$GITHUB_OUTPUT"
     fi
     rm -f "$REPORTER_MARKER"
+    # Tests passed but reporter failed — treat as success
+    exitCode=0
 fi
 
 if [ $exitCode -eq 0 ]
