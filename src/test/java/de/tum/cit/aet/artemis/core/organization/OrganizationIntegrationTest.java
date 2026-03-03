@@ -161,7 +161,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         List<OrganizationCourseDTO> courses = request.getList("/api/core/admin/organizations/" + organization.getId() + "/courses", HttpStatus.OK, OrganizationCourseDTO.class,
                 pageableSearchUtilService.searchMapping(buildSearch("")));
         Long addedCourseId = course1.getId();
-        assertThat(courses).anyMatch(c -> c.id().equals(addedCourseId));
+        assertThat(courses).hasSize(1);
+        assertThat(courses.get(0).id()).isEqualTo(addedCourseId);
     }
 
     /**
@@ -179,7 +180,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         Long removedCourseId = course1.getId();
         List<OrganizationCourseDTO> coursesBeforeRemoval = request.getList("/api/core/admin/organizations/" + organization.getId() + "/courses", HttpStatus.OK,
                 OrganizationCourseDTO.class, pageableSearchUtilService.searchMapping(buildSearch("")));
-        assertThat(coursesBeforeRemoval).anyMatch(c -> c.id().equals(removedCourseId));
+        assertThat(coursesBeforeRemoval).hasSize(1);
+        assertThat(coursesBeforeRemoval.get(0).id()).isEqualTo(removedCourseId);
 
         request.delete("/api/core/admin/organizations/" + organization.getId() + "/courses/" + course1.getId(), HttpStatus.OK);
 
@@ -201,7 +203,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         request.postWithoutLocation("/api/core/admin/organizations/" + organization.getId() + "/users/" + student.getLogin(), null, HttpStatus.OK, null);
         List<OrganizationMemberDTO> members = request.getList("/api/core/admin/organizations/" + organization.getId() + "/users", HttpStatus.OK, OrganizationMemberDTO.class,
                 pageableSearchUtilService.searchMapping(buildSearch("")));
-        assertThat(members).anyMatch(m -> m.id().equals(student.getId()));
+        assertThat(members).hasSize(1);
+        assertThat(members.get(0).id()).isEqualTo(student.getId());
     }
 
     /**
@@ -222,7 +225,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         List<OrganizationMemberDTO> remainingMembers = request.getList("/api/core/admin/organizations/" + organization.getId() + "/users", HttpStatus.OK,
                 OrganizationMemberDTO.class, pageableSearchUtilService.searchMapping(buildSearch("")));
 
-        assertThat(remainingMembers).noneMatch(m -> m.id().equals(student.getId()));
+        assertThat(remainingMembers).isEmpty();
     }
 
     /**
@@ -647,9 +650,11 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(result.getId()).isEqualTo(organization.getId());
         assertThat(result.getName()).isEqualTo(organization.getName());
 
-        assertThat(courses).anyMatch(c -> c.id().equals(expectedCourseId));
+        assertThat(courses).hasSize(1);
+        assertThat(courses.get(0).id()).isEqualTo(expectedCourseId);
 
-        assertThat(users).anyMatch(u -> u.id().equals(student.getId()));
+        assertThat(users).hasSize(1);
+        assertThat(users.get(0).id()).isEqualTo(student.getId());
     }
 
     /**

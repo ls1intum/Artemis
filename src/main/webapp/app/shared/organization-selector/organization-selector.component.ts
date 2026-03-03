@@ -41,7 +41,7 @@ export class OrganizationSelectorComponent {
     private readonly logoTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<Organization> }>>('logoCell');
 
     protected readonly assignedOrgIds = new Set<number>(
-        (this.config.data?.organizations ?? []).map((organization: Organization) => organization.id).filter((id: number | undefined) => id !== undefined),
+        (this.config.data?.organizations ?? []).map((o: Organization) => o.id).filter((id: number | undefined): id is number => id !== undefined),
     );
 
     readonly columns = computed<ColumnDef<Organization>[]>(() => [
@@ -51,13 +51,13 @@ export class OrganizationSelectorComponent {
         { field: 'emailPattern', headerKey: 'artemisApp.organizationManagement.emailPattern', sort: true },
     ]);
 
-    isAlreadyAssigned = computed(() => (org: Organization) => this.assignedOrgIds.has(org.id!));
+    isAlreadyAssigned = computed(() => (org: Organization) => org.id !== undefined && this.assignedOrgIds.has(org.id));
 
     loadOrganizations(event: TableLazyLoadEvent): void {
         this.isLoading.set(true);
         const requestId = ++this.loadRequestId;
         const query = buildDbQueryFromLazyEvent(event);
-        this.organizationService.getOrganizations(query, false).subscribe({
+        this.organizationService.getOrganizations(query).subscribe({
             next: (response) => {
                 if (requestId !== this.loadRequestId) return;
                 this.organizations.set(response.content);

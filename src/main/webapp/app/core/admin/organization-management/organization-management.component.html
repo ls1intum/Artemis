@@ -21,7 +21,7 @@
 
 <ng-template #organizationActions let-organization>
     <div class="btn-group flex-btn-group-container">
-        <button type="submit" [routerLink]="['./', organization.id, 'edit']" queryParamsHandling="merge" class="btn btn-warning btn-sm" (click)="$event.stopPropagation()">
+        <button type="button" [routerLink]="['./', organization.id, 'edit']" queryParamsHandling="merge" class="btn btn-warning btn-sm" (click)="$event.stopPropagation()">
             <fa-icon [icon]="faWrench" />
             <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
         </button>
