@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, effect, model, signal, viewChild } from '@angular/core';
+import { Component, effect, model, signal, viewChild } from '@angular/core';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 
 @Component({
@@ -6,23 +6,23 @@ import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.co
     templateUrl: './monaco-editor-fit-text.html',
     imports: [MonacoEditorComponent],
 })
-export class MonacoEditorFitTextComponent implements AfterViewInit {
+export class MonacoEditorFitTextComponent {
     readonly text = model<string>('');
     protected readonly editorHeight = signal(0);
 
     private readonly editor = viewChild.required(MonacoEditorComponent);
+    private initialized = false;
 
     constructor() {
         effect(() => {
             const newText = this.text();
             const editor = this.editor();
-            if (editor.getText() !== newText) {
+            if (!this.initialized) {
+                editor.changeModel('', newText, 'shell');
+                this.initialized = true;
+            } else if (editor.getText() !== newText) {
                 editor.setText(newText);
             }
         });
-    }
-
-    ngAfterViewInit() {
-        this.editor().changeModel('', this.text(), 'shell');
     }
 }
