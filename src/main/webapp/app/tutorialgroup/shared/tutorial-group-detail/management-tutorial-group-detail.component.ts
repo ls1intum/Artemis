@@ -4,7 +4,7 @@ import { Course, isMessagingEnabled } from 'app/core/course/shared/entities/cour
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { getDayTranslationKey } from '../util/weekdays';
-import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { TutorialGroupSessionDTO, TutorialGroupSessionStatus, entityToTutorialGroupSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TranslateService } from '@ngx-translate/core';
 import { faCircle, faCircleInfo, faCircleXmark, faPercent, faQuestionCircle, faUserCheck } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
@@ -55,7 +55,7 @@ export class ManagementTutorialGroupDetailComponent {
 
     readonly Math = Math;
 
-    sessions: TutorialGroupSession[] = [];
+    sessions: TutorialGroupSessionDTO[] = [];
 
     tutorialTimeslotString: string | undefined;
     isMessagingEnabled: boolean;
@@ -77,7 +77,7 @@ export class ManagementTutorialGroupDetailComponent {
                     this.formattedAdditionalInformation = this.artemisMarkdownService.safeHtmlForMarkdown(group.additionalInformation);
                 }
                 if (group.tutorialGroupSessions) {
-                    this.sessions = group.tutorialGroupSessions;
+                    this.sessions = group.tutorialGroupSessions.map(entityToTutorialGroupSessionDTO);
                 }
                 this.getTutorialDetail();
             }
