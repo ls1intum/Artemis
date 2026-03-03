@@ -99,8 +99,6 @@ public abstract class HyperionCodeGenerationService {
         }
         String normalizedConsistencyIssues = normalizeConsistencyIssues(consistencyIssues);
         CodeGenerationResponseDTO solutionPlanResponse = generateSolutionPlan(user, exercise, courseId, previousBuildLogs, repositoryStructure, normalizedConsistencyIssues);
-        defineFileStructure(user, exercise, courseId, solutionPlanResponse.getSolutionPlan(), repositoryStructure, normalizedConsistencyIssues);
-        generateClassAndMethodHeaders(user, exercise, courseId, solutionPlanResponse.getSolutionPlan(), repositoryStructure, normalizedConsistencyIssues);
         CodeGenerationResponseDTO coreLogicResponse = generateCoreLogic(user, exercise, courseId, solutionPlanResponse.getSolutionPlan(), repositoryStructure,
                 normalizedConsistencyIssues);
 

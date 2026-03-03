@@ -79,7 +79,7 @@ class HyperionCodeGenerationServiceTest {
     }
 
     @Test
-    void generateCode_withValidInput_orchestratesAllStepsAndReturnsFiles() throws Exception {
+    void generateCode_withValidInput_returnsFilesWithoutDuplicateStageCalls() throws Exception {
         String coreLogicJson = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"Sort.java\",\"content\":\"class Sort { void sort() { /* implementation */ } }\"},{\"path\":\"SortTest.java\",\"content\":\"@Test void testSort() { /* test */ }\"}]}";
 
         setupMockTemplateAndChatResponses(coreLogicJson);
@@ -90,11 +90,9 @@ class HyperionCodeGenerationServiceTest {
         assertThat(result.get(0).path()).isEqualTo("Sort.java");
         assertThat(result.get(1).path()).isEqualTo("SortTest.java");
 
-        // Verify all 4 steps were called in correct order
-        verify(chatModel, times(4)).call(any(Prompt.class));
+        // Base orchestration triggers planning + final logic stage once for this test strategy.
+        verify(chatModel, times(2)).call(any(Prompt.class));
         verify(templates).renderObject(eq("test-plan-template"), anyMap());
-        verify(templates).renderObject(eq("test-structure-template"), anyMap());
-        verify(templates).renderObject(eq("test-headers-template"), anyMap());
         verify(templates).renderObject(eq("test-logic-template"), anyMap());
     }
 
@@ -106,7 +104,7 @@ class HyperionCodeGenerationServiceTest {
         List<GeneratedFileDTO> result = strategy.generateCode(user, exercise, 1L, null, "repo structure", "consistency issues");
 
         assertThat(result).hasSize(1);
-        verify(chatModel, times(4)).call(any(Prompt.class));
+        verify(chatModel, times(2)).call(any(Prompt.class));
     }
 
     @Test
@@ -280,16 +278,11 @@ class HyperionCodeGenerationServiceTest {
 
     private void setupMockTemplateAndChatResponses(String finalResponse) {
         String planResponse = "{\"solutionPlan\":\"Generated plan\",\"files\":[]}";
-        String structureResponse = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"stub\",\"content\":\"stub\"}]}";
-        String headersResponse = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"headers\",\"content\":\"headers\"}]}";
 
         when(templates.renderObject(eq("test-plan-template"), anyMap())).thenReturn("rendered plan");
-        when(templates.renderObject(eq("test-structure-template"), anyMap())).thenReturn("rendered structure");
-        when(templates.renderObject(eq("test-headers-template"), anyMap())).thenReturn("rendered headers");
         when(templates.renderObject(eq("test-logic-template"), anyMap())).thenReturn("rendered logic");
 
-        when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(planResponse)).thenReturn(createChatResponse(structureResponse))
-                .thenReturn(createChatResponse(headersResponse)).thenReturn(createChatResponse(finalResponse));
+        when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(planResponse)).thenReturn(createChatResponse(finalResponse));
     }
 
     private ChatResponse createChatResponse(String content) {
