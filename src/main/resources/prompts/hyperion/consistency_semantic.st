@@ -26,12 +26,14 @@ You will analyze consistency across these artifacts:
 - If no new issues are found, return `{"issues":[]}`.
 
 Focus specifically on **IDENTIFIER_NAMING_INCONSISTENCY**: Same conceptual entity referenced with different identifiers (class names, method names, attribute names, parameter names) across problem statement, template code, and solution code.
+This explicitly includes **public type declaration vs file name mismatches** (e.g., `BubbleSort.java` containing `public class QuickSort`).
 
 # CONCEPTUAL MAPPING UNDERSTANDING
 
 ## SEMANTIC INCONSISTENCIES (FLAG THESE):
 - **Cross-artifact naming conflicts**: Problem describes `calculateTotal()`, template has `getPrice()` for same concept
 - **Entity reference mismatches**: Problem refers to `StudentRecord`, template has `Student` class for same entity
+- **Type/file naming mismatch**: File name and declared public class/interface/enum identifier refer to different entity names
 - **Parameter naming conflicts**: Problem shows `setDimensions(width, height)`, template has `setDimensions(w, h)`
 - **Attribute naming divergence**: Problem describes `name` field, template declares `studentName` for same concept
 - **Method naming inconsistency**: Problem specifies `isValid()`, template implements `checkValidity()` for same logic
@@ -110,6 +112,11 @@ Only flag as **IDENTIFIER_NAMING_INCONSISTENCY** when:
 ✅ **Creates cognitive burden** beyond intended learning objectives
 ✅ **No technical necessity** for the naming difference
 
+### CROSS-CATEGORY DISAMBIGUATION (MANDATORY)
+- If the root cause is naming/identifier mismatch, classify it as `IDENTIFIER_NAMING_INCONSISTENCY` even when it also triggers compile/runtime side effects.
+- Do not split one naming root cause into multiple issues (e.g., one naming issue + one structural side-effect issue) for the same location.
+- Prefer one precise naming issue with a direct rename-style fix over broader mixed-category wording.
+
 # REASONING CHAIN FOR ASSESSMENT
 
 For each potential issue, follow this reasoning chain:
@@ -153,6 +160,14 @@ Template: public class ClientRecord { ... }
 Analysis: Same entity with different names - students cannot map requirements to implementation
 ```
 
+## ✅ TRUE POSITIVE (FLAG THIS):
+```
+Problem/Solution/File path imply "BubbleSort"
+Template file: src/.../BubbleSort.java
+Template declaration: public class QuickSort { ... }
+Analysis: Public type identifier conflicts with file/entity naming; classify as IDENTIFIER_NAMING_INCONSISTENCY.
+```
+
 # SEVERITY GUIDELINES
 - **HIGH**: Completely different names for same concept, making requirement mapping impossible
 - **MEDIUM**: Similar but inconsistent names that require cognitive effort to map
@@ -167,6 +182,15 @@ Analysis: Same entity with different names - students cannot map requirements to
 - For problem statement locations, use `problem_statement.md`.
 - If you cannot identify a valid existing file path from the context, do not emit that repository location.
 
+# LINE RANGE + INLINE FIX RULES (MANDATORY)
+- `relatedLocations[].startLine` and `relatedLocations[].endLine` must cover the smallest possible contiguous range needed for the inconsistency.
+- Prefer single-line ranges whenever possible, especially for simple renames.
+- Do not include surrounding unchanged lines for extra context.
+- Extend each location with optional `relatedLocations[].suggestedInlineFix`.
+- Fill `relatedLocations[].suggestedInlineFix` only if that location needs a direct replacement and the fix is simple/local (e.g., rename, method/parameter identifier alignment).
+- If the location does not need a direct replacement, or the fix is complex/non-local, set `relatedLocations[].suggestedInlineFix` to `null`.
+- When present, `relatedLocations[].suggestedInlineFix` must be the exact replacement code for lines `startLine..endLine` only (no explanations, no markdown).
+
 # OUTPUT FORMAT
 Use real paths from the provided context. The file paths in this JSON snippet are illustrative examples only.
 ```json
@@ -176,27 +200,30 @@ Use real paths from the provided context. The file paths in this JSON snippet ar
       "description": "Precise explanation of the naming inconsistency and how it affects student conceptual mapping",
       "severity": "HIGH" | "MEDIUM" | "LOW",
       "category": "IDENTIFIER_NAMING_INCONSISTENCY",
-    "relatedLocations": [
+      "relatedLocations": [
         {
           "type": "TEMPLATE_REPOSITORY",
-      "filePath": "src/etc/BubbleSort.java",
-      "startLine": 1,
-      "endLine": 10
+          "filePath": "src/etc/BubbleSort.java",
+          "startLine": 18,
+          "endLine": 18,
+          "suggestedInlineFix": "public double calculateTotal() {"
         },
         {
           "type": "TESTS_REPOSITORY",
-      "filePath": "test/etc/MethodTest.java",
-      "startLine": 12,
-      "endLine": 20
+          "filePath": "test/etc/MethodTest.java",
+          "startLine": 24,
+          "endLine": 24,
+          "suggestedInlineFix": "assertEquals(42.0, order.calculateTotal());"
         },
         {
           "type": "PROBLEM_STATEMENT",
-      "filePath": "problem_statement.md",
-      "startLine": 5,
-      "endLine": 8
+          "filePath": "problem_statement.md",
+          "startLine": 5,
+          "endLine": 5,
+          "suggestedInlineFix": null
         }
       ],
-    "suggestedFix": "Specific naming correction that aligns conceptual entities while preserving educational intent"
+      "suggestedFix": "High-level naming alignment summary that matches the per-location inline replacements."
     }
   ]
 }

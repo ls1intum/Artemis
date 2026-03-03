@@ -28,6 +28,11 @@
             "threadOutdated": "Veraltet",
             "threadConsistencyIssue": "Konsistenzproblem",
             "threadConsistencySeverity": "{{severity}} Schweregrad",
+            "applyInlineFix": "Änderungen anwenden",
+            "inlineDiffHeader": {
+                "originalCode": "Originalcode",
+                "suggestedResult": "Vorgeschlagenes Ergebnis"
+            },
             "relatedLocationsTitle": "Verwandte Fundstellen:",
             "goToRelatedLocation": "Zur Fundstelle springen",
             "relatedLocationRepository": {

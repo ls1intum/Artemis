@@ -106,7 +106,7 @@ class HyperionConsistencyCheckServiceTest {
         when(repositoryService.getFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class)))
                 .thenReturn(Map.of("src/main/java/App.java", "class App { int sum(int a,int b){return a+b;} }"));
 
-        String json = "{\n  \"issues\": [\n    {\n      \"severity\": \"HIGH\",\n      \"category\": \"METHOD_PARAMETER_MISMATCH\",\n      \"description\": \"Parameters differ\",\n      \"suggestedFix\": \"Align parameter names\",\n      \"relatedLocations\": [{\"type\": \"TEMPLATE_REPOSITORY\", \"filePath\": \"src/main/java/App.java\", \"startLine\": 1, \"endLine\": 1}]\n    }\n  ]\n}";
+        String json = "{\n  \"issues\": [\n    {\n      \"severity\": \"HIGH\",\n      \"category\": \"METHOD_PARAMETER_MISMATCH\",\n      \"description\": \"Parameters differ\",\n      \"suggestedFix\": \"Align parameter names\",\n      \"relatedLocations\": [{\"type\": \"TEMPLATE_REPOSITORY\", \"filePath\": \"src/main/java/App.java\", \"startLine\": 1, \"endLine\": 1, \"suggestedInlineFix\": \"int sum(int first, int second) {\"}]\n    }\n  ]\n}";
 
         when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> {
             AssistantMessage msg = new AssistantMessage(json);
@@ -118,6 +118,8 @@ class HyperionConsistencyCheckServiceTest {
         assertThat(resp).isNotNull();
         assertThat(resp.issues()).isNotEmpty();
         assertThat(resp.issues().getFirst().category()).isEqualTo(ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH);
+        assertThat(resp.issues().getFirst().relatedLocations()).hasSize(1);
+        assertThat(resp.issues().getFirst().relatedLocations().getFirst().suggestedInlineFix()).isEqualTo("int sum(int first, int second) {");
     }
 
     @Test

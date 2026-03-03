@@ -241,4 +241,34 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         expect(comp.editingCommentId()).toBeUndefined();
         expect(comp.editText()).toBe('');
     });
+
+    it('should expose suggested inline fix for consistency issue threads', () => {
+        const suggestedFix = {
+            startLine: 5,
+            endLine: 5,
+            expectedCode: 'foo',
+            replacementCode: 'bar',
+            applied: false,
+        };
+        fixture.componentRef.setInput('thread', {
+            id: 1,
+            resolved: false,
+            comments: [
+                {
+                    id: 3,
+                    type: CommentType.CONSISTENCY_CHECK,
+                    createdDate: '2024-01-01T00:00:00Z',
+                    content: {
+                        contentType: CommentContentType.CONSISTENCY_CHECK,
+                        severity: ConsistencyIssue.SeverityEnum.High,
+                        category: ConsistencyIssue.CategoryEnum.MethodParameterMismatch,
+                        text: 'issue',
+                        suggestedFix,
+                    },
+                },
+            ],
+        } as any);
+
+        expect(comp.consistencySuggestedInlineFix()).toEqual(suggestedFix);
+    });
 });

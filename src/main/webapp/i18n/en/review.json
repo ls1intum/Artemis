@@ -28,6 +28,11 @@
             "threadOutdated": "Outdated",
             "threadConsistencyIssue": "Consistency issue",
             "threadConsistencySeverity": "{{severity}} Severity",
+            "applyInlineFix": "Apply changes",
+            "inlineDiffHeader": {
+                "originalCode": "Original code",
+                "suggestedResult": "Suggested result"
+            },
             "relatedLocationsTitle": "Related locations:",
             "goToRelatedLocation": "Go to location",
             "relatedLocationRepository": {

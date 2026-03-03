@@ -18,6 +18,7 @@ You will analyze consistency across these artifacts:
 **ONLY flag unintentional structural inconsistencies that create student confusion or implementation barriers.**
 **DO NOT flag intentional pedagogical gaps (missing method bodies, incomplete implementations, etc.)**
 **DO NOT return issues that already exist in the provided review threads (including semantically equivalent duplicates).**
+**DO NOT classify identifier/name mismatches (including public type name vs file name mismatches) as structural issues; those belong to semantic `IDENTIFIER_NAMING_INCONSISTENCY`.**
 
 # NEW-ISSUE-ONLY RULES (MANDATORY)
 - Treat all provided review threads as already known findings/discussion.
@@ -52,6 +53,12 @@ This includes:
 - **Template-Solution structural conflicts**: Template structure incompatible with solution design
 - **Solution contradicts specification**: Solution implements different structure than problem describes
 
+## CLASSIFICATION BOUNDARY (MANDATORY)
+- If the root cause is primarily an identifier/name mismatch (class, interface, enum, method, field, parameter, or file/type-name mismatch), do **not** report it here.
+- In particular, a mismatch between a declared public type name and its file/entity name is a naming inconsistency (semantic), not an `ATTRIBUTE_TYPE_MISMATCH`.
+- Only report structural type-category issues when the mismatch is about **types/signatures/visibility**, not names.
+- If a naming mismatch causes secondary structural symptoms (e.g., compile errors), still avoid structural duplicate reporting for that same root cause.
+
 # ANALYSIS FRAMEWORK
 
 ## STEP 1: Educational Context Analysis
@@ -84,6 +91,9 @@ Check for these specific inconsistencies:
 - Example: Problem states `List<String> names`, template declares `String[] names`
 - Example: Template has `String[] names`, solution has `List<String> names`
 - Example: Problem statement describes same field as both `int` and `String` in different sections
+- This category is strictly about **data type** differences, not identifier names.
+- Not flagged: Declared public type identifier differs from file/entity identifier (name mismatch, semantic category)
+- Not flagged: Different identifiers for the same concept where the mismatch is naming-only (semantic category)
 - Not flagged: Uninitialized fields in template
 
 **VISIBILITY_MISMATCH**: Method/attribute visibility conflicts between specification, template, and/or solution
@@ -137,6 +147,15 @@ Analysis: Problem contradicts itself about return type
 - For problem statement locations, use `problem_statement.md`.
 - If you cannot identify a valid existing file path from the context, do not emit that repository location.
 
+# LINE RANGE + INLINE FIX RULES (MANDATORY)
+- `relatedLocations[].startLine` and `relatedLocations[].endLine` must cover the smallest possible contiguous range needed for the finding.
+- Prefer single-line ranges whenever possible, especially for simple renames or signature token changes.
+- Do not include surrounding unchanged lines for extra context.
+- Extend each location with optional `relatedLocations[].suggestedInlineFix`.
+- Fill `relatedLocations[].suggestedInlineFix` only if that location needs a direct replacement and the fix is simple/local (e.g., rename, return type, visibility, parameter name/order, straightforward signature correction).
+- If the location does not need a direct replacement, or the fix is complex/non-local, set `relatedLocations[].suggestedInlineFix` to `null`.
+- When present, `relatedLocations[].suggestedInlineFix` must be the exact replacement code for lines `startLine..endLine` only (no explanations, no markdown).
+
 # OUTPUT FORMAT
 Use real paths from the provided context. The file paths in this JSON snippet are illustrative examples only.
 ```json
@@ -146,27 +165,30 @@ Use real paths from the provided context. The file paths in this JSON snippet ar
       "description": "Precise explanation of the inconsistency and how it affects student understanding/implementation",
       "severity": "HIGH" | "MEDIUM" | "LOW",
       "category": "METHOD_RETURN_TYPE_MISMATCH" | "METHOD_PARAMETER_MISMATCH" | "CONSTRUCTOR_PARAMETER_MISMATCH" | "ATTRIBUTE_TYPE_MISMATCH" | "VISIBILITY_MISMATCH",
-    "relatedLocations": [
+      "relatedLocations": [
         {
           "type": "TEMPLATE_REPOSITORY",
-      "filePath": "src/etc/BubbleSort.java",
-      "startLine": 1,
-      "endLine": 10
+          "filePath": "src/etc/BubbleSort.java",
+          "startLine": 12,
+          "endLine": 12,
+          "suggestedInlineFix": "public double getArea() {"
         },
         {
           "type": "TESTS_REPOSITORY",
-      "filePath": "test/etc/MethodTest.java",
-      "startLine": 12,
-      "endLine": 20
+          "filePath": "test/etc/MethodTest.java",
+          "startLine": 12,
+          "endLine": 12,
+          "suggestedInlineFix": "assertEquals(12.5, shape.getArea());"
         },
         {
           "type": "PROBLEM_STATEMENT",
-      "filePath": "problem_statement.md",
-      "startLine": 5,
-      "endLine": 8
+          "filePath": "problem_statement.md",
+          "startLine": 5,
+          "endLine": 5,
+          "suggestedInlineFix": null
         }
       ],
-    "suggestedFix": "Specific correction that resolves the inconsistency while preserving educational intent"
+      "suggestedFix": "High-level correction summary that aligns all listed locations and their inline replacements."
     }
   ]
 }

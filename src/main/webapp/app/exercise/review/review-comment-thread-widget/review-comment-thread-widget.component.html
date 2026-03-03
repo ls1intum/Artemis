@@ -127,6 +127,26 @@
                     </div>
                 } @else {
                     <div class="monaco-review-comment-text">{{ commentVm.displayText }}</div>
+                    @if (isConsistencyCheckComment(commentVm.comment) && commentVm.comment.id === firstComment()?.id && consistencySuggestedInlineFix(); as inlineFix) {
+                        <div class="monaco-review-comment-inline-diff">
+                            <div class="monaco-review-comment-inline-diff-box">
+                                <div class="monaco-review-comment-inline-diff-labels">
+                                    <span class="monaco-review-comment-inline-diff-label monaco-review-comment-inline-diff-label--left">
+                                        {{ 'artemisApp.review.inlineDiffHeader.originalCode' | artemisTranslate }}
+                                    </span>
+                                    <span class="monaco-review-comment-inline-diff-label monaco-review-comment-inline-diff-label--right">
+                                        {{ 'artemisApp.review.inlineDiffHeader.suggestedResult' | artemisTranslate }}
+                                    </span>
+                                </div>
+                                <jhi-monaco-diff-editor [allowSplitView]="true" [forceSideBySide]="true" [lineNumberOffset]="inlineFix.startLine - 1" />
+                                <div class="monaco-review-comment-inline-diff-actions">
+                                    <button pButton type="button" size="small" class="monaco-review-comment-inline-diff-apply">
+                                        {{ 'artemisApp.review.applyInlineFix' | artemisTranslate }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
                 }
             </div>
         }

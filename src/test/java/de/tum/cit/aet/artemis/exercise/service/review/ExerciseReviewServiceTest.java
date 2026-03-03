@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.exercise.domain.review.CommentType;
 import de.tum.cit.aet.artemis.exercise.dto.review.ConsistencyIssueCommentContentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CreateCommentThreadDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CreateCommentThreadGroupDTO;
+import de.tum.cit.aet.artemis.exercise.dto.review.InlineCodeChangeDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UpdateThreadResolvedStateDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UserCommentContentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
@@ -204,6 +205,33 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         var content = generatedConsistencyThread.getComments().iterator().next().getContent();
         assertThat(content).isInstanceOf(ConsistencyIssueCommentContentDTO.class);
         assertThat(((ConsistencyIssueCommentContentDTO) content).text()).contains("New consistency issue");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldPersistInlineFixForProblemStatementConsistencyLocation() {
+        ExerciseVersion initialVersion = createExerciseVersion();
+        ConsistencyIssueDTO issue = new ConsistencyIssueDTO(Severity.HIGH, ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH, "Rename parameter in statement",
+                "Align parameter naming", List.of(new ArtifactLocationDTO(ArtifactType.PROBLEM_STATEMENT, "", 2, 2, "Line 2 updated")));
+
+        exerciseReviewService.createConsistencyCheckThreads(programmingExercise.getId(), List.of(issue));
+
+        Set<CommentThread> threads = commentThreadRepository.findWithCommentsByExerciseId(programmingExercise.getId());
+        assertThat(threads).singleElement().satisfies(thread -> {
+            assertThat(thread.getTargetType()).isEqualTo(CommentThreadLocationType.PROBLEM_STATEMENT);
+            assertThat(thread.getLineNumber()).isEqualTo(2);
+            assertThat(thread.getInitialVersion()).isEqualTo(initialVersion);
+
+            var content = thread.getComments().iterator().next().getContent();
+            assertThat(content).isInstanceOf(ConsistencyIssueCommentContentDTO.class);
+            InlineCodeChangeDTO inlineFix = ((ConsistencyIssueCommentContentDTO) content).suggestedFix();
+            assertThat(inlineFix).isNotNull();
+            assertThat(inlineFix.startLine()).isEqualTo(2);
+            assertThat(inlineFix.endLine()).isEqualTo(2);
+            assertThat(inlineFix.expectedCode()).isEqualTo("Line 2");
+            assertThat(inlineFix.replacementCode()).isEqualTo("Line 2 updated");
+            assertThat(inlineFix.applied()).isFalse();
+        });
     }
 
     @Test

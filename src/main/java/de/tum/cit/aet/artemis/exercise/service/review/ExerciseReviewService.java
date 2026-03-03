@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -19,10 +20,15 @@ import org.eclipse.jgit.diff.Edit;
 import org.eclipse.jgit.diff.EditList;
 import org.eclipse.jgit.diff.RawText;
 import org.eclipse.jgit.diff.RawTextComparator;
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
+import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.util.io.DisabledOutputStream;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -46,6 +52,7 @@ import de.tum.cit.aet.artemis.exercise.domain.review.CommentType;
 import de.tum.cit.aet.artemis.exercise.dto.review.ConsistencyIssueCommentContentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CreateCommentThreadDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CreateCommentThreadGroupDTO;
+import de.tum.cit.aet.artemis.exercise.dto.review.InlineCodeChangeDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UpdateThreadResolvedStateDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UserCommentContentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
@@ -184,7 +191,7 @@ public class ExerciseReviewService {
                 for (ConsistencyThreadLocation location : locations) {
                     CommentThread thread = buildConsistencyCheckThread(exercise, location, initialCommitShasByTarget, latestProblemStatementVersion);
                     thread.setGroup(group);
-                    Comment comment = buildConsistencyCheckComment(thread, issue);
+                    Comment comment = buildConsistencyCheckComment(thread, issue, location, exercise, repositoryUrisByTarget, exerciseId);
                     thread.getComments().add(comment);
                     groupedThreads.add(thread);
                 }
@@ -195,7 +202,7 @@ public class ExerciseReviewService {
 
             for (ConsistencyThreadLocation location : locations) {
                 CommentThread thread = buildConsistencyCheckThread(exercise, location, initialCommitShasByTarget, latestProblemStatementVersion);
-                Comment comment = buildConsistencyCheckComment(thread, issue);
+                Comment comment = buildConsistencyCheckComment(thread, issue, location, exercise, repositoryUrisByTarget, exerciseId);
                 thread.getComments().add(comment);
                 threadsToPersist.add(thread);
             }
@@ -739,16 +746,22 @@ public class ExerciseReviewService {
     /**
      * Creates the initial consistency-check comment for a generated thread.
      *
-     * @param thread the target thread
-     * @param issue  the consistency issue source data
+     * @param thread                 the target thread
+     * @param issue                  the consistency issue source data
+     * @param location               the mapped location this thread represents
+     * @param exercise               the owning exercise
+     * @param repositoryUrisByTarget pre-resolved repository URIs by target
+     * @param exerciseId             exercise id used for logging context
      * @return the initialized consistency-check comment
      */
-    private Comment buildConsistencyCheckComment(CommentThread thread, ConsistencyIssueDTO issue) {
+    private Comment buildConsistencyCheckComment(CommentThread thread, ConsistencyIssueDTO issue, ConsistencyThreadLocation location, Exercise exercise,
+            ConsistencyTargetRepositoryUris repositoryUrisByTarget, long exerciseId) {
         User author = userRepository.getUser();
 
         Comment comment = new Comment();
         comment.setType(CommentType.CONSISTENCY_CHECK);
-        comment.setContent(new ConsistencyIssueCommentContentDTO(issue.severity(), issue.category(), buildConsistencyIssueText(issue), null));
+        comment.setContent(new ConsistencyIssueCommentContentDTO(issue.severity(), issue.category(), buildConsistencyIssueText(issue),
+                buildInlineSuggestedFix(thread, location, exercise, repositoryUrisByTarget, exerciseId)));
         comment.setAuthor(author);
         comment.setThread(thread);
         return comment;
@@ -768,6 +781,100 @@ public class ExerciseReviewService {
             return description;
         }
         return description + "\n\nSuggested fix: " + suggestedFix;
+    }
+
+    /**
+     * Builds an inline code change from one mapped consistency location when a simple inline replacement is available.
+     * Returns {@code null} when no per-location inline replacement should be persisted.
+     *
+     * @param thread                 persisted thread metadata
+     * @param location               mapped consistency location
+     * @param exercise               owning exercise
+     * @param repositoryUrisByTarget resolved repository URIs by target
+     * @param exerciseId             exercise id used for logging context
+     * @return inline change DTO or {@code null}
+     */
+    @Nullable
+    private InlineCodeChangeDTO buildInlineSuggestedFix(CommentThread thread, ConsistencyThreadLocation location, Exercise exercise,
+            ConsistencyTargetRepositoryUris repositoryUrisByTarget, long exerciseId) {
+        String replacementCode = location.suggestedInlineFix();
+        if (replacementCode == null || replacementCode.isBlank()) {
+            return null;
+        }
+
+        String expectedCode = resolveExpectedCodeForLocation(thread, location, exercise, repositoryUrisByTarget, exerciseId);
+        if (expectedCode == null || expectedCode.isBlank()) {
+            log.warn("Skipping inline suggested fix for exercise {} at {}:{} because expected code could not be resolved", exerciseId, thread.getTargetType(),
+                    thread.getLineNumber());
+            return null;
+        }
+
+        return new InlineCodeChangeDTO(location.startLine(), location.endLine(), expectedCode, replacementCode, false);
+    }
+
+    @Nullable
+    private String resolveExpectedCodeForLocation(CommentThread thread, ConsistencyThreadLocation location, Exercise exercise,
+            ConsistencyTargetRepositoryUris repositoryUrisByTarget, long exerciseId) {
+        return switch (thread.getTargetType()) {
+            case PROBLEM_STATEMENT -> extractLineRange(exercise.getProblemStatement(), location.startLine(), location.endLine());
+            case TEMPLATE_REPO, SOLUTION_REPO, TEST_REPO, AUXILIARY_REPO -> {
+                String filePath = thread.getFilePath();
+                String commitSha = thread.getInitialCommitSha();
+                if (filePath == null || filePath.isBlank() || commitSha == null || commitSha.isBlank()) {
+                    yield null;
+                }
+                LocalVCRepositoryUri repositoryUri = resolveRepositoryUri(thread.getTargetType(), thread.getAuxiliaryRepositoryId(), repositoryUrisByTarget);
+                if (repositoryUri == null) {
+                    yield null;
+                }
+                String fileContent = readFileContentAtCommit(repositoryUri, commitSha, filePath, exerciseId, thread.getTargetType());
+                yield extractLineRange(fileContent, location.startLine(), location.endLine());
+            }
+        };
+    }
+
+    @Nullable
+    private LocalVCRepositoryUri resolveRepositoryUri(CommentThreadLocationType targetType, @Nullable Long auxiliaryRepositoryId,
+            ConsistencyTargetRepositoryUris repositoryUrisByTarget) {
+        return switch (targetType) {
+            case TEMPLATE_REPO, SOLUTION_REPO, TEST_REPO -> repositoryUrisByTarget.repositoryUrisByTargetType().get(targetType);
+            case AUXILIARY_REPO -> auxiliaryRepositoryId == null ? null : repositoryUrisByTarget.auxiliaryRepositoryUrisById().get(auxiliaryRepositoryId);
+            case PROBLEM_STATEMENT -> null;
+        };
+    }
+
+    @Nullable
+    private String readFileContentAtCommit(LocalVCRepositoryUri repositoryUri, String commitSha, String filePath, long exerciseId, CommentThreadLocationType targetType) {
+        try (Repository repository = gitService.getBareRepository(repositoryUri, false); RevWalk revWalk = new RevWalk(repository)) {
+            ObjectId commitId = repository.resolve(commitSha + "^{commit}");
+            if (commitId == null) {
+                return null;
+            }
+            RevCommit commit = revWalk.parseCommit(commitId);
+            try (TreeWalk treeWalk = TreeWalk.forPath(repository, filePath, commit.getTree())) {
+                if (treeWalk == null || treeWalk.getFileMode(0).getObjectType() != Constants.OBJ_BLOB) {
+                    return null;
+                }
+                ObjectLoader loader = repository.open(treeWalk.getObjectId(0));
+                return new String(loader.getBytes(), StandardCharsets.UTF_8);
+            }
+        }
+        catch (Exception ex) {
+            log.warn("Failed to read expected code for exercise {} (target {}, file {}) at commit {}", exerciseId, targetType, filePath, commitSha, ex);
+            return null;
+        }
+    }
+
+    @Nullable
+    private String extractLineRange(@Nullable String content, int startLine, int endLine) {
+        if (content == null || startLine < 1 || endLine < startLine) {
+            return null;
+        }
+        String[] lines = content.split("\\R", -1);
+        if (endLine > lines.length) {
+            return null;
+        }
+        return String.join("\n", Arrays.copyOfRange(lines, startLine - 1, endLine));
     }
 
     /**
@@ -807,13 +914,14 @@ public class ExerciseReviewService {
     private Optional<ConsistencyThreadLocation> mapConsistencyIssueLocation(ArtifactLocationDTO location, long exerciseId, ConsistencyTargetRepositoryUris repositoryUrisByTarget) {
         int lineNumber = location.endLine();
         return switch (location.type()) {
-            case PROBLEM_STATEMENT -> Optional.of(new ConsistencyThreadLocation(CommentThreadLocationType.PROBLEM_STATEMENT, null, lineNumber));
-            case TEMPLATE_REPOSITORY ->
-                mapRepositoryConsistencyIssueLocation(CommentThreadLocationType.TEMPLATE_REPO, null, location.filePath(), lineNumber, exerciseId, repositoryUrisByTarget);
-            case SOLUTION_REPOSITORY ->
-                mapRepositoryConsistencyIssueLocation(CommentThreadLocationType.SOLUTION_REPO, null, location.filePath(), lineNumber, exerciseId, repositoryUrisByTarget);
-            case TESTS_REPOSITORY ->
-                mapRepositoryConsistencyIssueLocation(CommentThreadLocationType.TEST_REPO, null, location.filePath(), lineNumber, exerciseId, repositoryUrisByTarget);
+            case PROBLEM_STATEMENT -> Optional.of(new ConsistencyThreadLocation(CommentThreadLocationType.PROBLEM_STATEMENT, null, lineNumber, location.startLine(),
+                    location.endLine(), location.suggestedInlineFix()));
+            case TEMPLATE_REPOSITORY -> mapRepositoryConsistencyIssueLocation(CommentThreadLocationType.TEMPLATE_REPO, null, location.filePath(), lineNumber, location.startLine(),
+                    location.endLine(), location.suggestedInlineFix(), exerciseId, repositoryUrisByTarget);
+            case SOLUTION_REPOSITORY -> mapRepositoryConsistencyIssueLocation(CommentThreadLocationType.SOLUTION_REPO, null, location.filePath(), lineNumber, location.startLine(),
+                    location.endLine(), location.suggestedInlineFix(), exerciseId, repositoryUrisByTarget);
+            case TESTS_REPOSITORY -> mapRepositoryConsistencyIssueLocation(CommentThreadLocationType.TEST_REPO, null, location.filePath(), lineNumber, location.startLine(),
+                    location.endLine(), location.suggestedInlineFix(), exerciseId, repositoryUrisByTarget);
         };
     }
 
@@ -829,13 +937,13 @@ public class ExerciseReviewService {
      * @return mapped location, or empty if the file does not exist in the repository
      */
     private Optional<ConsistencyThreadLocation> mapRepositoryConsistencyIssueLocation(CommentThreadLocationType targetType, @Nullable Long auxiliaryRepositoryId, String filePath,
-            int lineNumber, long exerciseId, ConsistencyTargetRepositoryUris repositoryUrisByTarget) {
+            int lineNumber, int startLine, int endLine, @Nullable String suggestedInlineFix, long exerciseId, ConsistencyTargetRepositoryUris repositoryUrisByTarget) {
         Optional<String> validationError = exerciseReviewRepositoryService.validateFileExists(targetType, auxiliaryRepositoryId, filePath, repositoryUrisByTarget);
         if (validationError.isPresent()) {
             log.warn("Skipping consistency issue location for exercise {} because {}", exerciseId, validationError.get());
             return Optional.empty();
         }
-        return Optional.of(new ConsistencyThreadLocation(targetType, filePath, lineNumber));
+        return Optional.of(new ConsistencyThreadLocation(targetType, filePath, lineNumber, startLine, endLine, suggestedInlineFix));
     }
 
     /**
@@ -860,11 +968,15 @@ public class ExerciseReviewService {
     /**
      * Internal normalized representation of a consistency issue location used to create review threads.
      *
-     * @param targetType target location type for the thread
-     * @param filePath   repository-relative file path; {@code null} for problem statement
-     * @param lineNumber 1-based line number anchor
+     * @param targetType         target location type for the thread
+     * @param filePath           repository-relative file path; {@code null} for problem statement
+     * @param lineNumber         1-based line number anchor
+     * @param startLine          first line in the location range
+     * @param endLine            last line in the location range
+     * @param suggestedInlineFix optional per-location inline replacement
      */
-    private record ConsistencyThreadLocation(CommentThreadLocationType targetType, @Nullable String filePath, int lineNumber) {
+    private record ConsistencyThreadLocation(CommentThreadLocationType targetType, @Nullable String filePath, int lineNumber, int startLine, int endLine,
+            @Nullable String suggestedInlineFix) {
     }
 
     /**

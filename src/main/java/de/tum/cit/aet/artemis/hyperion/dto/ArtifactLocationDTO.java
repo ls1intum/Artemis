@@ -20,5 +20,11 @@ public record ArtifactLocationDTO(
 
         @NotNull @Schema(description = "Start line number (1-based)") Integer startLine,
 
-        @NotNull @Schema(description = "End line number (1-based)") Integer endLine) {
+        @NotNull @Schema(description = "End line number (1-based)") Integer endLine,
+
+        @Schema(description = "Optional inline replacement code for this location", nullable = true) String suggestedInlineFix) {
+
+    public ArtifactLocationDTO(ArtifactType type, String filePath, Integer startLine, Integer endLine) {
+        this(type, filePath, startLine, endLine, null);
+    }
 }

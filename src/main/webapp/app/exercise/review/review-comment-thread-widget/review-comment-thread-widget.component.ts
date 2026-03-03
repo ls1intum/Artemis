@@ -1,4 +1,19 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation, computed, inject, input, output, signal, viewChildren } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    OnDestroy,
+    OnInit,
+    ViewEncapsulation,
+    computed,
+    effect,
+    inject,
+    input,
+    output,
+    signal,
+    viewChild,
+    viewChildren,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -9,12 +24,13 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowUpRightFromSquare, faEllipsisVertical, faPen, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { Comment, CommentType } from 'app/exercise/shared/entities/review/comment.model';
-import { CommentContent, CommentContentType, ConsistencyIssueCommentContent } from 'app/exercise/shared/entities/review/comment-content.model';
+import { CommentContent, CommentContentType, ConsistencyIssueCommentContent, InlineCodeChange } from 'app/exercise/shared/entities/review/comment-content.model';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs/operators';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { sortCommentsByCreatedDateThenId } from 'app/exercise/review/review-comment-utils';
+import { MonacoDiffEditorComponent } from 'app/shared/monaco-editor/diff-editor/monaco-diff-editor.component';
 
 interface RelatedThreadLocation {
     threadId: number;
@@ -29,7 +45,7 @@ interface RelatedThreadLocation {
     // Monaco view zones render outside Angular's host tree, so styles must stay global.
     encapsulation: ViewEncapsulation.None,
     standalone: true,
-    imports: [FormsModule, ButtonDirective, MenuModule, ArtemisTranslatePipe, ArtemisDatePipe, FaIconComponent],
+    imports: [FormsModule, ButtonDirective, MenuModule, ArtemisTranslatePipe, ArtemisDatePipe, FaIconComponent, MonacoDiffEditorComponent],
 })
 export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     readonly thread = input.required<CommentThread>();
@@ -53,6 +69,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     userCommentMenuItems: MenuItem[] = [];
     nonUserCommentMenuItems: MenuItem[] = [];
     readonly commentMenus = viewChildren<Menu>('commentMenu');
+    readonly suggestedInlineFixDiffEditor = viewChild(MonacoDiffEditorComponent);
 
     private readonly destroyed$ = new Subject<void>();
     private readonly translateService = inject(TranslateService);
@@ -80,6 +97,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         return content;
     });
     readonly isConsistencyIssueThread = computed(() => this.firstConsistencyIssueContent() !== undefined);
+    readonly consistencySuggestedInlineFix = computed<InlineCodeChange | undefined>(() => this.firstConsistencyIssueContent()?.suggestedFix);
     readonly relatedGroupLocations = computed<RelatedThreadLocation[]>(() => {
         // Recompute related location labels when language changes because repository labels are translated.
         this.languageVersion();
@@ -106,6 +124,23 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
 
         return Array.from(distinctLocations.values()).sort((a, b) => a.locationLabel.localeCompare(b.locationLabel));
     });
+
+    constructor() {
+        effect(() => {
+            const inlineFix = this.consistencySuggestedInlineFix();
+            const diffEditor = this.suggestedInlineFixDiffEditor();
+            if (!inlineFix || !diffEditor) {
+                return;
+            }
+
+            diffEditor.setFileContents(
+                inlineFix.expectedCode,
+                inlineFix.replacementCode,
+                `current-${inlineFix.startLine}-${inlineFix.endLine}`,
+                `suggested-${inlineFix.startLine}-${inlineFix.endLine}`,
+            );
+        });
+    }
 
     /**
      * Deletes the given comment via the review comment service.

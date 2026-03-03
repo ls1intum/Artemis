@@ -16,6 +16,8 @@ export class MonacoDiffEditorComponent implements OnDestroy {
     monacoDiffEditorContainerElement: HTMLElement;
 
     allowSplitView = input<boolean>(true);
+    forceSideBySide = input<boolean>(false);
+    lineNumberOffset = input<number>(0);
     onReadyForDisplayChange = output<{ ready: boolean; lineChange: LineChange }>();
 
     /*
@@ -46,7 +48,17 @@ export class MonacoDiffEditorComponent implements OnDestroy {
         effect(() => {
             this._editor.updateOptions({
                 renderSideBySide: this.allowSplitView(),
+                useInlineViewWhenSpaceIsLimited: !this.forceSideBySide(),
             });
+        });
+
+        effect(() => {
+            const lineNumberOffset = Math.max(0, this.lineNumberOffset());
+            const lineNumbers: monaco.editor.LineNumbersType = lineNumberOffset === 0 ? 'on' : (lineNumber: number) => `${lineNumber + lineNumberOffset}`;
+            const lineNumbersMinChars = Math.max(4, `${lineNumberOffset + 100}`.length);
+
+            this._editor.getOriginalEditor().updateOptions({ lineNumbers, lineNumbersMinChars });
+            this._editor.getModifiedEditor().updateOptions({ lineNumbers, lineNumbersMinChars });
         });
     }
 
