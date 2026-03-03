@@ -1,6 +1,6 @@
 <div class="btn-group flex-btn-group-container">
     <!-- Cancel/Activate -->
-    @if (!tutorialGroupSession().tutorialGroupFreePeriod) {
+    @if (!tutorialGroupSession().freePeriod) {
         <button [id]="'cancel-activate-' + tutorialGroupSession().id" type="button" class="btn btn-secondary" (click)="openCancellationDialog()">
             {{
                 (tutorialGroupSession().status === tutorialGroupSessionStatus.CANCELLED
@@ -20,9 +20,9 @@
         [id]="'delete-' + tutorialGroupSession().id"
         jhiDeleteButton
         [animation]="false"
-        entityTitle="{{ tutorialGroupSession().start | artemisDate: 'short-date' : false : course().timeZone! }}
-    {{ tutorialGroupSession().start | artemisDate: 'time' : false : course().timeZone! }} -
-    {{ tutorialGroupSession().end | artemisDate: 'time' : false : course().timeZone! }}"
+        entityTitle="{{ tutorialGroupSession().startDate | artemisDate: 'short-date' : false : course().timeZone! }}
+    {{ tutorialGroupSession().startDate | artemisDate: 'time' : false : course().timeZone! }} -
+    {{ tutorialGroupSession().endDate | artemisDate: 'time' : false : course().timeZone! }}"
         deleteQuestion="artemisApp.pages.tutorialGroupSessionManagement.deleteDialog.question"
         (delete)="deleteTutorialGroupSession()"
         [dialogError]="dialogError$"

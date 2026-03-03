@@ -3,8 +3,9 @@ import { Dayjs } from 'dayjs/esm';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupSchedule } from 'app/tutorialgroup/shared/entities/tutorial-group-schedule.model';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
-import { TutorialGroupFreePeriodDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-free-period-dto.model';
-import { TutorialGroupScheduleDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-schedule-dto.model';
+import { TutorialGroupFreePeriodDTO, entityToTutorialGroupFreePeriodDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-free-period-dto.model';
+import { TutorialGroupScheduleDTO, entityToTutorialGroupScheduleDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-schedule-dto.model';
+import { convertDateFromClient } from 'app/shared/util/date.utils';
 
 export enum TutorialGroupSessionStatus {
     ACTIVE = 'ACTIVE',
@@ -66,3 +67,17 @@ export interface TutorialGroupSessionRequestDTO {
     endTime: string;
     location: string;
 }
+
+export const entityToTutorialGroupSessionDTO = (entity: TutorialGroupSession): TutorialGroupSessionDTO => {
+    return {
+        id: entity.id!,
+        startDate: convertDateFromClient(entity.start)!,
+        endDate: convertDateFromClient(entity.end)!,
+        status: entity.status,
+        statusExplanation: entity.statusExplanation,
+        location: entity.location!,
+        attendanceCount: entity.attendanceCount,
+        schedule: entity.tutorialGroupSchedule ? entityToTutorialGroupScheduleDTO(entity.tutorialGroupSchedule) : undefined,
+        freePeriod: entity.tutorialGroupFreePeriod ? entityToTutorialGroupFreePeriodDTO(entity.tutorialGroupFreePeriod) : undefined,
+    };
+};
