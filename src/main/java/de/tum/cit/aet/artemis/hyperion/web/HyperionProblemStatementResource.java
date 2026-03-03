@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementGlobalRefinementReque
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRefinementResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteResponseDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementTargetedRefinementRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionConsistencyCheckService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionProblemStatementGenerationService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionProblemStatementRefinementService;
@@ -129,6 +130,25 @@ public class HyperionProblemStatementResource {
         log.debug("REST request to Hyperion refine the problem statement globally for course [{}]", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         var result = problemStatementRefinementService.refineProblemStatement(course, request.problemStatementText(), request.userPrompt());
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * POST courses/{courseId}/problem-statements/refine/targeted: Refine an existing problem statement using targeted instructions.
+     *
+     * @param courseId the id of the course the problem statement belongs to
+     * @param request  the request containing the original problem statement and inline comments
+     * @return the ResponseEntity with status 200 (OK) and the refined problem statement or an error status
+     */
+    @EnforceAtLeastEditorInCourse
+    @PostMapping("courses/{courseId}/problem-statements/refine/targeted")
+    public ResponseEntity<ProblemStatementRefinementResponseDTO> refineProblemStatementTargeted(@PathVariable long courseId,
+            @Valid @RequestBody ProblemStatementTargetedRefinementRequestDTO request) {
+        log.debug("REST request to Hyperion refine the problem statement with targeted instructions for course [{}]", courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+
+        var result = problemStatementRefinementService.refineProblemStatementTargeted(course, request);
+
         return ResponseEntity.ok(result);
     }
 }

@@ -87,6 +87,9 @@ export class ExamTestRunPage {
 
     async changeWorkingTime(testRunId: number) {
         await this.page.locator(`#testrun-${testRunId}`).locator('.manage-worktime').click();
+        // Wait for navigation to the detail page and for the working time form to be ready
+        await this.page.waitForURL(`**/test-runs/${testRunId}`);
+        await this.page.locator('#workingTimeHours').waitFor({ state: 'visible', timeout: 30000 });
     }
 
     async startTestRun(testRunId: number) {
