@@ -192,73 +192,91 @@ public final class AnnotationBasedPolicyCollector {
         // Check for custom authorization annotations and extract role requirement
         Role minimumRole = null;
         String note = null;
+        String docDescription = null;
 
         // Course-scoped annotations
         if (AnnotatedElementUtils.hasAnnotation(method, EnforceAtLeastInstructorInCourse.class)) {
             minimumRole = Role.INSTRUCTOR;
             note = "if in course";
+            docDescription = extractDocDescription(method, EnforceAtLeastInstructorInCourse.class);
         }
         else if (AnnotatedElementUtils.hasAnnotation(method, EnforceAtLeastEditorInCourse.class)) {
             minimumRole = Role.EDITOR;
             note = "if in course";
+            docDescription = extractDocDescription(method, EnforceAtLeastEditorInCourse.class);
         }
         else if (AnnotatedElementUtils.hasAnnotation(method, EnforceAtLeastTutorInCourse.class)) {
             minimumRole = Role.TEACHING_ASSISTANT;
             note = "if in course";
+            docDescription = extractDocDescription(method, EnforceAtLeastTutorInCourse.class);
         }
         else if (AnnotatedElementUtils.hasAnnotation(method, EnforceAtLeastStudentInCourse.class)) {
             minimumRole = Role.STUDENT;
             note = "if in course";
+            docDescription = extractDocDescription(method, EnforceAtLeastStudentInCourse.class);
         }
         // Check for exercise-scoped annotations
         else if (hasAnnotation(method, "EnforceAtLeastInstructorInExercise")) {
             minimumRole = Role.INSTRUCTOR;
             note = "if in course";
+            docDescription = extractDocDescriptionByName(method, "EnforceAtLeastInstructorInExercise");
         }
         else if (hasAnnotation(method, "EnforceAtLeastEditorInExercise")) {
             minimumRole = Role.EDITOR;
             note = "if in course";
+            docDescription = extractDocDescriptionByName(method, "EnforceAtLeastEditorInExercise");
         }
         else if (hasAnnotation(method, "EnforceAtLeastTutorInExercise")) {
             minimumRole = Role.TEACHING_ASSISTANT;
             note = "if in course";
+            docDescription = extractDocDescriptionByName(method, "EnforceAtLeastTutorInExercise");
         }
         else if (hasAnnotation(method, "EnforceAtLeastStudentInExercise")) {
             minimumRole = Role.STUDENT;
             note = "if in course";
+            docDescription = extractDocDescriptionByName(method, "EnforceAtLeastStudentInExercise");
         }
         // Check for lecture-scoped annotations
         else if (hasAnnotation(method, "EnforceAtLeastInstructorInLecture")) {
             minimumRole = Role.INSTRUCTOR;
             note = "if in course";
+            docDescription = extractDocDescriptionByName(method, "EnforceAtLeastInstructorInLecture");
         }
         else if (hasAnnotation(method, "EnforceAtLeastEditorInLecture")) {
             minimumRole = Role.EDITOR;
             note = "if in course";
+            docDescription = extractDocDescriptionByName(method, "EnforceAtLeastEditorInLecture");
         }
         else if (hasAnnotation(method, "EnforceAtLeastTutorInLecture")) {
             minimumRole = Role.TEACHING_ASSISTANT;
             note = "if in course";
+            docDescription = extractDocDescriptionByName(method, "EnforceAtLeastTutorInLecture");
         }
         else if (hasAnnotation(method, "EnforceAtLeastStudentInLecture")) {
             minimumRole = Role.STUDENT;
             note = "if in course";
+            docDescription = extractDocDescriptionByName(method, "EnforceAtLeastStudentInLecture");
         }
         // Global role annotations
         else if (AnnotatedElementUtils.hasAnnotation(method, EnforceAdmin.class)) {
             minimumRole = Role.ADMIN;
+            docDescription = extractDocDescription(method, EnforceAdmin.class);
         }
         else if (AnnotatedElementUtils.hasAnnotation(method, EnforceAtLeastInstructor.class)) {
             minimumRole = Role.INSTRUCTOR;
+            docDescription = extractDocDescription(method, EnforceAtLeastInstructor.class);
         }
         else if (AnnotatedElementUtils.hasAnnotation(method, EnforceAtLeastEditor.class)) {
             minimumRole = Role.EDITOR;
+            docDescription = extractDocDescription(method, EnforceAtLeastEditor.class);
         }
         else if (AnnotatedElementUtils.hasAnnotation(method, EnforceAtLeastTutor.class)) {
             minimumRole = Role.TEACHING_ASSISTANT;
+            docDescription = extractDocDescription(method, EnforceAtLeastTutor.class);
         }
         else if (AnnotatedElementUtils.hasAnnotation(method, EnforceAtLeastStudent.class)) {
             minimumRole = Role.STUDENT;
+            docDescription = extractDocDescription(method, EnforceAtLeastStudent.class);
         }
 
         // If no custom annotation found, skip this method
@@ -266,8 +284,8 @@ public final class AnnotationBasedPolicyCollector {
             return null;
         }
 
-        // Extract feature name from method name and HTTP mapping
-        String featureName = generateFeatureName(method);
+        // Extract feature name: use docDescription if provided, otherwise generate from method name
+        String featureName = (docDescription != null && !docDescription.isEmpty()) ? docDescription : generateFeatureName(method);
         String section = determineSectionFromController(controller);
         String path = extractPathFromMethod(controller, method);
         String httpMethod = extractHttpMethod(method);
@@ -289,6 +307,51 @@ public final class AnnotationBasedPolicyCollector {
             }
         }
         return false;
+    }
+
+    /**
+     * Extracts the docDescription field from an annotation if present.
+     *
+     * @param method          the method with the annotation
+     * @param annotationClass the annotation class
+     * @return the docDescription value, or null if not present or empty
+     */
+    private static String extractDocDescription(Method method, Class<? extends Annotation> annotationClass) {
+        try {
+            Annotation annotation = method.getAnnotation(annotationClass);
+            if (annotation != null) {
+                java.lang.reflect.Method docDescMethod = annotationClass.getMethod("docDescription");
+                String value = (String) docDescMethod.invoke(annotation);
+                return (value != null && !value.isEmpty()) ? value : null;
+            }
+        }
+        catch (Exception e) {
+            // If docDescription field doesn't exist or can't be accessed, return null
+        }
+        return null;
+    }
+
+    /**
+     * Extracts the docDescription field from an annotation by its simple class name.
+     *
+     * @param method              the method with the annotation
+     * @param annotationClassName the simple class name of the annotation
+     * @return the docDescription value, or null if not present or empty
+     */
+    private static String extractDocDescriptionByName(Method method, String annotationClassName) {
+        try {
+            for (Annotation annotation : method.getAnnotations()) {
+                if (annotation.annotationType().getSimpleName().equals(annotationClassName)) {
+                    java.lang.reflect.Method docDescMethod = annotation.annotationType().getMethod("docDescription");
+                    String value = (String) docDescMethod.invoke(annotation);
+                    return (value != null && !value.isEmpty()) ? value : null;
+                }
+            }
+        }
+        catch (Exception e) {
+            // If docDescription field doesn't exist or can't be accessed, return null
+        }
+        return null;
     }
 
     /**
