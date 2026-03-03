@@ -22,6 +22,7 @@ import {
 import { GlobalSearchActionItemComponent } from 'app/core/navbar/global-search/components/action-item/global-search-action-item.component';
 import { SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
+import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -32,7 +33,6 @@ import { SearchResultItemComponent } from 'app/core/navbar/global-search/compone
 import { Router } from '@angular/router';
 import { SearchOverlayService } from 'app/core/navbar/global-search/services/search-overlay.service';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 
 // Number of fixed action buttons rendered above the search results.
 // Arrow-key indices 0..NAV_ACTION_COUNT-1 map to these buttons in template order.
@@ -76,7 +76,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     // Query all selectable items for auto-scroll functionality
     private readonly selectableItems = viewChildren<ElementRef<HTMLElement>>('selectableItem');
 
-    // False when artemis.iris.enabled = false in the server config; the button is hidden.
+    // False when artemis.iris.enabled = false in the server config; both action buttons are hidden.
     protected readonly irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
     // Lecture search button is only visible when no filter is active
     protected readonly showLectureButton = computed(() => this.activeFilters().length === 0);
