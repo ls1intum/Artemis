@@ -47,9 +47,9 @@ export class EditTutorialGroupSessionComponent implements OnDestroy {
             captureException('Error: Component not fully configured');
             return;
         }
-        const start = tutorialGroupSession.startDate ? dayjs(tutorialGroupSession.startDate).tz(course.timeZone) : undefined;
+        const start = tutorialGroupSession.startDate ? dayjs.tz(tutorialGroupSession.startDate, course.timeZone) : undefined;
 
-        const end = tutorialGroupSession.endDate ? dayjs(tutorialGroupSession.endDate).tz(course.timeZone) : undefined;
+        const end = tutorialGroupSession.endDate ? dayjs.tz(tutorialGroupSession.endDate, course.timeZone) : undefined;
 
         this.formData = {
             date: start?.toDate(),

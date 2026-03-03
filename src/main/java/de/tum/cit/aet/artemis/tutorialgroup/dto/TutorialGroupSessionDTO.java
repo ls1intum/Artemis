@@ -91,9 +91,6 @@ public record TutorialGroupSessionDTO(@NotNull Long id, @NotNull LocalDateTime s
     public static TutorialGroupSessionDTO of(TutorialGroupSession session, ZoneId courseZone) {
         Objects.requireNonNull(session, "Tutorial group session must be set");
         Objects.requireNonNull(courseZone, "Course time zone must be set");
-        if (session.getStart() == null || session.getEnd() == null) {
-            throw new BadRequestAlertException("The session must have a start and end date.", ENTITY_NAME, "noStartOrEndDate");
-        }
         if (session.getStart().isAfter(session.getEnd())) {
             throw new BadRequestAlertException("The session start date must be before the end date.", ENTITY_NAME, "startDateAfterEndDate");
         }

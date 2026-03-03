@@ -52,7 +52,7 @@ export class TutorialGroupSessionService {
     cancel(courseId: number, tutorialGroupId: number, sessionId: number, explanation?: string): Observable<EntityResponseType> {
         return this.httpClient.post<TutorialGroupSessionDTO>(
             `${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}/cancel`,
-            { status_explanation: explanation },
+            { statusExplanation: explanation },
             { observe: 'response' },
         );
     }
