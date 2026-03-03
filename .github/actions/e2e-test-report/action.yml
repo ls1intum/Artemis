@@ -1,10 +1,7 @@
 name: 'E2E Test Report'
-description: 'Download test results, generate report, and optionally post PR comment'
+description: 'Download test results and generate JUnit report'
 
 inputs:
-  phase-name:
-    description: 'Name of the phase (e.g., "Phase 1", "Phase 2")'
-    required: true
   artifact-name:
     description: 'Name of the artifact to download'
     required: true
@@ -17,31 +14,11 @@ inputs:
   commit-sha:
     description: 'Commit SHA for the test report'
     required: true
-  tests-run:
-    description: 'Description of which tests were run'
-    required: true
-  github-token:
-    description: 'GitHub token for API calls'
-    required: true
-  repository:
-    description: 'Repository name (owner/repo)'
-    required: true
-  repository-owner:
-    description: 'Repository owner'
-    required: true
-  run-id:
-    description: 'Workflow run ID'
-    required: true
-  head-branch:
-    description: 'Head branch name'
-    required: true
-  is-pr:
-    description: 'Whether this is a PR event'
-    required: true
-  reporter-failed:
-    description: 'Whether the test reporter (e.g., monocart) failed during this phase'
-    required: false
-    default: ''
+
+outputs:
+  summary:
+    description: 'Test summary from JUnit report'
+    value: ${{ steps.test-report.outputs.summary }}
 
 runs:
   using: 'composite'
@@ -67,61 +44,3 @@ runs:
         detailed_summary: true
         include_time_in_summary: true
         report_paths: '${{ inputs.download-path }}/results.xml'
-
-    - name: Find PR number
-      if: (success() || failure()) && inputs.is-pr == 'true'
-      id: find-pr
-      continue-on-error: true
-      shell: bash
-      run: |
-        BRANCH_NAME=${{ inputs.head-branch }}
-        echo "Checking if PR exists for head ref: $BRANCH_NAME."
-
-        PR_RESPONSE=$(curl -s -H "Authorization: token ${{ inputs.github-token }}" \
-          -H "Accept: application/vnd.github.v3+json" \
-          "https://api.github.com/repos/${{ inputs.repository }}/pulls?head=${{ inputs.repository-owner }}:$BRANCH_NAME")
-
-        PR_NUMBER=$(echo "$PR_RESPONSE" | grep -o '"number": [0-9]*,' | head -1 | sed 's/"number": //g' | sed 's/,//g' | tr -d ' \t\n\r')
-
-        if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
-          echo "Found PR: $PR_NUMBER from branch: $BRANCH_NAME."
-          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
-        else
-          echo "No PR found from branch: $BRANCH_NAME."
-        fi
-
-    - name: Post results comment
-      if: (success() || failure()) && steps.find-pr.outputs.pr_number != ''
-      uses: actions/github-script@v8
-      continue-on-error: true
-      with:
-        script: |
-          const prNumber = ${{ steps.find-pr.outputs.pr_number }};
-          const testsRun = `${{ inputs.tests-run }}`;
-          const phaseName = `${{ inputs.phase-name }}`;
-          const jobStatus = '${{ job.status }}';
-          const testSummary = `${{ steps.test-report.outputs.summary || '' }}`;
-
-          let statusEmoji = jobStatus === 'success' ? '✅' : '❌';
-          let statusText = jobStatus === 'success' ? 'passed' : 'failed';
-
-          const reporterFailed = '${{ inputs.reporter-failed }}';
-
-          let body = `### ${phaseName}: E2E Tests ${statusEmoji}\n\n`;
-          body += `**Status:** ${phaseName} ${statusText}\n\n`;
-          if (reporterFailed === 'true') {
-            body += `> **Note:** The test reporter (monocart) failed during this phase. Test results were not affected, but coverage data may be incomplete.\n\n`;
-          }
-          if (testSummary) {
-            body += `${testSummary}\n\n`;
-          }
-          body += `**Tests Run:** ${testsRun}\n\n`;
-          body += `**Details:** Check the [${phaseName} Test Report](https://github.com/${{ inputs.repository }}/actions/runs/${{ inputs.run-id }}) for detailed results.\n\n`;
-          body += `---\n*This is an automated comment for ${phaseName} of the E2E test execution.*`;
-
-          github.rest.issues.createComment({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            issue_number: prNumber,
-            body: body
-          });
