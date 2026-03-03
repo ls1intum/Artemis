@@ -742,12 +742,17 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.inPreviewMode = event.nextId === this.TAB_PREVIEW;
         this.inVisualMode = event.nextId === this.TAB_VISUAL;
         this.inEditMode = event.nextId === this.TAB_EDIT;
+        if (this.pendingNavChangeTimeout !== undefined) {
+            window.clearTimeout(this.pendingNavChangeTimeout);
+            this.pendingNavChangeTimeout = undefined;
+        }
         if (this.inEditMode) {
             // Defer layout adjustment to after Angular change detection and NgbNav tab switch complete.
             // Reading DOM dimensions before the tab pane is active yields incorrect values (e.g. height 0).
             this.pendingNavChangeTimeout = window.setTimeout(() => {
                 this.adjustEditorDimensions();
                 this.monacoEditor.focus();
+                this.pendingNavChangeTimeout = undefined;
             });
             this.onEditSelect.emit();
         } else if (this.inPreviewMode) {
