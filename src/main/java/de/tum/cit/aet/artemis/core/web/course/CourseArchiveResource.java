@@ -21,7 +21,6 @@ import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -37,7 +36,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceAccessPolicy.EnforceAccessPolicy;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.course.CourseArchiveService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
@@ -77,8 +76,7 @@ public class CourseArchiveResource {
      * @return the ResponseEntity with status 200 (OK) when no exception occurred
      */
     @PutMapping("courses/{courseId}/archive")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
-    @EnforceAccessPolicy(value = "courseInstructorAccessPolicy", resourceIdFieldName = "courseId")
+    @EnforceAtLeastInstructorInCourse
     @FeatureToggle(Feature.Exports)
     public ResponseEntity<Void> archiveCourse(@PathVariable Long courseId) {
         log.info("REST request to archive Course : {}", courseId);
@@ -107,8 +105,7 @@ public class CourseArchiveResource {
      * @param courseId The course id of the archived course
      * @return ResponseEntity with status
      */
-    @PreAuthorize("hasRole('INSTRUCTOR')")
-    @EnforceAccessPolicy(value = "courseInstructorAccessPolicy", resourceIdFieldName = "courseId")
+    @EnforceAtLeastInstructorInCourse
     @GetMapping("courses/{courseId}/download-archive")
     public ResponseEntity<Resource> downloadCourseArchive(@PathVariable Long courseId) throws IOException {
         log.info("REST request to download archive of Course : {}", courseId);
@@ -136,8 +133,7 @@ public class CourseArchiveResource {
      * @return ResponseEntity with status
      */
     @DeleteMapping("courses/{courseId}/cleanup")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
-    @EnforceAccessPolicy(value = "courseInstructorAccessPolicy", resourceIdFieldName = "courseId")
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Resource> cleanup(@PathVariable Long courseId, Principal principal) {
         log.info("REST request to cleanup the Course : {}", courseId);
         final Course course = courseRepository.findByIdElseThrow(courseId);

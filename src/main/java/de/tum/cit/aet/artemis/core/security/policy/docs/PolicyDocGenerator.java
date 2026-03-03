@@ -47,12 +47,15 @@ public final class PolicyDocGenerator {
     }
 
     /**
-     * Collects all access policies from known policy configuration classes.
+     * Collects all access policies from known policy configuration classes
+     * and from endpoints with custom authorization annotations.
      *
      * @return list of all access policies with documentation metadata
      */
     static List<AccessPolicy<?>> collectPolicies() {
         List<AccessPolicy<?>> policies = new ArrayList<>();
+
+        // Collect policy-based endpoints
         CourseAccessPolicies courseConfig = new CourseAccessPolicies();
         policies.add(courseConfig.courseVisibilityPolicy());
         policies.add(courseConfig.courseStudentAccessPolicy());
@@ -61,6 +64,10 @@ public final class PolicyDocGenerator {
         policies.add(courseConfig.courseInstructorAccessPolicy());
         ProgrammingExerciseAccessPolicies progConfig = new ProgrammingExerciseAccessPolicies();
         policies.add(progConfig.programmingExerciseVisibilityPolicy());
+
+        // Collect annotation-based endpoints
+        policies.addAll(AnnotationBasedPolicyCollector.collectAnnotationBasedPolicies());
+
         return policies;
     }
 

@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,7 +23,7 @@ import de.tum.cit.aet.artemis.core.dto.CourseSummaryDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceAccessPolicy.EnforceAccessPolicy;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.policy.AccessPolicy;
 import de.tum.cit.aet.artemis.core.security.policy.PolicyEngine;
 import de.tum.cit.aet.artemis.core.service.course.CourseAdminService;
@@ -74,8 +73,7 @@ public class CourseMaterialImportResource {
      * @return the ResponseEntity with status 200 (OK) and the course summary in the body
      */
     @GetMapping("courses/{courseId}/import-summary/{sourceCourseId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
-    @EnforceAccessPolicy(value = "courseInstructorAccessPolicy", resourceIdFieldName = "courseId")
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<CourseSummaryDTO> getImportSummary(@PathVariable long courseId, @PathVariable long sourceCourseId) {
         log.debug("REST request to get import summary for source course {}", sourceCourseId);
 
@@ -102,8 +100,7 @@ public class CourseMaterialImportResource {
      * @return the ResponseEntity with status 200 (OK) and the import result in the body
      */
     @PostMapping("courses/{courseId}/import-material")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
-    @EnforceAccessPolicy(value = "courseInstructorAccessPolicy", resourceIdFieldName = "courseId")
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<CourseMaterialImportResultDTO> importCourseMaterial(@PathVariable long courseId, @RequestBody CourseMaterialImportOptionsDTO options) {
         log.info("REST request to import course material from course {} to course {}", options.sourceCourseId(), courseId);
 

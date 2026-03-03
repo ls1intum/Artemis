@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,7 +32,8 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceAccessPolicy.EnforceAccessPolicy;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.course.CourseForUserGroupService;
 import de.tum.cit.aet.artemis.core.service.course.CourseLoadService;
@@ -163,8 +163,7 @@ public class CourseManagementResource {
      * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
      */
     @GetMapping("courses/{courseId}/for-assessment-dashboard")
-    @PreAuthorize("hasRole('TA')")
-    @EnforceAccessPolicy(value = "courseStaffAccessPolicy", resourceIdFieldName = "courseId")
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<Course> getCourseForAssessmentDashboard(@PathVariable long courseId) {
         log.debug("REST request /courses/{courseId}/for-assessment-dashboard");
         Course course = courseRepository.findByIdWithEagerExercisesElseThrow(courseId);
@@ -185,8 +184,7 @@ public class CourseManagementResource {
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
     @GetMapping("courses/{courseId}/with-exercises")
-    @PreAuthorize("hasRole('TA')")
-    @EnforceAccessPolicy(value = "courseStaffAccessPolicy", resourceIdFieldName = "courseId")
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<Course> getCourseWithExercises(@PathVariable Long courseId) {
         log.debug("REST request to get course {} for tutors", courseId);
         Course course = courseRepository.findWithEagerExercisesById(courseId);
@@ -200,8 +198,7 @@ public class CourseManagementResource {
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
     @GetMapping("courses/{courseId}/with-exercises-lectures-competencies")
-    @PreAuthorize("hasRole('TA')")
-    @EnforceAccessPolicy(value = "courseStaffAccessPolicy", resourceIdFieldName = "courseId")
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<Course> getCourseWithExercisesAndLecturesAndCompetencies(@PathVariable Long courseId) {
         log.debug("REST request to get course {} for tutors", courseId);
         return ResponseEntity.ok(courseLoadService.loadCourseWithExercisesLecturesLectureUnitsCompetenciesAndPrerequisites(courseId));
@@ -214,8 +211,7 @@ public class CourseManagementResource {
      * @return the course with eagerly loaded organizations
      */
     @GetMapping("courses/{courseId}/with-organizations")
-    @PreAuthorize("hasRole('TA')")
-    @EnforceAccessPolicy(value = "courseStaffAccessPolicy", resourceIdFieldName = "courseId")
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<Course> getCourseWithOrganizations(@PathVariable Long courseId) {
         log.debug("REST request to get a course with its organizations : {}", courseId);
         Course course = courseRepository.findWithEagerOrganizationsElseThrow(courseId);
@@ -229,8 +225,7 @@ public class CourseManagementResource {
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
     @GetMapping("courses/{courseId}/locked-submissions")
-    @PreAuthorize("hasRole('TA')")
-    @EnforceAccessPolicy(value = "courseStaffAccessPolicy", resourceIdFieldName = "courseId")
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<List<Submission>> getLockedSubmissionsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all locked submissions for course : {}", courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -250,8 +245,7 @@ public class CourseManagementResource {
      * @return Set of exercises with status 200 (OK)
      */
     @GetMapping("courses/{courseId}/all-exercises-with-due-dates")
-    @PreAuthorize("hasRole('TA')")
-    @EnforceAccessPolicy(value = "courseStaffAccessPolicy", resourceIdFieldName = "courseId")
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<Set<Exercise>> getAllExercisesWithDueDatesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all exercises with due dates and categories in course : {}", courseId);
         Set<Exercise> exercises = exerciseRepository.findByCourseIdWithFutureDueDatesAndCategories(courseId);
@@ -284,8 +278,7 @@ public class CourseManagementResource {
      * @return the ResponseEntity with status 200 (OK) and the list of categories or with status 404 (Not Found)
      */
     @GetMapping("courses/{courseId}/categories")
-    @PreAuthorize("hasRole('EDITOR')")
-    @EnforceAccessPolicy(value = "courseEditorAccessPolicy", resourceIdFieldName = "courseId")
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<Set<String>> getCategoriesInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get categories of Course : {}", courseId);
         return ResponseEntity.ok().body(exerciseRepository.findAllCategoryNames(courseId));
@@ -300,8 +293,7 @@ public class CourseManagementResource {
      * @return {@link CourseExistingExerciseDetailsDTO} with the exerciseNames (and already used shortNames if a {@link ExerciseType#PROGRAMMING} exercise is requested)
      */
     @GetMapping("courses/{courseId}/existing-exercise-details")
-    @PreAuthorize("hasRole('EDITOR')")
-    @EnforceAccessPolicy(value = "courseEditorAccessPolicy", resourceIdFieldName = "courseId")
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<CourseExistingExerciseDetailsDTO> getExistingExerciseDetails(@PathVariable Long courseId, @RequestParam String exerciseType) {
         log.debug("REST request to get details of existing exercises in course : {}", courseId);
         Course course = courseRepository.findByIdWithEagerExercisesElseThrow(courseId);
