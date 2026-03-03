@@ -392,7 +392,7 @@ public final class RepositoryExportTestUtil {
         repo.workingCopyGitRepo.push().setRemote("origin").call();
 
         // Wait for the bare repository to be fully ready for cloning operations
-        waitForBareRepositoryReady(repo, commit.getId());
+        waitForBareRepositoryReady(repo);
 
         return commit;
     }
@@ -406,32 +406,19 @@ public final class RepositoryExportTestUtil {
      * @param repo the local repository whose bare repo should be verified
      */
     public static void waitForBareRepositoryReady(LocalRepository repo) {
-        waitForBareRepositoryReady(repo, null);
-    }
-
-    /**
-     * Waits for a bare repository to be fully ready and a specific commit to be readable.
-     *
-     * @param repo     the local repository whose bare repo should be verified
-     * @param commitId optional commit ID to verify; if null, only HEAD is checked
-     */
-    public static void waitForBareRepositoryReady(LocalRepository repo, ObjectId commitId) {
         Awaitility.await().atMost(10, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
             try {
-                // Try to open the bare repository and resolve the commit
-                // This verifies the repo is accessible and has a valid reference
+                // Try to open the bare repository and resolve HEAD
+                // This verifies the repo is accessible and has a valid HEAD reference
                 try (Git git = Git.open(repo.remoteBareGitRepoFile)) {
-                    ObjectId objectToCheck = commitId;
-                    if (objectToCheck == null) {
-                        objectToCheck = git.getRepository().resolve("HEAD");
-                    }
-                    if (objectToCheck == null) {
+                    var headRef = git.getRepository().resolve("HEAD");
+                    if (headRef == null) {
                         log.debug("Bare repository HEAD is null, waiting...");
                         return false;
                     }
                     // Verify we can read the commit object
                     try (RevWalk revWalk = new RevWalk(git.getRepository())) {
-                        revWalk.parseCommit(objectToCheck);
+                        revWalk.parseCommit(headRef);
                     }
                     return true;
                 }
