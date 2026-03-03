@@ -14,10 +14,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhases;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -34,8 +34,6 @@ public class ProgrammingExerciseBuildPlanService {
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
-    private final Optional<BuildScriptGenerationService> buildScriptGenerationService;
-
     private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
 
     private final Optional<AeolusTemplateService> aeolusTemplateService;
@@ -47,11 +45,10 @@ public class ProgrammingExerciseBuildPlanService {
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     public ProgrammingExerciseBuildPlanService(Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<BuildScriptGenerationService> buildScriptGenerationService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
+            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, Optional<AeolusTemplateService> aeolusTemplateService, ProfileService profileService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
         this.continuousIntegrationService = continuousIntegrationService;
-        this.buildScriptGenerationService = buildScriptGenerationService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.aeolusTemplateService = aeolusTemplateService;
@@ -69,7 +66,7 @@ public class ProgrammingExerciseBuildPlanService {
      * @param programmingExercise Programming exercise for the build plans should be generated. The programming
      *                                exercise should contain a fully initialized template and solution participation.
      */
-    public void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise) throws JsonProcessingException {
+    public void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise) {
         // Get URLs for repos
         var exerciseRepoUri = programmingExercise.getVcsTemplateRepositoryUri();
         var testsRepoUri = programmingExercise.getVcsTestRepositoryUri();
@@ -82,37 +79,50 @@ public class ProgrammingExerciseBuildPlanService {
         // solution build plan
         continuousIntegration.createBuildPlanForExercise(programmingExercise, SOLUTION.getName(), solutionRepoUri, testsRepoUri, solutionRepoUri);
 
-        Windfile windfile = programmingExercise.getBuildConfig().getWindfile();
-        if (windfile != null && buildScriptGenerationService.isPresent() && programmingExercise.getBuildConfig().getBuildScript() == null) {
-            String script = buildScriptGenerationService.get().getScript(programmingExercise);
-            programmingExercise.getBuildConfig().setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
-            programmingExercise.getBuildConfig().setBuildScript(script);
-            programmingExerciseBuildConfigRepository.saveAndFlush(programmingExercise.getBuildConfig());
-        }
-
         // trigger BASE and SOLUTION build plans once here
         continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getTemplateParticipation());
         continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getSolutionParticipation());
     }
 
     /**
-     * Adds a default build plan config if LocalCI is active and no build plan exists
+     * Ensures that the build plan configuration for a programming exercise is stored in the
+     * {@link BuildPlanPhases} format. This handles three cases:
+     * <ol>
+     * <li>No config exists ({@code null}): loads the default windfile template and converts it to phases format</li>
+     * <li>Config exists in legacy Windfile format: converts it to phases format</li>
+     * <li>Config already in phases format:  no change needed</li>
+     * </ol>
+     * This normalization is skipped for Jenkins, which uses its own Jenkinsfile-based approach.
      *
-     * @param programmingExercise the programming exercise the default build config should be added
-     * @throws JsonProcessingException when the default build config cannot be written as JSON string
+     * @param programmingExercise the programming exercise whose build config should be normalized
+     * @throws JsonProcessingException when the build config cannot be serialized as JSON
      */
     public void addDefaultBuildPlanConfigForLocalCI(ProgrammingExercise programmingExercise) throws JsonProcessingException {
-        // For LocalCI and Aeolus, we store the build plan definition in the database as a windfile, we don't do that for Jenkins as
-        // we want to use the default approach of Jenkinsfiles and Build Plans if no customizations are made
-        if (aeolusTemplateService.isPresent() && programmingExercise.getBuildConfig().getBuildPlanConfiguration() == null && !profileService.isJenkinsActive()) {
-            Windfile windfile = aeolusTemplateService.get().getDefaultWindfileFor(programmingExercise);
-            if (windfile != null) {
-                programmingExercise.getBuildConfig().setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
-                programmingExerciseBuildConfigRepository.saveAndFlush(programmingExercise.getBuildConfig());
-            }
-            else {
-                log.warn("No windfile for the settings of exercise {}", programmingExercise.getId());
-            }
+        if (profileService.isJenkinsActive()) {
+            return;
+        }
+
+        var buildConfig = programmingExercise.getBuildConfig();
+
+        // already in phases format, nothing to do
+        if (buildConfig.getBuildPlanPhases() != null) {
+            return;
+        }
+
+        // existing config in Windfile format, convert to phases
+        Windfile windfile = buildConfig.getWindfile();
+
+        // no config at all, load default windfile template
+        if (windfile == null && buildConfig.getBuildPlanConfiguration() == null && aeolusTemplateService.isPresent()) {
+            windfile = aeolusTemplateService.get().getDefaultWindfileFor(programmingExercise);
+        }
+
+        if (windfile != null) {
+            BuildPlanPhases phases = BuildPlanPhases.fromWindfile(windfile);
+            buildConfig.setBuildPlanConfiguration(phases.serialize());
+            programmingExerciseBuildConfigRepository.saveAndFlush(buildConfig);
+        } else {
+            log.warn("No windfile for the settings of exercise {}", programmingExercise.getId());
         }
     }
 
@@ -136,13 +146,6 @@ public class ProgrammingExerciseBuildPlanService {
                 continuousIntegrationService.get().createProjectForExercise(updatedProgrammingExercise);
                 continuousIntegrationService.get().recreateBuildPlansForExercise(updatedProgrammingExercise);
                 resetAllStudentBuildPlanIdsForExercise(updatedProgrammingExercise);
-            }
-            // For Aeolus, we have to regenerate the build script based on the new Windfile of the exercise.
-            // We skip this for pure LocalCI to prevent the build script from being overwritten by the default one.
-            if (profileService.isAeolusActive() && buildScriptGenerationService.isPresent()) {
-                String script = buildScriptGenerationService.get().getScript(updatedProgrammingExercise);
-                updatedProgrammingExercise.getBuildConfig().setBuildScript(script);
-                programmingExerciseBuildConfigRepository.save(updatedProgrammingExercise.getBuildConfig());
             }
         }
         else {
