@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LectureSearchService } from './lecture-search.service';
 import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
@@ -19,6 +19,10 @@ describe('LectureSearchService', () => {
         });
         service = TestBed.inject(LectureSearchService);
         httpTesting = TestBed.inject(HttpTestingController);
+    });
+
+    afterEach(() => {
+        httpTesting.verify();
     });
 
     it('should be created', () => {
