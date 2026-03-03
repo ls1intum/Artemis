@@ -42,6 +42,7 @@
             "toClose": "to close",
             "searchLectureContent": "Search Lecture Content",
             "searchLectureContentDescription": "Deep semantic search through transcripts and materials",
+            "searchLectureContentHint": "Type to search through lecture transcripts and materials",
             "lectureResultsAriaLabel": "Lecture search results",
             "arrowUpAriaLabel": "Up arrow",
             "arrowDownAriaLabel": "Down arrow",

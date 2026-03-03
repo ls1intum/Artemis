@@ -42,6 +42,7 @@
             "toClose": "zum Schließen",
             "searchLectureContent": "Vorlesungsinhalt suchen",
             "searchLectureContentDescription": "Semantische Suche durch Transkripte und Materialien",
+            "searchLectureContentHint": "Tippe, um Vorlesungstranskripte und Materialien zu durchsuchen",
             "lectureResultsAriaLabel": "Vorlesungsergebnisse",
             "arrowUpAriaLabel": "Pfeil nach oben",
             "arrowDownAriaLabel": "Pfeil nach unten",
