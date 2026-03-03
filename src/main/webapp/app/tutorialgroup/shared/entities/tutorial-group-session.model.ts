@@ -49,6 +49,13 @@ export interface RawTutorialGroupDetailSessionDTO {
     attendanceCount?: number;
 }
 
+/**
+ * Data Transfer Object representing a tutorial group session
+ *
+ * All date values are serialized as ISO 8601 strings.
+ * Nested entities are converted to their respective DTOs.
+ *
+ */
 export interface TutorialGroupSessionDTO {
     id: number;
     startDate: string;
@@ -61,6 +68,12 @@ export interface TutorialGroupSessionDTO {
     freePeriod?: TutorialGroupFreePeriodDTO;
 }
 
+/**
+ * DTO used when creating a new tutorial group session.
+ *
+ * The date and time are transmitted separately to allow
+ * flexible backend reconstruction of the full timestamp.
+ */
 export interface TutorialGroupSessionRequestDTO {
     date: string;
     startTime: string;
@@ -68,6 +81,13 @@ export interface TutorialGroupSessionRequestDTO {
     location: string;
 }
 
+/**
+ * Converts a {@link TutorialGroupSession} entity into a
+ * {@link TutorialGroupSessionDTO}.
+ *
+ * @param entity the session entity to convert
+ * @returns the corresponding TutorialGroupSessionDTO
+ */
 export const entityToTutorialGroupSessionDTO = (entity: TutorialGroupSession): TutorialGroupSessionDTO => {
     return {
         id: entity.id!,

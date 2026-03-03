@@ -7,6 +7,21 @@ import {
 } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroupSessionFormData } from 'app/tutorialgroup/manage/tutorial-group-sessions/crud/tutorial-group-session-form/tutorial-group-session-form.component';
 
+/**
+ * Generates an example {@link TutorialGroupSession} entity.
+ *
+ * This helper is primarily used in unit tests to create
+ * consistent and predictable entity instances.
+ *
+ * Dates are initialized in UTC to simulate server responses.
+ *
+ * @param id the session id
+ * @param start the start timestamp (Dayjs, UTC)
+ * @param end the end timestamp (Dayjs, UTC)
+ * @param location the session location
+ * @param status the session status
+ * @returns a fully initialized TutorialGroupSession entity
+ */
 export const generateExampleTutorialGroupSession = ({
     id = 3,
     start = dayjs.utc('2021-01-01T10:00:00'),
@@ -25,6 +40,17 @@ export const generateExampleTutorialGroupSession = ({
     return exampleSession;
 };
 
+/**
+ * Generates an example {@link TutorialGroupSessionDTO}.
+ *
+ * This helper is used in frontend tests where the UI layer
+ * operates purely on DTO objects.
+ *
+ * All date values are ISO 8601 strings.
+ *
+ * @param overrides optional properties to override defaults
+ * @returns a fully initialized TutorialGroupSessionDTO
+ */
 export const generateExampleTutorialGroupSessionDTO = ({
     id = 3,
     startDate = '2021-01-01T10:00:00Z',
@@ -49,6 +75,14 @@ export const generateExampleTutorialGroupSessionDTO = ({
     };
 };
 
+/**
+ * Converts a {@link TutorialGroupSessionDTO} into form data
+ * used by the session creation/edit dialog.
+ *
+ * @param dto the session DTO
+ * @param tz the time zone to apply
+ * @returns form data suitable for the session form component
+ */
 export const tutorialGroupSessionDtoToFormData = (dto: TutorialGroupSessionDTO, tz: string): TutorialGroupSessionFormData => {
     const start = dayjs(dto.startDate).tz(tz);
     const end = dayjs(dto.endDate).tz(tz);
@@ -61,6 +95,14 @@ export const tutorialGroupSessionDtoToFormData = (dto: TutorialGroupSessionDTO, 
     };
 };
 
+/**
+ * Converts session form data into a {@link TutorialGroupSessionRequestDTO}
+ * used when creating or updating a session.
+ *
+ * @param formData the form input data
+ * @throws Error if required fields are missing
+ * @returns request DTO for backend submission
+ */
 export const formDataToTutorialGroupSessionDTO = (formData: TutorialGroupSessionFormData): TutorialGroupSessionRequestDTO => {
     if (!formData.date || !formData.startTime || !formData.endTime) {
         throw new Error('Date, startTime and endTime are required');

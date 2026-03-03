@@ -4,6 +4,20 @@ import { TutorialGroupFreePeriodFormData } from 'app/tutorialgroup/manage/tutori
 import { TutorialGroupFreePeriodsManagementComponent } from 'app/tutorialgroup/manage/tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-periods-management.component';
 import { TutorialGroupFreePeriodDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-free-period-dto.model';
 
+/**
+ * Generates an example {@link TutorialGroupFreePeriod} entity.
+ *
+ * This helper is primarily used in unit tests to create
+ * predictable free period entities.
+ *
+ * Dates are initialized in UTC to simulate server responses.
+ *
+ * @param id the free period id
+ * @param start the start timestamp (UTC)
+ * @param end the end timestamp (UTC)
+ * @param reason the optional explanation for the free period
+ * @returns a fully initialized TutorialGroupFreePeriod entity
+ */
 export const generateExampleTutorialGroupFreePeriod = ({
     id = 1,
     start = dayjs.utc('2021-01-01T00:00:00'),
@@ -19,6 +33,17 @@ export const generateExampleTutorialGroupFreePeriod = ({
     return examplePeriod;
 };
 
+/**
+ * Generates an example {@link TutorialGroupFreePeriodDTO}.
+ *
+ * Used in frontend tests where only transport-level
+ * DTO objects are required.
+ *
+ * All date values are ISO 8601 strings.
+ *
+ * @param overrides optional properties to override defaults
+ * @returns a fully initialized TutorialGroupFreePeriodDTO
+ */
 export const generateExampleTutorialGroupFreePeriodDTO = ({
     id = 1,
     start = '2021-01-01T00:00:00',
@@ -35,6 +60,14 @@ export const generateExampleTutorialGroupFreePeriodDTO = ({
     };
 };
 
+/**
+ * Converts a {@link TutorialGroupFreePeriod} entity into
+ * form data used by the free period dialog.
+ *
+ * @param entity the free period entity
+ * @param tz the time zone to apply
+ * @returns form data suitable for the free period form
+ */
 export const tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData = (entity: TutorialGroupFreePeriod, tz: string): TutorialGroupFreePeriodFormData => {
     if (TutorialGroupFreePeriodsManagementComponent.isFreeDay(entity)) {
         return {
@@ -63,6 +96,13 @@ export const tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData = (entity:
     }
 };
 
+/**
+ * Converts a {@link TutorialGroupFreePeriodDTO} into a
+ * {@link TutorialGroupFreePeriod} entity.
+ *
+ * @param dto the free period DTO
+ * @returns the corresponding entity representation
+ */
 export const tutorialGroupFreePeriodDTOToEntity = (dto: TutorialGroupFreePeriodDTO): TutorialGroupFreePeriod => {
     return {
         id: dto.id,
@@ -72,6 +112,18 @@ export const tutorialGroupFreePeriodDTOToEntity = (dto: TutorialGroupFreePeriodD
     } as TutorialGroupFreePeriod;
 };
 
+/**
+ * Converts form data into a {@link TutorialGroupFreePeriodDTO}
+ * for backend submission.
+ *
+ * If no explicit end date/time is provided,
+ * the period defaults to the end of the start day (23:59).
+ *
+ * @param formData the form input data
+ * @param tutorialGroupConfigurationId the associated configuration id
+ * @throws Error if required fields are missing
+ * @returns a DTO ready for backend submission
+ */
 export const formDataToTutorialGroupFreePeriodDTO = (formData: TutorialGroupFreePeriodFormData, tutorialGroupConfigurationId: number): TutorialGroupFreePeriodDTO => {
     if (!formData.startDate) {
         throw new Error('Start date is required');
