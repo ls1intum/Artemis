@@ -52,6 +52,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailGroupDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailSessionDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupResponseDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource;
 import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource.TutorialGroupRegistrationImportDTO;
 
@@ -131,11 +132,11 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     }
 
     void testJustForInstructorEndpoints() throws Exception {
-        request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), buildTutorialGroupDTOWithoutSchedule("tutor1"), TutorialGroup.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), buildTutorialGroupDTOWithoutSchedule("tutor1"), TutorialGroupResponseDTO.class, HttpStatus.FORBIDDEN);
         request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId),
                 new TutorialGroupResource.TutorialGroupUpdateDTO(
                         tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow(), "Lorem Ipsum", true),
-                TutorialGroup.class, HttpStatus.FORBIDDEN);
+                TutorialGroupResponseDTO.class, HttpStatus.FORBIDDEN);
         request.delete(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId), HttpStatus.FORBIDDEN);
         request.postListWithResponseBody(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId) + "/register-multiple", new HashSet<>(), StudentDTO.class,
                 HttpStatus.FORBIDDEN);
@@ -183,7 +184,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @ValueSource(booleans = { true, false })
     void getAllForCourse_asStudent_shouldHidePrivateInformation(boolean loadFromService) throws Exception {
         var tutorialGroupsOfCourse = getTutorialGroupsOfExampleCourse(false, loadFromService, TEST_PREFIX + "student1");
-        assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(Collectors.toSet())).contains(exampleOneTutorialGroupId, exampleTwoTutorialGroupId);
+        assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroupResponseDTO::id).collect(Collectors.toSet())).contains(exampleOneTutorialGroupId, exampleTwoTutorialGroupId);
         for (var tutorialGroup : tutorialGroupsOfCourse) { // private information hidden
             verifyPrivateInformationIsHidden(tutorialGroup);
         }
@@ -194,7 +195,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @ValueSource(booleans = { true, false })
     void getAllForCourse_asEditor_shouldHidePrivateInformation(boolean loadFromService) throws Exception {
         var tutorialGroupsOfCourse = getTutorialGroupsOfExampleCourse(false, loadFromService, TEST_PREFIX + "editor1");
-        assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(Collectors.toSet())).contains(exampleOneTutorialGroupId, exampleTwoTutorialGroupId);
+        assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroupResponseDTO::id).collect(Collectors.toSet())).contains(exampleOneTutorialGroupId, exampleTwoTutorialGroupId);
         for (var tutorialGroup : tutorialGroupsOfCourse) { // private information hidden
             verifyPrivateInformationIsHidden(tutorialGroup);
         }
@@ -205,11 +206,11 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getAllForCourse_asTutorOfOneGroup_shouldShowPrivateInformationForOwnGroup(boolean loadFromService) throws Exception {
         var tutorialGroupsOfCourse = getTutorialGroupsOfExampleCourse(false, loadFromService, TEST_PREFIX + "tutor1");
-        assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(Collectors.toSet())).contains(exampleOneTutorialGroupId, exampleTwoTutorialGroupId);
-        var groupWhereTutor = tutorialGroupsOfCourse.stream().filter(tutorialGroup -> tutorialGroup.getId().equals(exampleOneTutorialGroupId)).findFirst().orElseThrow();
+        assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroupResponseDTO::id).collect(Collectors.toSet())).contains(exampleOneTutorialGroupId, exampleTwoTutorialGroupId);
+        var groupWhereTutor = tutorialGroupsOfCourse.stream().filter(tutorialGroup -> tutorialGroup.id().equals(exampleOneTutorialGroupId)).findFirst().orElseThrow();
         verifyPrivateInformationIsShown(groupWhereTutor);
 
-        var groupWhereNotTutor = tutorialGroupsOfCourse.stream().filter(tutorialGroup -> tutorialGroup.getId().equals(exampleTwoTutorialGroupId)).findFirst().orElseThrow();
+        var groupWhereNotTutor = tutorialGroupsOfCourse.stream().filter(tutorialGroup -> tutorialGroup.id().equals(exampleTwoTutorialGroupId)).findFirst().orElseThrow();
         verifyPrivateInformationIsHidden(groupWhereNotTutor);
     }
 
@@ -219,11 +220,11 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     void getAllForCourse_asInstructorOfCourse_shouldShowPrivateInformation(boolean loadFromService) throws Exception {
         var tutorialGroupsOfCourse = getTutorialGroupsOfExampleCourse(true, loadFromService, TEST_PREFIX + "instructor1");
         assertThat(tutorialGroupsOfCourse).hasSize(2);
-        assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(Collectors.toSet())).containsExactlyInAnyOrder(exampleOneTutorialGroupId,
+        assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroupResponseDTO::id).collect(Collectors.toSet())).containsExactlyInAnyOrder(exampleOneTutorialGroupId,
                 exampleTwoTutorialGroupId);
-        var group1 = tutorialGroupsOfCourse.stream().filter(tutorialGroup -> tutorialGroup.getId().equals(exampleOneTutorialGroupId)).findFirst().orElseThrow();
+        var group1 = tutorialGroupsOfCourse.stream().filter(tutorialGroup -> tutorialGroup.id().equals(exampleOneTutorialGroupId)).findFirst().orElseThrow();
         verifyPrivateInformationIsShown(group1);
-        var group2 = tutorialGroupsOfCourse.stream().filter(tutorialGroup -> tutorialGroup.getId().equals(exampleTwoTutorialGroupId)).findFirst().orElseThrow();
+        var group2 = tutorialGroupsOfCourse.stream().filter(tutorialGroup -> tutorialGroup.id().equals(exampleTwoTutorialGroupId)).findFirst().orElseThrow();
         verifyPrivateInformationIsShown(group2);
     }
 
@@ -375,17 +376,17 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         var savedSessions = tutorialGroupSessionRepository.saveAllAndFlush(sessionToSave);
         assertThat(savedSessions).hasSize(attendance.length);
 
-        TutorialGroup tutorialGroup;
+        TutorialGroupResponseDTO tutorialGroup;
         if (useSingleEndpoint) {
-            tutorialGroup = request.get("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + tutorialGroupId, HttpStatus.OK, TutorialGroup.class);
+            tutorialGroup = request.get("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + tutorialGroupId, HttpStatus.OK, TutorialGroupResponseDTO.class);
         }
         else {
-            tutorialGroup = request.getList("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroup.class).stream()
-                    .filter(tg -> tg.getId().equals(tutorialGroupId)).findFirst().orElseThrow();
+            tutorialGroup = request.getList("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroupResponseDTO.class).stream()
+                    .filter(tg -> tg.id().equals(tutorialGroupId)).findFirst().orElseThrow();
         }
 
         // then
-        assertThat(tutorialGroup.getAverageAttendance()).isEqualTo(expectedAverage);
+        assertThat(tutorialGroup.averageAttendance()).isEqualTo(expectedAverage);
 
         // cleanup
         tutorialGroupSessionRepository.deleteAllInBatch(savedSessions);
@@ -396,14 +397,14 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void create_asInstructor_shouldCreateTutorialGroup() throws Exception {
         // when
-        var persistedTutorialGroup = request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), buildTutorialGroupDTOWithoutSchedule("tutor1"), TutorialGroup.class,
-                HttpStatus.CREATED);
+        var persistedTutorialGroup = request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), buildTutorialGroupDTOWithoutSchedule("tutor1"),
+                TutorialGroupResponseDTO.class, HttpStatus.CREATED);
         // then
-        assertThat(persistedTutorialGroup.getId()).isNotNull();
-        asserTutorialGroupChannelIsCorrectlyConfigured(persistedTutorialGroup);
+        assertThat(persistedTutorialGroup.id()).isNotNull();
+        asserTutorialGroupChannelIsCorrectlyConfigured(tutorialGroupTestRepository.findByIdElseThrow(persistedTutorialGroup.id()));
 
         // cleanup
-        tutorialGroupTestRepository.deleteById(persistedTutorialGroup.getId());
+        tutorialGroupTestRepository.deleteById(persistedTutorialGroup.id());
     }
 
     @Test
@@ -413,7 +414,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         var tutorialGroupDTO = buildTutorialGroupDTOWithId(22L, "tutor1");
         var numberOfTutorialGroups = tutorialGroupTestRepository.findAllByCourseId(exampleCourseId).size();
         // when
-        request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), tutorialGroupDTO, TutorialGroup.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), tutorialGroupDTO, TutorialGroupResponseDTO.class, HttpStatus.BAD_REQUEST);
         // then
         assertThat(tutorialGroupTestRepository.findAllByCourseId(exampleCourseId)).hasSize(numberOfTutorialGroups);
     }
@@ -427,7 +428,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
         var numberOfTutorialGroups = tutorialGroupTestRepository.findAllByCourseId(exampleCourseId).size();
         // when
-        request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), tutorialGroupDTO, TutorialGroup.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), tutorialGroupDTO, TutorialGroupResponseDTO.class, HttpStatus.BAD_REQUEST);
         // then
         assertThat(tutorialGroupTestRepository.findAllByCourseId(exampleCourseId)).hasSize(numberOfTutorialGroups);
     }
@@ -438,10 +439,10 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         courseUtilService.enableMessagingForCourse(courseRepository.findByIdElseThrow(exampleCourseId));
 
         // given
-        var persistedTutorialGroup = request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), buildTutorialGroupDTOWithoutSchedule("tutor1"), TutorialGroup.class,
-                HttpStatus.CREATED);
-        assertThat(persistedTutorialGroup.getId()).isNotNull();
-        var channel = asserTutorialGroupChannelIsCorrectlyConfigured(persistedTutorialGroup);
+        var persistedTutorialGroup = request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), buildTutorialGroupDTOWithoutSchedule("tutor1"),
+                TutorialGroupResponseDTO.class, HttpStatus.CREATED);
+        assertThat(persistedTutorialGroup.id()).isNotNull();
+        var channel = asserTutorialGroupChannelIsCorrectlyConfigured(tutorialGroupTestRepository.findByIdElseThrow(persistedTutorialGroup.id()));
 
         var user = userUtilService.getUserByLogin(testPrefix + "tutor1");
 
@@ -455,11 +456,14 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         assertThat(createdPost.getConversation().getId()).isEqualTo(channel.getId());
         userUtilService.changeUser(testPrefix + "instructor1");
 
-        request.delete(getTutorialGroupsPath(exampleCourseId, persistedTutorialGroup.getId()), HttpStatus.NO_CONTENT);
+        // save registrations before deletion so we can verify websocket notifications
+        var registrations = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(persistedTutorialGroup.id()).orElseThrow().getRegistrations();
+
+        request.delete(getTutorialGroupsPath(exampleCourseId, persistedTutorialGroup.id()), HttpStatus.NO_CONTENT);
         // then
-        request.get(getTutorialGroupsPath(exampleCourseId, persistedTutorialGroup.getId()), HttpStatus.NOT_FOUND, TutorialGroup.class);
-        assertTutorialGroupChannelDoesNotExist(persistedTutorialGroup);
-        persistedTutorialGroup.getRegistrations().forEach(registration -> verify(websocketMessagingService, timeout(2000).times(1))
+        request.get(getTutorialGroupsPath(exampleCourseId, persistedTutorialGroup.id()), HttpStatus.NOT_FOUND, TutorialGroupResponseDTO.class);
+        assertTutorialGroupChannelDoesNotExist(persistedTutorialGroup.id());
+        registrations.forEach(registration -> verify(websocketMessagingService, timeout(2000).times(1))
                 .sendMessage(eq("/topic/user/" + registration.getStudent().getId() + "/notifications/tutorial-groups"), any()));
     }
 
@@ -473,11 +477,11 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
         // when
         var updatedTutorialGroup = request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId),
-                new TutorialGroupResource.TutorialGroupUpdateDTO(existingTutorialGroup, "Lorem Ipsum", true), TutorialGroup.class, HttpStatus.OK);
+                new TutorialGroupResource.TutorialGroupUpdateDTO(existingTutorialGroup, "Lorem Ipsum", true), TutorialGroupResponseDTO.class, HttpStatus.OK);
 
         // then
-        assertThat(updatedTutorialGroup.getTitle()).isEqualTo(newRandomTitle);
-        asserTutorialGroupChannelIsCorrectlyConfigured(updatedTutorialGroup);
+        assertThat(updatedTutorialGroup.title()).isEqualTo(newRandomTitle);
+        asserTutorialGroupChannelIsCorrectlyConfigured(tutorialGroupTestRepository.findByIdElseThrow(updatedTutorialGroup.id()));
     }
 
     @Test
@@ -489,18 +493,18 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
         // when
         var updatedTutorialGroup = request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId),
-                new TutorialGroupResource.TutorialGroupUpdateDTO(existingTutorialGroup, "Lorem Ipsum", true), TutorialGroup.class, HttpStatus.OK);
+                new TutorialGroupResource.TutorialGroupUpdateDTO(existingTutorialGroup, "Lorem Ipsum", true), TutorialGroupResponseDTO.class, HttpStatus.OK);
 
         // then
-        assertThat(updatedTutorialGroup.getTeachingAssistant().getLogin()).isEqualTo(testPrefix + "tutor2");
-        asserTutorialGroupChannelIsCorrectlyConfigured(updatedTutorialGroup);
+        assertThat(updatedTutorialGroup.teachingAssistant().login()).isEqualTo(testPrefix + "tutor2");
+        asserTutorialGroupChannelIsCorrectlyConfigured(tutorialGroupTestRepository.findByIdElseThrow(updatedTutorialGroup.id()));
 
         // reset teaching assistant to tutor 1
         existingTutorialGroup.setTeachingAssistant(userUtilService.getUserByLogin(testPrefix + "tutor1"));
         updatedTutorialGroup = request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId),
-                new TutorialGroupResource.TutorialGroupUpdateDTO(existingTutorialGroup, "Lorem Ipsum", true), TutorialGroup.class, HttpStatus.OK);
-        assertThat(updatedTutorialGroup.getTeachingAssistant().getLogin()).isEqualTo(testPrefix + "tutor1");
-        asserTutorialGroupChannelIsCorrectlyConfigured(updatedTutorialGroup);
+                new TutorialGroupResource.TutorialGroupUpdateDTO(existingTutorialGroup, "Lorem Ipsum", true), TutorialGroupResponseDTO.class, HttpStatus.OK);
+        assertThat(updatedTutorialGroup.teachingAssistant().login()).isEqualTo(testPrefix + "tutor1");
+        asserTutorialGroupChannelIsCorrectlyConfigured(tutorialGroupTestRepository.findByIdElseThrow(updatedTutorialGroup.id()));
     }
 
     @Test
@@ -513,7 +517,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         existingTutorialGroup.setTitle("  " + existingGroupTwo.getTitle() + " ");
         // when
         request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId),
-                new TutorialGroupResource.TutorialGroupUpdateDTO(existingTutorialGroup, "Lorem Ipsum", true), TutorialGroup.class, HttpStatus.BAD_REQUEST);
+                new TutorialGroupResource.TutorialGroupUpdateDTO(existingTutorialGroup, "Lorem Ipsum", true), TutorialGroupResponseDTO.class, HttpStatus.BAD_REQUEST);
         // then
         assertThat(tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow().getTitle())
                 .isEqualTo(originalTitle);
@@ -524,7 +528,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void update_withoutId_shouldReturnBadRequest() throws Exception {
         // then
-        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId), buildTutorialGroupWithoutSchedule("tutor1"), TutorialGroup.class,
+        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId), buildTutorialGroupWithoutSchedule("tutor1"), TutorialGroupResponseDTO.class,
                 HttpStatus.BAD_REQUEST);
     }
 
@@ -970,50 +974,50 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         asserTutorialGroupChannelIsCorrectlyConfigured(tutorialGroup);
     }
 
-    private void verifyPrivateInformationIsHidden(TutorialGroup tutorialGroup) {
-        assertThat(tutorialGroup.getRegistrations()).isNullOrEmpty();
-        assertThat(tutorialGroup.getTeachingAssistant()).isNull();
-        assertThat(tutorialGroup.getCourse()).isNull();
+    private void verifyPrivateInformationIsHidden(TutorialGroupResponseDTO tutorialGroup) {
+        assertThat(tutorialGroup.registrations()).isNullOrEmpty();
+        assertThat(tutorialGroup.teachingAssistant()).isNull();
+        assertThat(tutorialGroup.course()).isNull();
     }
 
-    private void verifyPrivateInformationIsShown(TutorialGroup tutorialGroup) {
-        assertThat(tutorialGroup.getRegistrations()).isNotNull();
-        assertThat(tutorialGroup.getRegistrations()).isNotEmpty();
-        assertThat(tutorialGroup.getTeachingAssistant()).isNotNull();
-        assertThat(tutorialGroup.getCourse()).isNotNull();
+    private void verifyPrivateInformationIsShown(TutorialGroupResponseDTO tutorialGroup) {
+        assertThat(tutorialGroup.registrations()).isNotNull();
+        assertThat(tutorialGroup.registrations()).isNotEmpty();
+        assertThat(tutorialGroup.teachingAssistant()).isNotNull();
+        assertThat(tutorialGroup.course()).isNotNull();
     }
 
     private void oneOfCoursePrivateInfoHiddenTest(boolean loadFromService, String userLogin, boolean isAdminOrInstructor) throws Exception {
         var tutorialGroup = getTutorialGroupOfExampleCourse(loadFromService, userLogin, isAdminOrInstructor);
-        assertThat(tutorialGroup.getId()).isEqualTo(exampleOneTutorialGroupId);
+        assertThat(tutorialGroup.id()).isEqualTo(exampleOneTutorialGroupId);
         verifyPrivateInformationIsHidden(tutorialGroup);
     }
 
     private void oneOfCoursePrivateInfoShownTest(boolean loadFromService, String userLogin, boolean isAdminOrInstructor) throws Exception {
         var tutorialGroup = getTutorialGroupOfExampleCourse(loadFromService, userLogin, isAdminOrInstructor);
-        assertThat(tutorialGroup.getId()).isEqualTo(exampleOneTutorialGroupId);
+        assertThat(tutorialGroup.id()).isEqualTo(exampleOneTutorialGroupId);
         verifyPrivateInformationIsShown(tutorialGroup);
     }
 
-    private TutorialGroup getTutorialGroupOfExampleCourse(boolean loadFromService, String userLogin, boolean isAdminOrInstructor) throws Exception {
+    private TutorialGroupResponseDTO getTutorialGroupOfExampleCourse(boolean loadFromService, String userLogin, boolean isAdminOrInstructor) throws Exception {
         if (loadFromService) {
             var user = userRepository.findOneByLogin(userLogin).orElseThrow();
             var course = courseRepository.findById(exampleCourseId).orElseThrow();
-            return tutorialGroupService.getOneOfCourse(course, exampleOneTutorialGroupId, user, isAdminOrInstructor);
+            return TutorialGroupResponseDTO.from(tutorialGroupService.getOneOfCourse(course, exampleOneTutorialGroupId, user, isAdminOrInstructor));
         }
         else {
-            return request.get("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId, HttpStatus.OK, TutorialGroup.class);
+            return request.get("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId, HttpStatus.OK, TutorialGroupResponseDTO.class);
         }
     }
 
-    private List<TutorialGroup> getTutorialGroupsOfExampleCourse(boolean isAdminOrInstructor, boolean loadFromService, String userLogin) throws Exception {
+    private List<TutorialGroupResponseDTO> getTutorialGroupsOfExampleCourse(boolean isAdminOrInstructor, boolean loadFromService, String userLogin) throws Exception {
         if (loadFromService) {
             var user = userRepository.findOneByLogin(userLogin).orElseThrow();
             var course = courseRepository.findById(exampleCourseId).orElseThrow();
-            return tutorialGroupService.findAllForCourse(course, user, isAdminOrInstructor).stream().toList();
+            return tutorialGroupService.findAllForCourse(course, user, isAdminOrInstructor).stream().map(TutorialGroupResponseDTO::from).toList();
         }
         else {
-            return request.getList("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroup.class);
+            return request.getList("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroupResponseDTO.class);
         }
     }
 
@@ -1251,7 +1255,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
         TutorialGroupResource.TutorialGroupUpdateDTO updateDTO = new TutorialGroupResource.TutorialGroupUpdateDTO(updatedTutorialGroup, "Update notification text", true);
 
-        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), updateDTO, TutorialGroup.class, HttpStatus.OK);
+        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), updateDTO, TutorialGroupResponseDTO.class, HttpStatus.OK);
 
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
             List<CourseNotification> notifications = courseNotificationRepository.findAll();
@@ -1285,7 +1289,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
         TutorialGroupResource.TutorialGroupUpdateDTO updateDTO = new TutorialGroupResource.TutorialGroupUpdateDTO(updatedTutorialGroup, "Update notification text", true);
 
-        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), updateDTO, TutorialGroup.class, HttpStatus.OK);
+        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), updateDTO, TutorialGroupResponseDTO.class, HttpStatus.OK);
 
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
             List<CourseNotification> notifications = courseNotificationRepository.findAll();

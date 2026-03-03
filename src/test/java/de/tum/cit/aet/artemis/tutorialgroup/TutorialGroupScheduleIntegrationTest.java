@@ -11,7 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupResponseDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource;
 
 class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrationTest {
@@ -45,7 +45,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         var scheduleToCreate = this.buildExampleSchedule(mondayBeforeDSTSwitch, mondayAfterDSTSwitch);
         tutorialGroup.setTutorialGroupSchedule(scheduleToCreate);
         var dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
-        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroup.class, HttpStatus.OK);
+        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroupResponseDTO.class, HttpStatus.OK);
 
         // then
         var persistedTutorialGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessionsElseThrow(tutorialGroup.getId());
@@ -73,7 +73,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         scheduleToCreate.setRepetitionFrequency(2); // repeat every two weeks
         tutorialGroup.setTutorialGroupSchedule(scheduleToCreate);
         var dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
-        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroup.class, HttpStatus.OK);
+        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroupResponseDTO.class, HttpStatus.OK);
 
         // then
         var persistedTutorialGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessionsElseThrow(tutorialGroup.getId());
@@ -101,7 +101,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         var scheduleToCreate = this.buildExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY);
         tutorialGroup.setTutorialGroupSchedule(scheduleToCreate);
         var dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
-        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroup.class, HttpStatus.OK);
+        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroupResponseDTO.class, HttpStatus.OK);
 
         // then
         var persistedTutorialGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessionsElseThrow(tutorialGroup.getId());
@@ -133,28 +133,28 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         scheduleWithWrongFrom.setValidFromInclusive("2022-11-25T23:00:00.000Z"); // wrong format as not uuuu-MM-dd
         tutorialGroup.setTutorialGroupSchedule(scheduleWithWrongFrom);
         var dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
-        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroup.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroupResponseDTO.class, HttpStatus.BAD_REQUEST);
 
         // Test wrong format for validToInclusive
         var scheduleWithWrongTo = this.buildExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY);
         scheduleWithWrongTo.setValidToInclusive("2022-11-25T23:00:00.000Z"); // wrong format as not uuuu-MM-dd
         tutorialGroup.setTutorialGroupSchedule(scheduleWithWrongTo);
         dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
-        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroup.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroupResponseDTO.class, HttpStatus.BAD_REQUEST);
 
         // Test wrong format for startTime
         var scheduleWithWrongStartTime = this.buildExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY);
         scheduleWithWrongStartTime.setStartTime("23:00:00.000Z"); // wrong format as not hh:mm:ss
         tutorialGroup.setTutorialGroupSchedule(scheduleWithWrongStartTime);
         dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
-        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroup.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroupResponseDTO.class, HttpStatus.BAD_REQUEST);
 
         // Test wrong format for endTime
         var scheduleWithWrongEndTime = this.buildExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY);
         scheduleWithWrongEndTime.setEndTime("23:00:00.000Z"); // wrong format as not hh:mm:ss
         tutorialGroup.setTutorialGroupSchedule(scheduleWithWrongEndTime);
         dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
-        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroup.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroupResponseDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -167,7 +167,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
 
         var dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
         // when
-        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroup.class, HttpStatus.OK);
+        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroupResponseDTO.class, HttpStatus.OK);
 
         // then
         var persistedTutorialGroup = tutorialGroupTestRepository.findByIdElseThrow(tutorialGroup.getId());
@@ -193,7 +193,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
 
         var dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
         // when
-        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroup.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroupResponseDTO.class, HttpStatus.BAD_REQUEST);
 
         // then
         assertThat(tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroup.getId())).hasSize(1);
@@ -211,7 +211,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         var scheduleToCreate = this.buildExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY);
         tutorialGroup.setTutorialGroupSchedule(scheduleToCreate);
         var dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
-        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroupId), dto, TutorialGroup.class, HttpStatus.OK);
+        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroupId), dto, TutorialGroupResponseDTO.class, HttpStatus.OK);
 
         // Get the persisted session and schedule IDs for later comparison
         var persistedTutorialGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessionsElseThrow(tutorialGroupId);
@@ -224,7 +224,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         tutorialGroup.setTutorialGroupSchedule(persistedSchedule);
         tutorialGroup.setCapacity(2000);
         dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
-        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroupId), dto, TutorialGroup.class, HttpStatus.OK);
+        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroupId), dto, TutorialGroupResponseDTO.class, HttpStatus.OK);
 
         // then
         var resultTutorialGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessionsElseThrow(tutorialGroupId);
@@ -244,7 +244,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         var scheduleToCreate = this.buildExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY);
         tutorialGroup.setTutorialGroupSchedule(scheduleToCreate);
         var dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
-        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroupId), dto, TutorialGroup.class, HttpStatus.OK);
+        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroupId), dto, TutorialGroupResponseDTO.class, HttpStatus.OK);
 
         // Get the persisted session and schedule IDs for later comparison
         var persistedTutorialGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessionsElseThrow(tutorialGroupId);
@@ -257,7 +257,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         persistedSchedule.setLocation("updated");
         tutorialGroup.setTutorialGroupSchedule(persistedSchedule);
         dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
-        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroupId), dto, TutorialGroup.class, HttpStatus.OK);
+        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroupId), dto, TutorialGroupResponseDTO.class, HttpStatus.OK);
 
         // then
         var resultTutorialGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessionsElseThrow(tutorialGroupId);
@@ -280,7 +280,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         var initialSchedule = this.buildExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY);
         tutorialGroup.setTutorialGroupSchedule(initialSchedule);
         var dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
-        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroupId), dto, TutorialGroup.class, HttpStatus.OK);
+        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroupId), dto, TutorialGroupResponseDTO.class, HttpStatus.OK);
 
         // Add an individual session
         this.buildAndSaveExampleIndividualTutorialGroupSession(tutorialGroupId, FOURTH_AUGUST_MONDAY_00_00);
@@ -297,7 +297,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
 
         dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
         // when
-        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroupId), dto, TutorialGroup.class, HttpStatus.OK);
+        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroupId), dto, TutorialGroupResponseDTO.class, HttpStatus.OK);
 
         // then
         var resultTutorialGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessionsElseThrow(tutorialGroupId);
@@ -319,28 +319,46 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteScheduleOfTutorialGroup_shouldDeleteAllScheduledSessionsButKeepIndividualSessions() throws Exception {
         // given
-        var tutorialGroup = this.buildTutorialGroupWithExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY, "tutor1");
-        var persistedTutorialGroupId = request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), tutorialGroup, TutorialGroup.class, HttpStatus.CREATED).getId();
+        var tutorialGroupDTO = buildTutorialGroupDTOWithoutSchedule("tutor1");
+        var persistedTutorialGroupId = request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), tutorialGroupDTO, TutorialGroupResponseDTO.class, HttpStatus.CREATED)
+                .id();
+
+        // Add schedule via update
+        var tutorialGroup = tutorialGroupTestRepository.findByIdElseThrow(persistedTutorialGroupId);
+        var scheduleToCreate = this.buildExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY);
+        tutorialGroup.setTutorialGroupSchedule(scheduleToCreate);
+        var addScheduleDTO = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
+        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, persistedTutorialGroupId), addScheduleDTO, TutorialGroupResponseDTO.class, HttpStatus.OK);
+
         this.buildAndSaveExampleIndividualTutorialGroupSession(persistedTutorialGroupId, THIRD_AUGUST_MONDAY_00_00);
         tutorialGroup = tutorialGroupTestRepository.findByIdElseThrow(persistedTutorialGroupId);
         // when
         tutorialGroup.setTutorialGroupSchedule(null);
 
         var dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
-        tutorialGroup = request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroup.class, HttpStatus.OK);
+        var updatedTutorialGroupResponse = request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroupResponseDTO.class,
+                HttpStatus.OK);
         // then
-        var sessions = this.getTutorialGroupSessionsAscending(tutorialGroup.getId());
+        var sessions = this.getTutorialGroupSessionsAscending(updatedTutorialGroupResponse.id());
         assertThat(sessions).hasSize(1);
         var thirdAugustMondaySession = sessions.getFirst();
-        this.assertIndividualSessionIsActiveOnDate(thirdAugustMondaySession, THIRD_AUGUST_MONDAY_00_00, tutorialGroup.getId());
+        this.assertIndividualSessionIsActiveOnDate(thirdAugustMondaySession, THIRD_AUGUST_MONDAY_00_00, updatedTutorialGroupResponse.id());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteTutorialGroupWithSchedule_shouldDeleteScheduleAndSessions() throws Exception {
         // given
-        var tutorialGroup = this.buildTutorialGroupWithExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY, "tutor1");
-        var persistedTutorialGroupId = request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), tutorialGroup, TutorialGroup.class, HttpStatus.CREATED).getId();
+        var tutorialGroupDTO = buildTutorialGroupDTOWithoutSchedule("tutor1");
+        var persistedTutorialGroupId = request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), tutorialGroupDTO, TutorialGroupResponseDTO.class, HttpStatus.CREATED)
+                .id();
+        // Add schedule via update
+        var tutorialGroup = tutorialGroupTestRepository.findByIdElseThrow(persistedTutorialGroupId);
+        var scheduleToCreate = this.buildExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY);
+        tutorialGroup.setTutorialGroupSchedule(scheduleToCreate);
+        var addScheduleDTO = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
+        request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, persistedTutorialGroupId), addScheduleDTO, TutorialGroupResponseDTO.class, HttpStatus.OK);
+
         this.buildAndSaveExampleIndividualTutorialGroupSession(persistedTutorialGroupId, THIRD_AUGUST_MONDAY_00_00);
         tutorialGroup = tutorialGroupTestRepository.findByIdElseThrow(persistedTutorialGroupId);
 

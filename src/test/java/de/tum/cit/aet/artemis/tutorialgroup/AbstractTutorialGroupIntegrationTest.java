@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailSessionDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupResponseDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupFreePeriodRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
@@ -313,14 +314,15 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
     TutorialGroup setUpTutorialGroupWithSchedule(Long courseId, String tutorLogin) throws Exception {
         // First create the tutorial group using DTO (create endpoint doesn't support schedules)
         var tutorialGroupDTO = buildTutorialGroupDTOWithoutSchedule(tutorLogin);
-        var persistedTutorialGroup = request.postWithResponseBody(getTutorialGroupsPath(courseId), tutorialGroupDTO, TutorialGroup.class, HttpStatus.CREATED);
-        var persistedTutorialGroupId = persistedTutorialGroup.getId();
+        var persistedTutorialGroupResponse = request.postWithResponseBody(getTutorialGroupsPath(courseId), tutorialGroupDTO, TutorialGroupResponseDTO.class, HttpStatus.CREATED);
+        var persistedTutorialGroupId = persistedTutorialGroupResponse.id();
 
-        // Then update the tutorial group to add the schedule
+        // Then update the tutorial group to add the schedule - load entity from DB for the update DTO
+        var persistedTutorialGroup = tutorialGroupTestRepository.findByIdElseThrow(persistedTutorialGroupId);
         var scheduleToCreate = this.buildExampleSchedule(FIRST_AUGUST_MONDAY_00_00.toLocalDate(), SECOND_AUGUST_MONDAY_00_00.toLocalDate());
         persistedTutorialGroup.setTutorialGroupSchedule(scheduleToCreate);
         var updateDTO = new TutorialGroupResource.TutorialGroupUpdateDTO(persistedTutorialGroup, null, false);
-        request.putWithResponseBody(getTutorialGroupsPath(courseId, persistedTutorialGroupId), updateDTO, TutorialGroup.class, HttpStatus.OK);
+        request.putWithResponseBody(getTutorialGroupsPath(courseId, persistedTutorialGroupId), updateDTO, TutorialGroupResponseDTO.class, HttpStatus.OK);
 
         var newTutorialGroup = tutorialGroupTestRepository.findByIdElseThrow(persistedTutorialGroupId);
         this.assertTutorialGroupPersistedWithSchedule(newTutorialGroup, scheduleToCreate);
@@ -470,7 +472,11 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
     }
 
     void assertTutorialGroupChannelDoesNotExist(TutorialGroup tutorialGroup) {
-        var channelOptional = tutorialGroupTestRepository.getTutorialGroupChannel(tutorialGroup.getId());
+        assertTutorialGroupChannelDoesNotExist(tutorialGroup.getId());
+    }
+
+    void assertTutorialGroupChannelDoesNotExist(Long tutorialGroupId) {
+        var channelOptional = tutorialGroupTestRepository.getTutorialGroupChannel(tutorialGroupId);
         assertThat(channelOptional).isEmpty();
     }
 
