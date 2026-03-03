@@ -193,7 +193,11 @@ public class SharedQueueProcessingService {
         return isPaused.get();
     }
 
-    /** Sets the pause state (for tests only). */
+    /**
+     * Sets the pause state (for tests only).
+     *
+     * @param paused true to pause the build agent, false to resume
+     */
     public void setPauseState(boolean paused) {
         isPaused.set(paused);
     }
