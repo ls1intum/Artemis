@@ -157,6 +157,22 @@ class HyperionCodeGenerationServiceTest {
     }
 
     @Test
+    void callChatClient_withUsageMetadataAndMissingCourseId_doesNotTrackTokenUsage() throws Exception {
+        String expectedPlan = "Generated solution plan";
+        String jsonResponse = "{\"solutionPlan\":\"" + expectedPlan + "\",\"files\":[]}";
+        Map<String, Object> templateVariables = Map.of("key", "value");
+        String modelName = "gpt-5-mini-2025-08-07";
+
+        when(templates.renderObject("test-template", templateVariables)).thenReturn("rendered prompt");
+        when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(jsonResponse, modelName, 11, 7));
+
+        CodeGenerationResponseDTO result = strategy.testCallChatClient(user, exercise, null, "test-template", templateVariables);
+
+        assertThat(result.getSolutionPlan()).isEqualTo(expectedPlan);
+        verifyNoInteractions(llmTokenUsageService);
+    }
+
+    @Test
     void callChatClient_withoutUsageMetadata_doesNotTrackTokenUsage() throws Exception {
         String expectedPlan = "Generated solution plan";
         String jsonResponse = "{\"solutionPlan\":\"" + expectedPlan + "\",\"files\":[]}";
@@ -340,9 +356,14 @@ class HyperionCodeGenerationServiceTest {
         }
 
         // Expose protected method for testing
+        public CodeGenerationResponseDTO testCallChatClient(User user, ProgrammingExercise exercise, Long courseId, String prompt, Map<String, Object> templateVariables)
+                throws NetworkingException {
+            return callChatClient(user, exercise, courseId, prompt, templateVariables);
+        }
+
         public CodeGenerationResponseDTO testCallChatClient(User user, ProgrammingExercise exercise, String prompt, Map<String, Object> templateVariables)
                 throws NetworkingException {
-            return callChatClient(user, exercise, 1L, prompt, templateVariables);
+            return testCallChatClient(user, exercise, 1L, prompt, templateVariables);
         }
     }
 }

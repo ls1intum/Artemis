@@ -205,13 +205,17 @@ public abstract class HyperionCodeGenerationService {
             if (promptTokenCount == null && completionTokenCount == null) {
                 return;
             }
+            Long exerciseId = exercise != null ? exercise.getId() : null;
+            if (courseId == null) {
+                log.warn("Skipping token usage persistence for Hyperion code generation due to missing courseId (exerciseId={}, prompt={})", exerciseId, prompt);
+                return;
+            }
             int promptTokens = sanitizeTokenCount(promptTokenCount);
             int completionTokens = sanitizeTokenCount(completionTokenCount);
             LLMRequest llmRequest = llmTokenUsageService.buildLLMRequest(model, promptTokens, completionTokens, buildPipelineId(prompt));
             if (llmRequest == null) {
                 return;
             }
-            Long exerciseId = exercise != null ? exercise.getId() : null;
             Long userId = user != null ? user.getId() : null;
             llmTokenUsageService.saveLLMTokenUsage(List.of(llmRequest), LLMServiceType.HYPERION, builder -> builder.withCourse(courseId).withExercise(exerciseId).withUser(userId));
         }
