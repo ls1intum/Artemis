@@ -43,7 +43,7 @@ import de.tum.cit.aet.artemis.exercise.repository.review.CommentRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadGroupRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
-import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewService.LineMappingResult;
+import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewVersionChangeService.LineMappingResult;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.hyperion.domain.ArtifactType;
 import de.tum.cit.aet.artemis.hyperion.domain.ConsistencyIssueCategory;
@@ -64,6 +64,9 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @Autowired
     private ExerciseReviewService exerciseReviewService;
+
+    @Autowired
+    private ExerciseReviewVersionChangeService exerciseReviewVersionChangeService;
 
     @Autowired
     private ExerciseVersionService exerciseVersionService;
@@ -769,7 +772,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         String oldText = "a\nb\nc\nd\n";
         String newText = "a\nb\nx\nc\nd\n";
 
-        LineMappingResult result = exerciseReviewService.mapLineInText(oldText, newText, 3);
+        LineMappingResult result = exerciseReviewVersionChangeService.mapLineInText(oldText, newText, 3);
 
         assertThat(result.newLine()).isEqualTo(4);
         assertThat(result.outdated()).isFalse();
@@ -780,7 +783,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         String oldText = "a\nb\nc\nd\n";
         String newText = "a\nb\nc2\nd\n";
 
-        LineMappingResult result = exerciseReviewService.mapLineInText(oldText, newText, 3);
+        LineMappingResult result = exerciseReviewVersionChangeService.mapLineInText(oldText, newText, 3);
 
         assertThat(result.newLine()).isEqualTo(3);
         assertThat(result.outdated()).isTrue();
@@ -788,7 +791,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @Test
     void shouldMapLineInTextMarksInvalidLineAsOutdated() {
-        LineMappingResult result = exerciseReviewService.mapLineInText("a\nb\n", "a\nb\n", 0);
+        LineMappingResult result = exerciseReviewVersionChangeService.mapLineInText("a\nb\n", "a\nb\n", 0);
 
         assertThat(result.newLine()).isNull();
         assertThat(result.outdated()).isTrue();
@@ -814,15 +817,15 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         RevCommit newCommit = GitService.commit(repo.git()).setMessage("Update file").call();
         pushHeadToDefaultBranch(repo.git());
 
-        LineMappingResult shiftedLine = exerciseReviewService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 2);
+        LineMappingResult shiftedLine = exerciseReviewVersionChangeService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 2);
         assertThat(shiftedLine.newLine()).isEqualTo(3);
         assertThat(shiftedLine.outdated()).isFalse();
 
-        LineMappingResult editedLine = exerciseReviewService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 8);
+        LineMappingResult editedLine = exerciseReviewVersionChangeService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 8);
         assertThat(editedLine.newLine()).isEqualTo(9);
         assertThat(editedLine.outdated()).isTrue();
 
-        LineMappingResult unchangedLine = exerciseReviewService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 9);
+        LineMappingResult unchangedLine = exerciseReviewVersionChangeService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 9);
         assertThat(unchangedLine.newLine()).isEqualTo(10);
         assertThat(unchangedLine.outdated()).isFalse();
     }
@@ -844,7 +847,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         RevCommit newCommit = GitService.commit(repo.git()).setMessage("Delete file").call();
         pushHeadToDefaultBranch(repo.git());
 
-        LineMappingResult result = exerciseReviewService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 1);
+        LineMappingResult result = exerciseReviewVersionChangeService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 1);
         assertThat(result.newLine()).isNull();
         assertThat(result.outdated()).isTrue();
     }
@@ -864,7 +867,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         RevCommit newCommit = GitService.commit(repo.git()).setMessage("Add file").call();
         pushHeadToDefaultBranch(repo.git());
 
-        LineMappingResult result = exerciseReviewService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 1);
+        LineMappingResult result = exerciseReviewVersionChangeService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 1);
         assertThat(result.newLine()).isNull();
         assertThat(result.outdated()).isTrue();
     }
@@ -884,7 +887,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), previousProgramming);
         ExerciseSnapshotDTO current = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), currentProgramming);
 
-        exerciseReviewService.updateThreadsForVersionChange(previous, current);
+        exerciseReviewVersionChangeService.updateThreadsForVersionChange(previous, current);
 
         CommentThread updated = commentThreadRepository.findById(thread.getId()).orElseThrow();
         assertThat(updated.getLineNumber()).isEqualTo(3);
@@ -905,7 +908,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), previousProgramming);
         ExerciseSnapshotDTO current = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), currentProgramming);
 
-        exerciseReviewService.updateThreadsForVersionChange(previous, current);
+        exerciseReviewVersionChangeService.updateThreadsForVersionChange(previous, current);
 
         CommentThread updated = commentThreadRepository.findById(thread.getId()).orElseThrow();
         assertThat(updated.getLineNumber()).isEqualTo(5);
@@ -925,7 +928,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), previousProgramming);
         ExerciseSnapshotDTO current = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), currentProgramming);
 
-        exerciseReviewService.updateThreadsForVersionChange(previous, current);
+        exerciseReviewVersionChangeService.updateThreadsForVersionChange(previous, current);
 
         CommentThread updated = commentThreadRepository.findById(thread.getId()).orElseThrow();
         assertThat(updated.getLineNumber()).isEqualTo(3);
@@ -948,7 +951,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), previousProgramming);
         ExerciseSnapshotDTO current = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), currentProgramming);
 
-        exerciseReviewService.updateThreadsForVersionChange(previous, current);
+        exerciseReviewVersionChangeService.updateThreadsForVersionChange(previous, current);
 
         CommentThread updated = commentThreadRepository.findById(thread.getId()).orElseThrow();
         assertThat(updated.getLineNumber()).isEqualTo(3);
@@ -967,7 +970,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), previousProgramming);
         ExerciseSnapshotDTO current = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), currentProgramming);
 
-        exerciseReviewService.updateThreadsForVersionChange(previous, current);
+        exerciseReviewVersionChangeService.updateThreadsForVersionChange(previous, current);
 
         CommentThread updated = commentThreadRepository.findById(thread.getId()).orElseThrow();
         assertThat(updated.getLineNumber()).isEqualTo(5);
@@ -989,7 +992,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), previousProgramming);
         ExerciseSnapshotDTO current = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), currentProgramming);
 
-        exerciseReviewService.updateThreadsForVersionChange(previous, current);
+        exerciseReviewVersionChangeService.updateThreadsForVersionChange(previous, current);
 
         CommentThread updated = commentThreadRepository.findById(thread.getId()).orElseThrow();
         assertThat(updated.getLineNumber()).isEqualTo(5);
@@ -1001,7 +1004,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         CommentThread thread = persistThread(programmingExercise);
         Integer originalLine = thread.getLineNumber();
 
-        exerciseReviewService.updateThreadsForVersionChange(null, null);
+        exerciseReviewVersionChangeService.updateThreadsForVersionChange(null, null);
 
         CommentThread updated = commentThreadRepository.findById(thread.getId()).orElseThrow();
         assertThat(updated.getLineNumber()).isEqualTo(originalLine);
@@ -1017,11 +1020,72 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), "line1\nline2\nline3\n", null);
         ExerciseSnapshotDTO current = buildExerciseSnapshot(programmingExercise.getId(), "line1\ninserted\nline2\nline3\n", null);
 
-        exerciseReviewService.updateThreadsForVersionChange(previous, current);
+        exerciseReviewVersionChangeService.updateThreadsForVersionChange(previous, current);
 
         CommentThread updated = commentThreadRepository.findById(thread.getId()).orElseThrow();
         assertThat(updated.getLineNumber()).isEqualTo(3);
         assertThat(updated.isOutdated()).isFalse();
+    }
+
+    @Test
+    void shouldUpdateInlineFixRangeForProblemStatementOnVersionChange() {
+        CommentThread thread = persistThread(programmingExercise);
+        thread.setLineNumber(2);
+        thread.setInitialLineNumber(2);
+        thread = commentThreadRepository.save(thread);
+
+        Comment consistencyComment = buildConsistencyIssueCommentEntityWithInlineFix("Inline fix", "line2", "line2Updated", 2, 2, false);
+        consistencyComment.setThread(thread);
+        consistencyComment = commentRepository.save(consistencyComment);
+
+        ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), "line1\nline2\nline3\n", null);
+        ExerciseSnapshotDTO current = buildExerciseSnapshot(programmingExercise.getId(), "line1\ninserted\nline2\nline3\n", null);
+
+        exerciseReviewVersionChangeService.updateThreadsForVersionChange(previous, current);
+
+        CommentThread updatedThread = commentThreadRepository.findById(thread.getId()).orElseThrow();
+        assertThat(updatedThread.getLineNumber()).isEqualTo(3);
+        assertThat(updatedThread.isOutdated()).isFalse();
+
+        Comment updatedComment = commentRepository.findWithThreadById(consistencyComment.getId()).orElseThrow();
+        assertThat(updatedComment.getContent()).isInstanceOf(ConsistencyIssueCommentContentDTO.class);
+        InlineCodeChangeDTO inlineFix = ((ConsistencyIssueCommentContentDTO) updatedComment.getContent()).suggestedFix();
+        assertThat(inlineFix).isNotNull();
+        assertThat(inlineFix.startLine()).isEqualTo(3);
+        assertThat(inlineFix.endLine()).isEqualTo(3);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldUpdateInlineFixRangeForTemplateRepositoryOnVersionChange() throws Exception {
+        RepoHistory history = createRepoWithTwoCommits("template-inline-map");
+        CommentThread thread = buildRepoThread(CommentThreadLocationType.TEMPLATE_REPO, "src/Main.java", 2);
+        thread.setExercise(programmingExercise);
+        thread = commentThreadRepository.save(thread);
+
+        Comment consistencyComment = buildConsistencyIssueCommentEntityWithInlineFix("Inline fix", "beta\ngamma", "gamma\nbeta", 2, 3, false);
+        consistencyComment.setThread(thread);
+        consistencyComment = commentRepository.save(consistencyComment);
+
+        var previousParticipation = new ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO(1L, history.repositoryUri().toString(), null, history.oldCommit());
+        var currentParticipation = new ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO(1L, history.repositoryUri().toString(), null, history.newCommit());
+        var previousProgramming = buildProgrammingSnapshot(null, null, previousParticipation, null, null);
+        var currentProgramming = buildProgrammingSnapshot(null, null, currentParticipation, null, null);
+        ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), previousProgramming);
+        ExerciseSnapshotDTO current = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), currentProgramming);
+
+        exerciseReviewVersionChangeService.updateThreadsForVersionChange(previous, current);
+
+        CommentThread updatedThread = commentThreadRepository.findById(thread.getId()).orElseThrow();
+        assertThat(updatedThread.getLineNumber()).isEqualTo(3);
+        assertThat(updatedThread.isOutdated()).isFalse();
+
+        Comment updatedComment = commentRepository.findWithThreadById(consistencyComment.getId()).orElseThrow();
+        assertThat(updatedComment.getContent()).isInstanceOf(ConsistencyIssueCommentContentDTO.class);
+        InlineCodeChangeDTO inlineFix = ((ConsistencyIssueCommentContentDTO) updatedComment.getContent()).suggestedFix();
+        assertThat(inlineFix).isNotNull();
+        assertThat(inlineFix.startLine()).isEqualTo(3);
+        assertThat(inlineFix.endLine()).isEqualTo(4);
     }
 
     @Test
@@ -1032,7 +1096,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), null);
         ExerciseSnapshotDTO current = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), null);
 
-        exerciseReviewService.updateThreadsForVersionChange(previous, current);
+        exerciseReviewVersionChangeService.updateThreadsForVersionChange(previous, current);
 
         CommentThread updated = commentThreadRepository.findById(thread.getId()).orElseThrow();
         assertThat(updated.getLineNumber()).isEqualTo(originalLine);
@@ -1050,7 +1114,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), previousProgramming);
         ExerciseSnapshotDTO current = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), currentProgramming);
 
-        exerciseReviewService.updateThreadsForVersionChange(previous, current);
+        exerciseReviewVersionChangeService.updateThreadsForVersionChange(previous, current);
 
         assertThat(commentThreadRepository.findWithCommentsByExerciseId(programmingExercise.getId())).isEmpty();
     }
@@ -1107,6 +1171,14 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         Comment comment = new Comment();
         comment.setType(CommentType.CONSISTENCY_CHECK);
         comment.setContent(new ConsistencyIssueCommentContentDTO(Severity.HIGH, ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH, text, null));
+        return comment;
+    }
+
+    private Comment buildConsistencyIssueCommentEntityWithInlineFix(String text, String expectedCode, String replacementCode, int startLine, int endLine, boolean applied) {
+        Comment comment = new Comment();
+        comment.setType(CommentType.CONSISTENCY_CHECK);
+        comment.setContent(new ConsistencyIssueCommentContentDTO(Severity.HIGH, ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH, text,
+                new InlineCodeChangeDTO(startLine, endLine, expectedCode, replacementCode, applied)));
         return comment;
     }
 
