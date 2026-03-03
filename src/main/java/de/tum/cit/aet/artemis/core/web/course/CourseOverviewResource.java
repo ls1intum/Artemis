@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
@@ -47,8 +46,8 @@ import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceAccessPolicy.EnforceAccessPolicy;
-import de.tum.cit.aet.artemis.core.security.policy.AccessPolicy;
 import de.tum.cit.aet.artemis.core.security.policy.PolicyEngine;
+import de.tum.cit.aet.artemis.core.security.policy.definitions.CourseVisibilityPolicy;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.EnrollmentService;
 import de.tum.cit.aet.artemis.core.service.course.CourseService;
@@ -103,13 +102,12 @@ public class CourseOverviewResource {
 
     private final PolicyEngine policyEngine;
 
-    private final AccessPolicy<Course> courseVisibilityPolicy;
+    private final CourseVisibilityPolicy courseVisibilityPolicy;
 
     public CourseOverviewResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, AuthorizationCheckService authCheckService,
             EnrollmentService enrollmentService, CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository,
             Optional<ExamRepositoryApi> examRepositoryApi, ComplaintService complaintService, TeamRepository teamRepository,
-            QuizQuestionProgressService quizQuestionProgressService, FaqRepository faqRepository, PolicyEngine policyEngine,
-            @Qualifier("courseVisibilityPolicy") AccessPolicy<Course> courseVisibilityPolicy) {
+            QuizQuestionProgressService quizQuestionProgressService, FaqRepository faqRepository, PolicyEngine policyEngine, CourseVisibilityPolicy courseVisibilityPolicy) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
@@ -127,6 +125,22 @@ public class CourseOverviewResource {
     }
 
     /**
+     * GET /courses/for-dropdown
+     *
+     * @return contains all courses the user has access to with id, title and icon
+     */
+    @GetMapping("courses/for-dropdown")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Set<CourseDropdownDTO>> getCoursesForDropdown() {
+        long start = System.nanoTime();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        final var courses = courseService.findAllActiveForUser(user);
+        final var response = courses.stream().map(course -> new CourseDropdownDTO(course.getId(), course.getTitle(), course.getCourseIcon())).collect(Collectors.toSet());
+        log.info("GET /courses/for-dropdown took {} for {} courses for user {}", TimeLogUtil.formatDurationFrom(start), courses.size(), user.getLogin());
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      * GET /courses/{courseId}/for-dashboard
      *
      * @param courseId the courseId for which exercises, lectures, exams and competencies should be fetched
@@ -137,6 +151,7 @@ public class CourseOverviewResource {
     @GetMapping("courses/{courseId}/for-dashboard")
     @PreAuthorize("hasRole('USER')")
     @AllowedTools(ToolTokenType.SCORPIO)
+    @EnforceAccessPolicy(value = CourseVisibilityPolicy.class, resourceIdFieldName = "courseId")
     public ResponseEntity<CourseForDashboardDTO> getCourseForDashboard(@PathVariable long courseId) {
         long timeNanoStart = System.nanoTime();
         log.debug("REST request to get one course {} with exams, lectures, exercises, participations, submissions and results, etc.", courseId);
@@ -146,7 +161,7 @@ public class CourseOverviewResource {
         boolean trainingEnabled = quizQuestionProgressService.questionsAvailableForTraining(courseId);
         course.setTrainingEnabled(trainingEnabled);
         log.debug("courseService.findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsForUser done");
-        if (!policyEngine.isAllowed(courseVisibilityPolicy, user, course)) {
+        if (!policyEngine.isAllowed(courseVisibilityPolicy.getPolicy(), user, course)) {
             // user might be allowed to enroll in the course
             // We need the course with organizations so that we can check if the user is allowed to enroll
             course = courseRepository.findSingleWithOrganizationsAndPrerequisitesElseThrow(courseId);
@@ -171,22 +186,6 @@ public class CourseOverviewResource {
         CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, gradingScale, user.getId(), true);
         logDuration(List.of(course), user, timeNanoStart, "courses/" + courseId + "/for-dashboard (single course)");
         return ResponseEntity.ok(courseForDashboardDTO);
-    }
-
-    /**
-     * GET /courses/for-dropdown
-     *
-     * @return contains all courses the user has access to with id, title and icon
-     */
-    @GetMapping("courses/for-dropdown")
-    @EnforceAtLeastStudent
-    public ResponseEntity<Set<CourseDropdownDTO>> getCoursesForDropdown() {
-        long start = System.nanoTime();
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        final var courses = courseService.findAllActiveForUser(user);
-        final var response = courses.stream().map(course -> new CourseDropdownDTO(course.getId(), course.getTitle(), course.getCourseIcon())).collect(Collectors.toSet());
-        log.info("GET /courses/for-dropdown took {} for {} courses for user {}", TimeLogUtil.formatDurationFrom(start), courses.size(), user.getLogin());
-        return ResponseEntity.ok(response);
     }
 
     /**
@@ -267,7 +266,7 @@ public class CourseOverviewResource {
     // configuration in such cases.
     @GetMapping("courses/{courseId}")
     @PreAuthorize("hasRole('USER')")
-    @EnforceAccessPolicy(value = "courseVisibilityPolicy", resourceIdFieldName = "courseId")
+    @EnforceAccessPolicy(value = CourseVisibilityPolicy.class, resourceIdFieldName = "courseId")
     public ResponseEntity<Course> getCourse(@PathVariable Long courseId) {
         log.debug("REST request to get course {} for students", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -293,7 +292,7 @@ public class CourseOverviewResource {
 
     @GetMapping("courses/{courseId}/title")
     @PreAuthorize("hasRole('USER')")
-    @EnforceAccessPolicy(value = "courseVisibilityPolicy", resourceIdFieldName = "courseId")
+    @EnforceAccessPolicy(value = CourseVisibilityPolicy.class, resourceIdFieldName = "courseId")
     @ResponseBody
     public ResponseEntity<String> getCourseTitle(@PathVariable Long courseId) {
         final var title = courseRepository.getCourseTitle(courseId);
@@ -312,7 +311,7 @@ public class CourseOverviewResource {
      */
     @GetMapping("courses/{courseId}/allowed-complaints")
     @PreAuthorize("hasRole('USER')")
-    @EnforceAccessPolicy(value = "courseVisibilityPolicy", resourceIdFieldName = "courseId")
+    @EnforceAccessPolicy(value = CourseVisibilityPolicy.class, resourceIdFieldName = "courseId")
     public ResponseEntity<Long> getNumberOfAllowedComplaintsInCourse(@PathVariable Long courseId, @RequestParam(defaultValue = "false") Boolean teamMode) {
         log.debug("REST request to get the number of unaccepted Complaints associated to the current user in course : {}", courseId);
         User user = userRepository.getUser();

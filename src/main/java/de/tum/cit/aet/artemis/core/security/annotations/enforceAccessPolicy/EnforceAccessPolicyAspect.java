@@ -64,17 +64,19 @@ public class EnforceAccessPolicyAspect {
      * Intercepts methods annotated with {@link EnforceAccessPolicy} and evaluates the referenced policy.
      *
      * @param joinPoint           the method invocation join point
-     * @param enforceAccessPolicy the annotation instance providing the policy bean name and resource ID field name
+     * @param enforceAccessPolicy the annotation instance providing the policy provider class and resource ID field name
      * @return the original method's return value if the policy allows access
      * @throws Throwable if the method itself throws or if the policy denies access
      */
     @Around(value = "@annotation(enforceAccessPolicy)", argNames = "joinPoint,enforceAccessPolicy")
     public Object enforce(ProceedingJoinPoint joinPoint, EnforceAccessPolicy enforceAccessPolicy) throws Throwable {
-        String policyBeanName = enforceAccessPolicy.value();
+        Class<?> policyProviderClass = enforceAccessPolicy.value();
         String resourceIdFieldName = enforceAccessPolicy.resourceIdFieldName();
 
         @SuppressWarnings("unchecked")
-        AccessPolicy<Object> policy = applicationContext.getBean(policyBeanName, AccessPolicy.class);
+        de.tum.cit.aet.artemis.core.security.policy.PolicyProvider<Object> policyProvider = (de.tum.cit.aet.artemis.core.security.policy.PolicyProvider<Object>) applicationContext
+                .getBean(policyProviderClass);
+        AccessPolicy<Object> policy = policyProvider.getPolicy();
 
         long resourceId = getIdFromSignature(joinPoint, resourceIdFieldName).orElseThrow(
                 () -> new IllegalArgumentException("Method annotated with @EnforceAccessPolicy must have a parameter named '" + resourceIdFieldName + "' of type Long."));
