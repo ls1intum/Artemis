@@ -15,14 +15,30 @@ import de.tum.cit.aet.artemis.core.domain.User;
  * If no rule matches, the default effect applies.
  *
  * <p>
+ * <strong>Security by Default:</strong> Policies deny access by default unless explicitly configured otherwise.
+ * If you call {@code .build()} without specifying {@code .denyByDefault()} or {@code .allowByDefault()},
+ * the policy will deny by default (following the principle of least privilege).
+ *
+ * <p>
  * Example usage:
  *
  * <pre>{@code
  *
+ * // Explicit deny-by-default (recommended for clarity)
  * AccessPolicy<Course> policy = AccessPolicy.forResource(Course.class).named("course-visibility").section("Navigation").feature("Course Overview")
  *         .rule(when(memberOfGroup(Course::getInstructorGroupName)).thenAllow().documentedFor(INSTRUCTOR))
  *         .rule(when(memberOfGroup(Course::getStudentGroupName).and(hasStarted(Course::getStartDate))).thenAllow().documentedFor(STUDENT).withNote("if enrolled + started"))
  *         .denyByDefault();
+ *
+ * // Implicit deny-by-default (same behavior)
+ * AccessPolicy<Course> policy = AccessPolicy.forResource(Course.class).named("course-visibility").section("Navigation").feature("Course Overview")
+ *         .rule(when(memberOfGroup(Course::getInstructorGroupName)).thenAllow().documentedFor(INSTRUCTOR))
+ *         .rule(when(memberOfGroup(Course::getStudentGroupName).and(hasStarted(Course::getStartDate))).thenAllow().documentedFor(STUDENT).withNote("if enrolled + started"))
+ *         .build();  // Defaults to deny
+ *
+ * // Explicit allow-by-default (use only when intentional)
+ * AccessPolicy<Resource> openPolicy = AccessPolicy.forResource(Resource.class).named("public-resource").rule(when(isBanned()).thenDeny()).allowByDefault();  // Explicitly allow if
+ *                                                                                                                                                            // not banned
  * }</pre>
  *
  * @param <T> the type of resource being protected
@@ -260,6 +276,7 @@ public final class AccessPolicy<T> {
 
         /**
          * Finalizes the policy with a default DENY effect when no rule matches.
+         * This is the recommended approach for security-sensitive policies.
          *
          * @return the built policy
          */
@@ -269,11 +286,27 @@ public final class AccessPolicy<T> {
 
         /**
          * Finalizes the policy with a default ALLOW effect when no rule matches.
+         * Use this only when you explicitly want to allow access by default.
+         * Most policies should use {@link #denyByDefault()} instead.
          *
          * @return the built policy
          */
         public AccessPolicy<T> allowByDefault() {
             return new AccessPolicy<>(resourceType, name, section, features, rules, PolicyEffect.ALLOW);
+        }
+
+        /**
+         * Finalizes the policy. If no default is explicitly set, the policy will deny by default
+         * (following the principle of least privilege).
+         * <p>
+         * This method is equivalent to {@link #denyByDefault()}.
+         * <p>
+         * For explicit clarity, prefer using {@link #denyByDefault()} or {@link #allowByDefault()} instead.
+         *
+         * @return the built policy with deny-by-default behavior
+         */
+        public AccessPolicy<T> build() {
+            return denyByDefault();
         }
     }
 
