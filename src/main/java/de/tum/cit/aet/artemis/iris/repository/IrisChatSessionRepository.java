@@ -32,28 +32,17 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
     @Query("""
             SELECT new de.tum.cit.aet.artemis.iris.dao.IrisChatSessionDAO(
                       s,
-                      COALESCE(ccs.courseId, e1.id, e2.id, l.id, -1),
-                      COALESCE(e1.shortName, e2.shortName, l.title)
+                      COALESCE(s.exerciseId, s.lectureId, s.courseId),
+                      COALESCE(e.shortName, l.title)
                   )
                 FROM IrisChatSession s
-                    LEFT JOIN IrisCourseChatSession ccs ON s.id = ccs.id
-                    LEFT JOIN IrisLectureChatSession lcs ON s.id = lcs.id
-                    LEFT JOIN IrisTextExerciseChatSession tecs ON s.id = tecs.id
-                    LEFT JOIN IrisProgrammingExerciseChatSession pecs ON s.id = pecs.id
-                    LEFT JOIN Lecture l ON l.id = lcs.lectureId
-                    LEFT JOIN Exercise e1 ON e1.id = tecs.exerciseId
-                    LEFT JOIN Exercise e2 ON e2.id = pecs.exerciseId
+                    LEFT JOIN Exercise e ON e.id = s.exerciseId
+                    LEFT JOIN Lecture l ON l.id = s.lectureId
                     LEFT JOIN s.messages m
-                    LEFT JOIN m.content c
-                WHERE s.userId = :userId AND TYPE(s) IN (
-                        de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession,
-                        de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession,
-                        de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession,
-                        de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession
-                    )
-                    AND (ccs.courseId = :courseId OR l.course.id = :courseId OR e1.course.id = :courseId OR e2.course.id = :courseId)
+                WHERE s.userId = :userId
+                    AND s.courseId = :courseId
                     AND m.sender = de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender.USER
-                GROUP BY s, ccs.courseId, e1.id, e2.id, l.id
+                GROUP BY s, e.id, e.shortName, l.id, l.title
                 HAVING COUNT(m) > 0
                 ORDER BY s.creationDate DESC
             """)
